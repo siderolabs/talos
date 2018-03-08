@@ -1,0 +1,835 @@
+metadata:
+  repository: dianemo/tools
+  variables:
+    srcBash: http://ftp.gnu.org/gnu/bash/bash-4.4.12.tar.gz
+    srcBc: https://ftp.gnu.org/gnu/bc/bc-1.07.1.tar.gz
+    srcBinutils: http://ftp.gnu.org/gnu/binutils/binutils-2.29.1.tar.xz
+    srcBison: http://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.xz
+    srcBzip2: http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
+    srcCheck: https://github.com/libcheck/check/releases/download/0.12.0/check-0.12.0.tar.gz
+    srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
+    srcCurl: https://curl.haxx.se/download/curl-7.56.1.tar.xz
+    srcDejagnu: http://ftp.gnu.org/gnu/dejagnu/dejagnu-1.6.1.tar.gz
+    srcDiffutils: http://ftp.gnu.org/gnu/diffutils/diffutils-3.6.tar.xz
+    srcEd: https://ftp.gnu.org/gnu/ed/ed-1.14.2.tar.lz
+    srcElfutils: https://sourceware.org/ftp/elfutils/0.170/elfutils-0.170.tar.bz2
+    srcExpat: https://github.com/libexpat/libexpat/releases/download/R_2_2_5/expat-2.2.5.tar.bz2
+    srcExpect: https://downloads.sourceforge.net/expect/expect5.45.3.tar.gz
+    srcFile: ftp://ftp.astron.com/pub/file/file-5.32.tar.gz
+    srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
+    srcFlex: https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
+    srcGawk: http://ftp.gnu.org/gnu/gawk/gawk-4.2.0.tar.xz
+    srcGcc: http://ftp.gnu.org/gnu/gcc/gcc-7.2.0/gcc-7.2.0.tar.xz
+    srcGdbm: http://ftp.gnu.org/gnu/gdbm/gdbm-1.13.tar.gz
+    srcGettext: http://ftp.gnu.org/gnu/gettext/gettext-0.19.8.1.tar.xz
+    srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
+    srcGmp: http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+    srcGperf: http://ftp.gnu.org/gnu/gperf/gperf-3.0.4.tar.gz
+    srcGrep: http://ftp.gnu.org/gnu/grep/grep-3.1.tar.xz
+    srcGzip: http://ftp.gnu.org/gnu/gzip/gzip-1.8.tar.xz
+    srcIntltool: http://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+    srcLibcap: https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.25.tar.xz
+    srcLibffi: ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
+    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.15.4.tar.xz
+    srcLzip: http://download.savannah.gnu.org/releases/lzip/lzip-1.20.tar.gz
+    srcM4: http://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz
+    srcMake: http://ftp.gnu.org/gnu/make/make-4.2.1.tar.gz
+    srcMpc: https://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz
+    srcMpfr: http://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.xz
+    srcNcurses: http://ftp.gnu.org/gnu//ncurses/ncurses-6.0.tar.gz
+    srcOpenssl: https://www.openssl.org/source/openssl-1.1.0g.tar.gz
+    srcPatch: http://ftp.gnu.org/gnu/patch/patch-2.7.5.tar.xz
+    srcPerl: http://www.cpan.org/src/5.0/perl-5.26.1.tar.xz
+    srcPkgconfig: https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
+    srcPython: https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tar.xz
+    srcSed: http://ftp.gnu.org/gnu/sed/sed-4.4.tar.xz
+    srcTar: http://ftp.gnu.org/gnu/tar/tar-1.29.tar.xz
+    srcTcl: http://sourceforge.net/projects/tcl/files/Tcl/8.6.7/tcl-core8.6.7-src.tar.gz
+    srcTexinfo: http://ftp.gnu.org/gnu/texinfo/texinfo-6.5.tar.xz
+    srcUtilLinux: https://www.kernel.org/pub/linux/utils/util-linux/v2.31/util-linux-2.31.tar.xz
+    srcXmlParser: http://cpan.metacpan.org/authors/id/T/TO/TODDR/XML-Parser-2.44.tar.gz
+    srcXz: https://github.com/xz-mirror/xz/releases/download/v5.2.2/xz-5.2.2.tar.xz
+    srcZlib: http://zlib.net/zlib-1.2.11.tar.xz
+policies:
+- type: conventionalCommit
+  spec:
+    types:
+    - chore
+    - docs
+    - perf
+    - refactor
+    - style
+    - test
+    scopes:
+    - linux
+    - '*'
+pipeline:
+  stages:
+  - toolchain-phase-1
+  - toolchain-phase-2
+  - toolchain
+  - test-suite-phase-1
+  - test-suite
+  - tools-phase-1
+  - tools-phase-2
+  - tools-phase-3
+  - tools-phase-4
+  - tools
+stages:
+  test-suite:
+    tasks:
+    - test-suite
+  test-suite-phase-1:
+    tasks:
+    - tcl
+    - expect
+    - dejagnu
+    - check
+  toolchain:
+    tasks:
+    - toolchain
+  toolchain-phase-1:
+    tasks:
+    - toolchain-phase-1
+  toolchain-phase-2:
+    tasks:
+    - binutils-pass-1
+    - gcc-pass-1
+    - linux-headers
+    - glibc
+    - libstdcpp
+    - binutils-pass-2
+    - gcc-pass-2
+  tools:
+    tasks:
+    - tools
+  tools-phase-1:
+    tasks:
+    - ncurses
+    - bash
+    - bzip2
+    - coreutils
+    - diffutils
+    - file
+    - findutils
+    - gawk
+    - gettext
+    - grep
+    - gzip
+  tools-phase-2:
+    tasks:
+    - m4
+    - lzip
+    - ed
+    - texinfo
+    - bc
+    - bison
+    - make
+    - patch
+    - perl
+    - sed
+    - tar
+    - util-linux
+  tools-phase-3:
+    tasks:
+    - xz
+    - libffi
+    - gmp
+    - mpfr
+    - mpc
+    - expat
+    - gdbm
+    - zlib
+    - python
+    - openssl
+    - curl
+    - gperf
+    - libcap
+    - xml-parser
+    - intltool
+    - pkgconfig
+    - elfutils
+  tools-phase-4:
+    tasks:
+    - flex
+tasks:
+  bash:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcBash" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX \
+          --without-bash-malloc
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN ln -sv bash $PREFIX/bin/sh
+  bc:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcBc" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure --prefix=$PREFIX \
+            --with-readline \
+            --mandir=$PREFIX/share/man \
+            --infodir=$PREFIX/share/info
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  binutils-pass-1:
+    template: |
+      FROM {{ .Repository }}:toolchain-phase-1
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}/build
+      RUN curl {{ index .Variables "srcBinutils" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX \
+          --with-sysroot=$SYSROOT \
+          --with-lib-path=$PREFIX/lib \
+          --target=$TARGET \
+          --disable-nls \
+          --disable-werror
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  binutils-pass-2:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcBinutils" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN CC=$TARGET-gcc \
+          AR=$TARGET-ar \
+          RANLIB=$TARGET-ranlib \
+          ../configure \
+          --prefix=$PREFIX \
+          --disable-nls \
+          --disable-werror \
+          --with-lib-path=$PREFIX/lib \
+          --with-sysroot=$SYSROOT
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN make -C ld clean                  \
+          && make -C ld LIB_PATH=/usr/lib:/lib \
+          && cp -v ld/ld-new $PREFIX/bin
+  bison:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcBison" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN FORCE_UNSAFE_CONFIGURE=1 \
+          ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  bzip2:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcBzip2" }} | tar --strip-components=1 -xz
+      RUN sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+      RUN make -j $(($(nproc) / 2)) -f Makefile-libbz2_so
+      RUN make -j $(($(nproc) / 2)) clean
+      RUN make -j $(($(nproc) / 2))
+      RUN make PREFIX=$PREFIX install
+      RUN cp -v bzip2-shared $PREFIX/bin/bzip2 \
+          && cp -av libbz2.so* $PREFIX/lib \
+          && mkdir -p $PREFIX/usr/lib \
+          && ln -sv ../../lib/libbz2.so.1.0 $PREFIX/lib/libbz2.so \
+          && rm -v $PREFIX/bin/bunzip2 \
+          && rm -v $PREFIX/bin/bzcat \
+          && ln -sv bzip2 $PREFIX/bin/bunzip2 \
+          && ln -sv bzip2 $PREFIX/bin/bzcat
+  check:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcCheck" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN PKG_CONFIG= ../configure \
+            --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  coreutils:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcCoreutils" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN FORCE_UNSAFE_CONFIGURE=1 \
+          ../configure \
+          --prefix=$PREFIX \
+          --enable-install-program=hostname
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  curl:
+    template: |
+      RUN mkdir -p /tools/etc/ssl/certs
+      RUN curl https://curl.haxx.se/ca/cacert.pem -o /tools/etc/ssl/certs/ca-certificates
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcCurl" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --disable-static \
+            --enable-threaded-resolver \
+            --with-ca-bundle=/tools/etc/ssl/certs/ca-certificates
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  dejagnu:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcDejagnu" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX
+      RUN make install
+  diffutils:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcDiffutils" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  ed:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcEd" }} | tar --strip-components=1 -x --lzip
+      WORKDIR build
+      RUN ../configure --prefix=$PREFIX \
+            --bindir=/bin
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  elfutils:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcElfutils" }} | tar --strip-components=1 -xj
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --without-bzlib
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  expat:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcExpat" }} | tar --strip-components=1 -xj
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --disable-static
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  expect:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcExpect" }} | tar --strip-components=1 -xz
+      RUN cp -v configure configure.orig \
+          && sed 's:/usr/local/bin:/bin:' configure.orig > configure
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --with-tcl=$PREFIX/lib \
+            --with-tclinclude=$PREFIX/include
+      RUN make -j $(($(nproc) / 2))
+      RUN make SCRIPTS="" install
+  file:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcFile" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  findutils:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcFindutils" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  flex:
+    template: |
+      FROM {{ .Repository }}:test-suite
+      COPY --from={{ .Repository }}:tools-phase-3 /tools /tools
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcFlex" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN sed -i "/math.h/a #include <malloc.h>" ../src/flexdef.h
+      RUN ../configure --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN mkdir -p $PREFIX/usr/bin && ln -sv flex $PREFIX/usr/bin/lex
+  gawk:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcGawk" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  gcc-pass-1:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcGcc" }} | tar --strip-components=1 -xJ \
+          && mkdir mpfr && curl {{ index .Variables "srcMpfr" }} | tar -xJ --strip-components=1 -C mpfr \
+          && mkdir gmp && curl {{ index .Variables "srcGmp" }} | tar -xJ --strip-components=1 -C gmp \
+          && mkdir mpc && curl {{ index .Variables "srcMpc" }} | tar -xz --strip-components=1 -C mpc
+      COPY src/gcc/setup.sh /bin/
+      RUN chmod +x /bin/setup.sh \
+          && setup.sh
+      WORKDIR build
+      RUN ../configure \
+          --target=$TARGET \
+          --prefix=$PREFIX \
+          --with-glibc-version=2.26 \
+          --with-sysroot=$SYSROOT \
+          --with-newlib \
+          --without-headers \
+          --with-local-prefix=$PREFIX \
+          --with-native-system-header-dir=$PREFIX/include \
+          --disable-nls \
+          --disable-shared \
+          --disable-multilib \
+          --disable-decimal-float \
+          --disable-threads \
+          --disable-libatomic \
+          --disable-libgomp \
+          --disable-libmpx \
+          --disable-libquadmath \
+          --disable-libssp \
+          --disable-libvtv \
+          --disable-libstdcxx \
+          --enable-languages=c,c++
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  gcc-pass-2:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcGcc" }} | tar --strip-components=1 -xJ \
+          && mkdir mpfr && curl {{ index .Variables "srcMpfr" }} | tar -xJ --strip-components=1 -C mpfr \
+          && mkdir gmp && curl {{ index .Variables "srcGmp" }} | tar -xJ --strip-components=1 -C gmp \
+          && mkdir mpc && curl {{ index .Variables "srcMpc" }} | tar -xz --strip-components=1 -C mpc
+      RUN cat gcc/limitx.h gcc/glimits.h gcc/limity.h > `dirname $($TARGET-gcc -print-libgcc-file-name)`/include-fixed/limits.h
+      COPY --chown=1000 src/gcc/setup.sh /bin/
+      RUN chmod +x /bin/setup.sh \
+          && setup.sh
+      WORKDIR build
+      RUN CC=$TARGET-gcc \
+          CXX=$TARGET-g++ \
+          AR=$TARGET-ar \
+          RANLIB=$TARGET-ranlib \
+          ../configure \
+          --prefix=$PREFIX \
+          --with-local-prefix=$PREFIX \
+          --with-native-system-header-dir=$PREFIX/include \
+          --enable-languages=c,c++ \
+          --disable-libstdcxx-pch \
+          --disable-multilib \
+          --disable-bootstrap \
+          --disable-libgomp
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN ln -sv gcc $PREFIX/bin/cc \
+          && echo 'int main(){}' > dummy.c \
+          && cc dummy.c \
+          && readelf -l a.out | grep "$PREFIX"
+  gdbm:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcGdbm" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --disable-static \
+            --enable-libgdbm-compat
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  gettext:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcGettext" }} | tar --strip-components=1 -xJ
+      RUN cd gettext-tools \
+          && EMACS="no" \
+          ./configure \
+          --prefix=$PREFIX \
+          --disable-shared
+      RUN cd gettext-tools \
+          && make -C gnulib-lib \
+          && make -C intl pluralx.c \
+          && make -C src msgfmt \
+          && make -C src msgmerge \
+          && make -C src xgettext
+      RUN cd gettext-tools \
+          && cp -v src/msgfmt src/msgmerge src/xgettext /tools/bin
+  glibc:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{index .Variables "srcGlibc" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX \
+          --host=$TARGET \
+          --build=$(../scripts/config.guess) \
+          --enable-kernel=4.9 \
+          --with-headers=$PREFIX/include \
+          --enable-obsolete-nsl \
+          libc_cv_forced_unwind=yes \
+          libc_cv_c_cleanup=yes
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN echo 'int main(){}' > dummy.c
+      RUN $TARGET-gcc dummy.c
+      RUN readelf -l a.out | grep "$PREFIX"
+      RUN rm -v dummy.c a.out
+  gmp:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcGmp" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --enable-cxx \
+            --disable-static
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  gperf:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcGperf" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  grep:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcGrep" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  gzip:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcGzip" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  intltool:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcIntltool" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  libcap:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibcap" }} | tar --strip-components=1 -xJ
+      RUN sed -i '/install.*STALIBNAME/d' libcap/Makefile
+      RUN make -j $(($(nproc) / 2))
+      RUN make RAISE_SETFCAP=no lib=lib prefix=$PREFIX install
+  libffi:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcLibffi" }} | tar --strip-components=1 -xz
+      RUN sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
+      RUN sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --disable-static
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  libstdcpp:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcGcc" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../libstdc++-v3/configure \
+          --host=$TARGET \
+          --prefix=$PREFIX \
+          --disable-multilib \
+          --disable-nls \
+          --disable-libstdcxx-threads \
+          --disable-libstdcxx-pch \
+          --with-gxx-include-dir=$PREFIX/$TARGET/include/c++/7.2.0
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  linux-headers:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcLinux" }} | tar --strip-components=1 -xJ
+      RUN make mrproper
+      RUN make INSTALL_HDR_PATH=dest headers_install
+      RUN cp -rv dest/include/* $PREFIX/include
+  lzip:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLzip" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  m4:
+    template: |
+      FROM {{ .Repository }}:test-suite
+      COPY --from={{ .Repository }}:tools-phase-1 /tools /tools
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcM4" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  make:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcMake" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure  \
+          --prefix=$PREFIX \
+          --without-guile
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  mpc:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcMpc" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+             --prefix=$PREFIX \
+             --disable-static
+       RUN make -j $(($(nproc) / 2))
+       RUN make install
+  mpfr:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcMpfr" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --disable-static \
+            --enable-thread-safe
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  ncurses:
+    template: |
+      FROM {{ .Repository }}:test-suite
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcNcurses" }} | tar --strip-components=1 -xz
+      RUN sed -i s/mawk// configure
+      WORKDIR build
+      RUN ../configure \
+            --prefix=$PREFIX \
+            --with-shared \
+            --without-debug \
+            --without-ada \
+            --enable-widec \
+            --enable-overwrite
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  openssl:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcOpenssl" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../config \
+          --prefix=$PREFIX \
+          --openssldir=$PREFIX \
+          --libdir=lib \
+          shared \
+          zlib-dynamic
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  patch:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcPatch" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  perl:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcPerl" }} | tar --strip-components=1 -xJ
+      RUN sh Configure \
+            -des \
+            -Dprefix=$PREFIX \
+            -Dvendorprefix=$PREFIX \
+            -Duseshrplib \
+            -Dlibs="-lm -ldl" \
+            -Dusedl \
+            -Ddlsrc="dl_dlopen.xs"
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  pkgconfig:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcPkgconfig" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure --prefix=$PREFIX \
+            --with-internal-glib \
+            --disable-host-too
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN ln -fs /tools/bin/bash /bin/sh
+  python:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcPython" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN echo ac_cv_file__dev_ptmx=no >config.site
+      RUN echo ac_cv_file__dev_ptc=no >>config.site
+      RUN apt-get install -y python3
+      RUN ln -s /usr/bin/python3 /usr/bin/python
+      RUN rm -rf /usr/include
+      RUN CONFIG_SITE=config.site \
+          ../configure \
+            --prefix=$PREFIX \
+            --enable-shared \
+            --host=$TARGET \
+            --build=$ARCH \
+            --target=$TARGET \
+            --disable-ipv6 \
+            --with-tcltk-includes="-I$PREFIX/include" \
+            --with-tcltk-libs="-I$PREFIX/lib" \
+            --without-ensurepip
+      RUN sed -i 's/^#zlib/zlib/' Modules/Setup
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  sed:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcSed" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  tar:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcTar" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN FORCE_UNSAFE_CONFIGURE=1 \
+          ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  tcl:
+    template: |
+      FROM {{ .Repository }}:toolchain
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcTcl" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../unix/configure --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN chmod -v u+w $PREFIX/lib/libtcl8.6.so \
+          && make install-private-headers \
+          && ln -sv tclsh8.6 $PREFIX/bin/tclsh
+  test-suite:
+    template: |
+      FROM {{ .Repository }}:toolchain-phase-1
+      COPY --from={{ .Repository }}:test-suite-phase-1 /tools /tools
+  texinfo:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcTexinfo" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  toolchain:
+    template: |
+      FROM {{ .Repository }}:toolchain-phase-1
+      COPY --from={{ .Repository }}:toolchain-phase-2 /tools /tools
+  toolchain-phase-1:
+    template: |
+      FROM debian:buster
+      RUN apt-get -y update \
+          && apt-get -y install --no-install-recommends \
+          build-essential \
+          curl \
+          ca-certificates \
+          gawk \
+          m4 \
+          xz-utils
+      ENV ARCH x86_64
+      ENV SYS linux
+      ENV VENDOR dianemo
+      ENV SYSROOT /mnt/$VENDOR
+      ENV PREFIX /tools
+      ENV TARGET $ARCH-$VENDOR-$SYS-gnu
+      ENV SRC /usr/local/src
+      ENV PATH $PREFIX/bin:$PATH
+      RUN mkdir -p $SYSROOT$PREFIX
+      RUN ln -s $SYSROOT$PREFIX $PREFIX
+      RUN mkdir -p $PREFIX/lib
+      RUN ln -s lib $PREFIX/lib64
+      WORKDIR $SRC
+  tools:
+    template: |
+      FROM scratch as {{ .Docker.CurrentStage }}
+      COPY --from={{ .Repository }}:tools-phase-4 /tools /tools
+      ENV PATH /tools/bin
+      RUN [ "/tools/bin/bash", "-c", "strip --strip-debug /tools/lib/* || true" ]
+      RUN [ "/tools/bin/bash", "-c", "strip --strip-unneeded /tools/bin/* /tools/sbin/* || true" ]
+      RUN [ "/tools/bin/bash", "-c", "rm -rf /tools/share/info /tools/share/man /tools/share/doc" ]
+      FROM scratch
+      COPY --from={{ .Docker.CurrentStage }} /tools /tools
+      ENV PATH /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/tools/bin
+      RUN [ "mkdir", "/bin" ]
+      RUN [ "ln", "-s", "/tools/bin/bash", "/bin/sh" ]
+      RUN [ "ln", "-s", "/tools/bin/bash", "/bin/bash" ]
+  util-linux:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcUtilLinux" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN PKG_CONFIG="" \
+          ../configure \
+          --prefix=$PREFIX \
+          --without-python \
+          --disable-makeinstall-chown \
+          --without-systemdsystemunitdir \
+          --without-ncurses
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  xml-parser:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcXmlParser" }} | tar --strip-components=1 -xz
+      RUN perl Makefile.PL EXPATINCPATH=$PREFIX/include EXPATLIBPATH=$PREFIX/lib
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  xz:
+    template: |
+      FROM {{ .Repository }}:test-suite
+      COPY --from={{ .Repository }}:tools-phase-2 /tools /tools
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcXz" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  zlib:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcZlib" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install

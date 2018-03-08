@@ -1,0 +1,5 @@
+vmlinuz
+initramfs.xz
+*.iso
+*.raw
+*.vmdk
