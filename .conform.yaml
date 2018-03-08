@@ -1,0 +1,29 @@
+metadata:
+  repository: dianemo/build
+policies:
+- type: conventionalCommit
+  spec:
+    types:
+    - chore
+    - docs
+    - perf
+    - refactor
+    - style
+    - test
+    scopes:
+    - 'generate'
+    - 'initramfs'
+    - 'kernel'
+    - 'rootfs'
+    - 'tools'
+    - '*'
+script:
+  template: |
+    #!/bin/sh
+    set -e
+    cd tools && conform enforce
+    cd ../kernel && conform enforce
+    cd ../initramfs && conform enforce
+    cd ../rootfs && conform enforce
+    cd ../generate && conform enforce
+    cd ../
