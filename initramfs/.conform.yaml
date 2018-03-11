@@ -1,0 +1,41 @@
+metadata:
+  repository: dianemo/initramfs
+policies:
+- type: conventionalCommit
+  spec:
+    types:
+    - chore
+    - docs
+    - perf
+    - refactor
+    - style
+    - test
+    scopes:
+    - '*'
+pipeline:
+  stages:
+  - build
+stages:
+  build:
+    tasks:
+    - build
+  test:
+    tasks:
+    - test
+tasks:
+  build:
+    template: |
+      FROM golang:1.10.0-alpine3.7 AS {{ .Docker.CurrentStage }}
+      RUN apk --update add gcc musl-dev util-linux-dev xz
+      WORKDIR /initramfs
+      COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/lib/modules ./lib/modules
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init
+      COPY src/init ./
+      RUN /usr/local/go/bin/go build -ldflags '-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid"' -o /initramfs/init
+      RUN chmod +x /initramfs/init
+      WORKDIR /initramfs
+      RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/initramfs/initramfs.xz
+      FROM scratch
+      WORKDIR /tmp
+      COPY --from={{ .Docker.CurrentStage }} /initramfs/init init
+      COPY --from={{ .Docker.CurrentStage }} /initramfs/initramfs.xz initramfs.xz
