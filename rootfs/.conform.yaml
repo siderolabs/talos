@@ -1,0 +1,266 @@
+metadata:
+  repository: dianemo/rootfs
+  variables:
+    dest: /tools/usr/local/src
+    rootfs: /rootfs
+    srcCNI: https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
+    srcCNIPlugins: https://github.com/containernetworking/plugins/releases/download/v0.6.0/cni-plugins-amd64-v0.6.0.tgz
+    srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
+    srcDocker: https://download.docker.com/linux/static/stable/x86_64/docker-17.12.1-ce.tgz
+    srcEbtables: ftp://ftp.netfilter.org/pub/ebtables/ebtables-v2.0.10-4.tar.gz
+    srcElfutils: https://sourceware.org/ftp/elfutils/0.170/elfutils-0.170.tar.bz2
+    srcEthtool: https://www.kernel.org/pub/software/network/ethtool/ethtool-4.15.tar.xz
+    srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
+    srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
+    srcIproute2: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-4.15.0.tar.xz
+    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.0/bin/linux/amd64/kubeadm
+    srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
+    srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.9.3/bin/linux/amd64/kubelet
+    srcNetfilter: http://www.netfilter.org/projects/iptables/files/iptables-1.6.1.tar.bz2
+    srcSocat: http://www.dest-unreach.org/socat/download/socat-1.7.3.2.tar.gz
+    srcUtilLinux: https://www.kernel.org/pub/linux/utils/util-linux/v2.31/util-linux-2.31.tar.xz
+    srcZlib: http://zlib.net/zlib-1.2.11.tar.xz
+pipeline:
+  stages:
+  - build
+  - rootfs
+stages:
+  build:
+    tasks:
+    - filesystem
+    - certs
+    - glibc
+    - zlib
+    - iproute2
+    - iptables
+    - util-linux
+    - coreutils
+    - kmod
+    - elfutils
+    - findutils
+    - ethtool
+    - ebtables
+    - socat
+    - docker
+    - kubernetes
+    - etc
+  rootfs:
+    tasks:
+    - rootfs
+tasks:
+  certs:
+    template: |
+      RUN mkdir -p {{ index .Variables "rootfs" }}/etc/ssl/certs
+      RUN curl -o {{ index .Variables "rootfs" }}/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
+  coreutils:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcCoreutils" }} | tar --strip-components=1 -xJ
+      RUN FORCE_UNSAFE_CONFIGURE=1 ./configure \
+            --prefix=/usr \
+            --libexecdir=/usr/libexec \
+            --disable-static
+      RUN make -j $(($(nproc) / 2))
+      RUN cp ./src/uname /bin/uname
+      RUN cp ./src/touch /bin/touch
+      RUN cp ./src/du /bin/du
+      RUN cp ./src/nice /bin/nice
+  docker:
+    template: |
+      WORKDIR {{ index .Variables "rootfs" }}/bin
+      RUN curl -L {{ index .Variables "srcDocker" }} | tar --strip-components=1 -xz \
+          && rm docker
+  ebtables:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcEbtables" }} | tar --strip-components=1 -xz
+      RUN sed -i 's/-Werror//g' Makefile
+      RUN sed -i 's/-o root -g root/-o 0 -g 0/g' Makefile
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  elfutils:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcElfutils" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr \
+            --libexecdir=/usr/libexec \
+            --without-bzlib
+      RUN make
+      RUN make -C libelf install
+  etc:
+    template: |
+      COPY src/files/hosts {{ index .Variables "rootfs" }}/etc/hosts
+      COPY src/files/resolv.conf {{ index .Variables "rootfs" }}/etc/resolv.conf
+      RUN echo NAME="Dianemo" > {{ index .Variables "rootfs" }}/etc/os-release
+      RUN echo ID=dianemo >> {{ index .Variables "rootfs" }}/etc/os-release
+      {{ if not .Git.IsClean }}
+      RUN echo VERSION_ID=dirty >> {{ index .Variables "rootfs" }}/etc/os-release
+      RUN echo 'PRETTY_NAME="Dianemo (dirty) by Autonomy"' >> {{ index .Variables "rootfs" }}/etc/os-release
+      {{ else if .Git.IsTag }}
+      RUN echo VERSION_ID={{ .Git.Tag }} >> {{ index .Variables "rootfs" }}/etc/os-release
+      RUN echo 'PRETTY_NAME="Dianemo ({{ .Git.Tag }}) by Autonomy"' >> {{ index .Variables "rootfs" }}/etc/os-release
+      {{ else }}
+      RUN echo VERSION_ID={{ .Git.SHA }} >> {{ index .Variables "rootfs" }}/etc/os-release
+      RUN echo 'PRETTY_NAME="Dianemo ({{ .Git.SHA }}) by Autonomy"' >> {{ index .Variables "rootfs" }}/etc/os-release
+      {{ end }}
+      RUN echo HOME_URL="https://dianemo.autonomy.io/" >> {{ index .Variables "rootfs" }}/etc/os-release
+      RUN echo BUG_REPORT_URL="https://github.com/autonomy/dianemo/issues" >> {{ index .Variables "rootfs" }}/etc/os-release
+  ethtool:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcEthtool" }} | tar --strip-components=1 -xJ
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+  filesystem:
+    template: |
+      FROM dianemo/tools:{{ .Docker.Image.Tag }}
+      WORKDIR {{ index .Variables "rootfs" }}
+      COPY src/fsh.sh /tools/bin
+      RUN chmod +x /tools/bin/fsh.sh
+      RUN fsh.sh {{ index .Variables "rootfs" }}
+  findutils:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcFindutils" }} | tar --strip-components=1 -xz
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  glibc:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{index .Variables "srcGlibc" }} | tar --strip-components=1 -xJ
+      RUN ln -sfv /tools/lib/gcc /usr/lib
+      # Required by makeinfo
+      RUN ln -sv /tools/bin/perl /usr/bin/perl
+      WORKDIR build
+      RUN CC="gcc -isystem /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include -isystem /usr/include" \
+          ../configure \
+            --prefix=/usr \
+            --disable-static \
+            --disable-werror \
+            --enable-kernel=4.9 \
+            --enable-stack-protector=strong \
+            libc_cv_slibdir=/lib
+      RUN make -j $(($(nproc) / 2))
+      # RUN make check || true
+      RUN sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+      RUN mkdir {{ index .Variables "rootfs" }}/usr/lib/locale
+      RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+      RUN mkdir p {{ index .Variables "rootfs" }}/etc/default
+      RUN echo LC_ALL="en_US.UTF-8" >{{ index .Variables "rootfs" }}/etc/default/locale
+      RUN ln -sfv /tools/lib/libgcc_s.so{,.1} /usr/lib
+      RUN mv -v /tools/bin/{ld,ld-old}
+      RUN mv -v /tools/$(uname -m)-pc-linux-gnu/bin/{ld,ld-old}
+      RUN mv -v /tools/bin/{ld-new,ld}
+      RUN ln -sv /tools/bin/ld /tools/$(uname -m)-pc-linux-gnu/bin/ld
+      RUN gcc -dumpspecs | sed -e 's@/tools@@g' \
+            -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+            -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' > \
+            `dirname $(gcc --print-libgcc-file-name)`/specs
+      RUN echo 'int main(){}' > dummy.c
+      RUN cc dummy.c -v -Wl,--verbose &> dummy.log
+      RUN readelf -l a.out | grep ': /lib'
+      RUN grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log
+      RUN grep -B1 '^ /usr/include' dummy.log
+      RUN grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'
+      RUN grep "/lib.*/libc.so.6 " dummy.log
+      RUN grep found dummy.log
+      RUN rm -v dummy.c a.out dummy.log
+  iproute2:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcIproute2" }} | tar --strip-components=1 -xJ
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  iptables:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcNetfilter" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr \
+            --libexecdir=/usr/libexec \
+            --disable-static \
+            --sbindir=/sbin \
+            --disable-nftables \
+            --enable-libipq \
+            --with-xtlibdir=/lib/xtables
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  kmod:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcKmod" }} | tar --strip-components=1 -xJ
+      RUN ./configure \
+            --prefix=/usr \
+            --libexecdir=/usr/libexec \
+            --disable-static \
+            --bindir=/bin \
+            --libdir=/lib \
+            --sysconfdir=/etc
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+      RUN for target in depmod insmod modinfo modprobe rmmod; do ln -s ../bin/kmod /sbin/$target; done
+  kubernetes:
+    template: |
+      WORKDIR {{ index .Variables "rootfs" }}/opt/cni/bin
+      RUN mkdir {{ index .Variables "rootfs" }}/etc/kubernetes
+      RUN curl -L {{ index .Variables "srcCNI" }} | tar -xz
+      RUN curl -L {{ index .Variables "srcCNIPlugins" }} | tar -xz
+      WORKDIR {{ index .Variables "rootfs" }}/bin
+      RUN curl --retry 3 --retry-delay 60 -LO {{ index .Variables "srcKubelet" }}
+      RUN curl --retry 3 --retry-delay 60 -LO {{ index .Variables "srcKubeadm" }}
+      RUN chmod +x kubeadm
+      RUN chmod +x kubelet
+  rootfs:
+    template: |
+      FROM alpine:3.7 AS {{ .Docker.CurrentStage }}
+      COPY --from={{ .Repository }}:build {{ index .Variables "rootfs" }} {{ index .Variables "rootfs" }}
+      RUN apk --update add bash
+      COPY src/cleanup.sh /bin/cleanup.sh
+      RUN chmod +x /bin/cleanup.sh
+      RUN /bin/cleanup.sh
+      FROM scratch
+      LABEL maintainer="Andrew Rynhard <andrew.rynhard@autonomy.io>"
+      COPY --from={{ .Docker.CurrentStage }} {{ index .Variables "rootfs" }} {{ index .Variables "rootfs" }}
+  socat:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcSocat" }} | tar --strip-components=1 -xz
+      RUN ./configure \
+            --prefix=/usr \
+            --disable-filan \
+            --disable-procan
+      RUN make -j $(($(nproc) / 2))
+      RUN /tools/bin/install -c -m 755 socat /usr/bin
+  util-linux:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcUtilLinux" }} | tar --strip-components=1 -xJ
+      RUN ./configure \
+            --prefix=/usr \
+            --libexecdir=/usr/libexec \
+            --disable-bash-completion \
+            --disable-all-programs \
+            --enable-nsenter \
+            --enable-libblkid \
+            --enable-libmount \
+            --enable-mount
+      RUN make -j $(($(nproc) / 2))
+      RUN sed -i s/root:root/0:0/g ./Makefile
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  zlib:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcZlib" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
