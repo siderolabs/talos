@@ -11,16 +11,13 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/docker"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/kubernetes"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/mount"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/mount/cgroups"
-	"github.com/autonomy/dianemo/initramfs/src/init/pkg/services"
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/switchroot"
-)
-
-const (
-	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"
 )
 
 var (
@@ -49,7 +46,7 @@ func hang(errs []error) {
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	os.Setenv("PATH", PATH)
+	os.Setenv("PATH", constants.PATH)
 
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
@@ -82,8 +79,11 @@ func main() {
 		hang([]error{err})
 	}
 
-	// Start the services essential to running Kubernetes.
-	services.Start()
+	// Start the processes essential to running Kubernetes.
+	processManager := process.NewManager()
+	processManager.Start(&process.Docker{})
+	processManager.Start(&process.Kubeadm{})
+	processManager.Start(&process.Kubelet{})
 
 	// TODO: Authn/Authz.
 	// TODO: Errors API that admins can use to debug.

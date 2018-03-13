@@ -5,4 +5,5 @@ const (
 	NewRoot        = "/mnt/switch_root"
 	DATALabel      = "DATA"
 	ROOTLabel      = "ROOT"
+	PATH           = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"
 )
