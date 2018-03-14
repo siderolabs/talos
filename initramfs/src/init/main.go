@@ -91,6 +91,8 @@ func main() {
 	http.HandleFunc("/kubeconfig", kubernetes.KubeConfigHandleFunc)
 	// An endpoint for listing the running containers.
 	http.HandleFunc("/containers", docker.ContainersHandleFunc)
+	// An endpoint for streaming a process' stdout/stderr.
+	http.HandleFunc("/logs/", process.StreamHandleFunc)
 	// TODO: TLS only.
 	http.ListenAndServe(":8080", nil)
 }

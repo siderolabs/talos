@@ -2,9 +2,12 @@ package process
 
 import (
 	"fmt"
+	"io"
 	"log"
-	"os"
+	"net/http"
 	"os/exec"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
@@ -17,6 +20,8 @@ const (
 	Once
 	OnceAndOnlyOnce
 )
+
+var outputstreams = map[string]*io.PipeReader{}
 
 type Process interface {
 	Cmd() (string, []string)
@@ -34,9 +39,13 @@ func NewManager() *Manager {
 func (m *Manager) build(proc Process) (*exec.Cmd, error) {
 	name, args := proc.Cmd()
 	cmd := exec.Command(name, args...)
+	// Set the environment for the process.
 	cmd.Env = append(proc.Env(), fmt.Sprintf("PATH=%s", constants.PATH))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// Create a buffer for the stdout and stderr of the process.
+	r, w := io.Pipe()
+	outputstreams[path.Base(name)] = r
+	cmd.Stdout = w
+	cmd.Stderr = w
 
 	return cmd, nil
 }
@@ -59,6 +68,31 @@ func (m *Manager) Start(proc Process) error {
 	}(proc)
 
 	return nil
+}
+
+func StreamHandleFunc(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimPrefix(r.URL.Path, "/logs/")
+	stream, ok := outputstreams[name]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	buffer := make([]byte, 1024)
+	for {
+		n, err := stream.Read(buffer)
+		if err != nil {
+			stream.Close()
+			break
+		}
+		data := buffer[0:n]
+		w.Write(data)
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		for i := 0; i < n; i++ {
+			buffer[i] = 0
+		}
+	}
 }
 
 func (m *Manager) waitAndRestart(proc Process) {
