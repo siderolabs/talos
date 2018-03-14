@@ -13,9 +13,9 @@ metadata:
     srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
     srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
     srcIproute2: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-4.15.0.tar.xz
-    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.0/bin/linux/amd64/kubeadm
+    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.4/bin/linux/amd64/kubeadm
     srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
-    srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.9.3/bin/linux/amd64/kubelet
+    srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/linux/amd64/kubelet
     srcNetfilter: http://www.netfilter.org/projects/iptables/files/iptables-1.6.1.tar.bz2
     srcSocat: http://www.dest-unreach.org/socat/download/socat-1.7.3.2.tar.gz
     srcUtilLinux: https://www.kernel.org/pub/linux/utils/util-linux/v2.31/util-linux-2.31.tar.xz
