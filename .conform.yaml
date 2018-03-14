@@ -12,6 +12,7 @@ policies:
     - test
     scopes:
     - 'generate'
+    - 'init'
     - 'initramfs'
     - 'kernel'
     - 'rootfs'
