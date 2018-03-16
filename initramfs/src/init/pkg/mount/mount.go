@@ -62,6 +62,13 @@ var (
 			0,
 			"",
 		},
+		{
+			"none",
+			"/tmp",
+			"tmpfs",
+			0,
+			"",
+		},
 	}
 )
 
@@ -71,6 +78,7 @@ Mount creates the following file systems:
 	proc        /proc proc     nosuid,noexec,nodev    0   0
 	sysfs       /sys  sysfs    nosuid,noexec,nodev    0   0
 	tmpfs       /run  tmpfs    defaults               0   0
+	tmpfs       /tmp  tmpfs    defaults               0   0
 */
 func Mount() error {
 	for _, m := range filesystems {
@@ -91,6 +99,7 @@ Move moves the following file systems to the new root:
 	proc        /proc proc     nosuid,noexec,nodev    0   0
 	sysfs       /sys  sysfs    nosuid,noexec,nodev    0   0
 	tmpfs       /run  tmpfs    defaults               0   0
+	tmpfs       /tmp  tmpfs    defaults               0   0
 */
 func Move() error {
 	if err := os.MkdirAll(constants.NewRoot, os.ModeDir); err != nil {
@@ -102,8 +111,13 @@ func Move() error {
 		return fmt.Errorf("failed to probe block devices: %s", err.Error())
 	}
 	for _, b := range blockDevices {
-		if b.LABEL == constants.ROOTLabel {
-			if err := unix.Mount(b.dev, constants.NewRoot, b.TYPE, 0, ""); err != nil {
+		switch b.LABEL {
+		case constants.ROOTLabel:
+			if err := unix.Mount(b.dev, constants.NewRoot, b.TYPE, unix.MS_RDONLY, ""); err != nil {
+				return err
+			}
+		case constants.DATALabel:
+			if err := unix.Mount(b.dev, path.Join(constants.NewRoot, "var"), b.TYPE, 0, ""); err != nil {
 				return err
 			}
 		}

@@ -21,6 +21,7 @@ tasks:
       RUN mkdir /tmp
       RUN make -j $(($(nproc) / 2))
       RUN make modules_install INSTALL_MOD_PATH=/tmp
+      RUN depmod -b /tmp 4.15.4-dianemo
       RUN cp arch/x86/boot/bzImage /tmp/vmlinuz
       FROM scratch
       COPY --from={{ .Docker.CurrentStage }} /tmp /tmp

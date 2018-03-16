@@ -2,7 +2,6 @@ package process
 
 import (
 	"io/ioutil"
-	"os"
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process/conditions"
 )
@@ -26,7 +25,6 @@ featureGates:
 type Kubeadm struct{}
 
 func init() {
-	os.MkdirAll("/etc/kubernetes", os.ModeDir)
 	if err := ioutil.WriteFile("/etc/kubernetes/kubeadm.yaml", []byte(MasterConfiguration), 0644); err != nil {
 
 	}
