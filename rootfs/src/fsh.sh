@@ -5,7 +5,7 @@ set -e
 
 rm -rf /bin
 
-mkdir -pv ${PREFIX}/{dev,lib,opt,proc,sys}
+mkdir -pv ${PREFIX}/{dev,lib,opt,proc,sys,etc}
 
 mkdir -pv ${PREFIX}/bin
 ln -sv /bin $PREFIX/sbin
@@ -27,6 +27,15 @@ ln -sv /usr/include ${PREFIX}/usr/local/include
 mkdir -pv ${PREFIX}/run
 mkdir -pv ${PREFIX}/var/{log,mail,spool}
 ln -sv /run $PREFIX/var/run
+
+mkdir -pv $PREFIX/var/docker
+ln -sv /var/docker $PREFIX/etc/docker
+mkdir -pv $PREFIX/var/kubernetes
+ln -sv /var/kubernetes $PREFIX/etc/kubernetes
+mkdir -pv $PREFIX/var/cni
+ln -sv /var/cni $PREFIX/etc/cni
+mkdir -pv $PREFIX/var/libexec/kubernetes $PREFIX/usr/libexec
+ln -sv /var/libexec/kubernetes $PREFIX/usr/libexec/kubernetes
 
 install -dv -m 0750 ${PREFIX}/root
 install -dv -m 1777 ${PREFIX}/tmp ${PREFIX}/var/tmp

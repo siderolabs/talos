@@ -28,6 +28,7 @@ metadata:
     srcGrep: http://ftp.gnu.org/gnu/grep/grep-3.1.tar.xz
     srcGzip: http://ftp.gnu.org/gnu/gzip/gzip-1.8.tar.xz
     srcIntltool: http://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+    srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
     srcLibcap: https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.25.tar.xz
     srcLibffi: ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
     srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.15.4.tar.xz
@@ -139,6 +140,7 @@ stages:
   tools-phase-4:
     tasks:
     - flex
+    - kmod
 tasks:
   bash:
     template: |
@@ -515,6 +517,15 @@ tasks:
       RUN ../configure --prefix=$PREFIX
       RUN make -j $(($(nproc) / 2))
       RUN make install
+  kmod:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcKmod" }} | tar --strip-components=1 -xJ
+      RUN ./configure \
+            --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
+      RUN for target in depmod insmod modinfo modprobe rmmod; do ln -s ../bin/kmod $PREFIX/bin/$target; done
   libcap:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}

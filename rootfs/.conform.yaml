@@ -13,7 +13,7 @@ metadata:
     srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
     srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
     srcIproute2: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-4.15.0.tar.xz
-    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.4/bin/linux/amd64/kubeadm
+    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.0/bin/linux/amd64/kubeadm
     srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
     srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/linux/amd64/kubelet
     srcNetfilter: http://www.netfilter.org/projects/iptables/files/iptables-1.6.1.tar.bz2
@@ -210,7 +210,6 @@ tasks:
   kubernetes:
     template: |
       WORKDIR {{ index .Variables "rootfs" }}/opt/cni/bin
-      RUN mkdir {{ index .Variables "rootfs" }}/etc/kubernetes
       RUN curl -L {{ index .Variables "srcCNI" }} | tar -xz
       RUN curl -L {{ index .Variables "srcCNIPlugins" }} | tar -xz
       WORKDIR {{ index .Variables "rootfs" }}/bin

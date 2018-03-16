@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/docker"
@@ -23,17 +22,6 @@ import (
 var (
 	switchRoot *bool
 )
-
-func depmod() error {
-	cmd := exec.Command("/bin/depmod", []string{}...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func hang(errs []error) {
 	for _, err := range errs {
@@ -72,11 +60,6 @@ func main() {
 		if err := switchroot.Switch(); err != nil {
 			hang([]error{err})
 		}
-	}
-
-	// Load the kernel modules.
-	if err := depmod(); err != nil {
-		hang([]error{err})
 	}
 
 	// Start the processes essential to running Kubernetes.

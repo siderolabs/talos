@@ -77,6 +77,11 @@ func StreamHandleFunc(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
+	if stream == nil {
+		w.Write([]byte(fmt.Sprintf("process has not started: %s", name)))
+		return
+	}
+
 	buffer := make([]byte, 1024)
 	for {
 		n, err := stream.Read(buffer)
