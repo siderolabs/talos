@@ -11,12 +11,12 @@ policies:
     - style
     - test
     scopes:
-    - 'generate'
-    - 'init'
-    - 'initramfs'
-    - 'kernel'
-    - 'rootfs'
-    - 'tools'
+    - generate
+    - init
+    - initramfs
+    - kernel
+    - rootfs
+    - tools
     - '*'
 script:
   template: |

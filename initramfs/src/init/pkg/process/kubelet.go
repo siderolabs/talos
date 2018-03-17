@@ -16,6 +16,9 @@ func init() {
 func (p *Kubelet) Cmd() (name string, args []string) {
 	name = "/bin/kubelet"
 	args = []string{
+		"--container-runtime=remote",
+		"--container-runtime-endpoint=unix:///var/run/crio/crio.sock",
+		"--runtime-request-timeout=10m",
 		"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 		"--kubeconfig=/etc/kubernetes/kubelet.conf",
 		"--pod-manifest-path=/etc/kubernetes/manifests",

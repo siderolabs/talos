@@ -1,6 +1,7 @@
 metadata:
   repository: dianemo/tools
   variables:
+    srcAutoconf: https://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.xz
     srcBash: http://ftp.gnu.org/gnu/bash/bash-4.4.12.tar.gz
     srcBc: https://ftp.gnu.org/gnu/bc/bc-1.07.1.tar.gz
     srcBinutils: http://ftp.gnu.org/gnu/binutils/binutils-2.29.1.tar.xz
@@ -22,6 +23,7 @@ metadata:
     srcGcc: http://ftp.gnu.org/gnu/gcc/gcc-7.2.0/gcc-7.2.0.tar.xz
     srcGdbm: http://ftp.gnu.org/gnu/gdbm/gdbm-1.13.tar.gz
     srcGettext: http://ftp.gnu.org/gnu/gettext/gettext-0.19.8.1.tar.xz
+    srcGit: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.16.2.tar.xz
     srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
     srcGmp: http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
     srcGperf: http://ftp.gnu.org/gnu/gperf/gperf-3.0.4.tar.gz
@@ -141,7 +143,18 @@ stages:
     tasks:
     - flex
     - kmod
+    - autoconf
+    - git
 tasks:
+  autoconf:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{ index .Variables "srcAutoconf" }} | tar --strip-components=1 -xJ
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
   bash:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
@@ -451,6 +464,15 @@ tasks:
           && make -C src xgettext
       RUN cd gettext-tools \
           && cp -v src/msgfmt src/msgmerge src/xgettext /tools/bin
+  git:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl {{index .Variables "srcGit" }} | tar --strip-components=1 -xJ
+      RUN make configure
+      RUN ./configure \
+          --prefix=$PREFIX
+      RUN make -j $(($(nproc) / 2))
+      RUN make install
   glibc:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
@@ -594,8 +616,8 @@ tasks:
       RUN ../configure  \
           --prefix=$PREFIX \
           --without-guile
-      RUN make -j $(($(nproc) / 2))
-      RUN make install
+          RUN make -j $(($(nproc) / 2))
+          RUN make install
   mpc:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}

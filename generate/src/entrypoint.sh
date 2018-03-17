@@ -21,8 +21,8 @@ function raw() {
   dd if=/dev/zero of=/dianemo.raw bs=1M count=2000
   parted -s /dianemo.raw mklabel gpt
   parted -s -a none /dianemo.raw mkpart ESP fat32 0 50M
-  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M 700M
-  parted -s -a none /dianemo.raw mkpart DATA xfs 700M 2G
+  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M 750M
+  parted -s -a none /dianemo.raw mkpart DATA xfs 750M 2G
   losetup /dev/loop0 /dianemo.raw
   partx -av /dev/loop0
   sgdisk /dev/loop0 --attributes=1:set:2
@@ -45,7 +45,7 @@ EOF
   mount /dev/loop0p2 /mnt
   cp -Rv ./* /mnt
   rm -rf /mnt/boot
-  rm -rf /mnt/var
+  rm -rf /mnt/var/*
   umount /mnt
   mount /dev/loop0p3 /mnt
   cp -Rv ./var/* /mnt
@@ -56,10 +56,10 @@ EOF
 }
 
 function rootfs() {
-  dd if=/dev/zero of=/rootfs.raw bs=1M count=700
+  dd if=/dev/zero of=/rootfs.raw bs=1M count=750
   parted -s /rootfs.raw mklabel gpt
-  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 650M
-  parted -s -a none /rootfs.raw mkpart DATA xfs 650M 700M
+  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 700M
+  parted -s -a none /rootfs.raw mkpart DATA xfs 700M 750M
   losetup /dev/loop0 /rootfs.raw
   partx -av /dev/loop0
   mkfs.xfs -L ROOT /dev/loop0p1
