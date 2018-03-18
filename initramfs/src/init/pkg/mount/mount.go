@@ -113,12 +113,27 @@ func Move() error {
 	for _, b := range blockDevices {
 		switch b.LABEL {
 		case constants.ROOTLabel:
-			if err := unix.Mount(b.dev, constants.NewRoot, b.TYPE, unix.MS_RDONLY, ""); err != nil {
-				return err
+			if err := unix.Mount(b.dev, constants.NewRoot, b.TYPE, unix.MS_RDONLY|unix.MS_NOATIME, ""); err != nil {
+				return fmt.Errorf("mount %s: %s", constants.NewRoot, err.Error())
+			}
+			// See http://man7.org/linux/man-pages/man2/mount.2.html
+			// MS_SHARED
+			//   Make this mount point shared.  Mount and unmount events
+			//   immediately under this mount point will propagate to the other
+			//   mount points that are members of this mount's peer group.
+			//   Propagation here means that the same mount or unmount will
+			//   automatically occur under all of the other mount points in the
+			//   peer group.  Conversely, mount and unmount events that take
+			//   place under peer mount points will propagate to this mount
+			//   point.
+			// https://github.com/kubernetes/kubernetes/issues/61058
+			if err := unix.Mount("", constants.NewRoot, "", unix.MS_SHARED, ""); err != nil {
+				return fmt.Errorf("mount shared %s: %s", constants.NewRoot, err.Error())
 			}
 		case constants.DATALabel:
-			if err := unix.Mount(b.dev, path.Join(constants.NewRoot, "var"), b.TYPE, 0, ""); err != nil {
-				return err
+			target := path.Join(constants.NewRoot, "var")
+			if err := unix.Mount(b.dev, target, b.TYPE, unix.MS_NOATIME, ""); err != nil {
+				return fmt.Errorf("mount %s: %s", target, err.Error())
 			}
 		}
 	}

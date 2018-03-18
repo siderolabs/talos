@@ -9,16 +9,17 @@ import (
 const MasterConfiguration = `
 kind: MasterConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
+criSocket: /var/run/crio/crio.sock
 skipTokenPrint: true
-kubernetesVersion: v1.9.4
+kubernetesVersion: v1.10.0-beta.4
 networking:
   dnsDomain: cluster.local
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
 featureGates:
   HighAvailability: true
-  SelfHosting: true
-  StoreCertsInSecrets: true
+  SelfHosting: false
+  StoreCertsInSecrets: false
   DynamicKubeletConfig: true
 `
 
@@ -41,7 +42,7 @@ func (p *Kubeadm) Cmd() (name string, args []string) {
 }
 
 func (p *Kubeadm) Condition() func() (bool, error) {
-	return conditions.WaitForFileExists("/var/run/docker.sock")
+	return conditions.WaitForFileExists("/var/run/crio/crio.sock")
 }
 
 func (p *Kubeadm) Env() []string { return []string{} }

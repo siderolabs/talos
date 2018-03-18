@@ -1,7 +1,7 @@
 metadata:
   repository: dianemo/generate
   variables:
-    cmd: "raw"
+    cmd: raw
     srcSyslinux: https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
 script:
   template: |

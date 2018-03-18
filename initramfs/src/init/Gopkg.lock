@@ -2,84 +2,23 @@
 
 
 [[projects]]
-  name = "github.com/Microsoft/go-winio"
-  packages = ["."]
-  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
-  version = "v0.4.7"
-
-[[projects]]
-  name = "github.com/docker/distribution"
-  packages = [
-    "digest",
-    "reference"
-  ]
-  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
-  version = "v2.6.2"
-
-[[projects]]
-  name = "github.com/docker/engine-api"
+  name = "github.com/kubernetes-incubator/cri-o"
   packages = [
     "client",
-    "client/transport",
-    "client/transport/cancellable",
-    "types",
-    "types/blkiodev",
-    "types/container",
-    "types/filters",
-    "types/network",
-    "types/reference",
-    "types/registry",
-    "types/strslice",
-    "types/swarm",
-    "types/time",
-    "types/versions"
+    "types"
   ]
-  revision = "3d1601b9d2436a70b0dfc045a23f6503d19195df"
-  version = "v0.4.0"
-
-[[projects]]
-  name = "github.com/docker/go-connections"
-  packages = [
-    "nat",
-    "sockets",
-    "tlsconfig"
-  ]
-  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
-  version = "v0.3.0"
-
-[[projects]]
-  name = "github.com/docker/go-units"
-  packages = ["."]
-  revision = "0dadbb0345b35ec7ef35e228dabb8de89a65bf52"
-  version = "v0.3.2"
-
-[[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = [
-    "context",
-    "proxy"
-  ]
-  revision = "d0aafc73d5cdc42264b0af071c261abac580695e"
+  revision = "87237324485137e0f439c3011999401186b62874"
+  version = "v1.9.10"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix"]
   revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "40ae3357eb6997b858eac927a7a7c28d5fa55c494d4f75dd356f2233d486653c"
+  inputs-digest = "666ec6353b6b5143c5b4d58537f88a39a69f4a74a1232118033d11c1142b25a7"
   solver-name = "gps-cdcl"
   solver-version = 1
