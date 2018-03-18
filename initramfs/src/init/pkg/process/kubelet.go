@@ -35,6 +35,7 @@ func (p *Kubelet) Cmd() (name string, args []string) {
 		"--rotate-certificates=true",
 		"--serialize-image-pulls=false",
 		"--feature-gates=ExperimentalCriticalPodAnnotation=true",
+		"--v=4",
 	}
 
 	return name, args
