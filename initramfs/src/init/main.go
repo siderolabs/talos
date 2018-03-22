@@ -23,6 +23,12 @@ var (
 )
 
 func hang() {
+	if rec := recover(); rec != nil {
+		err, ok := rec.(error)
+		if ok {
+			log.Printf("%s\n", err.Error())
+		}
+	}
 	// Hang infinitely to avoid a kernel panic.
 	select {}
 }
@@ -36,36 +42,39 @@ func init() {
 }
 
 func main() {
+	defer hang()
 	if !*switchRoot {
 		// Mount the initial file systems.
 		if err := mount.Mount(); err != nil {
-			log.Println(err.Error())
-			hang()
+			panic(err)
 		}
 		// TODO: Execute user data.
 		// Move the initial file systems to the new root.
 		if err := mount.Move(); err != nil {
-			log.Println(err.Error())
-			hang()
+			panic(err)
 		}
 		// Mount the cgroups file systems to the new root.
 		if err := cgroups.Mount(); err != nil {
-			log.Println(err.Error())
-			hang()
+			panic(err)
 		}
 		// Perform the equivalent of switch_root.
 		// See https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
 		if err := switchroot.Switch(); err != nil {
-			log.Println(err.Error())
-			hang()
+			panic(err)
 		}
 	}
 
 	// Start the processes essential to running Kubernetes.
 	processManager := process.NewManager()
-	processManager.Start(&process.CRIO{})
-	processManager.Start(&process.Kubeadm{})
-	processManager.Start(&process.Kubelet{})
+	if err := processManager.Start(&process.CRIO{}); err != nil {
+		panic(err)
+	}
+	if err := processManager.Start(&process.Kubeadm{}); err != nil {
+		panic(err)
+	}
+	if err := processManager.Start(&process.Kubelet{}); err != nil {
+		panic(err)
+	}
 
 	// TODO: Authn/Authz.
 	// TODO: Errors API that admins can use to debug.
@@ -76,5 +85,7 @@ func main() {
 	// An endpoint for streaming a process' stdout/stderr.
 	http.HandleFunc("/logs/", process.StreamHandleFunc)
 	// TODO: TLS only.
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		panic(err)
+	}
 }
