@@ -16,6 +16,7 @@ import (
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/mount/cgroups"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/switchroot"
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
 var (
@@ -48,7 +49,10 @@ func main() {
 		if err := mount.Mount(); err != nil {
 			panic(err)
 		}
-		// TODO: Execute user data.
+		// Execute the user data.
+		if err := userdata.Execute(); err != nil {
+			panic(err)
+		}
 		// Move the initial file systems to the new root.
 		if err := mount.Move(); err != nil {
 			panic(err)
