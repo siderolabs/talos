@@ -18,9 +18,9 @@ metadata:
     srcGo: https://dl.google.com/go/go1.10.linux-amd64.tar.gz
     srcGPGME: https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-1.10.0.tar.bz2
     srcIproute2: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-4.15.0.tar.xz
-    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.4/bin/linux/amd64/kubeadm
+    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-rc.1/bin/linux/amd64/kubeadm
     srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
-    srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-beta.4/bin/linux/amd64/kubelet
+    srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.10.0-rc.1/bin/linux/amd64/kubelet
     srcLibassuan: https://www.gnupg.org/ftp/gcrypt/libassuan/libassuan-2.5.1.tar.bz2
     srcLibGPGError: https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.27.tar.bz2
     srcLVM2: https://sourceware.org/ftp/lvm2/releases/LVM2.2.02.171.tgz
