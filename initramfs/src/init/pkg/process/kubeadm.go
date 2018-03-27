@@ -11,7 +11,7 @@ kind: MasterConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
 criSocket: /var/run/crio/crio.sock
 skipTokenPrint: true
-kubernetesVersion: v1.10.0-rc.1
+kubernetesVersion: v1.10.0
 networking:
   dnsDomain: cluster.local
   serviceSubnet: 10.96.0.0/12
