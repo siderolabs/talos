@@ -6,6 +6,7 @@ metadata:
     srcBtrfsProgs: https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/btrfs-progs-v4.15.1.tar.xz
     srcCNI: https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
     srcCNIPlugins: https://github.com/containernetworking/plugins/releases/download/v0.6.0/cni-plugins-amd64-v0.6.0.tgz
+    srcConntrackTools: https://netfilter.org/projects/conntrack-tools/files/conntrack-tools-1.4.4.tar.bz2
     srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
     srcCRIO: https://github.com/kubernetes-incubator/cri-o/archive/v1.10.0-beta.1.tar.gz
     srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.0.0-alpha.0/crictl-v1.0.0-alpha.0-linux-amd64.tar.gz
@@ -23,6 +24,12 @@ metadata:
     srcKubelet: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet
     srcLibassuan: https://www.gnupg.org/ftp/gcrypt/libassuan/libassuan-2.5.1.tar.bz2
     srcLibGPGError: https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.27.tar.bz2
+    srcLibmnl: https://www.netfilter.org/projects/libmnl/files/libmnl-1.0.4.tar.bz2
+    srcLibnfnetlink: https://www.netfilter.org/projects/libnfnetlink/files/libnfnetlink-1.0.1.tar.bz2
+    srcLibnetfilterConntrack: https://netfilter.org/projects/libnetfilter_conntrack/files/libnetfilter_conntrack-1.0.6.tar.bz2
+    srcLibnetfilterCthelper: https://netfilter.org/projects/libnetfilter_cthelper/files/libnetfilter_cthelper-1.0.0.tar.bz2
+    srcLibnetfilterCttimeout: https://www.netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-1.0.0.tar.bz2
+    srcLibnetfilterQueue: https://netfilter.org/projects/libnetfilter_queue/files/libnetfilter_queue-1.0.3.tar.bz2
     srcLVM2: https://sourceware.org/ftp/lvm2/releases/LVM2.2.02.171.tgz
     srcLZO: http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
     srcNetfilter: http://www.netfilter.org/projects/iptables/files/iptables-1.6.1.tar.bz2
@@ -61,6 +68,13 @@ stages:
   build-phase-2:
     tasks:
     - lvm2
+    - libmnl
+    - libnfnetlink
+    - libnetfilter_queue
+    - libnetfilter_cthelper
+    - libnetfilter_cttimeout
+    - libnetfilter_conntrack
+    - conntrack-tools
     - runc
     - cri-o
     - kubernetes
@@ -80,11 +94,20 @@ tasks:
             --disable-convert \
             --disable-static
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   certs:
     template: |
       RUN mkdir -p {{ index .Variables "rootfs" }}/etc/ssl/certs
       RUN curl -o {{ index .Variables "rootfs" }}/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
+  conntrack-tools:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcConntrackTools" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr \
+            --disable-cthelper
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   coreutils:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
@@ -118,7 +141,7 @@ tasks:
       RUN sed -i 's/-Werror//g' Makefile
       RUN sed -i 's/-o root -g root/-o 0 -g 0/g' Makefile
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   elfutils:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
@@ -128,7 +151,7 @@ tasks:
             --libexecdir=/usr/libexec \
             --without-bzlib
       RUN make
-      RUN make -C libelf install
+      RUN make -C libelf install DESTDIR={{ index .Variables "rootfs" }}
   etc:
     template: |
       COPY src/files/hosts {{ index .Variables "rootfs" }}/etc/hosts
@@ -154,7 +177,7 @@ tasks:
       RUN ./configure \
             --prefix=/usr
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   filesystem:
     template: |
       FROM dianemo/tools:{{ .Docker.Image.Tag }}
@@ -183,7 +206,7 @@ tasks:
             --disable-gtk-doc-html \
             --disable-static
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   glibc:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
@@ -236,7 +259,7 @@ tasks:
       --enable-languages= \
       --disable-static
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   iproute2:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
@@ -291,7 +314,7 @@ tasks:
             --prefix=/usr \
             --disable-static
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   libgpg-error:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
@@ -300,7 +323,55 @@ tasks:
             --prefix=/usr \
             --disable-static
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  libmnl:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibmnl" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  libnetfilter_conntrack:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibnetfilterConntrack" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  libnetfilter_cthelper:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibnetfilterCthelper" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  libnetfilter_cttimeout:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibnetfilterCttimeout" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  libnetfilter_queue:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibnetfilterQueue" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+  libnfnetlink:
+    template: |
+      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcLibnfnetlink" }} | tar --strip-components=1 -xj
+      RUN ./configure \
+            --prefix=/usr
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   lvm2:
     template: |
       FROM scratch
@@ -314,7 +385,7 @@ tasks:
             --libexecdir=/usr/libexec \
             --enable-pkgconfig
       RUN make -j $(($(nproc) / 2)) libdm
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   lzo:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
@@ -323,7 +394,7 @@ tasks:
             --prefix=/usr \
             --disable-static
       RUN make -j $(($(nproc) / 2))
-      RUN make install
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   rootfs:
     template: |
       FROM alpine:3.7 AS {{ .Docker.CurrentStage }}
