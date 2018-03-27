@@ -141,7 +141,7 @@ tasks:
       RUN sed -i 's/-Werror//g' Makefile
       RUN sed -i 's/-o root -g root/-o 0 -g 0/g' Makefile
       RUN make -j $(($(nproc) / 2))
-      RUN make install DESTDIR={{ index .Variables "rootfs" }}
+      RUN make install MANDIR=/usr/share/man DESTDIR={{ index .Variables "rootfs" }}
   elfutils:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
