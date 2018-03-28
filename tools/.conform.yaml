@@ -20,7 +20,7 @@ metadata:
     srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
     srcFlex: https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
     srcGawk: http://ftp.gnu.org/gnu/gawk/gawk-4.2.0.tar.xz
-    srcGcc: http://ftp.gnu.org/gnu/gcc/gcc-7.2.0/gcc-7.2.0.tar.xz
+    srcGcc: http://ftp.gnu.org/gnu/gcc/gcc-7.3.0/gcc-7.3.0.tar.xz
     srcGdbm: http://ftp.gnu.org/gnu/gdbm/gdbm-1.13.tar.gz
     srcGettext: http://ftp.gnu.org/gnu/gettext/gettext-0.19.8.1.tar.xz
     srcGit: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.16.2.tar.xz
@@ -33,7 +33,7 @@ metadata:
     srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
     srcLibcap: https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.25.tar.xz
     srcLibffi: ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
-    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.15.4.tar.xz
+    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.15.13.tar.xz
     srcLzip: http://download.savannah.gnu.org/releases/lzip/lzip-1.20.tar.gz
     srcM4: http://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz
     srcMake: http://ftp.gnu.org/gnu/make/make-4.2.1.tar.gz
@@ -579,7 +579,7 @@ tasks:
           --disable-nls \
           --disable-libstdcxx-threads \
           --disable-libstdcxx-pch \
-          --with-gxx-include-dir=$PREFIX/$TARGET/include/c++/7.2.0
+          --with-gxx-include-dir=$PREFIX/$TARGET/include/c++/7.3.0
       RUN make -j $(($(nproc) / 2))
       RUN make install
   linux-headers:
@@ -776,7 +776,7 @@ tasks:
       COPY --from={{ .Repository }}:toolchain-phase-2 /tools /tools
   toolchain-phase-1:
     template: |
-      FROM debian:buster
+      FROM debian:buster-20180213
       RUN apt-get -y update \
           && apt-get -y install --no-install-recommends \
           build-essential \
