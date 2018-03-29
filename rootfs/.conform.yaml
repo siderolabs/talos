@@ -27,7 +27,6 @@ metadata:
     srcLibmnl: https://www.netfilter.org/projects/libmnl/files/libmnl-1.0.4.tar.bz2
     srcLibnfnetlink: https://www.netfilter.org/projects/libnfnetlink/files/libnfnetlink-1.0.1.tar.bz2
     srcLibnetfilterConntrack: https://netfilter.org/projects/libnetfilter_conntrack/files/libnetfilter_conntrack-1.0.6.tar.bz2
-    srcLibnetfilterCthelper: https://netfilter.org/projects/libnetfilter_cthelper/files/libnetfilter_cthelper-1.0.0.tar.bz2
     srcLibnetfilterCttimeout: https://www.netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-1.0.0.tar.bz2
     srcLibnetfilterQueue: https://netfilter.org/projects/libnetfilter_queue/files/libnetfilter_queue-1.0.3.tar.bz2
     srcLVM2: https://sourceware.org/ftp/lvm2/releases/LVM2.2.02.171.tgz
@@ -51,13 +50,21 @@ stages:
     - zlib
     - iproute2
     - iptables
+    - libmnl
+    - libnfnetlink
+    - libnetfilter_queue
+    - libnetfilter_cttimeout
+    - libnetfilter_conntrack
+    - conntrack-tools
+    - ethtool
+    - ebtables
     - util-linux
     - coreutils
     - kmod
     - elfutils
     - findutils
-    - ethtool
-    - ebtables
+  build-phase-2:
+    tasks:
     - socat
     - lzo
     - btrfs-progs
@@ -65,16 +72,7 @@ stages:
     - libassuan
     - gpgme
     - glib2
-  build-phase-2:
-    tasks:
     - lvm2
-    - libmnl
-    - libnfnetlink
-    - libnetfilter_queue
-    - libnetfilter_cthelper
-    - libnetfilter_cttimeout
-    - libnetfilter_conntrack
-    - conntrack-tools
     - runc
     - cri-o
     - kubernetes
@@ -326,6 +324,9 @@ tasks:
       RUN make install DESTDIR={{ index .Variables "rootfs" }}
   libmnl:
     template: |
+      # Note: PKG_CONFIG_PATH is required to build conntrack-tools and the
+      # libraries it depends on.
+      ENV PKG_CONFIG_PATH /rootfs/lib/pkgconfig
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcLibmnl" }} | tar --strip-components=1 -xj
       RUN ./configure \
@@ -336,14 +337,6 @@ tasks:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcLibnetfilterConntrack" }} | tar --strip-components=1 -xj
-      RUN ./configure \
-            --prefix=/usr
-      RUN make -j $(($(nproc) / 2))
-      RUN make install DESTDIR={{ index .Variables "rootfs" }}
-  libnetfilter_cthelper:
-    template: |
-      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
-      RUN curl -L {{ index .Variables "srcLibnetfilterCthelper" }} | tar --strip-components=1 -xj
       RUN ./configure \
             --prefix=/usr
       RUN make -j $(($(nproc) / 2))
@@ -374,10 +367,6 @@ tasks:
       RUN make install DESTDIR={{ index .Variables "rootfs" }}
   lvm2:
     template: |
-      FROM scratch
-      COPY --from={{ .Repository }}:build-phase-1 / /
-      ENV PATH $PATH:/tools/bin
-      ENV PKG_CONFIG_PATH /rootfs/lib/pkgconfig
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcLVM2" }} | tar --strip-components=1 -xz
       RUN ./configure \
@@ -413,6 +402,10 @@ tasks:
       RUN chmod +x {{ index .Variables "rootfs" }}/bin/runc
   socat:
     template: |
+      FROM scratch
+      COPY --from={{ .Repository }}:build-phase-1 / /
+      ENV PATH $PATH:/tools/bin
+      ENV PKG_CONFIG_PATH /rootfs/lib/pkgconfig
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcSocat" }} | tar --strip-components=1 -xz
       RUN ./configure \
