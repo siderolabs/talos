@@ -9,6 +9,7 @@ import (
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	logstream "github.com/autonomy/dianemo/initramfs/src/init/pkg/log"
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
 type Type int
@@ -20,20 +21,19 @@ const (
 )
 
 type Process interface {
-	Cmd() (string, []string)
+	Pre(userdata.UserData) error
+	Cmd(userdata.UserData) (string, []string)
 	Condition() func() (bool, error)
 	Env() []string
 	Type() Type
 }
 
-type Manager struct{}
-
-func NewManager() *Manager {
-	return &Manager{}
+type Manager struct {
+	UserData userdata.UserData
 }
 
 func (m *Manager) build(proc Process) (*exec.Cmd, error) {
-	name, args := proc.Cmd()
+	name, args := proc.Cmd(m.UserData)
 	cmd := exec.Command(name, args...)
 	// Set the environment for the process.
 	cmd.Env = append(proc.Env(), fmt.Sprintf("PATH=%s", constants.PATH))
@@ -47,34 +47,43 @@ func (m *Manager) build(proc Process) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
-func (m *Manager) Start(proc Process) error {
+func (m *Manager) Start(proc Process) {
 	go func(proc Process) {
+		err := proc.Pre(m.UserData)
+		if err != nil {
+			log.Printf("pre: %s", err.Error())
+		}
 		satisfied, err := proc.Condition()()
-		if !satisfied || err != nil {
+		if err != nil {
 			// TODO: Write the error to the log writer.
+			log.Printf("condition: %s", err.Error())
+		}
+		if !satisfied {
+			log.Printf("condition not satisfied")
 			return
 		}
 		// Wait for the command to exit. Then, based on the process Type, take
 		// the appropriate actions.
 		switch proc.Type() {
 		case Forever:
-			m.waitAndRestart(proc)
+			if err := m.waitAndRestart(proc); err != nil {
+				log.Printf("run: %s", err.Error())
+			}
 		case Once:
-			m.waitForSuccess(proc)
+			if err := m.waitForSuccess(proc); err != nil {
+				log.Printf("run: %s", err.Error())
+			}
 		}
 	}(proc)
-
-	return nil
 }
 
-func (m *Manager) waitAndRestart(proc Process) {
+func (m *Manager) waitAndRestart(proc Process) error {
 	cmd, err := m.build(proc)
 	if err != nil {
-		return
+		return err
 	}
 	if err := cmd.Start(); err != nil {
-		log.Println(err.Error())
-		return
+		return err
 	}
 	state, err := cmd.Process.Wait()
 	if err != nil {
@@ -82,18 +91,19 @@ func (m *Manager) waitAndRestart(proc Process) {
 	}
 	if state.Exited() {
 		time.Sleep(5 * time.Second)
-		m.waitAndRestart(proc)
+		return m.waitAndRestart(proc)
 	}
+
+	return nil
 }
 
-func (m *Manager) waitForSuccess(proc Process) {
+func (m *Manager) waitForSuccess(proc Process) error {
 	cmd, err := m.build(proc)
 	if err != nil {
-		return
+		return err
 	}
 	if err := cmd.Start(); err != nil {
-		log.Println(err.Error())
-		return
+		return err
 	}
 	state, err := cmd.Process.Wait()
 	if err != nil {
@@ -101,6 +111,8 @@ func (m *Manager) waitForSuccess(proc Process) {
 	}
 	if !state.Success() {
 		time.Sleep(5 * time.Second)
-		m.waitForSuccess(proc)
+		return m.waitForSuccess(proc)
 	}
+
+	return nil
 }

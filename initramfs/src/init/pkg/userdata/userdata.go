@@ -12,31 +12,37 @@ import (
 
 // UserData represents the user data.
 type UserData struct {
-	Version string `yaml:"version"`
+	Version   string            `yaml:"version"`
+	Token     string            `yaml:"token"`
+	Join      bool              `yaml:"join,omitempty"`
+	APIServer string            `yaml:"apiServer,omitempty"`
+	NodeName  string            `yaml:"nodeName,omitempty"`
+	Labels    map[string]string `yaml:"labels,omitempty"`
 }
 
 // Execute downloads the user data and executes the instructions.
-func Execute() error {
+func Execute() (UserData, error) {
+	userData := UserData{}
+
 	arguments, err := kernel.ParseProcCmdline()
 	if err != nil {
-		return fmt.Errorf("parse /proc/cmdline: %s", err.Error())
+		return userData, fmt.Errorf("parse kernel parameters: %s", err.Error())
 	}
 	url, ok := arguments[constants.UserDataURLFlag]
 	if !ok {
-		return nil
+		return userData, nil
 	}
 
 	userDataBytes, err := download(url)
 	if err != nil {
-		return fmt.Errorf("download user data: %s", err.Error())
+		return userData, fmt.Errorf("download user data: %s", err.Error())
 	}
 
-	userData := &UserData{}
-	if err := yaml.Unmarshal(userDataBytes, userData); err != nil {
-		return fmt.Errorf("decode user data: %s", err.Error())
+	if err := yaml.Unmarshal(userDataBytes, &userData); err != nil {
+		return userData, fmt.Errorf("decode user data: %s", err.Error())
 	}
 
-	return nil
+	return userData, nil
 }
 
 func download(url string) ([]byte, error) {

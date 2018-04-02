@@ -1,9 +1,11 @@
 package process
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process/conditions"
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
 const crioConf = `
@@ -179,15 +181,18 @@ const crioPolicy = `
 
 type CRIO struct{}
 
-func init() {
+func (p *CRIO) Pre(data userdata.UserData) error {
 	if err := ioutil.WriteFile("/etc/crio/crio.conf", []byte(crioConf), 0644); err != nil {
+		return fmt.Errorf("write crio.conf: %s", err.Error())
 	}
 	if err := ioutil.WriteFile("/etc/containers/policy.json", []byte(crioPolicy), 0644); err != nil {
-
+		return fmt.Errorf("write policy.json: %s", err.Error())
 	}
+
+	return nil
 }
 
-func (p *CRIO) Cmd() (name string, args []string) {
+func (p *CRIO) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/crio"
 	args = []string{
 		"--runtime=/bin/runc",

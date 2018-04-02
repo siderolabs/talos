@@ -1,19 +1,30 @@
 package process
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process/conditions"
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
 type Kubelet struct{}
 
-func init() {
-	os.Mkdir("/run/flannel", os.ModeDir)
-	os.MkdirAll("/etc/cni/net.d", os.ModeDir)
+func (p *Kubelet) Pre(data userdata.UserData) error {
+	if err := os.Mkdir("/run/flannel", os.ModeDir); err != nil {
+		return fmt.Errorf("create /run/flannel: %s", err.Error())
+	}
+	if err := os.MkdirAll("/etc/cni/net.d", os.ModeDir); err != nil {
+		return fmt.Errorf("create /etc/cni/net.d: %s", err.Error())
+	}
+	if err := os.MkdirAll("/etc/kubernetes/manifests", os.ModeDir); err != nil {
+		return fmt.Errorf("create /etc/kubernetes/manifests: %s", err.Error())
+	}
+
+	return nil
 }
 
-func (p *Kubelet) Cmd() (name string, args []string) {
+func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/kubelet"
 	args = []string{
 		"--container-runtime=remote",
@@ -38,11 +49,19 @@ func (p *Kubelet) Cmd() (name string, args []string) {
 		"--v=4",
 	}
 
+	if data.Join {
+		labels := "--node-labels="
+		for k, v := range data.Labels {
+			labels += k + "=" + v + ","
+		}
+		args = append(args, labels)
+	}
+
 	return name, args
 }
 
 func (p *Kubelet) Condition() func() (bool, error) {
-	return conditions.WaitForFileExists("/etc/kubernetes/kubelet.conf")
+	return conditions.WaitForFileExists("/etc/containers/policy.json")
 }
 
 func (p *Kubelet) Env() []string { return []string{} }
