@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	logstream "github.com/autonomy/dianemo/initramfs/src/init/pkg/log"
 	"github.com/kubernetes-incubator/cri-o/client"
 )
 
@@ -56,27 +59,45 @@ func KubeConfigHandleFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// File is found, create and send the correct headers
-
-	// Get the Content-Type of the file
-	// Create a buffer to store the header of the file in
 	FileHeader := make([]byte, 512)
-	// Copy the headers into the FileHeader buffer
 	openFile.Read(FileHeader)
-	// Get content type of file
 	FileContentType := http.DetectContentType(FileHeader)
 
-	// Get the file size
 	FileStat, _ := openFile.Stat()
 	FileSize := strconv.FormatInt(FileStat.Size(), 10)
 
-	// Send the headers
 	w.Header().Set("Content-Disposition", "attachment; filename=admin.conf")
 	w.Header().Set("Content-Type", FileContentType)
 	w.Header().Set("Content-Length", FileSize)
 
-	// Send the file
-	// We read 512 bytes from the file already so we reset the offset back to 0
-	openFile.Seek(0, 0)
-	io.Copy(w, openFile) // 'Copy' the file to the client
+	openFile.Seek(0, io.SeekStart)
+	io.Copy(w, openFile)
+}
+
+func ProcessLogHandleFunc(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimPrefix(r.URL.Path, "/logs/")
+	stream := logstream.Get(name)
+
+	if stream == nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(fmt.Sprintf("process not found: %s", name)))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Connection", "Keep-Alive")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for data := range stream.Read(ctx) {
+		if _, err := w.Write(data); err != nil {
+			cancel()
+			// Drain the channel
+			continue
+		}
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+	}
 }

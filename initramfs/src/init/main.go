@@ -87,7 +87,7 @@ func main() {
 	// An endpoint for listing the running containers.
 	http.HandleFunc("/container/", handlers.ContainerHandleFunc)
 	// An endpoint for streaming a process' stdout/stderr.
-	http.HandleFunc("/logs/", process.StreamHandleFunc)
+	http.HandleFunc("/logs/", handlers.ProcessLogHandleFunc)
 	// TODO: TLS only.
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
