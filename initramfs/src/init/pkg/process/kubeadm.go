@@ -27,6 +27,7 @@ featureGates:
   SelfHosting: false
   StoreCertsInSecrets: false
   DynamicKubeletConfig: true
+  CoreDNS: true
 `
 
 const NodeConfiguration = `
