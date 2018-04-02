@@ -176,41 +176,11 @@ const crioPolicy = `
     ]
 }
 `
-const crioBridgeNetwork = `
-{
-    "cniVersion": "0.3.0",
-    "name": "crio-bridge",
-    "type": "bridge",
-    "bridge": "cni0",
-    "isGateway": true,
-    "ipMasq": true,
-    "ipam": {
-        "type": "host-local",
-        "subnet": "10.88.0.0/16",
-        "routes": [
-            { "dst": "0.0.0.0/0" }
-        ]
-    }
-}
-`
-const crioLoopbackNetwork = `
-{
-    "cniVersion": "0.3.0",
-    "type": "loopback"
-}
-`
 
 type CRIO struct{}
 
 func init() {
 	if err := ioutil.WriteFile("/etc/crio/crio.conf", []byte(crioConf), 0644); err != nil {
-
-	}
-	if err := ioutil.WriteFile("/etc/cni/net.d/10-crio-bridge.conf", []byte(crioBridgeNetwork), 0644); err != nil {
-
-	}
-	if err := ioutil.WriteFile("/etc/cni/net.d/99-loopback.conf", []byte(crioLoopbackNetwork), 0644); err != nil {
-
 	}
 	if err := ioutil.WriteFile("/etc/containers/policy.json", []byte(crioPolicy), 0644); err != nil {
 
