@@ -49,10 +49,6 @@ func main() {
 		if err := mount.Mount(); err != nil {
 			panic(err)
 		}
-		// Execute the user data.
-		if err := userdata.Execute(); err != nil {
-			panic(err)
-		}
 		// Move the initial file systems to the new root.
 		if err := mount.Move(); err != nil {
 			panic(err)
@@ -68,17 +64,18 @@ func main() {
 		}
 	}
 
+	// Execute the user data.
+	data, err := userdata.Execute()
+	if err != nil {
+		panic(err)
+	}
 	// Start the processes essential to running Kubernetes.
-	processManager := process.NewManager()
-	if err := processManager.Start(&process.CRIO{}); err != nil {
-		panic(err)
+	processManager := &process.Manager{
+		UserData: data,
 	}
-	if err := processManager.Start(&process.Kubeadm{}); err != nil {
-		panic(err)
-	}
-	if err := processManager.Start(&process.Kubelet{}); err != nil {
-		panic(err)
-	}
+	processManager.Start(&process.CRIO{})
+	processManager.Start(&process.Kubeadm{})
+	processManager.Start(&process.Kubelet{})
 
 	// TODO: Authn/Authz.
 	// TODO: Errors API that admins can use to debug.
