@@ -22,7 +22,7 @@ runroot = "/var/run/containers/storage"
 
 # storage_driver select which storage driver is used to manage storage
 # of images and containers.
-storage_driver = ""
+storage_driver = "overlay"
 
 # storage_option is used to pass an option to the storage driver.
 storage_option = [
@@ -52,7 +52,7 @@ file_locking = true
 # This is a mandatory setting as this runtime will be the default one
 # and will also be used for untrusted container workloads if
 # runtime_untrusted_workload is not set.
-runtime = "/usr/bin/runc"
+runtime = "/bin/runc"
 
 # runtime_untrusted_workload is the OCI compatible runtime used for untrusted
 # container workloads. This is an optional setting, except if
@@ -106,7 +106,7 @@ apparmor_profile = "crio-default"
 cgroup_manager = "cgroupfs"
 
 # hooks_dir_path is the oci hooks directory for automatically executed hooks
-hooks_dir_path = "/usr/share/containers/oci/hooks.d"
+hooks_dir_path = "/var/containers/oci/hooks.d"
 
 # default_mounts is the mounts list to be mounted for the container when created
 default_mounts = [
@@ -120,7 +120,7 @@ enable_shared_pid_namespace = false
 
 # log_size_max is the max limit for the container log size in bytes.
 # Negative values indicate that no limit is imposed.
-log_size_max = -1
+log_size_max = 1000000
 
 # The "crio.image" table contains settings pertaining to the
 # management of OCI images.
@@ -169,6 +169,7 @@ network_dir = "/etc/cni/net.d/"
 # plugin_dir is is where CNI plugin binaries are stored.
 plugin_dir = "/opt/cni/bin/"
 `
+
 const crioPolicy = `
 {
     "default": [
@@ -194,11 +195,7 @@ func (p *CRIO) Pre(data userdata.UserData) error {
 
 func (p *CRIO) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/crio"
-	args = []string{
-		"--runtime=/bin/runc",
-		"--storage-driver=overlay",
-		"--log-size-max=1000000",
-	}
+	args = []string{}
 
 	return name, args
 }
