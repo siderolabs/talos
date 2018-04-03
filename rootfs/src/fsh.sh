@@ -28,7 +28,7 @@ mkdir -pv ${PREFIX}/run
 mkdir -pv ${PREFIX}/var/{log,mail,spool}
 ln -sv /run $PREFIX/var/run
 
-mkdir -pv $PREFIX/var/containers
+mkdir -pv $PREFIX/var/containers/{oci/hooks.d,}
 ln -sv /var/containers $PREFIX/etc/containers
 mkdir -pv $PREFIX/var/crio
 ln -sv /var/crio $PREFIX/etc/crio
