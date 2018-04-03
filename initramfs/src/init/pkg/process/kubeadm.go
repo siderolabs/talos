@@ -22,6 +22,9 @@ networking:
   dnsDomain: cluster.local
   serviceSubnet: 10.96.0.0/12
   podSubnet: 10.244.0.0/16
+kubeProxy:
+  config:
+    mode: ipvs
 featureGates:
   HighAvailability: true
   SelfHosting: false
@@ -67,8 +70,6 @@ func (p *Kubeadm) Pre(data userdata.UserData) error {
 	if err := ioutil.WriteFile("/etc/kubernetes/kubeadm.yaml", writer.Bytes(), 0644); err != nil {
 		return fmt.Errorf("write kubeadm.yaml: %s", err.Error())
 	}
-
-	// TODO: "modprobe -a ip_vs ip_vs_rr ip_vs_wrr ip_vs_sh nf_conntrack_ipv4"
 
 	return nil
 }
