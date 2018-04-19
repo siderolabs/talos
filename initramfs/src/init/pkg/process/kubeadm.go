@@ -17,7 +17,7 @@ token: {{ .Token }}
 TokenTTL: 0s
 criSocket: /var/run/crio/crio.sock
 skipTokenPrint: true
-kubernetesVersion: v1.10.0
+kubernetesVersion: v1.10.1
 networking:
   dnsDomain: cluster.local
   serviceSubnet: 10.96.0.0/12
