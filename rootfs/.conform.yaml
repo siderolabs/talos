@@ -426,6 +426,7 @@ tasks:
             --enable-nsenter \
             --enable-libblkid \
             --enable-libmount \
+            --enable-libuuid \
             --enable-mount
       RUN make -j $(($(nproc) / 2))
       RUN sed -i s/root:root/0:0/g ./Makefile
