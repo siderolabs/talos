@@ -13,7 +13,6 @@ import (
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/handlers"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/mount"
-	"github.com/autonomy/dianemo/initramfs/src/init/pkg/mount/cgroups"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/switchroot"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
@@ -45,21 +44,18 @@ func init() {
 func main() {
 	defer hang()
 	if !*switchRoot {
-		// Mount the initial file systems.
-		if err := mount.Mount(); err != nil {
+		// Read the block devices and populate the mount point definitions.
+		if err := mount.Init(constants.NewRoot); err != nil {
 			panic(err)
 		}
-		// Move the initial file systems to the new root.
-		if err := mount.Move(); err != nil {
 			panic(err)
 		}
-		// Mount the cgroups file systems to the new root.
-		if err := cgroups.Mount(); err != nil {
+		// Unmount the ROOT and DATA block devices
+		if err := mount.Unmount(); err != nil {
 			panic(err)
 		}
 		// Perform the equivalent of switch_root.
-		// See https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
-		if err := switchroot.Switch(); err != nil {
+		if err := switchroot.Switch(constants.NewRoot); err != nil {
 			panic(err)
 		}
 	}
