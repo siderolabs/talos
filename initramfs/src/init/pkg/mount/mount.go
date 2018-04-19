@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sync"
 
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/blkid"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
@@ -12,8 +13,8 @@ import (
 )
 
 type (
-	// Filesystem represents a linux file system.
-	Filesystem struct {
+	// MountPoint represents a linux mount point.
+	MountPoint struct {
 		source string
 		target string
 		fstype string
@@ -32,116 +33,158 @@ type (
 )
 
 var (
-	filesystems = []*Filesystem{
-		{
-			"none",
-			"/dev",
-			"devtmpfs",
-			unix.MS_NOSUID,
-			"",
-		},
-		{
-			"none",
-			"/proc",
-			"proc",
-			unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV,
-			"",
-		},
-		{
-			"none",
-			"/sys",
-			"sysfs",
-			unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV,
-			"",
-		},
-		{
-			"none",
-			"/run",
-			"tmpfs",
-			0,
-			"",
-		},
-		{
-			"none",
-			"/tmp",
-			"tmpfs",
-			0,
-			"",
-		},
+	instance struct {
+		special      map[string]*MountPoint
+		blockdevices map[string]*MountPoint
+	}
+
+	once sync.Once
+
+	special = map[string]*MountPoint{
+		"dev":  {"devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"},
+		"proc": {"proc", "/proc", "proc", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
+		"sys":  {"sysfs", "/sys", "sysfs", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
+		"run":  {"tmpfs", "/run", "tmpfs", 0, ""},
+		"tmp":  {"tmpfs", "/tmp", "tmpfs", 0, ""},
 	}
 )
 
-/*
-Mount creates the following file systems:
-	devtmpfs    /dev  devtmpfs nosuid                 0   0
-	proc        /proc proc     nosuid,noexec,nodev    0   0
-	sysfs       /sys  sysfs    nosuid,noexec,nodev    0   0
-	tmpfs       /run  tmpfs    defaults               0   0
-	tmpfs       /tmp  tmpfs    defaults               0   0
-*/
-func Mount() error {
-	for _, m := range filesystems {
-		if err := os.MkdirAll(m.target, os.ModeDir); err != nil {
-			return fmt.Errorf("failed to create %s: %s", m.target, err.Error())
+// Init initializes the mount points.
+func Init(s string) error {
+	once.Do(func() {
+		instance = struct {
+			special      map[string]*MountPoint
+			blockdevices map[string]*MountPoint
+		}{
+			special,
+			map[string]*MountPoint{},
 		}
-		if err := unix.Mount(m.source, m.target, m.fstype, m.flags, m.data); err != nil {
-			return fmt.Errorf("failed to mount %s: %s", m.target, err.Error())
+	})
+
+	for _, mountpoint := range instance.special {
+		if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
+			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+		}
+		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		}
+	}
+
+	probed, err := probe()
+	if err != nil {
+		return fmt.Errorf("probe block devices: %s", err.Error())
+	}
+	for _, b := range probed {
+		mountpoint := &MountPoint{
+			source: b.dev,
+			fstype: b.TYPE,
+			flags:  unix.MS_NOATIME,
+			data:   "",
+		}
+		switch b.LABEL {
+		case constants.ROOTLabel:
+			mountpoint.target = s
+		case constants.DATALabel:
+			mountpoint.target = path.Join(s, "var")
+		}
+
+		if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
+			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+		}
+		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		}
+
+		instance.blockdevices[b.LABEL] = mountpoint
+	}
+
+	return nil
+}
+
+// Move moves the mount points created in Init, to the new root.
+func Move(s string) error {
+	if err := os.MkdirAll(s, os.ModeDir); err != nil {
+		return err
+	}
+
+	// Move the special mounts to the new root.
+	for label, mountpoint := range instance.special {
+		target := path.Join(s, mountpoint.target)
+		if err := unix.Mount(mountpoint.target, target, "", unix.MS_MOVE, ""); err != nil {
+			return fmt.Errorf("move mount point %s to %s: %s", mountpoint.target, target, err.Error())
+		}
+		if label == "dev" {
+			mountpoint = &MountPoint{"devpts", path.Join(s, "/dev/pts"), "devpts", unix.MS_NOSUID | unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"}
+			if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
+				return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+			}
+			if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+				return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+			}
 		}
 	}
 
 	return nil
 }
 
-/*
-Move moves the following file systems to the new root:
-	devtmpfs    /dev  devtmpfs nosuid                 0   0
-	proc        /proc proc     nosuid,noexec,nodev    0   0
-	sysfs       /sys  sysfs    nosuid,noexec,nodev    0   0
-	tmpfs       /run  tmpfs    defaults               0   0
-	tmpfs       /tmp  tmpfs    defaults               0   0
-*/
-func Move() error {
-	if err := os.MkdirAll(constants.NewRoot, os.ModeDir); err != nil {
+// Finalize moves the mount points created in Init, to the new root.
+func Finalize(s string) error {
+	if err := unix.Mount(s, "/", "", unix.MS_MOVE, ""); err != nil {
 		return err
 	}
 
-	blockDevices, err := probe()
-	if err != nil {
-		return fmt.Errorf("failed to probe block devices: %s", err.Error())
+	return nil
+}
+
+// Mount moves the mount points created in Init, to the new root.
+func Mount(s string) error {
+	if err := os.MkdirAll(s, os.ModeDir); err != nil {
+		return err
 	}
-	for _, b := range blockDevices {
-		switch b.LABEL {
-		case constants.ROOTLabel:
-			if err := unix.Mount(b.dev, constants.NewRoot, b.TYPE, unix.MS_RDONLY|unix.MS_NOATIME, ""); err != nil {
-				return fmt.Errorf("mount %s: %s", constants.NewRoot, err.Error())
-			}
-			// See http://man7.org/linux/man-pages/man2/mount.2.html
-			// MS_SHARED
-			//   Make this mount point shared.  Mount and unmount events
-			//   immediately under this mount point will propagate to the other
-			//   mount points that are members of this mount's peer group.
-			//   Propagation here means that the same mount or unmount will
-			//   automatically occur under all of the other mount points in the
-			//   peer group.  Conversely, mount and unmount events that take
-			//   place under peer mount points will propagate to this mount
-			//   point.
-			// https://github.com/kubernetes/kubernetes/issues/61058
-			if err := unix.Mount("", constants.NewRoot, "", unix.MS_SHARED, ""); err != nil {
-				return fmt.Errorf("mount shared %s: %s", constants.NewRoot, err.Error())
-			}
-		case constants.DATALabel:
-			target := path.Join(constants.NewRoot, "var")
-			if err := unix.Mount(b.dev, target, b.TYPE, unix.MS_NOATIME, ""); err != nil {
-				return fmt.Errorf("mount %s: %s", target, err.Error())
-			}
+
+	mountpoint, ok := instance.blockdevices[constants.ROOTLabel]
+	if ok {
+		mountpoint.flags = unix.MS_RDONLY | unix.MS_NOATIME
+		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		}
+		// MS_SHARED:
+		//   Make this mount point shared.  Mount and unmount events
+		//   immediately under this mount point will propagate to the
+		//   other mount points that are members of this mount's peer
+		//   group. Propagation here means that the same mount or
+		//   unmount will automatically occur under all of the other
+		//   mount points in the peer group.  Conversely, mount and
+		//   unmount events that take place under peer mount points
+		//   will propagate to this mount point.
+		// See http://man7.org/linux/man-pages/man2/mount.2.html
+		// https://github.com/kubernetes/kubernetes/issues/61058
+		if err := unix.Mount("", mountpoint.target, "", unix.MS_SHARED, ""); err != nil {
+			return fmt.Errorf("mount %s as shared: %s", mountpoint.target, err.Error())
+		}
+	}
+	mountpoint, ok = instance.blockdevices[constants.DATALabel]
+	if ok {
+		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
 		}
 	}
 
-	// Move the existing file systems to the new root.
-	for _, m := range filesystems {
-		t := path.Join(constants.NewRoot, m.target)
-		if err := unix.Mount(m.target, t, "", unix.MS_MOVE, ""); err != nil {
-			return fmt.Errorf("failed to mount %s: %s", t, err.Error())
+	return nil
+}
+
+// Unmount unmounts the ROOT and DATA block devices.
+func Unmount() error {
+	mountpoint, ok := instance.blockdevices[constants.DATALabel]
+	if ok {
+		if err := unix.Unmount(mountpoint.target, 0); err != nil {
+			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
+		}
+	}
+	mountpoint, ok = instance.blockdevices[constants.ROOTLabel]
+	if ok {
+		if err := unix.Unmount(mountpoint.target, 0); err != nil {
+			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
 		}
 	}
 

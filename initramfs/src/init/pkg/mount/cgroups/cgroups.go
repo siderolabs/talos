@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	"golang.org/x/sys/unix"
 )
 
@@ -33,8 +32,9 @@ Mount creates the following file systems:
 	cgroup      /sys/fs/cgroup/freezer       cgroup   defaults               0   0
 	cgroup      /sys/fs/cgroup/cpuset        cgroup   defaults               0   0
 */
-func Mount() error {
-	target := path.Join(constants.NewRoot, "/sys/fs/cgroup")
+func Mount(s string) error {
+
+	target := path.Join(s, "/sys/fs/cgroup")
 	if err := os.MkdirAll(target, os.ModeDir); err != nil {
 		return fmt.Errorf("failed to create %s: %s", target, err.Error())
 	}
@@ -59,7 +59,7 @@ func Mount() error {
 		"cpuset",
 	}
 	for _, c := range cgroups {
-		p := path.Join(constants.NewRoot, fmt.Sprintf("/sys/fs/cgroup/%s", c))
+		p := path.Join(s, fmt.Sprintf("/sys/fs/cgroup/%s", c))
 		if err := os.MkdirAll(p, os.ModeDir); err != nil {
 			return fmt.Errorf("failed to create %s: %s", p, err.Error())
 		}
