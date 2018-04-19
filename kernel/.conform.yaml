@@ -2,7 +2,7 @@ metadata:
   repository: dianemo/kernel
   variables:
     artifacts: /artifacts
-    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.15.13.tar.xz
+    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.34.tar.xz
 pipeline:
   stages:
   - build
@@ -19,9 +19,10 @@ tasks:
       RUN make mrproper
       COPY src/linux/config .config
       RUN mkdir /tmp
+      RUN ln /tools/bin/pwd /bin/pwd
       RUN make -j $(($(nproc) / 2))
       RUN make modules_install INSTALL_MOD_PATH=/tmp
-      RUN depmod -b /tmp 4.15.13-dianemo
+      RUN depmod -b /tmp 4.14.34-dianemo
       RUN cp arch/x86/boot/bzImage /tmp/vmlinuz
       FROM scratch
       COPY --from={{ .Docker.CurrentStage }} /tmp /tmp
