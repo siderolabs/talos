@@ -83,7 +83,7 @@ func (l *Log) Read(ctx context.Context) <-chan []byte {
 			n, err := f.ReadAt(buf, offset)
 			if err != nil {
 				if err != io.EOF {
-					fmt.Println("error reading log file: %s", err.Error())
+					fmt.Printf("error reading log file: %s\n", err.Error())
 					break
 				}
 			}
