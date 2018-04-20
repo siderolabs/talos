@@ -9,17 +9,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func enableMemoryHierarchy() error {
-	f := path.Join(constants.NewRoot, "/sys/fs/cgroup/memory.use_hierarchy")
+func enableMemoryHierarchy(s string) error {
+	f := path.Join(s, "/sys/fs/cgroup/memory.use_hierarchy")
 	if err := ioutil.WriteFile(f, []byte{1}, 0644); err != nil {
-		return fmt.Errorf("set memory.use_hierarchy: %s", err.Error())
+		return err
 	}
 
 	return nil
 }
 
 /*
-Mount creates the following file systems:
+Mount creates the following mount points:
 	cgroup      /sys/fs/cgroup               tmpfs    defaults               0   0
 	cgroup      /sys/fs/cgroup/hugetlb       cgroup   defaults               0   0
 	cgroup      /sys/fs/cgroup/memory        cgroup   defaults               0   0
@@ -42,7 +42,7 @@ func Mount(s string) error {
 		return fmt.Errorf("failed to mount %s: %s", target, err.Error())
 	}
 
-	if err := enableMemoryHierarchy(); err != nil {
+	if err := enableMemoryHierarchy(s); err != nil {
 		return fmt.Errorf("failed to enable cgroup memory hierarchy: %s", err.Error())
 	}
 
@@ -62,6 +62,13 @@ func Mount(s string) error {
 		p := path.Join(s, fmt.Sprintf("/sys/fs/cgroup/%s", c))
 		if err := os.MkdirAll(p, os.ModeDir); err != nil {
 			return fmt.Errorf("failed to create %s: %s", p, err.Error())
+		}
+		switch c {
+		case "memory":
+			if err := enableMemoryHierarchy(target); err != nil {
+				return fmt.Errorf("enable memory.use_hierarchy: %s", err.Error())
+			}
+		default:
 		}
 		if err := unix.Mount("defaults", p, "cgroup", 0, ""); err != nil {
 			return fmt.Errorf("failed to mount %s: %s", p, err.Error())
