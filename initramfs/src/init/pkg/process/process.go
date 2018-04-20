@@ -23,7 +23,7 @@ const (
 type Process interface {
 	Pre(userdata.UserData) error
 	Cmd(userdata.UserData) (string, []string)
-	Condition() func() (bool, error)
+	Condition(userdata.UserData) func() (bool, error)
 	Env() []string
 	Type() Type
 }
@@ -53,7 +53,7 @@ func (m *Manager) Start(proc Process) {
 		if err != nil {
 			log.Printf("pre: %s", err.Error())
 		}
-		satisfied, err := proc.Condition()()
+		satisfied, err := proc.Condition(m.UserData)()
 		if err != nil {
 			// TODO: Write the error to the log writer.
 			log.Printf("condition: %s", err.Error())

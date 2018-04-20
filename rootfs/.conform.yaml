@@ -10,6 +10,7 @@ metadata:
     srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
     srcCRIO: https://github.com/kubernetes-incubator/cri-o/archive/v1.10.0.tar.gz
     srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.0.0-beta.0/crictl-v1.0.0-beta.0-linux-amd64.tar.gz
+    srcDocker: https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz
     srcEbtables: ftp://ftp.netfilter.org/pub/ebtables/ebtables-v2.0.10-4.tar.gz
     srcElfutils: https://sourceware.org/ftp/elfutils/0.170/elfutils-0.170.tar.bz2
     srcEthtool: https://www.kernel.org/pub/software/network/ethtool/ethtool-4.15.tar.xz
@@ -75,12 +76,18 @@ stages:
     - lvm2
     - runc
     - cri-o
+    - docker
     - kubernetes
     - etc
   rootfs:
     tasks:
     - rootfs
 tasks:
+  docker:
+    template: |
+      WORKDIR {{ index .Variables "rootfs" }}/bin
+      RUN curl -L {{ index .Variables "srcDocker" }} | tar --strip-components=1 -xz \
+          && rm docker
   btrfs-progs:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
