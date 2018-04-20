@@ -12,7 +12,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND quiet ip=dhcp consoleblank=0 console=tty0 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
+  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
 EOF
   mkisofs -o /out/dianemo.iso -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table .
 }
@@ -38,7 +38,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND quiet ip=dhcp consoleblank=0 console=tty0 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
+  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
 EOF
   cp -v /rootfs/boot/* /mnt/boot
   umount /mnt
