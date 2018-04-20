@@ -14,6 +14,7 @@ import (
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/handlers"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/mount"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process"
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/rootfs"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/switchroot"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
@@ -48,6 +49,13 @@ func main() {
 		if err := mount.Init(constants.NewRoot); err != nil {
 			panic(err)
 		}
+		// Download the user data.
+		data, err := userdata.Download()
+		if err != nil {
+			panic(err)
+		}
+		// Prepare the necessary files in the rootfs.
+		if err := rootfs.Prepare(constants.NewRoot, data); err != nil {
 			panic(err)
 		}
 		// Unmount the ROOT and DATA block devices
@@ -60,16 +68,19 @@ func main() {
 		}
 	}
 
-	// Execute the user data.
-	data, err := userdata.Execute()
+	// Download the user data.
+	data, err := userdata.Download()
 	if err != nil {
 		panic(err)
 	}
+
 	// Start the processes essential to running Kubernetes.
 	processManager := &process.Manager{
 		UserData: data,
 	}
+
 	processManager.Start(&process.CRIO{})
+	// processManager.Start(&process.Docker{})
 	processManager.Start(&process.Kubeadm{})
 	processManager.Start(&process.Kubelet{})
 
