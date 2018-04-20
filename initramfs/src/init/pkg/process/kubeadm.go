@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"text/template"
 
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process/conditions"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
@@ -15,7 +16,7 @@ kind: MasterConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
 token: {{ .Token }}
 TokenTTL: 0s
-criSocket: /var/run/crio/crio.sock
+criSocket: {{ .CRISocket }}
 skipTokenPrint: true
 kubernetesVersion: v1.10.1
 networking:
@@ -37,7 +38,7 @@ const NodeConfiguration = `
 kind: NodeConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
 token: {{ .Token }}
-criSocket: /var/run/crio/crio.sock
+criSocket: {{ .CRISocket }}
 discoveryTokenAPIServers:
   - {{ .APIServer }}
 discoveryTokenUnsafeSkipCAVerification: true
@@ -56,13 +57,29 @@ func (p *Kubeadm) Pre(data userdata.UserData) error {
 		configuration = MasterConfiguration
 	}
 
+	var criSocket string
+	switch data.ContainerRuntime {
+	case constants.ContainerRuntimeDocker:
+		criSocket = constants.ContainerRuntimeDockerSocket
+	case constants.ContainerRuntimeCRIO:
+		criSocket = constants.ContainerRuntimeCRIOSocket
+	}
+
+	aux := struct {
+		userdata.UserData
+		CRISocket string
+	}{
+		data,
+		criSocket,
+	}
+
 	tmpl, err := template.New("").Parse(configuration)
 	if err != nil {
 		return err
 	}
 	var buf []byte
 	writer := bytes.NewBuffer(buf)
-	err = tmpl.Execute(writer, data)
+	err = tmpl.Execute(writer, aux)
 	if err != nil {
 		return err
 	}
@@ -91,8 +108,15 @@ func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
-func (p *Kubeadm) Condition() func() (bool, error) {
-	return conditions.WaitForFileExists("/var/run/crio/crio.sock")
+func (p *Kubeadm) Condition(data userdata.UserData) func() (bool, error) {
+	switch data.ContainerRuntime {
+	case constants.ContainerRuntimeDocker:
+		return conditions.WaitForFileExists(constants.ContainerRuntimeDockerSocket)
+	case constants.ContainerRuntimeCRIO:
+		return conditions.WaitForFileExists(constants.ContainerRuntimeCRIOSocket)
+	default:
+		return conditions.None()
+	}
 }
 
 func (p *Kubeadm) Env() []string { return []string{} }

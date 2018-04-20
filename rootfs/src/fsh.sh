@@ -32,6 +32,8 @@ mkdir -pv $PREFIX/var/containers/{oci/hooks.d,}
 ln -sv /var/containers $PREFIX/etc/containers
 mkdir -pv $PREFIX/var/crio
 ln -sv /var/crio $PREFIX/etc/crio
+mkdir -pv $PREFIX/var/docker
+ln -sv /var/docker $PREFIX/etc/docker
 mkdir -pv $PREFIX/var/kubernetes
 ln -sv /var/kubernetes $PREFIX/etc/kubernetes
 mkdir -pv $PREFIX/var/cni

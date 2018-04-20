@@ -30,7 +30,7 @@ func hang() {
 			log.Printf("%s\n", err.Error())
 		}
 	}
-	// Hang infinitely to avoid a kernel panic.
+	// Hang forever to avoid a kernel panic.
 	select {}
 }
 
@@ -79,10 +79,16 @@ func main() {
 		UserData: data,
 	}
 
-	processManager.Start(&process.CRIO{})
-	// processManager.Start(&process.Docker{})
-	processManager.Start(&process.Kubeadm{})
+	switch data.ContainerRuntime {
+	case constants.ContainerRuntimeDocker:
+		processManager.Start(&process.Docker{})
+	case constants.ContainerRuntimeCRIO:
+		processManager.Start(&process.CRIO{})
+	default:
+		processManager.Start(&process.CRIO{})
+	}
 	processManager.Start(&process.Kubelet{})
+	processManager.Start(&process.Kubeadm{})
 
 	// TODO: Authn/Authz.
 	// TODO: Errors API that admins can use to debug.

@@ -200,7 +200,7 @@ func (p *CRIO) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
-func (p *CRIO) Condition() func() (bool, error) {
+func (p *CRIO) Condition(data userdata.UserData) func() (bool, error) {
 	return conditions.None()
 }
 

@@ -12,13 +12,14 @@ import (
 
 // UserData represents the user data.
 type UserData struct {
-	Version     string            `yaml:"version"`
-	Token       string            `yaml:"token"`
-	Join        bool              `yaml:"join,omitempty"`
-	APIServer   string            `yaml:"apiServer,omitempty"`
-	NodeName    string            `yaml:"nodeName,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
-	Nameservers []string          `yaml:"nameservers,omitempty"`
+	Version          string            `yaml:"version"`
+	Token            string            `yaml:"token"`
+	Join             bool              `yaml:"join,omitempty"`
+	APIServer        string            `yaml:"apiServer,omitempty"`
+	NodeName         string            `yaml:"nodeName,omitempty"`
+	Labels           map[string]string `yaml:"labels,omitempty"`
+	Nameservers      []string          `yaml:"nameservers,omitempty"`
+	ContainerRuntime string            `yaml:"containerRuntime,omitempty"`
 }
 
 // Download downloads the user data and executes the instructions.

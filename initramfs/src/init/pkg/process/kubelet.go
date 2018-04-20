@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/autonomy/dianemo/initramfs/src/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/process/conditions"
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
@@ -27,8 +28,6 @@ func (p *Kubelet) Pre(data userdata.UserData) error {
 func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/kubelet"
 	args = []string{
-		"--container-runtime=remote",
-		"--container-runtime-endpoint=unix:///var/run/crio/crio.sock",
 		"--runtime-request-timeout=10m",
 		"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 		"--kubeconfig=/etc/kubernetes/kubelet.conf",
@@ -46,7 +45,13 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 		"--rotate-certificates=true",
 		"--serialize-image-pulls=false",
 		"--feature-gates=ExperimentalCriticalPodAnnotation=true",
-		"--v=4",
+		"--v=2",
+	}
+
+	switch data.ContainerRuntime {
+	case constants.ContainerRuntimeCRIO:
+		args = append(args, "--container-runtime=remote", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
+	default:
 	}
 
 	if data.Join {
@@ -60,8 +65,15 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
-func (p *Kubelet) Condition() func() (bool, error) {
-	return conditions.WaitForFileExists("/etc/containers/policy.json")
+func (p *Kubelet) Condition(data userdata.UserData) func() (bool, error) {
+	switch data.ContainerRuntime {
+	case constants.ContainerRuntimeDocker:
+		return conditions.None()
+	case constants.ContainerRuntimeCRIO:
+		return conditions.WaitForFileExists("/etc/containers/policy.json")
+	default:
+		return conditions.None()
+	}
 }
 
 func (p *Kubelet) Env() []string { return []string{} }
