@@ -12,23 +12,23 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND quiet ip=dhcp console=tty1 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
+  APPEND quiet ip=dhcp consoleblank=0 console=tty0 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
 EOF
   mkisofs -o /out/dianemo.iso -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table .
 }
 
 function raw() {
-  dd if=/dev/zero of=/dianemo.raw bs=1M count=2000
+  dd if=/dev/zero of=/dianemo.raw bs=1M count=850
   parted -s /dianemo.raw mklabel gpt
   parted -s -a none /dianemo.raw mkpart ESP fat32 0 50M
-  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M 750M
-  parted -s -a none /dianemo.raw mkpart DATA xfs 750M 2G
+  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M 800M
+  parted -s -a none /dianemo.raw mkpart DATA xfs 800M 850M
   losetup /dev/loop0 /dianemo.raw
   partx -av /dev/loop0
   sgdisk /dev/loop0 --attributes=1:set:2
   mkfs.vfat /dev/loop0p1
-  mkfs.xfs -L ROOT /dev/loop0p2
-  mkfs.xfs -L DATA /dev/loop0p3
+  mkfs.xfs -n ftype=1 -L ROOT /dev/loop0p2
+  mkfs.xfs -n ftype=1 -L DATA /dev/loop0p3
   mount /dev/loop0p1 /mnt
   mkdir -p /mnt/boot/extlinux
   extlinux --install /mnt/boot/extlinux
@@ -38,7 +38,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND quiet ip=dhcp console=tty1 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
+  APPEND quiet ip=dhcp consoleblank=0 console=tty0 console=ttyS0 dianemo.autonomy.io/root=/dev/sda
 EOF
   cp -v /rootfs/boot/* /mnt/boot
   umount /mnt
@@ -56,14 +56,14 @@ EOF
 }
 
 function rootfs() {
-  dd if=/dev/zero of=/rootfs.raw bs=1M count=750
+  dd if=/dev/zero of=/rootfs.raw bs=1M count=800
   parted -s /rootfs.raw mklabel gpt
-  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 700M
-  parted -s -a none /rootfs.raw mkpart DATA xfs 700M 750M
+  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 750M
+  parted -s -a none /rootfs.raw mkpart DATA xfs 750M 800M
   losetup /dev/loop0 /rootfs.raw
   partx -av /dev/loop0
-  mkfs.xfs -L ROOT /dev/loop0p1
-  mkfs.xfs -L DATA /dev/loop0p2
+  mkfs.xfs -n ftype=1 -L ROOT /dev/loop0p1
+  mkfs.xfs -n ftype=1 -L DATA /dev/loop0p2
   mount /dev/loop0p1 /mnt
   cp -Rv ./* /mnt
   rm -rf /mnt/boot
