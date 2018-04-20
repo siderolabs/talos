@@ -5,45 +5,29 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 
 	"golang.org/x/sys/unix"
 )
 
-func enableMemoryHierarchy(s string) error {
-	f := path.Join(s, "/sys/fs/cgroup/memory.use_hierarchy")
-	if err := ioutil.WriteFile(f, []byte{1}, 0644); err != nil {
-		return err
-	}
+const (
+	memoryCgroup                  = "memory"
+	memoryUseHierarchy            = "memory.use_hierarchy"
+	memoryUseHierarchyPermissions = os.FileMode(400)
+)
 
-	return nil
-}
+var (
+	memoryUseHierarchyContents = []byte(strconv.Itoa(1))
+)
 
-/*
-Mount creates the following mount points:
-	cgroup      /sys/fs/cgroup               tmpfs    defaults               0   0
-	cgroup      /sys/fs/cgroup/hugetlb       cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/memory        cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/net_cls       cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/perf_event    cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/cpu           cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/devices       cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/pids          cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/blkio         cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/freezer       cgroup   defaults               0   0
-	cgroup      /sys/fs/cgroup/cpuset        cgroup   defaults               0   0
-*/
+// Mount creates the cgroup mount points.
 func Mount(s string) error {
-
 	target := path.Join(s, "/sys/fs/cgroup")
 	if err := os.MkdirAll(target, os.ModeDir); err != nil {
 		return fmt.Errorf("failed to create %s: %s", target, err.Error())
 	}
-	if err := unix.Mount("defaults", target, "tmpfs", 0, ""); err != nil {
+	if err := unix.Mount("tmpfs", target, "tmpfs", 0, ""); err != nil {
 		return fmt.Errorf("failed to mount %s: %s", target, err.Error())
-	}
-
-	if err := enableMemoryHierarchy(s); err != nil {
-		return fmt.Errorf("failed to enable cgroup memory hierarchy: %s", err.Error())
 	}
 
 	cgroups := []string{
@@ -59,13 +43,19 @@ func Mount(s string) error {
 		"cpuset",
 	}
 	for _, c := range cgroups {
-		p := path.Join(s, fmt.Sprintf("/sys/fs/cgroup/%s", c))
+		p := path.Join(s, "/sys/fs/cgroup", c)
 		if err := os.MkdirAll(p, os.ModeDir); err != nil {
 			return fmt.Errorf("failed to create %s: %s", p, err.Error())
 		}
-		if err := unix.Mount("defaults", p, "cgroup", 0, ""); err != nil {
+		if err := unix.Mount("cgroup", p, "cgroup", 0, ""); err != nil {
 			return fmt.Errorf("failed to mount %s: %s", p, err.Error())
 		}
+	}
+
+	// See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
+	target = path.Join(s, "/sys/fs/cgroup", memoryCgroup, memoryUseHierarchy)
+	if err := ioutil.WriteFile(target, memoryUseHierarchyContents, memoryUseHierarchyPermissions); err != nil {
+		return err
 	}
 
 	return nil
