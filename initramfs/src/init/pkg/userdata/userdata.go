@@ -12,16 +12,17 @@ import (
 
 // UserData represents the user data.
 type UserData struct {
-	Version   string            `yaml:"version"`
-	Token     string            `yaml:"token"`
-	Join      bool              `yaml:"join,omitempty"`
-	APIServer string            `yaml:"apiServer,omitempty"`
-	NodeName  string            `yaml:"nodeName,omitempty"`
-	Labels    map[string]string `yaml:"labels,omitempty"`
+	Version     string            `yaml:"version"`
+	Token       string            `yaml:"token"`
+	Join        bool              `yaml:"join,omitempty"`
+	APIServer   string            `yaml:"apiServer,omitempty"`
+	NodeName    string            `yaml:"nodeName,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Nameservers []string          `yaml:"nameservers,omitempty"`
 }
 
-// Execute downloads the user data and executes the instructions.
-func Execute() (UserData, error) {
+// Download downloads the user data and executes the instructions.
+func Download() (UserData, error) {
 	userData := UserData{}
 
 	arguments, err := kernel.ParseProcCmdline()
@@ -33,7 +34,21 @@ func Execute() (UserData, error) {
 		return userData, nil
 	}
 
-	userDataBytes, err := download(url)
+	resp, err := http.Get(url)
+	if err != nil {
+		return userData, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return userData, err
+	}
+
+	userDataBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return userData, err
+	}
+
 	if err != nil {
 		return userData, fmt.Errorf("download user data: %s", err.Error())
 	}
@@ -43,23 +58,4 @@ func Execute() (UserData, error) {
 	}
 
 	return userData, nil
-}
-
-func download(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, err
-	}
-
-	userDataBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return userDataBytes, nil
 }
