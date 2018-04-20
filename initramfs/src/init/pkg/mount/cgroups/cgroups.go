@@ -63,13 +63,6 @@ func Mount(s string) error {
 		if err := os.MkdirAll(p, os.ModeDir); err != nil {
 			return fmt.Errorf("failed to create %s: %s", p, err.Error())
 		}
-		switch c {
-		case "memory":
-			if err := enableMemoryHierarchy(target); err != nil {
-				return fmt.Errorf("enable memory.use_hierarchy: %s", err.Error())
-			}
-		default:
-		}
 		if err := unix.Mount("defaults", p, "cgroup", 0, ""); err != nil {
 			return fmt.Errorf("failed to mount %s: %s", p, err.Error())
 		}
