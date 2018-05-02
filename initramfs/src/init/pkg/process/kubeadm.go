@@ -18,7 +18,7 @@ token: {{ .Token }}
 TokenTTL: 0s
 criSocket: {{ .CRISocket }}
 skipTokenPrint: true
-kubernetesVersion: v1.10.1
+kubernetesVersion: v1.10.2
 networking:
   dnsDomain: cluster.local
   serviceSubnet: 10.96.0.0/12
