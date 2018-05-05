@@ -11,4 +11,9 @@ const (
 	ContainerRuntimeDockerSocket = "/var/run/docker.sock"
 	ContainerRuntimeCRIO         = "crio"
 	ContainerRuntimeCRIOSocket   = "/var/run/crio/crio.sock"
+	KubeadmConfig                = "/etc/kubernetes/kubeadm.yaml"
+	KubeadmCACert                = "/etc/kubernetes/pki/ca.crt"
+	KubeadmCAKey                 = "/etc/kubernetes/pki/ca.key"
+	SYSLOG_ACTION_SIZE_BUFFER    = 10
+	SYSLOG_ACTION_READ_ALL       = 3
 )
