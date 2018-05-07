@@ -12,14 +12,39 @@ import (
 
 // UserData represents the user data.
 type UserData struct {
-	Version          string            `yaml:"version"`
-	Token            string            `yaml:"token"`
-	Join             bool              `yaml:"join,omitempty"`
-	APIServer        string            `yaml:"apiServer,omitempty"`
-	NodeName         string            `yaml:"nodeName,omitempty"`
-	Labels           map[string]string `yaml:"labels,omitempty"`
-	Nameservers      []string          `yaml:"nameservers,omitempty"`
-	ContainerRuntime string            `yaml:"containerRuntime,omitempty"`
+	Version    string      `yaml:"version"`
+	OS         *OS         `yaml:"os"`
+	Kubernetes *Kubernetes `yaml:"kubernetes,omitempty"`
+}
+
+type OS struct {
+	Network  *Network  `yaml:"network,omitempty"`
+	Security *Security `yaml:"security"`
+}
+
+type Network struct {
+	Nameservers []string `yaml:"nameservers,omitempty"`
+}
+
+type Security struct {
+	CA       *KeyPair `yaml:"ca"`
+	Identity *KeyPair `yaml:"identity"`
+}
+
+type KeyPair struct {
+	Crt string `yaml:"crt"`
+	Key string `yaml:"key"`
+}
+
+type Kubernetes struct {
+	CA                         *KeyPair          `yaml:"ca,omitempty"`
+	Token                      string            `yaml:"token"`
+	Join                       bool              `yaml:"join,omitempty"`
+	APIServer                  string            `yaml:"apiServer,omitempty"`
+	NodeName                   string            `yaml:"nodeName,omitempty"`
+	Labels                     map[string]string `yaml:"labels,omitempty"`
+	ContainerRuntime           string            `yaml:"containerRuntime,omitempty"`
+	DiscoveryTokenCACertHashes []string          `yaml:"discoveryTokenCACertHashes,omitempty"`
 }
 
 // Download downloads the user data and executes the instructions.

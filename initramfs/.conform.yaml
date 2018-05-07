@@ -2,8 +2,22 @@ metadata:
   repository: dianemo/initramfs
 pipeline:
   stages:
+  - proto
+  - cli
   - build
 stages:
+  proto:
+    artifacts:
+    - source: /go/src/github.com/autonomy/dianemo/proto
+      destination: ./src/init
+    tasks:
+      - proto
+  cli:
+    artifacts:
+    - source: /cli
+      destination: ../build/osctl
+    tasks:
+      - cli
   build:
     tasks:
     - build
@@ -11,6 +25,28 @@ stages:
     tasks:
     - test
 tasks:
+  proto:
+    template: |
+      FROM golang:1.10.0 AS {{ .Docker.CurrentStage }}
+      WORKDIR /go/src/github.com/autonomy/dianemo
+      RUN apt-get update
+      RUN apt-get -y install bsdtar
+      RUN go get github.com/golang/protobuf/protoc-gen-go
+      RUN curl -L https://github.com/google/protobuf/releases/download/v3.5.1/protoc-3.5.1-linux-x86_64.zip | bsdtar -xf -  -C /tmp \
+          && mv /tmp/bin/protoc /bin \
+          && mv /tmp/include/* /usr/local/include \
+          && chmod +x /bin/protoc
+      COPY ./src/init/proto ./proto
+      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+  cli:
+    template: |
+      FROM golang:1.10.0-alpine3.7 AS {{ .Docker.CurrentStage }}
+      RUN apk --update add gcc musl-dev util-linux-dev xz
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init
+      COPY src/init ./
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init/cli
+      RUN GOOS=darwin /usr/local/go/bin/go build -o /cli
+      RUN chmod +x /cli
   build:
     template: |
       FROM golang:1.10.0-alpine3.7 AS {{ .Docker.CurrentStage }}

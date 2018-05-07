@@ -59,7 +59,7 @@ func ResolvConf(s string, userdata userdata.UserData) error {
 	}
 	var buf []byte
 	writer := bytes.NewBuffer(buf)
-	err = tmpl.Execute(writer, userdata.Nameservers)
+	err = tmpl.Execute(writer, userdata.OS.Network.Nameservers)
 	if err != nil {
 		return err
 	}
