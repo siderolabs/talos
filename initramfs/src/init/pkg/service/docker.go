@@ -5,12 +5,16 @@ import (
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
+// Docker implements the Service interface. It serves as the concrete type with
+// the required methods.
 type Docker struct{}
 
+// Pre implements the Service interface.
 func (p *Docker) Pre(data userdata.UserData) error {
 	return nil
 }
 
+// Cmd implements the Service interface.
 func (p *Docker) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/dockerd"
 	args = []string{
@@ -27,12 +31,15 @@ func (p *Docker) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
+// Condition implements the Service interface.
 func (p *Docker) Condition(data userdata.UserData) func() (bool, error) {
 	return conditions.None()
 }
 
+// Env implements the Service interface.
 func (p *Docker) Env() []string {
 	return []string{"DOCKER_NOFILE=1000000"}
 }
 
+// Type implements the Service interface.
 func (p *Docker) Type() Type { return Forever }

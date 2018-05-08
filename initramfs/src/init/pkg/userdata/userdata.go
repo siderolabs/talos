@@ -17,37 +17,45 @@ type UserData struct {
 	Kubernetes *Kubernetes `yaml:"kubernetes,omitempty"`
 }
 
+// OS represents the operating system specific configuration options.
 type OS struct {
 	Network  *Network  `yaml:"network,omitempty"`
 	Security *Security `yaml:"security"`
 }
 
+// Network represents the operating system networking specific configuration
+// options.
 type Network struct {
 	Nameservers []string `yaml:"nameservers,omitempty"`
 }
 
+// Security represents the operating system security specific configuration
+// options.
 type Security struct {
-	CA       *KeyPair `yaml:"ca"`
-	Identity *KeyPair `yaml:"identity"`
+	CA       *CertificateAndKeyPaths `yaml:"ca"`
+	Identity *CertificateAndKeyPaths `yaml:"identity"`
 }
 
-type KeyPair struct {
+// CertificateAndKeyPaths represents the paths to the certificate and private
+// key.
+type CertificateAndKeyPaths struct {
 	Crt string `yaml:"crt"`
 	Key string `yaml:"key"`
 }
 
+// Kubernetes represents the Kubernetes specific configuration options.
 type Kubernetes struct {
-	CA                         *KeyPair          `yaml:"ca,omitempty"`
-	Token                      string            `yaml:"token"`
-	Join                       bool              `yaml:"join,omitempty"`
-	APIServer                  string            `yaml:"apiServer,omitempty"`
-	NodeName                   string            `yaml:"nodeName,omitempty"`
-	Labels                     map[string]string `yaml:"labels,omitempty"`
-	ContainerRuntime           string            `yaml:"containerRuntime,omitempty"`
-	DiscoveryTokenCACertHashes []string          `yaml:"discoveryTokenCACertHashes,omitempty"`
+	CA                         *CertificateAndKeyPaths `yaml:"ca,omitempty"`
+	Token                      string                  `yaml:"token"`
+	Join                       bool                    `yaml:"join,omitempty"`
+	APIServer                  string                  `yaml:"apiServer,omitempty"`
+	NodeName                   string                  `yaml:"nodeName,omitempty"`
+	Labels                     map[string]string       `yaml:"labels,omitempty"`
+	ContainerRuntime           string                  `yaml:"containerRuntime,omitempty"`
+	DiscoveryTokenCACertHashes []string                `yaml:"discoveryTokenCACertHashes,omitempty"`
 }
 
-// Download downloads the user data and executes the instructions.
+// Download initializes a UserData struct from a remote URL.
 func Download() (UserData, error) {
 	userData := UserData{}
 
@@ -55,7 +63,7 @@ func Download() (UserData, error) {
 	if err != nil {
 		return userData, fmt.Errorf("parse kernel parameters: %s", err.Error())
 	}
-	url, ok := arguments[constants.UserDataURLFlag]
+	url, ok := arguments[constants.KernelParamUserData]
 	if !ok {
 		return userData, nil
 	}
@@ -64,6 +72,7 @@ func Download() (UserData, error) {
 	if err != nil {
 		return userData, err
 	}
+	// nolint: errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

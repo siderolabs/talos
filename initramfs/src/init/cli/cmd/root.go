@@ -10,7 +10,6 @@ import (
 var (
 	address      string
 	ca           string
-	crt          string
 	key          string
 	isContainer  bool
 	organization string

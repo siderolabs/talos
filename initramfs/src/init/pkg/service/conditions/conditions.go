@@ -5,12 +5,15 @@ import (
 	"time"
 )
 
+// None is a service condition that has no conditions.
 func None() func() (bool, error) {
 	return func() (bool, error) {
 		return true, nil
 	}
 }
 
+// FileExists is a service condition that checks for the existence of a file
+// once and only once.
 func FileExists(file string) func() (bool, error) {
 	return func() (bool, error) {
 		_, err := os.Stat(file)
@@ -26,6 +29,8 @@ func FileExists(file string) func() (bool, error) {
 	}
 }
 
+// WaitForFileExists is a service condition that will wait for the existence of
+// a file.
 func WaitForFileExists(file string) func() (bool, error) {
 	return func() (bool, error) {
 		for {

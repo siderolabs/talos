@@ -24,6 +24,7 @@ func ip() string {
 	return ""
 }
 
+// Prepare creates the files required by the installed binaries and libraries.
 func Prepare(s string, userdata userdata.UserData) error {
 	// Create /etc/hosts
 	hostname, err := os.Hostname()

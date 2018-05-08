@@ -14,6 +14,7 @@ import (
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
+// MasterConfiguration is the kubeadm manifest for master nodes.
 const MasterConfiguration = `
 kind: MasterConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
@@ -36,6 +37,7 @@ featureGates:
   CoreDNS: true
 `
 
+// NodeConfiguration is the kubeadm manifest for worker nodes.
 const NodeConfiguration = `
 kind: NodeConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
@@ -50,11 +52,12 @@ criSocket: {{ .CRISocket }}
 nodeName: {{ .NodeName }}
 `
 
+// Kubeadm implements the Service interface. It serves as the concrete type with
+// the required methods.
 type Kubeadm struct{}
 
-var cmd string
-
-func (p *Kubeadm) Pre(data userdata.UserData) error {
+// Pre implements the Service interface.
+func (p *Kubeadm) Pre(data userdata.UserData) (err error) {
 	var configuration string
 	if data.Kubernetes.Join {
 		configuration = NodeConfiguration
@@ -62,63 +65,28 @@ func (p *Kubeadm) Pre(data userdata.UserData) error {
 		configuration = MasterConfiguration
 	}
 
-	var criSocket string
+	var socket string
 	switch data.Kubernetes.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
-		criSocket = constants.ContainerRuntimeDockerSocket
+		socket = constants.ContainerRuntimeDockerSocket
 	case constants.ContainerRuntimeCRIO:
-		criSocket = constants.ContainerRuntimeCRIOSocket
+		socket = constants.ContainerRuntimeCRIOSocket
 	}
 
-	aux := struct {
-		*userdata.Kubernetes
-		CRISocket string
-	}{
-		data.Kubernetes,
-		criSocket,
-	}
-
-	tmpl, err := template.New("").Parse(configuration)
-	if err != nil {
-		return err
-	}
-	var buf []byte
-	writer := bytes.NewBuffer(buf)
-	err = tmpl.Execute(writer, aux)
-	if err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(constants.KubeadmConfig, writer.Bytes(), 0400); err != nil {
-		return fmt.Errorf("write %s: %s", constants.KubeadmConfig, err.Error())
+	if err = writeKubeadmManifest(data.Kubernetes, configuration, socket); err != nil {
+		return
 	}
 
 	if !data.Kubernetes.Join {
-		caCrtBytes, err := base64.StdEncoding.DecodeString(data.Kubernetes.CA.Crt)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(constants.KubeadmCACert, caCrtBytes, 0400); err != nil {
-			return fmt.Errorf("write %s: %s", constants.KubeadmCACert, err.Error())
-		}
-		caKeyBytes, err := base64.StdEncoding.DecodeString(data.Kubernetes.CA.Key)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(path.Dir(constants.KubeadmCAKey), 0600); err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(constants.KubeadmCAKey, caKeyBytes, 0400); err != nil {
-			return fmt.Errorf("write %s: %s", constants.KubeadmCAKey, err.Error())
+		if err = writeKubeadmPKIFiles(data.Kubernetes); err != nil {
+			return
 		}
 	}
 
 	return nil
 }
 
+// Cmd implements the Service interface.
 func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 	var cmd string
 	if data.Kubernetes.Join {
@@ -136,6 +104,7 @@ func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
+// Condition implements the Service interface.
 func (p *Kubeadm) Condition(data userdata.UserData) func() (bool, error) {
 	switch data.Kubernetes.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
@@ -147,6 +116,61 @@ func (p *Kubeadm) Condition(data userdata.UserData) func() (bool, error) {
 	}
 }
 
+// Env implements the Service interface.
 func (p *Kubeadm) Env() []string { return []string{} }
 
+// Type implements the Service interface.
 func (p *Kubeadm) Type() Type { return Once }
+
+func writeKubeadmManifest(data *userdata.Kubernetes, configuration, socket string) (err error) {
+	aux := struct {
+		*userdata.Kubernetes
+		CRISocket string
+	}{
+		data,
+		socket,
+	}
+
+	tmpl, err := template.New("").Parse(configuration)
+	if err != nil {
+		return err
+	}
+	var buf []byte
+	writer := bytes.NewBuffer(buf)
+	err = tmpl.Execute(writer, aux)
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(constants.KubeadmConfig, writer.Bytes(), 0400); err != nil {
+		return fmt.Errorf("write %s: %s", constants.KubeadmConfig, err.Error())
+	}
+
+	return nil
+}
+
+func writeKubeadmPKIFiles(data *userdata.Kubernetes) (err error) {
+	caCrtBytes, err := base64.StdEncoding.DecodeString(data.CA.Crt)
+	if err != nil {
+		return err
+	}
+	if err = os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
+		return err
+	}
+	if err = ioutil.WriteFile(constants.KubeadmCACert, caCrtBytes, 0400); err != nil {
+		return fmt.Errorf("write %s: %s", constants.KubeadmCACert, err.Error())
+	}
+
+	caKeyBytes, err := base64.StdEncoding.DecodeString(data.CA.Key)
+	if err != nil {
+		return err
+	}
+	if err = os.MkdirAll(path.Dir(constants.KubeadmCAKey), 0600); err != nil {
+		return err
+	}
+	if err = ioutil.WriteFile(constants.KubeadmCAKey, caKeyBytes, 0400); err != nil {
+		return fmt.Errorf("write %s: %s", constants.KubeadmCAKey, err.Error())
+	}
+
+	return nil
+}

@@ -9,8 +9,11 @@ import (
 	"github.com/autonomy/dianemo/initramfs/src/init/pkg/userdata"
 )
 
+// Kubelet implements the Service interface. It serves as the concrete type with
+// the required methods.
 type Kubelet struct{}
 
+// Pre implements the Service interface.
 func (p *Kubelet) Pre(data userdata.UserData) error {
 	if err := os.Mkdir("/run/flannel", os.ModeDir); err != nil {
 		return fmt.Errorf("create /run/flannel: %s", err.Error())
@@ -25,6 +28,7 @@ func (p *Kubelet) Pre(data userdata.UserData) error {
 	return nil
 }
 
+// Cmd implements the Service interface.
 func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/kubelet"
 	args = []string{
@@ -65,6 +69,7 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
+// Condition implements the Service interface.
 func (p *Kubelet) Condition(data userdata.UserData) func() (bool, error) {
 	switch data.Kubernetes.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
@@ -76,6 +81,8 @@ func (p *Kubelet) Condition(data userdata.UserData) func() (bool, error) {
 	}
 }
 
+// Env implements the Service interface.
 func (p *Kubelet) Env() []string { return []string{} }
 
+// Type implements the Service interface.
 func (p *Kubelet) Type() Type { return Forever }
