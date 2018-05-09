@@ -54,9 +54,7 @@ func Mount(s string) error {
 
 	// See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
 	target = path.Join(s, "/sys/fs/cgroup", memoryCgroup, memoryUseHierarchy)
-	if err := ioutil.WriteFile(target, memoryUseHierarchyContents, memoryUseHierarchyPermissions); err != nil {
-		return err
-	}
+	err := ioutil.WriteFile(target, memoryUseHierarchyContents, memoryUseHierarchyPermissions)
 
-	return nil
+	return err
 }

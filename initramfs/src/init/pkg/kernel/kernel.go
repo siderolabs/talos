@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// ParseProcCmdline parses /proc/cmdline and returns a map reprentation of the
+// kernel parameters.
 func ParseProcCmdline() (cmdline map[string]string, err error) {
 	cmdline = map[string]string{}
 	cmdlineBytes, err := ioutil.ReadFile("/proc/cmdline")

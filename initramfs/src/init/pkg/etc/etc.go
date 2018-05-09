@@ -25,6 +25,7 @@ nameserver {{ $ip }}
 {{ end }}
 `
 
+// Hosts renders a valid /etc/hosts file and writes it to disk.
 func Hosts(s, hostname, ip string) error {
 	data := struct {
 		IP       string
@@ -52,6 +53,7 @@ func Hosts(s, hostname, ip string) error {
 	return nil
 }
 
+// ResolvConf renders a valid /etc/resolv.conf file and writes it to disk.
 func ResolvConf(s string, userdata userdata.UserData) error {
 	tmpl, err := template.New("").Parse(resolvConfTemplate)
 	if err != nil {

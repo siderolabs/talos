@@ -1,3 +1,5 @@
+// +build linux
+
 package switchroot
 
 import (
@@ -16,9 +18,10 @@ func recursiveDelete(fd int) error {
 		return err
 	}
 
-	// The file descriptor is already open, but allocating a os.File
-	// here makes reading the files in the dir so much nicer.
+	// The file descriptor is already open, but allocating a os.File here makes
+	// reading the files in the dir so much nicer.
 	dir := os.NewFile(uintptr(fd), "__ignored__")
+	// nolint: errcheck
 	defer dir.Close()
 	names, err := dir.Readdirnames(-1)
 	if err != nil {
@@ -26,7 +29,8 @@ func recursiveDelete(fd int) error {
 	}
 
 	for _, name := range names {
-		// Loop here, but handle loop in separate function to make defer work as expected.
+		// Loop here, but handle loop in separate function to make defer work as
+		// expected.
 		if err := recusiveDeleteInner(fd, parentDev, name); err != nil {
 			return err
 		}
@@ -35,8 +39,9 @@ func recursiveDelete(fd int) error {
 }
 
 func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error {
-	// O_DIRECTORY and O_NOFOLLOW make this open fail for all files and all symlinks (even when pointing to a dir).
-	// We need to filter out symlinks because getDev later follows them.
+	// O_DIRECTORY and O_NOFOLLOW make this open fail for all files and all
+	// symlinks (even when pointing to a dir). We need to filter out symlinks
+	// because getDev later follows them.
 	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW, unix.O_RDWR)
 	if err != nil {
 		// childName points to either a file or a symlink, delete in any case.
@@ -45,6 +50,7 @@ func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error
 		}
 	} else {
 		// Open succeeded, which means childName points to a real directory.
+		// nolint: errcheck
 		defer unix.Close(childFd)
 
 		// Don't descent into other file systems.
@@ -76,7 +82,8 @@ func getDev(fd int) (dev uint64, err error) {
 	return stat.Dev, nil
 }
 
-// See https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
+// Switch performs a switch_root equivalent. See
+// https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
 func Switch(s string) error {
 	// Mount the ROOT and DATA block devices at the new root.
 	if err := mount.Mount(s); err != nil {
@@ -97,6 +104,7 @@ func Switch(s string) error {
 	if err != nil {
 		return err
 	}
+	// nolint: errcheck
 	defer oldRoot.Close()
 	if err := mount.Finalize(s); err != nil {
 		return err

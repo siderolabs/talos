@@ -24,6 +24,8 @@ var injectOSCmd = &cobra.Command{
 	Short: "Populates fields in the user data that are generated for the OS",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+
 		if len(args) != 1 {
 			os.Exit(1)
 		}
@@ -33,16 +35,16 @@ var injectOSCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		data := &userdata.UserData{}
-		if err := yaml.Unmarshal(fileBytes, data); err != nil {
+		if err = yaml.Unmarshal(fileBytes, data); err != nil {
 			os.Exit(1)
 		}
 		if data.OS.Security == nil {
 			data.OS.Security = &userdata.Security{}
-			data.OS.Security.Identity = &userdata.KeyPair{}
-			data.OS.Security.CA = &userdata.KeyPair{}
+			data.OS.Security.Identity = &userdata.CertificateAndKeyPaths{}
+			data.OS.Security.CA = &userdata.CertificateAndKeyPaths{}
 		}
 		if identity != "" {
-			fileBytes, err := ioutil.ReadFile(identity + ".crt")
+			fileBytes, err = ioutil.ReadFile(identity + ".crt")
 			if err != nil {
 				os.Exit(1)
 			}
@@ -54,7 +56,7 @@ var injectOSCmd = &cobra.Command{
 			data.OS.Security.Identity.Key = base64.StdEncoding.EncodeToString(fileBytes)
 		}
 		if ca != "" {
-			fileBytes, err := ioutil.ReadFile(ca + ".crt")
+			fileBytes, err = ioutil.ReadFile(ca + ".crt")
 			if err != nil {
 				os.Exit(1)
 			}
@@ -65,7 +67,9 @@ var injectOSCmd = &cobra.Command{
 		if err != nil {
 			os.Exit(1)
 		}
-		ioutil.WriteFile(filename, dataBytes, 0700)
+		if err := ioutil.WriteFile(filename, dataBytes, 0700); err != nil {
+			os.Exit(1)
+		}
 	},
 }
 
@@ -85,15 +89,15 @@ var injectKubernetesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		data := &userdata.UserData{}
-		if err := yaml.Unmarshal(fileBytes, data); err != nil {
+		if err = yaml.Unmarshal(fileBytes, data); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 		if data.Kubernetes.CA == nil {
-			data.Kubernetes.CA = &userdata.KeyPair{}
+			data.Kubernetes.CA = &userdata.CertificateAndKeyPaths{}
 		}
 		if ca != "" {
-			fileBytes, err := ioutil.ReadFile(ca + ".crt")
+			fileBytes, err = ioutil.ReadFile(ca + ".crt")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -107,7 +111,7 @@ var injectKubernetesCmd = &cobra.Command{
 			data.Kubernetes.CA.Key = base64.StdEncoding.EncodeToString(fileBytes)
 		}
 		if hash != "" {
-			fileBytes, err := ioutil.ReadFile(hash + ".sha256")
+			fileBytes, err = ioutil.ReadFile(hash + ".sha256")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -119,7 +123,9 @@ var injectKubernetesCmd = &cobra.Command{
 		if err != nil {
 			os.Exit(1)
 		}
-		ioutil.WriteFile(filename, dataBytes, 0700)
+		if err := ioutil.WriteFile(filename, dataBytes, 0700); err != nil {
+			os.Exit(1)
+		}
 	},
 }
 

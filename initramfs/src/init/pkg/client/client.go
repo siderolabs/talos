@@ -16,25 +16,30 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type ClientCredentials struct {
+// Credentials represents the set of values required to initialize a vaild
+// Client.
+type Credentials struct {
 	ca  string
 	crt string
 	key string
 }
 
+// Client implements the proto.DianemoClient interface. It serves as the
+// concrete type with the required methods.
 type Client struct {
-	conn        *grpc.ClientConn
-	client      proto.DianemoClient
-	credentials *ClientCredentials
+	conn   *grpc.ClientConn
+	client proto.DianemoClient
 }
 
-func NewDefaultClientCredentials() (creds *ClientCredentials, err error) {
+// NewDefaultClientCredentials initializes ClientCredentials using default paths
+// to the required CA, certificate, and key.
+func NewDefaultClientCredentials() (creds *Credentials, err error) {
 	u, err := user.Current()
 	if err != nil {
 		return
 	}
 
-	creds = &ClientCredentials{
+	creds = &Credentials{
 		ca:  path.Join(u.HomeDir, ".dianemo/ca.pem"),
 		crt: path.Join(u.HomeDir, ".dianemo/crt.pem"),
 		key: path.Join(u.HomeDir, ".dianemo/key.pem"),
@@ -43,7 +48,8 @@ func NewDefaultClientCredentials() (creds *ClientCredentials, err error) {
 	return creds, nil
 }
 
-func NewClient(address string, port int, clientcreds *ClientCredentials) (c *Client, err error) {
+// NewClient initializes a Client.
+func NewClient(address string, port int, clientcreds *Credentials) (c *Client, err error) {
 	grpcOpts := []grpc.DialOption{}
 
 	caBytes, err := ioutil.ReadFile(clientcreds.ca)
@@ -81,6 +87,7 @@ func NewClient(address string, port int, clientcreds *ClientCredentials) (c *Cli
 	return c, nil
 }
 
+// Kubeconfig implements the proto.DianemoClient interface.
 func (c *Client) Kubeconfig() (err error) {
 	ctx := context.Background()
 	r, err := c.client.Kubeconfig(ctx, &empty.Empty{})
@@ -92,6 +99,7 @@ func (c *Client) Kubeconfig() (err error) {
 	return nil
 }
 
+// Dmesg implements the proto.DianemoClient interface.
 func (c *Client) Dmesg() (err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -104,6 +112,7 @@ func (c *Client) Dmesg() (err error) {
 	return nil
 }
 
+// Logs implements the proto.DianemoClient interface.
 func (c *Client) Logs(r *proto.LogsRequest) (err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

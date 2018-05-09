@@ -1,3 +1,5 @@
+// +build linux
+
 // Package blkid provides bindings to libblkid.
 package blkid
 
@@ -14,6 +16,7 @@ import (
 	"unsafe"
 )
 
+// NewProbeFromFilename executes lblkid blkid_new_probe_from_filename.
 func NewProbeFromFilename(s string) (C.blkid_probe, error) {
 	cs := C.CString(s)
 	defer C.free(unsafe.Pointer(cs))
@@ -25,12 +28,13 @@ func NewProbeFromFilename(s string) (C.blkid_probe, error) {
 	return pr, nil
 }
 
+// DoProbe executes lblkid blkid_do_probe.
 func DoProbe(pr C.blkid_probe) {
 	C.blkid_do_probe(pr)
 }
 
 // ProbeLookupValue implements:
-//	int blkid_probe_lookup_value (blkid_probe pr, const char *name, const char **data, size_t *len);
+//  int blkid_probe_lookup_value (blkid_probe pr, const char *name, const char **data, size_t *len);
 func ProbeLookupValue(pr C.blkid_probe, name string, size *int) (string, error) {
 	cs := C.CString(name)
 	defer C.free(unsafe.Pointer(cs))
@@ -51,19 +55,19 @@ func ProbeLookupValue(pr C.blkid_probe, name string, size *int) (string, error) 
 }
 
 // ProbeGetPartitions implements:
-//	blkid_partlist blkid_probe_get_partitions (blkid_probe pr);
+//  blkid_partlist blkid_probe_get_partitions (blkid_probe pr);
 func ProbeGetPartitions(pr C.blkid_probe) C.blkid_partlist {
 	return C.blkid_probe_get_partitions(pr)
 }
 
 // ProbeGetPartitionsPartlistNumOfPartitions implements:
-//	int blkid_partlist_numof_partitions (blkid_partlist ls);
+//  int blkid_partlist_numof_partitions (blkid_partlist ls);
 func ProbeGetPartitionsPartlistNumOfPartitions(ls C.blkid_partlist) int {
 	return int(C.blkid_partlist_numof_partitions(ls))
 }
 
 // FreeProbe implements:
-//	int blkid_partlist_numof_partitions (blkid_partlist ls);
+//  int blkid_partlist_numof_partitions (blkid_partlist ls);
 func FreeProbe(pr C.blkid_probe) {
 	C.blkid_free_probe(pr)
 }

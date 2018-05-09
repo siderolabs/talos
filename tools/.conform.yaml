@@ -9,6 +9,7 @@ metadata:
     srcBzip2: http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
     srcCheck: https://github.com/libcheck/check/releases/download/0.12.0/check-0.12.0.tar.gz
     srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
+    srcCPIO: https://ftp.gnu.org/gnu/cpio/cpio-2.12.tar.gz
     srcCurl: https://curl.haxx.se/download/curl-7.56.1.tar.xz
     srcDejagnu: http://ftp.gnu.org/gnu/dejagnu/dejagnu-1.6.1.tar.gz
     srcDiffutils: http://ftp.gnu.org/gnu/diffutils/diffutils-3.6.tar.xz
@@ -26,6 +27,7 @@ metadata:
     srcGit: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.16.2.tar.xz
     srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
     srcGmp: http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+    srcGo: https://dl.google.com/go/go1.10.linux-amd64.tar.gz
     srcGperf: http://ftp.gnu.org/gnu/gperf/gperf-3.0.4.tar.gz
     srcGrep: http://ftp.gnu.org/gnu/grep/grep-3.1.tar.xz
     srcGzip: http://ftp.gnu.org/gnu/gzip/gzip-1.8.tar.xz
@@ -145,6 +147,8 @@ stages:
     - kmod
     - autoconf
     - git
+    - cpio
+    - golang
 tasks:
   autoconf:
     template: |
@@ -257,6 +261,15 @@ tasks:
           --prefix=$PREFIX \
           --enable-install-program=hostname
       RUN make -j $(($(nproc) / 2))
+      RUN make install
+  cpio:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      RUN curl -L {{ index .Variables "srcCPIO" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+          --prefix=$PREFIX
+      RUN make
       RUN make install
   curl:
     template: |
@@ -493,6 +506,11 @@ tasks:
       RUN $TARGET-gcc dummy.c
       RUN readelf -l a.out | grep "$PREFIX"
       RUN rm -v dummy.c a.out
+  golang:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      WORKDIR /tools/usr/local
+      RUN curl -L {{ index .Variables "srcGo" }} | tar -C /tools/usr/local -xz
   gmp:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
@@ -808,7 +826,11 @@ tasks:
       RUN [ "/tools/bin/bash", "-c", "rm -rf /tools/share/info /tools/share/man /tools/share/doc" ]
       FROM scratch
       COPY --from={{ .Docker.CurrentStage }} /tools /tools
+      ENV GOROOT /tools/usr/local/go
+      ENV GOPATH /tools/go
       ENV PATH /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/tools/bin
+      ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin
+      RUN [ "mkdir", "/tools/go" ]
       RUN [ "mkdir", "/bin" ]
       RUN [ "ln", "-s", "/tools/bin/bash", "/bin/sh" ]
       RUN [ "ln", "-s", "/tools/bin/bash", "/bin/bash" ]

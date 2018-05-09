@@ -7,31 +7,24 @@ import (
 	"os"
 )
 
-type Options struct {
-	Size int
-}
-
-type Option func(*Options)
-
+// Chunker is an interface for embedding all chunking interfaces under one name.
 type Chunker interface {
 	ChunkReader
 }
 
+// ChunkReader is an interface describing a reader that streams data in []byte
+// chunks.
 type ChunkReader interface {
 	Read(context.Context) <-chan []byte
 }
 
+// DefaultChunker is a conecrete type that implements the Chunker interface.
 type DefaultChunker struct {
 	path    string
 	options *Options
 }
 
-func Size(s int) Option {
-	return func(args *Options) {
-		args.Size = s
-	}
-}
-
+// NewDefaultChunker initializes a DefaultChunker with default values.
 func NewDefaultChunker(path string, setters ...Option) Chunker {
 	opts := &Options{
 		Size: 1024,
@@ -46,6 +39,22 @@ func NewDefaultChunker(path string, setters ...Option) Chunker {
 	}
 }
 
+// Options is the functional options struct.
+type Options struct {
+	Size int
+}
+
+// Option is the functional option func.
+type Option func(*Options)
+
+// Size sets the chunk size of the Chunker.
+func Size(s int) Option {
+	return func(args *Options) {
+		args.Size = s
+	}
+}
+
+// Read implements ChunkReader.
 func (c *DefaultChunker) Read(ctx context.Context) <-chan []byte {
 	// Create a buffered channel of length 1.
 	ch := make(chan []byte, 1)
@@ -56,13 +65,14 @@ func (c *DefaultChunker) Read(ctx context.Context) <-chan []byte {
 
 	go func(ch chan []byte, f *os.File) {
 		defer close(ch)
+		// nolint: errcheck
 		defer f.Close()
 
 		offset, err := f.Seek(0, io.SeekStart)
 		if err != nil {
 			return
 		}
-		buf := make([]byte, c.options.Size, c.options.Size)
+		buf := make([]byte, c.options.Size)
 		for {
 			select {
 			case <-ctx.Done():

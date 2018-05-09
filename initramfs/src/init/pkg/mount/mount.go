@@ -1,3 +1,5 @@
+// +build linux
+
 package mount
 
 import (
@@ -12,35 +14,15 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-type (
-	// MountPoint represents a linux mount point.
-	MountPoint struct {
-		source string
-		target string
-		fstype string
-		flags  uintptr
-		data   string
-	}
-
-	// BlockDevice represents the metadata on a block device probed by
-	// libblkid.
-	BlockDevice struct {
-		dev   string
-		TYPE  string
-		UUID  string
-		LABEL string
-	}
-)
-
 var (
 	instance struct {
-		special      map[string]*MountPoint
-		blockdevices map[string]*MountPoint
+		special      map[string]*Point
+		blockdevices map[string]*Point
 	}
 
 	once sync.Once
 
-	special = map[string]*MountPoint{
+	special = map[string]*Point{
 		"dev":  {"devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"},
 		"proc": {"proc", "/proc", "proc", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
 		"sys":  {"sysfs", "/sys", "sysfs", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
@@ -49,15 +31,32 @@ var (
 	}
 )
 
+// Point represents a linux mount point.
+type Point struct {
+	source string
+	target string
+	fstype string
+	flags  uintptr
+	data   string
+}
+
+// BlockDevice represents the metadata on a block device probed by libblkid.
+type BlockDevice struct {
+	dev   string
+	TYPE  string
+	UUID  string
+	LABEL string
+}
+
 // Init initializes the mount points.
 func Init(s string) error {
 	once.Do(func() {
 		instance = struct {
-			special      map[string]*MountPoint
-			blockdevices map[string]*MountPoint
+			special      map[string]*Point
+			blockdevices map[string]*Point
 		}{
 			special,
-			map[string]*MountPoint{},
+			map[string]*Point{},
 		}
 	})
 
@@ -75,16 +74,16 @@ func Init(s string) error {
 		return fmt.Errorf("probe block devices: %s", err.Error())
 	}
 	for _, b := range probed {
-		mountpoint := &MountPoint{
+		mountpoint := &Point{
 			source: b.dev,
 			fstype: b.TYPE,
 			flags:  unix.MS_NOATIME,
 			data:   "",
 		}
 		switch b.LABEL {
-		case constants.ROOTLabel:
+		case constants.RootPartitionLabel:
 			mountpoint.target = s
-		case constants.DATALabel:
+		case constants.DataPartitionLabel:
 			mountpoint.target = path.Join(s, "var")
 		}
 
@@ -114,7 +113,7 @@ func Move(s string) error {
 			return fmt.Errorf("move mount point %s to %s: %s", mountpoint.target, target, err.Error())
 		}
 		if label == "dev" {
-			mountpoint = &MountPoint{"devpts", path.Join(s, "/dev/pts"), "devpts", unix.MS_NOSUID | unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"}
+			mountpoint = &Point{"devpts", path.Join(s, "/dev/pts"), "devpts", unix.MS_NOSUID | unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"}
 			if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
 				return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
 			}
@@ -129,11 +128,7 @@ func Move(s string) error {
 
 // Finalize moves the mount points created in Init, to the new root.
 func Finalize(s string) error {
-	if err := unix.Mount(s, "/", "", unix.MS_MOVE, ""); err != nil {
-		return err
-	}
-
-	return nil
+	return unix.Mount(s, "/", "", unix.MS_MOVE, "")
 }
 
 // Mount moves the mount points created in Init, to the new root.
@@ -142,7 +137,7 @@ func Mount(s string) error {
 		return err
 	}
 
-	mountpoint, ok := instance.blockdevices[constants.ROOTLabel]
+	mountpoint, ok := instance.blockdevices[constants.RootPartitionLabel]
 	if ok {
 		mountpoint.flags = unix.MS_RDONLY | unix.MS_NOATIME
 		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
@@ -163,7 +158,7 @@ func Mount(s string) error {
 			return fmt.Errorf("mount %s as shared: %s", mountpoint.target, err.Error())
 		}
 	}
-	mountpoint, ok = instance.blockdevices[constants.DATALabel]
+	mountpoint, ok = instance.blockdevices[constants.DataPartitionLabel]
 	if ok {
 		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
 			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
@@ -175,13 +170,13 @@ func Mount(s string) error {
 
 // Unmount unmounts the ROOT and DATA block devices.
 func Unmount() error {
-	mountpoint, ok := instance.blockdevices[constants.DATALabel]
+	mountpoint, ok := instance.blockdevices[constants.DataPartitionLabel]
 	if ok {
 		if err := unix.Unmount(mountpoint.target, 0); err != nil {
 			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
 		}
 	}
-	mountpoint, ok = instance.blockdevices[constants.ROOTLabel]
+	mountpoint, ok = instance.blockdevices[constants.RootPartitionLabel]
 	if ok {
 		if err := unix.Unmount(mountpoint.target, 0); err != nil {
 			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
@@ -199,7 +194,7 @@ func probe() (b []*BlockDevice, err error) {
 		return
 	}
 
-	if root, ok := arguments[constants.KernelRootFlag]; ok {
+	if root, ok := arguments[constants.KernelParamRoot]; ok {
 		if _, err := os.Stat(root); os.IsNotExist(err) {
 			return nil, fmt.Errorf("device does not exist: %s", root)
 		}

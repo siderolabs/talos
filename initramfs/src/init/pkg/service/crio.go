@@ -180,8 +180,11 @@ const crioPolicy = `
 }
 `
 
+// CRIO implements the Service interface. It serves as the concrete type with
+// the required methods.
 type CRIO struct{}
 
+// Pre implements the Service interface.
 func (p *CRIO) Pre(data userdata.UserData) error {
 	if err := ioutil.WriteFile("/etc/crio/crio.conf", []byte(crioConf), 0644); err != nil {
 		return fmt.Errorf("write crio.conf: %s", err.Error())
@@ -193,6 +196,7 @@ func (p *CRIO) Pre(data userdata.UserData) error {
 	return nil
 }
 
+// Cmd implements the Service interface.
 func (p *CRIO) Cmd(data userdata.UserData) (name string, args []string) {
 	name = "/bin/crio"
 	args = []string{}
@@ -200,10 +204,13 @@ func (p *CRIO) Cmd(data userdata.UserData) (name string, args []string) {
 	return name, args
 }
 
+// Condition implements the Service interface.
 func (p *CRIO) Condition(data userdata.UserData) func() (bool, error) {
 	return conditions.None()
 }
 
+// Env implements the Service interface.
 func (p *CRIO) Env() []string { return []string{} }
 
+// Type implements the Service interface.
 func (p *CRIO) Type() Type { return Forever }

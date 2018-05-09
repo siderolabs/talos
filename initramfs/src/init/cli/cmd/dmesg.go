@@ -15,7 +15,10 @@ var dmesgCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {
-			cmd.Usage()
+			if err := cmd.Usage(); err != nil {
+				// TODO: How should we handle this?
+				os.Exit(1)
+			}
 			os.Exit(1)
 		}
 		creds, err := client.NewDefaultClientCredentials()

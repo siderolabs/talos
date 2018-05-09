@@ -35,42 +35,45 @@ func hang() {
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	os.Setenv("PATH", constants.PATH)
+	if err := os.Setenv("PATH", constants.PATH); err != nil {
+		panic(err)
+	}
 
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
 }
 
-func main() {
-	defer hang()
-	if !*switchRoot {
-		// Read the block devices and populate the mount point definitions.
-		if err := mount.Init(constants.NewRoot); err != nil {
-			panic(err)
-		}
-		// Download the user data.
-		data, err := userdata.Download()
-		if err != nil {
-			panic(err)
-		}
-		// Prepare the necessary files in the rootfs.
-		if err := rootfs.Prepare(constants.NewRoot, data); err != nil {
-			panic(err)
-		}
-		// Unmount the ROOT and DATA block devices
-		if err := mount.Unmount(); err != nil {
-			panic(err)
-		}
-		// Perform the equivalent of switch_root.
-		if err := switchroot.Switch(constants.NewRoot); err != nil {
-			panic(err)
-		}
+func initram() (err error) {
+	// Read the block devices and populate the mount point definitions.
+	if err = mount.Init(constants.NewRoot); err != nil {
+		return
 	}
-
 	// Download the user data.
 	data, err := userdata.Download()
 	if err != nil {
-		panic(err)
+		return
+	}
+	// Prepare the necessary files in the rootfs.
+	if err = rootfs.Prepare(constants.NewRoot, data); err != nil {
+		return
+	}
+	// Unmount the ROOT and DATA block devices
+	if err = mount.Unmount(); err != nil {
+		return
+	}
+	// Perform the equivalent of switch_root.
+	if err = switchroot.Switch(constants.NewRoot); err != nil {
+		return
+	}
+
+	return nil
+}
+
+func root() (err error) {
+	// Download the user data.
+	data, err := userdata.Download()
+	if err != nil {
+		return
 	}
 
 	// Start the services essential to running Kubernetes.
@@ -89,9 +92,19 @@ func main() {
 	services.Start(&service.Kubelet{})
 	services.Start(&service.Kubeadm{})
 
-	s, err := server.NewServer(data.OS.Security)
-	if err != nil {
+	return server.NewServer(data.OS.Security).Listen()
+}
+
+func main() {
+	defer hang()
+
+	if !*switchRoot {
+		if err := initram(); err != nil {
+			panic(err)
+		}
+	}
+
+	if err := root(); err != nil {
 		panic(err)
 	}
-	s.Listen()
 }

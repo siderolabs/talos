@@ -16,7 +16,9 @@ var logsCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			cmd.Usage()
+			if err := cmd.Usage(); err != nil {
+				os.Exit(1)
+			}
 			os.Exit(1)
 		}
 		process := args[0]

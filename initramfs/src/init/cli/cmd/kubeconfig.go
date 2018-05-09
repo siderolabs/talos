@@ -24,7 +24,9 @@ var kubeconfigCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		c.Kubeconfig()
+		if err := c.Kubeconfig(); err != nil {
+			os.Exit(1)
+		}
 	},
 }
 
