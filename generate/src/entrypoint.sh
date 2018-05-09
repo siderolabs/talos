@@ -2,6 +2,10 @@
 
 set -e
 
+function size() {
+  du -sm ./ | cut -f1
+}
+
 function iso() {
   mkdir -p ./boot/isolinux
   cp /usr/local/src/syslinux/bios/core/isolinux.bin ./boot/isolinux/isolinux.bin
@@ -18,11 +22,11 @@ EOF
 }
 
 function raw() {
-  dd if=/dev/zero of=/dianemo.raw bs=1M count=850
+  dd if=/dev/zero of=/dianemo.raw bs=1M count=$(($(size) + 150))
   parted -s /dianemo.raw mklabel gpt
   parted -s -a none /dianemo.raw mkpart ESP fat32 0 50M
-  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M 800M
-  parted -s -a none /dianemo.raw mkpart DATA xfs 800M 850M
+  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M $(($(size) + 100))M
+  parted -s -a none /dianemo.raw mkpart DATA xfs $(($(size) + 100))M $(($(size) + 150))M
   losetup /dev/loop0 /dianemo.raw
   partx -av /dev/loop0
   sgdisk /dev/loop0 --attributes=1:set:2
@@ -56,10 +60,10 @@ EOF
 }
 
 function rootfs() {
-  dd if=/dev/zero of=/rootfs.raw bs=1M count=800
+  dd if=/dev/zero of=/rootfs.raw bs=1M count=$(($(size) + 100))
   parted -s /rootfs.raw mklabel gpt
-  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 750M
-  parted -s -a none /rootfs.raw mkpart DATA xfs 750M 800M
+  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 $(($(size) + 50))M
+  parted -s -a none /rootfs.raw mkpart DATA xfs $(($(size) + 50))M $(($(size) + 100))M
   losetup /dev/loop0 /rootfs.raw
   partx -av /dev/loop0
   mkfs.xfs -n ftype=1 -L ROOT /dev/loop0p1
