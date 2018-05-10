@@ -7,46 +7,48 @@ pipeline:
 stages:
   build:
     artifacts:
-    - source: /tmp/cli
+    - source: /tmp/osctl
       destination: ../build/osctl
     tasks:
+    - src
     - test
-    - cli
+    - osd
+    - osctl
     - init
+    - image
   generate:
     artifacts:
     - source: /go/src/github.com/autonomy/dianemo/proto
-      destination: ./src/init
+      destination: ./cmd/osd
     tasks:
     - proto
 tasks:
-  cli:
+  image:
     template: |
-      FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
-      RUN ln -s /tools/lib64 /lib64
-      RUN mkdir /tmp
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init
-      COPY src/init ./
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init/cli
-      RUN GOOS=darwin go build -o /cli
-      RUN chmod +x /cli
+      FROM scratch
+      WORKDIR /tmp
+      COPY --from=src /osctl osctl
+      COPY --from=src /osd osd
+      COPY --from=src /initramfs/init init
+      COPY --from=src /initramfs/initramfs.xz initramfs.xz
+      CMD false
   init:
     template: |
-      FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
-      RUN ln -s /tools/lib64 /lib64
-      RUN mkdir /tmp
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init
-      COPY src/init ./
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/init
       RUN go build -ldflags '-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid"' -o /initramfs/init
       RUN chmod +x /initramfs/init
       WORKDIR /initramfs
       RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/initramfs/initramfs.xz
-      FROM scratch
-      WORKDIR /tmp
-      COPY --from=init /initramfs/init init
-      COPY --from=init /initramfs/initramfs.xz initramfs.xz
-      COPY --from=cli /cli cli
-      CMD false
+  osctl:
+    template: |
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
+      RUN GOOS=darwin go build -o /{{ .Docker.CurrentStage }}
+      RUN chmod +x /{{ .Docker.CurrentStage }}
+  osd:
+    template: |
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
+      RUN go build -o /{{ .Docker.CurrentStage }}
+      RUN chmod +x /{{ .Docker.CurrentStage }}
   proto:
     template: |
       FROM golang:1.10.0 AS {{ .Docker.CurrentStage }}
@@ -58,15 +60,17 @@ tasks:
           && mv /tmp/bin/protoc /bin \
           && mv /tmp/include/* /usr/local/include \
           && chmod +x /bin/protoc
-      COPY ./src/init/proto ./proto
+      COPY ./cmd/osd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
-  test:
+  src:
     template: |
       FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
       RUN ln -s /tools/lib64 /lib64
       RUN mkdir /tmp
       RUN curl -L https://github.com/alecthomas/gometalinter/releases/download/v2.0.5/gometalinter-2.0.5-linux-amd64.tar.gz | tar -xz --strip-components=1 -C /tools/bin
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/src/init
-      COPY src/init ./
       COPY --from=autonomy/golang:1.10 /bin/test.sh /bin/test.sh
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs
+      COPY ./ ./
+  test:
+    template: |
       RUN test.sh

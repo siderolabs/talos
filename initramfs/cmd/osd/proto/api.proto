@@ -1,0 +1,35 @@
+
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+
+// The OSD service definition.
+service OSD {
+  rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
+  rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
+  rpc Logs(LogsRequest) returns (stream Data) {}
+  rpc Dmesg(google.protobuf.Empty) returns (Data) {}
+}
+
+// The request message containing the process name.
+message ProcessesRequest {
+  string process = 1;
+}
+
+// The response message containing the requested logs.
+message ProcessesReply {
+  bytes content = 1;
+}
+
+// The request message containing the process name.
+message LogsRequest {
+  string process = 1;
+  bool container = 2;
+}
+
+// The response message containing the requested logs.
+message Data {
+  bytes bytes = 1;
+}
