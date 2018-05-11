@@ -100,6 +100,9 @@ func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 		"--config=/etc/kubernetes/kubeadm.yaml",
 		"--ignore-preflight-errors=cri",
 	}
+	if !data.Kubernetes.Join {
+		args = append(args, "--skip-token-print")
+	}
 
 	return name, args
 }
