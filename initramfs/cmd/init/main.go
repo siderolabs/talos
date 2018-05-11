@@ -13,12 +13,11 @@ import (
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/mount"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/rootfs"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/switchroot"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
 )
 
 var (
-	switchRoot *bool
+	switchroot *bool
 )
 
 func hang() {
@@ -38,7 +37,7 @@ func init() {
 		panic(err)
 	}
 
-	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
+	switchroot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
 }
 
@@ -79,7 +78,7 @@ func root() (err error) {
 		UserData: data,
 	}
 
-	// Start the Dianemo gRPC service.
+	// Start the OSD gRPC service.
 	services.Start(&service.OSD{})
 
 	// Start the services essential to running Kubernetes.
@@ -100,13 +99,13 @@ func root() (err error) {
 func main() {
 	defer hang()
 
-	if !*switchRoot {
-		if err := initram(); err != nil {
+	if *switchroot {
+		if err := root(); err != nil {
 			panic(err)
 		}
 	}
 
-	if err := root(); err != nil {
+	if err := initram(); err != nil {
 		panic(err)
 	}
 

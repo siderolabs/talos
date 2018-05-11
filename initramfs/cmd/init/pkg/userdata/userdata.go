@@ -56,41 +56,39 @@ type Kubernetes struct {
 }
 
 // Download initializes a UserData struct from a remote URL.
-func Download() (UserData, error) {
-	userData := UserData{}
-
+func Download() (data UserData, err error) {
 	arguments, err := kernel.ParseProcCmdline()
 	if err != nil {
-		return userData, fmt.Errorf("parse kernel parameters: %s", err.Error())
+		return data, fmt.Errorf("parse kernel parameters: %s", err.Error())
 	}
 	url, ok := arguments[constants.KernelParamUserData]
 	if !ok {
-		return userData, nil
+		return
 	}
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return userData, err
+		return
 	}
 	// nolint: errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return userData, err
+		return
 	}
 
-	userDataBytes, err := ioutil.ReadAll(resp.Body)
+	dataBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return userData, err
+		return
 	}
 
 	if err != nil {
-		return userData, fmt.Errorf("download user data: %s", err.Error())
+		return data, fmt.Errorf("download user data: %s", err.Error())
 	}
 
-	if err := yaml.Unmarshal(userDataBytes, &userData); err != nil {
-		return userData, fmt.Errorf("decode user data: %s", err.Error())
+	if err := yaml.Unmarshal(dataBytes, &data); err != nil {
+		return data, fmt.Errorf("decode user data: %s", err.Error())
 	}
 
-	return userData, nil
+	return data, nil
 }

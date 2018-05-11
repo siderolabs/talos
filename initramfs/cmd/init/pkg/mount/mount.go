@@ -4,6 +4,7 @@ package mount
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"sync"
@@ -49,7 +50,7 @@ type BlockDevice struct {
 }
 
 // Init initializes the mount points.
-func Init(s string) error {
+func Init(s string) (err error) {
 	once.Do(func() {
 		instance = struct {
 			special      map[string]*Point
@@ -60,41 +61,11 @@ func Init(s string) error {
 		}
 	})
 
-	for _, mountpoint := range instance.special {
-		if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
-			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
-		}
-		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
-		}
+	if err = mountSpecialDevices(); err != nil {
+		return
 	}
-
-	probed, err := probe()
-	if err != nil {
-		return fmt.Errorf("probe block devices: %s", err.Error())
-	}
-	for _, b := range probed {
-		mountpoint := &Point{
-			source: b.dev,
-			fstype: b.TYPE,
-			flags:  unix.MS_NOATIME,
-			data:   "",
-		}
-		switch b.LABEL {
-		case constants.RootPartitionLabel:
-			mountpoint.target = s
-		case constants.DataPartitionLabel:
-			mountpoint.target = path.Join(s, "var")
-		}
-
-		if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
-			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
-		}
-		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
-		}
-
-		instance.blockdevices[b.LABEL] = mountpoint
+	if err = mountBlockDevices(s); err != nil {
+		return
 	}
 
 	return nil
@@ -181,6 +152,56 @@ func Unmount() error {
 		if err := unix.Unmount(mountpoint.target, 0); err != nil {
 			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
 		}
+	}
+
+	return nil
+}
+
+func mountSpecialDevices() (err error) {
+	for _, mountpoint := range instance.special {
+		if err = os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
+			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+		}
+		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		}
+		log.Printf("mounted %s", mountpoint.target)
+	}
+
+	return nil
+}
+
+func mountBlockDevices(s string) (err error) {
+	probed, err := probe()
+	if err != nil {
+		return fmt.Errorf("probe block devices: %s", err.Error())
+	}
+	for _, b := range probed {
+		mountpoint := &Point{
+			source: b.dev,
+			fstype: b.TYPE,
+			flags:  unix.MS_NOATIME,
+			data:   "",
+		}
+		switch b.LABEL {
+		case constants.RootPartitionLabel:
+			mountpoint.target = s
+		case constants.DataPartitionLabel:
+			mountpoint.target = path.Join(s, "var")
+		default:
+			continue
+		}
+
+		if err = os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
+			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+		}
+		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		}
+
+		log.Printf("mounted %s", mountpoint.target)
+
+		instance.blockdevices[b.LABEL] = mountpoint
 	}
 
 	return nil
