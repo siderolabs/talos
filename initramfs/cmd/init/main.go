@@ -13,11 +13,12 @@ import (
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/mount"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/rootfs"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service"
+	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/switchroot"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
 )
 
 var (
-	switchroot *bool
+	switchRoot *bool
 )
 
 func hang() {
@@ -37,7 +38,7 @@ func init() {
 		panic(err)
 	}
 
-	switchroot = flag.Bool("switch-root", false, "perform a switch_root")
+	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
 }
 
@@ -99,7 +100,7 @@ func root() (err error) {
 func main() {
 	defer hang()
 
-	if *switchroot {
+	if *switchRoot {
 		if err := root(); err != nil {
 			panic(err)
 		}
