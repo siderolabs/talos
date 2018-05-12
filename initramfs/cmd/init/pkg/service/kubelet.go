@@ -58,7 +58,7 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	default:
 	}
 
-	if data.Kubernetes.Join {
+	if !data.Kubernetes.Init {
 		labels := "--node-labels="
 		for k, v := range data.Kubernetes.Labels {
 			labels += k + "=" + v + ","

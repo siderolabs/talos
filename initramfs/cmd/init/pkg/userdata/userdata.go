@@ -45,14 +45,11 @@ type CertificateAndKeyPaths struct {
 
 // Kubernetes represents the Kubernetes specific configuration options.
 type Kubernetes struct {
-	CA                         *CertificateAndKeyPaths `yaml:"ca,omitempty"`
-	Token                      string                  `yaml:"token"`
-	Join                       bool                    `yaml:"join,omitempty"`
-	APIServer                  string                  `yaml:"apiServer,omitempty"`
-	NodeName                   string                  `yaml:"nodeName,omitempty"`
-	Labels                     map[string]string       `yaml:"labels,omitempty"`
-	ContainerRuntime           string                  `yaml:"containerRuntime,omitempty"`
-	DiscoveryTokenCACertHashes []string                `yaml:"discoveryTokenCACertHashes,omitempty"`
+	CA               *CertificateAndKeyPaths `yaml:"ca,omitempty"`
+	Init             bool                    `yaml:"init,omitempty"`
+	ContainerRuntime string                  `yaml:"containerRuntime,omitempty"`
+	Labels           map[string]string       `yaml:"labels,omitempty"`
+	Configuration    string                  `yaml:"configuration,omitempty"`
 }
 
 // Download initializes a UserData struct from a remote URL.
