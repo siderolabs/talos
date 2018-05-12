@@ -110,14 +110,6 @@ var injectKubernetesCmd = &cobra.Command{
 			}
 			data.Kubernetes.CA.Key = base64.StdEncoding.EncodeToString(fileBytes)
 		}
-		if hash != "" {
-			fileBytes, err = ioutil.ReadFile(hash + ".sha256")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			data.Kubernetes.DiscoveryTokenCACertHashes = []string{string(fileBytes)}
-		}
 
 		dataBytes, err := yaml.Marshal(data)
 		if err != nil {
