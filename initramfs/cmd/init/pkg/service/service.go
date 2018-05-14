@@ -9,7 +9,7 @@ import (
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/constants"
 	servicelog "github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service/log"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
 // Type represents the service's restart policy.
@@ -57,7 +57,7 @@ func (m *Manager) build(proc Service) (cmd *exec.Cmd, err error) {
 	// Setup logging.
 	w, err := servicelog.New(path.Base(name))
 	if err != nil {
-		err = fmt.Errorf("service log handler: %s", err.Error())
+		err = fmt.Errorf("service log handler: %v", err)
 		return
 	}
 	cmd.Stdout = w
@@ -73,12 +73,11 @@ func (m *Manager) Start(proc Service) {
 	go func(proc Service) {
 		err := proc.Pre(m.UserData)
 		if err != nil {
-			log.Printf("pre: %s", err.Error())
+			log.Printf("pre: %v", err)
 		}
 		satisfied, err := proc.Condition(m.UserData)()
 		if err != nil {
-			// TODO: Write the error to the log writer.
-			log.Printf("condition: %s", err.Error())
+			log.Printf("condition: %v", err)
 		}
 		if !satisfied {
 			log.Printf("condition not satisfied")
@@ -89,11 +88,11 @@ func (m *Manager) Start(proc Service) {
 		switch proc.Type() {
 		case Forever:
 			if err := m.waitAndRestart(proc); err != nil {
-				log.Printf("run: %s", err.Error())
+				log.Printf("run: %v", err)
 			}
 		case Once:
 			if err := m.waitForSuccess(proc); err != nil {
-				log.Printf("run: %s", err.Error())
+				log.Printf("run: %v", err)
 			}
 		}
 	}(proc)

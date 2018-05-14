@@ -115,8 +115,8 @@ func Switch(s string) error {
 	if err := recursiveDelete(int(oldRoot.Fd())); err != nil {
 		panic(err)
 	}
-	if err := syscall.Exec("/sbin/init", []string{"init", "--switch-root"}, []string{}); err != nil {
-		return fmt.Errorf("exec /sbin/init: %s", err.Error())
+	if err := syscall.Exec("/proc/self/exe", []string{"exe", "--switch-root"}, []string{}); err != nil {
+		return fmt.Errorf("exec /proc/self/exe: %s", err.Error())
 	}
 
 	return nil

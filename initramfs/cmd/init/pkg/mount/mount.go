@@ -4,7 +4,6 @@ package mount
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"sync"
@@ -165,7 +164,6 @@ func mountSpecialDevices() (err error) {
 		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
 			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
 		}
-		log.Printf("mounted %s", mountpoint.target)
 	}
 
 	return nil
@@ -198,8 +196,6 @@ func mountBlockDevices(s string) (err error) {
 		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
 			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
 		}
-
-		log.Printf("mounted %s", mountpoint.target)
 
 		instance.blockdevices[b.LABEL] = mountpoint
 	}

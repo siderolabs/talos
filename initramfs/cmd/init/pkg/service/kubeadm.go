@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,7 +8,7 @@ import (
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service/conditions"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
 // Kubeadm implements the Service interface. It serves as the concrete type with
@@ -78,26 +77,18 @@ func writeKubeadmManifest(data string) (err error) {
 	return nil
 }
 
-func writeKubeadmPKIFiles(data *userdata.CertificateAndKeyPaths) (err error) {
-	caCrtBytes, err := base64.StdEncoding.DecodeString(data.Crt)
-	if err != nil {
-		return err
-	}
+func writeKubeadmPKIFiles(data *userdata.PEMEncodedCertificateAndKey) (err error) {
 	if err = os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(constants.KubeadmCACert, caCrtBytes, 0400); err != nil {
+	if err = ioutil.WriteFile(constants.KubeadmCACert, data.Crt, 0400); err != nil {
 		return fmt.Errorf("write %s: %s", constants.KubeadmCACert, err.Error())
 	}
 
-	caKeyBytes, err := base64.StdEncoding.DecodeString(data.Key)
-	if err != nil {
-		return err
-	}
 	if err = os.MkdirAll(path.Dir(constants.KubeadmCAKey), 0600); err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(constants.KubeadmCAKey, caKeyBytes, 0400); err != nil {
+	if err = ioutil.WriteFile(constants.KubeadmCAKey, data.Key, 0400); err != nil {
 		return fmt.Errorf("write %s: %s", constants.KubeadmCAKey, err.Error())
 	}
 
