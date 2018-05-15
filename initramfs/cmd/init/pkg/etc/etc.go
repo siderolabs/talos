@@ -7,7 +7,7 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
 const hostsTemplate = `

@@ -7,37 +7,33 @@ import (
 	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
-// OSD implements the Service interface. It serves as the concrete type with
+// ROTD implements the Service interface. It serves as the concrete type with
 // the required methods.
-type OSD struct{}
+type ROTD struct{}
 
 // Pre implements the Service interface.
-func (p *OSD) Pre(data userdata.UserData) error {
+func (p *ROTD) Pre(data userdata.UserData) error {
 	return nil
 }
 
 // Cmd implements the Service interface.
-func (p *OSD) Cmd(data userdata.UserData) (name string, args []string) {
-	name = "/bin/osd"
+func (p *ROTD) Cmd(data userdata.UserData) (name string, args []string) {
+	name = "/bin/rotd"
 	args = []string{
-		"--port=50000",
+		"--port=50001",
 		"--userdata=" + constants.UserDataPath,
-	}
-
-	if data.OS.Security.RootsOfTrust.Generate {
-		args = append(args, "--generate=true")
 	}
 
 	return name, args
 }
 
 // Condition implements the Service interface.
-func (p *OSD) Condition(data userdata.UserData) func() (bool, error) {
+func (p *ROTD) Condition(data userdata.UserData) func() (bool, error) {
 	return conditions.None()
 }
 
 // Env implements the Service interface.
-func (p *OSD) Env() []string { return []string{} }
+func (p *ROTD) Env() []string { return []string{} }
 
 // Type implements the Service interface.
-func (p *OSD) Type() Type { return Forever }
+func (p *ROTD) Type() Type { return Forever }

@@ -40,6 +40,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&address, "address", "192.168.1.200", "the address of the node")
+	rootCmd.PersistentFlags().StringVarP(&address, "address", "a", "127.0.0.1", "the address of the node")
 	rootCmd.PersistentFlags().IntVar(&port, "port", 50000, "the port of the gRPC server")
 }

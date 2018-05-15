@@ -30,6 +30,7 @@ tasks:
       COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/vmlinuz /rootfs/boot/vmlinuz
       COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/lib/modules /rootfs/lib/modules
       COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/osd /rootfs/bin/osd
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/rotd /rootfs/bin/rotd
       COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/initramfs.xz /rootfs/boot/initramfs.xz
       COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/init /rootfs/bin/init
       WORKDIR /rootfs

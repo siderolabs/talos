@@ -73,7 +73,9 @@ func NewClient(address string, port int, clientcreds *Credentials) (c *Client, e
 	creds := credentials.NewTLS(&tls.Config{
 		ServerName:   address,
 		Certificates: []tls.Certificate{crt},
-		RootCAs:      certPool,
+		// Set the root certificate authorities to use the self-signed
+		// certificate.
+		RootCAs: certPool,
 	})
 
 	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))

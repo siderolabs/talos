@@ -1,0 +1,19 @@
+
+syntax = "proto3";
+
+package proto;
+
+// The ROTD service definition.
+service ROTD {
+  rpc Certificate(CertificateRequest) returns (CertificateResponse) {}
+}
+
+// The request message containing the process name.
+message CertificateRequest {
+  bytes csr = 1;
+}
+
+// The response message containing the requested logs.
+message CertificateResponse {
+  bytes bytes = 1;
+}

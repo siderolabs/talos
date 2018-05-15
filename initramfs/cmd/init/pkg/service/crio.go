@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service/conditions"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
 const crioConf = `

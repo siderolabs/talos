@@ -8,7 +8,7 @@ import (
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/etc"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 	yaml "gopkg.in/yaml.v2"
 )
 

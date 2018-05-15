@@ -203,8 +203,9 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for OSD service
-
+// OSDClient is the client API for OSD service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type OSDClient interface {
 	Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error)
 	Processes(ctx context.Context, in *ProcessesRequest, opts ...grpc.CallOption) (*ProcessesReply, error)
@@ -222,7 +223,7 @@ func NewOSDClient(cc *grpc.ClientConn) OSDClient {
 
 func (c *oSDClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error) {
 	out := new(Data)
-	err := grpc.Invoke(ctx, "/proto.OSD/Kubeconfig", in, out, c.cc, opts...)
+	err := c.cc.Invoke(ctx, "/proto.OSD/Kubeconfig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +232,7 @@ func (c *oSDClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grp
 
 func (c *oSDClient) Processes(ctx context.Context, in *ProcessesRequest, opts ...grpc.CallOption) (*ProcessesReply, error) {
 	out := new(ProcessesReply)
-	err := grpc.Invoke(ctx, "/proto.OSD/Processes", in, out, c.cc, opts...)
+	err := c.cc.Invoke(ctx, "/proto.OSD/Processes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +240,7 @@ func (c *oSDClient) Processes(ctx context.Context, in *ProcessesRequest, opts ..
 }
 
 func (c *oSDClient) Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (OSD_LogsClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_OSD_serviceDesc.Streams[0], c.cc, "/proto.OSD/Logs", opts...)
+	stream, err := c.cc.NewStream(ctx, &_OSD_serviceDesc.Streams[0], "/proto.OSD/Logs", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +273,7 @@ func (x *oSDLogsClient) Recv() (*Data, error) {
 
 func (c *oSDClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error) {
 	out := new(Data)
-	err := grpc.Invoke(ctx, "/proto.OSD/Dmesg", in, out, c.cc, opts...)
+	err := c.cc.Invoke(ctx, "/proto.OSD/Dmesg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}

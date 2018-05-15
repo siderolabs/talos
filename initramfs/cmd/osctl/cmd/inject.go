@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -40,27 +41,48 @@ var injectOSCmd = &cobra.Command{
 		}
 		if data.OS.Security == nil {
 			data.OS.Security = &userdata.Security{}
-			data.OS.Security.Identity = &userdata.CertificateAndKeyPaths{}
-			data.OS.Security.CA = &userdata.CertificateAndKeyPaths{}
+			data.OS.Security.Identity = &userdata.PEMEncodedCertificateAndKey{}
+			data.OS.Security.CA = &userdata.PEMEncodedCertificateAndKey{}
 		}
+
+		encoded := &bytes.Buffer{}
+		encoder := base64.NewEncoder(base64.StdEncoding, encoded)
+		// nolint: errcheck
+		defer encoder.Close()
 		if identity != "" {
 			fileBytes, err = ioutil.ReadFile(identity + ".crt")
 			if err != nil {
 				os.Exit(1)
 			}
-			data.OS.Security.Identity.Crt = base64.StdEncoding.EncodeToString(fileBytes)
+			if _, err = encoder.Write(fileBytes); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			data.OS.Security.Identity.Crt = encoded.Bytes()
+			encoded.Reset()
+
 			fileBytes, err = ioutil.ReadFile(identity + ".key")
 			if err != nil {
 				os.Exit(1)
 			}
-			data.OS.Security.Identity.Key = base64.StdEncoding.EncodeToString(fileBytes)
+			if _, err = encoder.Write(fileBytes); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			data.OS.Security.Identity.Key = encoded.Bytes()
+			encoded.Reset()
 		}
 		if ca != "" {
 			fileBytes, err = ioutil.ReadFile(ca + ".crt")
 			if err != nil {
 				os.Exit(1)
 			}
-			data.OS.Security.CA.Crt = base64.StdEncoding.EncodeToString(fileBytes)
+			if _, err = encoder.Write(fileBytes); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			data.OS.Security.CA.Crt = encoded.Bytes()
+			encoded.Reset()
 		}
 
 		dataBytes, err := yaml.Marshal(data)
@@ -94,21 +116,34 @@ var injectKubernetesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if data.Kubernetes.CA == nil {
-			data.Kubernetes.CA = &userdata.CertificateAndKeyPaths{}
+			data.Kubernetes.CA = &userdata.PEMEncodedCertificateAndKey{}
 		}
 		if ca != "" {
+			encoded := &bytes.Buffer{}
+			encoder := base64.NewEncoder(base64.StdEncoding, encoded)
 			fileBytes, err = ioutil.ReadFile(ca + ".crt")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			data.Kubernetes.CA.Crt = base64.StdEncoding.EncodeToString(fileBytes)
+			if _, err = encoder.Write(fileBytes); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			data.Kubernetes.CA.Crt = encoded.Bytes()
+			encoded.Reset()
+
 			fileBytes, err = ioutil.ReadFile(ca + ".key")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			data.Kubernetes.CA.Key = base64.StdEncoding.EncodeToString(fileBytes)
+			if _, err = encoder.Write(fileBytes); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			data.Kubernetes.CA.Key = encoded.Bytes()
+			encoded.Reset()
 		}
 
 		dataBytes, err := yaml.Marshal(data)

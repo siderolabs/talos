@@ -7,19 +7,24 @@ pipeline:
 stages:
   build:
     artifacts:
-    - source: /tmp/osctl
-      destination: ../build/osctl
+    - source: /tmp/osctl-linux-amd64
+      destination: ../build/osctl-linux-amd64
+    - source: /tmp/osctl-darwin-amd64
+      destination: ../build/osctl-darwin-amd64
     tasks:
     - src
     - test
     - osd
+    - rotd
     - osctl
     - init
     - image
   generate:
     artifacts:
-    - source: /go/src/github.com/autonomy/dianemo/proto
+    - source: /go/src/github.com/autonomy/dianemo/initramfs/cmd/osd/proto
       destination: ./cmd/osd
+    - source: /go/src/github.com/autonomy/dianemo/initramfs/cmd/rotd/proto
+      destination: ./cmd/rotd
     tasks:
     - proto
 tasks:
@@ -27,8 +32,10 @@ tasks:
     template: |
       FROM scratch
       WORKDIR /tmp
-      COPY --from=src /osctl osctl
+      COPY --from=src /osctl-linux-amd64 osctl-linux-amd64
+      COPY --from=src /osctl-darwin-amd64 osctl-darwin-amd64
       COPY --from=src /osd osd
+      COPY --from=src /rotd rotd
       COPY --from=src /initramfs/init init
       COPY --from=src /initramfs/initramfs.xz initramfs.xz
       CMD false
@@ -42,9 +49,16 @@ tasks:
   osctl:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
-      RUN GOOS=darwin go build -o /{{ .Docker.CurrentStage }}
-      RUN chmod +x /{{ .Docker.CurrentStage }}
+      RUN GOOS=linux GOARCH=amd64 go build -o /{{ .Docker.CurrentStage }}-linux-amd64
+      RUN chmod +x /{{ .Docker.CurrentStage }}-linux-amd64
+      RUN GOOS=darwin GOARCH=amd64 go build -o /{{ .Docker.CurrentStage }}-darwin-amd64
+      RUN chmod +x /{{ .Docker.CurrentStage }}-darwin-amd64
   osd:
+    template: |
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
+      RUN go build -o /{{ .Docker.CurrentStage }}
+      RUN chmod +x /{{ .Docker.CurrentStage }}
+  rotd:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
       RUN go build -o /{{ .Docker.CurrentStage }}
@@ -52,7 +66,6 @@ tasks:
   proto:
     template: |
       FROM golang:1.10.0 AS {{ .Docker.CurrentStage }}
-      WORKDIR /go/src/github.com/autonomy/dianemo
       RUN apt-get update
       RUN apt-get -y install bsdtar
       RUN go get github.com/golang/protobuf/protoc-gen-go
@@ -60,7 +73,11 @@ tasks:
           && mv /tmp/bin/protoc /bin \
           && mv /tmp/include/* /usr/local/include \
           && chmod +x /bin/protoc
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/osd
       COPY ./cmd/osd/proto ./proto
+      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/rotd
+      COPY ./cmd/rotd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   src:
     template: |

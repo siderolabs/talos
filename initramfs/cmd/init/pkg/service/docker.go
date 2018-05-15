@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service/conditions"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
 // Docker implements the Service interface. It serves as the concrete type with

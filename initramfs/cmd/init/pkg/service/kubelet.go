@@ -6,7 +6,7 @@ import (
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service/conditions"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/userdata"
+	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 )
 
 // Kubelet implements the Service interface. It serves as the concrete type with
