@@ -2,6 +2,7 @@ metadata:
   repository: dianemo/kernel
   variables:
     artifacts: /artifacts
+    runcCheckConfig: https://raw.githubusercontent.com/opencontainers/runc/v1.0.0-rc5/script/check-config.sh
     srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.34.tar.xz
 pipeline:
   stages:
@@ -16,10 +17,16 @@ tasks:
       FROM dianemo/tools:{{ .Docker.Image.Tag}} AS {{ .Docker.CurrentStage }}
       WORKDIR /tools/usr/local/src/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcLinux" }} | tar --strip-components=1 -xJ
+      ADD {{ index .Variables "runcCheckConfig" }} /bin/check-config.sh
+      RUN chmod +x /bin/check-config.sh
       RUN make mrproper
       COPY src/linux/config .config
+      RUN mkdir -p /usr/bin \
+          && ln -s /tools/bin/env /usr/bin/env \
+          && ln -s /tools/bin/true /bin/true \
+          && ln -s /tools/bin/pwd /bin/pwd
+      RUN check-config.sh .config
       RUN mkdir /tmp
-      RUN ln /tools/bin/pwd /bin/pwd
       RUN make -j $(($(nproc) / 2))
       RUN make modules_install INSTALL_MOD_PATH=/tmp
       RUN depmod -b /tmp 4.14.34-dianemo
