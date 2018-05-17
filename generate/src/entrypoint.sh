@@ -42,7 +42,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=/dev/xvda dianemo.autonomy.io/userdata=http://169.254.169.254/latest/user-data
+  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=/dev/xvda
 EOF
   cp -v /rootfs/boot/* /mnt/boot
   umount /mnt
