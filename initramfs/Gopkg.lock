@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/fullsailor/pkcs7"
+  packages = ["."]
+  revision = "ae226422660e5ca10db350d33f81c6608f3fbcdd"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -128,6 +134,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1bbd1b885554621aa55dca10e4a782fdae9ca0b5f03e6e92ad0dedaad3329152"
+  inputs-digest = "2b235d862eee518e921541940f12a89044205ac98feb15d0fef511954bb77bee"
   solver-name = "gps-cdcl"
   solver-version = 1
