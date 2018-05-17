@@ -24,9 +24,9 @@ EOF
 function raw() {
   dd if=/dev/zero of=/dianemo.raw bs=1M count=$(($(size) + 150))
   parted -s /dianemo.raw mklabel gpt
-  parted -s -a none /dianemo.raw mkpart ESP fat32 0 50M
-  parted -s -a none /dianemo.raw mkpart ROOT xfs 50M $(($(size) + 100))M
-  parted -s -a none /dianemo.raw mkpart DATA xfs $(($(size) + 100))M $(($(size) + 150))M
+  parted -s -a optimal /dianemo.raw mkpart ESP fat32 0 50M
+  parted -s -a optimal /dianemo.raw mkpart ROOT xfs 50M $(($(size) + 100))M
+  parted -s -a optimal /dianemo.raw mkpart DATA xfs $(($(size) + 100))M 100%
   losetup /dev/loop0 /dianemo.raw
   partx -av /dev/loop0
   sgdisk /dev/loop0 --attributes=1:set:2
@@ -42,7 +42,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=/dev/xvda
+  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=/dev/xvda dianemo.autonomy.io/userdata=http://169.254.169.254/latest/user-data
 EOF
   cp -v /rootfs/boot/* /mnt/boot
   umount /mnt
@@ -62,8 +62,8 @@ EOF
 function rootfs() {
   dd if=/dev/zero of=/rootfs.raw bs=1M count=$(($(size) + 100))
   parted -s /rootfs.raw mklabel gpt
-  parted -s -a none /rootfs.raw mkpart ROOT xfs 0 $(($(size) + 50))M
-  parted -s -a none /rootfs.raw mkpart DATA xfs $(($(size) + 50))M $(($(size) + 100))M
+  parted -s -a optimal /rootfs.raw mkpart ROOT xfs 0 $(($(size) + 50))M
+  parted -s -a optimal /rootfs.raw mkpart DATA xfs $(($(size) + 50))M 100%
   losetup /dev/loop0 /rootfs.raw
   partx -av /dev/loop0
   mkfs.xfs -n ftype=1 -L ROOT /dev/loop0p1

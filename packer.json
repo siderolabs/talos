@@ -1,0 +1,79 @@
+{
+    "variables": {
+        "built": "{{ isotime }}"
+    },
+    "builders": [
+        {
+            "type": "amazon-ebssurrogate",
+            "region": "{{ user `region` }}",
+            "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
+            "ssh_pty": true,
+            "instance_type": "t2.small",
+            "associate_public_ip_address": true,
+            "ssh_username": "ubuntu",
+            "ssh_timeout": "5m",
+            "source_ami_filter": {
+                "filters": {
+                    "virtualization-type": "hvm",
+                    "name": "*ubuntu-yakkety-16.10-amd64-server-*",
+                    "root-device-type": "ebs"
+                },
+                "owners": [
+                    "099720109477"
+                ],
+                "most_recent": true
+            },
+            "launch_block_device_mappings": [
+                {
+                    "device_name": "/dev/xvdf",
+                    "delete_on_termination": true,
+                    "volume_size": 8,
+                    "volume_type": "gp2"
+                }
+            ],
+            "run_tags": {
+                "Name": "Packer - Dianemo {{ user `version` }}"
+            },
+            "run_volume_tags": {
+                "Name": "Packer - Dianemo {{ user `version` }}"
+            },
+            "ami_name": "dianemo-amd64-hvm-{{ user `version` }}",
+            "ami_description": "Dianemo (HVM)",
+            "ami_virtualization_type": "hvm",
+            "ami_regions": [
+                "us-west-1",
+                "us-west-2",
+                "us-east-1",
+                "us-east-2"
+            ],
+            "ami_root_device": {
+                "source_device_name": "/dev/xvdf",
+                "device_name": "/dev/xvda",
+                "delete_on_termination": true,
+                "volume_size": 8,
+                "volume_type": "gp2"
+            },
+            "tags": {
+                "Name": "Dianemo {{ user `version` }}",
+                "Built": "{{ user `built` }}"
+            }
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "file",
+            "source": "build/dianemo.raw",
+            "destination": "/tmp/dianemo.raw"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo dd if=/tmp/dianemo.raw of=/dev/xvdf",
+                "echo -n 'Fix\n3\n100%\n' | sudo parted /dev/xvdf ---pretend-input-tty unit % resizepart",
+                "sudo mount /dev/xvdf3 /mnt",
+                "sudo xfs_growfs -d /dev/xvdf3",
+                "sudo umount /mnt"
+            ]
+        }
+    ]
+}
