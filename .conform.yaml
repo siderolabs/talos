@@ -23,10 +23,16 @@ policies:
 script:
   template: |
     #!/bin/sh
+
     set -e
+
     cd tools && conform enforce
     cd ../kernel && conform enforce
     cd ../initramfs && conform enforce
     cd ../rootfs && conform enforce
     cd ../generate && conform enforce
     cd ../
+
+    {{ if or (and .Git.IsClean .Git.IsTag) (and .Git.IsClean (eq .Git.Branch "master")) }}
+    packer build -var 'version={{ .Docker.Image.Tag }}' packer.json
+    {{ end }}
