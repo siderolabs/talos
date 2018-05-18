@@ -102,6 +102,7 @@ func (c *Client) Kubeconfig() (err error) {
 }
 
 // Dmesg implements the proto.OSDClient interface.
+// nolint: dupl
 func (c *Client) Dmesg() (err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -133,4 +134,18 @@ func (c *Client) Logs(r *proto.LogsRequest) (err error) {
 		}
 		fmt.Print(string(data.Bytes))
 	}
+}
+
+// Version implements the proto.OSDClient interface.
+// nolint: dupl
+func (c *Client) Version() (err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	data, err := c.client.Version(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+	fmt.Print(string(data.Bytes))
+
+	return nil
 }

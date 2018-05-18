@@ -11,6 +11,7 @@ import (
 	servicelog "github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service/log"
 	"github.com/autonomy/dianemo/initramfs/cmd/osd/proto"
 	"github.com/autonomy/dianemo/initramfs/pkg/chunker"
+	"github.com/autonomy/dianemo/initramfs/pkg/version"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/kubernetes-incubator/cri-o/client"
 	"golang.org/x/sys/unix"
@@ -107,4 +108,16 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 	}
 
 	return nil
+}
+
+// Version implements the proto.OSDServer interface.
+func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (data *proto.Data, err error) {
+	v, err := version.NewVersion()
+	if err != nil {
+		return
+	}
+
+	data = &proto.Data{Bytes: []byte(v)}
+
+	return data, err
 }

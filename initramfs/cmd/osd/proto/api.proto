@@ -11,6 +11,7 @@ service OSD {
   rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
   rpc Logs(LogsRequest) returns (stream Data) {}
   rpc Dmesg(google.protobuf.Empty) returns (Data) {}
+  rpc Version(google.protobuf.Empty) returns (Data) {}
 }
 
 // The request message containing the process name.

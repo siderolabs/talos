@@ -1,5 +1,7 @@
 metadata:
   repository: dianemo/initramfs
+  variables:
+    versionPath: github.com/autonomy/dianemo/initramfs/pkg/version
 pipeline:
   stages:
   - generate
@@ -42,26 +44,55 @@ tasks:
   init:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/init
-      RUN go build -ldflags '-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid"' -o /initramfs/init
+      {{ if and .Git.IsClean .Git.IsTag }}
+      RUN GOOS=linux GOARCH=amd64 go build \
+        -ldflags '-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X {{ index .Variables "versionPath" }}.Built={{ .Built }}' \
+        -o /initramfs/init
+      {{ else }}
+      RUN GOOS=linux GOARCH=amd64 go build \
+        -ldflags '-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}' \
+        -o /initramfs/init
+      {{ end }}
       RUN chmod +x /initramfs/init
       WORKDIR /initramfs
       RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/initramfs/initramfs.xz
   osctl:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
-      RUN GOOS=linux GOARCH=amd64 go build -o /{{ .Docker.CurrentStage }}-linux-amd64
+      {{ if and .Git.IsClean .Git.IsTag }}
+      RUN GOOS=linux GOARCH=amd64 go build -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X {{ index .Variables "versionPath" }}.Built={{ .Built }}" \
+        -o /{{ .Docker.CurrentStage }}-linux-amd64
+      RUN GOOS=darwin GOARCH=amd64 go build -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X {{ index .Variables "versionPath" }}.Built={{ .Built }}" \
+        -o /{{ .Docker.CurrentStage }}-darwin-amd64
+      {{ else }}
+      RUN GOOS=linux GOARCH=amd64 go build -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -o /{{ .Docker.CurrentStage }}-linux-amd64
+      RUN GOOS=darwin GOARCH=amd64 go build -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -o /{{ .Docker.CurrentStage }}-darwin-amd64
+      {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}-linux-amd64
-      RUN GOOS=darwin GOARCH=amd64 go build -o /{{ .Docker.CurrentStage }}-darwin-amd64
       RUN chmod +x /{{ .Docker.CurrentStage }}-darwin-amd64
   osd:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
-      RUN go build -o /{{ .Docker.CurrentStage }}
+      {{ if and .Git.IsClean .Git.IsTag }}
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Server -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X {{ index .Variables "versionPath" }}.Built={{ .Built }}" \
+        -o /{{ .Docker.CurrentStage }}
+      {{ else }}
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Server -X {{ index .Variables "versionPath" }}.Tag={{ .Docker.Image.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -o /{{ .Docker.CurrentStage }}
+      {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
   rotd:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/{{ .Docker.CurrentStage }}
-      RUN go build -o /{{ .Docker.CurrentStage }}
+      RUN CGO_ENABLED=0 go build -a -ldflags "-s -w" -o /{{ .Docker.CurrentStage }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
   proto:
     template: |
