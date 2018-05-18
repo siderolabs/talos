@@ -43,6 +43,10 @@ func Prepare(s string, userdata userdata.UserData) (err error) {
 	if err = etc.ResolvConf(s, userdata); err != nil {
 		return
 	}
+	// Create /etc/os-release.
+	if err = etc.OSRelease(s); err != nil {
+		return
+	}
 	// Save the user data to disk.
 	data, err := yaml.Marshal(&userdata)
 	if err != nil {

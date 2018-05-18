@@ -77,7 +77,6 @@ stages:
     - cri-o
     - docker
     - kubernetes
-    - etc
     - cleanup
   rootfs:
     tasks:
@@ -162,22 +161,6 @@ tasks:
             --without-bzlib
       RUN make
       RUN make -C libelf install DESTDIR={{ index .Variables "rootfs" }}
-  etc:
-    template: |
-      RUN echo NAME="Dianemo" > {{ index .Variables "rootfs" }}/etc/os-release
-      RUN echo ID=dianemo >> {{ index .Variables "rootfs" }}/etc/os-release
-      {{ if not .Git.IsClean }}
-      RUN echo VERSION_ID=dirty >> {{ index .Variables "rootfs" }}/etc/os-release
-      RUN echo 'PRETTY_NAME="Dianemo (dirty) by Autonomy"' >> {{ index .Variables "rootfs" }}/etc/os-release
-      {{ else if .Git.IsTag }}
-      RUN echo VERSION_ID={{ .Git.Tag }} >> {{ index .Variables "rootfs" }}/etc/os-release
-      RUN echo 'PRETTY_NAME="Dianemo ({{ .Git.Tag }}) by Autonomy"' >> {{ index .Variables "rootfs" }}/etc/os-release
-      {{ else }}
-      RUN echo VERSION_ID={{ .Git.SHA }} >> {{ index .Variables "rootfs" }}/etc/os-release
-      RUN echo 'PRETTY_NAME="Dianemo ({{ .Git.SHA }}) by Autonomy"' >> {{ index .Variables "rootfs" }}/etc/os-release
-      {{ end }}
-      RUN echo HOME_URL="https://dianemo.autonomy.io/" >> {{ index .Variables "rootfs" }}/etc/os-release
-      RUN echo BUG_REPORT_URL="https://github.com/autonomy/dianemo/issues" >> {{ index .Variables "rootfs" }}/etc/os-release
   ethtool:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
