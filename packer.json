@@ -70,6 +70,7 @@
             "inline": [
                 "sudo dd if=/tmp/dianemo.raw of=/dev/xvdf",
                 "echo -n 'Fix\n3\n100%\n' | sudo parted /dev/xvdf ---pretend-input-tty unit % resizepart",
+                "sudo blockdev --rereadpt /dev/xvdf",
                 "sudo mount /dev/xvdf3 /mnt",
                 "sudo xfs_growfs -d /dev/xvdf3",
                 "sudo umount /mnt"
