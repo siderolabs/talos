@@ -1,9 +1,12 @@
 package etc
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"text/template"
@@ -22,9 +25,9 @@ ff02::2         ip6-allrouters
 `
 
 const resolvConfTemplate = `
-{{ range $_, $ip := . }}
+{{- range $_, $ip := . -}}
 nameserver {{ $ip }}
-{{ end }}
+{{- end -}}
 `
 
 const osReleaseTemplate = `
@@ -72,7 +75,15 @@ func ResolvConf(s string, userdata userdata.UserData) (err error) {
 	}
 	var buf []byte
 	writer := bytes.NewBuffer(buf)
-	err = tmpl.Execute(writer, userdata.OS.Network.Nameservers)
+	ip, err := DefaultGateway()
+	if err != nil {
+		return
+	}
+	nameservers := []string{ip}
+	if userdata.OS.Network != nil {
+		nameservers = append(nameservers, userdata.OS.Network.Nameservers...)
+	}
+	err = tmpl.Execute(writer, nameservers)
 	if err != nil {
 		return
 	}
@@ -113,4 +124,41 @@ func OSRelease(s string) (err error) {
 	}
 
 	return nil
+}
+
+// DefaultGateway parses /proc/net/route for the IP address of the default
+// gateway.
+func DefaultGateway() (s string, err error) {
+	handle, err := os.Open("/proc/net/route")
+	if err != nil {
+		return
+	}
+	// nolint: errcheck
+	defer handle.Close()
+	scanner := bufio.NewScanner(handle)
+
+	for scanner.Scan() {
+		parts := strings.Split(scanner.Text(), "\t")
+		if len(parts) < 3 {
+			return s, fmt.Errorf("expected at least 3 fields from /proc/net/route, got %d", len(parts))
+		}
+		// Skip the header.
+		if parts[0] == "Iface" {
+			continue
+		}
+		destination := parts[1]
+		gateway := parts[2]
+		// We are looking for the default gateway.
+		if destination == "00000000" {
+			var decoded []byte
+			decoded, err = hex.DecodeString(gateway)
+			if err != nil {
+				return
+			}
+			s = fmt.Sprintf("%v.%v.%v.%v", decoded[3], decoded[2], decoded[1], decoded[0])
+			break
+		}
+	}
+
+	return s, nil
 }
