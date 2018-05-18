@@ -57,9 +57,7 @@ type OS struct {
 
 // Network represents the operating system networking specific configuration
 // options.
-type Network struct {
-	Nameservers []string `yaml:"nameservers,omitempty"`
-}
+type Network struct{}
 
 // Security represents the operating system security specific configuration
 // options.
