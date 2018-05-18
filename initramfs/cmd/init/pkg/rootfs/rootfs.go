@@ -40,7 +40,7 @@ func Prepare(s string, userdata userdata.UserData) (err error) {
 		return
 	}
 	// Create /etc/resolv.conf.
-	if err = etc.ResolvConf(s, userdata); err != nil {
+	if err = etc.ResolvConf(s); err != nil {
 		return
 	}
 	// Create /etc/os-release.

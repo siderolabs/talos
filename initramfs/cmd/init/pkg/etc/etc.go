@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 	"github.com/autonomy/dianemo/initramfs/pkg/version"
 )
 
@@ -22,12 +21,6 @@ const hostsTemplate = `
 ::1             localhost ip6-localhost ip6-loopback
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
-`
-
-const resolvConfTemplate = `
-{{- range $_, $ip := . -}}
-nameserver {{ $ip }}
-{{- end -}}
 `
 
 const osReleaseTemplate = `
@@ -67,29 +60,11 @@ func Hosts(s, hostname, ip string) (err error) {
 	return nil
 }
 
-// ResolvConf renders a valid /etc/resolv.conf file and writes it to disk.
-func ResolvConf(s string, userdata userdata.UserData) (err error) {
-	tmpl, err := template.New("").Parse(resolvConfTemplate)
-	if err != nil {
+// ResolvConf symlinks /proc/net/pnp to /etc/resolv.conf. See
+// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt.
+func ResolvConf(s string) (err error) {
+	if err = os.Symlink("/proc/net/pnp", path.Join(s, "/etc/resolv.conf")); err != nil {
 		return
-	}
-	var buf []byte
-	writer := bytes.NewBuffer(buf)
-	ip, err := DefaultGateway()
-	if err != nil {
-		return
-	}
-	nameservers := []string{ip}
-	if userdata.OS.Network != nil {
-		nameservers = append(nameservers, userdata.OS.Network.Nameservers...)
-	}
-	err = tmpl.Execute(writer, nameservers)
-	if err != nil {
-		return
-	}
-
-	if err := ioutil.WriteFile(path.Join(s, "/etc/resolv.conf"), writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /etc/resolv.conf: %v", err)
 	}
 
 	return nil
