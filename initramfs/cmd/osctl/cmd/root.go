@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	address      string
 	ca           string
+	crt          string
 	key          string
 	isContainer  bool
 	organization string
@@ -40,6 +40,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&address, "address", "a", "127.0.0.1", "the address of the node")
 	rootCmd.PersistentFlags().IntVar(&port, "port", 50000, "the port of the gRPC server")
 }
