@@ -4,12 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"os/user"
-	"path"
 
+	"github.com/autonomy/dianemo/initramfs/cmd/osctl/pkg/config"
 	"github.com/autonomy/dianemo/initramfs/cmd/osd/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -19,9 +18,10 @@ import (
 // Credentials represents the set of values required to initialize a vaild
 // Client.
 type Credentials struct {
-	ca  string
-	crt string
-	key string
+	target string
+	ca     []byte
+	crt    []byte
+	key    []byte
 }
 
 // Client implements the proto.OSDClient interface. It serves as the
@@ -34,30 +34,39 @@ type Client struct {
 // NewDefaultClientCredentials initializes ClientCredentials using default paths
 // to the required CA, certificate, and key.
 func NewDefaultClientCredentials() (creds *Credentials, err error) {
-	u, err := user.Current()
+	c, err := config.Open()
 	if err != nil {
 		return
 	}
 
+	caBytes, err := base64.StdEncoding.DecodeString(c.Contexts[c.Context].CA)
+	if err != nil {
+		return
+	}
+	crtBytes, err := base64.StdEncoding.DecodeString(c.Contexts[c.Context].Crt)
+	if err != nil {
+		return
+	}
+	keyBytes, err := base64.StdEncoding.DecodeString(c.Contexts[c.Context].Key)
+	if err != nil {
+		return
+	}
 	creds = &Credentials{
-		ca:  path.Join(u.HomeDir, ".dianemo/ca.pem"),
-		crt: path.Join(u.HomeDir, ".dianemo/crt.pem"),
-		key: path.Join(u.HomeDir, ".dianemo/key.pem"),
+		target: c.Contexts[c.Context].Target,
+		ca:     caBytes,
+		crt:    crtBytes,
+		key:    keyBytes,
 	}
 
 	return creds, nil
 }
 
 // NewClient initializes a Client.
-func NewClient(address string, port int, clientcreds *Credentials) (c *Client, err error) {
+func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	grpcOpts := []grpc.DialOption{}
 
-	caBytes, err := ioutil.ReadFile(clientcreds.ca)
-	if err != nil {
-		return
-	}
 	c = &Client{}
-	crt, err := tls.LoadX509KeyPair(clientcreds.crt, clientcreds.key)
+	crt, err := tls.X509KeyPair(clientcreds.crt, clientcreds.key)
 	if err != nil {
 		return nil, fmt.Errorf("could not load client key pair: %s", err)
 	}
@@ -65,13 +74,13 @@ func NewClient(address string, port int, clientcreds *Credentials) (c *Client, e
 	if err != nil {
 		return nil, fmt.Errorf("could not read ca certificate: %s", err)
 	}
-	if ok := certPool.AppendCertsFromPEM(caBytes); !ok {
+	if ok := certPool.AppendCertsFromPEM(clientcreds.ca); !ok {
 		return nil, fmt.Errorf("failed to append client certs")
 	}
 	// TODO: Do not parse the address. Pass the IP and port in as separate
 	// parameters.
 	creds := credentials.NewTLS(&tls.Config{
-		ServerName:   address,
+		ServerName:   clientcreds.target,
 		Certificates: []tls.Certificate{crt},
 		// Set the root certificate authorities to use the self-signed
 		// certificate.
@@ -79,7 +88,7 @@ func NewClient(address string, port int, clientcreds *Credentials) (c *Client, e
 	})
 
 	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
-	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", address, port), grpcOpts...)
+	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", clientcreds.target, port), grpcOpts...)
 	if err != nil {
 		return
 	}

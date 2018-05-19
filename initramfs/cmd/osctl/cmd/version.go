@@ -32,7 +32,7 @@ var versionCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		c, err := client.NewClient(address, port, creds)
+		c, err := client.NewClient(port, creds)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
