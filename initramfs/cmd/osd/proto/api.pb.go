@@ -290,8 +290,7 @@ func (c *oSDClient) Version(ctx context.Context, in *empty.Empty, opts ...grpc.C
 	return out, nil
 }
 
-// Server API for OSD service
-
+// OSDServer is the server API for OSD service.
 type OSDServer interface {
 	Kubeconfig(context.Context, *empty.Empty) (*Data, error)
 	Processes(context.Context, *ProcessesRequest) (*ProcessesReply, error)

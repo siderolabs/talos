@@ -138,8 +138,7 @@ func (c *rOTDClient) Certificate(ctx context.Context, in *CertificateRequest, op
 	return out, nil
 }
 
-// Server API for ROTD service
-
+// ROTDServer is the server API for ROTD service.
 type ROTDServer interface {
 	Certificate(context.Context, *CertificateRequest) (*CertificateResponse, error)
 }
