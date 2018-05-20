@@ -7,7 +7,8 @@ import (
 	"path"
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/etc"
+	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/rootfs/etc"
+	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/rootfs/proc"
 	"github.com/autonomy/dianemo/initramfs/pkg/userdata"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -30,6 +31,10 @@ func ip() string {
 
 // Prepare creates the files required by the installed binaries and libraries.
 func Prepare(s string, userdata userdata.UserData) (err error) {
+	// Enable IP forwarding.
+	if err = proc.WriteSystemProperty("net.ipv4.ip_forward", "1"); err != nil {
+		return
+	}
 	// Create /etc/hosts.
 	hostname, err := os.Hostname()
 	if err != nil {
