@@ -68,10 +68,10 @@ tasks:
         -o /{{ .Docker.CurrentStage }}-darwin-amd64
       {{ else }}
       RUN GOOS=linux GOARCH=amd64 go build -a \
-        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SH={{ .Git.SHA }}" \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /{{ .Docker.CurrentStage }}-linux-amd64
       RUN GOOS=darwin GOARCH=amd64 go build -a \
-        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SH={{ .Git.SHA }}" \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /{{ .Docker.CurrentStage }}-darwin-amd64
       {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}-linux-amd64

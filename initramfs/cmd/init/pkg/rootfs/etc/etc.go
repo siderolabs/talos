@@ -73,6 +73,13 @@ func ResolvConf(s string) (err error) {
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
 // node's OS Image field is reported by the node from /etc/os-release.
 func OSRelease(s string) (err error) {
+	var v string
+	switch version.Tag {
+	case "none":
+		v = version.SHA
+	default:
+		v = version.Tag
+	}
 	data := struct {
 		Name    string
 		ID      string
@@ -80,7 +87,7 @@ func OSRelease(s string) (err error) {
 	}{
 		Name:    version.Name,
 		ID:      strings.ToLower(version.Name),
-		Version: version.Tag,
+		Version: v,
 	}
 
 	tmpl, err := template.New("").Parse(osReleaseTemplate)
