@@ -46,11 +46,11 @@ tasks:
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/initramfs/cmd/init
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
+        -ldflags "-s -w -linkmode external -extldflags \"-static -L/usr/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
         -o /initramfs/init
       {{ else }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -linkmode external -extldflags "-static -L/usr/lib -lblkid -luuid" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -ldflags "-s -w -linkmode external -extldflags \"-static -L/usr/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /initramfs/init
       {{ end }}
       RUN chmod +x /initramfs/init
