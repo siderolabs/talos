@@ -33,6 +33,8 @@ script:
     cd ../generate && conform enforce
     cd ../
 
-    {{ if or (and .Git.IsClean .Git.IsTag) (and .Git.IsClean (eq .Git.Branch "master")) }}
-    packer build -var 'version={{ .Docker.Image.Tag }}' packer.json
+    {{ if and .Git.IsClean .Git.IsTag }}
+    packer build -var 'version={{ .Git.Tag }}' packer.json
+    {{ else if and .Git.IsClean (eq .Git.Branch "master") }}
+    packer build -var 'version={{ .Git.SHA }}' packer.json
     {{ end }}
