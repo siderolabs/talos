@@ -99,7 +99,7 @@ type Kubernetes struct {
 type Kubelet struct {
 	Labels       map[string]string `yaml:"labels,omitempty"`
 	FeatureGates map[string]string `yaml:"featureGates,omitempty"`
-	ExtraArgs    map[string]string `json:"extraArgs,omitempty"`
+	ExtraArgs    map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for
