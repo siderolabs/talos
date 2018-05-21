@@ -48,7 +48,6 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 		"--cadvisor-port=0",
 		"--rotate-certificates=true",
 		"--serialize-image-pulls=false",
-		"--feature-gates=ExperimentalCriticalPodAnnotation=true",
 		"--v=2",
 	}
 
@@ -58,9 +57,22 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 	default:
 	}
 
-	if !data.Kubernetes.Init {
+	for k, v := range data.Kubernetes.Kubelet.ExtraArgs {
+		arg := "--" + k + "=" + v
+		args = append(args, arg)
+	}
+
+	if len(data.Kubernetes.Kubelet.FeatureGates) != 0 {
+		featureGates := "--feature-gates="
+		for k, v := range data.Kubernetes.Kubelet.FeatureGates {
+			featureGates += k + "=" + v + ","
+		}
+		args = append(args, featureGates)
+	}
+
+	if len(data.Kubernetes.Kubelet.Labels) != 0 {
 		labels := "--node-labels="
-		for k, v := range data.Kubernetes.Labels {
+		for k, v := range data.Kubernetes.Kubelet.Labels {
 			labels += k + "=" + v + ","
 		}
 		args = append(args, labels)

@@ -90,9 +90,16 @@ type PEMEncodedCertificateAndKey struct {
 type Kubernetes struct {
 	CA               *PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	Init             bool                         `yaml:"init,omitempty"`
+	Kubelet          Kubelet                      `yaml:"kubelet,omitempty"`
 	ContainerRuntime string                       `yaml:"containerRuntime,omitempty"`
-	Labels           map[string]string            `yaml:"labels,omitempty"`
 	Configuration    string                       `yaml:"configuration,omitempty"`
+}
+
+// Kubelet describes the set of configuration options available for the kubelet.
+type Kubelet struct {
+	Labels       map[string]string `yaml:"labels,omitempty"`
+	FeatureGates map[string]string `yaml:"featureGates,omitempty"`
+	ExtraArgs    map[string]string `json:"extraArgs,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for
