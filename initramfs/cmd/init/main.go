@@ -11,6 +11,7 @@ import (
 
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/mount"
+	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/platform"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/rootfs"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/service"
 	"github.com/autonomy/dianemo/initramfs/cmd/init/pkg/switchroot"
@@ -43,10 +44,21 @@ func initram() (err error) {
 	if err = mount.Init(constants.NewRoot); err != nil {
 		return
 	}
-	// Download the user data.
-	log.Println("downloading the user data")
-	data, err := userdata.Download()
+	// Discover the platform.
+	log.Println("discovering the platform")
+	p, err := platform.NewPlatform()
 	if err != nil {
+		return
+	}
+	// Download the user data.
+	log.Printf("downloading the user data for the platform: %s", p.Name())
+	data, err := p.UserData()
+	if err != nil {
+		return
+	}
+	log.Printf("preparing the node for the platform: %s", p.Name())
+	// Perform any tasks required by a particular platform.
+	if err = p.Prepare(data); err != nil {
 		return
 	}
 	// Prepare the necessary files in the rootfs.
