@@ -125,6 +125,7 @@ tasks:
       RUN cp ./src/touch /bin/touch
       RUN cp ./src/du /bin/du
       RUN cp ./src/nice /bin/nice
+      RUN cp ./src/cut /bin/cut
   cri-o:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
