@@ -5,7 +5,6 @@ metadata:
     srcSyslinux: https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
 script:
   template: |
-    mkdir -p ../build
     docker run --rm -v $PWD/../build:/out -v /dev:/dev --privileged {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }} {{ index .Variables "cmd" }}
 pipeline:
   stages:
