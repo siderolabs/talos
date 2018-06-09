@@ -26,7 +26,7 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // The request message containing the process name.
 type ProcessesRequest struct {
-	Process              string   `protobuf:"bytes,1,opt,name=process" json:"process,omitempty"`
+	Process              string   `protobuf:"bytes,1,opt,name=process,proto3" json:"process,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -104,8 +104,8 @@ func (m *ProcessesReply) GetContent() []byte {
 
 // The request message containing the process name.
 type LogsRequest struct {
-	Process              string   `protobuf:"bytes,1,opt,name=process" json:"process,omitempty"`
-	Container            bool     `protobuf:"varint,2,opt,name=container" json:"container,omitempty"`
+	Process              string   `protobuf:"bytes,1,opt,name=process,proto3" json:"process,omitempty"`
+	Container            bool     `protobuf:"varint,2,opt,name=container,proto3" json:"container,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
