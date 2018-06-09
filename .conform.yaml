@@ -26,6 +26,9 @@ script:
 
     set -e
 
+    mkdir -p ./build
+    rm -rf ./build/*
+
     cd tools && conform enforce
     cd ../kernel && conform enforce
     cd ../initramfs && conform enforce
