@@ -2,59 +2,59 @@ metadata:
   repository: dianemo/tools
   variables:
     srcAutoconf: https://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.xz
-    srcBash: http://ftp.gnu.org/gnu/bash/bash-4.4.12.tar.gz
+    srcBash: https://ftp.gnu.org/gnu/bash/bash-4.4.12.tar.gz
     srcBc: https://ftp.gnu.org/gnu/bc/bc-1.07.1.tar.gz
-    srcBinutils: http://ftp.gnu.org/gnu/binutils/binutils-2.29.1.tar.xz
-    srcBison: http://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.xz
+    srcBinutils: https://ftp.gnu.org/gnu/binutils/binutils-2.29.1.tar.xz
+    srcBison: https://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.xz
     srcBzip2: http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
     srcCheck: https://github.com/libcheck/check/releases/download/0.12.0/check-0.12.0.tar.gz
-    srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
+    srcCoreutils: https://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
     srcCPIO: https://ftp.gnu.org/gnu/cpio/cpio-2.12.tar.gz
     srcCurl: https://curl.haxx.se/download/curl-7.56.1.tar.xz
-    srcDejagnu: http://ftp.gnu.org/gnu/dejagnu/dejagnu-1.6.1.tar.gz
-    srcDiffutils: http://ftp.gnu.org/gnu/diffutils/diffutils-3.6.tar.xz
+    srcDejagnu: https://ftp.gnu.org/gnu/dejagnu/dejagnu-1.6.1.tar.gz
+    srcDiffutils: https://ftp.gnu.org/gnu/diffutils/diffutils-3.6.tar.xz
     srcEd: https://ftp.gnu.org/gnu/ed/ed-1.14.2.tar.lz
     srcElfutils: https://sourceware.org/ftp/elfutils/0.170/elfutils-0.170.tar.bz2
     srcExpat: https://github.com/libexpat/libexpat/releases/download/R_2_2_5/expat-2.2.5.tar.bz2
     srcExpect: https://downloads.sourceforge.net/expect/expect5.45.3.tar.gz
     srcFile: ftp://ftp.astron.com/pub/file/file-5.32.tar.gz
-    srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
+    srcFindutils: https://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
     srcFlex: https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
-    srcGawk: http://ftp.gnu.org/gnu/gawk/gawk-4.2.0.tar.xz
-    srcGcc: http://ftp.gnu.org/gnu/gcc/gcc-7.3.0/gcc-7.3.0.tar.xz
-    srcGdbm: http://ftp.gnu.org/gnu/gdbm/gdbm-1.13.tar.gz
-    srcGettext: http://ftp.gnu.org/gnu/gettext/gettext-0.19.8.1.tar.xz
+    srcGawk: https://ftp.gnu.org/gnu/gawk/gawk-4.2.0.tar.xz
+    srcGcc: https://ftp.gnu.org/gnu/gcc/gcc-7.3.0/gcc-7.3.0.tar.xz
+    srcGdbm: https://ftp.gnu.org/gnu/gdbm/gdbm-1.13.tar.gz
+    srcGettext: https://ftp.gnu.org/gnu/gettext/gettext-0.19.8.1.tar.xz
     srcGit: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.16.2.tar.xz
-    srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
-    srcGmp: http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+    srcGlibc: https://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
+    srcGmp: https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
     srcGo: https://dl.google.com/go/go1.10.linux-amd64.tar.gz
-    srcGperf: http://ftp.gnu.org/gnu/gperf/gperf-3.0.4.tar.gz
-    srcGrep: http://ftp.gnu.org/gnu/grep/grep-3.1.tar.xz
-    srcGzip: http://ftp.gnu.org/gnu/gzip/gzip-1.8.tar.xz
-    srcIntltool: http://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+    srcGperf: https://ftp.gnu.org/gnu/gperf/gperf-3.0.4.tar.gz
+    srcGrep: https://ftp.gnu.org/gnu/grep/grep-3.1.tar.xz
+    srcGzip: https://ftp.gnu.org/gnu/gzip/gzip-1.8.tar.xz
+    srcIntltool: https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
     srcKmod: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-25.tar.xz
     srcLibcap: https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.25.tar.xz
     srcLibffi: ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
     srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.34.tar.xz
-    srcLzip: http://download.savannah.gnu.org/releases/lzip/lzip-1.20.tar.gz
-    srcM4: http://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz
-    srcMake: http://ftp.gnu.org/gnu/make/make-4.2.1.tar.gz
+    srcLzip: https://download.savannah.gnu.org/releases/lzip/lzip-1.20.tar.gz
+    srcM4: https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz
+    srcMake: https://ftp.gnu.org/gnu/make/make-4.2.1.tar.gz
     srcMpc: https://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz
-    srcMpfr: http://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.xz
-    srcNcurses: http://ftp.gnu.org/gnu//ncurses/ncurses-6.0.tar.gz
+    srcMpfr: https://ftp.gnu.org/gnu/mpfr/mpfr-3.1.6.tar.xz
+    srcNcurses: https://ftp.gnu.org/gnu//ncurses/ncurses-6.0.tar.gz
     srcOpenssl: https://www.openssl.org/source/openssl-1.1.0g.tar.gz
-    srcPatch: http://ftp.gnu.org/gnu/patch/patch-2.7.5.tar.xz
-    srcPerl: http://www.cpan.org/src/5.0/perl-5.26.1.tar.xz
+    srcPatch: https://ftp.gnu.org/gnu/patch/patch-2.7.5.tar.xz
+    srcPerl: https://www.cpan.org/src/5.0/perl-5.26.1.tar.xz
     srcPkgconfig: https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
     srcPython: https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tar.xz
-    srcSed: http://ftp.gnu.org/gnu/sed/sed-4.4.tar.xz
-    srcTar: http://ftp.gnu.org/gnu/tar/tar-1.29.tar.xz
-    srcTcl: http://sourceforge.net/projects/tcl/files/Tcl/8.6.7/tcl-core8.6.7-src.tar.gz
-    srcTexinfo: http://ftp.gnu.org/gnu/texinfo/texinfo-6.5.tar.xz
+    srcSed: https://ftp.gnu.org/gnu/sed/sed-4.4.tar.xz
+    srcTar: https://ftp.gnu.org/gnu/tar/tar-1.29.tar.xz
+    srcTcl: https://sourceforge.net/projects/tcl/files/Tcl/8.6.7/tcl-core8.6.7-src.tar.gz
+    srcTexinfo: https://ftp.gnu.org/gnu/texinfo/texinfo-6.5.tar.xz
     srcUtilLinux: https://www.kernel.org/pub/linux/utils/util-linux/v2.31/util-linux-2.31.tar.xz
-    srcXmlParser: http://cpan.metacpan.org/authors/id/T/TO/TODDR/XML-Parser-2.44.tar.gz
+    srcXmlParser: https://cpan.metacpan.org/authors/id/T/TO/TODDR/XML-Parser-2.44.tar.gz
     srcXz: https://github.com/xz-mirror/xz/releases/download/v5.2.2/xz-5.2.2.tar.xz
-    srcZlib: http://zlib.net/zlib-1.2.11.tar.xz
+    srcZlib: https://zlib.net/zlib-1.2.11.tar.xz
 pipeline:
   stages:
   - toolchain-phase-1
