@@ -7,16 +7,16 @@ metadata:
     srcCNI: https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
     srcCNIPlugins: https://github.com/containernetworking/plugins/releases/download/v0.6.0/cni-plugins-amd64-v0.6.0.tgz
     srcConntrackTools: https://netfilter.org/projects/conntrack-tools/files/conntrack-tools-1.4.4.tar.bz2
-    srcCoreutils: http://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
+    srcCoreutils: https://ftp.gnu.org/gnu/coreutils/coreutils-8.27.tar.xz
     srcCRIO: https://github.com/kubernetes-incubator/cri-o/archive/v1.10.1.tar.gz
     srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.0.0-beta.0/crictl-v1.0.0-beta.0-linux-amd64.tar.gz
     srcDocker: https://get.docker.com/builds/Linux/x86_64/docker-1.12.6.tgz
     srcEbtables: ftp://ftp.netfilter.org/pub/ebtables/ebtables-v2.0.10-4.tar.gz
     srcElfutils: https://sourceware.org/ftp/elfutils/0.170/elfutils-0.170.tar.bz2
     srcEthtool: https://www.kernel.org/pub/software/network/ethtool/ethtool-4.15.tar.xz
-    srcFindutils: http://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
-    srcGlib2: http://ftp.gnome.org/pub/gnome/sources/glib/2.56/glib-2.56.0.tar.xz
-    srcGlibc: http://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
+    srcFindutils: https://ftp.gnu.org/gnu/findutils/findutils-4.6.0.tar.gz
+    srcGlib2: https://ftp.gnome.org/pub/gnome/sources/glib/2.56/glib-2.56.0.tar.xz
+    srcGlibc: https://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
     srcGPGME: https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-1.10.0.tar.bz2
     srcIproute2: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-4.15.0.tar.xz
     srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.11.0-beta.1/bin/linux/amd64/kubeadm
