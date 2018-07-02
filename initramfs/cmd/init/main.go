@@ -97,6 +97,7 @@ func root() (err error) {
 	services.Start(&service.OSD{})
 	if data.Kubernetes.Init {
 		services.Start(&service.ROTD{})
+		services.Start(&service.ProxyD{})
 	}
 
 	// Start the services essential to running Kubernetes.
