@@ -6,6 +6,7 @@
         {
             "type": "amazon-ebssurrogate",
             "region": "{{ user `region` }}",
+            "spot_price": "auto",
             "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
             "ssh_pty": true,
             "instance_type": "t2.small",
@@ -15,7 +16,7 @@
             "source_ami_filter": {
                 "filters": {
                     "virtualization-type": "hvm",
-                    "name": "*ubuntu-yakkety-16.10-amd64-server-*",
+                    "name": "*ubuntu-bionic-18.04-amd64-server-*",
                     "root-device-type": "ebs"
                 },
                 "owners": [
@@ -61,19 +62,15 @@
     ],
     "provisioners": [
         {
-            "type": "file",
-            "source": "build/dianemo.raw",
-            "destination": "/tmp/dianemo.raw"
-        },
-        {
             "type": "shell",
             "inline": [
-                "sudo dd if=/tmp/dianemo.raw of=/dev/xvdf",
-                "echo -n 'Fix\n3\n100%\n' | sudo parted /dev/xvdf ---pretend-input-tty unit % resizepart",
-                "sudo blockdev --rereadpt /dev/xvdf",
-                "sudo mount /dev/xvdf3 /mnt",
-                "sudo xfs_growfs -d /dev/xvdf3",
-                "sudo umount /mnt"
+                "sudo apt-get -y update",
+                "sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common",
+                "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
+                "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+                "sudo apt-get -y update",
+                "sudo apt-get -y install docker-ce",
+                "sudo docker run --privileged --volume /dev:/dev autonomy/dianemo:{{ user `version` }} image -b /dev/xvdf -t /dev/xvda -f -u none"
             ]
         }
     ]

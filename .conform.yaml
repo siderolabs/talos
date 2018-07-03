@@ -1,5 +1,5 @@
 metadata:
-  repository: dianemo/build
+  repository: autonomy/dianemo
 policies:
 - type: conventionalCommit
   spec:
@@ -11,7 +11,7 @@ policies:
     - style
     - test
     scopes:
-    - generate
+    - image
     - init
     - initramfs
     - kernel
@@ -28,16 +28,9 @@ script:
 
     mkdir -p ./build
     rm -rf ./build/*
-
     cd tools && conform enforce
     cd ../kernel && conform enforce
     cd ../initramfs && conform enforce
     cd ../rootfs && conform enforce
-    cd ../generate && conform enforce
+    cd ../image && conform enforce
     cd ../
-
-    {{ if and .Git.IsClean .Git.IsTag }}
-    packer build -var 'version={{ .Git.Tag }}' packer.json
-    {{ else if and .Git.IsClean (eq .Git.Branch "master") }}
-    packer build -var 'version={{ .Git.SHA }}' packer.json
-    {{ end }}
