@@ -96,12 +96,12 @@ func Move(s string) error {
 	return nil
 }
 
-// Finalize moves the mount points created in Init, to the new root.
+// Finalize moves the mount points created in Init to the new root.
 func Finalize(s string) error {
 	return unix.Mount(s, "/", "", unix.MS_MOVE, "")
 }
 
-// Mount moves the mount points created in Init, to the new root.
+// Mount moves the mount points created in Init to the new root.
 func Mount(s string) error {
 	if err := os.MkdirAll(s, os.ModeDir); err != nil {
 		return err

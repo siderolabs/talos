@@ -1,0 +1,58 @@
+metadata:
+  repository: autonomy/dianemo
+  variables:
+    srcSyslinux: https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
+pipeline:
+  stages:
+  - generate
+stages:
+  generate:
+    artifacts:
+    - source: /generated/rootfs.tar.xz
+      destination: ../build/rootfs.tar.xz
+    - source: /generated/boot/vmlinuz
+      destination: ../build/vmlinuz
+    - source: /generated/boot/initramfs.xz
+      destination: ../build/initramfs.xz
+    tasks:
+    - base
+    - rootfs
+    - boot
+    - image
+tasks:
+  base:
+    template: |
+      FROM alpine:3.7 AS generated
+      RUN apk --update add curl tar xz
+      WORKDIR /usr/local/src/syslinux
+      RUN curl -L {{ index .Variables "srcSyslinux" }} | tar --strip-components=1 -xJ
+      WORKDIR /
+  boot:
+    template: |
+      COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/vmlinuz /generated/boot/vmlinuz
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/initramfs.xz /generated/boot/initramfs.xz
+  image:
+    template: |
+      FROM alpine:3.7
+      RUN apk --update add bash curl e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
+      COPY --from=generated /usr/local/src/syslinux /usr/local/src/syslinux
+      COPY --from=generated /generated/rootfs.tar.xz /generated/rootfs.tar.xz
+      COPY --from=generated /generated/boot /generated/boot
+      RUN curl -L https://releases.hashicorp.com/packer/1.2.4/packer_1.2.4_linux_amd64.zip -o /tmp/packer.zip \
+          && unzip -d /tmp /tmp/packer.zip \
+          && mv /tmp/packer /bin \
+          && rm /tmp/packer.zip
+      COPY src/packer.json /packer.json
+      COPY src/entrypoint.sh /bin/entrypoint.sh
+      RUN chmod +x /bin/entrypoint.sh
+      ENV VERSION {{ .Docker.Image.Tag }}
+      ENTRYPOINT ["entrypoint.sh"]
+  rootfs:
+    template: |
+      COPY --from=dianemo/rootfs:{{ .Docker.Image.Tag }} /rootfs /generated/rootfs
+      COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/lib/modules /generated/rootfs/lib/modules
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/osd /generated/rootfs/bin/osd
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/proxyd /generated/rootfs/bin/proxyd
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/rotd /generated/rootfs/bin/rotd
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/init /generated/rootfs/bin/init
+      RUN {{if .Git.IsClean}}XZ_OPT=-9e{{else}}XZ_OPT=-0{{end}} tar -cvpJf /generated/rootfs.tar.xz -C /generated/rootfs .
