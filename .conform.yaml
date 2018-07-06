@@ -28,7 +28,7 @@ script:
 
     mkdir -p ./build
     rm -rf ./build/*
-    cd tools && conform enforce
+    cd ./src/tools && conform enforce
     cd ../kernel && conform enforce
     cd ../initramfs && conform enforce
     cd ../rootfs && conform enforce
