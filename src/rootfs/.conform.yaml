@@ -142,8 +142,7 @@ tasks:
   docker:
     template: |
       WORKDIR {{ index .Variables "rootfs" }}/bin
-      RUN curl -L {{ index .Variables "srcDocker" }} | tar --strip-components=1 -xz \
-          && rm docker
+      RUN curl -L {{ index .Variables "srcDocker" }} | tar --strip-components=1 -xz
   ebtables:
     template: |
       WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
