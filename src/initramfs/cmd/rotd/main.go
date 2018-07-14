@@ -33,19 +33,19 @@ func main() {
 		log.Fatalf("credentials: %v", err)
 	}
 
-	config, err := tls.NewConfig(tls.ServerOnly, data.OS.Security)
+	config, err := tls.NewConfig(tls.ServerOnly, data.Security.OS)
 	if err != nil {
 		log.Fatalf("credentials: %v", err)
 	}
 
 	creds := basic.NewCredentials(
-		data.OS.Security.CA.Crt,
-		data.OS.Security.RootsOfTrust.Username,
-		data.OS.Security.RootsOfTrust.Password,
+		data.Security.OS.CA.Crt,
+		data.Services.ROTD.Username,
+		data.Services.ROTD.Password,
 	)
 
 	err = factory.Listen(
-		&reg.Registrator{Data: data.OS.Security},
+		&reg.Registrator{Data: data.Security.OS},
 		factory.Port(*port),
 		factory.ServerOptions(
 			grpc.Creds(

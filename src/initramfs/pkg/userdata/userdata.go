@@ -1,65 +1,51 @@
 package userdata
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // UserData represents the user data.
 type UserData struct {
 	Version    string      `yaml:"version"`
-	OS         *OS         `yaml:"os"`
-	Kubernetes *Kubernetes `yaml:"kubernetes,omitempty"`
+	Security   *Security   `yaml:"security"`
+	Networking *Networking `yaml:"networking"`
+	Services   *Services   `yaml:"services"`
 }
 
-// OS represents the operating system specific configuration options.
-type OS struct {
-	Network  *Network  `yaml:"network,omitempty"`
-	Security *Security `yaml:"security"`
-}
-
-// Network represents the operating system networking specific configuration
-// options.
-type Network struct{}
-
-// Security represents the operating system security specific configuration
-// options.
+// Security represents the set of options available to configure security.
 type Security struct {
-	CA           *PEMEncodedCertificateAndKey `yaml:"ca"`
-	Identity     *PEMEncodedCertificateAndKey `yaml:"identity"`
-	RootsOfTrust *RootsOfTrust                `yaml:"rootsOfTrust"`
+	OS         *OSSecurity         `yaml:"os"`
+	Kubernetes *KubernetesSecurity `yaml:"kubernetes"`
 }
 
-// RootsOfTrust describes the configuration of the Root of Trust (RoT) services.
-// The username and password are used by master nodes, and worker nodes. The
-// master nodes use them to authentication clients, while the workers use them
-// to authenticate as a client. The endpoints should only be specified in the
-// worker user data, and should include all master nodes participating as a RoT.
-type RootsOfTrust struct {
-	Generate  bool     `yaml:"generate,omitempty"`
-	Username  string   `yaml:"username,omitempty"`
-	Password  string   `yaml:"password,omitempty"`
-	Endpoints []string `yaml:"endpoints,omitempty"`
+// OSSecurity represents the set of security options specific to the OS.
+type OSSecurity struct {
+	CA       *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	Identity *x509.PEMEncodedCertificateAndKey `yaml:"identity"`
 }
 
-// PEMEncodedCertificateAndKey represents the PEM encoded certificate and
-// private key pair.
-type PEMEncodedCertificateAndKey struct {
-	Crt []byte
-	Key []byte
+// KubernetesSecurity represents the set of security options specific to
+// Kubernetes.
+type KubernetesSecurity struct {
+	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 }
 
-// Kubernetes represents the Kubernetes specific configuration options.
-type Kubernetes struct {
-	CA               *PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
-	Init             bool                         `yaml:"init,omitempty"`
-	Kubelet          Kubelet                      `yaml:"kubelet,omitempty"`
-	ContainerRuntime string                       `yaml:"containerRuntime,omitempty"`
-	Configuration    string                       `yaml:"configuration,omitempty"`
+// Networking represents the set of options available to configure networking.
+type Networking struct {
+	OS         struct{} `yaml:"os"`
+	Kubernetes struct{} `yaml:"kubernetes"`
+}
+
+// Services represents the set of services available to configure.
+type Services struct {
+	Kubeadm *Kubeadm `yaml:"kubeadm"`
+	Kubelet *Kubelet `yaml:"kubelet"`
+	ROTD    *ROTD    `yaml:"rotd"`
 }
 
 // Kubelet describes the set of configuration options available for the kubelet.
@@ -69,49 +55,22 @@ type Kubelet struct {
 	ExtraArgs    map[string]string `yaml:"extraArgs,omitempty"`
 }
 
-// UnmarshalYAML implements the yaml.Unmarshaler interface for
-// PEMEncodedCertificateAndKey. It is expected that the Crt and Key are a base64
-// encoded string in the YAML file. This function decodes the strings into byte
-// slices.
-func (p *PEMEncodedCertificateAndKey) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var aux struct {
-		Crt string `yaml:"crt"`
-		Key string `yaml:"key"`
-	}
-	if err := unmarshal(&aux); err != nil {
-		return err
-	}
-
-	decodedCrt, err := base64.StdEncoding.DecodeString(aux.Crt)
-	if err != nil {
-		return err
-	}
-
-	decodedKey, err := base64.StdEncoding.DecodeString(aux.Key)
-	if err != nil {
-		return err
-	}
-
-	p.Crt = decodedCrt
-	p.Key = decodedKey
-
-	return nil
+// Kubeadm describes the set of configuration options available for kubeadm.
+type Kubeadm struct {
+	ContainerRuntime string `yaml:"containerRuntime,omitempty"`
+	Configuration    string `yaml:"configuration,omitempty"`
+	Init             bool   `yaml:"init,omitempty"`
 }
 
-// MarshalYAML implements the yaml.Marshaler interface for
-// PEMEncodedCertificateAndKey. It is expected that the Crt and Key are a base64
-// encoded string in the YAML file. This function encodes the byte slices into
-// strings
-func (p *PEMEncodedCertificateAndKey) MarshalYAML() (interface{}, error) {
-	var aux struct {
-		Crt string `yaml:"crt"`
-		Key string `yaml:"key"`
-	}
-
-	aux.Crt = base64.StdEncoding.EncodeToString(p.Crt)
-	aux.Key = base64.StdEncoding.EncodeToString(p.Key)
-
-	return aux, nil
+// ROTD describes the configuration of the Root of Trust (RoT) service. The
+// username and password are used by master nodes, and worker nodes. The master
+// nodes use them to authenticate clients, while the workers use them to
+// authenticate as a client. The endpoints should only be specified in the
+// worker user data, and should include all master nodes participating as a RoT.
+type ROTD struct {
+	Username  string   `yaml:"username"`
+	Password  string   `yaml:"password"`
+	Endpoints []string `yaml:"endpoints,omitempty"`
 }
 
 // Download initializes a UserData struct from a remote URL.

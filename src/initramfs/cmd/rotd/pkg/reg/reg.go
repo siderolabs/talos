@@ -16,7 +16,7 @@ import (
 // Registrator is the concrete type that implements the factory.Registrator and
 // proto.ROTDServer interfaces.
 type Registrator struct {
-	Data *userdata.Security
+	Data *userdata.OSSecurity
 }
 
 // Register implements the factory.Registrator interface.

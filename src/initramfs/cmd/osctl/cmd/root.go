@@ -19,8 +19,6 @@ var (
 	ip           string
 	port         int
 	hours        int
-	identity     string
-	hash         string
 )
 
 // rootCmd represents the base command when called without any subcommands

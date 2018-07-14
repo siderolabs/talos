@@ -8,6 +8,7 @@ import (
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/service/conditions"
+	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 )
 
@@ -17,13 +18,13 @@ type Kubeadm struct{}
 
 // Pre implements the Service interface.
 func (p *Kubeadm) Pre(data userdata.UserData) (err error) {
-	if data.Kubernetes.Init {
-		if err = writeKubeadmPKIFiles(data.Kubernetes.CA); err != nil {
+	if data.Services.Kubeadm.Init {
+		if err = writeKubeadmPKIFiles(data.Security.Kubernetes.CA); err != nil {
 			return
 		}
 	}
 
-	if err = writeKubeadmManifest(data.Kubernetes.Configuration); err != nil {
+	if err = writeKubeadmManifest(data.Services.Kubeadm.Configuration); err != nil {
 		return
 	}
 
@@ -33,7 +34,7 @@ func (p *Kubeadm) Pre(data userdata.UserData) (err error) {
 // Cmd implements the Service interface.
 func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 	var cmd string
-	if data.Kubernetes.Init {
+	if data.Services.Kubeadm.Init {
 		cmd = "init"
 	} else {
 		cmd = "join"
@@ -44,7 +45,7 @@ func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 		"--config=/etc/kubernetes/kubeadm.yaml",
 		"--ignore-preflight-errors=cri",
 	}
-	if data.Kubernetes.Init {
+	if data.Services.Kubeadm.Init {
 		args = append(args, "--skip-token-print")
 	}
 
@@ -53,7 +54,7 @@ func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
 
 // Condition implements the Service interface.
 func (p *Kubeadm) Condition(data userdata.UserData) func() (bool, error) {
-	switch data.Kubernetes.ContainerRuntime {
+	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		return conditions.WaitForFileExists(constants.ContainerRuntimeDockerSocket)
 	case constants.ContainerRuntimeCRIO:
@@ -77,7 +78,7 @@ func writeKubeadmManifest(data string) (err error) {
 	return nil
 }
 
-func writeKubeadmPKIFiles(data *userdata.PEMEncodedCertificateAndKey) (err error) {
+func writeKubeadmPKIFiles(data *x509.PEMEncodedCertificateAndKey) (err error) {
 	if err = os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
 		return err
 	}

@@ -9,8 +9,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
+	"io/ioutil"
 	"math/big"
 	"net"
 	"strings"
@@ -46,6 +48,13 @@ type CertificateSigningRequest struct {
 // KeyPair represents a certificate and key pair.
 type KeyPair struct {
 	*tls.Certificate
+}
+
+// PEMEncodedCertificateAndKey represents the PEM encoded certificate and
+// private key pair.
+type PEMEncodedCertificateAndKey struct {
+	Crt []byte
+	Key []byte
 }
 
 // Options is the functional options struct.
@@ -301,6 +310,71 @@ func NewKeyPair(ca *x509.Certificate, key *ecdsa.PrivateKey, setters ...Option) 
 	}
 
 	return keypair, nil
+}
+
+// NewCertificateAndKeyFromFiles initializes and returns a
+// PEMEncodedCertificateAndKey from the path to a crt and key.
+func NewCertificateAndKeyFromFiles(crt, key string) (p *PEMEncodedCertificateAndKey, err error) {
+	p = &PEMEncodedCertificateAndKey{}
+
+	crtBytes, err := ioutil.ReadFile(crt)
+	if err != nil {
+		return
+	}
+	p.Crt = crtBytes
+
+	keyBytes, err := ioutil.ReadFile(key)
+	if err != nil {
+		return
+	}
+	p.Key = keyBytes
+
+	return p, nil
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface for
+// PEMEncodedCertificateAndKey. It is expected that the Crt and Key are a base64
+// encoded string in the YAML file. This function decodes the strings into byte
+// slices.
+func (p *PEMEncodedCertificateAndKey) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var aux struct {
+		Crt string `yaml:"crt"`
+		Key string `yaml:"key"`
+	}
+	if err := unmarshal(&aux); err != nil {
+		return err
+	}
+
+	decodedCrt, err := base64.StdEncoding.DecodeString(aux.Crt)
+	if err != nil {
+		return err
+	}
+
+	decodedKey, err := base64.StdEncoding.DecodeString(aux.Key)
+	if err != nil {
+		return err
+	}
+
+	p.Crt = decodedCrt
+	p.Key = decodedKey
+
+	return nil
+}
+
+// MarshalYAML implements the yaml.Marshaler interface for
+// PEMEncodedCertificateAndKey. It is expected that the Crt and Key are a base64
+// encoded string in the YAML file. This function encodes the byte slices into
+// strings
+func (p *PEMEncodedCertificateAndKey) MarshalYAML() (interface{}, error) {
+	var aux struct {
+		Crt string `yaml:"crt"`
+		Key string `yaml:"key"`
+	}
+
+	aux.Crt = base64.StdEncoding.EncodeToString(p.Crt)
+	aux.Key = base64.StdEncoding.EncodeToString(p.Key)
+
+	return aux, nil
 }
 
 // Hash calculates the SHA-256 hash of the Subject Public Key Information (SPKI)
