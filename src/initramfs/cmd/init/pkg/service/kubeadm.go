@@ -32,24 +32,49 @@ func (p *Kubeadm) Pre(data userdata.UserData) (err error) {
 }
 
 // Cmd implements the Service interface.
-func (p *Kubeadm) Cmd(data userdata.UserData) (name string, args []string) {
+func (p *Kubeadm) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 	var cmd string
 	if data.Services.Kubeadm.Init {
 		cmd = "init"
 	} else {
 		cmd = "join"
 	}
-	name = "/bin/kubeadm"
-	args = []string{
+	cmdArgs.Name = "kubeadm"
+	cmdArgs.Path = "/bin/docker"
+	cmdArgs.Args = []string{
+		"run",
+		"--rm",
+		"--net=host",
+		"--pid=host",
+		"--privileged",
+		"--volume=/sys:/sys:rw",
+		"--volume=/sys/fs/cgroup:/sys/fs/cgroup:rw",
+		"--volume=/var/run:/var/run:rw",
+		"--volume=/run:/run:rw",
+		"--volume=/var/lib/docker:/var/lib/docker:rw",
+		"--volume=/var/lib/kubelet:/var/lib/kubelet:slave",
+		"--volume=/var/log:/var/log",
+		"--volume=/etc/kubernetes:/etc/kubernetes:shared",
+		"--volume=/etc/os-release:/etc/os-release:ro",
+		"--volume=/lib/modules:/lib/modules:ro",
+		"--volume=/bin/docker:/bin/docker:ro",
+		"--volume=/bin/crictl:/bin/crictl:ro",
+		"--volume=/bin/kubeadm:/bin/kubeadm:ro",
+		"--name=kubeadm",
+		"gcr.io/google_containers/hyperkube:v1.11.0",
+		"/bin/kubeadm",
+	}
+
+	kubeadmArgs := []string{
 		cmd,
 		"--config=/etc/kubernetes/kubeadm.yaml",
 		"--ignore-preflight-errors=cri",
 	}
-	if data.Services.Kubeadm.Init {
-		args = append(args, "--skip-token-print")
-	}
 
-	return name, args
+	cmdArgs.Args = append(cmdArgs.Args, kubeadmArgs...)
+	if data.Services.Kubeadm.Init {
+		cmdArgs.Args = append(cmdArgs.Args, "--skip-token-print")
+	}
 }
 
 // Condition implements the Service interface.

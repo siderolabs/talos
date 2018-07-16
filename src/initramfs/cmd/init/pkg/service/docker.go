@@ -15,9 +15,10 @@ func (p *Docker) Pre(data userdata.UserData) error {
 }
 
 // Cmd implements the Service interface.
-func (p *Docker) Cmd(data userdata.UserData) (name string, args []string) {
-	name = "/bin/dockerd"
-	args = []string{
+func (p *Docker) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+	cmdArgs.Name = "docker"
+	cmdArgs.Path = "/bin/dockerd"
+	cmdArgs.Args = []string{
 		"--live-restore",
 		"--iptables=false",
 		"--ip-masq=false",
@@ -27,8 +28,6 @@ func (p *Docker) Cmd(data userdata.UserData) (name string, args []string) {
 		"--log-opt=max-size=10m",
 		"--log-opt=max-file=3",
 	}
-
-	return name, args
 }
 
 // Condition implements the Service interface.

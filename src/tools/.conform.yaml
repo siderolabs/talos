@@ -506,11 +506,6 @@ tasks:
       RUN $TARGET-gcc dummy.c
       RUN readelf -l a.out | grep "$PREFIX"
       RUN rm -v dummy.c a.out
-  golang:
-    template: |
-      WORKDIR $SRC/{{ .Docker.CurrentStage }}
-      WORKDIR /tools/usr/local
-      RUN curl -L {{ index .Variables "srcGo" }} | tar -C /tools/usr/local -xz
   gmp:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
@@ -522,6 +517,11 @@ tasks:
             --disable-static
       RUN make -j $(($(nproc) / 2))
       RUN make install
+  golang:
+    template: |
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
+      WORKDIR /tools/usr/local
+      RUN curl -L {{ index .Variables "srcGo" }} | tar -C /tools/usr/local -xz
   gperf:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
@@ -559,7 +559,7 @@ tasks:
       RUN make install
   kmod:
     template: |
-      WORKDIR {{ index .Variables "dest" }}/{{ .Docker.CurrentStage }}
+      WORKDIR $SRC/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcKmod" }} | tar --strip-components=1 -xJ
       RUN ./configure \
             --prefix=$PREFIX

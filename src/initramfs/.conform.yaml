@@ -91,6 +91,22 @@ tasks:
         -o /{{ .Docker.CurrentStage }}
       {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
+  proto:
+    template: |
+      FROM golang:1.10.0 AS {{ .Docker.CurrentStage }}
+      RUN apt-get update
+      RUN apt-get -y install bsdtar
+      RUN go get github.com/golang/protobuf/protoc-gen-go
+      RUN curl -L https://github.com/google/protobuf/releases/download/v3.5.1/protoc-3.5.1-linux-x86_64.zip | bsdtar -xf -  -C /tmp \
+          && mv /tmp/bin/protoc /bin \
+          && mv /tmp/include/* /usr/local/include \
+          && chmod +x /bin/protoc
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/osd
+      COPY ./cmd/osd/proto ./proto
+      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/rotd
+      COPY ./cmd/rotd/proto ./proto
+      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   proxyd:
     template: |
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
@@ -109,22 +125,6 @@ tasks:
       WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       RUN CGO_ENABLED=0 go build -a -ldflags "-s -w" -o /{{ .Docker.CurrentStage }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
-  proto:
-    template: |
-      FROM golang:1.10.0 AS {{ .Docker.CurrentStage }}
-      RUN apt-get update
-      RUN apt-get -y install bsdtar
-      RUN go get github.com/golang/protobuf/protoc-gen-go
-      RUN curl -L https://github.com/google/protobuf/releases/download/v3.5.1/protoc-3.5.1-linux-x86_64.zip | bsdtar -xf -  -C /tmp \
-          && mv /tmp/bin/protoc /bin \
-          && mv /tmp/include/* /usr/local/include \
-          && chmod +x /bin/protoc
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/osd
-      COPY ./cmd/osd/proto ./proto
-      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/rotd
-      COPY ./cmd/rotd/proto ./proto
-      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   src:
     template: |
       FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
