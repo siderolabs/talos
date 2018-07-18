@@ -51,28 +51,32 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 		"--v=2",
 	}
 
-	switch data.Kubernetes.ContainerRuntime {
+	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeCRIO:
 		args = append(args, "--container-runtime=remote", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
 	default:
 	}
 
-	for k, v := range data.Kubernetes.Kubelet.ExtraArgs {
+	if data.Services.Kubelet == nil {
+		return name, args
+	}
+
+	for k, v := range data.Services.Kubelet.ExtraArgs {
 		arg := "--" + k + "=" + v
 		args = append(args, arg)
 	}
 
-	if len(data.Kubernetes.Kubelet.FeatureGates) != 0 {
+	if len(data.Services.Kubelet.FeatureGates) != 0 {
 		featureGates := "--feature-gates="
-		for k, v := range data.Kubernetes.Kubelet.FeatureGates {
+		for k, v := range data.Services.Kubelet.FeatureGates {
 			featureGates += k + "=" + v + ","
 		}
 		args = append(args, featureGates)
 	}
 
-	if len(data.Kubernetes.Kubelet.Labels) != 0 {
+	if len(data.Services.Kubelet.Labels) != 0 {
 		labels := "--node-labels="
-		for k, v := range data.Kubernetes.Kubelet.Labels {
+		for k, v := range data.Services.Kubelet.Labels {
 			labels += k + "=" + v + ","
 		}
 		args = append(args, labels)
@@ -83,7 +87,7 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 
 // Condition implements the Service interface.
 func (p *Kubelet) Condition(data userdata.UserData) func() (bool, error) {
-	switch data.Kubernetes.ContainerRuntime {
+	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		return conditions.None()
 	case constants.ContainerRuntimeCRIO:

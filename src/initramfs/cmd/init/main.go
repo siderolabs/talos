@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -95,20 +96,20 @@ func root() (err error) {
 	// Start the services essential to managing the node.
 	log.Println("starting OS services")
 	services.Start(&service.OSD{})
-	if data.Kubernetes.Init {
+	if data.Services.Kubeadm.Init {
 		services.Start(&service.ROTD{})
 		services.Start(&service.ProxyD{})
 	}
 
 	// Start the services essential to running Kubernetes.
 	log.Println("starting Kubernetes services")
-	switch data.Kubernetes.ContainerRuntime {
+	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		services.Start(&service.Docker{})
 	case constants.ContainerRuntimeCRIO:
-		fallthrough
-	default:
 		services.Start(&service.CRIO{})
+	default:
+		panic(fmt.Errorf("Unknown container runtime: %s", data.Services.Kubeadm.ContainerRuntime))
 	}
 	services.Start(&service.Kubelet{})
 	services.Start(&service.Kubeadm{})

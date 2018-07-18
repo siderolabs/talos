@@ -2,7 +2,9 @@ package service
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"os/exec"
 	"path"
 	"time"
@@ -56,12 +58,13 @@ func (m *Manager) build(proc Service) (cmd *exec.Cmd, err error) {
 
 	// Setup logging.
 	w, err := servicelog.New(path.Base(name))
+	mw := io.MultiWriter(w, os.Stdout)
 	if err != nil {
 		err = fmt.Errorf("service log handler: %v", err)
 		return
 	}
-	cmd.Stdout = w
-	cmd.Stderr = w
+	cmd.Stdout = mw
+	cmd.Stderr = mw
 
 	return cmd, nil
 }

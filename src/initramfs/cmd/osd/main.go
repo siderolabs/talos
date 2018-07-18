@@ -39,30 +39,30 @@ func main() {
 	}
 
 	if *generate {
-		if len(data.OS.Security.RootsOfTrust.Endpoints) == 0 {
+		if len(data.Services.ROTD.Endpoints) == 0 {
 			log.Fatalf("at least one root of trust endpoint is required")
 		}
 
 		creds := basic.NewCredentials(
-			data.OS.Security.CA.Crt,
-			data.OS.Security.RootsOfTrust.Username,
-			data.OS.Security.RootsOfTrust.Password,
+			data.Security.OS.CA.Crt,
+			data.Services.ROTD.Username,
+			data.Services.ROTD.Password,
 		)
 
 		// TODO: In the case of failure, attempt to generate the identity from
 		// another RoT.
 		var conn *grpc.ClientConn
-		conn, err = basic.NewConnection(data.OS.Security.RootsOfTrust.Endpoints[0], *rotPort, creds)
+		conn, err = basic.NewConnection(data.Services.ROTD.Endpoints[0], *rotPort, creds)
 		if err != nil {
 			return
 		}
 		generator := gen.NewGenerator(conn)
-		if err = generator.Identity(data.OS.Security); err != nil {
+		if err = generator.Identity(data.Security); err != nil {
 			log.Fatalf("generate identity: %v", err)
 		}
 	}
 
-	config, err := tls.NewConfig(tls.Mutual, data.OS.Security)
+	config, err := tls.NewConfig(tls.Mutual, data.Security.OS)
 	if err != nil {
 		log.Fatalf("credentials: %v", err)
 	}

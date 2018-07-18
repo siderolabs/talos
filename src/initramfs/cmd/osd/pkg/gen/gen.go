@@ -49,8 +49,8 @@ func (g *Generator) Identity(data *userdata.Security) (err error) {
 		return
 	}
 
-	data.Identity = &userdata.PEMEncodedCertificateAndKey{}
-	data.Identity.Key = key.KeyPEM
+	data.OS.Identity = &x509.PEMEncodedCertificateAndKey{}
+	data.OS.Identity.Key = key.KeyPEM
 
 	pemBlock, _ := pem.Decode(key.KeyPEM)
 	if pemBlock == nil {
@@ -76,10 +76,10 @@ func (g *Generator) Identity(data *userdata.Security) (err error) {
 		Csr: csr.X509CertificateRequestPEM,
 	}
 
-	return poll(g, req, data.Identity)
+	return poll(g, req, data.OS.Identity)
 }
 
-func poll(g *Generator, in *proto.CertificateRequest, data *userdata.PEMEncodedCertificateAndKey) (err error) {
+func poll(g *Generator, in *proto.CertificateRequest, data *x509.PEMEncodedCertificateAndKey) (err error) {
 	timeout := time.NewTimer(time.Minute * 5).C
 	tick := time.NewTicker(time.Second * 5).C
 

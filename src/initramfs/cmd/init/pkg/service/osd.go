@@ -24,7 +24,7 @@ func (p *OSD) Cmd(data userdata.UserData) (name string, args []string) {
 		"--userdata=" + constants.UserDataPath,
 	}
 
-	if data.OS.Security.RootsOfTrust.Generate {
+	if !data.Services.Kubeadm.Init {
 		args = append(args, "--generate=true")
 	}
 
