@@ -17,18 +17,17 @@ func (p *OSD) Pre(data userdata.UserData) error {
 }
 
 // Cmd implements the Service interface.
-func (p *OSD) Cmd(data userdata.UserData) (name string, args []string) {
-	name = "/bin/osd"
-	args = []string{
+func (p *OSD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+	cmdArgs.Name = "osd"
+	cmdArgs.Path = "/bin/osd"
+	cmdArgs.Args = []string{
 		"--port=50000",
 		"--userdata=" + constants.UserDataPath,
 	}
 
 	if !data.Services.Kubeadm.Init {
-		args = append(args, "--generate=true")
+		cmdArgs.Args = append(cmdArgs.Args, "--generate=true")
 	}
-
-	return name, args
 }
 
 // Condition implements the Service interface.

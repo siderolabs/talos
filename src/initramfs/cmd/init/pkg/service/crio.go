@@ -197,11 +197,10 @@ func (p *CRIO) Pre(data userdata.UserData) error {
 }
 
 // Cmd implements the Service interface.
-func (p *CRIO) Cmd(data userdata.UserData) (name string, args []string) {
-	name = "/bin/crio"
-	args = []string{}
-
-	return name, args
+func (p *CRIO) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+	cmdArgs.Name = "crio"
+	cmdArgs.Path = "/bin/crio"
+	cmdArgs.Args = []string{}
 }
 
 // Condition implements the Service interface.

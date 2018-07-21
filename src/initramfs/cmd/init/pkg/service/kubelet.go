@@ -24,14 +24,44 @@ func (p *Kubelet) Pre(data userdata.UserData) error {
 	if err := os.MkdirAll("/etc/kubernetes/manifests", os.ModeDir); err != nil {
 		return fmt.Errorf("create /etc/kubernetes/manifests: %s", err.Error())
 	}
+	if err := os.MkdirAll("/var/lib/kubelet", os.ModeDir); err != nil {
+		return fmt.Errorf("create /var/lib/kubelet: %s", err.Error())
+	}
 
 	return nil
 }
 
 // Cmd implements the Service interface.
-func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
-	name = "/bin/kubelet"
-	args = []string{
+func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+	cmdArgs.Name = "kubelet"
+	cmdArgs.Path = "/bin/docker"
+	cmdArgs.Args = []string{
+		"run",
+		"--volume=/dev:/dev:shared",
+		"--volume=/sys:/sys:ro",
+		"--volume=/sys/fs/cgroup:/sys/fs/cgroup:rw",
+		"--volume=/var/run:/var/run:rw",
+		"--volume=/run:/run:rw",
+		"--volume=/var/lib/docker:/var/lib/docker:rw",
+		"--volume=/var/lib/kubelet:/var/lib/kubelet:rshared",
+		"--volume=/var/log:/var/log",
+		"--volume=/etc/cni:/etc/cni:ro",
+		"--volume=/etc/kubernetes:/etc/kubernetes:shared",
+		"--volume=/etc/os-release:/etc/os-release:ro",
+		"--volume=/etc/ssl/certs:/etc/ssl/certs:ro",
+		"--volume=/lib/modules:/lib/modules:ro",
+		"--volume=/var/libexec/kubernetes:/usr/libexec/kubernetes:shared",
+		"--rm",
+		"--net=host",
+		"--pid=host",
+		"--privileged",
+		"--name=kubelet",
+		"gcr.io/google_containers/hyperkube:v1.11.0",
+		"/hyperkube",
+		"kubelet",
+	}
+
+	kubeletArgs := []string{
 		"--runtime-request-timeout=10m",
 		"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 		"--kubeconfig=/etc/kubernetes/kubelet.conf",
@@ -51,19 +81,21 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 		"--v=2",
 	}
 
+	cmdArgs.Args = append(cmdArgs.Args, kubeletArgs...)
+
 	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeCRIO:
-		args = append(args, "--container-runtime=remote", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
+		cmdArgs.Args = append(cmdArgs.Args, "--container-runtime=remote", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
 	default:
 	}
 
 	if data.Services.Kubelet == nil {
-		return name, args
+		return
 	}
 
 	for k, v := range data.Services.Kubelet.ExtraArgs {
 		arg := "--" + k + "=" + v
-		args = append(args, arg)
+		cmdArgs.Args = append(cmdArgs.Args, arg)
 	}
 
 	if len(data.Services.Kubelet.FeatureGates) != 0 {
@@ -71,7 +103,7 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 		for k, v := range data.Services.Kubelet.FeatureGates {
 			featureGates += k + "=" + v + ","
 		}
-		args = append(args, featureGates)
+		cmdArgs.Args = append(cmdArgs.Args, featureGates)
 	}
 
 	if len(data.Services.Kubelet.Labels) != 0 {
@@ -79,10 +111,8 @@ func (p *Kubelet) Cmd(data userdata.UserData) (name string, args []string) {
 		for k, v := range data.Services.Kubelet.Labels {
 			labels += k + "=" + v + ","
 		}
-		args = append(args, labels)
+		cmdArgs.Args = append(cmdArgs.Args, labels)
 	}
-
-	return name, args
 }
 
 // Condition implements the Service interface.

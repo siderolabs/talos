@@ -16,11 +16,10 @@ func (p *ProxyD) Pre(data userdata.UserData) error {
 }
 
 // Cmd implements the Service interface.
-func (p *ProxyD) Cmd(data userdata.UserData) (name string, args []string) {
-	name = "/bin/proxyd"
-	args = []string{}
-
-	return name, args
+func (p *ProxyD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+	cmdArgs.Name = "proxyd"
+	cmdArgs.Path = "/bin/proxyd"
+	cmdArgs.Args = []string{}
 }
 
 // Condition implements the Service interface.

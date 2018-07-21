@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"time"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
@@ -32,7 +31,7 @@ type Service interface {
 	Pre(userdata.UserData) error
 	// Cmd describes the path to the binary, and the set of arguments to be
 	// passed into it upon execution.
-	Cmd(userdata.UserData) (string, []string)
+	Cmd(userdata.UserData, *CmdArgs)
 	// Condition is invoked just before starting the process.
 	Condition(userdata.UserData) func() (bool, error)
 	// Env describes the service's environment variables. Elements should be in
@@ -48,16 +47,25 @@ type Manager struct {
 	UserData userdata.UserData
 }
 
+// CmdArgs represent the options available to services specific to the
+// configuration of their cmd.
+type CmdArgs struct {
+	Path string
+	Name string
+	Args []string
+}
+
 func (m *Manager) build(proc Service) (cmd *exec.Cmd, err error) {
+	cmdArgs := &CmdArgs{}
 	// Build the exec.Cmd
-	name, args := proc.Cmd(m.UserData)
-	cmd = exec.Command(name, args...)
+	proc.Cmd(m.UserData, cmdArgs)
+	cmd = exec.Command(cmdArgs.Path, cmdArgs.Args...)
 
 	// Set the environment for the service.
 	cmd.Env = append(proc.Env(), fmt.Sprintf("PATH=%s", constants.PATH))
 
 	// Setup logging.
-	w, err := servicelog.New(path.Base(name))
+	w, err := servicelog.New(cmdArgs.Name)
 	mw := io.MultiWriter(w, os.Stdout)
 	if err != nil {
 		err = fmt.Errorf("service log handler: %v", err)
