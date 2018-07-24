@@ -29,19 +29,19 @@
   name = "golang.org/x/sys"
 
 [[constraint]]
-  version = "kubernetes-1.11.0"
+  version = "kubernetes-1.11.1"
   name = "k8s.io/api"
 
 [[constraint]]
-  version = "kubernetes-1.11.0"
+  version = "kubernetes-1.11.1"
   name = "k8s.io/apimachinery"
 
 [[constraint]]
-  version = "kubernetes-1.11.0"
+  version = "kubernetes-1.11.1"
   name = "k8s.io/client-go"
 
 [[constraint]]
-  version = "v1.11.0"
+  version = "v1.11.1"
   name = "k8s.io/kubernetes"
 
 [[override]]
