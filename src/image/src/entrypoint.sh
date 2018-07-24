@@ -108,7 +108,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=${DIANEMO_ROOT} dianemo.autonomy.io/userdata=${DIANEMO_USERDATA}
+  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=${DIANEMO_ROOT} dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
 EOF
 }
 
@@ -122,6 +122,7 @@ function cleanup {
 
 DIANEMO_ROOT="sda"
 DIANEMO_USERDATA=""
+DIANEMO_PLATFORM="bare-metal"
 RAW_IMAGE="/out/image.raw"
 VMDK_IMAGE="/out/image.vmdk"
 ISO_IMAGE="/out/image.iso"
@@ -131,7 +132,7 @@ RAW=false
 case "$1" in
   image)
     shift
-    while getopts "b:flt:u:" opt; do
+    while getopts "b:flt:p:u:" opt; do
       case ${opt} in
         b )
           DEVICE=${OPTARG}
@@ -147,6 +148,10 @@ case "$1" in
           DEVICE=$(losetup -f)
           RAW=true
           echo "Using loop device ${RAW_IMAGE} as installation media"
+          ;;
+        p )
+          DIANEMO_PLATFORM=${OPTARG}
+          echo "Using kernel parameter dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}"
           ;;
         t )
           DIANEMO_ROOT=${OPTARG}
