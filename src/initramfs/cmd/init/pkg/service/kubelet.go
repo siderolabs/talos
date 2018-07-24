@@ -56,7 +56,7 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 		"--pid=host",
 		"--privileged",
 		"--name=kubelet",
-		"gcr.io/google_containers/hyperkube:v1.11.0",
+		"gcr.io/google_containers/hyperkube:v1.11.1",
 		"/hyperkube",
 		"kubelet",
 	}

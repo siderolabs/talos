@@ -61,7 +61,7 @@ func (p *Kubeadm) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 		"--volume=/bin/crictl:/bin/crictl:ro",
 		"--volume=/bin/kubeadm:/bin/kubeadm:ro",
 		"--name=kubeadm",
-		"gcr.io/google_containers/hyperkube:v1.11.0",
+		"gcr.io/google_containers/hyperkube:v1.11.1",
 		"/bin/kubeadm",
 	}
 

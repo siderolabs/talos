@@ -2,9 +2,9 @@ metadata:
   repository: dianemo/rootfs
   variables:
     rootfs: /rootfs
-    srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.11.0/crictl-v1.11.0-linux-amd64.tar.gz
+    srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.11.1/crictl-v1.11.1-linux-amd64.tar.gz
     srcDocker: https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz
-    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/linux/amd64/kubeadm
+    srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.11.1/bin/linux/amd64/kubeadm
 pipeline:
   stages:
   - image
