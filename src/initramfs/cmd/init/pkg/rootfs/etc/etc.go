@@ -53,8 +53,13 @@ func Hosts(s, hostname, ip string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile(path.Join(s, "/etc/hosts"), writer.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile(path.Join(s, "/var/run/hosts"), writer.Bytes(), 0644); err != nil {
 		return fmt.Errorf("write /etc/hosts: %v", err)
+	}
+	// The kubelet wants to manage /etc/hosts. Create a symlink there that
+	// points to a writable file.
+	if err := os.Symlink("/var/run/hosts", path.Join(s, "/etc/hosts")); err != nil {
+		return fmt.Errorf("symlink /etc/hosts: %v", err)
 	}
 
 	return nil
