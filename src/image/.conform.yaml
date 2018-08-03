@@ -2,6 +2,18 @@ metadata:
   repository: autonomy/dianemo
   variables:
     srcSyslinux: https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
+script:
+  template: |
+    #!/bin/sh
+
+    set -e
+
+    {{ if and (.Git.IsClean) (or (.Git.IsTag) (eq .Git.Branch "master")) }}
+    docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+    docker tag {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }} {{ .Docker.Image.Name }}:latest
+    docker push {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }}
+    docker push {{ .Docker.Image.Name }}:latest
+    {{ end }}
 pipeline:
   stages:
   - generate
