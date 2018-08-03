@@ -115,8 +115,15 @@ func (r *ReverseProxy) DeleteFunc() func(obj interface{}) {
 }
 
 func isAPIServer(pod *v1.Pod) bool {
+	// This is used for non-self-hosted deployments.
 	if component, ok := pod.Labels["component"]; ok {
 		if component == "kube-apiserver" {
+			return true
+		}
+	}
+	// This is used for self-hosted deployments.
+	if k8sApp, ok := pod.Labels["k8s-app"]; ok {
+		if k8sApp == "self-hosted-kube-apiserver" {
 			return true
 		}
 	}
