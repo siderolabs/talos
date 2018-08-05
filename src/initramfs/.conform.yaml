@@ -136,4 +136,8 @@ tasks:
       COPY ./ ./
   test:
     template: |
-      RUN test.sh
+      ENV GOMETALINTER_EXTRA_ARGS "--exclude=cmd/osd/proto/* --enable-gc"
+      ENV GOPACKAGES_CMD "go list ./... | grep -v /vendor/ | grep -v cmd/osd/proto/"
+      ENV GOFILES_CMD "find . -type f -name *.go -not -path \"./vendor/*\" -not -path \"cmd/osd/proto/*\""
+      RUN test.sh --lint
+      RUN test.sh --unit

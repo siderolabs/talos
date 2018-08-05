@@ -62,7 +62,6 @@ func (r *ReverseProxy) Listen(address string) (err error) {
 			}
 		}
 
-		// nolint: errcheck
 		go r.proxyConnection(conn)
 	}
 }
