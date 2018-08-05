@@ -12,6 +12,7 @@ policies:
     - test
     scopes:
     - conformance
+    - hack
     - image
     - init
     - initramfs
