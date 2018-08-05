@@ -5,9 +5,13 @@ metadata:
 spec:
   hostPID: true
   hostNetwork: true
+  # nodeSelector:
+  #   kubernetes.io/hostname: ${HOSTNAME}
+  tolerations:
+  - operator: Exists
   containers:
     - name: debug
-      image: alpine:3.8
+      image: ubuntu:18.04
       command: [ "/bin/sh", "-c", "--" ]
       args: [ "while true; do sleep 30; done;" ]
       env:
