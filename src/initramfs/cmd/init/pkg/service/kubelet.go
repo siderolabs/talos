@@ -62,23 +62,24 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 	}
 
 	kubeletArgs := []string{
-		"--runtime-request-timeout=10m",
 		"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 		"--kubeconfig=/etc/kubernetes/kubelet.conf",
-		"--pod-manifest-path=/etc/kubernetes/manifests",
-		"--allow-privileged=true",
-		"--network-plugin=cni",
-		"--cni-conf-dir=/etc/cni/net.d",
-		"--cni-bin-dir=/opt/cni/bin",
-		"--cluster-dns=10.96.0.10",
-		"--cluster-domain=cluster.local",
-		"--authorization-mode=Webhook",
-		"--client-ca-file=/etc/kubernetes/pki/ca.crt",
-		"--cgroup-driver=cgroupfs",
-		"--cadvisor-port=0",
-		"--rotate-certificates=true",
-		"--serialize-image-pulls=false",
-		"--v=2",
+		"--config=/var/lib/kubelet/config.yaml",
+		// "--runtime-request-timeout=10m",
+		// "--pod-manifest-path=/etc/kubernetes/manifests",
+		// "--allow-privileged=true",
+		// "--network-plugin=cni",
+		// "--cni-conf-dir=/etc/cni/net.d",
+		// "--cni-bin-dir=/opt/cni/bin",
+		// "--cluster-dns=10.96.0.10",
+		// "--cluster-domain=cluster.local",
+		// "--authorization-mode=Webhook",
+		// "--client-ca-file=/etc/kubernetes/pki/ca.crt",
+		// "--cgroup-driver=cgroupfs",
+		// "--cadvisor-port=0",
+		// "--rotate-certificates=true",
+		// "--serialize-image-pulls=false",
+		// "--v=2",
 	}
 
 	cmdArgs.Args = append(cmdArgs.Args, kubeletArgs...)
@@ -87,31 +88,6 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 	case constants.ContainerRuntimeCRIO:
 		cmdArgs.Args = append(cmdArgs.Args, "--container-runtime=remote", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
 	default:
-	}
-
-	if data.Services.Kubelet == nil {
-		return
-	}
-
-	for k, v := range data.Services.Kubelet.ExtraArgs {
-		arg := "--" + k + "=" + v
-		cmdArgs.Args = append(cmdArgs.Args, arg)
-	}
-
-	if len(data.Services.Kubelet.FeatureGates) != 0 {
-		featureGates := "--feature-gates="
-		for k, v := range data.Services.Kubelet.FeatureGates {
-			featureGates += k + "=" + v + ","
-		}
-		cmdArgs.Args = append(cmdArgs.Args, featureGates)
-	}
-
-	if len(data.Services.Kubelet.Labels) != 0 {
-		labels := "--node-labels="
-		for k, v := range data.Services.Kubelet.Labels {
-			labels += k + "=" + v + ","
-		}
-		cmdArgs.Args = append(cmdArgs.Args, labels)
 	}
 }
 
