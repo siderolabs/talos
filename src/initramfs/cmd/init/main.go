@@ -7,8 +7,10 @@ import "C"
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"path"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount"
@@ -87,6 +89,17 @@ func root() (err error) {
 	data, err := userdata.Open(constants.UserDataPath)
 	if err != nil {
 		return
+	}
+
+	// Create the requested files.
+	for _, f := range data.Files {
+		log.Printf("writing file: %s", f.Path)
+		if err = os.MkdirAll(path.Dir(f.Path), os.ModeDir); err != nil {
+			return
+		}
+		if err = ioutil.WriteFile(f.Path, []byte(f.Contents), f.Permissions); err != nil {
+			return
+		}
 	}
 
 	services := &service.Manager{

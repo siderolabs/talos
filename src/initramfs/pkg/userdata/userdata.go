@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	yaml "gopkg.in/yaml.v2"
@@ -15,6 +16,7 @@ type UserData struct {
 	Security   *Security   `yaml:"security"`
 	Networking *Networking `yaml:"networking"`
 	Services   *Services   `yaml:"services"`
+	Files      []*File     `yaml:"files"`
 }
 
 // Security represents the set of options available to configure security.
@@ -44,15 +46,14 @@ type Networking struct {
 // Services represents the set of services available to configure.
 type Services struct {
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
-	Kubelet *Kubelet `yaml:"kubelet"`
 	ROTD    *ROTD    `yaml:"rotd"`
 }
 
-// Kubelet describes the set of configuration options available for the kubelet.
-type Kubelet struct {
-	Labels       map[string]string `yaml:"labels,omitempty"`
-	FeatureGates map[string]string `yaml:"featureGates,omitempty"`
-	ExtraArgs    map[string]string `yaml:"extraArgs,omitempty"`
+// File represents a files to write to disk.
+type File struct {
+	Contents    string      `yaml:"contents"`
+	Permissions os.FileMode `yaml:"permissions"`
+	Path        string      `yaml:"path"`
 }
 
 // Kubeadm describes the set of configuration options available for kubeadm.
