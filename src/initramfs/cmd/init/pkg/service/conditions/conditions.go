@@ -46,3 +46,22 @@ func WaitForFileExists(file string) func() (bool, error) {
 		}
 	}
 }
+
+// WaitForFilesToExist is a service condition that will wait for the existence a
+// set of files.
+func WaitForFilesToExist(files ...string) func() (bool, error) {
+	return func() (exist bool, err error) {
+		for {
+			for _, f := range files {
+				exist, err = FileExists(f)()
+				if err != nil {
+					return false, err
+				}
+			}
+			if exist {
+				return true, nil
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
