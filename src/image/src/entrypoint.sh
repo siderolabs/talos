@@ -66,7 +66,7 @@ function create_iso() {
 }
 
 function create_ami() {
-  packer build -var "version=${VERSION}" /packer.json
+  packer build -var "version=${VERSION}" "${@}" /packer.json
 }
 
 function size() {
@@ -187,7 +187,8 @@ case "$1" in
     create_iso
     ;;
   ami)
-    create_ami
+    shift
+    create_ami "${@}"
     ;;
   *)
       trap - ERR

@@ -41,12 +41,7 @@
             "ami_name": "dianemo-amd64-hvm-{{ user `version` }}",
             "ami_description": "Dianemo (HVM)",
             "ami_virtualization_type": "hvm",
-            "ami_regions": [
-                "us-west-1",
-                "us-west-2",
-                "us-east-1",
-                "us-east-2"
-            ],
+            "ami_regions": "{{ user `regions` }}",
             "ami_root_device": {
                 "source_device_name": "/dev/xvdf",
                 "device_name": "/dev/xvda",
