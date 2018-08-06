@@ -2,7 +2,9 @@ package service
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/service/conditions"
@@ -65,22 +67,15 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 		"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 		"--kubeconfig=/etc/kubernetes/kubelet.conf",
 		"--config=/var/lib/kubelet/config.yaml",
-		// "--runtime-request-timeout=10m",
-		// "--pod-manifest-path=/etc/kubernetes/manifests",
-		// "--allow-privileged=true",
-		// "--network-plugin=cni",
-		// "--cni-conf-dir=/etc/cni/net.d",
-		// "--cni-bin-dir=/opt/cni/bin",
-		// "--cluster-dns=10.96.0.10",
-		// "--cluster-domain=cluster.local",
-		// "--authorization-mode=Webhook",
-		// "--client-ca-file=/etc/kubernetes/pki/ca.crt",
-		// "--cgroup-driver=cgroupfs",
-		// "--cadvisor-port=0",
-		// "--rotate-certificates=true",
-		// "--serialize-image-pulls=false",
-		// "--v=2",
 	}
+
+	fileBytes, err := ioutil.ReadFile("/var/lib/kubelet/kubeadm-flags.env")
+	if err != nil {
+		panic(err)
+	}
+	argsString := strings.TrimPrefix(string(fileBytes), "KUBELET_KUBEADM_ARGS=")
+	argsString = strings.TrimSuffix(argsString, "\n")
+	kubeletArgs = append(kubeletArgs, strings.Split(argsString, " ")...)
 
 	cmdArgs.Args = append(cmdArgs.Args, kubeletArgs...)
 
@@ -95,9 +90,9 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 func (p *Kubelet) Condition(data userdata.UserData) func() (bool, error) {
 	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
-		return conditions.None()
+		return conditions.WaitForFileExists("/var/lib/kubelet/kubeadm-flags.env")
 	case constants.ContainerRuntimeCRIO:
-		return conditions.WaitForFileExists("/etc/containers/policy.json")
+		return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", "/etc/containers/policy.json")
 	default:
 		return conditions.None()
 	}
