@@ -66,13 +66,18 @@ func (m *Manager) build(proc Service) (cmd *exec.Cmd, err error) {
 
 	// Setup logging.
 	w, err := servicelog.New(cmdArgs.Name)
-	mw := io.MultiWriter(w, os.Stdout)
 	if err != nil {
 		err = fmt.Errorf("service log handler: %v", err)
 		return
 	}
-	cmd.Stdout = mw
-	cmd.Stderr = mw
+	var writer io.Writer
+	if m.UserData.Debug {
+		writer = io.MultiWriter(w, os.Stdout)
+	} else {
+		writer = w
+	}
+	cmd.Stdout = writer
+	cmd.Stderr = writer
 
 	return cmd, nil
 }
