@@ -17,6 +17,7 @@ type UserData struct {
 	Networking *Networking `yaml:"networking"`
 	Services   *Services   `yaml:"services"`
 	Files      []*File     `yaml:"files"`
+	Debug      bool        `yaml:"debug"`
 }
 
 // Security represents the set of options available to configure security.
