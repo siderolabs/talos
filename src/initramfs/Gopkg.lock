@@ -337,6 +337,7 @@
   revision = "103fd098999dc9c0c88536f5c9ad2e5da39373ae"
 
 [[projects]]
+  branch = "release-8.0"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -396,12 +397,11 @@
     "util/integer",
     "util/retry"
   ]
-  revision = "59698c7d9724b0f95f9dc9e7f7dfdcc3dfeceb82"
-  version = "kubernetes-1.11.1"
+  revision = "1f13a808da65775f22cbf47862c4e5898d8f4ca1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f2358294383579efc1e1b593db2c20bb628921a70bd09908c300101602709f3f"
+  inputs-digest = "9bf281406222d6e1ba44af5634aef1941ffb500c4b269f41585c5fc13c483cef"
   solver-name = "gps-cdcl"
   solver-version = 1
