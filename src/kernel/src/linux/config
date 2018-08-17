@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/x86 4.17.10 Kernel Configuration
+# Linux/x86 4.17.15 Kernel Configuration
 #
 CONFIG_64BIT=y
 CONFIG_X86_64=y
@@ -252,6 +252,7 @@ CONFIG_PROFILING=y
 CONFIG_TRACEPOINTS=y
 CONFIG_CRASH_CORE=y
 CONFIG_KEXEC_CORE=y
+CONFIG_HOTPLUG_SMT=y
 # CONFIG_OPROFILE is not set
 CONFIG_HAVE_OPROFILE=y
 CONFIG_OPROFILE_NMI_TIMER=y
