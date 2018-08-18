@@ -15,12 +15,13 @@ stages:
       destination: ../../build/osctl-darwin-amd64
     tasks:
     - src
-    - test
     - osd
     - proxyd
     - rotd
     - osctl
     - init
+    - test
+    - initramfs
     - image
   generate:
     artifacts:
@@ -56,6 +57,8 @@ tasks:
         -o /initramfs/init
       {{ end }}
       RUN chmod +x /initramfs/init
+  initramfs:
+    template: |
       WORKDIR /initramfs
       RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/initramfs/initramfs.xz
   osctl:

@@ -7,6 +7,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
+	"text/tabwriter"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/osctl/pkg/config"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/osd/proto"
@@ -106,6 +108,34 @@ func (c *Client) Kubeconfig() (err error) {
 		return
 	}
 	fmt.Print(string(r.Bytes))
+
+	return nil
+}
+
+// Processes implements the proto.OSDClient interface.
+func (c *Client) Processes() (err error) {
+	ctx := context.Background()
+	reply, err := c.client.Processes(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NAME\tID\tSTATE\tSTATUS")
+	for _, p := range reply.Processes {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Name, p.Id[:12], p.State, p.Status)
+	}
+	w.Flush()
+
+	return nil
+}
+
+// Restart implements the proto.OSDClient interface.
+func (c *Client) Restart(r *proto.RestartRequest) (err error) {
+	ctx := context.Background()
+	_, err = c.client.Restart(ctx, r)
+	if err != nil {
+		return
+	}
 
 	return nil
 }

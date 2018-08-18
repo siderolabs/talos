@@ -7,7 +7,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/chunker"
+	filechunker "github.com/autonomy/dianemo/src/initramfs/pkg/chunker/file"
 )
 
 var instance = map[string]*Log{}
@@ -18,7 +18,7 @@ var mu = &sync.Mutex{}
 type Log struct {
 	Name   string
 	Path   string
-	source chunker.ChunkSource
+	source filechunker.Source
 }
 
 // New initializes and registers a log for a service.
@@ -57,7 +57,7 @@ func (l *Log) Close() error {
 
 // Read implements chunker.Chunker.
 func (l *Log) Read(ctx context.Context) <-chan []byte {
-	c := chunker.NewDefaultChunker(l.source)
+	c := filechunker.NewChunker(l.source)
 	return c.Read(ctx)
 }
 
