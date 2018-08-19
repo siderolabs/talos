@@ -68,7 +68,7 @@ func main() {
 	}
 
 	err = factory.Listen(
-		&reg.Registrator{},
+		&reg.Registrator{data},
 		factory.Port(*port),
 		factory.ServerOptions(
 			grpc.Creds(

@@ -4,23 +4,33 @@ package reg
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	servicelog "github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/service/log"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/osd/proto"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/chunker"
+	filechunker "github.com/autonomy/dianemo/src/initramfs/pkg/chunker/file"
+	streamchunker "github.com/autonomy/dianemo/src/initramfs/pkg/chunker/stream"
+	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/version"
+	dockerclient "github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/kubernetes-incubator/cri-o/client"
+	crioclient "github.com/kubernetes-incubator/cri-o/client"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
 // proto.OSDServer interfaces.
-type Registrator struct{}
+type Registrator struct {
+	Data *userdata.UserData
+}
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
@@ -43,7 +53,47 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 }
 
 // Processes implements the proto.OSDServer interface.
-func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
+func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *proto.ProcessesReply, err error) {
+	cli, err := dockerclient.NewEnvClient()
+	if err != nil {
+		return
+	}
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
+		All: true,
+	})
+	if err != nil {
+		return
+	}
+	var processes []*proto.Process
+	for _, container := range containers {
+		process := &proto.Process{
+			Id:     container.ID,
+			Name:   strings.TrimPrefix(container.Names[0], "/"),
+			State:  container.State,
+			Status: container.Status,
+		}
+		processes = append(processes, process)
+	}
+
+	reply = &proto.ProcessesReply{Processes: processes}
+
+	return
+}
+
+// Restart implements the proto.OSDServer interface.
+func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (reply *proto.RestartReply, err error) {
+	cli, err := dockerclient.NewEnvClient()
+	if err != nil {
+		return
+	}
+	duration := time.Duration(in.Timeout) * time.Second
+	err = cli.ContainerRestart(context.Background(), in.Id, &duration)
+	if err != nil {
+		return
+	}
+
+	reply = &proto.RestartReply{}
+
 	return
 }
 
@@ -74,23 +124,18 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
 	var chunk chunker.ChunkReader
 	if req.Container {
-		// TODO: Use the specified container runtime.
-		cli, _err := client.New("/var/run/crio/crio.sock")
-		if _err != nil {
-			err = _err
-			return
+		switch r.Data.Services.Kubeadm.ContainerRuntime {
+		case constants.ContainerRuntimeDocker:
+			chunk, err = dockerLogs(req.Process)
+			if err != nil {
+				return
+			}
+		case constants.ContainerRuntimeCRIO:
+			chunk, err = crioLogs(req.Process)
+			if err != nil {
+				return
+			}
 		}
-		info, _err := cli.ContainerInfo(req.Process)
-		if _err != nil {
-			err = _err
-			return
-		}
-		file, _err := os.OpenFile(info.LogPath, os.O_RDONLY, 0)
-		if _err != nil {
-			err = _err
-			return
-		}
-		chunk = chunker.NewDefaultChunker(file)
 	} else {
 		logpath := servicelog.FormatLogPath(req.Process)
 		file, _err := os.OpenFile(logpath, os.O_RDONLY, 0)
@@ -98,7 +143,11 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 			err = _err
 			return
 		}
-		chunk = chunker.NewDefaultChunker(file)
+		chunk = filechunker.NewChunker(file)
+	}
+
+	if chunk == nil {
+		return fmt.Errorf("no log reader found")
 	}
 
 	for data := range chunk.Read(l.Context()) {
@@ -120,4 +169,42 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (data *proto
 	data = &proto.Data{Bytes: []byte(v)}
 
 	return data, err
+}
+func crioLogs(id string) (chunk chunker.Chunker, err error) {
+	cli, err := crioclient.New(constants.ContainerRuntimeCRIOSocket)
+	if err != nil {
+		return
+	}
+	info, err := cli.ContainerInfo(id)
+	if err != nil {
+		return
+	}
+	file, err := os.OpenFile(info.LogPath, os.O_RDONLY, 0)
+	if err != nil {
+		return
+	}
+	chunk = filechunker.NewChunker(file)
+
+	return chunk, nil
+}
+
+func dockerLogs(id string) (chunk chunker.Chunker, err error) {
+	cli, err := dockerclient.NewEnvClient()
+	if err != nil {
+		return
+	}
+	stream, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
+		ShowStderr: true,
+		ShowStdout: true,
+		Timestamps: false,
+		Follow:     true,
+		Tail:       "40",
+	})
+	if err != nil {
+		return
+	}
+
+	chunk = streamchunker.NewChunker(stream)
+
+	return chunk, nil
 }
