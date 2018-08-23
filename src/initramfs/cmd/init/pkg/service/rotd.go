@@ -17,13 +17,15 @@ func (p *ROTD) Pre(data userdata.UserData) error {
 }
 
 // Cmd implements the Service interface.
-func (p *ROTD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+func (p *ROTD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 	cmdArgs.Name = "rotd"
 	cmdArgs.Path = "/bin/rotd"
 	cmdArgs.Args = []string{
 		"--port=50001",
 		"--userdata=" + constants.UserDataPath,
 	}
+
+	return nil
 }
 
 // Condition implements the Service interface.

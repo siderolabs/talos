@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/osctl/pkg/client"
@@ -14,7 +13,7 @@ var (
 	timeout int32
 )
 
-// restartCmd represents the processes command
+// restartCmd represents the restart command
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart a process",
@@ -33,13 +32,15 @@ var restartCmd = &cobra.Command{
 		}
 		c, err := client.NewClient(port, creds)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 		r := &proto.RestartRequest{
 			Id:      args[0],
 			Timeout: timeout,
 		}
 		if err := c.Restart(r); err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 	},

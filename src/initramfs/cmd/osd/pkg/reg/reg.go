@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -93,6 +94,78 @@ func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (re
 	}
 
 	reply = &proto.RestartReply{}
+
+	return
+}
+
+// Reset implements the proto.OSDServer interface.
+func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.ResetReply, err error) {
+
+	{
+		cmd := exec.Command("/bin/docker", "stop", "kubelet")
+
+		// Set the environment for the service.
+		cmd.Env = []string{fmt.Sprintf("PATH=%s", constants.PATH)}
+
+		if err = cmd.Start(); err != nil {
+			return
+		}
+		_, err = cmd.Process.Wait()
+		if err != nil {
+			return
+		}
+	}
+
+	args := []string{
+		"run",
+		"--rm",
+		"--net=host",
+		"--pid=host",
+		"--privileged",
+		"--volume=/sys:/sys:rw",
+		"--volume=/sys/fs/cgroup:/sys/fs/cgroup:rw",
+		"--volume=/var/run:/var/run:rw",
+		"--volume=/run:/run:rw",
+		"--volume=/var/lib/docker:/var/lib/docker:rw",
+		"--volume=/var/lib/kubelet:/var/lib/kubelet:slave",
+		"--volume=/var/log:/var/log",
+		"--volume=/etc/kubernetes:/etc/kubernetes:shared",
+		"--volume=/etc/os-release:/etc/os-release:ro",
+		"--volume=/lib/modules:/lib/modules:ro",
+		"--volume=/bin/docker:/bin/docker:ro",
+		"--volume=/bin/crictl:/bin/crictl:ro",
+		"--volume=/bin/kubeadm:/bin/kubeadm:ro",
+		"--name=kubeadm",
+		"gcr.io/google_containers/hyperkube:v1.11.2",
+		"/bin/kubeadm",
+		"reset",
+		"--force",
+	}
+
+	// Build the exec.Cmd
+	cmd := exec.Command("/bin/docker", args...)
+
+	// Set the environment for the service.
+	cmd.Env = []string{fmt.Sprintf("PATH=%s", constants.PATH)}
+
+	if err = cmd.Start(); err != nil {
+		return
+	}
+	_, err = cmd.Process.Wait()
+	if err != nil {
+		return
+	}
+
+	reply = &proto.ResetReply{}
+
+	return
+}
+
+// Reboot implements the proto.OSDServer interface.
+func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto.RebootReply, err error) {
+	unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
+
+	reply = &proto.RebootReply{}
 
 	return
 }

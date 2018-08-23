@@ -32,7 +32,7 @@ func (p *Kubeadm) Pre(data userdata.UserData) (err error) {
 }
 
 // Cmd implements the Service interface.
-func (p *Kubeadm) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+func (p *Kubeadm) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 	var cmd string
 	if data.Services.Kubeadm.Init {
 		cmd = "init"
@@ -75,6 +75,8 @@ func (p *Kubeadm) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 	if data.Services.Kubeadm.Init {
 		cmdArgs.Args = append(cmdArgs.Args, "--skip-token-print")
 	}
+
+	return nil
 }
 
 // Condition implements the Service interface.

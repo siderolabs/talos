@@ -122,10 +122,14 @@ func root() (err error) {
 	case constants.ContainerRuntimeCRIO:
 		services.Start(&service.CRIO{})
 	default:
-		panic(fmt.Errorf("Unknown container runtime: %s", data.Services.Kubeadm.ContainerRuntime))
+		panic(fmt.Errorf("unknown container runtime: %s", data.Services.Kubeadm.ContainerRuntime))
 	}
+
 	services.Start(&service.Kubelet{})
-	services.Start(&service.Kubeadm{})
+
+	if _, err := os.Stat("/etc/kubernetes/kubelet.conf"); os.IsNotExist(err) {
+		services.Start(&service.Kubeadm{})
+	}
 
 	return nil
 }
