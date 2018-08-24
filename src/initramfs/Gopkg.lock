@@ -440,6 +440,7 @@
     "rest",
     "rest/watch",
     "tools/auth",
+    "tools/bootstrap/token/api",
     "tools/cache",
     "tools/clientcmd",
     "tools/clientcmd/api",
@@ -459,9 +460,21 @@
   ]
   revision = "1f13a808da65775f22cbf47862c4e5898d8f4ca1"
 
+[[projects]]
+  name = "k8s.io/kubernetes"
+  packages = [
+    "cmd/kubeadm/app/constants",
+    "pkg/apis/core",
+    "pkg/registry/core/service/allocator",
+    "pkg/registry/core/service/ipallocator",
+    "pkg/util/version"
+  ]
+  revision = "bb9ffb1654d4a729bb4cec18ff088eacc153c239"
+  version = "v1.11.2"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d99ad48af7398aebbe784d812714386fa504f11095e691148e6afd7476528ed2"
+  inputs-digest = "12c8e47029c210f4e4d64592bd92cfb9e343ce6fbace1114377f06881d406568"
   solver-name = "gps-cdcl"
   solver-version = 1
