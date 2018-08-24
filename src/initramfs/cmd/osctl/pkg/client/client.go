@@ -140,6 +140,28 @@ func (c *Client) Restart(r *proto.RestartRequest) (err error) {
 	return nil
 }
 
+// Reset implements the proto.OSDClient interface.
+func (c *Client) Reset() (err error) {
+	ctx := context.Background()
+	_, err = c.client.Reset(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+
+	return nil
+}
+
+// Reboot implements the proto.OSDClient interface.
+func (c *Client) Reboot() (err error) {
+	ctx := context.Background()
+	_, err = c.client.Reboot(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+
+	return nil
+}
+
 // Dmesg implements the proto.OSDClient interface.
 // nolint: dupl
 func (c *Client) Dmesg() (err error) {

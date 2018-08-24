@@ -34,7 +34,7 @@ func (p *Kubelet) Pre(data userdata.UserData) error {
 }
 
 // Cmd implements the Service interface.
-func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
+func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 	cmdArgs.Name = "kubelet"
 	cmdArgs.Path = "/bin/docker"
 	cmdArgs.Args = []string{
@@ -71,7 +71,7 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 
 	fileBytes, err := ioutil.ReadFile("/var/lib/kubelet/kubeadm-flags.env")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	argsString := strings.TrimPrefix(string(fileBytes), "KUBELET_KUBEADM_ARGS=")
 	argsString = strings.TrimSuffix(argsString, "\n")
@@ -84,6 +84,8 @@ func (p *Kubelet) Cmd(data userdata.UserData, cmdArgs *CmdArgs) {
 		cmdArgs.Args = append(cmdArgs.Args, "--container-runtime=remote", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
 	default:
 	}
+
+	return nil
 }
 
 // Condition implements the Service interface.
