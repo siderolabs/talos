@@ -6,6 +6,7 @@ package proto;
 // The ROTD service definition.
 service ROTD {
   rpc Certificate(CertificateRequest) returns (CertificateResponse) {}
+  rpc WriteFile(WriteFileRequest) returns (WriteFileResponse) {}
 }
 
 // The request message containing the process name.
@@ -17,3 +18,13 @@ message CertificateRequest {
 message CertificateResponse {
   bytes bytes = 1;
 }
+
+// The request message containing the process name.
+message WriteFileRequest {
+  string path = 1;
+  bytes data = 2;
+  int32 perm = 3;
+}
+
+// The response message containing the requested logs.
+message WriteFileResponse {}

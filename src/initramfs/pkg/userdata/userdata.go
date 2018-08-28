@@ -59,9 +59,18 @@ type File struct {
 
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
-	ContainerRuntime string `yaml:"containerRuntime,omitempty"`
-	Configuration    string `yaml:"configuration,omitempty"`
-	Init             bool   `yaml:"init,omitempty"`
+	ContainerRuntime string             `yaml:"containerRuntime,omitempty"`
+	Configuration    string             `yaml:"configuration,omitempty"`
+	Init             *InitConfiguration `yaml:"init,omitempty"`
+}
+
+// InitConfiguration describes the init strategy.
+type InitConfiguration struct {
+	Type           string `yaml:"type,omitempty"`
+	TrustEndpoint  string `yaml:"trustEndpoint,omitempty"`
+	EtcdEndpoint   string `yaml:"etcdEndpoint,omitempty"`
+	EtcdMemberName string `yaml:"etcdMemberName,omitempty"`
+	SelfHosted     bool   `yaml:"selfHosted,omitempty"`
 }
 
 // ROTD describes the configuration of the Root of Trust (RoT) service. The

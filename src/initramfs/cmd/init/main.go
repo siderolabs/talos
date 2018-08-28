@@ -109,7 +109,7 @@ func root() (err error) {
 	// Start the services essential to managing the node.
 	log.Println("starting OS services")
 	services.Start(&service.OSD{})
-	if data.Services.Kubeadm.Init {
+	if data.Services.Kubeadm.Init != nil {
 		services.Start(&service.ROTD{})
 		services.Start(&service.ProxyD{})
 	}

@@ -29,6 +29,8 @@ type Service interface {
 	// Pre is invoked before a command is executed. It is useful for things like
 	// preparing files that the process might depend on.
 	Pre(userdata.UserData) error
+	// Post is invoked after a command is executed.
+	Post(userdata.UserData) error
 	// Cmd describes the path to the binary, and the set of arguments to be
 	// passed into it upon execution.
 	Cmd(userdata.UserData, *CmdArgs) error
@@ -158,6 +160,10 @@ func (m *Manager) waitForSuccess(proc Service) (err error) {
 	if !state.Success() {
 		time.Sleep(5 * time.Second)
 		return m.waitForSuccess(proc)
+	}
+
+	if err = proc.Post(m.UserData); err != nil {
+		return
 	}
 
 	return nil

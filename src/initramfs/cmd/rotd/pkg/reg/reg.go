@@ -5,6 +5,10 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path"
 	"time"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/rotd/proto"
@@ -36,6 +40,21 @@ func (r *Registrator) Certificate(ctx context.Context, in *proto.CertificateRequ
 	resp = &proto.CertificateResponse{
 		Bytes: signed.X509CertificatePEM,
 	}
+
+	return resp, nil
+}
+
+// WriteFile implements the proto.ROTDServer interface.
+func (r *Registrator) WriteFile(ctx context.Context, in *proto.WriteFileRequest) (resp *proto.WriteFileResponse, err error) {
+	if err = os.MkdirAll(path.Dir(in.Path), os.ModeDir); err != nil {
+		return
+	}
+	if err = ioutil.WriteFile(in.Path, in.Data, os.FileMode(in.Perm)); err != nil {
+		return
+	}
+
+	log.Printf("wrote file to disk: %s", in.Path)
+	resp = &proto.WriteFileResponse{}
 
 	return resp, nil
 }

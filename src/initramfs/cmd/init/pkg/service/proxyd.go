@@ -15,6 +15,11 @@ func (p *ProxyD) Pre(data userdata.UserData) error {
 	return nil
 }
 
+// Post implements the Service interface.
+func (p *ProxyD) Post(data userdata.UserData) (err error) {
+	return nil
+}
+
 // Cmd implements the Service interface.
 func (p *ProxyD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 	cmdArgs.Name = "proxyd"

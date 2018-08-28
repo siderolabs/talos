@@ -35,7 +35,7 @@ func (m *CertificateRequest) Reset()         { *m = CertificateRequest{} }
 func (m *CertificateRequest) String() string { return proto.CompactTextString(m) }
 func (*CertificateRequest) ProtoMessage()    {}
 func (*CertificateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_api_62f8d9161514c8eb, []int{0}
+	return fileDescriptor_api_92247eb635a417db, []int{0}
 }
 func (m *CertificateRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertificateRequest.Unmarshal(m, b)
@@ -74,7 +74,7 @@ func (m *CertificateResponse) Reset()         { *m = CertificateResponse{} }
 func (m *CertificateResponse) String() string { return proto.CompactTextString(m) }
 func (*CertificateResponse) ProtoMessage()    {}
 func (*CertificateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_api_62f8d9161514c8eb, []int{1}
+	return fileDescriptor_api_92247eb635a417db, []int{1}
 }
 func (m *CertificateResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertificateResponse.Unmarshal(m, b)
@@ -101,9 +101,97 @@ func (m *CertificateResponse) GetBytes() []byte {
 	return nil
 }
 
+// The request message containing the process name.
+type WriteFileRequest struct {
+	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Data                 []byte   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Perm                 int32    `protobuf:"varint,3,opt,name=perm,proto3" json:"perm,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WriteFileRequest) Reset()         { *m = WriteFileRequest{} }
+func (m *WriteFileRequest) String() string { return proto.CompactTextString(m) }
+func (*WriteFileRequest) ProtoMessage()    {}
+func (*WriteFileRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_api_92247eb635a417db, []int{2}
+}
+func (m *WriteFileRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteFileRequest.Unmarshal(m, b)
+}
+func (m *WriteFileRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteFileRequest.Marshal(b, m, deterministic)
+}
+func (dst *WriteFileRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteFileRequest.Merge(dst, src)
+}
+func (m *WriteFileRequest) XXX_Size() int {
+	return xxx_messageInfo_WriteFileRequest.Size(m)
+}
+func (m *WriteFileRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteFileRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteFileRequest proto.InternalMessageInfo
+
+func (m *WriteFileRequest) GetPath() string {
+	if m != nil {
+		return m.Path
+	}
+	return ""
+}
+
+func (m *WriteFileRequest) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+func (m *WriteFileRequest) GetPerm() int32 {
+	if m != nil {
+		return m.Perm
+	}
+	return 0
+}
+
+// The response message containing the requested logs.
+type WriteFileResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WriteFileResponse) Reset()         { *m = WriteFileResponse{} }
+func (m *WriteFileResponse) String() string { return proto.CompactTextString(m) }
+func (*WriteFileResponse) ProtoMessage()    {}
+func (*WriteFileResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_api_92247eb635a417db, []int{3}
+}
+func (m *WriteFileResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteFileResponse.Unmarshal(m, b)
+}
+func (m *WriteFileResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteFileResponse.Marshal(b, m, deterministic)
+}
+func (dst *WriteFileResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteFileResponse.Merge(dst, src)
+}
+func (m *WriteFileResponse) XXX_Size() int {
+	return xxx_messageInfo_WriteFileResponse.Size(m)
+}
+func (m *WriteFileResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteFileResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteFileResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*CertificateRequest)(nil), "proto.CertificateRequest")
 	proto.RegisterType((*CertificateResponse)(nil), "proto.CertificateResponse")
+	proto.RegisterType((*WriteFileRequest)(nil), "proto.WriteFileRequest")
+	proto.RegisterType((*WriteFileResponse)(nil), "proto.WriteFileResponse")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -119,6 +207,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ROTDClient interface {
 	Certificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
+	WriteFile(ctx context.Context, in *WriteFileRequest, opts ...grpc.CallOption) (*WriteFileResponse, error)
 }
 
 type rOTDClient struct {
@@ -138,9 +227,19 @@ func (c *rOTDClient) Certificate(ctx context.Context, in *CertificateRequest, op
 	return out, nil
 }
 
+func (c *rOTDClient) WriteFile(ctx context.Context, in *WriteFileRequest, opts ...grpc.CallOption) (*WriteFileResponse, error) {
+	out := new(WriteFileResponse)
+	err := c.cc.Invoke(ctx, "/proto.ROTD/WriteFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ROTDServer is the server API for ROTD service.
 type ROTDServer interface {
 	Certificate(context.Context, *CertificateRequest) (*CertificateResponse, error)
+	WriteFile(context.Context, *WriteFileRequest) (*WriteFileResponse, error)
 }
 
 func RegisterROTDServer(s *grpc.Server, srv ROTDServer) {
@@ -165,6 +264,24 @@ func _ROTD_Certificate_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ROTD_WriteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ROTDServer).WriteFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ROTD/WriteFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ROTDServer).WriteFile(ctx, req.(*WriteFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _ROTD_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.ROTD",
 	HandlerType: (*ROTDServer)(nil),
@@ -173,22 +290,31 @@ var _ROTD_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Certificate",
 			Handler:    _ROTD_Certificate_Handler,
 		},
+		{
+			MethodName: "WriteFile",
+			Handler:    _ROTD_WriteFile_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api.proto",
 }
 
-func init() { proto.RegisterFile("api.proto", fileDescriptor_api_62f8d9161514c8eb) }
+func init() { proto.RegisterFile("api.proto", fileDescriptor_api_92247eb635a417db) }
 
-var fileDescriptor_api_62f8d9161514c8eb = []byte{
-	// 136 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_api_92247eb635a417db = []byte{
+	// 217 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4c, 0x2c, 0xc8, 0xd4,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0x6a, 0x5c, 0x42, 0xce, 0xa9, 0x45,
 	0x25, 0x99, 0x69, 0x99, 0xc9, 0x89, 0x25, 0xa9, 0x41, 0xa9, 0x85, 0xa5, 0xa9, 0xc5, 0x25, 0x42,
 	0x02, 0x5c, 0xcc, 0xc9, 0xc5, 0x45, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x3c, 0x41, 0x20, 0xa6, 0x92,
 	0x36, 0x97, 0x30, 0x8a, 0xba, 0xe2, 0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x21, 0x11, 0x2e, 0xd6, 0xa4,
-	0xca, 0x92, 0xd4, 0x62, 0xa8, 0x52, 0x08, 0xc7, 0xc8, 0x8f, 0x8b, 0x25, 0xc8, 0x3f, 0xc4, 0x45,
-	0xc8, 0x8d, 0x8b, 0x1b, 0x49, 0x93, 0x90, 0x24, 0xc4, 0x6a, 0x3d, 0x4c, 0x0b, 0xa5, 0xa4, 0xb0,
-	0x49, 0x41, 0xec, 0x50, 0x62, 0x48, 0x62, 0x03, 0x4b, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff,
-	0xb4, 0xaa, 0x0a, 0x1e, 0xbf, 0x00, 0x00, 0x00,
+	0xca, 0x92, 0xd4, 0x62, 0xa8, 0x52, 0x08, 0x47, 0xc9, 0x8f, 0x4b, 0x20, 0xbc, 0x28, 0xb3, 0x24,
+	0xd5, 0x2d, 0x33, 0x07, 0x6e, 0xa4, 0x10, 0x17, 0x4b, 0x41, 0x62, 0x49, 0x06, 0x58, 0x21, 0x67,
+	0x10, 0x98, 0x0d, 0x12, 0x4b, 0x49, 0x2c, 0x49, 0x94, 0x60, 0x02, 0x6b, 0x06, 0xb3, 0xc1, 0xea,
+	0x52, 0x8b, 0x72, 0x25, 0x98, 0x15, 0x18, 0x35, 0x58, 0x83, 0xc0, 0x6c, 0x25, 0x61, 0x2e, 0x41,
+	0x24, 0xf3, 0x20, 0x56, 0x1b, 0x4d, 0x60, 0xe4, 0x62, 0x09, 0xf2, 0x0f, 0x71, 0x11, 0x72, 0xe3,
+	0xe2, 0x46, 0x72, 0x9a, 0x90, 0x24, 0xc4, 0x83, 0x7a, 0x98, 0xde, 0x92, 0x92, 0xc2, 0x26, 0x05,
+	0x31, 0x4e, 0x89, 0x41, 0xc8, 0x81, 0x8b, 0x13, 0x6e, 0x8b, 0x90, 0x38, 0x54, 0x29, 0xba, 0x3f,
+	0xa4, 0x24, 0x30, 0x25, 0x60, 0x26, 0x24, 0xb1, 0x81, 0xa5, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff,
+	0xff, 0x45, 0xd6, 0xa4, 0x2f, 0x67, 0x01, 0x00, 0x00,
 }

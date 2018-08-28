@@ -40,7 +40,7 @@ const (
 	ContainerRuntimeCRIOSocket = "/var/run/crio/crio.sock"
 
 	// KubeadmConfig is the path to the kubeadm manifest file.
-	KubeadmConfig = "/etc/kubernetes/kubeadm.yaml"
+	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
 
 	// KubeadmCACert is the path to the root CA certificate.
 	KubeadmCACert = "/etc/kubernetes/pki/ca.crt"

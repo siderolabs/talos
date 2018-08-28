@@ -16,6 +16,11 @@ func (p *OSD) Pre(data userdata.UserData) error {
 	return nil
 }
 
+// Post implements the Service interface.
+func (p *OSD) Post(data userdata.UserData) (err error) {
+	return nil
+}
+
 // Cmd implements the Service interface.
 func (p *OSD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 	cmdArgs.Name = "osd"
@@ -25,7 +30,7 @@ func (p *OSD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 		"--userdata=" + constants.UserDataPath,
 	}
 
-	if !data.Services.Kubeadm.Init {
+	if data.Services.Kubeadm.Init == nil {
 		cmdArgs.Args = append(cmdArgs.Args, "--generate=true")
 	}
 

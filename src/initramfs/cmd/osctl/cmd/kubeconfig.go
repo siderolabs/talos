@@ -12,7 +12,7 @@ import (
 // kubeconfigCmd represents the kubeconfig command
 var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
-	Short: "Download the admin.conf from the seed host",
+	Short: "Download the admin.conf from the node",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		creds, err := client.NewDefaultClientCredentials()
