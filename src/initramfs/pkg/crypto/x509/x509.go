@@ -161,8 +161,8 @@ func NewSelfSignedCertificateAuthority(setters ...Option) (ca *CertificateAuthor
 		NotBefore:             time.Now(),
 		NotAfter:              opts.NotAfter,
 		BasicConstraintsValid: true,
-		IsCA:     true,
-		KeyUsage: x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageServerAuth,
 			x509.ExtKeyUsageClientAuth,

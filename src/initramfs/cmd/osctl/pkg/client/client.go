@@ -124,7 +124,9 @@ func (c *Client) Processes() (err error) {
 	for _, p := range reply.Processes {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Name, p.Id[:12], p.State, p.Status)
 	}
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		return err
+	}
 
 	return nil
 }
