@@ -25,9 +25,9 @@ stages:
     - image
   generate:
     artifacts:
-    - source: /go/src/github.com/autonomy/dianemo/src/initramfs/cmd/osd/proto
+    - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/osd/proto
       destination: ./cmd/osd
-    - source: /go/src/github.com/autonomy/dianemo/src/initramfs/cmd/rotd/proto
+    - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/rotd/proto
       destination: ./cmd/rotd
     tasks:
     - proto
@@ -46,7 +46,7 @@ tasks:
       CMD false
   init:
     template: |
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/init
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 go build \
         -ldflags "-s -w -linkmode external -extldflags \"-static -L/usr/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -63,7 +63,7 @@ tasks:
       RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/initramfs/initramfs.xz
   osctl:
     template: |
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -83,7 +83,7 @@ tasks:
       RUN chmod +x /{{ .Docker.CurrentStage }}-darwin-amd64
   osd:
     template: |
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Server -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -96,23 +96,23 @@ tasks:
       RUN chmod +x /{{ .Docker.CurrentStage }}
   proto:
     template: |
-      FROM golang:1.10.0 AS {{ .Docker.CurrentStage }}
+      FROM golang:1.11.0 AS {{ .Docker.CurrentStage }}
       RUN apt-get update
       RUN apt-get -y install bsdtar
       RUN go get github.com/golang/protobuf/protoc-gen-go
-      RUN curl -L https://github.com/google/protobuf/releases/download/v3.5.1/protoc-3.5.1-linux-x86_64.zip | bsdtar -xf -  -C /tmp \
+      RUN curl -L https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-linux-x86_64.zip | bsdtar -xf -  -C /tmp \
           && mv /tmp/bin/protoc /bin \
           && mv /tmp/include/* /usr/local/include \
           && chmod +x /bin/protoc
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/osd
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/osd
       COPY ./cmd/osd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/rotd
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/rotd
       COPY ./cmd/rotd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   proxyd:
     template: |
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=ProxyD -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -125,22 +125,25 @@ tasks:
       RUN chmod +x /{{ .Docker.CurrentStage }}
   rotd:
     template: |
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       RUN CGO_ENABLED=0 go build -a -ldflags "-s -w" -o /{{ .Docker.CurrentStage }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
   src:
     template: |
       FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
       RUN ln -s /tools/lib64 /lib64
+      RUN mkdir -p /etc/ssl/certs
+      RUN ln -s /tools/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
       RUN mkdir /tmp
-      RUN curl -L https://github.com/alecthomas/gometalinter/releases/download/v2.0.5/gometalinter-2.0.5-linux-amd64.tar.gz | tar -xz --strip-components=1 -C /tools/bin
-      COPY --from=autonomy/golang:1.10 /bin/test.sh /bin/test.sh
-      WORKDIR $GOPATH/src/github.com/autonomy/dianemo/src/initramfs
+      RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.10.1
+      ENV GO111MODULE auto
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
       COPY ./ ./
+      RUN go mod download
+      RUN go mod verify
   test:
     template: |
-      ENV GOMETALINTER_EXTRA_ARGS "--exclude=cmd/osd/proto/* --enable-gc"
-      ENV GOPACKAGES_CMD "go list ./... | grep -v /vendor/ | grep -v cmd/osd/proto/"
-      ENV GOFILES_CMD "find . -type f -name *.go -not -path \"./vendor/*\" -not -path \"cmd/osd/proto/*\""
-      RUN test.sh --lint
-      RUN test.sh --unit
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
+      RUN chmod +x ./hack/test.sh
+      RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
+      RUN ./hack/test.sh --unit

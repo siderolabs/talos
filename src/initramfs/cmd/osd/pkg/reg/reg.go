@@ -65,7 +65,7 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *pr
 	if err != nil {
 		return
 	}
-	var processes []*proto.Process
+	processes := make([]*proto.Process, len(containers))
 	for _, container := range containers {
 		process := &proto.Process{
 			Id:     container.ID,
@@ -158,7 +158,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 
 	reply = &proto.ResetReply{}
 
-	return
+	return reply, nil
 }
 
 // Reboot implements the proto.OSDServer interface.

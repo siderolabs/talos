@@ -27,7 +27,7 @@ metadata:
     srcGit: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.16.2.tar.xz
     srcGlibc: https://ftp.gnu.org/gnu/glibc/glibc-2.26.tar.xz
     srcGmp: https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
-    srcGo: https://dl.google.com/go/go1.10.linux-amd64.tar.gz
+    srcGo: https://dl.google.com/go/go1.11.linux-amd64.tar.gz
     srcGperf: https://ftp.gnu.org/gnu/gperf/gperf-3.0.4.tar.gz
     srcGrep: https://ftp.gnu.org/gnu/grep/grep-3.1.tar.xz
     srcGzip: https://ftp.gnu.org/gnu/gzip/gzip-1.8.tar.xz
