@@ -7,24 +7,24 @@ import (
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 )
 
-// ROTD implements the Service interface. It serves as the concrete type with
+// Trustd implements the Service interface. It serves as the concrete type with
 // the required methods.
-type ROTD struct{}
+type Trustd struct{}
 
 // Pre implements the Service interface.
-func (p *ROTD) Pre(data userdata.UserData) error {
+func (p *Trustd) Pre(data userdata.UserData) error {
 	return nil
 }
 
 // Post implements the Service interface.
-func (p *ROTD) Post(data userdata.UserData) (err error) {
+func (p *Trustd) Post(data userdata.UserData) (err error) {
 	return nil
 }
 
 // Cmd implements the Service interface.
-func (p *ROTD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
-	cmdArgs.Name = "rotd"
-	cmdArgs.Path = "/bin/rotd"
+func (p *Trustd) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
+	cmdArgs.Name = "trustd"
+	cmdArgs.Path = "/bin/trustd"
 	cmdArgs.Args = []string{
 		"--port=50001",
 		"--userdata=" + constants.UserDataPath,
@@ -34,12 +34,12 @@ func (p *ROTD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 }
 
 // Condition implements the Service interface.
-func (p *ROTD) Condition(data userdata.UserData) func() (bool, error) {
+func (p *Trustd) Condition(data userdata.UserData) func() (bool, error) {
 	return conditions.None()
 }
 
 // Env implements the Service interface.
-func (p *ROTD) Env() []string { return []string{} }
+func (p *Trustd) Env() []string { return []string{} }
 
 // Type implements the Service interface.
-func (p *ROTD) Type() Type { return Forever }
+func (p *Trustd) Type() Type { return Forever }

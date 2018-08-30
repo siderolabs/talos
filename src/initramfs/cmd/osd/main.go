@@ -39,20 +39,20 @@ func main() {
 	}
 
 	if *generate {
-		if len(data.Services.ROTD.Endpoints) == 0 {
+		if len(data.Services.Trustd.Endpoints) == 0 {
 			log.Fatalf("at least one root of trust endpoint is required")
 		}
 
 		creds := basic.NewCredentials(
 			data.Security.OS.CA.Crt,
-			data.Services.ROTD.Username,
-			data.Services.ROTD.Password,
+			data.Services.Trustd.Username,
+			data.Services.Trustd.Password,
 		)
 
 		// TODO: In the case of failure, attempt to generate the identity from
 		// another RoT.
 		var conn *grpc.ClientConn
-		conn, err = basic.NewConnection(data.Services.ROTD.Endpoints[0], *rotPort, creds)
+		conn, err = basic.NewConnection(data.Services.Trustd.Endpoints[0], *rotPort, creds)
 		if err != nil {
 			return
 		}

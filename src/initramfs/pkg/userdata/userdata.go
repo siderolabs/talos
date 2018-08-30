@@ -47,7 +47,7 @@ type Networking struct {
 // Services represents the set of services available to configure.
 type Services struct {
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
-	ROTD    *ROTD    `yaml:"rotd"`
+	Trustd  *Trustd  `yaml:"trustd"`
 }
 
 // File represents a files to write to disk.
@@ -73,12 +73,12 @@ type InitConfiguration struct {
 	SelfHosted     bool   `yaml:"selfHosted,omitempty"`
 }
 
-// ROTD describes the configuration of the Root of Trust (RoT) service. The
+// Trustd describes the configuration of the Root of Trust (RoT) service. The
 // username and password are used by master nodes, and worker nodes. The master
 // nodes use them to authenticate clients, while the workers use them to
 // authenticate as a client. The endpoints should only be specified in the
 // worker user data, and should include all master nodes participating as a RoT.
-type ROTD struct {
+type Trustd struct {
 	Username  string   `yaml:"username"`
 	Password  string   `yaml:"password"`
 	Endpoints []string `yaml:"endpoints,omitempty"`

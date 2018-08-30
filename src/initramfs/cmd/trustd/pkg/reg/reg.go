@@ -11,24 +11,24 @@ import (
 	"path"
 	"time"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/rotd/proto"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 	"google.golang.org/grpc"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// proto.ROTDServer interfaces.
+// proto.TrustdServer interfaces.
 type Registrator struct {
 	Data *userdata.OSSecurity
 }
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	proto.RegisterROTDServer(s, r)
+	proto.RegisterTrustdServer(s, r)
 }
 
-// Certificate implements the proto.ROTDServer interface.
+// Certificate implements the proto.TrustdServer interface.
 func (r *Registrator) Certificate(ctx context.Context, in *proto.CertificateRequest) (resp *proto.CertificateResponse, err error) {
 	// TODO: Verify that the request is coming from the IP addresss declared in
 	// the CSR.
@@ -44,7 +44,7 @@ func (r *Registrator) Certificate(ctx context.Context, in *proto.CertificateRequ
 	return resp, nil
 }
 
-// WriteFile implements the proto.ROTDServer interface.
+// WriteFile implements the proto.TrustdServer interface.
 func (r *Registrator) WriteFile(ctx context.Context, in *proto.WriteFileRequest) (resp *proto.WriteFileResponse, err error) {
 	if err = os.MkdirAll(path.Dir(in.Path), os.ModeDir); err != nil {
 		return

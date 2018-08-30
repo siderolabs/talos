@@ -65,6 +65,6 @@ tasks:
       COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/lib/modules /generated/rootfs/lib/modules
       COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/osd /generated/rootfs/bin/osd
       COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/proxyd /generated/rootfs/bin/proxyd
-      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/rotd /generated/rootfs/bin/rotd
+      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/trustd /generated/rootfs/bin/trustd
       COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/init /generated/rootfs/bin/init
       RUN {{if .Git.IsClean}}XZ_OPT=-9e{{else}}XZ_OPT=-0{{end}} tar -cvpJf /generated/rootfs.tar.xz -C /generated/rootfs .
