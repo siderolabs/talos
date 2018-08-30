@@ -110,8 +110,8 @@ func root() (err error) {
 	log.Println("starting OS services")
 	services.Start(&service.OSD{})
 	if data.Services.Kubeadm.Init != nil {
-		services.Start(&service.ROTD{})
-		services.Start(&service.ProxyD{})
+		services.Start(&service.Trustd{})
+		services.Start(&service.Proxyd{})
 	}
 
 	// Start the services essential to running Kubernetes.

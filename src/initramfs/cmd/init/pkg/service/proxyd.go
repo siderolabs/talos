@@ -6,22 +6,22 @@ import (
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 )
 
-// ProxyD implements the Service interface. It serves as the concrete type with
+// Proxyd implements the Service interface. It serves as the concrete type with
 // the required methods.
-type ProxyD struct{}
+type Proxyd struct{}
 
 // Pre implements the Service interface.
-func (p *ProxyD) Pre(data userdata.UserData) error {
+func (p *Proxyd) Pre(data userdata.UserData) error {
 	return nil
 }
 
 // Post implements the Service interface.
-func (p *ProxyD) Post(data userdata.UserData) (err error) {
+func (p *Proxyd) Post(data userdata.UserData) (err error) {
 	return nil
 }
 
 // Cmd implements the Service interface.
-func (p *ProxyD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
+func (p *Proxyd) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 	cmdArgs.Name = "proxyd"
 	cmdArgs.Path = "/bin/proxyd"
 	cmdArgs.Args = []string{}
@@ -30,12 +30,12 @@ func (p *ProxyD) Cmd(data userdata.UserData, cmdArgs *CmdArgs) error {
 }
 
 // Condition implements the Service interface.
-func (p *ProxyD) Condition(data userdata.UserData) func() (bool, error) {
+func (p *Proxyd) Condition(data userdata.UserData) func() (bool, error) {
 	return conditions.WaitForFileExists("/etc/kubernetes/admin.conf")
 }
 
 // Env implements the Service interface.
-func (p *ProxyD) Env() []string { return []string{} }
+func (p *Proxyd) Env() []string { return []string{} }
 
 // Type implements the Service interface.
-func (p *ProxyD) Type() Type { return Forever }
+func (p *Proxyd) Type() Type { return Forever }

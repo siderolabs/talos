@@ -3,8 +3,8 @@ syntax = "proto3";
 
 package proto;
 
-// The ROTD service definition.
-service ROTD {
+// The Trustd service definition.
+service Trustd {
   rpc Certificate(CertificateRequest) returns (CertificateResponse) {}
   rpc WriteFile(WriteFileRequest) returns (WriteFileResponse) {}
 }

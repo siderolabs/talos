@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/rotd/pkg/reg"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/pkg/reg"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/factory"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/middleware/auth/basic"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/tls"
@@ -40,8 +40,8 @@ func main() {
 
 	creds := basic.NewCredentials(
 		data.Security.OS.CA.Crt,
-		data.Services.ROTD.Username,
-		data.Services.ROTD.Password,
+		data.Services.Trustd.Username,
+		data.Services.Trustd.Password,
 	)
 
 	err = factory.Listen(

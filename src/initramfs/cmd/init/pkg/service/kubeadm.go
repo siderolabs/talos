@@ -15,7 +15,7 @@ import (
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/service/conditions"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/rotd/proto"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/middleware/auth/basic"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/net"
@@ -90,8 +90,8 @@ func (p *Kubeadm) Post(data userdata.UserData) (err error) {
 
 	creds := basic.NewCredentials(
 		data.Security.OS.CA.Crt,
-		data.Services.ROTD.Username,
-		data.Services.ROTD.Password,
+		data.Services.Trustd.Username,
+		data.Services.Trustd.Password,
 	)
 
 	var conn *grpc.ClientConn
@@ -107,7 +107,7 @@ func (p *Kubeadm) Post(data userdata.UserData) (err error) {
 	if err != nil {
 		return
 	}
-	client := proto.NewROTDClient(conn)
+	client := proto.NewTrustdClient(conn)
 
 	files := []string{
 		"/etc/kubernetes/pki/ca.crt",
@@ -248,7 +248,7 @@ func parse(data userdata.UserData) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-func writeFiles(client proto.ROTDClient, files []string) (err error) {
+func writeFiles(client proto.TrustdClient, files []string) (err error) {
 	errChan := make(chan error)
 	doneChan := make(chan bool)
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Minute)

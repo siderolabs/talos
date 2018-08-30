@@ -9,7 +9,7 @@ import (
 	stdlibnet "net"
 	"time"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/rotd/proto"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/net"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
@@ -18,19 +18,19 @@ import (
 
 // Generator represents the OS identity generator.
 type Generator struct {
-	client proto.ROTDClient
+	client proto.TrustdClient
 }
 
 // NewGenerator initializes a Generator with a preconfigured grpc.ClientConn.
 func NewGenerator(conn *grpc.ClientConn) (g *Generator) {
-	client := proto.NewROTDClient(conn)
+	client := proto.NewTrustdClient(conn)
 
 	return &Generator{
 		client: client,
 	}
 }
 
-// Certificate implements the proto.ROTDClient interface.
+// Certificate implements the proto.TrustdClient interface.
 func (g *Generator) Certificate(in *proto.CertificateRequest) (resp *proto.CertificateResponse, err error) {
 	ctx := context.Background()
 	resp, err = g.client.Certificate(ctx, in)
