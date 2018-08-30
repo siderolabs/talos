@@ -3,7 +3,7 @@ metadata:
   variables:
     artifacts: /artifacts
     runcCheckConfig: https://raw.githubusercontent.com/opencontainers/runc/v1.0.0-rc5/script/check-config.sh
-    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.17.15.tar.xz
+    srcLinux: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.18.5.tar.xz
 pipeline:
   stages:
   - build
@@ -28,8 +28,8 @@ tasks:
       RUN check-config.sh .config
       RUN mkdir /tmp
       RUN make -j $(($(nproc) / 2))
-      RUN make modules_install INSTALL_MOD_PATH=/tmp
-      RUN depmod -b /tmp 4.17.15-dianemo
+      RUN make modules_install DEPMOD=/tools/bin/depmod INSTALL_MOD_PATH=/tmp
+      RUN depmod -b /tmp 4.18.5-dianemo
       RUN cp arch/x86/boot/bzImage /tmp/vmlinuz
       FROM scratch
       COPY --from={{ .Docker.CurrentStage }} /tmp /tmp
