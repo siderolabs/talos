@@ -44,7 +44,12 @@ docker run \
 	--rm \
 	--net=host \
 	--volume /etc/kubernetes/pki/etcd:/etc/kubernetes/pki/etcd k8s.gcr.io/etcd:{{ .EtcdVersion }} \
-	etcdctl --ca-file /etc/kubernetes/pki/etcd/ca.crt --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key --endpoints=https://{{ .Init.EtcdEndpoint }}:2379 member add {{ .Init.EtcdMemberName }} https://{{ .IP }}:2380
+	etcdctl \
+		--ca-file /etc/kubernetes/pki/etcd/ca.crt \
+		--cert-file /etc/kubernetes/pki/etcd/peer.crt \
+		--key-file /etc/kubernetes/pki/etcd/peer.key \
+		--endpoints=https://{{ .Init.EtcdEndpoint }}:2379 \
+		member add {{ .Init.EtcdMemberName }} https://{{ .IP }}:2380
 kubeadm alpha phase etcd local --config kubeadm-config.yaml
 kubeadm alpha phase kubeconfig all --config kubeadm-config.yaml
 {{- if not .Init.SelfHosted }}
