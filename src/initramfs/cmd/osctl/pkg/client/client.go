@@ -79,7 +79,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	if ok := certPool.AppendCertsFromPEM(clientcreds.ca); !ok {
 		return nil, fmt.Errorf("failed to append client certs")
 	}
-	// TODO: Do not parse the address. Pass the IP and port in as separate
+	// TODO(andrewrynhard): Do not parse the address. Pass the IP and port in as separate
 	// parameters.
 	creds := credentials.NewTLS(&tls.Config{
 		ServerName:   clientcreds.target,
@@ -120,9 +120,9 @@ func (c *Client) Processes() (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAME\tID\tSTATE\tSTATUS")
+	fmt.Fprintln(w, "ID\tIMAGE\tSTATUS\tMEMORY(MB)\tCPU")
 	for _, p := range reply.Processes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Name, p.Id[:12], p.State, p.Status)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", p.Id, p.Image, p.Status, float64(p.MemoryUsage)*1e-6, p.CpuUsage)
 	}
 	if err := w.Flush(); err != nil {
 		return err

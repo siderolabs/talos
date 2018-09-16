@@ -25,9 +25,10 @@ message ProcessesReply {
 // The response message containing the requested processes.
 message Process {
   string id = 1;
-  string name = 2;
-  string state = 3;
-  string status = 4;
+  string image = 2;
+  string status = 3;
+  uint64 memory_usage = 4;
+  uint64 cpu_usage = 5;
 }
 
 // The request message containing the process to restart.

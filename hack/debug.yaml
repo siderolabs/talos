@@ -4,6 +4,7 @@ metadata:
   name: debug
 spec:
   hostPID: true
+  hostIPC: true
   hostNetwork: true
   # nodeSelector:
   #   kubernetes.io/hostname: ${HOSTNAME}

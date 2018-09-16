@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	yaml "gopkg.in/yaml.v2"
@@ -46,8 +47,12 @@ type Networking struct {
 
 // Services represents the set of services available to configure.
 type Services struct {
+	Kubelet *Kubelet `yaml:"kubelet"`
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
 	Trustd  *Trustd  `yaml:"trustd"`
+	Proxyd  *Proxyd  `yaml:"proxyd"`
+	OSD     *OSD     `yaml:"osd"`
+	CRT     *CRT     `yaml:"crt"`
 }
 
 // File represents a files to write to disk.
@@ -57,8 +62,14 @@ type File struct {
 	Path        string      `yaml:"path"`
 }
 
+// Kubelet describes the configuration of the kubelet service.
+type Kubelet struct {
+	Image string `yaml:"image,omitempty"`
+}
+
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
+	Image            string             `yaml:"image,omitempty"`
 	ContainerRuntime string             `yaml:"containerRuntime,omitempty"`
 	Configuration    string             `yaml:"configuration,omitempty"`
 	Init             *InitConfiguration `yaml:"init,omitempty"`
@@ -79,9 +90,40 @@ type InitConfiguration struct {
 // authenticate as a client. The endpoints should only be specified in the
 // worker user data, and should include all master nodes participating as a RoT.
 type Trustd struct {
+	Image     string   `yaml:"image,omitempty"`
 	Username  string   `yaml:"username"`
 	Password  string   `yaml:"password"`
 	Endpoints []string `yaml:"endpoints,omitempty"`
+}
+
+// OSD describes the configuration of the osd service.
+type OSD struct {
+	Image string `yaml:"image,omitempty"`
+}
+
+// Proxyd describes the configuration of the proxyd service.
+type Proxyd struct {
+	Image string `yaml:"image,omitempty"`
+}
+
+// CRT describes the configuration of the container runtime service.
+type CRT struct {
+	Image string `yaml:"image,omitempty"`
+}
+
+// WriteFiles writes the requested files to disk.
+func (data *UserData) WriteFiles() (err error) {
+	for _, f := range data.Files {
+		p := path.Join("/var", f.Path)
+		if err = os.MkdirAll(path.Dir(p), os.ModeDir); err != nil {
+			return
+		}
+		if err = ioutil.WriteFile(p, []byte(f.Contents), f.Permissions); err != nil {
+			return
+		}
+	}
+
+	return nil
 }
 
 // Download initializes a UserData struct from a remote URL.

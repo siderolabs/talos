@@ -6,18 +6,16 @@ import "C"
 
 import (
 	"flag"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"path"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/platform"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/rootfs"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/service"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/switchroot"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/services"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 )
 
@@ -85,50 +83,38 @@ func initram() (err error) {
 
 func root() (err error) {
 	// Read the user data.
-	log.Println("reading the user data")
+	log.Printf("reading the user data: %s\n", constants.UserDataPath)
 	data, err := userdata.Open(constants.UserDataPath)
 	if err != nil {
-		return
+		return err
 	}
 
-	// Create the requested files.
-	for _, f := range data.Files {
-		log.Printf("writing file: %s", f.Path)
-		if err = os.MkdirAll(path.Dir(f.Path), os.ModeDir); err != nil {
-			return
-		}
-		if err = ioutil.WriteFile(f.Path, []byte(f.Contents), f.Permissions); err != nil {
-			return
-		}
+	// Write any user specified files to disk.
+	log.Println("writing the files specified in the user data to disk")
+	if err = data.WriteFiles(); err != nil {
+		return err
 	}
 
-	services := &service.Manager{
-		UserData: *data,
-	}
+	// Get a handle to the system services API.
+	systemservices := system.Services(data)
 
-	// Start the services essential to managing the node.
-	log.Println("starting OS services")
-	services.Start(&service.OSD{})
+	// Start the services common to all nodes.
+	log.Println("starting node services")
+	systemservices.Start(
+		&services.Containerd{},
+		&services.CRT{},
+		&services.OSD{},
+		&services.Kubelet{},
+		&services.Kubeadm{},
+	)
+
+	// Start the services common to all master nodes.
 	if data.Services.Kubeadm.Init != nil {
-		services.Start(&service.Trustd{})
-		services.Start(&service.Proxyd{})
-	}
-
-	// Start the services essential to running Kubernetes.
-	log.Println("starting Kubernetes services")
-	switch data.Services.Kubeadm.ContainerRuntime {
-	case constants.ContainerRuntimeDocker:
-		services.Start(&service.Docker{})
-	case constants.ContainerRuntimeCRIO:
-		services.Start(&service.CRIO{})
-	default:
-		panic(fmt.Errorf("unknown container runtime: %s", data.Services.Kubeadm.ContainerRuntime))
-	}
-
-	services.Start(&service.Kubelet{})
-
-	if _, err := os.Stat("/etc/kubernetes/kubelet.conf"); os.IsNotExist(err) {
-		services.Start(&service.Kubeadm{})
+		log.Println("starting master services")
+		systemservices.Start(
+			&services.Trustd{},
+			&services.Proxyd{},
+		)
 	}
 
 	return nil

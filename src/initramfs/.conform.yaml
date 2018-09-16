@@ -1,27 +1,73 @@
 metadata:
   repository: dianemo/initramfs
   variables:
+    rootfs: /rootfs
     versionPath: github.com/autonomy/dianemo/src/initramfs/pkg/version
+script:
+  template: |
+    #!/bin/sh
+
+    set -e
+
+    docker tag {{ .Repository }}:osd autonomy/osd:{{ .Git.SHA }}
+    docker save autonomy/osd:{{ .Git.SHA }} -o ../../build/osd.tar
+
+    docker tag {{ .Repository }}:trustd autonomy/trustd:{{ .Git.SHA }}
+    docker save autonomy/trustd:{{ .Git.SHA }} -o ../../build/trustd.tar
+
+    docker tag {{ .Repository }}:proxyd autonomy/proxyd:{{ .Git.SHA }}
+    docker save autonomy/proxyd:{{ .Git.SHA }} -o ../../build/proxyd.tar
+
+    {{ if and (.Git.IsClean) (or (.Git.IsTag) (eq .Git.Branch "master")) }}
+    docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+
+    docker tag autonomy/osd:{{ .Git.SHA }} autonomy/osd:latest
+    docker push autonomy/osd:{{ .Git.SHA }}
+    docker push autonomy/osd:latest
+
+    docker tag autonomy/trustd:{{ .Git.SHA }} autonomy/trustd:latest
+    docker push autonomy/trustd:{{ .Git.SHA }}
+    docker push autonomy/trustd:latest
+
+    docker tag autonomy/proxyd:{{ .Git.SHA }} autonomy/proxyd:latest
+    docker push autonomy/proxyd:{{ .Git.SHA }}
+    docker push autonomy/proxyd:latest
+    {{ end }}
 pipeline:
   stages:
   - generate
-  - build
+  - base
+  - osd
+  - osctl
+  - trustd
+  - proxyd
+  - initramfs
 stages:
-  build:
-    artifacts:
-    - source: /tmp/osctl-linux-amd64
-      destination: ../../build/osctl-linux-amd64
-    - source: /tmp/osctl-darwin-amd64
-      destination: ../../build/osctl-darwin-amd64
+  base:
     tasks:
     - src
+    - test
+  osd:
+    tasks:
+    - osd
+  osctl:
+    artifacts:
+    - source: /osctl-linux-amd64
+      destination: ../../build/osctl-linux-amd64
+    - source: /osctl-darwin-amd64
+      destination: ../../build/osctl-darwin-amd64
+    tasks:
+    - osctl
+  trustd:
+    tasks:
+    - trustd
+  proxyd:
+    tasks:
+    - proxyd
+  initramfs:
+    tasks:
     - init
     - initramfs
-    - trustd
-    - proxyd
-    - osd
-    - osctl
-    - test
     - image
   generate:
     artifacts:
@@ -36,33 +82,38 @@ tasks:
     template: |
       FROM scratch
       WORKDIR /tmp
-      COPY --from=src /initramfs/init init
-      COPY --from=src /initramfs/initramfs.xz initramfs.xz
-      COPY --from=src /trustd trustd
-      COPY --from=src /proxyd proxyd
-      COPY --from=src /osd osd
-      COPY --from=src /osctl-linux-amd64 osctl-linux-amd64
-      COPY --from=src /osctl-darwin-amd64 osctl-darwin-amd64
+      COPY --from=init /initramfs/initramfs.xz initramfs.xz
       CMD false
   init:
     template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -linkmode external -extldflags \"-static -L/usr/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
+        -ldflags "-s -w -linkmode external -extldflags \"-L/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
         -o /initramfs/init
       {{ else }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -linkmode external -extldflags \"-static -L/usr/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -ldflags "-s -w -linkmode external -extldflags \"-L/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /initramfs/init
       {{ end }}
       RUN chmod +x /initramfs/init
+      RUN mkdir -p /initramfs/lib \
+          && cp /tools/lib/libblkid.* /initramfs/lib \
+          && cp /tools/lib/libuuid.* /initramfs/lib
   initramfs:
     template: |
       WORKDIR /initramfs
-      RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/initramfs/initramfs.xz
+      RUN cp -R {{ index .Variables "rootfs" }}/* ./
+      {{ if .Git.IsClean }}
+      RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/tmp/initramfs.xz
+      {{ else }}
+      RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/tmp/initramfs.xz
+      {{ end }}
+      RUN cp /tmp/initramfs.xz /initramfs/initramfs.xz
   osctl:
     template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a \
@@ -81,8 +132,10 @@ tasks:
       {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}-linux-amd64
       RUN chmod +x /{{ .Docker.CurrentStage }}-darwin-amd64
+      CMD false
   osd:
     template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
@@ -94,6 +147,9 @@ tasks:
         -o /{{ .Docker.CurrentStage }}
       {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
+      FROM scratch
+      COPY --from={{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }}
+      ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]
   proto:
     template: |
       FROM golang:1.11.0 AS {{ .Docker.CurrentStage }}
@@ -112,6 +168,7 @@ tasks:
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   proxyd:
     template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
@@ -123,16 +180,20 @@ tasks:
         -o /{{ .Docker.CurrentStage }}
       {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
+      FROM scratch
+      COPY --from={{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }}
+      ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]
   src:
     template: |
       FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
       RUN ln -s /tools/lib64 /lib64
       RUN mkdir -p /etc/ssl/certs
       RUN ln -s /tools/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
-      RUN mkdir /tmp
       RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.10.1
       ENV GO111MODULE auto
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
+      RUN cp /tools/lib/libblkid.* /lib \
+          && cp /tools/lib/libuuid.* /lib
       COPY ./ ./
       RUN go mod download
       RUN go mod verify
@@ -144,6 +205,7 @@ tasks:
       RUN ./hack/test.sh --unit
   trustd:
     template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
@@ -155,3 +217,6 @@ tasks:
         -o /{{ .Docker.CurrentStage }}
       {{ end }}
       RUN chmod +x /{{ .Docker.CurrentStage }}
+      FROM scratch
+      COPY --from={{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }}
+      ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]

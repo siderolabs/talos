@@ -3,7 +3,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/osctl/pkg/client"
@@ -23,9 +22,11 @@ var psCmd = &cobra.Command{
 		}
 		c, err := client.NewClient(port, creds)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 		if err := c.Processes(); err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 	},

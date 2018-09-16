@@ -63,5 +63,5 @@ func (l *Log) Read(ctx context.Context) <-chan []byte {
 
 // FormatLogPath formats the path the log file.
 func FormatLogPath(p string) string {
-	return path.Join("/var/log", p)
+	return path.Join("/var/log", p+".log")
 }
