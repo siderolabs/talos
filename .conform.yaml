@@ -32,7 +32,7 @@ script:
     rm -rf ./build/*
     cd ./src/tools && conform enforce
     cd ../kernel && conform enforce
-    cd ../initramfs && conform enforce
     cd ../rootfs && conform enforce
+    cd ../initramfs && conform enforce
     cd ../image && conform enforce
     cd ../

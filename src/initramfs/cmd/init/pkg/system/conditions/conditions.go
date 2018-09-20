@@ -5,8 +5,11 @@ import (
 	"time"
 )
 
+// ConditionFunc is the signature that all condition funcs must have.
+type ConditionFunc = func() (bool, error)
+
 // None is a service condition that has no conditions.
-func None() func() (bool, error) {
+func None() ConditionFunc {
 	return func() (bool, error) {
 		return true, nil
 	}
@@ -14,7 +17,7 @@ func None() func() (bool, error) {
 
 // FileExists is a service condition that checks for the existence of a file
 // once and only once.
-func FileExists(file string) func() (bool, error) {
+func FileExists(file string) ConditionFunc {
 	return func() (bool, error) {
 		_, err := os.Stat(file)
 		if err != nil {
@@ -29,9 +32,9 @@ func FileExists(file string) func() (bool, error) {
 	}
 }
 
-// WaitForFileExists is a service condition that will wait for the existence of
+// WaitForFileToExist is a service condition that will wait for the existence of
 // a file.
-func WaitForFileExists(file string) func() (bool, error) {
+func WaitForFileToExist(file string) ConditionFunc {
 	return func() (bool, error) {
 		for {
 			exists, err := FileExists(file)()
@@ -49,16 +52,21 @@ func WaitForFileExists(file string) func() (bool, error) {
 
 // WaitForFilesToExist is a service condition that will wait for the existence a
 // set of files.
-func WaitForFilesToExist(files ...string) func() (bool, error) {
-	return func() (exist bool, err error) {
+func WaitForFilesToExist(files ...string) ConditionFunc {
+	return func() (exists bool, err error) {
+	L:
 		for {
 			for _, f := range files {
-				exist, err = FileExists(f)()
+				exists, err = FileExists(f)()
 				if err != nil {
 					return false, err
 				}
+				if !exists {
+					time.Sleep(1 * time.Second)
+					continue L
+				}
 			}
-			if exist {
+			if exists {
 				return true, nil
 			}
 			time.Sleep(1 * time.Second)

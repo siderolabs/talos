@@ -3,9 +3,11 @@
 
 package proto
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 import (
 	context "golang.org/x/net/context"
@@ -35,7 +37,7 @@ func (m *CertificateRequest) Reset()         { *m = CertificateRequest{} }
 func (m *CertificateRequest) String() string { return proto.CompactTextString(m) }
 func (*CertificateRequest) ProtoMessage()    {}
 func (*CertificateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_api_6d48f67e45b68bdd, []int{0}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
 }
 func (m *CertificateRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertificateRequest.Unmarshal(m, b)
@@ -43,8 +45,8 @@ func (m *CertificateRequest) XXX_Unmarshal(b []byte) error {
 func (m *CertificateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertificateRequest.Marshal(b, m, deterministic)
 }
-func (dst *CertificateRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertificateRequest.Merge(dst, src)
+func (m *CertificateRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertificateRequest.Merge(m, src)
 }
 func (m *CertificateRequest) XXX_Size() int {
 	return xxx_messageInfo_CertificateRequest.Size(m)
@@ -74,7 +76,7 @@ func (m *CertificateResponse) Reset()         { *m = CertificateResponse{} }
 func (m *CertificateResponse) String() string { return proto.CompactTextString(m) }
 func (*CertificateResponse) ProtoMessage()    {}
 func (*CertificateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_api_6d48f67e45b68bdd, []int{1}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
 }
 func (m *CertificateResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertificateResponse.Unmarshal(m, b)
@@ -82,8 +84,8 @@ func (m *CertificateResponse) XXX_Unmarshal(b []byte) error {
 func (m *CertificateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertificateResponse.Marshal(b, m, deterministic)
 }
-func (dst *CertificateResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertificateResponse.Merge(dst, src)
+func (m *CertificateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertificateResponse.Merge(m, src)
 }
 func (m *CertificateResponse) XXX_Size() int {
 	return xxx_messageInfo_CertificateResponse.Size(m)
@@ -115,7 +117,7 @@ func (m *WriteFileRequest) Reset()         { *m = WriteFileRequest{} }
 func (m *WriteFileRequest) String() string { return proto.CompactTextString(m) }
 func (*WriteFileRequest) ProtoMessage()    {}
 func (*WriteFileRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_api_6d48f67e45b68bdd, []int{2}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{2}
 }
 func (m *WriteFileRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_WriteFileRequest.Unmarshal(m, b)
@@ -123,8 +125,8 @@ func (m *WriteFileRequest) XXX_Unmarshal(b []byte) error {
 func (m *WriteFileRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_WriteFileRequest.Marshal(b, m, deterministic)
 }
-func (dst *WriteFileRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WriteFileRequest.Merge(dst, src)
+func (m *WriteFileRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteFileRequest.Merge(m, src)
 }
 func (m *WriteFileRequest) XXX_Size() int {
 	return xxx_messageInfo_WriteFileRequest.Size(m)
@@ -167,7 +169,7 @@ func (m *WriteFileResponse) Reset()         { *m = WriteFileResponse{} }
 func (m *WriteFileResponse) String() string { return proto.CompactTextString(m) }
 func (*WriteFileResponse) ProtoMessage()    {}
 func (*WriteFileResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_api_6d48f67e45b68bdd, []int{3}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{3}
 }
 func (m *WriteFileResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_WriteFileResponse.Unmarshal(m, b)
@@ -175,8 +177,8 @@ func (m *WriteFileResponse) XXX_Unmarshal(b []byte) error {
 func (m *WriteFileResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_WriteFileResponse.Marshal(b, m, deterministic)
 }
-func (dst *WriteFileResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WriteFileResponse.Merge(dst, src)
+func (m *WriteFileResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteFileResponse.Merge(m, src)
 }
 func (m *WriteFileResponse) XXX_Size() int {
 	return xxx_messageInfo_WriteFileResponse.Size(m)
@@ -299,9 +301,9 @@ var _Trustd_serviceDesc = grpc.ServiceDesc{
 	Metadata: "api.proto",
 }
 
-func init() { proto.RegisterFile("api.proto", fileDescriptor_api_6d48f67e45b68bdd) }
+func init() { proto.RegisterFile("api.proto", fileDescriptor_00212fb1f9d3bf1c) }
 
-var fileDescriptor_api_6d48f67e45b68bdd = []byte{
+var fileDescriptor_00212fb1f9d3bf1c = []byte{
 	// 219 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4c, 0x2c, 0xc8, 0xd4,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0x6a, 0x5c, 0x42, 0xce, 0xa9, 0x45,

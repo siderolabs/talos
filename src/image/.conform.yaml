@@ -8,6 +8,8 @@ script:
 
     set -e
 
+    docker save {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }} -o ../../build/dianemo.tar
+
     {{ if and (.Git.IsClean) (or (.Git.IsTag) (eq .Git.Branch "master")) }}
     docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
     docker tag {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }} {{ .Docker.Image.Name }}:latest
@@ -63,8 +65,4 @@ tasks:
     template: |
       COPY --from=dianemo/rootfs:{{ .Docker.Image.Tag }} /rootfs /generated/rootfs
       COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/lib/modules /generated/rootfs/lib/modules
-      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/osd /generated/rootfs/bin/osd
-      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/proxyd /generated/rootfs/bin/proxyd
-      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/trustd /generated/rootfs/bin/trustd
-      COPY --from=dianemo/initramfs:{{ .Docker.Image.Tag }} /tmp/init /generated/rootfs/bin/init
       RUN {{if .Git.IsClean}}XZ_OPT=-9e{{else}}XZ_OPT=-0{{end}} tar -cvpJf /generated/rootfs.tar.xz -C /generated/rootfs .

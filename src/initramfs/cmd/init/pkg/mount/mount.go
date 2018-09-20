@@ -8,9 +8,9 @@ import (
 	"path"
 	"sync"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/blkid"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/kernel"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount/blkid"
 	"golang.org/x/sys/unix"
 )
 

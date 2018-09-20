@@ -27,6 +27,9 @@ const (
 	// PATH defines all locations where executables are stored.
 	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"
 
+	// ContainerdSocket is the path to the containerd socket.
+	ContainerdSocket = "/run/containerd/containerd.sock"
+
 	// ContainerRuntimeDocker is the name of the Docker container runtime.
 	ContainerRuntimeDocker = "docker"
 
@@ -40,13 +43,21 @@ const (
 	ContainerRuntimeCRIOSocket = "/var/run/crio/crio.sock"
 
 	// KubeadmConfig is the path to the kubeadm manifest file.
-	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
+	KubeadmConfig = "/var/etc/kubernetes/kubeadm-config.yaml"
 
 	// KubeadmCACert is the path to the root CA certificate.
-	KubeadmCACert = "/etc/kubernetes/pki/ca.crt"
+	KubeadmCACert = "/var/etc/kubernetes/pki/ca.crt"
 
 	// KubeadmCAKey is the path to the root CA private key.
-	KubeadmCAKey = "/etc/kubernetes/pki/ca.key"
+	KubeadmCAKey = "/var/etc/kubernetes/pki/ca.key"
+
+	// KubeadmInitTypeInitial is the string that represents a master node that
+	// is the initial node.
+	KubeadmInitTypeInitial = "initial"
+
+	// KubeadmInitTypeDependent is the string that represents a master node that
+	// is not the initial node.
+	KubeadmInitTypeDependent = "dependent"
 
 	// UserDataPath is the path to the downloaded user data.
 	UserDataPath = "/var/run/userdata.yaml"

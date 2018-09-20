@@ -11,33 +11,33 @@ function create_image() {
 
   if [ "$FULL" = true ] ; then
     if [ "$RAW" = true ] ; then
-      parted -s -a optimal ${RAW_IMAGE} mkpart ESP fat32 0 50M
-      parted -s -a optimal ${RAW_IMAGE} mkpart ROOT xfs 50M $(($(size) + 100))M
-      parted -s -a optimal ${RAW_IMAGE} mkpart DATA xfs $(($(size) + 100))M 100%
+      parted -s -a optimal ${RAW_IMAGE} mkpart ESP fat32 0 $((${INITRAMFS_SIZE} + 50))M
+      parted -s -a optimal ${RAW_IMAGE} mkpart ROOT xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
+      parted -s -a optimal ${RAW_IMAGE} mkpart DATA xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
       losetup ${DEVICE} ${RAW_IMAGE}
       partx -av ${DEVICE}
       extract_boot_partition ${DEVICE}p1
       extract_root_partition ${DEVICE}p2
       extract_data_partition ${DEVICE}p3
     else
-      parted -s -a optimal ${DEVICE} mkpart ESP fat32 0 50M
-      parted -s -a optimal ${DEVICE} mkpart ROOT xfs 50M $(($(size) + 100))M
-      parted -s -a optimal ${DEVICE} mkpart DATA xfs $(($(size) + 100))M 100%
+      parted -s -a optimal ${DEVICE} mkpart ESP fat32 0 $((${INITRAMFS_SIZE} + 50))M
+      parted -s -a optimal ${DEVICE} mkpart ROOT xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
+      parted -s -a optimal ${DEVICE} mkpart DATA xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
       extract_boot_partition ${DEVICE}1
       extract_root_partition ${DEVICE}2
       extract_data_partition ${DEVICE}3
     fi
   else
     if [ "$RAW" = true ] ; then
-      parted -s -a optimal ${RAW_IMAGE} mkpart ROOT xfs 0 $(($(size) + 50))M
-      parted -s -a optimal ${RAW_IMAGE} mkpart DATA xfs $(($(size) + 50))M 100%
+      parted -s -a optimal ${RAW_IMAGE} mkpart ROOT xfs 0 $((${ROOTFS_SIZE} + 50))M
+      parted -s -a optimal ${RAW_IMAGE} mkpart DATA xfs $((${ROOTFS_SIZE} + 50))M 100%
       losetup ${DEVICE} ${RAW_IMAGE}
       partx -av ${DEVICE}
       extract_root_partition ${DEVICE}p1
       extract_data_partition ${DEVICE}p2
     else
-      parted -s -a optimal ${DEVICE} mkpart ROOT xfs 0 $(($(size) + 50))M
-      parted -s -a optimal ${DEVICE} mkpart DATA xfs $(($(size) + 50))M 100%
+      parted -s -a optimal ${DEVICE} mkpart ROOT xfs 0 $((${ROOTFS_SIZE} + 50))M
+      parted -s -a optimal ${DEVICE} mkpart DATA xfs $((${ROOTFS_SIZE} + 50))M 100%
       extract_root_partition ${DEVICE}1
       extract_data_partition ${DEVICE}2
     fi
@@ -58,8 +58,8 @@ function create_vmdk() {
 
 function create_iso() {
   mkdir -p /mnt/boot/isolinux
-  cp /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/boot/isolinux/isolinux.bin
-  cp /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/boot/isolinux/ldlinux.c32
+  cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/boot/isolinux/isolinux.bin
+  cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/boot/isolinux/ldlinux.c32
   create_extlinux_conf /mnt/boot/isolinux/isolinux.conf
   tar -xpvJf /generated/rootfs.tar.xz -C /mnt
   mkisofs -o ${ISO_IMAGE} -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table .
@@ -69,8 +69,8 @@ function create_ami() {
   packer build -var "version=${VERSION}" "${@}" /packer.json
 }
 
-function size() {
-  xz --robot --list /generated/rootfs.tar.xz | sed -n '3p' | cut -d$'\t' -f5 | awk '{printf("%.0f", $1*0.000001)}'
+function size_xz() {
+  xz --robot --list $1 | sed -n '3p' | cut -d$'\t' -f5 | awk '{printf("%.0f", $1*0.000001)}'
 }
 
 function extract_boot_partition() {
@@ -80,8 +80,8 @@ function extract_boot_partition() {
   mkdir -pv /mnt/boot/extlinux
   extlinux --install /mnt/boot/extlinux
   create_extlinux_conf /mnt/boot/extlinux/extlinux.conf
-  cp /generated/boot/vmlinuz /mnt/boot
-  cp /generated/boot/initramfs.xz /mnt/boot
+  cp -v /generated/boot/vmlinuz /mnt/boot
+  cp -v /generated/boot/initramfs.xz /mnt/boot
   umount -v /mnt
 }
 
@@ -128,6 +128,8 @@ VMDK_IMAGE="/out/image.vmdk"
 ISO_IMAGE="/out/image.iso"
 FULL=false
 RAW=false
+ROOTFS_SIZE=$(size_xz /generated/rootfs.tar.xz)
+INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
 
 case "$1" in
   image)
@@ -144,7 +146,7 @@ case "$1" in
           ;;
         l )
           trap cleanup ERR
-          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($(size) + 150))
+          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($(size_xz) + 150))
           DEVICE=$(losetup -f)
           RAW=true
           echo "Using loop device ${RAW_IMAGE} as installation media"
@@ -177,7 +179,7 @@ case "$1" in
       echo "The userdata flag '-u' must be specified"
       exit 1
     fi
-
+    echo -e "Creating image\n\t/: ${ROOTFS_SIZE}Mb\n\t/boot: ${INITRAMFS_SIZE}Mb"
     create_image
     ;;
   vmdk)

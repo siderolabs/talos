@@ -2,19 +2,24 @@ metadata:
   repository: dianemo/rootfs
   variables:
     rootfs: /rootfs
+    srcContainerd: https://github.com/containerd/containerd/releases/download/v1.2.0-beta.2/containerd-1.2.0-beta.2.linux-amd64.tar.gz
     srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.11.1/crictl-v1.11.1-linux-amd64.tar.gz
-    srcDocker: https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz
+    srcLibseccomp: https://github.com/seccomp/libseccomp/releases/download/v2.3.3/libseccomp-2.3.3.tar.gz
     srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.11.2/bin/linux/amd64/kubeadm
+    srcRunc: https://github.com/opencontainers/runc/releases/download/v1.0.0-rc5/runc.amd64
 pipeline:
   stages:
   - image
 stages:
   image:
     tasks:
-    - base
+    - libseccomp
+    - libblkid
+    - libuuid
     - certs
     - crictl
-    - docker
+    - containerd
+    - runc
     - kubeadm
     - cleanup
     - rootfs
@@ -28,20 +33,30 @@ tasks:
       COPY src/cleanup.sh /tools/bin
       RUN chmod +x /tools/bin/cleanup.sh
       RUN /tools/bin/cleanup.sh {{ index .Variables "rootfs" }}
+  containerd:
+    template: |
+      RUN curl -L {{ index .Variables "srcContainerd" }} | tar --strip-components=1 -xz -C {{ index .Variables "rootfs" }}/bin
+      RUN rm {{ index .Variables "rootfs" }}/bin/ctr
   crictl:
     template: |
       RUN curl -L {{ index .Variables "srcCRITools" }} | tar -xz -C {{ index .Variables "rootfs" }}/bin
-  docker:
+  libblkid:
     template: |
-      RUN curl -L {{ index .Variables "srcDocker" }} | tar --strip-components=1 -xz -C {{ index .Variables "rootfs" }}/bin
-  base:
+      RUN cp /tools/lib/libblkid.* {{ index .Variables "rootfs" }}/lib
+  libuuid:
+    template: |
+      RUN cp /tools/lib/libuuid.* {{ index .Variables "rootfs" }}/lib
+  libseccomp:
     template: |
       FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
-      ENV PATH $PATH:/tools/bin
-      WORKDIR {{ index .Variables "rootfs" }}
-      COPY src/fsh.sh /tools/bin
-      RUN chmod +x /tools/bin/fsh.sh
-      RUN fsh.sh {{ index .Variables "rootfs" }}
+      WORKDIR /tools/usr/local/src/{{ .Docker.CurrentStage }}
+      RUN curl -L {{index .Variables "srcLibseccomp" }} | tar --strip-components=1 -xz
+      WORKDIR build
+      RUN ../configure \
+            --prefix=/usr \
+            --disable-static
+      RUN make -j $(($(nproc) / 2))
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}
   kubeadm:
     template: |
       RUN curl --retry 3 --retry-delay 60 -L {{ index .Variables "srcKubeadm" }} -o {{ index .Variables "rootfs" }}/bin/kubeadm
@@ -50,4 +65,8 @@ tasks:
     template: |
       FROM scratch
       LABEL maintainer="Andrew Rynhard <andrew.rynhard@autonomy.io>"
-      COPY --from=base {{ index .Variables "rootfs" }} {{ index .Variables "rootfs" }}
+      COPY --from=libseccomp {{ index .Variables "rootfs" }} {{ index .Variables "rootfs" }}
+  runc:
+    template: |
+      RUN curl -L {{ index .Variables "srcRunc" }} -o {{ index .Variables "rootfs" }}/bin/runc
+      RUN chmod +x {{ index .Variables "rootfs" }}/bin/runc

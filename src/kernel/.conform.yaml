@@ -26,7 +26,8 @@ tasks:
           && ln -s /tools/bin/true /bin/true \
           && ln -s /tools/bin/pwd /bin/pwd
       RUN check-config.sh .config
-      RUN mkdir /tmp
+      RUN unlink /lib
+      RUN ln -s /tools/lib /lib
       RUN make -j $(($(nproc) / 2))
       RUN make modules_install DEPMOD=/tools/bin/depmod INSTALL_MOD_PATH=/tmp
       RUN depmod -b /tmp 4.18.5-dianemo
