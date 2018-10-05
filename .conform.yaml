@@ -30,9 +30,9 @@ script:
 
     mkdir -p ./build
     rm -rf ./build/*
-    cd ./src/tools && conform enforce
-    cd ../kernel && conform enforce
-    cd ../rootfs && conform enforce
-    cd ../initramfs && conform enforce
-    cd ../image && conform enforce
+    cd ./src/tools && conform build
+    cd ../kernel && conform build
+    cd ../rootfs && conform build
+    cd ../initramfs && conform build
+    cd ../image && conform build
     cd ../
