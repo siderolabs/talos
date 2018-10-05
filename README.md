@@ -31,7 +31,7 @@ go get -u github.com/autonomy/conform
 To build, simply run:
 
 ```bash
-conform enforce
+conform build
 ```
 
 ### License
