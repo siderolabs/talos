@@ -29,8 +29,6 @@ tasks:
       RUN unlink /lib
       RUN ln -s /tools/lib /lib
       RUN make -j $(($(nproc) / 2))
-      RUN make modules_install DEPMOD=/tools/bin/depmod INSTALL_MOD_PATH=/tmp
-      RUN depmod -b /tmp 4.18.5-dianemo
       RUN cp arch/x86/boot/bzImage /tmp/vmlinuz
       FROM scratch
       COPY --from={{ .Docker.CurrentStage }} /tmp /tmp

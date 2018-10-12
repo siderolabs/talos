@@ -88,7 +88,6 @@ func (c *CRT) Start(data *userdata.UserData) error {
 		args   runner.Args
 		mounts = []specs.Mount{
 			{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
-			{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "shared", "ro"}},
 			{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
 			{Type: "bind", Destination: "/etc/cni", Source: "/var/etc/cni", Options: []string{"bind", "rw"}},
 			{Type: "bind", Destination: "/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},

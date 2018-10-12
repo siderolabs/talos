@@ -108,7 +108,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=${DIANEMO_ROOT} dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=${DIANEMO_ROOT} dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
 EOF
 }
 
@@ -130,6 +130,7 @@ FULL=false
 RAW=false
 ROOTFS_SIZE=$(size_xz /generated/rootfs.tar.xz)
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
+KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="slub_debug=P page_poison=1 slab_nomerge pti=on"
 
 case "$1" in
   image)

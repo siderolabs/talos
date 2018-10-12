@@ -32,7 +32,11 @@ func ip() string {
 // Prepare creates the files required by the installed binaries and libraries.
 func Prepare(s string, userdata userdata.UserData) (err error) {
 	// Enable IP forwarding.
-	if err = proc.WriteSystemProperty("net.ipv4.ip_forward", "1"); err != nil {
+	if err = proc.WriteSystemProperty(&proc.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
+		return
+	}
+	// Kernel Self Protection Project recommended settings.
+	if err = kernelHardening(); err != nil {
 		return
 	}
 	// Create /etc/hosts.
@@ -59,6 +63,53 @@ func Prepare(s string, userdata userdata.UserData) (err error) {
 	}
 	if err = ioutil.WriteFile(path.Join(constants.NewRoot, constants.UserDataPath), data, 0400); err != nil {
 		return
+	}
+
+	return nil
+}
+
+// We can ignore setting kernel.kexec_load_disabled = 1 because modules are
+// disabled in the kernel config.
+func kernelHardening() (err error) {
+	props := []*proc.SystemProperty{
+		{
+			Key:   "kernel.kptr_restrict",
+			Value: "1",
+		},
+		{
+			Key:   "kernel.dmesg_restrict",
+			Value: "1",
+		},
+		{
+			Key:   "kernel.perf_event_paranoid",
+			Value: "3",
+		},
+		// {
+		// 	Key:   "kernel.kexec_load_disabled",
+		// 	Value: "1",
+		// },
+		{
+			Key:   "kernel.yama.ptrace_scope",
+			Value: "1",
+		},
+		{
+			Key:   "user.max_user_namespaces",
+			Value: "0",
+		},
+		// {
+		// 	Key:   "kernel.unprivileged_bpf_disabled",
+		// 	Value: "1",
+		// },
+		// {
+		// 	Key:   "net.core.bpf_jit_harden",
+		// 	Value: "2",
+		// },
+	}
+
+	for _, prop := range props {
+		if err = proc.WriteSystemProperty(prop); err != nil {
+			return
+		}
 	}
 
 	return nil

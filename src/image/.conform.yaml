@@ -64,5 +64,4 @@ tasks:
   rootfs:
     template: |
       COPY --from=dianemo/rootfs:{{ .Docker.Image.Tag }} /rootfs /generated/rootfs
-      COPY --from=dianemo/kernel:{{ .Docker.Image.Tag }} /tmp/lib/modules /generated/rootfs/lib/modules
       RUN {{if .Git.IsClean}}XZ_OPT=-9e{{else}}XZ_OPT=-0{{end}} tar -cvpJf /generated/rootfs.tar.xz -C /generated/rootfs .

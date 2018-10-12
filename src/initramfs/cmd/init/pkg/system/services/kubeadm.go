@@ -40,11 +40,11 @@ apt-get install -y curl
 curl -L https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz | tar -xz --strip-components=1 -C /bin docker/docker
 chmod +x /bin/docker
 
-trap 'kubeadm reset' ERR
+trap 'kubeadm reset --force' ERR
 
 {{- if .Init }}
 {{- if eq .Init.Type "initial" }}
-kubeadm init --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion --skip-token-print
+kubeadm init --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable --skip-token-print
 {{- else if eq .Init.Type "dependent" }}
 export KUBECONFIG=/etc/kubernetes/admin.conf
 kubeadm alpha phase certs all --config kubeadm-config.yaml
@@ -71,7 +71,7 @@ kubeadm alpha phase mark-master --config kubeadm-config.yaml
 echo "successfully joined master node {{ .Hostname }}"
 {{- end }}
 {{- else }}
-kubeadm join --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion
+kubeadm join --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable
 {{- end }}
 `
 
@@ -206,7 +206,6 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"ro"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "shared", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/bin/crictl", Source: "/bin/crictl", Options: []string{"bind", "ro"}},
