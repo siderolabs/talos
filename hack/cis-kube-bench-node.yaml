@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kube-bench-node
+spec:
+  template:
+    spec:
+      hostPID: true
+      containers:
+      - name: kube-bench
+        image: aquasec/kube-bench:latest
+        args:
+        - node
+        - --json
+        - --version=1.8
+      restartPolicy: Never
+  backoffLimit: 0

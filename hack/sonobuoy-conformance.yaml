@@ -1,4 +1,3 @@
-
 ---
 apiVersion: v1
 kind: Namespace
@@ -45,7 +44,7 @@ rules:
 apiVersion: v1
 data:
   config.json: |
-    {"Description":"DEFAULT","UUID":"b8431900-fdff-4e11-ae68-d36bac1ad51b","Version":"v0.11.4","ResultsDir":"/tmp/sonobuoy","Resources":["CertificateSigningRequests","ClusterRoleBindings","ClusterRoles","ComponentStatuses","CustomResourceDefinitions","Nodes","PersistentVolumes","PodSecurityPolicies","ServerGroups","ServerVersion","StorageClasses","ConfigMaps","ControllerRevisions","CronJobs","DaemonSets","Deployments","Endpoints","Ingresses","Jobs","LimitRanges","NetworkPolicies","PersistentVolumeClaims","PodDisruptionBudgets","PodTemplates","Pods","ReplicaSets","ReplicationControllers","ResourceQuotas","RoleBindings","Roles","ServiceAccounts","Services","StatefulSets"],"Filters":{"Namespaces":".*","LabelSelector":""},"Limits":{"PodLogs":{"LimitSize":"","LimitTime":""}},"Server":{"bindaddress":"0.0.0.0","bindport":8080,"advertiseaddress":"","timeoutseconds":10800},"Plugins":[{"name":"e2e"}],"PluginSearchPath":["./plugins.d","/etc/sonobuoy/plugins.d","~/sonobuoy/plugins.d"],"Namespace":"heptio-sonobuoy","LoadedPlugins":null,"WorkerImage":"gcr.io/heptio-images/sonobuoy:latest","ImagePullPolicy":"Always"}
+    {"Description":"DEFAULT","UUID":"01a2eac1-ae1c-4c9d-ace5-803a0600b021","Version":"v0.12.0","ResultsDir":"/tmp/sonobuoy","Resources":["CertificateSigningRequests","ClusterRoleBindings","ClusterRoles","ComponentStatuses","CustomResourceDefinitions","Nodes","PersistentVolumes","PodSecurityPolicies","ServerGroups","ServerVersion","StorageClasses","ConfigMaps","ControllerRevisions","CronJobs","DaemonSets","Deployments","Endpoints","Ingresses","Jobs","LimitRanges","NetworkPolicies","PersistentVolumeClaims","PodDisruptionBudgets","PodTemplates","Pods","ReplicaSets","ReplicationControllers","ResourceQuotas","RoleBindings","Roles","ServiceAccounts","Services","StatefulSets"],"Filters":{"Namespaces":".*","LabelSelector":""},"Limits":{"PodLogs":{"LimitSize":"","LimitTime":""}},"Server":{"bindaddress":"0.0.0.0","bindport":8080,"advertiseaddress":"","timeoutseconds":10800},"Plugins":[{"name":"e2e"}],"PluginSearchPath":["./plugins.d","/etc/sonobuoy/plugins.d","~/sonobuoy/plugins.d"],"Namespace":"heptio-sonobuoy","LoadedPlugins":null,"WorkerImage":"gcr.io/heptio-images/sonobuoy:latest","ImagePullPolicy":"Always"}
 kind: ConfigMap
 metadata:
   labels:
@@ -63,9 +62,9 @@ data:
     spec:
       env:
       - name: E2E_FOCUS
-        value: 'Pods should be submitted and removed'
+        value: '\[Conformance\]'
       - name: E2E_SKIP
-        value: 'Alpha|Kubectl|\[(Disruptive|Feature:[^\]]+|Flaky)\]'
+        value: 'Alpha|\[(Disruptive|Feature:[^\]]+|Flaky)\]'
       - name: E2E_PARALLEL
         value: '1'
       command: ["/run_e2e.sh"]
@@ -76,6 +75,8 @@ data:
       - mountPath: /tmp/results
         name: results
         readOnly: false
+      tolerations:
+        - operator: "Exists"
   systemd-logs.yaml: |
     sonobuoy-config:
       driver: DaemonSet
@@ -131,7 +132,7 @@ spec:
       valueFrom:
         fieldRef:
           fieldPath: status.podIP
-    image: gcr.io/heptio-images/sonobuoy:v0.11.4
+    image: gcr.io/heptio-images/sonobuoy:v0.12.0
     imagePullPolicy: Always
     name: kube-sonobuoy
     volumeMounts:
@@ -169,4 +170,3 @@ spec:
   selector:
     run: sonobuoy-master
   type: ClusterIP
-
