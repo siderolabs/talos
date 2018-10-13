@@ -70,7 +70,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 	if data.Services.Kubelet != nil && data.Services.Kubelet.Image != "" {
 		image = data.Services.Kubelet.Image
 	} else {
-		image = "gcr.io/google_containers/hyperkube:v1.11.2"
+		image = constants.KubernetesImage
 	}
 
 	// Set the process arguments.
