@@ -8,6 +8,10 @@ cleanup() {
 
 trap cleanup EXIT
 
+usage() {
+    echo "$0 [conformance|quick]"
+}
+
 wait_for_results() {
     kubectl wait --timeout=60s --for=condition=ready pod/sonobuoy -n heptio-sonobuoy
     while sonobuoy status | grep 'Sonobuoy is still running'; do sleep 10; done
@@ -15,6 +19,12 @@ wait_for_results() {
     sleep 60
     sonobuoy retrieve ../build
 }
+
+if [ "$#" -ne 1 ]; then
+    trap - EXIT
+    usage
+    exit 1
+fi
 
 case $1 in
 conformance)
@@ -25,6 +35,4 @@ quick)
     kubectl apply -f ./sonobuoy-quick.yaml
     wait_for_results
     ;;
-*)
-  ;;
 esac
