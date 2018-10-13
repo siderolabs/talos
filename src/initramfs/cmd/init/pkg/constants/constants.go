@@ -59,6 +59,17 @@ const (
 	// is not the initial node.
 	KubeadmInitTypeDependent = "dependent"
 
+	// KubernetesImage is the hyperkube image to use for the control plane.
+	KubernetesImage = "gcr.io/google_containers/hyperkube:v1.12.1"
+
+	// DockerImage is the docker image to use as the container runtime for
+	// Kubernetes.
+	DockerImage = "docker.io/library/docker:18.06.1-ce-dind"
+
+	// CRIOImage is the cri-o image to use as the container runtime for
+	// Kubernetes.
+	CRIOImage = "docker.io/autonomy/cri-o:latest"
+
 	// UserDataPath is the path to the downloaded user data.
 	UserDataPath = "/var/run/userdata.yaml"
 )

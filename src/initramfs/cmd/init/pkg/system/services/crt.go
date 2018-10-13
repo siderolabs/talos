@@ -98,7 +98,7 @@ func (c *CRT) Start(data *userdata.UserData) error {
 
 	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
-		image = "docker.io/library/docker:17.03-dind"
+		image = constants.DockerImage
 		args = runner.Args{
 			ID: c.ID(data),
 			ProcessArgs: []string{"dockerd",
@@ -114,10 +114,6 @@ func (c *CRT) Start(data *userdata.UserData) error {
 			},
 		}
 		dockerMounts := []specs.Mount{
-			// Since /var/run is not a symlink to /run in the docker image, we
-			// must mount /run to /var/run and /run in order to expose the
-			// docker socket and /run/<cni plugin> (e.g. /run/flannel).
-			{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 			{Type: "bind", Destination: "/var/lib/docker", Source: "/var/lib/docker", Options: []string{"rbind", "rshared", "rw"}},
 		}
 		mounts = append(mounts, dockerMounts...)
@@ -126,7 +122,7 @@ func (c *CRT) Start(data *userdata.UserData) error {
 		// TODO(andrewrynhard): We should use
 		// registry.centos.org/projectatomic/cri-o:latest, but a 403 is returned
 		// with attempting to pull the image.
-		image = "docker.io/autonomy/cri-o:latest"
+		image = constants.CRIOImage
 		args = runner.Args{
 			ID: c.ID(data),
 			ProcessArgs: []string{

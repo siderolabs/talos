@@ -37,7 +37,7 @@ cd /etc/kubernetes
 apt-get update -y
 apt-get install -y curl
 
-curl -L https://download.docker.com/linux/static/stable/x86_64/docker-17.03.2-ce.tgz | tar -xz --strip-components=1 -C /bin docker/docker
+curl -L https://download.docker.com/linux/static/stable/x86_64/docker-18.06.1-ce.tgz | tar -xz --strip-components=1 -C /bin docker/docker
 chmod +x /bin/docker
 
 trap 'kubeadm reset --force' ERR
@@ -191,7 +191,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	if data.Services.Kubeadm != nil && data.Services.Kubeadm.Image != "" {
 		image = data.Services.Kubeadm.Image
 	} else {
-		image = "gcr.io/google_containers/hyperkube:v1.11.2"
+		image = constants.KubernetesImage
 	}
 
 	// Set the process arguments.

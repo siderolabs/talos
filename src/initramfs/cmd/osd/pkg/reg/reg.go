@@ -152,7 +152,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 	if r.Data.Services.Kubeadm != nil && r.Data.Services.Kubeadm.Image != "" {
 		image = r.Data.Services.Kubeadm.Image
 	} else {
-		image = "gcr.io/google_containers/hyperkube:v1.11.2"
+		image = constants.KubernetesImage
 	}
 
 	// Set the process arguments.
