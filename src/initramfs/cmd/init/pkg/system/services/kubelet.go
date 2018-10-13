@@ -103,7 +103,6 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "shared", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/cni", Source: "/var/etc/cni", Options: []string{"rbind", "rshared", "ro"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
