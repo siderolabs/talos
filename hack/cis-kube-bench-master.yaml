@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kube-bench-master
+spec:
+  template:
+    spec:
+      hostPID: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ''
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: kube-bench
+        image: aquasec/kube-bench:latest
+        args:
+        - master
+        - --json
+        - --version=1.8
+      restartPolicy: Never
+  backoffLimit: 0
