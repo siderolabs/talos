@@ -130,7 +130,8 @@ FULL=false
 RAW=false
 ROOTFS_SIZE=$(size_xz /generated/rootfs.tar.xz)
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
-KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="slub_debug=P page_poison=1 slab_nomerge pti=on"
+# TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/dianemo/pull/157.
+KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
 
 case "$1" in
   image)
