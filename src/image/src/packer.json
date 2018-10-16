@@ -6,8 +6,6 @@
         {
             "type": "amazon-ebssurrogate",
             "region": "{{ user `region` }}",
-            "spot_price": "auto",
-            "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
             "ssh_pty": true,
             "instance_type": "t2.small",
             "associate_public_ip_address": true,
@@ -49,6 +47,7 @@
                 "volume_size": 8,
                 "volume_type": "gp2"
             },
+            "ena_support": true,
             "tags": {
                 "Name": "Dianemo {{ user `version` }}",
                 "Built": "{{ user `built` }}"
