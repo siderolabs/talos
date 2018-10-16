@@ -60,7 +60,7 @@ const (
 	KubeadmInitTypeDependent = "dependent"
 
 	// KubernetesImage is the hyperkube image to use for the control plane.
-	KubernetesImage = "gcr.io/google_containers/hyperkube:v1.12.1"
+	KubernetesImage = "gcr.io/google_containers/hyperkube:v1.13.0-alpha.1"
 
 	// DockerImage is the docker image to use as the container runtime for
 	// Kubernetes.
