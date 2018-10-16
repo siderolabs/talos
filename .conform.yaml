@@ -11,6 +11,7 @@ policies:
     - style
     - test
     scopes:
+    - ami
     - conformance
     - hack
     - image
