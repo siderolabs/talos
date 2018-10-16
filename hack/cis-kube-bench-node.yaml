@@ -12,6 +12,6 @@ spec:
         args:
         - node
         - --json
-        - --version=1.8
+        - --version=1.11
       restartPolicy: Never
   backoffLimit: 0
