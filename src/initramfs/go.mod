@@ -81,8 +81,9 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.1.1
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20181005203742-357ec6384fa7
-	k8s.io/apimachinery v0.0.0-20180913025736-6dd46049f395
+	k8s.io/api v0.0.0-20181016053855-c7463263e3f1
+	k8s.io/apimachinery v0.0.0-20181015213631-60666be32c5d
 	k8s.io/client-go v9.0.0+incompatible
-	k8s.io/kubernetes v1.12.1
+	k8s.io/cluster-bootstrap v0.0.0-20181011074507-f574069107f7 // indirect
+	k8s.io/kubernetes v1.13.0-alpha.1
 )
