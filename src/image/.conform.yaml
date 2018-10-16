@@ -1,6 +1,7 @@
 metadata:
   repository: autonomy/dianemo
   variables:
+    srcPacker: https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip
     srcSyslinux: https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
 script:
   template: |
@@ -52,7 +53,7 @@ tasks:
       COPY --from=generated /usr/local/src/syslinux /usr/local/src/syslinux
       COPY --from=generated /generated/rootfs.tar.xz /generated/rootfs.tar.xz
       COPY --from=generated /generated/boot /generated/boot
-      RUN curl -L https://releases.hashicorp.com/packer/1.2.4/packer_1.2.4_linux_amd64.zip -o /tmp/packer.zip \
+      RUN curl -L {{ index .Variables "srcPacker" }} -o /tmp/packer.zip \
           && unzip -d /tmp /tmp/packer.zip \
           && mv /tmp/packer /bin \
           && rm /tmp/packer.zip
