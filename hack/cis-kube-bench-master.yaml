@@ -18,6 +18,6 @@ spec:
         args:
         - master
         - --json
-        - --version=1.8
+        - --version=1.11
       restartPolicy: Never
   backoffLimit: 0
