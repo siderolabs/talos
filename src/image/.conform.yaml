@@ -16,6 +16,10 @@ script:
     docker tag {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }} {{ .Docker.Image.Name }}:latest
     docker push {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }}
     docker push {{ .Docker.Image.Name }}:latest
+    {{ if .Git.IsTag }}
+    docker tag {{ .Docker.Image.Name }}:{{ .Docker.Image.Tag }} {{ .Docker.Image.Name }}:{{ .Version.Original }}
+    docker push {{ .Docker.Image.Name }}:{{ .Version.Original }}
+    {{ end }}
     {{ end }}
 pipeline:
   stages:
