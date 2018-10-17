@@ -16,6 +16,38 @@ import (
 	"unsafe"
 )
 
+// GetDevWithAttribute returns the dev name of a block device matching the ATTRIBUTE=VALUE
+// pair. Supported attributes are:
+//    TYPE: filesystem type
+//    UUID: filesystem uuid
+//    LABEL: filesystem label
+func GetDevWithAttribute(attribute, value string) (string, error) {
+	var cache C.blkid_cache
+
+	ret := C.blkid_get_cache(&cache, nil)
+	if ret != 0 {
+		return "", fmt.Errorf("failed to get blkid cache: %d", ret)
+	}
+
+	C.blkid_probe_all(cache)
+
+	cs_attribute := C.CString(attribute)
+	cs_value := C.CString(value)
+	defer C.free(unsafe.Pointer(cs_attribute))
+	defer C.free(unsafe.Pointer(cs_value))
+
+	devname := C.blkid_get_devname(cache, cs_attribute, cs_value)
+	defer C.free(unsafe.Pointer(devname))
+
+	// If you have called blkid_get_cache(), you should call blkid_put_cache()
+	// when you are done using the blkid library functions.  This will save the
+	// cache to the blkid.tab file, if you have write access to the file.  It
+	// will also free all associated devices and tags:
+	C.blkid_put_cache(cache)
+
+	return C.GoString(devname), nil
+}
+
 // NewProbeFromFilename executes lblkid blkid_new_probe_from_filename.
 func NewProbeFromFilename(s string) (C.blkid_probe, error) {
 	cs := C.CString(s)

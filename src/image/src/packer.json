@@ -64,7 +64,7 @@
                 "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
                 "sudo apt-get -y update",
                 "sudo apt-get -y install docker-ce",
-                "sudo docker run --privileged --volume /dev:/dev autonomy/dianemo:{{ user `version` }} image -b /dev/xvdf -t /dev/xvda -f -p aws -u none"
+                "sudo docker run --privileged --volume /dev:/dev autonomy/dianemo:{{ user `version` }} image -b /dev/xvdf -f -p aws -u none"
             ]
         }
     ]
