@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/kernel"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount/blkid"
 	"golang.org/x/sys/unix"
 )
@@ -206,54 +205,56 @@ func mountBlockDevices(s string) (err error) {
 func probe() (b []*BlockDevice, err error) {
 	b = []*BlockDevice{}
 
-	arguments, err := kernel.ParseProcCmdline()
-	if err != nil {
-		return
+	if err := appendBlockDeviceWithLabel(&b, constants.RootPartitionLabel); err != nil {
+		return nil, err
 	}
-
-	if root, ok := arguments[constants.KernelParamRoot]; ok {
-		if _, err := os.Stat(root); os.IsNotExist(err) {
-			return nil, fmt.Errorf("device does not exist: %s", root)
-		}
-		pr, err := blkid.NewProbeFromFilename(root)
-		defer blkid.FreeProbe(pr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to probe %s: %s", root, err)
-		}
-
-		ls := blkid.ProbeGetPartitions(pr)
-		nparts := blkid.ProbeGetPartitionsPartlistNumOfPartitions(ls)
-
-		for i := 0; i < nparts; i++ {
-			dev := fmt.Sprintf("%s%d", root, i+1)
-			pr, err = blkid.NewProbeFromFilename(dev)
-			defer blkid.FreeProbe(pr)
-			if err != nil {
-				return nil, fmt.Errorf("failed to probe %s: %s", dev, err)
-			}
-
-			blkid.DoProbe(pr)
-			UUID, err := blkid.ProbeLookupValue(pr, "UUID", nil)
-			if err != nil {
-				return nil, err
-			}
-			TYPE, err := blkid.ProbeLookupValue(pr, "TYPE", nil)
-			if err != nil {
-				return nil, err
-			}
-			LABEL, err := blkid.ProbeLookupValue(pr, "LABEL", nil)
-			if err != nil {
-				return nil, err
-			}
-
-			b = append(b, &BlockDevice{
-				dev:   dev,
-				UUID:  UUID,
-				TYPE:  TYPE,
-				LABEL: LABEL,
-			})
-		}
+	if err := appendBlockDeviceWithLabel(&b, constants.DataPartitionLabel); err != nil {
+		return nil, err
 	}
 
 	return b, nil
+}
+
+func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
+	devname, err := blkid.GetDevWithAttribute("LABEL", value)
+	if err != nil {
+		return err
+	}
+
+	blockDevice, err := probeDevice(devname)
+	if err != nil {
+		return err
+	}
+
+	*b = append(*b, blockDevice)
+
+	return nil
+}
+
+func probeDevice(devname string) (*BlockDevice, error) {
+	pr, err := blkid.NewProbeFromFilename(devname)
+	defer blkid.FreeProbe(pr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to probe %s: %s", devname, err)
+	}
+	blkid.DoProbe(pr)
+	UUID, err := blkid.ProbeLookupValue(pr, "UUID", nil)
+	if err != nil {
+		return nil, err
+	}
+	TYPE, err := blkid.ProbeLookupValue(pr, "TYPE", nil)
+	if err != nil {
+		return nil, err
+	}
+	LABEL, err := blkid.ProbeLookupValue(pr, "LABEL", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BlockDevice{
+		dev:   devname,
+		UUID:  UUID,
+		TYPE:  TYPE,
+		LABEL: LABEL,
+	}, nil
 }

@@ -1,10 +1,6 @@
 package constants
 
 const (
-	// KernelParamRoot is the kernel parameter name for specifying the root
-	// disk.
-	KernelParamRoot = "dianemo.autonomy.io/root"
-
 	// KernelParamUserData is the kernel parameter name for specifying the URL
 	// to the user data.
 	KernelParamUserData = "dianemo.autonomy.io/userdata"

@@ -108,7 +108,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/root=${DIANEMO_ROOT} dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
 EOF
 }
 
@@ -120,7 +120,6 @@ function cleanup {
 
 # Defaults
 
-DIANEMO_ROOT="sda"
 DIANEMO_USERDATA=""
 DIANEMO_PLATFORM="bare-metal"
 RAW_IMAGE="/out/image.raw"
@@ -136,7 +135,7 @@ KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
 case "$1" in
   image)
     shift
-    while getopts "b:flt:p:u:" opt; do
+    while getopts "b:flp:u:" opt; do
       case ${opt} in
         b )
           DEVICE=${OPTARG}
@@ -156,10 +155,6 @@ case "$1" in
         p )
           DIANEMO_PLATFORM=${OPTARG}
           echo "Using kernel parameter dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}"
-          ;;
-        t )
-          DIANEMO_ROOT=${OPTARG}
-          echo "Using kernel parameter dianemo.autonomy.io/root=${DIANEMO_ROOT}"
           ;;
         u )
           DIANEMO_USERDATA=${OPTARG}
