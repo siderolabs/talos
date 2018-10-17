@@ -102,13 +102,15 @@ function extract_data_partition() {
 }
 
 function create_extlinux_conf() {
+  # AWS recommends setting the nvme_core.io_timeout to the highest value possible.
+  # See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
   cat <<EOF >$1
 DEFAULT Dianemo
   SAY Dianemo (${VERSION}) by Autonomy
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
 EOF
 }
 
