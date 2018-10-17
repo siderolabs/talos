@@ -99,6 +99,7 @@ linters:
   disable:
     - gas
     - typecheck
+    - megacheck
   disable-all: false
   fast: false
 
