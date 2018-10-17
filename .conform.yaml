@@ -12,6 +12,7 @@ policies:
     - test
     scopes:
     - ami
+    - ci
     - conformance
     - hack
     - image
