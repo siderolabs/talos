@@ -1,0 +1,62 @@
+<nav class="sidebar">
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list">
+                <li class="sidebar-item">
+                    <a class="sidebar-link logo" href="{{ .Site.BaseURL }}">
+                        <img src="{{ .Site.BaseURL }}/img/logo.svg" class="logo">
+                    </a>
+                </li>
+                {{ with .Site.Params.GitHubLink }}
+                <div class="column github-actions">
+                    <a class="button" href="{{.}}/fork">
+                        <i class="fa fa-code-fork" aria-hidden="true"></i>
+                        Fork
+                    </a>
+                    <a class="button" href="{{.}}/stargazers">
+                        <i class="fa fa-star" aria-hidden="true"></i>
+                        Star
+                    </a>
+                </div>
+                {{ end }}
+            </ul>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list">
+                {{ range .Site.Menus.main.ByWeight }}
+                {{ if .HasChildren }}
+                <li class="sidebar-item">
+                    <a class="sidebar-link" {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>{{ .Name }}</a>
+                    <ul class="sidebar-list">
+                        {{ range .Children }}
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>{{.Name }}</a>
+                        </li>
+                        {{ end }}
+                    </ul>
+                </li>
+                {{ else }}
+                <li class="sidebar-item">
+                    <a class="sidebar-link" {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>{{ .Name }}</a>
+                </li>
+                {{ end }}
+                {{ end }}
+            </ul>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list">
+                <li class="sidebar-item">
+                    <a class="sidebar-link logo" rel="noopener noreferrer" href="{{ .Site.Params.GitHubLink }}" target="_blank">
+                        <i class="fa fa-github" aria-hidden="true"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

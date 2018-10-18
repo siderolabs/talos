@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>KVM on Dianemo</title>
+    <link>https://dianemo.autonomy.io/examples/kvm/</link>
+    <description>Recent content in KVM on Dianemo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 29 Oct 2018 19:40:55 -0700</lastBuildDate>
+    
+	<atom:link href="https://dianemo.autonomy.io/examples/kvm/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+  </channel>
+</rss>

@@ -37,4 +37,5 @@ script:
     cd ../rootfs && conform build
     cd ../initramfs && conform build
     cd ../image && conform build
+    cd ../docs && conform build
     cd ../

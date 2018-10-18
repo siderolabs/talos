@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<head>
+
+    
+    <meta charset="utf-8">
+    <title>Autonomy</title>
+    <meta name="description" content="">
+    <meta name="author" content="andrew.rynhard@autonomy.io">
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <link href="https://fonts.googleapis.com/css?family=Raleway|Fira+Mono|Roboto:300" rel="stylesheet">
+
+    
+    <link rel="icon" type="image/png" href="https://dianemo.autonomy.io/img/favicon.png">
+
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://dianemo.autonomy.io/js/navbar.js"></script>
+
+    
+    <link rel="stylesheet" href="https://dianemo.autonomy.io//css/milligram.min.css">
+    <link rel="stylesheet" href="https://dianemo.autonomy.io/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dianemo.autonomy.io/css/main.css">
+</head>
+<nav class="sidebar">
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list">
+                <li class="sidebar-item">
+                    <a class="sidebar-link logo" href="https://dianemo.autonomy.io/">
+                        <img src="https://dianemo.autonomy.io//img/logo.svg" class="logo">
+                    </a>
+                </li>
+                
+                <div class="column github-actions">
+                    <a class="button" href="https://github.com/autonomy/dianemo/fork">
+                        <i class="fa fa-code-fork" aria-hidden="true"></i>
+                        Fork
+                    </a>
+                    <a class="button" href="https://github.com/autonomy/dianemo/stargazers">
+                        <i class="fa fa-star" aria-hidden="true"></i>
+                        Star
+                    </a>
+                </div>
+                
+            </ul>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list">
+                
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/" >Components</a>
+                    <ul class="sidebar-list">
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/kernel/" >kernel</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/init/" >init</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/kubeadm/" >kubeadm</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/trustd/" >trustd</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/proxyd/" >proxyd</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/osd/" >osd</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/osctl/" >osctl</a>
+                        </li>
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/" >Configuration</a>
+                    <ul class="sidebar-list">
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/controlplane/" >Control Plane</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/workers/" >Workers</a>
+                        </li>
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/" >Examples</a>
+                    <ul class="sidebar-list">
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/aws/" >AWS</a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/kvm/" >KVM</a>
+                        </li>
+                        
+                    </ul>
+                </li>
+                
+                
+            </ul>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list">
+                <li class="sidebar-item">
+                    <a class="sidebar-link logo" rel="noopener noreferrer" href="https://github.com/autonomy/dianemo" target="_blank">
+                        <i class="fa fa-github" aria-hidden="true"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<body class="has-docked-nav">
+    <div class="container">
+        <div class="row">
+            <div class="column">
+                <section class="article-list">
+                    <h1>KVM</h1>
+                    <p>
+
+<h2 id="install-the-master-node">Install the Master Node</h2>
+
+<p>On the KVM host, install a master node to an available block device:</p>
+
+<pre><code class="language-bash">docker run \
+ --rm \
+ --privileged \
+ --volume /dev:/dev \
+ autonomy/dianemo:latest image -b /dev/sda -f -p bare-metal -u http://${IP}:8080/master.yaml
+</code></pre>
+
+<blockquote>
+<p><code>http://${IP}:8080/master.yaml</code> should be reachable by the VM and contain a valid master configuration file.</p>
+</blockquote>
+
+<pre><code class="language-bash">virt-install \
+    -n master \
+    --description &quot;Kubernetes master node.&quot; \
+    --os-type=Linux \
+    --os-variant=generic \
+    --virt-type=kvm \
+    --cpu=host \
+    --ram=4096 \
+    --vcpus=2 \
+    --disk path=/dev/sdc \
+    --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \
+    --graphics none \
+    --boot hd \
+    --rng /dev/random
+</code></pre>
+
+<h2 id="install-a-worker-node">Install a Worker Node</h2>
+
+<p>Similarly, install a worker node to an available block device:</p>
+
+<pre><code class="language-bash">docker run \
+ --rm \
+ --privileged \
+ --volume /dev:/dev \
+ autonomy/dianemo:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/worker.yaml
+</code></pre>
+
+<blockquote>
+<p><code>http://${IP}:8080/worker.yaml</code> should be reachable by the VM and contain a valid worker configuration file.</p>
+</blockquote>
+
+<pre><code class="language-bash">virt-install \
+    -n master \
+    --description &quot;Kubernetes worker node.&quot; \
+    --os-type=Linux \
+    --os-variant=generic \
+    --virt-type=kvm \
+    --cpu=host \
+    --ram=4096 \
+    --vcpus=2 \
+    --disk path=/dev/sdc \
+    --network bridge=br0,model=e1000,mac=52:54:00:B9:5D:F2 \
+    --graphics none \
+    --boot hd \
+    --rng /dev/random
+</code></pre>
+</p>
+                    <article>
+                        
+                        <aside class="copyright">
+                            
+                            &copy; 2018 Released under Mozilla Public License 2.0
+                            
+                        </aside>
+                    </article>
+                </section>
+            </div>
+        </div>
+    </div>
+</body>
+
+

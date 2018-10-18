@@ -1,0 +1,27 @@
+{{- partial "head" . -}}
+
+{{- partial "sidebar" . -}}
+
+<body class="has-docked-nav">
+    <div class="container">
+        <div class="row">
+            <div class="column">
+                <div>
+                    <h1 align="center">{{ .Title }}</h1>
+                </div>
+                <article>
+                    <section>
+                        {{ .Content }}
+                    </section>
+                    <aside class="copyright">
+                        {{ with .Site.Params.copyright }}
+                        &copy; {{ now.Format "2006" }} {{ . }}
+                        {{ end }}
+                    </aside>
+                </article>
+            </div>
+        </div>
+    </div>
+</body>
+
+{{ partial "footer" . }}
