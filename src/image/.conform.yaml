@@ -64,7 +64,7 @@ tasks:
       COPY src/packer.json /packer.json
       COPY src/entrypoint.sh /bin/entrypoint.sh
       RUN chmod +x /bin/entrypoint.sh
-      {{ if .Git.IsTag }}
+      {{ if and .Git.IsClean .Git.IsTag }}
       ENV VERSION {{ .Git.Tag }}
       {{ else }}
       ENV VERSION {{ .Git.SHA }}

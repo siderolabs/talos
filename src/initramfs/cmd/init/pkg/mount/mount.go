@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/fs/xfs"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount/blkid"
+	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice"
+	gptpartition "github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table/gpt/partition"
 	"golang.org/x/sys/unix"
 )
 
@@ -62,7 +66,11 @@ func Init(s string) (err error) {
 	if err = mountSpecialDevices(); err != nil {
 		return
 	}
-	if err = mountBlockDevices(s); err != nil {
+	blockdevices, err := probe()
+	if err != nil {
+		return fmt.Errorf("probe block devices: %s", err.Error())
+	}
+	if err = mountBlockDevices(blockdevices, s); err != nil {
 		return
 	}
 
@@ -168,12 +176,56 @@ func mountSpecialDevices() (err error) {
 	return nil
 }
 
-func mountBlockDevices(s string) (err error) {
-	probed, err := probe()
-	if err != nil {
-		return fmt.Errorf("probe block devices: %s", err.Error())
+// nolint: gocyclo
+func fixDataPartition(blockdevices []*BlockDevice) error {
+	for _, b := range blockdevices {
+		if b.LABEL == constants.DataPartitionLabel {
+			devname := devnameFromPartname(b.dev)
+
+			bd, err := blockdevice.Open(devname)
+			if err != nil {
+				return err
+			}
+			// nolint: errcheck
+			defer bd.Close()
+
+			pt, err := bd.PartitionTable()
+			if err != nil {
+				return err
+			}
+
+			if err := pt.Read(); err != nil {
+				return err
+			}
+
+			if err := pt.Repair(); err != nil {
+				return err
+			}
+
+			for _, partition := range pt.Partitions() {
+				if partition.(*gptpartition.Partition).Name == constants.DataPartitionLabel {
+					if err := pt.Resize(partition); err != nil {
+						return err
+					}
+				}
+			}
+
+			// Rereading the partition table requires that all partitions be unmounted
+			// or it will fail with EBUSY.
+			if err := bd.RereadPartitionTable(devname); err != nil {
+				return err
+			}
+		}
 	}
-	for _, b := range probed {
+
+	return nil
+}
+
+func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
+	if err = fixDataPartition(blockdevices); err != nil {
+		return err
+	}
+	for _, b := range blockdevices {
 		mountpoint := &Point{
 			source: b.dev,
 			fstype: b.TYPE,
@@ -194,6 +246,13 @@ func mountBlockDevices(s string) (err error) {
 		}
 		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
 			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		}
+
+		if b.LABEL == constants.DataPartitionLabel {
+			// The XFS partition MUST be mounted, or this will fail.
+			if err = xfs.GrowFS(mountpoint.target); err != nil {
+				return err
+			}
 		}
 
 		instance.blockdevices[b.LABEL] = mountpoint
@@ -257,4 +316,26 @@ func probeDevice(devname string) (*BlockDevice, error) {
 		TYPE:  TYPE,
 		LABEL: LABEL,
 	}, nil
+}
+
+func partNo(partname string) string {
+	if strings.HasPrefix(partname, "/dev/nvme") {
+		idx := strings.Index(partname, "p")
+		return partname[idx+1:]
+	} else if strings.HasPrefix(partname, "/dev/sd") || strings.HasPrefix(partname, "/dev/hd") {
+		return strings.TrimLeft(partname, "/abcdefghijklmnopqrstuvwxyz")
+	}
+
+	return ""
+}
+
+func devnameFromPartname(partname string) string {
+	partno := partNo(partname)
+	if strings.HasPrefix(partname, "/dev/nvme") {
+		return strings.TrimRight(partname, "p"+partno)
+	} else if strings.HasPrefix(partname, "/dev/sd") || strings.HasPrefix(partname, "/dev/hd") {
+		return strings.TrimRight(partname, partno)
+	}
+
+	return ""
 }

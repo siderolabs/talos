@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<head>
+
+    
+    <meta charset="utf-8">
+    <title>Autonomy</title>
+    <meta name="description" content="">
+    <meta name="author" content="andrew.rynhard@autonomy.io">
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <link href="https://fonts.googleapis.com/css?family=Raleway|Fira+Mono|Roboto:300" rel="stylesheet">
+
+    
+    <link rel="icon" type="image/png" href="https://dianemo.autonomy.io/img/favicon.png">
+
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.0/fuse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
+    <script src="https://dianemo.autonomy.io/js/search.js"></script>
+
+    
+    <link rel="stylesheet" href="https://dianemo.autonomy.io//css/milligram.min.css">
+    <link rel="stylesheet" href="https://dianemo.autonomy.io/css/main.css">
+</head>
+<nav class="navbar">
+    <div class="container">
+        <div class="row">
+            <div class="column column-50">
+                <ul class="navbar-list navbar-left">
+                    <li class="navbar-item">
+                        <a class="navbar-link logo" href="/">
+                            <img src="https://dianemo.autonomy.io//img/logo.svg" class="logo">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="column column-50">
+                <ul class="navbar-list navbar-right">
+                    <li class="navbar-item">
+                        
+                        <a class="navbar-link navbar-logo" rel="noopener noreferrer" href="https://github.com/autonomy/dianemo" target="_blank">
+                            <span class="octicon octicon-mark-github"></span>
+                        </a>
+                        
+                    </li>
+                    <li class="navbar-item">
+                        
+                        <a class="navbar-link navbar-logo" rel="noopener noreferrer" href="https://hub.docker.com/u/autonomy" target="_blank">
+                            <span class="fab fa-docker"></span>
+                        </a>
+                        
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+<script id="search-result-template" type="text/x-js-template">
+    <li class="sidebar-item">
+        <div id="summary-${key}">
+            <a class="sidebar-link" href="${link}">${title}</a>
+            <p class="search-result-item">${preview}</p>
+        </div>
+    </li>
+</script>
+
+<nav class="sidebar">
+    
+    <div class="row">
+        <div class="column">
+            <span>
+                <a class="logo" href="https://dianemo.autonomy.io/">
+                    <img src="https://dianemo.autonomy.io//img/logo.svg" class="logo">
+                </a>
+            </span>
+        </div>
+    </div>
+    <hr>
+    
+    <div class="row">
+        <div class="column">
+            
+            <div class="button-group button-group-center">
+                <a class="button" href="https://github.com/autonomy/dianemo/fork">
+                    <span class="octicon octicon-repo-forked"></span>
+                    Fork
+                </a>
+                <a class="button" href="https://github.com/autonomy/dianemo/stargazers">
+                    <span class="octicon octicon-star"></span>
+                    Star
+                </a>
+            </div>
+            
+        </div>
+    </div>
+    <hr>
+    
+    <div class="row search-area">
+        <form class="search-form" action="" onSubmit="return">
+            <input class="search-box" id="search-query" name="s" type="text" placeholder="search" />
+        </form>
+        <ul class="sidebar-list search-results" id="search-results">
+        </ul>
+    </div>
+    <div class="row">
+        <div class="column">
+            <ul class="sidebar-list parent">
+                
+                
+                
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link sidebar-link-parent active"
+                         href="https://dianemo.autonomy.io/components/" >
+                        Components
+                    </a>
+                    <ul class="sidebar-list active">
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/kernel/" >
+                                kernel
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/init/" >
+                                init
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/kubeadm/" >
+                                kubeadm
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/trustd/" >
+                                trustd
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/proxyd/" >
+                                proxyd
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/osd/" >
+                                osd
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/components/osctl/" >
+                                osctl
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link active"
+                                 href="https://dianemo.autonomy.io/components/blockd/" >
+                                blockd
+                            </a>
+                        </li>
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link sidebar-link-parent"
+                         href="https://dianemo.autonomy.io/configuration/" >
+                        Configuration
+                    </a>
+                    <ul class="sidebar-list">
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/configuration/controlplane/" >
+                                Control Plane
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/configuration/workers/" >
+                                Workers
+                            </a>
+                        </li>
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link sidebar-link-parent"
+                         href="https://dianemo.autonomy.io/examples/" >
+                        Examples
+                    </a>
+                    <ul class="sidebar-list">
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/examples/aws/" >
+                                AWS
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/examples/kvm/" >
+                                KVM
+                            </a>
+                        </li>
+                        
+                    </ul>
+                </li>
+                
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+<body>
+    <div class="container">
+        <div class="content">
+            <div class="row ">
+                <div class="column column-10">
+                    
+                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/components/osctl/">
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                    
+                </div>
+                <div class="column document">
+                    <section class="document">
+                        <h1 class="title">blockd</h1>
+                        <p><p>Dianemo comes with a reserved block device with three partitions:</p>
+
+<ul>
+<li>an EFI System Partition (<code>ESP</code>)</li>
+<li>a <code>ROOT</code> partition mounted as read-only that contains the minimal set of binaries to operate system services</li>
+<li>and a <code>DATA</code> partion that is mounted as read/write at <code>/var/run</code></li>
+</ul>
+
+<p>These partitions are reserved and cannot be modified.
+The one expection to this is that the <code>DATA</code> partition will be resized automatically in the <code>init</code> process to the maximum size possible.
+Managing any other block device can be done via the <code>blockd</code> service.</p>
+</p>
+                    </section>
+                </div>
+                <div class="column column-10">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<div class="footer">
+    <aside class="copyright">
+        
+        &copy; 2018 Released under Mozilla Public License 2.0
+        
+    </aside>
+</div>
+

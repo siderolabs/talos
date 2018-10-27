@@ -38,6 +38,11 @@
   </url>
   
   <url>
+    <loc>https://dianemo.autonomy.io/components/blockd/</loc>
+    <lastmod>2018-10-30T09:16:35-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dianemo.autonomy.io/examples/aws/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
