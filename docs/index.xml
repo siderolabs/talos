@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Dianemo</title>
+    <link>https://dianemo.autonomy.io/</link>
+    <description>Recent content on Dianemo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 29 Oct 2018 19:40:55 -0700</lastBuildDate>
+    
+	<atom:link href="https://dianemo.autonomy.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Dianemo</title>
+      <link>https://dianemo.autonomy.io/dianemo/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/dianemo/</guid>
+      <description>Dianemo is a modern Linux distribution designed to be secure, immutable, and minimal.</description>
+    </item>
+    
+  </channel>
+</rss>

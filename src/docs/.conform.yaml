@@ -1,0 +1,27 @@
+metadata:
+  repository: dianemo/docs
+pipeline:
+  stages:
+  - build
+stages:
+  build:
+    artifacts:
+    - source: /src/github.com/autonomy/dianemo/src/public/
+      destination: ../../build/docs
+    tasks:
+    - docs
+script:
+  template: |
+    #!/bin/bash
+    set -e
+    rm -rf ../../docs
+    mv ../../build/docs ../../docs
+tasks:
+  docs:
+    template: |
+      FROM golang:1.11.0 as docs
+      WORKDIR /src/github.com/autonomy/dianemo
+      RUN curl -L https://github.com/gohugoio/hugo/releases/download/v0.49.2/hugo_0.49.2_Linux-64bit.tar.gz | tar -xz -C /bin
+      COPY ./src ./src
+      RUN cd ./src && hugo --verbose
+      RUN echo "dianemo.autonomy.io" >  /src/github.com/autonomy/dianemo/src/public/CNAME

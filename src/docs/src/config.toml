@@ -1,0 +1,98 @@
+baseURL = "https://dianemo.autonomy.io/"
+languageCode = "en-us"
+title = "Dianemo"
+theme = "autonomy"
+
+[params]
+    copyright = "Released under Mozilla Public License 2.0"
+    GitHubLink = "https://github.com/autonomy/dianemo"
+
+[menu]
+
+    [[menu.main]]
+        identifier = "components"
+        name       = "Components"
+        url        = "/components/"
+        weight     = 10
+
+        [[menu.main]]
+            name = "kernel"
+            parent = "components"
+            url = "/components/kernel/"
+            weight = 10
+
+        [[menu.main]]
+            name = "init"
+            parent = "components"
+            url = "/components/init/"
+            weight = 20
+
+        [[menu.main]]
+            name = "kubeadm"
+            parent = "components"
+            url = "/components/kubeadm/"
+            weight = 30
+
+        [[menu.main]]
+            name = "trustd"
+            parent = "components"
+            url = "/components/trustd/"
+            weight = 40
+
+        [[menu.main]]
+            name = "proxyd"
+            parent = "components"
+            url = "/components/proxyd/"
+            weight = 50
+
+        [[menu.main]]
+            name = "osd"
+            parent = "components"
+            url = "/components/osd/"
+            weight = 60
+
+        [[menu.main]]
+            name = "osctl"
+            parent = "components"
+            url = "/components/osctl/"
+            weight = 70
+
+    [[menu.main]]
+        identifier = "configuration"
+        name       = "Configuration"
+        url        = "/configuration/"
+        weight     = 20
+
+        [[menu.main]]
+            identifier = "controlplane"
+            name = "Control Plane"
+            parent = "configuration"
+            url = "/configuration/controlplane/"
+            weight = 10
+
+        [[menu.main]]
+            identifier = "workers"
+            name = "Workers"
+            parent = "configuration"
+            url = "/configuration/workers/"
+            weight = 20
+
+    [[menu.main]]
+        identifier = "examples"
+        name       = "Examples"
+        url        = "/examples/"
+        weight     = 30
+
+        [[menu.main]]
+            identifier = "aws"
+            name = "AWS"
+            parent = "examples"
+            url = "/examples/aws/"
+            weight = 10
+
+        [[menu.main]]
+            identifier = "kvm"
+            name = "KVM"
+            parent = "examples"
+            url = "/examples/kvm/"
+            weight = 20

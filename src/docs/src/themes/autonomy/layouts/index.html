@@ -1,0 +1,25 @@
+{{- partial "head" . -}}
+
+{{- partial "sidebar" . -}}
+
+<body class="has-docked-nav">
+
+    <!-- Primary Page Layout
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <div class="container">
+        {{ range where .Site.Pages "Type" "index" }}
+        <h1>{{ .Title }} {{ if .IsDraft }} (Draft){{ end }}</h1>
+
+        {{ .Content }}
+        {{ end }}
+        <aside class="copyright">
+            {{ with .Site.Params.copyright }}
+            &copy; {{ now.Format "2006" }} {{ . }}
+            {{ end }}
+        </aside>
+    </div>
+    <!-- End Document
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+
+{{ partial "footer" . }}
