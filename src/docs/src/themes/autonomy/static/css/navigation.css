@@ -1,0 +1,25 @@
+@import url("colors.css");
+.navigation {
+    width: 4rem;
+    font-size: 4.6rem;
+    height: 100%;
+    cursor: pointer;
+    display: table;
+    text-align: center;
+}
+
+.navigation>i {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    max-height: 100vh;
+    min-height: 100vh;
+}
+
+.navigation.navigation-previous {
+    float: left;
+}
+
+.navigation.navigation-next {
+    float: right;
+}

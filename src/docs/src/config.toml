@@ -6,6 +6,7 @@ theme = "autonomy"
 [params]
     Copyright = "Released under Mozilla Public License 2.0"
     GitHubLink = "https://github.com/autonomy/dianemo"
+    DockerHubLink = "https://hub.docker.com/u/autonomy"
 
 [[menu.main]]
     identifier = "components"

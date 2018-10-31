@@ -1,0 +1,54 @@
+@import url("dimensions.css");
+@import url("colors.css");
+.sidebar {
+    margin: 0;
+    padding: 0;
+    width: 300px;
+    background-color: var(--menu-color);
+    position: fixed;
+    height: calc(100% - var(--header-height));
+    overflow: auto;
+    z-index: var(--menu-z-index);
+}
+
+.sidebar-link {
+    display: block;
+    color: var(--secondary-color);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    line-height: 1.0rem;
+    padding: 12px;
+    width: 100%;
+}
+
+.sidebar-link.sidebar-link-parent {
+    font-weight: 900;
+}
+
+.sidebar-list {
+    display: block;
+    list-style: none;
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+.sidebar-item {
+    width: 100%;
+    position: relative;
+    margin-bottom: 0;
+}
+
+.sidebar .button {
+    font-size: 12px;
+    margin: 4px;
+}
+
+.button-group {
+    display: flex;
+}
+
+.button-group-center {
+    align-content: center;
+    justify-content: center;
+}

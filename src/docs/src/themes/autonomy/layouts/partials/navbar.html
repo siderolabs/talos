@@ -1,0 +1,33 @@
+<nav class="navbar">
+    <div class="container">
+        <div class="row">
+            <div class="column column-50">
+                <ul class="navbar-list navbar-left">
+                    <li class="navbar-item">
+                        <a class="navbar-link logo" href="/">
+                            <img src="{{ .Site.BaseURL }}/img/logo.svg" class="logo">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="column column-50">
+                <ul class="navbar-list navbar-right">
+                    <li class="navbar-item">
+                        {{ with .Site.Params.GitHubLink }}
+                        <a class="navbar-link navbar-logo" rel="noopener noreferrer" href="{{ . }}" target="_blank">
+                            <span class="octicon octicon-mark-github"></span>
+                        </a>
+                        {{ end }}
+                    </li>
+                    <li class="navbar-item">
+                        {{ with .Site.Params.DockerHubLink }}
+                        <a class="navbar-link navbar-logo" rel="noopener noreferrer" href="{{ . }}" target="_blank">
+                            <span class="fab fa-docker"></span>
+                        </a>
+                        {{ end }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,6 @@
+:root {
+    --header-height: 64px;
+    --menu-z-index: 999;
+    --content-padding-top: 8vh;
+    --content-padding-bottom: 1vh;
+}
