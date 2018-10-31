@@ -11,5 +11,23 @@
 	<atom:link href="https://dianemo.autonomy.io/configuration/index.xml" rel="self" type="application/rss+xml" />
     
     
+    <item>
+      <title>Control Plane</title>
+      <link>https://dianemo.autonomy.io/configuration/controlplane/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/configuration/controlplane/</guid>
+      <description>version: &amp;quot;&amp;quot; security: os: ca: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509} identity: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509} kubernetes: ca: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509} networking: os: {} kubernetes: {} services: kubeadm: init: type: initial etcdMemberName: etcd-1 containerRuntime: docker configuration: | apiVersion: kubeadm.k8s.io/v1alpha2 kind: MasterConfiguration clusterName: example bootstrapTokens: - token: abcdef.0123456789abcdef ttl: 0s kubeProxy: config: ipvs: scheduler: lc mode: ipvs networking: dnsDomain: cluster.local podSubnet: 10.244.0.0/16 serviceSubnet: 10.96.0.0/12 trustd: username: example password: example   You can generate the PKI resources and inject them into the configuration with osctl.</description>
+    </item>
+    
+    <item>
+      <title>Workers</title>
+      <link>https://dianemo.autonomy.io/configuration/workers/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/configuration/workers/</guid>
+      <description>version: &amp;quot;&amp;quot; security: os: ca: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} networking: os: {} kubernetes: {} services: kubeadm: containerRuntime: docker configuration: | apiVersion: kubeadm.k8s.io/v1alpha2 kind: NodeConfiguration token: abcdef.0123456789abcdef discoveryTokenAPIServers: - ${MASTER_IP}:443 discoveryTokenCACertHashes: - sha256:${CA_CERT_HASH} trustd: username: example password: example endpoints: - ${MASTER_IP}  </description>
+    </item>
+    
   </channel>
 </rss>

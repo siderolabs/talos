@@ -3,6 +3,41 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://dianemo.autonomy.io/components/kernel/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/components/init/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/components/kubeadm/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/components/trustd/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/components/proxyd/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/components/osd/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/components/osctl/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dianemo.autonomy.io/examples/aws/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
@@ -39,41 +74,6 @@
   
   <url>
     <loc>https://dianemo.autonomy.io/configuration/workers/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/init/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/kernel/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/kubeadm/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/osctl/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/osd/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/proxyd/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/components/trustd/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   

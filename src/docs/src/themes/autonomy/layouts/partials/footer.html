@@ -1,0 +1,7 @@
+<div class="footer">
+    <aside class="copyright">
+        {{ with .Site.Params.Copyright }}
+        &copy; {{ now.Format "2006" }} {{ . }}
+        {{ end }}
+    </aside>
+</div>

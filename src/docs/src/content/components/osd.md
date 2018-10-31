@@ -2,6 +2,11 @@
 title: "osd"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+weight: 60
+menu:
+  main:
+    parent: 'components'
+    weight: 60
 ---
 
 Dianemo is unique in that it has no concept of host-level access.

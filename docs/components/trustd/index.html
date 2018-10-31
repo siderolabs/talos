@@ -19,7 +19,6 @@
 
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://dianemo.autonomy.io/js/navbar.js"></script>
 
     
     <link rel="stylesheet" href="https://dianemo.autonomy.io//css/milligram.min.css">
@@ -142,13 +141,21 @@
         </div>
     </div>
 </nav>
-<body class="has-docked-nav">
+<body>
     <div class="container">
-        <div class="row">
-            <div class="column">
-                <section class="article-list">
-                    <h1>trustd</h1>
-                    <p><p>Security is one of the highest priorities within Autonomy.
+        <div class="content">
+            <div class="row ">
+                <div class="column column-10">
+                    
+                    <a class="nav nav-left" href="https://dianemo.autonomy.io/components/kubeadm/">
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                    
+                </div>
+                <div class="column document">
+                    <section class="document">
+                        <h1 class="title">trustd</h1>
+                        <p><p>Security is one of the highest priorities within Autonomy.
 To run a Kubernetes cluster a certain level of trust is required to operate a cluster.
 For example, orchestrating the bootstrap of a highly available control plane requires the distribution of sensitive PKI data.</p>
 
@@ -159,18 +166,25 @@ It can, for example, accept a write request from another node to place a file on
 
 <p>We imagine that the number available methods will grow as Dianemo gets tested in the real world.</p>
 </p>
-                    <article>
-                        
-                        <aside class="copyright">
-                            
-                            &copy; 2018 Released under Mozilla Public License 2.0
-                            
-                        </aside>
-                    </article>
-                </section>
+                    </section>
+                </div>
+                <div class="column column-10">
+                    
+                    <a class="nav nav-next" href="https://dianemo.autonomy.io/components/proxyd/">
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
+                    
+                </div>
             </div>
         </div>
     </div>
 </body>
 
+<div class="footer">
+    <aside class="copyright">
+        
+        &copy; 2018 Released under Mozilla Public License 2.0
+        
+    </aside>
+</div>
 

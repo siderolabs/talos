@@ -2,6 +2,11 @@
 title: "init"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+weight: 20
+menu:
+  main:
+    parent: 'components'
+    weight: 20
 ---
 
 A common theme throughout the design of Dianemo is minimalism.

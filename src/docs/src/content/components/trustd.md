@@ -2,6 +2,11 @@
 title: "trustd"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+weight: 40
+menu:
+  main:
+    parent: 'components'
+    weight: 40
 ---
 
 Security is one of the highest priorities within Autonomy.
