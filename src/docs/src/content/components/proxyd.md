@@ -2,6 +2,11 @@
 title: "proxyd"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+weight: 50
+menu:
+  main:
+    parent: 'components'
+    weight: 50
 ---
 
 Highly available Kubernetes clusters are crucial for production quality clusters.

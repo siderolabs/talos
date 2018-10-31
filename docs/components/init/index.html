@@ -19,7 +19,6 @@
 
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://dianemo.autonomy.io/js/navbar.js"></script>
 
     
     <link rel="stylesheet" href="https://dianemo.autonomy.io//css/milligram.min.css">
@@ -142,13 +141,21 @@
         </div>
     </div>
 </nav>
-<body class="has-docked-nav">
+<body>
     <div class="container">
-        <div class="row">
-            <div class="column">
-                <section class="article-list">
-                    <h1>init</h1>
-                    <p><p>A common theme throughout the design of Dianemo is minimalism.
+        <div class="content">
+            <div class="row ">
+                <div class="column column-10">
+                    
+                    <a class="nav nav-left" href="https://dianemo.autonomy.io/components/kernel/">
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                    
+                </div>
+                <div class="column document">
+                    <section class="document">
+                        <h1 class="title">init</h1>
+                        <p><p>A common theme throughout the design of Dianemo is minimalism.
 We believe strongly in the UNIX philosophy that each program should do one job well.
 The <code>init</code> included in Dianemo is one example of this.</p>
 
@@ -167,18 +174,25 @@ There simply is no mechanism in place to do anything else.</p>
 
 <p>In the following sections we will take a closer look at how these needs are addressed, and how services managed by <code>init</code> are designed to enhance the Kubernetes experience.</p>
 </p>
-                    <article>
-                        
-                        <aside class="copyright">
-                            
-                            &copy; 2018 Released under Mozilla Public License 2.0
-                            
-                        </aside>
-                    </article>
-                </section>
+                    </section>
+                </div>
+                <div class="column column-10">
+                    
+                    <a class="nav nav-next" href="https://dianemo.autonomy.io/components/kubeadm/">
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
+                    
+                </div>
             </div>
         </div>
     </div>
 </body>
 
+<div class="footer">
+    <aside class="copyright">
+        
+        &copy; 2018 Released under Mozilla Public License 2.0
+        
+    </aside>
+</div>
 

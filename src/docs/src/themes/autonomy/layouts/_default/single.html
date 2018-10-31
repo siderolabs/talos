@@ -2,23 +2,30 @@
 
 {{- partial "sidebar" . -}}
 
-<body class="has-docked-nav">
+<body>
     <div class="container">
-        <div class="row">
-            <div class="column">
-                <div>
-                    <h1 align="center">{{ .Title }}</h1>
+        <div class="content">
+            <div class="row ">
+                <div class="column column-10">
+                    {{ if .NextInSection }}
+                    <a class="nav nav-left" href="{{.NextInSection.Permalink}}">
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                    {{ end }}
                 </div>
-                <article>
-                    <section>
-                        {{ .Content }}
+                <div class="column document">
+                    <section class="document">
+                        <h1 class="title">{{ .Title }}</h1>
+                        <p>{{.Content}}</p>
                     </section>
-                    <aside class="copyright">
-                        {{ with .Site.Params.copyright }}
-                        &copy; {{ now.Format "2006" }} {{ . }}
-                        {{ end }}
-                    </aside>
-                </article>
+                </div>
+                <div class="column column-10">
+                    {{ if .PrevInSection }}
+                    <a class="nav nav-next" href="{{.PrevInSection.Permalink}}">
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
+                    {{ end }}
+                </div>
             </div>
         </div>
     </div>

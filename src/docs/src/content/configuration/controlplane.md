@@ -2,6 +2,10 @@
 title: "Control Plane"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+menu:
+  main:
+    parent: 'configuration'
+    weight: 10
 ---
 
 ```yaml

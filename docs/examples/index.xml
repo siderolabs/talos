@@ -11,5 +11,28 @@
 	<atom:link href="https://dianemo.autonomy.io/examples/index.xml" rel="self" type="application/rss+xml" />
     
     
+    <item>
+      <title>AWS</title>
+      <link>https://dianemo.autonomy.io/examples/aws/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/examples/aws/</guid>
+      <description>First, create the AMI:
+docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ autonomy/dianemo:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
+ An official Terraform module is currently being developed, stay tuned!
+ </description>
+    </item>
+    
+    <item>
+      <title>KVM</title>
+      <link>https://dianemo.autonomy.io/examples/kvm/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/examples/kvm/</guid>
+      <description>Install the Master Node On the KVM host, install a master node to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sda -f -p bare-metal -u http://${IP}:8080/master.yaml   http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
+ virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --ram=4096 \ --vcpus=2 \ --disk path=/dev/sdc \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Install a Worker Node Similarly, install a worker node to an available block device:</description>
+    </item>
+    
   </channel>
 </rss>

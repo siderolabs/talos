@@ -2,24 +2,23 @@
 
 {{- partial "sidebar" . -}}
 
-<body class="has-docked-nav">
-
-    <!-- Primary Page Layout
-–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<body>
     <div class="container">
-        {{ range where .Site.Pages "Type" "index" }}
-        <h1>{{ .Title }} {{ if .IsDraft }} (Draft){{ end }}</h1>
-
-        {{ .Content }}
-        {{ end }}
-        <aside class="copyright">
-            {{ with .Site.Params.copyright }}
-            &copy; {{ now.Format "2006" }} {{ . }}
-            {{ end }}
-        </aside>
+        <div class="content">
+            <div class="row ">
+                <div class="column column-10"></div>
+                <div class="column document">
+                    {{ range where .Site.Pages "Type" "index" }}
+                    <section class="document">
+                        <h1 class="title">{{ .Title }}</h1>
+                        <p>{{.Content}}</p>
+                    </section>
+                    {{ end }}
+                </div>
+                <div class="column column-10"></div>
+            </div>
+        </div>
     </div>
-    <!-- End Document
-–––––––––––––––––––––––––––––––––––––––––––––––––– -->
 </body>
 
 {{ partial "footer" . }}

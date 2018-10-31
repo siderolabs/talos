@@ -2,51 +2,18 @@
 
 {{- partial "sidebar" . -}}
 
-<body class="has-docked-nav">
+<body>
     <div class="container">
-        <div class="row">
-            <div class="column">
-                <section class="article-list">
-                    <h1>{{ .Title }}</h1>
-                    <p>{{.Content}}</p>
-                    <article>
-                        {{ range where .Data.Pages "Section" "post" }}
-                        <hr />
-                        <header>
-                            <h3>
-                                <a href="{{ .Permalink }}">{{ .Title }}</a>
-                            </h3>
-                            <div class="post-meta clearfix">
-                                <div class="post-date pull-left">
-                                    Posted on
-                                    <time datetime="{{ .Date.Format " 2006-01-02T15:04:05Z07:00 " | safeHTML }}">
-                                        {{ .Date.Format "Jan 2, 2006" }}
-                                    </time>
-                                </div>
-                            </div>
-                        </header>
-                        <div>
-                            {{ .Summary }}
-                        </div>
-                        {{ if .Truncated }}
-                        <footer>
-                            <ul class="pager">
-                                <li class="next">
-                                    <a href="{{ .Permalink }}">Read more
-                                        <span aria-hidden="true">&raquo;</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </footer>
-                        {{ end }}
-                        {{ end }}
-                        <aside class="copyright">
-                            {{ with .Site.Params.copyright }}
-                            &copy; {{ now.Format "2006" }} {{ . }}
-                            {{ end }}
-                        </aside>
-                    </article>
-                </section>
+        <div class="content">
+            <div class="row ">
+                <div class="column column-10"></div>
+                <div class="column document">
+                    <section class="document">
+                        <h1 class="title">{{ .Title }}</h1>
+                        <p>{{.Content}}</p>
+                    </section>
+                </div>
+                <div class="column column-10"></div>
             </div>
         </div>
     </div>
