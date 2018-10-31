@@ -170,5 +170,5 @@ k8s.io/client-go v9.0.0+incompatible h1:/PdJjifJTjMFe0G4ESclZDcwF1+bFePTJ2xf+MXj
 k8s.io/client-go v9.0.0+incompatible/go.mod h1:7vJpHMYJwNQCWgzmNV+VYUl1zCObLyodBc8nIyt8L5s=
 k8s.io/cluster-bootstrap v0.0.0-20181011074507-f574069107f7 h1:wdOvDd3jLRnwa7zvY09rK1C4V1xm6FqXbHu2jtzgWFQ=
 k8s.io/cluster-bootstrap v0.0.0-20181011074507-f574069107f7/go.mod h1:iBSm2nwo3OaiuW8VDvc3ySDXK5SKfUrxwPvBloKG7zg=
-k8s.io/kubernetes v1.13.0-alpha.1 h1:hLTa+Aa5bT51lPFDOmbqlSYnvwaqVbC+VB/03Bhg+Ho=
-k8s.io/kubernetes v1.13.0-alpha.1/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
+k8s.io/kubernetes v1.13.0-alpha.2 h1:mbyZgedqVpgcJ/S7gv5QvJqS20pzch9E1qXr+DziMoA=
+k8s.io/kubernetes v1.13.0-alpha.2/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=

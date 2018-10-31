@@ -85,5 +85,5 @@ require (
 	k8s.io/apimachinery v0.0.0-20181015213631-60666be32c5d
 	k8s.io/client-go v9.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0-20181011074507-f574069107f7 // indirect
-	k8s.io/kubernetes v1.13.0-alpha.1
+	k8s.io/kubernetes v1.13.0-alpha.2
 )
