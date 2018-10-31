@@ -140,31 +140,17 @@ pre {
 
 .sidebar .button {
     font-size: 12px;
+    margin: 5px;
 }
 
-.github-actions{
-    text-align: center;
+.column .github-actions {
+    display: flex;
+    align-content: center;
+    justify-content: center;
 }
 
 .copyright {
     color: #86929d;
-}
-
-@media screen and (max-width: 700px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-  }
-  .sidebar a {float: left;}
-  div.content {margin-left: 0;}
-}
-
-@media screen and (max-width: 400px) {
-  .sidebar a {
-    text-align: center;
-    float: none;
-  }
 }
 
 .nav {
@@ -179,7 +165,7 @@ pre {
     text-align: center;
 }
 
-.nav > i {
+.nav>i {
     display: table-cell;
     vertical-align: middle;
     text-align: center;
@@ -208,11 +194,43 @@ pre {
     padding: 50px;
 }
 
+@media screen and (max-width: 700px) {}
+
+@media screen and (max-width: 400px) {}
+
 /* Larger than mobile screen */
-@media (min-width: 40.0rem) {}
+
+@media (max-width: 40.0rem) {
+    .sidebar a {
+        text-align: center;
+        float: none;
+    }
+    .footer {
+        flex-shrink: 0;
+        margin-left: 0px;
+    }
+}
 
 /* Larger than tablet screen */
-@media (min-width: 80.0rem) {}
+
+@media (max-width: 80.0rem) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    .sidebar a {
+        float: left;
+    }
+    div.content {
+        margin-left: 0;
+    }
+    .footer {
+        flex-shrink: 0;
+        margin-left: 0px;
+    }
+}
 
 /* Larger than desktop screen */
+
 @media (min-width: 120.0rem) {}
