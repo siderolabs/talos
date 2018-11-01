@@ -4,6 +4,9 @@ title = "Dianemo"
 theme = "autonomy"
 sectionPagesMenu = "main"
 
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
 [params]
     Copyright = "Released under Mozilla Public License 2.0"
     GitHubLink = "https://github.com/autonomy/dianemo"
