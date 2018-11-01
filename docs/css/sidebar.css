@@ -3,7 +3,7 @@
 .sidebar {
     margin: 0;
     padding: 0;
-    width: 300px;
+    width: var(--content-margin-left);
     background-color: var(--menu-color);
     position: fixed;
     height: calc(100% - var(--header-height));
@@ -14,7 +14,7 @@
 .sidebar-link {
     display: block;
     color: var(--secondary-color);
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.5px;
     line-height: 1.0rem;
@@ -22,21 +22,38 @@
     width: 100%;
 }
 
+.sidebar-link:before {
+    content: "\203A";
+    padding-right: 4px;
+    font-size: 15px;
+}
+
 .sidebar-link.sidebar-link-parent {
-    font-weight: 900;
+    font-weight: normal;
 }
 
 .sidebar-list {
-    display: block;
+    display: none;
     list-style: none;
-    margin-top: 1px;
-    margin-bottom: 1px;
+}
+
+.sidebar-list.parent {
+    display: block;
+    margin-left: 75px;
+}
+
+.sidebar-list .active {
+    display: block;
 }
 
 .sidebar-item {
     width: 100%;
     position: relative;
     margin-bottom: 0;
+}
+
+.sidebar-link.active {
+    color: var(--main-highlight-color);
 }
 
 .sidebar .button {

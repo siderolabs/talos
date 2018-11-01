@@ -2,6 +2,7 @@ baseURL = "https://dianemo.autonomy.io/"
 languageCode = "en-us"
 title = "Dianemo"
 theme = "autonomy"
+sectionPagesMenu = "main"
 
 [params]
     Copyright = "Released under Mozilla Public License 2.0"
