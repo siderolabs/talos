@@ -4,7 +4,7 @@
 @import url("navbar.css");
 @import url("sidebar.css");
 @import url("navigation.css");
-@import url("http://cdnjs.cloudflare.com/ajax/libs/octicons/3.1.0/octicons.css");
+@import url("https://cdnjs.cloudflare.com/ajax/libs/octicons/3.1.0/octicons.css");
 @import url("https://use.fontawesome.com/releases/v5.4.2/css/all.css");
 object {
     height: 100%;
