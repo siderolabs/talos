@@ -1,25 +1,55 @@
+@import url("dimensions.css");
+@import url("fonts.css");
+@import url("colors.css");
+@import url("navbar.css");
+@import url("sidebar.css");
+@import url("navigation.css");
+@import url("http://cdnjs.cloudflare.com/ajax/libs/octicons/3.1.0/octicons.css");
+@import url("https://use.fontawesome.com/releases/v5.4.2/css/all.css");
 object {
     height: 100%;
     min-height: 100%;
 }
 
 body {
-    font-family: 'Raleway', sans-serif;
+    font-family: var(--main-font);
     margin: 0;
 }
 
 p {
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--paragraph-font);
 }
 
 code {
-    font-family: 'Fira Mono', monospace;
+    font-family: var(--code-font);
     font-size: 12px;
+}
+
+a {
+    color: var(--main-highlight-color);
+}
+
+a:hover {
+    color: var(--secondary-highlight-color);
+}
+
+hr {
+    margin: 1rem;
+}
+
+pre {
+    border-left: 0.3rem solid var(--main-highlight-color);
+    border-left-color: var(--main-highlight-color);
 }
 
 .header {
     margin-top: 6rem;
     text-align: center;
+}
+
+.footer {
+    flex-shrink: 0;
+    margin-left: 400px;
 }
 
 .container {
@@ -29,66 +59,10 @@ code {
     min-width: 100%;
 }
 
-.primary {
-    height: 500px;
-    width: 500px;
-    margin: auto;
-}
-
-.logo-primary {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 80%;
-}
-
-.pull-left {
-    float: left;
-}
-
-.pull-right {
-    float: right;
-}
-
-a {
-    color: #448FB0;
-}
-
-a:hover {
-    color: #74b8d6;
-}
-
-.button {
-    background-color: #448FB0;
-    border: 0;
-}
-
-.button:hover {
-    background-color: #74b8d6;
-    border: 0;
-}
-
-hr {
-    margin: 1rem;
-}
-
-pre {
-    border-left: 0.3rem solid #448FB0;
-    border-left-color: #448FB0;
-}
-
-.sidebar-link .logo {
-    display: block;
-    height: 184px;
-    width: 184px;
-    margin: auto;
-    width: 60%;
-}
-
 .content {
     margin-left: 300px;
-    padding-top: 100px;
-    padding-bottom: 100px;
+    padding-top: 8vh;
+    padding-bottom: 1vh;
     height: 100%;
     display: flex;
     align-items: center;
@@ -97,106 +71,51 @@ pre {
 
 .document {
     overflow-y: scroll;
-    max-height: 100vh;
-    min-height: 100vh;
+    max-height: calc(calc(97vh - var(--content-padding-top) - var(--content-padding-bottom)) - var(--header-height));
+    min-height: calc(calc(97vh - var(--content-padding-top) - var(--content-padding-bottom)) - var(--header-height));
+    padding: 50px;
 }
 
-.sidebar {
-    margin: 0;
-    padding: 0;
-    width: 300px;
-    background-color: #f4f5f6;
-    position: fixed;
-    height: 100%;
-    overflow: auto;
-    z-index: 999;
+.button {
+    background-color: var(--main-highlight-color);
+    border: 0;
 }
 
-.sidebar-link {
-    display: block;
-    color: #606c76;
+.button:hover {
+    background-color: var(--secondary-highlight-color);
+    border: 0;
+}
+
+.button .octicon {
     font-size: 16px;
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    margin-right: 0px;
-    line-height: 1.0rem;
-    padding: 14px;
-    text-decoration: none;
-    width: 100%;
 }
 
-.sidebar-list {
+.logo {
     display: block;
-    list-style: none;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-.sidebar-item {
-    width: 100%;
-    position: relative;
-    margin-bottom: 0;
-}
-
-.sidebar .button {
-    font-size: 12px;
-    margin: 5px;
-}
-
-.column .github-actions {
-    display: flex;
-    align-content: center;
-    justify-content: center;
+    margin: auto;
+    height: 192px;
+    width: 192px;
 }
 
 .copyright {
-    color: #86929d;
-}
-
-.nav {
-    /* position: fixed;
-    top: 0;
-    bottom: 0; */
-    width: 4rem;
-    font-size: 4.6rem;
-    height: 100%;
-    cursor: pointer;
-    display: table;
-    text-align: center;
-}
-
-.nav>i {
-    display: table-cell;
-    vertical-align: middle;
-    text-align: center;
-    max-height: 100vh;
-    min-height: 100vh;
-}
-
-.nav.nav-prev {
-    float: left;
-}
-
-.nav.nav-next {
-    float: right;
+    color: var(--main-color);
 }
 
 .title {
     text-align: center;
 }
 
-.footer {
-    flex-shrink: 0;
-    margin-left: 400px;
+.extra-group-center {
+    justify-content: space-evenly;
 }
 
-.document {
-    padding: 50px;
+.octicon {
+    font-size: 32px;
 }
 
-@media screen and (max-width: 700px) {}
-
-@media screen and (max-width: 400px) {}
+.fab {
+    font-size: 32px;
+}
 
 /* Larger than mobile screen */
 
@@ -219,10 +138,7 @@ pre {
         height: auto;
         position: relative;
     }
-    .sidebar a {
-        float: left;
-    }
-    div.content {
+    .content {
         margin-left: 0;
     }
     .footer {

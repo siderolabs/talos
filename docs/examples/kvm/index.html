@@ -18,14 +18,44 @@
     <link rel="icon" type="image/png" href="https://dianemo.autonomy.io/img/favicon.png">
 
     
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
-    
     <link rel="stylesheet" href="https://dianemo.autonomy.io//css/milligram.min.css">
-    <link rel="stylesheet" href="https://dianemo.autonomy.io/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://dianemo.autonomy.io/css/main.css">
 </head>
+<nav class="navbar">
+    <div class="container">
+        <div class="row">
+            <div class="column column-50">
+                <ul class="navbar-list navbar-left">
+                    <li class="navbar-item">
+                        <a class="navbar-link logo" href="/">
+                            <img src="https://dianemo.autonomy.io//img/logo.svg" class="logo">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="column column-50">
+                <ul class="navbar-list navbar-right">
+                    <li class="navbar-item">
+                        
+                        <a class="navbar-link navbar-logo" rel="noopener noreferrer" href="https://github.com/autonomy/dianemo" target="_blank">
+                            <span class="octicon octicon-mark-github"></span>
+                        </a>
+                        
+                    </li>
+                    <li class="navbar-item">
+                        
+                        <a class="navbar-link navbar-logo" rel="noopener noreferrer" href="https://hub.docker.com/u/autonomy" target="_blank">
+                            <span class="fab fa-docker"></span>
+                        </a>
+                        
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
 <nav class="sidebar">
+    
     <div class="row">
         <div class="column">
             <ul class="sidebar-list">
@@ -34,57 +64,80 @@
                         <img src="https://dianemo.autonomy.io//img/logo.svg" class="logo">
                     </a>
                 </li>
-                
-                <div class="column github-actions">
-                    <a class="button" href="https://github.com/autonomy/dianemo/fork">
-                        <i class="fa fa-code-fork" aria-hidden="true"></i>
-                        Fork
-                    </a>
-                    <a class="button" href="https://github.com/autonomy/dianemo/stargazers">
-                        <i class="fa fa-star" aria-hidden="true"></i>
-                        Star
-                    </a>
-                </div>
-                
             </ul>
         </div>
     </div>
     <hr>
+    
+    <div class="row">
+        <div class="column">
+            
+            <div class="button-group button-group-center">
+                <a class="button" href="https://github.com/autonomy/dianemo/fork">
+                    <span class="octicon octicon-repo-forked"></span>
+                    Fork
+                </a>
+                <a class="button" href="https://github.com/autonomy/dianemo/stargazers">
+                    <span class="octicon octicon-star"></span>
+                    Star
+                </a>
+            </div>
+            
+        </div>
+    </div>
+    <hr>
+    
     <div class="row">
         <div class="column">
             <ul class="sidebar-list">
                 
                 
                 <li class="sidebar-item">
-                    <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/" >Components</a>
+                    <a class="sidebar-link sidebar-link-parent"  href="https://dianemo.autonomy.io/components/" >
+                        Components
+                    </a>
                     <ul class="sidebar-list">
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/kernel/" >kernel</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/kernel/" >
+                                kernel
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/init/" >init</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/init/" >
+                                init
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/kubeadm/" >kubeadm</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/kubeadm/" >
+                                kubeadm
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/trustd/" >trustd</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/trustd/" >
+                                trustd
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/proxyd/" >proxyd</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/proxyd/" >
+                                proxyd
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/osd/" >osd</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/osd/" >
+                                osd
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/osctl/" >osctl</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/components/osctl/" >
+                                osctl
+                            </a>
                         </li>
                         
                     </ul>
@@ -93,15 +146,21 @@
                 
                 
                 <li class="sidebar-item">
-                    <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/" >Configuration</a>
+                    <a class="sidebar-link sidebar-link-parent"  href="https://dianemo.autonomy.io/configuration/" >
+                        Configuration
+                    </a>
                     <ul class="sidebar-list">
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/controlplane/" >Control Plane</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/controlplane/" >
+                                Control Plane
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/workers/" >Workers</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/configuration/workers/" >
+                                Workers
+                            </a>
                         </li>
                         
                     </ul>
@@ -110,15 +169,21 @@
                 
                 
                 <li class="sidebar-item">
-                    <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/" >Examples</a>
+                    <a class="sidebar-link sidebar-link-parent"  href="https://dianemo.autonomy.io/examples/" >
+                        Examples
+                    </a>
                     <ul class="sidebar-list">
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/aws/" >AWS</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/aws/" >
+                                AWS
+                            </a>
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/kvm/" >KVM</a>
+                            <a class="sidebar-link"  href="https://dianemo.autonomy.io/examples/kvm/" >
+                                KVM
+                            </a>
                         </li>
                         
                     </ul>
@@ -129,17 +194,6 @@
         </div>
     </div>
     <hr>
-    <div class="row">
-        <div class="column">
-            <ul class="sidebar-list">
-                <li class="sidebar-item">
-                    <a class="sidebar-link logo" rel="noopener noreferrer" href="https://github.com/autonomy/dianemo" target="_blank">
-                        <i class="fa fa-github" aria-hidden="true"></i>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
 </nav>
 <body>
     <div class="container">
@@ -147,7 +201,7 @@
             <div class="row ">
                 <div class="column column-10">
                     
-                    <a class="nav nav-left" href="https://dianemo.autonomy.io/examples/aws/">
+                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/examples/aws/">
                         <i class="fa fa-chevron-left"></i>
                     </a>
                     

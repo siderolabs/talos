@@ -1,5 +1,7 @@
 {{- partial "head" . -}}
 
+{{- partial "navbar" . -}}
+
 {{- partial "sidebar" . -}}
 
 <body>
@@ -8,7 +10,7 @@
             <div class="row ">
                 <div class="column column-10">
                     {{ if .NextInSection }}
-                    <a class="nav nav-left" href="{{.NextInSection.Permalink}}">
+                    <a class="navigation navigation-previous" href="{{.NextInSection.Permalink}}">
                         <i class="fa fa-chevron-left"></i>
                     </a>
                     {{ end }}
@@ -21,7 +23,7 @@
                 </div>
                 <div class="column column-10">
                     {{ if .PrevInSection }}
-                    <a class="nav nav-next" href="{{.PrevInSection.Permalink}}">
+                    <a class="navigation navigation-next" href="{{.PrevInSection.Permalink}}">
                         <i class="fa fa-chevron-right"></i>
                     </a>
                     {{ end }}
