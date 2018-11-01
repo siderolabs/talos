@@ -2,13 +2,11 @@
     <!-- Main logo -->
     <div class="row">
         <div class="column">
-            <ul class="sidebar-list">
-                <li class="sidebar-item">
-                    <a class="sidebar-link logo" href="{{ .Site.BaseURL }}">
-                        <img src="{{ .Site.BaseURL }}/img/logo.svg" class="logo">
-                    </a>
-                </li>
-            </ul>
+            <span>
+                <a class="logo" href="{{ .Site.BaseURL }}">
+                    <img src="{{ .Site.BaseURL }}/img/logo.svg" class="logo">
+                </a>
+            </span>
         </div>
     </div>
     <hr>
@@ -33,17 +31,21 @@
     <!-- Menu -->
     <div class="row">
         <div class="column">
-            <ul class="sidebar-list">
+            <ul class="sidebar-list parent">
+                <!-- https://gohugo.io/templates/menu-templates/#section-menu-for-lazy-bloggers -->
+                {{ $currentPage := . }}
                 {{ range .Site.Menus.main.ByWeight }}
                 {{ if .HasChildren }}
                 <li class="sidebar-item">
-                    <a class="sidebar-link sidebar-link-parent" {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>
+                    <a class="sidebar-link sidebar-link-parent{{if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }} active{{end}}"
+                        {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>
                         {{.Name }}
                     </a>
-                    <ul class="sidebar-list">
+                    <ul class="sidebar-list{{if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }} active{{end}}">
                         {{ range .Children }}
                         <li class="sidebar-item">
-                            <a class="sidebar-link" {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>
+                            <a class="sidebar-link{{if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }} active{{end}}"
+                                {{ if .URL }} href="{{ .URL | absURL }}" {{end}}>
                                 {{.Name }}
                             </a>
                         </li>
@@ -61,5 +63,4 @@
             </ul>
         </div>
     </div>
-    <hr>
 </nav>

@@ -34,6 +34,7 @@ a:hover {
 }
 
 hr {
+    width: 0;
     margin: 1rem;
 }
 
@@ -49,7 +50,7 @@ pre {
 
 .footer {
     flex-shrink: 0;
-    margin-left: 400px;
+    margin-left: var(--content-margin-left);
 }
 
 .container {
@@ -60,7 +61,7 @@ pre {
 }
 
 .content {
-    margin-left: 300px;
+    margin-left: var(--content-margin-left);
     padding-top: 8vh;
     padding-bottom: 1vh;
     height: 100%;
@@ -73,7 +74,6 @@ pre {
     overflow-y: scroll;
     max-height: calc(calc(97vh - var(--content-padding-top) - var(--content-padding-bottom)) - var(--header-height));
     min-height: calc(calc(97vh - var(--content-padding-top) - var(--content-padding-bottom)) - var(--header-height));
-    padding: 50px;
 }
 
 .button {
