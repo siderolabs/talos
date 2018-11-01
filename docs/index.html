@@ -19,6 +19,12 @@
     <link rel="icon" type="image/png" href="https://dianemo.autonomy.io/img/favicon.png">
 
     
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.0/fuse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
+    <script src="https://dianemo.autonomy.io/js/search.js"></script>
+
+    
     <link rel="stylesheet" href="https://dianemo.autonomy.io//css/milligram.min.css">
     <link rel="stylesheet" href="https://dianemo.autonomy.io/css/main.css">
 </head>
@@ -55,6 +61,15 @@
         </div>
     </div>
 </nav>
+<script id="search-result-template" type="text/x-js-template">
+    <li class="sidebar-item">
+        <div id="summary-${key}">
+            <a class="sidebar-link" href="${link}">${title}</a>
+            <p class="search-result-item">${snippet}</p>
+        </div>
+    </li>
+</script>
+
 <nav class="sidebar">
     
     <div class="row">
@@ -86,6 +101,13 @@
     </div>
     <hr>
     
+    <div class="row search-area">
+        <form class="search-form" action="" onSubmit="return searchButton()">
+            <input class="search-box" id="search-query" name="s" type="text" placeholder="search" />
+        </form>
+        <ul class="sidebar-list search-results" id="search-results">
+        </ul>
+    </div>
     <div class="row">
         <div class="column">
             <ul class="sidebar-list parent">
