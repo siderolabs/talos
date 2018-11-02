@@ -64,7 +64,7 @@
     <li class="sidebar-item">
         <div id="summary-${key}">
             <a class="sidebar-link" href="${link}">${title}</a>
-            <p class="search-result-item">${snippet}</p>
+            <p class="search-result-item">${preview}</p>
         </div>
     </li>
 </script>
@@ -101,7 +101,7 @@
     <hr>
     
     <div class="row search-area">
-        <form class="search-form" action="" onSubmit="return searchButton()">
+        <form class="search-form" action="" onSubmit="return">
             <input class="search-box" id="search-query" name="s" type="text" placeholder="search" />
         </form>
         <ul class="sidebar-list search-results" id="search-results">
