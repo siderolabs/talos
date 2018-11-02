@@ -46,7 +46,7 @@ function conform(e, project) {
     // Unit is milliseconds, 14400000ms = 4h.
     job.timeout = 14400000
 
-    job.host.nodeSelector.set("node-role.kubernetes.io/ci=", "''")
+    job.host.nodeSelector.set("node-role.kubernetes.io/ci", "")
 
     return job
 }
