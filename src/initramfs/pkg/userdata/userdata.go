@@ -51,6 +51,7 @@ type Services struct {
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
 	Trustd  *Trustd  `yaml:"trustd"`
 	Proxyd  *Proxyd  `yaml:"proxyd"`
+	Blockd  *Blockd  `yaml:"blockd"`
 	OSD     *OSD     `yaml:"osd"`
 	CRT     *CRT     `yaml:"crt"`
 }
@@ -103,6 +104,11 @@ type OSD struct {
 
 // Proxyd describes the configuration of the proxyd service.
 type Proxyd struct {
+	Image string `yaml:"image,omitempty"`
+}
+
+// Blockd describes the configuration of the blockd service.
+type Blockd struct {
 	Image string `yaml:"image,omitempty"`
 }
 

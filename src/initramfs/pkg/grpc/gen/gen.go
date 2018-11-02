@@ -11,6 +11,7 @@ import (
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
+	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/middleware/auth/basic"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/net"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 	"google.golang.org/grpc"
@@ -22,12 +23,29 @@ type Generator struct {
 }
 
 // NewGenerator initializes a Generator with a preconfigured grpc.ClientConn.
-func NewGenerator(conn *grpc.ClientConn) (g *Generator) {
+func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
+	if len(data.Services.Trustd.Endpoints) == 0 {
+		return nil, fmt.Errorf("at least one root of trust endpoint is required")
+	}
+
+	creds := basic.NewCredentials(
+		data.Security.OS.CA.Crt,
+		data.Services.Trustd.Username,
+		data.Services.Trustd.Password,
+	)
+
+	// TODO: In the case of failure, attempt to generate the identity from
+	// another RoT.
+	var conn *grpc.ClientConn
+	conn, err = basic.NewConnection(data.Services.Trustd.Endpoints[0], port, creds)
+	if err != nil {
+		return nil, err
+	}
 	client := proto.NewTrustdClient(conn)
 
 	return &Generator{
 		client: client,
-	}
+	}, nil
 }
 
 // Certificate implements the proto.TrustdClient interface.

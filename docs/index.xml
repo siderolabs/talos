@@ -80,6 +80,16 @@ To make this work, we needed an out-of-band tool for managing the nodes. In an i
     </item>
     
     <item>
+      <title>blockd</title>
+      <link>https://dianemo.autonomy.io/components/blockd/</link>
+      <pubDate>Tue, 30 Oct 2018 09:16:35 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/components/blockd/</guid>
+      <description>Dianemo comes with a reserved block device with three partitions:
+ an EFI System Partition (ESP) a ROOT partition mounted as read-only that contains the minimal set of binaries to operate system services and a DATA partion that is mounted as read/write at /var/run  These partitions are reserved and cannot be modified. The one expection to this is that the DATA partition will be resized automatically in the init process to the maximum size possible.</description>
+    </item>
+    
+    <item>
       <title>AWS</title>
       <link>https://dianemo.autonomy.io/examples/aws/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>

@@ -2,6 +2,7 @@ package factory
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net"
 	"strconv"
 
@@ -17,6 +18,7 @@ type Registrator interface {
 // Options is the functional options struct.
 type Options struct {
 	Port          int
+	Network       string
 	Config        *tls.Config
 	ServerOptions []grpc.ServerOption
 }
@@ -28,6 +30,13 @@ type Option func(*Options)
 func Port(o int) Option {
 	return func(args *Options) {
 		args.Port = o
+	}
+}
+
+// Network sets the network type of the listener.
+func Network(o string) Option {
+	return func(args *Options) {
+		args.Network = o
 	}
 }
 
@@ -48,7 +57,8 @@ func ServerOptions(o ...grpc.ServerOption) Option {
 // NewDefaultOptions initializes the Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
-		Port: 50000,
+		Port:    50000,
+		Network: "tcp",
 	}
 
 	for _, setter := range setters {
@@ -69,11 +79,19 @@ func Listen(r Registrator, setters ...Option) (err error) {
 	server := grpc.NewServer(opts.ServerOptions...)
 	r.Register(server)
 
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(opts.Port))
+	var address string
+	switch opts.Network {
+	case "unix":
+		address = "/run/factory/factory.sock"
+	case "tcp":
+		address = ":" + strconv.Itoa(opts.Port)
+	default:
+		return fmt.Errorf("unknown network: %s", opts.Network)
+	}
+	listener, err := net.Listen(opts.Network, address)
 	if err != nil {
 		return
 	}
-
 	err = server.Serve(listener)
 	if err != nil {
 		return

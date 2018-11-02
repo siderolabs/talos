@@ -1,0 +1,17 @@
+
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+
+// The Blockd service definition.
+service Blockd {
+  rpc Resize(ResizePartitionRequest) returns (google.protobuf.Empty) {}
+}
+
+// The request message containing the process name.
+message ResizePartitionRequest {
+  int32 number = 1;
+  int64 size = 2;
+}

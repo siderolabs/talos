@@ -11,33 +11,43 @@ function create_image() {
 
   if [ "$FULL" = true ] ; then
     if [ "$RAW" = true ] ; then
-      parted -s -a optimal ${RAW_IMAGE} mkpart ESP fat32 0 $((${INITRAMFS_SIZE} + 50))M
-      parted -s -a optimal ${RAW_IMAGE} mkpart ROOT xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
-      parted -s -a optimal ${RAW_IMAGE} mkpart DATA xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
+      parted -s -a optimal ${RAW_IMAGE} mkpart primary fat32 0 $((${INITRAMFS_SIZE} + 50))M
+      parted ${RAW_IMAGE} name 1 ESP
+      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
+      parted ${RAW_IMAGE} name 2 ROOT
+      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
+      parted ${RAW_IMAGE} name 3 DATA
       losetup ${DEVICE} ${RAW_IMAGE}
       partx -av ${DEVICE}
       extract_boot_partition ${DEVICE}p1
       extract_root_partition ${DEVICE}p2
       extract_data_partition ${DEVICE}p3
     else
-      parted -s -a optimal ${DEVICE} mkpart ESP fat32 0 $((${INITRAMFS_SIZE} + 50))M
-      parted -s -a optimal ${DEVICE} mkpart ROOT xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
-      parted -s -a optimal ${DEVICE} mkpart DATA xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
+      parted -s -a optimal ${DEVICE} mkpart primary fat32 0 $((${INITRAMFS_SIZE} + 50))M
+      parted ${DEVICE} name 1 ESP
+      parted -s -a optimal ${DEVICE} mkpart primary xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
+      parted ${DEVICE} name 2 ROOT
+      parted -s -a optimal ${DEVICE} mkpart primary xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
+      parted ${DEVICE} name 3 DATA
       extract_boot_partition ${DEVICE}1
       extract_root_partition ${DEVICE}2
       extract_data_partition ${DEVICE}3
     fi
   else
     if [ "$RAW" = true ] ; then
-      parted -s -a optimal ${RAW_IMAGE} mkpart ROOT xfs 0 $((${ROOTFS_SIZE} + 50))M
-      parted -s -a optimal ${RAW_IMAGE} mkpart DATA xfs $((${ROOTFS_SIZE} + 50))M 100%
+      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs 0 $((${ROOTFS_SIZE} + 50))M
+      parted ${RAW_IMAGE} name 1 ROOT
+      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${ROOTFS_SIZE} + 50))M 100%
+      parted ${RAW_IMAGE} name 2 DATA
       losetup ${DEVICE} ${RAW_IMAGE}
       partx -av ${DEVICE}
       extract_root_partition ${DEVICE}p1
       extract_data_partition ${DEVICE}p2
     else
-      parted -s -a optimal ${DEVICE} mkpart ROOT xfs 0 $((${ROOTFS_SIZE} + 50))M
-      parted -s -a optimal ${DEVICE} mkpart DATA xfs $((${ROOTFS_SIZE} + 50))M 100%
+      parted -s -a optimal ${DEVICE} mkpart primary xfs 0 $((${ROOTFS_SIZE} + 50))M
+      parted ${DEVICE} name 1 ROOT
+      parted -s -a optimal ${DEVICE} mkpart primary xfs $((${ROOTFS_SIZE} + 50))M 100%
+      parted ${DEVICE} name 2 DATA
       extract_root_partition ${DEVICE}1
       extract_data_partition ${DEVICE}2
     fi

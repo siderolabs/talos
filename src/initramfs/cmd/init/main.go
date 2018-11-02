@@ -104,6 +104,7 @@ func root() (err error) {
 		&services.Containerd{},
 		&services.CRT{},
 		&services.OSD{},
+		&services.Blockd{},
 		&services.Kubelet{},
 		&services.Kubeadm{},
 	)

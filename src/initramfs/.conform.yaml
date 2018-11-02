@@ -3,6 +3,7 @@ metadata:
   variables:
     rootfs: /rootfs
     versionPath: github.com/autonomy/dianemo/src/initramfs/pkg/version
+    srcXfsprogs: https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-4.18.0.tar.xz
 script:
   template: |
     #!/bin/sh
@@ -18,6 +19,9 @@ script:
     docker tag {{ .Repository }}:proxyd autonomy/proxyd:{{ .Git.SHA }}
     docker save autonomy/proxyd:{{ .Git.SHA }} -o ../../build/proxyd.tar
 
+    docker tag {{ .Repository }}:blockd autonomy/blockd:{{ .Git.SHA }}
+    docker save autonomy/blockd:{{ .Git.SHA }} -o ../../build/blockd.tar
+
     {{ if and (.Git.IsClean) (or (.Git.IsTag) (eq .Git.Branch "master")) }}
     docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
 
@@ -32,21 +36,27 @@ script:
     docker tag autonomy/proxyd:{{ .Git.SHA }} autonomy/proxyd:latest
     docker push autonomy/proxyd:{{ .Git.SHA }}
     docker push autonomy/proxyd:latest
+
+    docker tag autonomy/blockd:{{ .Git.SHA }} autonomy/blockd:latest
+    docker push autonomy/blockd:{{ .Git.SHA }}
+    docker push autonomy/blockd:latest
     {{ end }}
 pipeline:
   stages:
   - generate
   - base
+  - initramfs
   - osd
   - osctl
   - trustd
   - proxyd
-  - initramfs
+  - blockd
+  - test
+  - image
 stages:
   base:
     tasks:
     - src
-    - test
   osd:
     tasks:
     - osd
@@ -64,10 +74,16 @@ stages:
   proxyd:
     tasks:
     - proxyd
+  blockd:
+    tasks:
+    - blockd
   initramfs:
     tasks:
+    - xfsprogs
     - init
     - initramfs
+  image:
+    tasks:
     - image
   generate:
     artifacts:
@@ -75,26 +91,47 @@ stages:
       destination: ./cmd/osd
     - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto
       destination: ./cmd/trustd
+    - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/blockd/proto
+      destination: ./cmd/blockd
     tasks:
     - proto
+  test:
+    tasks:
+    - test
 tasks:
-  image:
-    template: |
-      FROM scratch
-      WORKDIR /tmp
-      COPY --from=init /initramfs/initramfs.xz initramfs.xz
-      CMD false
-  init:
+  blockd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Blockd -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
+        -o /{{ .Docker.CurrentStage }}
+      {{ else }}
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Blockd -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -o /{{ .Docker.CurrentStage }}
+      {{ end }}
+      RUN chmod +x /{{ .Docker.CurrentStage }}
+      FROM scratch
+      COPY --from={{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }}
+      ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]
+  image:
+    template: |
+      FROM scratch
+      WORKDIR /tmp
+      COPY --from=dianemo/initramfs:initramfs /initramfs/initramfs.xz initramfs.xz
+      CMD false
+  init:
+    template: |
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -linkmode external -extldflags \"-L/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
         -o /initramfs/init
       {{ else }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -linkmode external -extldflags \"-L/lib -lblkid -luuid\" -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /initramfs/init
       {{ end }}
       RUN chmod +x /initramfs/init
@@ -110,7 +147,7 @@ tasks:
       {{ else }}
       RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/tmp/initramfs.xz
       {{ end }}
-      RUN cp /tmp/initramfs.xz /initramfs/initramfs.xz
+      RUN cp /tmp/initramfs.xz .
   osctl:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
@@ -166,6 +203,9 @@ tasks:
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/trustd
       COPY ./cmd/trustd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/blockd
+      COPY ./cmd/blockd/proto ./proto
+      RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   proxyd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
@@ -199,6 +239,7 @@ tasks:
       RUN go mod verify
   test:
     template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
       RUN chmod +x ./hack/test.sh
       RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
@@ -220,3 +261,14 @@ tasks:
       FROM scratch
       COPY --from={{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }} /{{ .Docker.CurrentStage }}
       ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]
+  xfsprogs:
+    template: |
+      FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
+      WORKDIR /tmp/{{ .Docker.CurrentStage }}
+      RUN curl -L {{index .Variables "srcXfsprogs" }} | tar -xJ --strip-components=1
+      RUN make \
+            DEBUG=-DNDEBUG \
+            INSTALL_USER=0 \
+            INSTALL_GROUP=0 \
+            LOCAL_CONFIGURE_OPTIONS="--prefix=/usr"
+      RUN make install DESTDIR={{ index .Variables "rootfs" }}

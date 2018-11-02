@@ -522,7 +522,7 @@ tasks:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
       WORKDIR /tools/usr/local
-      RUN curl -L {{ index .Variables "srcGo" }} | tar -C /tools/usr/local -xz
+      RUN curl -L {{ index .Variables "srcGo" }} | tar -xz
   gperf:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
@@ -840,6 +840,7 @@ tasks:
       COPY src/fsh.sh /tools/bin
       RUN chmod +x /tools/bin/fsh.sh
       RUN fsh.sh {{ index .Variables "rootfs" }}
+      # WORKDIR $PREFIX/$SRC/{{ .Docker.CurrentStage }}
       WORKDIR /tools/usr/local/src/{{ .Docker.CurrentStage }}
       RUN curl -L {{index .Variables "srcGlibc" }} | tar --strip-components=1 -xJ
       RUN ln -sfv /tools/lib/gcc /usr/lib
@@ -894,6 +895,7 @@ tasks:
           --without-ncurses
       RUN make -j $(($(nproc) / 2))
       RUN make install
+      RUN cp -R ../include $PREFIX/include/util-linux
   xml-parser:
     template: |
       WORKDIR $SRC/{{ .Docker.CurrentStage }}
