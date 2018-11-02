@@ -1,10 +1,10 @@
-summaryInclude = 60;
-
-var fuseOptions = {
+var options = {
     shouldSort: true,
+    tokenize: true,
+    findAllMatches: true,
+    includeScore: true,
     includeMatches: true,
     threshold: 0.0,
-    tokenize: true,
     location: 0,
     distance: 100,
     maxPatternLength: 32,
@@ -12,11 +12,8 @@ var fuseOptions = {
     keys: [
         { name: "title", weight: 0.8 },
         { name: "contents", weight: 0.5 },
-        { name: "tags", weight: 0.3 },
-        { name: "categories", weight: 0.3 }
     ]
 };
-
 
 var query = param("s");
 if (query) {
@@ -24,81 +21,111 @@ if (query) {
     search(query);
 }
 
+function param(name) {
+    return decodeURIComponent((location.search.split(name + '=')[1] || '').split('&')[0]).replace(/\+/g, ' ');
+}
+
 function search(query) {
     $.getJSON("/index.json", function (data) {
         var pages = data;
-        var fuse = new Fuse(pages, fuseOptions);
+        var fuse = new Fuse(pages, options);
         var result = fuse.search(query);
         if (result.length > 0) {
-            results(result);
+            results(result, query);
         } else {
             $('#search-results').append("<p class=\"search-result-item centered\" style=\"text-align:center;\">No matches found</p>");
         }
     });
 }
 
-function results(result) {
-    $.each(result, function (key, value) {
-        var contents = value.item.contents;
-        var snippet = "";
-        var snippetHighlights = [];
-        var tags = [];
-        if (fuseOptions.tokenize) {
-            snippetHighlights.push(query);
-        } else {
-            $.each(value.matches, function (matchKey, mvalue) {
-                if (mvalue.key == "tags" || mvalue.key == "categories") {
-                    snippetHighlights.push(mvalue.value);
-                } else if (mvalue.key == "contents") {
-                    start = mvalue.indices[0][0] - summaryInclude > 0 ? mvalue.indices[0][0] - summaryInclude : 0;
-                    end = mvalue.indices[0][1] + summaryInclude < contents.length ? mvalue.indices[0][1] + summaryInclude : contents.length;
-                    snippet += contents.substring(start, end);
-                    snippetHighlights.push(mvalue.value.substring(mvalue.indices[0][0], mvalue.indices[0][1] - mvalue.indices[0][0] + 1));
-                }
-            });
-        }
+function make(params) {
 
-        if (snippet.length < 1) {
-            snippet += contents.substring(0, summaryInclude * 2);
-        }
-        //pull template from hugo templarte definition
-        var tpl = $('#search-result-template').html();
-        //replace values
-
-        var output = render(tpl, { key: key, title: value.item.title, link: value.item.permalink, tags: value.item.tags, categories: value.item.categories, snippet: snippet });
-        $('#search-results').append(output);
-        $.each(snippetHighlights, function (snipkey, snipvalue) {
-            $("#summary-" + key).mark(snipvalue);
-        });
-
-    });
 }
 
-function render(templateString, data) {
-    var conditionalMatches, conditionalPattern, copy;
-    conditionalPattern = /\$\{\s*isset ([a-zA-Z]*) \s*\}(.*)\$\{\s*end\s*}/g;
-    //since loop below depends on re.lastInxdex, we use a copy to capture any manipulations whilst inside the loop
-    copy = templateString;
-    while ((conditionalMatches = conditionalPattern.exec(templateString)) !== null) {
-        if (data[conditionalMatches[1]]) {
-            //valid key, remove conditionals, leave contents.
-            copy = copy.replace(conditionalMatches[0], conditionalMatches[2]);
+function results(results, query) {
+    var objs = {}
+
+    results.forEach((element, idx) => {
+        var title = element.item.title;
+        var permalink = element.item.permalink
+        var preview = '';
+
+        var contents = element.item.contents;
+
+        var highlights = [];
+        highlights.push(query)
+
+        var obj = {}
+        if (title in objs) {
+            obj = objs[title]
         } else {
-            //not valid, remove entire section
-            copy = copy.replace(conditionalMatches[0], '');
+            objs[title] = {
+                'title': title,
+                'link': permalink,
+                'preview': '',
+                'key': idx,
+                'highlights': highlights,
+            }
+            obj = objs[title]
+        }
+
+        element.matches.forEach(match => {
+            match.indices.forEach(index => {
+                start = index[0]
+                end = index[1] + 1
+
+                var substring
+                if (match.key == "contents") {
+                    substring = contents.substring(start, end)
+                    if (substring.toLowerCase().includes(query.toLowerCase())) {
+                        r1 = start - 25
+                        r2 = end + 25
+                        rangeStart = r1 > 0 ? r1 : 0;
+                        rangeEnd = r2 < contents.length ? r2 : contents.length;
+                        obj['preview'] += "..." + contents.substring(rangeStart, rangeEnd) + "..." + '\n'
+                    }
+                }
+            });
+        });
+    });
+
+    // Render the HTML.
+
+    for (const title in objs) {
+        if (objs.hasOwnProperty(title)) {
+            const obj = objs[title];
+            var tpl = $('#search-result-template').html();
+            var output = render(tpl, { key: obj['key'], title: obj['title'], link: obj['link'], preview: obj['preview'] });
+            $('#search-results').append(output);
+            $.each(obj['highlights'], function (_, value) {
+                $("#summary-" + obj['key']).mark(value);
+            });
         }
     }
-    templateString = copy;
+}
+
+function render(tpl, data) {
+    var matches, pattern, copy;
+    pattern = /\$\{\s*isset ([a-zA-Z]*) \s*\}(.*)\$\{\s*end\s*}/g;
+    //since loop below depends on re.lastInxdex, we use a copy to capture any manipulations whilst inside the loop
+    copy = tpl;
+    while ((matches = pattern.exec(tpl)) !== null) {
+        if (data[matches[1]]) {
+            //valid key, remove conditionals, leave contents.
+            copy = copy.replace(matches[0], matches[2]);
+        } else {
+            //not valid, remove entire section
+            copy = copy.replace(matches[0], '');
+        }
+    }
+    tpl = copy;
     //now any conditionals removed we can do simple substitution
     var key, find, re;
     for (key in data) {
         find = '\\$\\{\\s*' + key + '\\s*\\}';
         re = new RegExp(find, 'g');
-        templateString = templateString.replace(re, data[key]);
+        tpl = tpl.replace(re, data[key]);
     }
-    return templateString;
-}
 
-function param(name) {
-    return decodeURIComponent((location.search.split(name + '=')[1] || '').split('&')[0]).replace(/\+/g, ' ');
+    return tpl;
 }
