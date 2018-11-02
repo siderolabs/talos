@@ -1,5 +1,17 @@
+<a name="0.1.0-alpha.12"></a>
+# [0.1.0-alpha.12](https://github.com/autonomy/dianemo/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
+
+
+### Features
+
+* upgrade Kubernetes to v1.13.0-alpha.2 ([#173](https://github.com/autonomy/dianemo/issues/173)) ([60adafb](https://github.com/autonomy/dianemo/commit/60adafb))
+* add blockd service ([#172](https://github.com/autonomy/dianemo/issues/172)) ([aa65101](https://github.com/autonomy/dianemo/commit/aa65101))
+
+
+
 <a name="0.1.0-alpha.11"></a>
-# [0.1.0-alpha.11](https://github.com/autonomy/dianemo/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-17)
+# [0.1.0-alpha.11](https://github.com/autonomy/dianemo/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-18)
+
 
 ### Bug Fixes
 
