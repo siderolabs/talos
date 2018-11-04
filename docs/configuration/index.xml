@@ -12,12 +12,25 @@
     
     
     <item>
-      <title>Control Plane</title>
-      <link>https://dianemo.autonomy.io/configuration/controlplane/</link>
+      <title>osd</title>
+      <link>https://dianemo.autonomy.io/configuration/osd/</link>
+      <pubDate>Sat, 03 Nov 2018 17:14:49 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/configuration/osd/</guid>
+      <description>The osd service enforces a high level of security by utilizing mutual TLS for authentication and authorization. In this section we will configure mutual TLS by generating the certificates for the servers (osd) and clients (osctl).
+Cluster Owners We recommend that the configuration of osd be performed by a cluster owner. A cluster owner should be a person of authority within an organization. Perhaps a director, manager, or senior member of a team.</description>
+    </item>
+    
+    <item>
+      <title>Masters</title>
+      <link>https://dianemo.autonomy.io/configuration/masters/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/configuration/controlplane/</guid>
-      <description>version: &amp;quot;&amp;quot; security: os: ca: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509} identity: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509} kubernetes: ca: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509} networking: os: {} kubernetes: {} services: kubeadm: init: type: initial etcdMemberName: etcd-1 containerRuntime: docker configuration: | apiVersion: kubeadm.k8s.io/v1alpha2 kind: MasterConfiguration clusterName: example bootstrapTokens: - token: abcdef.0123456789abcdef ttl: 0s kubeProxy: config: ipvs: scheduler: lc mode: ipvs networking: dnsDomain: cluster.local podSubnet: 10.244.0.0/16 serviceSubnet: 10.96.0.0/12 trustd: username: example password: example   You can generate the PKI resources and inject them into the configuration with osctl.</description>
+      <guid>https://dianemo.autonomy.io/configuration/masters/</guid>
+      <description>Configuring master nodes in a Dianemo Kubernetes cluster is a two part process:
+ configuring the Dianemo specific options and configuring the Kubernetes specific options  To get started, create a YAML file we will use in the following steps:
+touch &amp;lt;node-name&amp;gt;.yaml  Configuring Dianemo Injecting the Dianemo PKI Using osctl, and our output from the PKI instructions, inject the generated PKI into the configuration file:
+osctl inject os --crt &amp;lt;organization&amp;gt;.</description>
     </item>
     
     <item>
@@ -26,7 +39,9 @@
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
       <guid>https://dianemo.autonomy.io/configuration/workers/</guid>
-      <description>version: &amp;quot;&amp;quot; security: os: ca: crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509} networking: os: {} kubernetes: {} services: kubeadm: containerRuntime: docker configuration: | apiVersion: kubeadm.k8s.io/v1alpha2 kind: NodeConfiguration token: abcdef.0123456789abcdef discoveryTokenAPIServers: - ${MASTER_IP}:443 discoveryTokenCACertHashes: - sha256:${CA_CERT_HASH} trustd: username: example password: example endpoints: - ${MASTER_IP}  </description>
+      <description>Configuring the worker nodes is much more simple in comparison to configuring the master nodes. Using the trustd API, worker nodes submit a CSR, and, if authenticated, receive a valid osd certificate. Similarly, using a kubeadm token, the node joins an existing cluster.
+We need to specify:
+ the osd public certificate trustd credentials and endpoints and a kubeadm JoinConfiguration  version: &amp;quot;&amp;quot; security: os: ca: crt: &amp;lt;base 64 encoded root public certificate&amp;gt; services: kubeadm: configuration: | apiVersion: kubeadm.</description>
     </item>
     
   </channel>

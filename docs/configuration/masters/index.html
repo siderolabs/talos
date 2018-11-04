@@ -190,9 +190,16 @@
                     <ul class="sidebar-list active">
                         
                         <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/configuration/osd/" >
+                                osd
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
                             <a class="sidebar-link active"
-                                 href="https://dianemo.autonomy.io/configuration/controlplane/" >
-                                Control Plane
+                                 href="https://dianemo.autonomy.io/configuration/masters/" >
+                                Masters
                             </a>
                         </li>
                         
@@ -243,55 +250,142 @@
             <div class="row ">
                 <div class="column column-10">
                     
+                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/configuration/osd/">
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                    
                 </div>
                 <div class="column document">
                     <section class="document">
-                        <h1 class="title">Control Plane</h1>
-                        <p><pre><code class="language-yaml">version: &quot;&quot;
-security:
+                        <h1 class="title">Masters</h1>
+                        <p>
+
+<p>Configuring master nodes in a Dianemo Kubernetes cluster is a two part process:</p>
+
+<ul>
+<li>configuring the Dianemo specific options</li>
+<li>and configuring the Kubernetes specific options</li>
+</ul>
+
+<p>To get started, create a YAML file we will use in the following steps:</p>
+
+<pre><code class="language-bash">touch &lt;node-name&gt;.yaml
+</code></pre>
+
+<h2 id="configuring-dianemo">Configuring Dianemo</h2>
+
+<h3 id="injecting-the-dianemo-pki">Injecting the Dianemo PKI</h3>
+
+<p>Using <code>osctl</code>, and our output from the <a href="https://dianemo.autonomy.io/configuration/osd/">PKI</a> instructions, inject the generated PKI into the configuration file:</p>
+
+<pre><code class="language-bash">osctl inject os --crt &lt;organization&gt;.crt --key &lt;organization&gt;.key &lt;node-name&gt;.yaml
+osctl inject identity --crt &lt;node-name&gt;.crt --key &lt;node-name&gt;.key &lt;node-name&gt;.yaml
+</code></pre>
+
+<p>You should see the following fields populated:</p>
+
+<pre><code class="language-yaml">security:
   os:
     ca:
-      crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509}
-      key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509}
+      crt: &lt;base 64 encoded root public certificate&gt;
+      key: &lt;base 64 encoded root private key&gt;
     identity:
-      crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509}
-      key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509}
+      crt: &lt;base 64 encoded identity public certificate&gt;
+      key: &lt;base 64 encoded identity private key&gt;
+  ...
+</code></pre>
+
+<h3 id="configuring-trustd">Configuring <code>trustd</code></h3>
+
+<p>Each master node participates as a Root of Trust in the cluster.
+The responsibilities of <code>trustd</code> include:</p>
+
+<ul>
+<li>certificate as a service</li>
+<li>and Kubernetes PKI distribution amongst master nodes</li>
+</ul>
+
+<p>The auth done between <code>trustd</code> and a client is, for now, a simple username and password combination.
+Having these credentials gives a client the power to request a certifcate that identifies itself.
+In the <code>&lt;node-name&gt;.yaml</code>, add the follwing:</p>
+
+<pre><code class="language-yaml">security:
+...
+services:
+  ...
+  trustd:
+    username: &lt;username&gt;
+    password: &lt;password&gt;
+  ...
+</code></pre>
+
+<h2 id="configuring-kubernetes">Configuring Kubernetes</h2>
+
+<h3 id="generating-the-root-ca">Generating the Root CA</h3>
+
+<p>To create the root CA for the Kubernetes cluster, run:</p>
+
+<pre><code class="language-bash">osctl gen ca --rsa --hours &lt;hours&gt; --organization &lt;kubernetes-organization&gt;
+</code></pre>
+
+<blockquote class="note " >
+    <p>Note: The <code>--rsa</code> flag is required for the generation of the Kubernetes CA.</p>
+</blockquote>
+
+
+<h3 id="injecting-the-kubernetes-pki">Injecting the Kubernetes PKI</h3>
+
+<p>Using <code>osctl</code>, inject the generated PKI into the configuration file:</p>
+
+<pre><code class="language-bash">osctl inject kubernetes --crt &lt;kubernetes-organization&gt;.crt --key &lt;kubernetes-organization&gt;.key &lt;node-name&gt;.yaml
+</code></pre>
+
+<p>You should see the following fields populated:</p>
+
+<pre><code class="language-yaml">security:
+  ...
   kubernetes:
     ca:
-      crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509}
-      key: ${BASE64_ENCODED_PEM_FORMATTED_PRIVATE_X509}
-networking:
-  os: {}
-  kubernetes: {}
-services:
+      crt: &lt;base 64 encoded root public certificate&gt;
+      key: &lt;base 64 encoded root private key&gt;
+  ...
+</code></pre>
+
+<h3 id="configuring-kubeadm">Configuring Kubeadm</h3>
+
+<p>The configuration of the <code>kubeadm</code> service is done in two parts:</p>
+
+<ul>
+<li>supplying the Dianemo specific options</li>
+<li>supplying the <code>kubeadm</code> <code>InitConfiguration</code></li>
+</ul>
+
+<h4 id="dianemo-specific-options">Dianemo Specific Options</h4>
+
+<pre><code class="language-yaml">services:
+  ...
   kubeadm:
     init:
       type: initial
-      etcdMemberName: etcd-1
-    containerRuntime: docker
+      etcdMemberName: &lt;member-name&gt;
+  ...
+</code></pre>
+
+<h4 id="kubeadm-specific-options">Kubeadm Specific Options</h4>
+
+<pre><code class="language-yaml">services:
+  ...
+  kubeadm:
+    ...
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1alpha2
-      kind: MasterConfiguration
-      clusterName: example
-      bootstrapTokens:
-      - token: abcdef.0123456789abcdef
-        ttl: 0s
-      kubeProxy:
-        config:
-          ipvs:
-            scheduler: lc
-          mode: ipvs
-      networking:
-        dnsDomain: cluster.local
-        podSubnet: 10.244.0.0/16
-        serviceSubnet: 10.96.0.0/12
-  trustd:
-    username: example
-    password: example
+      apiVersion: kubeadm.k8s.io/v1alpha3
+      kind: InitConfiguration
+      ...
+  ...
 </code></pre>
 
 <blockquote>
-<p>You can generate the PKI resources and inject them into the configuration with <a href="/components/osctl/">osctl</a>.</p>
+<p>See the official <a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/">documentation</a> for the options available in <code>InitConfiguration</code>.</p>
 </blockquote>
 </p>
                     </section>

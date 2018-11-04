@@ -191,8 +191,15 @@
                         
                         <li class="sidebar-item">
                             <a class="sidebar-link"
-                                 href="https://dianemo.autonomy.io/configuration/controlplane/" >
-                                Control Plane
+                                 href="https://dianemo.autonomy.io/configuration/osd/" >
+                                osd
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/configuration/masters/" >
+                                Masters
                             </a>
                         </li>
                         
@@ -245,7 +252,14 @@
                 <div class="column document">
                     <section class="document">
                         <h1 class="title">Configuration</h1>
-                        <p><p>In this section we will discuss the configuration of a Dianemo node.</p>
+                        <p><p>In this section, we will step through the configuration of a Dianemo based Kubernetes cluster.
+There are three major components we will configure:</p>
+
+<ul>
+<li><code>osd</code> and <code>osctl</code></li>
+<li>the master nodes</li>
+<li>the worker nodes</li>
+</ul>
 </p>
                     </section>
                 </div>

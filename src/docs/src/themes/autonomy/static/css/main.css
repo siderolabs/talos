@@ -164,7 +164,16 @@ input.search-box {
 
 input.search-box::placeholder {
     text-align: center;
-    opacity: 0.7;
+    opacity: 0.2;
+}
+
+h1>code,
+h2>code,
+h3>code,
+h4>code,
+h5>code,
+h6>code {
+    font-size: inherit;
 }
 
 /* Larger than mobile screen */

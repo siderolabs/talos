@@ -21,4 +21,4 @@ But, in the real world, this does not happen.
 We still need a way to handle operational scenarios that may arise.
 
 The `osd` daemon provides a way to do just that.
-Based on the Principle of Least Privilege, `osd` provides operational value for cluster administrations by providing an API for node management.
+Based on the Principle of Least Privilege, `osd` provides operational value for cluster administrators by providing an API for node management.
