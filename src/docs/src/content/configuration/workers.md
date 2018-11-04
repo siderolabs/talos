@@ -2,35 +2,42 @@
 title: "Workers"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+weight: 30
 menu:
   main:
     parent: 'configuration'
-    weight: 20
+    weight: 30
 ---
+
+Configuring the worker nodes is much more simple in comparison to configuring the master nodes.
+Using the `trustd` API, worker nodes submit a `CSR`, and, if authenticated, receive a valid `osd` certificate.
+Similarly, using a `kubeadm` token, the node joins an existing cluster.
+
+We need to specify:
+
+- the `osd` public certificate
+- `trustd` credentials and endpoints
+- and a `kubeadm` `JoinConfiguration`
 
 ```yaml
 version: ""
 security:
   os:
     ca:
-      crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509}
-networking:
-  os: {}
-  kubernetes: {}
+      crt: <base 64 encoded root public certificate>
 services:
   kubeadm:
-    containerRuntime: docker
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1alpha2
-      kind: NodeConfiguration
-      token: abcdef.0123456789abcdef
-      discoveryTokenAPIServers:
-      - ${MASTER_IP}:443
-      discoveryTokenCACertHashes:
-      - sha256:${CA_CERT_HASH}
+      apiVersion: kubeadm.k8s.io/v1alpha3
+      kind: JoinConfiguration
+      ...
   trustd:
-    username: example
-    password: example
+    username: <username>
+    password: <password>
     endpoints:
-    - ${MASTER_IP}
+    - <master-1>
+    ...
+    - <master-n>
 ```
+
+> See the official [documentation](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/) for the options available in `InitConfiguration`.

@@ -3,12 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://dianemo.autonomy.io/configuration/osd/</loc>
+    <lastmod>2018-11-03T17:14:49-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dianemo.autonomy.io/components/kernel/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
+    <loc>https://dianemo.autonomy.io/configuration/masters/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dianemo.autonomy.io/components/init/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/configuration/workers/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
@@ -58,11 +73,6 @@
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/configuration/controlplane/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://dianemo.autonomy.io/dianemo/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
@@ -78,18 +88,13 @@
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/configuration/workers/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://dianemo.autonomy.io/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://dianemo.autonomy.io/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+    <lastmod>2018-11-03T17:14:49-07:00</lastmod>
     <priority>0</priority>
   </url>
   

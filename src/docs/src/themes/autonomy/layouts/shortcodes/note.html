@@ -1,0 +1,3 @@
+<blockquote class="note {{ .Get 0 }}" {{ if len .Params | eq 2 }} id="{{ .Get 1 }}" {{ end }}>
+    <p>Note: {{ .Inner }}</p>
+</blockquote>

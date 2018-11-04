@@ -191,8 +191,15 @@
                         
                         <li class="sidebar-item">
                             <a class="sidebar-link"
-                                 href="https://dianemo.autonomy.io/configuration/controlplane/" >
-                                Control Plane
+                                 href="https://dianemo.autonomy.io/configuration/osd/" >
+                                osd
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
+                            <a class="sidebar-link"
+                                 href="https://dianemo.autonomy.io/configuration/masters/" >
+                                Masters
                             </a>
                         </li>
                         
@@ -243,7 +250,7 @@
             <div class="row ">
                 <div class="column column-10">
                     
-                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/configuration/controlplane/">
+                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/configuration/masters/">
                         <i class="fa fa-chevron-left"></i>
                     </a>
                     
@@ -251,31 +258,41 @@
                 <div class="column document">
                     <section class="document">
                         <h1 class="title">Workers</h1>
-                        <p><pre><code class="language-yaml">version: &quot;&quot;
+                        <p><p>Configuring the worker nodes is much more simple in comparison to configuring the master nodes.
+Using the <code>trustd</code> API, worker nodes submit a <code>CSR</code>, and, if authenticated, receive a valid <code>osd</code> certificate.
+Similarly, using a <code>kubeadm</code> token, the node joins an existing cluster.</p>
+
+<p>We need to specify:</p>
+
+<ul>
+<li>the <code>osd</code> public certificate</li>
+<li><code>trustd</code> credentials and endpoints</li>
+<li>and a <code>kubeadm</code> <code>JoinConfiguration</code></li>
+</ul>
+
+<pre><code class="language-yaml">version: &quot;&quot;
 security:
   os:
     ca:
-      crt: ${BASE64_ENCODED_PEM_FORMATTED_PUBLIC_X509}
-networking:
-  os: {}
-  kubernetes: {}
+      crt: &lt;base 64 encoded root public certificate&gt;
 services:
   kubeadm:
-    containerRuntime: docker
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1alpha2
-      kind: NodeConfiguration
-      token: abcdef.0123456789abcdef
-      discoveryTokenAPIServers:
-      - ${MASTER_IP}:443
-      discoveryTokenCACertHashes:
-      - sha256:${CA_CERT_HASH}
+      apiVersion: kubeadm.k8s.io/v1alpha3
+      kind: JoinConfiguration
+      ...
   trustd:
-    username: example
-    password: example
+    username: &lt;username&gt;
+    password: &lt;password&gt;
     endpoints:
-    - ${MASTER_IP}
+    - &lt;master-1&gt;
+    ...
+    - &lt;master-n&gt;
 </code></pre>
+
+<blockquote>
+<p>See the official <a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/">documentation</a> for the options available in <code>InitConfiguration</code>.</p>
+</blockquote>
 </p>
                     </section>
                 </div>
