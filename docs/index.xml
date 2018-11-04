@@ -38,7 +38,7 @@ Cluster Owners We recommend that the configuration of osd be performed by a clus
       <guid>https://dianemo.autonomy.io/configuration/masters/</guid>
       <description>Configuring master nodes in a Dianemo Kubernetes cluster is a two part process:
  configuring the Dianemo specific options and configuring the Kubernetes specific options  To get started, create a YAML file we will use in the following steps:
-touch &amp;lt;node-name&amp;gt;.yaml  Configuring Dianemo Injecting the Dianemo PKI Using osctl, and our output from the PKI instructions, inject the generated PKI into the configuration file:
+touch &amp;lt;node-name&amp;gt;.yaml  Configuring Dianemo Injecting the Dianemo PKI Using osctl, and our output from the osd configuration documentation, inject the generated PKI into the configuration file:
 osctl inject os --crt &amp;lt;organization&amp;gt;.</description>
     </item>
     
