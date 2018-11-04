@@ -63,9 +63,7 @@ var injectKubernetesCmd = &cobra.Command{
 // nolint: dupl
 func injectOSData(u *userdata.UserData, crt, key string) (err error) {
 	if u.Security == nil {
-		u.Security = &userdata.Security{
-			OS: &userdata.OSSecurity{},
-		}
+		u.Security = newSecurity()
 	}
 	crtAndKey, err := x509.NewCertificateAndKeyFromFiles(crt, key)
 	if err != nil {
@@ -79,9 +77,7 @@ func injectOSData(u *userdata.UserData, crt, key string) (err error) {
 // nolint: dupl
 func injectIdentityData(u *userdata.UserData, crt, key string) (err error) {
 	if u.Security == nil {
-		u.Security = &userdata.Security{
-			OS: &userdata.OSSecurity{},
-		}
+		u.Security = newSecurity()
 	}
 	crtAndKey, err := x509.NewCertificateAndKeyFromFiles(crt, key)
 	if err != nil {
@@ -95,9 +91,7 @@ func injectIdentityData(u *userdata.UserData, crt, key string) (err error) {
 // nolint: dupl
 func injectKubernetesData(u *userdata.UserData, crt, key string) (err error) {
 	if u.Security == nil {
-		u.Security = &userdata.Security{
-			Kubernetes: &userdata.KubernetesSecurity{},
-		}
+		u.Security = newSecurity()
 	}
 	crtAndKey, err := x509.NewCertificateAndKeyFromFiles(crt, key)
 	if err != nil {
@@ -137,6 +131,13 @@ func inject(args []string, crt, key string, f func(*userdata.UserData, string, s
 	}
 
 	return nil
+}
+
+func newSecurity() *userdata.Security {
+	return &userdata.Security{
+		OS:         &userdata.OSSecurity{},
+		Kubernetes: &userdata.KubernetesSecurity{},
+	}
 }
 
 func init() {
