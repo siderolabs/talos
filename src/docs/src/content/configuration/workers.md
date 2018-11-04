@@ -40,4 +40,4 @@ services:
     - <master-n>
 ```
 
-> See the official [documentation](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/) for the options available in `InitConfiguration`.
+> See the official [documentation](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/) for the options available in `JoinConfiguration`.

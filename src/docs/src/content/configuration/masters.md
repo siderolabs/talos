@@ -24,7 +24,7 @@ touch <node-name>.yaml
 
 ### Injecting the Dianemo PKI
 
-Using `osctl`, and our output from the [PKI]({{< ref "osd.md" >}}) instructions, inject the generated PKI into the configuration file:
+Using `osctl`, and our output from the `osd` configuration [documentation]({{< ref "osd.md" >}}), inject the generated PKI into the configuration file:
 
 ```bash
 osctl inject os --crt <organization>.crt --key <organization>.key <node-name>.yaml
