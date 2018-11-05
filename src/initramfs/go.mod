@@ -34,7 +34,7 @@ require (
 	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
-	github.com/google/uuid v1.0.0 // indirect
+	github.com/google/uuid v1.0.0
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
@@ -71,6 +71,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20181003184128-c57b0facaced // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20181019160139-8e24a49d80f8
+	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/appengine v1.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20180831171423-11092d34479b // indirect
@@ -82,9 +83,9 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.1.1
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20181016053855-c7463263e3f1
-	k8s.io/apimachinery v0.0.0-20181015213631-60666be32c5d
+	k8s.io/api v0.0.0-20181031211151-1455c336c32a
+	k8s.io/apimachinery v0.0.0-20181031012033-2e0dc82819fd
 	k8s.io/client-go v9.0.0+incompatible
-	k8s.io/cluster-bootstrap v0.0.0-20181011074507-f574069107f7 // indirect
-	k8s.io/kubernetes v1.13.0-alpha.2
+	k8s.io/cluster-bootstrap v0.0.0-20181031213608-96092a322233 // indirect
+	k8s.io/kubernetes v1.13.0-alpha.3
 )
