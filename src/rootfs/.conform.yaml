@@ -3,7 +3,7 @@ metadata:
   variables:
     rootfs: /rootfs
     srcContainerd: https://github.com/containerd/containerd/releases/download/v1.2.0/containerd-1.2.0.linux-amd64.tar.gz
-    srcCRITools: https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.11.1/crictl-v1.11.1-linux-amd64.tar.gz
+    srcCRITools: https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-amd64.tar.gz
     srcLibseccomp: https://github.com/seccomp/libseccomp/releases/download/v2.3.3/libseccomp-2.3.3.tar.gz
     srcKubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.13.0-alpha.3/bin/linux/amd64/kubeadm
     srcRunc: https://github.com/opencontainers/runc/releases/download/v1.0.0-rc5/runc.amd64
