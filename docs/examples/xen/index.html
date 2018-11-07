@@ -183,11 +183,11 @@
                 
                 
                 <li class="sidebar-item">
-                    <a class="sidebar-link sidebar-link-parent active"
+                    <a class="sidebar-link sidebar-link-parent"
                          href="https://dianemo.autonomy.io/configuration/" >
                         Configuration
                     </a>
-                    <ul class="sidebar-list active">
+                    <ul class="sidebar-list">
                         
                         <li class="sidebar-item">
                             <a class="sidebar-link"
@@ -197,7 +197,7 @@
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link active"
+                            <a class="sidebar-link"
                                  href="https://dianemo.autonomy.io/configuration/masters/" >
                                 Masters
                             </a>
@@ -216,11 +216,11 @@
                 
                 
                 <li class="sidebar-item">
-                    <a class="sidebar-link sidebar-link-parent"
+                    <a class="sidebar-link sidebar-link-parent active"
                          href="https://dianemo.autonomy.io/examples/" >
                         Examples
                     </a>
-                    <ul class="sidebar-list">
+                    <ul class="sidebar-list active">
                         
                         <li class="sidebar-item">
                             <a class="sidebar-link"
@@ -237,7 +237,7 @@
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link"
+                            <a class="sidebar-link active"
                                  href="https://dianemo.autonomy.io/examples/xen/" >
                                 Xen
                             </a>
@@ -257,151 +257,99 @@
             <div class="row ">
                 <div class="column column-10">
                     
-                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/configuration/osd/">
+                    <a class="navigation navigation-previous" href="https://dianemo.autonomy.io/examples/kvm/">
                         <i class="fa fa-chevron-left"></i>
                     </a>
                     
                 </div>
                 <div class="column document">
                     <section class="document">
-                        <h1 class="title">Masters</h1>
+                        <h1 class="title">Xen</h1>
                         <p>
 
-<p>Configuring master nodes in a Dianemo Kubernetes cluster is a two part process:</p>
+<h2 id="creating-a-master-node">Creating a Master Node</h2>
 
-<ul>
-<li>configuring the Dianemo specific options</li>
-<li>and configuring the Kubernetes specific options</li>
-</ul>
+<p>On <code>Dom0</code>, install Dianemo to an available block device:</p>
 
-<p>To get started, create a YAML file we will use in the following steps:</p>
-
-<pre><code class="language-bash">touch &lt;node-name&gt;.yaml
+<pre><code class="language-bash">docker run \
+ --rm \
+ --privileged \
+ --volume /dev:/dev \
+ autonomy/dianemo:latest image -b /dev/sdb
 </code></pre>
 
-<h2 id="configuring-dianemo">Configuring Dianemo</h2>
+<p>Save the following as <code>/etc/xen/master.cfg</code></p>
 
-<h3 id="injecting-the-dianemo-pki">Injecting the Dianemo PKI</h3>
+<pre><code class="language-python">name = &quot;master&quot;
 
-<p>Using <code>osctl</code>, and our output from the <code>osd</code> configuration <a href="https://dianemo.autonomy.io/configuration/osd/">documentation</a>, inject the generated PKI into the configuration file:</p>
+builder='hvm'
+bootloader = &quot;/bin/pygrub&quot;
+firmware_override = &quot;/usr/lib64/xen/boot/hvmloader&quot;
 
-<pre><code class="language-bash">osctl inject os --crt &lt;organization&gt;.crt --key &lt;organization&gt;.key &lt;node-name&gt;.yaml
-osctl inject identity --crt &lt;node-name&gt;.crt --key &lt;node-name&gt;.key &lt;node-name&gt;.yaml
-</code></pre>
+vcpus=2
+memory = 4096
+serial = &quot;pty&quot;
 
-<p>You should see the following fields populated:</p>
-
-<pre><code class="language-yaml">security:
-  os:
-    ca:
-      crt: &lt;base 64 encoded root public certificate&gt;
-      key: &lt;base 64 encoded root private key&gt;
-    identity:
-      crt: &lt;base 64 encoded identity public certificate&gt;
-      key: &lt;base 64 encoded identity private key&gt;
-  ...
-</code></pre>
-
-<h3 id="configuring-trustd">Configuring <code>trustd</code></h3>
-
-<p>Each master node participates as a Root of Trust in the cluster.
-The responsibilities of <code>trustd</code> include:</p>
-
-<ul>
-<li>certificate as a service</li>
-<li>and Kubernetes PKI distribution amongst master nodes</li>
-</ul>
-
-<p>The auth done between <code>trustd</code> and a client is, for now, a simple username and password combination.
-Having these credentials gives a client the power to request a certifcate that identifies itself.
-In the <code>&lt;node-name&gt;.yaml</code>, add the follwing:</p>
-
-<pre><code class="language-yaml">security:
-...
-services:
-  ...
-  trustd:
-    username: &lt;username&gt;
-    password: &lt;password&gt;
-  ...
-</code></pre>
-
-<h2 id="configuring-kubernetes">Configuring Kubernetes</h2>
-
-<h3 id="generating-the-root-ca">Generating the Root CA</h3>
-
-<p>To create the root CA for the Kubernetes cluster, run:</p>
-
-<pre><code class="language-bash">osctl gen ca --rsa --hours &lt;hours&gt; --organization &lt;kubernetes-organization&gt;
+kernel = &quot;/var/lib/xen/dianemo/vmlinuz&quot;
+ramdisk = &quot;/var/lib/xen/dianemo/initramfs.xz&quot;
+disk = [ 'phy:/dev/sdb,xvda,w', ]
+vif = [ 'mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000', ]
+extra = &quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/platform=bare-metal dianemo.autonomy.io/userdata=http://${IP}:8080/master.yaml&quot;
 </code></pre>
 
 <blockquote class="note " >
-    <p>Note: The <code>--rsa</code> flag is required for the generation of the Kubernetes CA.</p>
+    <p>Note: <code>http://${IP}:8080/master.yaml</code> should be reachable by the VM and contain a valid master configuration file.</p>
 </blockquote>
 
 
-<h3 id="injecting-the-kubernetes-pki">Injecting the Kubernetes PKI</h3>
+<p>Now, create the VM:</p>
 
-<p>Using <code>osctl</code>, inject the generated PKI into the configuration file:</p>
-
-<pre><code class="language-bash">osctl inject kubernetes --crt &lt;kubernetes-organization&gt;.crt --key &lt;kubernetes-organization&gt;.key &lt;node-name&gt;.yaml
+<pre><code class="language-bash">xl create /etc/xen/master.cfg
 </code></pre>
 
-<p>You should see the following fields populated:</p>
+<h2 id="creating-a-worker-node">Creating a Worker Node</h2>
 
-<pre><code class="language-yaml">security:
-  ...
-  kubernetes:
-    ca:
-      crt: &lt;base 64 encoded root public certificate&gt;
-      key: &lt;base 64 encoded root private key&gt;
-  ...
+<p>On <code>Dom0</code>, install Dianemo to an available block device:</p>
+
+<pre><code class="language-bash">docker run \
+ --rm \
+ --privileged \
+ --volume /dev:/dev \
+ autonomy/dianemo:latest image -b /dev/sdc
 </code></pre>
 
-<h3 id="configuring-kubeadm">Configuring Kubeadm</h3>
+<p>Save the following as <code>/etc/xen/worker.cfg</code></p>
 
-<p>The configuration of the <code>kubeadm</code> service is done in two parts:</p>
+<pre><code class="language-python">name = &quot;worker&quot;
 
-<ul>
-<li>supplying the Dianemo specific options</li>
-<li>supplying the <code>kubeadm</code> <code>InitConfiguration</code></li>
-</ul>
+builder='hvm'
+bootloader = &quot;/bin/pygrub&quot;
+firmware_override = &quot;/usr/lib64/xen/boot/hvmloader&quot;
 
-<h4 id="dianemo-specific-options">Dianemo Specific Options</h4>
+vcpus=2
+memory = 4096
+serial = &quot;pty&quot;
 
-<pre><code class="language-yaml">services:
-  ...
-  kubeadm:
-    init:
-      type: initial
-      etcdMemberName: &lt;member-name&gt;
-  ...
+kernel = &quot;/var/lib/xen/dianemo/vmlinuz&quot;
+ramdisk = &quot;/var/lib/xen/dianemo/initramfs.xz&quot;
+disk = [ 'phy:/dev/sdc,xvda,w', ]
+vif = [ 'mac=52:54:00:B9:5D:F2,bridge=xenbr0,model=e1000', ]
+extra = &quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/platform=bare-metal dianemo.autonomy.io/userdata=http://${IP}:8080/worker.yaml&quot;
 </code></pre>
 
-<h4 id="kubeadm-specific-options">Kubeadm Specific Options</h4>
-
-<pre><code class="language-yaml">services:
-  ...
-  kubeadm:
-    ...
-    configuration: |
-      apiVersion: kubeadm.k8s.io/v1alpha3
-      kind: InitConfiguration
-      ...
-  ...
-</code></pre>
-
-<blockquote>
-<p>See the official <a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/">documentation</a> for the options available in <code>InitConfiguration</code>.</p>
+<blockquote class="note " >
+    <p>Note: <code>http://${IP}:8080/worker.yaml</code> should be reachable by the VM and contain a valid worker configuration file.</p>
 </blockquote>
+
+
+<p>Now, create the VM:</p>
+
+<pre><code class="language-bash">xl create /etc/xen/worker.cfg
+</code></pre>
 </p>
                     </section>
                 </div>
                 <div class="column column-10">
-                    
-                    <a class="navigation navigation-next" href="https://dianemo.autonomy.io/configuration/workers/">
-                        <i class="fa fa-chevron-right"></i>
-                    </a>
                     
                 </div>
             </div>

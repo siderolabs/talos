@@ -29,9 +29,21 @@ docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --e
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
       <guid>https://dianemo.autonomy.io/examples/kvm/</guid>
-      <description>Install the Master Node On the KVM host, install a master node to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sda -f -p bare-metal -u http://${IP}:8080/master.yaml   http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
- virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --ram=4096 \ --vcpus=2 \ --disk path=/dev/sdc \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Install a Worker Node Similarly, install a worker node to an available block device:</description>
+      <description>Creating a Master Node On the KVM host, install a master node to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
+ Now, create the VM:
+virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --vcpus=2 \ --ram=4096 \ --disk path=/dev/sdb \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Creating a Worker Node On the KVM host, install a worker node to an available block device:</description>
+    </item>
+    
+    <item>
+      <title>Xen</title>
+      <link>https://dianemo.autonomy.io/examples/xen/</link>
+      <pubDate>Tue, 06 Nov 2018 06:25:46 -0800</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/examples/xen/</guid>
+      <description>Creating a Master Node On Dom0, install Dianemo to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
+name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/dianemo/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/dianemo/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.</description>
     </item>
     
   </channel>

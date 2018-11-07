@@ -8,7 +8,17 @@
   </url>
   
   <url>
+    <loc>https://dianemo.autonomy.io/examples/aws/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dianemo.autonomy.io/components/kernel/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/examples/kvm/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
@@ -20,6 +30,11 @@
   <url>
     <loc>https://dianemo.autonomy.io/components/init/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://dianemo.autonomy.io/examples/xen/</loc>
+    <lastmod>2018-11-06T06:25:46-08:00</lastmod>
   </url>
   
   <url>
@@ -58,11 +73,6 @@
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/examples/aws/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://dianemo.autonomy.io/components/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
@@ -79,11 +89,6 @@
   
   <url>
     <loc>https://dianemo.autonomy.io/examples/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/examples/kvm/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   

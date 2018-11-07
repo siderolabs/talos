@@ -2,13 +2,14 @@
 title: "KVM"
 date: 2018-10-29T19:40:55-07:00
 draft: false
+weight: 20
 menu:
   main:
     parent: 'examples'
     weight: 20
 ---
 
-## Install the Master Node
+## Creating a Master Node
 
 On the KVM host, install a master node to an available block device:
 
@@ -17,10 +18,12 @@ docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- autonomy/dianemo:latest image -b /dev/sda -f -p bare-metal -u http://${IP}:8080/master.yaml
+ autonomy/dianemo:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml
 ```
 
-> `http://${IP}:8080/master.yaml` should be reachable by the VM and contain a valid master configuration file.
+{{% note %}}`http://${IP}:8080/master.yaml` should be reachable by the VM and contain a valid master configuration file.{{% /note %}}
+
+Now, create the VM:
 
 ```bash
 virt-install \
@@ -30,28 +33,30 @@ virt-install \
     --os-variant=generic \
     --virt-type=kvm \
     --cpu=host \
-    --ram=4096 \
     --vcpus=2 \
-    --disk path=/dev/sdc \
+    --ram=4096 \
+    --disk path=/dev/sdb \
     --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \
     --graphics none \
     --boot hd \
     --rng /dev/random
 ```
 
-## Install a Worker Node
+## Creating a Worker Node
 
-Similarly, install a worker node to an available block device:
+On the KVM host, install a worker node to an available block device:
 
 ```bash
 docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- autonomy/dianemo:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/worker.yaml
+ autonomy/dianemo:latest image -b /dev/sdc -f -p bare-metal -u http://${IP}:8080/worker.yaml
 ```
 
-> `http://${IP}:8080/worker.yaml` should be reachable by the VM and contain a valid worker configuration file.
+{{% note %}}`http://${IP}:8080/worker.yaml` should be reachable by the VM and contain a valid worker configuration file.{{% /note %}}
+
+Now, create the VM:
 
 ```bash
 virt-install \
@@ -61,8 +66,8 @@ virt-install \
     --os-variant=generic \
     --virt-type=kvm \
     --cpu=host \
-    --ram=4096 \
     --vcpus=2 \
+    --ram=4096 \
     --disk path=/dev/sdc \
     --network bridge=br0,model=e1000,mac=52:54:00:B9:5D:F2 \
     --graphics none \
