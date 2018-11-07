@@ -22,12 +22,36 @@ Cluster Owners We recommend that the configuration of osd be performed by a clus
     </item>
     
     <item>
+      <title>AWS</title>
+      <link>https://dianemo.autonomy.io/examples/aws/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/examples/aws/</guid>
+      <description>First, create the AMI:
+docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ autonomy/dianemo:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
+ An official Terraform module is currently being developed, stay tuned!
+ </description>
+    </item>
+    
+    <item>
       <title>kernel</title>
       <link>https://dianemo.autonomy.io/components/kernel/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
       <guid>https://dianemo.autonomy.io/components/kernel/</guid>
       <description>The kernel included with Dianemo is configured according to the recommendations outlined in the Kernel Self Protection Project (KSSP).</description>
+    </item>
+    
+    <item>
+      <title>KVM</title>
+      <link>https://dianemo.autonomy.io/examples/kvm/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/examples/kvm/</guid>
+      <description>Creating a Master Node On the KVM host, install a master node to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
+ Now, create the VM:
+virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --vcpus=2 \ --ram=4096 \ --disk path=/dev/sdb \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Creating a Worker Node On the KVM host, install a worker node to an available block device:</description>
     </item>
     
     <item>
@@ -51,6 +75,17 @@ osctl inject os --crt &amp;lt;organization&amp;gt;.</description>
       <description>A common theme throughout the design of Dianemo is minimalism. We believe strongly in the UNIX philosophy that each program should do one job well. The init included in Dianemo is one example of this.
 We wanted to create a focused init that had one job - run Kubernetes. There simply is no mechanism in place to do anything else.
 To accomplish this, we must address real world operations needs like:</description>
+    </item>
+    
+    <item>
+      <title>Xen</title>
+      <link>https://dianemo.autonomy.io/examples/xen/</link>
+      <pubDate>Tue, 06 Nov 2018 06:25:46 -0800</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/examples/xen/</guid>
+      <description>Creating a Master Node On Dom0, install Dianemo to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
+name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/dianemo/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/dianemo/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.</description>
     </item>
     
     <item>
@@ -123,35 +158,12 @@ To make this work, we needed an out-of-band tool for managing the nodes. In an i
     </item>
     
     <item>
-      <title>AWS</title>
-      <link>https://dianemo.autonomy.io/examples/aws/</link>
-      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
-      
-      <guid>https://dianemo.autonomy.io/examples/aws/</guid>
-      <description>First, create the AMI:
-docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ autonomy/dianemo:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
- An official Terraform module is currently being developed, stay tuned!
- </description>
-    </item>
-    
-    <item>
       <title>Dianemo</title>
       <link>https://dianemo.autonomy.io/dianemo/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
       <guid>https://dianemo.autonomy.io/dianemo/</guid>
       <description>Dianemo is a modern Linux distribution designed to be secure, immutable, and minimal.</description>
-    </item>
-    
-    <item>
-      <title>KVM</title>
-      <link>https://dianemo.autonomy.io/examples/kvm/</link>
-      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
-      
-      <guid>https://dianemo.autonomy.io/examples/kvm/</guid>
-      <description>Install the Master Node On the KVM host, install a master node to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sda -f -p bare-metal -u http://${IP}:8080/master.yaml   http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
- virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --ram=4096 \ --vcpus=2 \ --disk path=/dev/sdc \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Install a Worker Node Similarly, install a worker node to an available block device:</description>
     </item>
     
   </channel>
