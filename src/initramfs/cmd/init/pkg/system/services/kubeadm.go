@@ -136,23 +136,21 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 // ConditionFunc implements the Service interface.
 func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	var conditionFunc conditions.ConditionFunc
+	var socket string
 	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
-		if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Bootstrap {
-			conditionFunc = conditions.WaitForFileToExist(constants.ContainerRuntimeDockerSocket)
-		} else {
-			conditionFunc = conditions.WaitForFilesToExist(constants.ContainerRuntimeDockerSocket, "/var/etc/kubernetes/admin.conf")
-		}
+		socket = constants.ContainerRuntimeDockerSocket
 	case constants.ContainerRuntimeCRIO:
-		if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Bootstrap {
-			conditionFunc = conditions.WaitForFileToExist(constants.ContainerRuntimeCRIOSocket)
-		} else {
-			conditionFunc = conditions.WaitForFilesToExist(constants.ContainerRuntimeCRIOSocket, "/var/etc/kubernetes/admin.conf")
-		}
+		socket = constants.ContainerRuntimeDockerSocket
 	}
 
-	return conditionFunc
+	files := []string{socket}
+
+	if data.Services.Kubeadm.Init != nil && !data.Services.Kubeadm.Init.Bootstrap {
+		files = append(files, "/var/etc/kubernetes/admin.conf")
+	}
+
+	return conditions.WaitForFilesToExist(files...)
 }
 
 // Start implements the Service interface.
