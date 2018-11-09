@@ -153,14 +153,14 @@ tasks:
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
-      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a \
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
         -o /{{ .Docker.CurrentStage }}-linux-amd64
       RUN GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
         -o /{{ .Docker.CurrentStage }}-darwin-amd64
       {{ else }}
-      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a \
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /{{ .Docker.CurrentStage }}-linux-amd64
       RUN GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -a \
