@@ -48,7 +48,6 @@ func (s *singleton) Start(services ...Service) {
 	for _, service := range services {
 		go func(service Service) {
 			id := service.ID(s.UserData)
-			log.Printf("starting service %q", id)
 			if err := service.PreFunc(s.UserData); err != nil {
 				log.Printf("failed to run pre stage of service %q: %v", id, err)
 				return
@@ -60,6 +59,7 @@ func (s *singleton) Start(services ...Service) {
 				return
 			}
 
+			log.Printf("starting service %q", id)
 			if err := service.Start(s.UserData); err != nil {
 				log.Printf("failed to start service %q: %v", id, err)
 				return

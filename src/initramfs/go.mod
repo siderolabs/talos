@@ -4,8 +4,6 @@ require (
 	github.com/BurntSushi/toml v0.3.0 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
-	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
-	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
 	github.com/containerd/containerd v1.2.0
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
@@ -20,7 +18,6 @@ require (
 	github.com/docker/engine-api v0.4.0
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-events v0.0.0-20170721190031-9461782956ad // indirect
-	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5
@@ -37,14 +34,12 @@ require (
 	github.com/google/uuid v1.0.0
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be // indirect
 	github.com/kubernetes-incubator/cri-o v1.11.2
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/onsi/ginkgo v1.6.0 // indirect
@@ -56,16 +51,11 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v0.8.0 // indirect
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
-	github.com/prometheus/common v0.0.0-20180801064454-c7de2306084e // indirect
-	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.1 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
-	go.etcd.io/bbolt v1.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20180515001509-1a580b3eff78 // indirect
 	golang.org/x/net v0.0.0-20180724234803-3673e40ba225
 	golang.org/x/oauth2 v0.0.0-20181003184128-c57b0facaced // indirect
@@ -86,6 +76,4 @@ require (
 	k8s.io/api v0.0.0-20181031211151-1455c336c32a
 	k8s.io/apimachinery v0.0.0-20181031012033-2e0dc82819fd
 	k8s.io/client-go v9.0.0+incompatible
-	k8s.io/cluster-bootstrap v0.0.0-20181031213608-96092a322233 // indirect
-	k8s.io/kubernetes v1.13.0-alpha.3
 )

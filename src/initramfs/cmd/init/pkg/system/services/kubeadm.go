@@ -20,19 +20,14 @@ import (
 	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/middleware/auth/basic"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/net"
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"google.golang.org/grpc"
-	kubeadmconstants "k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
 
 const kubeadmSH = `#!/bin/bash
 
-set -eEou pipefail
-
-cd /etc/kubernetes
+set -e
 
 apt-get update -y
 apt-get install -y curl
@@ -40,36 +35,16 @@ apt-get install -y curl
 curl -L https://download.docker.com/linux/static/stable/x86_64/docker-18.06.1-ce.tgz | tar -xz --strip-components=1 -C /bin docker/docker
 chmod +x /bin/docker
 
+cd /etc/kubernetes
+
 trap 'kubeadm reset --force' ERR
 
-{{- if .Init }}
-{{- if eq .Init.Type "initial" }}
+{{ if .Init }}
+	{{- if .Init.Bootstrap }}
 kubeadm init --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable --skip-token-print
-{{- else if eq .Init.Type "dependent" }}
-export KUBECONFIG=/etc/kubernetes/admin.conf
-kubeadm alpha phase certs all --config kubeadm-config.yaml
-kubeadm alpha phase kubelet config write-to-disk --config kubeadm-config.yaml
-kubeadm alpha phase kubelet write-env-file --config kubeadm-config.yaml
-kubeadm alpha phase kubeconfig kubelet --config kubeadm-config.yaml
-# Workaround for clusters running with the DenyEscalatingExec admission controller.
-docker run \
-	--rm \
-	--net=host \
-	--volume /etc/kubernetes/pki/etcd:/etc/kubernetes/pki/etcd k8s.gcr.io/etcd:{{ .EtcdVersion }} \
-	etcdctl \
-		--ca-file /etc/kubernetes/pki/etcd/ca.crt \
-		--cert-file /etc/kubernetes/pki/etcd/peer.crt \
-		--key-file /etc/kubernetes/pki/etcd/peer.key \
-		--endpoints=https://{{ .Init.EtcdEndpoint }}:2379 \
-		member add {{ .Init.EtcdMemberName }} https://{{ .IP }}:2380
-kubeadm alpha phase etcd local --config kubeadm-config.yaml
-kubeadm alpha phase kubeconfig all --config kubeadm-config.yaml
-{{- if not .Init.SelfHosted }}
-	kubeadm alpha phase controlplane all --config kubeadm-config.yaml
-{{- end }}
-kubeadm alpha phase mark-master --config kubeadm-config.yaml
-echo "successfully joined master node {{ .Hostname }}"
-{{- end }}
+	{{- else }}
+kubeadm join --config kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable --experimental-control-plane
+	{{- end }}
 {{- else }}
 kubeadm join --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable
 {{- end }}
@@ -109,12 +84,12 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubeadm) PostFunc(data *userdata.UserData) (err error) {
+func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 	if data.Services.Kubeadm.Init == nil {
 		return nil
 	}
 
-	if data.Services.Kubeadm.Init.TrustEndpoint == "" {
+	if data.Services.Kubeadm.Init.TrustEndpoints == nil {
 		return nil
 	}
 
@@ -123,21 +98,6 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) (err error) {
 		data.Services.Trustd.Username,
 		data.Services.Trustd.Password,
 	)
-
-	var conn *grpc.ClientConn
-	parts := strings.Split(data.Services.Kubeadm.Init.TrustEndpoint, ":")
-	if len(parts) != 2 {
-		return fmt.Errorf("trust endpoint is not valid")
-	}
-	i, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return err
-	}
-	conn, err = basic.NewConnection(parts[0], i, creds)
-	if err != nil {
-		return
-	}
-	client := proto.NewTrustdClient(conn)
 
 	files := []string{
 		"/var/etc/kubernetes/pki/ca.crt",
@@ -150,8 +110,25 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) (err error) {
 		"/var/etc/kubernetes/pki/etcd/ca.key",
 		"/var/etc/kubernetes/admin.conf",
 	}
-	if err = writeFiles(client, files); err != nil {
-		return
+
+	for _, endpoint := range data.Services.Kubeadm.Init.TrustEndpoints {
+		parts := strings.Split(endpoint, ":")
+		if len(parts) != 2 {
+			return fmt.Errorf("trust endpoint is not valid: %s", endpoint)
+		}
+		i, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return err
+		}
+		conn, err := basic.NewConnection(parts[0], i, creds)
+		if err != nil {
+			return err
+		}
+		client := proto.NewTrustdClient(conn)
+
+		if err := writeFiles(client, files); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -162,16 +139,16 @@ func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFun
 	var conditionFunc conditions.ConditionFunc
 	switch data.Services.Kubeadm.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
-		if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Type == constants.KubeadmInitTypeDependent {
-			conditionFunc = conditions.WaitForFilesToExist(constants.ContainerRuntimeDockerSocket, "/var/etc/kubernetes/admin.conf")
-		} else {
+		if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Bootstrap {
 			conditionFunc = conditions.WaitForFileToExist(constants.ContainerRuntimeDockerSocket)
+		} else {
+			conditionFunc = conditions.WaitForFilesToExist(constants.ContainerRuntimeDockerSocket, "/var/etc/kubernetes/admin.conf")
 		}
 	case constants.ContainerRuntimeCRIO:
-		if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Type == constants.KubeadmInitTypeDependent {
-			conditionFunc = conditions.WaitForFilesToExist(constants.ContainerRuntimeCRIOSocket, "/var/etc/kubernetes/admin.conf")
-		} else {
+		if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Bootstrap {
 			conditionFunc = conditions.WaitForFileToExist(constants.ContainerRuntimeCRIOSocket)
+		} else {
+			conditionFunc = conditions.WaitForFilesToExist(constants.ContainerRuntimeCRIOSocket, "/var/etc/kubernetes/admin.conf")
 		}
 	}
 
@@ -269,24 +246,10 @@ func writeKubeadmPKIFiles(data *x509.PEMEncodedCertificateAndKey) (err error) {
 }
 
 func parse(data *userdata.UserData) ([]byte, error) {
-	ip, err := net.IP()
-	if err != nil {
-		return nil, err
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
 	aux := struct {
-		IP          string
-		Hostname    string
-		Init        *userdata.InitConfiguration
-		EtcdVersion string
+		Init *userdata.InitConfiguration
 	}{
-		Hostname:    hostname,
-		IP:          ip.String(),
-		Init:        data.Services.Kubeadm.Init,
-		EtcdVersion: kubeadmconstants.DefaultEtcdVersion,
+		Init: data.Services.Kubeadm.Init,
 	}
 	t, err := template.New("kubeadm").Parse(kubeadmSH)
 	if err != nil {
