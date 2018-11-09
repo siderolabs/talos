@@ -78,11 +78,8 @@ type Kubeadm struct {
 
 // InitConfiguration describes the init strategy.
 type InitConfiguration struct {
-	Type           string `yaml:"type,omitempty"`
-	TrustEndpoint  string `yaml:"trustEndpoint,omitempty"`
-	EtcdEndpoint   string `yaml:"etcdEndpoint,omitempty"`
-	EtcdMemberName string `yaml:"etcdMemberName,omitempty"`
-	SelfHosted     bool   `yaml:"selfHosted,omitempty"`
+	Bootstrap      bool     `yaml:"bootstrap"`
+	TrustEndpoints []string `yaml:"trustEndpoints,omitempty"`
 }
 
 // Trustd describes the configuration of the Root of Trust (RoT) service. The
