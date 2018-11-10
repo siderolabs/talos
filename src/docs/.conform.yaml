@@ -7,15 +7,9 @@ stages:
   build:
     artifacts:
     - source: /src/github.com/autonomy/dianemo/src/public/
-      destination: ../../build/docs
+      destination: ../../docs
     tasks:
     - docs
-script:
-  template: |
-    #!/bin/bash
-    set -e
-    rm -rf ../../docs
-    mv ../../build/docs ../../docs
 tasks:
   docs:
     template: |
