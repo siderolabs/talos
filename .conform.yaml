@@ -31,7 +31,6 @@ script:
     set -e
 
     mkdir -p ./build
-    rm -rf ./build/*
     cd ./src/tools && conform build
     cd ../kernel && conform build
     cd ../rootfs && conform build
