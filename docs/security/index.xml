@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Security on Dianemo</title>
+    <link>https://dianemo.autonomy.io/security/</link>
+    <description>Recent content in Security on Dianemo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 29 Oct 2018 19:40:55 -0700</lastBuildDate>
+    
+	<atom:link href="https://dianemo.autonomy.io/security/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>CIS Kubernetes Benchmark</title>
+      <link>https://dianemo.autonomy.io/security/cis/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://dianemo.autonomy.io/security/cis/</guid>
+      <description>CIS Kubernetes Benchmark version 1.3.0</description>
+    </item>
+    
+  </channel>
+</rss>

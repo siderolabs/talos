@@ -19,13 +19,20 @@ sectionPagesMenu = "main"
     weight     = 10
 
 [[menu.main]]
+    identifier = "security"
+    name       = "Security"
+    url        = "/security/"
+    weight     = 20
+
+[[menu.main]]
     identifier = "configuration"
     name       = "Configuration"
     url        = "/configuration/"
-    weight     = 20
+    weight     = 30
 
 [[menu.main]]
     identifier = "examples"
     name       = "Examples"
     url        = "/examples/"
-    weight     = 30
+    weight     = 40
+
