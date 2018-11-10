@@ -13,5 +13,13 @@ spec:
         - node
         - --json
         - --version=1.11
+        volumeMounts:
+        - name: etc-kubernetes
+          mountPath: /etc/kubernetes
+      volumes:
+      - name: etc-kubernetes
+        hostPath:
+          path: /etc/kubernetes
+          type: Directory
       restartPolicy: Never
   backoffLimit: 0
