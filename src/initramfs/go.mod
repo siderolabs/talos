@@ -52,6 +52,7 @@ require (
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
+	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.1 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
@@ -74,6 +75,14 @@ require (
 	gopkg.in/yaml.v2 v2.1.1
 	gotest.tools v2.1.0+incompatible // indirect
 	k8s.io/api v0.0.0-20181031211151-1455c336c32a
+	k8s.io/apiextensions-apiserver v0.0.0-20181110112449-a6e0648e729a // indirect
 	k8s.io/apimachinery v0.0.0-20181031012033-2e0dc82819fd
+	k8s.io/apiserver v0.0.0-20181110111630-c45349c92333 // indirect
 	k8s.io/client-go v9.0.0+incompatible
+	k8s.io/cluster-bootstrap v0.0.0-20181108060158-bf9d13f1fbeb // indirect
+	k8s.io/kube-openapi v0.0.0-20181109181836-c59034cc13d5 // indirect
+	k8s.io/kube-proxy v0.0.0-20181108055616-8eeec43ca7b5 // indirect
+	k8s.io/kubelet v0.0.0-20181108055742-1ff588f76017 // indirect
+	k8s.io/kubernetes v1.13.0-alpha.3
+	k8s.io/utils v0.0.0-20181102055113-1bd4f387aa67 // indirect
 )
