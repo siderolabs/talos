@@ -120,7 +120,7 @@ DEFAULT Dianemo
 LABEL Dianemo
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
 EOF
 }
 
@@ -133,7 +133,7 @@ function cleanup {
 # Defaults
 
 DIANEMO_USERDATA=""
-DIANEMO_PLATFORM="bare-metal"
+DIANEMO_PLATFORM=""
 RAW_IMAGE="/out/image.raw"
 VMDK_IMAGE="/out/image.vmdk"
 ISO_IMAGE="/out/image.iso"
@@ -143,15 +143,20 @@ ROOTFS_SIZE=$(size_xz /generated/rootfs.tar.xz)
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
 # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/dianemo/pull/157.
 KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
+EXTRA_KERNEL_PARAMS=""
 
 case "$1" in
   image)
     shift
-    while getopts "b:flp:u:" opt; do
+    while getopts "b:flp:u:e:" opt; do
       case ${opt} in
         b )
           DEVICE=${OPTARG}
           echo "Using block device ${DEVICE} as installation media"
+          ;;
+        e )
+          EXTRA_KERNEL_PARAMS=${OPTARG}
+          echo "Using extra kernel params ${EXTRA_KERNEL_PARAMS}"
           ;;
         f )
           echo "Creating full image"
@@ -159,7 +164,7 @@ case "$1" in
           ;;
         l )
           trap cleanup ERR
-          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($(size_xz) + 150))
+          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($ROOTFS_SIZE+$INITRAMFS_SIZE+150))
           DEVICE=$(losetup -f)
           RAW=true
           echo "Using loop device ${RAW_IMAGE} as installation media"
@@ -184,7 +189,12 @@ case "$1" in
     done
     shift $((OPTIND -1))
 
-  if [ -z "${DIANEMO_USERDATA}" ]; then
+    if [ -z "${DIANEMO_PLATFORM}" ]; then
+      echo "The platform flag '-p' must be specified"
+      exit 1
+    fi
+
+    if [ -z "${DIANEMO_USERDATA}" ]; then
       echo "The userdata flag '-u' must be specified"
       exit 1
     fi
