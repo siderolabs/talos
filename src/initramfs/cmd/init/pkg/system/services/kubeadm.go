@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/security/cis"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/conditions"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner"
 	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner/containerd"
@@ -78,6 +79,16 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 
 	if err = writeKubeadmConfig(data.Services.Kubeadm.Configuration); err != nil {
 		return
+	}
+
+	if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Bootstrap {
+		if err := cis.EnforceMasterRequirements(); err != nil {
+			return err
+		}
+	} else {
+		if err := cis.EnforceWorkerRequirements(); err != nil {
+			return err
+		}
 	}
 
 	return nil
