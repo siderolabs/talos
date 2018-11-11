@@ -8,6 +8,14 @@ import (
 	"path"
 
 	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	kubeadmscheme "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/scheme"
+	kubeadmutil "k8s.io/kubernetes/cmd/kubeadm/app/util"
+	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -47,6 +55,7 @@ type Networking struct {
 
 // Services represents the set of services available to configure.
 type Services struct {
+	Init    *Init    `yaml:"init"`
 	Kubelet *Kubelet `yaml:"kubelet"`
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
 	Trustd  *Trustd  `yaml:"trustd"`
@@ -63,6 +72,11 @@ type File struct {
 	Path        string      `yaml:"path"`
 }
 
+// Init describes the configuration of the init service.
+type Init struct {
+	ContainerRuntime string `yaml:"containerRuntime,omitempty"`
+}
+
 // Kubelet describes the configuration of the kubelet service.
 type Kubelet struct {
 	Image string `yaml:"image,omitempty"`
@@ -70,16 +84,82 @@ type Kubelet struct {
 
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
-	Image            string             `yaml:"image,omitempty"`
-	ContainerRuntime string             `yaml:"containerRuntime,omitempty"`
-	Configuration    string             `yaml:"configuration,omitempty"`
-	Init             *InitConfiguration `yaml:"init,omitempty"`
+	Configuration runtime.Object `yaml:"configuration"`
+	bootstrap     bool
+	controlPlane  bool
 }
 
-// InitConfiguration describes the init strategy.
-type InitConfiguration struct {
-	Bootstrap      bool     `yaml:"bootstrap"`
-	TrustEndpoints []string `yaml:"trustEndpoints,omitempty"`
+// MarshalYAML implements the yaml.Marshaler interface.
+func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
+	var aux struct {
+		Configuration string `yaml:"configuration,omitempty"`
+	}
+
+	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
+	if err != nil {
+		return nil, err
+	}
+
+	if kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...) {
+		kdm.bootstrap = true
+	}
+	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
+		kdm.bootstrap = false
+	}
+
+	aux.Configuration = string(b)
+
+	return aux, nil
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface.
+func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var aux struct {
+		ContainerRuntime string `yaml:"containerRuntime,omitempty"`
+		Configuration    string `yaml:"configuration,omitempty"`
+	}
+
+	if err := unmarshal(&aux); err != nil {
+		return err
+	}
+
+	b := []byte(aux.Configuration)
+
+	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
+	if err != nil {
+		return err
+	}
+
+	if kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...) {
+		// Since the ClusterConfiguration is embedded in the InitConfiguration
+		// struct, it is required to (un)marshal it a special way. The kubeadm
+		// API exposes one function (MarshalKubeadmConfigObject) to handle the
+		// marshaling, but does not yet have that convenience for
+		// unmarshaling.
+		cfg, err := configutil.BytesToInternalConfig(b)
+		if err != nil {
+			return err
+		}
+		kdm.Configuration = cfg
+		kdm.bootstrap = true
+	}
+	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
+		cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(b, kubeadmapi.SchemeGroupVersion, kubeadmscheme.Codecs)
+		if err != nil {
+			return err
+		}
+		kdm.Configuration = cfg
+		kdm.bootstrap = false
+		joinConfiguration := cfg.(*kubeadm.JoinConfiguration)
+		kdm.controlPlane = joinConfiguration.ControlPlane
+	}
+
+	return nil
 }
 
 // Trustd describes the configuration of the Root of Trust (RoT) service. The
@@ -172,4 +252,28 @@ func Open(p string) (data *UserData, err error) {
 	}
 
 	return data, nil
+}
+
+// IsBootstrap indicates if the current kubeadm configuration is a master init
+// configuration.
+func (data *UserData) IsBootstrap() bool {
+	return data.Services.Kubeadm.bootstrap
+}
+
+// IsControlPlane indicates if the current kubeadm configuration is a worker
+// acting as a master.
+func (data *UserData) IsControlPlane() bool {
+	return data.Services.Kubeadm.controlPlane
+}
+
+// IsMaster indicates if the current kubeadm configuration is a master
+// configuration.
+func (data *UserData) IsMaster() bool {
+	return data.Services.Kubeadm.bootstrap || data.Services.Kubeadm.controlPlane
+}
+
+// IsWorker indicates if the current kubeadm configuration is a worker
+// configuration.
+func (data *UserData) IsWorker() bool {
+	return !data.IsMaster()
 }

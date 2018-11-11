@@ -29,7 +29,7 @@ const crioPolicy = `{
 
 // ID implements the Service interface.
 func (c *CRT) ID(data *userdata.UserData) string {
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		return "docker"
 	case constants.ContainerRuntimeCRIO:
@@ -41,7 +41,7 @@ func (c *CRT) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (c *CRT) PreFunc(data *userdata.UserData) error {
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		if err := os.MkdirAll("/var/lib/docker", os.ModeDir); err != nil {
 			return fmt.Errorf("failed to create directory /var/lib/docker: %v", err)
@@ -98,7 +98,7 @@ func (c *CRT) Start(data *userdata.UserData) error {
 		env = []string{}
 	)
 
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		image = constants.DockerImage
 		args = runner.Args{
@@ -142,7 +142,7 @@ func (c *CRT) Start(data *userdata.UserData) error {
 		}
 		mounts = append(mounts, crioMounts...)
 	default:
-		return fmt.Errorf("unknown container runtime %q", data.Services.Kubeadm.ContainerRuntime)
+		return fmt.Errorf("unknown container runtime %q", data.Services.Init.ContainerRuntime)
 	}
 
 	if data.Services.CRT != nil && data.Services.CRT.Image != "" {

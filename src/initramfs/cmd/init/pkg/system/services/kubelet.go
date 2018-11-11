@@ -53,7 +53,7 @@ func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
 // ConditionFunc implements the Service interface.
 func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
 	var conditionFunc conditions.ConditionFunc
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		conditionFunc = conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env")
 	case constants.ContainerRuntimeCRIO:
@@ -85,7 +85,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		},
 	}
 
-	if data.Services.Kubeadm.ContainerRuntime == constants.ContainerRuntimeCRIO {
+	if data.Services.Init.ContainerRuntime == constants.ContainerRuntimeCRIO {
 		args.ProcessArgs = append(args.ProcessArgs, "--container-runtime=remote", "--runtime-request-timeout=15m", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
 	}
 
@@ -109,7 +109,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/var/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		mounts = append(mounts, specs.Mount{Type: "bind", Destination: "/var/lib/docker", Source: "/var/lib/docker", Options: []string{"rbind", "rshared", "rw"}})
 	case constants.ContainerRuntimeCRIO:
