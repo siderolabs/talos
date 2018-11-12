@@ -24,6 +24,9 @@ import (
 	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
 )
 
 const kubeadmSH = `#!/bin/bash
@@ -40,12 +43,8 @@ cd /etc/kubernetes
 
 trap 'kubeadm reset --force' ERR
 
-{{ if .Init }}
-	{{- if .Init.Bootstrap }}
+{{- if .Bootstrap }}
 kubeadm init --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable --skip-token-print
-	{{- else }}
-kubeadm join --config kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable --experimental-control-plane
-	{{- end }}
 {{- else }}
 kubeadm join --config=kubeadm-config.yaml --ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable
 {{- end }}
@@ -62,33 +61,18 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
-	contents, err := parse(data)
-	if err != nil {
+	if err = writeKubeadmScript(data); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile("/run/kubeadm.sh", contents, os.FileMode(0700)); err != nil {
-		return
-	}
-
-	if data.Services.Kubeadm.Init != nil {
+	if data.IsMaster() {
 		if err = writeKubeadmPKIFiles(data.Security.Kubernetes.CA); err != nil {
-			return
+			return err
 		}
 	}
 
-	if err = writeKubeadmConfig(data.Services.Kubeadm.Configuration); err != nil {
-		return
-	}
-
-	if data.Services.Kubeadm.Init != nil && data.Services.Kubeadm.Init.Bootstrap {
-		if err := cis.EnforceMasterRequirements(); err != nil {
-			return err
-		}
-	} else {
-		if err := cis.EnforceWorkerRequirements(); err != nil {
-			return err
-		}
+	if err = writeKubeadmConfig(data); err != nil {
+		return err
 	}
 
 	return nil
@@ -96,11 +80,11 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 
 // PostFunc implements the Service interface.
 func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
-	if data.Services.Kubeadm.Init == nil {
+	if data.IsWorker() {
 		return nil
 	}
 
-	if data.Services.Kubeadm.Init.TrustEndpoints == nil {
+	if data.Services.Trustd.Endpoints == nil {
 		return nil
 	}
 
@@ -111,6 +95,8 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 	)
 
 	files := []string{
+		"/var/etc/kubernetes/audit-policy.yaml",
+		"/var/etc/kubernetes/encryptionconfig.yaml",
 		"/var/etc/kubernetes/pki/ca.crt",
 		"/var/etc/kubernetes/pki/ca.key",
 		"/var/etc/kubernetes/pki/sa.key",
@@ -122,7 +108,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 		"/var/etc/kubernetes/admin.conf",
 	}
 
-	for _, endpoint := range data.Services.Kubeadm.Init.TrustEndpoints {
+	for _, endpoint := range data.Services.Trustd.Endpoints {
 		parts := strings.Split(endpoint, ":")
 		if len(parts) != 2 {
 			return fmt.Errorf("trust endpoint is not valid: %s", endpoint)
@@ -148,7 +134,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 // ConditionFunc implements the Service interface.
 func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
 	var socket string
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		socket = constants.ContainerRuntimeDockerSocket
 	case constants.ContainerRuntimeCRIO:
@@ -157,7 +143,7 @@ func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFun
 
 	files := []string{socket}
 
-	if data.Services.Kubeadm.Init != nil && !data.Services.Kubeadm.Init.Bootstrap {
+	if data.IsControlPlane() {
 		files = append(files, "/var/etc/kubernetes/admin.conf")
 	}
 
@@ -170,14 +156,6 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	// We only wan't to run kubeadm if it hasn't been ran already.
 	if _, err := os.Stat("/var/etc/kubernetes/kubelet.conf"); !os.IsNotExist(err) {
 		return nil
-	}
-
-	// Set the image.
-	var image string
-	if data.Services.Kubeadm != nil && data.Services.Kubeadm.Image != "" {
-		image = data.Services.Kubeadm.Image
-	} else {
-		image = constants.KubernetesImage
 	}
 
 	// Set the process arguments.
@@ -199,7 +177,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/bin/kubeadm.sh", Source: "/run/kubeadm.sh", Options: []string{"bind", "ro"}},
 	}
 
-	switch data.Services.Kubeadm.ContainerRuntime {
+	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:
 		mounts = append(mounts, specs.Mount{Type: "bind", Destination: "/var/lib/docker", Source: "/var/lib/docker", Options: []string{"rbind", "rshared", "rw"}})
 	case constants.ContainerRuntimeCRIO:
@@ -211,7 +189,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	return r.Run(
 		data,
 		args,
-		runner.WithContainerImage(image),
+		runner.WithContainerImage(constants.KubernetesImage),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			containerd.WithRootfsPropagation("slave"),
@@ -224,12 +202,43 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	)
 }
 
-func writeKubeadmConfig(data string) (err error) {
+func writeKubeadmScript(data *userdata.UserData) (err error) {
+	contents, err := parse(data)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile("/run/kubeadm.sh", contents, os.FileMode(0700))
+}
+
+func writeKubeadmConfig(data *userdata.UserData) (err error) {
+	var b []byte
+	if data.IsBootstrap() {
+		initConfiguration := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
+		if err = cis.EnforceMasterRequirements(initConfiguration); err != nil {
+			return err
+		}
+		b, err = configutil.MarshalKubeadmConfigObject(initConfiguration)
+		if err != nil {
+			return err
+		}
+	} else {
+		joinConfiguration := data.Services.Kubeadm.Configuration.(*kubeadmapi.JoinConfiguration)
+		if err = cis.EnforceWorkerRequirements(joinConfiguration); err != nil {
+			return err
+		}
+		b, err = configutil.MarshalKubeadmConfigObject(joinConfiguration)
+		if err != nil {
+			return err
+		}
+	}
+
 	p := path.Dir(constants.KubeadmConfig)
 	if err := os.MkdirAll(p, os.ModeDir); err != nil {
 		return fmt.Errorf("create %s: %v", p, err)
 	}
-	if err = ioutil.WriteFile(constants.KubeadmConfig, []byte(data), 0400); err != nil {
+
+	if err = ioutil.WriteFile(constants.KubeadmConfig, b, 0400); err != nil {
 		return fmt.Errorf("write %s: %v", constants.KubeadmConfig, err)
 	}
 
@@ -256,9 +265,9 @@ func writeKubeadmPKIFiles(data *x509.PEMEncodedCertificateAndKey) (err error) {
 
 func parse(data *userdata.UserData) ([]byte, error) {
 	aux := struct {
-		Init *userdata.InitConfiguration
+		Bootstrap bool
 	}{
-		Init: data.Services.Kubeadm.Init,
+		Bootstrap: data.IsBootstrap(),
 	}
 	t, err := template.New("kubeadm").Parse(kubeadmSH)
 	if err != nil {

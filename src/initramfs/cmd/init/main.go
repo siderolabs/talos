@@ -110,7 +110,7 @@ func root() (err error) {
 	)
 
 	// Start the services common to all master nodes.
-	if data.Services.Kubeadm.Init != nil {
+	if data.IsMaster() {
 		log.Println("starting master services")
 		systemservices.Start(
 			&services.Trustd{},

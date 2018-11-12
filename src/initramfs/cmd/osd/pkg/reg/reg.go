@@ -147,14 +147,6 @@ func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (re
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.ResetReply, err error) {
 	// TODO(andrewrynhard): Delete all system tasks and containers.
 
-	// Set the image.
-	var image string
-	if r.Data.Services.Kubeadm != nil && r.Data.Services.Kubeadm.Image != "" {
-		image = r.Data.Services.Kubeadm.Image
-	} else {
-		image = constants.KubernetesImage
-	}
-
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          "reset",
@@ -180,7 +172,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 	err = cr.Run(
 		r.Data,
 		args,
-		runner.WithContainerImage(image),
+		runner.WithContainerImage(constants.KubernetesImage),
 		runner.WithOCISpecOpts(
 			containerdrunner.WithMemoryLimit(int64(1000000*512)),
 			containerdrunner.WithRootfsPropagation("slave"),
@@ -237,7 +229,7 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
 	var chunk chunker.ChunkReader
 	if req.Container {
-		switch r.Data.Services.Kubeadm.ContainerRuntime {
+		switch r.Data.Services.Init.ContainerRuntime {
 		case constants.ContainerRuntimeDocker:
 			chunk, err = dockerLogs(req.Process)
 			if err != nil {

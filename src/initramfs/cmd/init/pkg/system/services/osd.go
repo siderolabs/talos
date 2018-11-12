@@ -50,7 +50,7 @@ func (o *OSD) Start(data *userdata.UserData) error {
 		ID:          o.ID(data),
 		ProcessArgs: []string{"/osd", "--port=50000", "--userdata=" + constants.UserDataPath},
 	}
-	if data.Services.Kubeadm.Init == nil {
+	if data.IsWorker() {
 		args.ProcessArgs = append(args.ProcessArgs, "--generate=true")
 	}
 
