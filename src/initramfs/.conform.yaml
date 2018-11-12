@@ -247,8 +247,8 @@ tasks:
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
       WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
       RUN chmod +x ./hack/test.sh
-      RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
       RUN ./hack/test.sh --unit
+      RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
   trustd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
