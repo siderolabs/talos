@@ -211,10 +211,16 @@ func writeKubeadmScript(data *userdata.UserData) (err error) {
 	return ioutil.WriteFile("/run/kubeadm.sh", contents, os.FileMode(0700))
 }
 
+func enforceMasterOverrides(initConfiguration *kubeadmapi.InitConfiguration) {
+	initConfiguration.KubernetesVersion = constants.KubernetesVersion
+	initConfiguration.UnifiedControlPlaneImage = constants.KubernetesImage
+}
+
 func writeKubeadmConfig(data *userdata.UserData) (err error) {
 	var b []byte
 	if data.IsBootstrap() {
 		initConfiguration := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
+		enforceMasterOverrides(initConfiguration)
 		if err = cis.EnforceMasterRequirements(initConfiguration); err != nil {
 			return err
 		}
