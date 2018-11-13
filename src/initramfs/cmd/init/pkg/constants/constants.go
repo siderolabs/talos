@@ -47,16 +47,11 @@ const (
 	// KubeadmCAKey is the path to the root CA private key.
 	KubeadmCAKey = "/var/etc/kubernetes/pki/ca.key"
 
-	// KubeadmInitTypeInitial is the string that represents a master node that
-	// is the initial node.
-	KubeadmInitTypeInitial = "initial"
+	// KubernetesVersion is the enforced target version of the control plane.
+	KubernetesVersion = "v1.13.0-alpha.3"
 
-	// KubeadmInitTypeDependent is the string that represents a master node that
-	// is not the initial node.
-	KubeadmInitTypeDependent = "dependent"
-
-	// KubernetesImage is the hyperkube image to use for the control plane.
-	KubernetesImage = "gcr.io/google_containers/hyperkube:v1.13.0-alpha.3"
+	// KubernetesImage is the enforced hyperkube image to use for the control plane.
+	KubernetesImage = "gcr.io/google_containers/hyperkube:" + KubernetesVersion
 
 	// DockerImage is the docker image to use as the container runtime for
 	// Kubernetes.
