@@ -1,5 +1,5 @@
 metadata:
-  repository: dianemo/kernel
+  repository: talos/kernel
   variables:
     artifacts: /artifacts
     runcCheckConfig: https://raw.githubusercontent.com/opencontainers/runc/v1.0.0-rc5/script/check-config.sh
@@ -14,7 +14,7 @@ stages:
 tasks:
   linux:
     template: |
-      FROM dianemo/tools:{{ .Docker.Image.Tag}} AS {{ .Docker.CurrentStage }}
+      FROM talos/tools:{{ .Docker.Image.Tag}} AS {{ .Docker.CurrentStage }}
       WORKDIR /tools/usr/local/src/{{ .Docker.CurrentStage }}
       RUN curl -L {{ index .Variables "srcLinux" }} | tar --strip-components=1 -xJ
       ADD {{ index .Variables "runcCheckConfig" }} /bin/check-config.sh

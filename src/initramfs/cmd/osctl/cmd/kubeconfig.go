@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/osctl/pkg/client"
+	"github.com/autonomy/talos/src/initramfs/cmd/osctl/pkg/client"
 	"github.com/spf13/cobra"
 )
 

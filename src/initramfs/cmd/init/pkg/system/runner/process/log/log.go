@@ -7,7 +7,7 @@ import (
 	"path"
 	"sync"
 
-	filechunker "github.com/autonomy/dianemo/src/initramfs/pkg/chunker/file"
+	filechunker "github.com/autonomy/talos/src/initramfs/pkg/chunker/file"
 )
 
 var instance = map[string]*Log{}

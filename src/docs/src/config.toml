@@ -1,6 +1,6 @@
-baseURL = "https://dianemo.autonomy.io/"
+baseURL = "https://talos.autonomy.io/"
 languageCode = "en-us"
-title = "Dianemo"
+title = "Talos"
 theme = "autonomy"
 sectionPagesMenu = "main"
 
@@ -9,7 +9,7 @@ sectionPagesMenu = "main"
 
 [params]
     Copyright = "Released under Mozilla Public License 2.0"
-    GitHubLink = "https://github.com/autonomy/dianemo"
+    GitHubLink = "https://github.com/autonomy/talos"
     DockerHubLink = "https://hub.docker.com/u/autonomy"
 
 [[menu.main]]

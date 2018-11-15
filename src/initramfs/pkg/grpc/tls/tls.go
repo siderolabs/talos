@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 // Type represents the TLS authentication type.

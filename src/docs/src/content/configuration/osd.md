@@ -23,7 +23,7 @@ They are responsible for storing the root CA, and distributing the PKI for autho
 ### Cluster Administrators
 
 The authorization to use `osctl` should be granted to a person fit for cluster administration.
-As a cluster administrator, the user gains access to the out-of-band management tools offered by Dianemo.
+As a cluster administrator, the user gains access to the out-of-band management tools offered by Talos.
 
 ## Configuring `osd`
 
@@ -98,7 +98,7 @@ cat <user>.crt | base64
 cat <user>.key | base64
 ```
 
-Now, create `~/.dianemo/config` with the following contents:
+Now, create `~/.talos/config` with the following contents:
 
 ```yaml
 context: <context>

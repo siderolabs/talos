@@ -6,10 +6,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/rootfs/etc"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/rootfs/proc"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/etc"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/proc"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	yaml "gopkg.in/yaml.v2"
 )
 

@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/pkg/crypto/x509"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )

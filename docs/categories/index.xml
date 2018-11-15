@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Categories on Dianemo</title>
-    <link>https://dianemo.autonomy.io/categories/</link>
-    <description>Recent content in Categories on Dianemo</description>
+    <title>Categories on Talos</title>
+    <link>https://talos.autonomy.io/categories/</link>
+    <description>Recent content in Categories on Talos</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     
-	<atom:link href="https://dianemo.autonomy.io/categories/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://talos.autonomy.io/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
   </channel>

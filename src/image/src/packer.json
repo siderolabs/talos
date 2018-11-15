@@ -31,13 +31,13 @@
                 }
             ],
             "run_tags": {
-                "Name": "Packer - Dianemo {{ user `version` }}"
+                "Name": "Packer - Talos {{ user `version` }}"
             },
             "run_volume_tags": {
-                "Name": "Packer - Dianemo {{ user `version` }}"
+                "Name": "Packer - Talos {{ user `version` }}"
             },
-            "ami_name": "dianemo-amd64-hvm-{{ user `version` }}",
-            "ami_description": "Dianemo (HVM)",
+            "ami_name": "talos-amd64-hvm-{{ user `version` }}",
+            "ami_description": "Talos (HVM)",
             "ami_virtualization_type": "hvm",
             "ami_regions": "{{ user `regions` }}",
             "ami_root_device": {
@@ -49,7 +49,7 @@
             },
             "ena_support": true,
             "tags": {
-                "Name": "Dianemo {{ user `version` }}",
+                "Name": "Talos {{ user `version` }}",
                 "Built": "{{ user `built` }}"
             }
         }
@@ -64,7 +64,7 @@
                 "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
                 "sudo apt-get -y update",
                 "sudo apt-get -y install docker-ce",
-                "sudo docker run --privileged --volume /dev:/dev autonomy/dianemo:{{ user `version` }} image -b /dev/xvdf -f -p aws -u none"
+                "sudo docker run --privileged --volume /dev:/dev autonomy/talos:{{ user `version` }} image -b /dev/xvdf -f -p aws -u none"
             ]
         }
     ]

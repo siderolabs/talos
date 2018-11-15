@@ -11,14 +11,14 @@ menu:
 
 ## Creating a Master Node
 
-On `Dom0`, install Dianemo to an available block device:
+On `Dom0`, install Talos to an available block device:
 
 ```bash
 docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- autonomy/dianemo:latest image -b /dev/sdb
+ autonomy/talos:latest image -b /dev/sdb
 ```
 
 Save the following as `/etc/xen/master.cfg`
@@ -34,11 +34,11 @@ vcpus=2
 memory = 4096
 serial = "pty"
 
-kernel = "/var/lib/xen/dianemo/vmlinuz"
-ramdisk = "/var/lib/xen/dianemo/initramfs.xz"
+kernel = "/var/lib/xen/talos/vmlinuz"
+ramdisk = "/var/lib/xen/talos/initramfs.xz"
 disk = [ 'phy:/dev/sdb,xvda,w', ]
 vif = [ 'mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000', ]
-extra = "ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/platform=bare-metal dianemo.autonomy.io/userdata=http://${IP}:8080/master.yaml"
+extra = "ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/master.yaml"
 ```
 
 {{% note %}}`http://${IP}:8080/master.yaml` should be reachable by the VM and contain a valid master configuration file.{{% /note %}}
@@ -51,14 +51,14 @@ xl create /etc/xen/master.cfg
 
 ## Creating a Worker Node
 
-On `Dom0`, install Dianemo to an available block device:
+On `Dom0`, install Talos to an available block device:
 
 ```bash
 docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- autonomy/dianemo:latest image -b /dev/sdc
+ autonomy/talos:latest image -b /dev/sdc
 ```
 
 Save the following as `/etc/xen/worker.cfg`
@@ -74,11 +74,11 @@ vcpus=2
 memory = 4096
 serial = "pty"
 
-kernel = "/var/lib/xen/dianemo/vmlinuz"
-ramdisk = "/var/lib/xen/dianemo/initramfs.xz"
+kernel = "/var/lib/xen/talos/vmlinuz"
+ramdisk = "/var/lib/xen/talos/initramfs.xz"
 disk = [ 'phy:/dev/sdc,xvda,w', ]
 vif = [ 'mac=52:54:00:B9:5D:F2,bridge=xenbr0,model=e1000', ]
-extra = "ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/platform=bare-metal dianemo.autonomy.io/userdata=http://${IP}:8080/worker.yaml"
+extra = "ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/worker.yaml"
 ```
 
 {{% note %}}`http://${IP}:8080/worker.yaml` should be reachable by the VM and contain a valid worker configuration file.{{% /note %}}

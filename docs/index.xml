@@ -1,99 +1,99 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Dianemo</title>
-    <link>https://dianemo.autonomy.io/</link>
-    <description>Recent content on Dianemo</description>
+    <title>Talos</title>
+    <link>https://talos.autonomy.io/</link>
+    <description>Recent content on Talos</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 03 Nov 2018 17:14:49 -0700</lastBuildDate>
     
-	<atom:link href="https://dianemo.autonomy.io/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://talos.autonomy.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>osd</title>
-      <link>https://dianemo.autonomy.io/configuration/osd/</link>
+      <link>https://talos.autonomy.io/configuration/osd/</link>
       <pubDate>Sat, 03 Nov 2018 17:14:49 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/configuration/osd/</guid>
+      <guid>https://talos.autonomy.io/configuration/osd/</guid>
       <description>The osd service enforces a high level of security by utilizing mutual TLS for authentication and authorization. In this section we will configure mutual TLS by generating the certificates for the servers (osd) and clients (osctl).
 Cluster Owners We recommend that the configuration of osd be performed by a cluster owner. A cluster owner should be a person of authority within an organization. Perhaps a director, manager, or senior member of a team.</description>
     </item>
     
     <item>
       <title>AWS</title>
-      <link>https://dianemo.autonomy.io/examples/aws/</link>
+      <link>https://talos.autonomy.io/examples/aws/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/examples/aws/</guid>
+      <guid>https://talos.autonomy.io/examples/aws/</guid>
       <description>First, create the AMI:
-docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ autonomy/dianemo:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
+docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ autonomy/talos:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
  An official Terraform module is currently being developed, stay tuned!
  </description>
     </item>
     
     <item>
       <title>kernel</title>
-      <link>https://dianemo.autonomy.io/components/kernel/</link>
+      <link>https://talos.autonomy.io/components/kernel/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/kernel/</guid>
-      <description>The kernel included with Dianemo is configured according to the recommendations outlined in the Kernel Self Protection Project (KSSP).</description>
+      <guid>https://talos.autonomy.io/components/kernel/</guid>
+      <description>The kernel included with Talos is configured according to the recommendations outlined in the Kernel Self Protection Project (KSSP).</description>
     </item>
     
     <item>
       <title>KVM</title>
-      <link>https://dianemo.autonomy.io/examples/kvm/</link>
+      <link>https://talos.autonomy.io/examples/kvm/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/examples/kvm/</guid>
+      <guid>https://talos.autonomy.io/examples/kvm/</guid>
       <description>Creating a Master Node On the KVM host, install a master node to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
  Now, create the VM:
 virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --vcpus=2 \ --ram=4096 \ --disk path=/dev/sdb \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Creating a Worker Node On the KVM host, install a worker node to an available block device:</description>
     </item>
     
     <item>
       <title>Masters</title>
-      <link>https://dianemo.autonomy.io/configuration/masters/</link>
+      <link>https://talos.autonomy.io/configuration/masters/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/configuration/masters/</guid>
-      <description>Configuring master nodes in a Dianemo Kubernetes cluster is a two part process:
- configuring the Dianemo specific options and configuring the Kubernetes specific options  To get started, create a YAML file we will use in the following steps:
-touch &amp;lt;node-name&amp;gt;.yaml  Configuring Dianemo Injecting the Dianemo PKI Using osctl, and our output from the osd configuration documentation, inject the generated PKI into the configuration file:
+      <guid>https://talos.autonomy.io/configuration/masters/</guid>
+      <description>Configuring master nodes in a Talos Kubernetes cluster is a two part process:
+ configuring the Talos specific options and configuring the Kubernetes specific options  To get started, create a YAML file we will use in the following steps:
+touch &amp;lt;node-name&amp;gt;.yaml  Configuring Talos Injecting the Talos PKI Using osctl, and our output from the osd configuration documentation, inject the generated PKI into the configuration file:
 osctl inject os --crt &amp;lt;organization&amp;gt;.</description>
     </item>
     
     <item>
       <title>init</title>
-      <link>https://dianemo.autonomy.io/components/init/</link>
+      <link>https://talos.autonomy.io/components/init/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/init/</guid>
-      <description>A common theme throughout the design of Dianemo is minimalism. We believe strongly in the UNIX philosophy that each program should do one job well. The init included in Dianemo is one example of this.
+      <guid>https://talos.autonomy.io/components/init/</guid>
+      <description>A common theme throughout the design of Talos is minimalism. We believe strongly in the UNIX philosophy that each program should do one job well. The init included in Talos is one example of this.
 We wanted to create a focused init that had one job - run Kubernetes. There simply is no mechanism in place to do anything else.
 To accomplish this, we must address real world operations needs like:</description>
     </item>
     
     <item>
       <title>Xen</title>
-      <link>https://dianemo.autonomy.io/examples/xen/</link>
+      <link>https://talos.autonomy.io/examples/xen/</link>
       <pubDate>Tue, 06 Nov 2018 06:25:46 -0800</pubDate>
       
-      <guid>https://dianemo.autonomy.io/examples/xen/</guid>
-      <description>Creating a Master Node On Dom0, install Dianemo to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/dianemo:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
-name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/dianemo/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/dianemo/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 dianemo.</description>
+      <guid>https://talos.autonomy.io/examples/xen/</guid>
+      <description>Creating a Master Node On Dom0, install Talos to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
+name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
     </item>
     
     <item>
       <title>Workers</title>
-      <link>https://dianemo.autonomy.io/configuration/workers/</link>
+      <link>https://talos.autonomy.io/configuration/workers/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/configuration/workers/</guid>
+      <guid>https://talos.autonomy.io/configuration/workers/</guid>
       <description>Configuring the worker nodes is much more simple in comparison to configuring the master nodes. Using the trustd API, worker nodes submit a CSR, and, if authenticated, receive a valid osd certificate. Similarly, using a kubeadm token, the node joins an existing cluster.
 We need to specify:
  the osd public certificate trustd credentials and endpoints and a kubeadm JoinConfiguration  version: &amp;quot;&amp;quot; security: os: ca: crt: &amp;lt;base 64 encoded root public certificate&amp;gt; services: kubeadm: configuration: | apiVersion: kubeadm.</description>
@@ -101,69 +101,69 @@ We need to specify:
     
     <item>
       <title>kubeadm</title>
-      <link>https://dianemo.autonomy.io/components/kubeadm/</link>
+      <link>https://talos.autonomy.io/components/kubeadm/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/kubeadm/</guid>
-      <description>At the heart of Dianemo is kubeadm, allowing it to harness the power of the official upstream bootstrap tool. By integrating with kubeadm natively, Dianemo stands to gain a strong community of users and developers already familiar with kubeadm.</description>
+      <guid>https://talos.autonomy.io/components/kubeadm/</guid>
+      <description>At the heart of Talos is kubeadm, allowing it to harness the power of the official upstream bootstrap tool. By integrating with kubeadm natively, Talos stands to gain a strong community of users and developers already familiar with kubeadm.</description>
     </item>
     
     <item>
       <title>trustd</title>
-      <link>https://dianemo.autonomy.io/components/trustd/</link>
+      <link>https://talos.autonomy.io/components/trustd/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/trustd/</guid>
+      <guid>https://talos.autonomy.io/components/trustd/</guid>
       <description>Security is one of the highest priorities within Autonomy. To run a Kubernetes cluster a certain level of trust is required to operate a cluster. For example, orchestrating the bootstrap of a highly available control plane requires the distribution of sensitive PKI data.
 To that end, we created trustd. Based on the concept of a Root of Trust, trustd is a simple daemon responsible for establishing trust within the system. Once trust is established, various methods become available to the trustee.</description>
     </item>
     
     <item>
       <title>proxyd</title>
-      <link>https://dianemo.autonomy.io/components/proxyd/</link>
+      <link>https://talos.autonomy.io/components/proxyd/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/proxyd/</guid>
-      <description>Highly available Kubernetes clusters are crucial for production quality clusters. The proxyd component is a simple yet powerful reverse proxy that adapts to where Dianemo is employed and provides load balancing across all API servers.</description>
+      <guid>https://talos.autonomy.io/components/proxyd/</guid>
+      <description>Highly available Kubernetes clusters are crucial for production quality clusters. The proxyd component is a simple yet powerful reverse proxy that adapts to where Talos is employed and provides load balancing across all API servers.</description>
     </item>
     
     <item>
       <title>osd</title>
-      <link>https://dianemo.autonomy.io/components/osd/</link>
+      <link>https://talos.autonomy.io/components/osd/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/osd/</guid>
-      <description>Dianemo is unique in that it has no concept of host-level access. There are no shells installed. No ssh daemon. Only what is required to run Kubernetes. Furthermore, there is no way to run any custom processes on the host level.
+      <guid>https://talos.autonomy.io/components/osd/</guid>
+      <description>Talos is unique in that it has no concept of host-level access. There are no shells installed. No ssh daemon. Only what is required to run Kubernetes. Furthermore, there is no way to run any custom processes on the host level.
 To make this work, we needed an out-of-band tool for managing the nodes. In an ideal world, the system would be self-healing and we would never have to touch it.</description>
     </item>
     
     <item>
       <title>osctl</title>
-      <link>https://dianemo.autonomy.io/components/osctl/</link>
+      <link>https://talos.autonomy.io/components/osctl/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/osctl/</guid>
+      <guid>https://talos.autonomy.io/components/osctl/</guid>
       <description>The osctl CLI is the client to the osd service running on every node. With it you can do things like:
  retrieve container logs restart a service reset a node reboot a node retrieve kernel logs generate pki resources inject data into node configuration files  </description>
     </item>
     
     <item>
       <title>blockd</title>
-      <link>https://dianemo.autonomy.io/components/blockd/</link>
+      <link>https://talos.autonomy.io/components/blockd/</link>
       <pubDate>Tue, 30 Oct 2018 09:16:35 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/components/blockd/</guid>
-      <description>Dianemo comes with a reserved block device with three partitions:
+      <guid>https://talos.autonomy.io/components/blockd/</guid>
+      <description>Talos comes with a reserved block device with three partitions:
  an EFI System Partition (ESP) a ROOT partition mounted as read-only that contains the minimal set of binaries to operate system services and a DATA partion that is mounted as read/write at /var/run  These partitions are reserved and cannot be modified. The one exception to this is that the DATA partition will be resized automatically in the init process to the maximum size possible.</description>
     </item>
     
     <item>
-      <title>Dianemo</title>
-      <link>https://dianemo.autonomy.io/dianemo/</link>
+      <title>Talos</title>
+      <link>https://talos.autonomy.io/talos/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://dianemo.autonomy.io/dianemo/</guid>
-      <description>Dianemo is a modern Linux distribution designed to be secure, immutable, and minimal.</description>
+      <guid>https://talos.autonomy.io/talos/</guid>
+      <description>Talos is a modern Linux distribution designed to be secure, immutable, and minimal.</description>
     </item>
     
   </channel>

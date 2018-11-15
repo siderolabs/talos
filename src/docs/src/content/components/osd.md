@@ -9,7 +9,7 @@ menu:
     weight: 60
 ---
 
-Dianemo is unique in that it has no concept of host-level access.
+Talos is unique in that it has no concept of host-level access.
 There are no shells installed.
 No ssh daemon.
 Only what is required to run Kubernetes.

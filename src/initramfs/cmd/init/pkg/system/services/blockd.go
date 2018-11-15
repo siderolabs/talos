@@ -4,12 +4,12 @@ package services
 import (
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/conditions"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner/containerd"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/version"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/containerd"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/pkg/version"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )

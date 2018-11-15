@@ -1,7 +1,7 @@
 // Package table provides a library for working with block device partition tables.
 package table
 
-import "github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/pkg/serde"
+import "github.com/autonomy/talos/src/initramfs/pkg/blockdevice/pkg/serde"
 
 // Table represents a partition table.
 type Table = []byte

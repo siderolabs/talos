@@ -9,9 +9,9 @@ menu:
     weight: 20
 ---
 
-A common theme throughout the design of Dianemo is minimalism.
+A common theme throughout the design of Talos is minimalism.
 We believe strongly in the UNIX philosophy that each program should do one job well.
-The `init` included in Dianemo is one example of this.
+The `init` included in Talos is one example of this.
 
 We wanted to create a focused `init` that had one job - run Kubernetes.
 There simply is no mechanism in place to do anything else.

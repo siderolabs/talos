@@ -7,8 +7,8 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount/cgroups"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/cgroups"
 	"golang.org/x/sys/unix"
 )
 

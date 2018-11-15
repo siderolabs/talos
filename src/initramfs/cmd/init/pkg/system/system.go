@@ -4,8 +4,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/conditions"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 type singleton struct {

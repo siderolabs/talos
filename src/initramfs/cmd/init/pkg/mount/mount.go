@@ -9,11 +9,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/fs/xfs"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount/blkid"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice"
-	gptpartition "github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table/gpt/partition"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/fs/xfs"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/blkid"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice"
+	gptpartition "github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/partition"
 	"golang.org/x/sys/unix"
 )
 

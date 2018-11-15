@@ -4,11 +4,11 @@ import (
 	"flag"
 	"log"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/osd/pkg/reg"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/factory"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/gen"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/grpc/tls"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/osd/pkg/reg"
+	"github.com/autonomy/talos/src/initramfs/pkg/grpc/factory"
+	"github.com/autonomy/talos/src/initramfs/pkg/grpc/gen"
+	"github.com/autonomy/talos/src/initramfs/pkg/grpc/tls"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

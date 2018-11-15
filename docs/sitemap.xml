@@ -3,108 +3,108 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://dianemo.autonomy.io/configuration/osd/</loc>
+    <loc>https://talos.autonomy.io/configuration/osd/</loc>
     <lastmod>2018-11-03T17:14:49-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/examples/aws/</loc>
+    <loc>https://talos.autonomy.io/examples/aws/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/kernel/</loc>
+    <loc>https://talos.autonomy.io/components/kernel/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/examples/kvm/</loc>
+    <loc>https://talos.autonomy.io/examples/kvm/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/configuration/masters/</loc>
+    <loc>https://talos.autonomy.io/configuration/masters/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/init/</loc>
+    <loc>https://talos.autonomy.io/components/init/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/examples/xen/</loc>
+    <loc>https://talos.autonomy.io/examples/xen/</loc>
     <lastmod>2018-11-06T06:25:46-08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/configuration/workers/</loc>
+    <loc>https://talos.autonomy.io/configuration/workers/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/kubeadm/</loc>
+    <loc>https://talos.autonomy.io/components/kubeadm/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/trustd/</loc>
+    <loc>https://talos.autonomy.io/components/trustd/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/proxyd/</loc>
+    <loc>https://talos.autonomy.io/components/proxyd/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/osd/</loc>
+    <loc>https://talos.autonomy.io/components/osd/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/osctl/</loc>
+    <loc>https://talos.autonomy.io/components/osctl/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/blockd/</loc>
+    <loc>https://talos.autonomy.io/components/blockd/</loc>
     <lastmod>2018-10-30T09:16:35-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/components/</loc>
+    <loc>https://talos.autonomy.io/components/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/configuration/</loc>
+    <loc>https://talos.autonomy.io/configuration/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/dianemo/</loc>
+    <loc>https://talos.autonomy.io/examples/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/examples/</loc>
+    <loc>https://talos.autonomy.io/talos/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/categories/</loc>
+    <loc>https://talos.autonomy.io/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://dianemo.autonomy.io/</loc>
+    <loc>https://talos.autonomy.io/tags/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://talos.autonomy.io/</loc>
     <lastmod>2018-11-03T17:14:49-07:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://dianemo.autonomy.io/tags/</loc>
     <priority>0</priority>
   </url>
   
