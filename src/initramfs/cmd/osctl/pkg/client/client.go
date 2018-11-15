@@ -10,8 +10,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/osctl/pkg/config"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/osd/proto"
+	"github.com/autonomy/talos/src/initramfs/cmd/osctl/pkg/config"
+	"github.com/autonomy/talos/src/initramfs/cmd/osd/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

@@ -1,8 +1,8 @@
 metadata:
-  repository: dianemo/initramfs
+  repository: talos/initramfs
   variables:
     rootfs: /rootfs
-    versionPath: github.com/autonomy/dianemo/src/initramfs/pkg/version
+    versionPath: github.com/autonomy/talos/src/initramfs/pkg/version
     srcXfsprogs: https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-4.18.0.tar.xz
 script:
   template: |
@@ -56,7 +56,7 @@ pipeline:
 stages:
   base:
     artifacts:
-    - source: /src/github.com/autonomy/dianemo/src/initramfs/vendor
+    - source: /src/github.com/autonomy/talos/src/initramfs/vendor
       destination: ./vendor
     tasks:
     - xfsprogs
@@ -90,11 +90,11 @@ stages:
     - image
   generate:
     artifacts:
-    - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/osd/proto
+    - source: /src/github.com/autonomy/talos/src/initramfs/cmd/osd/proto
       destination: ./cmd/osd/proto
-    - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto
+    - source: /src/github.com/autonomy/talos/src/initramfs/cmd/trustd/proto
       destination: ./cmd/trustd/proto
-    - source: /src/github.com/autonomy/dianemo/src/initramfs/cmd/blockd/proto
+    - source: /src/github.com/autonomy/talos/src/initramfs/cmd/blockd/proto
       destination: ./cmd/blockd/proto
     tasks:
     - proto
@@ -105,7 +105,7 @@ tasks:
   blockd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Blockd -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -123,19 +123,19 @@ tasks:
     template: |
       FROM scratch
       WORKDIR /tmp
-      COPY --from=dianemo/initramfs:initramfs /initramfs/initramfs.xz initramfs.xz
+      COPY --from=talos/initramfs:initramfs /initramfs/initramfs.xz initramfs.xz
       CMD false
   init:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Talos -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
         -o /initramfs/init
       {{ else }}
       RUN GOOS=linux GOARCH=amd64 go build \
-        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Dianemo -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
+        -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Talos -X {{ index .Variables "versionPath" }}.Tag=none -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }}" \
         -o /initramfs/init
       {{ end }}
       RUN chmod +x /initramfs/init
@@ -155,7 +155,7 @@ tasks:
   osctl:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Client -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -177,7 +177,7 @@ tasks:
   osd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Server -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -201,19 +201,19 @@ tasks:
           && mv /tmp/bin/protoc /bin \
           && mv /tmp/include/* /usr/local/include \
           && chmod +x /bin/protoc
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/osd
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/osd
       COPY ./cmd/osd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/trustd
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/trustd
       COPY ./cmd/trustd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/blockd
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/blockd
       COPY ./cmd/blockd/proto ./proto
       RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
   proxyd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Proxyd -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -229,13 +229,13 @@ tasks:
       ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]
   src:
     template: |
-      FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
+      FROM talos/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
       RUN ln -s /tools/lib64 /lib64
       RUN mkdir -p /etc/ssl/certs
       RUN ln -s /tools/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
       RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.10.1
       ENV GO111MODULE auto
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs
       COPY --from=xfsprogs {{ index .Variables "rootfs" }} {{ index .Variables "rootfs" }}
       COPY ./ ./
       RUN go mod download
@@ -245,14 +245,14 @@ tasks:
   test:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs
       RUN chmod +x ./hack/test.sh
       RUN ./hack/test.sh --unit
       RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
   trustd:
     template: |
       FROM {{ .Repository }}:base AS {{ .Docker.CurrentStage }}
-      WORKDIR /src/github.com/autonomy/dianemo/src/initramfs/cmd/{{ .Docker.CurrentStage }}
+      WORKDIR /src/github.com/autonomy/talos/src/initramfs/cmd/{{ .Docker.CurrentStage }}
       {{ if and .Git.IsClean .Git.IsTag }}
       RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a \
         -ldflags "-s -w -X {{ index .Variables "versionPath" }}.Name=Trustd -X {{ index .Variables "versionPath" }}.Tag={{ .Git.Tag }} -X {{ index .Variables "versionPath" }}.SHA={{ .Git.SHA }} -X \"{{ index .Variables "versionPath" }}.Built={{ .Built }}\"" \
@@ -268,7 +268,7 @@ tasks:
       ENTRYPOINT ["/{{ .Docker.CurrentStage }}"]
   xfsprogs:
     template: |
-      FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
+      FROM talos/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
       RUN ln -s /tools/lib64 /lib64
       RUN mkdir -p /etc/ssl/certs
       RUN ln -s /tools/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates

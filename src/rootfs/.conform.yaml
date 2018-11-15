@@ -1,5 +1,5 @@
 metadata:
-  repository: dianemo/rootfs
+  repository: talos/rootfs
   variables:
     rootfs: /rootfs
     srcContainerd: https://github.com/containerd/containerd/releases/download/v1.2.0/containerd-1.2.0.linux-amd64.tar.gz
@@ -48,7 +48,7 @@ tasks:
       RUN cp /tools/lib/libuuid.* {{ index .Variables "rootfs" }}/lib
   libseccomp:
     template: |
-      FROM dianemo/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
+      FROM talos/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
       WORKDIR /tools/usr/local/src/{{ .Docker.CurrentStage }}
       RUN curl -L {{index .Variables "srcLibseccomp" }} | tar --strip-components=1 -xz
       WORKDIR build

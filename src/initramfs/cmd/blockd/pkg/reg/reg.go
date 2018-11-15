@@ -3,8 +3,8 @@ package reg
 import (
 	"context"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/blockd/proto"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/blockd/proto"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 )

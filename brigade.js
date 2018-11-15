@@ -26,7 +26,7 @@ events.on("pull_request", function (e, project) {
 })
 
 function conform(e, project) {
-    var job = new Job("dianemo", "autonomy/conform:latest")
+    var job = new Job("talos", "autonomy/conform:latest")
 
     job.env = {
         // "DOCKER_HOST": "tcp://docker:2375"

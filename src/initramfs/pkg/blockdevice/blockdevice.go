@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table/gpt"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt"
 	"golang.org/x/sys/unix"
 )
 

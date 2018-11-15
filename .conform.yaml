@@ -1,5 +1,5 @@
 metadata:
-  repository: autonomy/dianemo
+  repository: autonomy/talos
 policies:
 - type: conventionalCommit
   spec:

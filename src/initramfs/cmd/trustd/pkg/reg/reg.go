@@ -11,9 +11,9 @@ import (
 	"path"
 	"time"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/trustd/proto"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/trustd/proto"
+	"github.com/autonomy/talos/src/initramfs/pkg/crypto/x509"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"google.golang.org/grpc"
 )
 

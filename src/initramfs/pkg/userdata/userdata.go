@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
+	"github.com/autonomy/talos/src/initramfs/pkg/crypto/x509"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"

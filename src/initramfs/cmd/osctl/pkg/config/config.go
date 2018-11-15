@@ -28,7 +28,7 @@ func Open() (c *Config, err error) {
 	if err != nil {
 		return
 	}
-	fileBytes, err := ioutil.ReadFile(path.Join(u.HomeDir, ".dianemo", "config"))
+	fileBytes, err := ioutil.ReadFile(path.Join(u.HomeDir, ".talos", "config"))
 	if err != nil {
 		return
 	}
@@ -52,7 +52,7 @@ func (c *Config) Save() (err error) {
 		return
 	}
 
-	if err = ioutil.WriteFile(path.Join(u.HomeDir, ".dianemo", "config"), configBytes, 0600); err != nil {
+	if err = ioutil.WriteFile(path.Join(u.HomeDir, ".talos", "config"), configBytes, 0600); err != nil {
 		return
 	}
 

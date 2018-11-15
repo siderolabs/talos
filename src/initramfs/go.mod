@@ -1,4 +1,4 @@
-module github.com/autonomy/dianemo/src/initramfs
+module github.com/autonomy/talos/src/initramfs
 
 require (
 	github.com/BurntSushi/toml v0.3.0 // indirect

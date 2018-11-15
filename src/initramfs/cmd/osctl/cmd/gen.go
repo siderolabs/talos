@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/crypto/x509"
+	"github.com/autonomy/talos/src/initramfs/pkg/crypto/x509"
 	"github.com/spf13/cobra"
 )
 

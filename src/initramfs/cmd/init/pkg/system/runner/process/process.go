@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner"
-	processlogger "github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner/process/log"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
+	processlogger "github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/process/log"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 // Process is a runner.Runner that runs a process on the host.

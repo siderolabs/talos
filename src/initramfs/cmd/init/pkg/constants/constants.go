@@ -3,11 +3,11 @@ package constants
 const (
 	// KernelParamUserData is the kernel parameter name for specifying the URL
 	// to the user data.
-	KernelParamUserData = "dianemo.autonomy.io/userdata"
+	KernelParamUserData = "talos.autonomy.io/userdata"
 
 	// KernelParamPlatform is the kernel parameter name for specifying the
 	// platform.
-	KernelParamPlatform = "dianemo.autonomy.io/platform"
+	KernelParamPlatform = "talos.autonomy.io/platform"
 
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"

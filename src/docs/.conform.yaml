@@ -1,12 +1,12 @@
 metadata:
-  repository: dianemo/docs
+  repository: talos/docs
 pipeline:
   stages:
   - build
 stages:
   build:
     artifacts:
-    - source: /src/github.com/autonomy/dianemo/src/public/
+    - source: /src/github.com/autonomy/talos/src/public/
       destination: ../../docs
     tasks:
     - docs
@@ -14,8 +14,8 @@ tasks:
   docs:
     template: |
       FROM golang:1.11.0 as docs
-      WORKDIR /src/github.com/autonomy/dianemo
+      WORKDIR /src/github.com/autonomy/talos
       RUN curl -L https://github.com/gohugoio/hugo/releases/download/v0.49.2/hugo_0.49.2_Linux-64bit.tar.gz | tar -xz -C /bin
       COPY ./src ./src
       RUN cd ./src && hugo --verbose
-      RUN echo "dianemo.autonomy.io" >  /src/github.com/autonomy/dianemo/src/public/CNAME
+      RUN echo "talos.autonomy.io" >  /src/github.com/autonomy/talos/src/public/CNAME

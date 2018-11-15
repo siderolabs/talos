@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/pkg/lba"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/pkg/serde"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table/gpt/header"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/table/gpt/partition"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/pkg/lba"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/pkg/serde"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/header"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/partition"
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 )

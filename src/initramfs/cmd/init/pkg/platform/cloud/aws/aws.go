@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"github.com/fullsailor/pkcs7"
 	"golang.org/x/sys/unix"
 )

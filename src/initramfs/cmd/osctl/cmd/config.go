@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/osctl/pkg/config"
+	"github.com/autonomy/talos/src/initramfs/cmd/osctl/pkg/config"
 	"github.com/spf13/cobra"
 )
 

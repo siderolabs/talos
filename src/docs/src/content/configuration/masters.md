@@ -9,9 +9,9 @@ menu:
     weight: 20
 ---
 
-Configuring master nodes in a Dianemo Kubernetes cluster is a two part process:
+Configuring master nodes in a Talos Kubernetes cluster is a two part process:
 
-- configuring the Dianemo specific options
+- configuring the Talos specific options
 - and configuring the Kubernetes specific options
 
 To get started, create a YAML file we will use in the following steps:
@@ -20,9 +20,9 @@ To get started, create a YAML file we will use in the following steps:
 touch <node-name>.yaml
 ```
 
-## Configuring Dianemo
+## Configuring Talos
 
-### Injecting the Dianemo PKI
+### Injecting the Talos PKI
 
 Using `osctl`, and our output from the `osd` configuration [documentation]({{< ref "osd.md" >}}), inject the generated PKI into the configuration file:
 
@@ -104,10 +104,10 @@ security:
 
 The configuration of the `kubeadm` service is done in two parts:
 
-- supplying the Dianemo specific options
+- supplying the Talos specific options
 - supplying the `kubeadm` `InitConfiguration`
 
-#### Dianemo Specific Options
+#### Talos Specific Options
 
 ```yaml
 services:

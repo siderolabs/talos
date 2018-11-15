@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/version"
+	"github.com/autonomy/talos/src/initramfs/pkg/version"
 )
 
 const hostsTemplate = `
@@ -28,8 +28,8 @@ NAME="{{ .Name }}"
 ID={{ .ID }}
 VERSION_ID={{ .Version }}
 PRETTY_NAME="{{ .Name }} ({{ .Version }}) by Autonomy"
-HOME_URL="https://dianemo.autonomy.io/"
-BUG_REPORT_URL="https://github.com/autonomy/dianemo/src/issues"
+HOME_URL="https://talos.autonomy.io/"
+BUG_REPORT_URL="https://github.com/autonomy/talos/src/issues"
 `
 
 // Hosts renders a valid /etc/hosts file and writes it to disk.

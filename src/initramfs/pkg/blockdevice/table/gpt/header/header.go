@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"hash/crc32"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/pkg/lba"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/blockdevice/pkg/serde"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/pkg/lba"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/pkg/serde"
 	"github.com/google/uuid"
 )
 

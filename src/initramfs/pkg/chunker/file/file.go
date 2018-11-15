@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/autonomy/dianemo/src/initramfs/pkg/chunker"
+	"github.com/autonomy/talos/src/initramfs/pkg/chunker"
 )
 
 // Options is the functional options struct.

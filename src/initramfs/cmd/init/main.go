@@ -9,14 +9,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/platform"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/rootfs"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/switchroot"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/services"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/platform"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/switchroot"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/services"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 var (

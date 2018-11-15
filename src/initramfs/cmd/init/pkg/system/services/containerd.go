@@ -3,10 +3,10 @@ package services
 import (
 	"os"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/conditions"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/system/runner/process"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/process"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 // Containerd implements the Service interface. It serves as the concrete type with

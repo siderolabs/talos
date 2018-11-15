@@ -8,10 +8,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/kernel"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/mount/blkid"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/kernel"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/blkid"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"golang.org/x/sys/unix"
 	yaml "gopkg.in/yaml.v2"
 )

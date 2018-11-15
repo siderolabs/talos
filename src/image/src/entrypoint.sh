@@ -115,12 +115,12 @@ function create_extlinux_conf() {
   # AWS recommends setting the nvme_core.io_timeout to the highest value possible.
   # See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
   cat <<EOF >$1
-DEFAULT Dianemo
-  SAY Dianemo (${VERSION}) by Autonomy
-LABEL Dianemo
+DEFAULT Talos
+  SAY Talos (${VERSION}) by Autonomy
+LABEL Talos
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 dianemo.autonomy.io/userdata=${DIANEMO_USERDATA} dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 talos.autonomy.io/userdata=${TALOS_USERDATA} talos.autonomy.io/platform=${TALOS_PLATFORM}
 EOF
 }
 
@@ -132,8 +132,8 @@ function cleanup {
 
 # Defaults
 
-DIANEMO_USERDATA=""
-DIANEMO_PLATFORM=""
+TALOS_USERDATA=""
+TALOS_PLATFORM=""
 RAW_IMAGE="/out/image.raw"
 VMDK_IMAGE="/out/image.vmdk"
 ISO_IMAGE="/out/image.iso"
@@ -141,7 +141,7 @@ FULL=false
 RAW=false
 ROOTFS_SIZE=$(size_xz /generated/rootfs.tar.xz)
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
-# TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/dianemo/pull/157.
+# TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/talos/pull/157.
 KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
 EXTRA_KERNEL_PARAMS=""
 
@@ -170,12 +170,12 @@ case "$1" in
           echo "Using loop device ${RAW_IMAGE} as installation media"
           ;;
         p )
-          DIANEMO_PLATFORM=${OPTARG}
-          echo "Using kernel parameter dianemo.autonomy.io/platform=${DIANEMO_PLATFORM}"
+          TALOS_PLATFORM=${OPTARG}
+          echo "Using kernel parameter talos.autonomy.io/platform=${TALOS_PLATFORM}"
           ;;
         u )
-          DIANEMO_USERDATA=${OPTARG}
-          echo "Using kernel parameter dianemo.autonomy.io/userdata=${DIANEMO_USERDATA}"
+          TALOS_USERDATA=${OPTARG}
+          echo "Using kernel parameter talos.autonomy.io/userdata=${TALOS_USERDATA}"
           ;;
         \? )
           echo "Invalid Option: -${OPTARG}" 1>&2
@@ -189,12 +189,12 @@ case "$1" in
     done
     shift $((OPTIND -1))
 
-    if [ -z "${DIANEMO_PLATFORM}" ]; then
+    if [ -z "${TALOS_PLATFORM}" ]; then
       echo "The platform flag '-p' must be specified"
       exit 1
     fi
 
-    if [ -z "${DIANEMO_USERDATA}" ]; then
+    if [ -z "${TALOS_USERDATA}" ]; then
       echo "The userdata flag '-u' must be specified"
       exit 1
     fi

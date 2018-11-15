@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/proxyd/pkg/backend"
-	pkgnet "github.com/autonomy/dianemo/src/initramfs/pkg/net"
+	"github.com/autonomy/talos/src/initramfs/cmd/proxyd/pkg/backend"
+	pkgnet "github.com/autonomy/talos/src/initramfs/pkg/net"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"

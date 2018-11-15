@@ -5,11 +5,11 @@ package platform
 import (
 	"fmt"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/kernel"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/platform/baremetal"
-	"github.com/autonomy/dianemo/src/initramfs/cmd/init/pkg/platform/cloud/aws"
-	"github.com/autonomy/dianemo/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/kernel"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/platform/baremetal"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/platform/cloud/aws"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 // Platform is an interface describing a platform.

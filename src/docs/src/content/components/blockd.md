@@ -9,7 +9,7 @@ menu:
     weight: 80
 ---
 
-Dianemo comes with a reserved block device with three partitions:
+Talos comes with a reserved block device with three partitions:
 
 - an EFI System Partition (`ESP`)
 - a `ROOT` partition mounted as read-only that contains the minimal set of binaries to operate system services

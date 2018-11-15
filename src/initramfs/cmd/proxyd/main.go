@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/autonomy/dianemo/src/initramfs/cmd/proxyd/pkg/frontend"
+	"github.com/autonomy/talos/src/initramfs/cmd/proxyd/pkg/frontend"
 )
 
 func main() {
