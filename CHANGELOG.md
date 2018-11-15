@@ -1,3 +1,31 @@
+<a name="0.1.0-alpha.13"></a>
+# [0.1.0-alpha.13](https://github.com/autonomy/dianemo/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
+
+
+### Bug Fixes
+
+* **hack:** add /etc/kubernetes to CIS benchmark jobs ([#199](https://github.com/autonomy/dianemo/issues/199)) ([fc84b62](https://github.com/autonomy/dianemo/commit/fc84b62))
+* **image:** VMDK generation ([#204](https://github.com/autonomy/dianemo/issues/204)) ([9d4f791](https://github.com/autonomy/dianemo/commit/9d4f791))
+* **init:** node join ([#195](https://github.com/autonomy/dianemo/issues/195)) ([157ef67](https://github.com/autonomy/dianemo/commit/157ef67))
+* **init:** use kubeadm experimental-control-plane ([#194](https://github.com/autonomy/dianemo/issues/194)) ([2fd7112](https://github.com/autonomy/dianemo/commit/2fd7112))
+* **osctl:** build Linux binary with CGO ([#196](https://github.com/autonomy/dianemo/issues/196)) ([ab82aa7](https://github.com/autonomy/dianemo/commit/ab82aa7))
+* **osctl:** nil pointer when injecting kubernetes PKI ([#187](https://github.com/autonomy/dianemo/issues/187)) ([160702b](https://github.com/autonomy/dianemo/commit/160702b))
+
+
+### Features
+
+* upgrade Containerd to v1.2.0 ([#190](https://github.com/autonomy/dianemo/issues/190)) ([47787f7](https://github.com/autonomy/dianemo/commit/47787f7))
+* upgrade Kubernetes to v1.13.0-alpha.3 ([#189](https://github.com/autonomy/dianemo/issues/189)) ([91825fa](https://github.com/autonomy/dianemo/commit/91825fa))
+* embed the kubeadm config ([#205](https://github.com/autonomy/dianemo/issues/205)) ([160ce41](https://github.com/autonomy/dianemo/commit/160ce41))
+* **init:** add NoCloud user-data support ([#209](https://github.com/autonomy/dianemo/issues/209)) ([b584904](https://github.com/autonomy/dianemo/commit/b584904))
+* **init:** enforce CIS requirements ([#198](https://github.com/autonomy/dianemo/issues/198)) ([0c41de9](https://github.com/autonomy/dianemo/commit/0c41de9))
+* **init:** enforce use of hyperkube and Kubernetes version ([#207](https://github.com/autonomy/dianemo/issues/207)) ([0081a89](https://github.com/autonomy/dianemo/commit/0081a89))
+* **kernel:** add virtio support ([#208](https://github.com/autonomy/dianemo/issues/208)) ([ff97c8c](https://github.com/autonomy/dianemo/commit/ff97c8c))
+* **kernel:** upgrade Linux to v4.19.1 ([#192](https://github.com/autonomy/dianemo/issues/192)) ([36b899b](https://github.com/autonomy/dianemo/commit/36b899b))
+* **rootfs:** upgrade crictl to v1.12.0 ([#191](https://github.com/autonomy/dianemo/issues/191)) ([f7ad93c](https://github.com/autonomy/dianemo/commit/f7ad93c))
+
+
+
 <a name="0.1.0-alpha.12"></a>
 # [0.1.0-alpha.12](https://github.com/autonomy/dianemo/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
 
