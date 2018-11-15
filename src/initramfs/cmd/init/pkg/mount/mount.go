@@ -71,7 +71,7 @@ func Init(s string) (err error) {
 		return fmt.Errorf("probe block devices: %s", err.Error())
 	}
 	if err = mountBlockDevices(blockdevices, s); err != nil {
-		return
+		return fmt.Errorf("error mounting block devices: %v", err)
 	}
 
 	return nil
@@ -181,10 +181,9 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 	for _, b := range blockdevices {
 		if b.LABEL == constants.DataPartitionLabel {
 			devname := devnameFromPartname(b.dev)
-
 			bd, err := blockdevice.Open(devname)
 			if err != nil {
-				return err
+				return fmt.Errorf("error opening block device %q: %v", devname, err)
 			}
 			// nolint: errcheck
 			defer bd.Close()
@@ -223,7 +222,7 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 
 func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 	if err = fixDataPartition(blockdevices); err != nil {
-		return err
+		return fmt.Errorf("error fixing data partition: %v", err)
 	}
 	for _, b := range blockdevices {
 		mountpoint := &Point{
@@ -251,7 +250,7 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 		if b.LABEL == constants.DataPartitionLabel {
 			// The XFS partition MUST be mounted, or this will fail.
 			if err = xfs.GrowFS(mountpoint.target); err != nil {
-				return err
+				return fmt.Errorf("error growing XFS file system: %v", err)
 			}
 		}
 
@@ -277,12 +276,16 @@ func probe() (b []*BlockDevice, err error) {
 func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	devname, err := blkid.GetDevWithAttribute("LABEL", value)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dev with attribute: %v", err)
+	}
+
+	if devname == "" {
+		return fmt.Errorf("no device with attribute \"LABEL=%s\" found", value)
 	}
 
 	blockDevice, err := probeDevice(devname)
 	if err != nil {
-		return err
+		return fmt.Errorf("faild to probe block device %q: %v", devname, err)
 	}
 
 	*b = append(*b, blockDevice)
@@ -318,22 +321,24 @@ func probeDevice(devname string) (*BlockDevice, error) {
 	}, nil
 }
 
+// TODO(andrewrynhard): Should we return an error here?
 func partNo(partname string) string {
 	if strings.HasPrefix(partname, "/dev/nvme") {
 		idx := strings.Index(partname, "p")
 		return partname[idx+1:]
-	} else if strings.HasPrefix(partname, "/dev/sd") || strings.HasPrefix(partname, "/dev/hd") {
+	} else if strings.HasPrefix(partname, "/dev/sd") || strings.HasPrefix(partname, "/dev/hd") || strings.HasPrefix(partname, "/dev/vd") {
 		return strings.TrimLeft(partname, "/abcdefghijklmnopqrstuvwxyz")
 	}
 
 	return ""
 }
 
+// TODO(andrewrynhard): Should we return an error here?
 func devnameFromPartname(partname string) string {
 	partno := partNo(partname)
 	if strings.HasPrefix(partname, "/dev/nvme") {
 		return strings.TrimRight(partname, "p"+partno)
-	} else if strings.HasPrefix(partname, "/dev/sd") || strings.HasPrefix(partname, "/dev/hd") {
+	} else if strings.HasPrefix(partname, "/dev/sd") || strings.HasPrefix(partname, "/dev/hd") || strings.HasPrefix(partname, "/dev/vd") {
 		return strings.TrimRight(partname, partno)
 	}
 
