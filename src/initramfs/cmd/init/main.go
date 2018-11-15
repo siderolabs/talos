@@ -51,8 +51,8 @@ func initram() (err error) {
 	if err != nil {
 		return
 	}
-	// Download the user data.
-	log.Printf("downloading the user data for the platform: %s", p.Name())
+	// Retrieve the user data.
+	log.Printf("retrieving the user data for the platform: %s", p.Name())
 	data, err := p.UserData()
 	if err != nil {
 		return

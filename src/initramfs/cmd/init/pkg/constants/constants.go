@@ -63,6 +63,10 @@ const (
 
 	// UserDataPath is the path to the downloaded user data.
 	UserDataPath = "/var/run/userdata.yaml"
+
+	// UserDataCIData is the volume label for NoCloud cloud-init.
+	// See https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html#datasource-nocloud.
+	UserDataCIData = "cidata"
 )
 
 // See https://linux.die.net/man/3/klogctl
