@@ -50,9 +50,15 @@ func (p *Process) build(data *userdata.UserData, args *runner.Args, opts *runner
 		err = fmt.Errorf("service log handler: %v", err)
 		return
 	}
+
 	var writer io.Writer
 	if data.Debug {
-		writer = io.MultiWriter(w, os.Stdout)
+		out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return nil, err
+		}
+
+		writer = io.MultiWriter(w, out)
 	} else {
 		writer = w
 	}

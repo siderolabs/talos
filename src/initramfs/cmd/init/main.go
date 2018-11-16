@@ -19,6 +19,11 @@ import (
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
+const (
+	prefix = "[talos] "
+	flags  = 0
+)
+
 var (
 	switchRoot *bool
 )
@@ -30,10 +35,13 @@ func recovery() {
 }
 
 func init() {
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	if err := os.Setenv("PATH", constants.PATH); err != nil {
+	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
 		panic(err)
 	}
+	log.SetOutput(out)
+	log.SetPrefix(prefix)
+	log.SetFlags(flags)
 
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
@@ -124,6 +132,9 @@ func root() (err error) {
 func main() {
 	defer recovery()
 
+	if err := os.Setenv("PATH", constants.PATH); err != nil {
+		panic(err)
+	}
 	if *switchRoot {
 		if err := root(); err != nil {
 			panic(err)
