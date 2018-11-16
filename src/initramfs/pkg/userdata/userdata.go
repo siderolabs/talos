@@ -84,6 +84,7 @@ type Kubelet struct {
 
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
+	Image         string         `yaml:"image,omitempty"`
 	Configuration runtime.Object `yaml:"configuration"`
 	bootstrap     bool
 	controlPlane  bool
