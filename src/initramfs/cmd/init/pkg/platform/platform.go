@@ -9,6 +9,7 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/kernel"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/platform/baremetal"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/platform/cloud/aws"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/platform/cloud/vmware"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
@@ -33,10 +34,12 @@ func NewPlatform() (p Platform, err error) {
 			} else {
 				return nil, fmt.Errorf("failed to verify EC2 PKCS7 signature")
 			}
+		case "vmware":
+			p = &vmware.VMware{}
 		case "bare-metal":
 			p = &baremetal.BareMetal{}
 		default:
-			return nil, fmt.Errorf("no platform specified")
+			return nil, fmt.Errorf("platform not supported: %s", platform)
 		}
 	}
 	return p, nil

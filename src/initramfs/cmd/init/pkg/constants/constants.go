@@ -67,6 +67,12 @@ const (
 	// UserDataCIData is the volume label for NoCloud cloud-init.
 	// See https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html#datasource-nocloud.
 	UserDataCIData = "cidata"
+
+	// UserDataGuestInfo is the name of the VMware guestinfo user data strategy.
+	UserDataGuestInfo = "guestinfo"
+
+	// VMwareGuestInfoUserDataKey is the guestinfo key used to provide a user data file.
+	VMwareGuestInfoUserDataKey = "talos.userdata"
 )
 
 // See https://linux.die.net/man/3/klogctl
