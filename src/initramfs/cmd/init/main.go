@@ -29,9 +29,12 @@ var (
 )
 
 func recovery() {
+	// We should only reach this point if something within initram() fails.
 	if r := recover(); r != nil {
 		log.Printf("recovered from: %v\n", r)
 	}
+
+	select {}
 }
 
 func init() {
@@ -139,13 +142,9 @@ func main() {
 		if err := root(); err != nil {
 			panic(err)
 		}
-		select {}
 	}
 
 	if err := initram(); err != nil {
 		panic(err)
 	}
-
-	// We should only reach this point if something within initram() fails.
-	select {}
 }
