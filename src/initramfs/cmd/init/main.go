@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -17,11 +18,8 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/services"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
-)
 
-const (
-	prefix = "[talos] "
-	flags  = 0
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -38,22 +36,30 @@ func recovery() {
 }
 
 func init() {
-	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		panic(err)
-	}
-	log.SetOutput(out)
-	log.SetPrefix(prefix)
-	log.SetFlags(flags)
-
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
 }
 
+func kmsg(prefix string) error {
+	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to open /dev/kmsg: %v", err)
+	}
+	log.SetOutput(out)
+	log.SetPrefix(prefix + " ")
+	log.SetFlags(0)
+
+	return nil
+}
+
 func initram() (err error) {
 	// Read the block devices and populate the mount point definitions.
-	log.Println("initializing mount points")
 	if err = mount.Init(constants.NewRoot); err != nil {
+		return
+	}
+	// Setup logging to /dev/kmsg.
+	// NB: We should not attempt to open /dev/kmsg until after /dev is mounted.
+	if err = kmsg("[talos] [initramfs]"); err != nil {
 		return
 	}
 	// Discover the platform.
@@ -93,6 +99,10 @@ func initram() (err error) {
 }
 
 func root() (err error) {
+	// Setup logging to /dev/kmsg.
+	if err = kmsg("[talos]"); err != nil {
+		return
+	}
 	// Read the user data.
 	log.Printf("reading the user data: %s\n", constants.UserDataPath)
 	data, err := userdata.Open(constants.UserDataPath)
