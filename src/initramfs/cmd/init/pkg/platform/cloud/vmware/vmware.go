@@ -50,6 +50,10 @@ func (vmw *VMware) UserData() (data userdata.UserData, err error) {
 			return data, fmt.Errorf("failed to get guestinfo.%s: %v", constants.VMwareGuestInfoUserDataKey, err)
 		}
 
+		if val == "" {
+			return data, fmt.Errorf("userdata is required, no value found for guestinfo.%s: %v", constants.VMwareGuestInfoUserDataKey, err)
+		}
+
 		b, err := base64.StdEncoding.DecodeString(val)
 		if err != nil {
 			return data, fmt.Errorf("failed to decode guestinfo.%s: %v", constants.VMwareGuestInfoUserDataKey, err)
