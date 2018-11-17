@@ -192,12 +192,18 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		mounts = append(mounts, specs.Mount{Type: "bind", Destination: "/var/lib/containers", Source: "/var/lib/containers", Options: []string{"rbind", "rshared", "rw"}})
 	}
 
+	env := []string{}
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := containerd.Containerd{}
 
 	return r.Run(
 		data,
 		args,
 		runner.WithContainerImage(image),
+		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			containerd.WithRootfsPropagation("slave"),

@@ -19,6 +19,9 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Env represents a set of environment variables.
+type Env = map[string]string
+
 // UserData represents the user data.
 type UserData struct {
 	Version    string      `yaml:"version"`
@@ -27,6 +30,7 @@ type UserData struct {
 	Services   *Services   `yaml:"services"`
 	Files      []*File     `yaml:"files"`
 	Debug      bool        `yaml:"debug"`
+	Env        Env         `yaml:"env,omitempty"`
 }
 
 // Security represents the set of options available to configure security.
@@ -79,12 +83,13 @@ type Init struct {
 
 // Kubelet describes the configuration of the kubelet service.
 type Kubelet struct {
-	Image string `yaml:"image,omitempty"`
+	CommonServiceOptions `yaml:",inline"`
 }
 
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
-	Image         string         `yaml:"image,omitempty"`
+	CommonServiceOptions `yaml:",inline"`
+
 	Configuration runtime.Object `yaml:"configuration"`
 	bootstrap     bool
 	controlPlane  bool
@@ -169,7 +174,8 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 // authenticate as a client. The endpoints should only be specified in the
 // worker user data, and should include all master nodes participating as a RoT.
 type Trustd struct {
-	Image     string   `yaml:"image,omitempty"`
+	CommonServiceOptions `yaml:",inline"`
+
 	Username  string   `yaml:"username"`
 	Password  string   `yaml:"password"`
 	Endpoints []string `yaml:"endpoints,omitempty"`
@@ -177,22 +183,28 @@ type Trustd struct {
 
 // OSD describes the configuration of the osd service.
 type OSD struct {
-	Image string `yaml:"image,omitempty"`
+	CommonServiceOptions `yaml:",inline"`
 }
 
 // Proxyd describes the configuration of the proxyd service.
 type Proxyd struct {
-	Image string `yaml:"image,omitempty"`
+	CommonServiceOptions `yaml:",inline"`
 }
 
 // Blockd describes the configuration of the blockd service.
 type Blockd struct {
-	Image string `yaml:"image,omitempty"`
+	CommonServiceOptions `yaml:",inline"`
 }
 
 // CRT describes the configuration of the container runtime service.
 type CRT struct {
+	CommonServiceOptions `yaml:",inline"`
+}
+
+// CommonServiceOptions represents the set of options common to all services.
+type CommonServiceOptions struct {
 	Image string `yaml:"image,omitempty"`
+	Env   Env    `yaml:"env,omitempty"`
 }
 
 // WriteFiles writes the requested files to disk.

@@ -2,6 +2,7 @@
 package services
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
@@ -64,12 +65,18 @@ func (t *Blockd) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/run/factory", Source: "/run/blockd", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
+	env := []string{}
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := containerd.Containerd{}
 
 	return r.Run(
 		data,
 		args,
 		runner.WithContainerImage(image),
+		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithMounts(mounts),

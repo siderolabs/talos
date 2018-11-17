@@ -2,6 +2,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
@@ -57,12 +59,18 @@ func (t *Trustd) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/var/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
 	}
 
+	env := []string{}
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := containerd.Containerd{}
 
 	return r.Run(
 		data,
 		args,
 		runner.WithContainerImage(image),
+		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithMounts(mounts),

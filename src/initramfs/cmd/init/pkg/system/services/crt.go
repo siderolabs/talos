@@ -149,6 +149,10 @@ func (c *CRT) Start(data *userdata.UserData) error {
 		image = data.Services.CRT.Image
 	}
 
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := containerd.Containerd{}
 
 	return r.Run(

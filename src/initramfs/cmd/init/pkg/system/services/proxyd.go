@@ -2,6 +2,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/containerd"
@@ -56,12 +58,18 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/etc/kubernetes/pki/ca.crt", Source: "/var/etc/kubernetes/pki/ca.crt", Options: []string{"rbind", "ro"}},
 	}
 
+	env := []string{}
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := containerd.Containerd{}
 
 	return r.Run(
 		data,
 		args,
 		runner.WithContainerImage(image),
+		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithMounts(mounts),
