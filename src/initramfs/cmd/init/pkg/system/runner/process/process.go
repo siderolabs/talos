@@ -12,6 +12,8 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
 	processlogger "github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/process/log"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
+
+	"golang.org/x/sys/unix"
 )
 
 // Process is a runner.Runner that runs a process on the host.
@@ -53,7 +55,7 @@ func (p *Process) build(data *userdata.UserData, args *runner.Args, opts *runner
 
 	var writer io.Writer
 	if data.Debug {
-		out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
 		if err != nil {
 			return nil, err
 		}
