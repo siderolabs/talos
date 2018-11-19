@@ -116,6 +116,14 @@ func root() (err error) {
 		return err
 	}
 
+	// Set the requested environment variables.
+	log.Println("setting environment variables")
+	for key, val := range data.Env {
+		if err = os.Setenv(key, val); err != nil {
+			log.Printf("WARNING failed to set enivronment variable: %v", err)
+		}
+	}
+
 	// Get a handle to the system services API.
 	systemservices := system.Services(data)
 
@@ -145,9 +153,11 @@ func root() (err error) {
 func main() {
 	defer recovery()
 
+	// TODO(andrewrynhard): Remove this and be explicit.
 	if err := os.Setenv("PATH", constants.PATH); err != nil {
 		panic(err)
 	}
+
 	if *switchRoot {
 		if err := root(); err != nil {
 			panic(err)

@@ -116,12 +116,18 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		mounts = append(mounts, specs.Mount{Type: "bind", Destination: "/etc/containers", Source: "/var/etc/containers", Options: []string{"bind", "rw"}})
 	}
 
+	env := []string{}
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := containerd.Containerd{}
 
 	return r.Run(
 		data,
 		args,
 		runner.WithContainerImage(image),
+		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*2048)),
 			containerd.WithRootfsPropagation("slave"),

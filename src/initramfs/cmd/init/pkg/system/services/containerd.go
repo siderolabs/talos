@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
@@ -41,10 +42,16 @@ func (c *Containerd) Start(data *userdata.UserData) error {
 		ProcessArgs: []string{"/bin/containerd"},
 	}
 
+	env := []string{}
+	for key, val := range data.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	r := process.Process{}
 
 	return r.Run(
 		data,
 		args,
+		runner.WithEnv(env),
 	)
 }
