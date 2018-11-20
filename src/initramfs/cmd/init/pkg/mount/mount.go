@@ -8,12 +8,15 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/fs/xfs"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/blkid"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice"
 	gptpartition "github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/partition"
+	"github.com/pkg/errors"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -68,10 +71,10 @@ func Init(s string) (err error) {
 	}
 	blockdevices, err := probe()
 	if err != nil {
-		return fmt.Errorf("probe block devices: %s", err.Error())
+		return fmt.Errorf("error probing block devices: %v", err)
 	}
 	if err = mountBlockDevices(blockdevices, s); err != nil {
-		return fmt.Errorf("error mounting block devices: %v", err)
+		return fmt.Errorf("error mounting partitions: %v", err)
 	}
 
 	return nil
@@ -86,16 +89,16 @@ func Move(s string) error {
 	// Move the special mounts to the new root.
 	for label, mountpoint := range instance.special {
 		target := path.Join(s, mountpoint.target)
-		if err := unix.Mount(mountpoint.target, target, "", unix.MS_MOVE, ""); err != nil {
-			return fmt.Errorf("move mount point %s to %s: %s", mountpoint.target, target, err.Error())
+		if err := UnixMountWithRetry(mountpoint.target, target, "", unix.MS_MOVE, ""); err != nil {
+			return fmt.Errorf("move mount point %s to %s: %v", mountpoint.target, target, err)
 		}
 		if label == "dev" {
 			mountpoint = &Point{"devpts", path.Join(s, "/dev/pts"), "devpts", unix.MS_NOSUID | unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"}
 			if err := os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
-				return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+				return fmt.Errorf("error creating mount point directory %s: %v", mountpoint.target, err)
 			}
-			if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-				return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+			if err := UnixMountWithRetry(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+				return fmt.Errorf("error moving special device from %s to %s: %v", mountpoint.source, mountpoint.target, err)
 			}
 		}
 	}
@@ -118,7 +121,7 @@ func Mount(s string) error {
 	if ok {
 		mountpoint.flags = unix.MS_RDONLY | unix.MS_NOATIME
 		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("error mounting partition %s: %v", mountpoint.target, err)
 		}
 		// MS_SHARED:
 		//   Make this mount point shared.  Mount and unmount events
@@ -132,13 +135,13 @@ func Mount(s string) error {
 		// See http://man7.org/linux/man-pages/man2/mount.2.html
 		// https://github.com/kubernetes/kubernetes/issues/61058
 		if err := unix.Mount("", mountpoint.target, "", unix.MS_SHARED, ""); err != nil {
-			return fmt.Errorf("mount %s as shared: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("error making making mount point %s shared: %v", mountpoint.target, err)
 		}
 	}
 	mountpoint, ok = instance.blockdevices[constants.DataPartitionLabel]
 	if ok {
 		if err := unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("error mounting partition %s: %v", mountpoint.target, err)
 		}
 	}
 
@@ -150,13 +153,13 @@ func Unmount() error {
 	mountpoint, ok := instance.blockdevices[constants.DataPartitionLabel]
 	if ok {
 		if err := unix.Unmount(mountpoint.target, 0); err != nil {
-			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("unmount mount point %s: %v", mountpoint.target, err)
 		}
 	}
 	mountpoint, ok = instance.blockdevices[constants.RootPartitionLabel]
 	if ok {
 		if err := unix.Unmount(mountpoint.target, 0); err != nil {
-			return fmt.Errorf("unmount mount point %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("unmount mount point %s: %v", mountpoint.target, err)
 		}
 	}
 
@@ -166,14 +169,33 @@ func Unmount() error {
 func mountSpecialDevices() (err error) {
 	for _, mountpoint := range instance.special {
 		if err = os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
-			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("error creating mount point directory %s: %v", mountpoint.target, err)
 		}
-		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+		if err = UnixMountWithRetry(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
+			return fmt.Errorf("error mounting special device %s: %v", mountpoint.target, err)
 		}
 	}
 
 	return nil
+}
+
+// UnixMountWithRetry attempts to retry a mount on EBUSY. It will attempt a
+// retry every 100 milliseconds over the course of 5 seconds.
+func UnixMountWithRetry(source string, target string, fstype string, flags uintptr, data string) (err error) {
+	for i := 0; i < 50; i++ {
+		if err = unix.Mount(source, target, fstype, flags, data); err != nil {
+			switch err {
+			case unix.EBUSY:
+				time.Sleep(100 * time.Millisecond)
+				continue
+			default:
+				return err
+			}
+		}
+		return nil
+	}
+
+	return errors.Errorf("mount timeout: %v", err)
 }
 
 // nolint: gocyclo
@@ -241,10 +263,10 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 		}
 
 		if err = os.MkdirAll(mountpoint.target, os.ModeDir); err != nil {
-			return fmt.Errorf("create %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("error creating mount point directory %s: %v", mountpoint.target, err)
 		}
 		if err = unix.Mount(mountpoint.source, mountpoint.target, mountpoint.fstype, mountpoint.flags, mountpoint.data); err != nil {
-			return fmt.Errorf("mount %s: %s", mountpoint.target, err.Error())
+			return fmt.Errorf("error mounting partition %s: %v", mountpoint.target, err)
 		}
 
 		if b.LABEL == constants.DataPartitionLabel {
@@ -285,7 +307,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 
 	blockDevice, err := probeDevice(devname)
 	if err != nil {
-		return fmt.Errorf("faild to probe block device %q: %v", devname, err)
+		return fmt.Errorf("failed to probe block device %q: %v", devname, err)
 	}
 
 	*b = append(*b, blockDevice)
