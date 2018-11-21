@@ -6,7 +6,6 @@ import "C"
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/services"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
+	"github.com/pkg/errors"
 
 	"golang.org/x/sys/unix"
 )
@@ -26,82 +26,75 @@ var (
 	switchRoot *bool
 )
 
-func recovery() {
-	// We should only reach this point if something within initram() fails.
-	if r := recover(); r != nil {
-		log.Printf("recovered from: %v\n", r)
-	}
-
-	select {}
-}
-
 func init() {
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
 }
 
-func kmsg(prefix string) error {
+func kmsg(prefix string) (*os.File, error) {
 	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
 	if err != nil {
-		return fmt.Errorf("failed to open /dev/kmsg: %v", err)
+		return nil, errors.Wrap(err, "failed to open /dev/kmsg")
 	}
 	log.SetOutput(out)
 	log.SetPrefix(prefix + " ")
 	log.SetFlags(0)
 
-	return nil
+	return out, nil
 }
 
-func initram() (err error) {
+func initram() error {
 	// Read the block devices and populate the mount point definitions.
-	if err = mount.Init(constants.NewRoot); err != nil {
-		return
+	if err := mount.Init(constants.NewRoot); err != nil {
+		return err
 	}
 	// Setup logging to /dev/kmsg.
-	// NB: We should not attempt to open /dev/kmsg until after /dev is mounted.
-	if err = kmsg("[talos] [initramfs]"); err != nil {
-		return
+	var f *os.File
+	f, err := kmsg("[talos] [initramfs]")
+	if err != nil {
+		return err
 	}
 	// Discover the platform.
 	log.Println("discovering the platform")
 	p, err := platform.NewPlatform()
 	if err != nil {
-		return
+		return err
 	}
 	// Retrieve the user data.
 	log.Printf("retrieving the user data for the platform: %s", p.Name())
 	data, err := p.UserData()
 	if err != nil {
-		return
+		return err
 	}
 	log.Printf("preparing the node for the platform: %s", p.Name())
 	// Perform any tasks required by a particular platform.
-	if err = p.Prepare(data); err != nil {
-		return
+	if err := p.Prepare(data); err != nil {
+		return err
 	}
 	// Prepare the necessary files in the rootfs.
 	log.Println("preparing the root filesystem")
-	if err = rootfs.Prepare(constants.NewRoot, data); err != nil {
-		return
+	if err := rootfs.Prepare(constants.NewRoot, data); err != nil {
+		return err
 	}
 	// Unmount the ROOT and DATA block devices.
 	log.Println("unmounting the ROOT and DATA partitions")
-	if err = mount.Unmount(); err != nil {
-		return
+	if err := mount.Unmount(); err != nil {
+		return err
 	}
 	// Perform the equivalent of switch_root.
 	log.Println("entering the new root")
-	if err = switchroot.Switch(constants.NewRoot); err != nil {
-		return
+	f.Close() // nolint: errcheck
+	if err := switchroot.Switch(constants.NewRoot); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func root() (err error) {
+func root() error {
 	// Setup logging to /dev/kmsg.
-	if err = kmsg("[talos]"); err != nil {
-		return
+	if _, err := kmsg("[talos]"); err != nil {
+		return err
 	}
 	// Read the user data.
 	log.Printf("reading the user data: %s\n", constants.UserDataPath)
@@ -112,14 +105,14 @@ func root() (err error) {
 
 	// Write any user specified files to disk.
 	log.Println("writing the files specified in the user data to disk")
-	if err = data.WriteFiles(); err != nil {
+	if err := data.WriteFiles(); err != nil {
 		return err
 	}
 
 	// Set the requested environment variables.
 	log.Println("setting environment variables")
 	for key, val := range data.Env {
-		if err = os.Setenv(key, val); err != nil {
+		if err := os.Setenv(key, val); err != nil {
 			log.Printf("WARNING failed to set enivronment variable: %v", err)
 		}
 	}
@@ -150,21 +143,35 @@ func root() (err error) {
 	return nil
 }
 
+func recovery() {
+	if r := recover(); r != nil {
+		log.Printf("recovered from: %+v\n", r)
+	}
+
+	select {}
+}
+
 func main() {
 	defer recovery()
 
 	// TODO(andrewrynhard): Remove this and be explicit.
 	if err := os.Setenv("PATH", constants.PATH); err != nil {
-		panic(err)
+		panic(errors.New("error setting PATH"))
 	}
 
 	if *switchRoot {
 		if err := root(); err != nil {
-			panic(err)
+			panic(errors.Wrap(err, "boot failed"))
 		}
+
+		// Hang forever.
+		select {}
 	}
 
 	if err := initram(); err != nil {
-		panic(err)
+		panic(errors.Wrap(err, "early boot failed"))
 	}
+
+	// We should never reach this point if things are working as intended.
+	panic(errors.New("unkown error"))
 }

@@ -4,10 +4,10 @@
 package proto
 
 import (
+	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	empty "github.com/golang/protobuf/ptypes/empty"
-	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 	math "math"
 )

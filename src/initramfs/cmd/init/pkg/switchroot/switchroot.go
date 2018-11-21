@@ -3,12 +3,12 @@
 package switchroot
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/cgroups"
+	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -87,36 +87,36 @@ func getDev(fd int) (dev uint64, err error) {
 func Switch(s string) error {
 	// Mount the ROOT and DATA block devices at the new root.
 	if err := mount.Mount(s); err != nil {
-		panic(err)
+		return errors.Wrap(err, "error mounting block device")
 	}
 	// Move the special mount points to the new root.
 	if err := mount.Move(s); err != nil {
-		panic(err)
+		return errors.Wrap(err, "error moving special devices")
 	}
 	// Mount the cgroups file systems to the new root.
 	if err := cgroups.Mount(s); err != nil {
-		panic(err)
+		return errors.Wrap(err, "error mounting cgroups")
 	}
 	if err := unix.Chdir(s); err != nil {
-		return fmt.Errorf("chdir: %s", err.Error())
+		return errors.Wrapf(err, "error changing working directory to %s", s)
 	}
 	oldRoot, err := os.Open("/")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error opening /")
 	}
 	// nolint: errcheck
 	defer oldRoot.Close()
 	if err := mount.Finalize(s); err != nil {
-		return err
+		return errors.Wrap(err, "error moving /")
 	}
 	if err := unix.Chroot("."); err != nil {
-		return fmt.Errorf("chroot: %s", err.Error())
+		return errors.Wrap(err, "error chroot")
 	}
 	if err := recursiveDelete(int(oldRoot.Fd())); err != nil {
-		panic(err)
+		return errors.Wrap(err, "error deleting initramfs")
 	}
 	if err := syscall.Exec("/proc/self/exe", []string{"exe", "--switch-root"}, []string{}); err != nil {
-		return fmt.Errorf("exec /proc/self/exe: %s", err.Error())
+		return errors.Wrap(err, "error executing /proc/self/exe")
 	}
 
 	return nil
