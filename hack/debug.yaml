@@ -3,9 +3,6 @@ kind: Pod
 metadata:
   name: debug
 spec:
-  hostPID: true
-  hostIPC: true
-  hostNetwork: true
   # nodeSelector:
   #   kubernetes.io/hostname: ${HOSTNAME}
   tolerations:
@@ -18,8 +15,6 @@ spec:
       env:
       - name: DOCKER_HOST
         value: unix:///rootfs/run/docker.sock
-      securityContext:
-        privileged: true
       volumeMounts:
       - mountPath: /rootfs
         name: root
