@@ -48,27 +48,34 @@ type Point struct {
 
 // BlockDevice represents the metadata on a block device probed by libblkid.
 type BlockDevice struct {
-	dev   string
-	TYPE  string
-	UUID  string
-	LABEL string
+	dev       string
+	TYPE      string
+	UUID      string
+	LABEL     string
+	PARTLABEL string
+	PARTUUID  string
+}
+
+// init initializes the instance metadata
+func init() {
+	instance = struct {
+		special      map[string]*Point
+		blockdevices map[string]*Point
+	}{
+		special,
+		map[string]*Point{},
+	}
 }
 
 // Init initializes the mount points.
-func Init(s string) (err error) {
-	once.Do(func() {
-		instance = struct {
-			special      map[string]*Point
-			blockdevices map[string]*Point
-		}{
-			special,
-			map[string]*Point{},
-		}
-	})
-
+func InitSpecial(s string) (err error) {
 	if err = mountSpecialDevices(); err != nil {
 		return
 	}
+}
+
+// InitBlock initializes the block device mount points.
+func InitBlock(s string) (err error) {
 	blockdevices, err := probe()
 	if err != nil {
 		return fmt.Errorf("error probing block devices: %v", err)
@@ -304,7 +311,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 		return fmt.Errorf("no device with attribute \"LABEL=%s\" found", value)
 	}
 
-	blockDevice, err := probeDevice(devname)
+	blockDevice, err := ProbeDevice(devname)
 	if err != nil {
 		return fmt.Errorf("failed to probe block device %q: %v", devname, err)
 	}
@@ -314,7 +321,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	return nil
 }
 
-func probeDevice(devname string) (*BlockDevice, error) {
+func ProbeDevice(devname string) (*BlockDevice, error) {
 	pr, err := blkid.NewProbeFromFilename(devname)
 	defer blkid.FreeProbe(pr)
 	if err != nil {
@@ -333,12 +340,22 @@ func probeDevice(devname string) (*BlockDevice, error) {
 	if err != nil {
 		return nil, err
 	}
+	PARTLABEL, err := blkid.ProbeLookupValue(pr, "PARTLABEL", nil)
+	if err != nil {
+		return nil, err
+	}
+	PARTUUID, err := blkid.ProbeLookupValue(pr, "PARTUUID", nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return &BlockDevice{
-		dev:   devname,
-		UUID:  UUID,
-		TYPE:  TYPE,
-		LABEL: LABEL,
+		dev:       devname,
+		UUID:      UUID,
+		TYPE:      TYPE,
+		LABEL:     LABEL,
+		PARTLABEL: PARTLABEL,
+		PARTUUID:  PARTUUID,
 	}, nil
 }
 

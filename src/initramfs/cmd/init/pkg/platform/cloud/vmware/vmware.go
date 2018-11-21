@@ -71,3 +71,7 @@ func (vmw *VMware) UserData() (data userdata.UserData, err error) {
 func (vmw *VMware) Prepare(data userdata.UserData) (err error) {
 	return nil
 }
+
+func (vmw *VMware) Install(data userdata.UserData) (err error) {
+	return nil
+}

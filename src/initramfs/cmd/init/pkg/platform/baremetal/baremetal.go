@@ -74,3 +74,36 @@ func (b *BareMetal) UserData() (data userdata.UserData, err error) {
 func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 	return nil
 }
+
+func (b *BareMetal) Install(data userdata.UserData) (err error) {
+	// No installation necessary
+	if data.Install == nil {
+		return nil
+	}
+
+	if data.Install.RootDevice == "" {
+		return fmt.Errorf("%s", "install.rootdevice is required")
+	}
+
+	if data.Install.DataDevice == "" {
+		data.Install.Device = data.Install.RootDevice
+	}
+
+	// Should probably have a canonical location to fetch rootfs - github?/s3?
+	// leaving this w/o a default for now
+	if data.Install.RootFSURL == "" {
+		data.Install.RootFSURL = ""
+	}
+
+	// Verify that the disks are unused
+	// Maybe a simple check against bd.UUID is more appropriate?
+	if !data.Install.Wipe {
+		for _, device := range []string{data.Install.RootDevice, data.Install.DataDevice} {
+			bd := blkid.ProbeDevice(device)
+			if bd.Label == "" || bd.Type == "" || bd.PartLabel == "" {
+				return fmt.Errorf("%s: %s", "install device is not empty", device)
+			}
+		}
+
+	}
+}

@@ -44,8 +44,8 @@ func kmsg(prefix string) (*os.File, error) {
 }
 
 func initram() error {
-	// Read the block devices and populate the mount point definitions.
-	if err := mount.Init(constants.NewRoot); err != nil {
+	// Read the special filesystems and populate the mount point definitions.
+	if err := mount.InitSpecial(constants.NewRoot); err != nil {
 		return err
 	}
 	// Setup logging to /dev/kmsg.
@@ -64,6 +64,14 @@ func initram() error {
 	log.Printf("retrieving the user data for the platform: %s", p.Name())
 	data, err := p.UserData()
 	if err != nil {
+		return err
+	}
+	// Perform rootfs/datafs installation if defined
+	if err := p.Install(data); err != nil {
+		return err
+	}
+	// Read the block devices and populate the mount point definitions.
+	if err := mount.InitBlock(constants.NewRoot); err != nil {
 		return err
 	}
 	log.Printf("preparing the node for the platform: %s", p.Name())
