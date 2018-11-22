@@ -79,6 +79,7 @@ type File struct {
 // Init describes the configuration of the init service.
 type Init struct {
 	ContainerRuntime string `yaml:"containerRuntime,omitempty"`
+	CNI              string `yaml:"cni,omitempty"`
 }
 
 // Kubelet describes the configuration of the kubelet service.

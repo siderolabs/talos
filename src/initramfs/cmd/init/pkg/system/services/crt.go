@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/cni"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/containerd"
@@ -66,20 +67,11 @@ func (c *CRT) PreFunc(data *userdata.UserData) error {
 		if err := ioutil.WriteFile("/var/etc/crio/seccomp.json", []byte(seccompProfile), 0644); err != nil {
 			return fmt.Errorf("failed to write seccomp.json: %v", err)
 		}
-		if err := os.MkdirAll("/var/etc/cni/net.d", os.ModeDir); err != nil {
-			return fmt.Errorf("create /var/etc/cni/net.d: %s", err.Error())
-		}
-		if err := os.MkdirAll("/var/opt/cni/bin", os.ModeDir); err != nil {
-			return fmt.Errorf("create /var/opt/cni/bin: %s", err.Error())
-		}
 		if err := os.MkdirAll("/var/etc/kubernetes/manifests", os.ModeDir); err != nil {
 			return fmt.Errorf("create /var/etc/kubernetes/manifests: %s", err.Error())
 		}
 		if err := os.MkdirAll("/var/lib/kubelet", os.ModeDir); err != nil {
 			return fmt.Errorf("create /var/lib/kubelet: %s", err.Error())
-		}
-		if err := os.MkdirAll("/var/lib/calico", os.ModeDir); err != nil {
-			return fmt.Errorf("create /var/lib/calico: %s", err.Error())
 		}
 		if err := os.MkdirAll("/var/libexec/kubernetes", os.ModeDir); err != nil {
 			return fmt.Errorf("create /var/libexec/kubernetes: %s", err.Error())
@@ -110,11 +102,8 @@ func (c *CRT) Start(data *userdata.UserData) error {
 			{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
 			{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 			{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
-			{Type: "bind", Destination: "/etc/cni", Source: "/var/etc/cni", Options: []string{"bind", "rw"}},
-			{Type: "bind", Destination: "/opt/cni", Source: "/var/opt/cni", Options: []string{"bind", "rw"}},
 			{Type: "bind", Destination: "/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 			{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-			{Type: "bind", Destination: "/var/lib/calico", Source: "/var/lib/calico", Options: []string{"rbind", "rshared", "rw"}},
 			{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/var/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 		}
 		env = []string{}
@@ -166,6 +155,12 @@ func (c *CRT) Start(data *userdata.UserData) error {
 	default:
 		return fmt.Errorf("unknown container runtime %q", data.Services.Init.ContainerRuntime)
 	}
+
+	cniMounts, err := cni.Mounts(data)
+	if err != nil {
+		return err
+	}
+	mounts = append(mounts, cniMounts...)
 
 	if data.Services.CRT != nil && data.Services.CRT.Image != "" {
 		image = data.Services.CRT.Image
