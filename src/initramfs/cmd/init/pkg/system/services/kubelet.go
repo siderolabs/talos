@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/cni"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/conditions"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/system/runner/containerd"
@@ -26,26 +27,11 @@ func (k *Kubelet) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubelet) PreFunc(data *userdata.UserData) error {
-	if err := os.Mkdir("/run/flannel", os.ModeDir); err != nil {
-		return fmt.Errorf("create /run/flannel: %s", err.Error())
-	}
-	if err := os.Mkdir("/run/calico", os.ModeDir); err != nil {
-		return fmt.Errorf("create /run/calico: %s", err.Error())
-	}
-	if err := os.MkdirAll("/var/etc/cni/net.d", os.ModeDir); err != nil {
-		return fmt.Errorf("create /var/etc/cni/net.d: %s", err.Error())
-	}
-	if err := os.MkdirAll("/var/opt/cni/bin", os.ModeDir); err != nil {
-		return fmt.Errorf("create /var/opt/cni/bin: %s", err.Error())
-	}
 	if err := os.MkdirAll("/var/etc/kubernetes/manifests", os.ModeDir); err != nil {
 		return fmt.Errorf("create /var/etc/kubernetes/manifests: %s", err.Error())
 	}
 	if err := os.MkdirAll("/var/lib/kubelet", os.ModeDir); err != nil {
 		return fmt.Errorf("create /var/lib/kubelet: %s", err.Error())
-	}
-	if err := os.MkdirAll("/var/lib/calico", os.ModeDir); err != nil {
-		return fmt.Errorf("create /var/lib/calico: %s", err.Error())
 	}
 	if err := os.MkdirAll("/var/libexec/kubernetes", os.ModeDir); err != nil {
 		return fmt.Errorf("create /var/libexec/kubernetes: %s", err.Error())
@@ -111,13 +97,16 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/calico", Source: "/var/lib/calico", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
-		{Type: "bind", Destination: "/etc/cni", Source: "/var/etc/cni", Options: []string{"rbind", "rshared", "ro"}},
-		{Type: "bind", Destination: "/opt/cni", Source: "/var/opt/cni", Options: []string{"rbind", "rshared", "ro"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/var/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 	}
+
+	cniMounts, err := cni.Mounts(data)
+	if err != nil {
+		return err
+	}
+	mounts = append(mounts, cniMounts...)
 
 	switch data.Services.Init.ContainerRuntime {
 	case constants.ContainerRuntimeDocker:

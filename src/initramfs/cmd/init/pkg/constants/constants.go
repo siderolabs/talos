@@ -23,6 +23,12 @@ const (
 	// PATH defines all locations where executables are stored.
 	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"
 
+	// CNICalico is used to specify Calico CNI.
+	CNICalico = "calico"
+
+	// CNIFlannel is used to specify Flannel CNI.
+	CNIFlannel = "flannel"
+
 	// ContainerdSocket is the path to the containerd socket.
 	ContainerdSocket = "/run/containerd/containerd.sock"
 

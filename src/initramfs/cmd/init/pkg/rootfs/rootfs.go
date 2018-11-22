@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/cni"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/etc"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/proc"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
@@ -30,7 +31,7 @@ func ip() string {
 }
 
 // Prepare creates the files required by the installed binaries and libraries.
-func Prepare(s string, userdata userdata.UserData) (err error) {
+func Prepare(s string, data userdata.UserData) (err error) {
 	// Enable IP forwarding.
 	if err = proc.WriteSystemProperty(&proc.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
 		return
@@ -56,12 +57,16 @@ func Prepare(s string, userdata userdata.UserData) (err error) {
 	if err = etc.OSRelease(s); err != nil {
 		return
 	}
+	// Setup directories required by the CNI plugin.
+	if err = cni.Setup(s, &data); err != nil {
+		return
+	}
 	// Save the user data to disk.
-	data, err := yaml.Marshal(&userdata)
+	dataBytes, err := yaml.Marshal(&data)
 	if err != nil {
 		return
 	}
-	if err = ioutil.WriteFile(path.Join(constants.NewRoot, constants.UserDataPath), data, 0400); err != nil {
+	if err = ioutil.WriteFile(path.Join(constants.NewRoot, constants.UserDataPath), dataBytes, 0400); err != nil {
 		return
 	}
 
