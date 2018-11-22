@@ -67,12 +67,16 @@ func (bd *BlockDevice) Close() error {
 }
 
 // PartitionTable returns the block device partition table.
-func (bd *BlockDevice) PartitionTable() (table.PartitionTable, error) {
+func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
 	if bd.table == nil {
 		return nil, fmt.Errorf("missing partition table")
 	}
 
-	return bd.table, bd.table.Read()
+	if read {
+		return bd.table, bd.table.Read()
+	} else {
+		return bd.table, nil
+	}
 }
 
 // RereadPartitionTable invokes the BLKRRPART ioctl to have the kernel read the

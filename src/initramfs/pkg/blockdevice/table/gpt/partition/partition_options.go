@@ -14,11 +14,11 @@ type Options struct {
 type Option func(*Options)
 
 // WithPartitionType sets the partition type.
-func WithPartitionType(o [16]byte) Option {
+func WithPartitionType(id string) Option {
 	return func(args *Options) {
 		// TODO: An Option should return an error.
 		// nolint: errcheck
-		guuid, _ := uuid.FromBytes(o[:])
+		guuid, _ := uuid.Parse(id)
 		args.Type = guuid
 	}
 }
@@ -35,7 +35,7 @@ func NewDefaultOptions(setters ...interface{}) *Options {
 	// Default to data type "af3dc60f-8384-7247-8e79-3d69d8477de4"
 	// TODO: An Option should return an error.
 	// nolint: errcheck
-	guuid, _ := uuid.FromBytes([]byte{0Xaf, 0X3d, 0Xc6, 0X0f, 0X83, 0X84, 0X72, 0X47, 0X8e, 0X79, 0X3d, 0X69, 0Xd8, 0X47, 0X7d, 0Xe4})
+	guuid, _ := uuid.Parse("af3dc60f-8384-7247-8e79-3d69d8477de4")
 
 	opts := &Options{
 		Type: guuid,

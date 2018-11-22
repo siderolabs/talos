@@ -12,6 +12,10 @@ const (
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
+	// BootPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	BootPartitionLabel = "ESP"
+
 	// DataPartitionLabel is the label of the partition to use for mounting at
 	// the data path.
 	DataPartitionLabel = "DATA"

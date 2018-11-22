@@ -80,7 +80,9 @@ type File struct {
 // Install represents the installation options for preparing a node
 type Install struct {
 	DataDevice string `yaml:"datadevice,omitempty"`
+	DataSize   uint   `yaml:"datasize,omitempty"`
 	RootDevice string `yaml:"rootdevice"`
+	RootSize   uint   `yaml:"rootsize,omitempty"`
 	Wipe       bool   `yaml:"wipe"`
 	RootFSURL  string `yaml:"rootfsurl"`
 }
