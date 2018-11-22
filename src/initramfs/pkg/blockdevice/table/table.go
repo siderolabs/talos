@@ -22,6 +22,8 @@ type PartitionTable interface {
 	Partitions() []Partition
 	// Repair repairs a partition table.
 	Repair() error
+	// New creates a new partition table.
+	New() (PartitionTable, error)
 	// Partitioner must be implemented by a partition table.
 	Partitioner
 }

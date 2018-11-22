@@ -2,11 +2,14 @@
 package blockdevice
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt"
+	"github.com/pkg/errors"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -18,18 +21,41 @@ type BlockDevice struct {
 }
 
 // Open initializes and returns a block device.
-func Open(devname string) (*BlockDevice, error) {
+// TODO(andrewrynhard): Use BLKGETSIZE ioctl to get the size.
+// TODO(andrewrynhard): Use BLKPBSZGET ioctl to get the physical sector size.
+// TODO(andrewrynhard): Use BLKSSZGET ioctl to get the logical sector size
+// and pass them into gpt as options.
+func Open(devname string, setters ...Option) (*BlockDevice, error) {
+	opts := NewDefaultOptions(setters...)
+
+	bd := &BlockDevice{}
+
 	f, err := os.OpenFile(devname, os.O_RDWR, os.ModeDevice)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Dynamically detect MBR/GPT.
-	// TODO: Use BLKGETSIZE ioctl to get the size.
-	// TODO: Use BLKPBSZGET ioctl to get the physical sector size.
-	// TODO: Use BLKSSZGET ioctl to get the logical sector size.
-	// and pass them into gpt as options.
-	bd := &BlockDevice{
-		table: gpt.NewGPT(devname, f),
+
+	if opts.CreateGPT {
+		gpt := gpt.NewGPT(devname, f)
+		table, e := gpt.New()
+		if e != nil {
+			return nil, e
+		}
+		bd.table = table
+	} else {
+		buf := make([]byte, 1)
+		// PMBR protective entry starts at 446. The partition type is at offset
+		// 4 from the start of the PMBR protective entry.
+		_, err = f.ReadAt(buf, 450)
+		if err != nil {
+			return nil, err
+		}
+		// For GPT, the partition type should be 0xee (EFI GPT).
+		if bytes.Equal(buf, []byte{0xee}) {
+			bd.table = gpt.NewGPT(devname, f)
+		} else {
+			return nil, errors.New("failed to find GUID partition table")
+		}
 	}
 
 	return bd, nil
@@ -46,10 +72,10 @@ func (bd *BlockDevice) PartitionTable() (table.PartitionTable, error) {
 		return nil, fmt.Errorf("missing partition table")
 	}
 
-	return bd.table, nil
+	return bd.table, bd.table.Read()
 }
 
-// RereadPartitionTable invokes the BLKRRPART ioctl have the kernel read the
+// RereadPartitionTable invokes the BLKRRPART ioctl to have the kernel read the
 // partition table.
 func (bd *BlockDevice) RereadPartitionTable(devname string) error {
 	f, err := os.Open(devname)
