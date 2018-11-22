@@ -79,6 +79,8 @@ type File struct {
 
 // Install represents the installation options for preparing a node
 type Install struct {
+	BootDevice string `yaml:"bootdevice,omitempty"`
+	BootSize   uint   `yaml:"bootsize, omitempty"`
 	DataDevice string `yaml:"datadevice,omitempty"`
 	DataSize   uint   `yaml:"datasize,omitempty"`
 	RootDevice string `yaml:"rootdevice"`
