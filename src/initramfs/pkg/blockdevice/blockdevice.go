@@ -15,7 +15,8 @@ import (
 
 // BlockDevice represents a block device.
 type BlockDevice struct {
-	table table.PartitionTable
+	devname string
+	table   table.PartitionTable
 
 	f *os.File
 }
@@ -81,13 +82,9 @@ func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
 
 // RereadPartitionTable invokes the BLKRRPART ioctl to have the kernel read the
 // partition table.
-func (bd *BlockDevice) RereadPartitionTable(devname string) error {
-	f, err := os.Open(devname)
-	if err != nil {
-		return err
-	}
+func (bd *BlockDevice) RereadPartitionTable() error {
 	unix.Sync()
-	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKRRPART, 0); ret != 0 {
+	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
 		return fmt.Errorf("re-read partition table: %v", ret)
 	}
 	if err := f.Sync(); err != nil {
@@ -96,4 +93,8 @@ func (bd *BlockDevice) RereadPartitionTable(devname string) error {
 	unix.Sync()
 
 	return nil
+}
+
+func (bd *BlockDevice) Name() string {
+	return bd.devicename
 }

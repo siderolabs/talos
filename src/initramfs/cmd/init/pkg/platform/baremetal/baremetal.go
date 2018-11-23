@@ -4,12 +4,16 @@ package baremetal
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/fs/xfs"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/kernel"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/blkid"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice"
@@ -126,62 +130,101 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 
 	}
 
-	uniqueDevices := make(map[string]table.PartitionTable)
-	for _, device := range []string{data.Install.RootDevice, data.Install.DataDevice} {
-		if _, ok := uniqueDevices[device]; !ok {
+	// Create a map of all the devices we need to be concerned with
+	devices := make(map[string]*device)
 
-			bd, err := blockdevice.Open(device)
-			if err != nil {
-				return err
-			}
+	// PR: Should we only allow boot device creation if data.Install.Wipe?
+	if data.Install.BootDevice != "" {
+		// TODO replace []string{} with boot partition artifacts
+		devices[constants.BootPartitionLabel] = newDevice(data.Install.BootDevice, constants.BootPartitionLabel, data.Install.BootSize, []string{})
+	}
+	devices[constants.RootPartitionLabel] = newDevice(data.Install.RootDevice, constants.RootPartitionLabel, data.Install.RootSize, []string{data.Install.RootFSURL})
+
+	// TODO replace []string{} with data partition artifacts
+	devices[constants.DataPartitionLabel] = newDevice(data.Install.DataDevice, constants.DataPartitionLabel, data.Install.DataSize, []string{})
+
+	// Use the below to only open a block device once
+	uniqueDevices := make(map[string]blockdevice.BlockDevice)
+
+	// Associate block device to a partition table. This allows us to
+	// make use of a single partition table across an entire block device.
+	partitionTables := make(map[blockdevice.BlockDevice]table.PartitionTable)
+	for _, device := range []string{data.Install.BootDevice, data.Install.RootDevice, data.Install.DataDevice} {
+		if dev, ok := uniqueDevices[device]; ok {
+			devices[device].BlockDevice = bd
+			devices[device].PartitionTable = partitonTables[bd]
+			continue
 		}
 
-		// Ignore errors here since they're most likely from a partition
-		// table not existing yet
-		// Only read partition table if we're not going to wipe
-		pt, _ := bd.PartitionTable(!data.Install.Wipe)
-		uniqueDevices[device] = pt
-	}
-
-	var err error
-	if data.Install.BootDevice != "" {
-		// Create boot partition
-		err = partitionDisk(uniqueDevices[data.Install.BootDevice], data.Install.BootSize, constants.BootPartitionLabel)
+		bd, err := blockdevice.Open(device)
 		if err != nil {
 			return err
 		}
+
+		defer bd.Close()
+
+		// Ignoring error here since it should only happen if this is an empty disk
+		// where a partition table does not already exist
+		pt, _ = bd.PartitionTable(!data.Install.Wipe)
+		uniqueDevices[device] = bd
+		partitionTables[bd] = pt
+
+		devices[device].BlockDevice = bd
+		devices[device].PartitionTable = pt
 	}
 
-	// Create root partition
-	err = partitionDisk(uniqueDevices[data.Install.RootDevice], data.Install.RootSize, constants.RootPartitionLabel)
-	if err != nil {
-		return err
+	for _, dev := range devices {
+		// Partition the disk
+		err = device.Partition()
+		// Create the device files
+		err = device.BlockDevice.RereadPartitionTable()
+		// Create the filesystem
+		err = device.Format()
+		// Mount up the new filesystem
+		err = device.Mount()
+		// Install the necessary bits/files
+		// // download / copy kernel bits to boot
+		// // download / extract rootfsurl
+		// // handle data dirs creation
+		err = device.Install()
+		// Unmount the disk so we can proceed to the next phase
+		// as if there was no installation phase
+		err = device.Unmount()
 	}
-
-	// Create data partition
-	err = partitionDisk(uniqueDevices[data.Install.DataDevice], data.Install.DataSize, constants.DataPartitionLabel)
-	if err != nil {
-		return err
-	}
-
-	// Reread partition table?
-
-	// Close bd // drop uniqueDevices
-
-	// look up actual device name ( data.Install.xxxDevice + partition.No ? )
-
-	// format disk
-
-	// download / copy kernel bits to boot
-
-	// download / extract rootfsurl
-
-	// handle data dirs creation
 }
 
-func partitionDisk(device table.PartitionTable, size uint, name string) error {
+type device struct {
+	Label    string
+	Name     string
+	Size     int
+	DataURLs []string
+
+	BlockDevice *blockdevice.BlockDevice
+	// This seems overkill to save partition table
+	// when we can get partition table from BlockDevice
+	// but we want to have a shared partition table for each
+	// device so we can properly append partitions and have
+	// an atomic write partition operation
+	PartitionTable table.PartitionTable
+
+	// This guy might be overkill but we can clean up later
+	// Made up of Name + part.No(), so maybe it's worth
+	// just storing part.No() and adding a method d.PartName()
+	PartitionName string
+}
+
+func newDevice(name string, label string, size int, data []string) *device {
+	return &device{
+		Name:     name,
+		Label:    label,
+		Size:     size,
+		DataURLs: data,
+	}
+}
+
+func (d *device) Partition() error {
 	var typeID string
-	switch name {
+	switch d.Label {
 	case constants.BootPartitionLabel:
 		// EFI System Partition
 		typeID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
@@ -202,10 +245,49 @@ func partitionDisk(device table.PartitionTable, size uint, name string) error {
 		return fmt.Errorf("%s", "unknown partition label")
 	}
 
-	_, err := devices[target].Add(size, partition.Options.WithPartitionType(typeID), partition.Options.WithPartitionName(name))
+	part, err := d.BlockDevice.PartitionAdd(size, partition.Options.WithPartitionType(typeID), partition.Options.WithPartitionName(name))
+
+	d.PartName = d.BlockDevice.Name() + strconv.Itoa(int(part.No()))
+
 	return err
 }
 
-func formatPartition() error {
+func (d *device) Format() error {
+	return xfs.MakeFS(d.PartName)
+}
 
+func (d *device) Mount() error {
+	return nil
+}
+
+func (d *device) Install() error {
+	for _, artifacts := range d.DataURLs {
+		out, err := ioutil.TempFile("", "installdata")
+		if err != nil {
+			return err
+		}
+
+		defer os.Remove(tmpfile.Name())
+		defer out.Close()
+
+		// Get the data
+		resp, err := http.Get(artifacts)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		// Write the body to file
+		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			return err
+		}
+
+		// Extract artifact if necessary, otherwise place at root of partition/filesystem
+	}
+	return nil
+}
+
+func (d *device) Unmount() error {
+	return nil
 }
