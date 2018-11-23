@@ -2,6 +2,7 @@
 package gpt
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"syscall"
@@ -13,6 +14,7 @@ import (
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/header"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/partition"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -105,6 +107,90 @@ func (gpt *GPT) Write() error {
 	return gpt.Read()
 }
 
+// New creates a new partition table and writes it to disk.
+func (gpt *GPT) New() (table.PartitionTable, error) {
+	// Seek to the end to get the size.
+	size, err := gpt.f.Seek(0, 2)
+	if err != nil {
+		return nil, err
+	}
+	// Reset and seek to the beginning.
+	_, err = gpt.f.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	h, err := gpt.newHeader(size)
+	if err != nil {
+		return nil, err
+	}
+	pmbr, err := gpt.newPMBR(h)
+	if err != nil {
+		return nil, err
+	}
+
+	gpt.header = h
+	gpt.partitions = []table.Partition{}
+
+	written, err := gpt.f.WriteAt(pmbr[446:], 446)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write the protective MBR")
+	}
+	if written != len(pmbr[446:]) {
+		return nil, errors.Errorf("expected a write %d bytes, got %d", written, len(pmbr[446:]))
+	}
+
+	if err := gpt.Write(); err != nil {
+		return nil, err
+	}
+
+	return gpt, nil
+}
+
+func (gpt *GPT) newHeader(size int64) (*header.Header, error) {
+	h := &header.Header{}
+	h.Signature = "EFI PART"
+	h.Revision = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x01, 0x00})
+	h.Size = header.HeaderSize
+	h.Reserved = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x00, 0x00})
+	h.CurrentLBA = 1
+	h.BackupLBA = uint64(size/int64(gpt.lba.PhysicalBlockSize) - 1)
+	h.FirstUsableLBA = 34
+	h.LastUsableLBA = h.BackupLBA - 33
+	guuid, err := uuid.NewUUID()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate UUID for new partition table")
+	}
+	h.GUUID = guuid
+	h.PartitionEntriesStartLBA = 2
+	h.NumberOfPartitionEntries = 128
+	h.PartitionEntrySize = 128
+
+	return h, nil
+}
+
+// See:
+// - https://en.wikipedia.org/wiki/GUID_Partition_Table#Protective_MBR_(LBA_0)
+// - https://www.syslinux.org/wiki/index.php?title=Doc/gpt
+// - https://en.wikipedia.org/wiki/Master_boot_record
+func (gpt *GPT) newPMBR(h *header.Header) ([]byte, error) {
+	pmbr := make([]byte, 512)
+
+	// Boot signature.
+	copy(pmbr[510:], []byte{0x55, 0xaa})
+	// PMBR protective entry.
+	b := pmbr[446 : 446+16]
+	b[0] = 0x00
+	// Partition type: EFI data partition.
+	b[4] = 0xee
+	// Partition start LBA.
+	binary.LittleEndian.PutUint32(b[8:12], 1)
+	// Partition length in sectors.
+	binary.LittleEndian.PutUint32(b[12:16], uint32(h.BackupLBA))
+
+	return pmbr, nil
+}
+
 // Write the primary table.
 func (gpt *GPT) writePrimary(partitions []byte) error {
 	header, err := gpt.deserializeHeader(partitions)
@@ -187,7 +273,7 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 	end = start + size/uint64(gpt.PhysicalBlockSize())
 
 	if end > gpt.header.LastUsableLBA {
-		// TODO: This calculation is wrong, fix it.
+		// TODO(andrewrynhard): This calculation is wrong, fix it.
 		available := (gpt.header.LastUsableLBA - start) * uint64(gpt.PhysicalBlockSize())
 		return nil, fmt.Errorf("requested partition size %d is too big, largest available is %d", size, available)
 	}
@@ -202,7 +288,7 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 		ID:       uuid,
 		FirstLBA: start,
 		LastLBA:  end,
-		// TODO: Flags should be an option.
+		// TODO(andrewrynhard): Flags should be an option.
 		Flags:  0,
 		Name:   opts.Name,
 		Number: int32(len(gpt.partitions) + 1),
@@ -222,14 +308,14 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 }
 
 // Resize resizes a partition.
-// TODO: Verify that we can indeed grow this partition safely.
+// TODO(andrewrynhard): Verify that we can indeed grow this partition safely.
 func (gpt *GPT) Resize(p table.Partition) error {
 	partition, ok := p.(*partition.Partition)
 	if !ok {
 		return fmt.Errorf("partition is not a GUID partition table partition")
 	}
 
-	// TODO: This should be a parameter.
+	// TODO(andrewrynhard): This should be a parameter.
 	partition.LastLBA = gpt.header.LastUsableLBA
 
 	index := partition.Number - 1
@@ -256,7 +342,6 @@ func (gpt *GPT) PhysicalBlockSize() int {
 	return gpt.lba.PhysicalBlockSize
 }
 
-// TODO: Rename this func, it doesn't deserialize anything.
 func (gpt *GPT) readPrimary() ([]byte, error) {
 	// LBA 34 is the first usable sector on the disk.
 	table := gpt.lba.Make(34)
@@ -338,7 +423,7 @@ func (gpt *GPT) serializePartitions(header *header.Header) ([]table.Partition, e
 }
 
 func (gpt *GPT) deserializePartitions() ([]byte, error) {
-	// TODO: Should this be a method on the Header struct?
+	// TODO(andrewrynhard): Should this be a method on the Header struct?
 	data := make([]byte, gpt.header.NumberOfPartitionEntries*gpt.header.PartitionEntrySize)
 
 	for j, p := range gpt.partitions {
