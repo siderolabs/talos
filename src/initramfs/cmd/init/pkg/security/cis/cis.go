@@ -3,9 +3,9 @@ package cis
 import (
 	"bytes"
 	"encoding/base64"
-	"html/template"
 	"io/ioutil"
 	"math/rand"
+	"text/template"
 	"time"
 
 	"k8s.io/api/core/v1"
