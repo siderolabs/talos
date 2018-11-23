@@ -79,14 +79,17 @@ type File struct {
 
 // Install represents the installation options for preparing a node
 type Install struct {
-	BootDevice string `yaml:"bootdevice,omitempty"`
-	BootSize   uint   `yaml:"bootsize, omitempty"`
-	DataDevice string `yaml:"datadevice,omitempty"`
-	DataSize   uint   `yaml:"datasize,omitempty"`
-	RootDevice string `yaml:"rootdevice"`
-	RootSize   uint   `yaml:"rootsize,omitempty"`
-	Wipe       bool   `yaml:"wipe"`
-	RootFSURL  string `yaml:"rootfsurl"`
+	Boot *InstallDevice `yaml:"boot,omitempty"`
+	Root *InstallDevice `yaml:"root"`
+	Data *InstallDevice `yaml:"data,omitempty"`
+	Wipe bool           `yaml:"wipe"`
+}
+
+// InstallDevice represents the specific directions for each partition
+type InstallDevice struct {
+	Device string   `yaml:"device,omitempty"`
+	Size   uint     `yaml:"size,omitempty"`
+	Data   []string `yaml:"data,omitempty"`
 }
 
 // Init describes the configuration of the init service.

@@ -3,14 +3,17 @@
 package baremetal
 
 import (
+	"archive/tar"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/fs/xfs"
@@ -89,33 +92,54 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 		return nil
 	}
 
-	if data.Install.RootDevice == "" {
+	// Root Device Init
+	if data.Install.Root.Device == "" {
 		return fmt.Errorf("%s", "install.rootdevice is required")
 	}
 
-	if data.Install.RootSize == 0 {
+	if data.Install.Root.Size == 0 {
 		// Set to 1G default for funzies
 		data.Install.RootSize = 1024 * 1000 * 1000 * 1000
 	}
 
-	if data.Install.DataDevice == "" {
-		data.Install.Device = data.Install.RootDevice
+	if len(data.Install.Root.Data) == 0 {
+		// Should probably have a canonical location to fetch rootfs - github?/s3?
+		// leaving this w/o a default for now
+		data.Install.Root.Data = append(data.Install.Root.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/rootfs.tar.xz")
 	}
 
-	if data.Install.DataSize == 0 {
+	// Data Device Init
+	if data.Install.Data.Device == "" {
+		data.Install.Data.Device = data.Install.Root.Device
+	}
+
+	if data.Install.Data.Size == 0 {
 		// Set to 1G default for funzies
-		data.Install.DataSize = 1024 * 1000 * 1000 * 1000
+		data.Install.Data.Size = 1024 * 1000 * 1000 * 1000
 	}
 
-	if data.Install.BootSize == 0 {
-		// Set to 1G default for funzies
-		data.Install.BootSize = 1024 * 1000 * 1000 * 1000
+	if len(data.Install.Data.Data) == 0 {
+		// Unsure if these are the real files or not, but gives an idea
+		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/blockd.tar")
+		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/osd.tar")
+		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/proxyd.tar")
+		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/trustd.tar")
+
 	}
 
-	// Should probably have a canonical location to fetch rootfs - github?/s3?
-	// leaving this w/o a default for now
-	if data.Install.RootFSURL == "" {
-		data.Install.RootFSURL = ""
+	// Boot Device Init
+	if data.Install.Boot != nil {
+		if data.Install.Boot.Device == "" {
+			data.Install.Boot.Device = data.Install.Root.Device
+		}
+		if data.Install.Boot.Size == 0 {
+			// Set to 1G default for funzies
+			data.Install.Boot.Size = 1024 * 1000 * 1000 * 1000
+		}
+		if len(data.Install.Data.Data) == 0 {
+			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/vmlinuz")
+			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/initramfs.xz")
+		}
 	}
 
 	// Verify that the disks are unused
@@ -136,12 +160,12 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
 	if data.Install.BootDevice != "" {
 		// TODO replace []string{} with boot partition artifacts
-		devices[constants.BootPartitionLabel] = newDevice(data.Install.BootDevice, constants.BootPartitionLabel, data.Install.BootSize, []string{})
+		devices[constants.BootPartitionLabel] = newDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Boot.Data)
 	}
-	devices[constants.RootPartitionLabel] = newDevice(data.Install.RootDevice, constants.RootPartitionLabel, data.Install.RootSize, []string{data.Install.RootFSURL})
+	devices[constants.RootPartitionLabel] = newDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Root.Data)
 
 	// TODO replace []string{} with data partition artifacts
-	devices[constants.DataPartitionLabel] = newDevice(data.Install.DataDevice, constants.DataPartitionLabel, data.Install.DataSize, []string{})
+	devices[constants.DataPartitionLabel] = newDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Data.Data)
 
 	// Use the below to only open a block device once
 	uniqueDevices := make(map[string]blockdevice.BlockDevice)
@@ -284,10 +308,84 @@ func (d *device) Install() error {
 		}
 
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
+		// Feels kind of janky, but going to use the suffix to denote what to do
+		switch {
+		case strings.HasSuffix(artifact, ".tar"):
+			// extract tar
+			err = untar(out)
+		case strings.HasSuffix(artifact, ".xz"):
+			// extract xz
+			// Maybe change to use gzip instead of xz to use stdlib?
+		default:
+			// nothing special, download and go
+			dst := strings.Split(artifact, "/")
+			err := os.Rename(out.Name(), "/"+dst[len(dst)-1])
+		}
 	}
 	return nil
 }
 
 func (d *device) Unmount() error {
 	return nil
+}
+
+// https://medium.com/@skdomino/taring-untaring-files-in-go-6b07cf56bc07
+// no idea if this gets what we want but seems awful close
+func untar(tarball *os.File) error {
+	tr := tar.NewReader(tarball)
+
+	for {
+		header, err := tr.Next()
+
+		switch {
+
+		// if no more files are found return
+		case err == io.EOF:
+			return nil
+
+			// return any other error
+		case err != nil:
+			return err
+
+			// if the header is nil, just skip it (not sure how this happens)
+		case header == nil:
+			continue
+		}
+
+		// the target location where the dir/file should be created
+		target := filepath.Join(dst, header.Name)
+
+		// the following switch could also be done using fi.Mode(), not sure if there
+		// a benefit of using one vs. the other.
+		// fi := header.FileInfo()
+
+		// check the file type
+		switch header.Typeflag {
+
+		// if its a dir and it doesn't exist create it
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					return err
+				}
+			}
+
+			// if it's a file create it
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+
+			// manually close here after each file operation; defering would cause each file close
+			// to wait until all operations have completed.
+			f.Close()
+		}
+	}
+
 }
