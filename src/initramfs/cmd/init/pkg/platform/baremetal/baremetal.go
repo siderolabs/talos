@@ -281,7 +281,14 @@ func (d *device) Format() error {
 }
 
 func (d *device) Mount() error {
-	return nil
+	var err error
+	if err = os.MkdirAll(filepath.Join("/tmp", d.Label), os.ModeDir); err != nil {
+		return err
+	}
+	if err = unix.Mount(d.PartitionName, filepath.Join("/tmp", d.Label), "xfs", 0, ""); err != nil {
+		return err
+	}
+	return err
 }
 
 func (d *device) Install() error {
@@ -312,26 +319,28 @@ func (d *device) Install() error {
 		switch {
 		case strings.HasSuffix(artifact, ".tar"):
 			// extract tar
-			err = untar(out)
+			err = untar(out, "/tmp", d.Label)
 		case strings.HasSuffix(artifact, ".xz"):
 			// extract xz
 			// Maybe change to use gzip instead of xz to use stdlib?
+		case strings.HasSuffix(artifact, ".gz"):
+		case strings.HasSuffix(artifact, ".tar.gz"):
 		default:
 			// nothing special, download and go
 			dst := strings.Split(artifact, "/")
-			err := os.Rename(out.Name(), "/"+dst[len(dst)-1])
+			err = os.Rename(out.Name(), filepath.Join("/tmp/", d.Label, dst[len(dst)-1]))
 		}
 	}
 	return nil
 }
 
 func (d *device) Unmount() error {
-	return nil
+	return unix.Unmount(filepath.Join("/tmp", d.Label), 0)
 }
 
 // https://medium.com/@skdomino/taring-untaring-files-in-go-6b07cf56bc07
 // no idea if this gets what we want but seems awful close
-func untar(tarball *os.File) error {
+func untar(tarball *os.File, dst string) error {
 	tr := tar.NewReader(tarball)
 
 	for {
@@ -387,5 +396,4 @@ func untar(tarball *os.File) error {
 			f.Close()
 		}
 	}
-
 }
