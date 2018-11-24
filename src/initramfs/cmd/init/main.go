@@ -127,6 +127,7 @@ func root() error {
 	log.Println("starting node services")
 	systemservices.Start(
 		&services.Containerd{},
+		&services.Udevd{},
 		&services.CRT{},
 		&services.OSD{},
 		&services.Blockd{},
