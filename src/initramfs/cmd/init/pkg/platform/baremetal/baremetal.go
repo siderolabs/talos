@@ -18,6 +18,7 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/fs/xfs"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/kernel"
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount/blkid"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table"
@@ -86,10 +87,15 @@ func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 	return nil
 }
 
-func (b *BareMetal) Install(data userdata.UserData) (err error) {
+// Install provides the functionality to install talos by
+// download the necessary bits and write them to a target device
+// nolint: gocyclo
+func (b *BareMetal) Install(data userdata.UserData) error {
+	var err error
+
 	// No installation necessary
 	if data.Install == nil {
-		return nil
+		return err
 	}
 
 	// Root Device Init
@@ -99,7 +105,7 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 
 	if data.Install.Root.Size == 0 {
 		// Set to 1G default for funzies
-		data.Install.RootSize = 1024 * 1000 * 1000 * 1000
+		data.Install.Root.Size = 1024 * 1000 * 1000 * 1000
 	}
 
 	if len(data.Install.Root.Data) == 0 {
@@ -145,9 +151,13 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 	// Verify that the disks are unused
 	// Maybe a simple check against bd.UUID is more appropriate?
 	if !data.Install.Wipe {
-		for _, device := range []string{data.Install.RootDevice, data.Install.DataDevice} {
-			bd := blkid.ProbeDevice(device)
-			if bd.Label == "" || bd.Type == "" || bd.PartLabel == "" {
+		var bd *mount.BlockDevice
+		for _, device := range []string{data.Install.Boot.Device, data.Install.Root.Device, data.Install.Data.Device} {
+			bd, err = mount.ProbeDevice(device)
+			if err != nil {
+				return err
+			}
+			if bd.LABEL == "" || bd.TYPE == "" || bd.PARTLABEL == "" {
 				return fmt.Errorf("%s: %s", "target install device is not empty", device)
 			}
 		}
@@ -158,38 +168,40 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 	devices := make(map[string]*device)
 
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
-	if data.Install.BootDevice != "" {
-		// TODO replace []string{} with boot partition artifacts
+	if data.Install.Boot.Device != "" {
 		devices[constants.BootPartitionLabel] = newDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Boot.Data)
 	}
 	devices[constants.RootPartitionLabel] = newDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Root.Data)
 
-	// TODO replace []string{} with data partition artifacts
 	devices[constants.DataPartitionLabel] = newDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Data.Data)
 
 	// Use the below to only open a block device once
-	uniqueDevices := make(map[string]blockdevice.BlockDevice)
+	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
 
 	// Associate block device to a partition table. This allows us to
 	// make use of a single partition table across an entire block device.
-	partitionTables := make(map[blockdevice.BlockDevice]table.PartitionTable)
-	for _, device := range []string{data.Install.BootDevice, data.Install.RootDevice, data.Install.DataDevice} {
+	partitionTables := make(map[*blockdevice.BlockDevice]table.PartitionTable)
+	for _, device := range []string{data.Install.Boot.Device, data.Install.Root.Device, data.Install.Data.Device} {
 		if dev, ok := uniqueDevices[device]; ok {
-			devices[device].BlockDevice = bd
-			devices[device].PartitionTable = partitonTables[bd]
+			devices[device].BlockDevice = dev
+			devices[device].PartitionTable = partitionTables[dev]
 			continue
 		}
 
-		bd, err := blockdevice.Open(device)
+		var bd *blockdevice.BlockDevice
+
+		bd, err = blockdevice.Open(device)
 		if err != nil {
 			return err
 		}
 
+		// nolint: errcheck
 		defer bd.Close()
 
 		// Ignoring error here since it should only happen if this is an empty disk
 		// where a partition table does not already exist
-		pt, _ = bd.PartitionTable(!data.Install.Wipe)
+		// nolint: errcheck
+		pt, _ := bd.PartitionTable(!data.Install.Wipe)
 		uniqueDevices[device] = bd
 		partitionTables[bd] = pt
 
@@ -199,28 +211,48 @@ func (b *BareMetal) Install(data userdata.UserData) (err error) {
 
 	for _, dev := range devices {
 		// Partition the disk
-		err = device.Partition()
+		err = dev.Partition()
+		if err != nil {
+			break
+		}
 		// Create the device files
-		err = device.BlockDevice.RereadPartitionTable()
+		err = dev.BlockDevice.RereadPartitionTable()
+		if err != nil {
+			break
+		}
 		// Create the filesystem
-		err = device.Format()
+		err = dev.Format()
+		if err != nil {
+			break
+		}
 		// Mount up the new filesystem
-		err = device.Mount()
+		err = dev.Mount()
+		if err != nil {
+			break
+		}
 		// Install the necessary bits/files
 		// // download / copy kernel bits to boot
 		// // download / extract rootfsurl
 		// // handle data dirs creation
-		err = device.Install()
+		err = dev.Install()
+		if err != nil {
+			break
+		}
 		// Unmount the disk so we can proceed to the next phase
 		// as if there was no installation phase
-		err = device.Unmount()
+		err = dev.Unmount()
+		if err != nil {
+			break
+		}
 	}
+
+	return err
 }
 
 type device struct {
 	Label    string
 	Name     string
-	Size     int
+	Size     uint
 	DataURLs []string
 
 	BlockDevice *blockdevice.BlockDevice
@@ -237,7 +269,7 @@ type device struct {
 	PartitionName string
 }
 
-func newDevice(name string, label string, size int, data []string) *device {
+func newDevice(name string, label string, size uint, data []string) *device {
 	return &device{
 		Name:     name,
 		Label:    label,
@@ -269,15 +301,15 @@ func (d *device) Partition() error {
 		return fmt.Errorf("%s", "unknown partition label")
 	}
 
-	part, err := d.BlockDevice.PartitionAdd(size, partition.Options.WithPartitionType(typeID), partition.Options.WithPartitionName(name))
+	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label))
 
-	d.PartName = d.BlockDevice.Name() + strconv.Itoa(int(part.No()))
+	d.PartitionName = d.Name + strconv.Itoa(int(part.No()))
 
 	return err
 }
 
 func (d *device) Format() error {
-	return xfs.MakeFS(d.PartName)
+	return xfs.MakeFS(d.PartitionName)
 }
 
 func (d *device) Mount() error {
@@ -292,20 +324,24 @@ func (d *device) Mount() error {
 }
 
 func (d *device) Install() error {
-	for _, artifacts := range d.DataURLs {
+	for _, artifact := range d.DataURLs {
 		out, err := ioutil.TempFile("", "installdata")
 		if err != nil {
 			return err
 		}
 
-		defer os.Remove(tmpfile.Name())
+		// nolint: errcheck
+		defer os.Remove(out.Name())
+		// nolint: errcheck
 		defer out.Close()
 
 		// Get the data
-		resp, err := http.Get(artifacts)
+		resp, err := http.Get(artifact)
 		if err != nil {
 			return err
 		}
+
+		// nolint: errcheck
 		defer resp.Body.Close()
 
 		// Write the body to file
@@ -319,7 +355,7 @@ func (d *device) Install() error {
 		switch {
 		case strings.HasSuffix(artifact, ".tar"):
 			// extract tar
-			err = untar(out, "/tmp", d.Label)
+			return untar(out, filepath.Join("/tmp", d.Label))
 		case strings.HasSuffix(artifact, ".xz"):
 			// extract xz
 			// Maybe change to use gzip instead of xz to use stdlib?
@@ -328,7 +364,7 @@ func (d *device) Install() error {
 		default:
 			// nothing special, download and go
 			dst := strings.Split(artifact, "/")
-			err = os.Rename(out.Name(), filepath.Join("/tmp/", d.Label, dst[len(dst)-1]))
+			return os.Rename(out.Name(), filepath.Join("/tmp/", d.Label, dst[len(dst)-1]))
 		}
 	}
 	return nil
@@ -340,6 +376,7 @@ func (d *device) Unmount() error {
 
 // https://medium.com/@skdomino/taring-untaring-files-in-go-6b07cf56bc07
 // no idea if this gets what we want but seems awful close
+// nolint: gocyclo
 func untar(tarball *os.File, dst string) error {
 	tr := tar.NewReader(tarball)
 
@@ -393,6 +430,7 @@ func untar(tarball *os.File, dst string) error {
 
 			// manually close here after each file operation; defering would cause each file close
 			// to wait until all operations have completed.
+			// nolint: errcheck
 			f.Close()
 		}
 	}

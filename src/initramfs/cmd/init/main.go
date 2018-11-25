@@ -43,6 +43,7 @@ func kmsg(prefix string) (*os.File, error) {
 	return out, nil
 }
 
+// nolint: gocyclo
 func initram() error {
 	// Read the special filesystems and populate the mount point definitions.
 	if err := mount.InitSpecial(constants.NewRoot); err != nil {

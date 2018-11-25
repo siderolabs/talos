@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
@@ -25,8 +24,6 @@ var (
 		special      map[string]*Point
 		blockdevices map[string]*Point
 	}
-
-	once sync.Once
 
 	special = map[string]*Point{
 		"dev":  {"devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"},
@@ -67,11 +64,9 @@ func init() {
 	}
 }
 
-// Init initializes the mount points.
+// InitSpecial initializes the special device  mount points.
 func InitSpecial(s string) (err error) {
-	if err = mountSpecialDevices(); err != nil {
-		return
-	}
+	return mountSpecialDevices()
 }
 
 // InitBlock initializes the block device mount points.
@@ -213,7 +208,7 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 			// nolint: errcheck
 			defer bd.Close()
 
-			pt, err := bd.PartitionTable()
+			pt, err := bd.PartitionTable(false)
 			if err != nil {
 				return err
 			}
@@ -240,7 +235,7 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 
 			// Rereading the partition table requires that all partitions be unmounted
 			// or it will fail with EBUSY.
-			if err := bd.RereadPartitionTable(devname); err != nil {
+			if err := bd.RereadPartitionTable(); err != nil {
 				return err
 			}
 		}
@@ -321,6 +316,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	return nil
 }
 
+// ProbeDevice looks up UUID/TYPE/LABEL/PARTLABEL/PARTUUID from a block device
 func ProbeDevice(devname string) (*BlockDevice, error) {
 	pr, err := blkid.NewProbeFromFilename(devname)
 	defer blkid.FreeProbe(pr)
