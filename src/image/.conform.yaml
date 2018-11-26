@@ -27,8 +27,8 @@ pipeline:
 stages:
   generate:
     artifacts:
-    - source: /generated/rootfs.tar.xz
-      destination: ../../build/rootfs.tar.xz
+    - source: /generated/rootfs.tar.gz
+      destination: ../../build/rootfs.tar.gz
     - source: /generated/boot/vmlinuz
       destination: ../../build/vmlinuz
     - source: /generated/boot/initramfs.xz
@@ -55,7 +55,7 @@ tasks:
       FROM alpine:3.7
       RUN apk --update add bash curl e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
       COPY --from=generated /usr/local/src/syslinux /usr/local/src/syslinux
-      COPY --from=generated /generated/rootfs.tar.xz /generated/rootfs.tar.xz
+      COPY --from=generated /generated/rootfs.tar.gz /generated/rootfs.tar.gz
       COPY --from=generated /generated/boot /generated/boot
       RUN curl -L {{ index .Variables "srcPacker" }} -o /tmp/packer.zip \
           && unzip -d /tmp /tmp/packer.zip \
@@ -73,4 +73,4 @@ tasks:
   rootfs:
     template: |
       COPY --from=talos/rootfs:{{ .Docker.Image.Tag }} /rootfs /generated/rootfs
-      RUN {{if .Git.IsClean}}XZ_OPT=-9e{{else}}XZ_OPT=-0{{end}} tar -cvpJf /generated/rootfs.tar.xz -C /generated/rootfs .
+      RUN tar -cvpzf /generated/rootfs.tar.gz -C /generated/rootfs .
