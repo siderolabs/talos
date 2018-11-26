@@ -4,6 +4,7 @@ package baremetal
 
 import (
 	"archive/tar"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -110,8 +111,8 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	if len(data.Install.Root.Data) == 0 {
 		// Should probably have a canonical location to fetch rootfs - github?/s3?
-		// leaving this w/o a default for now
-		data.Install.Root.Data = append(data.Install.Root.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/rootfs.tar.xz")
+		// need to figure out how to download latest instead of hardcoding
+		data.Install.Root.Data = append(data.Install.Root.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/rootfs.tar.gz")
 	}
 
 	// Data Device Init
@@ -125,12 +126,8 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	}
 
 	if len(data.Install.Data.Data) == 0 {
-		// Unsure if these are the real files or not, but gives an idea
-		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/blockd.tar")
-		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/osd.tar")
-		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/proxyd.tar")
-		data.Install.Data.Data = append(data.Install.Data.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/trustd.tar")
-
+		// Stub out the dir structure for `/var`
+		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "lib", "lib/misc", "log", "mail", "opt", "run", "spool", "tmp"}...)
 	}
 
 	// Boot Device Init
@@ -323,6 +320,7 @@ func (d *device) Mount() error {
 	return err
 }
 
+// nolint: gocyclo
 func (d *device) Install() error {
 	for _, artifact := range d.DataURLs {
 		out, err := ioutil.TempFile("", "installdata")
@@ -351,20 +349,25 @@ func (d *device) Install() error {
 		}
 
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
-		// Feels kind of janky, but going to use the suffix to denote what to do
 		switch {
-		case strings.HasSuffix(artifact, ".tar"):
+		case !strings.HasPrefix(artifact, "http"):
+			// Local files
+			if err = os.MkdirAll(artifact, 0755); err != nil {
+				return err
+			}
+		case strings.HasSuffix(artifact, ".tar") || strings.HasSuffix(artifact, ".tar.gz"):
 			// extract tar
-			return untar(out, filepath.Join("/tmp", d.Label))
-		case strings.HasSuffix(artifact, ".xz"):
-			// extract xz
-			// Maybe change to use gzip instead of xz to use stdlib?
-		case strings.HasSuffix(artifact, ".gz"):
-		case strings.HasSuffix(artifact, ".tar.gz"):
+			err = untar(out, filepath.Join("/tmp", d.Label))
+			if err != nil {
+				return err
+			}
 		default:
 			// nothing special, download and go
 			dst := strings.Split(artifact, "/")
-			return os.Rename(out.Name(), filepath.Join("/tmp/", d.Label, dst[len(dst)-1]))
+			err = os.Rename(out.Name(), filepath.Join("/tmp/", d.Label, dst[len(dst)-1]))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -378,7 +381,20 @@ func (d *device) Unmount() error {
 // no idea if this gets what we want but seems awful close
 // nolint: gocyclo
 func untar(tarball *os.File, dst string) error {
-	tr := tar.NewReader(tarball)
+
+	var input io.Reader
+	var err error
+
+	if strings.HasSuffix(tarball.Name(), ".tar.gz") {
+		input, err = gzip.NewReader(tarball)
+		if err != nil {
+			return err
+		}
+	} else {
+		input = tarball
+	}
+
+	tr := tar.NewReader(input)
 
 	for {
 		header, err := tr.Next()
@@ -434,4 +450,5 @@ func untar(tarball *os.File, dst string) error {
 			f.Close()
 		}
 	}
+
 }
