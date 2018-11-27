@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -162,7 +163,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	}
 
 	// Create a map of all the devices we need to be concerned with
-	devices := make(map[string]*device)
+	devices := make(map[string]*Device)
 
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
 	if data.Install.Boot.Device != "" {
@@ -246,13 +247,15 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	return err
 }
 
-type device struct {
-	Label    string
-	Name     string
-	Size     uint
-	DataURLs []string
+type Device struct {
+	Label     string
+	Name      string
+	Size      uint
+	DataURLs  []string
+	MountBase string
 
 	BlockDevice *blockdevice.BlockDevice
+
 	// This seems overkill to save partition table
 	// when we can get partition table from BlockDevice
 	// but we want to have a shared partition table for each
@@ -266,16 +269,17 @@ type device struct {
 	PartitionName string
 }
 
-func newDevice(name string, label string, size uint, data []string) *device {
-	return &device{
-		Name:     name,
-		Label:    label,
-		Size:     size,
-		DataURLs: data,
+func newDevice(name string, label string, size uint, data []string) *Device {
+	return &Device{
+		Name:      name,
+		Label:     label,
+		Size:      size,
+		DataURLs:  data,
+		MountBase: "/tmp",
 	}
 }
 
-func (d *device) Partition() error {
+func (d *Device) Partition() error {
 	var typeID string
 	switch d.Label {
 	case constants.BootPartitionLabel:
@@ -305,67 +309,67 @@ func (d *device) Partition() error {
 	return err
 }
 
-func (d *device) Format() error {
+func (d *Device) Format() error {
 	return xfs.MakeFS(d.PartitionName)
 }
 
-func (d *device) Mount() error {
+func (d *Device) Mount() error {
 	var err error
-	if err = os.MkdirAll(filepath.Join("/tmp", d.Label), os.ModeDir); err != nil {
+	if err = os.MkdirAll(filepath.Join(d.MountBase, d.Label), os.ModeDir); err != nil {
 		return err
 	}
-	if err = unix.Mount(d.PartitionName, filepath.Join("/tmp", d.Label), "xfs", 0, ""); err != nil {
+	if err = unix.Mount(d.PartitionName, filepath.Join(d.MountBase, d.Label), "xfs", 0, ""); err != nil {
 		return err
 	}
 	return err
 }
 
 // nolint: gocyclo
-func (d *device) Install() error {
+func (d *Device) Install() error {
+	mountpoint := filepath.Join(d.MountBase, d.Label)
+
 	for _, artifact := range d.DataURLs {
-		out, err := ioutil.TempFile("", "installdata")
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer os.Remove(out.Name())
-		// nolint: errcheck
-		defer out.Close()
-
-		// Get the data
-		resp, err := http.Get(artifact)
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer resp.Body.Close()
-
-		// Write the body to file
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			return err
-		}
-
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
 		switch {
-		case !strings.HasPrefix(artifact, "http"):
-			// Local files
-			if err = os.MkdirAll(artifact, 0755); err != nil {
-				return err
-			}
-		case strings.HasSuffix(artifact, ".tar") || strings.HasSuffix(artifact, ".tar.gz"):
-			// extract tar
-			err = untar(out, filepath.Join("/tmp", d.Label))
+		case strings.HasPrefix(artifact, "http"):
+			u, err := url.Parse(artifact)
 			if err != nil {
 				return err
+			}
+
+			out, err := downloader(u, d.MountBase)
+			if err != nil {
+				return err
+			}
+
+			// TODO add support for checksum validation of downloaded file
+
+			// nolint: errcheck
+			defer os.Remove(out.Name())
+			// nolint: errcheck
+			defer out.Close()
+
+			switch {
+			case strings.HasSuffix(artifact, ".tar") || strings.HasSuffix(artifact, ".tar.gz"):
+				// extract tar
+				err = untar(out, mountpoint)
+				if err != nil {
+					return err
+				}
+			default:
+				// nothing special, download and go
+				dst := strings.Split(artifact, "/")
+				err = os.Rename(out.Name(), filepath.Join(mountpoint, dst[len(dst)-1]))
+				if err != nil {
+					return err
+				}
 			}
 		default:
-			// nothing special, download and go
-			dst := strings.Split(artifact, "/")
-			err = os.Rename(out.Name(), filepath.Join("/tmp/", d.Label, dst[len(dst)-1]))
-			if err != nil {
+			// Local directories
+			// TODO: maybe look at url-ish style to provide
+			// additional flexibility
+			// file:// dir://
+			if err := os.MkdirAll(artifact, 0755); err != nil {
 				return err
 			}
 		}
@@ -373,12 +377,11 @@ func (d *device) Install() error {
 	return nil
 }
 
-func (d *device) Unmount() error {
-	return unix.Unmount(filepath.Join("/tmp", d.Label), 0)
+func (d *Device) Unmount() error {
+	return unix.Unmount(filepath.Join(d.MountBase, d.Label), 0)
 }
 
-// https://medium.com/@skdomino/taring-untaring-files-in-go-6b07cf56bc07
-// no idea if this gets what we want but seems awful close
+// Simple extract function
 // nolint: gocyclo
 func untar(tarball *os.File, dst string) error {
 
@@ -390,6 +393,9 @@ func untar(tarball *os.File, dst string) error {
 		if err != nil {
 			return err
 		}
+
+		// nolint: errcheck
+		defer input.(*gzip.Reader).Close()
 	} else {
 		input = tarball
 	}
@@ -397,19 +403,16 @@ func untar(tarball *os.File, dst string) error {
 	tr := tar.NewReader(input)
 
 	for {
-		header, err := tr.Next()
+		var header *tar.Header
+
+		header, err = tr.Next()
 
 		switch {
-
-		// if no more files are found return
 		case err == io.EOF:
-			return nil
-
-			// return any other error
+			err = nil
+			return err
 		case err != nil:
 			return err
-
-			// if the header is nil, just skip it (not sure how this happens)
 		case header == nil:
 			continue
 		}
@@ -417,38 +420,66 @@ func untar(tarball *os.File, dst string) error {
 		// the target location where the dir/file should be created
 		target := filepath.Join(dst, header.Name)
 
-		// the following switch could also be done using fi.Mode(), not sure if there
-		// a benefit of using one vs. the other.
-		// fi := header.FileInfo()
-
-		// check the file type
+		// May need to add in support for these
+		/*
+			// Type '1' to '6' are header-only flags and may not have a data body.
+			TypeLink    = '1' // Hard link
+			TypeSymlink = '2' // Symbolic link
+			TypeChar    = '3' // Character device node
+			TypeBlock   = '4' // Block device node
+			TypeDir     = '5' // Directory
+			TypeFifo    = '6' // FIFO node
+		*/
 		switch header.Typeflag {
-
-		// if its a dir and it doesn't exist create it
 		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
-					return err
-				}
+			if err := os.MkdirAll(target, 0755); err != nil {
+				return err
 			}
-
-			// if it's a file create it
 		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			output, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
 
-			// copy over contents
-			if _, err := io.Copy(f, tr); err != nil {
+			if _, err := io.Copy(output, tr); err != nil {
 				return err
 			}
 
-			// manually close here after each file operation; defering would cause each file close
-			// to wait until all operations have completed.
-			// nolint: errcheck
-			f.Close()
+			err = output.Close()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
+	return err
+}
+
+func downloader(artifact *url.URL, base string) (*os.File, error) {
+	out, err := os.Create(filepath.Join(base, filepath.Base(artifact.Path)))
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the data
+	resp, err := http.Get(artifact.String())
+	if err != nil {
+		return out, err
+	}
+
+	// nolint: errcheck
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		out.Close()
+		return nil, fmt.Errorf("Failed to download %s, got %d", artifact, resp.StatusCode)
+	}
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+
+	// Reset out file position to 0 so we can immediately read from it
+	out.Seek(0, 0)
+
+	return out, err
 }
