@@ -167,11 +167,11 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
 	if data.Install.Boot.Device != "" {
-		devices[constants.BootPartitionLabel] = newDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Boot.Data)
+		devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Boot.Data)
 	}
-	devices[constants.RootPartitionLabel] = newDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Root.Data)
+	devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Root.Data)
 
-	devices[constants.DataPartitionLabel] = newDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Data.Data)
+	devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Data.Data)
 
 	// Use the below to only open a block device once
 	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
@@ -247,6 +247,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	return err
 }
 
+// Device represents a single partition.
 type Device struct {
 	Label     string
 	Name      string
@@ -269,7 +270,9 @@ type Device struct {
 	PartitionName string
 }
 
-func newDevice(name string, label string, size uint, data []string) *Device {
+// NewDevice create a Device with basic metadata. BlockDevice and PartitionTable
+// need to be set outsite of this.
+func NewDevice(name string, label string, size uint, data []string) *Device {
 	return &Device{
 		Name:      name,
 		Label:     label,
@@ -279,6 +282,7 @@ func newDevice(name string, label string, size uint, data []string) *Device {
 	}
 }
 
+// Partition creates a new partition on the specified device
 func (d *Device) Partition() error {
 	var typeID string
 	switch d.Label {
@@ -309,10 +313,13 @@ func (d *Device) Partition() error {
 	return err
 }
 
+// Format creates a xfs filesystem on the device/partition
 func (d *Device) Format() error {
 	return xfs.MakeFS(d.PartitionName)
 }
 
+// Mount will create the mountpoint and mount the partition to MountBase/Label
+// ex, /tmp/DATA
 func (d *Device) Mount() error {
 	var err error
 	if err = os.MkdirAll(filepath.Join(d.MountBase, d.Label), os.ModeDir); err != nil {
@@ -324,6 +331,8 @@ func (d *Device) Mount() error {
 	return err
 }
 
+// Install downloads the necessary artifacts and creates the necessary directories
+// for installation of the OS
 // nolint: gocyclo
 func (d *Device) Install() error {
 	mountpoint := filepath.Join(d.MountBase, d.Label)
@@ -377,6 +386,7 @@ func (d *Device) Install() error {
 	return nil
 }
 
+// Unmount unmounts the partition
 func (d *Device) Unmount() error {
 	return unix.Unmount(filepath.Join(d.MountBase, d.Label), 0)
 }
@@ -432,16 +442,18 @@ func untar(tarball *os.File, dst string) error {
 		*/
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, 0755); err != nil {
+			if err = os.MkdirAll(target, 0755); err != nil {
 				return err
 			}
 		case tar.TypeReg:
-			output, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			var output *os.File
+
+			output, err = os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
 
-			if _, err := io.Copy(output, tr); err != nil {
+			if _, err = io.Copy(output, tr); err != nil {
 				return err
 			}
 
@@ -451,8 +463,6 @@ func untar(tarball *os.File, dst string) error {
 			}
 		}
 	}
-
-	return err
 }
 
 func downloader(artifact *url.URL, base string) (*os.File, error) {
@@ -471,15 +481,19 @@ func downloader(artifact *url.URL, base string) (*os.File, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
+		// nolint: errcheck
 		out.Close()
 		return nil, fmt.Errorf("Failed to download %s, got %d", artifact, resp.StatusCode)
 	}
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return out, err
+	}
 
 	// Reset out file position to 0 so we can immediately read from it
-	out.Seek(0, 0)
+	_, err = out.Seek(0, 0)
 
 	return out, err
 }

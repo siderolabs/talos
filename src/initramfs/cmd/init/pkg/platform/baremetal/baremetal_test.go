@@ -11,6 +11,7 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 )
 
+// nolint: gocyclo
 func TestUnTar(t *testing.T) {
 	f, err := os.Open("testdata/talos_test.tar.gz")
 	if err != nil {
@@ -71,6 +72,7 @@ func TestNewDevice(t *testing.T) {
 
 	// nolint: errcheck
 	defer ts.Close()
+	// nolint: errcheck
 	defer os.RemoveAll(dev.MountBase)
 
 	if err := dev.Install(); err != nil {
@@ -117,7 +119,7 @@ func newdev(t *testing.T, label string) (*Device, *httptest.Server) {
 	ts := httptest.NewServer(mux)
 
 	// Set up a test for dir creation and file download
-	dev := newDevice("testdev", label, 1024, []string{"lala", ts.URL + "/talos_test.tar.gz"})
+	dev := NewDevice("testdev", label, 1024, []string{"lala", ts.URL + "/talos_test.tar.gz"})
 
 	out, err := ioutil.TempDir("", "testbaremetal")
 	if err != nil {
