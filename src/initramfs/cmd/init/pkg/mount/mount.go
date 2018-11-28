@@ -231,6 +231,10 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 				}
 			}
 
+			if err := pt.Write(); err != nil {
+				return err
+			}
+
 			// Rereading the partition table requires that all partitions be unmounted
 			// or it will fail with EBUSY.
 			if err := bd.RereadPartitionTable(devname); err != nil {
