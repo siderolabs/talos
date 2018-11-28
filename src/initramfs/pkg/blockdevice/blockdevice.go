@@ -35,6 +35,8 @@ func Open(devname string, setters ...Option) (*BlockDevice, error) {
 		return nil, err
 	}
 
+	bd.f = f
+
 	if opts.CreateGPT {
 		gpt := gpt.NewGPT(devname, f)
 		table, e := gpt.New()

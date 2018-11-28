@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 )
 
 // nolint: gocyclo
@@ -112,6 +113,41 @@ func TestNewDevice(t *testing.T) {
 
 }
 
+func TestPartition(t *testing.T) {
+	f := newbd(t)
+
+	// nolint: errcheck
+	defer f.Close()
+	// nolint: errcheck
+	defer os.RemoveAll(f.Name())
+
+	ud := userdata.UserData{
+		Install: &userdata.Install{
+			Wipe: true,
+			Boot: &userdata.InstallDevice{
+				Device: f.Name(),
+				Size:   512 * 1000 * 1000,
+			},
+			Root: &userdata.InstallDevice{
+				Device: f.Name(),
+				Size:   512 * 1000 * 1000,
+				Data:   []string{"https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz"},
+			},
+			Data: &userdata.InstallDevice{
+				Device: f.Name(),
+				Size:   512 * 1000 * 1000,
+			},
+		},
+	}
+
+	bm := BareMetal{}
+
+	err := bm.Install(ud)
+	if err != nil {
+		t.Fatal("Installation failed: ", err)
+	}
+}
+
 func newdev(t *testing.T, label string) (*Device, *httptest.Server) {
 	// Set up a simple http server to serve a simple asset
 	mux := http.NewServeMux()
@@ -134,4 +170,24 @@ func newdev(t *testing.T, label string) (*Device, *httptest.Server) {
 	}
 
 	return dev, ts
+}
+
+func newbd(t *testing.T) *os.File {
+
+	tmpfile, err := ioutil.TempFile("", "testbaremetal")
+	if err != nil {
+		t.Fatal("Failed to create tempfile", err)
+	}
+
+	// Create a 3G sparse file so we can partition it
+	if err := tmpfile.Truncate(3e9); err != nil {
+		t.Fatal("Failed to truncate tempfile", err)
+	}
+
+	_, err = tmpfile.Seek(0, 0)
+	if err != nil {
+		t.Fatal("Failed to reset tmpfile read position", err)
+	}
+
+	return tmpfile
 }

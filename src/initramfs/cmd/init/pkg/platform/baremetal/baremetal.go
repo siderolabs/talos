@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -164,14 +165,19 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	// Create a map of all the devices we need to be concerned with
 	devices := make(map[string]*Device)
+	labeldev := make(map[string]string)
 
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
 	if data.Install.Boot.Device != "" {
 		devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Boot.Data)
+		labeldev[constants.BootPartitionLabel] = data.Install.Boot.Device
 	}
+
 	devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Root.Data)
+	labeldev[constants.RootPartitionLabel] = data.Install.Root.Device
 
 	devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Data.Data)
+	labeldev[constants.DataPartitionLabel] = data.Install.Data.Device
 
 	// Use the below to only open a block device once
 	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
@@ -179,16 +185,16 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	// Associate block device to a partition table. This allows us to
 	// make use of a single partition table across an entire block device.
 	partitionTables := make(map[*blockdevice.BlockDevice]table.PartitionTable)
-	for _, device := range []string{data.Install.Boot.Device, data.Install.Root.Device, data.Install.Data.Device} {
+	for label, device := range labeldev {
 		if dev, ok := uniqueDevices[device]; ok {
-			devices[device].BlockDevice = dev
-			devices[device].PartitionTable = partitionTables[dev]
+			devices[label].BlockDevice = dev
+			devices[label].PartitionTable = partitionTables[dev]
 			continue
 		}
 
 		var bd *blockdevice.BlockDevice
 
-		bd, err = blockdevice.Open(device)
+		bd, err = blockdevice.Open(device, blockdevice.WithNewGPT(data.Install.Wipe))
 		if err != nil {
 			return err
 		}
@@ -199,12 +205,18 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 		// Ignoring error here since it should only happen if this is an empty disk
 		// where a partition table does not already exist
 		// nolint: errcheck
-		pt, _ := bd.PartitionTable(!data.Install.Wipe)
+		pt, err := bd.PartitionTable(!data.Install.Wipe)
+		if err != nil {
+			return err
+		}
+
 		uniqueDevices[device] = bd
 		partitionTables[bd] = pt
 
-		devices[device].BlockDevice = bd
-		devices[device].PartitionTable = pt
+		log.Printf("%+v", device)
+		log.Printf("%+v", devices)
+		devices[label].BlockDevice = bd
+		devices[label].PartitionTable = pt
 	}
 
 	for _, dev := range devices {
@@ -306,11 +318,17 @@ func (d *Device) Partition() error {
 		return fmt.Errorf("%s", "unknown partition label")
 	}
 
+	log.Println(d.Label)
+
 	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label))
+	if err != nil {
+		log.Println("HERE")
+		return err
+	}
 
 	d.PartitionName = d.Name + strconv.Itoa(int(part.No()))
 
-	return err
+	return nil
 }
 
 // Format creates a xfs filesystem on the device/partition
