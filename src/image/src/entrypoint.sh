@@ -71,7 +71,7 @@ function create_iso() {
   cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/boot/isolinux/isolinux.bin
   cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/boot/isolinux/ldlinux.c32
   create_extlinux_conf /mnt/boot/isolinux/isolinux.conf
-  tar -xpvJf /generated/rootfs.tar.xz -C /mnt
+  tar -xpvzf /generated/rootfs.tar.gz -C /mnt
   mkisofs -o ${ISO_IMAGE} -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table .
 }
 
@@ -80,7 +80,11 @@ function create_ami() {
 }
 
 function size_xz() {
-  xz --robot --list $1 | sed -n '3p' | cut -d$'\t' -f5 | awk '{printf("%.0f", $1*0.000001)}'
+  xz --robot --list $1 | awk 'END { printf("%.0f", $5*0.000001)}'
+}
+
+function size_gz() {
+  gzip --list $1 | awk 'END { printf("%.0f", $2*0.000001)}'
 }
 
 function extract_boot_partition() {
@@ -99,7 +103,7 @@ function extract_root_partition() {
   local partition=$1
   mkfs.xfs -f -n ftype=1 -L ROOT ${partition}
   mount -v ${partition} /mnt
-  tar -xpvJf /generated/rootfs.tar.xz --exclude="./var" -C /mnt
+  tar -xpvzf /generated/rootfs.tar.gz --exclude="./var" -C /mnt
   umount -v /mnt
 }
 
@@ -107,7 +111,7 @@ function extract_data_partition() {
   local partition=$1
   mkfs.xfs -f -n ftype=1 -L DATA ${partition}
   mount -v ${partition} /mnt
-  tar -xpvJf /generated/rootfs.tar.xz --strip-components=2 -C /mnt "./var"
+  tar -xpvzf /generated/rootfs.tar.gz --strip-components=2 -C /mnt "./var"
   umount -v /mnt
 }
 
@@ -139,7 +143,7 @@ VMDK_IMAGE="/out/image.vmdk"
 ISO_IMAGE="/out/image.iso"
 FULL=false
 RAW=false
-ROOTFS_SIZE=$(size_xz /generated/rootfs.tar.xz)
+ROOTFS_SIZE=$(size_gz /generated/rootfs.tar.gz)
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
 # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/talos/pull/157.
 KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
