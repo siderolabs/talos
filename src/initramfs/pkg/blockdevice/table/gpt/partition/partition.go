@@ -24,6 +24,9 @@ type Partition struct {
 	TrailingBytes []byte    // 128
 
 	Number int32
+
+	IsNew     bool
+	IsResized bool
 }
 
 // NewPartition initializes and returns a new partition.
