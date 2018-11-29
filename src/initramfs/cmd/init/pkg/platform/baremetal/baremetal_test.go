@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"unsafe"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
-	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice"
+	"golang.org/x/sys/unix"
 )
 
 // nolint: gocyclo
@@ -121,31 +123,61 @@ func TestPartition(t *testing.T) {
 	// nolint: errcheck
 	defer os.RemoveAll(f.Name())
 
-	ud := userdata.UserData{
-		Install: &userdata.Install{
-			Wipe: true,
-			Boot: &userdata.InstallDevice{
-				Device: f.Name(),
-				Size:   512 * 1000 * 1000,
-			},
-			Root: &userdata.InstallDevice{
-				Device: f.Name(),
-				Size:   512 * 1000 * 1000,
-				Data:   []string{"https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz"},
-			},
-			Data: &userdata.InstallDevice{
-				Device: f.Name(),
-				Size:   512 * 1000 * 1000,
-			},
-		},
-	}
+	lo := newloop(t, f)
 
-	bm := BareMetal{}
+	// nolint: errcheck
+	defer lo.Close()
+	// nolint: errcheck
+	defer os.RemoveAll(lo.Name())
 
-	err := bm.Install(ud)
+	dev := NewDevice(lo.Name(), constants.RootPartitionLabel, 512*1000*1000, []string{})
+	bd, err := blockdevice.Open(dev.Name, blockdevice.WithNewGPT(true))
 	if err != nil {
-		t.Fatal("Installation failed: ", err)
+		t.Error("Failed to create block device", err)
 	}
+	pt, err := bd.PartitionTable(false)
+	if err != nil {
+		t.Error("Failed to get partition table", err)
+	}
+	dev.PartitionTable = pt
+
+	err = dev.Partition()
+	if err != nil {
+		t.Error("Failed to create new partition", err)
+	}
+
+	err = dev.PartitionTable.Write()
+	if err != nil {
+		t.Error("Failed to write partition to disk", err)
+	}
+
+	/*
+		ud := userdata.UserData{
+			Install: &userdata.Install{
+				Wipe: true,
+				Boot: &userdata.InstallDevice{
+					Device: f.Name(),
+					Size:   512 * 1000 * 1000,
+				},
+				Root: &userdata.InstallDevice{
+					Device: f.Name(),
+					Size:   512 * 1000 * 1000,
+					Data:   []string{"https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz"},
+				},
+				Data: &userdata.InstallDevice{
+					Device: f.Name(),
+					Size:   512 * 1000 * 1000,
+				},
+			},
+		}
+
+		bm := BareMetal{}
+
+		err := bm.Install(ud)
+		if err != nil {
+			t.Fatal("Installation failed: ", err)
+		}
+	*/
 }
 
 func newdev(t *testing.T, label string) (*Device, *httptest.Server) {
@@ -190,4 +222,56 @@ func newbd(t *testing.T) *os.File {
 	}
 
 	return tmpfile
+}
+
+func newloop(t *testing.T, backer *os.File) *os.File {
+	err := unix.Mknod("/dev/loop", 0660, 7)
+	if err != nil {
+		t.Fatal("Failed to create loopback device", err)
+	}
+
+	loopFile, err := os.Open("/dev/loop")
+	if err != nil {
+		t.Fatal("Failed to open loopback device", err)
+	}
+
+	_, _, errno := unix.Syscall(unix.SYS_IOCTL, loopFile.Fd(), 0x4C00, backer.Fd())
+	if errno == 0 {
+		type Info struct {
+			Device         uint64
+			INode          uint64
+			RDevice        uint64
+			Offset         uint64
+			SizeLimit      uint64
+			Number         uint32
+			EncryptType    uint32
+			EncryptKeySize uint32
+			Flags          uint32
+			FileName       [64]byte
+			CryptName      [64]byte
+			EncryptKey     [32]byte
+			Init           [2]uint64
+		}
+		info := Info{}
+		copy(info.FileName[:], []byte(backer.Name()))
+		info.Offset = 0
+
+		_, _, errno := unix.Syscall(unix.SYS_IOCTL, loopFile.Fd(), 0x4C04, uintptr(unsafe.Pointer(&info)))
+		if errno == unix.ENXIO {
+			// nolint: errcheck
+			unix.Syscall(unix.SYS_IOCTL, loopFile.Fd(), 0x4C01, 0)
+			t.Error("device not backed by a file")
+		} else if errno != 0 {
+			// nolint: errcheck
+			unix.Syscall(unix.SYS_IOCTL, loopFile.Fd(), 0x4C01, 0)
+			t.Errorf("could not get info about (err: %d): %v", errno, errno)
+		}
+	}
+
+	_, err = loopFile.Seek(0, 0)
+	if err != nil {
+		t.Fatal("Failed to reset tmpfile read position", err)
+	}
+
+	return loopFile
 }
