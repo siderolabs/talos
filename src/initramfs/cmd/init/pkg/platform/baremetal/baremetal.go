@@ -107,7 +107,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	if data.Install.Root.Size == 0 {
 		// Set to 1G default for funzies
-		data.Install.Root.Size = 1024 * 1000 * 1000 * 1000
+		data.Install.Root.Size = 1024 * 1000 * 1000
 	}
 
 	if len(data.Install.Root.Data) == 0 {
@@ -123,7 +123,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	if data.Install.Data.Size == 0 {
 		// Set to 1G default for funzies
-		data.Install.Data.Size = 1024 * 1000 * 1000 * 1000
+		data.Install.Data.Size = 1024 * 1000 * 1000
 	}
 
 	if len(data.Install.Data.Data) == 0 {
@@ -137,8 +137,8 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 			data.Install.Boot.Device = data.Install.Root.Device
 		}
 		if data.Install.Boot.Size == 0 {
-			// Set to 1G default for funzies
-			data.Install.Boot.Size = 1024 * 1000 * 1000 * 1000
+			// Set to 512MB default for funzies
+			data.Install.Boot.Size = 512 * 1000
 		}
 		if len(data.Install.Data.Data) == 0 {
 			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/vmlinuz")
