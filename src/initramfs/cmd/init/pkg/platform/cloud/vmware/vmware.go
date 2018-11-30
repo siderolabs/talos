@@ -71,3 +71,8 @@ func (vmw *VMware) UserData() (data userdata.UserData, err error) {
 func (vmw *VMware) Prepare(data userdata.UserData) (err error) {
 	return nil
 }
+
+// Install installs talos
+func (vmw *VMware) Install(data userdata.UserData) (err error) {
+	return nil
+}

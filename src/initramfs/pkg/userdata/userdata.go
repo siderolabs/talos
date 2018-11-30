@@ -31,6 +31,7 @@ type UserData struct {
 	Files      []*File     `yaml:"files"`
 	Debug      bool        `yaml:"debug"`
 	Env        Env         `yaml:"env,omitempty"`
+	Install    *Install    `yaml:"install,omitempty"`
 }
 
 // Security represents the set of options available to configure security.
@@ -74,6 +75,21 @@ type File struct {
 	Contents    string      `yaml:"contents"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
+}
+
+// Install represents the installation options for preparing a node
+type Install struct {
+	Boot *InstallDevice `yaml:"boot,omitempty"`
+	Root *InstallDevice `yaml:"root"`
+	Data *InstallDevice `yaml:"data,omitempty"`
+	Wipe bool           `yaml:"wipe"`
+}
+
+// InstallDevice represents the specific directions for each partition
+type InstallDevice struct {
+	Device string   `yaml:"device,omitempty"`
+	Size   uint     `yaml:"size,omitempty"`
+	Data   []string `yaml:"data,omitempty"`
 }
 
 // Init describes the configuration of the init service.

@@ -35,6 +35,8 @@ func Open(devname string, setters ...Option) (*BlockDevice, error) {
 		return nil, err
 	}
 
+	bd.f = f
+
 	if opts.CreateGPT {
 		gpt := gpt.NewGPT(devname, f)
 		table, e := gpt.New()
@@ -67,9 +69,13 @@ func (bd *BlockDevice) Close() error {
 }
 
 // PartitionTable returns the block device partition table.
-func (bd *BlockDevice) PartitionTable() (table.PartitionTable, error) {
+func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
 	if bd.table == nil {
 		return nil, fmt.Errorf("missing partition table")
+	}
+
+	if !read {
+		return bd.table, nil
 	}
 
 	return bd.table, bd.table.Read()
@@ -77,16 +83,12 @@ func (bd *BlockDevice) PartitionTable() (table.PartitionTable, error) {
 
 // RereadPartitionTable invokes the BLKRRPART ioctl to have the kernel read the
 // partition table.
-func (bd *BlockDevice) RereadPartitionTable(devname string) error {
-	f, err := os.Open(devname)
-	if err != nil {
-		return err
-	}
+func (bd *BlockDevice) RereadPartitionTable() error {
 	unix.Sync()
-	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKRRPART, 0); ret != 0 {
+	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
 		return fmt.Errorf("re-read partition table: %v", ret)
 	}
-	if err := f.Sync(); err != nil {
+	if err := bd.f.Sync(); err != nil {
 		return err
 	}
 	unix.Sync()

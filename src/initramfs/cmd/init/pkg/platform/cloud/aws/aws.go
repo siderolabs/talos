@@ -147,3 +147,8 @@ func hostname() (err error) {
 
 	return nil
 }
+
+// Install installs talos if necessary
+func (a *AWS) Install(data userdata.UserData) (err error) {
+	return nil
+}

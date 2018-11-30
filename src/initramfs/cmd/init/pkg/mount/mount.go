@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
@@ -25,8 +24,6 @@ var (
 		special      map[string]*Point
 		blockdevices map[string]*Point
 	}
-
-	once sync.Once
 
 	special = map[string]*Point{
 		"dev":  {"devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"},
@@ -48,27 +45,32 @@ type Point struct {
 
 // BlockDevice represents the metadata on a block device probed by libblkid.
 type BlockDevice struct {
-	dev   string
-	TYPE  string
-	UUID  string
-	LABEL string
+	dev       string
+	TYPE      string
+	UUID      string
+	LABEL     string
+	PARTLABEL string
+	PARTUUID  string
 }
 
-// Init initializes the mount points.
-func Init(s string) (err error) {
-	once.Do(func() {
-		instance = struct {
-			special      map[string]*Point
-			blockdevices map[string]*Point
-		}{
-			special,
-			map[string]*Point{},
-		}
-	})
-
-	if err = mountSpecialDevices(); err != nil {
-		return
+// init initializes the instance metadata
+func init() {
+	instance = struct {
+		special      map[string]*Point
+		blockdevices map[string]*Point
+	}{
+		special,
+		map[string]*Point{},
 	}
+}
+
+// InitSpecial initializes the special device  mount points.
+func InitSpecial(s string) (err error) {
+	return mountSpecialDevices()
+}
+
+// InitBlock initializes the block device mount points.
+func InitBlock(s string) (err error) {
 	blockdevices, err := probe()
 	if err != nil {
 		return fmt.Errorf("error probing block devices: %v", err)
@@ -150,16 +152,12 @@ func Mount(s string) error {
 
 // Unmount unmounts the ROOT and DATA block devices.
 func Unmount() error {
-	mountpoint, ok := instance.blockdevices[constants.DataPartitionLabel]
-	if ok {
-		if err := unix.Unmount(mountpoint.target, 0); err != nil {
-			return fmt.Errorf("unmount mount point %s: %v", mountpoint.target, err)
-		}
-	}
-	mountpoint, ok = instance.blockdevices[constants.RootPartitionLabel]
-	if ok {
-		if err := unix.Unmount(mountpoint.target, 0); err != nil {
-			return fmt.Errorf("unmount mount point %s: %v", mountpoint.target, err)
+	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+		mountpoint, ok := instance.blockdevices[disk]
+		if ok {
+			if err := unix.Unmount(mountpoint.target, 0); err != nil {
+				return fmt.Errorf("unmount mount point %s: %v", mountpoint.target, err)
+			}
 		}
 	}
 
@@ -210,7 +208,7 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 			// nolint: errcheck
 			defer bd.Close()
 
-			pt, err := bd.PartitionTable()
+			pt, err := bd.PartitionTable(false)
 			if err != nil {
 				return err
 			}
@@ -237,7 +235,7 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 
 			// Rereading the partition table requires that all partitions be unmounted
 			// or it will fail with EBUSY.
-			if err := bd.RereadPartitionTable(devname); err != nil {
+			if err := bd.RereadPartitionTable(); err != nil {
 				return err
 			}
 		}
@@ -289,11 +287,10 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 func probe() (b []*BlockDevice, err error) {
 	b = []*BlockDevice{}
 
-	if err := appendBlockDeviceWithLabel(&b, constants.RootPartitionLabel); err != nil {
-		return nil, err
-	}
-	if err := appendBlockDeviceWithLabel(&b, constants.DataPartitionLabel); err != nil {
-		return nil, err
+	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+		if err := appendBlockDeviceWithLabel(&b, disk); err != nil {
+			return nil, err
+		}
 	}
 
 	return b, nil
@@ -309,7 +306,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 		return fmt.Errorf("no device with attribute \"LABEL=%s\" found", value)
 	}
 
-	blockDevice, err := probeDevice(devname)
+	blockDevice, err := ProbeDevice(devname)
 	if err != nil {
 		return fmt.Errorf("failed to probe block device %q: %v", devname, err)
 	}
@@ -319,7 +316,8 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	return nil
 }
 
-func probeDevice(devname string) (*BlockDevice, error) {
+// ProbeDevice looks up UUID/TYPE/LABEL/PARTLABEL/PARTUUID from a block device
+func ProbeDevice(devname string) (*BlockDevice, error) {
 	pr, err := blkid.NewProbeFromFilename(devname)
 	defer blkid.FreeProbe(pr)
 	if err != nil {
@@ -338,12 +336,22 @@ func probeDevice(devname string) (*BlockDevice, error) {
 	if err != nil {
 		return nil, err
 	}
+	PARTLABEL, err := blkid.ProbeLookupValue(pr, "PARTLABEL", nil)
+	if err != nil {
+		return nil, err
+	}
+	PARTUUID, err := blkid.ProbeLookupValue(pr, "PARTUUID", nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return &BlockDevice{
-		dev:   devname,
-		UUID:  UUID,
-		TYPE:  TYPE,
-		LABEL: LABEL,
+		dev:       devname,
+		UUID:      UUID,
+		TYPE:      TYPE,
+		LABEL:     LABEL,
+		PARTLABEL: PARTLABEL,
+		PARTUUID:  PARTUUID,
 	}, nil
 }
 
