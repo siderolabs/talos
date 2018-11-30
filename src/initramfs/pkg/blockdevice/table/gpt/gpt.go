@@ -100,7 +100,7 @@ func (gpt *GPT) Write() error {
 	}
 
 	if err := gpt.writeSecondary(partitions); err != nil {
-		return errors.Errorf("failed to write primary table: %v", err)
+		return errors.Errorf("failed to write secondary table: %v", err)
 	}
 
 	for _, p := range gpt.Partitions() {
@@ -298,7 +298,7 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 	}
 
 	partition := &partition.Partition{
-		IsNew:    true,
+		IsNew:    !opts.Test,
 		Type:     opts.Type,
 		ID:       uuid,
 		FirstLBA: start,

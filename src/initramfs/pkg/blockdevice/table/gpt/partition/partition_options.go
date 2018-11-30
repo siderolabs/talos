@@ -8,6 +8,7 @@ import (
 type Options struct {
 	Type uuid.UUID
 	Name string
+	Test bool
 }
 
 // Option is the functional option func.
@@ -30,6 +31,12 @@ func WithPartitionName(o string) Option {
 	}
 }
 
+func WithPartitionTest(t bool) Option {
+	return func(args *Options) {
+		args.Test = t
+	}
+}
+
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...interface{}) *Options {
 	// Default to data type "af3dc60f-8384-7247-8e79-3d69d8477de4"
@@ -40,6 +47,7 @@ func NewDefaultOptions(setters ...interface{}) *Options {
 	opts := &Options{
 		Type: guuid,
 		Name: "",
+		Test: false,
 	}
 
 	for _, setter := range setters {

@@ -13,7 +13,11 @@ func GrowFS(partname string) error {
 }
 
 // MakeFS creates a XFS filesystem on the specified partition
-func MakeFS(partname string) error {
+func MakeFS(partname string, force bool) error {
+	if force {
+		return cmd("mkfs.xfs", "-f", partname)
+	}
+
 	return cmd("mkfs.xfs", partname)
 }
 

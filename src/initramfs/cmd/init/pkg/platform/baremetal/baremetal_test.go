@@ -123,18 +123,12 @@ func TestPartition(t *testing.T) {
 	// nolint: errcheck
 	defer os.RemoveAll(f.Name())
 
-	lo := newloop(t, f)
-
-	// nolint: errcheck
-	defer lo.Close()
-	// nolint: errcheck
-	defer os.RemoveAll(lo.Name())
-
-	dev := NewDevice(lo.Name(), constants.RootPartitionLabel, 512*1000*1000, []string{})
+	dev := NewDevice(f.Name(), constants.RootPartitionLabel, 512*1000*1000, true, true, []string{})
 	bd, err := blockdevice.Open(dev.Name, blockdevice.WithNewGPT(true))
 	if err != nil {
 		t.Error("Failed to create block device", err)
 	}
+
 	pt, err := bd.PartitionTable(false)
 	if err != nil {
 		t.Error("Failed to get partition table", err)
@@ -151,33 +145,23 @@ func TestPartition(t *testing.T) {
 		t.Error("Failed to write partition to disk", err)
 	}
 
+	// Since we're testing with a file and not a device
+	// there won't be a tailing `1` at the end to denote
+	// the partition
+	dev.PartitionName = dev.Name
+
 	/*
-		ud := userdata.UserData{
-			Install: &userdata.Install{
-				Wipe: true,
-				Boot: &userdata.InstallDevice{
-					Device: f.Name(),
-					Size:   512 * 1000 * 1000,
-				},
-				Root: &userdata.InstallDevice{
-					Device: f.Name(),
-					Size:   512 * 1000 * 1000,
-					Data:   []string{"https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz"},
-				},
-				Data: &userdata.InstallDevice{
-					Device: f.Name(),
-					Size:   512 * 1000 * 1000,
-				},
-			},
-		}
+		this is janky
 
-		bm := BareMetal{}
-
-		err := bm.Install(ud)
-		if err != nil {
-			t.Fatal("Installation failed: ", err)
-		}
+		We're creating a partition on a file
+		But we aren't actually creating a new file/device file
+		to represent the new partition. So we're going to overwrite
+		the entire disk.
 	*/
+	err = dev.Format()
+	if err != nil {
+		t.Error("Failed to format partition", err)
+	}
 }
 
 func newdev(t *testing.T, label string) (*Device, *httptest.Server) {
@@ -187,7 +171,7 @@ func newdev(t *testing.T, label string) (*Device, *httptest.Server) {
 	ts := httptest.NewServer(mux)
 
 	// Set up a test for dir creation and file download
-	dev := NewDevice("testdev", label, 1024, []string{"lala", ts.URL + "/talos_test.tar.gz"})
+	dev := NewDevice("testdev", label, 1024, true, true, []string{"lala", ts.URL + "/talos_test.tar.gz"})
 
 	out, err := ioutil.TempDir("", "testbaremetal")
 	if err != nil {
@@ -224,13 +208,16 @@ func newbd(t *testing.T) *os.File {
 	return tmpfile
 }
 
+// Unsure if this function is still needed
+// Leaving it in here in case we want to pick loopback device support
+// back up for testing
 func newloop(t *testing.T, backer *os.File) *os.File {
-	err := unix.Mknod("/dev/loop", 0660, 7)
+	err := unix.Mknod("/dev/loop1", 0660, 7)
 	if err != nil {
 		t.Fatal("Failed to create loopback device", err)
 	}
 
-	loopFile, err := os.Open("/dev/loop")
+	loopFile, err := os.Open("/dev/loop1")
 	if err != nil {
 		t.Fatal("Failed to open loopback device", err)
 	}

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -169,14 +168,14 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
 	if data.Install.Boot.Device != "" {
-		devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Boot.Data)
+		devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Wipe, false, data.Install.Boot.Data)
 		labeldev[constants.BootPartitionLabel] = data.Install.Boot.Device
 	}
 
-	devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Root.Data)
+	devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Wipe, false, data.Install.Root.Data)
 	labeldev[constants.RootPartitionLabel] = data.Install.Root.Device
 
-	devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Data.Data)
+	devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Wipe, false, data.Install.Data.Data)
 	labeldev[constants.DataPartitionLabel] = data.Install.Data.Device
 
 	// Use the below to only open a block device once
@@ -213,8 +212,6 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 		uniqueDevices[device] = bd
 		partitionTables[bd] = pt
 
-		log.Printf("%+v", device)
-		log.Printf("%+v", devices)
 		devices[label].BlockDevice = bd
 		devices[label].PartitionTable = pt
 	}
@@ -261,11 +258,13 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 // Device represents a single partition.
 type Device struct {
+	DataURLs  []string
+	Force     bool
 	Label     string
+	MountBase string
 	Name      string
 	Size      uint
-	DataURLs  []string
-	MountBase string
+	Test      bool
 
 	BlockDevice *blockdevice.BlockDevice
 
@@ -284,13 +283,15 @@ type Device struct {
 
 // NewDevice create a Device with basic metadata. BlockDevice and PartitionTable
 // need to be set outsite of this.
-func NewDevice(name string, label string, size uint, data []string) *Device {
+func NewDevice(name string, label string, size uint, force bool, test bool, data []string) *Device {
 	return &Device{
-		Name:      name,
-		Label:     label,
-		Size:      size,
 		DataURLs:  data,
+		Force:     force,
+		Label:     label,
 		MountBase: "/tmp",
+		Name:      name,
+		Size:      size,
+		Test:      test,
 	}
 }
 
@@ -318,11 +319,8 @@ func (d *Device) Partition() error {
 		return fmt.Errorf("%s", "unknown partition label")
 	}
 
-	log.Println(d.Label)
-
-	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label))
+	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label), partition.WithPartitionTest(d.Test))
 	if err != nil {
-		log.Println("HERE")
 		return err
 	}
 
@@ -333,7 +331,7 @@ func (d *Device) Partition() error {
 
 // Format creates a xfs filesystem on the device/partition
 func (d *Device) Format() error {
-	return xfs.MakeFS(d.PartitionName)
+	return xfs.MakeFS(d.PartitionName, d.Force)
 }
 
 // Mount will create the mountpoint and mount the partition to MountBase/Label
