@@ -103,25 +103,6 @@ func (gpt *GPT) Write() error {
 		return errors.Errorf("failed to write secondary table: %v", err)
 	}
 
-	for _, p := range gpt.Partitions() {
-		var gptpartition *partition.Partition
-		var ok bool
-
-		if gptpartition, ok = p.(*partition.Partition); !ok {
-			return errors.New("not a GPT partition")
-		}
-		if gptpartition.IsNew {
-			if err := gpt.InformKernelOfAdd(p); err != nil {
-				return errors.Errorf("failed to inform kernel of new partition: %v", err)
-			}
-		}
-		if gptpartition.IsResized {
-			if err := gpt.InformKernelOfResize(p); err != nil {
-				return errors.Errorf("failed to inform kernel of resized partition: %v", err)
-			}
-		}
-	}
-
 	return gpt.Read()
 }
 
@@ -447,38 +428,17 @@ func (gpt *GPT) deserializePartitions() ([]byte, error) {
 
 // InformKernelOfAdd invokes the BLKPG_ADD_PARTITION ioctl.
 func (gpt *GPT) InformKernelOfAdd(partition table.Partition) error {
-	f, err := os.Open(gpt.devname)
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer f.Close()
-
-	return inform(f.Fd(), partition, unix.BLKPG_ADD_PARTITION, int64(gpt.lba.PhysicalBlockSize))
+	return inform(gpt.f.Fd(), partition, unix.BLKPG_ADD_PARTITION, int64(gpt.lba.PhysicalBlockSize))
 }
 
 // InformKernelOfResize invokes the BLKPG_RESIZE_PARTITION ioctl.
 func (gpt *GPT) InformKernelOfResize(partition table.Partition) error {
-	f, err := os.Open(gpt.devname)
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer f.Close()
-
-	return inform(f.Fd(), partition, unix.BLKPG_RESIZE_PARTITION, int64(gpt.lba.PhysicalBlockSize))
+	return inform(gpt.f.Fd(), partition, unix.BLKPG_RESIZE_PARTITION, int64(gpt.lba.PhysicalBlockSize))
 }
 
 // InformKernelOfDelete invokes the BLKPG_DEL_PARTITION ioctl.
 func (gpt *GPT) InformKernelOfDelete(partition table.Partition) error {
-	f, err := os.Open(gpt.devname)
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer f.Close()
-
-	return inform(f.Fd(), partition, unix.BLKPG_DEL_PARTITION, int64(gpt.lba.PhysicalBlockSize))
+	return inform(gpt.f.Fd(), partition, unix.BLKPG_DEL_PARTITION, int64(gpt.lba.PhysicalBlockSize))
 }
 
 func inform(fd uintptr, partition table.Partition, op int32, blocksize int64) error {
