@@ -7,11 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"unsafe"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice"
-	"golang.org/x/sys/unix"
 )
 
 // nolint: gocyclo
@@ -196,7 +194,7 @@ func newbd(t *testing.T) *os.File {
 	}
 
 	// Create a 3G sparse file so we can partition it
-	if err := tmpfile.Truncate(3e9); err != nil {
+	if err = tmpfile.Truncate(3e9); err != nil {
 		t.Fatal("Failed to truncate tempfile", err)
 	}
 
@@ -211,6 +209,7 @@ func newbd(t *testing.T) *os.File {
 // Unsure if this function is still needed
 // Leaving it in here in case we want to pick loopback device support
 // back up for testing
+/*
 func newloop(t *testing.T, backer *os.File) *os.File {
 	err := unix.Mknod("/dev/loop1", 0660, 7)
 	if err != nil {
@@ -262,3 +261,4 @@ func newloop(t *testing.T, backer *os.File) *os.File {
 
 	return loopFile
 }
+*/

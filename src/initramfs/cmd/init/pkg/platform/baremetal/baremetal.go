@@ -201,10 +201,8 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 		// nolint: errcheck
 		defer bd.Close()
 
-		// Ignoring error here since it should only happen if this is an empty disk
-		// where a partition table does not already exist
-		// nolint: errcheck
-		pt, err := bd.PartitionTable(!data.Install.Wipe)
+		var pt table.PartitionTable
+		pt, err = bd.PartitionTable(!data.Install.Wipe)
 		if err != nil {
 			return err
 		}
@@ -259,14 +257,9 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 // Device represents a single partition.
 type Device struct {
 	DataURLs  []string
-	Force     bool
 	Label     string
 	MountBase string
 	Name      string
-	Size      uint
-	Test      bool
-
-	BlockDevice *blockdevice.BlockDevice
 
 	// This seems overkill to save partition table
 	// when we can get partition table from BlockDevice
@@ -279,6 +272,13 @@ type Device struct {
 	// Made up of Name + part.No(), so maybe it's worth
 	// just storing part.No() and adding a method d.PartName()
 	PartitionName string
+
+	Size uint
+
+	BlockDevice *blockdevice.BlockDevice
+
+	Force bool
+	Test  bool
 }
 
 // NewDevice create a Device with basic metadata. BlockDevice and PartitionTable

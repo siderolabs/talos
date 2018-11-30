@@ -31,6 +31,8 @@ func WithPartitionName(o string) Option {
 	}
 }
 
+// WithPartitionTest allows us to disable the IsNew partition
+// check. This is only intended to be used for tests.
 func WithPartitionTest(t bool) Option {
 	return func(args *Options) {
 		args.Test = t
