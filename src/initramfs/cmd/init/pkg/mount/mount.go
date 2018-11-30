@@ -297,13 +297,13 @@ func probe() (b []*BlockDevice, err error) {
 }
 
 func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
-	devname, err := blkid.GetDevWithAttribute("LABEL", value)
+	devname, err := blkid.GetDevWithAttribute("PARTLABEL", value)
 	if err != nil {
 		return fmt.Errorf("failed to get dev with attribute: %v", err)
 	}
 
 	if devname == "" {
-		return fmt.Errorf("no device with attribute \"LABEL=%s\" found", value)
+		return fmt.Errorf("no device with attribute \"PARTLABEL=%s\" found", value)
 	}
 
 	blockDevice, err := ProbeDevice(devname)
