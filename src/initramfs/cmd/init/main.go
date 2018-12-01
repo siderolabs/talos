@@ -51,8 +51,7 @@ func initram() error {
 		return err
 	}
 	// Setup logging to /dev/kmsg.
-	var f *os.File
-	f, err := kmsg("[talos] [initramfs]")
+	_, err := kmsg("[talos] [initramfs]")
 	if err != nil {
 		return err
 	}
@@ -86,14 +85,8 @@ func initram() error {
 	if err := rootfs.Prepare(constants.NewRoot, data); err != nil {
 		return err
 	}
-	// Unmount the ROOT and DATA block devices.
-	log.Println("unmounting the ROOT and DATA partitions")
-	if err := mount.Unmount(); err != nil {
-		return err
-	}
 	// Perform the equivalent of switch_root.
 	log.Println("entering the new root")
-	f.Close() // nolint: errcheck
 	if err := switchroot.Switch(constants.NewRoot); err != nil {
 		return err
 	}

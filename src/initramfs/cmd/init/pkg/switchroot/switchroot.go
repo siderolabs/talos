@@ -82,13 +82,10 @@ func getDev(fd int) (dev uint64, err error) {
 	return stat.Dev, nil
 }
 
-// Switch performs a switch_root equivalent. See
+// Switch performs a switch_root. The caller must ensure that the ROOT and DATA
+// partitions are already mounted. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
 func Switch(s string) error {
-	// Mount the ROOT and DATA block devices at the new root.
-	if err := mount.Mount(s); err != nil {
-		return errors.Wrap(err, "error mounting block device")
-	}
 	// Move the special mount points to the new root.
 	if err := mount.Move(s); err != nil {
 		return errors.Wrap(err, "error moving special devices")
