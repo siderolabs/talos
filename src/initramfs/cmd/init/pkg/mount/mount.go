@@ -152,7 +152,7 @@ func Mount(s string) error {
 
 // Unmount unmounts the ROOT and DATA block devices.
 func Unmount() error {
-	for _, disk := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
+	for _, disk := range []string{constants.BootPartitionLabel, constants.DataPartitionLabel, constants.RootPartitionLabel} {
 		mountpoint, ok := instance.blockdevices[disk]
 		if ok {
 			if err := unix.Unmount(mountpoint.target, 0); err != nil {
