@@ -153,7 +153,8 @@ func Mount(s string) error {
 
 // Unmount unmounts the ROOT and DATA block devices.
 func Unmount() error {
-	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+	//	time.Sleep(time.Second * 30)
+	for _, disk := range []string{constants.DataPartitionLabel, constants.RootPartitionLabel} {
 		mountpoint, ok := instance.blockdevices[disk]
 		if ok {
 			if err := unix.Unmount(mountpoint.target, 0); err != nil {
@@ -300,7 +301,10 @@ func probe() (b []*BlockDevice, err error) {
 }
 
 func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
-	devname, err := blkid.GetDevWithAttribute("PART_ENTRY_NAME", value)
+	//devname, err := blkid.GetDevWithAttribute("PART_ENTRY_NAME", value)
+	//devname, err := blkid.GetDevWithAttribute("LABEL", value)
+	devname, err := blkid.GetDevWithAttribute("PARTLABEL", value)
+
 	if err != nil {
 		return fmt.Errorf("failed to get dev with attribute: %v", err)
 	}
@@ -347,14 +351,17 @@ func ProbeDevice(devname string) (*BlockDevice, error) {
 		return nil, err
 	}
 
-	return &BlockDevice{
+	b := &BlockDevice{
 		dev:             devname,
 		UUID:            UUID,
 		TYPE:            TYPE,
 		LABEL:           LABEL,
 		PART_ENTRY_NAME: PART_ENTRY_NAME,
 		PART_ENTRY_UUID: PART_ENTRY_UUID,
-	}, nil
+	}
+
+	log.Print("%+v", b)
+	return b, nil
 }
 
 // TODO(andrewrynhard): Should we return an error here?

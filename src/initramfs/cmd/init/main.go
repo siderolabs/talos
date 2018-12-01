@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
@@ -52,8 +51,8 @@ func initram() error {
 		return err
 	}
 	// Setup logging to /dev/kmsg.
-	var f *os.File
-	f, err := kmsg("[talos] [initramfs]")
+	//	var f *os.File
+	_, err := kmsg("[talos] [initramfs]")
 	if err != nil {
 		return err
 	}
@@ -77,21 +76,21 @@ func initram() error {
 	if err := mount.InitBlock(constants.NewRoot); err != nil {
 		return err
 	}
-	err = filepath.Walk("/root", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
-			return err
-		}
-		if info.IsDir() && (info.Name() == "proc" || info.Name() == "sys" || info.Name() == "usr") {
-			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
-			return filepath.SkipDir
-		}
-		log.Printf("visited file or dir: %q\n", path)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+	//	err = filepath.Walk("/root", func(path string, info os.FileInfo, err error) error {
+	//		if err != nil {
+	//			log.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+	//			return err
+	//		}
+	//		if info.IsDir() && (info.Name() == "proc" || info.Name() == "sys" || info.Name() == "usr") {
+	//			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
+	//			return filepath.SkipDir
+	//		}
+	//		log.Printf("visited file or dir: %q\n", path)
+	//		return nil
+	//	})
+	//	if err != nil {
+	//		return err
+	//	}
 	log.Printf("preparing the node for the platform: %s", p.Name())
 	// Perform any tasks required by a particular platform.
 	if err := p.Prepare(data); err != nil {
@@ -103,13 +102,13 @@ func initram() error {
 		return err
 	}
 	// Unmount the ROOT and DATA block devices.
-	log.Println("unmounting the ROOT and DATA partitions")
-	if err := mount.Unmount(); err != nil {
-		return err
-	}
+	//log.Println("unmounting the ROOT and DATA partitions")
+	//if err := mount.Unmount(); err != nil {
+	//	return err
+	//}
 	// Perform the equivalent of switch_root.
 	log.Println("entering the new root")
-	f.Close() // nolint: errcheck
+	//f.Close() // nolint: errcheck
 	if err := switchroot.Switch(constants.NewRoot); err != nil {
 		return err
 	}
@@ -120,7 +119,7 @@ func initram() error {
 func root() error {
 	// Setup logging to /dev/kmsg.
 	if _, err := kmsg("[talos]"); err != nil {
-		return err
+		return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
 	}
 	// Read the user data.
 	log.Printf("reading the user data: %s\n", constants.UserDataPath)

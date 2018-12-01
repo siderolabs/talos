@@ -3,6 +3,9 @@
 package switchroot
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"syscall"
 
@@ -86,20 +89,24 @@ func getDev(fd int) (dev uint64, err error) {
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
 func Switch(s string) error {
 	// Mount the ROOT and DATA block devices at the new root.
-	if err := mount.Mount(s); err != nil {
-		return errors.Wrap(err, "error mounting block device")
-	}
+	//if err := mount.Mount(s); err != nil {
+	//	return errors.Wrap(err, "error mounting block device")
+	//}
 	// Move the special mount points to the new root.
+	log.Println("moving mounts")
 	if err := mount.Move(s); err != nil {
 		return errors.Wrap(err, "error moving special devices")
 	}
 	// Mount the cgroups file systems to the new root.
+	log.Println("mounting cgroups")
 	if err := cgroups.Mount(s); err != nil {
 		return errors.Wrap(err, "error mounting cgroups")
 	}
+	log.Println("changing working directory")
 	if err := unix.Chdir(s); err != nil {
 		return errors.Wrapf(err, "error changing working directory to %s", s)
 	}
+	log.Println("cleaning old root")
 	oldRoot, err := os.Open("/")
 	if err != nil {
 		return errors.Wrap(err, "error opening /")
@@ -115,6 +122,15 @@ func Switch(s string) error {
 	if err := recursiveDelete(int(oldRoot.Fd())); err != nil {
 		return errors.Wrap(err, "error deleting initramfs")
 	}
+	files, err := ioutil.ReadDir("/proc/self")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		fmt.Println(file.Name())
+	}
+	log.Println("switching to new root")
 	if err := syscall.Exec("/proc/self/exe", []string{"exe", "--switch-root"}, []string{}); err != nil {
 		return errors.Wrap(err, "error executing /proc/self/exe")
 	}
