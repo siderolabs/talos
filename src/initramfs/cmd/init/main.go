@@ -6,8 +6,10 @@ import "C"
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
@@ -73,6 +75,21 @@ func initram() error {
 	}
 	// Read the block devices and populate the mount point definitions.
 	if err := mount.InitBlock(constants.NewRoot); err != nil {
+		return err
+	}
+	err = filepath.Walk("/root", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+		if info.IsDir() && (info.Name() == "proc" || info.Name() == "sys" || info.Name() == "usr") {
+			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
+			return filepath.SkipDir
+		}
+		log.Printf("visited file or dir: %q\n", path)
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 	log.Printf("preparing the node for the platform: %s", p.Name())
