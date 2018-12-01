@@ -48,6 +48,11 @@ function conform(e, project) {
 
     job.host.nodeSelector.set("node-role.kubernetes.io/ci", "")
 
+    job.resourceRequests.memory = "8Gi";
+    job.resourceRequests.cpu = "4";
+    job.resourceLimits.memory = "16Gi";
+    job.resourceLimits.cpu = "8";
+
     return job
 }
 
