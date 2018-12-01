@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -103,7 +104,7 @@ func initram() error {
 func root() error {
 	// Setup logging to /dev/kmsg.
 	if _, err := kmsg("[talos]"); err != nil {
-		return err
+		return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
 	}
 	// Read the user data.
 	log.Printf("reading the user data: %s\n", constants.UserDataPath)

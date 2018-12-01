@@ -152,7 +152,7 @@ func Mount(s string) error {
 
 // Unmount unmounts the ROOT and DATA block devices.
 func Unmount() error {
-	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+	for _, disk := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
 		mountpoint, ok := instance.blockdevices[disk]
 		if ok {
 			if err := unix.Unmount(mountpoint.target, 0); err != nil {
@@ -260,6 +260,8 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 			mountpoint.target = s
 		case constants.DataPartitionLabel:
 			mountpoint.target = path.Join(s, "var")
+		case constants.BootPartitionLabel:
+			mountpoint.target = path.Join(s, "boot")
 		default:
 			continue
 		}
@@ -287,7 +289,7 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 func probe() (b []*BlockDevice, err error) {
 	b = []*BlockDevice{}
 
-	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		if err := appendBlockDeviceWithLabel(&b, disk); err != nil {
 			return nil, err
 		}
