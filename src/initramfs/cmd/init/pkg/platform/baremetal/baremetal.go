@@ -509,6 +509,12 @@ func untar(tarball *os.File, dst string) error {
 			if err != nil {
 				return err
 			}
+		case tar.TypeSymlink:
+			dest := filepath.Join(dst, header.Name)
+			source := header.Linkname
+			if err := os.Symlink(source, dest); err != nil {
+				return err
+			}
 		}
 	}
 }

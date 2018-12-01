@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"syscall"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
@@ -122,6 +123,20 @@ func Switch(s string) error {
 	if err := recursiveDelete(int(oldRoot.Fd())); err != nil {
 		return errors.Wrap(err, "error deleting initramfs")
 	}
+
+	filepath.Walk("/", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+		if info.IsDir() && (info.Name() == "proc" || info.Name() == "sys" || info.Name() == "usr") {
+			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
+			return filepath.SkipDir
+		}
+		log.Printf("visited file or dir: %q\n", path)
+		return nil
+	})
+
 	files, err := ioutil.ReadDir("/proc/self")
 	if err != nil {
 		log.Fatal(err)
