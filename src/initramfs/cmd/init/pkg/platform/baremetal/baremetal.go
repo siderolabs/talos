@@ -130,7 +130,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	if len(data.Install.Data.Data) == 0 {
 		// Stub out the dir structure for `/var`
-		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "lib", "lib/misc", "log", "mail", "opt", "run", "spool", "tmp"}...)
+		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "lib", "lib/misc", "log", "mail", "opt", "run:/run", "spool", "tmp"}...)
 	}
 
 	// Boot Device Init
@@ -218,10 +218,10 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	}
 
 	// devices = Device
-	for _, dev := range devices {
+	for _, label := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
 		// Partition the disk
-		log.Printf("Partitioning %s - %s\n", dev.Name, dev.Label)
-		err = dev.Partition()
+		log.Printf("Partitioning %s - %s\n", devices[label].Name, label)
+		err = devices[label].Partition()
 		if err != nil {
 			return err
 		}
@@ -347,15 +347,12 @@ func (d *Device) Partition() error {
 		return fmt.Errorf("%s", "unknown partition label")
 	}
 
-	log.Println("d.partitiontable.add")
 	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label), partition.WithPartitionTest(d.Test))
 	if err != nil {
 		return err
 	}
 
-	log.Println("d.PartitionName")
 	d.PartitionName = d.Name + strconv.Itoa(int(part.No()))
-	log.Println("Done partitioning")
 
 	return nil
 }
@@ -421,12 +418,16 @@ func (d *Device) Install() error {
 				}
 			}
 		default:
-			// Local directories
-			// TODO: maybe look at url-ish style to provide
-			// additional flexibility
-			// file:// dir://
-			if err := os.MkdirAll(artifact, 0755); err != nil {
-				return err
+			// Local directories/links
+			link := strings.Split(artifact, ":")
+			if len(link) == 1 {
+				if err := os.MkdirAll(filepath.Join(mountpoint, artifact), 0755); err != nil {
+					return err
+				}
+			} else {
+				if err := os.Symlink(link[1], filepath.Join(mountpoint, link[0])); err != nil && !os.IsExist(err) {
+					return err
+				}
 			}
 		}
 	}
