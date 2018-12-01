@@ -4,6 +4,7 @@ package mount
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -286,10 +287,18 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 
 func probe() (b []*BlockDevice, err error) {
 	b = []*BlockDevice{}
+	c := []*BlockDevice{}
 
-	for _, disk := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
-		if err := appendBlockDeviceWithLabel(&b, disk); err != nil {
+	for _, disk := range []string{constants.RootPartitionLabel, constants.BootPartitionLabel, constants.DataPartitionLabel} {
+		log.Println("probe:", disk)
+		if _, err := appendBlockDeviceWithLabel(&b, disk); err != nil {
 			return nil, err
+		}
+		log.Printf("probe block devices: %+v", b)
+		if a, err := appendBlockDeviceWithLabel(&c, disk); err != nil {
+			return nil, err
+		} else {
+			log.Printf("probe block devices return: %+v", a)
 		}
 	}
 
@@ -299,7 +308,7 @@ func probe() (b []*BlockDevice, err error) {
 func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	devname, err := blkid.GetDevWithAttribute("PART_ENTRY_NAME", value)
 	if err != nil {
-		return fmt.Errorf("failed to get dev with attribute: %v", err)
+		return b, fmt.Errorf("failed to get dev with attribute: %v", err)
 	}
 
 	if devname == "" {
@@ -308,12 +317,12 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 
 	blockDevice, err := ProbeDevice(devname)
 	if err != nil {
-		return fmt.Errorf("failed to probe block device %q: %v", devname, err)
+		return b, fmt.Errorf("failed to probe block device %q: %v", devname, err)
 	}
 
 	*b = append(*b, blockDevice)
 
-	return nil
+	return b, nil
 }
 
 // ProbeDevice looks up UUID/TYPE/LABEL/PART_ENTRY_NAME/PART_ENTRY_UUID from a block device
