@@ -57,7 +57,7 @@ func (b *BareMetal) UserData() (data userdata.UserData, err error) {
 
 	if option == constants.UserDataCIData {
 		var devname string
-		devname, err = blkid.GetDevWithAttribute("LABEL", constants.UserDataCIData)
+		devname, err = blkid.GetDevWithAttribute("PARTLABEL", constants.UserDataCIData)
 		if err != nil {
 			return data, fmt.Errorf("failed to find %s volume: %v", constants.UserDataCIData, err)
 		}
@@ -157,7 +157,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 			if err != nil {
 				return err
 			}
-			if bd.LABEL == "" || bd.TYPE == "" || bd.PARTLABEL == "" {
+			if bd.LABEL == "" || bd.TYPE == "" || bd.PART_ENTRY_NAME == "" {
 				return fmt.Errorf("%s: %s", "target install device is not empty", device)
 			}
 		}
