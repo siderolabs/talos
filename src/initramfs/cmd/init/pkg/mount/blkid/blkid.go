@@ -14,6 +14,15 @@ import "C"
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/pkg/errors"
+)
+
+const (
+	BLKID_SUBLKS_LABEL        = (1 << 1)
+	BLKID_SUBLKS_UUID         = (1 << 3)
+	BLKID_SUBLKS_TYPE         = (1 << 5)
+	BLKID_PARTS_ENTRY_DETAILS = (1 << 2)
 )
 
 // GetDevWithAttribute returns the dev name of a block device matching the ATTRIBUTE=VALUE
@@ -61,8 +70,21 @@ func NewProbeFromFilename(s string) (C.blkid_probe, error) {
 }
 
 // DoProbe executes lblkid blkid_do_probe.
-func DoProbe(pr C.blkid_probe) {
-	C.blkid_do_probe(pr)
+func DoProbe(pr C.blkid_probe) error {
+	if retval := C.blkid_do_probe(pr); retval != 0 {
+		return errors.Errorf("%d", retval)
+	}
+
+	return nil
+}
+
+// DoSafeProbe executes lblkid blkid_do_safeprobe.
+func DoSafeProbe(pr C.blkid_probe) error {
+	if retval := C.blkid_do_safeprobe(pr); retval != 0 {
+		return errors.Errorf("%d", retval)
+	}
+
+	return nil
 }
 
 // ProbeLookupValue implements:
@@ -74,13 +96,18 @@ func ProbeLookupValue(pr C.blkid_probe, name string, size *int) (string, error) 
 	var data *C.char
 	defer C.free(unsafe.Pointer(data))
 
-	if size == nil {
-		C.blkid_probe_lookup_value(pr, cs, &data, nil)
-	} else {
-		var s *C.size_t
-		defer C.free(unsafe.Pointer(s))
-		*s = C.size_t(*size)
-		C.blkid_probe_lookup_value(pr, cs, &data, s)
+	C.blkid_probe_enable_superblocks(pr, 1)
+	C.blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_LABEL|BLKID_SUBLKS_UUID|BLKID_SUBLKS_TYPE)
+	C.blkid_probe_enable_partitions(pr, 1)
+	C.blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS)
+
+	if err := DoSafeProbe(pr); err != nil {
+		return "", errors.Errorf("failed to do safe probe: %v", err)
+	}
+
+	retval := C.blkid_probe_lookup_value(pr, cs, &data, nil)
+	if retval != 0 {
+		return "", errors.Errorf("failed to lookup value %s: %d", name, retval)
 	}
 
 	return C.GoString(data), nil

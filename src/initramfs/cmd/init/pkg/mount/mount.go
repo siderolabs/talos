@@ -45,12 +45,12 @@ type Point struct {
 
 // BlockDevice represents the metadata on a block device probed by libblkid.
 type BlockDevice struct {
-	dev       string
-	TYPE      string
-	UUID      string
-	LABEL     string
-	PARTLABEL string
-	PARTUUID  string
+	dev             string
+	TYPE            string
+	UUID            string
+	LABEL           string
+	PART_ENTRY_NAME string
+	PART_ENTRY_UUID string
 }
 
 // init initializes the instance metadata
@@ -199,7 +199,7 @@ func UnixMountWithRetry(source string, target string, fstype string, flags uintp
 // nolint: gocyclo
 func fixDataPartition(blockdevices []*BlockDevice) error {
 	for _, b := range blockdevices {
-		if b.LABEL == constants.DataPartitionLabel {
+		if b.PART_ENTRY_NAME == constants.DataPartitionLabel {
 			devname := devnameFromPartname(b.dev)
 			bd, err := blockdevice.Open(devname)
 			if err != nil {
@@ -255,7 +255,7 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 			flags:  unix.MS_NOATIME,
 			data:   "",
 		}
-		switch b.LABEL {
+		switch b.PART_ENTRY_NAME {
 		case constants.RootPartitionLabel:
 			mountpoint.target = s
 		case constants.DataPartitionLabel:
@@ -271,14 +271,14 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 			return fmt.Errorf("error mounting partition %s: %v", mountpoint.target, err)
 		}
 
-		if b.LABEL == constants.DataPartitionLabel {
+		if b.PART_ENTRY_NAME == constants.DataPartitionLabel {
 			// The XFS partition MUST be mounted, or this will fail.
 			if err = xfs.GrowFS(mountpoint.target); err != nil {
 				return fmt.Errorf("error growing XFS file system: %v", err)
 			}
 		}
 
-		instance.blockdevices[b.LABEL] = mountpoint
+		instance.blockdevices[b.PART_ENTRY_NAME] = mountpoint
 	}
 
 	return nil
@@ -303,7 +303,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	}
 
 	if devname == "" {
-		return fmt.Errorf("no device with attribute \"PARTLABEL=%s\" found", value)
+		return fmt.Errorf("no device with attribute \"PART_ENTRY_NAME=%s\" found", value)
 	}
 
 	blockDevice, err := ProbeDevice(devname)
@@ -316,14 +316,13 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	return nil
 }
 
-// ProbeDevice looks up UUID/TYPE/LABEL/PARTLABEL/PARTUUID from a block device
+// ProbeDevice looks up UUID/TYPE/LABEL/PART_ENTRY_NAME/PART_ENTRY_UUID from a block device
 func ProbeDevice(devname string) (*BlockDevice, error) {
 	pr, err := blkid.NewProbeFromFilename(devname)
 	defer blkid.FreeProbe(pr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to probe %s: %s", devname, err)
 	}
-	blkid.DoProbe(pr)
 	UUID, err := blkid.ProbeLookupValue(pr, "UUID", nil)
 	if err != nil {
 		return nil, err
@@ -336,22 +335,22 @@ func ProbeDevice(devname string) (*BlockDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-	PARTLABEL, err := blkid.ProbeLookupValue(pr, "PARTLABEL", nil)
+	PART_ENTRY_NAME, err := blkid.ProbeLookupValue(pr, "PART_ENTRY_NAME", nil)
 	if err != nil {
 		return nil, err
 	}
-	PARTUUID, err := blkid.ProbeLookupValue(pr, "PARTUUID", nil)
+	PART_ENTRY_UUID, err := blkid.ProbeLookupValue(pr, "PART_ENTRY_UUID", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &BlockDevice{
-		dev:       devname,
-		UUID:      UUID,
-		TYPE:      TYPE,
-		LABEL:     LABEL,
-		PARTLABEL: PARTLABEL,
-		PARTUUID:  PARTUUID,
+		dev:             devname,
+		UUID:            UUID,
+		TYPE:            TYPE,
+		LABEL:           LABEL,
+		PART_ENTRY_NAME: PART_ENTRY_NAME,
+		PART_ENTRY_UUID: PART_ENTRY_UUID,
 	}, nil
 }
 
