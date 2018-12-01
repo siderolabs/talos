@@ -74,6 +74,8 @@ func DoProbe(pr C.blkid_probe) error {
 	if retval := C.blkid_do_probe(pr); retval != 0 {
 		return errors.Errorf("%d", retval)
 	}
+
+	return nil
 }
 
 // DoSafeProbe executes lblkid blkid_do_safeprobe.
@@ -99,7 +101,7 @@ func ProbeLookupValue(pr C.blkid_probe, name string, size *int) (string, error) 
 	C.blkid_probe_enable_partitions(pr, 1)
 	C.blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS)
 
-	if err := DoSafeProbe(); err != nil {
+	if err := DoSafeProbe(pr); err != nil {
 		return "", errors.Errorf("failed to do safe probe: %v", err)
 	}
 
