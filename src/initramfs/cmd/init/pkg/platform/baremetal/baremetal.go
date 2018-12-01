@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -95,6 +96,7 @@ func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 func (b *BareMetal) Install(data userdata.UserData) error {
 	var err error
 
+	log.Println("Starting installation")
 	// No installation necessary
 	if data.Install == nil {
 		return err
@@ -128,7 +130,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	if len(data.Install.Data.Data) == 0 {
 		// Stub out the dir structure for `/var`
-		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "lib", "lib/misc", "log", "mail", "opt", "run", "spool", "tmp"}...)
+		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "lib", "lib/misc", "log", "mail", "opt", "run:/run", "spool", "tmp"}...)
 	}
 
 	// Boot Device Init
@@ -183,6 +185,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	// Associate block device to a partition table. This allows us to
 	// make use of a single partition table across an entire block device.
+	log.Println("Opening block devices in preparation for partitioning")
 	partitionTables := make(map[*blockdevice.BlockDevice]table.PartitionTable)
 	for label, device := range labeldev {
 		if dev, ok := uniqueDevices[device]; ok {
@@ -214,40 +217,65 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 		devices[label].PartitionTable = pt
 	}
 
-	for _, dev := range devices {
+	// devices = Device
+	for _, label := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
 		// Partition the disk
-		err = dev.Partition()
+		log.Printf("Partitioning %s - %s\n", devices[label].Name, label)
+		err = devices[label].Partition()
 		if err != nil {
-			break
+			return err
 		}
+	}
+
+	// uniqueDevices = blockdevice
+	seen := make(map[string]interface{})
+	for _, dev := range devices {
+		if _, ok := seen[dev.Name]; ok {
+			continue
+		}
+		seen[dev.Name] = nil
+
+		err = dev.PartitionTable.Write()
+		if err != nil {
+			return err
+		}
+
 		// Create the device files
+		log.Printf("Reread Partition Table %s - %s\n", dev.Name)
 		err = dev.BlockDevice.RereadPartitionTable()
 		if err != nil {
-			break
+			return err
 		}
+	}
+
+	for _, dev := range devices {
 		// Create the filesystem
+		log.Printf("Formatting Partition %s - %s\n", dev.Name, dev.Label)
 		err = dev.Format()
 		if err != nil {
-			break
+			return err
 		}
 		// Mount up the new filesystem
+		log.Printf("Mounting Partition %s - %s\n", dev.Name, dev.Label)
 		err = dev.Mount()
 		if err != nil {
-			break
+			return err
 		}
 		// Install the necessary bits/files
 		// // download / copy kernel bits to boot
 		// // download / extract rootfsurl
 		// // handle data dirs creation
+		log.Printf("Installing Partition %s - %s\n", dev.Name, dev.Label)
 		err = dev.Install()
 		if err != nil {
-			break
+			return err
 		}
 		// Unmount the disk so we can proceed to the next phase
 		// as if there was no installation phase
+		log.Printf("Unmounting Partition %s - %s\n", dev.Name, dev.Label)
 		err = dev.Unmount()
 		if err != nil {
-			break
+			return err
 		}
 	}
 
@@ -390,12 +418,16 @@ func (d *Device) Install() error {
 				}
 			}
 		default:
-			// Local directories
-			// TODO: maybe look at url-ish style to provide
-			// additional flexibility
-			// file:// dir://
-			if err := os.MkdirAll(artifact, 0755); err != nil {
-				return err
+			// Local directories/links
+			link := strings.Split(artifact, ":")
+			if len(link) == 1 {
+				if err := os.MkdirAll(filepath.Join(mountpoint, artifact), 0755); err != nil {
+					return err
+				}
+			} else {
+				if err := os.Symlink(link[1], filepath.Join(mountpoint, link[0])); err != nil && !os.IsExist(err) {
+					return err
+				}
 			}
 		}
 	}
