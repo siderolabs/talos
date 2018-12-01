@@ -359,7 +359,7 @@ func (d *Device) Partition() error {
 
 // Format creates a xfs filesystem on the device/partition
 func (d *Device) Format() error {
-	return xfs.MakeFS(d.PartitionName, d.Force)
+	return xfs.MakeFS(d.PartitionName, xfs.WithLabel(d.Label), xfs.WithForce(d.Force))
 }
 
 // Mount will create the mountpoint and mount the partition to MountBase/Label

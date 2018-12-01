@@ -12,17 +12,28 @@ func GrowFS(partname string) error {
 	return cmd("xfs_growfs", "-d", partname)
 }
 
-// MakeFS creates a XFS filesystem on the specified partition
-func MakeFS(partname string, force bool) error {
-	if force {
-		return cmd("mkfs.xfs", "-f", partname)
+// MakeFS creates a XFS filesystem on the specified partition.
+func MakeFS(partname string, setters ...Option) error {
+	opts := NewDefaultOptions(setters...)
+
+	// The ftype=1 naming option is required by overlayfs.
+	args := []string{"-n", "ftype=1"}
+
+	if opts.Force {
+		args = append(args, "-f")
 	}
 
-	return cmd("mkfs.xfs", partname)
+	if opts.Label != "" {
+		args = append(args, "-L", opts.Label)
+	}
+
+	args = append(args, partname)
+
+	return cmd("mkfs.xfs", args...)
 }
 
-func cmd(name string, arg ...string) error {
-	cmd := exec.Command(name, arg...)
+func cmd(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
 	err := cmd.Start()
