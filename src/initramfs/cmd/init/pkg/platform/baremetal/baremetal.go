@@ -241,7 +241,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 		}
 
 		// Create the device files
-		log.Printf("Reread Partition Table %s - %s\n", dev.Name)
+		log.Printf("Reread Partition Table %s\n", dev.Name)
 		err = dev.BlockDevice.RereadPartitionTable()
 		if err != nil {
 			return err
