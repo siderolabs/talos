@@ -99,7 +99,7 @@ func TestNewDevice(t *testing.T) {
 		t.Error("Failed to walk dir", err)
 	}
 
-	expected := map[string]interface{}{"talos": nil, "talosdir": nil, "talosfile": nil}
+	expected := map[string]interface{}{"talos": nil, "talosdir": nil, "talosfile": nil, "lala": nil}
 
 	if len(files) != len(expected) {
 		t.Errorf("Did not get back expected number of files - expected %d got %d", len(expected), len(files))
