@@ -1,0 +1,9 @@
+{
+  "id": "talos",
+  "name": "Talos node",
+  "boot": {
+    "kernel": "/assets/talos/${talos_version}/vmlinuz",
+    "initrd": ["/assets/talos/${talos_version}/initramfs.xz"],
+    "args": "[ ${talos_boot_args},${talos_userdata},${talos_platform} ]" 
+  }
+}
