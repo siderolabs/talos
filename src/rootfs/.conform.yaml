@@ -21,6 +21,8 @@ stages:
     - containerd
     - runc
     - kubeadm
+    - udevd
+    - test
     - cleanup
     - rootfs
 tasks:
@@ -61,11 +63,32 @@ tasks:
     template: |
       RUN curl --retry 3 --retry-delay 60 -L {{ index .Variables "srcKubeadm" }} -o {{ index .Variables "rootfs" }}/bin/kubeadm
       RUN chmod +x {{ index .Variables "rootfs" }}/bin/kubeadm
+  test:
+    template: |
+      RUN chmod +x ./hack/test.sh
+      RUN ./hack/test.sh --unit
+      RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
+  udevd:
+    template: |
+      FROM talos/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
+      RUN ln -s /tools/lib64 /lib64
+      RUN mkdir -p /etc/ssl/certs
+      RUN ln -s /tools/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
+      RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.10.1
+      ENV GO111MODULE auto
+      WORKDIR /src/github.com/autonomy/talos/src/rootfs/udevd
+      COPY ./udevd ./
+      RUN go mod download
+      RUN go mod verify
+      RUN go mod vendor
+      CMD ["false"]
+      RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build  -a -ldflags "-s -w" -o /{{ .Docker.CurrentStage }}
   rootfs:
     template: |
       FROM scratch
       LABEL maintainer="Andrew Rynhard <andrew.rynhard@autonomy.io>"
       COPY --from=libseccomp {{ index .Variables "rootfs" }} {{ index .Variables "rootfs" }}
+      COPY --from=udevd /udevd {{ index .Variables "rootfs" }}/bin/udevd
   runc:
     template: |
       RUN curl -L {{ index .Variables "srcRunc" }} -o {{ index .Variables "rootfs" }}/bin/runc
