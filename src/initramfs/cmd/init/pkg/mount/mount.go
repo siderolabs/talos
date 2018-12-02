@@ -45,12 +45,12 @@ type Point struct {
 
 // BlockDevice represents the metadata on a block device probed by libblkid.
 type BlockDevice struct {
-	dev             string
-	TYPE            string
-	UUID            string
-	LABEL           string
-	PART_ENTRY_NAME string
-	PART_ENTRY_UUID string
+	dev           string
+	Type          string
+	UUID          string
+	Label         string
+	PartEntryName string
+	PartEntryUUID string
 }
 
 // init initializes the instance metadata
@@ -199,7 +199,7 @@ func UnixMountWithRetry(source string, target string, fstype string, flags uintp
 // nolint: gocyclo
 func fixDataPartition(blockdevices []*BlockDevice) error {
 	for _, b := range blockdevices {
-		if b.PART_ENTRY_NAME == constants.DataPartitionLabel {
+		if b.PartEntryName == constants.DataPartitionLabel {
 			devname := devnameFromPartname(b.dev)
 			bd, err := blockdevice.Open(devname)
 			if err != nil {
@@ -244,6 +244,7 @@ func fixDataPartition(blockdevices []*BlockDevice) error {
 	return nil
 }
 
+// nolint: gocyclo
 func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 	if err = fixDataPartition(blockdevices); err != nil {
 		return fmt.Errorf("error fixing data partition: %v", err)
@@ -251,11 +252,11 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 	for _, b := range blockdevices {
 		mountpoint := &Point{
 			source: b.dev,
-			fstype: b.TYPE,
+			fstype: b.Type,
 			flags:  unix.MS_NOATIME,
 			data:   "",
 		}
-		switch b.PART_ENTRY_NAME {
+		switch b.PartEntryName {
 		case constants.RootPartitionLabel:
 			mountpoint.target = s
 		case constants.DataPartitionLabel:
@@ -273,14 +274,14 @@ func mountBlockDevices(blockdevices []*BlockDevice, s string) (err error) {
 			return fmt.Errorf("error mounting partition %s: %v", mountpoint.target, err)
 		}
 
-		if b.PART_ENTRY_NAME == constants.DataPartitionLabel {
+		if b.PartEntryName == constants.DataPartitionLabel {
 			// The XFS partition MUST be mounted, or this will fail.
 			if err = xfs.GrowFS(mountpoint.target); err != nil {
 				return fmt.Errorf("error growing XFS file system: %v", err)
 			}
 		}
 
-		instance.blockdevices[b.PART_ENTRY_NAME] = mountpoint
+		instance.blockdevices[b.PartEntryName] = mountpoint
 	}
 
 	return nil
@@ -305,7 +306,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	}
 
 	if devname == "" {
-		return fmt.Errorf("no device with attribute \"PART_ENTRY_NAME=%s\" found", value)
+		return fmt.Errorf("no device with attribute \"PartEntryName=%s\" found", value)
 	}
 
 	blockDevice, err := ProbeDevice(devname)
@@ -318,7 +319,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	return nil
 }
 
-// ProbeDevice looks up UUID/TYPE/LABEL/PART_ENTRY_NAME/PART_ENTRY_UUID from a block device
+// ProbeDevice looks up UUID/TYPE/LABEL/PartEntryName/PartEntryUUID from a block device
 func ProbeDevice(devname string) (*BlockDevice, error) {
 	pr, err := blkid.NewProbeFromFilename(devname)
 	defer blkid.FreeProbe(pr)
@@ -329,30 +330,30 @@ func ProbeDevice(devname string) (*BlockDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-	TYPE, err := blkid.ProbeLookupValue(pr, "TYPE", nil)
+	Type, err := blkid.ProbeLookupValue(pr, "TYPE", nil)
 	if err != nil {
 		return nil, err
 	}
-	LABEL, err := blkid.ProbeLookupValue(pr, "LABEL", nil)
+	Label, err := blkid.ProbeLookupValue(pr, "LABEL", nil)
 	if err != nil {
 		return nil, err
 	}
-	PART_ENTRY_NAME, err := blkid.ProbeLookupValue(pr, "PART_ENTRY_NAME", nil)
+	PartEntryName, err := blkid.ProbeLookupValue(pr, "PartEntryName", nil)
 	if err != nil {
 		return nil, err
 	}
-	PART_ENTRY_UUID, err := blkid.ProbeLookupValue(pr, "PART_ENTRY_UUID", nil)
+	PartEntryUUID, err := blkid.ProbeLookupValue(pr, "PartEntryUUID", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &BlockDevice{
-		dev:             devname,
-		UUID:            UUID,
-		TYPE:            TYPE,
-		LABEL:           LABEL,
-		PART_ENTRY_NAME: PART_ENTRY_NAME,
-		PART_ENTRY_UUID: PART_ENTRY_UUID,
+		dev:           devname,
+		UUID:          UUID,
+		Type:          Type,
+		Label:         Label,
+		PartEntryName: PartEntryName,
+		PartEntryUUID: PartEntryUUID,
 	}, nil
 }
 

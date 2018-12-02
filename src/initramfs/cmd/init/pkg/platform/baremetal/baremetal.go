@@ -157,7 +157,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 			if err != nil {
 				return err
 			}
-			if bd.LABEL == "" || bd.TYPE == "" || bd.PART_ENTRY_NAME == "" {
+			if bd.Label == "" || bd.Type == "" || bd.PartEntryName == "" {
 				return fmt.Errorf("%s: %s", "target install device is not empty", device)
 			}
 		}
