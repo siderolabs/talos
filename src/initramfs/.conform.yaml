@@ -146,11 +146,7 @@ tasks:
     template: |
       WORKDIR /initramfs
       RUN cp -R {{ index .Variables "rootfs" }}/* ./
-      {{ if .Git.IsClean }}
-      RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -9 -e -T 0 -z >/tmp/initramfs.xz
-      {{ else }}
       RUN find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/tmp/initramfs.xz
-      {{ end }}
       RUN cp /tmp/initramfs.xz .
   osctl:
     template: |
