@@ -53,7 +53,7 @@ tasks:
   image:
     template: |
       FROM alpine:3.7
-      RUN apk --update add bash curl e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
+      RUN apk --update add bash curl gzip e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
       COPY --from=generated /usr/local/src/syslinux /usr/local/src/syslinux
       COPY --from=generated /generated/rootfs.tar.gz /generated/rootfs.tar.gz
       COPY --from=generated /generated/boot /generated/boot
