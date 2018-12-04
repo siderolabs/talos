@@ -107,9 +107,10 @@ func EnforceTLSRequirements(cfg *kubeadmapi.InitConfiguration) error {
 // EnforceAdmissionPluginsRequirements enforces CIS requirements for admission plugins.
 // TODO(andrewrynhard): Include any extra user specified plugins.
 // TODO(andrewrynhard): Enable EventRateLimit.
+// TODO(andrewrynhard): Enable AlwaysPullImages (See https://github.com/kubernetes/kubernetes/issues/64333).
 func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	// nolint: lll
-	cfg.APIServerExtraArgs["enable-admission-plugins"] = "AlwaysPullImages,PodSecurityPolicy,DenyEscalatingExec,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
+	cfg.APIServerExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,DenyEscalatingExec,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
 
 	return nil
 }
