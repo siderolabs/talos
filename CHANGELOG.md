@@ -1,3 +1,53 @@
+<a name="0.1.0-alpha.14"></a>
+# [0.1.0-alpha.14](https://github.com/autonomy/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-12-05)
+
+
+### Bug Fixes
+
+* **gpt:** do not inform kernel of partition when writing ([#237](https://github.com/autonomy/talos/issues/237)) ([fa9f77e](https://github.com/autonomy/talos/commit/fa9f77e))
+* **hack:** remove privileged options from debug manifest ([#224](https://github.com/autonomy/talos/issues/224)) ([9c77b49](https://github.com/autonomy/talos/commit/9c77b49))
+* **image:** install gzip ([#272](https://github.com/autonomy/talos/issues/272)) ([d4db548](https://github.com/autonomy/talos/commit/d4db548))
+* **init:** address linter errors ([#251](https://github.com/autonomy/talos/issues/251)) ([ff83876](https://github.com/autonomy/talos/commit/ff83876))
+* **init:** allow custom image for kubeadm ([#212](https://github.com/autonomy/talos/issues/212)) ([0bbd8a4](https://github.com/autonomy/talos/commit/0bbd8a4))
+* **init:** avoid kernel panic on recover ([#216](https://github.com/autonomy/talos/issues/216)) ([74aafac](https://github.com/autonomy/talos/commit/74aafac))
+* **init:** ensure VMware user data is not empty ([#217](https://github.com/autonomy/talos/issues/217)) ([f00e05a](https://github.com/autonomy/talos/commit/f00e05a))
+* **init:** log to kmsg after /dev is mounted ([#218](https://github.com/autonomy/talos/issues/218)) ([fde2639](https://github.com/autonomy/talos/commit/fde2639))
+* **init:** retry mounts ([#220](https://github.com/autonomy/talos/issues/220)) ([51118bd](https://github.com/autonomy/talos/commit/51118bd))
+* **init:** revert e94095b and fix bad attribute lookups ([#274](https://github.com/autonomy/talos/issues/274)) ([b3f12a2](https://github.com/autonomy/talos/commit/b3f12a2))
+* **init:** unmount / last ([#249](https://github.com/autonomy/talos/issues/249)) ([ee95933](https://github.com/autonomy/talos/commit/ee95933))
+* **init:** use PARTLABEL to identity Talos block devices ([#238](https://github.com/autonomy/talos/issues/238)) ([a3dd113](https://github.com/autonomy/talos/commit/a3dd113))
+* **init:** use smaller default install sizes ([#240](https://github.com/autonomy/talos/issues/240)) ([b50afcb](https://github.com/autonomy/talos/commit/b50afcb))
+* disable AlwaysPullImages admission plugin ([#273](https://github.com/autonomy/talos/issues/273)) ([1bb002c](https://github.com/autonomy/talos/commit/1bb002c))
+* **init:** use text/template ([#228](https://github.com/autonomy/talos/issues/228)) ([08dd81a](https://github.com/autonomy/talos/commit/08dd81a))
+* **init:** use the correct blkid lookup values ([#243](https://github.com/autonomy/talos/issues/243)) ([e74f4c1](https://github.com/autonomy/talos/commit/e74f4c1))
+* **initramfs:** fix bare metal install ([#245](https://github.com/autonomy/talos/issues/245)) ([c171c51](https://github.com/autonomy/talos/commit/c171c51))
+* **initramfs:** fix hardcoded version ([#275](https://github.com/autonomy/talos/issues/275)) ([72eaa72](https://github.com/autonomy/talos/commit/72eaa72))
+* **initramfs:** fix printf statement ([#250](https://github.com/autonomy/talos/issues/250)) ([678951b](https://github.com/autonomy/talos/commit/678951b))
+* **initramfs:** imports ([#276](https://github.com/autonomy/talos/issues/276)) ([55fc13e](https://github.com/autonomy/talos/commit/55fc13e))
+* **initramfs:** minor fixes for booting from bare metal ([#241](https://github.com/autonomy/talos/issues/241)) ([7564144](https://github.com/autonomy/talos/commit/7564144))
+* **kernel:** add missing kernel config options ([#236](https://github.com/autonomy/talos/issues/236)) ([c48a2ef](https://github.com/autonomy/talos/commit/c48a2ef))
+
+
+### Features
+
+* **init:** add calico support ([#223](https://github.com/autonomy/talos/issues/223)) ([f16a130](https://github.com/autonomy/talos/commit/f16a130))
+* **init:** add label and force options for xfs ([#244](https://github.com/autonomy/talos/issues/244)) ([e320fd1](https://github.com/autonomy/talos/commit/e320fd1))
+* **init:** add support for installing to a device ([#225](https://github.com/autonomy/talos/issues/225)) ([79c96cf](https://github.com/autonomy/talos/commit/79c96cf))
+* **init:** add VMware support ([#200](https://github.com/autonomy/talos/issues/200)) ([48b2ea3](https://github.com/autonomy/talos/commit/48b2ea3))
+* **init:** create CNI mounts ([#226](https://github.com/autonomy/talos/issues/226)) ([aa08f15](https://github.com/autonomy/talos/commit/aa08f15))
+* **init:** enable PSP admission plugin ([#230](https://github.com/autonomy/talos/issues/230)) ([d0a0d1f](https://github.com/autonomy/talos/commit/d0a0d1f))
+* **init:** log to /dev/kmsg ([#214](https://github.com/autonomy/talos/issues/214)) ([b30ed5d](https://github.com/autonomy/talos/commit/b30ed5d))
+* **init:** service env var option ([#219](https://github.com/autonomy/talos/issues/219)) ([0c80b7e](https://github.com/autonomy/talos/commit/0c80b7e))
+* **initramfs:** API for creating new partition tables ([#227](https://github.com/autonomy/talos/issues/227)) ([374343a](https://github.com/autonomy/talos/commit/374343a))
+* **kernel:** add igb and ixgb drivers ([#221](https://github.com/autonomy/talos/issues/221)) ([4696527](https://github.com/autonomy/talos/commit/4696527))
+* **kernel:** add low level SCSI support ([#215](https://github.com/autonomy/talos/issues/215)) ([325de5b](https://github.com/autonomy/talos/commit/325de5b))
+* **kernel:** add raw iptables support ([#222](https://github.com/autonomy/talos/issues/222)) ([86ef4fc](https://github.com/autonomy/talos/commit/86ef4fc))
+* **kernel:** add vmxnet3 support ([#213](https://github.com/autonomy/talos/issues/213)) ([0244d18](https://github.com/autonomy/talos/commit/0244d18))
+* atomic partition table operations ([#234](https://github.com/autonomy/talos/issues/234)) ([a2d079e](https://github.com/autonomy/talos/commit/a2d079e))
+* udevd service ([#231](https://github.com/autonomy/talos/issues/231)) ([0c65fc6](https://github.com/autonomy/talos/commit/0c65fc6))
+
+
+
 <a name="0.1.0-alpha.13"></a>
 # [0.1.0-alpha.13](https://github.com/autonomy/talos/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
 
