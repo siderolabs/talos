@@ -27,6 +27,7 @@ import (
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table"
 	"github.com/autonomy/talos/src/initramfs/pkg/blockdevice/table/gpt/partition"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
+	"github.com/autonomy/talos/src/initramfs/pkg/version"
 	"golang.org/x/sys/unix"
 	yaml "gopkg.in/yaml.v2"
 )
