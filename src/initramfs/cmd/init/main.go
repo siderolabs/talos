@@ -85,6 +85,11 @@ func initram() error {
 	if err := rootfs.Prepare(constants.NewRoot, data); err != nil {
 		return err
 	}
+	// Unmount the ROOT and DATA block devices.
+	log.Println("unmounting the ROOT and DATA partitions")
+	if err := mount.Unmount(); err != nil {
+		return err
+	}
 	// Perform the equivalent of switch_root.
 	log.Println("entering the new root")
 	if err := switchroot.Switch(constants.NewRoot); err != nil {
