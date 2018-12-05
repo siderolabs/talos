@@ -57,15 +57,15 @@ func (b *BareMetal) UserData() (data userdata.UserData, err error) {
 
 	if option == constants.UserDataCIData {
 		var devname string
-		devname, err = blkid.GetDevWithAttribute("PARTLABEL", constants.UserDataCIData)
+		devname, err = blkid.GetDevWithAttribute("LABEL", constants.UserDataCIData)
 		if err != nil {
-			return data, fmt.Errorf("failed to find %s volume: %v", constants.UserDataCIData, err)
+			return data, fmt.Errorf("failed to find %s iso: %v", constants.UserDataCIData, err)
 		}
 		if err = os.Mkdir(mnt, 0700); err != nil {
 			return data, fmt.Errorf("failed to mkdir: %v", err)
 		}
 		if err = unix.Mount(devname, mnt, "iso9660", unix.MS_RDONLY, ""); err != nil {
-			return data, fmt.Errorf("failed to mount: %v", err)
+			return data, fmt.Errorf("failed to mount iso: %v", err)
 		}
 		var dataBytes []byte
 		dataBytes, err = ioutil.ReadFile(path.Join(mnt, "user-data"))

@@ -4,6 +4,7 @@ package mount
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -306,7 +307,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	}
 
 	if devname == "" {
-		return fmt.Errorf("no device with attribute \"PartEntryName=%s\" found", value)
+		return fmt.Errorf("no device with attribute \"PART_ENTRY_NAME=%s\" found", value)
 	}
 
 	blockDevice, err := ProbeDevice(devname)
@@ -319,7 +320,7 @@ func appendBlockDeviceWithLabel(b *[]*BlockDevice, value string) error {
 	return nil
 }
 
-// ProbeDevice looks up UUID/TYPE/LABEL/PartEntryName/PartEntryUUID from a block device
+// ProbeDevice looks up UUID/TYPE/LABEL/PART_ENTRY_NAME/PART_ENTRY_UUID from a block device
 func ProbeDevice(devname string) (*BlockDevice, error) {
 	pr, err := blkid.NewProbeFromFilename(devname)
 	defer blkid.FreeProbe(pr)
@@ -336,13 +337,13 @@ func ProbeDevice(devname string) (*BlockDevice, error) {
 	}
 	Label, err := blkid.ProbeLookupValue(pr, "LABEL", nil)
 	if err != nil {
-		return nil, err
+		log.Printf("WARNING: %v", err)
 	}
-	PartEntryName, err := blkid.ProbeLookupValue(pr, "PartEntryName", nil)
+	PartEntryName, err := blkid.ProbeLookupValue(pr, "PART_ENTRY_NAME", nil)
 	if err != nil {
 		return nil, err
 	}
-	PartEntryUUID, err := blkid.ProbeLookupValue(pr, "PartEntryUUID", nil)
+	PartEntryUUID, err := blkid.ProbeLookupValue(pr, "PART_ENTRY_UUID", nil)
 	if err != nil {
 		return nil, err
 	}
