@@ -115,7 +115,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	if len(data.Install.Root.Data) == 0 {
 		// Should probably have a canonical location to fetch rootfs - github?/s3?
 		// need to figure out how to download latest instead of hardcoding
-		data.Install.Root.Data = append(data.Install.Root.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/rootfs.tar.gz")
+		data.Install.Root.Data = append(data.Install.Root.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/rootfs.tar.gz")
 	}
 
 	// Data Device Init
@@ -143,8 +143,9 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 			data.Install.Boot.Size = 512 * 1000
 		}
 		if len(data.Install.Data.Data) == 0 {
-			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/vmlinuz")
-			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/v0.1.0-alpha.13/initramfs.xz")
+			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/vmlinuz")
+			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/initramfs.xz")
+
 		}
 	}
 
