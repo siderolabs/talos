@@ -5,8 +5,11 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"text/template"
 	"time"
+
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 
 	"k8s.io/api/core/v1"
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
@@ -51,6 +54,10 @@ func EnforceAuditingRequirements(cfg *kubeadmapi.InitConfiguration) error {
 
 // EnforceSecretRequirements enforces CIS requirements for secrets.
 func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
+	if _, err := os.Stat(constants.EncryptionConfigInitramfsPath); !os.IsNotExist(err) {
+		return nil
+	}
+
 	random := func(min, max int) int {
 		return rand.Intn(max-min) + min
 	}
@@ -80,14 +87,14 @@ func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	if err := t.Execute(buf, aux); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile("/var/etc/kubernetes/encryptionconfig.yaml", buf.Bytes(), 0400); err != nil {
+	if err := ioutil.WriteFile(constants.EncryptionConfigInitramfsPath, buf.Bytes(), 0400); err != nil {
 		return err
 	}
-	cfg.APIServerExtraArgs["experimental-encryption-provider-config"] = "/etc/kubernetes/encryptionconfig.yaml"
+	cfg.APIServerExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
 	vol := kubeadmapi.HostPathMount{
 		Name:      "encryptionconfig",
-		HostPath:  "/etc/kubernetes/encryptionconfig.yaml",
-		MountPath: "/etc/kubernetes/encryptionconfig.yaml",
+		HostPath:  constants.EncryptionConfigRootfsPath,
+		MountPath: constants.EncryptionConfigRootfsPath,
 		Writable:  false,
 		PathType:  v1.HostPathFile,
 	}

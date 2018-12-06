@@ -83,6 +83,12 @@ const (
 
 	// VMwareGuestInfoUserDataKey is the guestinfo key used to provide a user data file.
 	VMwareGuestInfoUserDataKey = "talos.userdata"
+
+	// EncryptionConfigInitramfsPath is the path to the EncryptionConfig relative to initramfs.
+	EncryptionConfigInitramfsPath = "/var/etc/kubernetes/encryptionconfig.yaml"
+
+	// EncryptionConfigRootfsPath is the path to the EncryptionConfig relative to rootfs.
+	EncryptionConfigRootfsPath = "/etc/kubernetes/encryptionconfig.yaml"
 )
 
 // See https://linux.die.net/man/3/klogctl
