@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/mount"
@@ -155,6 +156,12 @@ func root() error {
 func recovery() {
 	if r := recover(); r != nil {
 		log.Printf("recovered from: %+v\n", r)
+		for i := 10; i >= 0; i-- {
+			log.Printf("rebooting in %d seconds\n", i)
+			time.Sleep(1 * time.Second)
+		}
+
+		unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
 	}
 
 	select {}
