@@ -3,9 +3,12 @@ package userdata
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"math"
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/autonomy/talos/src/initramfs/pkg/crypto/x509"
 
@@ -241,31 +244,43 @@ func (data *UserData) WriteFiles() (err error) {
 
 // Download initializes a UserData struct from a remote URL.
 func Download(url string) (data UserData, err error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return
-	}
-	// nolint: errcheck
-	defer resp.Body.Close()
+	maxRetries := 10
+	maxWait := float64(64)
 
-	if resp.StatusCode != http.StatusOK {
-		return data, fmt.Errorf("download user data: %d", resp.StatusCode)
-	}
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		resp, err := http.Get(url)
+		if err != nil {
+			return data, err
+		}
+		// nolint: errcheck
+		defer resp.Body.Close()
 
-	dataBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Received %d\n", resp.StatusCode)
+			snooze := math.Pow(2, float64(attempt))
+			if snooze > maxWait {
+				snooze = maxWait
+			}
+			time.Sleep(time.Duration(snooze) * time.Second)
+			continue
+		}
 
-	if err != nil {
-		return data, fmt.Errorf("read user data: %s", err.Error())
-	}
+		dataBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return data, err
+		}
 
-	if err := yaml.Unmarshal(dataBytes, &data); err != nil {
-		return data, fmt.Errorf("unmarshal user data: %s", err.Error())
-	}
+		if err != nil {
+			return data, fmt.Errorf("read user data: %s", err.Error())
+		}
 
-	return data, nil
+		if err := yaml.Unmarshal(dataBytes, &data); err != nil {
+			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
+		}
+
+		return data, nil
+	}
+	return data, fmt.Errorf("failed to download userdata from: %s", url)
 }
 
 // Open is a convenience function that reads the user data from disk, and
