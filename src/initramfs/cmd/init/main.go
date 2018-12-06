@@ -161,6 +161,7 @@ func recovery() {
 			time.Sleep(1 * time.Second)
 		}
 
+		// nolint: errcheck
 		unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
 	}
 
