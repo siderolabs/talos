@@ -96,7 +96,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 	files := []string{
 		"/var/etc/kubernetes/audit-policy.yaml",
-		"/var/etc/kubernetes/encryptionconfig.yaml",
+		constants.EncryptionConfigInitramfsPath,
 		"/var/etc/kubernetes/pki/ca.crt",
 		"/var/etc/kubernetes/pki/ca.key",
 		"/var/etc/kubernetes/pki/sa.key",
