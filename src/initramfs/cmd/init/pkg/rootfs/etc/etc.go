@@ -56,33 +56,31 @@ func Hosts(s, hostname, ip string) (err error) {
 	if err := ioutil.WriteFile(path.Join(s, "/var/run/hosts"), writer.Bytes(), 0644); err != nil {
 		return fmt.Errorf("write /etc/hosts: %v", err)
 	}
-	if _, err := os.Lstat(path.Join(s, "/etc/hosts")); err == nil {
-		if err = os.Remove(path.Join(s, "/etc/hosts")); err != nil {
-			return fmt.Errorf("remove symlink /etc/hosts: %v", err)
-		}
-	}
+
 	// The kubelet wants to manage /etc/hosts. Create a symlink there that
 	// points to a writable file.
-	if err := os.Symlink("/var/run/hosts", path.Join(s, "/etc/hosts")); err != nil {
-		return fmt.Errorf("symlink /etc/hosts: %v", err)
-	}
-
-	return nil
+	return createSymlink("/var/run/hosts", path.Join(s, "/etc/hosts"))
 }
 
 // ResolvConf symlinks /proc/net/pnp to /etc/resolv.conf. See
 // https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt.
 func ResolvConf(s string) (err error) {
-	if _, err = os.Lstat(path.Join(s, "/etc/resolv.conf")); err == nil {
-		if err = os.Remove(path.Join(s, "/etc/resolv.conf")); err != nil {
-			return fmt.Errorf("remove symlink /etc/hosts: %v", err)
+	return createSymlink("/proc/net/pnp", path.Join(s, "/etc/resolv.conf"))
+}
+
+//
+func createSymlink(source string, target string) (err error) {
+	if _, err = os.Lstat(target); err == nil {
+		if err = os.Remove(target); err != nil {
+			return fmt.Errorf("remove symlink %s: %v", target, err)
 		}
 	}
-	if err = os.Symlink("/proc/net/pnp", path.Join(s, "/etc/resolv.conf")); err != nil {
-		return
+	if err = os.Symlink(source, target); err != nil {
+		return fmt.Errorf("symlink %s -> %s: %v", target, source, err)
 	}
 
 	return nil
+
 }
 
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
