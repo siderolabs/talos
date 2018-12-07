@@ -29,9 +29,9 @@ services:
       - token: '1qbsj9.3oz5hsk6grdfp98b'
         ttl: 0s
       nodeRegistration:
-        taints: 
+        taints:
         kubeletExtraArgs:
-          node-labels: 
+          node-labels:
           feature-gates: ExperimentalCriticalPodAnnotation=true
       ---
       apiVersion: kubeadm.k8s.io/v1alpha3
@@ -53,7 +53,7 @@ services:
         feature-gates: ExperimentalCriticalPodAnnotation=true
       networking:
         dnsDomain: talos.cluster.local
-        podSubnet: 
+        podSubnet:
         serviceSubnet: 192.168.0.0/24
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
@@ -62,16 +62,16 @@ services:
       ipvs:
         scheduler: lc
   trustd:
-    image: docker.io/autonomy/trustd:latest 
+    image: docker.io/autonomy/trustd:latest
     username: '5H7iU_9\u003cxizSRD'
     password: '[a@c56X!@78\u0026f\u0026L7%+ibLrZG'
-    endpoints: ["147.75.75.189:50001"]
+    endpoints: ["147.75.75.189"]
   proxyd:
-    image: docker.io/autonomy/proxyd:latest 
+    image: docker.io/autonomy/proxyd:latest
   blockd:
-    image: docker.io/autonomy/blockd:latest 
+    image: docker.io/autonomy/blockd:latest
   osd:
-    image: docker.io/autonomy/osd:latest 
+    image: docker.io/autonomy/osd:latest
 install:
   wipe: true
   boot:

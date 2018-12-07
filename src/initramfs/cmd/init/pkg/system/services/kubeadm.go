@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
-	"strings"
 	"text/template"
 	"time"
 
@@ -109,15 +107,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 	}
 
 	for _, endpoint := range data.Services.Trustd.Endpoints {
-		parts := strings.Split(endpoint, ":")
-		if len(parts) != 2 {
-			return fmt.Errorf("trust endpoint is not valid: %s", endpoint)
-		}
-		i, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return err
-		}
-		conn, err := basic.NewConnection(parts[0], i, creds)
+		conn, err := basic.NewConnection(endpoint, constants.TrustdPort, creds)
 		if err != nil {
 			return err
 		}

@@ -2,10 +2,10 @@ package factory
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"strconv"
 
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -47,7 +47,7 @@ func Config(o *tls.Config) Option {
 	}
 }
 
-// ServerOptions sets the listen port of the server.
+// ServerOptions sets the gRPC server options of the server.
 func ServerOptions(o ...grpc.ServerOption) Option {
 	return func(args *Options) {
 		args.ServerOptions = o
@@ -57,7 +57,6 @@ func ServerOptions(o ...grpc.ServerOption) Option {
 // NewDefaultOptions initializes the Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
-		Port:    50000,
 		Network: "tcp",
 	}
 
@@ -76,6 +75,10 @@ func NewDefaultOptions(setters ...Option) *Options {
 func Listen(r Registrator, setters ...Option) (err error) {
 	opts := NewDefaultOptions(setters...)
 
+	if opts.Network == "tcp" && opts.Port == 0 {
+		return errors.Errorf("a port is required for TCP listener")
+	}
+
 	server := grpc.NewServer(opts.ServerOptions...)
 	r.Register(server)
 
@@ -86,7 +89,7 @@ func Listen(r Registrator, setters ...Option) (err error) {
 	case "tcp":
 		address = ":" + strconv.Itoa(opts.Port)
 	default:
-		return fmt.Errorf("unknown network: %s", opts.Network)
+		return errors.Errorf("unknown network: %s", opts.Network)
 	}
 	listener, err := net.Listen(opts.Network, address)
 	if err != nil {
