@@ -177,7 +177,6 @@ func (c *CRT) Start(data *userdata.UserData) error {
 		args,
 		runner.WithContainerImage(image),
 		runner.WithOCISpecOpts(
-			containerd.WithMemoryLimit(int64(1000000*2048)),
 			containerd.WithRootfsPropagation("slave"),
 			oci.WithMounts(mounts),
 			oci.WithHostNamespace(specs.PIDNamespace),
