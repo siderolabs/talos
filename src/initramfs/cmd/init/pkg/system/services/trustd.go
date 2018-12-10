@@ -50,7 +50,7 @@ func (t *Trustd) Start(data *userdata.UserData) error {
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          t.ID(data),
-		ProcessArgs: []string{"/trustd", "--port=50001", "--userdata=" + constants.UserDataPath},
+		ProcessArgs: []string{"/trustd", "--userdata=" + constants.UserDataPath},
 	}
 
 	// Set the mounts.

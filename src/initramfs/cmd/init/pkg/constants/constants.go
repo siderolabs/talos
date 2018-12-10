@@ -89,6 +89,12 @@ const (
 
 	// EncryptionConfigRootfsPath is the path to the EncryptionConfig relative to rootfs.
 	EncryptionConfigRootfsPath = "/etc/kubernetes/encryptionconfig.yaml"
+
+	// OsdPort is the port for the osd service.
+	OsdPort = 50000
+
+	// TrustdPort is the port for the trustd service.
+	TrustdPort = 50001
 )
 
 // See https://linux.die.net/man/3/klogctl

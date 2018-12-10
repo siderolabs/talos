@@ -17,7 +17,6 @@ var (
 	name         string
 	csr          string
 	ip           string
-	port         int
 	hours        int
 )
 
@@ -35,8 +34,4 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func init() {
-	rootCmd.PersistentFlags().IntVar(&port, "port", 50000, "the port of the gRPC server")
 }

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/osd/pkg/reg"
 	"github.com/autonomy/talos/src/initramfs/pkg/grpc/factory"
 	"github.com/autonomy/talos/src/initramfs/pkg/grpc/gen"
@@ -14,17 +15,13 @@ import (
 )
 
 var (
-	dataPath   *string
-	generate   *bool
-	port       *int
-	trustdPort *int
+	dataPath *string
+	generate *bool
 )
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 	dataPath = flag.String("userdata", "", "the path to the user data")
-	port = flag.Int("port", 50000, "the port to listen on")
-	trustdPort = flag.Int("trustd-port", 50001, "the trustd port")
 	generate = flag.Bool("generate", false, "generate the TLS certificate using one of the Root of Trusts")
 	flag.Parse()
 }
@@ -37,7 +34,7 @@ func main() {
 
 	if *generate {
 		var generator *gen.Generator
-		generator, err = gen.NewGenerator(data, *trustdPort)
+		generator, err = gen.NewGenerator(data, constants.TrustdPort)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -54,7 +51,7 @@ func main() {
 	log.Println("Starting osd")
 	err = factory.Listen(
 		&reg.Registrator{Data: data},
-		factory.Port(*port),
+		factory.Port(constants.OsdPort),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(config),

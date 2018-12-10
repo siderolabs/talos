@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/trustd/pkg/reg"
 	"github.com/autonomy/talos/src/initramfs/pkg/grpc/factory"
 	"github.com/autonomy/talos/src/initramfs/pkg/grpc/middleware/auth/basic"
@@ -15,13 +16,11 @@ import (
 
 var (
 	dataPath *string
-	port     *int
 )
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 	dataPath = flag.String("userdata", "", "the path to the user data")
-	port = flag.Int("port", 50001, "the port to listen on")
 	flag.Parse()
 }
 
@@ -46,7 +45,7 @@ func main() {
 
 	err = factory.Listen(
 		&reg.Registrator{Data: data.Security.OS},
-		factory.Port(*port),
+		factory.Port(constants.TrustdPort),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(config),

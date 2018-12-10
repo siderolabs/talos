@@ -50,7 +50,7 @@ func (o *OSD) Start(data *userdata.UserData) error {
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          o.ID(data),
-		ProcessArgs: []string{"/osd", "--port=50000", "--userdata=" + constants.UserDataPath},
+		ProcessArgs: []string{"/osd", "--userdata=" + constants.UserDataPath},
 	}
 	if data.IsWorker() {
 		args.ProcessArgs = append(args.ProcessArgs, "--generate=true")

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
+
 	"github.com/autonomy/talos/src/initramfs/cmd/osctl/pkg/client"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +28,7 @@ var dmesgCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		c, err := client.NewClient(port, creds)
+		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
