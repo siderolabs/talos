@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"path"
 
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/constants"
 	"github.com/autonomy/talos/src/initramfs/cmd/init/pkg/rootfs/cni"
@@ -66,7 +65,7 @@ func Prepare(s string, data userdata.UserData) (err error) {
 	if err != nil {
 		return
 	}
-	if err = ioutil.WriteFile(path.Join(constants.NewRoot, constants.UserDataPath), dataBytes, 0400); err != nil {
+	if err = ioutil.WriteFile(constants.UserDataPath, dataBytes, 0400); err != nil {
 		return
 	}
 

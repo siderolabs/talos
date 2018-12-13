@@ -53,13 +53,13 @@ func Hosts(s, hostname, ip string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile(path.Join(s, "/var/run/hosts"), writer.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("/run/hosts", writer.Bytes(), 0644); err != nil {
 		return fmt.Errorf("write /etc/hosts: %v", err)
 	}
 
 	// The kubelet wants to manage /etc/hosts. Create a symlink there that
 	// points to a writable file.
-	return createSymlink("/var/run/hosts", path.Join(s, "/etc/hosts"))
+	return createSymlink("/run/hosts", path.Join(s, "/etc/hosts"))
 }
 
 // ResolvConf symlinks /proc/net/pnp to /etc/resolv.conf. See

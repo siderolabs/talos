@@ -5,7 +5,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
-	github.com/containerd/containerd v1.2.0
+	github.com/containerd/containerd v1.2.1
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
 	github.com/containerd/cri v1.11.1 // indirect
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
@@ -25,7 +25,6 @@ require (
 	github.com/godbus/dbus v4.1.0+incompatible // indirect
 	github.com/gogo/googleapis v1.1.0 // indirect
 	github.com/gogo/protobuf v1.1.1 // indirect
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20180513044358-24b0969c4cb7 // indirect
 	github.com/golang/protobuf v1.2.0
 	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
@@ -59,31 +58,32 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	golang.org/x/crypto v0.0.0-20180515001509-1a580b3eff78 // indirect
-	golang.org/x/net v0.0.0-20180724234803-3673e40ba225
+	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d
 	golang.org/x/oauth2 v0.0.0-20181003184128-c57b0facaced // indirect
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20181019160139-8e24a49d80f8
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/appengine v1.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20180831171423-11092d34479b // indirect
-	google.golang.org/grpc v1.11.3
+	google.golang.org/grpc v1.17.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
-	gopkg.in/yaml.v2 v2.1.1
+	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.1.0+incompatible // indirect
 	k8s.io/api v0.0.0-20181031211151-1455c336c32a
 	k8s.io/apiextensions-apiserver v0.0.0-20181110112449-a6e0648e729a // indirect
-	k8s.io/apimachinery v0.0.0-20181031012033-2e0dc82819fd
+	k8s.io/apimachinery v0.0.0-20181211025822-57dc7e687b54
 	k8s.io/apiserver v0.0.0-20181110111630-c45349c92333 // indirect
 	k8s.io/client-go v9.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0-20181108060158-bf9d13f1fbeb // indirect
+	k8s.io/klog v0.1.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20181109181836-c59034cc13d5 // indirect
 	k8s.io/kube-proxy v0.0.0-20181108055616-8eeec43ca7b5 // indirect
 	k8s.io/kubelet v0.0.0-20181108055742-1ff588f76017 // indirect
 	k8s.io/kubernetes v1.13.0-alpha.3
 	k8s.io/utils v0.0.0-20181102055113-1bd4f387aa67 // indirect
+	sigs.k8s.io/yaml v1.1.0 // indirect
 )
