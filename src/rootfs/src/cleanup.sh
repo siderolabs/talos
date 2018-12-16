@@ -3,7 +3,7 @@
 function remove_symlinks() {
   set +e
   for l in $(find ${PREFIX} -type l); do
-    readlink $l | grep -q /tools
+    readlink $l | grep -q /toolchain
     if [ $? == 0 ]; then
         echo "Unlinking $l"
         unlink $l
@@ -44,12 +44,15 @@ rm -rf \
   ${PREFIX}/bin/scmp_sys_resolver \
   ${PREFIX}/bin/catchsegv \
   ${PREFIX}/lib/gconv/ \
+  ${PREFIX}/include/* \
+  ${PREFIX}/share/* \
   ${PREFIX}/usr/include/* \
   ${PREFIX}/usr/share/* \
-  ${PREFIX}/usr/libexec/getconf
+  ${PREFIX}/usr/libexec/getconf \
+  ${PREFIX}/var/db
 
-mkdir -p /usr/share
-mkdir -p /usr/local/share
+mkdir -p ${PREFIX}/usr/share
+mkdir -p ${PREFIX}/usr/local/share
 
 paths=( /etc/pki /usr/share/ca-certificates /usr/local/share/ca-certificates /etc/ca-certificates )
 for d in "${paths[@]}"; do

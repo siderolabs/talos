@@ -32,9 +32,7 @@ script:
     set -e
 
     mkdir -p ./build
-    cd ./src/tools && conform build
-    cd ../kernel && conform build
-    cd ../rootfs && conform build
+    cd ./src/rootfs && conform build
     cd ../initramfs && conform build
     cd ../image && conform build
     cd ../docs && conform build

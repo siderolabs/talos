@@ -32,9 +32,9 @@ tasks:
       RUN curl -o {{ index .Variables "rootfs" }}/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
   cleanup:
     template: |
-      COPY src/cleanup.sh /tools/bin
-      RUN chmod +x /tools/bin/cleanup.sh
-      RUN /tools/bin/cleanup.sh {{ index .Variables "rootfs" }}
+      COPY src/cleanup.sh /toolchain/bin
+      RUN chmod +x /toolchain/bin/cleanup.sh
+      RUN /toolchain/bin/cleanup.sh {{ index .Variables "rootfs" }}
   containerd:
     template: |
       RUN curl -L {{ index .Variables "srcContainerd" }} | tar --strip-components=1 -xz -C {{ index .Variables "rootfs" }}/bin
@@ -44,14 +44,14 @@ tasks:
       RUN curl -L {{ index .Variables "srcCRITools" }} | tar -xz -C {{ index .Variables "rootfs" }}/bin
   libblkid:
     template: |
-      RUN cp /tools/lib/libblkid.* {{ index .Variables "rootfs" }}/lib
+      RUN cp /toolchain/lib/libblkid.* {{ index .Variables "rootfs" }}/lib
   libuuid:
     template: |
-      RUN cp /tools/lib/libuuid.* {{ index .Variables "rootfs" }}/lib
+      RUN cp /toolchain/lib/libuuid.* {{ index .Variables "rootfs" }}/lib
   libseccomp:
     template: |
-      FROM talos/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
-      WORKDIR /tools/usr/local/src/{{ .Docker.CurrentStage }}
+      FROM autonomy/toolchain:690a03a AS {{ .Docker.CurrentStage }}
+      WORKDIR /toolchain/usr/local/src/{{ .Docker.CurrentStage }}
       RUN curl -L {{index .Variables "srcLibseccomp" }} | tar --strip-components=1 -xz
       WORKDIR build
       RUN ../configure \
@@ -70,10 +70,9 @@ tasks:
       RUN ./hack/test.sh --lint ./hack/golangci-lint.yaml
   udevd:
     template: |
-      FROM talos/tools:{{ .Docker.Image.Tag }} AS {{ .Docker.CurrentStage }}
-      RUN ln -s /tools/lib64 /lib64
+      FROM autonomy/toolchain:690a03a AS {{ .Docker.CurrentStage }}
       RUN mkdir -p /etc/ssl/certs
-      RUN ln -s /tools/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
+      RUN ln -s /toolchain/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
       RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.10.1
       ENV GO111MODULE auto
       WORKDIR /src/github.com/autonomy/talos/src/rootfs/udevd
