@@ -12,16 +12,16 @@ require (
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/containers/storage v0.0.0-20180829143637-d0cb01076460 // indirect
 	github.com/coreos/go-systemd v0.0.0-20180828140353-eee3db372b31 // indirect
-	github.com/davecgh/go-spew v1.1.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.7.0-rc.0+incompatible // indirect
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/engine-api v0.4.0
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-events v0.0.0-20170721190031-9461782956ad // indirect
 	github.com/docker/go-units v0.3.3 // indirect
+	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/godbus/dbus v4.1.0+incompatible // indirect
 	github.com/gogo/googleapis v1.1.0 // indirect
 	github.com/gogo/protobuf v1.1.1 // indirect
@@ -50,6 +50,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/renstrom/dedent v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cobra v0.0.3
@@ -58,8 +59,9 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	golang.org/x/crypto v0.0.0-20180515001509-1a580b3eff78 // indirect
-	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d
+	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
 	golang.org/x/oauth2 v0.0.0-20181003184128-c57b0facaced // indirect
+	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181019160139-8e24a49d80f8
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
@@ -73,17 +75,17 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20181031211151-1455c336c32a
-	k8s.io/apiextensions-apiserver v0.0.0-20181110112449-a6e0648e729a // indirect
-	k8s.io/apimachinery v0.0.0-20181211025822-57dc7e687b54
-	k8s.io/apiserver v0.0.0-20181110111630-c45349c92333 // indirect
-	k8s.io/client-go v9.0.0+incompatible
+	k8s.io/api v0.0.0-20181213150558-05914d821849
+	k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476 // indirect
+	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
+	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
+	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0-20181108060158-bf9d13f1fbeb // indirect
 	k8s.io/klog v0.1.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20181109181836-c59034cc13d5 // indirect
 	k8s.io/kube-proxy v0.0.0-20181108055616-8eeec43ca7b5 // indirect
 	k8s.io/kubelet v0.0.0-20181108055742-1ff588f76017 // indirect
-	k8s.io/kubernetes v1.13.0-alpha.3
+	k8s.io/kubernetes v1.13.1 // indirect
 	k8s.io/utils v0.0.0-20181102055113-1bd4f387aa67 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

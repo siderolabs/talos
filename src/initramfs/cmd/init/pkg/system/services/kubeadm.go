@@ -217,7 +217,7 @@ func writeKubeadmScript(data *userdata.UserData) (err error) {
 
 func enforceMasterOverrides(initConfiguration *kubeadmapi.InitConfiguration) {
 	initConfiguration.KubernetesVersion = constants.KubernetesVersion
-	initConfiguration.UnifiedControlPlaneImage = constants.KubernetesImage
+	initConfiguration.UseHyperKubeImage = true
 }
 
 func writeKubeadmConfig(data *userdata.UserData) (err error) {
