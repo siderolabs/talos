@@ -182,7 +182,11 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		kdm.Configuration = cfg
 		kdm.bootstrap = false
 		joinConfiguration := cfg.(*kubeadm.JoinConfiguration)
-		kdm.controlPlane = joinConfiguration.ControlPlane
+		if joinConfiguration.ControlPlane == nil {
+			kdm.controlPlane = false
+		} else {
+			kdm.controlPlane = true
+		}
 	}
 
 	return nil

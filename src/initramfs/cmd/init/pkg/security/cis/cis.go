@@ -43,11 +43,13 @@ func EnforceAuditingRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	if err := ioutil.WriteFile("/var/etc/kubernetes/audit-policy.yaml", []byte(auditPolicy), 0400); err != nil {
 		return err
 	}
-	maxAge := int32(30)
-	cfg.FeatureGates["Auditing"] = true
-	cfg.ClusterConfiguration.AuditPolicyConfiguration.Path = "/etc/kubernetes/audit-policy.yaml"
-	cfg.ClusterConfiguration.AuditPolicyConfiguration.LogDir = "/etc/kubernetes/logs"
-	cfg.ClusterConfiguration.AuditPolicyConfiguration.LogMaxAge = &maxAge
+
+	// TODO(andrewrynhard): We should log to a file, and the option to retrieve
+	// the log files.
+	cfg.APIServer.ExtraArgs["audit-log-path"] = "-"
+	cfg.APIServer.ExtraArgs["audit-log-maxage"] = "30"
+	cfg.APIServer.ExtraArgs["audit-log-maxbackup"] = "3"
+	cfg.APIServer.ExtraArgs["audit-log-maxsize"] = "50"
 
 	return nil
 }
@@ -90,15 +92,15 @@ func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	if err := ioutil.WriteFile(constants.EncryptionConfigInitramfsPath, buf.Bytes(), 0400); err != nil {
 		return err
 	}
-	cfg.APIServerExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
+	cfg.APIServer.ExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
 	vol := kubeadmapi.HostPathMount{
 		Name:      "encryptionconfig",
 		HostPath:  constants.EncryptionConfigRootfsPath,
 		MountPath: constants.EncryptionConfigRootfsPath,
-		Writable:  false,
+		ReadOnly:  true,
 		PathType:  v1.HostPathFile,
 	}
-	cfg.APIServerExtraVolumes = append(cfg.APIServerExtraVolumes, vol)
+	cfg.APIServer.ExtraVolumes = append(cfg.APIServer.ExtraVolumes, vol)
 
 	return nil
 }
@@ -106,7 +108,7 @@ func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
 // EnforceTLSRequirements enforces CIS requirements for TLS.
 func EnforceTLSRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	// nolint: lll
-	cfg.APIServerExtraArgs["tls-cipher-suites"] = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+	cfg.APIServer.ExtraArgs["tls-cipher-suites"] = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
 
 	return nil
 }
@@ -117,7 +119,7 @@ func EnforceTLSRequirements(cfg *kubeadmapi.InitConfiguration) error {
 // TODO(andrewrynhard): Enable AlwaysPullImages (See https://github.com/kubernetes/kubernetes/issues/64333).
 func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	// nolint: lll
-	cfg.APIServerExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,DenyEscalatingExec,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
+	cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,DenyEscalatingExec,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
 
 	return nil
 }
@@ -126,11 +128,11 @@ func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.InitConfiguration) erro
 // TODO(andrewrynhard): Enable anonymous-auth, see https://github.com/kubernetes/kubeadm/issues/798.
 // TODO(andrewrynhard): Enable kubelet-certificate-authority, see https://github.com/kubernetes/kubeadm/issues/118#issuecomment-407202481.
 func EnforceExtraRequirements(cfg *kubeadmapi.InitConfiguration) error {
-	cfg.APIServerExtraArgs["profiling"] = disabled
-	cfg.ControllerManagerExtraArgs["profiling"] = disabled
-	cfg.SchedulerExtraArgs["profiling"] = disabled
+	cfg.APIServer.ExtraArgs["profiling"] = disabled
+	cfg.ControllerManager.ExtraArgs["profiling"] = disabled
+	cfg.Scheduler.ExtraArgs["profiling"] = disabled
 
-	cfg.APIServerExtraArgs["service-account-lookup"] = "true"
+	cfg.APIServer.ExtraArgs["service-account-lookup"] = "true"
 
 	return nil
 }
@@ -164,18 +166,18 @@ func EnforceWorkerRequirements(cfg *kubeadmapi.JoinConfiguration) error {
 }
 
 func ensureFieldsAreNotNil(cfg *kubeadmapi.InitConfiguration) {
-	if cfg.APIServerExtraArgs == nil {
-		cfg.APIServerExtraArgs = make(map[string]string)
+	if cfg.APIServer.ExtraArgs == nil {
+		cfg.APIServer.ExtraArgs = make(map[string]string)
 	}
-	if cfg.ControllerManagerExtraArgs == nil {
-		cfg.ControllerManagerExtraArgs = make(map[string]string)
+	if cfg.ControllerManager.ExtraArgs == nil {
+		cfg.ControllerManager.ExtraArgs = make(map[string]string)
 	}
-	if cfg.SchedulerExtraArgs == nil {
-		cfg.SchedulerExtraArgs = make(map[string]string)
+	if cfg.Scheduler.ExtraArgs == nil {
+		cfg.Scheduler.ExtraArgs = make(map[string]string)
 	}
 
-	if cfg.APIServerExtraVolumes == nil {
-		cfg.APIServerExtraVolumes = make([]kubeadmapi.HostPathMount, 0)
+	if cfg.APIServer.ExtraVolumes == nil {
+		cfg.APIServer.ExtraVolumes = make([]kubeadmapi.HostPathMount, 0)
 	}
 
 	if cfg.FeatureGates == nil {
