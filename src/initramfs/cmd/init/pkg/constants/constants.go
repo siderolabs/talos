@@ -36,26 +36,14 @@ const (
 	// ContainerdSocket is the path to the containerd socket.
 	ContainerdSocket = "/run/containerd/containerd.sock"
 
-	// ContainerRuntimeDocker is the name of the Docker container runtime.
-	ContainerRuntimeDocker = "docker"
-
-	// ContainerRuntimeDockerSocket is the path to the Docker daemon socket.
-	ContainerRuntimeDockerSocket = "/var/run/docker.sock"
-
-	// ContainerRuntimeCRIO is the name of the CRI-O container runtime.
-	ContainerRuntimeCRIO = "crio"
-
-	// ContainerRuntimeCRIOSocket is the path to the CRI-O daemon socket.
-	ContainerRuntimeCRIOSocket = "/var/run/crio/crio.sock"
-
 	// KubeadmConfig is the path to the kubeadm manifest file.
-	KubeadmConfig = "/var/etc/kubernetes/kubeadm-config.yaml"
+	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
 
 	// KubeadmCACert is the path to the root CA certificate.
-	KubeadmCACert = "/var/etc/kubernetes/pki/ca.crt"
+	KubeadmCACert = "/etc/kubernetes/pki/ca.crt"
 
 	// KubeadmCAKey is the path to the root CA private key.
-	KubeadmCAKey = "/var/etc/kubernetes/pki/ca.key"
+	KubeadmCAKey = "/etc/kubernetes/pki/ca.key"
 
 	// KubernetesVersion is the enforced target version of the control plane.
 	KubernetesVersion = "v1.13.1"
@@ -85,7 +73,7 @@ const (
 	VMwareGuestInfoUserDataKey = "talos.userdata"
 
 	// EncryptionConfigInitramfsPath is the path to the EncryptionConfig relative to initramfs.
-	EncryptionConfigInitramfsPath = "/var/etc/kubernetes/encryptionconfig.yaml"
+	EncryptionConfigInitramfsPath = "/etc/kubernetes/encryptionconfig.yaml"
 
 	// EncryptionConfigRootfsPath is the path to the EncryptionConfig relative to rootfs.
 	EncryptionConfigRootfsPath = "/etc/kubernetes/encryptionconfig.yaml"

@@ -40,7 +40,7 @@ resources:
 // TODO(andrewrynhard): Enable audit-log-maxbackup.
 // TODO(andrewrynhard): Enable audit-log-maxsize.
 func EnforceAuditingRequirements(cfg *kubeadmapi.InitConfiguration) error {
-	if err := ioutil.WriteFile("/var/etc/kubernetes/audit-policy.yaml", []byte(auditPolicy), 0400); err != nil {
+	if err := ioutil.WriteFile("/etc/kubernetes/audit-policy.yaml", []byte(auditPolicy), 0400); err != nil {
 		return err
 	}
 

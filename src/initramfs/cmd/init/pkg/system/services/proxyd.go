@@ -34,7 +34,7 @@ func (p *Proxyd) PostFunc(data *userdata.UserData) (err error) {
 
 // ConditionFunc implements the Service interface.
 func (p *Proxyd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	return conditions.WaitForFilesToExist("/var/etc/kubernetes/pki/ca.crt", "/var/etc/kubernetes/admin.conf")
+	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt", "/etc/kubernetes/admin.conf")
 }
 
 func (p *Proxyd) Start(data *userdata.UserData) error {
@@ -54,8 +54,8 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 
 	// Set the mounts.
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: "/etc/kubernetes/admin.conf", Source: "/var/etc/kubernetes/admin.conf", Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: "/etc/kubernetes/pki/ca.crt", Source: "/var/etc/kubernetes/pki/ca.crt", Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: "/etc/kubernetes/admin.conf", Source: "/etc/kubernetes/admin.conf", Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: "/etc/kubernetes/pki/ca.crt", Source: "/etc/kubernetes/pki/ca.crt", Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}

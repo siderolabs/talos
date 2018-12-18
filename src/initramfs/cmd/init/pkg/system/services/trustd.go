@@ -56,7 +56,7 @@ func (t *Trustd) Start(data *userdata.UserData) error {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: "/var/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 	}
 
 	env := []string{}

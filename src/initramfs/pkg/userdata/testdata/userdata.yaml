@@ -16,7 +16,6 @@ networking:
   kubernetes: {}
 services:
   init:
-    containerRuntime: docker
     cni: flannel
   kubeadm:
     configuration: |
