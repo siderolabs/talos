@@ -48,7 +48,7 @@ tasks:
       WORKDIR /
   boot:
     template: |
-      COPY --from=autonomy/kernel:c33b0fd /vmlinuz /generated/boot/vmlinuz
+      COPY --from=autonomy/kernel:e18620a /vmlinuz /generated/boot/vmlinuz
       COPY --from=talos/initramfs:{{ .Docker.Image.Tag }} /tmp/initramfs.xz /generated/boot/initramfs.xz
   image:
     template: |
