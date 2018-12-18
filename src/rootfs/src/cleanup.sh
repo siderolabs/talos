@@ -58,3 +58,6 @@ paths=( /etc/pki /usr/share/ca-certificates /usr/local/share/ca-certificates /et
 for d in "${paths[@]}"; do
   ln -sv /etc/ssl/certs ${PREFIX}$d
 done
+
+# Required by kube-proxy.
+mkdir ${PREFIX}/lib/modules

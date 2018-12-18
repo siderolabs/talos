@@ -12,11 +12,11 @@ import (
 
 // Setup prepares the root file system for the requested CNI plugin.
 func Setup(s string, data *userdata.UserData) error {
-	paths := []string{"/var/etc/cni/net.d"}
+	paths := []string{"/etc/cni/net.d"}
 
 	switch data.Services.Init.CNI {
 	case constants.CNICalico:
-		paths = append(paths, "/run/calico", "/var/lib/calico", "/var/opt/cni/bin")
+		paths = append(paths, "/run/calico", "/var/lib/calico")
 	case constants.CNIFlannel:
 		paths = append(paths, "/run/flannel")
 	default:
@@ -27,7 +27,6 @@ func Setup(s string, data *userdata.UserData) error {
 		if err := os.MkdirAll(path.Join(s, p), os.ModeDir); err != nil {
 			return errors.Wrapf(err, "failed to create directory %s", path.Join(s, p))
 		}
-
 	}
 
 	return nil
@@ -37,14 +36,14 @@ func Setup(s string, data *userdata.UserData) error {
 // paths are relative to the root file system after switching the root.
 func Mounts(data *userdata.UserData) ([]specs.Mount, error) {
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: "/etc/cni", Source: "/var/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/opt/cni", Source: "/opt/cni", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
 	switch data.Services.Init.CNI {
 	case constants.CNICalico:
 		calicoMounts := []specs.Mount{
 			{Type: "bind", Destination: "/var/lib/calico", Source: "/var/lib/calico", Options: []string{"rbind", "rshared", "rw"}},
-			{Type: "bind", Destination: "/opt/cni", Source: "/var/opt/cni", Options: []string{"rbind", "rshared", "rw"}},
 		}
 		mounts = append(mounts, calicoMounts...)
 	case constants.CNIFlannel:

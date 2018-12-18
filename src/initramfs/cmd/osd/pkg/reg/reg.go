@@ -4,8 +4,6 @@ package reg
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,7 +15,6 @@ import (
 	"github.com/autonomy/talos/src/initramfs/cmd/osd/proto"
 	"github.com/autonomy/talos/src/initramfs/pkg/chunker"
 	filechunker "github.com/autonomy/talos/src/initramfs/pkg/chunker/file"
-	streamchunker "github.com/autonomy/talos/src/initramfs/pkg/chunker/stream"
 	"github.com/autonomy/talos/src/initramfs/pkg/userdata"
 	"github.com/autonomy/talos/src/initramfs/pkg/version"
 	"github.com/containerd/cgroups"
@@ -26,11 +23,9 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl"
-	dockerclient "github.com/docker/engine-api/client"
-	"github.com/docker/engine-api/types"
 	"github.com/golang/protobuf/ptypes/empty"
-	crioclient "github.com/kubernetes-incubator/cri-o/client"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 )
@@ -160,11 +155,10 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/docker", Source: "/var/lib/docker", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/bin/crictl", Source: "/bin/crictl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/bin/kubeadm", Source: "/bin/kubeadm", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/bin/kubeadm.sh", Source: "/run/kubeadm.sh", Options: []string{"bind", "ro"}},
 	}
 
 	cr := containerdrunner.Containerd{}
@@ -229,30 +223,19 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
 	var chunk chunker.ChunkReader
 	if req.Container {
-		switch r.Data.Services.Init.ContainerRuntime {
-		case constants.ContainerRuntimeDocker:
-			chunk, err = dockerLogs(req.Process)
-			if err != nil {
-				return
-			}
-		case constants.ContainerRuntimeCRIO:
-			chunk, err = crioLogs(req.Process)
-			if err != nil {
-				return
-			}
-		}
-	} else {
-		logpath := servicelog.FormatLogPath(req.Process)
-		file, _err := os.OpenFile(logpath, os.O_RDONLY, 0)
-		if _err != nil {
-			err = _err
-			return
-		}
-		chunk = filechunker.NewChunker(file)
+		return errors.New("container logs is currently unsupported")
 	}
 
+	logpath := servicelog.FormatLogPath(req.Process)
+	file, _err := os.OpenFile(logpath, os.O_RDONLY, 0)
+	if _err != nil {
+		err = _err
+		return
+	}
+	chunk = filechunker.NewChunker(file)
+
 	if chunk == nil {
-		return fmt.Errorf("no log reader found")
+		return errors.New("no log reader found")
 	}
 
 	for data := range chunk.Read(l.Context()) {
@@ -274,43 +257,4 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (data *proto
 	data = &proto.Data{Bytes: []byte(v)}
 
 	return data, err
-}
-
-func crioLogs(id string) (chunk chunker.Chunker, err error) {
-	cli, err := crioclient.New(constants.ContainerRuntimeCRIOSocket)
-	if err != nil {
-		return
-	}
-	info, err := cli.ContainerInfo(id)
-	if err != nil {
-		return
-	}
-	file, err := os.OpenFile(info.LogPath, os.O_RDONLY, 0)
-	if err != nil {
-		return
-	}
-	chunk = filechunker.NewChunker(file)
-
-	return chunk, nil
-}
-
-func dockerLogs(id string) (chunk chunker.Chunker, err error) {
-	cli, err := dockerclient.NewEnvClient()
-	if err != nil {
-		return
-	}
-	stream, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
-		ShowStderr: true,
-		ShowStdout: true,
-		Timestamps: false,
-		Follow:     true,
-		Tail:       "40",
-	})
-	if err != nil {
-		return
-	}
-
-	chunk = streamchunker.NewChunker(stream)
-
-	return chunk, nil
 }

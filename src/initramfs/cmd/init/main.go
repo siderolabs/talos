@@ -134,7 +134,6 @@ func root() error {
 	systemservices.Start(
 		&services.Containerd{},
 		&services.Udevd{},
-		&services.CRT{},
 		&services.OSD{},
 		&services.Blockd{},
 		&services.Kubelet{},

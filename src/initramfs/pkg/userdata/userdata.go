@@ -97,8 +97,7 @@ type InstallDevice struct {
 
 // Init describes the configuration of the init service.
 type Init struct {
-	ContainerRuntime string `yaml:"containerRuntime,omitempty"`
-	CNI              string `yaml:"cni,omitempty"`
+	CNI string `yaml:"cni,omitempty"`
 }
 
 // Kubelet describes the configuration of the kubelet service.
@@ -146,8 +145,7 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var aux struct {
-		ContainerRuntime string `yaml:"containerRuntime,omitempty"`
-		Configuration    string `yaml:"configuration,omitempty"`
+		Configuration string `yaml:"configuration,omitempty"`
 	}
 
 	if err := unmarshal(&aux); err != nil {

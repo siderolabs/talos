@@ -27,8 +27,8 @@ func (k *Kubelet) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubelet) PreFunc(data *userdata.UserData) error {
-	if err := os.MkdirAll("/var/etc/kubernetes/manifests", os.ModeDir); err != nil {
-		return fmt.Errorf("create /var/etc/kubernetes/manifests: %s", err.Error())
+	if err := os.MkdirAll("/etc/kubernetes/manifests", os.ModeDir); err != nil {
+		return fmt.Errorf("create /etc/kubernetes/manifests: %s", err.Error())
 	}
 	if err := os.MkdirAll("/var/lib/kubelet", os.ModeDir); err != nil {
 		return fmt.Errorf("create /var/lib/kubelet: %s", err.Error())
@@ -36,7 +36,7 @@ func (k *Kubelet) PreFunc(data *userdata.UserData) error {
 	if err := os.MkdirAll("/var/libexec/kubernetes", os.ModeDir); err != nil {
 		return fmt.Errorf("create /var/libexec/kubernetes: %s", err.Error())
 	}
-	return nil
+	return os.MkdirAll("/var/log/pods", os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
@@ -46,15 +46,7 @@ func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
 
 // ConditionFunc implements the Service interface.
 func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	var conditionFunc conditions.ConditionFunc
-	switch data.Services.Init.ContainerRuntime {
-	case constants.ContainerRuntimeDocker:
-		conditionFunc = conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env")
-	case constants.ContainerRuntimeCRIO:
-		conditionFunc = conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", "/var/etc/containers/policy.json")
-	}
-
-	return conditionFunc
+	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", constants.ContainerdSocket)
 }
 
 // Start implements the Service interface.
@@ -76,11 +68,10 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 			"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf",
 			"--kubeconfig=/etc/kubernetes/kubelet.conf",
 			"--config=/var/lib/kubelet/config.yaml",
+			"--container-runtime=remote",
+			"--runtime-request-timeout=15m",
+			"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 		},
-	}
-
-	if data.Services.Init.ContainerRuntime == constants.ContainerRuntimeCRIO {
-		args.ProcessArgs = append(args.ProcessArgs, "--container-runtime=remote", "--runtime-request-timeout=15m", "--container-runtime-endpoint=unix:///var/run/crio/crio.sock")
 	}
 
 	fileBytes, err := ioutil.ReadFile("/var/lib/kubelet/kubeadm-flags.env")
@@ -97,7 +88,8 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/var/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 	}
@@ -107,13 +99,6 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		return err
 	}
 	mounts = append(mounts, cniMounts...)
-
-	switch data.Services.Init.ContainerRuntime {
-	case constants.ContainerRuntimeDocker:
-		mounts = append(mounts, specs.Mount{Type: "bind", Destination: "/var/lib/docker", Source: "/var/lib/docker", Options: []string{"rbind", "rshared", "rw"}})
-	case constants.ContainerRuntimeCRIO:
-		mounts = append(mounts, specs.Mount{Type: "bind", Destination: "/etc/containers", Source: "/var/etc/containers", Options: []string{"bind", "rw"}})
-	}
 
 	env := []string{}
 	for key, val := range data.Env {

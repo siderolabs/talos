@@ -62,7 +62,7 @@ func (o *OSD) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: constants.ContainerdSocket, Source: constants.ContainerdSocket, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/run", Source: "/var/run", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/run", Source: "/run", Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: "/etc/kubernetes", Source: "/var/etc/kubernetes", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"rbind", "rw"}},
 	}
