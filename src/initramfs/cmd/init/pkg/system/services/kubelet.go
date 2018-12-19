@@ -91,7 +91,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/var/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
 	cniMounts, err := cni.Mounts(data)
