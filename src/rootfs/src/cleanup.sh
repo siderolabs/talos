@@ -61,3 +61,6 @@ done
 
 # Required by kube-proxy.
 mkdir ${PREFIX}/lib/modules
+
+mkdir -p ${PREFIX}/usr/libexec
+ln -sv ../../var/libexec/kubernetes ${PREFIX}/usr/libexec/kubernetes
