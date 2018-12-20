@@ -1,5 +1,3 @@
-metadata:
-  repository: autonomy/talos
 policies:
 - type: conventionalCommit
   spec:
@@ -25,15 +23,3 @@ policies:
     - rootfs
     - tools
     - '*'
-script:
-  template: |
-    #!/bin/sh
-
-    set -e
-
-    mkdir -p ./build
-    cd ./src/rootfs && conform build
-    cd ../initramfs && conform build
-    cd ../image && conform build
-    cd ../docs && conform build
-    cd ../
