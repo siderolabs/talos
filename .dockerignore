@@ -1,2 +1,8 @@
-build
-vendor
+**
+!hack
+!installer
+!internal
+!vendor
+!web
+!go.mod
+!go.sum
