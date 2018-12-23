@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"hash/crc32"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/pkg/lba"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/pkg/serde"
+	"github.com/autonomy/talos/internal/pkg/blockdevice/lba"
+	"github.com/autonomy/talos/internal/pkg/serde"
 	"github.com/google/uuid"
 )
 

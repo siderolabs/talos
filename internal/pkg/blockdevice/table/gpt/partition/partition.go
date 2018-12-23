@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/pkg/serde"
+	"github.com/autonomy/talos/internal/pkg/serde"
 	"github.com/google/uuid"
 	"golang.org/x/text/encoding/unicode"
 )

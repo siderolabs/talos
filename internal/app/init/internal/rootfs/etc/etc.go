@@ -29,7 +29,7 @@ ID={{ .ID }}
 VERSION_ID={{ .Version }}
 PRETTY_NAME="{{ .Name }} ({{ .Version }}) by Autonomy"
 HOME_URL="https://talos.autonomy.io/"
-BUG_REPORT_URL="https://github.com/autonomy/talos/src/issues"
+BUG_REPORT_URL="https://github.com/autonomy/talos/issues"
 `
 
 // Hosts renders a valid /etc/hosts file and writes it to disk.

@@ -1,8 +1,4 @@
-// +build linux
-
 package main
-
-import "C"
 
 import (
 	"flag"
@@ -11,10 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/autonomy/talos/internal/app/init/internal/mount"
 	"github.com/autonomy/talos/internal/app/init/internal/platform"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs"
-	"github.com/autonomy/talos/internal/app/init/internal/switchroot"
+	"github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/autonomy/talos/internal/app/init/pkg/system"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/services"
 	"github.com/autonomy/talos/internal/pkg/constants"
@@ -46,54 +41,55 @@ func kmsg(prefix string) (*os.File, error) {
 }
 
 // nolint: gocyclo
-func initram() error {
-	// Read the special filesystems and populate the mount point definitions.
-	if err := mount.InitSpecial(constants.NewRoot); err != nil {
+func initram() (err error) {
+	var initializer *mount.Initializer
+	if initializer, err = mount.NewInitializer(constants.NewRoot); err != nil {
+		return err
+	}
+	// Mount the special devices.
+	if err = initializer.InitSpecial(); err != nil {
 		return err
 	}
 	// Setup logging to /dev/kmsg.
-	_, err := kmsg("[talos] [initramfs]")
+	_, err = kmsg("[talos] [initramfs]")
 	if err != nil {
 		return err
 	}
 	// Discover the platform.
 	log.Println("discovering the platform")
-	p, err := platform.NewPlatform()
-	if err != nil {
+	var p platform.Platform
+	if p, err = platform.NewPlatform(); err != nil {
 		return err
 	}
+	log.Printf("platform is: %s", p.Name())
 	// Retrieve the user data.
-	log.Printf("retrieving the user data for the platform: %s", p.Name())
-	data, err := p.UserData()
-	if err != nil {
+	log.Printf("retrieving the user data")
+	var data userdata.UserData
+	if data, err = p.UserData(); err != nil {
 		return err
 	}
-	// Perform rootfs/datafs installation if defined
-	if err := p.Install(data); err != nil {
+	// Perform rootfs/datafs installation if needed.
+	if err = p.Install(data); err != nil {
 		return err
 	}
-	// Read the block devices and populate the mount point definitions.
-	if err := mount.InitBlock(constants.NewRoot); err != nil {
+	// Mount the owned partitions.
+	log.Printf("mounting the partitions")
+	if err = initializer.InitOwned(); err != nil {
 		return err
 	}
-	log.Printf("preparing the node for the platform: %s", p.Name())
 	// Perform any tasks required by a particular platform.
-	if err := p.Prepare(data); err != nil {
+	log.Printf("performing platform specific tasks")
+	if err = p.Prepare(data); err != nil {
 		return err
 	}
 	// Prepare the necessary files in the rootfs.
 	log.Println("preparing the root filesystem")
-	if err := rootfs.Prepare(constants.NewRoot, data); err != nil {
-		return err
-	}
-	// Unmount the ROOT and DATA block devices.
-	log.Println("unmounting the ROOT and DATA partitions")
-	if err := mount.Unmount(); err != nil {
+	if err = rootfs.Prepare(constants.NewRoot, data); err != nil {
 		return err
 	}
 	// Perform the equivalent of switch_root.
 	log.Println("entering the new root")
-	if err := switchroot.Switch(constants.NewRoot); err != nil {
+	if err = initializer.Switch(); err != nil {
 		return err
 	}
 

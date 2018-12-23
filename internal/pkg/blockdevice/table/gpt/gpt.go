@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/pkg/lba"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/pkg/serde"
+	"github.com/autonomy/talos/internal/pkg/blockdevice/lba"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt/header"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt/partition"
+	"github.com/autonomy/talos/internal/pkg/serde"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"

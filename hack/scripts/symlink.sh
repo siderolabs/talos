@@ -14,4 +14,5 @@ done
 mkdir ${PREFIX}/lib/modules
 
 mkdir -p ${PREFIX}/usr/libexec
+mkdir -p ${PREFIX}/var/libexec/kubernetes
 ln -sv ../../var/libexec/kubernetes ${PREFIX}/usr/libexec/kubernetes

@@ -75,10 +75,6 @@ RUN ../configure \
     --disable-static
 RUN make -j $(($(nproc) / 2))
 RUN make install DESTDIR=/rootfs
-# libblkid
-RUN cp /toolchain/lib/libblkid.* /rootfs/lib
-# libuuid
-RUN cp /toolchain/lib/libuuid.* /rootfs/lib
 # ca-certificates
 RUN mkdir -p /rootfs/etc/ssl/certs
 RUN curl -o /rootfs/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
@@ -113,11 +109,10 @@ FROM base AS initramfs
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
-ENV CGO_ENABLED 1
 RUN apt update \
-    && apt install -y util-linux libblkid-dev cpio xz-utils
+    && apt install -y cpio xz-utils
 WORKDIR /src/internal/app/init
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
+RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
 RUN chmod +x /init
 WORKDIR /initramfs
 RUN cp /init ./
@@ -188,7 +183,7 @@ ENTRYPOINT ["/blockd"]
 
 FROM base AS test
 RUN apt update \
-    && apt install -y util-linux libblkid-dev xfsprogs
+    && apt install -y xfsprogs
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.12.3
 RUN chmod +x ./hack/golang/test.sh
 ENV PATH /rootfs/bin:$PATH
