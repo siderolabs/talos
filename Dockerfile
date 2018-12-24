@@ -51,7 +51,7 @@ COPY --from=udevd-build /udevd /udevd
 ENTRYPOINT ["/udevd"]
 
 ARG TOOLCHAIN_VERSION
-FROM autonomy/toolchain:${TOOLCHAIN_VERSION} AS rootfs
+FROM autonomy/toolchain:${TOOLCHAIN_VERSION} AS common
 RUN rm -rf /rootfs/etc
 RUN mkdir -p /rootfs/var/etc
 RUN ln -sv var/etc /rootfs/etc
@@ -66,6 +66,11 @@ RUN make \
     INSTALL_GROUP=0 \
     LOCAL_CONFIGURE_OPTIONS="--prefix=/"
 RUN make install DESTDIR=/rootfs
+
+FROM common AS rootfs
+RUN rm -rf /rootfs/etc
+RUN mkdir -p /rootfs/var/etc
+RUN ln -sv var/etc /rootfs/etc
 # libseccomp
 WORKDIR /toolchain/usr/local/src/libseccomp
 RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v2.3.3/libseccomp-2.3.3.tar.gz | tar --strip-components=1 -xz
@@ -116,7 +121,7 @@ RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.S
 RUN chmod +x /init
 WORKDIR /initramfs
 RUN cp /init ./
-COPY --from=rootfs /rootfs ./
+COPY --from=common /rootfs ./
 COPY ./hack/scripts/cleanup.sh /bin
 RUN chmod +x /bin/cleanup.sh
 RUN /bin/cleanup.sh /initramfs
