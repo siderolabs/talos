@@ -1,15 +1,13 @@
-// +build linux
-
 package platform
 
 import (
 	"fmt"
 
-	"github.com/autonomy/talos/internal/app/init/internal/kernel"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/baremetal"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/aws"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/vmware"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	"github.com/autonomy/talos/internal/pkg/kernel"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 )
 

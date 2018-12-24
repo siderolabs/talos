@@ -1,16 +1,15 @@
-// +build linux
-
 package vmware
 
 import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/autonomy/talos/internal/app/init/internal/kernel"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	"github.com/autonomy/talos/internal/pkg/kernel"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
+
 	yaml "gopkg.in/yaml.v2"
 )
 

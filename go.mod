@@ -62,7 +62,7 @@ require (
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/appengine v1.2.0 // indirect
-	google.golang.org/genproto v0.0.0-20180831171423-11092d34479b // indirect
+	google.golang.org/genproto v0.0.0-20181221175505-bd9b4fb69e2f // indirect
 	google.golang.org/grpc v1.17.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
@@ -71,9 +71,9 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20181213150558-05914d821849
+	k8s.io/api v0.0.0-20181221193117-173ce66c1e39
 	k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476 // indirect
-	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
+	k8s.io/apimachinery v0.0.0-20181220065808-98853ca904e8
 	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0-20181108060158-bf9d13f1fbeb // indirect

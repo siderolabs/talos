@@ -1,11 +1,8 @@
-// +build linux
-
 package baremetal
 
 import (
 	"archive/tar"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,17 +15,19 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/autonomy/talos/internal/app/init/internal/fs/xfs"
-	"github.com/autonomy/talos/internal/app/init/internal/kernel"
-	"github.com/autonomy/talos/internal/app/init/internal/mount"
-	"github.com/autonomy/talos/internal/app/init/internal/mount/blkid"
 	"github.com/autonomy/talos/internal/pkg/blockdevice"
+	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
+	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt/partition"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	"github.com/autonomy/talos/internal/pkg/kernel"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/autonomy/talos/internal/pkg/version"
+	"github.com/pkg/errors"
+
 	"golang.org/x/sys/unix"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -53,31 +52,31 @@ func (b *BareMetal) UserData() (data userdata.UserData, err error) {
 
 	option, ok := arguments[constants.KernelParamUserData]
 	if !ok {
-		return data, fmt.Errorf("no user data option was found")
+		return data, errors.Errorf("no user data option was found")
 	}
 
 	if option == constants.UserDataCIData {
-		var devname string
-		devname, err = blkid.GetDevWithAttribute("LABEL", constants.UserDataCIData)
+		var dev *probe.ProbedBlockDevice
+		dev, err = probe.GetDevWithFileSystemLabel(constants.UserDataCIData)
 		if err != nil {
-			return data, fmt.Errorf("failed to find %s iso: %v", constants.UserDataCIData, err)
+			return data, errors.Errorf("failed to find %s iso: %v", constants.UserDataCIData, err)
 		}
 		if err = os.Mkdir(mnt, 0700); err != nil {
-			return data, fmt.Errorf("failed to mkdir: %v", err)
+			return data, errors.Errorf("failed to mkdir: %v", err)
 		}
-		if err = unix.Mount(devname, mnt, "iso9660", unix.MS_RDONLY, ""); err != nil {
-			return data, fmt.Errorf("failed to mount iso: %v", err)
+		if err = unix.Mount(dev.Path, mnt, "iso9660", unix.MS_RDONLY, ""); err != nil {
+			return data, errors.Errorf("failed to mount iso: %v", err)
 		}
 		var dataBytes []byte
 		dataBytes, err = ioutil.ReadFile(path.Join(mnt, "user-data"))
 		if err != nil {
-			return data, fmt.Errorf("read user data: %s", err.Error())
+			return data, errors.Errorf("read user data: %s", err.Error())
 		}
 		if err = unix.Unmount(mnt, 0); err != nil {
-			return data, fmt.Errorf("failed to unmount: %v", err)
+			return data, errors.Errorf("failed to unmount: %v", err)
 		}
 		if err = yaml.Unmarshal(dataBytes, &data); err != nil {
-			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
+			return data, errors.Errorf("unmarshal user data: %s", err.Error())
 		}
 
 		return data, nil
@@ -97,15 +96,16 @@ func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 func (b *BareMetal) Install(data userdata.UserData) error {
 	var err error
 
-	log.Println("Starting installation")
 	// No installation necessary
 	if data.Install == nil {
 		return err
 	}
 
+	log.Println("starting installation")
+
 	// Root Device Init
 	if data.Install.Root.Device == "" {
-		return fmt.Errorf("%s", "install.rootdevice is required")
+		return errors.Errorf("%s", "install.rootdevice is required")
 	}
 
 	if data.Install.Root.Size == 0 {
@@ -153,17 +153,20 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	// Verify that the disks are unused
 	// Maybe a simple check against bd.UUID is more appropriate?
 	if !data.Install.Wipe {
-		var bd *mount.BlockDevice
+		var dev *probe.ProbedBlockDevice
 		for _, device := range []string{data.Install.Boot.Device, data.Install.Root.Device, data.Install.Data.Device} {
-			bd, err = mount.ProbeDevice(device)
+			dev, err = probe.GetDevWithFileSystemLabel(device)
 			if err != nil {
-				return err
+				// We continue here because we only care if we can discover the
+				// device successfully and confirm that the disk is not in use.
+				// TODO(andrewrynhard): We should return a custom error type here
+				// that we can use to confirm the device was not found.
+				continue
 			}
-			if bd.Label == "" || bd.Type == "" || bd.PartEntryName == "" {
-				return fmt.Errorf("%s: %s", "target install device is not empty", device)
+			if dev.SuperBlock != nil {
+				return errors.Errorf("target install device %s is not empty, found existing %s file system", device, dev.SuperBlock.Type())
 			}
 		}
-
 	}
 
 	// Create a map of all the devices we need to be concerned with
@@ -340,13 +343,13 @@ func (d *Device) Partition() error {
 		case "amd64":
 			typeID = "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
 		default:
-			return fmt.Errorf("%s", "unsupported cpu architecture")
+			return errors.Errorf("%s", "unsupported cpu architecture")
 		}
 	case constants.DataPartitionLabel:
 		// Data Partition
 		typeID = "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
 	default:
-		return fmt.Errorf("%s", "unknown partition label")
+		return errors.Errorf("%s", "unknown partition label")
 	}
 
 	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label), partition.WithPartitionTest(d.Test))
@@ -539,7 +542,7 @@ func downloader(artifact *url.URL, base string) (*os.File, error) {
 	if resp.StatusCode != 200 {
 		// nolint: errcheck
 		out.Close()
-		return nil, fmt.Errorf("Failed to download %s, got %d", artifact, resp.StatusCode)
+		return nil, errors.Errorf("Failed to download %s, got %d", artifact, resp.StatusCode)
 	}
 
 	// Write the body to file
