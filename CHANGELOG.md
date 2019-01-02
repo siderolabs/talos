@@ -1,3 +1,26 @@
+<a name="0.1.0-alpha.15"></a>
+# [0.1.0-alpha.15](https://github.com/autonomy/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
+
+
+### Bug Fixes
+
+* **init:** don't create the EncryptionConfig if it exists ([#282](https://github.com/autonomy/talos/issues/282)) ([0c32c95](https://github.com/autonomy/talos/commit/0c32c95))
+* **init:** no memory limit for container runtime ([#289](https://github.com/autonomy/talos/issues/289)) ([fdac043](https://github.com/autonomy/talos/commit/fdac043))
+* symlink kubernetes libexec directory ([#294](https://github.com/autonomy/talos/issues/294)) ([3de4323](https://github.com/autonomy/talos/commit/3de4323))
+
+
+### Features
+
+* **image:** build AMI with random.trust_cpu=on ([#287](https://github.com/autonomy/talos/issues/287)) ([648ce5b](https://github.com/autonomy/talos/commit/648ce5b))
+* **init:** reboot node on panic ([#284](https://github.com/autonomy/talos/issues/284)) ([5140fbe](https://github.com/autonomy/talos/commit/5140fbe))
+* **initramfs:** retry userdata download ([#283](https://github.com/autonomy/talos/issues/283)) ([028bdec](https://github.com/autonomy/talos/commit/028bdec))
+* **kernel:** upgrade Linux to v4.19.10 ([#293](https://github.com/autonomy/talos/issues/293)) ([a8292cb](https://github.com/autonomy/talos/commit/a8292cb))
+* add filesystem probing library ([#298](https://github.com/autonomy/talos/issues/298)) ([42b722b](https://github.com/autonomy/talos/commit/42b722b))
+* upgrade Kubernetes to v1.13.1 ([#291](https://github.com/autonomy/talos/issues/291)) ([f5f948e](https://github.com/autonomy/talos/commit/f5f948e))
+* use Containerd as CRI ([#292](https://github.com/autonomy/talos/issues/292)) ([23f7adb](https://github.com/autonomy/talos/commit/23f7adb))
+
+
+
 <a name="0.1.0-alpha.14"></a>
 # [0.1.0-alpha.14](https://github.com/autonomy/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-12-05)
 
