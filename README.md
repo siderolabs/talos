@@ -17,16 +17,8 @@
 
 ## Developing Talos
 
-Install [conform](https://github.com/autonomy/conform):
-
 ```bash
-go get -u github.com/autonomy/conform
-```
-
-Start the build:
-
-```bash
-conform build
+make
 ```
 
 ## License
