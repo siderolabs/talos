@@ -2,7 +2,7 @@ SHA := $(shell gitmeta git sha)
 TAG := $(shell gitmeta image tag)
 BUILT := $(shell gitmeta built)
 
-COMMON_APP_ARGS := -f ./Dockerfile --build-arg TOOLCHAIN_VERSION=690a03a --build-arg KERNEL_VERSION=e18620a --build-arg GOLANG_VERSION=1.11.4 --build-arg SHA=$(SHA) --build-arg TAG=$(TAG) .
+COMMON_APP_ARGS := -f ./Dockerfile --build-arg TOOLCHAIN_VERSION=bfdccf2 --build-arg KERNEL_VERSION=65ec2e6 --build-arg GOLANG_VERSION=1.11.4 --build-arg SHA=$(SHA) --build-arg TAG=$(TAG) .
 
 export DOCKER_BUILDKIT := 1
 
@@ -10,6 +10,12 @@ all: enforce rootfs initramfs osctl test docs installer
 
 enforce:
 	@docker run --rm -it -v $(PWD):/src -w /src autonomy/conform:latest
+
+common:
+	@docker build \
+		-t autonomy/$@:$(TAG) \
+		--target=$@ \
+		$(COMMON_APP_ARGS)
 
 osd:
 	@docker build \
