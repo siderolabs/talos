@@ -9,7 +9,7 @@ export DOCKER_BUILDKIT := 1
 all: enforce rootfs initramfs osd osctl trustd proxyd blockd udevd test installer docs
 
 enforce:
-	@conform enforce
+	@docker run --rm -it -v $(PWD):/src -w /src autonomy/conform:latest
 
 osd:
 	@docker build \

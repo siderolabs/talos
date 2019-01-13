@@ -1,4 +1,9 @@
 policies:
+- type: commit
+  spec:
+    headerLength: 89
+    dco: true
+    gpg: true
 - type: conventionalCommit
   spec:
     types:
@@ -23,3 +28,8 @@ policies:
     - rootfs
     - tools
     - '*'
+- type: license
+  spec:
+    includeSuffixes:
+    - .go
+    headerFile: LICENSE_HEADER
