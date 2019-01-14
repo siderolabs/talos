@@ -233,8 +233,7 @@ type CRT struct {
 
 // CommonServiceOptions represents the set of options common to all services.
 type CommonServiceOptions struct {
-	Image string `yaml:"image,omitempty"`
-	Env   Env    `yaml:"env,omitempty"`
+	Env Env `yaml:"env,omitempty"`
 }
 
 // WriteFiles writes the requested files to disk.

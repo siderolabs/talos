@@ -12,6 +12,7 @@ import (
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
 	"github.com/autonomy/talos/internal/app/osd/proto"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 )
 
@@ -41,9 +42,16 @@ var restartCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		var namespace string
+		if kubernetes {
+			namespace = criconstants.K8sContainerdNamespace
+		} else {
+			namespace = constants.SystemContainerdNamespace
+		}
 		r := &proto.RestartRequest{
-			Id:      args[0],
-			Timeout: timeout,
+			Id:        args[0],
+			Namespace: namespace,
+			Timeout:   timeout,
 		}
 		if err := c.Restart(r); err != nil {
 			fmt.Println(err)
@@ -54,5 +62,6 @@ var restartCmd = &cobra.Command{
 
 func init() {
 	restartCmd.Flags().Int32VarP(&timeout, "timeout", "t", 60, "the timeout duration in seconds")
+	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	rootCmd.AddCommand(restartCmd)
 }

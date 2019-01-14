@@ -11,6 +11,7 @@ import (
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
 	"github.com/autonomy/talos/internal/app/osd/proto"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,6 @@ var logsCmd = &cobra.Command{
 			}
 			os.Exit(1)
 		}
-		process := args[0]
 		creds, err := client.NewDefaultClientCredentials()
 		if err != nil {
 			fmt.Println(err)
@@ -37,9 +37,15 @@ var logsCmd = &cobra.Command{
 			fmt.Print(err)
 			os.Exit(1)
 		}
+		var namespace string
+		if kubernetes {
+			namespace = criconstants.K8sContainerdNamespace
+		} else {
+			namespace = constants.SystemContainerdNamespace
+		}
 		r := &proto.LogsRequest{
-			Process:   process,
-			Container: isContainer,
+			Id:        args[0],
+			Namespace: namespace,
 		}
 		if err := c.Logs(r); err != nil {
 			fmt.Print(err)
@@ -49,6 +55,6 @@ var logsCmd = &cobra.Command{
 }
 
 func init() {
-	logsCmd.Flags().BoolVarP(&isContainer, "container", "c", false, "treat <id> as a container ID")
+	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	rootCmd.AddCommand(logsCmd)
 }

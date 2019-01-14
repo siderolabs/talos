@@ -11,6 +11,7 @@ import (
 
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +31,13 @@ var psCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		if err := c.Processes(); err != nil {
+		var namespace string
+		if kubernetes {
+			namespace = criconstants.K8sContainerdNamespace
+		} else {
+			namespace = constants.SystemContainerdNamespace
+		}
+		if err := c.Processes(namespace); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -38,5 +45,6 @@ var psCmd = &cobra.Command{
 }
 
 func init() {
+	psCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	rootCmd.AddCommand(psCmd)
 }

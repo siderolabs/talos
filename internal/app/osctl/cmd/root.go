@@ -15,13 +15,13 @@ var (
 	ca           string
 	crt          string
 	key          string
-	isContainer  bool
 	organization string
 	rsa          bool
 	name         string
 	csr          string
 	ip           string
 	hours        int
+	kubernetes   bool
 )
 
 // rootCmd represents the base command when called without any subcommands

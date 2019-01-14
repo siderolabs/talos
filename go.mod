@@ -1,13 +1,12 @@
 module github.com/autonomy/talos
 
 require (
-	github.com/BurntSushi/toml v0.3.0 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
 	github.com/containerd/containerd v1.2.1
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
-	github.com/containerd/cri v1.11.1 // indirect
+	github.com/containerd/cri v1.11.1
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/coreos/go-systemd v0.0.0-20180828140353-eee3db372b31 // indirect
@@ -41,7 +40,6 @@ require (
 	github.com/onsi/gomega v1.4.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/opencontainers/runtime-spec v0.1.2-0.20180710222632-d810dbc60d8c
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.0
@@ -55,7 +53,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	golang.org/x/crypto v0.0.0-20180515001509-1a580b3eff78 // indirect
-	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
+	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc // indirect
 	golang.org/x/oauth2 v0.0.0-20181003184128-c57b0facaced // indirect
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181019160139-8e24a49d80f8

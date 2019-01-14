@@ -43,13 +43,7 @@ func (t *Trustd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 }
 
 func (t *Trustd) Start(data *userdata.UserData) error {
-	// Set the image.
-	var image string
-	if data.Services.Trustd != nil && data.Services.Trustd.Image != "" {
-		image = data.Services.Trustd.Image
-	} else {
-		image = "docker.io/autonomy/trustd:" + version.Tag
-	}
+	image := "docker.io/autonomy/trustd:" + version.Tag
 
 	// Set the process arguments.
 	args := runner.Args{

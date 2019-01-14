@@ -8,13 +8,18 @@ import "google/protobuf/empty.proto";
 // The OSD service definition.
 service OSD {
   rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
-  rpc Processes(google.protobuf.Empty) returns (ProcessesReply) {}
+  rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
   rpc Restart(RestartRequest) returns (RestartReply) {}
   rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
   rpc Logs(LogsRequest) returns (stream Data) {}
   rpc Dmesg(google.protobuf.Empty) returns (Data) {}
   rpc Version(google.protobuf.Empty) returns (Data) {}
+}
+
+// The request message containing the containerd namespace.
+message ProcessesRequest {
+  string namespace = 1;
 }
 
 // The response message containing the requested processes.
@@ -34,7 +39,8 @@ message Process {
 // The request message containing the process to restart.
 message RestartRequest {
   string id = 1;
-  int32 timeout = 2;
+  string namespace = 2;
+  int32 timeout = 3;
 }
 
 // The response message containing the restart status.
@@ -48,8 +54,8 @@ message RebootReply {}
 
 // The request message containing the process name.
 message LogsRequest {
-  string process = 1;
-  bool container = 2;
+  string id = 1;
+  string namespace = 2;
 }
 
 // The response message containing the requested logs.

@@ -7,6 +7,7 @@ package services
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
@@ -28,7 +29,7 @@ func (p *Proxyd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (p *Proxyd) PreFunc(data *userdata.UserData) error {
-	return nil
+	return os.MkdirAll("/etc/kubernetes", os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
@@ -42,13 +43,7 @@ func (p *Proxyd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 }
 
 func (p *Proxyd) Start(data *userdata.UserData) error {
-	// Set the image.
-	var image string
-	if data.Services.Proxyd != nil && data.Services.Proxyd.Image != "" {
-		image = data.Services.Proxyd.Image
-	} else {
-		image = "docker.io/autonomy/proxyd:" + version.Tag
-	}
+	image := "docker.io/autonomy/proxyd:" + version.Tag
 
 	// Set the process arguments.
 	args := runner.Args{

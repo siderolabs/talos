@@ -32,6 +32,8 @@ type Options struct {
 	OCISpecOpts []oci.SpecOpts
 	// ContainerImage is the container's image.
 	ContainerImage string
+	// Namespace is the containerd namespace.
+	Namespace string
 	// Type describes the service's restart policy.
 	Type Type
 }
@@ -52,8 +54,9 @@ const (
 // DefaultOptions describes the default options to a runner.
 func DefaultOptions() *Options {
 	return &Options{
-		Env:  []string{},
-		Type: Forever,
+		Env:       []string{},
+		Type:      Forever,
+		Namespace: "system",
 	}
 }
 
@@ -68,6 +71,13 @@ func WithType(o Type) Option {
 func WithEnv(o []string) Option {
 	return func(args *Options) {
 		args.Env = o
+	}
+}
+
+// WithNamespace sets the tar file to load.
+func WithNamespace(o string) Option {
+	return func(args *Options) {
+		args.Namespace = o
 	}
 }
 

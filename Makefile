@@ -6,7 +6,7 @@ COMMON_APP_ARGS := -f ./Dockerfile --build-arg TOOLCHAIN_VERSION=690a03a --build
 
 export DOCKER_BUILDKIT := 1
 
-all: enforce rootfs initramfs osd osctl trustd proxyd blockd udevd test installer docs
+all: enforce rootfs initramfs osctl udevd test installer docs
 
 enforce:
 	@docker run --rm -it -v $(PWD):/src -w /src autonomy/conform:latest
@@ -16,6 +16,7 @@ osd:
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
+	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 osctl:
 	@docker build \
@@ -30,18 +31,21 @@ trustd:
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
+	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 proxyd:
 	@docker build \
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
+	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 blockd:
 	@docker build \
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
+	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 udevd:
 	@docker build \
@@ -55,7 +59,23 @@ test:
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 
-rootfs:
+hyperkube:
+	@docker pull k8s.gcr.io/$@:v1.13.1
+	@docker save k8s.gcr.io/$@:v1.13.1 -o ./images/$@.tar
+
+etcd:
+	@docker pull k8s.gcr.io/$@:3.2.24
+	@docker save k8s.gcr.io/$@:3.2.24 -o ./images/$@.tar
+
+coredns:
+	@docker pull k8s.gcr.io/$@:1.2.6
+	@docker save k8s.gcr.io/$@:1.2.6 -o ./images/$@.tar
+
+pause:
+	@docker pull k8s.gcr.io/$@:3.1
+	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
+
+rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
 	@docker build \
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
@@ -79,7 +99,7 @@ docs:
 	@docker run --rm -it -v $(PWD):/out autonomy/$@:$(TAG) cp -R /docs /out
 
 .PHONY: installer
-installer:
+installer: initramfs rootfs
 	@docker build \
 		-t autonomy/talos:$(TAG) \
 		--target=$@ \

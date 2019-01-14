@@ -12,9 +12,7 @@ import (
 
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
-	servicelog "github.com/autonomy/talos/internal/app/init/pkg/system/runner/process/log"
 	"github.com/autonomy/talos/internal/app/osd/proto"
-	"github.com/autonomy/talos/internal/pkg/chunker"
 	filechunker "github.com/autonomy/talos/internal/pkg/chunker/file"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
@@ -59,8 +57,8 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 }
 
 // Processes implements the proto.OSDServer interface.
-func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *proto.ProcessesReply, err error) {
-	ctx = namespaces.WithNamespace(ctx, "system")
+func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
+	ctx = namespaces.WithNamespace(ctx, in.Namespace)
 	client, err := containerd.New(constants.ContainerdSocket)
 	if err != nil {
 		return nil, err
@@ -124,7 +122,7 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *pr
 
 // Restart implements the proto.OSDServer interface.
 func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (reply *proto.RestartReply, err error) {
-	ctx = namespaces.WithNamespace(ctx, "system")
+	ctx = namespaces.WithNamespace(ctx, in.Namespace)
 	client, err := containerd.New(constants.ContainerdSocket)
 	if err != nil {
 		return nil, err
@@ -226,18 +224,23 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 // Logs implements the proto.OSDServer interface. Service or container logs can
 // be requested and the contents of the log file are streamed in chunks.
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
-	var chunk chunker.ChunkReader
-	if req.Container {
-		return errors.New("container logs is currently unsupported")
+	ctx := namespaces.WithNamespace(context.Background(), req.Namespace)
+	client, err := containerd.New(constants.ContainerdSocket)
+	if err != nil {
+		return err
 	}
-
-	logpath := servicelog.FormatLogPath(req.Process)
-	file, _err := os.OpenFile(logpath, os.O_RDONLY, 0)
+	// nolint: errcheck
+	defer client.Close()
+	task, err := client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: req.Id})
+	if err != nil {
+		return err
+	}
+	file, _err := os.OpenFile(task.Process.Stdout, os.O_RDONLY, 0)
 	if _err != nil {
 		err = _err
 		return
 	}
-	chunk = filechunker.NewChunker(file)
+	chunk := filechunker.NewChunker(file)
 
 	if chunk == nil {
 		return errors.New("no log reader found")

@@ -46,7 +46,7 @@ func WithRootfsPropagation(rp string) oci.SpecOpts {
 // Run implements the Runner interface.
 // nolint: gocyclo
 func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...runner.Option) error {
-	//  Wait for the containerd socket.
+	// Wait for the containerd socket.
 
 	_, err := conditions.WaitForFileToExist(constants.ContainerdSocket)()
 	if err != nil {
@@ -62,7 +62,7 @@ func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...r
 
 	// Create the containerd client.
 
-	ctx := namespaces.WithNamespace(context.Background(), "system")
+	ctx := namespaces.WithNamespace(context.Background(), opts.Namespace)
 	client, err := containerd.New(constants.ContainerdSocket)
 	if err != nil {
 		return err
@@ -70,11 +70,9 @@ func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...r
 	// nolint: errcheck
 	defer client.Close()
 
-	// Pull the image and unpack it.
-
-	image, err := client.Pull(ctx, opts.ContainerImage, containerd.WithPullUnpack)
+	image, err := client.GetImage(ctx, opts.ContainerImage)
 	if err != nil {
-		return fmt.Errorf("failed to pull image %q: %v", opts.ContainerImage, err)
+		return err
 	}
 
 	// Create the container.
