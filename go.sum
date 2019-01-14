@@ -10,6 +10,7 @@ github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844 h1:W0F6ErEE8B84
 github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844/go.mod h1:X9rLEHIqSf/wfK8NsPqxJmeZgW4pcfzdXITDrUSJ6uI=
 github.com/containerd/containerd v1.2.1 h1:rG4/dK9V2qa5a9ly/E3CtG6/FBXfmSkDo8An3ea2Yt8=
 github.com/containerd/containerd v1.2.1/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=
+github.com/containerd/containerd v1.2.2 h1:N3tAHxrX+byqfAsENdDWLSMtFD4thUxK7kFElUl+8z8=
 github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 h1:HSgjWPBWohO3kHDPwCPUGSLqJjXCjA7ad5057beR2ZU=
 github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containerd/cri v1.11.1 h1:mR8+eNW4zEcbWGTGEpmDd7GzMmK7IMxMSVAZ2aIDKA4=
