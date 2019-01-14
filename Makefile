@@ -85,6 +85,7 @@ installer:
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 	@docker run --rm -it -v $(PWD)/build:/build autonomy/talos:$(SHA) cp /generated/boot/vmlinuz /build
+	@docker run --rm -it -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/talos:$(SHA) image -l
 
 deps:
 	@GO111MODULES=on CGO_ENABLED=0 go get -u github.com/autonomy/gitmeta
