@@ -47,7 +47,7 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 	if data.Services.Proxyd != nil && data.Services.Proxyd.Image != "" {
 		image = data.Services.Proxyd.Image
 	} else {
-		image = "docker.io/autonomy/proxyd:" + version.SHA
+		image = "docker.io/autonomy/proxyd:" + version.Tag
 	}
 
 	// Set the process arguments.

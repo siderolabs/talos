@@ -48,7 +48,7 @@ func (o *OSD) Start(data *userdata.UserData) error {
 	if data.Services.OSD != nil && data.Services.OSD.Image != "" {
 		image = data.Services.OSD.Image
 	} else {
-		image = "docker.io/autonomy/osd:" + version.SHA
+		image = "docker.io/autonomy/osd:" + version.Tag
 	}
 
 	// Set the process arguments.
