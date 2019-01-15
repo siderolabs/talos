@@ -13,78 +13,78 @@ enforce:
 
 osd:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 
 osctl:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(SHA) cp /osctl-linux-amd64 /build
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(SHA) cp /osctl-darwin-amd64 /build
+	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /osctl-linux-amd64 /build
+	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /osctl-darwin-amd64 /build
 
 trustd:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 
 proxyd:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 
 blockd:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 
 udevd:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS) \
 
 test:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 
 rootfs:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(SHA) cp /rootfs.tar.gz /build
+	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /rootfs.tar.gz /build
 
 initramfs:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(SHA) cp /initramfs.xz /build
+	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /initramfs.xz /build
 
 .PHONY: docs
 docs:
 	@docker build \
-		-t autonomy/$@:$(SHA) \
+		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
 	@rm -rf ./docs
-	@docker run --rm -it -v $(PWD):/out autonomy/$@:$(SHA) cp -R /docs /out
+	@docker run --rm -it -v $(PWD):/out autonomy/$@:$(TAG) cp -R /docs /out
 
 .PHONY: installer
 installer:
 	@docker build \
-		-t autonomy/talos:$(SHA) \
+		-t autonomy/talos:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/talos:$(SHA) cp /generated/boot/vmlinuz /build
+	@docker run --rm -it -v $(PWD)/build:/build autonomy/talos:$(TAG) cp /generated/boot/vmlinuz /build
 	@docker run --rm -it -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/talos:$(SHA) image -l
 
 deps:
