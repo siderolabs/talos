@@ -49,7 +49,7 @@ func (t *Blockd) Start(data *userdata.UserData) error {
 	if data.Services.Blockd != nil && data.Services.Blockd.Image != "" {
 		image = data.Services.Blockd.Image
 	} else {
-		image = "docker.io/autonomy/blockd:" + version.SHA
+		image = "docker.io/autonomy/blockd:" + version.Tag
 	}
 
 	// Set the process arguments.

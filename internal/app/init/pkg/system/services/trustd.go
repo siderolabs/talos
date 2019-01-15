@@ -48,7 +48,7 @@ func (t *Trustd) Start(data *userdata.UserData) error {
 	if data.Services.Trustd != nil && data.Services.Trustd.Image != "" {
 		image = data.Services.Trustd.Image
 	} else {
-		image = "docker.io/autonomy/trustd:" + version.SHA
+		image = "docker.io/autonomy/trustd:" + version.Tag
 	}
 
 	// Set the process arguments.
