@@ -193,14 +193,16 @@ case "$1" in
     done
     shift $((OPTIND -1))
 
-    if [ -z "${TALOS_PLATFORM}" ]; then
-      echo "The platform flag '-p' must be specified"
-      exit 1
-    fi
+    if [ "$FULL" = true ] ; then
+      if [ -z "${TALOS_PLATFORM}" ]; then
+        echo "The platform flag '-p' must be specified"
+        exit 1
+      fi
 
-    if [ -z "${TALOS_USERDATA}" ]; then
-      echo "The userdata flag '-u' must be specified"
-      exit 1
+      if [ -z "${TALOS_USERDATA}" ]; then
+        echo "The userdata flag '-u' must be specified"
+        exit 1
+      fi
     fi
     echo -e "Creating image\n\t/: ${ROOTFS_SIZE}Mb\n\t/boot: ${INITRAMFS_SIZE}Mb"
     create_image
