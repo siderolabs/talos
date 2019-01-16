@@ -44,13 +44,7 @@ func (t *Blockd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 }
 
 func (t *Blockd) Start(data *userdata.UserData) error {
-	// Set the image.
-	var image string
-	if data.Services.Blockd != nil && data.Services.Blockd.Image != "" {
-		image = data.Services.Blockd.Image
-	} else {
-		image = "docker.io/autonomy/blockd:" + version.Tag
-	}
+	image := "docker.io/autonomy/blockd:" + version.Tag
 
 	// Set the process arguments.
 	args := runner.Args{

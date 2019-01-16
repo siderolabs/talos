@@ -53,7 +53,7 @@ const (
 	KubernetesVersion = "v1.13.1"
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
-	KubernetesImage = "gcr.io/google_containers/hyperkube:" + KubernetesVersion
+	KubernetesImage = "k8s.gcr.io/hyperkube:" + KubernetesVersion
 
 	// DockerImage is the docker image to use as the container runtime for
 	// Kubernetes.
@@ -87,6 +87,9 @@ const (
 
 	// TrustdPort is the port for the trustd service.
 	TrustdPort = 50001
+
+	// SystemContainerdNamespace is the Containerd namespace for Talos services.
+	SystemContainerdNamespace = "system"
 )
 
 // See https://linux.die.net/man/3/klogctl

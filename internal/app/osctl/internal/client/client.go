@@ -117,9 +117,9 @@ func (c *Client) Kubeconfig() (err error) {
 }
 
 // Processes implements the proto.OSDClient interface.
-func (c *Client) Processes() (err error) {
+func (c *Client) Processes(namespace string) (err error) {
 	ctx := context.Background()
-	reply, err := c.client.Processes(ctx, &empty.Empty{})
+	reply, err := c.client.Processes(ctx, &proto.ProcessesRequest{Namespace: namespace})
 	if err != nil {
 		return
 	}

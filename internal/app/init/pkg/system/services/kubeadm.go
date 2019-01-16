@@ -24,6 +24,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/grpc/middleware/auth/basic"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/containerd/containerd/oci"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
@@ -113,13 +114,7 @@ func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFun
 // Start implements the Service interface.
 // nolint: dupl
 func (k *Kubeadm) Start(data *userdata.UserData) error {
-	// Set the image.
-	var image string
-	if data.Services.Kubeadm != nil && data.Services.Kubeadm.Image != "" {
-		image = data.Services.Kubeadm.Image
-	} else {
-		image = constants.KubernetesImage
-	}
+	image := constants.KubernetesImage
 
 	// We only wan't to run kubeadm if it hasn't been ran already.
 	if _, err := os.Stat("/etc/kubernetes/kubelet.conf"); !os.IsNotExist(err) {
@@ -159,6 +154,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	return r.Run(
 		data,
 		args,
+		runner.WithNamespace(criconstants.K8sContainerdNamespace),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(

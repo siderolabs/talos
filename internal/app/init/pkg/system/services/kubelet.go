@@ -17,6 +17,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/containerd/containerd/oci"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -55,13 +56,7 @@ func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFun
 
 // Start implements the Service interface.
 func (k *Kubelet) Start(data *userdata.UserData) error {
-	// Set the image.
-	var image string
-	if data.Services.Kubelet != nil && data.Services.Kubelet.Image != "" {
-		image = data.Services.Kubelet.Image
-	} else {
-		image = constants.KubernetesImage
-	}
+	image := constants.KubernetesImage
 
 	// Set the process arguments.
 	args := runner.Args{
@@ -114,6 +109,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 	return r.Run(
 		data,
 		args,
+		runner.WithNamespace(criconstants.K8sContainerdNamespace),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(

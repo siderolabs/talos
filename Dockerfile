@@ -98,6 +98,8 @@ RUN curl -L https://github.com/containernetworking/plugins/releases/download/v0.
 # kubeadm
 RUN curl --retry 3 --retry-delay 60 -L https://storage.googleapis.com/kubernetes-release/release/v1.13.1/bin/linux/amd64/kubeadm -o /rootfs/bin/kubeadm
 RUN chmod +x /rootfs/bin/kubeadm
+# images
+COPY images /rootfs/usr/images
 # udevd
 COPY --from=udevd-build /udevd /rootfs/bin/udevd
 # cleanup

@@ -5,19 +5,25 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/autonomy/talos/internal/app/init/internal/platform"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/autonomy/talos/internal/app/init/pkg/system"
+	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/services"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/pkg/errors"
 
 	"golang.org/x/sys/unix"
@@ -100,54 +106,130 @@ func initram() (err error) {
 	return nil
 }
 
-func root() error {
+func root() (err error) {
 	// Setup logging to /dev/kmsg.
-	if _, err := kmsg("[talos]"); err != nil {
+	if _, err = kmsg("[talos]"); err != nil {
 		return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
 	}
 	// Read the user data.
 	log.Printf("reading the user data: %s\n", constants.UserDataPath)
-	data, err := userdata.Open(constants.UserDataPath)
-	if err != nil {
+	var data *userdata.UserData
+	if data, err = userdata.Open(constants.UserDataPath); err != nil {
 		return err
 	}
 
 	// Write any user specified files to disk.
 	log.Println("writing the files specified in the user data to disk")
-	if err := data.WriteFiles(); err != nil {
+	if err = data.WriteFiles(); err != nil {
 		return err
 	}
 
 	// Set the requested environment variables.
 	log.Println("setting environment variables")
 	for key, val := range data.Env {
-		if err := os.Setenv(key, val); err != nil {
+		if err = os.Setenv(key, val); err != nil {
 			log.Printf("WARNING failed to set enivronment variable: %v", err)
 		}
 	}
 
 	// Get a handle to the system services API.
-	systemservices := system.Services(data)
+	svcs := system.Services(data)
 
+	// Start containerd.
+	svcs.Start(&services.Containerd{})
+
+	go startSystemServices(data)
+	go startKubernetesServices(data)
+
+	return nil
+}
+
+func startSystemServices(data *userdata.UserData) {
+	svcs := system.Services(data)
+
+	// Import the system images.
+	if err := importImages([]string{"/usr/images/blockd.tar", "/usr/images/osd.tar", "/usr/images/proxyd.tar", "/usr/images/trustd.tar"}, constants.SystemContainerdNamespace); err != nil {
+		panic(err)
+	}
+
+	log.Println("starting system services")
 	// Start the services common to all nodes.
-	log.Println("starting node services")
-	systemservices.Start(
-		&services.Containerd{},
+	svcs.Start(
 		&services.Udevd{},
 		&services.OSD{},
 		&services.Blockd{},
-		&services.Kubelet{},
-		&services.Kubeadm{},
 	)
-
 	// Start the services common to all master nodes.
 	if data.IsMaster() {
-		log.Println("starting master services")
-		systemservices.Start(
+		svcs.Start(
 			&services.Trustd{},
 			&services.Proxyd{},
 		)
 	}
+}
+
+func startKubernetesServices(data *userdata.UserData) {
+	svcs := system.Services(data)
+
+	// Import the Kubernetes images.
+	if err := importImages([]string{"/usr/images/hyperkube.tar", "/usr/images/etcd.tar", "/usr/images/coredns.tar", "/usr/images/pause.tar"}, criconstants.K8sContainerdNamespace); err != nil {
+		panic(err)
+	}
+
+	log.Println("starting kubernetes services")
+	svcs.Start(
+		&services.Kubelet{},
+		&services.Kubeadm{},
+	)
+}
+
+func importImages(files []string, namespace string) (err error) {
+	_, err = conditions.WaitForFileToExist(constants.ContainerdSocket)()
+	if err != nil {
+		return err
+	}
+
+	ctx := namespaces.WithNamespace(context.Background(), namespace)
+	client, err := containerd.New(constants.ContainerdSocket)
+	if err != nil {
+		return err
+	}
+	// nolint: errcheck
+	defer client.Close()
+
+	var wg sync.WaitGroup
+
+	wg.Add(len(files))
+
+	for _, file := range files {
+		go func(wg *sync.WaitGroup, f string) {
+			defer wg.Done()
+
+			tarball, err := os.Open(f)
+			if err != nil {
+				panic(err)
+			}
+
+			imgs, err := client.Import(ctx, tarball)
+			if err != nil {
+				panic(err)
+			}
+			if err = tarball.Close(); err != nil {
+				panic(err)
+			}
+
+			for _, img := range imgs {
+				image := containerd.NewImage(client, img)
+				log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
+				err = image.Unpack(ctx, containerd.DefaultSnapshotter)
+				if err != nil {
+					panic(err)
+				}
+			}
+		}(&wg, file)
+	}
+
+	wg.Wait()
 
 	return nil
 }
