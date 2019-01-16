@@ -98,8 +98,7 @@ docs:
 	@rm -rf ./docs
 	@docker run --rm -it -v $(PWD):/out autonomy/$@:$(TAG) cp -R /docs /out
 
-.PHONY: installer
-installer: initramfs rootfs
+installer:
 	@docker build \
 		-t autonomy/talos:$(TAG) \
 		--target=$@ \
