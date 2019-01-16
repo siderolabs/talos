@@ -208,20 +208,14 @@ RUN echo "talos.autonomy.io" > /docs/CNAME
 ARG KERNEL_VERSION
 FROM autonomy/kernel:${KERNEL_VERSION} as kernel
 
-FROM alpine:3.7 AS installer-build
-RUN apk --update add curl tar xz
+FROM alpine:3.7 AS installer
+RUN apk --update add bash curl gzip e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
 WORKDIR /usr/local/src/syslinux
 RUN curl -L https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz | tar --strip-components=1 -xJ
 WORKDIR /
 COPY --from=kernel /vmlinuz /generated/boot/vmlinuz
 COPY --from=rootfs /rootfs.tar.gz /generated/rootfs.tar.gz
 COPY --from=initramfs /initramfs.xz /generated/boot/initramfs.xz
-
-FROM alpine:3.7 AS installer
-RUN apk --update add bash curl gzip e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
-COPY --from=installer-build /usr/local/src/syslinux /usr/local/src/syslinux
-COPY --from=installer-build /generated/rootfs.tar.gz /generated/rootfs.tar.gz
-COPY --from=installer-build /generated/boot /generated/boot
 RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip -o /tmp/packer.zip \
     && unzip -d /tmp /tmp/packer.zip \
     && mv /tmp/packer /bin \
