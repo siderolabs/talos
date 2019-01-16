@@ -124,9 +124,9 @@ func (c *Client) Processes(namespace string) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "ID\tIMAGE\tSTATUS\tMEMORY(MB)\tCPU")
+	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tSTATUS\tMEMORY(MB)\tCPU")
 	for _, p := range reply.Processes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", p.Id, p.Image, p.Status, float64(p.MemoryUsage)*1e-6, p.CpuUsage)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%.2f\t%d\n", p.Namespace, p.Id, p.Image, p.Status, float64(p.MemoryUsage)*1e-6, p.CpuUsage)
 	}
 	if err := w.Flush(); err != nil {
 		return err

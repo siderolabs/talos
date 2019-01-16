@@ -59,23 +59,30 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 
 // Processes implements the proto.OSDServer interface.
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
-	ctx = namespaces.WithNamespace(ctx, in.Namespace)
 	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return nil, err
 	}
 	// nolint: errcheck
 	defer client.Close()
+
+	ctx = namespaces.WithNamespace(ctx, in.Namespace)
+
 	containers, err := client.Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	processes := []*proto.Process{}
-	for _, c := range containers {
-		info, err := c.Info(ctx)
+
+	for _, container := range containers {
+		task, err := container.Task(ctx, nil)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		task, err := c.Task(ctx, nil)
+		image, err := container.Image(ctx)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -88,9 +95,10 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 		}
 
 		process := &proto.Process{
-			Id:     task.ID(),
-			Image:  info.Image,
-			Status: string(status.Status),
+			Namespace: in.Namespace,
+			Id:        container.ID(),
+			Image:     image.Name(),
+			Status:    string(status.Status),
 		}
 
 		if status.Status == containerd.Running {
@@ -99,16 +107,19 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 				log.Println(err)
 				continue
 			}
+
 			anydata, err := typeurl.UnmarshalAny(metrics.Data)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
+
 			data, ok := anydata.(*cgroups.Metrics)
 			if !ok {
 				log.Println(errors.New("failed to convert metric data to cgroups.Metrics"))
 				continue
 			}
+
 			process.MemoryUsage = data.Memory.Usage.Usage
 			process.CpuUsage = data.CPU.Usage.Total
 		}
