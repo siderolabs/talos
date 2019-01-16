@@ -20,6 +20,7 @@ import (
 	"github.com/containerd/cgroups"
 	"github.com/containerd/containerd"
 	tasks "github.com/containerd/containerd/api/services/tasks/v1"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl"
@@ -59,7 +60,7 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 // Processes implements the proto.OSDServer interface.
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
 	ctx = namespaces.WithNamespace(ctx, in.Namespace)
-	client, err := containerd.New(constants.ContainerdSocket)
+	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +124,7 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 // Restart implements the proto.OSDServer interface.
 func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (reply *proto.RestartReply, err error) {
 	ctx = namespaces.WithNamespace(ctx, in.Namespace)
-	client, err := containerd.New(constants.ContainerdSocket)
+	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +226,7 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 // be requested and the contents of the log file are streamed in chunks.
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
 	ctx := namespaces.WithNamespace(context.Background(), req.Namespace)
-	client, err := containerd.New(constants.ContainerdSocket)
+	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return err
 	}

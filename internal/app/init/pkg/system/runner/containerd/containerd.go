@@ -10,11 +10,11 @@ import (
 
 	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
-	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/runtime/restart"
@@ -48,7 +48,7 @@ func WithRootfsPropagation(rp string) oci.SpecOpts {
 func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...runner.Option) error {
 	// Wait for the containerd socket.
 
-	_, err := conditions.WaitForFileToExist(constants.ContainerdSocket)()
+	_, err := conditions.WaitForFileToExist(defaults.DefaultAddress)()
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...r
 	// Create the containerd client.
 
 	ctx := namespaces.WithNamespace(context.Background(), opts.Namespace)
-	client, err := containerd.New(constants.ContainerdSocket)
+	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return err
 	}

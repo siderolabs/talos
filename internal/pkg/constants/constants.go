@@ -37,9 +37,6 @@ const (
 	// CNIFlannel is used to specify Flannel CNI.
 	CNIFlannel = "flannel"
 
-	// ContainerdSocket is the path to the containerd socket.
-	ContainerdSocket = "/run/containerd/containerd.sock"
-
 	// KubeadmConfig is the path to the kubeadm manifest file.
 	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
 

@@ -16,6 +16,7 @@ import (
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -51,7 +52,7 @@ func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
 
 // ConditionFunc implements the Service interface.
 func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", constants.ContainerdSocket)
+	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", defaults.DefaultAddress)
 }
 
 // Start implements the Service interface.
@@ -69,7 +70,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 			"--config=/var/lib/kubelet/config.yaml",
 			"--container-runtime=remote",
 			"--runtime-request-timeout=15m",
-			"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
+			"--container-runtime-endpoint=unix://" + defaults.DefaultAddress,
 		},
 	}
 
