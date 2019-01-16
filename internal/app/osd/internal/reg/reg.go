@@ -58,6 +58,7 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 }
 
 // Processes implements the proto.OSDServer interface.
+// nolint: gocyclo
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
 	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
