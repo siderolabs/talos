@@ -23,6 +23,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/autonomy/talos/internal/pkg/grpc/middleware/auth/basic"
 	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -102,7 +103,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 // ConditionFunc implements the Service interface.
 func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	files := []string{constants.ContainerdSocket}
+	files := []string{defaults.DefaultAddress}
 
 	if data.IsControlPlane() {
 		files = append(files, "/etc/kubernetes/admin.conf")
@@ -181,7 +182,7 @@ func writeKubeadmConfig(data *userdata.UserData) (err error) {
 		if !ok {
 			return errors.New("expected InitConfiguration")
 		}
-		initConfiguration.NodeRegistration.CRISocket = constants.ContainerdSocket
+		initConfiguration.NodeRegistration.CRISocket = defaults.DefaultAddress
 		enforceMasterOverrides(initConfiguration)
 		if err = cis.EnforceMasterRequirements(initConfiguration); err != nil {
 			return err
@@ -195,7 +196,7 @@ func writeKubeadmConfig(data *userdata.UserData) (err error) {
 		if !ok {
 			return errors.New("expected JoinConfiguration")
 		}
-		joinConfiguration.NodeRegistration.CRISocket = constants.ContainerdSocket
+		joinConfiguration.NodeRegistration.CRISocket = defaults.DefaultAddress
 		if err = cis.EnforceWorkerRequirements(joinConfiguration); err != nil {
 			return err
 		}

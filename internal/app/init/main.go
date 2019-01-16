@@ -22,6 +22,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/pkg/errors"
@@ -184,13 +185,13 @@ func startKubernetesServices(data *userdata.UserData) {
 }
 
 func importImages(files []string, namespace string) (err error) {
-	_, err = conditions.WaitForFileToExist(constants.ContainerdSocket)()
+	_, err = conditions.WaitForFileToExist(defaults.DefaultAddress)()
 	if err != nil {
 		return err
 	}
 
 	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	client, err := containerd.New(constants.ContainerdSocket)
+	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return err
 	}

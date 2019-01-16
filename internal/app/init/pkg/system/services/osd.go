@@ -15,6 +15,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/autonomy/talos/internal/pkg/version"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -58,7 +59,7 @@ func (o *OSD) Start(data *userdata.UserData) error {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: constants.ContainerdSocket, Source: constants.ContainerdSocket, Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: defaults.DefaultAddress, Source: defaults.DefaultAddress, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/run", Source: "/var/run", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/run", Source: "/run", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},

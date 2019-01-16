@@ -12,6 +12,7 @@ import (
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/process"
 	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/containerd/containerd/defaults"
 )
 
 // Containerd implements the Service interface. It serves as the concrete type with
@@ -25,7 +26,7 @@ func (c *Containerd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (c *Containerd) PreFunc(data *userdata.UserData) error {
-	return os.MkdirAll("/var/lib/containerd", os.ModeDir)
+	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
