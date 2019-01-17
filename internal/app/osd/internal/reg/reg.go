@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
@@ -99,7 +100,48 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 			Namespace: in.Namespace,
 			Id:        container.ID(),
 			Image:     image.Name(),
-			Status:    string(status.Status),
+			Pid:       task.Pid(),
+			Status:    strings.ToUpper(string(status.Status)),
+		}
+
+		processes = append(processes, process)
+	}
+
+	reply = &proto.ProcessesReply{Processes: processes}
+
+	return reply, nil
+}
+
+// Stats implements the proto.OSDServer interface.
+// nolint: gocyclo
+func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply *proto.StatsReply, err error) {
+	client, err := containerd.New(defaults.DefaultAddress)
+	if err != nil {
+		return nil, err
+	}
+	// nolint: errcheck
+	defer client.Close()
+
+	ctx = namespaces.WithNamespace(ctx, in.Namespace)
+
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := []*proto.Stat{}
+
+	for _, container := range containers {
+		task, err := container.Task(ctx, nil)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		status, err := task.Status(ctx)
+		if err != nil {
+			log.Println(err)
+			continue
 		}
 
 		if status.Status == containerd.Running {
@@ -121,14 +163,27 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 				continue
 			}
 
-			process.MemoryUsage = data.Memory.Usage.Usage
-			process.CpuUsage = data.CPU.Usage.Total
+			var used uint64
+			mem := data.Memory
+			if mem.Usage != nil {
+				if mem.TotalInactiveFile < mem.Usage.Usage {
+					used = mem.Usage.Usage - mem.TotalInactiveFile
+				}
+			}
+
+			stat := &proto.Stat{
+				Namespace:   in.Namespace,
+				Id:          container.ID(),
+				MemoryUsage: used,
+				CpuUsage:    data.CPU.Usage.Total,
+			}
+
+			stats = append(stats, stat)
 		}
 
-		processes = append(processes, process)
 	}
 
-	reply = &proto.ProcessesReply{Processes: processes}
+	reply = &proto.StatsReply{Stats: stats}
 
 	return reply, nil
 }
