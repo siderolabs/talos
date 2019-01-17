@@ -6,7 +6,7 @@ COMMON_APP_ARGS := -f ./Dockerfile --build-arg TOOLCHAIN_VERSION=690a03a --build
 
 export DOCKER_BUILDKIT := 1
 
-all: enforce rootfs initramfs osctl udevd test installer docs
+all: enforce rootfs initramfs osctl test docs installer
 
 enforce:
 	@docker run --rm -it -v $(PWD):/src -w /src autonomy/conform:latest
@@ -16,7 +16,6 @@ osd:
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 osctl:
 	@docker build \
@@ -31,21 +30,18 @@ trustd:
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 proxyd:
 	@docker build \
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 blockd:
 	@docker build \
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
 		$(COMMON_APP_ARGS)
-	@docker save autonomy/$@:$(TAG) -o ./images/$@.tar
 
 udevd:
 	@docker build \
@@ -76,6 +72,10 @@ pause:
 	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
 
 rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
+	@docker save autonomy/osd:$(TAG)    -o ./images/osd.tar
+	@docker save autonomy/trustd:$(TAG) -o ./images/trustd.tar
+	@docker save autonomy/proxyd:$(TAG) -o ./images/proxyd.tar
+	@docker save autonomy/blockd:$(TAG) -o ./images/blockd.tar
 	@docker build \
 		-t autonomy/$@:$(TAG) \
 		--target=$@ \
