@@ -116,6 +116,25 @@ func (c *Client) Kubeconfig() (err error) {
 	return nil
 }
 
+// Stats implements the proto.OSDClient interface.
+func (c *Client) Stats(namespace string) (err error) {
+	ctx := context.Background()
+	reply, err := c.client.Stats(ctx, &proto.StatsRequest{Namespace: namespace})
+	if err != nil {
+		return
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NAMESPACE\tID\tMEMORY(MB)\tCPU")
+	for _, s := range reply.Stats {
+		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, s.Id, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+	}
+	if err := w.Flush(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Processes implements the proto.OSDClient interface.
 func (c *Client) Processes(namespace string) (err error) {
 	ctx := context.Background()
@@ -124,9 +143,9 @@ func (c *Client) Processes(namespace string) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tSTATUS\tMEMORY(MB)\tCPU")
+	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 	for _, p := range reply.Processes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%.2f\t%d\n", p.Namespace, p.Id, p.Image, p.Status, float64(p.MemoryUsage)*1e-6, p.CpuUsage)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, p.Id, p.Image, p.Pid, p.Status)
 	}
 	if err := w.Flush(); err != nil {
 		return err

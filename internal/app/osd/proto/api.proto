@@ -7,40 +7,50 @@ import "google/protobuf/empty.proto";
 
 // The OSD service definition.
 service OSD {
-  rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
-  rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
-  rpc Restart(RestartRequest) returns (RestartReply) {}
-  rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
-  rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
-  rpc Logs(LogsRequest) returns (stream Data) {}
   rpc Dmesg(google.protobuf.Empty) returns (Data) {}
+  rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
+  rpc Logs(LogsRequest) returns (stream Data) {}
+  rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
+  rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
+  rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
+  rpc Restart(RestartRequest) returns (RestartReply) {}
+  rpc Stats(StatsRequest) returns (StatsReply) {}
   rpc Version(google.protobuf.Empty) returns (Data) {}
 }
 
 // The request message containing the containerd namespace.
-message ProcessesRequest {
-  string namespace = 1;
-}
+message ProcessesRequest { string namespace = 1; }
 
 // The response message containing the requested processes.
-message ProcessesReply {
-  repeated Process processes = 1;
-}
+message ProcessesReply { repeated Process processes = 1; }
 
 // The response message containing the requested processes.
 message Process {
   string namespace = 1;
   string id = 2;
   string image = 3;
-  string status = 4;
-  uint64 memory_usage = 5;
-  uint64 cpu_usage = 6;
+  uint32 pid = 4;
+  string status = 5;
+}
+
+// The request message containing the containerd namespace.
+message StatsRequest { string namespace = 1; }
+
+// The response message containing the requested stats.
+message StatsReply { repeated Stat stats = 1; }
+
+// The response message containing the requested stat.
+message Stat {
+  string namespace = 1;
+  string id = 2;
+  uint64 memory_usage = 4;
+  uint64 cpu_usage = 5;
 }
 
 // The request message containing the process to restart.
 message RestartRequest {
-  string id = 1;
-  string namespace = 2;
+  string namespace = 1;
+  string id = 2;
   int32 timeout = 3;
 }
 
@@ -55,11 +65,9 @@ message RebootReply {}
 
 // The request message containing the process name.
 message LogsRequest {
-  string id = 1;
-  string namespace = 2;
+  string namespace = 1;
+  string id = 2;
 }
 
 // The response message containing the requested logs.
-message Data {
-  bytes bytes = 1;
-}
+message Data { bytes bytes = 1; }
