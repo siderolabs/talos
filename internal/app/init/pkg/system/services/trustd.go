@@ -13,7 +13,6 @@ import (
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
-	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -43,7 +42,7 @@ func (t *Trustd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 }
 
 func (t *Trustd) Start(data *userdata.UserData) error {
-	image := "docker.io/autonomy/trustd:" + version.Tag
+	image := "talos/trustd"
 
 	// Set the process arguments.
 	args := runner.Args{
