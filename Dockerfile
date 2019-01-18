@@ -52,9 +52,20 @@ ENTRYPOINT ["/udevd"]
 
 ARG TOOLCHAIN_VERSION
 FROM autonomy/toolchain:${TOOLCHAIN_VERSION} AS common
-RUN rm -rf /rootfs/etc
-RUN mkdir -p /rootfs/var/etc
-RUN ln -sv var/etc /rootfs/etc
+# fhs
+COPY hack/scripts/fhs.sh .
+RUN ./fhs.sh /rootfs
+WORKDIR /tmp/gcompat
+RUN curl -L https://github.com/AdelieLinux/gcompat/archive/0.3.0.tar.gz | tar -xz --strip-components=1
+RUN make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2
+RUN make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2 install
+# golang
+ENV GOROOT /toolchain/usr/local/go
+ENV GOPATH /toolchain/go
+ENV PATH ${PATH}:${GOROOT}/bin
+RUN mkdir -p ${GOROOT} ${GOPATH}
+RUN curl -L https://dl.google.com/go/go1.11.4.linux-amd64.tar.gz | tar -xz --strip-components=1 -C ${GOROOT}
+RUN ln -s lib /lib64
 # xfsprogs
 RUN mkdir -p /etc/ssl/certs
 RUN ln -s /toolchain/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
@@ -66,11 +77,10 @@ RUN make \
     INSTALL_GROUP=0 \
     LOCAL_CONFIGURE_OPTIONS="--prefix=/"
 RUN make install DESTDIR=/rootfs
+# libuuid
+RUN cp /toolchain/lib/libuuid.* /rootfs/lib
 
 FROM common AS rootfs
-RUN rm -rf /rootfs/etc
-RUN mkdir -p /rootfs/var/etc
-RUN ln -sv var/etc /rootfs/etc
 # libseccomp
 WORKDIR /toolchain/usr/local/src/libseccomp
 RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v2.3.3/libseccomp-2.3.3.tar.gz | tar --strip-components=1 -xz
@@ -80,19 +90,27 @@ RUN ../configure \
     --disable-static
 RUN make -j $(($(nproc) / 2))
 RUN make install DESTDIR=/rootfs
+RUN make install DESTDIR=/toolchain
 # ca-certificates
 RUN mkdir -p /rootfs/etc/ssl/certs
 RUN curl -o /rootfs/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
-# containerd
+# crictl
 RUN curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-amd64.tar.gz | tar -xz -C /rootfs/bin
-RUN curl -L https://github.com/containerd/containerd/releases/download/v1.2.1/containerd-1.2.1.linux-amd64.tar.gz | tar --strip-components=1 -xz -C /rootfs/bin
-RUN rm /rootfs/bin/ctr
+# containerd
+RUN mkdir -p $GOPATH/src/github.com/containerd \
+    && cd $GOPATH/src/github.com/containerd \
+    && git clone https://github.com/containerd/containerd.git \
+    && cd $GOPATH/src/github.com/containerd/containerd \
+    && git checkout v1.2.1
+RUN cd $GOPATH/src/github.com/containerd/containerd \
+    && make binaries BUILDTAGS=no_btrfs \
+    && cp bin/containerd /rootfs/bin \
+    && cp bin/containerd-shim /rootfs/bin
 # runc
 RUN curl -L https://github.com/opencontainers/runc/releases/download/v1.0.0-rc6/runc.amd64 -o /rootfs/bin/runc
 RUN chmod +x /rootfs/bin/runc
-RUN ln -sv ../opt /rootfs/var/opt
-RUN mkdir -p /rootfs/opt/cni/bin
 # CNI
+RUN mkdir -p /rootfs/opt/cni/bin
 RUN curl -L https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz | tar -xz -C /rootfs/opt/cni/bin
 RUN curl -L https://github.com/containernetworking/plugins/releases/download/v0.7.4/cni-plugins-amd64-v0.7.4.tgz | tar -xz -C /rootfs/opt/cni/bin
 # kubeadm
