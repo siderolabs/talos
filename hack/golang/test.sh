@@ -5,19 +5,14 @@ set -e
 CGO_ENABLED=1
 GOPACKAGES=$(go list ./...)
 
-lint_packages() {
-  echo "Linting packages"
-  golangci-lint run --config ${1}
-}
-
-perform_unit_tests() {
-  echo "Performing unit tests"
-  go test -v -short ./...
-}
-
-perform_integration_tests() {
-  echo "Performing integration tests"
+perform_tests() {
+  echo "Performing tests"
   go test -v ./...
+}
+
+perform_short_tests() {
+  echo "Performing short tests"
+  go test -v -short ./...
 }
 
 perform_coverage_tests() {
@@ -38,20 +33,14 @@ perform_coverage_tests() {
 }
 
 case $1 in
-  --lint)
-  lint_packages ${2}
-  ;;
-  --unit)
-  perform_unit_tests
-  ;;
-  --integration)
-  perform_integration_tests
+  --short)
+  perform_short_tests
   ;;
   --coverage)
   perform_coverage_tests
   ;;
   *)
-  exit 1
+  perform_tests
   ;;
 esac
 
