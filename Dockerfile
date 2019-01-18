@@ -134,7 +134,7 @@ RUN mkdir -p /rootfs/opt/cni/bin
 RUN curl -L https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz | tar -xz -C /rootfs/opt/cni/bin
 RUN curl -L https://github.com/containernetworking/plugins/releases/download/v0.7.4/cni-plugins-amd64-v0.7.4.tgz | tar -xz -C /rootfs/opt/cni/bin
 # kubeadm
-RUN curl --retry 3 --retry-delay 60 -L https://storage.googleapis.com/kubernetes-release/release/v1.13.1/bin/linux/amd64/kubeadm -o /rootfs/bin/kubeadm
+RUN curl --retry 3 --retry-delay 60 -L https://storage.googleapis.com/kubernetes-release/release/v1.13.2/bin/linux/amd64/kubeadm -o /rootfs/bin/kubeadm
 RUN chmod +x /rootfs/bin/kubeadm
 # images
 COPY images /rootfs/usr/images

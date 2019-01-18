@@ -68,8 +68,8 @@ lint:
 		$(COMMON_APP_ARGS)
 
 hyperkube:
-	@docker pull k8s.gcr.io/$@:v1.13.1
-	@docker save k8s.gcr.io/$@:v1.13.1 -o ./images/$@.tar
+	@docker pull k8s.gcr.io/$@:v1.13.2
+	@docker save k8s.gcr.io/$@:v1.13.2 -o ./images/$@.tar
 
 etcd:
 	@docker pull k8s.gcr.io/$@:3.2.24
