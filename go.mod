@@ -5,7 +5,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
-	github.com/containerd/containerd v1.2.1
+	github.com/containerd/containerd v1.2.2
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
 	github.com/containerd/cri v1.11.1
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
