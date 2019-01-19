@@ -5,25 +5,21 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/autonomy/talos/internal/app/init/internal/platform"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/autonomy/talos/internal/app/init/pkg/system"
-	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
+	ctrdrunner "github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/services"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/defaults"
-	"github.com/containerd/containerd/namespaces"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/pkg/errors"
 
@@ -149,7 +145,33 @@ func startSystemServices(data *userdata.UserData) {
 	svcs := system.Services(data)
 
 	// Import the system images.
-	if err := importImages([]string{"/usr/images/blockd.tar", "/usr/images/osd.tar", "/usr/images/proxyd.tar", "/usr/images/trustd.tar"}, constants.SystemContainerdNamespace); err != nil {
+	reqs := []*ctrdrunner.ImportRequest{
+		{
+			Path: "/usr/images/blockd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/blockd"),
+			},
+		},
+		{
+			Path: "/usr/images/osd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/osd"),
+			},
+		},
+		{
+			Path: "/usr/images/proxyd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/proxyd"),
+			},
+		},
+		{
+			Path: "/usr/images/trustd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/trustd"),
+			},
+		},
+	}
+	if err := ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
 		panic(err)
 	}
 
@@ -173,7 +195,22 @@ func startKubernetesServices(data *userdata.UserData) {
 	svcs := system.Services(data)
 
 	// Import the Kubernetes images.
-	if err := importImages([]string{"/usr/images/hyperkube.tar", "/usr/images/etcd.tar", "/usr/images/coredns.tar", "/usr/images/pause.tar"}, criconstants.K8sContainerdNamespace); err != nil {
+
+	reqs := []*ctrdrunner.ImportRequest{
+		{
+			Path: "/usr/images/hyperkube.tar",
+		},
+		{
+			Path: "/usr/images/etcd.tar",
+		},
+		{
+			Path: "/usr/images/coredns.tar",
+		},
+		{
+			Path: "/usr/images/pause.tar",
+		},
+	}
+	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
 		panic(err)
 	}
 
@@ -182,57 +219,6 @@ func startKubernetesServices(data *userdata.UserData) {
 		&services.Kubelet{},
 		&services.Kubeadm{},
 	)
-}
-
-func importImages(files []string, namespace string) (err error) {
-	_, err = conditions.WaitForFileToExist(defaults.DefaultAddress)()
-	if err != nil {
-		return err
-	}
-
-	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	client, err := containerd.New(defaults.DefaultAddress)
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer client.Close()
-
-	var wg sync.WaitGroup
-
-	wg.Add(len(files))
-
-	for _, file := range files {
-		go func(wg *sync.WaitGroup, f string) {
-			defer wg.Done()
-
-			tarball, err := os.Open(f)
-			if err != nil {
-				panic(err)
-			}
-
-			imgs, err := client.Import(ctx, tarball)
-			if err != nil {
-				panic(err)
-			}
-			if err = tarball.Close(); err != nil {
-				panic(err)
-			}
-
-			for _, img := range imgs {
-				image := containerd.NewImage(client, img)
-				log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
-				err = image.Unpack(ctx, containerd.DefaultSnapshotter)
-				if err != nil {
-					panic(err)
-				}
-			}
-		}(&wg, file)
-	}
-
-	wg.Wait()
-
-	return nil
 }
 
 func recovery() {

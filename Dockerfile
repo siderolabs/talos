@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
-ARG TOOLCHAIN_VERSION
 ARG KERNEL_VERSION
+ARG TOOLCHAIN_VERSION
 ARG GOLANG_VERSION
 
 # The proto target will generate code based on service definitions.
@@ -33,6 +33,20 @@ FROM autonomy/toolchain:${TOOLCHAIN_VERSION} AS base
 # ca-certificates
 RUN mkdir -p /etc/ssl/certs
 RUN ln -s /toolchain/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
+# fhs
+COPY hack/scripts/fhs.sh /bin
+RUN fhs.sh /rootfs
+# xfsprogs
+WORKDIR /tmp/xfsprogs
+RUN curl -L https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-4.18.0.tar.xz | tar -xJ --strip-components=1
+RUN make \
+    DEBUG=-DNDEBUG \
+    INSTALL_USER=0 \
+    INSTALL_GROUP=0 \
+    LOCAL_CONFIGURE_OPTIONS="--prefix=/"
+RUN make install DESTDIR=/rootfs
+# libuuid
+RUN cp /toolchain/lib/libuuid.* /rootfs/lib
 # gcompat
 WORKDIR /tmp/gcompat
 RUN curl -L https://github.com/AdelieLinux/gcompat/archive/0.3.0.tar.gz | tar -xz --strip-components=1
@@ -49,34 +63,14 @@ RUN ln -s lib /lib64
 ENV GO111MODULE on
 ENV CGO_ENABLED 0
 WORKDIR /src
-COPY ./ ./
+COPY ./internal ./internal
+COPY ./go.mod ./
+COPY ./go.sum ./
 COPY --from=proto /osd/proto/api.pb.go ./internal/app/osd/proto
 COPY --from=proto /trustd/proto/api.pb.go ./internal/app/trustd/proto
 COPY --from=proto /blockd/proto/api.pb.go ./internal/app/blockd/proto
 RUN go mod download
 RUN go mod verify
-
-# The common target creates a filesystem that contains requirements common to
-# the initramfs and rootfs.
-
-ARG TOOLCHAIN_VERSION
-FROM base AS common
-# fhs
-COPY hack/scripts/fhs.sh .
-RUN ./fhs.sh /rootfs
-# xfsprogs
-RUN mkdir -p /etc/ssl/certs
-WORKDIR /tmp/xfsprogs
-RUN curl -L https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-4.18.0.tar.xz | tar -xJ --strip-components=1
-RUN make \
-    DEBUG=-DNDEBUG \
-    INSTALL_USER=0 \
-    INSTALL_GROUP=0 \
-    LOCAL_CONFIGURE_OPTIONS="--prefix=/"
-RUN make install DESTDIR=/rootfs
-# libuuid
-RUN cp /toolchain/lib/libuuid.* /rootfs/lib
-WORKDIR /src
 
 # The udevd target builds the udevd binary.
 
@@ -97,10 +91,30 @@ ENTRYPOINT ["/udevd"]
 ARG KERNEL_VERSION
 FROM autonomy/kernel:${KERNEL_VERSION} as kernel
 
+# The initramfs target creates an initramfs.
+
+FROM base AS initramfs-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+WORKDIR /src/internal/app/init
+RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
+RUN chmod +x /init
+WORKDIR /initramfs
+RUN cp /init ./
+COPY --from=base /rootfs ./
+WORKDIR /src
+COPY hack/scripts/cleanup.sh /bin
+RUN cleanup.sh /initramfs
+WORKDIR /initramfs
+RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+FROM scratch AS initramfs
+COPY --from=initramfs-build /initramfs.xz /initramfs.xz
+
 # The rootfs target creates a root filesysyem with only what is required to run
 # Kubernetes.
 
-FROM common AS rootfs
+FROM base AS rootfs-build
 # libseccomp
 WORKDIR /toolchain/usr/local/src/libseccomp
 RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v2.3.3/libseccomp-2.3.3.tar.gz | tar --strip-components=1 -xz
@@ -136,37 +150,20 @@ RUN curl -L https://github.com/containernetworking/plugins/releases/download/v0.
 # kubeadm
 RUN curl --retry 3 --retry-delay 60 -L https://storage.googleapis.com/kubernetes-release/release/v1.13.2/bin/linux/amd64/kubeadm -o /rootfs/bin/kubeadm
 RUN chmod +x /rootfs/bin/kubeadm
-# images
-COPY images /rootfs/usr/images
 # udevd
 COPY --from=udevd-build /udevd /rootfs/bin/udevd
+# images
+COPY images /rootfs/usr/images
 # cleanup
 WORKDIR /src
-RUN chmod +x ./hack/scripts/cleanup.sh
-RUN ./hack/scripts/cleanup.sh /rootfs
-COPY ./hack/scripts/symlink.sh /bin
-RUN chmod +x ./hack/scripts/symlink.sh
-RUN ./hack/scripts/symlink.sh /rootfs
+COPY hack/scripts/cleanup.sh /bin
+RUN cleanup.sh /rootfs
+COPY hack/scripts/symlink.sh /bin
+RUN symlink.sh /rootfs
 WORKDIR /rootfs
 RUN ["/toolchain/bin/tar", "-cvpzf", "/rootfs.tar.gz", "."]
-
-# The initramfs target creates an initramfs.
-
-FROM base AS initramfs
-ARG SHA
-ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
-WORKDIR /src/internal/app/init
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
-RUN chmod +x /init
-WORKDIR /initramfs
-RUN cp /init ./
-COPY --from=common /rootfs ./
-WORKDIR /src
-RUN chmod +x ./hack/scripts/cleanup.sh
-RUN ./hack/scripts/cleanup.sh /initramfs
-WORKDIR /initramfs
-RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+FROM scratch AS rootfs
+COPY --from=rootfs-build /rootfs.tar.gz /rootfs.tar.gz
 
 # The installer target generates an image that can be used to install Talos to
 # various environments.
@@ -183,37 +180,39 @@ RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64
     && unzip -d /tmp /tmp/packer.zip \
     && mv /tmp/packer /bin \
     && rm /tmp/packer.zip
-COPY ./hack/installer/packer.json /packer.json
-COPY ./hack/installer/entrypoint.sh /bin/entrypoint.sh
-RUN chmod +x /bin/entrypoint.sh
+COPY hack/installer/packer.json /packer.json
+COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
 ARG TAG
 ENV VERSION ${TAG}
 ENTRYPOINT ["entrypoint.sh"]
 
 # The test target performs tests on the codebase.
 
-FROM common AS test
+FROM base AS test
 # xfsprogs is required by the tests
 ENV PATH /rootfs/bin:$PATH
-RUN chmod +x ./hack/golang/test.sh
-RUN ./hack/golang/test.sh --short
-RUN ./hack/golang/test.sh
+COPY hack/golang/test.sh /bin
+RUN test.sh --short
+RUN test.sh
 
 # The lint target performs linting on the codebase.
 
-FROM common AS lint
+FROM base AS lint
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.12.5
-RUN golangci-lint run --config ./hack/golang/golangci-lint.yaml
+COPY hack/golang/golangci-lint.yaml .
+RUN golangci-lint run --config golangci-lint.yaml
 
 # The docs target generates a static website containing documentation.
 
-FROM base as docs
+FROM base as docs-build
 RUN curl -L https://github.com/gohugoio/hugo/releases/download/v0.49.2/hugo_0.49.2_Linux-64bit.tar.gz | tar -xz -C /bin
 WORKDIR /web
 COPY ./web ./
 RUN mkdir /docs
 RUN hugo --destination=/docs --verbose
 RUN echo "talos.autonomy.io" > /docs/CNAME
+FROM scratch AS docs
+COPY --from=docs-build /docs /docs
 
 # The osd target builds the osd binary.
 
@@ -231,15 +230,25 @@ ENTRYPOINT ["/osd"]
 
 # The osctl target builds the osctl binaries.
 
-FROM base AS osctl
+FROM base AS osctl-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
 WORKDIR /src/internal/app/osctl
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
-RUN GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
+RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
+FROM scratch AS osctl-linux-amd64
+COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /osctl-linux-amd64
+
+FROM base AS osctl-darwin-amd64-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+WORKDIR /src/internal/app/osctl
+RUN GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
+FROM scratch AS osctl-darwin-amd64
+COPY --from=osctl-darwin-amd64-build /osctl-darwin-amd64 /osctl-darwin-amd64
 
 # The trustd target builds the trustd binary.
 

@@ -13,7 +13,6 @@ import (
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/pkg/userdata"
-	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -43,7 +42,7 @@ func (p *Proxyd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 }
 
 func (p *Proxyd) Start(data *userdata.UserData) error {
-	image := "docker.io/autonomy/proxyd:" + version.Tag
+	image := "talos/proxyd"
 
 	// Set the process arguments.
 	args := runner.Args{

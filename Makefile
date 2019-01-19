@@ -1,71 +1,136 @@
 SHA := $(shell gitmeta git sha)
 TAG := $(shell gitmeta image tag)
 BUILT := $(shell gitmeta built)
+PUSH := $(shell gitmeta pushable)
 
-COMMON_APP_ARGS := -f ./Dockerfile --build-arg TOOLCHAIN_VERSION=397b293 --build-arg KERNEL_VERSION=65ec2e6 --build-arg GOLANG_VERSION=1.11.4 --build-arg SHA=$(SHA) --build-arg TAG=$(TAG) .
+TOOLCHAIN_VERSION ?= 397b293
+KERNEL_VERSION ?= 65ec2e6
+GOLANG_VERSION ?= 1.11.4
 
-export DOCKER_BUILDKIT := 1
+COMMON_ARGS := --frontend=dockerfile.v0
+COMMON_ARGS += --local context=.
+COMMON_ARGS += --local dockerfile=.
+COMMON_ARGS += --frontend-opt build-arg:KERNEL_VERSION=$(KERNEL_VERSION)
+COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_VERSION=$(TOOLCHAIN_VERSION)
+COMMON_ARGS += --frontend-opt build-arg:GOLANG_VERSION=$(GOLANG_VERSION)
+COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
+COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
-all: enforce rootfs initramfs osctl test lint docs installer
+all: enforce rootfs initramfs kernel osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
 
 enforce:
 	@docker run --rm -it -v $(PWD):/src -w /src autonomy/conform:latest
 
 common:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
+	@buildctl build \
+		--exporter=docker \
+		--exporter-opt output=build/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+	@docker load < build/$@.tar
 
-osd:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
+kernel:
+	@buildctl build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
-osctl:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /osctl-linux-amd64 /build
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /osctl-darwin-amd64 /build
+initramfs:
+	@buildctl build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
-trustd:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
+rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
+	@buildctl build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
-proxyd:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
+installer:
+	@buildctl build \
+		--exporter=docker \
+		--exporter-opt output=build/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--exporter-opt push=$(PUSH) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+	@docker load < build/$@.tar
+	@docker run --rm -it -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/$@:$(TAG) image -l
 
-blockd:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
-
-udevd:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS) \
+.PHONY: docs
+docs:
+	@rm -rf ./docs
+	@buildctl build \
+		--exporter=local \
+		--exporter-opt output=. \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
 test:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
+	@buildctl build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
 lint:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
+	@buildctl build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+osctl-linux-amd64:
+	@buildctl build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+osctl-darwin-amd64:
+	@buildctl build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+udevd:
+	@buildctl build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+osd:
+	@buildctl build \
+		--exporter=docker \
+		--exporter-opt output=images/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+trustd:
+	@buildctl build \
+		--exporter=docker \
+		--exporter-opt output=images/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+proxyd:
+	@buildctl build \
+		--exporter=docker \
+		--exporter-opt output=images/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+blockd:
+	@buildctl build \
+		--exporter=docker \
+		--exporter-opt output=images/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
 hyperkube:
 	@docker pull k8s.gcr.io/$@:v1.13.2
@@ -83,45 +148,9 @@ pause:
 	@docker pull k8s.gcr.io/$@:3.1
 	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
 
-rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
-	@docker save autonomy/osd:$(TAG)    -o ./images/osd.tar
-	@docker save autonomy/trustd:$(TAG) -o ./images/trustd.tar
-	@docker save autonomy/proxyd:$(TAG) -o ./images/proxyd.tar
-	@docker save autonomy/blockd:$(TAG) -o ./images/blockd.tar
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /rootfs.tar.gz /build
-
-initramfs:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/$@:$(TAG) cp /initramfs.xz /build
-
-.PHONY: docs
-docs:
-	@docker build \
-		-t autonomy/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
-	@rm -rf ./docs
-	@docker run --rm -it -v $(PWD):/out autonomy/$@:$(TAG) cp -R /docs /out
-
-installer:
-	@docker build \
-		-t autonomy/talos:$(TAG) \
-		--target=$@ \
-		$(COMMON_APP_ARGS)
-	@docker run --rm -it -v $(PWD)/build:/build autonomy/talos:$(TAG) cp /generated/boot/vmlinuz /build
-	@docker run --rm -it -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/talos:$(TAG) image -l
-
 deps:
 	@GO111MODULES=on CGO_ENABLED=0 go get -u github.com/autonomy/gitmeta
-	@GO111MODULES=on CGO_ENABLED=0 go get -u github.com/autonomy/conform
 
 clean:
-	go clean -modcache
-	rm -rf build vendor
+	-go clean -modcache
+	-rm -rf build vendor

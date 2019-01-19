@@ -1,8 +1,6 @@
 **
-!bin
 !hack
-!images
-!installer
+!images/*.tar
 !internal
 !vendor
 !web

@@ -14,7 +14,6 @@ import (
 	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
-	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -45,7 +44,7 @@ func (o *OSD) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
 }
 
 func (o *OSD) Start(data *userdata.UserData) error {
-	image := "docker.io/autonomy/osd:" + version.Tag
+	image := "talos/osd"
 
 	// Set the process arguments.
 	args := runner.Args{
