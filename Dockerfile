@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
-ARG KERNEL_VERSION
-ARG TOOLCHAIN_VERSION
+ARG KERNEL_IMAGE
+ARG TOOLCHAIN_IMAGE
 ARG GOLANG_VERSION
 
 # The proto target will generate code based on service definitions.
@@ -28,8 +28,8 @@ RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.
 
 # The base target provides a common starting point for all other targets.
 
-ARG TOOLCHAIN_VERSION
-FROM autonomy/toolchain:${TOOLCHAIN_VERSION} AS base
+ARG TOOLCHAIN_IMAGE
+FROM ${TOOLCHAIN_IMAGE} AS base
 # ca-certificates
 RUN mkdir -p /etc/ssl/certs
 RUN ln -s /toolchain/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
@@ -88,8 +88,8 @@ ENTRYPOINT ["/udevd"]
 
 # The kernel target is the linux kernel.
 
-ARG KERNEL_VERSION
-FROM autonomy/kernel:${KERNEL_VERSION} as kernel
+ARG KERNEL_IMAGE
+FROM ${KERNEL_IMAGE} as kernel
 
 # The initramfs target creates an initramfs.
 

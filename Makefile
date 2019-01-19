@@ -3,25 +3,23 @@ TAG := $(shell gitmeta image tag)
 BUILT := $(shell gitmeta built)
 PUSH := $(shell gitmeta pushable)
 
-TOOLCHAIN_VERSION ?= 397b293
-KERNEL_VERSION ?= 65ec2e6
+KERNEL_IMAGE ?= autonomy/kernel:65ec2e6
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:397b293
 GOLANG_VERSION ?= 1.11.4
 
-COMMON_ARGS := --frontend=dockerfile.v0
+COMMON_ARGS := --progress=plain
+COMMON_ARGS += --frontend=dockerfile.v0
 COMMON_ARGS += --local context=.
 COMMON_ARGS += --local dockerfile=.
-COMMON_ARGS += --frontend-opt build-arg:KERNEL_VERSION=$(KERNEL_VERSION)
-COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_VERSION=$(TOOLCHAIN_VERSION)
+COMMON_ARGS += --frontend-opt build-arg:KERNEL_IMAGE=$(KERNEL_IMAGE)
+COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
 COMMON_ARGS += --frontend-opt build-arg:GOLANG_VERSION=$(GOLANG_VERSION)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
-all: enforce rootfs initramfs kernel osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
+all: kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
 
-enforce:
-	@docker run --rm -it -v $(PWD):/src -w /src autonomy/conform:latest
-
-common:
+base:
 	@buildctl build \
 		--exporter=docker \
 		--exporter-opt output=build/$@.tar \
@@ -60,7 +58,7 @@ installer:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
-	@docker run --rm -it -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/$@:$(TAG) image -l
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/$@:$(TAG) image -l
 
 .PHONY: docs
 docs:
@@ -147,9 +145,6 @@ coredns:
 pause:
 	@docker pull k8s.gcr.io/$@:3.1
 	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
-
-deps:
-	@GO111MODULES=on CGO_ENABLED=0 go get -u github.com/autonomy/gitmeta
 
 clean:
 	-go clean -modcache
