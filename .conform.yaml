@@ -4,30 +4,30 @@ policies:
     headerLength: 89
     dco: true
     gpg: true
-- type: conventionalCommit
-  spec:
-    types:
-    - chore
-    - docs
-    - perf
-    - refactor
-    - style
-    - test
-    scopes:
-    - ami
-    - ci
-    - conformance
-    - gpt
-    - hack
-    - image
-    - init
-    - initramfs
-    - kernel
-    - osctl
-    - osd
-    - rootfs
-    - tools
-    - '*'
+    imperative: true
+    conventional:
+      types:
+      - chore
+      - docs
+      - perf
+      - refactor
+      - style
+      - test
+      scopes:
+      - ami
+      - ci
+      - conformance
+      - gpt
+      - hack
+      - image
+      - init
+      - initramfs
+      - kernel
+      - osctl
+      - osd
+      - rootfs
+      - tools
+      - '*'
 - type: license
   spec:
     includeSuffixes:
