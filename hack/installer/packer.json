@@ -11,17 +11,9 @@
             "associate_public_ip_address": true,
             "ssh_username": "ubuntu",
             "ssh_timeout": "5m",
-            "source_ami_filter": {
-                "filters": {
-                    "virtualization-type": "hvm",
-                    "name": "*ubuntu-bionic-18.04-amd64-server-*",
-                    "root-device-type": "ebs"
-                },
-                "owners": [
-                    "099720109477"
-                ],
-                "most_recent": true
-            },
+            "source_ami": "ami-03fa1f014b48fa6bd",
+            "force_deregister": true,
+            "force_delete_snapshot": true,
             "launch_block_device_mappings": [
                 {
                     "device_name": "/dev/xvdf",
@@ -58,6 +50,7 @@
         {
             "type": "shell",
             "inline": [
+                "curl -fsSL get.docker.com | sudo sh",
                 "sudo docker run --privileged --volume /dev:/dev autonomy/talos:{{ user `version` }} image -b /dev/xvdf -f -p aws -u none -e 'random.trust_cpu=on'"
             ]
         }
