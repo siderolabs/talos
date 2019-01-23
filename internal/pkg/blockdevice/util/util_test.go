@@ -74,6 +74,20 @@ func Test_PartNo(t *testing.T) {
 			},
 			want: "10",
 		},
+		{
+			name: "xvda1",
+			args: args{
+				devname: "xvda1",
+			},
+			want: "1",
+		},
+		{
+			name: "xvda10",
+			args: args{
+				devname: "xvda10",
+			},
+			want: "10",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

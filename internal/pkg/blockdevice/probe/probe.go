@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/autonomy/talos/internal/pkg/blockdevice"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem"
@@ -64,9 +65,14 @@ func All() (probed []*ProbedBlockDevice, err error) {
 
 		// A partition table was found, now probe each partition's file system.
 		for _, p := range pt.Partitions() {
-			devpath = fmt.Sprintf("/dev/%s%d", info.Name(), p.No())
-			if sb = probe(devpath); sb != nil {
-				probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: devpath})
+			var partpath string
+			if strings.HasPrefix(info.Name(), "nvme") {
+				partpath = fmt.Sprintf("/dev/%sp%d", info.Name(), p.No())
+			} else {
+				partpath = fmt.Sprintf("/dev/%s%d", info.Name(), p.No())
+			}
+			if sb = probe(partpath); sb != nil {
+				probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: partpath})
 			}
 		}
 	}
