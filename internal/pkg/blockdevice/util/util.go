@@ -16,11 +16,11 @@ func PartNo(partname string) (partno string, err error) {
 	if strings.HasPrefix(partname, "nvme") {
 		idx := strings.Index(partname, "p")
 		return partname[idx+1:], nil
-	} else if strings.HasPrefix(partname, "sd") || strings.HasPrefix(partname, "hd") || strings.HasPrefix(partname, "vd") {
+	} else if strings.HasPrefix(partname, "sd") || strings.HasPrefix(partname, "hd") || strings.HasPrefix(partname, "vd") || strings.HasPrefix(partname, "xvd") {
 		return strings.TrimLeft(partname, "/abcdefghijklmnopqrstuvwxyz"), nil
 	}
 
-	return "", errors.New("could not determine partition number from partition name")
+	return "", errors.Errorf("could not determine partition number from partition name: %s", partname)
 }
 
 // DevnameFromPartname returns the device name from a partition name.
@@ -32,9 +32,9 @@ func DevnameFromPartname(partname string) (devname string, err error) {
 	}
 	if strings.HasPrefix(partname, "nvme") {
 		return strings.TrimRight(partname, "p"+partno), nil
-	} else if strings.HasPrefix(partname, "sd") || strings.HasPrefix(partname, "hd") || strings.HasPrefix(partname, "vd") {
+	} else if strings.HasPrefix(partname, "sd") || strings.HasPrefix(partname, "hd") || strings.HasPrefix(partname, "vd") || strings.HasPrefix(partname, "xvd") {
 		return strings.TrimRight(partname, partno), nil
 	}
 
-	return "", errors.New("could not determine dev name from partition name")
+	return "", errors.Errorf("could not determine dev name from partition name: %s", partname)
 }
