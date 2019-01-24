@@ -2,9 +2,15 @@
   <h1 align="center">Talos</h1>
   <p align="center">A modern Linux distribution for Kubernetes.</p>
   <p align="center">
-    <a href="https://travis-ci.org/autonomy/talos"><img alt="Build Status" src="https://img.shields.io/travis/autonomy/talos.svg?style=flat-square"></a>
-    <a href="https://github.com/autonomy/talos/releases/latest"><img alt="Release" src="https://img.shields.io/github/release/autonomy/talos.svg?style=flat-square"></a>
-    <a href="https://github.com/autonomy/talos/releases/latest"><img alt="GitHub (pre-)release" src="https://img.shields.io/github/release/autonomy/talos/all.svg?style=flat-square"></a>
+    <a href="https://travis-ci.org/autonomy/talos">
+      <img alt="Build Status" src="https://img.shields.io/travis/autonomy/talos.svg?logo=travis&style=flat-square">
+    </a>
+    <a href="https://github.com/autonomy/talos/releases/latest">
+      <img alt="Release" src="https://img.shields.io/github/release/autonomy/talos.svg?logo=github&logoColor=white&style=flat-square">
+    </a>
+    <a href="https://github.com/autonomy/talos/releases/latest">
+      <img alt="Pre-release" src="https://img.shields.io/github/release-pre/autonomy/talos.svg?label=pre-release&logo=GitHub&logoColor=white&style=flat-square">
+    </a>
   </p>
 </p>
 
