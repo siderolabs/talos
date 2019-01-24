@@ -22,6 +22,8 @@
 - **Predictability**: Remove needless variables and reduce unknown factors from your environment using immutable infrastructure.
 - **Evolvability**: Simplify and increase your ability to easily accommodate future changes to your architecture.
 
+To learn more about Talos, see the [documentation](https://talos.autonomy.io).
+
 ## Developing Talos
 
 ```bash
