@@ -1,18 +1,19 @@
 dist: xenial
-
 language: minimal
-
 services:
-  - docker
-
+- docker
 before_install:
-- docker run --name buildkit --rm -d --privileged -p 1234:1234 moby/buildkit:v0.3.3 --addr tcp://0.0.0.0:1234
+- docker run --name buildkit --rm -d --privileged -p 1234:1234 moby/buildkit:v0.3.3
+  --addr tcp://0.0.0.0:1234
 - sudo docker cp buildkit:/usr/bin/buildctl /usr/bin/
 - docker pull autonomy/conform:v0.1.0-alpha.9
 - export BUILDKIT_HOST=tcp://0.0.0.0:1234
 - GO111MODULE=off go get github.com/autonomy/gitmeta
-
 script:
 - docker run --rm -v $PWD:/src -w /src autonomy/conform:v0.1.0-alpha.9
 - make
-- "if [[ -n $(git status -s) ]];then echo 'working tree is dirty' && git status -s && exit 1; fi"
+- if [[ -n $(git status -s) ]];then echo 'working tree is dirty' && git status -s
+  && exit 1; fi
+notifications:
+  slack:
+    secure: bgfqtIpkGgA7RjXiZ/KmmkR5mHY6RUsE/wmvZwC1fmjUyK2lNrFenRiJqWVN0ilM9SKgczashLVTilFul7vZlR2TFGq5P8xubBMavjkOOQxj7XZTOrQDA1CQIcySQi5olS/J01kIjQOVWc5ETD+mzp27mr+3JYGQViCsld9V3Fv44NsLwhCooWtGbxilAkda0c97Ff6VjPrWjAqO6o5CdaDYzG4592kmpEkYl65hzDVpVyC6YjaQ31+s5B9s43IdIYVAJ3wBr1hFNTo4WID8eG4hV3w1RcearHLbWBDcZXPWFqWorGdQY7AFJXb3sKiJ8FZo6/XlHB/ONiiM/4Voax1eaZTdX5WjzY03lOkqfOAhjEuyGCWywNCH1tBW86k6cBuUB/SHgXyuVGSq5Y2LHPH8c7ouLVIwp0y1fhpXkH6kQflvmp2Q0vTAu6gu0AEY5OYbzO1PWzvrItWAPRV482nn6QGBI4HYMs6VSfu8f+9sqtH0HzI67L+mPAUiH0WCrC5gxnaK1PY07UAnbQlxyxWbxnsdamradvLEGjxbDDHKs9qwy0IXvykDzn1FRM40CeEUe7UZIjk6GGmGgCF7xtkGgkQj3nuOPUbv7eynmMa5y1yNxhwaL5hl/O7EKAoUldE1PakajORnbp2V+UOX/aOp2QwAMpZtjdVtzDBkTOg=
