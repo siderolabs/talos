@@ -17,7 +17,7 @@ wait_for_results() {
     while sonobuoy status | grep 'Sonobuoy is still running'; do sleep 10; done
     # Sleep in order to avoid 'error retrieving results: error: tmp/sonobuoy no such file or directory'
     sleep 60
-    sonobuoy retrieve ../build
+    sonobuoy retrieve ../../../build
 }
 
 if [ "$#" -ne 1 ]; then
