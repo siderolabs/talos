@@ -1,3 +1,26 @@
+<a name="0.1.0-alpha.16"></a>
+# [0.1.0-alpha.16](https://github.com/autonomy/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
+
+
+### Bug Fixes
+
+* raw image output ([#307](https://github.com/autonomy/talos/issues/307)) ([8836577](https://github.com/autonomy/talos/commit/8836577))
+* use version tag for container tags ([#308](https://github.com/autonomy/talos/issues/308)) ([07570a3](https://github.com/autonomy/talos/commit/07570a3))
+* **init:** update probe for NVMe ([#323](https://github.com/autonomy/talos/issues/323)) ([d8bf727](https://github.com/autonomy/talos/commit/d8bf727))
+* **osctl:** compile static binary with CGO enabeld ([#328](https://github.com/autonomy/talos/issues/328)) ([fa14741](https://github.com/autonomy/talos/commit/fa14741))
+
+
+### Features
+
+* import core service containers from local store ([#309](https://github.com/autonomy/talos/issues/309)) ([25fca3d](https://github.com/autonomy/talos/commit/25fca3d))
+* **osctl:** add stats command ([#314](https://github.com/autonomy/talos/issues/314)) ([62bb226](https://github.com/autonomy/talos/commit/62bb226))
+* **osctl:** output namespace ([#312](https://github.com/autonomy/talos/issues/312)) ([3c5f99f](https://github.com/autonomy/talos/commit/3c5f99f))
+* upgrade containerd to v1.2.2 ([#318](https://github.com/autonomy/talos/issues/318)) ([a2b2e7e](https://github.com/autonomy/talos/commit/a2b2e7e))
+* upgrade Kubernetes to v1.13.2 ([#319](https://github.com/autonomy/talos/issues/319)) ([5cadd83](https://github.com/autonomy/talos/commit/5cadd83))
+* use musl libc ([#316](https://github.com/autonomy/talos/issues/316)) ([26c4418](https://github.com/autonomy/talos/commit/26c4418))
+
+
+
 <a name="0.1.0-alpha.15"></a>
 # [0.1.0-alpha.15](https://github.com/autonomy/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
 
