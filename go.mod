@@ -56,7 +56,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	golang.org/x/crypto v0.0.0-20190122013713-64072686203f // indirect
-	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
+	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e // indirect
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181019160139-8e24a49d80f8
 	golang.org/x/text v0.3.0
@@ -71,9 +71,9 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20190111032252-67edc246be36
+	k8s.io/api v0.0.0-20190202010724-74b699b93c15
 	k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476 // indirect
-	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
+	k8s.io/apimachinery v0.0.0-20190117220443-572dfc7bdfcb
 	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0-20181108060158-bf9d13f1fbeb // indirect
@@ -81,7 +81,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20181109181836-c59034cc13d5 // indirect
 	k8s.io/kube-proxy v0.0.0-20181108055616-8eeec43ca7b5 // indirect
 	k8s.io/kubelet v0.0.0-20181108055742-1ff588f76017 // indirect
-	k8s.io/kubernetes v1.13.2
+	k8s.io/kubernetes v1.13.3
 	k8s.io/utils v0.0.0-20181102055113-1bd4f387aa67 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

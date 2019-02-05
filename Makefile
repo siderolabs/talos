@@ -131,8 +131,8 @@ blockd:
 		$(COMMON_ARGS)
 
 hyperkube:
-	@docker pull k8s.gcr.io/$@:v1.13.2
-	@docker save k8s.gcr.io/$@:v1.13.2 -o ./images/$@.tar
+	@docker pull k8s.gcr.io/$@:v1.13.3
+	@docker save k8s.gcr.io/$@:v1.13.3 -o ./images/$@.tar
 
 etcd:
 	@docker pull k8s.gcr.io/$@:3.2.24
