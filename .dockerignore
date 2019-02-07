@@ -1,8 +1,8 @@
 **
 !hack
-!images/*.tar
 !internal
 !vendor
 !web
 !go.mod
 !go.sum
+!images/rootfs-warm.tar.gz

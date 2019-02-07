@@ -27,10 +27,12 @@ import (
 )
 
 var (
-	switchRoot *bool
+	warmFilesytem *bool
+	switchRoot    *bool
 )
 
 func init() {
+	warmFilesytem = flag.Bool("warm", false, "warm the root filesystem by importing the images")
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	flag.Parse()
 }
@@ -45,6 +47,66 @@ func kmsg(prefix string) (*os.File, error) {
 	log.SetFlags(0)
 
 	return out, nil
+}
+
+func warm() error {
+	// Get a handle to the system services API.
+	svcs := system.Services(&userdata.UserData{})
+
+	// Start containerd.
+	svcs.Start(&services.Containerd{})
+
+	// Import the system images.
+	reqs := []*ctrdrunner.ImportRequest{
+		{
+			Path: "/usr/images/blockd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/blockd"),
+			},
+		},
+		{
+			Path: "/usr/images/osd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/osd"),
+			},
+		},
+		{
+			Path: "/usr/images/proxyd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/proxyd"),
+			},
+		},
+		{
+			Path: "/usr/images/trustd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/trustd"),
+			},
+		},
+	}
+	if err := ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
+		return err
+	}
+
+	// Import the Kubernetes images.
+	reqs = []*ctrdrunner.ImportRequest{
+		{
+			Path: "/usr/images/hyperkube.tar",
+		},
+		{
+			Path: "/usr/images/etcd.tar",
+		},
+		{
+			Path: "/usr/images/coredns.tar",
+		},
+		{
+			Path: "/usr/images/pause.tar",
+		},
+	}
+	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // nolint: gocyclo
@@ -144,37 +206,6 @@ func root() (err error) {
 func startSystemServices(data *userdata.UserData) {
 	svcs := system.Services(data)
 
-	// Import the system images.
-	reqs := []*ctrdrunner.ImportRequest{
-		{
-			Path: "/usr/images/blockd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/blockd"),
-			},
-		},
-		{
-			Path: "/usr/images/osd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/osd"),
-			},
-		},
-		{
-			Path: "/usr/images/proxyd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/proxyd"),
-			},
-		},
-		{
-			Path: "/usr/images/trustd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/trustd"),
-			},
-		},
-	}
-	if err := ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
-		panic(err)
-	}
-
 	log.Println("starting system services")
 	// Start the services common to all nodes.
 	svcs.Start(
@@ -193,27 +224,6 @@ func startSystemServices(data *userdata.UserData) {
 
 func startKubernetesServices(data *userdata.UserData) {
 	svcs := system.Services(data)
-
-	// Import the Kubernetes images.
-
-	reqs := []*ctrdrunner.ImportRequest{
-		{
-			Path: "/usr/images/hyperkube.tar",
-		},
-		{
-			Path: "/usr/images/etcd.tar",
-		},
-		{
-			Path: "/usr/images/coredns.tar",
-		},
-		{
-			Path: "/usr/images/pause.tar",
-		},
-	}
-	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
-		panic(err)
-	}
-
 	log.Println("starting kubernetes services")
 	svcs.Start(
 		&services.Kubelet{},
@@ -251,6 +261,12 @@ func main() {
 
 		// Hang forever.
 		select {}
+	} else if *warmFilesytem {
+		if err := warm(); err != nil {
+			log.Printf("failed to warm the image cache: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	if err := initram(); err != nil {

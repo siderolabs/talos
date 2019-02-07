@@ -2,6 +2,10 @@
 ARG KERNEL_IMAGE
 ARG TOOLCHAIN_IMAGE
 ARG GOLANG_VERSION
+ARG HYPERKUBE_IMAGE
+ARG ETCD_IMAGE
+ARG COREDNS_IMAGE
+ARG PAUSE_IMAGE
 
 # The proto target will generate code based on service definitions.
 
@@ -47,7 +51,7 @@ RUN make \
 RUN make install DESTDIR=/rootfs
 # libuuid
 RUN cp /toolchain/lib/libuuid.* /rootfs/lib
-# gcompat
+# gcompat (required by go)
 WORKDIR /tmp/gcompat
 RUN curl -L https://github.com/AdelieLinux/gcompat/archive/0.3.0.tar.gz | tar -xz --strip-components=1
 RUN make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2
@@ -89,7 +93,7 @@ ENTRYPOINT ["/udevd"]
 # The kernel target is the linux kernel.
 
 ARG KERNEL_IMAGE
-FROM ${KERNEL_IMAGE} as kernel
+FROM ${KERNEL_IMAGE} AS kernel
 
 # The initramfs target creates an initramfs.
 
@@ -109,7 +113,26 @@ RUN cleanup.sh /initramfs
 WORKDIR /initramfs
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
 FROM scratch AS initramfs
+COPY --from=initramfs-build /init /init
 COPY --from=initramfs-build /initramfs.xz /initramfs.xz
+
+# Since we cannot run containerd in a container with overlayfs, we need to
+# build squashed images to avoid [22438.348624] overlayfs: filesystem on 'containerd/merged/io.containerd.snapshotter.v1.overlayfs/snapshots/2/fs' not supported as upperdir.
+# See https://github.com/containerd/containerd/issues/2402.
+FROM $HYPERKUBE_IMAGE AS hyperkube
+RUN apt update
+RUN apt -y install curl
+# kubeadm
+RUN curl --retry 3 --retry-delay 60 -L https://storage.googleapis.com/kubernetes-release/release/v1.13.3/bin/linux/amd64/kubeadm -o /bin/kubeadm
+RUN chmod +x /bin/kubeadm
+# crictl
+RUN curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-amd64.tar.gz | tar -xz -C /bin
+
+FROM $ETCD_IMAGE AS etcd
+
+FROM $COREDNS_IMAGE AS coredns
+
+FROM $PAUSE_IMAGE AS pause
 
 # The rootfs target creates a root filesysyem with only what is required to run
 # Kubernetes.
@@ -128,8 +151,6 @@ RUN make install DESTDIR=/toolchain
 # ca-certificates
 RUN mkdir -p /rootfs/etc/ssl/certs
 RUN curl -o /rootfs/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
-# crictl
-RUN curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-amd64.tar.gz | tar -xz -C /rootfs/bin
 # containerd
 RUN mkdir -p $GOPATH/src/github.com/containerd \
     && cd $GOPATH/src/github.com/containerd \
@@ -147,13 +168,8 @@ RUN chmod +x /rootfs/bin/runc
 RUN mkdir -p /rootfs/opt/cni/bin
 RUN curl -L https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz | tar -xz -C /rootfs/opt/cni/bin
 RUN curl -L https://github.com/containernetworking/plugins/releases/download/v0.7.4/cni-plugins-amd64-v0.7.4.tgz | tar -xz -C /rootfs/opt/cni/bin
-# kubeadm
-RUN curl --retry 3 --retry-delay 60 -L https://storage.googleapis.com/kubernetes-release/release/v1.13.3/bin/linux/amd64/kubeadm -o /rootfs/bin/kubeadm
-RUN chmod +x /rootfs/bin/kubeadm
 # udevd
 COPY --from=udevd-build /udevd /rootfs/bin/udevd
-# images
-COPY images /rootfs/usr/images
 # cleanup
 WORKDIR /src
 COPY hack/scripts/cleanup.sh /bin
@@ -174,7 +190,7 @@ WORKDIR /usr/local/src/syslinux
 RUN curl -L https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz | tar --strip-components=1 -xJ
 WORKDIR /
 COPY --from=kernel /vmlinuz /generated/boot/vmlinuz
-COPY --from=rootfs /rootfs.tar.gz /generated/rootfs.tar.gz
+COPY ./images/rootfs-warm.tar.gz /generated/rootfs.tar.gz
 COPY --from=initramfs /initramfs.xz /generated/boot/initramfs.xz
 RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip -o /tmp/packer.zip \
     && unzip -d /tmp /tmp/packer.zip \
@@ -204,7 +220,7 @@ RUN golangci-lint run --config golangci-lint.yaml
 
 # The docs target generates a static website containing documentation.
 
-FROM base as docs-build
+FROM base AS docs-build
 RUN curl -L https://github.com/gohugoio/hugo/releases/download/v0.49.2/hugo_0.49.2_Linux-64bit.tar.gz | tar -xz -C /bin
 WORKDIR /web
 COPY ./web ./
