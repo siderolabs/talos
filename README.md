@@ -111,6 +111,10 @@ k8s.io      e42ec788edc1e3af71cb6fa151dd8cc1076906dbe09d7099697f36069e38b5a8   s
 k8s.io      kubelet                                                            k8s.gcr.io/hyperkube:v1.13.2                                              2068   RUNNING
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md)
