@@ -3,9 +3,24 @@ TAG := $(shell gitmeta image tag)
 BUILT := $(shell gitmeta built)
 PUSH := $(shell gitmeta pushable)
 
+VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:65ec2e6
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:397b293
 GOLANG_VERSION ?= 1.11.4
+BUILDKIT_VERSION ?= v0.3.3
+BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
+BUILDKIT_HOST ?= tcp://0.0.0.0:1234
+BUILDKIT_CONTAINER_NAME ?= talos-buildkit
+BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}')
+BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}')
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
+endif
+ifeq ($(UNAME_S),Darwin)
+BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
+endif
+BINDIR ?= /usr/local/bin
 
 COMMON_ARGS := --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -17,10 +32,43 @@ COMMON_ARGS += --frontend-opt build-arg:GOLANG_VERSION=$(GOLANG_VERSION)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
-all: kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
+all: buildkitd builddeps kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
+
+.PHONY: builddeps
+builddeps: gitmeta buildctl
+
+gitmeta:
+	GO111MODULE=off go get github.com/autonomy/gitmeta
+
+buildctl:
+	@wget -qO - $(BUILDCTL_ARCHIVE) | \
+		sudo tar -zxf - -C $(BINDIR) --strip-components 1 bin/buildctl
+
+.PHONY: buildkitd
+buildkitd:
+ifeq (tcp://0.0.0.0:1234,$(findstring tcp://0.0.0.0:1234,$(BUILDKIT_HOST)))
+ifeq ($(BUILDKIT_CONTAINER_STOPPED),$(BUILDKIT_CONTAINER_NAME))
+	@echo "Removing exited talos-buildkit container"
+	@docker rm $(BUILDKIT_CONTAINER_NAME)
+endif
+ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
+	@echo "Starting talos-buildkit container"
+	@docker run \
+		--name $(BUILDKIT_CONTAINER_NAME) \
+		-d \
+		--privileged \
+		 -p 1234:1234 \
+		$(BUILDKIT_IMAGE) \
+		--addr $(BUILDKIT_HOST)
+endif
+endif
+
+.PHONY: ci
+ci: builddeps buildkitd
 
 base:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=docker \
 		--exporter-opt output=build/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
@@ -29,28 +77,32 @@ base:
 	@docker load < build/$@.tar
 
 kernel:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=local \
 		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 initramfs:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=local \
 		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=local \
 		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 installer:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=docker \
 		--exporter-opt output=build/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
@@ -63,43 +115,50 @@ installer:
 .PHONY: docs
 docs:
 	@rm -rf ./docs
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=local \
 		--exporter-opt output=. \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 test:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 lint:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 osctl-linux-amd64:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=local \
 		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 osctl-darwin-amd64:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=local \
 		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 udevd:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
 osd:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=docker \
 		--exporter-opt output=images/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
@@ -107,7 +166,8 @@ osd:
 		$(COMMON_ARGS)
 
 trustd:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=docker \
 		--exporter-opt output=images/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
@@ -115,7 +175,8 @@ trustd:
 		$(COMMON_ARGS)
 
 proxyd:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=docker \
 		--exporter-opt output=images/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
@@ -123,7 +184,8 @@ proxyd:
 		$(COMMON_ARGS)
 
 blockd:
-	@buildctl build \
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--exporter=docker \
 		--exporter-opt output=images/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \

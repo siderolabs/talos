@@ -144,4 +144,3 @@ See [CHANGELOG.md](CHANGELOG.md)
 [cis]: https://www.cisecurity.org/benchmark/kubernetes/
 [kspp]: https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project
 [nist]: https://www.nist.gov/publications/application-container-security-guide
-

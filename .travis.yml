@@ -3,12 +3,9 @@ language: minimal
 services:
 - docker
 before_install:
-- docker run --name buildkit --rm -d --privileged -p 1234:1234 moby/buildkit:v0.3.3
-  --addr tcp://0.0.0.0:1234
-- sudo docker cp buildkit:/usr/bin/buildctl /usr/bin/
+- make ci BINDIR=/usr/bin
 - docker pull autonomy/conform:v0.1.0-alpha.9
 - export BUILDKIT_HOST=tcp://0.0.0.0:1234
-- GO111MODULE=off go get github.com/autonomy/gitmeta
 script:
 - docker run --rm -v $PWD:/src -w /src autonomy/conform:v0.1.0-alpha.9
 - make
