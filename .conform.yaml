@@ -3,7 +3,7 @@ policies:
   spec:
     headerLength: 89
     dco: true
-    gpg: true
+    gpg: false
     imperative: true
     conventional:
       types:
