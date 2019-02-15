@@ -1,3 +1,14 @@
+<a name="0.1.0-alpha.17"></a>
+# [0.1.0-alpha.17](https://github.com/autonomy/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
+
+
+### Features
+
+* disable session tickets ([#334](https://github.com/andrewrynhard/talos/issues/334)) ([b226f5f](https://github.com/andrewrynhard/talos/commit/b226f5f))
+* upgrade Kubernetes to v1.13.3 ([#335](https://github.com/andrewrynhard/talos/issues/335)) ([1219ae7](https://github.com/andrewrynhard/talos/commit/1219ae7))
+
+
+
 <a name="0.1.0-alpha.16"></a>
 # [0.1.0-alpha.16](https://github.com/autonomy/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
 
