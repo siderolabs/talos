@@ -11,8 +11,8 @@ BUILDKIT_VERSION ?= v0.3.3
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
 BUILDKIT_CONTAINER_NAME ?= talos-buildkit
-BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}')
-BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}')
+BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}' 2>/dev/null)
+BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}' 2>/dev/null)
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
@@ -32,7 +32,7 @@ COMMON_ARGS += --frontend-opt build-arg:GOLANG_VERSION=$(GOLANG_VERSION)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
-all: buildkitd builddeps kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
+all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
 
 .PHONY: builddeps
 builddeps: gitmeta buildctl
@@ -60,6 +60,8 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 		 -p 1234:1234 \
 		$(BUILDKIT_IMAGE) \
 		--addr $(BUILDKIT_HOST)
+	@echo "Wait for buildkitd to become available"
+	@sleep 5
 endif
 endif
 
