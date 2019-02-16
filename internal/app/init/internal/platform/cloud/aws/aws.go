@@ -121,8 +121,8 @@ func (a *AWS) UserData() (userdata.UserData, error) {
 	return userdata.Download(AWSUserDataEndpoint)
 }
 
-// Prepare implements the platform.Platform interface.
-func (a *AWS) Prepare(data userdata.UserData) (err error) {
+// Prepare implements the platform.Platform interface and handles initial host preparation.
+func (a *AWS) Install(data userdata.UserData) (err error) {
 	return hostname()
 }
 
@@ -150,7 +150,7 @@ func hostname() (err error) {
 	return nil
 }
 
-// Install installs talos if necessary
-func (a *AWS) Install(data userdata.UserData) (err error) {
+// Install implements the platform.Platform interface and handles additional system setup.
+func (a *AWS) Prepare(data userdata.UserData) (err error) {
 	return nil
 }

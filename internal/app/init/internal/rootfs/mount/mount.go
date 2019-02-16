@@ -95,7 +95,7 @@ func (i *Initializer) MoveSpecial() (err error) {
 // stage.
 func (i *Initializer) InitOwned() (err error) {
 	var owned *mount.Points
-	if owned, err = mountpoints(); err != nil {
+	if owned, err = Mountpoints(); err != nil {
 		return errors.Errorf("error initializing owned block devices: %v", err)
 	}
 	i.owned = owned
@@ -215,15 +215,17 @@ func (i *Initializer) Switch() (err error) {
 	return nil
 }
 
-func mountpoints() (mountpoints *mount.Points, err error) {
+func Mountpoints() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		var target string
 		switch name {
 		case constants.RootPartitionLabel:
 			target = "/"
 		case constants.DataPartitionLabel:
 			target = "/var"
+		case constants.BootPartitionLabel:
+			target = "/boot"
 		}
 
 		var dev *probe.ProbedBlockDevice

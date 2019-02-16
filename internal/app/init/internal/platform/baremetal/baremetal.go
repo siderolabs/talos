@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/autonomy/talos/internal/pkg/blockdevice"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
@@ -40,7 +41,9 @@ const (
 )
 
 // BareMetal is a discoverer for non-cloud environments.
-type BareMetal struct{}
+type BareMetal struct {
+	devices map[string]*Device
+}
 
 // Name implements the platform.Platform interface.
 func (b *BareMetal) Name() string {
@@ -89,23 +92,9 @@ func (b *BareMetal) UserData() (data userdata.UserData, err error) {
 	return userdata.Download(option)
 }
 
-// Prepare implements the platform.Platform interface.
+// Prepare implements the platform.Platform interface and handles initial host preparation.
 func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
-	return nil
-}
-
-// Install provides the functionality to install talos by
-// download the necessary bits and write them to a target device
-// nolint: gocyclo
-func (b *BareMetal) Install(data userdata.UserData) error {
-	var err error
-
-	// No installation necessary
-	if data.Install == nil {
-		return err
-	}
-
-	log.Println("starting installation")
+	log.Println("preparing ", b.Name())
 
 	// Root Device Init
 	if data.Install.Root.Device == "" {
@@ -135,7 +124,7 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 	if len(data.Install.Data.Data) == 0 {
 		// Stub out the dir structure for `/var`
-		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "lib", "lib/misc", "log", "mail", "opt", "run:/run", "spool", "tmp"}...)
+		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "etc", "lib", "lib/misc", "log", "mail", "opt", "run:/run", "spool", "tmp"}...)
 	}
 
 	// Boot Device Init
@@ -174,19 +163,35 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	}
 
 	// Create a map of all the devices we need to be concerned with
-	devices := make(map[string]*Device)
+	b.devices = make(map[string]*Device)
 	labeldev := make(map[string]string)
 
 	// PR: Should we only allow boot device creation if data.Install.Wipe?
 	if data.Install.Boot.Device != "" {
-		devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device, constants.BootPartitionLabel, data.Install.Boot.Size, data.Install.Wipe, false, data.Install.Boot.Data)
+		b.devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device,
+			constants.BootPartitionLabel,
+			data.Install.Boot.Size,
+			data.Install.Wipe,
+			false,
+			data.Install.Boot.Data)
 		labeldev[constants.BootPartitionLabel] = data.Install.Boot.Device
 	}
 
-	devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device, constants.RootPartitionLabel, data.Install.Root.Size, data.Install.Wipe, false, data.Install.Root.Data)
+	b.devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device,
+		constants.RootPartitionLabel,
+		data.Install.Root.Size,
+		data.Install.Wipe,
+		false,
+		data.Install.Root.Data)
 	labeldev[constants.RootPartitionLabel] = data.Install.Root.Device
 
-	devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device, constants.DataPartitionLabel, data.Install.Data.Size, data.Install.Wipe, false, data.Install.Data.Data)
+	b.devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device,
+		constants.DataPartitionLabel,
+		data.Install.Data.Size,
+		data.Install.Wipe,
+		false,
+		data.Install.Data.Data)
+
 	labeldev[constants.DataPartitionLabel] = data.Install.Data.Device
 
 	// Use the below to only open a block device once
@@ -198,8 +203,8 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 	partitionTables := make(map[*blockdevice.BlockDevice]table.PartitionTable)
 	for label, device := range labeldev {
 		if dev, ok := uniqueDevices[device]; ok {
-			devices[label].BlockDevice = dev
-			devices[label].PartitionTable = partitionTables[dev]
+			b.devices[label].BlockDevice = dev
+			b.devices[label].PartitionTable = partitionTables[dev]
 			continue
 		}
 
@@ -222,67 +227,85 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 		uniqueDevices[device] = bd
 		partitionTables[bd] = pt
 
-		devices[label].BlockDevice = bd
-		devices[label].PartitionTable = pt
+		b.devices[label].BlockDevice = bd
+		b.devices[label].PartitionTable = pt
 	}
 
 	// devices = Device
-	for _, label := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
-		// Partition the disk
-		log.Printf("Partitioning %s - %s\n", devices[label].Name, label)
-		err = devices[label].Partition()
-		if err != nil {
-			return err
+	if data.Install.Wipe {
+		for _, label := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
+			// Partition the disk
+			log.Printf("Partitioning %s - %s\n", b.devices[label].Name, label)
+			err = b.devices[label].Partition()
+			if err != nil {
+				return err
+			}
+			log.Printf("Device: %+v", b.devices[label])
 		}
 	}
 
-	// uniqueDevices = blockdevice
-	seen := make(map[string]interface{})
-	for _, dev := range devices {
-		if _, ok := seen[dev.Name]; ok {
-			continue
-		}
-		seen[dev.Name] = nil
+	// Installation/preparation necessary
+	if data.Install != nil {
 
-		err = dev.PartitionTable.Write()
-		if err != nil {
-			return err
+		// uniqueDevices = blockdevice
+		seen := make(map[string]interface{})
+		for _, dev := range b.devices {
+			if _, ok := seen[dev.Name]; ok {
+				continue
+			}
+			seen[dev.Name] = nil
+
+			err = dev.PartitionTable.Write()
+			if err != nil {
+				return err
+			}
+
+			// Create the device files
+			log.Printf("Reread Partition Table %s\n", dev.Name)
+			err = dev.BlockDevice.RereadPartitionTable()
+			if err != nil {
+				return err
+			}
 		}
 
-		// Create the device files
-		log.Printf("Reread Partition Table %s\n", dev.Name)
-		err = dev.BlockDevice.RereadPartitionTable()
-		if err != nil {
-			return err
+		for _, dev := range b.devices {
+			// Create the filesystem
+			log.Printf("Formatting Partition %s - %s\n", dev.Name, dev.Label)
+			err = dev.Format()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	for _, dev := range devices {
-		// Create the filesystem
-		log.Printf("Formatting Partition %s - %s\n", dev.Name, dev.Label)
-		err = dev.Format()
-		if err != nil {
-			return err
-		}
-		// Mount up the new filesystem
-		log.Printf("Mounting Partition %s - %s\n", dev.Name, dev.Label)
-		err = dev.Mount()
-		if err != nil {
-			return err
-		}
+	m, err := mount.Mountpoints()
+	if err != nil {
+		return err
+	}
+
+	iter := m.Iter()
+	for iter.Next() {
+		log.Println(iter.Key(), iter.Value().Target())
+		b.devices[iter.Key()].MountPoint = filepath.Join(constants.NewRoot, iter.Value().Target())
+	}
+
+	return err
+}
+
+// Install implements the platform.Platform interface and handles additional system setup.
+// nolint: gocyclo
+func (b *BareMetal) Install(data userdata.UserData) error {
+	var err error
+
+	log.Println("installing", b.Name())
+
+	for _, dev := range b.devices {
 		// Install the necessary bits/files
 		// // download / copy kernel bits to boot
 		// // download / extract rootfsurl
 		// // handle data dirs creation
 		log.Printf("Installing Partition %s - %s\n", dev.Name, dev.Label)
 		err = dev.Install()
-		if err != nil {
-			return err
-		}
-		// Unmount the disk so we can proceed to the next phase
-		// as if there was no installation phase
-		log.Printf("Unmounting Partition %s - %s\n", dev.Name, dev.Label)
-		err = dev.Unmount()
 		if err != nil {
 			return err
 		}
@@ -293,10 +316,10 @@ func (b *BareMetal) Install(data userdata.UserData) error {
 
 // Device represents a single partition.
 type Device struct {
-	DataURLs  []string
-	Label     string
-	MountBase string
-	Name      string
+	DataURLs   []string
+	Label      string
+	MountPoint string
+	Name       string
 
 	// This seems overkill to save partition table
 	// when we can get partition table from BlockDevice
@@ -321,14 +344,15 @@ type Device struct {
 // NewDevice create a Device with basic metadata. BlockDevice and PartitionTable
 // need to be set outsite of this.
 func NewDevice(name string, label string, size uint, force bool, test bool, data []string) *Device {
+
+	// constants.NewRoot
 	return &Device{
-		DataURLs:  data,
-		Force:     force,
-		Label:     label,
-		MountBase: "/tmp",
-		Name:      name,
-		Size:      size,
-		Test:      test,
+		DataURLs: data,
+		Force:    force,
+		Label:    label,
+		Name:     name,
+		Size:     size,
+		Test:     test,
 	}
 }
 
@@ -368,27 +392,36 @@ func (d *Device) Partition() error {
 
 // Format creates a xfs filesystem on the device/partition
 func (d *Device) Format() error {
+	log.Println("PartName", d.PartitionName)
+	log.Println("Label", d.Label)
+	log.Println("Force", d.Force)
 	return xfs.MakeFS(d.PartitionName, xfs.WithLabel(d.Label), xfs.WithForce(d.Force))
 }
 
+/*
 // Mount will create the mountpoint and mount the partition to MountBase/Label
 // ex, /tmp/DATA
 func (d *Device) Mount() error {
 	var err error
-	if err = os.MkdirAll(filepath.Join(d.MountBase, d.Label), os.ModeDir); err != nil {
+	if err = os.MkdirAll(filepath.Join(d.MountPoint, d.Label), os.ModeDir); err != nil {
 		return err
 	}
-	if err = unix.Mount(d.PartitionName, filepath.Join(d.MountBase, d.Label), "xfs", 0, ""); err != nil {
+	if err = unix.Mount(d.PartitionName, filepath.Join(d.MountPoint, d.Label), "xfs", 0, ""); err != nil {
 		return err
 	}
 	return err
 }
+*/
 
 // Install downloads the necessary artifacts and creates the necessary directories
 // for installation of the OS
 // nolint: gocyclo
 func (d *Device) Install() error {
-	mountpoint := filepath.Join(d.MountBase, d.Label)
+
+	// Data partition setup is handled via rootfs extraction
+	if d.Label == constants.DataPartitionLabel {
+		return nil
+	}
 
 	for _, artifact := range d.DataURLs {
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
@@ -399,7 +432,7 @@ func (d *Device) Install() error {
 				return err
 			}
 
-			out, err := downloader(u, d.MountBase)
+			out, err := downloader(u, d.MountPoint)
 			if err != nil {
 				return err
 			}
@@ -414,14 +447,14 @@ func (d *Device) Install() error {
 			switch {
 			case strings.HasSuffix(artifact, ".tar") || strings.HasSuffix(artifact, ".tar.gz"):
 				// extract tar
-				err = untar(out, mountpoint)
+				err = untar(out, d.MountPoint)
 				if err != nil {
 					return err
 				}
 			default:
 				// nothing special, download and go
 				dst := strings.Split(artifact, "/")
-				outputFile, err := os.Create(filepath.Join(mountpoint, dst[len(dst)-1]))
+				outputFile, err := os.Create(filepath.Join(d.MountPoint, dst[len(dst)-1]))
 				if err != nil {
 					return err
 				}
@@ -436,11 +469,11 @@ func (d *Device) Install() error {
 			// Local directories/links
 			link := strings.Split(artifact, ":")
 			if len(link) == 1 {
-				if err := os.MkdirAll(filepath.Join(mountpoint, artifact), 0755); err != nil {
+				if err := os.MkdirAll(filepath.Join(d.MountPoint, artifact), 0755); err != nil {
 					return err
 				}
 			} else {
-				if err := os.Symlink(link[1], filepath.Join(mountpoint, link[0])); err != nil && !os.IsExist(err) {
+				if err := os.Symlink(link[1], filepath.Join(d.MountPoint, link[0])); err != nil && !os.IsExist(err) {
 					return err
 				}
 			}
@@ -451,7 +484,7 @@ func (d *Device) Install() error {
 
 // Unmount unmounts the partition
 func (d *Device) Unmount() error {
-	return unix.Unmount(filepath.Join(d.MountBase, d.Label), 0)
+	return unix.Unmount(filepath.Join(d.MountPoint, d.Label), 0)
 }
 
 // Simple extract function
