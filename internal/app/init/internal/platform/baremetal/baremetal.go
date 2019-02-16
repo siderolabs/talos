@@ -421,7 +421,13 @@ func (d *Device) Install() error {
 			default:
 				// nothing special, download and go
 				dst := strings.Split(artifact, "/")
-				err = os.Rename(out.Name(), filepath.Join(mountpoint, dst[len(dst)-1]))
+				outputFile, err := os.Create(filepath.Join(mountpoint, dst[len(dst)-1]))
+				if err != nil {
+					return err
+				}
+				defer outputFile.Close()
+
+				_, err = io.Copy(outputFile, out)
 				if err != nil {
 					return err
 				}
