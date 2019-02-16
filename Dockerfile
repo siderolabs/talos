@@ -45,6 +45,8 @@ RUN make \
     INSTALL_GROUP=0 \
     LOCAL_CONFIGURE_OPTIONS="--prefix=/"
 RUN make install DESTDIR=/rootfs
+# libblkid
+RUN cp /toolchain/lib/libblkid.* /rootfs/lib
 # libuuid
 RUN cp /toolchain/lib/libuuid.* /rootfs/lib
 # gcompat
