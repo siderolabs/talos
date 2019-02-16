@@ -39,6 +39,7 @@ NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP       EXTERNAL-I
 - **[golang][golang]:** implements a pure golang `init`
 - **[gRPC][grpc]:** exposes a secure gRPC API
 - **[containerd][containerd]:** runs containerd for `system` services in tandem with the builtin [`CRI`][cri] runtime for Kubernetes pods
+- **[kubeadm][kubeadm]:** uses `kubeadm` to create conformant Kubernetes clusters
 
 ### Secure
 
@@ -144,6 +145,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 [golang]: https://golang.org/
 [grpc]: https://grpc.io/
 [containerd]: https://containerd.io/
+[kubeadm]: https://github.com/kubernetes/kubeadm
 [cri]: https://github.com/containerd/cri
 [cis]: https://www.cisecurity.org/benchmark/kubernetes/
 [kspp]: https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project
