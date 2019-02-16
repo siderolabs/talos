@@ -1,3 +1,13 @@
+# [0.1.0-alpha.18](https://github.com/autonomy/talos/compare/v0.1.0-alpha.17...v0.1.0-alpha.18) (2019-02-16)
+
+
+### Bug Fixes
+
+* add libblkid to the rootfs ([#345](https://github.com/andrewrynhard/talos/issues/345)) ([76bc58b](https://github.com/andrewrynhard/talos/commit/76bc58b))
+* Minor adjustments to makefile ([#340](https://github.com/andrewrynhard/talos/issues/340)) ([eced2f2](https://github.com/andrewrynhard/talos/commit/eced2f2)), closes [#338](https://github.com/andrewrynhard/talos/issues/338)
+
+
+
 <a name="0.1.0-alpha.17"></a>
 # [0.1.0-alpha.17](https://github.com/autonomy/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
 
