@@ -137,6 +137,16 @@ See [CHANGELOG.md](CHANGELOG.md)
 > However, the API is based on the Principle of Least Privilege, and exposes only a limited set of methods.
 > We aren't quite there yet, but we envision Talos being a great place for the application of [control theory](https://en.wikipedia.org/wiki/Control_theory) in order to provide a self-healing platform.
 
+**How is Talos different than CoreOS/RancherOS/Linuxkit?**
+
+> Talos is similar in many ways, but there are some differences that make it unique.
+> You can imagine Talos as a container image, in that it is immutable and built with a single purpose in mind.
+> In this case, that purpose is Kubernetes.
+> Talos tightly integrates with Kubernetes, and is not meant to be a general use Linux distribution.
+> This allows us to dramatically decrease the footprint of Talos, and in turn improve a number of other areas like security, predictability, and reliability.
+> In addition to this, interaction with the host is done through a secure gRPC API.
+> If you want to run Kubernetes with zero cruft, Talos is the perect fit.
+
 ## License
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg?style=flat-square)](https://github.com/autonomy/talos/blob/master/LICENSE)
