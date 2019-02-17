@@ -117,12 +117,12 @@ func (a *AWS) Name() string {
 }
 
 // UserData implements the platform.Platform interface.
-func (a *AWS) UserData() (userdata.UserData, error) {
+func (a *AWS) UserData() (*userdata.UserData, error) {
 	return userdata.Download(AWSUserDataEndpoint)
 }
 
 // Prepare implements the platform.Platform interface.
-func (a *AWS) Prepare(data userdata.UserData) (err error) {
+func (a *AWS) Prepare(data *userdata.UserData) (err error) {
 	return hostname()
 }
 
@@ -151,6 +151,6 @@ func hostname() (err error) {
 }
 
 // Install installs talos if necessary
-func (a *AWS) Install(data userdata.UserData) (err error) {
+func (a *AWS) Install(data *userdata.UserData) (err error) {
 	return nil
 }

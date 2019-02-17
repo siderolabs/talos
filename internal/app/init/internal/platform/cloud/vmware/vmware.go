@@ -26,7 +26,7 @@ func (vmw *VMware) Name() string {
 }
 
 // UserData implements the platform.Platform interface.
-func (vmw *VMware) UserData() (data userdata.UserData, err error) {
+func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
 	arguments, err := kernel.ParseProcCmdline()
 	if err != nil {
 		return
@@ -71,11 +71,11 @@ func (vmw *VMware) UserData() (data userdata.UserData, err error) {
 }
 
 // Prepare implements the platform.Platform interface.
-func (vmw *VMware) Prepare(data userdata.UserData) (err error) {
+func (vmw *VMware) Prepare(data *userdata.UserData) (err error) {
 	return nil
 }
 
 // Install installs talos
-func (vmw *VMware) Install(data userdata.UserData) (err error) {
+func (vmw *VMware) Install(data *userdata.UserData) (err error) {
 	return nil
 }

@@ -71,7 +71,7 @@ func initram() (err error) {
 	log.Printf("platform is: %s", p.Name())
 	// Retrieve the user data.
 	log.Printf("retrieving the user data")
-	var data userdata.UserData
+	var data *userdata.UserData
 	if data, err = p.UserData(); err != nil {
 		return err
 	}
