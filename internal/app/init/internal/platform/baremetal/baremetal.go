@@ -48,7 +48,7 @@ func (b *BareMetal) Name() string {
 }
 
 // UserData implements the platform.Platform interface.
-func (b *BareMetal) UserData() (data userdata.UserData, err error) {
+func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
 	arguments, err := kernel.ParseProcCmdline()
 	if err != nil {
 		return
@@ -90,14 +90,14 @@ func (b *BareMetal) UserData() (data userdata.UserData, err error) {
 }
 
 // Prepare implements the platform.Platform interface.
-func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
+func (b *BareMetal) Prepare(data *userdata.UserData) (err error) {
 	return nil
 }
 
 // Install provides the functionality to install talos by
 // download the necessary bits and write them to a target device
 // nolint: gocyclo
-func (b *BareMetal) Install(data userdata.UserData) error {
+func (b *BareMetal) Install(data *userdata.UserData) error {
 	var err error
 
 	// No installation necessary

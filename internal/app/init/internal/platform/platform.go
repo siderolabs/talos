@@ -18,9 +18,9 @@ import (
 // Platform is an interface describing a platform.
 type Platform interface {
 	Name() string
-	UserData() (userdata.UserData, error)
-	Prepare(userdata.UserData) error
-	Install(userdata.UserData) error
+	UserData() (*userdata.UserData, error)
+	Prepare(*userdata.UserData) error
+	Install(*userdata.UserData) error
 }
 
 // NewPlatform is a helper func for discovering the current platform.

@@ -252,7 +252,7 @@ func (data *UserData) WriteFiles() (err error) {
 }
 
 // Download initializes a UserData struct from a remote URL.
-func Download(url string) (data UserData, err error) {
+func Download(url string) (data *UserData, err error) {
 	maxRetries := 10
 	maxWait := float64(64)
 
@@ -283,7 +283,7 @@ func Download(url string) (data UserData, err error) {
 			return data, fmt.Errorf("read user data: %s", err.Error())
 		}
 
-		if err := yaml.Unmarshal(dataBytes, &data); err != nil {
+		if err := yaml.Unmarshal(dataBytes, data); err != nil {
 			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
 		}
 

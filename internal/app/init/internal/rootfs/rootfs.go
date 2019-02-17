@@ -34,7 +34,7 @@ func ip() string {
 }
 
 // Prepare creates the files required by the installed binaries and libraries.
-func Prepare(s string, data userdata.UserData) (err error) {
+func Prepare(s string, data *userdata.UserData) (err error) {
 	// Enable IP forwarding.
 	if err = proc.WriteSystemProperty(&proc.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
 		return
@@ -61,11 +61,11 @@ func Prepare(s string, data userdata.UserData) (err error) {
 		return
 	}
 	// Setup directories required by the CNI plugin.
-	if err = cni.Setup(s, &data); err != nil {
+	if err = cni.Setup(s, data); err != nil {
 		return
 	}
 	// Save the user data to disk.
-	dataBytes, err := yaml.Marshal(&data)
+	dataBytes, err := yaml.Marshal(data)
 	if err != nil {
 		return
 	}
