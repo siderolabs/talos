@@ -25,6 +25,7 @@ policies:
       - kernel
       - osctl
       - osd
+      - osinstall
       - rootfs
       - tools
       - '*'
