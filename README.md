@@ -116,6 +116,12 @@ k8s.io      kubelet                                                            k
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
+## Contact
+
+If you would like to participate in discussions about Talos, please send an email to maintainers@autonomy.io with the subject line "Slack Invite", and we would be happy to send an invite to our workspace.
+
+> It is important that the subject line is _exactly_ "Slack Invite" (exclude the double quotes).
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md)
