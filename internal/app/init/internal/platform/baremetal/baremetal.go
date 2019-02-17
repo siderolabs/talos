@@ -122,6 +122,7 @@ func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 		data.Install.Data.Size = 1024 * 1000 * 1000
 	}
 
+	// TODO: Remove this bit since it's covered in rootfs
 	if len(data.Install.Data.Data) == 0 {
 		// Stub out the dir structure for `/var`
 		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "etc", "lib", "lib/misc", "log", "mail", "opt", "run:/run", "spool", "tmp"}...)
@@ -197,6 +198,68 @@ func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 	// Use the below to only open a block device once
 	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
 
+	if data.Install.Wipe {
+		var zero *os.File
+		zero, err = os.Open("/dev/zero")
+		if err != nil {
+			return err
+		}
+		defer zero.Close()
+
+		for _, dev := range uniqueDevices {
+
+			log.Println("zeroing out", dev.Device())
+			// This bit is to calculate how much we should zero
+			var devSize uint
+			for label, device := range labeldev {
+				if device == dev.Device().Name() {
+					devSize += b.devices[label].Size
+				}
+
+			}
+
+			io.CopyN(dev.Device(), zero, int64(devSize))
+		}
+	}
+
+	if data.Install.Wipe {
+		log.Println("Preparing to zero out devices")
+		var zero *os.File
+		zero, err = os.Open("/dev/zero")
+		if err != nil {
+			return err
+		}
+		defer zero.Close()
+
+		log.Println("Calculating total disk usage")
+		diskSizes := make(map[string]uint, len(b.devices))
+		for _, dev := range b.devices {
+			log.Printf("%+v %d", dev, dev.Size)
+
+			// Adding 264*512b to cover partition table size
+			// In theory, a GUID Partition Table disk can be up to 264 sectors in a single logical block in length.
+			// Logical blocks are commonly 512 bytes or one sector in size.
+			// TODO verify this against gpt.go
+			diskSizes[dev.Name] += dev.Size + 164010
+		}
+
+		log.Println("Zeroing out each disk")
+		var f *os.File
+		for dev, size := range diskSizes {
+			log.Printf("%+v %d", dev, size)
+			f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice)
+			if err != nil {
+				return err
+			}
+
+			io.CopyN(f, zero, int64(size))
+			if err = f.Close(); err != nil {
+				return err
+			}
+		}
+
+	}
+
 	// Associate block device to a partition table. This allows us to
 	// make use of a single partition table across an entire block device.
 	log.Println("Opening block devices in preparation for partitioning")
@@ -234,6 +297,7 @@ func (b *BareMetal) Prepare(data userdata.UserData) (err error) {
 	// devices = Device
 	if data.Install.Wipe {
 		for _, label := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
+			// Wipe disk
 			// Partition the disk
 			log.Printf("Partitioning %s - %s\n", b.devices[label].Name, label)
 			err = b.devices[label].Partition()
