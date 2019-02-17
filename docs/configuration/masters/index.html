@@ -321,8 +321,8 @@ In the <code>&lt;node-name&gt;.yaml</code>, add the follwing:</p>
 services:
   ...
   trustd:
-    username: &lt;username&gt;
-    password: &lt;password&gt;
+    username: '&lt;username&gt;'
+    password: '&lt;password&gt;'
   ...
 </code></pre>
 
@@ -373,8 +373,7 @@ services:
   ...
   kubeadm:
     init:
-      type: initial
-      etcdMemberName: &lt;member-name&gt;
+      cni: &lt;flannel|calico&gt;
   ...
 </code></pre>
 
@@ -394,6 +393,48 @@ services:
 <blockquote>
 <p>See the official <a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/">documentation</a> for the options available in <code>InitConfiguration</code>.</p>
 </blockquote>
+
+<p>In the end you should have something that looks similar to the following:</p>
+
+<pre><code class="language-yaml">version: &quot;&quot;
+security:
+  os:
+    ca:
+      crt: &lt;base 64 encoded root public certificate&gt;
+      key: &lt;base 64 encoded root private key&gt;
+    identity:
+      crt: &lt;base 64 encoded identity public certificate&gt;
+      key: &lt;base 64 encoded identity private key&gt;
+  kubernetes:
+    ca:
+      crt: &lt;base 64 encoded root public certificate&gt;
+      key: &lt;base 64 encoded root private key&gt;
+services:
+  init:
+    cni: &lt;flannel|calico&gt;
+  kubeadm:
+    configuration: |
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: InitConfiguration
+      apiEndpoint:
+        advertiseAddress: &lt;master ip&gt;
+        bindPort: 6443
+      apiVersion: kubeadm.k8s.io/v1beta1
+      bootstrapTokens:
+      - token: '&lt;kubeadm token&gt;'
+        ttl: 0s
+      ---
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: ClusterConfiguration
+      controlPlaneEndpoint: &lt;master ip&gt;:443
+      networking:
+        dnsDomain: cluster.local
+        podSubnet: &lt;pod subnet&gt;
+        serviceSubnet: &lt;service subnet&gt;
+  trustd:
+    username: '&lt;username&gt;'
+    password: '&lt;password&gt;'
+</code></pre>
 </p>
                     </section>
                 </div>
