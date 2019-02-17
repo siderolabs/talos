@@ -63,8 +63,8 @@ security:
 services:
   ...
   trustd:
-    username: <username>
-    password: <password>
+    username: '<username>'
+    password: '<password>'
   ...
 ```
 
@@ -114,8 +114,7 @@ services:
   ...
   kubeadm:
     init:
-      type: initial
-      etcdMemberName: <member-name>
+      cni: <flannel|calico>
   ...
 ```
 
@@ -134,3 +133,46 @@ services:
 ```
 
 > See the official [documentation](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/) for the options available in `InitConfiguration`.
+
+In the end you should have something that looks similar to the following:
+
+```yaml
+version: ""
+security:
+  os:
+    ca:
+      crt: <base 64 encoded root public certificate>
+      key: <base 64 encoded root private key>
+    identity:
+      crt: <base 64 encoded identity public certificate>
+      key: <base 64 encoded identity private key>
+  kubernetes:
+    ca:
+      crt: <base 64 encoded root public certificate>
+      key: <base 64 encoded root private key>
+services:
+  init:
+    cni: <flannel|calico>
+  kubeadm:
+    configuration: |
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: InitConfiguration
+      apiEndpoint:
+        advertiseAddress: <master ip>
+        bindPort: 6443
+      apiVersion: kubeadm.k8s.io/v1beta1
+      bootstrapTokens:
+      - token: '<kubeadm token>'
+        ttl: 0s
+      ---
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: ClusterConfiguration
+      controlPlaneEndpoint: <master ip>:443
+      networking:
+        dnsDomain: cluster.local
+        podSubnet: <pod subnet>
+        serviceSubnet: <service subnet>
+  trustd:
+    username: '<username>'
+    password: '<password>'
+```
