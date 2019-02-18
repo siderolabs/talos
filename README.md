@@ -139,7 +139,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-[![license](https://img.shields.io/github/license/autonomy/talos.svg?style=flat-square)](https://github.com/autonomy/talos/blob/master/LICENSE)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg?style=flat-square)](https://github.com/autonomy/talos/blob/master/LICENSE)
 
 [musl]: https://www.musl-libc.org/
 [golang]: https://golang.org/
