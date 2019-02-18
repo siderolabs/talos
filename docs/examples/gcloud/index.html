@@ -237,7 +237,7 @@
                         </li>
                         
                         <li class="sidebar-item">
-                            <a class="sidebar-link active"
+                            <a class="sidebar-link"
                                  href="https://talos.autonomy.io/examples/xen/" >
                                 Xen
                             </a>
@@ -257,103 +257,31 @@
             <div class="row ">
                 <div class="column column-10">
                     
-                    <a class="navigation navigation-previous" href="https://talos.autonomy.io/examples/kvm/">
+                    <a class="navigation navigation-previous" href="https://talos.autonomy.io/examples/xen/">
                         <i class="fa fa-chevron-left"></i>
                     </a>
                     
                 </div>
                 <div class="column document">
                     <section class="document">
-                        <h1 class="title">Xen</h1>
-                        <p>
+                        <h1 class="title"></h1>
+                        <p><p>TLDR:
+ - Build a google cloud image with <code>make gcloud-image</code>
+ - Upload the image with <code>gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://gcloud-bucket-name</code>
+ - Crate a custom google cloud image with:</p>
 
-<h2 id="creating-a-master-node">Creating a Master Node</h2>
-
-<p>On <code>Dom0</code>, install Talos to an available block device:</p>
-
-<pre><code class="language-bash">docker run \
- --rm \
- --privileged \
- --volume /dev:/dev \
- autonomy/talos:latest image -b /dev/sdb
+<pre><code class="language-bash"> gcloud compute images create talos --source-uri=gs://gcloud-bucket-name/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE
 </code></pre>
 
-<p>Save the following as <code>/etc/xen/master.cfg</code></p>
+<ul>
+<li>Create instance in google cloud, making sure to create a <code>talos</code> key in the &ldquo;Metadata&rdquo; section, with a value of your full talos node configuration. Further exploration needed to see if we can use the &ldquo;Startup script&rdquo; section instead.</li>
+</ul>
 
-<pre><code class="language-python">name = &quot;master&quot;
-
-builder='hvm'
-bootloader = &quot;/bin/pygrub&quot;
-firmware_override = &quot;/usr/lib64/xen/boot/hvmloader&quot;
-
-vcpus=2
-memory = 4096
-serial = &quot;pty&quot;
-
-kernel = &quot;/var/lib/xen/talos/vmlinuz&quot;
-ramdisk = &quot;/var/lib/xen/talos/initramfs.xz&quot;
-disk = [ 'phy:/dev/sdb,xvda,w', ]
-vif = [ 'mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000', ]
-extra = &quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/master.yaml&quot;
-</code></pre>
-
-<blockquote class="note " >
-    <p>Note: <code>http://${IP}:8080/master.yaml</code> should be reachable by the VM and contain a valid master configuration file.</p>
-</blockquote>
-
-
-<p>Now, create the VM:</p>
-
-<pre><code class="language-bash">xl create /etc/xen/master.cfg
-</code></pre>
-
-<h2 id="creating-a-worker-node">Creating a Worker Node</h2>
-
-<p>On <code>Dom0</code>, install Talos to an available block device:</p>
-
-<pre><code class="language-bash">docker run \
- --rm \
- --privileged \
- --volume /dev:/dev \
- autonomy/talos:latest image -b /dev/sdc
-</code></pre>
-
-<p>Save the following as <code>/etc/xen/worker.cfg</code></p>
-
-<pre><code class="language-python">name = &quot;worker&quot;
-
-builder='hvm'
-bootloader = &quot;/bin/pygrub&quot;
-firmware_override = &quot;/usr/lib64/xen/boot/hvmloader&quot;
-
-vcpus=2
-memory = 4096
-serial = &quot;pty&quot;
-
-kernel = &quot;/var/lib/xen/talos/vmlinuz&quot;
-ramdisk = &quot;/var/lib/xen/talos/initramfs.xz&quot;
-disk = [ 'phy:/dev/sdc,xvda,w', ]
-vif = [ 'mac=52:54:00:B9:5D:F2,bridge=xenbr0,model=e1000', ]
-extra = &quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/worker.yaml&quot;
-</code></pre>
-
-<blockquote class="note " >
-    <p>Note: <code>http://${IP}:8080/worker.yaml</code> should be reachable by the VM and contain a valid worker configuration file.</p>
-</blockquote>
-
-
-<p>Now, create the VM:</p>
-
-<pre><code class="language-bash">xl create /etc/xen/worker.cfg
-</code></pre>
+<p><img src="/img/talos-gcloud.png" alt="metadata" /></p>
 </p>
                     </section>
                 </div>
                 <div class="column column-10">
-                    
-                    <a class="navigation navigation-next" href="https://talos.autonomy.io/examples/gcloud/">
-                        <i class="fa fa-chevron-right"></i>
-                    </a>
                     
                 </div>
             </div>

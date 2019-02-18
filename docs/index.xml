@@ -166,5 +166,15 @@ To make this work, we needed an out-of-band tool for managing the nodes. In an i
       <description>Talos is a modern Linux distribution designed to be secure, immutable, and minimal.</description>
     </item>
     
+    <item>
+      <title></title>
+      <link>https://talos.autonomy.io/examples/gcloud/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.autonomy.io/examples/gcloud/</guid>
+      <description>TLDR: - Build a google cloud image with make gcloud-image - Upload the image with gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://gcloud-bucket-name - Crate a custom google cloud image with:
+gcloud compute images create talos --source-uri=gs://gcloud-bucket-name/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE   Create instance in google cloud, making sure to create a talos key in the &amp;ldquo;Metadata&amp;rdquo; section, with a value of your full talos node configuration. Further exploration needed to see if we can use the &amp;ldquo;Startup script&amp;rdquo; section instead.</description>
+    </item>
+    
   </channel>
 </rss>

@@ -252,12 +252,21 @@ func (data *UserData) WriteFiles() (err error) {
 }
 
 // Download initializes a UserData struct from a remote URL.
-func Download(url string) (data *UserData, err error) {
+func Download(url string, headers *map[string]string) (data *UserData, err error) {
+
 	maxRetries := 10
 	maxWait := float64(64)
 
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	if headers != nil {
+		for k, v := range *headers {
+			req.Header.Set(k, v)
+		}
+	}
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		resp, err := http.Get(url)
+		resp, err := client.Do(req)
 		if err != nil {
 			return data, err
 		}

@@ -102,7 +102,7 @@ func TestDownloadRetry(t *testing.T) {
 	ts := testUDServer()
 	defer ts.Close()
 
-	_, err := Download(ts.URL)
+	_, err := Download(ts.URL, nil)
 	if err != nil {
 		t.Error("Failed to download userdata", err)
 	}

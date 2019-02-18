@@ -7,6 +7,7 @@ VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:65ec2e6
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:397b293
 GOLANG_VERSION ?= 1.11.4
+DOCKER_ARGS ?= ""
 BUILDKIT_VERSION ?= v0.3.3
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
@@ -112,7 +113,23 @@ installer:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/$@:$(TAG) image -l
+
+do-image: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build/do:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) image -l \
+	-f -p digitalocean -u http://169.254.169.254/metadata/v1/user-data -e 'random.trust_cpu=on'
+
+gcloud-image: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build/gcloud:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) image -l \
+	-f -p googlecloud -u http://metadata.google.internal/computeMetadata/v1/instance/talos -e 'random.trust_cpu=on'
+	@mv $(PWD)/build/gcloud/image.raw $(PWD)/build/gcloud/disk.raw
+	##Hacks to get tar working properly
+	@export BUILDROOTDIR="$(PWD)"
+	@cd $(PWD)/build/gcloud
+	@tar -Sczf talos.tar.gz disk.raw
+	@cd $(BUILDROOTDIR)
+
+vanilla-image: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) image -l
 
 .PHONY: docs
 docs:
