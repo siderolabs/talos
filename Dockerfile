@@ -200,7 +200,7 @@ RUN test.sh
 # The lint target performs linting on the codebase.
 
 FROM base AS lint
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.12.5
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.14.0
 COPY hack/golang/golangci-lint.yaml .
 RUN golangci-lint run --config golangci-lint.yaml
 
