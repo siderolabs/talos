@@ -25,7 +25,7 @@
 For details on the design and usage of Talos, see the [documentation](https://talos.autonomy.io).
 
 ```bash
-$ kubectl get nodes -owide
+$ kubectl get nodes -o wide
 NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE                              KERNEL-VERSION   CONTAINER-RUNTIME
 192.168.124.200   Ready    master   50s   v1.13.2   192.168.124.200   <none>        Talos (v0.1.0-alpha.16) by Autonomy   4.19.10-talos    containerd://1.2.2
 192.168.124.201   Ready    worker   26s   v1.13.2   192.168.124.201   <none>        Talos (v0.1.0-alpha.16) by Autonomy   4.19.10-talos    containerd://1.2.2
@@ -132,7 +132,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 > We would like for Talos users to start thinking about what a "machine" is in the context of a Kubernetes cluster.
 > That is that a Kubernetes _cluster_ can be thought of as one massive machine and the _nodes_ merely as additional resources.
-> We don't wan't humans to focus on the _nodes_, but rather the _machine_ that is the Kubernetes cluster.
+> We don't want humans to focus on the _nodes_, but rather the _machine_ that is the Kubernetes cluster.
 > Should an issue arise at the node level, osctl should provide the necessary tooling to assist in the identification, debugging, and remediation of the issue.
 > However, the API is based on the Principle of Least Privilege, and exposes only a limited set of methods.
 > We aren't quite there yet, but we envision Talos being a great place for the application of [control theory](https://en.wikipedia.org/wiki/Control_theory) in order to provide a self-healing platform.
