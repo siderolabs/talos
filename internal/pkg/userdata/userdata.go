@@ -283,6 +283,7 @@ func Download(url string) (data *UserData, err error) {
 			return data, fmt.Errorf("read user data: %s", err.Error())
 		}
 
+		data = &UserData{}
 		if err := yaml.Unmarshal(dataBytes, data); err != nil {
 			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
 		}
