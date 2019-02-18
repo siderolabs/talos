@@ -7,7 +7,7 @@ We value your time and interest in making Talos a successful open source project
 
 There are a number of ways you can help!
 We are in need of both technical and non-technical contributions.
-Even just mentioning the project to a friend, collegue, or anyone else for that matter, would be a huge help.
+Even just mentioning the project to a friend, colleague, or anyone else for that matter, would be a huge help.
 We need writers, bloggers, engineers, graphics designers — you name it, we need it.
 
 ## Guidelines
