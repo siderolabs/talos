@@ -32,6 +32,7 @@
             "ami_description": "Talos (HVM)",
             "ami_virtualization_type": "hvm",
             "ami_regions": "{{ user `regions` }}",
+            "ami_groups": "{{ user `visibility` }}",
             "ami_root_device": {
                 "source_device_name": "/dev/xvdf",
                 "device_name": "/dev/xvda",

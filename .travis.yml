@@ -8,6 +8,7 @@ before_install:
 - export BUILDKIT_HOST=tcp://0.0.0.0:1234
 script:
 - make
+- 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash make publish-aws; fi'
 - if [[ -n $(git status -s) ]];then echo 'working tree is dirty' && git status -s
   && exit 1; fi
 branches:

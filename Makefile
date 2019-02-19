@@ -23,6 +23,7 @@ BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKI
 endif
 BINDIR ?= /usr/local/bin
 CONFORM_VERSION ?= v0.1.0-alpha.10
+AWS_PUBLISH_REGIONS ?= us-west-1,us-west-2,us-east-1,us-east-2,eu-central-1
 
 COMMON_ARGS := --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -59,7 +60,7 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 		--name $(BUILDKIT_CONTAINER_NAME) \
 		-d \
 		--privileged \
-		 -p 1234:1234 \
+		-p 1234:1234 \
 		$(BUILDKIT_IMAGE) \
 		--addr $(BUILDKIT_HOST)
 	@echo "Wait for buildkitd to become available"
@@ -126,6 +127,12 @@ image-gcloud: installer
 
 image-vanilla: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) image -l
+
+publish-aws:
+	@docker run \
+    	--rm \
+    	--env AWS_DEFAULT_REGION="us-west-2" \
+    	autonomy/talos:latest ami -var regions=${AWS_PUBLISH_REGIONS} -var version=$(TAG) -var visibility=all
 
 .PHONY: docs
 docs:
