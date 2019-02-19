@@ -117,6 +117,20 @@ COPY --from=initramfs-build /initramfs.xz /initramfs.xz
 # Kubernetes.
 
 FROM base AS rootfs-build
+# iptables
+WORKDIR /toolchain/usr/local/src/iptables
+RUN curl -L http://www.netfilter.org/projects/iptables/files/iptables-1.8.2.tar.bz2 | tar --strip-components=1 -xj
+WORKDIR /toolchain/usr/local/src/iptables/build
+RUN ../configure \
+     --prefix=/usr \
+     --libexecdir=/usr/libexec \
+     --disable-static \
+     --sbindir=/sbin \
+     --disable-nftables \
+     --enable-libipq \
+     --with-xtlibdir=/lib/xtables
+RUN make
+RUN make install DESTDIR=/rootfs
 # libseccomp
 WORKDIR /toolchain/usr/local/src/libseccomp
 RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v2.3.3/libseccomp-2.3.3.tar.gz | tar --strip-components=1 -xz
