@@ -46,5 +46,15 @@ docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest im
 name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
     </item>
     
+    <item>
+      <title></title>
+      <link>https://talos.autonomy.io/examples/gcloud/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.autonomy.io/examples/gcloud/</guid>
+      <description>TL;DR: - Build a google cloud image with make gcloud-image - Upload the image with gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://gcloud-bucket-name - Create a custom google cloud image with:
+gcloud compute images create talos --source-uri=gs://gcloud-bucket-name/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE   Create instance in google cloud, making sure to create a user-data key in the &amp;ldquo;Metadata&amp;rdquo; section, with a value of your full talos node configuration. Further exploration needed to see if we can use the &amp;ldquo;Startup script&amp;rdquo; section instead.</description>
+    </item>
+    
   </channel>
 </rss>
