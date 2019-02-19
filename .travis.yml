@@ -3,11 +3,10 @@ language: minimal
 services:
 - docker
 before_install:
+- make enforce
 - make ci BINDIR=/usr/bin
-- docker pull autonomy/conform:v0.1.0-alpha.9
 - export BUILDKIT_HOST=tcp://0.0.0.0:1234
 script:
-- docker run --rm -v $PWD:/src -w /src autonomy/conform:v0.1.0-alpha.9
 - make
 - if [[ -n $(git status -s) ]];then echo 'working tree is dirty' && git status -s
   && exit 1; fi
