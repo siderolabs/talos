@@ -93,6 +93,10 @@
   </url>
   
   <url>
+    <loc>https://talos.autonomy.io/examples/gcloud/</loc>
+  </url>
+  
+  <url>
     <loc>https://talos.autonomy.io/categories/</loc>
     <priority>0</priority>
   </url>

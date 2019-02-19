@@ -4,9 +4,10 @@ BUILT := $(shell gitmeta built)
 PUSH := $(shell gitmeta pushable)
 
 VPATH = $(PATH)
-KERNEL_IMAGE ?= autonomy/kernel:65ec2e6
+KERNEL_IMAGE ?= autonomy/kernel:0d2dec2
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:397b293
 GOLANG_VERSION ?= 1.11.4
+DOCKER_ARGS ?= 
 BUILDKIT_VERSION ?= v0.3.3
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
@@ -116,7 +117,15 @@ installer:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged autonomy/$@:$(TAG) image -l
+
+image-gcloud: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build/gcloud:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) image -l \
+	-f -p googlecloud -u none -e 'random.trust_cpu=on'
+	@mv $(PWD)/build/gcloud/image.raw $(PWD)/build/gcloud/disk.raw
+	@tar -C $(PWD)/build/gcloud -Sczf $(PWD)/build/gcloud/talos.tar.gz disk.raw
+
+image-vanilla: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) image -l
 
 .PHONY: docs
 docs:
