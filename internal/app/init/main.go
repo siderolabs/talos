@@ -13,6 +13,7 @@ import (
 
 	"github.com/autonomy/talos/internal/app/init/internal/platform"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs"
+	"github.com/autonomy/talos/internal/app/init/internal/rootfs/etc"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/autonomy/talos/internal/app/init/pkg/system"
 	ctrdrunner "github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
@@ -60,6 +61,10 @@ func initram() (err error) {
 	// Setup logging to /dev/kmsg.
 	_, err = kmsg("[talos] [initramfs]")
 	if err != nil {
+		return err
+	}
+	// Ensure DNS works in early boot.
+	if err = etc.ResolvConf(""); err != nil {
 		return err
 	}
 	// Discover the platform.
