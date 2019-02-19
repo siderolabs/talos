@@ -126,7 +126,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	args := runner.Args{
 		ID: k.ID(data),
 	}
-	ignore := "--ignore-preflight-errors=cri,kubeletversion,requiredipvskernelmodulesavailable"
+	ignore := "--ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable"
 	if data.IsBootstrap() {
 		args.ProcessArgs = []string{"kubeadm", "init", "--config=/etc/kubernetes/kubeadm-config.yaml", ignore, "--skip-token-print"}
 	} else {
