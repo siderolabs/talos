@@ -21,6 +21,7 @@ ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
 endif
 BINDIR ?= /usr/local/bin
+CONFORM_VERSION ?= v0.1.0-alpha.10
 
 COMMON_ARGS := --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -64,6 +65,9 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 	@sleep 5
 endif
 endif
+
+enforce:
+	@docker run --rm -v $(PWD):/src -w /src autonomy/conform:$(CONFORM_VERSION)
 
 .PHONY: ci
 ci: builddeps buildkitd
