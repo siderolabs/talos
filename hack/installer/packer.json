@@ -7,7 +7,7 @@
             "type": "amazon-ebssurrogate",
             "region": "{{ user `region` }}",
             "ssh_pty": true,
-            "instance_type": "t2.small",
+            "instance_type": "t2.micro",
             "associate_public_ip_address": true,
             "ssh_username": "ubuntu",
             "ssh_timeout": "5m",
