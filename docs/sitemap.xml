@@ -18,11 +18,6 @@
   </url>
   
   <url>
-    <loc>https://talos.autonomy.io/examples/kvm/</loc>
-    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://talos.autonomy.io/configuration/masters/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
@@ -33,8 +28,12 @@
   </url>
   
   <url>
-    <loc>https://talos.autonomy.io/examples/xen/</loc>
-    <lastmod>2018-11-06T06:25:46-08:00</lastmod>
+    <loc>https://talos.autonomy.io/examples/gcloud/</loc>
+  </url>
+  
+  <url>
+    <loc>https://talos.autonomy.io/examples/kvm/</loc>
+    <lastmod>2018-10-29T19:40:55-07:00</lastmod>
   </url>
   
   <url>
@@ -45,6 +44,11 @@
   <url>
     <loc>https://talos.autonomy.io/components/kubeadm/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://talos.autonomy.io/examples/xen/</loc>
+    <lastmod>2018-11-06T06:25:46-08:00</lastmod>
   </url>
   
   <url>
@@ -90,10 +94,6 @@
   <url>
     <loc>https://talos.autonomy.io/talos/</loc>
     <lastmod>2018-10-29T19:40:55-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://talos.autonomy.io/examples/gcloud/</loc>
   </url>
   
   <url>
