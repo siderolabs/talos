@@ -78,6 +78,7 @@ func initram() (err error) {
 	log.Printf("retrieving the user data")
 	var data *userdata.UserData
 	if data, err = p.UserData(); err != nil {
+		log.Printf("encountered error reading userdata: %v", err)
 		return err
 	}
 	// Perform rootfs/datafs installation if needed.
