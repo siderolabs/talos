@@ -230,6 +230,13 @@
                         </li>
                         
                         <li class="sidebar-item">
+                            <a class="sidebar-link active"
+                                 href="https://talos.autonomy.io/examples/gcloud/" >
+                                Google Cloud
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-item">
                             <a class="sidebar-link"
                                  href="https://talos.autonomy.io/examples/kvm/" >
                                 KVM
@@ -257,29 +264,43 @@
             <div class="row ">
                 <div class="column column-10">
                     
-                    <a class="navigation navigation-previous" href="https://talos.autonomy.io/examples/xen/">
+                    <a class="navigation navigation-previous" href="https://talos.autonomy.io/examples/aws/">
                         <i class="fa fa-chevron-left"></i>
                     </a>
                     
                 </div>
                 <div class="column document">
                     <section class="document">
-                        <h1 class="title"></h1>
-                        <p><p>TL;DR:
- - Build a google cloud image with <code>make gcloud-image</code>
- - Upload the image with <code>gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://gcloud-bucket-name</code>
- - Create a custom google cloud image with:</p>
+                        <h1 class="title">Google Cloud</h1>
+                        <p><p>First, create the Google Cloud compatible image:</p>
 
-<pre><code class="language-bash"> gcloud compute images create talos --source-uri=gs://gcloud-bucket-name/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE
+<pre><code class="language-bash">make image-gcloud
 </code></pre>
 
-<ul>
-<li>Create instance in google cloud, making sure to create a <code>user-data</code> key in the &ldquo;Metadata&rdquo; section, with a value of your full talos node configuration. Further exploration needed to see if we can use the &ldquo;Startup script&rdquo; section instead.</li>
-</ul>
+<p>Upload the image with:</p>
+
+<pre><code class="language-bash">gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://&lt;gcloud bucket name&gt;
+</code></pre>
+
+<p>Create a custom google cloud image with:</p>
+
+<pre><code class="language-bash">gcloud compute images create talos --source-uri=gs://&lt;gcloud bucket name&gt;/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE
+</code></pre>
+
+<p>Create an instance in google cloud, making sure to create a <code>user-data</code> key in the &ldquo;Metadata&rdquo; section, with a value of your full talos node configuration.</p>
+
+<blockquote class="note " >
+    <p>Note: Further exploration is needed to see if we can use the &ldquo;Startup script&rdquo; section instead.</p>
+</blockquote>
+
 </p>
                     </section>
                 </div>
                 <div class="column column-10">
+                    
+                    <a class="navigation navigation-next" href="https://talos.autonomy.io/examples/kvm/">
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
                     
                 </div>
             </div>

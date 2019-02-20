@@ -43,18 +43,6 @@ docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --e
     </item>
     
     <item>
-      <title>KVM</title>
-      <link>https://talos.autonomy.io/examples/kvm/</link>
-      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
-      
-      <guid>https://talos.autonomy.io/examples/kvm/</guid>
-      <description>Creating a Master Node On the KVM host, install a master node to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
- Now, create the VM:
-virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --vcpus=2 \ --ram=4096 \ --disk path=/dev/sdb \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Creating a Worker Node On the KVM host, install a worker node to an available block device:</description>
-    </item>
-    
-    <item>
       <title>Masters</title>
       <link>https://talos.autonomy.io/configuration/masters/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
@@ -78,14 +66,28 @@ To accomplish this, we must address real world operations needs like:</descripti
     </item>
     
     <item>
-      <title>Xen</title>
-      <link>https://talos.autonomy.io/examples/xen/</link>
-      <pubDate>Tue, 06 Nov 2018 06:25:46 -0800</pubDate>
+      <title>Google Cloud</title>
+      <link>https://talos.autonomy.io/examples/gcloud/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://talos.autonomy.io/examples/xen/</guid>
-      <description>Creating a Master Node On Dom0, install Talos to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
-name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
+      <guid>https://talos.autonomy.io/examples/gcloud/</guid>
+      <description>First, create the Google Cloud compatible image:
+make image-gcloud  Upload the image with:
+gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://&amp;lt;gcloud bucket name&amp;gt;  Create a custom google cloud image with:
+gcloud compute images create talos --source-uri=gs://&amp;lt;gcloud bucket name&amp;gt;/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE  Create an instance in google cloud, making sure to create a user-data key in the &amp;ldquo;Metadata&amp;rdquo; section, with a value of your full talos node configuration.
+Note: Further exploration is needed to see if we can use the &amp;ldquo;Startup script&amp;rdquo; section instead.</description>
+    </item>
+    
+    <item>
+      <title>KVM</title>
+      <link>https://talos.autonomy.io/examples/kvm/</link>
+      <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
+      
+      <guid>https://talos.autonomy.io/examples/kvm/</guid>
+      <description>Creating a Master Node On the KVM host, install a master node to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
+ Now, create the VM:
+virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --vcpus=2 \ --ram=4096 \ --disk path=/dev/sdb \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Creating a Worker Node On the KVM host, install a worker node to an available block device:</description>
     </item>
     
     <item>
@@ -106,6 +108,17 @@ We need to specify:
       
       <guid>https://talos.autonomy.io/components/kubeadm/</guid>
       <description>At the heart of Talos is kubeadm, allowing it to harness the power of the official upstream bootstrap tool. By integrating with kubeadm natively, Talos stands to gain a strong community of users and developers already familiar with kubeadm.</description>
+    </item>
+    
+    <item>
+      <title>Xen</title>
+      <link>https://talos.autonomy.io/examples/xen/</link>
+      <pubDate>Tue, 06 Nov 2018 06:25:46 -0800</pubDate>
+      
+      <guid>https://talos.autonomy.io/examples/xen/</guid>
+      <description>Creating a Master Node On Dom0, install Talos to an available block device:
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
+name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
     </item>
     
     <item>
@@ -164,16 +177,6 @@ To make this work, we needed an out-of-band tool for managing the nodes. In an i
       
       <guid>https://talos.autonomy.io/talos/</guid>
       <description>Talos is a modern Linux distribution designed to be secure, immutable, and minimal.</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>https://talos.autonomy.io/examples/gcloud/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://talos.autonomy.io/examples/gcloud/</guid>
-      <description>TL;DR: - Build a google cloud image with make gcloud-image - Upload the image with gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://gcloud-bucket-name - Create a custom google cloud image with:
-gcloud compute images create talos --source-uri=gs://gcloud-bucket-name/talos.tar.gz --guest-os-features=VIRTIO_SCSI_MULTIQUEUE   Create instance in google cloud, making sure to create a user-data key in the &amp;ldquo;Metadata&amp;rdquo; section, with a value of your full talos node configuration. Further exploration needed to see if we can use the &amp;ldquo;Startup script&amp;rdquo; section instead.</description>
     </item>
     
   </channel>
