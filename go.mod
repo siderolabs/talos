@@ -5,15 +5,14 @@ require (
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
-	github.com/containerd/containerd v1.2.2
+	github.com/containerd/containerd v1.2.4
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
 	github.com/containerd/cri v1.11.1
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/coreos/go-systemd v0.0.0-20180828140353-eee3db372b31 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.7.0-rc.0+incompatible // indirect
-	github.com/docker/docker v1.13.1 // indirect
+	github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // indirect
 	github.com/docker/go-events v0.0.0-20170721190031-9461782956ad // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
