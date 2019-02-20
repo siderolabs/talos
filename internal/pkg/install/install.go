@@ -21,6 +21,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Install fetches the necessary data locations and copies or extracts
+// to the target locations
+// nolint: gocyclo
 func Install(data *userdata.UserData) (err error) {
 
 	dataURLs := make(map[string][]string)
@@ -30,48 +33,41 @@ func Install(data *userdata.UserData) (err error) {
 		dataURLs[path.Join(constants.NewRoot, constants.BootMountPoint)] = data.Install.Boot.Data
 	}
 
+	var sourceFile *os.File
+	var destFile *os.File
+
 	var previousMountPoint string
 	for dest, urls := range dataURLs {
+
 		if dest != previousMountPoint {
 			log.Printf("Downloading assets for %s\n", dest)
 			previousMountPoint = dest
 		}
+
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
 		for _, artifact := range urls {
 			log.Println(artifact)
 			switch {
 			case strings.HasPrefix(artifact, "http"):
+				var u *url.URL
 				log.Printf("Downloading %s\n", artifact)
-				u, err := url.Parse(artifact)
+				u, err = url.Parse(artifact)
 				if err != nil {
 					return err
 				}
 
-				downloadedFile, err := downloader(u, dest)
+				sourceFile, err = download(u, dest)
 				if err != nil {
 					return err
 				}
 
 				// TODO add support for checksum validation of downloaded file
-
-				switch {
-				case strings.HasSuffix(artifact, ".tar") || strings.HasSuffix(artifact, ".tar.gz"):
-					// extract tar
-					log.Printf("Extracting %s\n", artifact)
-					err = untar(downloadedFile, dest)
-					if err != nil {
-						return err
-					}
-
-					err = os.Remove(downloadedFile.Name())
-					if err != nil {
-						return err
-					}
-				default:
-					// nothing special, download and go
+			case strings.HasPrefix(artifact, "/"):
+				sourceFile, err = os.Open(artifact)
+				if err != nil {
+					return err
 				}
-
-				err = downloadedFile.Close()
+				destFile, err = os.Create(filepath.Join(dest, filepath.Base(artifact)))
 				if err != nil {
 					return err
 				}
@@ -79,14 +75,39 @@ func Install(data *userdata.UserData) (err error) {
 				// Local directories/links
 				link := strings.Split(artifact, ":")
 				if len(link) == 1 {
-					if err := os.MkdirAll(filepath.Join(dest, artifact), 0755); err != nil {
+					if err = os.MkdirAll(filepath.Join(dest, artifact), 0755); err != nil {
 						return err
 					}
 				} else {
-					if err := os.Symlink(link[1], filepath.Join(dest, link[0])); err != nil && !os.IsExist(err) {
+					if err = os.Symlink(link[1], filepath.Join(dest, link[0])); err != nil && !os.IsExist(err) {
 						return err
 					}
 				}
+			}
+
+			switch {
+			case strings.HasSuffix(sourceFile.Name(), ".tar") || strings.HasSuffix(sourceFile.Name(), ".tar.gz"):
+				log.Printf("Extracting %s\n", artifact)
+				err = untar(sourceFile, dest)
+				if err != nil {
+					return err
+				}
+			case strings.HasPrefix(sourceFile.Name(), "/"):
+				if _, err = io.Copy(destFile, sourceFile); err != nil {
+					return err
+				}
+
+				if err = destFile.Close(); err != nil {
+					return err
+				}
+			default:
+			}
+
+			if err = sourceFile.Close(); err != nil {
+				return err
+			}
+			if err = os.Remove(sourceFile.Name()); err != nil {
+				return err
 			}
 		}
 	}
@@ -94,7 +115,7 @@ func Install(data *userdata.UserData) (err error) {
 }
 
 // Simple extract function
-// nolint: gocyclo
+// nolint: gocyclo, dupl
 func untar(tarball *os.File, dst string) error {
 
 	var input io.Reader
@@ -173,7 +194,7 @@ func untar(tarball *os.File, dst string) error {
 	}
 }
 
-func downloader(artifact *url.URL, base string) (*os.File, error) {
+func download(artifact *url.URL, base string) (*os.File, error) {
 	downloadedFile, err := os.Create(filepath.Join(base, filepath.Base(artifact.Path)))
 	if err != nil {
 		return nil, err

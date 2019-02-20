@@ -20,7 +20,7 @@ const (
 	// the boot path.
 	BootPartitionLabel = "ESP"
 
-	// BootPartitionLabel is the label of the partition to use for mounting at
+	// BootMountPoint is the label of the partition to use for mounting at
 	// the boot path.
 	BootMountPoint = "/boot"
 
@@ -28,7 +28,7 @@ const (
 	// the data path.
 	DataPartitionLabel = "DATA"
 
-	// DataPartitionLabel is the label of the partition to use for mounting at
+	// DataMountPoint is the label of the partition to use for mounting at
 	// the data path.
 	DataMountPoint = "/var"
 
@@ -36,7 +36,7 @@ const (
 	// the root path.
 	RootPartitionLabel = "ROOT"
 
-	// RootPartitionLabel is the label of the partition to use for mounting at
+	// RootMountPoint is the label of the partition to use for mounting at
 	// the root path.
 	RootMountPoint = "/"
 

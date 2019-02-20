@@ -8,11 +8,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strconv"
 
-	// "github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/autonomy/talos/internal/pkg/blockdevice"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
@@ -22,10 +20,12 @@ import (
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/pkg/errors"
-
-	"golang.org/x/sys/unix"
 )
 
+// Prepare handles setting/consolidating/defaulting userdata pieces specific to
+// installation
+// TODO: See if this would be more appropriate in userdata
+// nolint: dupl, gocyclo
 func Prepare(data *userdata.UserData) (err error) {
 	log.Println("preparing ")
 
@@ -36,7 +36,7 @@ func Prepare(data *userdata.UserData) (err error) {
 
 	if data.Install.Root.Size == 0 {
 		// Set to 1G default for funzies
-		data.Install.Root.Size = 1024 * 1000 * 1000
+		data.Install.Root.Size = 2048 * 1000 * 1000
 	}
 
 	if len(data.Install.Root.Data) == 0 {
@@ -55,12 +55,6 @@ func Prepare(data *userdata.UserData) (err error) {
 		data.Install.Data.Size = 1024 * 1000 * 1000
 	}
 
-	// TODO: Remove this bit since it's covered in rootfs
-	if len(data.Install.Data.Data) == 0 {
-		// Stub out the dir structure for `/var`
-		data.Install.Data.Data = append(data.Install.Data.Data, []string{"cache", "etc", "lib", "lib/misc", "log", "mail", "opt", "run:/run", "spool", "tmp"}...)
-	}
-
 	// Boot Device Init
 	if data.Install.Boot != nil {
 		if data.Install.Boot.Device == "" {
@@ -68,9 +62,9 @@ func Prepare(data *userdata.UserData) (err error) {
 		}
 		if data.Install.Boot.Size == 0 {
 			// Set to 512MB default for funzies
-			data.Install.Boot.Size = 512 * 1000
+			data.Install.Boot.Size = 512 * 1000 * 1000
 		}
-		if len(data.Install.Data.Data) == 0 {
+		if len(data.Install.Boot.Data) == 0 {
 			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/vmlinuz")
 			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/initramfs.xz")
 
@@ -128,33 +122,6 @@ func Prepare(data *userdata.UserData) (err error) {
 
 	labeldev[constants.DataPartitionLabel] = data.Install.Data.Device
 
-	// Use the below to only open a block device once
-	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
-
-	if data.Install.Wipe {
-		var zero *os.File
-		zero, err = os.Open("/dev/zero")
-		if err != nil {
-			return err
-		}
-		defer zero.Close()
-
-		for _, dev := range uniqueDevices {
-
-			log.Println("zeroing out", dev.Device())
-			// This bit is to calculate how much we should zero
-			var devSize uint
-			for label, device := range labeldev {
-				if device == dev.Device().Name() {
-					devSize += devices[label].Size
-				}
-
-			}
-
-			io.CopyN(dev.Device(), zero, int64(devSize))
-		}
-	}
-
 	if data.Install.Wipe {
 		log.Println("Preparing to zero out devices")
 		var zero *os.File
@@ -162,7 +129,6 @@ func Prepare(data *userdata.UserData) (err error) {
 		if err != nil {
 			return err
 		}
-		defer zero.Close()
 
 		log.Println("Calculating total disk usage")
 		diskSizes := make(map[string]uint, len(devices))
@@ -182,13 +148,22 @@ func Prepare(data *userdata.UserData) (err error) {
 				return err
 			}
 
-			io.CopyN(f, zero, int64(size))
+			if _, err = io.CopyN(f, zero, int64(size)); err != nil {
+				return err
+			}
+
 			if err = f.Close(); err != nil {
 				return err
 			}
 		}
 
+		if err = zero.Close(); err != nil {
+			return err
+		}
 	}
+
+	// Use the below to only open a block device once
+	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
 
 	// Associate block device to a partition table. This allows us to
 	// make use of a single partition table across an entire block device.
@@ -302,7 +277,7 @@ type Device struct {
 	Test  bool
 }
 
-// NewDevice create a Device with basic metadata. BlockDevice and PartitionTable
+// NewDevice creates a Device with basic metadata. BlockDevice and PartitionTable
 // need to be set outsite of this.
 func NewDevice(name string, label string, size uint, force bool, test bool, data []string) *Device {
 	return &Device{
@@ -317,6 +292,7 @@ func NewDevice(name string, label string, size uint, force bool, test bool, data
 }
 
 // Partition creates a new partition on the specified device
+// nolint: dupl
 func (d *Device) Partition() error {
 	var typeID string
 	switch d.Label {
@@ -353,17 +329,4 @@ func (d *Device) Partition() error {
 // Format creates a xfs filesystem on the device/partition
 func (d *Device) Format() error {
 	return xfs.MakeFS(d.PartitionName, xfs.WithLabel(d.Label), xfs.WithForce(d.Force))
-}
-
-// Mount will create the mountpoint and mount the partition to MountBase/Label
-// ex, /tmp/DATA
-func (d *Device) Mount() error {
-	var err error
-	if err = os.MkdirAll(filepath.Join(d.MountBase, d.Label), os.ModeDir); err != nil {
-		return err
-	}
-	if err = unix.Mount(d.PartitionName, filepath.Join(d.MountBase, d.Label), "xfs", 0, ""); err != nil {
-		return err
-	}
-	return err
 }

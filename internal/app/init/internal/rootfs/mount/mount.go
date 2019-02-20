@@ -215,6 +215,7 @@ func (i *Initializer) Switch() (err error) {
 	return nil
 }
 
+// nolint: dupl
 func mountpoints() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
 	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel, constants.BootPartitionLabel} {

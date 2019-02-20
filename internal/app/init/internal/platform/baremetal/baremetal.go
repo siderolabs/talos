@@ -96,7 +96,7 @@ func (b *BareMetal) Prepare(data *userdata.UserData) (err error) {
 
 // Install provides the functionality to install talos by
 // download the necessary bits and write them to a target device
-// nolint: gocyclo
+// nolint: gocyclo, dupl
 func (b *BareMetal) Install(data *userdata.UserData) error {
 	var err error
 
@@ -333,6 +333,7 @@ func NewDevice(name string, label string, size uint, force bool, test bool, data
 }
 
 // Partition creates a new partition on the specified device
+// nolint: dupl
 func (d *Device) Partition() error {
 	var typeID string
 	switch d.Label {
@@ -449,7 +450,7 @@ func (d *Device) Unmount() error {
 }
 
 // Simple extract function
-// nolint: gocyclo
+// nolint: gocyclo, dupl
 func untar(tarball *os.File, dst string) error {
 
 	var input io.Reader

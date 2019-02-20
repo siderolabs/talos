@@ -10,9 +10,12 @@ import (
 	ud "github.com/autonomy/talos/internal/pkg/userdata"
 )
 
+// UserData provides an abstraction to call the appropriate method to
+// load user data
+// TODO: Merge this in to internal/pkg/userdata
 func UserData(location string) (userData *ud.UserData, err error) {
 	if strings.HasPrefix(location, "http") {
-		userData, err = ud.Download(location)
+		userData, err = ud.Download(location, nil)
 	} else {
 		userData, err = ud.Open(location)
 	}

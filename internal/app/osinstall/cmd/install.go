@@ -8,8 +8,9 @@ package cmd
 import (
 	"log"
 
-	"github.com/autonomy/talos/internal/app/osinstall/internal/install"
 	"github.com/autonomy/talos/internal/app/osinstall/internal/userdata"
+	"github.com/autonomy/talos/internal/pkg/install"
+	udata "github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/spf13/cobra"
 )
 
@@ -19,19 +20,24 @@ var installCmd = &cobra.Command{
 	Short: "Install Talos to a specified disk",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		ud, err := userdata.UserData(userdataFile)
-		if err != nil {
-			log.Fatal(err)
-		}
+		var ud *udata.UserData
+		var err error
+		if userdataFile != "" {
+			ud, err = userdata.UserData(userdataFile)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		err = install.Prepare(ud)
-		if err != nil {
-			log.Fatal(err)
+			err = install.Prepare(ud)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		err = install.Mount()
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		err = install.Install(ud)
 		if err != nil {
 			log.Fatal(err)
