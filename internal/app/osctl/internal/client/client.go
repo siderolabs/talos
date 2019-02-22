@@ -235,3 +235,22 @@ func (c *Client) Version() (err error) {
 
 	return nil
 }
+
+// Routes implements the proto.OSDClient interface.
+func (c *Client) Routes() (err error) {
+	ctx := context.Background()
+	reply, err := c.client.Routes(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY")
+	for _, r := range reply.Routes {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", r.Interface, r.Destination, r.Gateway)
+	}
+	if err := w.Flush(); err != nil {
+		return err
+	}
+
+	return nil
+}
