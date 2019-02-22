@@ -28,6 +28,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 )
@@ -321,6 +322,44 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 	}
 
 	return nil
+}
+
+// Routes implements the proto.OSDServer interface.
+func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (data *proto.RoutesReply, err error) {
+	routeList, err := netlink.RouteList(nil, 2)
+	if err != nil {
+		return nil, err
+	}
+
+	routes := []*proto.Route{}
+
+	for _, route := range routeList {
+		link, _err := netlink.LinkByIndex(route.LinkIndex)
+		if _err != nil {
+			err = _err
+			return nil, err
+		}
+
+		destination := "0.0.0.0"
+		if route.Dst != nil {
+			destination = route.Dst.String()
+		}
+
+		gateway := "0.0.0.0"
+		if route.Gw != nil {
+			gateway = route.Gw.String()
+		}
+
+		routeMessage := &proto.Route{
+			Interface:   link.Attrs().Name,
+			Destination: destination,
+			Gateway:     gateway,
+		}
+		routes = append(routes, routeMessage)
+	}
+
+	data = &proto.RoutesReply{Routes: routes}
+	return data, err
 }
 
 // Version implements the proto.OSDServer interface.
