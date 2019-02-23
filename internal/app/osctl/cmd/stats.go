@@ -21,7 +21,7 @@ var statsCmd = &cobra.Command{
 	Short: "Get processes stats",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials()
+		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

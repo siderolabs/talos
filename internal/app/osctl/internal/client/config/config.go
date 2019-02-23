@@ -27,12 +27,8 @@ type Context struct {
 }
 
 // Open reads the config and initilzes a Config struct.
-func Open() (c *Config, err error) {
-	u, err := user.Current()
-	if err != nil {
-		return
-	}
-	fileBytes, err := ioutil.ReadFile(path.Join(u.HomeDir, ".talos", "config"))
+func Open(p string) (c *Config, err error) {
+	fileBytes, err := ioutil.ReadFile(p)
 	if err != nil {
 		return
 	}
