@@ -26,12 +26,12 @@ func (gc *GoogleCloud) UserData() (data *userdata.UserData, err error) {
 	return userdata.Download(GCUserDataEndpoint, &map[string]string{"Metadata-Flavor": "Google"})
 }
 
-// Prepare implements the platform.Platform interface.
+// Prepare implements the platform.Platform interface and handles initial host preparation.
 func (gc *GoogleCloud) Prepare(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// Install installs talos
+// Install implements the platform.Platform interface and handles additional system setup.
 func (gc *GoogleCloud) Install(data *userdata.UserData) (err error) {
 	return nil
 }

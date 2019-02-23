@@ -70,12 +70,12 @@ func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Prepare implements the platform.Platform interface.
+// Prepare implements the platform.Platform interface and handles initial host preparation.
 func (vmw *VMware) Prepare(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// Install installs talos
+// Install implements the platform.Platform interface and handles additional system setup.
 func (vmw *VMware) Install(data *userdata.UserData) (err error) {
 	return nil
 }
