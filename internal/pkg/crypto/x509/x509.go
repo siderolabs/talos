@@ -66,6 +66,7 @@ type Options struct {
 	Organization       string
 	SignatureAlgorithm x509.SignatureAlgorithm
 	IPAddresses        []net.IP
+	DNSNames           []string
 	Bits               int
 	RSA                bool
 	NotAfter           time.Time
@@ -96,6 +97,14 @@ func IPAddresses(o []net.IP) Option {
 	}
 }
 
+// DNSNames sets the value for the DNS Names in Subject Alternate Name of
+// the certificate.
+func DNSNames(o []string) Option {
+	return func(opts *Options) {
+		opts.DNSNames = o
+	}
+}
+
 // Bits sets the bit size of the RSA key pair.
 func Bits(o int) Option {
 	return func(opts *Options) {
@@ -123,6 +132,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 		IPAddresses:        []net.IP{},
+		DNSNames:           []string{},
 		Bits:               4096,
 		RSA:                false,
 		NotAfter:           time.Now().Add(8760 * time.Hour),
@@ -172,6 +182,7 @@ func NewSelfSignedCertificateAuthority(setters ...Option) (ca *CertificateAuthor
 			x509.ExtKeyUsageClientAuth,
 		},
 		IPAddresses: opts.IPAddresses,
+		DNSNames:    opts.DNSNames,
 	}
 
 	if opts.RSA {
@@ -182,8 +193,8 @@ func NewSelfSignedCertificateAuthority(setters ...Option) (ca *CertificateAuthor
 	return ecdsaCertificateAuthority(crt)
 }
 
-// NewCertificateSigningRequest creates a CSR. If the IPAddresses option is not
-// specified, the CSR will be generated with the default value set in
+// NewCertificateSigningRequest creates a CSR. If the IPAddresses or DNSNames options are not
+// specified, the CSR will be generated with the default values set in
 // NewDefaultOptions.
 func NewCertificateSigningRequest(key *ecdsa.PrivateKey, setters ...Option) (csr *CertificateSigningRequest, err error) {
 	opts := NewDefaultOptions(setters...)
@@ -191,6 +202,7 @@ func NewCertificateSigningRequest(key *ecdsa.PrivateKey, setters ...Option) (csr
 	template := &x509.CertificateRequest{
 		SignatureAlgorithm: opts.SignatureAlgorithm,
 		IPAddresses:        opts.IPAddresses,
+		DNSNames:           opts.DNSNames,
 	}
 
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
@@ -262,6 +274,7 @@ func NewCertificateFromCSR(ca *x509.Certificate, key *ecdsa.PrivateKey, csr *x50
 			x509.ExtKeyUsageClientAuth,
 		},
 		IPAddresses: csr.IPAddresses,
+		DNSNames:    csr.DNSNames,
 	}
 
 	crtDER, err := x509.CreateCertificate(rand.Reader, template, ca, csr.PublicKey, key)
