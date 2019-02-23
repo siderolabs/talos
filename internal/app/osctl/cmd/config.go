@@ -34,7 +34,7 @@ var configTargetCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		target := args[0]
-		c, err := config.Open()
+		c, err := config.Open(talosconfig)
 		if err != nil {
 			fmt.Printf("%v", err)
 			os.Exit(1)
@@ -64,7 +64,7 @@ var configContextCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		context := args[0]
-		c, err := config.Open()
+		c, err := config.Open(talosconfig)
 		if err != nil {
 			fmt.Printf("%v", err)
 			os.Exit(1)
@@ -90,7 +90,7 @@ var configAddCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		context := args[0]
-		c, err := config.Open()
+		c, err := config.Open(talosconfig)
 		if err != nil {
 			fmt.Printf("%v", err)
 			os.Exit(1)

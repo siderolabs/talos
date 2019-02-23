@@ -21,7 +21,7 @@ var psCmd = &cobra.Command{
 	Short: "List processes",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials()
+		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

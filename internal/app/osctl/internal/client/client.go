@@ -39,8 +39,8 @@ type Client struct {
 
 // NewDefaultClientCredentials initializes ClientCredentials using default paths
 // to the required CA, certificate, and key.
-func NewDefaultClientCredentials() (creds *Credentials, err error) {
-	c, err := config.Open()
+func NewDefaultClientCredentials(p string) (creds *Credentials, err error) {
+	c, err := config.Open(p)
 	if err != nil {
 		return
 	}

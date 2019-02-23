@@ -7,6 +7,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/user"
+	"path"
 
 	"github.com/spf13/cobra"
 )
@@ -22,6 +24,7 @@ var (
 	ip           string
 	hours        int
 	kubernetes   bool
+	talosconfig  string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -34,6 +37,11 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	u, err := user.Current()
+	if err != nil {
+		return
+	}
+	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", path.Join(u.HomeDir, ".talos", "config"), "The path to the Talos configuration file")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

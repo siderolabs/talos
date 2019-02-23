@@ -32,7 +32,7 @@ var versionCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		}
-		creds, err := client.NewDefaultClientCredentials()
+		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
