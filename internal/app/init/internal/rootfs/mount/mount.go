@@ -215,15 +215,18 @@ func (i *Initializer) Switch() (err error) {
 	return nil
 }
 
+// nolint: dupl
 func mountpoints() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel} {
+	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		var target string
 		switch name {
 		case constants.RootPartitionLabel:
-			target = "/"
+			target = constants.RootMountPoint
 		case constants.DataPartitionLabel:
-			target = "/var"
+			target = constants.DataMountPoint
+		case constants.BootPartitionLabel:
+			target = constants.BootMountPoint
 		}
 
 		var dev *probe.ProbedBlockDevice

@@ -20,13 +20,25 @@ const (
 	// the boot path.
 	BootPartitionLabel = "ESP"
 
+	// BootMountPoint is the label of the partition to use for mounting at
+	// the boot path.
+	BootMountPoint = "/boot"
+
 	// DataPartitionLabel is the label of the partition to use for mounting at
 	// the data path.
 	DataPartitionLabel = "DATA"
 
+	// DataMountPoint is the label of the partition to use for mounting at
+	// the data path.
+	DataMountPoint = "/var"
+
 	// RootPartitionLabel is the label of the partition to use for mounting at
 	// the root path.
 	RootPartitionLabel = "ROOT"
+
+	// RootMountPoint is the label of the partition to use for mounting at
+	// the root path.
+	RootMountPoint = "/"
 
 	// PATH defines all locations where executables are stored.
 	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"

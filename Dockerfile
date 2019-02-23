@@ -307,3 +307,15 @@ ARG APP
 FROM scratch AS blockd
 COPY --from=blockd-build /blockd /blockd
 ENTRYPOINT ["/blockd"]
+
+# The osinstall target builds the installer binaries.
+
+FROM base AS osinstall-linux-amd64-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+WORKDIR /src/internal/app/osinstall
+RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osinstall-linux-amd64
+RUN chmod +x /osinstall-linux-amd64
+FROM scratch AS osinstall-linux-amd64
+COPY --from=osinstall-linux-amd64-build /osinstall-linux-amd64 /osinstall-linux-amd64

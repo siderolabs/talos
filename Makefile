@@ -34,7 +34,7 @@ COMMON_ARGS += --frontend-opt build-arg:GOLANG_VERSION=$(GOLANG_VERSION)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
-all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 test lint docs installer
+all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 osinstall-linux-amd64 test lint docs installer
 
 .PHONY: builddeps
 builddeps: gitmeta buildctl
@@ -158,6 +158,14 @@ osctl-linux-amd64:
 		$(COMMON_ARGS)
 
 osctl-darwin-amd64:
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+osinstall-linux-amd64:
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \

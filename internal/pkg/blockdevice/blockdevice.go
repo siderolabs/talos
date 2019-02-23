@@ -99,3 +99,8 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 
 	return nil
 }
+
+// Device returns the backing file for the block device
+func (bd *BlockDevice) Device() *os.File {
+	return bd.f
+}
