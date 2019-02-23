@@ -16,6 +16,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -295,6 +296,41 @@ func NewCertificateFromCSR(ca *x509.Certificate, key *ecdsa.PrivateKey, csr *x50
 	crt = &Certificate{
 		X509Certificate:    x509Certificate,
 		X509CertificatePEM: crtPEM,
+	}
+
+	return crt, nil
+}
+
+// NewCertificateFromCSRBytes creates a signed certificate using the provided
+// certificate, key, and CSR.
+func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Certificate, err error) {
+	caPemBlock, _ := pem.Decode(ca)
+	if caPemBlock == nil {
+		return nil, fmt.Errorf("decode PEM: %v", err)
+	}
+	caCrt, err := x509.ParseCertificate(caPemBlock.Bytes)
+	if err != nil {
+		return
+	}
+	keyPemBlock, _ := pem.Decode(key)
+	if keyPemBlock == nil {
+		return nil, fmt.Errorf("decode PEM: %v", err)
+	}
+	caKey, err := x509.ParseECPrivateKey(keyPemBlock.Bytes)
+	if err != nil {
+		return
+	}
+	csrPemBlock, _ := pem.Decode(csr)
+	if csrPemBlock == nil {
+		return
+	}
+	request, err := x509.ParseCertificateRequest(csrPemBlock.Bytes)
+	if err != nil {
+		return
+	}
+	crt, err = NewCertificateFromCSR(caCrt, caKey, request, setters...)
+	if err != nil {
+		return
 	}
 
 	return crt, nil

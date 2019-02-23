@@ -6,24 +6,29 @@ package rootfs
 
 import (
 	"io/ioutil"
-	"net"
+	"log"
+	stdlibnet "net"
 	"os"
+	"time"
 
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/cni"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/etc"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/proc"
 	"github.com/autonomy/talos/internal/pkg/constants"
+	"github.com/autonomy/talos/internal/pkg/crypto/x509"
+	"github.com/autonomy/talos/internal/pkg/grpc/gen"
 	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func ip() string {
-	addrs, err := net.InterfaceAddrs()
+	addrs, err := stdlibnet.InterfaceAddrs()
 	if err != nil {
 		return ""
 	}
 	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+		if ipnet, ok := address.(*stdlibnet.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
 				return ipnet.IP.String()
 			}
@@ -34,6 +39,7 @@ func ip() string {
 }
 
 // Prepare creates the files required by the installed binaries and libraries.
+// nolint: gocyclo
 func Prepare(s string, data *userdata.UserData) (err error) {
 	// Enable IP forwarding.
 	if err = proc.WriteSystemProperty(&proc.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
@@ -64,6 +70,10 @@ func Prepare(s string, data *userdata.UserData) (err error) {
 	if err = cni.Setup(s, data); err != nil {
 		return
 	}
+	// Generate the identity certificate.
+	if err = generatePKI(data); err != nil {
+		return
+	}
 	// Save the user data to disk.
 	dataBytes, err := yaml.Marshal(data)
 	if err != nil {
@@ -71,6 +81,36 @@ func Prepare(s string, data *userdata.UserData) (err error) {
 	}
 	if err = ioutil.WriteFile(constants.UserDataPath, dataBytes, 0400); err != nil {
 		return
+	}
+
+	return nil
+}
+
+func generatePKI(data *userdata.UserData) (err error) {
+	log.Println("generating node identity PKI")
+	if data.IsBootstrap() {
+		log.Println("generating PKI locally")
+		var csr *x509.CertificateSigningRequest
+		if csr, err = data.Security.NewIdentityCSR(); err != nil {
+			return err
+		}
+		var crt *x509.Certificate
+		crt, err = x509.NewCertificateFromCSRBytes(data.Security.OS.CA.Crt, data.Security.OS.CA.Key, csr.X509CertificateRequestPEM, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
+		if err != nil {
+			return err
+		}
+		data.Security.OS.Identity.Crt = crt.X509CertificatePEM
+		return nil
+	}
+
+	log.Println("generating PKI from trustd")
+	var generator *gen.Generator
+	generator, err = gen.NewGenerator(data, constants.TrustdPort)
+	if err != nil {
+		return errors.Wrap(err, "failed to create trustd client")
+	}
+	if err = generator.Identity(data.Security); err != nil {
+		return errors.Wrap(err, "failed to generate identity")
 	}
 
 	return nil

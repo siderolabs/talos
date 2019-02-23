@@ -28,7 +28,6 @@ Using `osctl`, and our output from the `osd` configuration [documentation]({{< r
 
 ```bash
 osctl inject os --crt <organization>.crt --key <organization>.key <node-name>.yaml
-osctl inject identity --crt <node-name>.crt --key <node-name>.key <node-name>.yaml
 ```
 
 You should see the following fields populated:
@@ -39,11 +38,10 @@ security:
     ca:
       crt: <base 64 encoded root public certificate>
       key: <base 64 encoded root private key>
-    identity:
-      crt: <base 64 encoded identity public certificate>
-      key: <base 64 encoded identity private key>
   ...
 ```
+
+This process only needs to be performed on you initial node's configuration file.
 
 ### Configuring `trustd`
 
@@ -143,9 +141,6 @@ security:
     ca:
       crt: <base 64 encoded root public certificate>
       key: <base 64 encoded root private key>
-    identity:
-      crt: <base 64 encoded identity public certificate>
-      key: <base 64 encoded identity private key>
   kubernetes:
     ca:
       crt: <base 64 encoded root public certificate>

@@ -30,8 +30,7 @@ As a cluster administrator, the user gains access to the out-of-band management 
 To configure `osd`, we will need:
 
 - static IP addresses for each node that will participate as a master
-- a root CA
-- and identity certificates for each node participating as a master signed by the root CA
+- and a root CA
 
 The following steps should be performed by a cluster owner.
 
@@ -50,16 +49,7 @@ The public certificate (`<organization>.crt`) should be made available to cluste
 
 ### Generating the Identity Certificates
 
-Now that we have our root CA, we must create certificates that identify the node.
-As the cluster owner, run:
-
-```bash
-osctl gen key --name <node-name>
-osctl gen csr --ip <node-ip> --key <node-name>.key
-osctl gen crt --hours <hours> --ca <organization> --csr <node-name>.csr --name <node-name>
-```
-
-Repeat this process for each node that will participate as a master.
+Talos provides automation for generating each node's certificate.
 
 ## Configuring `osctl`
 

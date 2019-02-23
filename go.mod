@@ -53,6 +53,8 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
+	github.com/vishvananda/netlink v1.0.0
+	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	golang.org/x/crypto v0.0.0-20190122013713-64072686203f // indirect
 	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e // indirect

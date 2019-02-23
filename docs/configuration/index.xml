@@ -41,7 +41,7 @@ osctl inject os --crt &amp;lt;organization&amp;gt;.</description>
       <guid>https://talos.autonomy.io/configuration/workers/</guid>
       <description>Configuring the worker nodes is much more simple in comparison to configuring the master nodes. Using the trustd API, worker nodes submit a CSR, and, if authenticated, receive a valid osd certificate. Similarly, using a kubeadm token, the node joins an existing cluster.
 We need to specify:
- the osd public certificate trustd credentials and endpoints and a kubeadm JoinConfiguration  version: &amp;quot;&amp;quot; security: os: ca: crt: &amp;lt;base 64 encoded root public certificate&amp;gt; services: kubeadm: configuration: | apiVersion: kubeadm.</description>
+ the osd public certificate trustd credentials and endpoints and a kubeadm JoinConfiguration  version: &amp;quot;&amp;quot; ... services: kubeadm: configuration: | apiVersion: kubeadm.k8s.io/v1alpha3 kind: JoinConfiguration .</description>
     </item>
     
   </channel>

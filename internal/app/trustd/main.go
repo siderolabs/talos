@@ -42,7 +42,6 @@ func main() {
 	}
 
 	creds := basic.NewCredentials(
-		data.Security.OS.CA.Crt,
 		data.Services.Trustd.Username,
 		data.Services.Trustd.Password,
 	)

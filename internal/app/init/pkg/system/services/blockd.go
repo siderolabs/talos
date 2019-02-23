@@ -50,9 +50,6 @@ func (t *Blockd) Start(data *userdata.UserData) error {
 		ID:          t.ID(data),
 		ProcessArgs: []string{"/blockd", "--userdata=" + constants.UserDataPath},
 	}
-	if data.IsWorker() {
-		args.ProcessArgs = append(args.ProcessArgs, "--generate=true")
-	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{

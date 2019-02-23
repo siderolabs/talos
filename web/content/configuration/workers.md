@@ -21,10 +21,7 @@ We need to specify:
 
 ```yaml
 version: ""
-security:
-  os:
-    ca:
-      crt: <base 64 encoded root public certificate>
+...
 services:
   kubeadm:
     configuration: |

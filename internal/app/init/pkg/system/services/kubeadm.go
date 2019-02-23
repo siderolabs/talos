@@ -67,7 +67,6 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 	}
 
 	creds := basic.NewCredentials(
-		data.Security.OS.CA.Crt,
 		data.Services.Trustd.Username,
 		data.Services.Trustd.Password,
 	)
@@ -219,20 +218,26 @@ func writeKubeadmConfig(data *userdata.UserData) (err error) {
 }
 
 func writeKubeadmPKIFiles(data *x509.PEMEncodedCertificateAndKey) (err error) {
-	if err = os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
-		return err
+	if data == nil {
+		return nil
 	}
-	if err = ioutil.WriteFile(constants.KubeadmCACert, data.Crt, 0400); err != nil {
-		return fmt.Errorf("write %s: %v", constants.KubeadmCACert, err)
-	}
+	if data.Crt != nil {
 
-	if err = os.MkdirAll(path.Dir(constants.KubeadmCAKey), 0600); err != nil {
-		return err
+		if err = os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(constants.KubeadmCACert, data.Crt, 0400); err != nil {
+			return fmt.Errorf("write %s: %v", constants.KubeadmCACert, err)
+		}
 	}
-	if err = ioutil.WriteFile(constants.KubeadmCAKey, data.Key, 0400); err != nil {
-		return fmt.Errorf("write %s: %v", constants.KubeadmCAKey, err)
+	if data.Key != nil {
+		if err = os.MkdirAll(path.Dir(constants.KubeadmCAKey), 0600); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(constants.KubeadmCAKey, data.Key, 0400); err != nil {
+			return fmt.Errorf("write %s: %v", constants.KubeadmCAKey, err)
+		}
 	}
-
 	return nil
 }
 

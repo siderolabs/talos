@@ -25,6 +25,9 @@ import (
 // to the target locations
 // nolint: gocyclo
 func Install(data *userdata.UserData) (err error) {
+	if data.Install == nil {
+		return nil
+	}
 
 	dataURLs := make(map[string][]string)
 	dataURLs[path.Join(constants.NewRoot, constants.RootMountPoint)] = data.Install.Root.Data
