@@ -118,9 +118,15 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Contact
 
+### Slack
+
 If you would like to participate in discussions about Talos, please send an email to maintainers@autonomy.io with the subject line "Slack Invite", and we would be happy to send an invite to our workspace.
 
 > It is important that the subject line is _exactly_ "Slack Invite" (exclude the double quotes).
+
+### Twitter
+
+![Twitter Follow](https://img.shields.io/twitter/follow/autonomyio.svg?style=social)
 
 ## Changelog
 
