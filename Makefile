@@ -1,7 +1,7 @@
-SHA := $(shell gitmeta git sha)
-TAG := $(shell gitmeta image tag)
-BUILT := $(shell gitmeta built)
-PUSH := $(shell gitmeta pushable)
+SHA = $(shell gitmeta git sha)
+TAG = $(shell gitmeta image tag)
+BUILT = $(shell gitmeta built)
+PUSH = $(shell gitmeta pushable)
 
 VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:e8147aa
@@ -24,7 +24,7 @@ endif
 BINDIR ?= /usr/local/bin
 CONFORM_VERSION ?= v0.1.0-alpha.10
 
-COMMON_ARGS := --progress=plain
+COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
 COMMON_ARGS += --local context=.
 COMMON_ARGS += --local dockerfile=.
