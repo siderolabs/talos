@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	stdlibnet "net"
+	"os"
 	"time"
 
 	"github.com/autonomy/talos/internal/app/trustd/proto"
@@ -86,9 +87,15 @@ func (g *Generator) Identity(data *userdata.Security) (err error) {
 	if err != nil {
 		return
 	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		return
+	}
 	opts := []x509.Option{}
 	ips := []stdlibnet.IP{addr}
+	names := []string{hostname}
 	opts = append(opts, x509.IPAddresses(ips))
+	opts = append(opts, x509.DNSNames(names))
 	opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
 	csr, err := x509.NewCertificateSigningRequest(keyEC, opts...)
 	if err != nil {
