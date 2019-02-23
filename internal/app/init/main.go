@@ -81,8 +81,9 @@ func initram() (err error) {
 		log.Printf("encountered error reading userdata: %v", err)
 		return err
 	}
-	// Perform rootfs/datafs installation if needed.
-	if err = p.Install(data); err != nil {
+	// Perform any tasks required by a particular platform.
+	log.Printf("performing platform specific tasks")
+	if err = p.Prepare(data); err != nil {
 		return err
 	}
 	// Mount the owned partitions.
@@ -90,9 +91,8 @@ func initram() (err error) {
 	if err = initializer.InitOwned(); err != nil {
 		return err
 	}
-	// Perform any tasks required by a particular platform.
-	log.Printf("performing platform specific tasks")
-	if err = p.Prepare(data); err != nil {
+	// Install handles additional system setup
+	if err = p.Install(data); err != nil {
 		return err
 	}
 	// Prepare the necessary files in the rootfs.
