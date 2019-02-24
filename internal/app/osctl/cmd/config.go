@@ -44,7 +44,7 @@ var configTargetCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		c.Contexts[c.Context].Target = target
-		if err := c.Save(); err != nil {
+		if err := c.Save(talosconfig); err != nil {
 			fmt.Printf("%v", err)
 			os.Exit(1)
 		}
@@ -70,7 +70,7 @@ var configContextCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		c.Context = context
-		if err := c.Save(); err != nil {
+		if err := c.Save(talosconfig); err != nil {
 			fmt.Printf("%v", err)
 			os.Exit(1)
 		}
@@ -119,7 +119,7 @@ var configAddCmd = &cobra.Command{
 			c.Contexts = map[string]*config.Context{}
 		}
 		c.Contexts[context] = newContext
-		if err := c.Save(); err != nil {
+		if err := c.Save(talosconfig); err != nil {
 			fmt.Printf("%v", err)
 			os.Exit(1)
 		}
