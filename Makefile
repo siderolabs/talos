@@ -73,7 +73,7 @@ enforce:
 .PHONY: ci
 ci: builddeps buildkitd
 
-base:
+base: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -83,7 +83,7 @@ base:
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-kernel:
+kernel: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -91,7 +91,7 @@ kernel:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-initramfs:
+initramfs: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -99,7 +99,7 @@ initramfs:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
+rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd blockd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -107,7 +107,8 @@ rootfs: hyperkube etcd coredns pause osd trustd proxyd blockd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-installer:
+installer: buildkitd
+	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -128,7 +129,7 @@ image-vanilla: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/talos:$(TAG) image -l
 
 .PHONY: docs
-docs:
+docs: buildkitd
 	@rm -rf ./docs
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -137,27 +138,19 @@ docs:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-test:
+test: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-lint:
+lint: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-osctl-linux-amd64:
-	@buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--exporter=local \
-		--exporter-opt output=build \
-		--frontend-opt target=$@ \
-		$(COMMON_ARGS)
-
-osctl-darwin-amd64:
+osctl-linux-amd64: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -165,7 +158,7 @@ osctl-darwin-amd64:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-osinstall-linux-amd64:
+osctl-darwin-amd64: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -173,13 +166,21 @@ osinstall-linux-amd64:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-udevd:
+osinstall-linux-amd64: buildkitd
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--exporter=local \
+		--exporter-opt output=build \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+udevd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-osd:
+osd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -188,7 +189,7 @@ osd:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-trustd:
+trustd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -197,7 +198,7 @@ trustd:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-proxyd:
+proxyd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -206,7 +207,7 @@ proxyd:
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-blockd:
+blockd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
