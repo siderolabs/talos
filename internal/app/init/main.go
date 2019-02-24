@@ -13,8 +13,8 @@ import (
 
 	"github.com/autonomy/talos/internal/app/init/internal/platform"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs"
-	"github.com/autonomy/talos/internal/app/init/internal/rootfs/etc"
 	"github.com/autonomy/talos/internal/app/init/internal/rootfs/mount"
+	"github.com/autonomy/talos/internal/app/init/pkg/network"
 	"github.com/autonomy/talos/internal/app/init/pkg/system"
 	ctrdrunner "github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/services"
@@ -63,10 +63,6 @@ func initram() (err error) {
 	if err != nil {
 		return err
 	}
-	// Ensure DNS works in early boot.
-	if err = etc.ResolvConf(""); err != nil {
-		return err
-	}
 	// Discover the platform.
 	log.Println("discovering the platform")
 	var p platform.Platform
@@ -74,6 +70,10 @@ func initram() (err error) {
 		return err
 	}
 	log.Printf("platform is: %s", p.Name())
+	// Setup the network.
+	if err = network.Setup(p.Name()); err != nil {
+		return err
+	}
 	// Retrieve the user data.
 	log.Printf("retrieving the user data")
 	var data *userdata.UserData
