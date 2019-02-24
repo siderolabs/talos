@@ -231,6 +231,10 @@ func mountpoints() (mountpoints *mount.Points, err error) {
 
 		var dev *probe.ProbedBlockDevice
 		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
+			if name == constants.BootPartitionLabel {
+				// A bootloader is not always required.
+				continue
+			}
 			return nil, errors.Errorf("failed to find device with label %s: %v", name, err)
 		}
 

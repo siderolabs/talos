@@ -290,8 +290,7 @@ As a cluster administrator, the user gains access to the out-of-band management 
 
 <ul>
 <li>static IP addresses for each node that will participate as a master</li>
-<li>a root CA</li>
-<li>and identity certificates for each node participating as a master signed by the root CA</li>
+<li>and a root CA</li>
 </ul>
 
 <p>The following steps should be performed by a cluster owner.</p>
@@ -313,15 +312,7 @@ The public certificate (<code>&lt;organization&gt;.crt</code>) should be made av
 
 <h3 id="generating-the-identity-certificates">Generating the Identity Certificates</h3>
 
-<p>Now that we have our root CA, we must create certificates that identify the node.
-As the cluster owner, run:</p>
-
-<pre><code class="language-bash">osctl gen key --name &lt;node-name&gt;
-osctl gen csr --ip &lt;node-ip&gt; --key &lt;node-name&gt;.key
-osctl gen crt --hours &lt;hours&gt; --ca &lt;organization&gt; --csr &lt;node-name&gt;.csr --name &lt;node-name&gt;
-</code></pre>
-
-<p>Repeat this process for each node that will participate as a master.</p>
+<p>Talos provides automation for generating each node&rsquo;s certificate.</p>
 
 <h2 id="configuring-osctl">Configuring <code>osctl</code></h2>
 

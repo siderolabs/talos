@@ -51,9 +51,6 @@ func (o *OSD) Start(data *userdata.UserData) error {
 		ID:          o.ID(data),
 		ProcessArgs: []string{"/osd", "--userdata=" + constants.UserDataPath},
 	}
-	if data.IsWorker() {
-		args.ProcessArgs = append(args.ProcessArgs, "--generate=true")
-	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{

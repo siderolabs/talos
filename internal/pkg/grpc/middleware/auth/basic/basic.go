@@ -7,7 +7,6 @@ package basic
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"log"
 	"time"
@@ -21,15 +20,12 @@ import (
 // Credentials implements credentials.PerRPCCredentials. It uses a basic
 // username and password lookup to authenticate users.
 type Credentials struct {
-	Crt                []byte
 	Username, Password string
 }
 
-// NewCredentials initializes ClientCredentials with the username, password and
-// path to the required CA.
-func NewCredentials(crt []byte, username, password string) (creds *Credentials) {
+// NewCredentials initializes ClientCredentials with the username, and password.
+func NewCredentials(username, password string) (creds *Credentials) {
 	creds = &Credentials{
-		Crt:      crt,
 		Username: username,
 		Password: password,
 	}
@@ -39,22 +35,14 @@ func NewCredentials(crt []byte, username, password string) (creds *Credentials) 
 
 // NewConnection initializes a grpc.ClientConn configured for basic
 // authentication.
-func NewConnection(address string, port int, creds *Credentials) (conn *grpc.ClientConn, err error) {
+func NewConnection(address string, port int, creds credentials.PerRPCCredentials) (conn *grpc.ClientConn, err error) {
 	grpcOpts := []grpc.DialOption{}
-
-	certPool := x509.NewCertPool()
-	if err != nil {
-		return nil, fmt.Errorf("could not read ca certificate: %s", err)
-	}
-	if ok := certPool.AppendCertsFromPEM(creds.Crt); !ok {
-		return nil, fmt.Errorf("failed to append client certs")
-	}
 
 	grpcOpts = append(
 		grpcOpts,
 		grpc.WithTransportCredentials(
 			credentials.NewTLS(&tls.Config{
-				RootCAs: certPool,
+				InsecureSkipVerify: true,
 			})),
 		grpc.WithPerRPCCredentials(creds),
 	)

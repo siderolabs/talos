@@ -292,7 +292,6 @@
 <p>Using <code>osctl</code>, and our output from the <code>osd</code> configuration <a href="https://talos.autonomy.io/configuration/osd/">documentation</a>, inject the generated PKI into the configuration file:</p>
 
 <pre><code class="language-bash">osctl inject os --crt &lt;organization&gt;.crt --key &lt;organization&gt;.key &lt;node-name&gt;.yaml
-osctl inject identity --crt &lt;node-name&gt;.crt --key &lt;node-name&gt;.key &lt;node-name&gt;.yaml
 </code></pre>
 
 <p>You should see the following fields populated:</p>
@@ -302,11 +301,10 @@ osctl inject identity --crt &lt;node-name&gt;.crt --key &lt;node-name&gt;.key &l
     ca:
       crt: &lt;base 64 encoded root public certificate&gt;
       key: &lt;base 64 encoded root private key&gt;
-    identity:
-      crt: &lt;base 64 encoded identity public certificate&gt;
-      key: &lt;base 64 encoded identity private key&gt;
   ...
 </code></pre>
+
+<p>This process only needs to be performed on you initial node&rsquo;s configuration file.</p>
 
 <h3 id="configuring-trustd">Configuring <code>trustd</code></h3>
 
@@ -408,9 +406,6 @@ security:
     ca:
       crt: &lt;base 64 encoded root public certificate&gt;
       key: &lt;base 64 encoded root private key&gt;
-    identity:
-      crt: &lt;base 64 encoded identity public certificate&gt;
-      key: &lt;base 64 encoded identity private key&gt;
   kubernetes:
     ca:
       crt: &lt;base 64 encoded root public certificate&gt;

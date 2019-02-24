@@ -6,18 +6,13 @@ package gen
 
 import (
 	"context"
-	stdlibx509 "crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"log"
-	stdlibnet "net"
-	"os"
 	"time"
 
 	"github.com/autonomy/talos/internal/app/trustd/proto"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/autonomy/talos/internal/pkg/grpc/middleware/auth/basic"
-	"github.com/autonomy/talos/internal/pkg/net"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"google.golang.org/grpc"
 )
@@ -34,7 +29,6 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 	}
 
 	creds := basic.NewCredentials(
-		data.Security.OS.CA.Crt,
 		data.Services.Trustd.Username,
 		data.Services.Trustd.Password,
 	)
@@ -64,51 +58,22 @@ func (g *Generator) Certificate(in *proto.CertificateRequest) (resp *proto.Certi
 	return resp, err
 }
 
-// Identity creates a CSR and sends it to a Root of Trust for signing.
-// The Root of Trust responds with a signed certificate.
+// Identity creates a CSR and sends it to trustd for signing.
+// A signed certificate is returned.
 func (g *Generator) Identity(data *userdata.Security) (err error) {
-	key, err := x509.NewKey()
-	if err != nil {
-		return
-	}
-
-	data.OS.Identity = &x509.PEMEncodedCertificateAndKey{}
-	data.OS.Identity.Key = key.KeyPEM
-
-	pemBlock, _ := pem.Decode(key.KeyPEM)
-	if pemBlock == nil {
-		return fmt.Errorf("failed to decode key")
-	}
-	keyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
-	if err != nil {
-		return
-	}
-	addr, err := net.IP()
-	if err != nil {
-		return
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		return
-	}
-	opts := []x509.Option{}
-	ips := []stdlibnet.IP{addr}
-	names := []string{hostname}
-	opts = append(opts, x509.IPAddresses(ips))
-	opts = append(opts, x509.DNSNames(names))
-	opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
-	csr, err := x509.NewCertificateSigningRequest(keyEC, opts...)
-	if err != nil {
-		return
+	data.OS = &userdata.OSSecurity{CA: &x509.PEMEncodedCertificateAndKey{}}
+	var csr *x509.CertificateSigningRequest
+	if csr, err = data.NewIdentityCSR(); err != nil {
+		return err
 	}
 	req := &proto.CertificateRequest{
 		Csr: csr.X509CertificateRequestPEM,
 	}
 
-	return poll(g, req, data.OS.Identity)
+	return poll(g, req, data.OS)
 }
 
-func poll(g *Generator, in *proto.CertificateRequest, data *x509.PEMEncodedCertificateAndKey) (err error) {
+func poll(g *Generator, in *proto.CertificateRequest, data *userdata.OSSecurity) (err error) {
 	timeout := time.NewTimer(time.Minute * 5).C
 	tick := time.NewTicker(time.Second * 5).C
 
@@ -117,12 +82,14 @@ func poll(g *Generator, in *proto.CertificateRequest, data *x509.PEMEncodedCerti
 		case <-timeout:
 			return fmt.Errorf("timeout waiting for certificate")
 		case <-tick:
-			crt, _err := g.Certificate(in)
+			resp, _err := g.Certificate(in)
 			if _err != nil {
 				log.Println(_err)
 				continue
 			}
-			data.Crt = crt.Bytes
+			data.CA = &x509.PEMEncodedCertificateAndKey{}
+			data.CA.Crt = resp.Ca
+			data.Identity.Crt = resp.Crt
 
 			return nil
 		}

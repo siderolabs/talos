@@ -27,7 +27,9 @@ import (
 // TODO: See if this would be more appropriate in userdata
 // nolint: dupl, gocyclo
 func Prepare(data *userdata.UserData) (err error) {
-	log.Println("preparing ")
+	if data.Install == nil {
+		return nil
+	}
 
 	// Root Device Init
 	if data.Install.Root.Device == "" {

@@ -11,7 +11,6 @@ import (
 	"github.com/autonomy/talos/internal/app/osd/internal/reg"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/grpc/factory"
-	"github.com/autonomy/talos/internal/pkg/grpc/gen"
 	"github.com/autonomy/talos/internal/pkg/grpc/tls"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"google.golang.org/grpc"
@@ -20,13 +19,11 @@ import (
 
 var (
 	dataPath *string
-	generate *bool
 )
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 	dataPath = flag.String("userdata", "", "the path to the user data")
-	generate = flag.Bool("generate", false, "generate the TLS certificate using one of the Root of Trusts")
 	flag.Parse()
 }
 
@@ -34,17 +31,6 @@ func main() {
 	data, err := userdata.Open(*dataPath)
 	if err != nil {
 		log.Fatalf("open user data: %v", err)
-	}
-
-	if *generate {
-		var generator *gen.Generator
-		generator, err = gen.NewGenerator(data, constants.TrustdPort)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err = generator.Identity(data.Security); err != nil {
-			log.Fatalf("generate identity: %v", err)
-		}
 	}
 
 	config, err := tls.NewConfig(tls.Mutual, data.Security.OS)

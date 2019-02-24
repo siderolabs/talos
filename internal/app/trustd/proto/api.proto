@@ -16,7 +16,8 @@ message CertificateRequest {
 
 // The response message containing the requested logs.
 message CertificateResponse {
-  bytes bytes = 1;
+  bytes ca = 1;
+  bytes crt = 2;
 }
 
 // The request message containing the process name.

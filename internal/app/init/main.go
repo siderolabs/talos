@@ -148,6 +148,8 @@ func root() (err error) {
 }
 
 func startSystemServices(data *userdata.UserData) {
+	var err error
+
 	svcs := system.Services(data)
 
 	// Import the system images.
@@ -177,7 +179,7 @@ func startSystemServices(data *userdata.UserData) {
 			},
 		},
 	}
-	if err := ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
+	if err = ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
 		panic(err)
 	}
 

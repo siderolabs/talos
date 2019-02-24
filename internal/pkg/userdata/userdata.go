@@ -5,17 +5,21 @@
 package userdata
 
 import (
+	stdlibx509 "crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
+	stdlibnet "net"
 	"net/http"
 	"os"
 	"path"
 	"time"
 
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
+	"github.com/autonomy/talos/internal/pkg/net"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
@@ -249,6 +253,47 @@ func (data *UserData) WriteFiles() (err error) {
 	}
 
 	return nil
+}
+
+// NewIdentityCSR creates a new CSR for the node's identity certificate.
+func (data *Security) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err error) {
+	var key *x509.Key
+	key, err = x509.NewKey()
+	if err != nil {
+		return nil, err
+	}
+
+	data.OS.Identity = &x509.PEMEncodedCertificateAndKey{}
+	data.OS.Identity.Key = key.KeyPEM
+
+	pemBlock, _ := pem.Decode(key.KeyPEM)
+	if pemBlock == nil {
+		return nil, fmt.Errorf("failed to decode key")
+	}
+	keyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := net.IP()
+	if err != nil {
+		return nil, err
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		return
+	}
+	opts := []x509.Option{}
+	names := []string{hostname}
+	ips := []stdlibnet.IP{addr}
+	opts = append(opts, x509.DNSNames(names))
+	opts = append(opts, x509.IPAddresses(ips))
+	opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
+	csr, err = x509.NewCertificateSigningRequest(keyEC, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return csr, nil
 }
 
 // Download initializes a UserData struct from a remote URL.
