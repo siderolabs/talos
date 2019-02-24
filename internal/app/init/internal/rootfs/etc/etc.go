@@ -66,10 +66,15 @@ func Hosts(s, hostname, ip string) (err error) {
 	return createSymlink("/run/hosts", path.Join(s, "/etc/hosts"))
 }
 
-// ResolvConf symlinks /proc/net/pnp to /etc/resolv.conf. See
-// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt.
+// ResolvConf copies the resolv.conf generated in the early boot to the new
+// root.
 func ResolvConf(s string) (err error) {
-	return createSymlink("/proc/net/pnp", path.Join(s, "/etc/resolv.conf"))
+	source, err := ioutil.ReadFile("/etc/resolv.conf")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(path.Join(s, "/etc/resolv.conf"), source, 0644)
 }
 
 //

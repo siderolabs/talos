@@ -300,7 +300,7 @@ kernel = &quot;/var/lib/xen/talos/vmlinuz&quot;
 ramdisk = &quot;/var/lib/xen/talos/initramfs.xz&quot;
 disk = [ 'phy:/dev/sdb,xvda,w', ]
 vif = [ 'mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000', ]
-extra = &quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/master.yaml&quot;
+extra = &quot;consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/master.yaml&quot;
 </code></pre>
 
 <blockquote class="note " >
@@ -340,7 +340,7 @@ kernel = &quot;/var/lib/xen/talos/vmlinuz&quot;
 ramdisk = &quot;/var/lib/xen/talos/initramfs.xz&quot;
 disk = [ 'phy:/dev/sdc,xvda,w', ]
 vif = [ 'mac=52:54:00:B9:5D:F2,bridge=xenbr0,model=e1000', ]
-extra = &quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/worker.yaml&quot;
+extra = &quot;consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.autonomy.io/platform=bare-metal talos.autonomy.io/userdata=http://${IP}:8080/worker.yaml&quot;
 </code></pre>
 
 <blockquote class="note " >

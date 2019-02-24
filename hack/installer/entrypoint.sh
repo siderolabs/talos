@@ -124,7 +124,7 @@ DEFAULT Talos
 LABEL Talos
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 ip=dhcp consoleblank=0 console=tty0 console=ttyS0,9600 talos.autonomy.io/userdata=${TALOS_USERDATA} talos.autonomy.io/platform=${TALOS_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 console=ttyS0,9600 talos.autonomy.io/userdata=${TALOS_USERDATA} talos.autonomy.io/platform=${TALOS_PLATFORM}
 EOF
 }
 
