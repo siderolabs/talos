@@ -41,7 +41,6 @@ func Install(data *userdata.UserData) (err error) {
 
 	var previousMountPoint string
 	for dest, urls := range dataURLs {
-
 		if dest != previousMountPoint {
 			log.Printf("Downloading assets for %s\n", dest)
 			previousMountPoint = dest
@@ -49,7 +48,6 @@ func Install(data *userdata.UserData) (err error) {
 
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
 		for _, artifact := range urls {
-			log.Println(artifact)
 			switch {
 			case strings.HasPrefix(artifact, "http"):
 				var u *url.URL
@@ -66,51 +64,59 @@ func Install(data *userdata.UserData) (err error) {
 
 				// TODO add support for checksum validation of downloaded file
 			case strings.HasPrefix(artifact, "/"):
+				log.Printf("Copying %s to %s\n", artifact, filepath.Join(dest, filepath.Base(artifact)))
 				sourceFile, err = os.Open(artifact)
 				if err != nil {
 					return err
 				}
+
 				destFile, err = os.Create(filepath.Join(dest, filepath.Base(artifact)))
 				if err != nil {
 					return err
-				}
-			default:
-				// Local directories/links
-				link := strings.Split(artifact, ":")
-				if len(link) == 1 {
-					if err = os.MkdirAll(filepath.Join(dest, artifact), 0755); err != nil {
-						return err
-					}
-				} else {
-					if err = os.Symlink(link[1], filepath.Join(dest, link[0])); err != nil && !os.IsExist(err) {
-						return err
-					}
 				}
 			}
 
 			switch {
 			case strings.HasSuffix(sourceFile.Name(), ".tar") || strings.HasSuffix(sourceFile.Name(), ".tar.gz"):
-				log.Printf("Extracting %s\n", artifact)
+				log.Printf("Extracting %s to %s\n", sourceFile.Name(), dest)
+
 				err = untar(sourceFile, dest)
 				if err != nil {
+					log.Printf("Failed to extract %s to %s\n", sourceFile.Name(), dest)
 					return err
 				}
-			case strings.HasPrefix(sourceFile.Name(), "/"):
+
+				if err = sourceFile.Close(); err != nil {
+					log.Printf("Failed to close %s", sourceFile.Name())
+					return err
+				}
+
+				if err = os.Remove(sourceFile.Name()); err != nil {
+					log.Printf("Failed to remove %s", sourceFile.Name())
+					return err
+				}
+			case strings.HasPrefix(sourceFile.Name(), "/") && destFile != nil:
+				log.Printf("Copying %s to %s\n", sourceFile.Name(), destFile.Name())
+
 				if _, err = io.Copy(destFile, sourceFile); err != nil {
+					log.Printf("Failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
 					return err
 				}
 
 				if err = destFile.Close(); err != nil {
+					log.Printf("Failed to close %s", destFile.Name())
+					return err
+				}
+
+				if err = sourceFile.Close(); err != nil {
+					log.Printf("Failed to close %s", sourceFile.Name())
 					return err
 				}
 			default:
-			}
-
-			if err = sourceFile.Close(); err != nil {
-				return err
-			}
-			if err = os.Remove(sourceFile.Name()); err != nil {
-				return err
+				if err = sourceFile.Close(); err != nil {
+					log.Printf("Failed to close %s", sourceFile.Name())
+					return err
+				}
 			}
 		}
 	}
