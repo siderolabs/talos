@@ -17,6 +17,7 @@ import (
 
 	"github.com/autonomy/talos/internal/app/proxyd/internal/backend"
 	pkgnet "github.com/autonomy/talos/internal/pkg/net"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -132,10 +133,14 @@ func (r *ReverseProxy) Watch() (err error) {
 	if err != nil {
 		return
 	}
-	ip, err := pkgnet.IP()
+	ips, err := pkgnet.IPAddrs()
 	if err != nil {
 		return
 	}
+	if len(ips) == 0 {
+		return errors.New("no IP address found for bootstrap backend")
+	}
+	ip := ips[0]
 	// Update the host to the node's IP.
 	config.Host = ip.String() + ":6443"
 	// Add the node for the purposes of bootstrapping. If we don't do this, the

@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
-	stdlibnet "net"
 	"net/http"
 	"os"
 	"path"
@@ -274,7 +273,7 @@ func (data *Security) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err
 	if err != nil {
 		return nil, err
 	}
-	addr, err := net.IP()
+	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +283,6 @@ func (data *Security) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err
 	}
 	opts := []x509.Option{}
 	names := []string{hostname}
-	ips := []stdlibnet.IP{addr}
 	opts = append(opts, x509.DNSNames(names))
 	opts = append(opts, x509.IPAddresses(ips))
 	opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
