@@ -99,6 +99,9 @@ const (
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
+
+	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
+	TalosConfigEnvVar = "TALOSCONFIG"
 )
 
 // See https://linux.die.net/man/3/klogctl
