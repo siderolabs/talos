@@ -5,12 +5,14 @@
 package net
 
 import (
-	"fmt"
 	"net"
 )
 
-// IP finds and returns the first non-loopback interface of the current machine.
-func IP() (ip net.IP, err error) {
+// IPAddrs finds and returns a list of non-loopback IPv4 addresses of the
+// current machine.
+func IPAddrs() (ips []net.IP, err error) {
+	ips = []net.IP{}
+
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return
@@ -19,10 +21,11 @@ func IP() (ip net.IP, err error) {
 	for _, a := range addrs {
 		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				return ipnet.IP, nil
+				ips = append(ips, ipnet.IP)
+
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("could not discover IP address")
+	return ips, nil
 }
