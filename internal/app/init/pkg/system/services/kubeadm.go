@@ -43,7 +43,7 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
-	if data.IsMaster() {
+	if data.IsBootstrap() {
 		if err = writeKubeadmPKIFiles(data.Security.Kubernetes.CA); err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 
 // PostFunc implements the Service interface.
 func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
-	if data.IsWorker() {
+	if !data.IsBootstrap() {
 		return nil
 	}
 
