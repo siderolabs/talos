@@ -4,6 +4,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
+	github.com/autonomy/dhcp v0.0.0-20190227141242-cedea8519f96
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
 	github.com/containerd/containerd v1.2.4
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
@@ -53,6 +54,7 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
+	github.com/u-root/u-root v4.0.0+incompatible // indirect
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
