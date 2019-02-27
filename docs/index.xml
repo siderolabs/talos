@@ -118,7 +118,7 @@ We need to specify:
       <guid>https://talos.autonomy.io/examples/xen/</guid>
       <description>Creating a Master Node On Dom0, install Talos to an available block device:
 docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
-name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;ip=dhcp consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
+name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
     </item>
     
     <item>
