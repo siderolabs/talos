@@ -91,7 +91,7 @@ func generatePKI(data *userdata.UserData) (err error) {
 	if data.IsBootstrap() {
 		log.Println("generating PKI locally")
 		var csr *x509.CertificateSigningRequest
-		if csr, err = data.Security.NewIdentityCSR(); err != nil {
+		if csr, err = data.NewIdentityCSR(); err != nil {
 			return err
 		}
 		var crt *x509.Certificate
@@ -109,7 +109,7 @@ func generatePKI(data *userdata.UserData) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to create trustd client")
 	}
-	if err = generator.Identity(data.Security); err != nil {
+	if err = generator.Identity(data); err != nil {
 		return errors.Wrap(err, "failed to generate identity")
 	}
 

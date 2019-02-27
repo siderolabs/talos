@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	stdlibnet "net"
 	"net/http"
 	"os"
 	"path"
@@ -212,6 +213,7 @@ type Trustd struct {
 	Username  string   `yaml:"username"`
 	Password  string   `yaml:"password"`
 	Endpoints []string `yaml:"endpoints,omitempty"`
+	CertSANs  []string `yaml:"certSANs,omitempty"`
 }
 
 // OSD describes the configuration of the osd service.
@@ -255,15 +257,15 @@ func (data *UserData) WriteFiles() (err error) {
 }
 
 // NewIdentityCSR creates a new CSR for the node's identity certificate.
-func (data *Security) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err error) {
+func (data *UserData) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err error) {
 	var key *x509.Key
 	key, err = x509.NewKey()
 	if err != nil {
 		return nil, err
 	}
 
-	data.OS.Identity = &x509.PEMEncodedCertificateAndKey{}
-	data.OS.Identity.Key = key.KeyPEM
+	data.Security.OS.Identity = &x509.PEMEncodedCertificateAndKey{}
+	data.Security.OS.Identity.Key = key.KeyPEM
 
 	pemBlock, _ := pem.Decode(key.KeyPEM)
 	if pemBlock == nil {
@@ -276,6 +278,11 @@ func (data *Security) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, err
+	}
+	for _, san := range data.Services.Trustd.CertSANs {
+		if ip := stdlibnet.ParseIP(san); ip != nil {
+			ips = append(ips, ip)
+		}
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
