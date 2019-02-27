@@ -61,6 +61,9 @@ func (g *Generator) Certificate(in *proto.CertificateRequest) (resp *proto.Certi
 // Identity creates a CSR and sends it to trustd for signing.
 // A signed certificate is returned.
 func (g *Generator) Identity(data *userdata.UserData) (err error) {
+	if data.Security == nil {
+		data.Security = &userdata.Security{}
+	}
 	data.Security.OS = &userdata.OSSecurity{CA: &x509.PEMEncodedCertificateAndKey{}}
 	var csr *x509.CertificateSigningRequest
 	if csr, err = data.NewIdentityCSR(); err != nil {
