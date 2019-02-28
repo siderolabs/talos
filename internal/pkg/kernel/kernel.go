@@ -12,19 +12,34 @@ import (
 // ParseProcCmdline parses /proc/cmdline and returns a map reprentation of the
 // kernel parameters.
 func ParseProcCmdline() (cmdline map[string]string, err error) {
-	cmdline = map[string]string{}
-	cmdlineBytes, err := ioutil.ReadFile("/proc/cmdline")
+	var cmdlineBytes []byte
+	cmdlineBytes, err = ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return
 	}
-	line := strings.TrimSuffix(string(cmdlineBytes), "\n")
-	arguments := strings.Split(line, " ")
-	for _, a := range arguments {
-		kv := strings.Split(a, "=")
-		if len(kv) == 2 {
-			cmdline[kv[0]] = kv[1]
+
+	cmdline = ParseKernelBootParameters(cmdlineBytes)
+
+	return
+}
+
+// ParseKernelBootParameters parses kernel boot time parameters
+//
+// Ref: http://man7.org/linux/man-pages/man7/bootparam.7.html
+func ParseKernelBootParameters(parameters []byte) (parsed map[string]string) {
+	parsed = map[string]string{}
+
+	line := strings.TrimSuffix(string(parameters), "\n")
+	for _, arg := range strings.Fields(line) {
+		kv := strings.SplitN(arg, "=", 2)
+		// TODO: doesn't handle duplicate key names well (overwrites
+		//       previous value)
+		if len(kv) == 1 {
+			parsed[kv[0]] = ""
+		} else {
+			parsed[kv[0]] = kv[1]
 		}
 	}
 
-	return cmdline, err
+	return
 }
