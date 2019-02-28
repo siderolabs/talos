@@ -52,7 +52,7 @@ require (
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/stretchr/testify v1.2.2 // indirect
+	github.com/stretchr/testify v1.2.2
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/u-root/u-root v4.0.0+incompatible // indirect
 	github.com/vishvananda/netlink v1.0.0
