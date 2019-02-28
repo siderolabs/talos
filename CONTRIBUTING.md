@@ -23,11 +23,12 @@ We have a small tool that you can use to remind you of our policy.
 
 ```bash
 go get github.com/autonomy/conform
-cat <EOF | tee .git/hooks/commit-msg
+cat <<EOF | tee .git/hooks/commit-msg
 #!/bin/sh
 
-conform enforce --commit-msg-file $1
+conform enforce --commit-msg-file \$1
 EOF
+chmod +x .git/hooks/commit-msg
 ```
 
 In addition, all commits should be signed by the committer using `git commit -s` which should produce a commit
