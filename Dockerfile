@@ -26,6 +26,9 @@ WORKDIR /blockd
 COPY ./internal/app/blockd/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
+ARG GOLANG_VERSION
+FROM golang:${GOLANG_VERSION}-alpine AS golang-musl
+
 # The base target provides a common starting point for all other targets.
 
 ARG TOOLCHAIN_IMAGE
@@ -49,17 +52,12 @@ RUN make install DESTDIR=/rootfs
 RUN cp /toolchain/lib/libblkid.* /rootfs/lib
 # libuuid
 RUN cp /toolchain/lib/libuuid.* /rootfs/lib
-# gcompat
-WORKDIR /tmp/gcompat
-RUN curl -L https://github.com/AdelieLinux/gcompat/archive/0.3.0.tar.gz | tar -xz --strip-components=1
-RUN make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2
-RUN make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2 install
 # golang
 ENV GOROOT /toolchain/usr/local/go
 ENV GOPATH /toolchain/go
+COPY --from=golang-musl /usr/local/go ${GOROOT}
 ENV PATH ${PATH}:${GOROOT}/bin
-RUN mkdir -p ${GOROOT} ${GOPATH}
-RUN curl -L https://dl.google.com/go/go1.11.4.linux-amd64.tar.gz | tar -xz --strip-components=1 -C ${GOROOT}
+RUN mkdir -p ${GOPATH}
 RUN ln -s lib /lib64
 # context
 ENV GO111MODULE on
