@@ -5,7 +5,6 @@
 package network
 
 import (
-	"errors"
 	"log"
 	"time"
 
@@ -75,13 +74,13 @@ func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, e
 				log.Printf("using IP address %s", m.YourIPAddr.String())
 			}
 
+			hostname := m.YourIPAddr.String()
 			if m.HostName() != "" {
-				log.Printf("using hostname: %s", m.HostName())
-				if err = unix.Sethostname([]byte(m.HostName())); err != nil {
-					return nil, err
-				}
-			} else {
-				return nil, errors.New("missing hostname in DHCP reply")
+				hostname = m.HostName()
+			}
+			log.Printf("using hostname: %s", hostname)
+			if err = unix.Sethostname([]byte(hostname)); err != nil {
+				return nil, err
 			}
 
 			break
