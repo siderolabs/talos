@@ -26,6 +26,9 @@ var statsCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		if target != "" {
+			creds.Target = target
+		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
 			fmt.Println(err)
@@ -46,5 +49,6 @@ var statsCmd = &cobra.Command{
 
 func init() {
 	statsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	statsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(statsCmd)
 }

@@ -25,6 +25,9 @@ var rebootCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		if target != "" {
+			creds.Target = target
+		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
 			fmt.Println(err)
@@ -38,5 +41,6 @@ var rebootCmd = &cobra.Command{
 }
 
 func init() {
+	rebootCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(rebootCmd)
 }
