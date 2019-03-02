@@ -24,7 +24,7 @@ import (
 // Credentials represents the set of values required to initialize a vaild
 // Client.
 type Credentials struct {
-	target string
+	Target string
 	ca     []byte
 	crt    []byte
 	key    []byte
@@ -58,7 +58,7 @@ func NewDefaultClientCredentials(p string) (creds *Credentials, err error) {
 		return
 	}
 	creds = &Credentials{
-		target: c.Contexts[c.Context].Target,
+		Target: c.Contexts[c.Context].Target,
 		ca:     caBytes,
 		crt:    crtBytes,
 		key:    keyBytes,
@@ -86,7 +86,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	// TODO(andrewrynhard): Do not parse the address. Pass the IP and port in as separate
 	// parameters.
 	creds := credentials.NewTLS(&tls.Config{
-		ServerName:   clientcreds.target,
+		ServerName:   clientcreds.Target,
 		Certificates: []tls.Certificate{crt},
 		// Set the root certificate authorities to use the self-signed
 		// certificate.
@@ -94,7 +94,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	})
 
 	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
-	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", clientcreds.target, port), grpcOpts...)
+	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", clientcreds.Target, port), grpcOpts...)
 	if err != nil {
 		return
 	}

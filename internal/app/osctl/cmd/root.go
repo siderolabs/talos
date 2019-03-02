@@ -26,6 +26,7 @@ var (
 	hours        int
 	kubernetes   bool
 	talosconfig  string
+	target       string
 )
 
 // rootCmd represents the base command when called without any subcommands
