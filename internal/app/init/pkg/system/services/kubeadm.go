@@ -58,11 +58,11 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 
 // PostFunc implements the Service interface.
 func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
-	if !data.IsBootstrap() {
+	if data.IsWorker() {
 		return nil
 	}
 
-	if data.Services.Trustd.Endpoints == nil {
+	if data.Services.Trustd == nil || data.Services.Trustd.Next == "" {
 		return nil
 	}
 
@@ -72,8 +72,6 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 	)
 
 	files := []string{
-		"/etc/kubernetes/audit-policy.yaml",
-		constants.EncryptionConfigInitramfsPath,
 		"/etc/kubernetes/pki/ca.crt",
 		"/etc/kubernetes/pki/ca.key",
 		"/etc/kubernetes/pki/sa.key",
@@ -82,19 +80,20 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 		"/etc/kubernetes/pki/front-proxy-ca.key",
 		"/etc/kubernetes/pki/etcd/ca.crt",
 		"/etc/kubernetes/pki/etcd/ca.key",
+		"/etc/kubernetes/audit-policy.yaml",
+		constants.EncryptionConfigInitramfsPath,
 		"/etc/kubernetes/admin.conf",
 	}
 
-	for _, endpoint := range data.Services.Trustd.Endpoints {
-		conn, err := basic.NewConnection(endpoint, constants.TrustdPort, creds)
-		if err != nil {
-			return err
-		}
-		client := proto.NewTrustdClient(conn)
+	conn, err := basic.NewConnection(data.Services.Trustd.Next, constants.TrustdPort, creds)
+	if err != nil {
+		return err
+	}
 
-		if err := writeFiles(client, files); err != nil {
-			return err
-		}
+	client := proto.NewTrustdClient(conn)
+
+	if err := writeFiles(client, files); err != nil {
+		return err
 	}
 
 	return nil
