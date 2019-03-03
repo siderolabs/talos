@@ -33,7 +33,7 @@ var configTargetCmd = &cobra.Command{
 			}
 			os.Exit(1)
 		}
-		target := args[0]
+		target = args[0]
 		c, err := config.Open(talosconfig)
 		if err != nil {
 			fmt.Printf("%v", err)
