@@ -214,6 +214,7 @@ type Trustd struct {
 	Password  string   `yaml:"password"`
 	Endpoints []string `yaml:"endpoints,omitempty"`
 	CertSANs  []string `yaml:"certSANs,omitempty"`
+	Next      string   `yaml:"next,omitempty"`
 }
 
 // OSD describes the configuration of the osd service.
