@@ -6,6 +6,14 @@ package vfat
 
 // Options is the functional options struct.
 type Options struct {
+	Label string
+}
+
+// WithLabel sets the filesystem label.
+func WithLabel(o string) Option {
+	return func(args *Options) {
+		args.Label = o
+	}
 }
 
 // Option is the functional option func.
@@ -13,7 +21,9 @@ type Option func(*Options)
 
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
-	opts := &Options{}
+	opts := &Options{
+		Label: "",
+	}
 
 	for _, setter := range setters {
 		setter(opts)
