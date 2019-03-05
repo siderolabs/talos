@@ -218,7 +218,7 @@ RUN golangci-lint run --config golangci-lint.yaml
 
 # The docs target generates a static website containing documentation.
 
-FROM base as docs-build
+FROM base AS docs-build
 RUN curl -L https://github.com/gohugoio/hugo/releases/download/v0.49.2/hugo_0.49.2_Linux-64bit.tar.gz | tar -xz -C /bin
 WORKDIR /web
 COPY ./web ./

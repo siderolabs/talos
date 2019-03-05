@@ -143,7 +143,8 @@ VMDK_IMAGE="/out/image.vmdk"
 ISO_IMAGE="/out/image.iso"
 FULL=false
 RAW=false
-ROOTFS_SIZE=$(size_gz /generated/rootfs.tar.gz)
+TOTAL_SIZE=$(size_gz /generated/rootfs.tar.gz)
+ROOTFS_SIZE=$(tar -tvf /generated/rootfs.tar.gz --exclude=./var | awk '{s+=$3} END { printf "%.0f", s*0.000001}')
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
 # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/talos/pull/157.
 KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
@@ -168,7 +169,7 @@ case "$1" in
           ;;
         l )
           trap cleanup ERR
-          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($ROOTFS_SIZE+$INITRAMFS_SIZE+150))
+          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($TOTAL_SIZE+$INITRAMFS_SIZE+150))
           DEVICE=$(losetup -f)
           RAW=true
           echo "Using loop device ${RAW_IMAGE} as installation media"
