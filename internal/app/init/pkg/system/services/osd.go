@@ -54,6 +54,7 @@ func (o *OSD) Start(data *userdata.UserData) error {
 
 	// Set the mounts.
 	mounts := []specs.Mount{
+		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: defaults.DefaultAddress, Source: defaults.DefaultAddress, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/run", Source: "/var/run", Options: []string{"rbind", "rw"}},
@@ -76,7 +77,6 @@ func (o *OSD) Start(data *userdata.UserData) error {
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
-			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithMounts(mounts),
 		),
 	)
