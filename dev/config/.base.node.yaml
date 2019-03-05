@@ -1,0 +1,25 @@
+services:
+  init:
+    cni: flannel
+  kubeadm:
+    configuration: |
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: InitConfiguration
+      apiVersion: kubeadm.k8s.io/v1beta1
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+      ---
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: ClusterConfiguration
+      networking:
+        dnsDomain: cluster.local
+      ---
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      kind: KubeletConfiguration
+      failSwapOn: false  # necessary for some docker hosts
+    extraArgs:
+      - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
+        # additions to talos default are:  FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
+  trustd:
+    username: 'dev'
+    password: 'talos_trust_dev'

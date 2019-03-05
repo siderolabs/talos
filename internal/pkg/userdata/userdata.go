@@ -119,6 +119,7 @@ type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`
 
 	Configuration runtime.Object `yaml:"configuration"`
+	ExtraArgs     []string       `yaml:"extraArgs,omitempty"`
 	bootstrap     bool
 	controlPlane  bool
 }
@@ -126,8 +127,11 @@ type Kubeadm struct {
 // MarshalYAML implements the yaml.Marshaler interface.
 func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 	var aux struct {
-		Configuration string `yaml:"configuration,omitempty"`
+		Configuration string   `yaml:"configuration,omitempty"`
+		ExtraArgs     []string `yaml:"extraArgs,omitempty"`
 	}
+
+	aux.ExtraArgs = kdm.ExtraArgs
 
 	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
 	if err != nil {
@@ -154,12 +158,15 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var aux struct {
-		Configuration string `yaml:"configuration,omitempty"`
+		Configuration string   `yaml:"configuration,omitempty"`
+		ExtraArgs     []string `yaml:"extraArgs,omitempty"`
 	}
 
 	if err := unmarshal(&aux); err != nil {
 		return err
 	}
+
+	kdm.ExtraArgs = aux.ExtraArgs
 
 	b := []byte(aux.Configuration)
 
