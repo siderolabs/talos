@@ -48,6 +48,13 @@ RUN make \
     INSTALL_GROUP=0 \
     LOCAL_CONFIGURE_OPTIONS="--prefix=/"
 RUN make install DESTDIR=/rootfs
+WORKDIR /tmp/dosfstools
+RUN curl -L https://github.com/dosfstools/dosfstools/releases/download/v4.1/dosfstools-4.1.tar.xz | tar -xJ --strip-components=1
+RUN ./configure \
+    --prefix=/ \
+    --enable-compat-symlinks
+RUN make
+RUN make install DESTDIR=/rootfs
 # libblkid
 RUN cp /toolchain/lib/libblkid.* /rootfs/lib
 # libuuid
