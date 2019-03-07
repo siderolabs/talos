@@ -84,8 +84,12 @@ func (i *Initializer) MoveSpecial() (err error) {
 		return iter.Err()
 	}
 
+	if err := mount.WithRetry(mount.NewMountPoint("tmpfs", "/dev/shm", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""), mount.WithPrefix(i.prefix)); err != nil {
+		return errors.Errorf("error mounting mount point %s: %v", "/dev/shm", err)
+	}
+
 	if err := mount.WithRetry(mount.NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"), mount.WithPrefix(i.prefix)); err != nil {
-		return errors.Errorf("error mounting mount point %s: %v", iter.Value().Target(), err)
+		return errors.Errorf("error mounting mount point %s: %v", "/dev/pts", err)
 	}
 
 	return nil
