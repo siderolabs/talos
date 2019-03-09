@@ -1,0 +1,4 @@
+pki/
+userdata/*
+!userdata/.*
+talosconfig

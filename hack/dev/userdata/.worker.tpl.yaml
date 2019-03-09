@@ -1,0 +1,41 @@
+version: ""
+security: null
+networking:
+  os: {}
+  kubernetes: {}
+services:
+  init:
+    cni: flannel
+  kubelet: null
+  kubeadm:
+    configuration: |
+      apiVersion: kubeadm.k8s.io/v1beta1
+      caCertPath: /etc/kubernetes/pki/ca.crt
+      discovery:
+        bootstrapToken:
+          apiServerEndpoint: 10.5.0.6:443
+          token: 1qbsj9.3oz5hsk6grdfp98b
+          unsafeSkipCAVerification: true
+        timeout: 5m0s
+        tlsBootstrapToken: 1qbsj9.3oz5hsk6grdfp98b
+      kind: JoinConfiguration
+      nodeRegistration:
+        criSocket: /var/run/dockershim.sock
+        kubeletExtraArgs:
+          node-labels: node-role.kubernetes.io/worker=
+          feature-gates: ExperimentalCriticalPodAnnotation=true
+    extraArgs:
+    - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
+  trustd:
+    username: dev
+    password: talos_trust_dev
+    endpoints:
+    - 10.5.0.6
+    - 10.5.0.7
+    - 10.5.0.8
+  proxyd: null
+  blockd: null
+  osd: null
+  crt: null
+files: []
+debug: false

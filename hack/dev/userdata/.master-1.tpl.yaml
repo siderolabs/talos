@@ -6,20 +6,40 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
       apiVersion: kubeadm.k8s.io/v1beta1
+      bootstrapTokens:
+      - token: 1qbsj9.3oz5hsk6grdfp98b
+        ttl: 0s
       nodeRegistration:
         criSocket: /run/containerd/containerd.sock
       ---
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
+      controlPlaneEndpoint: 10.5.0.6:443
+      apiServer:
+        certSANs:
+        - 127.0.0.1
+        - 10.5.0.7
+        - 10.5.0.8
       networking:
         dnsDomain: cluster.local
+        podSubnet: 10.244.0.1/16
+        serviceSubnet: 10.96.0.1/12
       ---
       apiVersion: kubelet.config.k8s.io/v1beta1
       kind: KubeletConfiguration
       failSwapOn: false  # necessary for some docker hosts
+      ---
+      apiVersion: kubeproxy.config.k8s.io/v1alpha1
+      kind: KubeProxyConfiguration
+      # See https://github.com/kubernetes/kubernetes/issues/58610#issuecomment-359552443
+      conntrack:
+        max: 0
+        maxPerCore: 0
     extraArgs:
       - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
         # additions to talos default are:  FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
   trustd:
     username: 'dev'
     password: 'talos_trust_dev'
+    next: 10.5.0.7
+debug: true

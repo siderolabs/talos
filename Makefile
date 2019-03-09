@@ -107,7 +107,7 @@ rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd blockd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-docker-os: buildkitd
+container-os: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \

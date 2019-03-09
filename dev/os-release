@@ -1,6 +1,0 @@
-NAME="Talos"
-ID=dev-container
-VERSION_ID=dev-container
-PRETTY_NAME="Talos (dev-container) by Autonomy"
-HOME_URL="https://talos.autonomy.io/"
-BUG_REPORT_URL="https://github.com/autonomy/talos/issues"

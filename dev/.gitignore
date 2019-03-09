@@ -1,5 +1,0 @@
-pki/
-config/*
-!config/.*
-*.kmsg
-*.logs/

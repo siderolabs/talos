@@ -1,0 +1,131 @@
+version: '3.7'
+
+services:
+  master-1:
+    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    container_name: master-1
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    hostname: master-1
+    entrypoint: /sbin/init
+    command: --in-container
+    volumes:
+      # os config
+      - ./userdata/master-1.yaml:/run/userdata.yaml
+      # state dirs
+      - master-1_containerd:/var/lib/containerd/
+      - master-1_etcd:/var/lib/etcd/
+      - master-1_kubelet:/var/lib/kubelet/
+      - master-1_kubernetes:/etc/kubernetes/
+      - master-1_cni:/etc/cni/
+    tmpfs:
+      - /run
+    networks:
+      talosbr:
+        ipv4_address: 10.5.0.6
+
+  master-2:
+    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    container_name: master-2
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    hostname: master-2
+    entrypoint: /sbin/init
+    command: --in-container
+    volumes:
+      # os config
+      - ./userdata/master-2.yaml:/run/userdata.yaml
+      # state dirs
+      - master-2_containerd:/var/lib/containerd/
+      - master-2_etcd:/var/lib/etcd/
+      - master-2_kubelet:/var/lib/kubelet/
+      - master-2_kubernetes:/etc/kubernetes/
+      - master-2_cni:/etc/cni/
+    tmpfs:
+      - /run
+    networks:
+      talosbr:
+        ipv4_address: 10.5.0.7
+
+  master-3:
+    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    container_name: master-3
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    hostname: master-3
+    entrypoint: /sbin/init
+    command: --in-container
+    volumes:
+      # os config
+      - ./userdata/master-3.yaml:/run/userdata.yaml
+      # state dirs
+      - master-3_containerd:/var/lib/containerd/
+      - master-3_etcd:/var/lib/etcd/
+      - master-3_kubelet:/var/lib/kubelet/
+      - master-3_kubernetes:/etc/kubernetes/
+      - master-3_cni:/etc/cni/
+    tmpfs:
+      - /run
+    networks:
+      talosbr:
+        ipv4_address: 10.5.0.8
+
+  worker-1:
+    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    container_name: worker-1
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    hostname: worker-1
+    entrypoint: /sbin/init
+    command: --in-container
+    volumes:
+      # os config
+      - ./userdata/worker-1.yaml:/run/userdata.yaml
+      # state dirs
+      - worker-1_containerd:/var/lib/containerd/
+      - worker-1_etcd:/var/lib/etcd/
+      - worker-1_kubelet:/var/lib/kubelet/
+      - worker-1_kubernetes:/etc/kubernetes/
+      - worker-1_cni:/etc/cni/
+    tmpfs:
+      - /run
+    networks:
+      talosbr:
+
+volumes:
+  master-1_containerd:
+  master-1_etcd:
+  master-1_kubelet:
+  master-1_kubernetes:
+  master-1_ssl:
+  master-1_cni:
+  master-2_containerd:
+  master-2_etcd:
+  master-2_kubelet:
+  master-2_kubernetes:
+  master-2_ssl:
+  master-2_cni:
+  master-3_containerd:
+  master-3_etcd:
+  master-3_kubelet:
+  master-3_kubernetes:
+  master-3_ssl:
+  master-3_cni:
+  worker-1_containerd:
+  worker-1_etcd:
+  worker-1_kubelet:
+  worker-1_kubernetes:
+  worker-1_ssl:
+  worker-1_cni:
+
+
+networks:
+  talosbr:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/16

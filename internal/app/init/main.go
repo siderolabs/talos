@@ -28,11 +28,13 @@ import (
 )
 
 var (
-	switchRoot *bool
+	switchRoot  *bool
+	inContainer *bool
 )
 
 func init() {
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
+	inContainer = flag.Bool("in-container", false, "run Talos in a container")
 	flag.Parse()
 }
 
@@ -46,6 +48,31 @@ func kmsg(prefix string) (*os.File, error) {
 	log.SetFlags(0)
 
 	return out, nil
+}
+
+func container() (err error) {
+	log.Println("preparing container based deploy")
+
+	log.Println("remounting volumes as shared mounts")
+	targets := []string{"/", "/var/lib/kubelet", "/etc/cni"}
+	for _, t := range targets {
+		if err = unix.Mount("", t, "", unix.MS_SHARED, ""); err != nil {
+			return err
+		}
+	}
+
+	log.Printf("reading the user data: %s\n", constants.UserDataPath)
+	var data *userdata.UserData
+	if data, err = userdata.Open(constants.UserDataPath); err != nil {
+		return err
+	}
+
+	log.Println("preparing the root filesystem")
+	if err = rootfs.Prepare("", true, data); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // nolint: gocyclo
@@ -97,7 +124,7 @@ func initram() (err error) {
 	}
 	// Prepare the necessary files in the rootfs.
 	log.Println("preparing the root filesystem")
-	if err = rootfs.Prepare(constants.NewRoot, data); err != nil {
+	if err = rootfs.Prepare(constants.NewRoot, false, data); err != nil {
 		return err
 	}
 	// Perform the equivalent of switch_root.
@@ -114,6 +141,7 @@ func root() (err error) {
 	if _, err = kmsg("[talos]"); err != nil {
 		return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
 	}
+
 	// Read the user data.
 	log.Printf("reading the user data: %s\n", constants.UserDataPath)
 	var data *userdata.UserData
@@ -261,10 +289,22 @@ func main() {
 		select {}
 	}
 
+	if *inContainer {
+		if err := container(); err != nil {
+			panic(errors.Wrap(err, "failed to prepare container based deploy"))
+		}
+		if err := root(); err != nil {
+			panic(errors.Wrap(err, "boot failed"))
+		}
+
+		// Hang forever.
+		select {}
+	}
+
 	if err := initram(); err != nil {
 		panic(errors.Wrap(err, "early boot failed"))
 	}
 
 	// We should never reach this point if things are working as intended.
-	panic(errors.New("unkown error"))
+	panic(errors.New("unknown error"))
 }
