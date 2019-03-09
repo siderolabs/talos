@@ -107,6 +107,17 @@ rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd blockd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+docker-os: buildkitd
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--exporter=docker \
+		--exporter-opt output=build/$@.tar \
+		--exporter-opt name=docker.io/autonomy/talos-os:$(TAG) \
+		--exporter-opt push=$(PUSH) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+	@docker load < build/$@.tar
+
 installer: buildkitd
 	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \

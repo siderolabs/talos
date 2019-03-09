@@ -74,6 +74,12 @@ services:
       mode: ipvs
       ipvs:
         scheduler: lc
+      ---
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      kind: KubeletConfiguration
+      failSwapOn: false
+    extraArgs:
+    - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,Swap
   trustd:
     image: docker.io/autonomy/trustd:latest
     username: '5H7iU_9\u003cxizSRD'

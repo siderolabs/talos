@@ -131,6 +131,8 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		args.ProcessArgs = []string{"kubeadm", "join", "--config=/etc/kubernetes/kubeadm-config.yaml", ignore}
 	}
 
+	args.ProcessArgs = append(args.ProcessArgs, data.Services.Kubeadm.ExtraArgs...)
+
 	// Set the mounts.
 	// nolint: dupl
 	mounts := []specs.Mount{
