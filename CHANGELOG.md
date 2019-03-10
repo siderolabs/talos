@@ -1,25 +1,69 @@
+# [v0.1.0-alpha.19](https://github.com/autonomy/talos/compare/v0.1.0-alpha.18...v0.1.0-alpha.19) (2019-03-11)
+
+
+### Bug Fixes
+
+* add initialization for userdata download ([#367](https://github.com/autonomy/talos/issues/367)) ([12eeab2](https://github.com/autonomy/talos/commit/12eeab2)), closes [#363](https://github.com/autonomy/talos/issues/363)
+* add iptables to rootfs ([#378](https://github.com/autonomy/talos/issues/378)) ([eed7388](https://github.com/autonomy/talos/commit/eed7388))
+* add missing mounts and remove memory limits ([#442](https://github.com/autonomy/talos/issues/442)) ([a2cee67](https://github.com/autonomy/talos/commit/a2cee67))
+* assign to existing target variable ([#436](https://github.com/autonomy/talos/issues/436)) ([9f1e54c](https://github.com/autonomy/talos/commit/9f1e54c))
+* delay `gitmeta` until needed in Makefile ([#407](https://github.com/autonomy/talos/issues/407)) ([0ed9bc8](https://github.com/autonomy/talos/commit/0ed9bc8))
+* distribute PKI from initial master to joining masters ([#426](https://github.com/autonomy/talos/issues/426)) ([7528d89](https://github.com/autonomy/talos/commit/7528d89))
+* **initramfs:** fix case where we download a non archive file ([#421](https://github.com/autonomy/talos/issues/421)) ([83d979d](https://github.com/autonomy/talos/commit/83d979d))
+* ensure DNS works in early boot ([#382](https://github.com/autonomy/talos/issues/382)) ([078a664](https://github.com/autonomy/talos/commit/078a664))
+* fallback on IP address when DHCP reply has no hostname ([#432](https://github.com/autonomy/talos/issues/432)) ([08ee6c4](https://github.com/autonomy/talos/commit/08ee6c4))
+* join masters in serial ([#437](https://github.com/autonomy/talos/issues/437)) ([b6e6c46](https://github.com/autonomy/talos/commit/b6e6c46))
+* mount /dev/shm as tmpfs ([#445](https://github.com/autonomy/talos/issues/445)) ([1ee326b](https://github.com/autonomy/talos/commit/1ee326b))
+* output userdata fails, ignore numcpu for kubeadm ([#398](https://github.com/autonomy/talos/issues/398)) ([8e30f95](https://github.com/autonomy/talos/commit/8e30f95))
+* write config changes to specified config file ([#416](https://github.com/autonomy/talos/issues/416)) ([6d8e94d](https://github.com/autonomy/talos/commit/6d8e94d))
+
+
+### Features
+
+* add `docker-os` make target, Kubeadm.ExtraArgs, and a dev Makefile ([#446](https://github.com/autonomy/talos/issues/446)) ([98e3920](https://github.com/autonomy/talos/commit/98e3920))
+* add arg to target nodes per command ([#435](https://github.com/autonomy/talos/issues/435)) ([0cf8dda](https://github.com/autonomy/talos/commit/0cf8dda))
+* add automated PKI for joining nodes ([#406](https://github.com/autonomy/talos/issues/406)) ([9e947c3](https://github.com/autonomy/talos/commit/9e947c3))
+* add config flag to osctl ([#413](https://github.com/autonomy/talos/issues/413)) ([4d5350e](https://github.com/autonomy/talos/commit/4d5350e))
+* add container based deploy support to init ([#447](https://github.com/autonomy/talos/issues/447)) ([b5f398d](https://github.com/autonomy/talos/commit/b5f398d))
+* add DHCP client ([#427](https://github.com/autonomy/talos/issues/427)) ([ee232b8](https://github.com/autonomy/talos/commit/ee232b8))
+* add dosfstools to initramfs and rootfs ([#444](https://github.com/autonomy/talos/issues/444)) ([d706803](https://github.com/autonomy/talos/commit/d706803))
+* add gcloud integration ([#385](https://github.com/autonomy/talos/issues/385)) ([85e35d3](https://github.com/autonomy/talos/commit/85e35d3))
+* add hostname to node certificate SAN ([#415](https://github.com/autonomy/talos/issues/415)) ([52d2660](https://github.com/autonomy/talos/commit/52d2660))
+* add osinstall cli utility ([#368](https://github.com/autonomy/talos/issues/368)) ([8ee9022](https://github.com/autonomy/talos/commit/8ee9022))
+* add route printing to osctl ([#404](https://github.com/autonomy/talos/issues/404)) ([a2704ee](https://github.com/autonomy/talos/commit/a2704ee))
+* add TALOSCONFIG env var ([#422](https://github.com/autonomy/talos/issues/422)) ([c63ef44](https://github.com/autonomy/talos/commit/c63ef44))
+* allow user specified IP addresses in SANs ([#425](https://github.com/autonomy/talos/issues/425)) ([b59f632](https://github.com/autonomy/talos/commit/b59f632))
+* change AWS instance type to t2.micro ([#399](https://github.com/autonomy/talos/issues/399)) ([a55b84a](https://github.com/autonomy/talos/commit/a55b84a))
+* create certificates with all non-loopback addresses ([#424](https://github.com/autonomy/talos/issues/424)) ([dce3e2c](https://github.com/autonomy/talos/commit/dce3e2c))
+* log to stdout when in container mode ([#450](https://github.com/autonomy/talos/issues/450)) ([1f08961](https://github.com/autonomy/talos/commit/1f08961))
+* update gcc to 8.3.0, drop gcompat ([#433](https://github.com/autonomy/talos/issues/433)) ([9de34cd](https://github.com/autonomy/talos/commit/9de34cd))
+* upgrade containerd to v1.2.4 ([#395](https://github.com/autonomy/talos/issues/395)) ([b963f5a](https://github.com/autonomy/talos/commit/b963f5a))
+* upgrade linux to v4.19.23 ([#402](https://github.com/autonomy/talos/issues/402)) ([c50b2e6](https://github.com/autonomy/talos/commit/c50b2e6))
+* upgrade musl to 1.1.21 ([#401](https://github.com/autonomy/talos/issues/401)) ([d8594f4](https://github.com/autonomy/talos/commit/d8594f4))
+* **hack:** add osctl/kubelet dev tooling and document usage ([#449](https://github.com/autonomy/talos/issues/449)) ([4f530e8](https://github.com/autonomy/talos/commit/4f530e8))
+
+
+
 # [0.1.0-alpha.18](https://github.com/autonomy/talos/compare/v0.1.0-alpha.17...v0.1.0-alpha.18) (2019-02-16)
 
 
 ### Bug Fixes
 
-* add libblkid to the rootfs ([#345](https://github.com/andrewrynhard/talos/issues/345)) ([76bc58b](https://github.com/andrewrynhard/talos/commit/76bc58b))
-* Minor adjustments to makefile ([#340](https://github.com/andrewrynhard/talos/issues/340)) ([eced2f2](https://github.com/andrewrynhard/talos/commit/eced2f2)), closes [#338](https://github.com/andrewrynhard/talos/issues/338)
+* add libblkid to the rootfs ([#345](https://github.com/autonomy/talos/issues/345)) ([76bc58b](https://github.com/autonomy/talos/commit/76bc58b))
+* Minor adjustments to makefile ([#340](https://github.com/autonomy/talos/issues/340)) ([eced2f2](https://github.com/autonomy/talos/commit/eced2f2)), closes [#338](https://github.com/autonomy/talos/issues/338)
 
 
 
-<a name="0.1.0-alpha.17"></a>
 # [0.1.0-alpha.17](https://github.com/autonomy/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
 
 
 ### Features
 
-* disable session tickets ([#334](https://github.com/andrewrynhard/talos/issues/334)) ([b226f5f](https://github.com/andrewrynhard/talos/commit/b226f5f))
-* upgrade Kubernetes to v1.13.3 ([#335](https://github.com/andrewrynhard/talos/issues/335)) ([1219ae7](https://github.com/andrewrynhard/talos/commit/1219ae7))
+* disable session tickets ([#334](https://github.com/autonomy/talos/issues/334)) ([b226f5f](https://github.com/autonomy/talos/commit/b226f5f))
+* upgrade Kubernetes to v1.13.3 ([#335](https://github.com/autonomy/talos/issues/335)) ([1219ae7](https://github.com/autonomy/talos/commit/1219ae7))
 
 
 
-<a name="0.1.0-alpha.16"></a>
 # [0.1.0-alpha.16](https://github.com/autonomy/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
 
 
@@ -42,7 +86,6 @@
 
 
 
-<a name="0.1.0-alpha.15"></a>
 # [0.1.0-alpha.15](https://github.com/autonomy/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
 
 
@@ -65,7 +108,6 @@
 
 
 
-<a name="0.1.0-alpha.14"></a>
 # [0.1.0-alpha.14](https://github.com/autonomy/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-12-05)
 
 
@@ -115,7 +157,6 @@
 
 
 
-<a name="0.1.0-alpha.13"></a>
 # [0.1.0-alpha.13](https://github.com/autonomy/talos/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
 
 
@@ -143,7 +184,6 @@
 
 
 
-<a name="0.1.0-alpha.12"></a>
 # [0.1.0-alpha.12](https://github.com/autonomy/talos/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
 
 
@@ -154,7 +194,6 @@
 
 
 
-<a name="0.1.0-alpha.11"></a>
 # [0.1.0-alpha.11](https://github.com/autonomy/talos/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-18)
 
 
@@ -175,7 +214,6 @@
 
 
 
-<a name="0.1.0-alpha.10"></a>
 # [0.1.0-alpha.10](https://github.com/autonomy/talos/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2018-10-13)
 
 
@@ -186,7 +224,6 @@
 
 
 
-<a name="0.1.0-alpha.9"></a>
 # [0.1.0-alpha.9](https://github.com/autonomy/talos/compare/v0.1.0-alpha.8...v0.1.0-alpha.9) (2018-09-20)
 
 
@@ -202,7 +239,6 @@
 
 
 
-<a name="0.1.0-alpha.8"></a>
 # [0.1.0-alpha.8](https://github.com/autonomy/talos/compare/v0.1.0-alpha.7...v0.1.0-alpha.8) (2018-08-28)
 
 
@@ -215,7 +251,6 @@
 
 
 
-<a name="0.1.0-alpha.7"></a>
 # [0.1.0-alpha.7](https://github.com/autonomy/talos/compare/v0.1.0-alpha.6...v0.1.0-alpha.7) (2018-08-11)
 
 
@@ -241,7 +276,6 @@
 
 
 
-<a name="0.1.0-alpha.6"></a>
 # [0.1.0-alpha.6](https://github.com/autonomy/talos/compare/v0.1.0-alpha.5...v0.1.0-alpha.6) (2018-07-24)
 
 
@@ -261,7 +295,6 @@
 
 
 
-<a name="0.1.0-alpha.5"></a>
 # [0.1.0-alpha.5](https://github.com/autonomy/talos/compare/v0.1.0-alpha.4...v0.1.0-alpha.5) (2018-07-02)
 
 
@@ -283,7 +316,6 @@
 
 
 
-<a name="0.1.0-alpha.4"></a>
 # [0.1.0-alpha.4](https://github.com/autonomy/talos/compare/v0.1.0-alpha.3...v0.1.0-alpha.4) (2018-05-20)
 
 
@@ -309,7 +341,6 @@
 
 
 
-<a name="0.1.0-alpha.3"></a>
 # [0.1.0-alpha.3](https://github.com/autonomy/talos/compare/v0.1.0-alpha.2...v0.1.0-alpha.3) (2018-05-15)
 
 
@@ -328,7 +359,6 @@
 
 
 
-<a name="0.1.0-alpha.2"></a>
 # [0.1.0-alpha.2](https://github.com/autonomy/talos/compare/v0.1.0-alpha.1...v0.1.0-alpha.2) (2018-05-09)
 
 
@@ -341,7 +371,6 @@
 
 
 
-<a name="0.1.0-alpha.1"></a>
 # [0.1.0-alpha.1](https://github.com/autonomy/talos/compare/v0.1.0-alpha.0...v0.1.0-alpha.1) (2018-04-20)
 
 
@@ -364,7 +393,6 @@
 
 
 
-<a name="0.1.0-alpha.0"></a>
 # [0.1.0-alpha.0](https://github.com/autonomy/talos/compare/aba4615...v0.1.0-alpha.0) (2018-04-03)
 
 
