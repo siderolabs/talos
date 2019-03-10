@@ -40,27 +40,31 @@ func ip() string {
 
 // Prepare creates the files required by the installed binaries and libraries.
 // nolint: gocyclo
-func Prepare(s string, data *userdata.UserData) (err error) {
-	// Enable IP forwarding.
-	if err = proc.WriteSystemProperty(&proc.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
-		return
-	}
-	// Kernel Self Protection Project recommended settings.
-	if err = kernelHardening(); err != nil {
-		return
-	}
-	// Create /etc/hosts.
-	hostname, err := os.Hostname()
-	if err != nil {
-		return
-	}
-	ip := ip()
-	if err = etc.Hosts(s, hostname, ip); err != nil {
-		return
-	}
-	// Create /etc/resolv.conf.
-	if err = etc.ResolvConf(s); err != nil {
-		return
+func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
+	if !inContainer {
+		// Enable IP forwarding.
+		if err = proc.WriteSystemProperty(&proc.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
+			return
+		}
+		// Kernel Self Protection Project recommended settings.
+		if err = kernelHardening(); err != nil {
+			return
+		}
+		// Create /etc/hosts.
+		var hostname string
+		if hostname, err = os.Hostname(); err != nil {
+			return
+		}
+		ip := ip()
+		if err = etc.Hosts(s, hostname, ip); err != nil {
+			return
+		}
+		// Create /etc/resolv.conf.
+		if err = etc.ResolvConf(s); err != nil {
+			return
+		}
+	} else if err = ioutil.WriteFile("/etc/resolv.conf", []byte(constants.ContainerBasedResolvConf), 0600); err != nil {
+		return err
 	}
 	// Create /etc/os-release.
 	if err = etc.OSRelease(s); err != nil {
