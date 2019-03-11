@@ -13,19 +13,23 @@ all: up
 
 .PHONY: up
 up: talosconfig
-	@$(DOCKER_COMPOSE) up -d
+	@$(DOCKER_COMPOSE) up -d $(SERVICES)
 
 .PHONY: down
 down:
-	@$(DOCKER_COMPOSE) down -v
+	@$(DOCKER_COMPOSE) down -v $(SERVICES)
 
 talosconfig:
 	@mkdir -p pki
 	@./gen.sh $(IP_ADDR)
 
+kubeconfig:
+	@$(DOCKER_COMPOSE) run --rm osctl kubeconfig > kubeconfig
+
 .PHONY: clean
 clean: down
 	-@rm talosconfig
+	-@rm kubeconfig
 	-@rm userdata/master-1.yaml
 	-@rm userdata/master-2.yaml
 	-@rm userdata/master-3.yaml
