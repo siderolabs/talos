@@ -137,9 +137,11 @@ func initram() (err error) {
 }
 
 func root() (err error) {
-	// Setup logging to /dev/kmsg.
-	if _, err = kmsg("[talos]"); err != nil {
-		return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
+	if !*inContainer {
+		// Setup logging to /dev/kmsg.
+		if _, err = kmsg("[talos]"); err != nil {
+			return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
+		}
 	}
 
 	// Read the user data.
