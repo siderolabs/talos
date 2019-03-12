@@ -72,14 +72,15 @@ func Install(args string, data *userdata.UserData) (err error) {
 
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
 		for _, artifact := range urls {
-			switch {
-			case strings.HasPrefix(artifact, "http"):
-				var u *url.URL
+			var u *url.URL
+			if u, err = url.Parse(artifact); err != nil {
+				return err
+			}
+			switch u.Scheme {
+			case "http":
+				fallthrough
+			case "https":
 				log.Printf("downloading %s\n", artifact)
-				u, err = url.Parse(artifact)
-				if err != nil {
-					return err
-				}
 
 				sourceFile, err = download(u, dest)
 				if err != nil {
@@ -87,14 +88,15 @@ func Install(args string, data *userdata.UserData) (err error) {
 				}
 
 				// TODO add support for checksum validation of downloaded file
-			case strings.HasPrefix(artifact, "/"):
-				log.Printf("Copying %s to %s\n", artifact, filepath.Join(dest, filepath.Base(artifact)))
-				sourceFile, err = os.Open(artifact)
+			case "file":
+				source := u.Path
+				log.Printf("copying %s to %s\n", artifact, filepath.Join(dest, filepath.Base(source)))
+				sourceFile, err = os.Open(source)
 				if err != nil {
 					return err
 				}
 
-				destFile, err = os.Create(filepath.Join(dest, filepath.Base(artifact)))
+				destFile, err = os.Create(filepath.Join(dest, filepath.Base(source)))
 				if err != nil {
 					return err
 				}
@@ -106,39 +108,39 @@ func Install(args string, data *userdata.UserData) (err error) {
 
 				err = untar(sourceFile, dest)
 				if err != nil {
-					log.Printf("Failed to extract %s to %s\n", sourceFile.Name(), dest)
+					log.Printf("failed to extract %s to %s\n", sourceFile.Name(), dest)
 					return err
 				}
 
 				if err = sourceFile.Close(); err != nil {
-					log.Printf("Failed to close %s", sourceFile.Name())
+					log.Printf("failed to close %s", sourceFile.Name())
 					return err
 				}
 
 				if err = os.Remove(sourceFile.Name()); err != nil {
-					log.Printf("Failed to remove %s", sourceFile.Name())
+					log.Printf("failed to remove %s", sourceFile.Name())
 					return err
 				}
 			case strings.HasPrefix(sourceFile.Name(), "/") && destFile != nil:
 				log.Printf("Copying %s to %s\n", sourceFile.Name(), destFile.Name())
 
 				if _, err = io.Copy(destFile, sourceFile); err != nil {
-					log.Printf("Failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
+					log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
 					return err
 				}
 
 				if err = destFile.Close(); err != nil {
-					log.Printf("Failed to close %s", destFile.Name())
+					log.Printf("failed to close %s", destFile.Name())
 					return err
 				}
 
 				if err = sourceFile.Close(); err != nil {
-					log.Printf("Failed to close %s", sourceFile.Name())
+					log.Printf("failed to close %s", sourceFile.Name())
 					return err
 				}
 			default:
 				if err = sourceFile.Close(); err != nil {
-					log.Printf("Failed to close %s", sourceFile.Name())
+					log.Printf("failed to close %s", sourceFile.Name())
 					return err
 				}
 			}
@@ -254,7 +256,7 @@ func download(artifact *url.URL, base string) (*os.File, error) {
 	if resp.StatusCode != 200 {
 		// nolint: errcheck
 		downloadedFile.Close()
-		return nil, errors.Errorf("Failed to download %s, got %d", artifact, resp.StatusCode)
+		return nil, errors.Errorf("failed to download %s, got %d", artifact, resp.StatusCode)
 	}
 
 	// Write the body to file

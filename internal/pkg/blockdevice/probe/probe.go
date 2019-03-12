@@ -88,12 +88,19 @@ func All() (probed []*ProbedBlockDevice, err error) {
 				bd *blockdevice.BlockDevice
 				sb filesystem.SuperBlocker
 			)
-			if bd, err = blockdevice.Open(devpath); err != nil {
-				return nil, errors.Wrap(err, "unexpected error when opening block device")
-			}
+			// We ignore the error here because there is the
+			// possibility that opening the block device fails for
+			// good reason (e.g. no partition table, read-only
+			// filesystem), but the block device does have a
+			// filesystem. This is currently a limitation in our
+			// blockdevice package. We should make that package
+			// better and update the code here.
+			// nolint: errcheck
+			bd, _ = blockdevice.Open(devpath)
 			if sb, err = FileSystem(path); err != nil {
 				return nil, errors.Wrap(err, "unexpected error when reading super block")
 			}
+
 			probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: path})
 		}
 	}

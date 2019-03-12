@@ -49,7 +49,7 @@ func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
 		if err = os.Mkdir(mnt, 0700); err != nil {
 			return data, errors.Errorf("failed to mkdir: %v", err)
 		}
-		if err = unix.Mount(dev.Path, mnt, "iso9660", unix.MS_RDONLY, ""); err != nil {
+		if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
 			return data, errors.Errorf("failed to mount iso: %v", err)
 		}
 		var dataBytes []byte
