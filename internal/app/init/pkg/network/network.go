@@ -17,6 +17,16 @@ import (
 
 // Setup creates the network.
 func Setup(platform string) (err error) {
+
+	// TODO: Turn this into a log level
+	/*
+		log.Println("All available network links")
+		links, _ := netlink.LinkList()
+		for _, link := range links {
+			log.Printf("%+v", link)
+		}
+	*/
+
 	//ifup lo
 	ifname := "lo"
 	link, err := netlink.LinkByName(ifname)
@@ -38,15 +48,46 @@ func Setup(platform string) (err error) {
 	}
 
 	//dhcp request
-	modifiers := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(dhcpv4.OptionHostName, dhcpv4.OptionClasslessStaticRouteOption, dhcpv4.OptionDNSDomainSearchList, dhcpv4.OptionNTPServers)}
+	modifiers := []dhcpv4.Modifier{
+		dhcpv4.WithRequestedOptions(
+			dhcpv4.OptionHostName,
+			dhcpv4.OptionClasslessStaticRouteOption,
+			dhcpv4.OptionDNSDomainSearchList,
+			dhcpv4.OptionNTPServers,
+		),
+	}
+	if err = dhclient(ifname, modifiers); err != nil {
+		return err
+	}
+
+	// Set up dhcp renewals every 5m
+	go func() {
+		for {
+			// TODO pick this out of the dhclient/netconf response
+			// so we can request less frequently
+			time.Sleep(5 * time.Minute)
+			log.Println("Renewing dhcp lease")
+			if err = dhclient(ifname, modifiers); err != nil {
+				// Probably need to do something better here but not sure there's much to do
+				log.Println("Failed to renew dhcp lease, ", err)
+			}
+		}
+	}()
+	return nil
+}
+
+func dhclient(ifname string, modifiers []dhcpv4.Modifier) error {
+	var err error
 	var netconf *netboot.NetConf
+
 	if netconf, err = dhclient4(ifname, modifiers...); err != nil {
 		return err
 	}
 	if err = netboot.ConfigureInterface(ifname, netconf); err != nil {
 		return err
 	}
-	return nil
+
+	return err
 }
 
 // nolint: gocyclo
