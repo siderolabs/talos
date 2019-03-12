@@ -11,6 +11,7 @@ import (
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/aws"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/googlecloud"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/vmware"
+	"github.com/autonomy/talos/internal/app/init/internal/platform/iso"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/kernel"
 	"github.com/autonomy/talos/internal/pkg/userdata"
@@ -44,6 +45,8 @@ func NewPlatform() (p Platform, err error) {
 			p = &vmware.VMware{}
 		case "bare-metal":
 			p = &baremetal.BareMetal{}
+		case "iso":
+			p = &iso.ISO{}
 		default:
 			return nil, fmt.Errorf("platform not supported: %s", platform)
 		}

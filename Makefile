@@ -136,6 +136,9 @@ image-gcloud: installer
 	@mv $(PWD)/build/gcloud/image.raw $(PWD)/build/gcloud/disk.raw
 	@tar -C $(PWD)/build/gcloud -Sczf $(PWD)/build/gcloud/talos.tar.gz disk.raw
 
+image-iso: installer
+	@docker run --rm -it -v $(PWD)/build:/out autonomy/talos:$(TAG) iso
+
 image-vanilla: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/talos:$(TAG) image -l
 

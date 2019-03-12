@@ -70,9 +70,14 @@ function create_iso() {
   mkdir -p /mnt/boot/isolinux
   cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/boot/isolinux/isolinux.bin
   cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/boot/isolinux/ldlinux.c32
-  create_extlinux_conf /mnt/boot/isolinux/isolinux.conf
+  TALOS_USERDATA=default
+  TALOS_PLATFORM=iso
+  EXTRA_KERNEL_PARAMS="random.trust_cpu=on printk.devkmsg=on"
+  create_extlinux_conf /mnt/boot/isolinux/isolinux.cfg
   tar -xpvzf /generated/rootfs.tar.gz -C /mnt
-  mkisofs -o ${ISO_IMAGE} -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table .
+  cp -v /generated/boot/vmlinuz /mnt/boot
+  cp -v /generated/boot/initramfs.xz /mnt/boot
+  mkisofs -o ${ISO_IMAGE} -r -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /mnt
 }
 
 function create_ami() {
