@@ -227,6 +227,10 @@ func startSystemServices(data *userdata.UserData) {
 			&services.Proxyd{},
 		)
 	}
+
+	// Launch dhclient
+	// nolint: errcheck
+	network.Setup("")
 }
 
 func startKubernetesServices(data *userdata.UserData) {
