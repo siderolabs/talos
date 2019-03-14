@@ -59,6 +59,14 @@ RUN make install DESTDIR=/rootfs
 RUN cp /toolchain/lib/libblkid.* /rootfs/lib
 # libuuid
 RUN cp /toolchain/lib/libuuid.* /rootfs/lib
+# syslinux/extlinux
+RUN mkdir /tmp/syslinux
+WORKDIR /tmp/syslinux
+RUN curl -L https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz | tar -xJ --strip-components=1
+RUN ln -s /toolchain/bin/pwd /bin/pwd && \
+    make installer && \
+    cp /tmp/syslinux/bios/extlinux/extlinux /rootfs/bin && \
+    cp /tmp/syslinux/bios/mbr/gptmbr.bin /rootfs/share
 # golang
 ENV GOROOT /toolchain/usr/local/go
 ENV GOPATH /toolchain/go
@@ -113,6 +121,9 @@ COPY --from=base /rootfs ./
 WORKDIR /src
 COPY hack/scripts/cleanup.sh /bin
 RUN cleanup.sh /initramfs
+# bootloader
+COPY --from=base /rootfs/share/gptmbr.bin /initramfs/usr/share/gptmbr.bin
+COPY --from=base /rootfs/bin/extlinux /initramfs/bin/extlinux
 WORKDIR /initramfs
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
 FROM scratch AS initramfs
@@ -181,6 +192,8 @@ COPY hack/scripts/cleanup.sh /bin
 RUN cleanup.sh /rootfs
 COPY hack/scripts/symlink.sh /bin
 RUN symlink.sh /rootfs
+# bootloader
+COPY --from=base /rootfs/share/gptmbr.bin /rootfs/usr/share/gptmbr.bin
 WORKDIR /rootfs
 RUN ["/toolchain/bin/tar", "-cvpzf", "/rootfs.tar.gz", "."]
 FROM scratch AS rootfs
