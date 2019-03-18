@@ -285,10 +285,9 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 		ID:       uuid,
 		FirstLBA: start,
 		LastLBA:  end,
-		// TODO(andrewrynhard): Flags should be an option.
-		Flags:  0,
-		Name:   opts.Name,
-		Number: int32(len(gpt.partitions) + 1),
+		Flags:    opts.Flags,
+		Name:     opts.Name,
+		Number:   int32(len(gpt.partitions) + 1),
 	}
 
 	gpt.partitions = append(gpt.partitions, partition)

@@ -5,6 +5,7 @@
 package mount
 
 import (
+	"log"
 	"os"
 	"path"
 
@@ -237,6 +238,7 @@ func mountpoints() (mountpoints *mount.Points, err error) {
 		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
 			if name == constants.BootPartitionLabel {
 				// A bootloader is not always required.
+				log.Println("WARNING: no ESP partition was found")
 				continue
 			}
 			return nil, errors.Errorf("failed to find device with label %s: %v", name, err)

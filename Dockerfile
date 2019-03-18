@@ -39,6 +39,9 @@ RUN ln -s /toolchain/etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificate
 # fhs
 COPY hack/scripts/fhs.sh /bin
 RUN fhs.sh /rootfs
+# ca-certificates
+RUN mkdir -p /rootfs/etc/ssl/certs
+RUN curl -o /rootfs/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
 # xfsprogs
 WORKDIR /tmp/xfsprogs
 RUN curl -L https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-4.18.0.tar.xz | tar -xJ --strip-components=1
@@ -66,7 +69,7 @@ RUN curl -L https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.t
 RUN ln -s /toolchain/bin/pwd /bin/pwd && \
     make installer && \
     cp /tmp/syslinux/bios/extlinux/extlinux /rootfs/bin && \
-    cp /tmp/syslinux/bios/mbr/gptmbr.bin /rootfs/share
+    cp /tmp/syslinux/efi64/mbr/gptmbr.bin /rootfs/share
 # golang
 ENV GOROOT /toolchain/usr/local/go
 ENV GOPATH /toolchain/go
@@ -157,9 +160,6 @@ RUN ../configure \
 RUN make -j $(($(nproc) / 2))
 RUN make install DESTDIR=/rootfs
 RUN make install DESTDIR=/toolchain
-# ca-certificates
-RUN mkdir -p /rootfs/etc/ssl/certs
-RUN curl -o /rootfs/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
 # crictl
 RUN curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-amd64.tar.gz | tar -xz -C /rootfs/bin
 # containerd

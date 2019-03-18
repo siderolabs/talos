@@ -10,9 +10,10 @@ import (
 
 // Options is the functional options struct.
 type Options struct {
-	Type uuid.UUID
-	Name string
-	Test bool
+	Type  uuid.UUID
+	Name  string
+	Flags uint64
+	Test  bool
 }
 
 // Option is the functional option func.
@@ -32,6 +33,15 @@ func WithPartitionType(id string) Option {
 func WithPartitionName(o string) Option {
 	return func(args *Options) {
 		args.Name = o
+	}
+}
+
+// WithLegacyBIOSBootableAttribute marks the partition as bootable.
+func WithLegacyBIOSBootableAttribute(o bool) Option {
+	return func(args *Options) {
+		if o == true {
+			args.Flags = 4
+		}
 	}
 }
 

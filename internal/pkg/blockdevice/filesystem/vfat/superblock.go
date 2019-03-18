@@ -57,5 +57,5 @@ func (sb *SuperBlock) Offset() int64 {
 
 // Type implements the SuperBlocker interface.
 func (sb *SuperBlock) Type() string {
-	return "fat32"
+	return "vfat"
 }

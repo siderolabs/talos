@@ -14,6 +14,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	kernelParams string
+)
+
 // installCmd reads in a userData file and attempts to parse it
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -38,7 +42,7 @@ var installCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		err = install.Install(ud)
+		err = install.Install(kernelParams, ud)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -46,6 +50,7 @@ var installCmd = &cobra.Command{
 }
 
 func init() {
+	installCmd.Flags().StringVarP(&kernelParams, "kernel-parameters", "k", "", "kernel parameter flags")
 	installCmd.Flags().StringVarP(&userdataFile, "userdata", "u", "", "path or url of userdata file")
 	rootCmd.AddCommand(installCmd)
 }

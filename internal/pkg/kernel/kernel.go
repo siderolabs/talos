@@ -9,11 +9,21 @@ import (
 	"strings"
 )
 
+// ReadProcCmdline reads /proc/cmdline.
+func ReadProcCmdline() (cmdlineBytes []byte, err error) {
+	cmdlineBytes, err = ioutil.ReadFile("/proc/cmdline")
+	if err != nil {
+		return nil, err
+	}
+
+	return cmdlineBytes, nil
+}
+
 // ParseProcCmdline parses /proc/cmdline and returns a map reprentation of the
 // kernel parameters.
 func ParseProcCmdline() (cmdline map[string]string, err error) {
 	var cmdlineBytes []byte
-	cmdlineBytes, err = ioutil.ReadFile("/proc/cmdline")
+	cmdlineBytes, err = ReadProcCmdline()
 	if err != nil {
 		return
 	}
