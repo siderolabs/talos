@@ -123,7 +123,7 @@ func EnforceTLSRequirements(cfg *kubeadmapi.InitConfiguration) error {
 // TODO(andrewrynhard): Enable AlwaysPullImages (See https://github.com/kubernetes/kubernetes/issues/64333).
 func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	// nolint: lll
-	cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,DenyEscalatingExec,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
+	cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
 
 	return nil
 }
