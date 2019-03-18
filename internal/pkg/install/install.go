@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/autonomy/talos/internal/pkg/blockdevice/bootloader/syslinux"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/pkg/errors"
@@ -24,7 +25,7 @@ import (
 // Install fetches the necessary data locations and copies or extracts
 // to the target locations
 // nolint: gocyclo
-func Install(data *userdata.UserData) (err error) {
+func Install(args string, data *userdata.UserData) (err error) {
 	if data.Install == nil {
 		return nil
 	}
@@ -44,6 +45,10 @@ func Install(data *userdata.UserData) (err error) {
 		if dest != previousMountPoint {
 			log.Printf("Downloading assets for %s\n", dest)
 			previousMountPoint = dest
+		}
+
+		if err = os.MkdirAll(dest, os.ModeDir); err != nil {
+			return err
 		}
 
 		// Extract artifact if necessary, otherwise place at root of partition/filesystem
@@ -120,6 +125,11 @@ func Install(data *userdata.UserData) (err error) {
 			}
 		}
 	}
+
+	if err = syslinux.Install(args); err != nil {
+		return err
+	}
+
 	return nil
 }
 

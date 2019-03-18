@@ -12,6 +12,8 @@ import (
 	"strconv"
 
 	"github.com/autonomy/talos/internal/pkg/blockdevice"
+	"github.com/autonomy/talos/internal/pkg/blockdevice/bootloader/syslinux"
+	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/vfat"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
@@ -178,6 +180,11 @@ func Prepare(data *userdata.UserData) (err error) {
 			continue
 		}
 
+		if label == constants.BootPartitionLabel {
+			if err = syslinux.Prepare(device); err != nil {
+				return err
+			}
+		}
 		var bd *blockdevice.BlockDevice
 
 		bd, err = blockdevice.Open(device, blockdevice.WithNewGPT(data.Install.Wipe))
@@ -241,7 +248,7 @@ func Prepare(data *userdata.UserData) (err error) {
 
 		for _, dev := range devices {
 			// Create the filesystem
-			log.Printf("Formatting Partition %s - %s\n", dev.Name, dev.Label)
+			log.Printf("Formatting Partition %s - %s\n", dev.PartitionName, dev.Label)
 			err = dev.Format()
 			if err != nil {
 				return err
@@ -296,11 +303,15 @@ func NewDevice(name string, label string, size uint, force bool, test bool, data
 // Partition creates a new partition on the specified device
 // nolint: dupl
 func (d *Device) Partition() error {
-	var typeID string
+	var (
+		typeID             string
+		legacyBIOSBootable bool
+	)
 	switch d.Label {
 	case constants.BootPartitionLabel:
 		// EFI System Partition
 		typeID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+		legacyBIOSBootable = true
 	case constants.RootPartitionLabel:
 		// Root Partition
 		switch runtime.GOARCH {
@@ -318,7 +329,13 @@ func (d *Device) Partition() error {
 		return errors.Errorf("%s", "unknown partition label")
 	}
 
-	part, err := d.PartitionTable.Add(uint64(d.Size), partition.WithPartitionType(typeID), partition.WithPartitionName(d.Label), partition.WithPartitionTest(d.Test))
+	part, err := d.PartitionTable.Add(
+		uint64(d.Size),
+		partition.WithPartitionType(typeID),
+		partition.WithPartitionName(d.Label),
+		partition.WithLegacyBIOSBootableAttribute(legacyBIOSBootable),
+		partition.WithPartitionTest(d.Test),
+	)
 	if err != nil {
 		return err
 	}
@@ -330,5 +347,8 @@ func (d *Device) Partition() error {
 
 // Format creates a xfs filesystem on the device/partition
 func (d *Device) Format() error {
+	if d.Label == constants.BootPartitionLabel {
+		return vfat.MakeFS(d.PartitionName, vfat.WithLabel(d.Label))
+	}
 	return xfs.MakeFS(d.PartitionName, xfs.WithLabel(d.Label), xfs.WithForce(d.Force))
 }

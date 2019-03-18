@@ -83,6 +83,15 @@ func (b *BareMetal) Prepare(data *userdata.UserData) (err error) {
 // Install provides the functionality to install talos by
 // download the necessary bits and write them to a target device
 // nolint: gocyclo, dupl
-func (b *BareMetal) Install(data *userdata.UserData) error {
-	return install.Install(data)
+func (b *BareMetal) Install(data *userdata.UserData) (err error) {
+	var cmdlineBytes []byte
+	cmdlineBytes, err = kernel.ReadProcCmdline()
+	if err != nil {
+		return err
+	}
+	if err = install.Install(string(cmdlineBytes), data); err != nil {
+		return errors.Wrap(err, "failed to install to bare metal")
+	}
+
+	return nil
 }

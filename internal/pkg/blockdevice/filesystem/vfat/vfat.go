@@ -15,7 +15,7 @@ func MakeFS(partname string, setters ...Option) error {
 	args := []string{}
 
 	if opts.Label != "" {
-		args = append(args, "-n", opts.Label)
+		args = append(args, "-F", "32", "-n", opts.Label)
 	}
 
 	args = append(args, partname)
