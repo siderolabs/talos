@@ -99,7 +99,7 @@ initramfs: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd blockd
+rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd blockd ntpd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -219,6 +219,15 @@ proxyd: buildkitd
 		$(COMMON_ARGS)
 
 blockd: buildkitd
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--exporter=docker \
+		--exporter-opt output=images/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+
+ntpd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \

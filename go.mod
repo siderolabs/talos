@@ -5,6 +5,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
 	github.com/autonomy/dhcp v0.0.0-20190227141242-cedea8519f96
+	github.com/beevik/ntp v0.2.0
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
 	github.com/containerd/containerd v1.2.4
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect

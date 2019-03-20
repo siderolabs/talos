@@ -7,6 +7,8 @@ github.com/Microsoft/hcsshim v0.7.0 h1:m1J6JDH52fG9Qjq8fznVe8PNX75RFge88bzQ8u/HF
 github.com/Microsoft/hcsshim v0.7.0/go.mod h1:Op3hHsoHPAvb6lceZHDtd9OkTew38wNoXnJs8iY7rUg=
 github.com/autonomy/dhcp v0.0.0-20190227141242-cedea8519f96 h1:le2YbRJwapQ4/vDjJX5EfKBMzdBKmTkxq2+7qIv/oPU=
 github.com/autonomy/dhcp v0.0.0-20190227141242-cedea8519f96/go.mod h1:geIPC0Of8gFT72dq3OwSOpqHWJaISvkU7XXqs8HF0+0=
+github.com/beevik/ntp v0.2.0 h1:sGsd+kAXzT0bfVfzJfce04g+dSRfrs+tbQW8lweuYgw=
+github.com/beevik/ntp v0.2.0/go.mod h1:hIHWr+l3+/clUnF44zdK+CWW7fO8dR5cIylAQ76NRpg=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844 h1:W0F6ErEE8B84VNA5yX3sqNm0z7tivzEtvI/3DMo4Mr4=
 github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844/go.mod h1:X9rLEHIqSf/wfK8NsPqxJmeZgW4pcfzdXITDrUSJ6uI=

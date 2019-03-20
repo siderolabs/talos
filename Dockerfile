@@ -343,3 +343,15 @@ RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=C
 RUN chmod +x /osinstall-linux-amd64
 FROM scratch AS osinstall-linux-amd64
 COPY --from=osinstall-linux-amd64-build /osinstall-linux-amd64 /osinstall-linux-amd64
+
+# The ntpd target builds the ntpd binary
+FROM base AS ntpd-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+WORKDIR /src/internal/app/ntpd
+RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
+RUN chmod +x /ntpd
+FROM scratch AS ntpd
+COPY --from=ntpd-build /ntpd /ntpd
+ENTRYPOINT ["/ntpd"]

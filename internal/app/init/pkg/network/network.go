@@ -48,6 +48,7 @@ func Setup(platform string) (err error) {
 	}
 
 	//dhcp request
+	// TODO: Figure out how we want to pass around ntp servers
 	modifiers := []dhcpv4.Modifier{
 		dhcpv4.WithRequestedOptions(
 			dhcpv4.OptionHostName,

@@ -80,6 +80,7 @@ type Services struct {
 	Blockd  *Blockd  `yaml:"blockd"`
 	OSD     *OSD     `yaml:"osd"`
 	CRT     *CRT     `yaml:"crt"`
+	NTPd    *NTPd    `yaml:"ntp"`
 }
 
 // File represents a files to write to disk.
@@ -247,6 +248,13 @@ type CRT struct {
 // CommonServiceOptions represents the set of options common to all services.
 type CommonServiceOptions struct {
 	Env Env `yaml:"env,omitempty"`
+}
+
+// NTPd describes the configuration of the ntp service.
+type NTPd struct {
+	CommonServiceOptions `yaml:",inline"`
+
+	Server string `yaml:"server,omitempty"`
 }
 
 // WriteFiles writes the requested files to disk.

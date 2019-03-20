@@ -208,6 +208,12 @@ func startSystemServices(data *userdata.UserData) {
 				containerd.WithIndexName("talos/trustd"),
 			},
 		},
+		{
+			Path: "/usr/images/ntpd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/ntpd"),
+			},
+		},
 	}
 	if err = ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
 		panic(err)
@@ -219,6 +225,7 @@ func startSystemServices(data *userdata.UserData) {
 		&services.Udevd{},
 		&services.OSD{},
 		&services.Blockd{},
+		&services.NTPd{},
 	)
 	// Start the services common to all master nodes.
 	if data.IsMaster() {
