@@ -26,9 +26,6 @@ WORKDIR /blockd
 COPY ./internal/app/blockd/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
-ARG GOLANG_VERSION
-FROM golang:${GOLANG_VERSION}-alpine AS golang-musl
-
 # The base target provides a common starting point for all other targets.
 
 ARG TOOLCHAIN_IMAGE
@@ -71,12 +68,8 @@ RUN ln -s /toolchain/bin/pwd /bin/pwd && \
     cp /tmp/syslinux/bios/extlinux/extlinux /rootfs/bin && \
     cp /tmp/syslinux/efi64/mbr/gptmbr.bin /rootfs/share
 # golang
-ENV GOROOT /toolchain/usr/local/go
-ENV GOPATH /toolchain/go
-COPY --from=golang-musl /usr/local/go ${GOROOT}
-ENV PATH ${PATH}:${GOROOT}/bin
+ENV GOPATH /toolchain/gopath
 RUN mkdir -p ${GOPATH}
-RUN ln -s lib /lib64
 # context
 ENV GO111MODULE on
 ENV CGO_ENABLED 0

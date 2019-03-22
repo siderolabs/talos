@@ -5,7 +5,7 @@ PUSH = $(shell gitmeta pushable)
 
 VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:e8147aa
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:80f91fd
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:0341dfd
 GOLANG_VERSION ?= 1.12
 DOCKER_ARGS ?=
 BUILDKIT_VERSION ?= v0.3.3
