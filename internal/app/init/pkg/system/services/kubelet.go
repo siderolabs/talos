@@ -33,16 +33,24 @@ func (k *Kubelet) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubelet) PreFunc(data *userdata.UserData) error {
-	if err := os.MkdirAll("/etc/kubernetes/manifests", os.ModeDir); err != nil {
-		return fmt.Errorf("create /etc/kubernetes/manifests: %s", err.Error())
+	requiredMounts := []string{
+		"/dev/disk/by-path",
+		"/etc/kubernetes",
+		"/run",
+		"/sys/fs/cgroup",
+		"/usr/libexec/kubernetes",
+		"/var/lib/containerd",
+		"/var/lib/kubelet",
+		"/var/log/pods",
 	}
-	if err := os.MkdirAll("/var/lib/kubelet", os.ModeDir); err != nil {
-		return fmt.Errorf("create /var/lib/kubelet: %s", err.Error())
+
+	for _, dir := range requiredMounts {
+		if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+			return fmt.Errorf("create %s: %s", dir, err.Error())
+		}
 	}
-	if err := os.MkdirAll("/var/libexec/kubernetes", os.ModeDir); err != nil {
-		return fmt.Errorf("create /var/libexec/kubernetes: %s", err.Error())
-	}
-	return os.MkdirAll("/var/log/pods", os.ModeDir)
+
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -82,19 +90,20 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 	argsString = strings.TrimSuffix(argsString, "\n")
 	args.ProcessArgs = append(args.ProcessArgs, strings.Split(argsString, " ")...)
 
-	// Set the mounts.
+	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
-		{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
+	// Add in the additional CNI mounts
 	cniMounts, err := cni.Mounts(data)
 	if err != nil {
 		return err
