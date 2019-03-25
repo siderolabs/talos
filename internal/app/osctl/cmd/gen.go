@@ -7,14 +7,13 @@ package cmd
 import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/spf13/cobra"
 )
@@ -38,16 +37,16 @@ var caCmd = &cobra.Command{
 		}
 		ca, err := x509.NewSelfSignedCertificateAuthority(opts...)
 		if err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error generating CA: %s", err)
 		}
 		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0400); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error writing CA certificate: %s", err)
 		}
 		if err := ioutil.WriteFile(organization+".sha256", []byte(x509.Hash(ca.Crt)), 0400); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error writing certificate hash: %s", err)
 		}
 		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0400); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error writing key: %s", err)
 		}
 	},
 }
@@ -60,11 +59,10 @@ var keyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		key, err := x509.NewKey()
 		if err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error generating key: %s", err)
 		}
 		if err := ioutil.WriteFile(name+".key", key.KeyPEM, 0400); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error writing key: %s", err)
 		}
 	},
 }
@@ -77,34 +75,30 @@ var csrCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		keyBytes, err := ioutil.ReadFile(key)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error reading key: %s", err)
 		}
 		pemBlock, _ := pem.Decode(keyBytes)
 		if pemBlock == nil {
-			os.Exit(1)
+			helpers.Fatalf("error decoding PEM: %s", err)
 		}
 		keyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error parsing ECDSA key: %s", err)
 		}
 		opts := []x509.Option{}
 		parsed := net.ParseIP(ip)
 		if parsed == nil {
-			fmt.Printf("invalid IP: %s", ip)
-			os.Exit(1)
+			helpers.Fatalf("invalid IP: %s", ip)
 		}
 		ips := []net.IP{parsed}
 		opts = append(opts, x509.IPAddresses(ips))
 		opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(hours)*time.Hour)))
 		csr, err := x509.NewCertificateSigningRequest(keyEC, opts...)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error generating CSR: %s", err)
 		}
 		if err := ioutil.WriteFile(strings.TrimSuffix(key, path.Ext(key))+".csr", csr.X509CertificateRequestPEM, 0400); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error writing CSR: %s", err)
 		}
 	},
 }
@@ -117,55 +111,46 @@ var crtCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		caBytes, err := ioutil.ReadFile(ca + ".crt")
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error reading CA cert: %s", err)
 		}
 		caPemBlock, _ := pem.Decode(caBytes)
 		if caPemBlock == nil {
-			os.Exit(1)
+			helpers.Fatalf("error decoding cert PEM: %s", err)
 		}
 		caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error parsing cert: %s", err)
 		}
 		keyBytes, err := ioutil.ReadFile(ca + ".key")
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error reading key file: %s", err)
 		}
 		keyPemBlock, _ := pem.Decode(keyBytes)
 		if keyPemBlock == nil {
-			os.Exit(1)
+			helpers.Fatalf("error decoding key PEM: %s", err)
 		}
 		caKey, err := stdlibx509.ParseECPrivateKey(keyPemBlock.Bytes)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error parsing EC key: %s", err)
 		}
 		csrBytes, err := ioutil.ReadFile(csr)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error reading CSR: %s", err)
 		}
 		csrPemBlock, _ := pem.Decode(csrBytes)
 		if csrPemBlock == nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error parsing CSR PEM: %s", err)
 		}
 		ccsr, err := stdlibx509.ParseCertificateRequest(csrPemBlock.Bytes)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error parsing CSR: %s", err)
 		}
 		signedCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, x509.NotAfter(time.Now().Add(time.Duration(hours)*time.Hour)))
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error signing certificate: %s", err)
 		}
 		if err := ioutil.WriteFile(name+".crt", signedCrt.X509CertificatePEM, 0400); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error writing certificate: %s", err)
 		}
 	},
 }
@@ -180,7 +165,7 @@ var keypairCmd = &cobra.Command{
 		if ip != "" {
 			parsed := net.ParseIP(ip)
 			if parsed == nil {
-				fmt.Printf("invalid IP: %s", ip)
+				helpers.Fatalf("invalid IP: %s", ip)
 			}
 			ips := []net.IP{parsed}
 			opts = append(opts, x509.IPAddresses(ips))
@@ -190,13 +175,13 @@ var keypairCmd = &cobra.Command{
 		}
 		ca, err := x509.NewSelfSignedCertificateAuthority(opts...)
 		if err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error generating CA: %s", err)
 		}
 		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0400); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error writing certificate: %s", err)
 		}
 		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0400); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error writing key: %s", err)
 		}
 	},
 }
@@ -204,45 +189,29 @@ var keypairCmd = &cobra.Command{
 func init() {
 	// Certificate Authorities
 	caCmd.Flags().StringVar(&organization, "organization", "", "X.509 distinguished name for the Organization")
-	if err := cobra.MarkFlagRequired(caCmd.Flags(), "organization"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(caCmd.Flags(), "organization"))
 	caCmd.Flags().IntVar(&hours, "hours", 24, "the hours from now on which the certificate validity period ends")
 	caCmd.Flags().BoolVar(&rsa, "rsa", false, "generate in RSA format")
 	// Keys
 	keyCmd.Flags().StringVar(&name, "name", "", "the basename of the generated file")
-	if err := cobra.MarkFlagRequired(keyCmd.Flags(), "name"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(keyCmd.Flags(), "name"))
 	// Certificates
 	crtCmd.Flags().StringVar(&name, "name", "", "the basename of the generated file")
-	if err := cobra.MarkFlagRequired(crtCmd.Flags(), "name"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(crtCmd.Flags(), "name"))
 	crtCmd.Flags().StringVar(&ca, "ca", "", "path to the PEM encoded CERTIFICATE")
-	if err := cobra.MarkFlagRequired(crtCmd.Flags(), "ca"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(crtCmd.Flags(), "ca"))
 	crtCmd.Flags().StringVar(&csr, "csr", "", "path to the PEM encoded CERTIFICATE REQUEST")
-	if err := cobra.MarkFlagRequired(crtCmd.Flags(), "csr"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(crtCmd.Flags(), "csr"))
 	crtCmd.Flags().IntVar(&hours, "hours", 24, "the hours from now on which the certificate validity period ends")
 	// Keypairs
 	keypairCmd.Flags().StringVar(&ip, "ip", "", "generate the certificate for this IP address")
 	keypairCmd.Flags().StringVar(&ca, "ca", "", "path to the PEM encoded CERTIFICATE")
-	if err := cobra.MarkFlagRequired(keypairCmd.Flags(), "ca"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(keypairCmd.Flags(), "ca"))
 	// Certificate Signing Requests
 	csrCmd.Flags().StringVar(&key, "key", "", "path to the PEM encoded EC or RSA PRIVATE KEY")
-	if err := cobra.MarkFlagRequired(csrCmd.Flags(), "key"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(csrCmd.Flags(), "key"))
 	csrCmd.Flags().StringVar(&ip, "ip", "", "generate the certificate for this IP address")
-	if err := cobra.MarkFlagRequired(csrCmd.Flags(), "ip"); err != nil {
-		os.Exit(1)
-	}
+	helpers.Should(cobra.MarkFlagRequired(csrCmd.Flags(), "ip"))
 
 	genCmd.AddCommand(caCmd, keypairCmd, keyCmd, csrCmd, crtCmd)
 	rootCmd.AddCommand(genCmd)
