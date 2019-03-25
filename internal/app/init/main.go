@@ -165,6 +165,12 @@ func root() (err error) {
 		}
 	}
 
+	go func() {
+		if err := listenForPowerButton(); err != nil {
+			log.Printf("WARNING: power off events will be ignored: %+v", err)
+		}
+	}()
+
 	// Get a handle to the system services API.
 	svcs := system.Services(data)
 
