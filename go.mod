@@ -25,17 +25,16 @@ require (
 	github.com/gogo/protobuf v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff // indirect
 	github.com/golang/protobuf v1.2.0
-	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/google/uuid v1.0.0
 	github.com/googleapis/gnostic v0.2.0 // indirect
-	github.com/gregjones/httpcache v0.0.0-20181110185634-c63ab54fda8f // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
 	github.com/mdlayher/netlink v0.0.0-20190313131330-258ea9dff42c
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -46,10 +45,8 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/opencontainers/runtime-spec v0.1.2-0.20180710222632-d810dbc60d8c
-	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/renstrom/dedent v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3
@@ -61,6 +58,7 @@ require (
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
+	golang.org/x/net v0.0.0-20190313220215-9f648a60d977
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20190312061237-fead79001313
 	golang.org/x/text v0.3.0
@@ -75,17 +73,19 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20190202010724-74b699b93c15
-	k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476 // indirect
-	k8s.io/apimachinery v0.0.0-20190117220443-572dfc7bdfcb
-	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
-	k8s.io/client-go v10.0.0+incompatible
-	k8s.io/cluster-bootstrap v0.0.0-20181108060158-bf9d13f1fbeb // indirect
-	k8s.io/klog v0.1.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20181109181836-c59034cc13d5 // indirect
-	k8s.io/kube-proxy v0.0.0-20181108055616-8eeec43ca7b5 // indirect
-	k8s.io/kubelet v0.0.0-20181108055742-1ff588f76017 // indirect
-	k8s.io/kubernetes v1.13.3
-	k8s.io/utils v0.0.0-20181102055113-1bd4f387aa67 // indirect
+	k8s.io/api v0.0.0-20190313235455-40a48860b5ab
+	k8s.io/apiextensions-apiserver v0.0.0-20190322231200-1c09d17c1352 // indirect
+	k8s.io/apimachinery v0.0.0-20190313205120-d7deff9243b1
+	k8s.io/apiserver v0.0.0-20190324105220-f881eae9ec04 // indirect
+	k8s.io/client-go v2.0.0-alpha.0.0.20190313235726-6ee68ca5fd83+incompatible
+	k8s.io/cloud-provider v0.0.0-20190323031113-9c9d72d1bf90 // indirect
+	k8s.io/cluster-bootstrap v0.0.0-20190313124217-0fa624df11e9 // indirect
+	k8s.io/component-base v0.0.0-20190313120452-4727f38490bc // indirect
+	k8s.io/klog v0.2.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580 // indirect
+	k8s.io/kube-proxy v0.0.0-20190320190624-78a1c9778e0e // indirect
+	k8s.io/kubelet v0.0.0-20190313123811-3556bcde9670 // indirect
+	k8s.io/kubernetes v1.14.0
+	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

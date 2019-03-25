@@ -12,7 +12,7 @@ services:
       talosbr:
 
   kubectl:
-    image: k8s.gcr.io/hyperkube:${HYPERKUBE_TAG:-v1.13.3}
+    image: k8s.gcr.io/hyperkube:${HYPERKUBE_TAG:-v1.14.0}
     entrypoint: kubectl
     volumes:
       - ./kubeconfig:/root/.kube/config

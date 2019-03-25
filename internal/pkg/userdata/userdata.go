@@ -119,20 +119,23 @@ type Kubelet struct {
 type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`
 
-	Configuration runtime.Object `yaml:"configuration"`
-	ExtraArgs     []string       `yaml:"extraArgs,omitempty"`
-	bootstrap     bool
-	controlPlane  bool
+	Configuration  runtime.Object `yaml:"configuration"`
+	ExtraArgs      []string       `yaml:"extraArgs,omitempty"`
+	CertificateKey string         `yaml:"certificateKey,omitempty"`
+	bootstrap      bool
+	controlPlane   bool
 }
 
 // MarshalYAML implements the yaml.Marshaler interface.
 func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 	var aux struct {
-		Configuration string   `yaml:"configuration,omitempty"`
-		ExtraArgs     []string `yaml:"extraArgs,omitempty"`
+		Configuration  string   `yaml:"configuration,omitempty"`
+		ExtraArgs      []string `yaml:"extraArgs,omitempty"`
+		CertificateKey string   `yaml:"certificateKey,omitempty"`
 	}
 
 	aux.ExtraArgs = kdm.ExtraArgs
+	aux.CertificateKey = kdm.CertificateKey
 
 	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
 	if err != nil {
@@ -159,8 +162,9 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var aux struct {
-		Configuration string   `yaml:"configuration,omitempty"`
-		ExtraArgs     []string `yaml:"extraArgs,omitempty"`
+		Configuration  string   `yaml:"configuration,omitempty"`
+		ExtraArgs      []string `yaml:"extraArgs,omitempty"`
+		CertificateKey string   `yaml:"certificateKey,omitempty"`
 	}
 
 	if err := unmarshal(&aux); err != nil {
@@ -168,6 +172,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	kdm.ExtraArgs = aux.ExtraArgs
+	kdm.CertificateKey = aux.CertificateKey
 
 	b := []byte(aux.Configuration)
 
@@ -182,7 +187,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		// API exposes one function (MarshalKubeadmConfigObject) to handle the
 		// marshaling, but does not yet have that convenience for
 		// unmarshaling.
-		cfg, err := configutil.BytesToInternalConfig(b)
+		cfg, err := configutil.BytesToInitConfiguration(b)
 		if err != nil {
 			return err
 		}
@@ -218,11 +223,11 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type Trustd struct {
 	CommonServiceOptions `yaml:",inline"`
 
-	Username  string   `yaml:"username"`
-	Password  string   `yaml:"password"`
-	Endpoints []string `yaml:"endpoints,omitempty"`
-	CertSANs  []string `yaml:"certSANs,omitempty"`
-	Next      string   `yaml:"next,omitempty"`
+	Username      string   `yaml:"username"`
+	Password      string   `yaml:"password"`
+	Endpoints     []string `yaml:"endpoints,omitempty"`
+	CertSANs      []string `yaml:"certSANs,omitempty"`
+	BootstrapNode string   `yaml:"bootstrapNode,omitempty"`
 }
 
 // OSD describes the configuration of the osd service.

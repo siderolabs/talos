@@ -33,7 +33,7 @@ services:
     cni: flannel
   kubeadm:
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1alpha3
+      apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
       apiEndpoint:
         advertiseAddress: 147.75.78.217
@@ -47,7 +47,7 @@ services:
           node-labels:
           feature-gates: ExperimentalCriticalPodAnnotation=true
       ---
-      apiVersion: kubeadm.k8s.io/v1alpha3
+      apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
       clusterName: talos.cluster.local
       controlPlaneEndpoint: 147.75.78.217:443

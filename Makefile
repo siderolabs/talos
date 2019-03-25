@@ -243,16 +243,16 @@ ntpd: buildkitd
 		$(COMMON_ARGS)
 
 hyperkube:
-	@docker pull k8s.gcr.io/$@:v1.13.3
-	@docker save k8s.gcr.io/$@:v1.13.3 -o ./images/$@.tar
+	@docker pull k8s.gcr.io/$@:v1.14.0
+	@docker save k8s.gcr.io/$@:v1.14.0 -o ./images/$@.tar
 
 etcd:
-	@docker pull k8s.gcr.io/$@:3.2.24
-	@docker save k8s.gcr.io/$@:3.2.24 -o ./images/$@.tar
+	@docker pull k8s.gcr.io/$@:3.3.10
+	@docker save k8s.gcr.io/$@:3.3.10 -o ./images/$@.tar
 
 coredns:
-	@docker pull k8s.gcr.io/$@:1.2.6
-	@docker save k8s.gcr.io/$@:1.2.6 -o ./images/$@.tar
+	@docker pull k8s.gcr.io/$@:1.3.1
+	@docker save k8s.gcr.io/$@:1.3.1 -o ./images/$@.tar
 
 pause:
 	@docker pull k8s.gcr.io/$@:3.1

@@ -6,6 +6,7 @@ package proto;
 // The Trustd service definition.
 service Trustd {
   rpc Certificate(CertificateRequest) returns (CertificateResponse) {}
+  rpc ReadFile(ReadFileRequest) returns (ReadFileResponse) {}
   rpc WriteFile(WriteFileRequest) returns (WriteFileResponse) {}
 }
 
@@ -18,6 +19,16 @@ message CertificateRequest {
 message CertificateResponse {
   bytes ca = 1;
   bytes crt = 2;
+}
+
+// The request message for reading a file on disk.
+message ReadFileRequest {
+  string path = 1;
+}
+
+// The response message for reading a file on disk.
+message ReadFileResponse {
+  bytes data = 1;
 }
 
 // The request message containing the process name.
