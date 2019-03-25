@@ -4,8 +4,8 @@ BUILT = $(shell gitmeta built)
 PUSH = $(shell gitmeta pushable)
 
 VPATH = $(PATH)
-KERNEL_IMAGE ?= autonomy/kernel:e8147aa
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:0341dfd
+KERNEL_IMAGE ?= autonomy/kernel:acdffda
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:7362500
 GOLANG_VERSION ?= 1.12
 DOCKER_ARGS ?=
 BUILDKIT_VERSION ?= v0.3.3
