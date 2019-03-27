@@ -1,21 +1,11 @@
 # syntax=docker/dockerfile:experimental
 ARG KERNEL_IMAGE
 ARG TOOLCHAIN_IMAGE
-ARG GOLANG_VERSION
 
 # The proto target will generate code based on service definitions.
 
-ARG GOLANG_VERSION
-FROM golang:${GOLANG_VERSION} AS proto
-RUN apt update
-RUN apt -y install bsdtar
-WORKDIR /go/src/github.com/golang/protobuf
-RUN curl -L https://github.com/golang/protobuf/archive/v1.2.0.tar.gz | tar -xz --strip-components=1
-RUN cd protoc-gen-go && go install .
-RUN curl -L https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-linux-x86_64.zip | bsdtar -xf - -C /tmp \
-    && mv /tmp/bin/protoc /bin \
-    && mv /tmp/include/* /usr/local/include \
-    && chmod +x /bin/protoc
+ARG TOOLCHAIN_IMAGE
+FROM ${TOOLCHAIN_IMAGE} AS proto-build
 WORKDIR /osd
 COPY ./internal/app/osd/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
@@ -25,6 +15,11 @@ RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.
 WORKDIR /blockd
 COPY ./internal/app/blockd/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+
+FROM scratch AS proto
+COPY --from=proto-build /osd/proto/api.pb.go /internal/app/osd/proto/
+COPY --from=proto-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
+COPY --from=proto-build /blockd/proto/api.pb.go /internal/app/blockd/proto/
 
 # The base target provides a common starting point for all other targets.
 
@@ -77,9 +72,7 @@ WORKDIR /src
 COPY ./internal ./internal
 COPY ./go.mod ./
 COPY ./go.sum ./
-COPY --from=proto /osd/proto/api.pb.go ./internal/app/osd/proto
-COPY --from=proto /trustd/proto/api.pb.go ./internal/app/trustd/proto
-COPY --from=proto /blockd/proto/api.pb.go ./internal/app/blockd/proto
+COPY --from=proto /internal/app ./internal/app
 RUN go mod download
 RUN go mod verify
 
