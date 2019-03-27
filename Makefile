@@ -5,8 +5,7 @@ PUSH = $(shell gitmeta pushable)
 
 VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:acdffda
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:7362500
-GOLANG_VERSION ?= 1.12
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:989387e
 DOCKER_ARGS ?=
 BUILDKIT_VERSION ?= v0.3.3
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
@@ -22,7 +21,7 @@ ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
 endif
 BINDIR ?= /usr/local/bin
-CONFORM_VERSION ?= 1473b44
+CONFORM_VERSION ?= c539351
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -30,7 +29,6 @@ COMMON_ARGS += --local context=.
 COMMON_ARGS += --local dockerfile=.
 COMMON_ARGS += --frontend-opt build-arg:KERNEL_IMAGE=$(KERNEL_IMAGE)
 COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
-COMMON_ARGS += --frontend-opt build-arg:GOLANG_VERSION=$(GOLANG_VERSION)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
@@ -129,6 +127,14 @@ installer: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
+
+proto: buildkitd
+	buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--exporter=local \
+		--exporter-opt output=./ \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
 
 image-gcloud: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build/gcloud:/out --privileged $(DOCKER_ARGS) autonomy/talos:$(TAG) image -l \
