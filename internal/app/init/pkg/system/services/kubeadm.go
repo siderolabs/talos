@@ -6,6 +6,7 @@ package services
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -43,14 +44,40 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
+	if err = writeKubeadmConfig(data); err != nil {
+		return err
+	}
+
 	if data.IsBootstrap() {
 		if err = writeKubeadmPKIFiles(data.Security.Kubernetes.CA); err != nil {
 			return err
 		}
-	}
+	} else if data.IsControlPlane() {
+		if data.Services.Trustd == nil || data.Services.Trustd.BootstrapNode == "" {
+			return nil
+		}
 
-	if err = writeKubeadmConfig(data); err != nil {
-		return err
+		creds := basic.NewCredentials(
+			data.Services.Trustd.Username,
+			data.Services.Trustd.Password,
+		)
+
+		files := []string{
+			constants.AuditPolicyPathInitramfs,
+			constants.EncryptionConfigInitramfsPath,
+		}
+
+		conn, err := basic.NewConnection(data.Services.Trustd.BootstrapNode, constants.TrustdPort, creds)
+		if err != nil {
+			return err
+		}
+
+		client := proto.NewTrustdClient(conn)
+
+		if err := writeFiles(client, files); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
@@ -58,54 +85,12 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 
 // PostFunc implements the Service interface.
 func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
-	if data.IsWorker() {
-		return nil
-	}
-
-	if data.Services.Trustd == nil || data.Services.Trustd.Next == "" {
-		return nil
-	}
-
-	creds := basic.NewCredentials(
-		data.Services.Trustd.Username,
-		data.Services.Trustd.Password,
-	)
-
-	files := []string{
-		"/etc/kubernetes/pki/ca.crt",
-		"/etc/kubernetes/pki/ca.key",
-		"/etc/kubernetes/pki/sa.key",
-		"/etc/kubernetes/pki/sa.pub",
-		"/etc/kubernetes/pki/front-proxy-ca.crt",
-		"/etc/kubernetes/pki/front-proxy-ca.key",
-		"/etc/kubernetes/pki/etcd/ca.crt",
-		"/etc/kubernetes/pki/etcd/ca.key",
-		"/etc/kubernetes/audit-policy.yaml",
-		constants.EncryptionConfigInitramfsPath,
-		"/etc/kubernetes/admin.conf",
-	}
-
-	conn, err := basic.NewConnection(data.Services.Trustd.Next, constants.TrustdPort, creds)
-	if err != nil {
-		return err
-	}
-
-	client := proto.NewTrustdClient(conn)
-
-	if err := writeFiles(client, files); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // ConditionFunc implements the Service interface.
 func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
 	files := []string{defaults.DefaultAddress}
-
-	if data.IsControlPlane() {
-		files = append(files, "/etc/kubernetes/admin.conf")
-	}
 
 	return conditions.WaitForFilesToExist(files...)
 }
@@ -124,11 +109,38 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	args := runner.Args{
 		ID: k.ID(data),
 	}
+
 	ignore := "--ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable"
-	if data.IsBootstrap() {
-		args.ProcessArgs = []string{"kubeadm", "init", "--config=/etc/kubernetes/kubeadm-config.yaml", ignore, "--skip-token-print"}
-	} else {
-		args.ProcessArgs = []string{"kubeadm", "join", "--config=/etc/kubernetes/kubeadm-config.yaml", ignore}
+	encoded := hex.EncodeToString([]byte(data.Services.Kubeadm.CertificateKey))
+	certificateKey := "--certificate-key=" + encoded
+
+	switch {
+	case data.IsBootstrap() == true:
+		args.ProcessArgs = []string{
+			"kubeadm",
+			"init",
+			"--config=/etc/kubernetes/kubeadm-config.yaml",
+			certificateKey,
+			ignore,
+			"--skip-token-print",
+			"--skip-certificate-key-print",
+			"--experimental-upload-certs",
+		}
+	case data.IsControlPlane() == true:
+		args.ProcessArgs = []string{
+			"kubeadm",
+			"join",
+			"--config=/etc/kubernetes/kubeadm-config.yaml",
+			certificateKey,
+			ignore,
+		}
+	default:
+		args.ProcessArgs = []string{
+			"kubeadm",
+			"join",
+			"--config=/etc/kubernetes/kubeadm-config.yaml",
+			ignore,
+		}
 	}
 
 	args.ProcessArgs = append(args.ProcessArgs, data.Services.Kubeadm.ExtraArgs...)
@@ -254,21 +266,20 @@ func writeFiles(client proto.TrustdClient, files []string) (err error) {
 	}()
 
 	go func() {
+		var err error
 		for _, f := range files {
 		L:
-			b, err := ioutil.ReadFile(f)
-			if err != nil {
+			req := &proto.ReadFileRequest{
+				Path: f,
+			}
+			var resp *proto.ReadFileResponse
+			if resp, err = client.ReadFile(context.Background(), req); err != nil {
 				log.Printf("failed to read file %s: %v", f, err)
 				time.Sleep(1 * time.Second)
 				goto L
 			}
-			req := &proto.WriteFileRequest{
-				Path: f,
-				Data: b,
-			}
-			_, err = client.WriteFile(context.Background(), req)
-			if err != nil {
-				log.Printf("failed to write file %s: %v", f, err)
+			if err = ioutil.WriteFile(f, resp.Data, 0400); err != nil {
+				log.Printf("failed to read file %s: %v", f, err)
 				time.Sleep(1 * time.Second)
 				goto L
 			}

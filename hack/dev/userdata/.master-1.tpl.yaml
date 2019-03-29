@@ -43,5 +43,4 @@ services:
   trustd:
     username: 'dev'
     password: 'talos_trust_dev'
-    next: 10.5.0.7
 debug: true
