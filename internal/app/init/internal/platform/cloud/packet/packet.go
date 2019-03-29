@@ -7,7 +7,7 @@ package packet
 import (
 	"github.com/autonomy/talos/internal/pkg/install"
 	"github.com/autonomy/talos/internal/pkg/kernel"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
 )
 

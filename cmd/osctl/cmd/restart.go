@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/autonomy/talos/internal/app/osctl/internal/client"
+	"github.com/autonomy/talos/cmd/osctl/pkg/client"
 	"github.com/autonomy/talos/internal/app/osd/proto"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	criconstants "github.com/containerd/cri/pkg/constants"

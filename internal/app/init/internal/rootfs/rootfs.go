@@ -17,7 +17,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/autonomy/talos/internal/pkg/grpc/gen"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )

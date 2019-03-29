@@ -2,29 +2,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// nolint: dupl,golint
 package cmd
 
 import (
-	"os"
-
-	"github.com/autonomy/talos/internal/app/osctl/internal/client"
-	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
-	"github.com/autonomy/talos/internal/app/osd/proto"
+	"github.com/autonomy/talos/cmd/osctl/pkg/client"
+	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 )
 
-// logsCmd represents the logs command
-var logsCmd = &cobra.Command{
-	Use:   "logs <id>",
-	Short: "Retrieve logs for a process or container",
+// statsCmd represents the processes command
+var statsCmd = &cobra.Command{
+	Use:   "stats",
+	Short: "Get processes stats",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
 			helpers.Fatalf("error getting client credentials: %s", err)
@@ -42,18 +36,14 @@ var logsCmd = &cobra.Command{
 		} else {
 			namespace = constants.SystemContainerdNamespace
 		}
-		r := &proto.LogsRequest{
-			Id:        args[0],
-			Namespace: namespace,
-		}
-		if err := c.Logs(r); err != nil {
-			helpers.Fatalf("error fetching logs: %s", err)
+		if err := c.Stats(namespace); err != nil {
+			helpers.Fatalf("error getting stats: %s", err)
 		}
 	},
 }
 
 func init() {
-	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	logsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
-	rootCmd.AddCommand(logsCmd)
+	statsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	statsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
+	rootCmd.AddCommand(statsCmd)
 }

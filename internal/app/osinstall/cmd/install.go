@@ -10,7 +10,7 @@ import (
 
 	"github.com/autonomy/talos/internal/app/osinstall/internal/userdata"
 	"github.com/autonomy/talos/internal/pkg/install"
-	udata "github.com/autonomy/talos/internal/pkg/userdata"
+	udata "github.com/autonomy/talos/pkg/userdata"
 	"github.com/spf13/cobra"
 )
 

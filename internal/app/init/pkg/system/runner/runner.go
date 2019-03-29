@@ -5,7 +5,7 @@
 package runner
 
 import (
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 )

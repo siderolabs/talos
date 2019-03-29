@@ -4,7 +4,7 @@
 
 package main
 
-import "github.com/autonomy/talos/internal/app/osctl/cmd"
+import "github.com/autonomy/talos/cmd/osctl/cmd"
 
 func main() {
 	cmd.Execute()

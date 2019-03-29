@@ -9,8 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/autonomy/talos/internal/app/osctl/internal/client/config"
-	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
+	"github.com/autonomy/talos/cmd/osctl/pkg/client/config"
+	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/spf13/cobra"
 )
 

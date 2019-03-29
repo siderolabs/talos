@@ -6,16 +6,16 @@
 package cmd
 
 import (
-	"github.com/autonomy/talos/internal/app/osctl/internal/client"
-	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
+	"github.com/autonomy/talos/cmd/osctl/pkg/client"
+	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/spf13/cobra"
 )
 
-// resetCmd represents the reset command
-var resetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "Reset a node",
+// routesCmd represents the net routes command
+var routesCmd = &cobra.Command{
+	Use:   "routes",
+	Short: "List network routes",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
@@ -29,13 +29,14 @@ var resetCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("error constructing client: %s", err)
 		}
-		if err := c.Reset(); err != nil {
-			helpers.Fatalf("error executing reset: %s", err)
+
+		if err := c.Routes(); err != nil {
+			helpers.Fatalf("error getting routes: %s", err)
 		}
 	},
 }
 
 func init() {
-	resetCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
-	rootCmd.AddCommand(resetCmd)
+	routesCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
+	rootCmd.AddCommand(routesCmd)
 }

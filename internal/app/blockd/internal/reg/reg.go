@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/autonomy/talos/internal/app/blockd/proto"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 )

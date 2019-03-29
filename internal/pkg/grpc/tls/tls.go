@@ -9,7 +9,7 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 )
 
 // Type represents the TLS authentication type.

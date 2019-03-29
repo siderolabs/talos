@@ -5,7 +5,7 @@
 package googlecloud
 
 import (
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 )
 
 const (

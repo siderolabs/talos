@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
+	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
