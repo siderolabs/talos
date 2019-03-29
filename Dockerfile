@@ -159,7 +159,7 @@ RUN cd $GOPATH/src/github.com/containerd/containerd \
     && cp bin/containerd /rootfs/bin \
     && cp bin/containerd-shim /rootfs/bin
 # runc
-RUN curl -L https://github.com/opencontainers/runc/releases/download/v1.0.0-rc6/runc.amd64 -o /rootfs/bin/runc
+RUN curl -L https://github.com/opencontainers/runc/releases/download/v1.0.0-rc7/runc.amd64 -o /rootfs/bin/runc
 RUN chmod +x /rootfs/bin/runc
 # CNI
 RUN mkdir -p /rootfs/opt/cni/bin
