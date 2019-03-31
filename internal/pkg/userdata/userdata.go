@@ -83,26 +83,41 @@ type Services struct {
 	NTPd    *NTPd    `yaml:"ntp"`
 }
 
-// File represents a files to write to disk.
+// File represents a file to write to disk.
 type File struct {
 	Contents    string      `yaml:"contents"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
 }
 
-// Install represents the installation options for preparing a node
+// Install represents the installation options for preparing a node.
 type Install struct {
-	Boot *InstallDevice `yaml:"boot,omitempty"`
-	Root *InstallDevice `yaml:"root"`
-	Data *InstallDevice `yaml:"data,omitempty"`
-	Wipe bool           `yaml:"wipe"`
+	Boot  *BootDevice    `yaml:"boot,omitempty"`
+	Root  *RootDevice    `yaml:"root"`
+	Data  *InstallDevice `yaml:"data,omitempty"`
+	Wipe  bool           `yaml:"wipe"`
+	Force bool           `yaml:"force"`
 }
 
-// InstallDevice represents the specific directions for each partition
+// BootDevice represents the install options specific to the boot partition.
+type BootDevice struct {
+	InstallDevice `yaml:",inline"`
+
+	Kernel    string `yaml:"kernel"`
+	Initramfs string `yaml:"initramfs"`
+}
+
+// RootDevice represents the install options specific to the root partition.
+type RootDevice struct {
+	InstallDevice `yaml:",inline"`
+
+	Rootfs string `yaml:"rootfs"`
+}
+
+// InstallDevice represents the specific directions for each partition.
 type InstallDevice struct {
-	Device string   `yaml:"device,omitempty"`
-	Size   uint     `yaml:"size,omitempty"`
-	Data   []string `yaml:"data,omitempty"`
+	Device string `yaml:"device,omitempty"`
+	Size   uint   `yaml:"size,omitempty"`
 }
 
 // Init describes the configuration of the init service.

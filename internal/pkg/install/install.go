@@ -30,11 +30,19 @@ func Install(args string, data *userdata.UserData) (err error) {
 		return nil
 	}
 
+	// Install the bootloader.
+
+	if err = syslinux.Prepare(data.Install.Boot.Device); err != nil {
+		return err
+	}
+
+	// Download and extract all artifacts.
+
 	dataURLs := make(map[string][]string)
-	dataURLs[path.Join(constants.NewRoot, constants.RootMountPoint)] = data.Install.Root.Data
+	dataURLs[path.Join(constants.NewRoot, constants.RootMountPoint)] = []string{data.Install.Root.Rootfs}
 
 	if data.Install.Boot != nil {
-		dataURLs[path.Join(constants.NewRoot, constants.BootMountPoint)] = data.Install.Boot.Data
+		dataURLs[path.Join(constants.NewRoot, constants.BootMountPoint)] = []string{data.Install.Boot.Kernel, data.Install.Boot.Initramfs}
 	}
 
 	var sourceFile *os.File
@@ -43,7 +51,7 @@ func Install(args string, data *userdata.UserData) (err error) {
 	var previousMountPoint string
 	for dest, urls := range dataURLs {
 		if dest != previousMountPoint {
-			log.Printf("Downloading assets for %s\n", dest)
+			log.Printf("downloading assets for %s\n", dest)
 			previousMountPoint = dest
 		}
 
@@ -56,7 +64,7 @@ func Install(args string, data *userdata.UserData) (err error) {
 			switch {
 			case strings.HasPrefix(artifact, "http"):
 				var u *url.URL
-				log.Printf("Downloading %s\n", artifact)
+				log.Printf("downloading %s\n", artifact)
 				u, err = url.Parse(artifact)
 				if err != nil {
 					return err
@@ -83,7 +91,7 @@ func Install(args string, data *userdata.UserData) (err error) {
 
 			switch {
 			case strings.HasSuffix(sourceFile.Name(), ".tar") || strings.HasSuffix(sourceFile.Name(), ".tar.gz"):
-				log.Printf("Extracting %s to %s\n", sourceFile.Name(), dest)
+				log.Printf("extracting %s to %s\n", sourceFile.Name(), dest)
 
 				err = untar(sourceFile, dest)
 				if err != nil {

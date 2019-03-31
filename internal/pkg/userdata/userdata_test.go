@@ -32,74 +32,44 @@ services:
   init:
     cni: flannel
   kubeadm:
+    certificateKey: 'test'
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
-      apiEndpoint:
-        advertiseAddress: 147.75.78.217
+      localAPIEndpoint:
+        advertiseAddress: 127.0.0.1
         bindPort: 6443
       bootstrapTokens:
       - token: '1qbsj9.3oz5hsk6grdfp98b'
         ttl: 0s
-      nodeRegistration:
-        taints:
-        kubeletExtraArgs:
-          node-labels:
-          feature-gates: ExperimentalCriticalPodAnnotation=true
       ---
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
-      clusterName: talos.cluster.local
-      controlPlaneEndpoint: 147.75.78.217:443
-      apiServerCertSANs: [ 147.75.78.217,147.75.75.189,147.75.75.137 ]
-      apiServerExtraArgs:
-        runtime-config: settings.k8s.io/v1alpha1=true
-        oidc-issuer-url: https://dex.dev.autonomy.io
-        oidc-username-claim: email
-        oidc-groups-claim: groups
-        oidc-client-id: kubernetes
-        feature-gates: ExperimentalCriticalPodAnnotation=true
-      controllerManagerExtraArgs:
-        terminated-pod-gc-threshold: '100'
-        feature-gates: ExperimentalCriticalPodAnnotation=true
-      schedulerExtraArgs:
-        feature-gates: ExperimentalCriticalPodAnnotation=true
-      networking:
-        dnsDomain: talos.cluster.local
-        podSubnet:
-        serviceSubnet: 192.168.0.0/24
+      clusterName: test
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
       kind: KubeProxyConfiguration
       mode: ipvs
       ipvs:
         scheduler: lc
-      ---
-      apiVersion: kubelet.config.k8s.io/v1beta1
-      kind: KubeletConfiguration
-      failSwapOn: false
-    extraArgs:
-    - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,Swap
   trustd:
-    image: docker.io/autonomy/trustd:latest
-    username: '5H7iU_9\u003cxizSRD'
-    password: '[a@c56X!@78\u0026f\u0026L7%+ibLrZG'
-    endpoints: ["147.75.75.189"]
-  proxyd:
-    image: docker.io/autonomy/proxyd:latest
-  blockd:
-    image: docker.io/autonomy/blockd:latest
-  osd:
-    image: docker.io/autonomy/osd:latest
+    username: 'test'
+    password: 'test'
+    endpoints: []
+    certSANs: []
 install:
   wipe: true
+  force: true
   boot:
+    force: true
     device: /dev/sda
     size: 1024000000
   root:
+    force: true
     device: /dev/sda
     size: 1024000000
   data:
+    force: true
     device: /dev/sda
     size: 1024000000
 `
