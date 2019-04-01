@@ -25,8 +25,10 @@ services:
         tlsBootstrapToken: 1qbsj9.3oz5hsk6grdfp98b
       nodeRegistration:
         criSocket: /run/containerd/containerd.sock
-    extraArgs:
-    - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
+    ignorePreflightErrors:
+      - FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
+      - Swap
+      - SystemVerification
   trustd:
     username: dev
     password: talos_trust_dev

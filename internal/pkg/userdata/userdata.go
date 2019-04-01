@@ -134,23 +134,26 @@ type Kubelet struct {
 type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`
 
-	Configuration  runtime.Object `yaml:"configuration"`
-	ExtraArgs      []string       `yaml:"extraArgs,omitempty"`
-	CertificateKey string         `yaml:"certificateKey,omitempty"`
-	bootstrap      bool
-	controlPlane   bool
+	Configuration         runtime.Object `yaml:"configuration"`
+	ExtraArgs             []string       `yaml:"extraArgs,omitempty"`
+	CertificateKey        string         `yaml:"certificateKey,omitempty"`
+	IgnorePreflightErrors []string       `yaml:"ignorePreflightErrors,omitempty"`
+	bootstrap             bool
+	controlPlane          bool
 }
 
 // MarshalYAML implements the yaml.Marshaler interface.
 func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 	var aux struct {
-		Configuration  string   `yaml:"configuration,omitempty"`
-		ExtraArgs      []string `yaml:"extraArgs,omitempty"`
-		CertificateKey string   `yaml:"certificateKey,omitempty"`
+		Configuration         string   `yaml:"configuration,omitempty"`
+		ExtraArgs             []string `yaml:"extraArgs,omitempty"`
+		CertificateKey        string   `yaml:"certificateKey,omitempty"`
+		IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
 	}
 
 	aux.ExtraArgs = kdm.ExtraArgs
 	aux.CertificateKey = kdm.CertificateKey
+	aux.IgnorePreflightErrors = kdm.IgnorePreflightErrors
 
 	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
 	if err != nil {
@@ -177,9 +180,10 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var aux struct {
-		Configuration  string   `yaml:"configuration,omitempty"`
-		ExtraArgs      []string `yaml:"extraArgs,omitempty"`
-		CertificateKey string   `yaml:"certificateKey,omitempty"`
+		Configuration         string   `yaml:"configuration,omitempty"`
+		ExtraArgs             []string `yaml:"extraArgs,omitempty"`
+		CertificateKey        string   `yaml:"certificateKey,omitempty"`
+		IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
 	}
 
 	if err := unmarshal(&aux); err != nil {
@@ -188,6 +192,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	kdm.ExtraArgs = aux.ExtraArgs
 	kdm.CertificateKey = aux.CertificateKey
+	kdm.IgnorePreflightErrors = aux.IgnorePreflightErrors
 
 	b := []byte(aux.Configuration)
 

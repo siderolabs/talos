@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/autonomy/talos/internal/app/init/internal/security/cis"
@@ -110,7 +111,9 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		ID: k.ID(data),
 	}
 
-	ignore := "--ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable"
+	ignorePreflightErrors := []string{"cri", "kubeletversion", "numcpu", "requiredipvskernelmodulesavailable"}
+	ignorePreflightErrors = append(ignorePreflightErrors, data.Services.Kubeadm.IgnorePreflightErrors...)
+	ignore := "--ignore-preflight-errors=" + strings.Join(ignorePreflightErrors, ",")
 	encoded := hex.EncodeToString([]byte(data.Services.Kubeadm.CertificateKey))
 	certificateKey := "--certificate-key=" + encoded
 
