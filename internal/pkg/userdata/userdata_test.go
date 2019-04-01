@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // nolint: lll
@@ -84,6 +87,108 @@ func TestDownloadRetry(t *testing.T) {
 	}
 }
 
+// nolint: lll
+const kubeadmConfig = `configuration: |
+  apiVersion: kubeadm.k8s.io/v1beta1
+  bootstrapTokens:
+  - groups:
+    - system:bootstrappers:kubeadm:default-node-token
+    token: 1qbsj9.3oz5hsk6grdfp98b
+    ttl: 0s
+    usages:
+    - signing
+    - authentication
+  kind: InitConfiguration
+  localAPIEndpoint:
+    advertiseAddress: 192.168.88.11
+    bindPort: 6443
+  nodeRegistration:
+    criSocket: /var/run/dockershim.sock
+    name: smiradell
+    taints:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+  ---
+  apiServer:
+    timeoutForControlPlane: 4m0s
+  apiVersion: kubeadm.k8s.io/v1beta1
+  certificatesDir: /etc/kubernetes/pki
+  clusterName: test
+  controlPlaneEndpoint: ""
+  controllerManager: {}
+  dns:
+    type: CoreDNS
+  etcd:
+    local:
+      dataDir: /var/lib/etcd
+  imageRepository: k8s.gcr.io
+  kind: ClusterConfiguration
+  kubernetesVersion: v1.14.0
+  networking:
+    dnsDomain: cluster.local
+    podSubnet: ""
+    serviceSubnet: 10.96.0.0/12
+  scheduler: {}
+  ---
+  apiVersion: kubeproxy.config.k8s.io/v1alpha1
+  bindAddress: 0.0.0.0
+  clientConnection:
+    acceptContentTypes: ""
+    burst: 10
+    contentType: application/vnd.kubernetes.protobuf
+    kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
+    qps: 5
+  clusterCIDR: ""
+  configSyncPeriod: 15m0s
+  conntrack:
+    max: null
+    maxPerCore: 32768
+    min: 131072
+    tcpCloseWaitTimeout: 1h0m0s
+    tcpEstablishedTimeout: 24h0m0s
+  enableProfiling: false
+  healthzBindAddress: 0.0.0.0:10256
+  hostnameOverride: ""
+  iptables:
+    masqueradeAll: false
+    masqueradeBit: 14
+    minSyncPeriod: 0s
+    syncPeriod: 30s
+  ipvs:
+    excludeCIDRs: null
+    minSyncPeriod: 0s
+    scheduler: lc
+    strictARP: false
+    syncPeriod: 30s
+  kind: KubeProxyConfiguration
+  metricsBindAddress: 127.0.0.1:10249
+  mode: ipvs
+  nodePortAddresses: null
+  oomScoreAdj: -999
+  portRange: ""
+  resourceContainer: /kube-proxy
+  udpIdleTimeout: 250ms
+  winkernel:
+    enableDSR: false
+    networkName: ""
+    sourceVip: ""
+certificateKey: test
+`
+
+func TestKubeadmMarshal(t *testing.T) {
+	var kubeadm Kubeadm
+
+	err := yaml.Unmarshal([]byte(kubeadmConfig), &kubeadm)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "test", kubeadm.CertificateKey)
+
+	out, err := yaml.Marshal(&kubeadm)
+	assert.NoError(t, err)
+
+	assert.Equal(t, kubeadmConfig, string(out))
+}
+
 func testUDServer() *httptest.Server {
 	var count int
 
@@ -96,7 +201,6 @@ func testUDServer() *httptest.Server {
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}))
 
 	return ts

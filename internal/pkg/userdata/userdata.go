@@ -134,27 +134,19 @@ type Kubelet struct {
 type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`
 
-	Configuration         runtime.Object `yaml:"configuration"`
-	ExtraArgs             []string       `yaml:"extraArgs,omitempty"`
-	CertificateKey        string         `yaml:"certificateKey,omitempty"`
-	IgnorePreflightErrors []string       `yaml:"ignorePreflightErrors,omitempty"`
+	// ConfigurationStr is converted to Configuration and back in Marshal/UnmarshalYAML
+	Configuration    runtime.Object `yaml:"-"`
+	ConfigurationStr string         `yaml:"configuration"`
+
+	ExtraArgs             []string `yaml:"extraArgs,omitempty"`
+	CertificateKey        string   `yaml:"certificateKey,omitempty"`
+	IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
 	bootstrap             bool
 	controlPlane          bool
 }
 
 // MarshalYAML implements the yaml.Marshaler interface.
 func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
-	var aux struct {
-		Configuration         string   `yaml:"configuration,omitempty"`
-		ExtraArgs             []string `yaml:"extraArgs,omitempty"`
-		CertificateKey        string   `yaml:"certificateKey,omitempty"`
-		IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
-	}
-
-	aux.ExtraArgs = kdm.ExtraArgs
-	aux.CertificateKey = kdm.CertificateKey
-	aux.IgnorePreflightErrors = kdm.IgnorePreflightErrors
-
 	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
 	if err != nil {
 		return nil, err
@@ -172,29 +164,22 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 		kdm.bootstrap = false
 	}
 
-	aux.Configuration = string(b)
+	kdm.ConfigurationStr = string(b)
 
-	return aux, nil
+	type KubeadmAlias Kubeadm
+
+	return (*KubeadmAlias)(kdm), nil
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var aux struct {
-		Configuration         string   `yaml:"configuration,omitempty"`
-		ExtraArgs             []string `yaml:"extraArgs,omitempty"`
-		CertificateKey        string   `yaml:"certificateKey,omitempty"`
-		IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
-	}
+	type KubeadmAlias Kubeadm
 
-	if err := unmarshal(&aux); err != nil {
+	if err := unmarshal((*KubeadmAlias)(kdm)); err != nil {
 		return err
 	}
 
-	kdm.ExtraArgs = aux.ExtraArgs
-	kdm.CertificateKey = aux.CertificateKey
-	kdm.IgnorePreflightErrors = aux.IgnorePreflightErrors
-
-	b := []byte(aux.Configuration)
+	b := []byte(kdm.ConfigurationStr)
 
 	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
 	if err != nil {
