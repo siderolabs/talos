@@ -5,7 +5,6 @@ services:
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
-      apiVersion: kubeadm.k8s.io/v1beta1
       bootstrapTokens:
       - token: 1qbsj9.3oz5hsk6grdfp98b
         ttl: 0s
@@ -37,9 +36,10 @@ services:
       conntrack:
         max: 0
         maxPerCore: 0
-    extraArgs:
-      - --ignore-preflight-errors=cri,kubeletversion,numcpu,requiredipvskernelmodulesavailable,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
-        # additions to talos default are:  FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,Swap
+    ignorePreflightErrors:
+      - FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
+      - Swap
+      - SystemVerification
   trustd:
     username: 'dev'
     password: 'talos_trust_dev'
