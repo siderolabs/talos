@@ -10,9 +10,9 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"unsafe"
 
 	"github.com/autonomy/talos/internal/pkg/blockdevice"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/bootloader/syslinux"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/vfat"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
@@ -22,6 +22,35 @@ import (
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
+)
+
+const (
+	// DefaultSizeRootDevice is the default size of the root partition.
+	// TODO(andrewrynhard): We should inspect the tarball's uncompressed size and dynamically set the root partition's size.
+	DefaultSizeRootDevice = 2048 * 1000 * 1000
+
+	// DefaultSizeDataDevice is the default size of the data partition.
+	DefaultSizeDataDevice = 1024 * 1000 * 1000
+
+	// DefaultSizeBootDevice is the default size of the boot partition.
+	// TODO(andrewrynhard): We should inspect the sizes of the artifacts and dynamically set the boot partition's size.
+	DefaultSizeBootDevice = 512 * 1000 * 1000
+)
+
+var (
+	// DefaultURLBase is the base URL for all default artifacts.
+	// TODO(andrewrynhard): We need to setup infrastructure for publishing artifacts and not depend on GitHub.
+	DefaultURLBase = "https://github.com/autonomy/talos/releases/download/" + version.Tag
+
+	// DefaultRootfsURL is the URL to the rootfs.
+	DefaultRootfsURL = DefaultURLBase + "/rootfs.tar.gz"
+
+	// DefaultKernelURL is the URL to the kernel.
+	DefaultKernelURL = DefaultURLBase + "/vmlinuz"
+
+	// DefaultInitramfsURL is the URL to the initramfs.
+	DefaultInitramfsURL = DefaultURLBase + "/initramfs.xz"
 )
 
 // Prepare handles setting/consolidating/defaulting userdata pieces specific to
@@ -33,281 +62,269 @@ func Prepare(data *userdata.UserData) (err error) {
 		return nil
 	}
 
-	// Root Device Init
-	if data.Install.Root.Device == "" {
-		return errors.Errorf("%s", "install.rootdevice is required")
+	// Verify that the target device(s) can satisify the requested options.
+
+	if err = VerifyRootDevice(data); err != nil {
+		return errors.Wrap(err, "failed to prepare root device")
+	}
+	if err = VerifyDataDevice(data); err != nil {
+		return errors.Wrap(err, "failed to prepare data device")
+	}
+	if err = VerifyBootDevice(data); err != nil {
+		return errors.Wrap(err, "failed to prepare boot device")
 	}
 
-	if data.Install.Root.Size == 0 {
-		// Set to 1G default for funzies
-		data.Install.Root.Size = 2048 * 1000 * 1000
-	}
-
-	if len(data.Install.Root.Data) == 0 {
-		// Should probably have a canonical location to fetch rootfs - github?/s3?
-		// need to figure out how to download latest instead of hardcoding
-		data.Install.Root.Data = append(data.Install.Root.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/rootfs.tar.gz")
-	}
-
-	// Data Device Init
-	if data.Install.Data.Device == "" {
-		data.Install.Data.Device = data.Install.Root.Device
-	}
-
-	if data.Install.Data.Size == 0 {
-		// Set to 1G default for funzies
-		data.Install.Data.Size = 1024 * 1000 * 1000
-	}
-
-	// Boot Device Init
-	if data.Install.Boot != nil {
-		if data.Install.Boot.Device == "" {
-			data.Install.Boot.Device = data.Install.Root.Device
-		}
-		if data.Install.Boot.Size == 0 {
-			// Set to 512MB default for funzies
-			data.Install.Boot.Size = 512 * 1000 * 1000
-		}
-		if len(data.Install.Boot.Data) == 0 {
-			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/vmlinuz")
-			data.Install.Boot.Data = append(data.Install.Boot.Data, "https://github.com/autonomy/talos/releases/download/"+version.Tag+"/initramfs.xz")
-
-		}
-	}
-
-	// Verify that the disks are unused
-	// Maybe a simple check against bd.UUID is more appropriate?
-	if !data.Install.Wipe {
-		var dev *probe.ProbedBlockDevice
-		for _, device := range []string{data.Install.Boot.Device, data.Install.Root.Device, data.Install.Data.Device} {
-			dev, err = probe.GetDevWithFileSystemLabel(device)
-			if err != nil {
-				// We continue here because we only care if we can discover the
-				// device successfully and confirm that the disk is not in use.
-				// TODO(andrewrynhard): We should return a custom error type here
-				// that we can use to confirm the device was not found.
-				continue
-			}
-			if dev.SuperBlock != nil {
-				return errors.Errorf("target install device %s is not empty, found existing %s file system", device, dev.SuperBlock.Type())
-			}
-		}
-	}
-
-	// Create a map of all the devices we need to be concerned with
-	devices := make(map[string]*Device)
-	labeldev := make(map[string]string)
-
-	// PR: Should we only allow boot device creation if data.Install.Wipe?
-	if data.Install.Boot.Device != "" {
-		devices[constants.BootPartitionLabel] = NewDevice(data.Install.Boot.Device,
-			constants.BootPartitionLabel,
-			data.Install.Boot.Size,
-			data.Install.Wipe,
-			false,
-			data.Install.Boot.Data)
-		labeldev[constants.BootPartitionLabel] = data.Install.Boot.Device
-	}
-
-	devices[constants.RootPartitionLabel] = NewDevice(data.Install.Root.Device,
-		constants.RootPartitionLabel,
-		data.Install.Root.Size,
-		data.Install.Wipe,
-		false,
-		data.Install.Root.Data)
-	labeldev[constants.RootPartitionLabel] = data.Install.Root.Device
-
-	devices[constants.DataPartitionLabel] = NewDevice(data.Install.Data.Device,
-		constants.DataPartitionLabel,
-		data.Install.Data.Size,
-		data.Install.Wipe,
-		false,
-		data.Install.Data.Data)
-
-	labeldev[constants.DataPartitionLabel] = data.Install.Data.Device
+	manifest := NewManifest(data)
 
 	if data.Install.Wipe {
-		log.Println("Preparing to zero out devices")
-		var zero *os.File
-		zero, err = os.Open("/dev/zero")
-		if err != nil {
-			return err
-		}
-
-		log.Println("Calculating total disk usage")
-		diskSizes := make(map[string]uint, len(devices))
-		for _, dev := range devices {
-			// Adding 264*512b to cover partition table size
-			// In theory, a GUID Partition Table disk can be up to 264 sectors in a single logical block in length.
-			// Logical blocks are commonly 512 bytes or one sector in size.
-			// TODO verify this against gpt.go
-			diskSizes[dev.Name] += dev.Size + 164010
-		}
-
-		log.Println("Zeroing out each disk")
-		var f *os.File
-		for dev, size := range diskSizes {
-			f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice)
-			if err != nil {
-				return err
-			}
-
-			if _, err = io.CopyN(f, zero, int64(size)); err != nil {
-				return err
-			}
-
-			if err = f.Close(); err != nil {
-				return err
-			}
-		}
-
-		if err = zero.Close(); err != nil {
-			return err
+		if err = WipeDevices(manifest); err != nil {
+			return errors.Wrap(err, "failed to wipe device(s)")
 		}
 	}
 
-	// Use the below to only open a block device once
-	uniqueDevices := make(map[string]*blockdevice.BlockDevice)
+	// Create and format all partitions.
 
-	// Associate block device to a partition table. This allows us to
-	// make use of a single partition table across an entire block device.
-	log.Println("Opening block devices in preparation for partitioning")
-	partitionTables := make(map[*blockdevice.BlockDevice]table.PartitionTable)
-	for label, device := range labeldev {
-		if dev, ok := uniqueDevices[device]; ok {
-			devices[label].BlockDevice = dev
-			devices[label].PartitionTable = partitionTables[dev]
-			continue
-		}
-
-		if label == constants.BootPartitionLabel {
-			if err = syslinux.Prepare(device); err != nil {
-				return err
-			}
-		}
-		var bd *blockdevice.BlockDevice
-
-		bd, err = blockdevice.Open(device, blockdevice.WithNewGPT(data.Install.Wipe))
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer bd.Close()
-
-		var pt table.PartitionTable
-		pt, err = bd.PartitionTable(!data.Install.Wipe)
-		if err != nil {
-			return err
-		}
-
-		uniqueDevices[device] = bd
-		partitionTables[bd] = pt
-
-		devices[label].BlockDevice = bd
-		devices[label].PartitionTable = pt
-	}
-
-	// devices = Device
-	if data.Install.Wipe {
-		for _, label := range []string{constants.BootPartitionLabel, constants.RootPartitionLabel, constants.DataPartitionLabel} {
-			// Wipe disk
-			// Partition the disk
-			log.Printf("Partitioning %s - %s\n", devices[label].Name, label)
-			err = devices[label].Partition()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// Installation/preparation necessary
-	if data.Install != nil {
-
-		// uniqueDevices = blockdevice
-		seen := make(map[string]interface{})
-		for _, dev := range devices {
-			if _, ok := seen[dev.Name]; ok {
-				continue
-			}
-			seen[dev.Name] = nil
-
-			err = dev.PartitionTable.Write()
-			if err != nil {
-				return err
-			}
-
-			// Create the device files
-			log.Printf("Reread Partition Table %s\n", dev.Name)
-			if err = dev.BlockDevice.RereadPartitionTable(); err != nil {
-				log.Println("break here?")
-				return err
-			}
-
-		}
-
-		for _, dev := range devices {
-			// Create the filesystem
-			log.Printf("Formatting Partition %s - %s\n", dev.PartitionName, dev.Label)
-			err = dev.Format()
-			if err != nil {
-				return err
-			}
-		}
+	if err = ExecuteManifest(data, manifest); err != nil {
+		return err
 	}
 
 	return err
 }
 
-// Device represents a single partition.
-type Device struct {
-	DataURLs  []string
-	Label     string
-	MountBase string
-	Name      string
+// ExecuteManifest partitions and formats all disks in a manifest.
+func ExecuteManifest(data *userdata.UserData, manifest *Manifest) (err error) {
+	for dev, targets := range manifest.Targets {
+		var bd *blockdevice.BlockDevice
+		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(data.Install.Force)); err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer bd.Close()
 
-	// This seems overkill to save partition table
-	// when we can get partition table from BlockDevice
-	// but we want to have a shared partition table for each
-	// device so we can properly append partitions and have
-	// an atomic write partition operation
-	PartitionTable table.PartitionTable
+		for _, target := range targets {
+			if err = target.Partition(bd); err != nil {
+				return errors.Wrap(err, "failed to partition device")
+			}
+		}
 
-	// This guy might be overkill but we can clean up later
-	// Made up of Name + part.No(), so maybe it's worth
-	// just storing part.No() and adding a method d.PartName()
-	PartitionName string
+		if err = bd.RereadPartitionTable(); err != nil {
+			return err
+		}
 
-	Size uint
+		for _, target := range targets {
+			if err = target.Format(); err != nil {
+				return errors.Wrap(err, "failed to format device")
+			}
+		}
+	}
 
-	BlockDevice *blockdevice.BlockDevice
-
-	Force bool
-	Test  bool
+	return nil
 }
 
-// NewDevice creates a Device with basic metadata. BlockDevice and PartitionTable
-// need to be set outsite of this.
-func NewDevice(name string, label string, size uint, force bool, test bool, data []string) *Device {
-	return &Device{
-		DataURLs:  data,
-		Force:     force,
-		Label:     label,
-		MountBase: "/tmp",
-		Name:      name,
-		Size:      size,
-		Test:      test,
+// VerifyRootDevice verifies the supplied root device options.
+func VerifyRootDevice(data *userdata.UserData) (err error) {
+	if data.Install.Root.Device == "" {
+		return errors.New("a root device is required")
 	}
+
+	if data.Install.Root.Size == 0 {
+		data.Install.Root.Size = DefaultSizeRootDevice
+	}
+
+	if data.Install.Root.Rootfs == "" {
+		data.Install.Root.Rootfs = DefaultRootfsURL
+	}
+
+	if !data.Install.Force {
+		if err = VerifyDiskAvailability(constants.RootPartitionLabel); err != nil {
+			return errors.Wrap(err, "failed to verify disk availability")
+		}
+	}
+
+	return nil
+}
+
+// VerifyDataDevice verifies the supplied data device options.
+func VerifyDataDevice(data *userdata.UserData) (err error) {
+	if data.Install.Data.Device == "" {
+		data.Install.Data.Device = data.Install.Root.Device
+	}
+
+	if data.Install.Data.Size == 0 {
+		data.Install.Data.Size = DefaultSizeDataDevice
+	}
+
+	if !data.Install.Force {
+		if err = VerifyDiskAvailability(constants.DataPartitionLabel); err != nil {
+			return errors.Wrap(err, "failed to verify disk availability")
+		}
+	}
+
+	return nil
+}
+
+// VerifyBootDevice verifies the supplied boot device options.
+func VerifyBootDevice(data *userdata.UserData) (err error) {
+	if data.Install.Boot != nil {
+		if data.Install.Boot.Device == "" {
+			data.Install.Boot.Device = data.Install.Root.Device
+		}
+		if data.Install.Boot.Size == 0 {
+			data.Install.Boot.Size = DefaultSizeBootDevice
+		}
+		if data.Install.Boot.Kernel == "" {
+			data.Install.Boot.Kernel = DefaultKernelURL
+		}
+		if data.Install.Boot.Initramfs == "" {
+			data.Install.Boot.Initramfs = DefaultInitramfsURL
+		}
+	}
+
+	if !data.Install.Force {
+		if err = VerifyDiskAvailability(constants.BootPartitionLabel); err != nil {
+			return errors.Wrap(err, "failed to verify disk availability")
+		}
+	}
+	return nil
+}
+
+// VerifyDiskAvailability verifies that no filesystems currently exist with
+// the labels used by the OS.
+func VerifyDiskAvailability(label string) (err error) {
+	var dev *probe.ProbedBlockDevice
+	if dev, err = probe.GetDevWithFileSystemLabel(label); err != nil {
+		// We return here because we only care if we can discover the
+		// device successfully and confirm that the disk is not in use.
+		// TODO(andrewrynhard): We should return a custom error type here
+		// that we can use to confirm the device was not found.
+		return nil
+	}
+	if dev.SuperBlock != nil {
+		return errors.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
+	}
+
+	return nil
+}
+
+// WipeDevices writes zeros to each block device in the preparation manifest.
+func WipeDevices(manifest *Manifest) (err error) {
+	var zero *os.File
+	if zero, err = os.Open("/dev/zero"); err != nil {
+		return err
+	}
+
+	for dev := range manifest.Targets {
+		var f *os.File
+		if f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice); err != nil {
+			return err
+		}
+		var size uint64
+		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
+			return errors.Errorf("failed to got block device size: %v", ret)
+		}
+		if _, err = io.CopyN(f, zero, int64(size)); err != nil {
+			return err
+		}
+
+		if err = f.Close(); err != nil {
+			return err
+		}
+	}
+
+	if err = zero.Close(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NewManifest initializes and returns a Manifest.
+func NewManifest(data *userdata.UserData) (manifest *Manifest) {
+	manifest = &Manifest{
+		Targets: map[string][]*Target{},
+	}
+
+	// Initialize any slices we need.
+
+	if manifest.Targets[data.Install.Boot.Device] == nil {
+		manifest.Targets[data.Install.Boot.Device] = []*Target{}
+	}
+	if manifest.Targets[data.Install.Root.Device] == nil {
+		manifest.Targets[data.Install.Root.Device] = []*Target{}
+	}
+	if manifest.Targets[data.Install.Data.Device] == nil {
+		manifest.Targets[data.Install.Data.Device] = []*Target{}
+	}
+
+	bootTarget := &Target{
+		Device:    data.Install.Boot.Device,
+		Label:     constants.BootPartitionLabel,
+		Size:      data.Install.Boot.Size,
+		Force:     data.Install.Force,
+		Test:      false,
+		MountBase: "/tmp",
+	}
+
+	rootTarget := &Target{
+		Device:    data.Install.Root.Device,
+		Label:     constants.RootPartitionLabel,
+		Size:      data.Install.Root.Size,
+		Force:     data.Install.Force,
+		Test:      false,
+		MountBase: "/tmp",
+	}
+
+	dataTarget := &Target{
+		Device:    data.Install.Data.Device,
+		Label:     constants.DataPartitionLabel,
+		Size:      data.Install.Data.Size,
+		Force:     data.Install.Force,
+		Test:      false,
+		MountBase: "/tmp",
+	}
+
+	for _, target := range []*Target{bootTarget, rootTarget, dataTarget} {
+		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
+	}
+
+	return manifest
+}
+
+// Manifest represents the instructions for preparing all block devices
+// for an installation.
+type Manifest struct {
+	Targets map[string][]*Target
+}
+
+// Target represents an installation partition.
+type Target struct {
+	Label          string
+	MountBase      string
+	Device         string
+	FileSystemType string
+	PartitionName  string
+	Size           uint
+	Force          bool
+	Test           bool
+	BlockDevice    *blockdevice.BlockDevice
 }
 
 // Partition creates a new partition on the specified device
-// nolint: dupl
-func (d *Device) Partition() error {
+// nolint: dupl, gocyclo
+func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	var (
 		typeID             string
 		legacyBIOSBootable bool
 	)
-	switch d.Label {
+
+	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
+
+	var pt table.PartitionTable
+	if pt, err = bd.PartitionTable(true); err != nil {
+		return err
+	}
+
+	switch t.Label {
 	case constants.BootPartitionLabel:
 		// EFI System Partition
 		typeID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
@@ -329,26 +346,31 @@ func (d *Device) Partition() error {
 		return errors.Errorf("%s", "unknown partition label")
 	}
 
-	part, err := d.PartitionTable.Add(
-		uint64(d.Size),
+	part, err := pt.Add(
+		uint64(t.Size),
 		partition.WithPartitionType(typeID),
-		partition.WithPartitionName(d.Label),
+		partition.WithPartitionName(t.Label),
 		partition.WithLegacyBIOSBootableAttribute(legacyBIOSBootable),
-		partition.WithPartitionTest(d.Test),
+		partition.WithPartitionTest(t.Test),
 	)
 	if err != nil {
 		return err
 	}
 
-	d.PartitionName = d.Name + strconv.Itoa(int(part.No()))
+	if err = pt.Write(); err != nil {
+		return err
+	}
+
+	t.PartitionName = t.Device + strconv.Itoa(int(part.No()))
 
 	return nil
 }
 
 // Format creates a xfs filesystem on the device/partition
-func (d *Device) Format() error {
-	if d.Label == constants.BootPartitionLabel {
-		return vfat.MakeFS(d.PartitionName, vfat.WithLabel(d.Label))
+func (t *Target) Format() error {
+	log.Printf("formatting partition %s - %s\n", t.PartitionName, t.Label)
+	if t.Label == constants.BootPartitionLabel {
+		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
 	}
-	return xfs.MakeFS(d.PartitionName, xfs.WithLabel(d.Label), xfs.WithForce(d.Force))
+	return xfs.MakeFS(t.PartitionName, xfs.WithLabel(t.Label), xfs.WithForce(t.Force))
 }

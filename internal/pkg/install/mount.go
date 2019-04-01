@@ -5,8 +5,6 @@
 package install
 
 import (
-	"log"
-
 	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/mount"
@@ -18,17 +16,13 @@ import (
 // to the appropriate mountpoint.
 // TODO: See if we can consolidate this with rootfs/mount
 func Mount() (err error) {
-	log.Println("Discovering mountpoints")
-
 	var mp *mount.Points
 	if mp, err = mountpoints(); err != nil {
 		return errors.Errorf("error initializing block devices: %v", err)
 	}
 
-	log.Println("Attempting to mount filesystems")
 	iter := mp.Iter()
 	for iter.Next() {
-		log.Println("- ", iter.Value())
 		if err = mount.WithRetry(iter.Value(), mount.WithPrefix(constants.NewRoot)); err != nil {
 			return errors.Errorf("error mounting partitions: %v", err)
 		}

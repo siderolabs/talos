@@ -140,6 +140,12 @@ func (gpt *GPT) New() (table.PartitionTable, error) {
 		return nil, errors.Errorf("expected a write %d bytes, got %d", written, len(pmbr[446:]))
 	}
 
+	// Reset and seek to the beginning.
+	_, err = gpt.f.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	return gpt, nil
 }
 

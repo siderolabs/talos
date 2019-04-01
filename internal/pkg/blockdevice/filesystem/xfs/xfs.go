@@ -6,7 +6,6 @@
 package xfs
 
 import (
-	"os"
 	"os/exec"
 )
 
@@ -38,12 +37,9 @@ func MakeFS(partname string, setters ...Option) error {
 
 func cmd(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdout
 	err := cmd.Start()
 	if err != nil {
 		return err
 	}
-
 	return cmd.Wait()
 }

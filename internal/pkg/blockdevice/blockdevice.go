@@ -7,8 +7,8 @@ package blockdevice
 
 import (
 	"bytes"
-	"fmt"
 	"os"
+	"unsafe"
 
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt"
@@ -43,11 +43,14 @@ func Open(devname string, setters ...Option) (*BlockDevice, error) {
 
 	if opts.CreateGPT {
 		gpt := gpt.NewGPT(devname, f)
-		table, e := gpt.New()
-		if e != nil {
-			return nil, e
+		var pt table.PartitionTable
+		if pt, err = gpt.New(); err != nil {
+			return nil, err
 		}
-		bd.table = table
+		if err = pt.Write(); err != nil {
+			return nil, err
+		}
+		bd.table = pt
 	} else {
 		buf := make([]byte, 1)
 		// PMBR protective entry starts at 446. The partition type is at offset
@@ -75,7 +78,7 @@ func (bd *BlockDevice) Close() error {
 // PartitionTable returns the block device partition table.
 func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
 	if bd.table == nil {
-		return nil, fmt.Errorf("missing partition table")
+		return nil, errors.New("missing partition table")
 	}
 
 	if !read {
@@ -88,14 +91,20 @@ func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
 // RereadPartitionTable invokes the BLKRRPART ioctl to have the kernel read the
 // partition table.
 func (bd *BlockDevice) RereadPartitionTable() error {
-	unix.Sync()
-	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
-		return fmt.Errorf("re-read partition table: %v", ret)
-	}
+	// Flush the file buffers.
+	// NOTE(andrewrynhard): I'm not entirely sure we need this, but
+	// figured it wouldn't hurt.
 	if err := bd.f.Sync(); err != nil {
 		return err
 	}
-	unix.Sync()
+	// Flush the block device buffers.
+	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKFLSBUF, 0); ret != 0 {
+		return errors.Errorf("flush block device buffers: %v", ret)
+	}
+	// Reread the partition table.
+	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
+		return errors.Errorf("re-read partition table: %v", ret)
+	}
 
 	return nil
 }
@@ -103,4 +112,13 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 // Device returns the backing file for the block device
 func (bd *BlockDevice) Device() *os.File {
 	return bd.f
+}
+
+// Size returns the size of the block device in bytes.
+func (bd *BlockDevice) Size() (uint64, error) {
+	var devsize uint64
+	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&devsize))); errno != 0 {
+		return 0, errno
+	}
+	return devsize, nil
 }
