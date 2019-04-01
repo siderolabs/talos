@@ -10,6 +10,7 @@ import (
 	"github.com/autonomy/talos/internal/app/init/internal/platform/baremetal"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/aws"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/googlecloud"
+	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/packet"
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/vmware"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/kernel"
@@ -44,6 +45,8 @@ func NewPlatform() (p Platform, err error) {
 			p = &vmware.VMware{}
 		case "bare-metal":
 			p = &baremetal.BareMetal{}
+		case "packet":
+			p = &packet.Packet{}
 		default:
 			return nil, fmt.Errorf("platform not supported: %s", platform)
 		}
