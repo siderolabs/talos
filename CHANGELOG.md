@@ -1,3 +1,27 @@
+# [v0.1.0-alpha.20](https://github.com/autonomy/talos/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2019-04-02)
+
+
+### Bug Fixes
+
+* revert runc to v1.0.0-rc.6 ([#470](https://github.com/autonomy/talos/issues/470)) ([9bc2f8f](https://github.com/autonomy/talos/commit/9bc2f8f))
+
+
+### Features
+
+* add power off functionality ([#462](https://github.com/autonomy/talos/issues/462)) ([2e9a7ec](https://github.com/autonomy/talos/commit/2e9a7ec))
+* **initramfs:** add support for refreshing dhcp lease ([#454](https://github.com/autonomy/talos/issues/454)) ([75d1d89](https://github.com/autonomy/talos/commit/75d1d89))
+* add basic ntp implementation ([#459](https://github.com/autonomy/talos/issues/459)) ([3693cff](https://github.com/autonomy/talos/commit/3693cff))
+* add packet support ([#473](https://github.com/autonomy/talos/issues/473)) ([19f712e](https://github.com/autonomy/talos/commit/19f712e))
+* dd bootloader components ([#438](https://github.com/autonomy/talos/issues/438)) ([226697e](https://github.com/autonomy/talos/commit/226697e))
+* install bootloader to block device ([#455](https://github.com/autonomy/talos/issues/455)) ([31a00ef](https://github.com/autonomy/talos/commit/31a00ef))
+* remove DenyEscalatingExec admission plugin ([#457](https://github.com/autonomy/talos/issues/457)) ([6ae6118](https://github.com/autonomy/talos/commit/6ae6118))
+* upgrade containerd to v1.2.5 ([#463](https://github.com/autonomy/talos/issues/463)) ([30774fc](https://github.com/autonomy/talos/commit/30774fc))
+* upgrade Kubernetes to v1.14.0 ([#466](https://github.com/autonomy/talos/issues/466)) ([50253b8](https://github.com/autonomy/talos/commit/50253b8))
+* upgrade Linux to v4.19.31 ([#464](https://github.com/autonomy/talos/issues/464)) ([da21b90](https://github.com/autonomy/talos/commit/da21b90))
+* upgrade runc to v1.0.0-rc.7 ([#469](https://github.com/autonomy/talos/issues/469)) ([8dba7db](https://github.com/autonomy/talos/commit/8dba7db))
+
+
+
 # [v0.1.0-alpha.19](https://github.com/autonomy/talos/compare/v0.1.0-alpha.18...v0.1.0-alpha.19) (2019-03-11)
 
 
