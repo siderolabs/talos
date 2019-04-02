@@ -5,10 +5,8 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/spf13/cobra"
@@ -28,23 +26,19 @@ var versionCmd = &cobra.Command{
 			version.PrintShortVersion()
 		} else {
 			if err := version.PrintLongVersion(); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				helpers.Fatalf("error printing long version: %s", err)
 			}
 		}
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error getting client credentials: %s", err)
 		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error constructing client: %s", err)
 		}
 		if err := c.Version(); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error getting version: %s", err)
 		}
 	},
 }

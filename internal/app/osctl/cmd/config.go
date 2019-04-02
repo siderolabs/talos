@@ -6,11 +6,11 @@ package cmd
 
 import (
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"os"
 
 	"github.com/autonomy/talos/internal/app/osctl/internal/client/config"
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/spf13/cobra"
 )
 
@@ -28,25 +28,20 @@ var configTargetCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			if err := cmd.Usage(); err != nil {
-				os.Exit(1)
-			}
+			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 		target = args[0]
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error reading config: %s", err)
 		}
 		if c.Context == "" {
-			fmt.Println("no context is set")
-			os.Exit(1)
+			helpers.Fatalf("no context is set")
 		}
 		c.Contexts[c.Context].Target = target
 		if err := c.Save(talosconfig); err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error writing config: %s", err)
 		}
 	},
 }
@@ -58,21 +53,17 @@ var configContextCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			if err := cmd.Usage(); err != nil {
-				os.Exit(1)
-			}
+			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 		context := args[0]
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error reading config: %s", err)
 		}
 		c.Context = context
 		if err := c.Save(talosconfig); err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error writing config: %s", err)
 		}
 	},
 }
@@ -84,31 +75,25 @@ var configAddCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			if err := cmd.Usage(); err != nil {
-				os.Exit(1)
-			}
+			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 		context := args[0]
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error reading config: %s", err)
 		}
 		caBytes, err := ioutil.ReadFile(ca)
 		if err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error reading CA: %s", err)
 		}
 		crtBytes, err := ioutil.ReadFile(crt)
 		if err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error reading certificate: %s", err)
 		}
 		keyBytes, err := ioutil.ReadFile(key)
 		if err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error reading key: %s", err)
 		}
 		newContext := &config.Context{
 			CA:  base64.StdEncoding.EncodeToString(caBytes),
@@ -120,28 +105,16 @@ var configAddCmd = &cobra.Command{
 		}
 		c.Contexts[context] = newContext
 		if err := c.Save(talosconfig); err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
+			helpers.Fatalf("error writing config: %s", err)
 		}
 	},
 }
 
 func init() {
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
-	if err := configAddCmd.MarkFlagRequired("ca"); err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
-	}
-	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
-	if err := configAddCmd.MarkFlagRequired("crt"); err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
-	}
-	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
-	if err := configAddCmd.MarkFlagRequired("key"); err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
-	}
+	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
+	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
+	helpers.Should(configAddCmd.MarkFlagRequired("key"))
 	configCmd.AddCommand(configContextCmd, configTargetCmd, configAddCmd)
 	rootCmd.AddCommand(configCmd)
 }
