@@ -5,10 +5,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/app/osd/proto"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	criconstants "github.com/containerd/cri/pkg/constants"
@@ -22,23 +22,19 @@ var logsCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			if err := cmd.Usage(); err != nil {
-				os.Exit(1)
-			}
+			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error getting client credentials: %s", err)
 		}
 		if target != "" {
 			creds.Target = target
 		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
-			fmt.Print(err)
-			os.Exit(1)
+			helpers.Fatalf("error constructing client: %s", err)
 		}
 		var namespace string
 		if kubernetes {
@@ -51,8 +47,7 @@ var logsCmd = &cobra.Command{
 			Namespace: namespace,
 		}
 		if err := c.Logs(r); err != nil {
-			fmt.Print(err)
-			os.Exit(1)
+			helpers.Fatalf("error fetching logs: %s", err)
 		}
 	},
 }

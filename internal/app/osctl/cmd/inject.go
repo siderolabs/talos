@@ -7,8 +7,8 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/spf13/cobra"
@@ -30,8 +30,7 @@ var injectOSCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := inject(args, crt, key, injectOSData); err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
+			helpers.Fatalf("%s", err)
 		}
 	},
 }
@@ -44,8 +43,7 @@ var injectIdentityCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := inject(args, crt, key, injectIdentityData); err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
+			helpers.Fatalf("%s", err)
 		}
 	},
 }
@@ -58,8 +56,7 @@ var injectKubernetesCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := inject(args, crt, key, injectKubernetesData); err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
+			helpers.Fatalf("%s", err)
 		}
 	},
 }
@@ -146,16 +143,9 @@ func newSecurity() *userdata.Security {
 
 func init() {
 	injectCmd.PersistentFlags().StringVar(&crt, "crt", "", "the path to the PKI certificate")
-	if err := injectCmd.MarkPersistentFlagRequired("crt"); err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
+	helpers.Should(injectCmd.MarkPersistentFlagRequired("crt"))
 	injectCmd.PersistentFlags().StringVar(&key, "key", "", "the path to the PKI key")
-	if err := injectCmd.MarkPersistentFlagRequired("key"); err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-
+	helpers.Should(injectCmd.MarkPersistentFlagRequired("key"))
 	injectCmd.AddCommand(injectOSCmd, injectIdentityCmd, injectKubernetesCmd)
 	rootCmd.AddCommand(injectCmd)
 }

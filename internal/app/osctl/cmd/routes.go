@@ -6,10 +6,8 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/spf13/cobra"
 )
@@ -22,21 +20,18 @@ var routesCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error getting client credentials: %s", err)
 		}
 		if target != "" {
 			creds.Target = target
 		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error constructing client: %s", err)
 		}
 
 		if err := c.Routes(); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error getting routes: %s", err)
 		}
 	},
 }

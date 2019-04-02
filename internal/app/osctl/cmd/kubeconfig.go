@@ -6,11 +6,8 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
-	"os"
-
 	"github.com/autonomy/talos/internal/app/osctl/internal/client"
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/spf13/cobra"
 )
@@ -23,15 +20,14 @@ var kubeconfigCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			helpers.Fatalf("error getting client credentials: %s", err)
 		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
-			log.Fatal(err)
+			helpers.Fatalf("error constructing client: %s", err)
 		}
 		if err := c.Kubeconfig(); err != nil {
-			os.Exit(1)
+			helpers.Fatalf("error fetching kubeconfig: %s", err)
 		}
 	},
 }

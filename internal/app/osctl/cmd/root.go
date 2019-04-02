@@ -5,11 +5,11 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"os/user"
 	"path"
 
+	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/spf13/cobra"
 )
@@ -52,7 +52,6 @@ func Execute() {
 	}
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		helpers.Fatalf("%s", err)
 	}
 }
