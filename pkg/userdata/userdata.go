@@ -66,8 +66,30 @@ type KubernetesSecurity struct {
 
 // Networking represents the set of options available to configure networking.
 type Networking struct {
-	OS         struct{} `yaml:"os"`
 	Kubernetes struct{} `yaml:"kubernetes"`
+	OS         *OSNet   `yaml:"os"`
+}
+
+// OSNet represents the network interfaces present on the host
+type OSNet struct {
+	Devices []Device `yaml:"devices"`
+}
+
+// Device represents a network interface
+type Device struct {
+	Interface string `yaml:"interface"`
+	CIDR      string `yaml:"cidr"`
+	DHCP      bool   `yaml:"dhcp"`
+	Bond      *Bond  `yaml:"bond"`
+}
+
+// Bond contains the various options for configuring a
+// bonded interface
+type Bond struct {
+	Mode       string   `yaml:"mode"`
+	HashPolicy string   `yaml:"hashpolicy"`
+	LACPRate   string   `yaml:"lacprate"`
+	Interfaces []string `yaml:"interfaces"`
 }
 
 // Services represents the set of services available to configure.
