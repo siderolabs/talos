@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
+	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/spf13/cobra"
 )

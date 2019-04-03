@@ -6,32 +6,36 @@
 package cmd
 
 import (
-	"github.com/autonomy/talos/internal/app/osctl/internal/client"
-	"github.com/autonomy/talos/internal/app/osctl/internal/helpers"
+	"github.com/autonomy/talos/cmd/osctl/pkg/client"
+	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/spf13/cobra"
 )
 
-// kubeconfigCmd represents the kubeconfig command
-var kubeconfigCmd = &cobra.Command{
-	Use:   "kubeconfig",
-	Short: "Download the admin.conf from the node",
+// rebootCmd represents the reboot command
+var rebootCmd = &cobra.Command{
+	Use:   "reboot",
+	Short: "Reboot a node",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		creds, err := client.NewDefaultClientCredentials(talosconfig)
 		if err != nil {
 			helpers.Fatalf("error getting client credentials: %s", err)
 		}
+		if target != "" {
+			creds.Target = target
+		}
 		c, err := client.NewClient(constants.OsdPort, creds)
 		if err != nil {
 			helpers.Fatalf("error constructing client: %s", err)
 		}
-		if err := c.Kubeconfig(); err != nil {
-			helpers.Fatalf("error fetching kubeconfig: %s", err)
+		if err := c.Reboot(); err != nil {
+			helpers.Fatalf("error executing reboot: %s", err)
 		}
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(kubeconfigCmd)
+	rebootCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
+	rootCmd.AddCommand(rebootCmd)
 }

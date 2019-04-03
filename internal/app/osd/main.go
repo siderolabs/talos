@@ -12,7 +12,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/grpc/factory"
 	"github.com/autonomy/talos/internal/pkg/grpc/tls"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

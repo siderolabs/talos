@@ -10,7 +10,7 @@ import (
 
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/kernel"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 

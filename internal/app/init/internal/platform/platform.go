@@ -14,7 +14,7 @@ import (
 	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/vmware"
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/kernel"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 )
 
 // Platform is an interface describing a platform.

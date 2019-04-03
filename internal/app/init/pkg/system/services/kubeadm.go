@@ -24,7 +24,7 @@ import (
 	"github.com/autonomy/talos/internal/pkg/constants"
 	"github.com/autonomy/talos/internal/pkg/crypto/x509"
 	"github.com/autonomy/talos/internal/pkg/grpc/middleware/auth/basic"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"

@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 )
 
 type singleton struct {

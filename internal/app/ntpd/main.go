@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/beevik/ntp"
 )
 

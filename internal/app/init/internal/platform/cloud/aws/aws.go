@@ -12,7 +12,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/fullsailor/pkcs7"
 	"golang.org/x/sys/unix"
 )

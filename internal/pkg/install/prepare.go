@@ -19,8 +19,8 @@ import (
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
 	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt/partition"
 	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/userdata"
 	"github.com/autonomy/talos/internal/pkg/version"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )

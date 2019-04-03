@@ -19,7 +19,7 @@ import (
 	ctrdrunner "github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/autonomy/talos/internal/app/init/pkg/system/services"
 	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/userdata"
+	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/containerd/containerd"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/pkg/errors"

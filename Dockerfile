@@ -69,6 +69,8 @@ RUN mkdir -p ${GOPATH}
 ENV GO111MODULE on
 ENV CGO_ENABLED 0
 WORKDIR /src
+COPY ./cmd ./cmd
+COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY ./go.mod ./
 COPY ./go.sum ./
@@ -267,7 +269,7 @@ FROM base AS osctl-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
-WORKDIR /src/internal/app/osctl
+WORKDIR /src/cmd/osctl
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -a -ldflags "-s -w -linkmode external -extldflags \"-static\" -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 FROM scratch AS osctl-linux-amd64
@@ -277,7 +279,7 @@ FROM base AS osctl-darwin-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
-WORKDIR /src/internal/app/osctl
+WORKDIR /src/cmd/osctl
 RUN GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 FROM scratch AS osctl-darwin-amd64
