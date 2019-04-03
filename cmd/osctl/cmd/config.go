@@ -111,10 +111,12 @@ var configAddCmd = &cobra.Command{
 }
 
 func init() {
+	configCmd.AddCommand(configContextCmd, configTargetCmd, configAddCmd)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
+	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
+	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
 	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
 	helpers.Should(configAddCmd.MarkFlagRequired("key"))
-	configCmd.AddCommand(configContextCmd, configTargetCmd, configAddCmd)
 	rootCmd.AddCommand(configCmd)
 }
