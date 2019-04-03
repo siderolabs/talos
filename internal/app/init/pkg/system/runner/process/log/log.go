@@ -11,7 +11,7 @@ import (
 	"path"
 	"sync"
 
-	filechunker "github.com/autonomy/talos/internal/pkg/chunker/file"
+	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 )
 
 var instance = map[string]*Log{}

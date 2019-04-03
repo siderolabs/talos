@@ -8,13 +8,13 @@ package services
 import (
 	"fmt"
 
-	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
-	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
-	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/containerd"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // NTPd implements the Service interface. It serves as the concrete type with

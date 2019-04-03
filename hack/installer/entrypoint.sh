@@ -124,7 +124,7 @@ DEFAULT Talos
 LABEL Talos
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 console=ttyS0,9600 talos.autonomy.io/userdata=${TALOS_USERDATA} talos.autonomy.io/platform=${TALOS_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 console=ttyS0,9600 talos.userdata=${TALOS_USERDATA} talos.platform=${TALOS_PLATFORM}
 EOF
 }
 
@@ -146,7 +146,7 @@ RAW=false
 TOTAL_SIZE=$(size_gz /generated/rootfs.tar.gz)
 ROOTFS_SIZE=$(tar -tvf /generated/rootfs.tar.gz --exclude=./var | awk '{s+=$3} END { printf "%.0f", s*0.000001}')
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
-# TODO(andrewrynhard): Add slub_debug=P. See https://github.com/autonomy/talos/pull/157.
+# TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
 KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
 EXTRA_KERNEL_PARAMS=""
 
@@ -176,11 +176,11 @@ case "$1" in
           ;;
         p )
           TALOS_PLATFORM=${OPTARG}
-          echo "Using kernel parameter talos.autonomy.io/platform=${TALOS_PLATFORM}"
+          echo "Using kernel parameter talos.platform=${TALOS_PLATFORM}"
           ;;
         u )
           TALOS_USERDATA=${OPTARG}
-          echo "Using kernel parameter talos.autonomy.io/userdata=${TALOS_USERDATA}"
+          echo "Using kernel parameter talos.userdata=${TALOS_USERDATA}"
           ;;
         \? )
           echo "Invalid Option: -${OPTARG}" 1>&2

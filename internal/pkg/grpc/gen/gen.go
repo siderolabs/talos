@@ -10,10 +10,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/autonomy/talos/internal/app/trustd/proto"
-	"github.com/autonomy/talos/internal/pkg/crypto/x509"
-	"github.com/autonomy/talos/internal/pkg/grpc/middleware/auth/basic"
-	"github.com/autonomy/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/app/trustd/proto"
+	"github.com/talos-systems/talos/internal/pkg/crypto/x509"
+	"github.com/talos-systems/talos/internal/pkg/grpc/middleware/auth/basic"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 )
 

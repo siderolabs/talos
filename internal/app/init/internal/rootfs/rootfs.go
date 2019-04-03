@@ -11,14 +11,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/autonomy/talos/internal/app/init/internal/rootfs/cni"
-	"github.com/autonomy/talos/internal/app/init/internal/rootfs/etc"
-	"github.com/autonomy/talos/internal/app/init/internal/rootfs/proc"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/crypto/x509"
-	"github.com/autonomy/talos/internal/pkg/grpc/gen"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/cni"
+	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/etc"
+	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/proc"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/crypto/x509"
+	"github.com/talos-systems/talos/internal/pkg/grpc/gen"
+	"github.com/talos-systems/talos/pkg/userdata"
 	yaml "gopkg.in/yaml.v2"
 )
 

@@ -10,8 +10,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/autonomy/talos/internal/pkg/serde"
 	"github.com/google/uuid"
+	"github.com/talos-systems/talos/internal/pkg/serde"
 	"golang.org/x/text/encoding/unicode"
 )
 

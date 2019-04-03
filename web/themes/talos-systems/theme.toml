@@ -3,9 +3,9 @@
 
 name = "Autonomy"
 license = "Mozilla Public License 2.0"
-licenselink = "https://github.com/autonomy/hugo-theme-autonomy/blob/master/LICENSE"
+licenselink = "https://github.com/talos-systems/hugo-theme-talos/blob/master/LICENSE"
 description = "A Hugo theme for Autonomy websites"
-homepage = "https://github.com/autonomy/hugo-theme-autonomy"
+homepage = "https://github.com/talos-systems/hugo-theme-talos"
 tags = []
 features = []
 min_version = "0.26"

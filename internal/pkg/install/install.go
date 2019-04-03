@@ -16,10 +16,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/bootloader/syslinux"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Install fetches the necessary data locations and copies or extracts

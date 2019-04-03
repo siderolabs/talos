@@ -12,16 +12,16 @@ import (
 	"strconv"
 	"unsafe"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/vfat"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt/partition"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/version"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/vfat"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/xfs"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/table"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
 )
 
@@ -41,7 +41,7 @@ const (
 var (
 	// DefaultURLBase is the base URL for all default artifacts.
 	// TODO(andrewrynhard): We need to setup infrastructure for publishing artifacts and not depend on GitHub.
-	DefaultURLBase = "https://github.com/autonomy/talos/releases/download/" + version.Tag
+	DefaultURLBase = "https://github.com/talos-systems/talos/releases/download/" + version.Tag
 
 	// DefaultRootfsURL is the URL to the rootfs.
 	DefaultRootfsURL = DefaultURLBase + "/rootfs.tar.gz"

@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 GIT_SHORT_SHA = $(shell git rev-parse --short=7 HEAD)
 GIT_DIRTY = $(shell [[ -n `git status -s` ]] && echo -dirty)
-OS_IMAGE_NAME ?= autonomy/talos-os
+OS_IMAGE_NAME ?= talos-systems/talos-os
 TAG = $(GIT_SHORT_SHA)$(GIT_DIRTY)
 DOCKER_COMPOSE ?= IMAGE=$(OS_IMAGE_NAME) TAG=$(TAG) docker-compose
 IP_ADDR ?= 10.5.0.6

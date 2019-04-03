@@ -13,12 +13,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/iso9660"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/vfat"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/iso9660"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/vfat"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/xfs"
 )
 
 // ProbedBlockDevice represents a probed block device.

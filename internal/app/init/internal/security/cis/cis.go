@@ -13,7 +13,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/autonomy/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 
 	v1 "k8s.io/api/core/v1"
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"

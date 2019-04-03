@@ -9,9 +9,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/autonomy/talos/cmd/osctl/pkg/client/config"
-	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
 // configCmd represents the config command.

@@ -9,15 +9,15 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/filesystem/xfs"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
-	gptpartition "github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt/partition"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/util"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/mount"
-	"github.com/autonomy/talos/internal/pkg/mount/cgroups"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/xfs"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
+	gptpartition "github.com/talos-systems/talos/internal/pkg/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/util"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/cgroups"
 	"golang.org/x/sys/unix"
 )
 

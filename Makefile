@@ -38,7 +38,7 @@ all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 osinstall-l
 builddeps: gitmeta buildctl
 
 gitmeta:
-	GO111MODULE=off go get github.com/autonomy/gitmeta
+	GO111MODULE=off go get github.com/talos-systems/gitmeta
 
 buildctl:
 	@wget -qO - $(BUILDCTL_ARCHIVE) | \
@@ -137,13 +137,13 @@ proto: buildkitd
 		$(COMMON_ARGS)
 
 image-gcloud: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build/gcloud:/out --privileged $(DOCKER_ARGS) autonomy/talos:$(TAG) image -l \
+	@docker run --rm -v /dev:/dev -v $(PWD)/build/gcloud:/out --privileged $(DOCKER_ARGS) talos-systems/talos:$(TAG) image -l \
 	-f -p googlecloud -u none -e 'random.trust_cpu=on'
 	@mv $(PWD)/build/gcloud/image.raw $(PWD)/build/gcloud/disk.raw
 	@tar -C $(PWD)/build/gcloud -Sczf $(PWD)/build/gcloud/talos.tar.gz disk.raw
 
 image-vanilla: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/talos:$(TAG) image -l
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) talos-systems/talos:$(TAG) image -l
 
 .PHONY: docs
 docs: buildkitd

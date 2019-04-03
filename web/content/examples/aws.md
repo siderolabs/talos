@@ -17,7 +17,7 @@ docker run \
     --volume $HOME/.aws/credentials:/root/.aws/credentials \
     --env AWS_DEFAULT_PROFILE=${PROFILE} \
     --env AWS_DEFAULT_REGION=${REGION} \
-    autonomy/talos:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}
+    talos-systems/talos:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}
 ```
 
 Once the AMI is created, you can now start an EC2 instance using the AMI ID.

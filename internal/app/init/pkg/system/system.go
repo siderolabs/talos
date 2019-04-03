@@ -8,8 +8,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
-	"github.com/autonomy/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 type singleton struct {

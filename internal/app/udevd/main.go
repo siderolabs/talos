@@ -12,9 +12,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/talos/internal/app/udevd/internal/drivers/scsi"
-	"github.com/autonomy/talos/internal/app/udevd/internal/uevent"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/udevd/internal/drivers/scsi"
+	"github.com/talos-systems/talos/internal/app/udevd/internal/uevent"
 )
 
 func init() {

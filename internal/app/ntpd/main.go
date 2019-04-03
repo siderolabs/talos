@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/beevik/ntp"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // https://access.redhat.com/solutions/39194

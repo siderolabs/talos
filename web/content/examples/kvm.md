@@ -18,7 +18,7 @@ docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- autonomy/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml
+ talos-systems/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml
 ```
 
 {{% note %}}`http://${IP}:8080/master.yaml` should be reachable by the VM and contain a valid master configuration file.{{% /note %}}
@@ -51,7 +51,7 @@ docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- autonomy/talos:latest image -b /dev/sdc -f -p bare-metal -u http://${IP}:8080/worker.yaml
+ talos-systems/talos:latest image -b /dev/sdc -f -p bare-metal -u http://${IP}:8080/worker.yaml
 ```
 
 {{% note %}}`http://${IP}:8080/worker.yaml` should be reachable by the VM and contain a valid worker configuration file.{{% /note %}}

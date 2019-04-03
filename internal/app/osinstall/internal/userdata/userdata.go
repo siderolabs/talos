@@ -7,7 +7,7 @@ package userdata
 import (
 	"strings"
 
-	ud "github.com/autonomy/talos/pkg/userdata"
+	ud "github.com/talos-systems/talos/pkg/userdata"
 )
 
 // UserData provides an abstraction to call the appropriate method to

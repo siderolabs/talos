@@ -14,9 +14,9 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/autonomy/talos/cmd/osctl/pkg/client/config"
-	"github.com/autonomy/talos/internal/app/osd/proto"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

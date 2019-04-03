@@ -83,7 +83,7 @@ RUN go mod verify
 FROM base AS udevd-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/udevd
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /udevd
 RUN chmod +x /udevd
@@ -102,7 +102,7 @@ FROM ${KERNEL_IMAGE} as kernel
 FROM base AS initramfs-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/init
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
 RUN chmod +x /init
@@ -245,7 +245,7 @@ WORKDIR /web
 COPY ./web ./
 RUN mkdir /docs
 RUN hugo --destination=/docs --verbose
-RUN echo "talos.autonomy.io" > /docs/CNAME
+RUN echo "docs.talos-systems.com" > /docs/CNAME
 FROM scratch AS docs
 COPY --from=docs-build /docs /docs
 
@@ -254,7 +254,7 @@ COPY --from=docs-build /docs /docs
 FROM base AS osd-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/osd
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
 RUN chmod +x /osd
@@ -268,7 +268,7 @@ ENTRYPOINT ["/osd"]
 FROM base AS osctl-linux-amd64-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -a -ldflags "-s -w -linkmode external -extldflags \"-static\" -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
@@ -278,7 +278,7 @@ COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /osctl-linux-amd64
 FROM base AS osctl-darwin-amd64-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
 RUN GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
@@ -290,7 +290,7 @@ COPY --from=osctl-darwin-amd64-build /osctl-darwin-amd64 /osctl-darwin-amd64
 FROM base AS trustd-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/trustd
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
 RUN chmod +x /trustd
@@ -304,7 +304,7 @@ ENTRYPOINT ["/trustd"]
 FROM base AS proxyd-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/proxyd
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
 RUN chmod +x /proxyd
@@ -318,7 +318,7 @@ ENTRYPOINT ["/proxyd"]
 FROM base AS blockd-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/blockd
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /blockd
 RUN chmod +x /blockd
@@ -332,7 +332,7 @@ ENTRYPOINT ["/blockd"]
 FROM base AS osinstall-linux-amd64-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/osinstall
 RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osinstall-linux-amd64
 RUN chmod +x /osinstall-linux-amd64
@@ -343,7 +343,7 @@ COPY --from=osinstall-linux-amd64-build /osinstall-linux-amd64 /osinstall-linux-
 FROM base AS ntpd-build
 ARG SHA
 ARG TAG
-ARG VERSION_PKG="github.com/autonomy/talos/internal/pkg/version"
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/ntpd
 RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
 RUN chmod +x /ntpd

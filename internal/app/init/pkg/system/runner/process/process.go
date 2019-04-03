@@ -12,10 +12,10 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
-	processlogger "github.com/autonomy/talos/internal/app/init/pkg/system/runner/process/log"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
+	processlogger "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process/log"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Process is a runner.Runner that runs a process on the host.

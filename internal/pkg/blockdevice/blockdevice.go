@@ -10,9 +10,9 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/table"
-	"github.com/autonomy/talos/internal/pkg/blockdevice/table/gpt"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/table"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/table/gpt"
 
 	"golang.org/x/sys/unix"
 )
