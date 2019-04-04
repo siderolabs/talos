@@ -187,7 +187,10 @@ udevd: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-osd: buildkitd
+images:
+	mkdir -p images
+
+osd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -196,7 +199,7 @@ osd: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-trustd: buildkitd
+trustd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -205,7 +208,7 @@ trustd: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-proxyd: buildkitd
+proxyd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -214,7 +217,7 @@ proxyd: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-blockd: buildkitd
+blockd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -223,7 +226,7 @@ blockd: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-ntpd: buildkitd
+ntpd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
@@ -232,19 +235,19 @@ ntpd: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-hyperkube:
+hyperkube: images
 	@docker pull k8s.gcr.io/$@:v1.14.0
 	@docker save k8s.gcr.io/$@:v1.14.0 -o ./images/$@.tar
 
-etcd:
+etcd: images
 	@docker pull k8s.gcr.io/$@:3.3.10
 	@docker save k8s.gcr.io/$@:3.3.10 -o ./images/$@.tar
 
-coredns:
+coredns: images
 	@docker pull k8s.gcr.io/$@:1.3.1
 	@docker save k8s.gcr.io/$@:1.3.1 -o ./images/$@.tar
 
-pause:
+pause: images
 	@docker pull k8s.gcr.io/$@:3.1
 	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
 
