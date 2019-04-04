@@ -1,6 +1,6 @@
 build
 cache
-images/*.tar
+images
 vendor
 .vscode
 
