@@ -9,7 +9,7 @@ menu:
     weight: 40
 ---
 
-Security is one of the highest priorities within Autonomy.
+Security is one of the highest priorities within Talos.
 To run a Kubernetes cluster a certain level of trust is required to operate a cluster.
 For example, orchestrating the bootstrap of a highly available control plane requires the distribution of sensitive PKI data.
 
