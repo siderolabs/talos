@@ -6,6 +6,7 @@ package services
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -114,7 +115,11 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	ignorePreflightErrors := []string{"cri", "kubeletversion", "numcpu", "requiredipvskernelmodulesavailable"}
 	ignorePreflightErrors = append(ignorePreflightErrors, data.Services.Kubeadm.IgnorePreflightErrors...)
 	ignore := "--ignore-preflight-errors=" + strings.Join(ignorePreflightErrors, ",")
-	encoded := hex.EncodeToString([]byte(data.Services.Kubeadm.CertificateKey))
+
+	// sha256 provided key to make it exactly 32 bytes, as required by kubeadm:
+	//   https://github.com/kubernetes/kubernetes/blob/master/cmd/kubeadm/app/constants/constants.go : CertificateKeySize
+	hashedKey := sha256.Sum256([]byte(data.Services.Kubeadm.CertificateKey))
+	encoded := hex.EncodeToString(hashedKey[:])
 	certificateKey := "--certificate-key=" + encoded
 
 	switch {
