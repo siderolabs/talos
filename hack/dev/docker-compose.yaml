@@ -21,7 +21,7 @@ services:
       talosbr:
 
   master-1:
-    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    image: ${IMAGE:-talos-systems/talos-os}:${TAG}
     container_name: master-1
     privileged: true
     security_opt:
@@ -45,7 +45,7 @@ services:
         ipv4_address: 10.5.0.6
 
   master-2:
-    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    image: ${IMAGE:-talos-systems/talos-os}:${TAG}
     container_name: master-2
     privileged: true
     security_opt:
@@ -69,7 +69,7 @@ services:
         ipv4_address: 10.5.0.7
 
   master-3:
-    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    image: ${IMAGE:-talos-systems/talos-os}:${TAG}
     container_name: master-3
     privileged: true
     security_opt:
@@ -93,7 +93,7 @@ services:
         ipv4_address: 10.5.0.8
 
   worker-1:
-    image: ${IMAGE:-autonomy/talos-os}:${TAG}
+    image: ${IMAGE:-talos-systems/talos-os}:${TAG}
     container_name: worker-1
     privileged: true
     security_opt:

@@ -1,10 +1,9 @@
-module github.com/autonomy/talos
+module github.com/talos-systems/talos
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/Microsoft/hcsshim v0.7.0 // indirect
-	github.com/autonomy/dhcp v0.0.0-20190227141242-cedea8519f96
 	github.com/beevik/ntp v0.2.0
 	github.com/containerd/cgroups v0.0.0-20180905221500-58556f5ad844
 	github.com/containerd/containerd v1.2.5
@@ -54,11 +53,11 @@ require (
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
+	github.com/talos-systems/dhcp v0.0.0-20190227141242-cedea8519f96
 	github.com/u-root/u-root v4.0.0+incompatible // indirect
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
-	golang.org/x/net v0.0.0-20190313220215-9f648a60d977
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20190312061237-fead79001313
 	golang.org/x/text v0.3.0

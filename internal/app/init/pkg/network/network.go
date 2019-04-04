@@ -8,9 +8,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/autonomy/dhcp/dhcpv4"
-	"github.com/autonomy/dhcp/dhcpv4/client4"
-	"github.com/autonomy/dhcp/netboot"
+	"github.com/talos-systems/dhcp/dhcpv4"
+	"github.com/talos-systems/dhcp/dhcpv4/client4"
+	"github.com/talos-systems/dhcp/netboot"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 )

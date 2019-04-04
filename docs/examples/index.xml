@@ -2,33 +2,33 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Examples on Talos</title>
-    <link>https://talos.autonomy.io/examples/</link>
+    <link>https://docs.talos-systems.com/examples/</link>
     <description>Recent content in Examples on Talos</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 29 Oct 2018 19:40:55 -0700</lastBuildDate>
     
-	<atom:link href="https://talos.autonomy.io/examples/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://docs.talos-systems.com/examples/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>AWS</title>
-      <link>https://talos.autonomy.io/examples/aws/</link>
+      <link>https://docs.talos-systems.com/examples/aws/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://talos.autonomy.io/examples/aws/</guid>
+      <guid>https://docs.talos-systems.com/examples/aws/</guid>
       <description>First, create the AMI:
-docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ autonomy/talos:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
+docker run \ --rm \ --volume $HOME/.aws/credentials:/root/.aws/credentials \ --env AWS_DEFAULT_PROFILE=${PROFILE} \ --env AWS_DEFAULT_REGION=${REGION} \ talos-systems/talos:latest ami -var regions=${COMMA_SEPARATED_LIST_OF_REGIONS}  Once the AMI is created, you can now start an EC2 instance using the AMI ID. Provide the proper configuration as the instance&amp;rsquo;s user data.
  An official Terraform module is currently being developed, stay tuned!
  </description>
     </item>
     
     <item>
       <title>Google Cloud</title>
-      <link>https://talos.autonomy.io/examples/gcloud/</link>
+      <link>https://docs.talos-systems.com/examples/gcloud/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://talos.autonomy.io/examples/gcloud/</guid>
+      <guid>https://docs.talos-systems.com/examples/gcloud/</guid>
       <description>First, create the Google Cloud compatible image:
 make image-gcloud  Upload the image with:
 gsutil cp /path/to/talos/build/gcloud/talos.tar.gz gs://&amp;lt;gcloud bucket name&amp;gt;  Create a custom google cloud image with:
@@ -38,24 +38,24 @@ Note: Further exploration is needed to see if we can use the &amp;ldquo;Startup 
     
     <item>
       <title>KVM</title>
-      <link>https://talos.autonomy.io/examples/kvm/</link>
+      <link>https://docs.talos-systems.com/examples/kvm/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://talos.autonomy.io/examples/kvm/</guid>
+      <guid>https://docs.talos-systems.com/examples/kvm/</guid>
       <description>Creating a Master Node On the KVM host, install a master node to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ talos-systems/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml  Note: http://${IP}:8080/master.yaml should be reachable by the VM and contain a valid master configuration file.
  Now, create the VM:
 virt-install \ -n master \ --description &amp;quot;Kubernetes master node.&amp;quot; \ --os-type=Linux \ --os-variant=generic \ --virt-type=kvm \ --cpu=host \ --vcpus=2 \ --ram=4096 \ --disk path=/dev/sdb \ --network bridge=br0,model=e1000,mac=52:54:00:A8:4C:E1 \ --graphics none \ --boot hd \ --rng /dev/random  Creating a Worker Node On the KVM host, install a worker node to an available block device:</description>
     </item>
     
     <item>
       <title>Xen</title>
-      <link>https://talos.autonomy.io/examples/xen/</link>
+      <link>https://docs.talos-systems.com/examples/xen/</link>
       <pubDate>Tue, 06 Nov 2018 06:25:46 -0800</pubDate>
       
-      <guid>https://talos.autonomy.io/examples/xen/</guid>
+      <guid>https://docs.talos-systems.com/examples/xen/</guid>
       <description>Creating a Master Node On Dom0, install Talos to an available block device:
-docker run \ --rm \ --privileged \ --volume /dev:/dev \ autonomy/talos:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
+docker run \ --rm \ --privileged \ --volume /dev:/dev \ talos-systems/talos:latest image -b /dev/sdb  Save the following as /etc/xen/master.cfg
 name = &amp;quot;master&amp;quot; builder=&#39;hvm&#39; bootloader = &amp;quot;/bin/pygrub&amp;quot; firmware_override = &amp;quot;/usr/lib64/xen/boot/hvmloader&amp;quot; vcpus=2 memory = 4096 serial = &amp;quot;pty&amp;quot; kernel = &amp;quot;/var/lib/xen/talos/vmlinuz&amp;quot; ramdisk = &amp;quot;/var/lib/xen/talos/initramfs.xz&amp;quot; disk = [ &#39;phy:/dev/sdb,xvda,w&#39;, ] vif = [ &#39;mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000&#39;, ] extra = &amp;quot;consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.</description>
     </item>
     

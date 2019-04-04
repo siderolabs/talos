@@ -8,12 +8,12 @@ import (
 	"flag"
 	"log"
 
-	"github.com/autonomy/talos/internal/app/trustd/internal/reg"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/grpc/factory"
-	"github.com/autonomy/talos/internal/pkg/grpc/middleware/auth/basic"
-	"github.com/autonomy/talos/internal/pkg/grpc/tls"
-	"github.com/autonomy/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
+	"github.com/talos-systems/talos/internal/pkg/grpc/middleware/auth/basic"
+	"github.com/talos-systems/talos/internal/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

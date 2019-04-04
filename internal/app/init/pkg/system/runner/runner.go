@@ -5,9 +5,9 @@
 package runner
 
 import (
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Runner describes the requirements for running a process.

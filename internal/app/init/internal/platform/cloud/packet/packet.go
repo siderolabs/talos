@@ -5,10 +5,10 @@
 package packet
 
 import (
-	"github.com/autonomy/talos/internal/pkg/install"
-	"github.com/autonomy/talos/internal/pkg/kernel"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (

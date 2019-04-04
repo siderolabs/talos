@@ -2,14 +2,14 @@
   <h1 align="center">Talos</h1>
   <p align="center">A modern Linux distribution for Kubernetes.</p>
   <p align="center">
-    <a href="https://travis-ci.org/autonomy/talos">
-      <img alt="Build Status" src="https://img.shields.io/travis/autonomy/talos.svg?logo=travis&style=flat-square">
+    <a href="https://travis-ci.org/talos-systems/talos">
+      <img alt="Build Status" src="https://img.shields.io/travis/talos-systems/talos.svg?logo=travis&style=flat-square">
     </a>
-    <a href="https://github.com/autonomy/talos/releases/latest">
-      <img alt="Release" src="https://img.shields.io/github/release/autonomy/talos.svg?logo=github&logoColor=white&style=flat-square">
+    <a href="https://github.com/talos-systems/talos/releases/latest">
+      <img alt="Release" src="https://img.shields.io/github/release/talos-systems/talos.svg?logo=github&logoColor=white&style=flat-square">
     </a>
-    <a href="https://github.com/autonomy/talos/releases/latest">
-      <img alt="Pre-release" src="https://img.shields.io/github/release-pre/autonomy/talos.svg?label=pre-release&logo=GitHub&logoColor=white&style=flat-square">
+    <a href="https://github.com/talos-systems/talos/releases/latest">
+      <img alt="Pre-release" src="https://img.shields.io/github/release-pre/talos-systems/talos.svg?label=pre-release&logo=GitHub&logoColor=white&style=flat-square">
     </a>
   </p>
 </p>
@@ -22,7 +22,7 @@
 - **Predictability**: remove needless variables and reduce unknown factors from your environment using immutable infrastructure.
 - **Evolvability**: simplify and increase your ability to easily accommodate future changes to your architecture.
 
-For details on the design and usage of Talos, see the [documentation](https://talos.autonomy.io).
+For details on the design and usage of Talos, see the [documentation](https://docs.talos-systems.com).
 
 ```bash
 $ kubectl get nodes -o wide
@@ -120,13 +120,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Slack
 
-If you would like to participate in discussions about Talos, please send an email to maintainers@autonomy.io with the subject line "Slack Invite", and we would be happy to send an invite to our workspace.
+If you would like to participate in discussions about Talos, please send an email to maintainers@talos-systems.io with the subject line "Slack Invite", and we would be happy to send an invite to our workspace.
 
 > It is important that the subject line is _exactly_ "Slack Invite" (exclude the double quotes).
 
 ### Twitter
 
-![Twitter Follow](https://img.shields.io/twitter/follow/autonomyio.svg?style=social)
+![Twitter Follow](https://img.shields.io/twitter/follow/talos-systemsio.svg?style=social)
 
 ## Changelog
 
@@ -161,7 +161,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-[![license](https://img.shields.io/github/license/autonomy/talos.svg?style=flat-square)](https://github.com/autonomy/talos/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/talos-systems/talos.svg?style=flat-square)](https://github.com/talos-systems/talos/blob/master/LICENSE)
 
 [musl]: https://www.musl-libc.org/
 [golang]: https://golang.org/

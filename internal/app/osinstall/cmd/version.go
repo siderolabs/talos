@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/autonomy/talos/internal/pkg/version"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/talos/internal/pkg/version"
 )
 
 var (

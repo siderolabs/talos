@@ -10,10 +10,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 )
 
 // ImportRequest represents an image import request.

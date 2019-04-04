@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/autonomy/talos/internal/pkg/chunker"
+	"github.com/talos-systems/talos/internal/pkg/chunker"
 )
 
 // Options is the functional options struct.

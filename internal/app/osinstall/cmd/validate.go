@@ -8,8 +8,8 @@ package cmd
 import (
 	"log"
 
-	"github.com/autonomy/talos/internal/app/osinstall/internal/userdata"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/talos/internal/app/osinstall/internal/userdata"
 )
 
 // validateCmd reads in a userData file and attempts to parse it

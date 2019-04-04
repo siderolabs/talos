@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Configuration on Talos</title>
-    <link>https://talos.autonomy.io/configuration/</link>
+    <link>https://docs.talos-systems.com/configuration/</link>
     <description>Recent content in Configuration on Talos</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 29 Oct 2018 19:40:55 -0700</lastBuildDate>
     
-	<atom:link href="https://talos.autonomy.io/configuration/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://docs.talos-systems.com/configuration/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>osd</title>
-      <link>https://talos.autonomy.io/configuration/osd/</link>
+      <link>https://docs.talos-systems.com/configuration/osd/</link>
       <pubDate>Sat, 03 Nov 2018 17:14:49 -0700</pubDate>
       
-      <guid>https://talos.autonomy.io/configuration/osd/</guid>
+      <guid>https://docs.talos-systems.com/configuration/osd/</guid>
       <description>The osd service enforces a high level of security by utilizing mutual TLS for authentication and authorization. In this section we will configure mutual TLS by generating the certificates for the servers (osd) and clients (osctl).
 Cluster Owners We recommend that the configuration of osd be performed by a cluster owner. A cluster owner should be a person of authority within an organization. Perhaps a director, manager, or senior member of a team.</description>
     </item>
     
     <item>
       <title>Masters</title>
-      <link>https://talos.autonomy.io/configuration/masters/</link>
+      <link>https://docs.talos-systems.com/configuration/masters/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://talos.autonomy.io/configuration/masters/</guid>
+      <guid>https://docs.talos-systems.com/configuration/masters/</guid>
       <description>Configuring master nodes in a Talos Kubernetes cluster is a two part process:
  configuring the Talos specific options and configuring the Kubernetes specific options  To get started, create a YAML file we will use in the following steps:
 touch &amp;lt;node-name&amp;gt;.yaml  Configuring Talos Injecting the Talos PKI Using osctl, and our output from the osd configuration documentation, inject the generated PKI into the configuration file:
@@ -35,10 +35,10 @@ osctl inject os --crt &amp;lt;organization&amp;gt;.</description>
     
     <item>
       <title>Workers</title>
-      <link>https://talos.autonomy.io/configuration/workers/</link>
+      <link>https://docs.talos-systems.com/configuration/workers/</link>
       <pubDate>Mon, 29 Oct 2018 19:40:55 -0700</pubDate>
       
-      <guid>https://talos.autonomy.io/configuration/workers/</guid>
+      <guid>https://docs.talos-systems.com/configuration/workers/</guid>
       <description>Configuring the worker nodes is much more simple in comparison to configuring the master nodes. Using the trustd API, worker nodes submit a CSR, and, if authenticated, receive a valid osd certificate. Similarly, using a kubeadm token, the node joins an existing cluster.
 We need to specify:
  the osd public certificate trustd credentials and endpoints and a kubeadm JoinConfiguration  version: &amp;quot;&amp;quot; ... services: kubeadm: configuration: | apiVersion: kubeadm.k8s.io/v1alpha3 kind: JoinConfiguration .</description>

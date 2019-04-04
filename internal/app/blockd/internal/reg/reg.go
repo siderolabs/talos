@@ -7,9 +7,9 @@ package reg
 import (
 	"context"
 
-	"github.com/autonomy/talos/internal/app/blockd/proto"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/talos-systems/talos/internal/app/blockd/proto"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 )
 

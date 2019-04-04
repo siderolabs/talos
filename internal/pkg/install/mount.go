@@ -5,10 +5,10 @@
 package install
 
 import (
-	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/mount"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 	"golang.org/x/sys/unix"
 )
 

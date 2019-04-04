@@ -7,11 +7,11 @@ package constants
 const (
 	// KernelParamUserData is the kernel parameter name for specifying the URL
 	// to the user data.
-	KernelParamUserData = "talos.autonomy.io/userdata"
+	KernelParamUserData = "talos.userdata"
 
 	// KernelParamPlatform is the kernel parameter name for specifying the
 	// platform.
-	KernelParamPlatform = "talos.autonomy.io/platform"
+	KernelParamPlatform = "talos.platform"
 
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
@@ -63,14 +63,6 @@ const (
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
 	KubernetesImage = "k8s.gcr.io/hyperkube:" + KubernetesVersion
-
-	// DockerImage is the docker image to use as the container runtime for
-	// Kubernetes.
-	DockerImage = "docker.io/library/docker:18.06.1-ce-dind"
-
-	// CRIOImage is the cri-o image to use as the container runtime for
-	// Kubernetes.
-	CRIOImage = "docker.io/autonomy/cri-o:latest"
 
 	// UserDataPath is the path to the downloaded user data.
 	UserDataPath = "/run/userdata.yaml"

@@ -7,10 +7,10 @@ package services
 import (
 	"fmt"
 
-	"github.com/autonomy/talos/internal/app/init/pkg/system/conditions"
-	"github.com/autonomy/talos/internal/app/init/pkg/system/runner"
-	"github.com/autonomy/talos/internal/app/init/pkg/system/runner/process"
-	"github.com/autonomy/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Udevd implements the Service interface. It serves as the concrete type with

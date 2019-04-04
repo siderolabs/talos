@@ -8,10 +8,10 @@ package cmd
 import (
 	"log"
 
-	"github.com/autonomy/talos/internal/app/osinstall/internal/userdata"
-	"github.com/autonomy/talos/internal/pkg/install"
-	udata "github.com/autonomy/talos/pkg/userdata"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/talos/internal/app/osinstall/internal/userdata"
+	"github.com/talos-systems/talos/internal/pkg/install"
+	udata "github.com/talos-systems/talos/pkg/userdata"
 )
 
 var (

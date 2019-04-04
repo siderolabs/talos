@@ -2,12 +2,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Talos</title>
-    <link>https://talos.autonomy.io/categories/</link>
+    <link>https://docs.talos-systems.com/categories/</link>
     <description>Recent content in Categories on Talos</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     
-	<atom:link href="https://talos.autonomy.io/categories/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://docs.talos-systems.com/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
   </channel>

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/autonomy/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 )
 
 type KernelSuite struct {

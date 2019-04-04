@@ -1,7 +1,7 @@
-baseURL = "https://talos.autonomy.io/"
+baseURL = "https://docs.talos-systems.com/"
 languageCode = "en-us"
 title = "Talos"
-theme = "autonomy"
+theme = "talos-systems"
 sectionPagesMenu = "main"
 
 [outputs]
@@ -9,8 +9,8 @@ sectionPagesMenu = "main"
 
 [params]
     Copyright = "Released under Mozilla Public License 2.0"
-    GitHubLink = "https://github.com/autonomy/talos"
-    DockerHubLink = "https://hub.docker.com/u/autonomy"
+    GitHubLink = "https://github.com/talos-systems/talos"
+    DockerHubLink = "https://hub.docker.com/u/talos-systems"
 
 [[menu.main]]
     identifier = "components"

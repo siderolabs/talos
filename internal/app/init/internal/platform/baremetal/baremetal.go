@@ -9,12 +9,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/probe"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/install"
-	"github.com/autonomy/talos/internal/pkg/kernel"
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/userdata"
 
 	"golang.org/x/sys/unix"
 

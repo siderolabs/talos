@@ -12,8 +12,8 @@ import (
 	"os/exec"
 	"text/template"
 
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/version"
 )
 
 const extlinuxConfig = `DEFAULT Talos

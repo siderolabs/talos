@@ -12,8 +12,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/autonomy/talos/pkg/userdata"
 	"github.com/fullsailor/pkcs7"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
 )
 

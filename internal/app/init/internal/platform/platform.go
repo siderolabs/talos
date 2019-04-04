@@ -7,14 +7,14 @@ package platform
 import (
 	"fmt"
 
-	"github.com/autonomy/talos/internal/app/init/internal/platform/baremetal"
-	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/aws"
-	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/googlecloud"
-	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/packet"
-	"github.com/autonomy/talos/internal/app/init/internal/platform/cloud/vmware"
-	"github.com/autonomy/talos/internal/pkg/constants"
-	"github.com/autonomy/talos/internal/pkg/kernel"
-	"github.com/autonomy/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/baremetal"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/aws"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/googlecloud"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/packet"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/vmware"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Platform is an interface describing a platform.

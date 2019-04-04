@@ -7,7 +7,7 @@ package main
 import (
 	"log"
 
-	"github.com/autonomy/talos/internal/app/proxyd/internal/frontend"
+	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
 )
 
 func main() {

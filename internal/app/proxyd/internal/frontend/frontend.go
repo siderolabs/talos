@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/autonomy/talos/internal/app/proxyd/internal/backend"
-	pkgnet "github.com/autonomy/talos/internal/pkg/net"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
+	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"

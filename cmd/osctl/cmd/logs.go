@@ -7,12 +7,12 @@ package cmd
 import (
 	"os"
 
-	"github.com/autonomy/talos/cmd/osctl/pkg/client"
-	"github.com/autonomy/talos/cmd/osctl/pkg/helpers"
-	"github.com/autonomy/talos/internal/app/osd/proto"
-	"github.com/autonomy/talos/internal/pkg/constants"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // logsCmd represents the logs command

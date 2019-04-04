@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"hash/crc32"
 
-	"github.com/autonomy/talos/internal/pkg/blockdevice/lba"
-	"github.com/autonomy/talos/internal/pkg/serde"
 	"github.com/google/uuid"
+	"github.com/talos-systems/talos/internal/pkg/blockdevice/lba"
+	"github.com/talos-systems/talos/internal/pkg/serde"
 )
 
 const (
