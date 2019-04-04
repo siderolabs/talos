@@ -17,7 +17,7 @@ import (
 )
 
 const extlinuxConfig = `DEFAULT Talos
-  SAY Talos ({{ .Version }}) by Autonomy
+  SAY Talos ({{ .Version }})
 LABEL Talos
   KERNEL /vmlinuz
   INITRD /initramfs.xz
