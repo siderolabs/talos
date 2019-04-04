@@ -29,7 +29,7 @@ kubeconfig:
 .PHONY: clean
 clean: down
 	-@rm talosconfig
-	-@rm kubeconfig
+	-@rm -rf kubeconfig
 	-@rm userdata/master-1.yaml
 	-@rm userdata/master-2.yaml
 	-@rm userdata/master-3.yaml
