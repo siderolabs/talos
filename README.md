@@ -126,7 +126,7 @@ If you would like to participate in discussions about Talos, please send an emai
 
 ### Twitter
 
-![Twitter Follow](https://img.shields.io/twitter/follow/talos-systemsio.svg?style=social)
+![Twitter Follow](https://img.shields.io/twitter/follow/talossystems.svg?style=social)
 
 ## Changelog
 
