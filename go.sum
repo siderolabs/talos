@@ -114,8 +114,8 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e h1:QjF5rxNgRSLHJDwKUvfYP3qOx1vTDzUi/+oSC8FXnCI=
 github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/dhcp v0.0.0-20190227141242-cedea8519f96 h1:GLXEc60FUjmMUWhIk/ehYAepPElxhY2LO4T8rxHYCZ8=
-github.com/talos-systems/dhcp v0.0.0-20190227141242-cedea8519f96/go.mod h1:GwIzrf+fKB8dvrxTG3W4jw7ROxjEsYy6l+ItLXwjBwM=
+github.com/talos-systems/dhcp v0.0.0-20190403231749-dd8bdda8e381 h1:0qEzTi1SSSzRb5cEXV9UbdJPscKhhQR1y/wy91xFjX0=
+github.com/talos-systems/dhcp v0.0.0-20190403231749-dd8bdda8e381/go.mod h1:GwIzrf+fKB8dvrxTG3W4jw7ROxjEsYy6l+ItLXwjBwM=
 github.com/u-root/u-root v4.0.0+incompatible h1:xSVgoUpJbfQEuFem81g0muGsgd+/92iY4F7gp6wYUFQ=
 github.com/u-root/u-root v4.0.0+incompatible/go.mod h1:RYkpo8pTHrNjW08opNd/U6p/RJE7K0D8fXO0d47+3YY=
 github.com/vishvananda/netlink v1.0.0 h1:bqNY2lgheFIu1meHUFSH3d7vG93AFyqg3oGbJCOJgSM=
