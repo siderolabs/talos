@@ -53,7 +53,7 @@ require (
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
-	github.com/talos-systems/dhcp v0.0.0-20190227141242-cedea8519f96
+	github.com/talos-systems/dhcp v0.0.0-20190403231749-dd8bdda8e381
 	github.com/u-root/u-root v4.0.0+incompatible // indirect
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
