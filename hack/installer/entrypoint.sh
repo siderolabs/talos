@@ -120,7 +120,7 @@ function create_extlinux_conf() {
   # See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
   cat <<EOF >$1
 DEFAULT Talos
-  SAY Talos (${VERSION}) by Autonomy
+  SAY Talos (${VERSION})
 LABEL Talos
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz

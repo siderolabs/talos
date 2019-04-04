@@ -31,7 +31,7 @@ const osReleaseTemplate = `
 NAME="{{ .Name }}"
 ID={{ .ID }}
 VERSION_ID={{ .Version }}
-PRETTY_NAME="{{ .Name }} ({{ .Version }}) by Autonomy"
+PRETTY_NAME="{{ .Name }} ({{ .Version }})"
 HOME_URL="https://docs.talos-systems.com/"
 BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 `
