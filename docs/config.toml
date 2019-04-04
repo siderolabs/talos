@@ -1,7 +1,7 @@
 baseURL = "https://docs.talos-systems.com/"
 languageCode = "en-us"
 title = "Talos"
-theme = "talos-systems"
+theme = "hugo-theme-talos"
 sectionPagesMenu = "main"
 
 [outputs]

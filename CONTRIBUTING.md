@@ -55,7 +55,6 @@ make ci
 
 In the `Makefile` there are a variety of targets, the most common are:
 
-* `docs` builds the Hugo-based documentation site.
 * `kernel` creates the `vmlinuz` Linux kernel executable.
 * `initamfs` creates the `initramfs.xz` initial RAMdisk filesystem.
 * `image-vanilla` creates the `image.raw` file that can be used as a image volume for VMs.

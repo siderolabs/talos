@@ -236,19 +236,7 @@ FROM base AS lint
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.14.0
 COPY hack/golang/golangci-lint.yaml .
 RUN golangci-lint run --config golangci-lint.yaml
-
-# The docs target generates a static website containing documentation.
-
-FROM base AS docs-build
-RUN curl -L https://github.com/gohugoio/hugo/releases/download/v0.49.2/hugo_0.49.2_Linux-64bit.tar.gz | tar -xz -C /bin
-WORKDIR /web
-COPY ./web ./
-RUN mkdir /docs
-RUN hugo --destination=/docs --verbose
-RUN echo "docs.talos-systems.com" > /docs/CNAME
-FROM scratch AS docs
-COPY --from=docs-build /docs /docs
-
+#
 # The osd target builds the osd binary.
 
 FROM base AS osd-build

@@ -32,7 +32,7 @@ COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
-all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 osinstall-linux-amd64 test lint docs installer
+all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 osinstall-linux-amd64 test lint installer
 
 .PHONY: builddeps
 builddeps: gitmeta buildctl
@@ -144,16 +144,6 @@ image-gcloud: installer
 
 image-vanilla: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) talos-systems/talos:$(TAG) image -l
-
-.PHONY: docs
-docs: buildkitd
-	@rm -rf ./docs
-	@buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--exporter=local \
-		--exporter-opt output=. \
-		--frontend-opt target=$@ \
-		$(COMMON_ARGS)
 
 test: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
