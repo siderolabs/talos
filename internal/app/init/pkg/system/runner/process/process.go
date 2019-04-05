@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	processlogger "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process/log"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -67,47 +68,39 @@ func (p *Process) build(data *userdata.UserData, args *runner.Args, opts *runner
 	return cmd, nil
 }
 
-func (p *Process) waitAndRestart(data *userdata.UserData, args *runner.Args, opts *runner.Options) (err error) {
+func (p *Process) run(data *userdata.UserData, args *runner.Args, opts *runner.Options) error {
 	cmd, err := p.build(data, args, opts)
 	if err != nil {
-		log.Printf("%v", err)
-		time.Sleep(5 * time.Second)
-		return p.waitAndRestart(data, args, opts)
-	}
-	if err = cmd.Start(); err != nil {
-		log.Printf("%v", err)
-		time.Sleep(5 * time.Second)
-		return p.waitAndRestart(data, args, opts)
-	}
-	state, err := cmd.Process.Wait()
-	if err != nil {
-		log.Printf("%v", err)
-		time.Sleep(5 * time.Second)
-		return p.waitAndRestart(data, args, opts)
-	}
-	if state.Exited() {
-		time.Sleep(5 * time.Second)
-		return p.waitAndRestart(data, args, opts)
+		return errors.Wrap(err, "error building command")
 	}
 
-	return nil
+	if err = cmd.Start(); err != nil {
+		return errors.Wrap(err, "error starting process")
+	}
+
+	return cmd.Wait()
 }
 
-func (p *Process) waitForSuccess(data *userdata.UserData, args *runner.Args, opts *runner.Options) (err error) {
-	cmd, err := p.build(data, args, opts)
-	if err != nil {
-		return
-	}
-	if err = cmd.Start(); err != nil {
-		return
-	}
-	state, err := cmd.Process.Wait()
-	if err != nil {
-		return
-	}
-	if !state.Success() {
+func (p *Process) waitAndRestart(data *userdata.UserData, args *runner.Args, opts *runner.Options) error {
+	for {
+		err := p.run(data, args, opts)
+		if err != nil {
+			log.Printf("error running %v, going to restart forever: %s", args.ProcessArgs, err)
+		}
+
 		time.Sleep(5 * time.Second)
-		return p.waitForSuccess(data, args, opts)
+	}
+}
+
+func (p *Process) waitForSuccess(data *userdata.UserData, args *runner.Args, opts *runner.Options) error {
+	for {
+		err := p.run(data, args, opts)
+		if err == nil {
+			break
+		}
+
+		log.Printf("error running %v, going to restart until it succeeds: %s", args.ProcessArgs, err)
+		time.Sleep(5 * time.Second)
 	}
 
 	return nil
