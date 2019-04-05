@@ -1,25 +1,6 @@
 version: '3.7'
 
 services:
-  osctl:
-    image: alpine
-    entrypoint: /bin/osctl
-    command: version
-    volumes:
-      - ../../build/osctl-linux-amd64:/bin/osctl:ro
-      - ./talosconfig:/root/.talos/config
-    networks:
-      talosbr:
-
-  kubectl:
-    image: k8s.gcr.io/hyperkube:${HYPERKUBE_TAG:-v1.14.0}
-    entrypoint: kubectl
-    volumes:
-      - ./kubeconfig:/root/.kube/config
-      - ./manifests:/manifests
-    networks:
-      talosbr:
-
   master-1:
     image: ${IMAGE:-autonomy/talos}:${TAG}
     container_name: master-1
