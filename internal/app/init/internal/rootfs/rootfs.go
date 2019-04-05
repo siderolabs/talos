@@ -63,9 +63,8 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 		if err = etc.ResolvConf(s); err != nil {
 			return
 		}
-	} else if err = ioutil.WriteFile("/etc/resolv.conf", []byte(constants.ContainerBasedResolvConf), 0600); err != nil {
-		return err
 	}
+
 	// Create /etc/os-release.
 	if err = etc.OSRelease(s); err != nil {
 		return
