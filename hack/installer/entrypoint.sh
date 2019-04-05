@@ -138,9 +138,9 @@ function cleanup {
 
 TALOS_USERDATA=""
 TALOS_PLATFORM=""
-RAW_IMAGE="/out/image.raw"
-VMDK_IMAGE="/out/image.vmdk"
-ISO_IMAGE="/out/image.iso"
+RAW_IMAGE="/out/disk.raw"
+VMDK_IMAGE="/out/disk.vmdk"
+ISO_IMAGE="/out/disk.iso"
 FULL=false
 RAW=false
 TOTAL_SIZE=$(size_gz /generated/rootfs.tar.gz)
@@ -151,9 +151,9 @@ KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
 EXTRA_KERNEL_PARAMS=""
 
 case "$1" in
-  image)
+  disk)
     shift
-    while getopts "b:flp:u:e:" opt; do
+    while getopts "b:fln:p:u:e:" opt; do
       case ${opt} in
         b )
           DEVICE=${OPTARG}
@@ -164,7 +164,7 @@ case "$1" in
           echo "Using extra kernel params ${EXTRA_KERNEL_PARAMS}"
           ;;
         f )
-          echo "Creating full image"
+          echo "Creating full disk"
           FULL=true
           ;;
         l )
@@ -173,6 +173,9 @@ case "$1" in
           DEVICE=$(losetup -f)
           RAW=true
           echo "Using loop device ${RAW_IMAGE} as installation media"
+          ;;
+        n )
+          RAW_IMAGE="/out/${OPTARG}.raw"
           ;;
         p )
           TALOS_PLATFORM=${OPTARG}
@@ -205,7 +208,7 @@ case "$1" in
         exit 1
       fi
     fi
-    echo -e "Creating image\n\t/: ${ROOTFS_SIZE}Mb\n\t/boot: ${INITRAMFS_SIZE}Mb"
+    echo -e "Creating disk\n\t/: ${ROOTFS_SIZE}Mb\n\t/boot: ${INITRAMFS_SIZE}Mb"
     create_image
     ;;
   vmdk)

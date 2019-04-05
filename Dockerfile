@@ -187,7 +187,7 @@ RUN ["/toolchain/bin/tar", "-cvpzf", "/rootfs.tar.gz", "."]
 FROM scratch AS rootfs
 COPY --from=rootfs-build /rootfs.tar.gz /rootfs.tar.gz
 
-# The container-os target generates a docker image that can be used to run Talos
+# The talos target generates a docker image that can be used to run Talos
 # in containers.
 
 FROM rootfs-build AS docker-rootfs-build
@@ -195,7 +195,7 @@ FROM rootfs-build AS docker-rootfs-build
 RUN rm /rootfs/etc
 RUN mv /rootfs/var/etc /rootfs/etc
 RUN ln -s /etc /rootfs/var/etc
-FROM scratch AS container-os
+FROM scratch AS talos
 COPY --from=docker-rootfs-build /rootfs /
 COPY --from=initramfs-build /init /sbin/init
 ENTRYPOINT ["/sbin/init"]
