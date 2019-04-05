@@ -97,10 +97,6 @@ const (
 
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
-
-	// ContainerBasedResolvConf is a resolv.conf that can be used for container based deploys.
-	// See https://github.com/coredns/coredns/tree/master/plugin/loop#troubleshooting
-	ContainerBasedResolvConf = "nameserver 8.8.4.4\nnameserver 8.8.8.8"
 )
 
 // See https://linux.die.net/man/3/klogctl
