@@ -2,6 +2,7 @@ services:
   init:
     cni: flannel
   kubeadm:
+    certificateKey: ChangeMe
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
@@ -9,7 +10,11 @@ services:
       - token: 1qbsj9.3oz5hsk6grdfp98b
         ttl: 0s
       nodeRegistration:
+        name: master-1
         criSocket: /run/containerd/containerd.sock
+      localAPIEndpoint:
+        advertiseAddress: 10.5.0.6
+        bindPort: 6443
       ---
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
