@@ -13,19 +13,19 @@ make TAG=<image_tag>
 
 # connect using ../../build/osctl-linux-amd64
 ## master-1
-TAG= docker-compose run --rm osctl ps
+./osctl ps
 ## master-2
-TAG= docker-compose run --rm osctl -t 10.5.0.7 ps
+./osctl -t master-2 ps
 
 
 # use kubectl
 make kubeconfig
 
-## apply PSP
-TAG= docker-compose run --rm kubectl apply -f ./manifests/psp.yaml
-## apply CNI
-TAG= docker-compose run --rm kubectl apply -f ./manifests/cni.yaml
+## apply PSP & CNI
+make manifests
 
+## get nodes
+./kubectl.sh get nodes
 
 # read init logs  (container stdout equiv. to /dev/kmsg)
 docker-compose logs -f

@@ -3,7 +3,7 @@ SHELL := /bin/bash
 GIT_SHORT_SHA = $(shell git rev-parse --short=7 HEAD)
 GIT_DIRTY = $(shell [[ -n `git status -s` ]] && echo -dirty)
 OS_IMAGE_NAME ?= autonomy/talos
-TAG = $(GIT_SHORT_SHA)$(GIT_DIRTY)
+TAG ?= $(GIT_SHORT_SHA)$(GIT_DIRTY)
 DOCKER_COMPOSE ?= IMAGE=$(OS_IMAGE_NAME) TAG=$(TAG) docker-compose
 IP_ADDR ?= 10.5.0.6
 
@@ -24,12 +24,17 @@ talosconfig:
 	@./gen.sh $(IP_ADDR)
 
 kubeconfig:
-	@$(DOCKER_COMPOSE) run --rm osctl kubeconfig > kubeconfig
+	@./osctl.sh kubeconfig > kubeconfig
+
+.PHONY: manifests
+manifests: kubeconfig
+	@./kubectl.sh apply -f /manifests/psp.yaml
+	@./kubectl.sh apply -f /manifests/cni.yaml
 
 .PHONY: clean
 clean: down
 	-@rm talosconfig
-	-@rm -rf kubeconfig
+	-@rm kubeconfig
 	-@rm userdata/master-1.yaml
 	-@rm userdata/master-2.yaml
 	-@rm userdata/master-3.yaml
