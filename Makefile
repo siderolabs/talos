@@ -105,24 +105,13 @@ rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd blockd ntpd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-container-os: buildkitd
-	@buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--exporter=docker \
-		--exporter-opt output=build/$@.tar \
-		--exporter-opt name=docker.io/autonomy/talos-os:$(TAG) \
-		--exporter-opt push=$(PUSH) \
-		--frontend-opt target=$@ \
-		$(COMMON_ARGS)
-	@docker load < build/$@.tar
-
 installer: buildkitd
 	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
 		--exporter-opt output=build/$@.tar \
-		--exporter-opt name=docker.io/autonomy/talos:$(TAG) \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
 		--exporter-opt push=$(PUSH) \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
@@ -136,14 +125,26 @@ proto: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-image-gcloud: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build/gcloud:/out --privileged $(DOCKER_ARGS) talos-systems/talos:$(TAG) image -l \
-	-f -p googlecloud -u none -e 'random.trust_cpu=on'
-	@mv $(PWD)/build/gcloud/image.raw $(PWD)/build/gcloud/disk.raw
-	@tar -C $(PWD)/build/gcloud -Sczf $(PWD)/build/gcloud/talos.tar.gz disk.raw
+talos-gcloud: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n disk-gce -l -f -p googlecloud -u none -e 'random.trust_cpu=on'
+	@tar -C $(PWD)/build -Sczf $(PWD)/build/talos-gce.tar.gz disk-gce.raw
 
-image-vanilla: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) talos-systems/talos:$(TAG) image -l
+talos-vanilla: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -l
+
+talos: buildkitd
+	@buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--exporter=docker \
+		--exporter-opt output=build/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--exporter-opt push=$(PUSH) \
+		--frontend-opt target=$@ \
+		$(COMMON_ARGS)
+	@docker load < build/$@.tar
+
+release: all talos-vanilla talos-gcloud talos
+	xz -e9 ./build/disk.raw
 
 test: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
@@ -252,5 +253,4 @@ pause: images
 	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
 
 clean:
-	-go clean -modcache
-	-rm -rf build vendor
+	@-rm -rf build images vendor
