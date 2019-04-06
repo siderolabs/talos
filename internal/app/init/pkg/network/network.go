@@ -9,6 +9,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/dhcp/dhcpv4"
 	"github.com/talos-systems/dhcp/dhcpv4/client4"
 	"github.com/talos-systems/dhcp/netboot"
@@ -95,7 +96,7 @@ func Setup(data *userdata.UserData) (err error) {
 					var anetconf *netboot.NetConf
 					if anetconf, err = dhclient(netconf.Interface); err != nil {
 						// Probably need to do something better here but not sure there's much to do
-						log.Printf("failed to renew dhcp lease for %s: %+v", netconf.Interface, err)
+						log.Printf("failed to obtain dhcp lease for %s: %+v", netconf.Interface, err)
 						continue
 					}
 					if len(anetconf.Addresses) != 1 {
@@ -199,9 +200,20 @@ func ifup(ifname string) (err error) {
 	if link, err = netlink.LinkByName(ifname); err != nil {
 		return err
 	}
-	if err = netlink.LinkSetUp(link); err != nil {
-		return err
+	attrs := link.Attrs()
+	switch attrs.OperState {
+	case netlink.OperUnknown:
+		fallthrough
+	case netlink.OperDown:
+		if err = netlink.LinkSetUp(link); err != nil {
+			return err
+		}
+	case netlink.OperUp:
+		return nil
+	default:
+		return errors.Errorf("cannot handle current state of %s: %s", ifname, attrs.OperState.String())
 	}
+
 	return nil
 }
 
