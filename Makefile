@@ -126,11 +126,12 @@ proto: buildkitd
 		$(COMMON_ARGS)
 
 talos-gcloud: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n disk-gce -l -f -p googlecloud -u none -e 'random.trust_cpu=on'
-	@tar -C $(PWD)/build -Sczf $(PWD)/build/talos-gce.tar.gz disk-gce.raw
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -l -f -p googlecloud -u none -e 'random.trust_cpu=on'
+	@tar -C $(PWD)/build -Sczf $(PWD)/build/talos.tar.gz disk.raw
+	@rm $(PWD)/build/disk.raw
 
 talos-vanilla: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -l
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n talos -l
 
 talos: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
