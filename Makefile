@@ -125,13 +125,13 @@ proto: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-talos-gcloud: installer
+talos-gce: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -l -f -p googlecloud -u none -e 'random.trust_cpu=on'
-	@tar -C $(PWD)/build -Sczf $(PWD)/build/talos.tar.gz disk.raw
+	@tar -C $(PWD)/build -Sczf $(PWD)/build/$@.tar.gz disk.raw
 	@rm $(PWD)/build/disk.raw
 
-talos-vanilla: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n talos -l
+talos-raw: installer
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n rootfs -l
 
 talos: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
@@ -144,8 +144,8 @@ talos: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-release: all talos-vanilla talos-gcloud talos
-	xz -e9 ./build/disk.raw
+release: all talos-raw talos-gce talos
+	xz -e9 ./build/rootfs.raw
 
 test: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
