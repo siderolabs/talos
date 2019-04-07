@@ -8,14 +8,14 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"sync"
 
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 )
 
 var instance = map[string]*Log{}
-var mu = &sync.Mutex{}
+var mu sync.Mutex
 
 // Log represents the log of a service. It supports streaming of the contents of
 // the log file by way of implementing the chunker.Chunker interface.
@@ -27,9 +27,13 @@ type Log struct {
 
 // New initializes and registers a log for a service.
 func New(name string) (*Log, error) {
+	mu.Lock()
 	if l, ok := instance[name]; ok {
+		mu.Unlock()
 		return l, nil
 	}
+	mu.Unlock()
+
 	logpath := FormatLogPath(name)
 	w, err := os.Create(logpath)
 	if err != nil {
@@ -56,6 +60,10 @@ func (l *Log) Write(p []byte) (n int, err error) {
 
 // Close implements io.WriteCloser.
 func (l *Log) Close() error {
+	mu.Lock()
+	delete(instance, l.Name)
+	mu.Unlock()
+
 	return l.source.Close()
 }
 
@@ -67,5 +75,5 @@ func (l *Log) Read(ctx context.Context) <-chan []byte {
 
 // FormatLogPath formats the path the log file.
 func FormatLogPath(p string) string {
-	return path.Join("/var/log", p+".log")
+	return filepath.Join("/var/log", p+".log")
 }
