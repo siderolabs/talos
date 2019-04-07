@@ -4,7 +4,7 @@ BUILT = $(shell gitmeta built)
 PUSH = $(shell gitmeta pushable)
 
 VPATH = $(PATH)
-KERNEL_IMAGE ?= autonomy/kernel:acdffda
+KERNEL_IMAGE ?= autonomy/kernel:c2c0c9e
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:989387e
 DOCKER_ARGS ?=
 BUILDKIT_VERSION ?= v0.3.3
