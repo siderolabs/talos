@@ -51,7 +51,7 @@
             "type": "shell",
             "inline": [
                 "curl -fsSL get.docker.com | sudo sh",
-                "sudo docker run --privileged --volume /dev:/dev talos-systems/talos:{{ user `version` }} image -b /dev/xvdf -f -p aws -u none -e 'random.trust_cpu=on'"
+                "sudo docker run --privileged --volume /dev:/dev autonomy/installer:{{ user `version` }} image -b /dev/xvdf -f -p aws -u none -e 'random.trust_cpu=on'"
             ]
         }
     ]
