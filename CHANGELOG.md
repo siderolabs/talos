@@ -1,3 +1,20 @@
+# [v0.1.0-alpha.21](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2019-04-08)
+
+
+### Bug Fixes
+
+* **osctl:** add missing flags ([#479](https://github.com/talos-systems/talos/issues/479)) ([380ba21](https://github.com/talos-systems/talos/commit/380ba21))
+* check link state before bringing it up ([#497](https://github.com/talos-systems/talos/issues/497)) ([7fac0df](https://github.com/talos-systems/talos/commit/7fac0df))
+* create GCE disk as disk.raw ([#498](https://github.com/talos-systems/talos/issues/498)) ([67d7abe](https://github.com/talos-systems/talos/commit/67d7abe))
+* remove static resolv.conf ([#491](https://github.com/talos-systems/talos/issues/491)) ([0926e72](https://github.com/talos-systems/talos/commit/0926e72))
+
+
+### Features
+
+* add network configuration support ([#476](https://github.com/talos-systems/talos/issues/476)) ([7d4db80](https://github.com/talos-systems/talos/commit/7d4db80))
+
+
+
 # [v0.1.0-alpha.20](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2019-04-02)
 
 
