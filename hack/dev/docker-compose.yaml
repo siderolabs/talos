@@ -14,6 +14,7 @@ services:
       # os config
       - ./userdata/master-1.yaml:/run/userdata.yaml
       # state dirs
+      - /var/log
       - /var/lib/containerd/
       - /var/lib/etcd/
       - /var/lib/kubelet/
@@ -38,6 +39,7 @@ services:
       # os config
       - ./userdata/master-2.yaml:/run/userdata.yaml
       # state dirs
+      - /var/log
       - /var/lib/containerd/
       - /var/lib/etcd/
       - /var/lib/kubelet/
@@ -62,6 +64,7 @@ services:
       # os config
       - ./userdata/master-3.yaml:/run/userdata.yaml
       # state dirs
+      - /var/log
       - /var/lib/containerd/
       - /var/lib/etcd/
       - /var/lib/kubelet/
@@ -86,6 +89,7 @@ services:
       # os config
       - ./userdata/worker-1.yaml:/run/userdata.yaml
       # state dirs
+      - /var/log
       - /var/lib/containerd/
       - /var/lib/etcd/
       - /var/lib/kubelet/
