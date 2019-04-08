@@ -26,6 +26,9 @@ talosconfig:
 kubeconfig:
 	@./osctl.sh kubeconfig > kubeconfig
 
+enter: kubeconfig
+	@./enter.sh
+
 .PHONY: manifests
 manifests: kubeconfig
 	@./kubectl.sh apply -f /manifests/psp.yaml

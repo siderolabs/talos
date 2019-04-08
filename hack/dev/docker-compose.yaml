@@ -14,11 +14,11 @@ services:
       # os config
       - ./userdata/master-1.yaml:/run/userdata.yaml
       # state dirs
-      - master-1_containerd:/var/lib/containerd/
-      - master-1_etcd:/var/lib/etcd/
-      - master-1_kubelet:/var/lib/kubelet/
-      - master-1_kubernetes:/etc/kubernetes/
-      - master-1_cni:/etc/cni/
+      - /var/lib/containerd/
+      - /var/lib/etcd/
+      - /var/lib/kubelet/
+      - /etc/kubernetes/
+      - /etc/cni/
     tmpfs:
       - /run
     networks:
@@ -38,11 +38,11 @@ services:
       # os config
       - ./userdata/master-2.yaml:/run/userdata.yaml
       # state dirs
-      - master-2_containerd:/var/lib/containerd/
-      - master-2_etcd:/var/lib/etcd/
-      - master-2_kubelet:/var/lib/kubelet/
-      - master-2_kubernetes:/etc/kubernetes/
-      - master-2_cni:/etc/cni/
+      - /var/lib/containerd/
+      - /var/lib/etcd/
+      - /var/lib/kubelet/
+      - /etc/kubernetes/
+      - /etc/cni/
     tmpfs:
       - /run
     networks:
@@ -62,11 +62,11 @@ services:
       # os config
       - ./userdata/master-3.yaml:/run/userdata.yaml
       # state dirs
-      - master-3_containerd:/var/lib/containerd/
-      - master-3_etcd:/var/lib/etcd/
-      - master-3_kubelet:/var/lib/kubelet/
-      - master-3_kubernetes:/etc/kubernetes/
-      - master-3_cni:/etc/cni/
+      - /var/lib/containerd/
+      - /var/lib/etcd/
+      - /var/lib/kubelet/
+      - /etc/kubernetes/
+      - /etc/cni/
     tmpfs:
       - /run
     networks:
@@ -86,42 +86,15 @@ services:
       # os config
       - ./userdata/worker-1.yaml:/run/userdata.yaml
       # state dirs
-      - worker-1_containerd:/var/lib/containerd/
-      - worker-1_etcd:/var/lib/etcd/
-      - worker-1_kubelet:/var/lib/kubelet/
-      - worker-1_kubernetes:/etc/kubernetes/
-      - worker-1_cni:/etc/cni/
+      - /var/lib/containerd/
+      - /var/lib/etcd/
+      - /var/lib/kubelet/
+      - /etc/kubernetes/
+      - /etc/cni/
     tmpfs:
       - /run
     networks:
       talosbr:
-
-volumes:
-  master-1_containerd:
-  master-1_etcd:
-  master-1_kubelet:
-  master-1_kubernetes:
-  master-1_ssl:
-  master-1_cni:
-  master-2_containerd:
-  master-2_etcd:
-  master-2_kubelet:
-  master-2_kubernetes:
-  master-2_ssl:
-  master-2_cni:
-  master-3_containerd:
-  master-3_etcd:
-  master-3_kubelet:
-  master-3_kubernetes:
-  master-3_ssl:
-  master-3_cni:
-  worker-1_containerd:
-  worker-1_etcd:
-  worker-1_kubelet:
-  worker-1_kubernetes:
-  worker-1_ssl:
-  worker-1_cni:
-
 
 networks:
   talosbr:
