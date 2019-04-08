@@ -34,6 +34,9 @@ manifests: kubeconfig
 	@./kubectl.sh apply -f /manifests/psp.yaml
 	@./kubectl.sh apply -f /manifests/cni.yaml
 
+integration: up
+	@./integration.sh
+
 .PHONY: clean
 clean: down
 	-@rm talosconfig

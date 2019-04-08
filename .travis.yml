@@ -8,8 +8,10 @@ before_install:
 - export BUILDKIT_HOST=tcp://0.0.0.0:1234
 script:
 - make
-- if [[ -n $(git status -s) ]];then echo 'working tree is dirty' && git status -s
-  && exit 1; fi
+- make talos
+- cd hack/dev
+- make integration
+- if [[ -n $(git status -s) ]];then echo 'working tree is dirty' && git status -s && exit 1; fi
 branches:
   only:
   - master
