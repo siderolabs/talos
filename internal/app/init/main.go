@@ -98,7 +98,7 @@ func initram() (err error) {
 	}
 	log.Printf("platform is: %s", p.Name())
 	// Setup basic network.
-	if err = network.Setup(nil); err != nil {
+	if err = network.InitNetwork(); err != nil {
 		return err
 	}
 	// Retrieve the user data.
@@ -109,7 +109,7 @@ func initram() (err error) {
 		return err
 	}
 	// Setup custom network.
-	if err = network.Setup(data); err != nil {
+	if err = network.SetupNetwork(data); err != nil {
 		return err
 	}
 	// Perform any tasks required by a particular platform.
@@ -247,7 +247,15 @@ func startSystemServices(data *userdata.UserData) {
 
 	// Launch dhclient
 	// nolint: errcheck
-	network.Setup(data)
+	if data == nil || data.Networking == nil || data.Networking.OS == nil {
+		network.DHCPd(network.DefaultInterface)
+	} else {
+		for _, netconf := range data.Networking.OS.Devices {
+			if netconf.DHCP {
+				network.DHCPd(netconf.Interface)
+			}
+		}
+	}
 }
 
 func startKubernetesServices(data *userdata.UserData) {
