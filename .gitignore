@@ -13,3 +13,6 @@ vendor
 
 # protoc-generated files
 *.pb.go
+
+# Go
+coverage.txt

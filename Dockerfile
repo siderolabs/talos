@@ -223,12 +223,14 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # The test target performs tests on the codebase.
 
-FROM base AS test
+FROM base AS test-runner
 # xfsprogs is required by the tests
 ENV PATH /rootfs/bin:$PATH
 COPY hack/golang/test.sh /bin
 RUN test.sh --short
 RUN test.sh
+FROM scratch AS test
+COPY --from=test-runner /src/coverage.txt /coverage.txt
 
 # The lint target performs linting on the codebase.
 
