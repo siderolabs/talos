@@ -5,6 +5,9 @@
     <a href="https://travis-ci.org/talos-systems/talos">
       <img alt="Build Status" src="https://img.shields.io/travis/talos-systems/talos.svg?logo=travis&style=flat-square">
     </a>
+    <a href="https://codecov.io/gh/talos-systems/talos">
+      <img alt="Codecov" src="https://img.shields.io/codecov/c/github/talos-systems/talos.svg?style=flat-square">
+    </a>
     <a href="https://github.com/talos-systems/talos/releases/latest">
       <img alt="Release" src="https://img.shields.io/github/release/talos-systems/talos.svg?logo=github&logoColor=white&style=flat-square">
     </a>
