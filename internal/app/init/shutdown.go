@@ -5,8 +5,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/mdlayher/genetlink"
 	"github.com/mdlayher/netlink"
 	"github.com/pkg/errors"
@@ -22,25 +20,18 @@ const (
 func listenForPowerButton() (err error) {
 	// Get the acpi_event family.
 
-	genconn, err := genetlink.Dial(nil)
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer genconn.Close()
-	var f genetlink.Family
-	if f, err = genconn.GetFamily(acpiGenlFamilyName); os.IsNotExist(err) {
-		return errors.Wrap(err, acpiGenlFamilyName+" not available")
-	}
-
-	// Listen for ACPI event.
-
-	conn, err := netlink.Dial(unix.NETLINK_GENERIC, nil)
+	conn, err := genetlink.Dial(nil)
 	if err != nil {
 		return err
 	}
 	// nolint: errcheck
 	defer conn.Close()
+
+	f, err := conn.GetFamily(acpiGenlFamilyName)
+	if netlink.IsNotExist(err) {
+		return errors.Wrap(err, acpiGenlFamilyName+" not available")
+	}
+
 	var id uint32
 	for _, group := range f.Groups {
 		if group.Name == acpiGenlMcastGroupName {
@@ -50,7 +41,10 @@ func listenForPowerButton() (err error) {
 	if err = conn.JoinGroup(id); err != nil {
 		return err
 	}
-	msgs, err := conn.Receive()
+
+	// Listen for ACPI events.
+
+	msgs, _, err := conn.Receive()
 	if err != nil {
 		return err
 	}
