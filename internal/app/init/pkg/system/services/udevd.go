@@ -50,11 +50,11 @@ func (c *Udevd) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := process.Process{}
-
-	return r.Run(
+	r := process.NewRunner(
 		data,
 		args,
 		runner.WithEnv(env),
 	)
+
+	return r.Run()
 }

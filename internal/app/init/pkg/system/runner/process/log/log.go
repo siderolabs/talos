@@ -26,7 +26,7 @@ type Log struct {
 }
 
 // New initializes and registers a log for a service.
-func New(name string) (*Log, error) {
+func New(name, rootPath string) (*Log, error) {
 	mu.Lock()
 	if l, ok := instance[name]; ok {
 		mu.Unlock()
@@ -34,7 +34,7 @@ func New(name string) (*Log, error) {
 	}
 	mu.Unlock()
 
-	logpath := FormatLogPath(name)
+	logpath := FormatLogPath(name, rootPath)
 	w, err := os.Create(logpath)
 	if err != nil {
 		return nil, fmt.Errorf("create log file: %s", err.Error())
@@ -74,6 +74,6 @@ func (l *Log) Read(ctx context.Context) <-chan []byte {
 }
 
 // FormatLogPath formats the path the log file.
-func FormatLogPath(p string) string {
-	return filepath.Join("/var/log", p+".log")
+func FormatLogPath(p, rootPath string) string {
+	return filepath.Join(rootPath, p+".log")
 }

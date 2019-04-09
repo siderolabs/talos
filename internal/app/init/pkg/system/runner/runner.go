@@ -5,14 +5,16 @@
 package runner
 
 import (
+	"time"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Runner describes the requirements for running a process.
 type Runner interface {
-	Run(*userdata.UserData, *Args, ...Option)
+	Run() error
+	Stop() error
 }
 
 // Args represents the required options for services.
@@ -36,6 +38,13 @@ type Options struct {
 	Namespace string
 	// Type describes the service's restart policy.
 	Type Type
+	// LogPath is the root path to store logs
+	LogPath string
+	// RestartInterval is the interval between restarts for failed runs
+	RestartInterval time.Duration
+	// GracefulShutdownTimeout is the time to wait for process to exit after SIGTERM
+	// before sending SIGKILL
+	GracefulShutdownTimeout time.Duration
 }
 
 // Option is the functional option func.
@@ -54,9 +63,12 @@ const (
 // DefaultOptions describes the default options to a runner.
 func DefaultOptions() *Options {
 	return &Options{
-		Env:       []string{},
-		Type:      Forever,
-		Namespace: "system",
+		Env:                     []string{},
+		Type:                    Forever,
+		Namespace:               "system",
+		LogPath:                 "/var/log",
+		RestartInterval:         5 * time.Second,
+		GracefulShutdownTimeout: 10 * time.Second,
 	}
 }
 
@@ -99,5 +111,26 @@ func WithContainerOpts(o ...containerd.NewContainerOpts) Option {
 func WithOCISpecOpts(o ...oci.SpecOpts) Option {
 	return func(args *Options) {
 		args.OCISpecOpts = o
+	}
+}
+
+// WithLogPath sets the log path root
+func WithLogPath(path string) Option {
+	return func(args *Options) {
+		args.LogPath = path
+	}
+}
+
+// WithRestartInterval sets the interval between restarts of the failed task
+func WithRestartInterval(interval time.Duration) Option {
+	return func(args *Options) {
+		args.RestartInterval = interval
+	}
+}
+
+// WithGracefulShutdownTimeout sets the timeout for the task to terminate before sending SIGKILL
+func WithGracefulShutdownTimeout(timeout time.Duration) Option {
+	return func(args *Options) {
+		args.GracefulShutdownTimeout = timeout
 	}
 }
