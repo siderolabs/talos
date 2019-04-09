@@ -18,8 +18,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/talos-systems/talos/internal/pkg/crypto/x509"
 	"github.com/talos-systems/talos/internal/pkg/net"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"

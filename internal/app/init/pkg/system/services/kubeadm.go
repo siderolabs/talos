@@ -27,8 +27,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/crypto/x509"
 	"github.com/talos-systems/talos/internal/pkg/grpc/middleware/auth/basic"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"

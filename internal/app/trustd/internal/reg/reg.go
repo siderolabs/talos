@@ -12,7 +12,7 @@ import (
 	"path"
 
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
-	"github.com/talos-systems/talos/internal/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 )

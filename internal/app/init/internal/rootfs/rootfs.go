@@ -16,8 +16,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/etc"
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/proc"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/crypto/x509"
 	"github.com/talos-systems/talos/internal/pkg/grpc/gen"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 	yaml "gopkg.in/yaml.v2"
 )
