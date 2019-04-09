@@ -150,6 +150,8 @@ release: all talos-raw talos-gce talos
 test: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
+		--exporter=local \
+		--exporter-opt output=./ \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
