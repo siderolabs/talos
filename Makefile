@@ -155,7 +155,7 @@ test: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-lint: buildkitd
+lint:
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--frontend-opt target=$@ \

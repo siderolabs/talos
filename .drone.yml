@@ -1,0 +1,27 @@
+kind: pipeline
+name: default
+
+steps:
+- name: make
+  image: moby/buildkit:v0.3.3
+  env:
+  commands:
+    - buildctl --addr tcp://buildkitd.ci.svc:1234
+               build
+               --frontend-opt target=lint
+               --progress=plain
+               --frontend=dockerfile.v0
+               --local context=.
+               --local dockerfile=.
+               --frontend-opt build-arg:KERNEL_IMAGE=autonomy/kernel:c2c0c9e
+               --frontend-opt build-arg:TOOLCHAIN_IMAGE=autonomy/toolchain:989387e
+               --frontend-opt build-arg:SHA=75823f3
+               --frontend-opt build-arg:TAG=v0.1.0-alpha.21
+
+#    - apk add --update make
+#    - make gitmeta
+#    - make lint BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234
+#     - make test
+#     - make kernel
+#     - make initramfs
+#     - make rootfs
