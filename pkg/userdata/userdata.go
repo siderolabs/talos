@@ -77,10 +77,11 @@ type OSNet struct {
 
 // Device represents a network interface
 type Device struct {
-	Interface string `yaml:"interface"`
-	CIDR      string `yaml:"cidr"`
-	DHCP      bool   `yaml:"dhcp"`
-	Bond      *Bond  `yaml:"bond"`
+	Interface string  `yaml:"interface"`
+	CIDR      string  `yaml:"cidr"`
+	DHCP      bool    `yaml:"dhcp"`
+	Routes    []Route `yaml:"routes"`
+	Bond      *Bond   `yaml:"bond"`
 }
 
 // Bond contains the various options for configuring a
@@ -90,6 +91,12 @@ type Bond struct {
 	HashPolicy string   `yaml:"hashpolicy"`
 	LACPRate   string   `yaml:"lacprate"`
 	Interfaces []string `yaml:"interfaces"`
+}
+
+// Route represents a network route
+type Route struct {
+	Network string `yaml:"network"`
+	Gateway string `yaml:"gateway"`
 }
 
 // Services represents the set of services available to configure.
