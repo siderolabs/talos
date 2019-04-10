@@ -39,7 +39,7 @@ func WithPartitionName(o string) Option {
 // WithLegacyBIOSBootableAttribute marks the partition as bootable.
 func WithLegacyBIOSBootableAttribute(o bool) Option {
 	return func(args *Options) {
-		if o == true {
+		if o {
 			args.Flags = 4
 		}
 	}

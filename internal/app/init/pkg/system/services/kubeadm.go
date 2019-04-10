@@ -123,7 +123,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 	certificateKey := "--certificate-key=" + encoded
 
 	switch {
-	case data.IsBootstrap() == true:
+	case data.IsBootstrap():
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"init",
@@ -134,7 +134,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 			"--skip-certificate-key-print",
 			"--experimental-upload-certs",
 		}
-	case data.IsControlPlane() == true:
+	case data.IsControlPlane():
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"join",

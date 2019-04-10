@@ -395,10 +395,6 @@ func Download(url string, headers *map[string]string) (data *UserData, err error
 
 		dataBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return data, err
-		}
-
-		if err != nil {
 			return data, fmt.Errorf("read user data: %s", err.Error())
 		}
 

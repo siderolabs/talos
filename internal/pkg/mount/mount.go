@@ -45,7 +45,7 @@ func NewMountPoint(source string, target string, fstype string, flags uintptr, d
 // NewMountPoints initializes and returns a Points struct.
 func NewMountPoints() *Points {
 	return &Points{
-		points: make(PointMap, 0),
+		points: make(PointMap),
 	}
 }
 
