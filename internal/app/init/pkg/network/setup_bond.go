@@ -14,6 +14,7 @@ import (
 
 func setupBonding(netconf userdata.Device) (err error) {
 	log.Println("bringing up bonded interface")
+	log.Println("**** note **** bonding support is considered experimental")
 	bond := netlink.NewLinkBond(netlink.LinkAttrs{Name: netconf.Interface})
 
 	if _, ok := netlink.StringToBondModeMap[netconf.Bond.Mode]; !ok {
@@ -27,20 +28,49 @@ func setupBonding(netconf userdata.Device) (err error) {
 	}
 	bond.XmitHashPolicy = netlink.StringToBondXmitHashPolicyMap[netconf.Bond.HashPolicy]
 
+	if _, ok := netlink.StringToBondLacpRateMap[netconf.Bond.LACPRate]; !ok {
+		return fmt.Errorf("invalid lacp rate for %s", netconf.Interface)
+	}
+	bond.LacpRate = netlink.StringToBondLacpRateMap[netconf.Bond.LACPRate]
+
 	// Set up bonding if defined
-	var slaveLink netlink.Link
-	for _, bondInterface := range netconf.Bond.Interfaces {
-		log.Printf("enslaving %s for %s\n", bondInterface, netconf.Interface)
-		slaveLink, err = netlink.LinkByName(bondInterface)
+	var subLink netlink.Link
+	for _, subInterface := range netconf.Bond.Interfaces {
+		log.Printf("enslaving %s for %s\n", subInterface, netconf.Interface)
+		subLink, err = netlink.LinkByName(subInterface)
 		if err != nil {
 			return err
 		}
 
-		if err = netlink.LinkSetBondSlave(slaveLink, &netlink.Bond{LinkAttrs: *bond.Attrs()}); err != nil {
+		// Bring down the interface
+		if err = ifdown(subInterface); err != nil {
+			log.Printf("failed to set link state to down for %s: %+v", subInterface, err)
 			return err
 		}
 
-		// TODO do we need to ifup slave interfaces?
+		// Deconfigure all IPs on the sub interface
+		var addrs []netlink.Addr
+		addrs, err = netlink.AddrList(subLink, netlink.FAMILY_ALL)
+		if err != nil {
+			log.Printf("failed to get addresses for %s: %+v", subInterface, err)
+			return err
+		}
+		for _, addr := range addrs {
+			if err = netlink.AddrDel(subLink, &addr); err != nil {
+				log.Printf("failed to delete address for %s %+v: %+v", subInterface, addr, err)
+				return err
+			}
+		}
+
+		// Add sub interface to bond
+		if err = netlink.LinkSetBondSlave(subLink, &netlink.Bond{LinkAttrs: *bond.Attrs()}); err != nil {
+			return err
+		}
+
+		if err = ifup(subInterface); err != nil {
+			return err
+		}
 	}
-	return err
+
+	return ifup(netconf.Interface)
 }

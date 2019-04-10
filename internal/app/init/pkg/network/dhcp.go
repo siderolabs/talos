@@ -5,6 +5,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -68,24 +69,30 @@ func Dhclient(ifname string) (int, error) {
 
 // nolint: gocyclo
 func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, error) {
-	attempts := 10
 	client := client4.NewClient()
+	// Increasing from the default of 3 to be optimistic
+	client.ReadTimeout = time.Duration(5 * time.Second)
+
 	var (
 		conv []*dhcpv4.DHCPv4
 		err  error
 	)
-	for attempt := 0; attempt < attempts; attempt++ {
-		log.Printf("requesting DHCP lease: attempt %d of %d", attempt+1, attempts)
+
+	log.Printf("requesting DHCP lease")
+	for attempt := 0; attempt < 10; attempt++ {
 		conv, err = client.Exchange(ifname, modifiers...)
-		if err != nil && attempt < attempts {
-			log.Printf("failed to request DHCP lease: %v", err)
-			time.Sleep(time.Duration(attempt) * time.Second)
-			continue
+		if err == nil {
+			break
 		}
-		break
+		time.Sleep(time.Duration(attempt) * time.Second)
+	}
+
+	if len(conv) == 0 {
+		return nil, errors.New("failed to request DHCP lease")
 	}
 
 	for _, m := range conv {
+		// TODO: Look at changing this m.MessageType() to MessageTypeAck
 		if m.OpCode == dhcpv4.OpcodeBootReply && m.MessageType() == dhcpv4.MessageTypeOffer {
 			if m.YourIPAddr != nil {
 				log.Printf("using IP address %s", m.YourIPAddr.String())

@@ -7,6 +7,7 @@ package network
 import (
 	"log"
 	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -84,6 +85,7 @@ func defaultNetworkSetup() (err error) {
 	return nil
 }
 
+// TODO: ifup/ifdown can be refactored and consolidated
 func ifup(ifname string) (err error) {
 	var link netlink.Link
 	if link, err = netlink.LinkByName(ifname); err != nil {
@@ -104,5 +106,52 @@ func ifup(ifname string) (err error) {
 		return errors.Errorf("cannot handle current state of %s: %s", ifname, attrs.OperState.String())
 	}
 
+	// Probably should put a timeout on this
+	for i := 0; i < 10; i++ {
+		if waitForDeviceUp(ifname) {
+			break
+		}
+		time.Sleep(1 * time.Second)
+		if i == 9 {
+			return errors.Errorf("device failed to come up %s", ifname)
+		}
+	}
+
 	return nil
+}
+
+func ifdown(ifname string) (err error) {
+	var link netlink.Link
+	if link, err = netlink.LinkByName(ifname); err != nil {
+		return err
+	}
+	attrs := link.Attrs()
+	switch attrs.OperState {
+	case netlink.OperDown:
+		return nil
+	case netlink.OperUnknown:
+		fallthrough
+	case netlink.OperUp:
+		if err = netlink.LinkSetDown(link); err != nil && err != syscall.EEXIST {
+			log.Printf("im failing here in operdown for %s", ifname)
+			return err
+		}
+	default:
+		return errors.Errorf("cannot handle current state of %s: %s", ifname, attrs.OperState.String())
+	}
+
+	return nil
+}
+func waitForDeviceUp(ifname string) bool {
+	if link, err := netlink.LinkByName(ifname); err == nil {
+		log.Printf("device %s status %s", ifname, link.Attrs().OperState.String())
+		if link.Attrs().OperState == netlink.OperUp {
+			return true
+		}
+		// Not sure why, but lo reports back as unknown
+		if link.Attrs().OperState == netlink.OperUnknown && ifname == "lo" {
+			return true
+		}
+	}
+	return false
 }

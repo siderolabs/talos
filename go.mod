@@ -46,22 +46,21 @@ require (
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/opencontainers/runtime-spec v0.1.2-0.20180710222632-d810dbc60d8c
 	github.com/pkg/errors v0.8.1
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/objx v0.1.1 // indirect
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.3.0
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/talos-systems/dhcp v0.0.0-20190403231749-dd8bdda8e381
 	github.com/u-root/u-root v4.0.0+incompatible // indirect
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
-	golang.org/x/net v0.0.0-20190313220215-9f648a60d977
+	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	golang.org/x/sys v0.0.0-20190312061237-fead79001313
+	golang.org/x/sys v0.0.0-20190405154228-4b34438f7a67
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
 	google.golang.org/genproto v0.0.0-20181221175505-bd9b4fb69e2f // indirect
