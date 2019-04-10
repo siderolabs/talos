@@ -27,9 +27,6 @@ const (
 // NewConfig initializes a TLS config for the specified type.
 func NewConfig(t Type, data *userdata.OSSecurity) (config *tls.Config, err error) {
 	certPool := x509.NewCertPool()
-	if err != nil {
-		return nil, fmt.Errorf("could not read ca certificate: %s", err)
-	}
 	if ok := certPool.AppendCertsFromPEM(data.CA.Crt); !ok {
 		return nil, fmt.Errorf("failed to append client certs")
 	}

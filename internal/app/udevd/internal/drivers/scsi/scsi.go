@@ -140,7 +140,7 @@ type GenericIOHeader struct {
 	Timeout        uint32
 	Flags          uint32
 	PackID         int32
-	pad0           [4]byte // nolint: structcheck
+	pad0           [4]byte // nolint: structcheck, unused
 	UsrPtr         *byte
 	Status         uint8
 	MaskedStatus   uint8
@@ -355,9 +355,10 @@ func (dvc *Device) Page83Inquiry() (err error) {
 		descriptor := buf[i:]
 		// Determinine the association.
 		// TODO(andrewrynhard): This should be a function.
-		if descriptor[1]&0x30 == 0x10 {
-		} else if descriptor[1]&0x30 == 0 {
-		}
+		// TODO(andrewrynhard): Complete this if statement.
+		//if descriptor[1]&0x30 == 0x10 {
+		//} else if descriptor[1]&0x30 == 0 {
+		//}
 
 		if descriptor[0]&0x0f == CodeSetASCII {
 			continue

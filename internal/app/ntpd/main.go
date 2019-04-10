@@ -86,23 +86,21 @@ func (n *NTP) Daemon() {
 	log.Println(time.Now())
 
 	for {
-		select {
-		case <-ticker.C:
-			// Set some variance with how frequently we poll ntp servers
-			if err = n.Query(); err != nil {
-				log.Printf("error querying %s for time, %s", n.Server, err)
-				continue
-			}
-			log.Printf("%+v\n", n.Response)
-			log.Println("Current time")
-			log.Println(time.Now())
-			if err = n.SetTime(); err != nil {
-				log.Printf("failed to set time, %s", err)
-				continue
-			}
-			log.Println("Updated time")
-			log.Println(time.Now())
+		<-ticker.C
+		// Set some variance with how frequently we poll ntp servers
+		if err = n.Query(); err != nil {
+			log.Printf("error querying %s for time, %s", n.Server, err)
+			continue
 		}
+		log.Printf("%+v\n", n.Response)
+		log.Println("Current time")
+		log.Println(time.Now())
+		if err = n.SetTime(); err != nil {
+			log.Printf("failed to set time, %s", err)
+			continue
+		}
+		log.Println("Updated time")
+		log.Println(time.Now())
 		ticker = time.NewTicker(time.Duration(rando.Intn(MAXPOLL)+MINPOLL) * time.Second)
 	}
 }

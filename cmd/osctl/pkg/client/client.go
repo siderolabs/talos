@@ -77,9 +77,6 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 		return nil, fmt.Errorf("could not load client key pair: %s", err)
 	}
 	certPool := x509.NewCertPool()
-	if err != nil {
-		return nil, fmt.Errorf("could not read ca certificate: %s", err)
-	}
 	if ok := certPool.AppendCertsFromPEM(clientcreds.ca); !ok {
 		return nil, fmt.Errorf("failed to append client certs")
 	}
