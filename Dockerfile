@@ -69,14 +69,15 @@ RUN mkdir -p ${GOPATH}
 ENV GO111MODULE on
 ENV CGO_ENABLED 0
 WORKDIR /src
+COPY ./go.mod ./
+COPY ./go.sum ./
+RUN go mod download
+RUN go mod verify
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
-COPY ./go.mod ./
-COPY ./go.sum ./
 COPY --from=proto /internal/app ./internal/app
-RUN go mod download
-RUN go mod verify
+RUN go list -mod=readonly all
 
 # The udevd target builds the udevd binary.
 
