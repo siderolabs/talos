@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">Talos</h1>
-  <p align="center">A modern Linux distribution for Kubernetes.</p>
+  <p align="center">A modern operating system for Kubernetes.</p>
   <p align="center">
     <a href="https://travis-ci.org/talos-systems/talos">
       <img alt="Build Status" src="https://img.shields.io/travis/talos-systems/talos.svg?logo=travis&style=flat-square">
@@ -24,7 +24,7 @@
 
 ---
 
-**Talos** is a modern Linux distribution for Kubernetes that provides a number of capabilities. A few are:
+**Talos** is a modern operating system for Kubernetes that provides a number of capabilities. A few are:
 
 - **Security**: reduce your attack surface by practicing the Principle of Least Privilege (PoLP) and enforcing mutual TLS (mTLS).
 - **Predictability**: remove needless variables and reduce unknown factors from your environment using immutable infrastructure.
@@ -146,7 +146,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 > Talos was an automaton created by the Greek God of the forge to protect the island of Crete.
 > He would patrol the coast and enforce laws throughout the land.
-> We felt it was a fitting name for a security focused Linux distribution designed to run Kubernetes.
+> We felt it was a fitting name for a security focused operating system designed to run Kubernetes.
 
 **Why no shell or SSH?**
 
@@ -162,7 +162,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 > Talos is similar in many ways, but there are some differences that make it unique.
 > You can imagine Talos as a container image, in that it is immutable and built with a single purpose in mind.
 > In this case, that purpose is Kubernetes.
-> Talos tightly integrates with Kubernetes, and is not meant to be a general use Linux distribution.
+> Talos tightly integrates with Kubernetes, and is not meant to be a general use operating system.
 > This allows us to dramatically decrease the footprint of Talos, and in turn improve a number of other areas like security, predictability, and reliability.
 > In addition to this, interaction with the host is done through a secure gRPC API.
 > If you want to run Kubernetes with zero cruft, Talos is the perect fit.
