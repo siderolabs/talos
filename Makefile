@@ -10,6 +10,7 @@ DOCKER_ARGS ?=
 BUILDKIT_VERSION ?= v0.3.3
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
+BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 BUILDKIT_CONTAINER_NAME ?= talos-buildkit
 BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}' 2>/dev/null)
 BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}' 2>/dev/null)
@@ -21,7 +22,7 @@ ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
 endif
 BINDIR ?= /usr/local/bin
-CONFORM_VERSION ?= c539351
+CONFORM_VERSION ?= 57c9dbd
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -57,7 +58,8 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 		--name $(BUILDKIT_CONTAINER_NAME) \
 		-d \
 		--privileged \
-		 -p 1234:1234 \
+		-p 1234:1234 \
+		$(BUILDKIT_CACHE) \
 		$(BUILDKIT_IMAGE) \
 		--addr $(BUILDKIT_HOST)
 	@echo "Wait for buildkitd to become available"

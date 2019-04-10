@@ -31,6 +31,9 @@ policies:
       - '*'
 - type: license
   spec:
+    skipPaths:
+    - .git/
+    - .buildkit/
     includeSuffixes:
     - .go
     excludeSuffixes:
