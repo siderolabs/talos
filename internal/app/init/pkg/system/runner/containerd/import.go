@@ -8,11 +8,12 @@ import (
 	"context"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 )
 
@@ -37,39 +38,43 @@ func Import(namespace string, reqs ...*ImportRequest) (err error) {
 	// nolint: errcheck
 	defer client.Close()
 
-	var wg sync.WaitGroup
-
-	wg.Add(len(reqs))
+	errCh := make(chan error)
+	var result *multierror.Error
 
 	for _, req := range reqs {
-		go func(wg *sync.WaitGroup, r *ImportRequest) {
-			defer wg.Done()
+		go func(errCh chan<- error, r *ImportRequest) {
+			errCh <- func() error {
 
-			tarball, err := os.Open(r.Path)
-			if err != nil {
-				panic(err)
-			}
-
-			imgs, err := client.Import(ctx, tarball, r.Options...)
-			if err != nil {
-				panic(err)
-			}
-			if err = tarball.Close(); err != nil {
-				panic(err)
-			}
-
-			for _, img := range imgs {
-				image := containerd.NewImage(client, img)
-				log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
-				err = image.Unpack(ctx, containerd.DefaultSnapshotter)
+				tarball, err := os.Open(r.Path)
 				if err != nil {
-					panic(err)
+					return errors.Wrapf(err, "error opening %v", r.Path)
 				}
-			}
-		}(&wg, req)
+
+				imgs, err := client.Import(ctx, tarball, r.Options...)
+				if err != nil {
+					return errors.Wrapf(err, "error importing %v", r.Path)
+				}
+				if err = tarball.Close(); err != nil {
+					return errors.Wrapf(err, "error closing %v", r.Path)
+				}
+
+				for _, img := range imgs {
+					image := containerd.NewImage(client, img)
+					log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
+					err = image.Unpack(ctx, containerd.DefaultSnapshotter)
+					if err != nil {
+						return errors.Wrapf(err, "error unpacking %v", img.Name)
+					}
+				}
+
+				return nil
+			}()
+		}(errCh, req)
 	}
 
-	wg.Wait()
+	for range reqs {
+		result = multierror.Append(result, <-errCh)
+	}
 
-	return nil
+	return result.ErrorOrNil()
 }
