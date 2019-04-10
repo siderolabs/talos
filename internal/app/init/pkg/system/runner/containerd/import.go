@@ -24,8 +24,8 @@ type ImportRequest struct {
 }
 
 // Import imports the images specified by the import requests.
-func Import(namespace string, reqs ...*ImportRequest) (err error) {
-	_, err = conditions.WaitForFileToExist(defaults.DefaultAddress)()
+func Import(namespace string, reqs ...*ImportRequest) error {
+	_, err := conditions.WaitForFileToExist(defaults.DefaultAddress)()
 	if err != nil {
 		return err
 	}
@@ -45,25 +45,25 @@ func Import(namespace string, reqs ...*ImportRequest) (err error) {
 		go func(errCh chan<- error, r *ImportRequest) {
 			errCh <- func() error {
 
-				tarball, err := os.Open(r.Path)
-				if err != nil {
-					return errors.Wrapf(err, "error opening %v", r.Path)
+				tarball, ierr := os.Open(r.Path)
+				if ierr != nil {
+					return errors.Wrapf(ierr, "error opening %v", r.Path)
 				}
 
-				imgs, err := client.Import(ctx, tarball, r.Options...)
-				if err != nil {
-					return errors.Wrapf(err, "error importing %v", r.Path)
+				imgs, ierr := client.Import(ctx, tarball, r.Options...)
+				if ierr != nil {
+					return errors.Wrapf(ierr, "error importing %v", r.Path)
 				}
-				if err = tarball.Close(); err != nil {
-					return errors.Wrapf(err, "error closing %v", r.Path)
+				if ierr = tarball.Close(); ierr != nil {
+					return errors.Wrapf(ierr, "error closing %v", r.Path)
 				}
 
 				for _, img := range imgs {
 					image := containerd.NewImage(client, img)
 					log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
-					err = image.Unpack(ctx, containerd.DefaultSnapshotter)
-					if err != nil {
-						return errors.Wrapf(err, "error unpacking %v", img.Name)
+					ierr = image.Unpack(ctx, containerd.DefaultSnapshotter)
+					if ierr != nil {
+						return errors.Wrapf(ierr, "error unpacking %v", img.Name)
 					}
 				}
 
