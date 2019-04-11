@@ -7,6 +7,8 @@ before_install:
 - make ci BINDIR=/usr/bin
 - export BUILDKIT_HOST=tcp://0.0.0.0:1234
 script:
+- make lint
+- make test
 - make
 - make talos
 - cd hack/dev

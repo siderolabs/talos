@@ -37,7 +37,7 @@ RUN curl -o /rootfs/etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/ca
 # xfsprogs
 WORKDIR /tmp/xfsprogs
 RUN curl -L https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-4.18.0.tar.xz | tar -xJ --strip-components=1
-RUN make \
+RUN make -j $(($(nproc) / 2)) \
     DEBUG=-DNDEBUG \
     INSTALL_USER=0 \
     INSTALL_GROUP=0 \
@@ -48,7 +48,7 @@ RUN curl -L https://github.com/dosfstools/dosfstools/releases/download/v4.1/dosf
 RUN ./configure \
     --prefix=/ \
     --enable-compat-symlinks
-RUN make
+RUN make -j $(($(nproc) / 2))
 RUN make install DESTDIR=/rootfs
 # libblkid
 RUN cp /toolchain/lib/libblkid.* /rootfs/lib
@@ -59,7 +59,7 @@ RUN mkdir /tmp/syslinux
 WORKDIR /tmp/syslinux
 RUN curl -L https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz | tar -xJ --strip-components=1
 RUN ln -s /toolchain/bin/pwd /bin/pwd && \
-    make installer && \
+    make -j $(($(nproc) / 2)) installer && \
     cp /tmp/syslinux/bios/extlinux/extlinux /rootfs/bin && \
     cp /tmp/syslinux/efi64/mbr/gptmbr.bin /rootfs/share
 # golang
@@ -137,7 +137,7 @@ RUN ../configure \
      --disable-nftables \
      --enable-libipq \
      --with-xtlibdir=/lib/xtables
-RUN make
+RUN make -j $(($(nproc) / 2))
 RUN make install DESTDIR=/rootfs
 # libseccomp
 WORKDIR /toolchain/usr/local/src/libseccomp
