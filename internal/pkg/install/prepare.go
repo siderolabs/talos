@@ -287,6 +287,24 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
 	}
 
+	for _, extra := range data.Install.ExtraDevices {
+		if manifest.Targets[extra.Device] == nil {
+			manifest.Targets[extra.Device] = []*Target{}
+		}
+
+		for _, part := range extra.Partitions {
+			extraTarget := &Target{
+				Device:    extra.Device,
+				Size:      part.Size,
+				Force:     data.Install.Force,
+				Test:      false,
+				MountBase: "/tmp",
+			}
+
+			manifest.Targets[extra.Device] = append(manifest.Targets[extra.Device], extraTarget)
+		}
+	}
+
 	return manifest
 }
 
@@ -312,11 +330,6 @@ type Target struct {
 // Partition creates a new partition on the specified device
 // nolint: dupl, gocyclo
 func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
-	var (
-		typeID             string
-		legacyBIOSBootable bool
-	)
-
 	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
 
 	var pt table.PartitionTable
@@ -324,13 +337,16 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		return err
 	}
 
+	opts := []interface{}{partition.WithPartitionTest(t.Test)}
+
 	switch t.Label {
 	case constants.BootPartitionLabel:
 		// EFI System Partition
-		typeID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-		legacyBIOSBootable = true
+		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
 	case constants.RootPartitionLabel:
 		// Root Partition
+		var typeID string
 		switch runtime.GOARCH {
 		case "386":
 			typeID = "44479540-F297-41B2-9AF7-D131D5F0458A"
@@ -339,20 +355,17 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		default:
 			return errors.Errorf("%s", "unsupported cpu architecture")
 		}
+		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label))
 	case constants.DataPartitionLabel:
 		// Data Partition
-		typeID = "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
+		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
+		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label))
 	default:
-		return errors.Errorf("%s", "unknown partition label")
+		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
+		opts = append(opts, partition.WithPartitionType(typeID))
 	}
 
-	part, err := pt.Add(
-		uint64(t.Size),
-		partition.WithPartitionType(typeID),
-		partition.WithPartitionName(t.Label),
-		partition.WithLegacyBIOSBootableAttribute(legacyBIOSBootable),
-		partition.WithPartitionTest(t.Test),
-	)
+	part, err := pt.Add(uint64(t.Size), opts...)
 	if err != nil {
 		return err
 	}
@@ -372,5 +385,9 @@ func (t *Target) Format() error {
 	if t.Label == constants.BootPartitionLabel {
 		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
 	}
-	return xfs.MakeFS(t.PartitionName, xfs.WithLabel(t.Label), xfs.WithForce(t.Force))
+	opts := []xfs.Option{xfs.WithForce(t.Force)}
+	if t.Label != "" {
+		opts = append(opts, xfs.WithLabel(t.Label))
+	}
+	return xfs.MakeFS(t.PartitionName, opts...)
 }

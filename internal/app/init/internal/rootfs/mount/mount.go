@@ -5,6 +5,7 @@
 package mount
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -18,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/cgroups"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
 )
 
@@ -124,6 +126,24 @@ func (i *Initializer) InitOwned() (err error) {
 		// NB: The XFS partition MUST be mounted, or this will fail.
 		if err = xfs.GrowFS(path.Join(i.prefix, mountpoint.Target())); err != nil {
 			return errors.Errorf("error growing data partition file system: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// ExtraDevices mounts the extra devices.
+func ExtraDevices(data *userdata.UserData) (err error) {
+	if data.Install == nil || data.Install.ExtraDevices == nil {
+		return nil
+	}
+	for _, extra := range data.Install.ExtraDevices {
+		for i, part := range extra.Partitions {
+			devname := fmt.Sprintf("%s%d", extra.Device, i+1)
+			mountpoint := mount.NewMountPoint(devname, part.MountPoint, "xfs", unix.MS_NOATIME, "")
+			if err = mount.WithRetry(mountpoint); err != nil {
+				return errors.Errorf("failed to mount %s at %s: %v", devname, part.MountPoint, err)
+			}
 		}
 	}
 
