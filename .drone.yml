@@ -1,0 +1,67 @@
+kind: pipeline
+name: default
+
+services:
+- name: docker
+  image: docker:dind
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+
+steps:
+- name: conform
+  image: autonomy/conform:c539351
+
+- name: lint
+  image: autonomy/build-container:latest
+  pull: true
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  commands:
+    - make lint
+  volumes:
+  - name: dockersock
+    path: /var/run
+
+- name: test
+  image: autonomy/build-container:latest
+  pull: true
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  commands:
+    - make test
+  volumes:
+  - name: dockersock
+    path: /var/run
+
+- name: build
+  image: autonomy/build-container:latest
+  pull: true
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  commands:
+    - make
+  volumes:
+  - name: dockersock
+    path: /var/run
+
+- name: basic-integration
+  image: autonomy/build-container:latest
+  pull: true
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  commands:
+    - cd hack/dev
+    - make integration
+  volumes:
+  - name: dockersock
+    path: /var/run
+  depends_on:
+  - conform
+  - lint
+  - test
+  - build
+volumes:
+- name: dockersock
+  temp: {}
