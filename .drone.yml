@@ -62,6 +62,27 @@ steps:
   - lint
   - test
   - build
+
+- name: push
+  image: autonomy/build-container:latest
+  pull: always
+  environment:
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  commands:
+  - make login
+  - make push
+  volumes:
+  - name: dockersock
+    path: /var/run
+  when:
+    branch:
+    - master
+    event:
+    - push
+
 volumes:
 - name: dockersock
   temp: {}
