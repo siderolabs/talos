@@ -33,6 +33,9 @@ COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
 COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
 
+# to allow tests to run containerd
+DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/
+
 all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 osinstall-linux-amd64 installer talos
 
 .PHONY: builddeps
@@ -150,12 +153,20 @@ release: all talos-raw talos-gce talos
 	xz -e9 ./build/rootfs.raw
 
 test: buildkitd
+	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
-		--exporter=local \
-		--exporter-opt output=./ \
+		--exporter=docker \
+		--exporter-opt output=build/$@.tar \
+		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--exporter-opt push=$(PUSH) \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
+	@docker load < build/$@.tar
+	@docker run -i --rm $(DOCKER_TEST_ARGS) autonomy/$@:$(TAG) /bin/test.sh --short
+	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
+		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/test.sh && \
+		cp ./.artifacts/coverage.txt coverage.txt
 
 lint: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
