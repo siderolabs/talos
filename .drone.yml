@@ -82,6 +82,8 @@ steps:
     - master
     event:
     - push
+  depends_on:
+  - basic-integration
 
 volumes:
 - name: dockersock
