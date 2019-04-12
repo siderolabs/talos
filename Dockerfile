@@ -125,6 +125,8 @@ COPY --from=initramfs-build /initramfs.xz /initramfs.xz
 # Kubernetes.
 
 FROM base AS rootfs-build
+# modules.builtin
+COPY --from=kernel /modules /rootfs/lib/modules
 # iptables
 WORKDIR /toolchain/usr/local/src/iptables
 RUN curl -L http://www.netfilter.org/projects/iptables/files/iptables-1.8.2.tar.bz2 | tar --strip-components=1 -xj
