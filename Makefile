@@ -255,5 +255,17 @@ pause: images
 	@docker pull k8s.gcr.io/$@:3.1
 	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
 
+.PHONY: login
+login:
+	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
+
+push:
+	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
+	@docker push autonomy/installer:$(TAG)
+	@docker push autonomy/installer:latest
+	@docker tag autonomy/talos:$(TAG) autonomy/talos:latest
+	@docker push autonomy/talos:$(TAG)
+	@docker push autonomy/talos:latest
+
 clean:
 	@-rm -rf build images vendor
