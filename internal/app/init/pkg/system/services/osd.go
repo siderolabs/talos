@@ -69,15 +69,15 @@ func (o *OSD) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.Containerd{}
-
-	return r.Run(
+	r := containerd.NewRunner(
 		data,
-		args,
+		&args,
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithMounts(mounts),
 		),
 	)
+
+	return r.Run()
 }

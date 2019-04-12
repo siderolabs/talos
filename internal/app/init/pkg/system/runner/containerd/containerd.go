@@ -6,63 +6,67 @@ package containerd
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"path/filepath"
+	"syscall"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/runtime/restart"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-// Containerd represents a service to be run in a container.
-type Containerd struct{}
+// containerdRunner is a runner.Runner that runs container in containerd
+type containerdRunner struct {
+	data *userdata.UserData
+	args *runner.Args
+	opts *runner.Options
 
-// WithMemoryLimit sets the linux resource memory limit field.
-func WithMemoryLimit(limit int64) oci.SpecOpts {
-	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
-		s.Linux.Resources.Memory = &specs.LinuxMemory{
-			Limit: &limit,
-			// DisableOOMKiller: &disable,
-		}
-		return nil
-	}
+	stop    chan struct{}
+	stopped chan struct{}
 }
 
-// WithRootfsPropagation sets the root filesystem propagation.
-func WithRootfsPropagation(rp string) oci.SpecOpts {
-	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
-		s.Linux.RootfsPropagation = rp
-		return nil
+// errStopped is used internally to signal that task was stopped
+var errStopped = errors.New("stopped")
+
+// NewRunner creates runner.Runner that runs a container in containerd
+func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Option) runner.Runner {
+	r := &containerdRunner{
+		data:    data,
+		args:    args,
+		opts:    runner.DefaultOptions(),
+		stop:    make(chan struct{}),
+		stopped: make(chan struct{}),
 	}
+
+	for _, setter := range setters {
+		setter(r.opts)
+	}
+
+	return r
 }
 
 // Run implements the Runner interface.
 // nolint: gocyclo
-func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...runner.Option) error {
-	// Wait for the containerd socket.
+func (c *containerdRunner) Run() error {
+	defer close(c.stopped)
 
+	// Wait for the containerd socket.
 	_, err := conditions.WaitForFileToExist(defaults.DefaultAddress)()
 	if err != nil {
 		return err
 	}
 
-	// Create the default runner options.
-
-	opts := runner.DefaultOptions()
-	for _, setter := range setters {
-		setter(opts)
-	}
-
 	// Create the containerd client.
 
-	ctx := namespaces.WithNamespace(context.Background(), opts.Namespace)
+	ctx := namespaces.WithNamespace(context.Background(), c.opts.Namespace)
 	client, err := containerd.New(defaults.DefaultAddress)
 	if err != nil {
 		return err
@@ -70,83 +74,139 @@ func (c *Containerd) Run(data *userdata.UserData, args runner.Args, setters ...r
 	// nolint: errcheck
 	defer client.Close()
 
-	image, err := client.GetImage(ctx, opts.ContainerImage)
+	image, err := client.GetImage(ctx, c.opts.ContainerImage)
 	if err != nil {
 		return err
 	}
 
 	// Create the container.
 
-	specOpts := newOCISpecOpts(image, args, opts)
-	containerOpts := newContainerOpts(image, args, opts, specOpts)
+	specOpts := c.newOCISpecOpts(image)
+	containerOpts := c.newContainerOpts(image, specOpts)
 	container, err := client.NewContainer(
 		ctx,
-		args.ID,
+		c.args.ID,
 		containerOpts...,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create container %q: %v", args.ID, err)
+		return errors.Wrapf(err, "failed to create container %q", c.args.ID)
 	}
+	defer container.Delete(ctx, containerd.WithSnapshotCleanup) // nolint: errcheck
 
-	// Create the task and start it.
-
-	task, err := container.NewTask(ctx, cio.LogFile(logPath(args)))
-	if err != nil {
-		return fmt.Errorf("failed to create task: %q: %v", args.ID, err)
-	}
-	if err := task.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start task: %q: %v", args.ID, err)
-	}
-
-	// Wait for the task exit code.
-
-	if opts.Type == runner.Once {
-		defer container.Delete(ctx, containerd.WithSnapshotCleanup) // nolint: errcheck
-		defer task.Delete(ctx)                                      // nolint: errcheck
-		statusC, err := task.Wait(ctx)
-		if err != nil {
-			return fmt.Errorf("failed waiting for task: %q: %v", args.ID, err)
+	// Manage task lifecycle
+	switch c.opts.Type {
+	case runner.Once:
+		err = c.runOnce(ctx, container)
+		if err == errStopped {
+			err = nil
 		}
-		status := <-statusC
+		return err
+	case runner.Forever:
+		for {
+			err = c.runOnce(ctx, container)
+			if err == errStopped {
+				return nil
+			}
+			if err != nil {
+				log.Printf("error running %v, going to restart forever: %s", c.args.ID, err)
+			}
+
+			select {
+			case <-c.stop:
+				return nil
+			case <-time.After(c.opts.RestartInterval):
+			}
+		}
+	default:
+		panic("unsupported runner type")
+	}
+
+}
+
+func (c *containerdRunner) runOnce(ctx context.Context, container containerd.Container) error {
+	// Create the task and start it.
+	task, err := container.NewTask(ctx, cio.LogFile(c.logPath()))
+	if err != nil {
+		return errors.Wrapf(err, "failed to create task: %q", c.args.ID)
+	}
+	defer task.Delete(ctx) // nolint: errcheck
+
+	if err = task.Start(ctx); err != nil {
+		return errors.Wrapf(err, "failed to start task: %q", c.args.ID)
+	}
+
+	statusC, err := task.Wait(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "failed waiting for task: %q", c.args.ID)
+	}
+
+	select {
+	case status := <-statusC:
 		code := status.ExitCode()
 		if code != 0 {
-			return fmt.Errorf("task %q failed: exit code %d", args.ID, code)
+			return errors.Errorf("task %q failed: exit code %d", c.args.ID, code)
 		}
+		return nil
+	case <-c.stop:
+		// graceful stop the task
+		log.Printf("sending SIGTERM to %v", c.args.ID)
+
+		// nolint: errcheck
+		_ = task.Kill(ctx, syscall.SIGTERM, containerd.WithKillAll)
 	}
+
+	select {
+	case <-statusC:
+		// stopped process exited
+		return errStopped
+	case <-time.After(c.opts.GracefulShutdownTimeout):
+		// kill the process
+		log.Printf("sending SIGKILL to %v", c.args.ID)
+
+		// nolint: errcheck
+		_ = task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll)
+	}
+
+	<-statusC
+	return errStopped
+}
+
+// Stop implements runner.Runner interface
+func (c *containerdRunner) Stop() error {
+	close(c.stop)
+
+	<-c.stopped
 
 	return nil
 }
 
-func newContainerOpts(image containerd.Image, args runner.Args, opts *runner.Options, specOpts []oci.SpecOpts) []containerd.NewContainerOpts {
+func (c *containerdRunner) newContainerOpts(image containerd.Image, specOpts []oci.SpecOpts) []containerd.NewContainerOpts {
 	containerOpts := []containerd.NewContainerOpts{
 		containerd.WithImage(image),
-		containerd.WithNewSnapshot(args.ID, image),
+		containerd.WithNewSnapshot(c.args.ID, image),
 		containerd.WithNewSpec(specOpts...),
 	}
-	if opts.Type == runner.Forever {
-		containerOpts = append(containerOpts, restart.WithStatus(containerd.Running), restart.WithLogPath(logPath(args)))
-	}
-	containerOpts = append(containerOpts, opts.ContainerOpts...)
+	containerOpts = append(containerOpts, c.opts.ContainerOpts...)
 
 	return containerOpts
 }
 
-func newOCISpecOpts(image oci.Image, args runner.Args, opts *runner.Options) []oci.SpecOpts {
+func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 	specOpts := []oci.SpecOpts{
 		oci.WithImageConfig(image),
-		oci.WithProcessArgs(args.ProcessArgs...),
-		oci.WithEnv(opts.Env),
+		oci.WithProcessArgs(c.args.ProcessArgs...),
+		oci.WithEnv(c.opts.Env),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithHostHostsFile,
 		oci.WithHostResolvconf,
 		oci.WithPrivileged,
 	}
-	specOpts = append(specOpts, opts.OCISpecOpts...)
+	specOpts = append(specOpts, c.opts.OCISpecOpts...)
 
 	return specOpts
 }
 
-func logPath(args runner.Args) string {
-	return "/var/log/" + args.ID + ".log"
+func (c *containerdRunner) logPath() string {
+	return filepath.Join(c.opts.LogPath, c.args.ID+".log")
 }

@@ -124,11 +124,9 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.Containerd{}
-
-	return r.Run(
+	r := containerd.NewRunner(
 		data,
-		args,
+		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
@@ -141,4 +139,6 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		),
 		runner.WithType(runner.Forever),
 	)
+
+	return r.Run()
 }

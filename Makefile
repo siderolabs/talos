@@ -148,7 +148,7 @@ talos: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-test: buildkitd
+test: buildkitd rootfs
 	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \

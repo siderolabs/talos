@@ -62,11 +62,9 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.Containerd{}
-
-	return r.Run(
+	r := containerd.NewRunner(
 		data,
-		args,
+		&args,
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -75,4 +73,6 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 			oci.WithPrivileged,
 		),
 	)
+
+	return r.Run()
 }
