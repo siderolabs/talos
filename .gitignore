@@ -16,3 +16,6 @@ vendor
 
 # Go
 coverage.txt
+
+# buildkit cache
+.buildkit/
