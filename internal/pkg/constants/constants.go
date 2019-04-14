@@ -59,7 +59,7 @@ const (
 	KubeadmCAKey = "/etc/kubernetes/pki/ca.key"
 
 	// KubernetesVersion is the enforced target version of the control plane.
-	KubernetesVersion = "v1.14.0"
+	KubernetesVersion = "v1.14.1"
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
 	KubernetesImage = "k8s.gcr.io/hyperkube:" + KubernetesVersion

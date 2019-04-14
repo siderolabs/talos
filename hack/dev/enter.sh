@@ -9,4 +9,4 @@ docker run \
 	-v "${PWD}/talosconfig:/root/.talos/config" \
 	-v "${PWD}/kubeconfig":/root/.kube/config \
 	-v "${PWD}/manifests":/manifests \
-	k8s.gcr.io/hyperkube:${HYPERKUBE_TAG:-v1.14.0} bash
+	k8s.gcr.io/hyperkube:${HYPERKUBE_TAG:-v1.14.1} bash
