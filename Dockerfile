@@ -12,14 +12,10 @@ RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.
 WORKDIR /trustd
 COPY ./internal/app/trustd/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
-WORKDIR /blockd
-COPY ./internal/app/blockd/proto ./proto
-RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
 FROM scratch AS proto
 COPY --from=proto-build /osd/proto/api.pb.go /internal/app/osd/proto/
 COPY --from=proto-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
-COPY --from=proto-build /blockd/proto/api.pb.go /internal/app/blockd/proto/
 
 # The base target provides a common starting point for all other targets.
 
@@ -305,20 +301,6 @@ ARG APP
 FROM scratch AS proxyd
 COPY --from=proxyd-build /proxyd /proxyd
 ENTRYPOINT ["/proxyd"]
-
-# The blockd target builds the blockd binaries.
-
-FROM base-src AS blockd-build
-ARG SHA
-ARG TAG
-ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
-WORKDIR /src/internal/app/blockd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /blockd
-RUN chmod +x /blockd
-ARG APP
-FROM scratch AS blockd
-COPY --from=blockd-build /blockd /blockd
-ENTRYPOINT ["/blockd"]
 
 # The osinstall target builds the installer binaries.
 

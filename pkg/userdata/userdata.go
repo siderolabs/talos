@@ -107,7 +107,6 @@ type Services struct {
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
 	Trustd  *Trustd  `yaml:"trustd"`
 	Proxyd  *Proxyd  `yaml:"proxyd"`
-	Blockd  *Blockd  `yaml:"blockd"`
 	OSD     *OSD     `yaml:"osd"`
 	CRT     *CRT     `yaml:"crt"`
 	NTPd    *NTPd    `yaml:"ntp"`
@@ -287,11 +286,6 @@ type OSD struct {
 
 // Proxyd describes the configuration of the proxyd service.
 type Proxyd struct {
-	CommonServiceOptions `yaml:",inline"`
-}
-
-// Blockd describes the configuration of the blockd service.
-type Blockd struct {
 	CommonServiceOptions `yaml:",inline"`
 }
 
