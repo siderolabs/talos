@@ -68,6 +68,10 @@ RUN mkdir -p ${GOPATH}
 # context
 ENV GO111MODULE on
 ENV CGO_ENABLED 0
+
+# The base-src provides base target to build from Go Talos sources
+
+FROM base AS base-src
 WORKDIR /src
 COPY ./go.mod ./
 COPY ./go.sum ./
@@ -81,7 +85,7 @@ RUN go list -mod=readonly all
 
 # The udevd target builds the udevd binary.
 
-FROM base AS udevd-build
+FROM base-src AS udevd-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -100,7 +104,7 @@ FROM ${KERNEL_IMAGE} as kernel
 
 # The initramfs target creates an initramfs.
 
-FROM base AS initramfs-build
+FROM base-src AS initramfs-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -226,25 +230,21 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # The test target performs tests on the codebase.
 
-FROM base AS test-runner
+FROM base-src AS test
 # xfsprogs is required by the tests
 ENV PATH /rootfs/bin:$PATH
 COPY hack/golang/test.sh /bin
-RUN test.sh --short
-RUN test.sh
-FROM scratch AS test
-COPY --from=test-runner /src/coverage.txt /coverage.txt
 
 # The lint target performs linting on the codebase.
 
-FROM base AS lint
+FROM base-src AS lint
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.16.0
 COPY hack/golang/golangci-lint.yaml .
 RUN golangci-lint run --config golangci-lint.yaml
 #
 # The osd target builds the osd binary.
 
-FROM base AS osd-build
+FROM base-src AS osd-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -258,7 +258,7 @@ ENTRYPOINT ["/osd"]
 
 # The osctl target builds the osctl binaries.
 
-FROM base AS osctl-linux-amd64-build
+FROM base-src AS osctl-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -268,7 +268,7 @@ RUN chmod +x /osctl-linux-amd64
 FROM scratch AS osctl-linux-amd64
 COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /osctl-linux-amd64
 
-FROM base AS osctl-darwin-amd64-build
+FROM base-src AS osctl-darwin-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -280,7 +280,7 @@ COPY --from=osctl-darwin-amd64-build /osctl-darwin-amd64 /osctl-darwin-amd64
 
 # The trustd target builds the trustd binary.
 
-FROM base AS trustd-build
+FROM base-src AS trustd-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -294,7 +294,7 @@ ENTRYPOINT ["/trustd"]
 
 # The proxyd target builds the proxyd binaries.
 
-FROM base AS proxyd-build
+FROM base-src AS proxyd-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -308,7 +308,7 @@ ENTRYPOINT ["/proxyd"]
 
 # The blockd target builds the blockd binaries.
 
-FROM base AS blockd-build
+FROM base-src AS blockd-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -322,7 +322,7 @@ ENTRYPOINT ["/blockd"]
 
 # The osinstall target builds the installer binaries.
 
-FROM base AS osinstall-linux-amd64-build
+FROM base-src AS osinstall-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
@@ -333,7 +333,7 @@ FROM scratch AS osinstall-linux-amd64
 COPY --from=osinstall-linux-amd64-build /osinstall-linux-amd64 /osinstall-linux-amd64
 
 # The ntpd target builds the ntpd binary
-FROM base AS ntpd-build
+FROM base-src AS ntpd-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
