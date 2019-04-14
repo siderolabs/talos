@@ -201,12 +201,6 @@ func startSystemServices(data *userdata.UserData) {
 	// Import the system images.
 	reqs := []*ctrdrunner.ImportRequest{
 		{
-			Path: "/usr/images/blockd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/blockd"),
-			},
-		},
-		{
 			Path: "/usr/images/osd.tar",
 			Options: []containerd.ImportOpt{
 				containerd.WithIndexName("talos/osd"),
@@ -240,7 +234,6 @@ func startSystemServices(data *userdata.UserData) {
 	svcs.Start(
 		&services.Udevd{},
 		&services.OSD{},
-		&services.Blockd{},
 		&services.NTPd{},
 	)
 	// Start the services common to all master nodes.
