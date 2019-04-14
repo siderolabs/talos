@@ -74,11 +74,11 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.1.0+incompatible // indirect
-	k8s.io/api v0.0.0-20190313235455-40a48860b5ab
+	k8s.io/api v0.0.0-20190409021203-6e4e0e4f393b
 	k8s.io/apiextensions-apiserver v0.0.0-20190322231200-1c09d17c1352 // indirect
-	k8s.io/apimachinery v0.0.0-20190313205120-d7deff9243b1
+	k8s.io/apimachinery v0.0.0-20190404173353-6a84e37a896d
 	k8s.io/apiserver v0.0.0-20190324105220-f881eae9ec04 // indirect
-	k8s.io/client-go v2.0.0-alpha.0.0.20190313235726-6ee68ca5fd83+incompatible
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/cloud-provider v0.0.0-20190323031113-9c9d72d1bf90 // indirect
 	k8s.io/cluster-bootstrap v0.0.0-20190313124217-0fa624df11e9 // indirect
 	k8s.io/component-base v0.0.0-20190313120452-4727f38490bc // indirect
@@ -86,7 +86,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580 // indirect
 	k8s.io/kube-proxy v0.0.0-20190320190624-78a1c9778e0e // indirect
 	k8s.io/kubelet v0.0.0-20190313123811-3556bcde9670 // indirect
-	k8s.io/kubernetes v1.14.0
+	k8s.io/kubernetes v1.14.1
 	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

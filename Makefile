@@ -242,8 +242,8 @@ ntpd: buildkitd images
 		$(COMMON_ARGS)
 
 hyperkube: images
-	@docker pull k8s.gcr.io/$@:v1.14.0
-	@docker save k8s.gcr.io/$@:v1.14.0 -o ./images/$@.tar
+	@docker pull k8s.gcr.io/$@:v1.14.1
+	@docker save k8s.gcr.io/$@:v1.14.1 -o ./images/$@.tar
 
 etcd: images
 	@docker pull k8s.gcr.io/$@:3.3.10
