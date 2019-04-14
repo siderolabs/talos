@@ -124,6 +124,7 @@ func (i *Initializer) InitOwned() (err error) {
 
 	if mountpoint, ok := i.owned.Get(constants.DataPartitionLabel); ok {
 		// NB: The XFS partition MUST be mounted, or this will fail.
+		log.Printf("growing the %s partition", constants.DataPartitionLabel)
 		if err = xfs.GrowFS(path.Join(i.prefix, mountpoint.Target())); err != nil {
 			return errors.Errorf("error growing data partition file system: %v", err)
 		}
