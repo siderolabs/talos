@@ -162,7 +162,7 @@ RUN mkdir -p $GOPATH/src/github.com/containerd \
     && cd $GOPATH/src/github.com/containerd \
     && git clone https://github.com/containerd/containerd.git \
     && cd $GOPATH/src/github.com/containerd/containerd \
-    && git checkout v1.2.5
+    && git checkout v1.2.6
 RUN cd $GOPATH/src/github.com/containerd/containerd \
     && make binaries BUILDTAGS=no_btrfs \
     && cp bin/containerd /rootfs/bin \
