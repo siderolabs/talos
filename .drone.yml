@@ -87,10 +87,9 @@ steps:
   - name: dockersock
     path: /var/run
   when:
-    branch:
-    - master
     event:
-    - push
+      exclude:
+      - pull_request
   depends_on:
   - basic-integration
 
