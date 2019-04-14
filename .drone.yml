@@ -35,6 +35,18 @@ steps:
   - name: dockersock
     path: /var/run
 
+- name: coverage
+  image: plugins/codecov
+  settings:
+    token:
+      from_secret: codecov_token
+    files:
+     - coverage.txt
+  depends_on:
+  - conform
+  - lint
+  - test
+
 - name: build
   image: autonomy/build-container:latest
   pull: true
@@ -58,9 +70,6 @@ steps:
   - name: dockersock
     path: /var/run
   depends_on:
-  - conform
-  - lint
-  - test
   - build
 
 - name: push
