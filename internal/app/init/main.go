@@ -155,6 +155,12 @@ func root() (err error) {
 		return err
 	}
 
+	// Mount the extra partitions.
+	log.Printf("mounting the extra partitions")
+	if err = mount.ExtraDevices(data); err != nil {
+		return err
+	}
+
 	// Write any user specified files to disk.
 	log.Println("writing the files specified in the user data to disk")
 	if err = data.WriteFiles(); err != nil {

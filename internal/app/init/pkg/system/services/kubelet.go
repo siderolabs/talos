@@ -104,12 +104,20 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
-	// Add in the additional CNI mounts
+	// Add in the additional CNI mounts.
 	cniMounts, err := cni.Mounts(data)
 	if err != nil {
 		return err
 	}
 	mounts = append(mounts, cniMounts...)
+
+	// Add extra mounts.
+	// TODO(andrewrynhard): We should verify that the mount source is
+	// whitelisted. There is the potential that a user can expose
+	// sensitive information.
+	if data.Services != nil && data.Services.Kubelet != nil && data.Services.Kubelet.ExtraMounts != nil {
+		mounts = append(mounts, data.Services.Kubelet.ExtraMounts...)
+	}
 
 	env := []string{}
 	for key, val := range data.Env {

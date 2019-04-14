@@ -18,6 +18,7 @@ import (
 	"path"
 	"time"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 
@@ -121,11 +122,12 @@ type File struct {
 
 // Install represents the installation options for preparing a node.
 type Install struct {
-	Boot  *BootDevice    `yaml:"boot,omitempty"`
-	Root  *RootDevice    `yaml:"root"`
-	Data  *InstallDevice `yaml:"data,omitempty"`
-	Wipe  bool           `yaml:"wipe"`
-	Force bool           `yaml:"force"`
+	Boot         *BootDevice    `yaml:"boot,omitempty"`
+	Root         *RootDevice    `yaml:"root"`
+	Data         *InstallDevice `yaml:"data,omitempty"`
+	ExtraDevices []*ExtraDevice `yaml:"extraDevices,omitempty"`
+	Wipe         bool           `yaml:"wipe"`
+	Force        bool           `yaml:"force"`
 }
 
 // BootDevice represents the install options specific to the boot partition.
@@ -149,6 +151,19 @@ type InstallDevice struct {
 	Size   uint   `yaml:"size,omitempty"`
 }
 
+// ExtraDevice represents the options available for partitioning, formatting,
+// and mounting extra disks.
+type ExtraDevice struct {
+	Device     string                  `yaml:"device,omitempty"`
+	Partitions []*ExtraDevicePartition `yaml:"partitions,omitempty"`
+}
+
+// ExtraDevicePartition represents the options for a device partition.
+type ExtraDevicePartition struct {
+	Size       uint   `yaml:"size,omitempty"`
+	MountPoint string `yaml:"mountpoint,omitempty"`
+}
+
 // Init describes the configuration of the init service.
 type Init struct {
 	CNI string `yaml:"cni,omitempty"`
@@ -157,6 +172,7 @@ type Init struct {
 // Kubelet describes the configuration of the kubelet service.
 type Kubelet struct {
 	CommonServiceOptions `yaml:",inline"`
+	ExtraMounts          []specs.Mount `yaml:"extraMounts"`
 }
 
 // Kubeadm describes the set of configuration options available for kubeadm.
