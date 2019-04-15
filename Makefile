@@ -168,6 +168,14 @@ test: buildkitd
 		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/test.sh && \
 		cp ./.artifacts/coverage.txt coverage.txt
 
+dev-test:
+	@docker run -i --rm $(DOCKER_TEST_ARGS) \
+		-v $(PWD)/internal:/src/internal:ro \
+		-v $(PWD)/pkg:/src/pkg:ro \
+		-v $(PWD)/cmd:/src/cmd:ro \
+		autonomy/test:$(TAG) \
+		go test -v ./...
+
 lint: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
