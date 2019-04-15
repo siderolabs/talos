@@ -20,3 +20,5 @@ coverage.txt
 
 # buildkit cache
 .buildkit/
+
+release.txt

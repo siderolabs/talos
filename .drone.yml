@@ -93,6 +93,38 @@ steps:
   depends_on:
   - basic-integration
 
+- name: release
+  image: autonomy/build-container:latest
+  pull: always
+  commands:
+  - make clean
+  - make release
+  volumes:
+  - name: dockersock
+    path: /var/run
+  when:
+    event: tag
+  depends_on:
+  - basic-integration
+
+- name: publish
+  image: plugins/github-release
+  settings:
+    api_key:
+      from_secret: github_token
+    title: release.txt
+    draft: true
+    note: CHANGELOG.md
+    files:
+    - build/*
+    checksum:
+    - sha256
+    - sha512
+  when:
+    event: tag
+  depends_on:
+  - release
+
 volumes:
 - name: dockersock
   temp: {}
