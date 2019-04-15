@@ -96,6 +96,8 @@ steps:
 - name: release
   image: autonomy/build-container:latest
   pull: always
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
   - make clean
   - make release
