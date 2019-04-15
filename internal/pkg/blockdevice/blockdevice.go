@@ -29,17 +29,24 @@ type BlockDevice struct {
 // TODO(andrewrynhard): Use BLKPBSZGET ioctl to get the physical sector size.
 // TODO(andrewrynhard): Use BLKSSZGET ioctl to get the logical sector size
 // and pass them into gpt as options.
-func Open(devname string, setters ...Option) (*BlockDevice, error) {
+func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 	opts := NewDefaultOptions(setters...)
 
-	bd := &BlockDevice{}
+	bd = &BlockDevice{}
 
-	f, err := os.OpenFile(devname, os.O_RDWR, os.ModeDevice)
-	if err != nil {
+	var f *os.File
+	if f, err = os.OpenFile(devname, os.O_RDWR, os.ModeDevice); err != nil {
 		return nil, err
 	}
 
 	bd.f = f
+
+	defer func() {
+		if err != nil {
+			// nolint: errcheck
+			f.Close()
+		}
+	}()
 
 	if opts.CreateGPT {
 		gpt := gpt.NewGPT(devname, f)
@@ -63,7 +70,8 @@ func Open(devname string, setters ...Option) (*BlockDevice, error) {
 		if bytes.Equal(buf, []byte{0xee}) {
 			bd.table = gpt.NewGPT(devname, f)
 		} else {
-			return nil, errors.New("failed to find GUID partition table")
+			err = errors.New("failed to find GUID partition table")
+			return nil, err
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -27,6 +28,16 @@ import (
 // nolint: gocyclo
 func Install(args string, data *userdata.UserData) (err error) {
 	if data.Install == nil {
+		return nil
+	}
+
+	var exists bool
+	if exists, err = Exists(); err != nil {
+		return err
+	}
+
+	if exists {
+		log.Println("found existing installation, skipping install step")
 		return nil
 	}
 
@@ -135,6 +146,10 @@ func Install(args string, data *userdata.UserData) (err error) {
 	}
 
 	if err = syslinux.Install(args); err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filepath.Join(constants.NewRoot, constants.BootMountPoint, "installed"), []byte{}, 0400); err != nil {
 		return err
 	}
 
