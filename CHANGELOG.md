@@ -1,3 +1,23 @@
+# [v0.1.0-alpha.22](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2019-04-15)
+
+
+### Bug Fixes
+
+* remove redundant netlink connection, use netlink.IsNotExist in init ([#511](https://github.com/talos-systems/talos/issues/511)) ([72f60b4](https://github.com/talos-systems/talos/commit/72f60b4))
+
+
+### Features
+
+* **initramfs:** Add support for specifying static routes ([#513](https://github.com/talos-systems/talos/issues/513)) ([3151f9d](https://github.com/talos-systems/talos/commit/3151f9d))
+* add support for extra disk management ([#524](https://github.com/talos-systems/talos/issues/524)) ([2faf36b](https://github.com/talos-systems/talos/commit/2faf36b))
+* log the xfs_growfs of the data partition ([#537](https://github.com/talos-systems/talos/issues/537)) ([47d2bbd](https://github.com/talos-systems/talos/commit/47d2bbd))
+* remove blockd ([#536](https://github.com/talos-systems/talos/issues/536)) ([a817e74](https://github.com/talos-systems/talos/commit/a817e74))
+* upgrade containerd to v1.2.6 ([#532](https://github.com/talos-systems/talos/issues/532)) ([a106e42](https://github.com/talos-systems/talos/commit/a106e42))
+* upgrade Kubernetes to v1.14.1 ([#530](https://github.com/talos-systems/talos/issues/530)) ([ae9e6ac](https://github.com/talos-systems/talos/commit/ae9e6ac))
+* upgrade Linux to v4.19.34 ([#531](https://github.com/talos-systems/talos/issues/531)) ([038e17c](https://github.com/talos-systems/talos/commit/038e17c))
+
+
+
 # [v0.1.0-alpha.21](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2019-04-08)
 
 
