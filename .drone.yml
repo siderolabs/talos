@@ -27,6 +27,7 @@ steps:
   pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+    BINDIR: /usr/local/bin
   commands:
     - make lint
   volumes:
@@ -53,6 +54,7 @@ steps:
   pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+    BINDIR: /usr/local/bin
   commands:
     - make test
   volumes:
@@ -77,6 +79,7 @@ steps:
   pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+    BINDIR: /usr/local/bin
   commands:
     - cd hack/dev
     - make integration
