@@ -64,33 +64,16 @@ steps:
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
+    - make clean
     - make
   depends_on:
   - fetch
   volumes:
   - name: dockersock
     path: /var/run
-  when:
-    event:
-      exclude:
-      - tag
-
-- name: release
-  image: autonomy/build-container:latest
-  privileged: true
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-  commands:
-  - make clean
-  - make release
-  volumes:
-  - name: dockersock
-    path: /var/run
-  when:
-    event: tag
   depends_on:
   - fetch
+  - test
 
 - name: basic-integration
   image: autonomy/build-container:latest
@@ -128,14 +111,12 @@ steps:
       - pull_request
   depends_on:
   - basic-integration
-  - release
 
 - name: publish
   image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
-    title: release.txt
     draft: true
     note: CHANGELOG.md
     files:
@@ -146,7 +127,7 @@ steps:
   when:
     event: tag
   depends_on:
-  - release
+  - basic-integration
 
 volumes:
 - name: dockersock
