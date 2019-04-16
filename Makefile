@@ -91,6 +91,7 @@ kernel: buildkitd
 		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
+	@-rm -rf ./build/modules
 
 initramfs: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
