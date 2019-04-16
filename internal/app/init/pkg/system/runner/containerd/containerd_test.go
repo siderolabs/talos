@@ -77,7 +77,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.Require().NoError(err)
 }
 
-func (suite *ContainerdSuite) TeardownSuite() {
+func (suite *ContainerdSuite) TearDownSuite() {
 	suite.Require().NoError(suite.client.Close())
 
 	suite.Require().NoError(suite.containerdRunner.Stop())
@@ -244,6 +244,49 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 
 	suite.Assert().NoError(r.Stop())
 	<-done
+}
+
+func (suite *ContainerdSuite) TestImportSuccess() {
+	reqs := []*containerdrunner.ImportRequest{
+		{
+			Path: "/rootfs/usr/images/osd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("testtalos/osd"),
+			},
+		},
+		{
+			Path: "/rootfs/usr/images/proxyd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("testtalos/proxyd"),
+			},
+		},
+	}
+	suite.Assert().NoError(containerdrunner.Import(containerdNamespace, reqs...))
+
+	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
+	for _, imageName := range []string{"testtalos/osd", "testtalos/proxyd"} {
+		image, err := suite.client.ImageService().Get(ctx, imageName)
+		suite.Require().NoError(err)
+		suite.Require().Equal(imageName, image.Name)
+	}
+}
+
+func (suite *ContainerdSuite) TestImportFail() {
+	reqs := []*containerdrunner.ImportRequest{
+		{
+			Path: "/rootfs/usr/images/osd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("testtalos/osd2"),
+			},
+		},
+		{
+			Path: "/rootfs/usr/images/nothere.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("testtalos/nothere"),
+			},
+		},
+	}
+	suite.Assert().Error(containerdrunner.Import(containerdNamespace, reqs...))
 }
 
 func TestContainerdSuite(t *testing.T) {
