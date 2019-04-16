@@ -24,7 +24,7 @@ steps:
 
 - name: lint
   image: autonomy/build-container:latest
-  pull: true
+  pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
@@ -37,7 +37,7 @@ steps:
 
 - name: test
   image: autonomy/build-container:latest
-  pull: true
+  pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
@@ -60,7 +60,7 @@ steps:
 
 - name: build
   image: autonomy/build-container:latest
-  pull: true
+  pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
@@ -70,10 +70,31 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
+  when:
+    event:
+      exclude:
+      - tag
+
+- name: release
+  image: autonomy/build-container:latest
+  privileged: true
+  pull: always
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  commands:
+  - make clean
+  - make release
+  volumes:
+  - name: dockersock
+    path: /var/run
+  when:
+    event: tag
+  depends_on:
+  - fetch
 
 - name: basic-integration
   image: autonomy/build-container:latest
-  pull: true
+  pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
@@ -84,6 +105,8 @@ steps:
     path: /var/run
   depends_on:
   - build
+  when:
+    event: pull_request
 
 - name: push
   image: autonomy/build-container:latest
@@ -105,22 +128,7 @@ steps:
       - pull_request
   depends_on:
   - basic-integration
-
-- name: release
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-  commands:
-  - make clean
-  - make release
-  volumes:
-  - name: dockersock
-    path: /var/run
-  when:
-    event: tag
-  depends_on:
-  - basic-integration
+  - release
 
 - name: publish
   image: plugins/github-release
