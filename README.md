@@ -2,8 +2,8 @@
   <h1 align="center">Talos</h1>
   <p align="center">A modern operating system for Kubernetes.</p>
   <p align="center">
-    <a href="https://travis-ci.org/talos-systems/talos">
-      <img alt="Build Status" src="https://img.shields.io/travis/talos-systems/talos.svg?logo=travis&style=flat-square">
+    <a href="https://ci.dev.talos-systems.io/talos-systems/talos">
+      <img alt="Drone (self-hosted)" src="https://img.shields.io/drone/build/talos-systems/talos.svg?server=https%3A%2F%2Fci.dev.talos-systems.io&style=flat-square">
     </a>
     <a href="https://codecov.io/gh/talos-systems/talos">
       <img alt="Codecov" src="https://img.shields.io/codecov/c/github/talos-systems/talos.svg?style=flat-square">
