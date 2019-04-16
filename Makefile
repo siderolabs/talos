@@ -1,7 +1,5 @@
 SHA = $(shell gitmeta git sha)
 TAG = $(shell gitmeta image tag)
-BUILT = $(shell gitmeta built)
-PUSH = $(shell gitmeta pushable)
 
 VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:8fd9a83
