@@ -10,6 +10,13 @@ services:
     path: /var/run
 
 steps:
+- name: fetch
+  image: docker:git
+  commands:
+  - git fetch --tags
+  when:
+    event: tag
+
 - name: conform
   image: autonomy/conform:c539351
 
