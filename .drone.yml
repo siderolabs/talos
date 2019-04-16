@@ -112,13 +112,12 @@ steps:
   depends_on:
   - basic-integration
 
-- name: publish
+- name: release
   image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
     draft: true
-    note: CHANGELOG.md
     files:
     - build/*
     checksum:
