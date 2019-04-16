@@ -227,7 +227,8 @@ ENTRYPOINT ["entrypoint.sh"]
 # The test target performs tests on the codebase.
 
 FROM base-src AS test
-# xfsprogs is required by the tests
+# xfsprogs and containerd are required by the tests
+COPY --from=rootfs-build /rootfs /rootfs
 ENV PATH /rootfs/bin:$PATH
 COPY hack/golang/test.sh /bin
 

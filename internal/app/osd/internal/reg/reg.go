@@ -232,11 +232,9 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 		{Type: "bind", Destination: "/bin/kubeadm", Source: "/bin/kubeadm", Options: []string{"bind", "ro"}},
 	}
 
-	cr := containerdrunner.Containerd{}
-
-	err = cr.Run(
+	cr := containerdrunner.NewRunner(
 		r.Data,
-		args,
+		&args,
 		runner.WithContainerImage(constants.KubernetesImage),
 		runner.WithOCISpecOpts(
 			containerdrunner.WithMemoryLimit(int64(1000000*512)),
@@ -249,6 +247,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 		runner.WithType(runner.Once),
 	)
 
+	err = cr.Run()
 	if err != nil {
 		return nil, err
 	}

@@ -64,7 +64,6 @@ steps:
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
-    - make clean
     - make
   depends_on:
   - fetch

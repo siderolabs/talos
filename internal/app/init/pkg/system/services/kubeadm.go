@@ -171,11 +171,9 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.Containerd{}
-
-	return r.Run(
+	r := containerd.NewRunner(
 		data,
-		args,
+		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
@@ -189,6 +187,8 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		),
 		runner.WithType(runner.Once),
 	)
+
+	return r.Run()
 }
 
 func enforceMasterOverrides(initConfiguration *kubeadmapi.InitConfiguration) {
