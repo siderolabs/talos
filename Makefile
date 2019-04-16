@@ -147,10 +147,6 @@ talos: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-release: all talos-raw talos-gce talos
-	xz -e9 ./build/rootfs.raw
-	@ echo @(TAG) > release.txt
-
 test: buildkitd
 	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
