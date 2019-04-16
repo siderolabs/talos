@@ -19,6 +19,8 @@ steps:
 
 - name: conform
   image: autonomy/conform:c539351
+  depends_on:
+  - fetch
 
 - name: lint
   image: autonomy/build-container:latest
@@ -30,6 +32,8 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
+  depends_on:
+  - fetch
 
 - name: test
   image: autonomy/build-container:latest
@@ -41,6 +45,8 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
+  depends_on:
+  - fetch
 
 - name: coverage
   image: plugins/codecov
@@ -50,8 +56,6 @@ steps:
     files:
      - coverage.txt
   depends_on:
-  - conform
-  - lint
   - test
 
 - name: build
@@ -61,6 +65,8 @@ steps:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
     - make
+  depends_on:
+  - fetch
   volumes:
   - name: dockersock
     path: /var/run
