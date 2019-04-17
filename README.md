@@ -2,17 +2,6 @@
   <h1 align="center">Talos</h1>
   <p align="center">A modern operating system for Kubernetes.</p>
   <p align="center">
-    <a href="https://ci.dev.talos-systems.io/talos-systems/talos">
-      <img alt="Drone (self-hosted)" src="https://img.shields.io/drone/build/talos-systems/talos.svg?server=https%3A%2F%2Fci.dev.talos-systems.io&style=flat-square">
-    </a>
-    <a href="https://codecov.io/gh/talos-systems/talos">
-      <img alt="Codecov" src="https://img.shields.io/codecov/c/github/talos-systems/talos.svg?style=flat-square">
-    </a>
-    <a href="https://goreportcard.com/report/github.com/talos-systems/talos">
-      <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/talos-systems/talos?style=flat-square">
-    </a>
-  </p>
-  <p align="center">
     <a href="https://github.com/talos-systems/talos/releases/latest">
       <img alt="Release" src="https://img.shields.io/github/release/talos-systems/talos.svg?logo=github&logoColor=white&style=flat-square">
     </a>
@@ -120,21 +109,22 @@ k8s.io      e42ec788edc1e3af71cb6fa151dd8cc1076906dbe09d7099697f36069e38b5a8   s
 k8s.io      kubelet                                                            k8s.gcr.io/hyperkube:v1.13.2                                              2068   RUNNING
 ```
 
+## Community
+
+Follow us on Twitter for the latest on Talos, or join our slack for in-depth discussions!
+
+<p>
+  <a href="https://twitter.com/talossystems">
+    <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/talossystems.svg?style=social">
+  </a>
+  <a href="https://slack.dev.talos-systems.io">
+    <img alt="Slack Invite" src="https://slack.dev.talos-systems.io/badge.svg">
+  </a>
+</p>
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
-
-## Contact
-
-### Slack
-
-If you would like to participate in discussions about Talos, please send an email to maintainers@talos-systems.io with the subject line "Slack Invite", and we would be happy to send an invite to our workspace.
-
-> It is important that the subject line is _exactly_ "Slack Invite" (exclude the double quotes).
-
-### Twitter
-
-![Twitter Follow](https://img.shields.io/twitter/follow/talossystems.svg?style=social)
 
 ## Changelog
 
