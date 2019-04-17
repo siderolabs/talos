@@ -6,6 +6,7 @@ package config
 
 import (
 	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -26,13 +27,27 @@ type Context struct {
 
 // Open reads the config and initilzes a Config struct.
 func Open(p string) (c *Config, err error) {
+	if err = ensure(p); err != nil {
+		return nil, err
+	}
+
 	fileBytes, err := ioutil.ReadFile(p)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	c = &Config{}
 	if err = yaml.Unmarshal(fileBytes, c); err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+// FromString returns a config from a string.
+func FromString(p string) (c *Config, err error) {
+	c = &Config{}
+	if err = yaml.Unmarshal([]byte(p), c); err != nil {
 		return
 	}
 
@@ -48,6 +63,18 @@ func (c *Config) Save(p string) (err error) {
 
 	if err = ioutil.WriteFile(p, configBytes, 0600); err != nil {
 		return
+	}
+
+	return nil
+}
+
+func ensure(filename string) (err error) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		config := &Config{
+			Context:  "",
+			Contexts: map[string]*Context{},
+		}
+		return config.Save(filename)
 	}
 
 	return nil

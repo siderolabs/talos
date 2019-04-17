@@ -28,6 +28,45 @@ NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP       EXTERNAL-I
 192.168.124.201   Ready    worker   26s   v1.13.2   192.168.124.201   <none>        Talos (v0.1.0-alpha.16) by Autonomy   4.19.10-talos    containerd://1.2.2
 ```
 
+## Quick Start
+
+The quickest way to get started with Talos is to create a local docker-based cluster:
+
+```bash
+osctl cluster create
+```
+
+> Note: You can download `osctl` from the latest [release](https://github.com/talos-systems/talos/releases/latest).
+
+Now, enter a container in the newly created network:
+
+```bash
+docker run \
+	--rm \
+	-it \
+	--net=talos \
+	-e KUBECONFIG=/tmp/kubeconfig \
+	-v $(which osctl):/bin/osctl:ro \
+	-v $HOME/.talos/config:/root/.talos/config \
+	k8s.gcr.io/hyperkube:v1.14.1
+```
+
+> Note: If you are on MacOS be sure to mount `osctl-linux-amd64`.
+
+Once inside the container, download the kubeconfig:
+
+```bash
+osctl kubeconfig > $KUBECONFIG
+```
+
+> Note: It can take up to a minute for the kubeconfig to be available.
+
+To cleanup, run:
+
+```bash
+osctl cluster destroy
+```
+
 ## Features
 
 ### Technologies

@@ -158,6 +158,10 @@ talos: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
+.PHONY: integration
+integration:
+	@KUBERNETES_VERSION=v1.14.1 ./hack/test/integration.sh
+
 .PHONY: test
 test: buildkitd
 	@mkdir -p build

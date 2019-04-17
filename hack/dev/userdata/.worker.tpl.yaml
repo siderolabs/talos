@@ -23,10 +23,6 @@ services:
         criSocket: /run/containerd/containerd.sock
         kubeletExtraArgs:
           node-labels: node-role.kubernetes.io/worker=
-    ignorePreflightErrors:
-      - FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
-      - Swap
-      - SystemVerification
   trustd:
     username: dev
     password: talos_trust_dev

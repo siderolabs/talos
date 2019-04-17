@@ -9,6 +9,8 @@ services:
   volumes:
   - name: dockersock
     path: /var/run
+  - name: tmp
+    path: /tmp
 
 steps:
 - name: fetch
@@ -82,11 +84,12 @@ steps:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
     BINDIR: /usr/local/bin
   commands:
-    - cd hack/dev
     - make integration
   volumes:
   - name: dockersock
     path: /var/run
+  - name: tmp
+    path: /tmp
   depends_on:
   - build
   when:
@@ -131,6 +134,8 @@ steps:
 
 volumes:
 - name: dockersock
+  temp: {}
+- name: tmp
   temp: {}
 
 ---

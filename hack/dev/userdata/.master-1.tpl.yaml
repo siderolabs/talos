@@ -31,20 +31,8 @@ services:
       ---
       apiVersion: kubelet.config.k8s.io/v1beta1
       kind: KubeletConfiguration
-      failSwapOn: false  # necessary for some docker hosts
       featureGates:
         ExperimentalCriticalPodAnnotation: true
-      ---
-      apiVersion: kubeproxy.config.k8s.io/v1alpha1
-      kind: KubeProxyConfiguration
-      # See https://github.com/kubernetes/kubernetes/issues/58610#issuecomment-359552443
-      conntrack:
-        max: 0
-        maxPerCore: 0
-    ignorePreflightErrors:
-      - FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
-      - Swap
-      - SystemVerification
   trustd:
     username: 'dev'
     password: 'talos_trust_dev'

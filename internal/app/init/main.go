@@ -5,8 +5,10 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -29,17 +31,21 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"golang.org/x/sys/unix"
+
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 )
 
 var (
 	switchRoot  *bool
 	inContainer *bool
 	rebootFlag  = unix.LINUX_REBOOT_CMD_RESTART
+	userdataArg *string
 )
 
 func init() {
 	switchRoot = flag.Bool("switch-root", false, "perform a switch_root")
 	inContainer = flag.Bool("in-container", false, "run Talos in a container")
+	userdataArg = flag.String("userdata", "", "the base64 encoded userdata")
 	flag.Parse()
 }
 
@@ -66,10 +72,33 @@ func container() (err error) {
 		}
 	}
 
-	log.Printf("reading the user data: %s\n", constants.UserDataPath)
+	if *userdataArg != "" {
+		log.Printf("writing the user data: %s\n", constants.UserDataPath)
+		var decoded []byte
+		if decoded, err = base64.StdEncoding.DecodeString(*userdataArg); err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(constants.UserDataPath, decoded, 0400); err != nil {
+			return err
+		}
+	}
+
 	var data *userdata.UserData
 	if data, err = userdata.Open(constants.UserDataPath); err != nil {
 		return err
+	}
+
+	// Workarounds for running in a container.
+
+	data.Services.Kubeadm.IgnorePreflightErrors = []string{"FileContent--proc-sys-net-bridge-bridge-nf-call-iptables", "Swap", "SystemVerification"}
+	initConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
+	if ok {
+		initConfiguration.ClusterConfiguration.ComponentConfigs.Kubelet.FailSwapOn = false
+		// See https://github.com/kubernetes/kubernetes/issues/58610#issuecomment-359552443
+		max := int32(0)
+		maxPerCore := int32(0)
+		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.Max = &max
+		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.MaxPerCore = &maxPerCore
 	}
 
 	log.Println("preparing the root filesystem")
