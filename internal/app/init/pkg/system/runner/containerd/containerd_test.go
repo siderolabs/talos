@@ -290,5 +290,13 @@ func (suite *ContainerdSuite) TestImportFail() {
 }
 
 func TestContainerdSuite(t *testing.T) {
+	if os.Getuid() != 0 {
+		t.Skip("can't run the test as non-root")
+	}
+	_, err := os.Stat("/rootfs/bin/containerd")
+	if err != nil {
+		t.Skip("containerd binary is not available, skipping the test")
+	}
+
 	suite.Run(t, new(ContainerdSuite))
 }

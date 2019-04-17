@@ -77,7 +77,7 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=proto /internal/app ./internal/app
-RUN go list -mod=readonly all
+RUN go list -mod=readonly all >/dev/null
 
 # The udevd target builds the udevd binary.
 
