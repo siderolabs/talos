@@ -62,6 +62,16 @@ func Prepare(data *userdata.UserData) (err error) {
 		return nil
 	}
 
+	var exists bool
+	if exists, err = Exists(); err != nil {
+		return err
+	}
+
+	if exists {
+		log.Println("found existing installation, skipping prepare step")
+		return nil
+	}
+
 	// Verify that the target device(s) can satisify the requested options.
 
 	if err = VerifyRootDevice(data); err != nil {

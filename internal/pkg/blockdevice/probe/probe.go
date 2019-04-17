@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -29,6 +30,50 @@ type ProbedBlockDevice struct {
 	Path       string
 }
 
+func probe(devpath string) (devpaths []string) {
+	devpaths = []string{}
+
+	// Start by opening the block device.
+	// If a partition table was not found, it is still possible that a
+	// file system exists without a partition table.
+	bd, err := blockdevice.Open(devpath)
+	if err != nil {
+		// nolint: errcheck
+		if sb, _ := FileSystem(devpath); sb != nil {
+			devpaths = append(devpaths, devpath)
+		}
+
+		return devpaths
+	}
+	// nolint: errcheck
+	defer bd.Close()
+
+	// A partition table was not found, and we have already checked for
+	// a file system on the block device. Let's check if the block device
+	// has partitions.
+	pt, err := bd.PartitionTable(true)
+	if err != nil {
+		return devpaths
+	}
+
+	// A partition table was found, now probe each partition's file system.
+	name := filepath.Base(devpath)
+	for _, p := range pt.Partitions() {
+		var partpath string
+		if strings.HasPrefix(name, "nvme") {
+			partpath = fmt.Sprintf("/dev/%sp%d", name, p.No())
+		} else {
+			partpath = fmt.Sprintf("/dev/%s%d", name, p.No())
+		}
+		// nolint: errcheck
+		if sb, _ := FileSystem(partpath); sb != nil {
+			devpaths = append(devpaths, partpath)
+		}
+	}
+
+	return devpaths
+}
+
 // All probes a block device's file system for the given label.
 func All() (probed []*ProbedBlockDevice, err error) {
 	var infos []os.FileInfo
@@ -36,44 +81,20 @@ func All() (probed []*ProbedBlockDevice, err error) {
 		return nil, err
 	}
 
-	probe := func(devpath string) (sb filesystem.SuperBlocker) {
-		// nolint: errcheck
-		sb, _ = FileSystem(devpath)
-		return sb
-	}
-
 	for _, info := range infos {
-		var sb filesystem.SuperBlocker
 		devpath := "/dev/" + info.Name()
-
-		bd, err := blockdevice.Open(devpath)
-		if err != nil {
-			// A partition table was not found, but it is still possible that a
-			// file system exists without a partition table.
-			if sb = probe(devpath); sb != nil {
-				probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: devpath})
+		for _, path := range probe(devpath) {
+			var (
+				bd *blockdevice.BlockDevice
+				sb filesystem.SuperBlocker
+			)
+			if bd, err = blockdevice.Open(devpath); err != nil {
+				return nil, errors.Wrap(err, "unexpected error when opening block device")
 			}
-			continue
-		}
-
-		pt, err := bd.PartitionTable(true)
-		if err != nil {
-			// A partition table was not found, and we have already checked for
-			// a file system on the block device.
-			continue
-		}
-
-		// A partition table was found, now probe each partition's file system.
-		for _, p := range pt.Partitions() {
-			var partpath string
-			if strings.HasPrefix(info.Name(), "nvme") {
-				partpath = fmt.Sprintf("/dev/%sp%d", info.Name(), p.No())
-			} else {
-				partpath = fmt.Sprintf("/dev/%s%d", info.Name(), p.No())
+			if sb, err = FileSystem(path); err != nil {
+				return nil, errors.Wrap(err, "unexpected error when reading super block")
 			}
-			if sb = probe(partpath); sb != nil {
-				probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: partpath})
-			}
+			probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: path})
 		}
 	}
 
