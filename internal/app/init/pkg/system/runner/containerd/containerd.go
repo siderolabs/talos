@@ -13,13 +13,13 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -59,7 +59,7 @@ func (c *containerdRunner) Run() error {
 	defer close(c.stopped)
 
 	// Wait for the containerd socket.
-	_, err := conditions.WaitForFileToExist(defaults.DefaultAddress)()
+	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)()
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (c *containerdRunner) Run() error {
 	// Create the containerd client.
 
 	ctx := namespaces.WithNamespace(context.Background(), c.opts.Namespace)
-	client, err := containerd.New(defaults.DefaultAddress)
+	client, err := containerd.New(constants.ContainerdAddress)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/containerd/cgroups"
 	"github.com/containerd/containerd"
 	tasks "github.com/containerd/containerd/api/services/tasks/v1"
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl"
@@ -59,32 +58,25 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 }
 
 // Processes implements the proto.OSDServer interface.
-// nolint: gocyclo
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
-	imageList, err := images(in.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	containers, err := containerID(in.Namespace)
+	pods, err := podInfo(in.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	processes := []*proto.Process{}
 
-	for _, container := range containers {
-		if container.Name == "" {
-			continue
+	for _, containers := range pods {
+		for _, container := range containers.Containers {
+			process := &proto.Process{
+				Namespace: in.Namespace,
+				Id:        container.Display,
+				Image:     container.Image,
+				Pid:       container.Pid,
+				Status:    container.Status,
+			}
+			processes = append(processes, process)
 		}
-		process := &proto.Process{
-			Namespace: in.Namespace,
-			Id:        container.Name,
-			Image:     imageList[container.Digest],
-			Pid:       container.Pid,
-			Status:    container.Status,
-		}
-		processes = append(processes, process)
 	}
 
 	return &proto.ProcessesReply{Processes: processes}, nil
@@ -168,7 +160,7 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 // Restart implements the proto.OSDServer interface.
 func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (reply *proto.RestartReply, err error) {
 	ctx = namespaces.WithNamespace(ctx, in.Namespace)
-	client, err := containerd.New(defaults.DefaultAddress)
+	client, err := containerd.New(constants.ContainerdAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -267,15 +259,16 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 
 // Logs implements the proto.OSDServer interface. Service or container logs can
 // be requested and the contents of the log file are streamed in chunks.
+// nolint: gocyclo
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
 	var (
-		client     *containerd.Client
-		containers []containerProc
-		ctx        context.Context
-		task       *tasks.GetResponse
+		client *containerd.Client
+		ctx    context.Context
+		pods   []*pod
+		task   *tasks.GetResponse
 	)
 
-	containers, err = containerID(req.Namespace)
+	pods, err = podInfo(req.Namespace)
 	if err != nil {
 		return err
 	}
@@ -286,31 +279,38 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 	// nolint: errcheck
 	defer client.Close()
 
-	for _, container := range containers {
-		if container.Name != req.Id {
-			continue
-		}
+	for _, containers := range pods {
+		for _, container := range containers.Containers {
+			if container.Display != req.Id {
+				continue
+			}
 
-		task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: req.Id})
-		if err != nil {
-			return
-		}
+			if container.LogFile == "" {
+				task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: container.ID})
+				if err != nil {
+					return
+				}
 
-		var file *os.File
-		file, err = os.OpenFile(task.Process.Stdout, os.O_RDONLY, 0)
-		if err != nil {
-			return
-		}
-		chunk := filechunker.NewChunker(file)
+				container.LogFile = task.Process.Stdout
+			}
 
-		if chunk == nil {
-			err = errors.New("no log reader found")
-			return
-		}
-
-		for data := range chunk.Read(l.Context()) {
-			if err = l.Send(&proto.Data{Bytes: data}); err != nil {
+			var file *os.File
+			file, err = os.OpenFile(container.LogFile, os.O_RDONLY, 0)
+			if err != nil {
 				return
+			}
+
+			chunk := filechunker.NewChunker(file)
+
+			if chunk == nil {
+				err = errors.New("no log reader found")
+				return
+			}
+
+			for data := range chunk.Read(l.Context()) {
+				if err = l.Send(&proto.Data{Bytes: data}); err != nil {
+					return
+				}
 			}
 		}
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -44,7 +45,7 @@ func (c *Containerd) Start(data *userdata.UserData) error {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID:          c.ID(data),
-		ProcessArgs: []string{"/bin/containerd"},
+		ProcessArgs: []string{"/bin/containerd", "--address", constants.ContainerdAddress},
 	}
 
 	env := []string{}

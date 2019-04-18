@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -92,7 +91,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 // ConditionFunc implements the Service interface.
 func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	files := []string{defaults.DefaultAddress}
+	files := []string{constants.ContainerdAddress}
 
 	return conditions.WaitForFilesToExist(files...)
 }
@@ -203,7 +202,7 @@ func writeKubeadmConfig(data *userdata.UserData) (err error) {
 		if !ok {
 			return errors.New("expected InitConfiguration")
 		}
-		initConfiguration.NodeRegistration.CRISocket = defaults.DefaultAddress
+		initConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
 		enforceMasterOverrides(initConfiguration)
 		if err = cis.EnforceMasterRequirements(initConfiguration); err != nil {
 			return err
@@ -217,7 +216,7 @@ func writeKubeadmConfig(data *userdata.UserData) (err error) {
 		if !ok {
 			return errors.New("expected JoinConfiguration")
 		}
-		joinConfiguration.NodeRegistration.CRISocket = defaults.DefaultAddress
+		joinConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
 		if err = cis.EnforceWorkerRequirements(joinConfiguration); err != nil {
 			return err
 		}

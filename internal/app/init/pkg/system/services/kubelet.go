@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -60,7 +59,7 @@ func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
 
 // ConditionFunc implements the Service interface.
 func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", defaults.DefaultAddress)
+	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", constants.ContainerdAddress)
 }
 
 // Start implements the Service interface.
@@ -78,7 +77,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 			"--config=/var/lib/kubelet/config.yaml",
 			"--container-runtime=remote",
 			"--runtime-request-timeout=15m",
-			"--container-runtime-endpoint=unix://" + defaults.DefaultAddress,
+			"--container-runtime-endpoint=unix://" + constants.ContainerdAddress,
 		},
 	}
 

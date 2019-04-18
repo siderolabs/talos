@@ -4,6 +4,8 @@
 
 package constants
 
+import "github.com/containerd/containerd/defaults"
+
 const (
 	// KernelParamUserData is the kernel parameter name for specifying the URL
 	// to the user data.
@@ -108,4 +110,9 @@ const (
 	// SYSLOG_ACTION_READ_ALL is a named type argument to klogctl.
 	// nolint: golint
 	SYSLOG_ACTION_READ_ALL = 3
+)
+
+// Containerd
+const (
+	ContainerdAddress = defaults.DefaultAddress
 )

@@ -8,60 +8,81 @@ import (
 	"context"
 	"log"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
-type containerProc struct {
-	Name   string // Friendly name
-	ID     string // container sha/id
-	Digest string // Container Digest
-	Status string // Running state of container
-	Pid    uint32
+type container struct {
+	Display string // Friendly Name
+	Name    string // container name
+	ID      string // container sha/id
+	Digest  string // Container Digest
+	Image   string
+	Status  string // Running state of container
+	Pid     uint32
+	LogFile string
+}
 
-	Container containerd.Container
-	Context   context.Context
+type pod struct {
+	Name    string
+	Sandbox string
+
+	Containers []*container
 }
 
 func connect(namespace string) (*containerd.Client, context.Context, error) {
-	client, err := containerd.New(defaults.DefaultAddress)
+	client, err := containerd.New(constants.ContainerdAddress)
 	return client, namespaces.WithNamespace(context.Background(), namespace), err
 }
 
-func containerID(namespace string) ([]containerProc, error) {
+// nolint: gocyclo
+func podInfo(namespace string) ([]*pod, error) {
+	pods := []*pod{}
+
 	client, ctx, err := connect(namespace)
 	if err != nil {
-		return nil, err
+		return pods, err
 	}
 	// nolint: errcheck
 	defer client.Close()
 
-	containers, err := client.Containers(ctx)
+	var imageList map[string]string
+	imageList, err = images(namespace)
 	if err != nil {
-		return nil, err
+		return pods, err
 	}
 
-	cps := make([]containerProc, len(containers))
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return pods, err
+	}
 
-	for _, container := range containers {
-		cp := containerProc{}
+	for _, cntr := range containers {
+		cp := &container{}
 
-		info, err := container.Info(ctx)
+		info, err := cntr.Info(ctx)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		img, err := container.Image(ctx)
+		spec, err := cntr.Spec(ctx)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		task, err := container.Task(ctx, nil)
+		img, err := cntr.Image(ctx)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		task, err := cntr.Task(ctx, nil)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -73,22 +94,78 @@ func containerID(namespace string) ([]containerProc, error) {
 			continue
 		}
 
-		cp.ID = container.ID()
-		cp.Name = container.ID()
+		cp.ID = cntr.ID()
+		cp.Name = cntr.ID()
+		cp.Display = cntr.ID()
 		cp.Digest = img.Target().Digest.String()
-		cp.Container = container
-		cp.Context = ctx
+		cp.Image = imageList[img.Target().Digest.String()]
 		cp.Pid = task.Pid()
 		cp.Status = strings.ToUpper(string(status.Status))
 
-		if _, ok := info.Labels["io.kubernetes.pod.name"]; ok {
-			cp.Name = path.Join(info.Labels["io.kubernetes.pod.namespace"], info.Labels["io.kubernetes.pod.name"])
+		if cname, ok := info.Labels["io.kubernetes.pod.name"]; ok {
+			if cns, ok := info.Labels["io.kubernetes.pod.namespace"]; ok {
+				cp.Display = path.Join(cns, cname)
+			}
 		}
 
-		cps = append(cps, cp)
+		// Save off an identifier for the pod
+		// this is typically the container name (non-k8s namespace)
+		// or will be k8s namespace"/"k8s pod name":"container name
+		podName := cp.Display
+
+		// Typically on actual application containers inside the pod/sandbox
+		if _, ok := info.Labels["io.kubernetes.container.name"]; ok {
+			cp.Name = info.Labels["io.kubernetes.container.name"]
+			cp.Display = cp.Display + ":" + info.Labels["io.kubernetes.container.name"]
+		}
+
+		// Typically on the 'infrastructure' container, aka k8s.gcr.io/pause
+		var sandbox string
+		if _, ok := spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]; ok {
+			sandbox = spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]
+		}
+
+		// Figure out if we need to create a new pod or append
+		// to an existing pod
+		// Also set pod sandbox ID if defined
+		found := false
+		for _, pod := range pods {
+			if pod.Name != podName {
+				continue
+			}
+			if sandbox != "" {
+				pod.Sandbox = sandbox
+			}
+			pod.Containers = append(pod.Containers, cp)
+			found = true
+			break
+		}
+
+		if !found {
+			p := &pod{
+				Name:       podName,
+				Containers: []*container{cp},
+			}
+			if sandbox != "" {
+				p.Sandbox = sandbox
+			}
+			pods = append(pods, p)
+		}
 	}
 
-	return cps, nil
+	// This seems janky because it is
+	// But we need to loop through everything again to associate
+	// the sandbox with the container name so we can get a proper
+	// filepath to the location of the logfile
+	for _, contents := range pods {
+		for _, cntr := range contents.Containers {
+			if strings.Contains(cntr.Display, ":") && contents.Sandbox != "" {
+				cntr.LogFile = filepath.Join(contents.Sandbox, cntr.Name, "0.log")
+			}
+		}
+	}
+
+	return pods, nil
 }
 
 func images(namespace string) (map[string]string, error) {
@@ -107,6 +184,9 @@ func images(namespace string) (map[string]string, error) {
 	// create a map[sha]name for easier lookups later
 	imageList := make(map[string]string, len(images))
 	for _, image := range images {
+		if strings.HasPrefix(image.Name(), "sha256:") {
+			continue
+		}
 		imageList[image.Target().Digest.String()] = image.Name()
 	}
 	return imageList, nil
