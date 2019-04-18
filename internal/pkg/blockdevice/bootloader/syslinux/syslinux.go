@@ -23,7 +23,7 @@ LABEL Talos
   INITRD /initramfs.xz
   APPEND {{ .Append }}`
 
-const gptmbrbin = "/usr/share/gptmbr.bin"
+const gptmbrbin = "/usr/lib/syslinux/gptmbr.bin"
 
 // Syslinux represents the syslinux bootloader.
 type Syslinux struct{}

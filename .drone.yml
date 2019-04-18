@@ -35,6 +35,19 @@ steps:
   depends_on:
   - fetch
 
+- name: build
+  image: autonomy/build-container:latest
+  pull: always
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  commands:
+    - make
+  volumes:
+  - name: dockersock
+    path: /var/run
+  depends_on:
+  - fetch
+
 - name: test
   image: autonomy/build-container:latest
   pull: always
@@ -47,6 +60,7 @@ steps:
     path: /var/run
   depends_on:
   - fetch
+  - build
 
 - name: coverage
   image: plugins/codecov
@@ -56,22 +70,6 @@ steps:
     files:
      - coverage.txt
   depends_on:
-  - test
-
-- name: build
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-  commands:
-    - make
-  depends_on:
-  - fetch
-  volumes:
-  - name: dockersock
-    path: /var/run
-  depends_on:
-  - fetch
   - test
 
 - name: basic-integration
