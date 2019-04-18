@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -62,8 +63,8 @@ func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFun
 	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", constants.ContainerdAddress)
 }
 
-// Start implements the Service interface.
-func (k *Kubelet) Start(data *userdata.UserData) error {
+// Runner implements the Service interface.
+func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 	image := constants.KubernetesImage
 
 	// Set the process arguments.
@@ -83,7 +84,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 
 	fileBytes, err := ioutil.ReadFile("/var/lib/kubelet/kubeadm-flags.env")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	argsString := strings.TrimPrefix(string(fileBytes), "KUBELET_KUBEADM_ARGS=")
 	argsString = strings.TrimSuffix(argsString, "\n")
@@ -106,7 +107,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 	// Add in the additional CNI mounts.
 	cniMounts, err := cni.Mounts(data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	mounts = append(mounts, cniMounts...)
 
@@ -123,7 +124,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.NewRunner(
+	return restart.New(containerd.NewRunner(
 		data,
 		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
@@ -136,8 +137,7 @@ func (k *Kubelet) Start(data *userdata.UserData) error {
 			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,
 		),
-		runner.WithType(runner.Forever),
-	)
-
-	return r.Run()
+	),
+		restart.WithType(restart.Forever),
+	), nil
 }

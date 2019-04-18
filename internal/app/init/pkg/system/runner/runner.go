@@ -5,6 +5,7 @@
 package runner
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -13,8 +14,11 @@ import (
 
 // Runner describes the requirements for running a process.
 type Runner interface {
+	fmt.Stringer
+	Open() error
 	Run() error
 	Stop() error
+	Close() error
 }
 
 // Args represents the required options for services.
@@ -36,12 +40,8 @@ type Options struct {
 	ContainerImage string
 	// Namespace is the containerd namespace.
 	Namespace string
-	// Type describes the service's restart policy.
-	Type Type
 	// LogPath is the root path to store logs
 	LogPath string
-	// RestartInterval is the interval between restarts for failed runs
-	RestartInterval time.Duration
 	// GracefulShutdownTimeout is the time to wait for process to exit after SIGTERM
 	// before sending SIGKILL
 	GracefulShutdownTimeout time.Duration
@@ -50,32 +50,13 @@ type Options struct {
 // Option is the functional option func.
 type Option func(*Options)
 
-// Type represents the service's restart policy.
-type Type int
-
-const (
-	// Forever will always restart a process.
-	Forever Type = iota
-	// Once will restart the process only if it did not exit successfully.
-	Once
-)
-
 // DefaultOptions describes the default options to a runner.
 func DefaultOptions() *Options {
 	return &Options{
 		Env:                     []string{},
-		Type:                    Forever,
 		Namespace:               "system",
 		LogPath:                 "/var/log",
-		RestartInterval:         5 * time.Second,
 		GracefulShutdownTimeout: 10 * time.Second,
-	}
-}
-
-// WithType sets the type of a service.
-func WithType(o Type) Option {
-	return func(args *Options) {
-		args.Type = o
 	}
 }
 
@@ -118,13 +99,6 @@ func WithOCISpecOpts(o ...oci.SpecOpts) Option {
 func WithLogPath(path string) Option {
 	return func(args *Options) {
 		args.LogPath = path
-	}
-}
-
-// WithRestartInterval sets the interval between restarts of the failed task
-func WithRestartInterval(interval time.Duration) Option {
-	return func(args *Options) {
-		args.RestartInterval = interval
 	}
 }
 

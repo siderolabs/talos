@@ -6,6 +6,7 @@ package containerd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"path/filepath"
 	"syscall"
@@ -31,10 +32,11 @@ type containerdRunner struct {
 
 	stop    chan struct{}
 	stopped chan struct{}
-}
 
-// errStopped is used internally to signal that task was stopped
-var errStopped = errors.New("stopped")
+	client    *containerd.Client
+	ctx       context.Context
+	container containerd.Container
+}
 
 // NewRunner creates runner.Runner that runs a container in containerd
 func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Option) runner.Runner {
@@ -53,10 +55,8 @@ func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Opt
 	return r
 }
 
-// Run implements the Runner interface.
-// nolint: gocyclo
-func (c *containerdRunner) Run() error {
-	defer close(c.stopped)
+// Open implements the Runner interface.
+func (c *containerdRunner) Open() error {
 
 	// Wait for the containerd socket.
 	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)()
@@ -66,15 +66,13 @@ func (c *containerdRunner) Run() error {
 
 	// Create the containerd client.
 
-	ctx := namespaces.WithNamespace(context.Background(), c.opts.Namespace)
-	client, err := containerd.New(constants.ContainerdAddress)
+	c.ctx = namespaces.WithNamespace(context.Background(), c.opts.Namespace)
+	c.client, err = containerd.New(constants.ContainerdAddress)
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
-	defer client.Close()
 
-	image, err := client.GetImage(ctx, c.opts.ContainerImage)
+	image, err := c.client.GetImage(c.ctx, c.opts.ContainerImage)
 	if err != nil {
 		return err
 	}
@@ -83,59 +81,50 @@ func (c *containerdRunner) Run() error {
 
 	specOpts := c.newOCISpecOpts(image)
 	containerOpts := c.newContainerOpts(image, specOpts)
-	container, err := client.NewContainer(
-		ctx,
+	c.container, err = c.client.NewContainer(
+		c.ctx,
 		c.args.ID,
 		containerOpts...,
 	)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create container %q", c.args.ID)
 	}
-	defer container.Delete(ctx, containerd.WithSnapshotCleanup) // nolint: errcheck
 
-	// Manage task lifecycle
-	switch c.opts.Type {
-	case runner.Once:
-		err = c.runOnce(ctx, container)
-		if err == errStopped {
-			err = nil
-		}
-		return err
-	case runner.Forever:
-		for {
-			err = c.runOnce(ctx, container)
-			if err == errStopped {
-				return nil
-			}
-			if err != nil {
-				log.Printf("error running %v, going to restart forever: %s", c.args.ID, err)
-			}
-
-			select {
-			case <-c.stop:
-				return nil
-			case <-time.After(c.opts.RestartInterval):
-			}
-		}
-	default:
-		panic("unsupported runner type")
-	}
-
+	return nil
 }
 
-func (c *containerdRunner) runOnce(ctx context.Context, container containerd.Container) error {
+// Close implements runner.Runner interface
+func (c *containerdRunner) Close() error {
+	if c.container != nil {
+		err := c.container.Delete(c.ctx, containerd.WithSnapshotCleanup)
+		if err != nil {
+			return err
+		}
+	}
+
+	if c.client == nil {
+		return nil
+	}
+
+	return c.client.Close()
+}
+
+// Run implements runner.Runner interface
+func (c *containerdRunner) Run() error {
+	defer close(c.stopped)
+
 	// Create the task and start it.
-	task, err := container.NewTask(ctx, cio.LogFile(c.logPath()))
+	task, err := c.container.NewTask(c.ctx, cio.LogFile(c.logPath()))
 	if err != nil {
 		return errors.Wrapf(err, "failed to create task: %q", c.args.ID)
 	}
-	defer task.Delete(ctx) // nolint: errcheck
+	defer task.Delete(c.ctx) // nolint: errcheck
 
-	if err = task.Start(ctx); err != nil {
+	if err = task.Start(c.ctx); err != nil {
 		return errors.Wrapf(err, "failed to start task: %q", c.args.ID)
 	}
 
-	statusC, err := task.Wait(ctx)
+	statusC, err := task.Wait(c.ctx)
 	if err != nil {
 		return errors.Wrapf(err, "failed waiting for task: %q", c.args.ID)
 	}
@@ -152,23 +141,23 @@ func (c *containerdRunner) runOnce(ctx context.Context, container containerd.Con
 		log.Printf("sending SIGTERM to %v", c.args.ID)
 
 		// nolint: errcheck
-		_ = task.Kill(ctx, syscall.SIGTERM, containerd.WithKillAll)
+		_ = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll)
 	}
 
 	select {
 	case <-statusC:
 		// stopped process exited
-		return errStopped
+		return nil
 	case <-time.After(c.opts.GracefulShutdownTimeout):
 		// kill the process
 		log.Printf("sending SIGKILL to %v", c.args.ID)
 
 		// nolint: errcheck
-		_ = task.Kill(ctx, syscall.SIGKILL, containerd.WithKillAll)
+		_ = task.Kill(c.ctx, syscall.SIGKILL, containerd.WithKillAll)
 	}
 
 	<-statusC
-	return errStopped
+	return nil
 }
 
 // Stop implements runner.Runner interface
@@ -176,6 +165,9 @@ func (c *containerdRunner) Stop() error {
 	close(c.stop)
 
 	<-c.stopped
+
+	c.stop = make(chan struct{})
+	c.stopped = make(chan struct{})
 
 	return nil
 }
@@ -209,4 +201,8 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 
 func (c *containerdRunner) logPath() string {
 	return filepath.Join(c.opts.LogPath, c.args.ID+".log")
+}
+
+func (c *containerdRunner) String() string {
+	return fmt.Sprintf("Containerd(%v)", c.args.ID)
 }

@@ -212,8 +212,15 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,
 		),
-		runner.WithType(runner.Once),
 	)
+
+	err = cr.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	// nolint: errcheck
+	defer cr.Close()
 
 	err = cr.Run()
 	if err != nil {

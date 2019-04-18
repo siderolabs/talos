@@ -96,14 +96,14 @@ func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFun
 	return conditions.WaitForFilesToExist(files...)
 }
 
-// Start implements the Service interface.
+// Runner implements the Service interface.
 // nolint: dupl
-func (k *Kubeadm) Start(data *userdata.UserData) error {
+func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 	image := constants.KubernetesImage
 
 	// We only wan't to run kubeadm if it hasn't been ran already.
 	if _, err := os.Stat("/etc/kubernetes/kubelet.conf"); !os.IsNotExist(err) {
-		return nil
+		return nil, nil
 	}
 
 	// Set the process arguments.
@@ -170,7 +170,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.NewRunner(
+	return containerd.NewRunner(
 		data,
 		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
@@ -184,10 +184,7 @@ func (k *Kubeadm) Start(data *userdata.UserData) error {
 			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,
 		),
-		runner.WithType(runner.Once),
-	)
-
-	return r.Run()
+	), nil
 }
 
 func enforceMasterOverrides(initConfiguration *kubeadmapi.InitConfiguration) {

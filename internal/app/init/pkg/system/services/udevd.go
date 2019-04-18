@@ -10,6 +10,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -37,8 +38,8 @@ func (c *Udevd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc 
 	return conditions.None()
 }
 
-// Start implements the Service interface.
-func (c *Udevd) Start(data *userdata.UserData) error {
+// Runner implements the Service interface.
+func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID:          c.ID(data),
@@ -50,11 +51,11 @@ func (c *Udevd) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := process.NewRunner(
+	return restart.New(process.NewRunner(
 		data,
 		args,
 		runner.WithEnv(env),
-	)
-
-	return r.Run()
+	),
+		restart.WithType(restart.Forever),
+	), nil
 }

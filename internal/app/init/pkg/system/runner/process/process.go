@@ -30,9 +30,6 @@ type processRunner struct {
 	stopped chan struct{}
 }
 
-// errStopped is used internally to signal that task was stopped
-var errStopped = errors.New("stopped")
-
 // NewRunner creates runner.Runner that runs a process on the host
 func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &processRunner{
@@ -50,20 +47,16 @@ func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Opt
 	return r
 }
 
+// Open implements the Runner interface.
+func (p *processRunner) Open() error {
+	return nil
+}
+
 // Run implements the Runner interface.
 func (p *processRunner) Run() error {
 	defer close(p.stopped)
 
-	switch p.opts.Type {
-	case runner.Forever:
-		p.waitAndRestart()
-	case runner.Once:
-		p.waitForSuccess()
-	default:
-		panic("unexpected runner type")
-	}
-
-	return nil
+	return p.run()
 }
 
 // Stop implements the Runner interface
@@ -72,6 +65,14 @@ func (p *processRunner) Stop() error {
 
 	<-p.stopped
 
+	p.stop = make(chan struct{})
+	p.stopped = make(chan struct{})
+
+	return nil
+}
+
+// Close implements the Runner interface.
+func (p *processRunner) Close() error {
 	return nil
 }
 
@@ -122,6 +123,7 @@ func (p *processRunner) run() error {
 		return err
 	case <-p.stop:
 		// graceful stop the service
+		log.Printf("sending SIGTERM to %s", p)
 
 		// nolint: errcheck
 		_ = cmd.Process.Signal(syscall.SIGTERM)
@@ -130,50 +132,20 @@ func (p *processRunner) run() error {
 	select {
 	case <-waitCh:
 		// stopped process exited
-		return errStopped
+		return nil
 	case <-time.After(p.opts.GracefulShutdownTimeout):
 		// kill the process
+		log.Printf("sending SIGKILL to %s", p)
 
 		// nolint: errcheck
-		_ = cmd.Process.Kill()
+		_ = cmd.Process.Signal(syscall.SIGKILL)
 	}
 
 	// wait for process to terminate
 	<-waitCh
-	return errStopped
+	return nil
 }
 
-func (p *processRunner) waitAndRestart() {
-	for {
-		err := p.run()
-		if err == errStopped {
-			return
-		}
-		if err != nil {
-			log.Printf("error running %v, going to restart forever: %s", p.args.ProcessArgs, err)
-		}
-
-		select {
-		case <-p.stop:
-			return
-		case <-time.After(p.opts.RestartInterval):
-		}
-	}
-}
-
-func (p *processRunner) waitForSuccess() {
-	for {
-		err := p.run()
-		if err == errStopped || err == nil {
-			break
-		}
-
-		log.Printf("error running %v, going to restart until it succeeds: %s", p.args.ProcessArgs, err)
-
-		select {
-		case <-p.stop:
-			return
-		case <-time.After(p.opts.RestartInterval):
-		}
-	}
+func (p *processRunner) String() string {
+	return fmt.Sprintf("Process(%v)", p.args.ProcessArgs)
 }
