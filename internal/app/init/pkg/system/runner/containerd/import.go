@@ -10,11 +10,11 @@ import (
 	"os"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // ImportRequest represents an image import request.
@@ -25,13 +25,13 @@ type ImportRequest struct {
 
 // Import imports the images specified by the import requests.
 func Import(namespace string, reqs ...*ImportRequest) error {
-	_, err := conditions.WaitForFileToExist(defaults.DefaultAddress)()
+	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)()
 	if err != nil {
 		return err
 	}
 
 	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	client, err := containerd.New(defaults.DefaultAddress)
+	client, err := containerd.New(constants.ContainerdAddress)
 	if err != nil {
 		return err
 	}

@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -68,7 +67,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		suite.Require().NoError(suite.containerdRunner.Run())
 	}()
 
-	suite.client, err = containerd.New(defaults.DefaultAddress)
+	suite.client, err = containerd.New(constants.ContainerdAddress)
 	suite.Require().NoError(err)
 
 	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)

@@ -39,6 +39,7 @@ func connect(namespace string) (*containerd.Client, context.Context, error) {
 	return client, namespaces.WithNamespace(context.Background(), namespace), err
 }
 
+// nolint: gocyclo
 func podInfo(namespace string) ([]*pod, error) {
 	pods := []*pod{}
 
@@ -107,6 +108,9 @@ func podInfo(namespace string) ([]*pod, error) {
 			}
 		}
 
+		// Save off an identifier for the pod
+		// this is typically the container name (non-k8s namespace)
+		// or will be k8s namespace"/"k8s pod name":"container name
 		podName := cp.Display
 
 		// Typically on actual application containers inside the pod/sandbox
@@ -121,6 +125,9 @@ func podInfo(namespace string) ([]*pod, error) {
 			sandbox = spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]
 		}
 
+		// Figure out if we need to create a new pod or append
+		// to an existing pod
+		// Also set pod sandbox ID if defined
 		found := false
 		for _, pod := range pods {
 			if pod.Name != podName {

@@ -58,7 +58,6 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 }
 
 // Processes implements the proto.OSDServer interface.
-// nolint: gocyclo
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
 	pods, err := podInfo(in.Namespace)
 	if err != nil {
@@ -260,6 +259,7 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 
 // Logs implements the proto.OSDServer interface. Service or container logs can
 // be requested and the contents of the log file are streamed in chunks.
+// nolint: gocyclo
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
 	var (
 		client *containerd.Client
@@ -285,12 +285,12 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 				continue
 			}
 
-			task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: container.ID})
-			if err != nil {
-				return
-			}
-
 			if container.LogFile == "" {
+				task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: container.ID})
+				if err != nil {
+					return
+				}
+
 				container.LogFile = task.Process.Stdout
 			}
 
