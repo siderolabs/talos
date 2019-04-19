@@ -5,10 +5,12 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/gob"
 	"fmt"
 	"io"
 	"os"
@@ -17,6 +19,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
+	"github.com/talos-systems/talos/internal/pkg/proc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -250,4 +253,21 @@ func (c *Client) Routes() (err error) {
 	}
 
 	return nil
+}
+
+// Top implements the proto.OSDClient interface.
+// nolint: dupl
+func (c *Client) Top() (pl []proc.ProcessList, err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var reply *proto.TopReply
+	reply, err = c.client.Top(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+
+	buf := bytes.NewBuffer(reply.ProcessList.Bytes)
+	dec := gob.NewDecoder(buf)
+	err = dec.Decode(&pl)
+	return
 }

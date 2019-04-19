@@ -16,6 +16,7 @@ service OSD {
   rpc Restart(RestartRequest) returns (RestartReply) {}
   rpc Routes(google.protobuf.Empty) returns (RoutesReply) {}
   rpc Stats(StatsRequest) returns (StatsReply) {}
+  rpc Top(google.protobuf.Empty) returns (TopReply) {}
   rpc Version(google.protobuf.Empty) returns (Data) {}
 }
 
@@ -82,3 +83,9 @@ message Route {
   string destination = 2;
   string gateway = 3;
 }
+
+message TopRequest {}
+
+message TopReply { ProcessList process_list = 1; }
+
+message ProcessList { bytes bytes = 1; }
