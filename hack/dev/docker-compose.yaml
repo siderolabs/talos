@@ -8,7 +8,7 @@ services:
     security_opt:
       - seccomp:unconfined
     hostname: master-1
-    entrypoint: /sbin/init
+    entrypoint: /init
     command: --in-container
     volumes:
       # os config
@@ -33,7 +33,7 @@ services:
     security_opt:
       - seccomp:unconfined
     hostname: master-2
-    entrypoint: /sbin/init
+    entrypoint: /init
     command: --in-container
     volumes:
       # os config
@@ -58,7 +58,7 @@ services:
     security_opt:
       - seccomp:unconfined
     hostname: master-3
-    entrypoint: /sbin/init
+    entrypoint: /init
     command: --in-container
     volumes:
       # os config
@@ -83,7 +83,7 @@ services:
     security_opt:
       - seccomp:unconfined
     hostname: worker-1
-    entrypoint: /sbin/init
+    entrypoint: /init
     command: --in-container
     volumes:
       # os config

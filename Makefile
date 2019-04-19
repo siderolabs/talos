@@ -1,10 +1,27 @@
 SHA = $(shell gitmeta git sha)
 TAG = $(shell gitmeta image tag)
 
-VPATH = $(PATH)
 KERNEL_IMAGE ?= autonomy/kernel:8fd9a83
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:989387e
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:255b4fd
+ROOTFS_IMAGE ?= autonomy/rootfs-base:255b4fd
+INITRAMFS_IMAGE ?= autonomy/initramfs-base:255b4fd
+
 DOCKER_ARGS ?=
+DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/
+
+COMMON_ARGS = --progress=plain
+COMMON_ARGS += --frontend=dockerfile.v0
+COMMON_ARGS += --local context=.
+COMMON_ARGS += --local dockerfile=.
+COMMON_ARGS += --frontend-opt build-arg:KERNEL_IMAGE=$(KERNEL_IMAGE)
+COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
+COMMON_ARGS += --frontend-opt build-arg:ROOTFS_IMAGE=$(ROOTFS_IMAGE)
+COMMON_ARGS += --frontend-opt build-arg:INITRAMFS_IMAGE=$(INITRAMFS_IMAGE)
+COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
+COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
+
+# TODO(andrewrynhard): Move this logic to a shell script.
+VPATH = $(PATH)
 BUILDKIT_VERSION ?= v0.3.3
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
@@ -20,21 +37,8 @@ ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
 endif
 BINDIR ?= /usr/local/bin
-CONFORM_VERSION ?= 57c9dbd
 
-COMMON_ARGS = --progress=plain
-COMMON_ARGS += --frontend=dockerfile.v0
-COMMON_ARGS += --local context=.
-COMMON_ARGS += --local dockerfile=.
-COMMON_ARGS += --frontend-opt build-arg:KERNEL_IMAGE=$(KERNEL_IMAGE)
-COMMON_ARGS += --frontend-opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
-COMMON_ARGS += --frontend-opt build-arg:SHA=$(SHA)
-COMMON_ARGS += --frontend-opt build-arg:TAG=$(TAG)
-
-# to allow tests to run containerd
-DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/
-
-all: ci kernel initramfs rootfs osctl-linux-amd64 osctl-darwin-amd64 osinstall-linux-amd64 installer talos
+all: ci rootfs initramfs kernel installer talos
 
 .PHONY: builddeps
 builddeps: gitmeta buildctl
@@ -68,22 +72,18 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 endif
 endif
 
-enforce:
-	@docker run --rm -v $(PWD):/src -w /src autonomy/conform:$(CONFORM_VERSION)
-
 .PHONY: ci
 ci: builddeps buildkitd
 
-base: buildkitd
+.PHONY: binaries
+binaries: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
-		--exporter=docker \
-		--exporter-opt output=build/$@.tar \
-		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
+		--exporter=local \
+		--exporter-opt output=build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
-	@docker load < build/$@.tar
-
+.PHONY: kernel
 kernel: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -93,6 +93,7 @@ kernel: buildkitd
 		$(COMMON_ARGS)
 	@-rm -rf ./build/modules
 
+.PHONY: initramfs
 initramfs: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -101,7 +102,8 @@ initramfs: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd ntpd
+.PHONY: rootfs
+rootfs: buildkitd binaries osd trustd proxyd ntpd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=local \
@@ -109,6 +111,7 @@ rootfs: buildkitd hyperkube etcd coredns pause osd trustd proxyd ntpd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: installer
 installer: buildkitd
 	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
@@ -116,11 +119,11 @@ installer: buildkitd
 		--exporter=docker \
 		--exporter-opt output=build/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
-		--exporter-opt push=$(PUSH) \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
+.PHONY: proto
 proto: buildkitd
 	buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -129,41 +132,44 @@ proto: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: talos-gce
 talos-gce: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -l -f -p googlecloud -u none -e 'random.trust_cpu=on'
 	@tar -C $(PWD)/build -Sczf $(PWD)/build/$@.tar.gz disk.raw
 	@rm $(PWD)/build/disk.raw
 
+.PHONY: talos-raw
 talos-raw: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n rootfs -l
 
+.PHONY: talos
 talos: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
 		--exporter-opt output=build/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
-		--exporter-opt push=$(PUSH) \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-test: buildkitd rootfs
+.PHONY: test
+test: buildkitd
 	@mkdir -p build
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--exporter=docker \
-		--exporter-opt output=build/$@.tar \
+		--exporter-opt output=/tmp/$@.tar \
 		--exporter-opt name=docker.io/autonomy/$@:$(TAG) \
-		--exporter-opt push=$(PUSH) \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
-	@docker load < build/$@.tar
+	@docker load < /tmp/$@.tar
 	@docker run -i --rm $(DOCKER_TEST_ARGS) autonomy/$@:$(TAG) /bin/test.sh --short
 	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
 		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/test.sh && \
 		cp ./.artifacts/coverage.txt coverage.txt
 
+.PHONY: dev-test
 dev-test:
 	@docker run -i --rm $(DOCKER_TEST_ARGS) \
 		-v $(PWD)/internal:/src/internal:ro \
@@ -172,12 +178,14 @@ dev-test:
 		autonomy/test:$(TAG) \
 		go test -v ./...
 
+.PHONY: lint
 lint: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: osctl-linux-amd64
 osctl-linux-amd64: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -186,6 +194,7 @@ osctl-linux-amd64: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: osctl-darwin-amd64
 osctl-darwin-amd64: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -194,6 +203,7 @@ osctl-darwin-amd64: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: osinstall-linux-amd64
 osinstall-linux-amd64: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -202,15 +212,14 @@ osinstall-linux-amd64: buildkitd
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: udevd
 udevd: buildkitd
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-images:
-	mkdir -p images
-
+.PHONY: osd
 osd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -220,6 +229,7 @@ osd: buildkitd images
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: trustd
 trustd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -229,6 +239,7 @@ trustd: buildkitd images
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: proxyd
 proxyd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -238,6 +249,7 @@ proxyd: buildkitd images
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: ntpd
 ntpd: buildkitd images
 	@buildctl --addr $(BUILDKIT_HOST) \
 		build \
@@ -247,26 +259,14 @@ ntpd: buildkitd images
 		--frontend-opt target=$@ \
 		$(COMMON_ARGS)
 
-hyperkube: images
-	@docker pull k8s.gcr.io/$@:v1.14.1
-	@docker save k8s.gcr.io/$@:v1.14.1 -o ./images/$@.tar
-
-etcd: images
-	@docker pull k8s.gcr.io/$@:3.3.10
-	@docker save k8s.gcr.io/$@:3.3.10 -o ./images/$@.tar
-
-coredns: images
-	@docker pull k8s.gcr.io/$@:1.3.1
-	@docker save k8s.gcr.io/$@:1.3.1 -o ./images/$@.tar
-
-pause: images
-	@docker pull k8s.gcr.io/$@:3.1
-	@docker save k8s.gcr.io/$@:3.1 -o ./images/$@.tar
+images:
+	@mkdir images
 
 .PHONY: login
 login:
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
 
+.PHONY: push
 push:
 	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
 	@docker push autonomy/installer:$(TAG)
@@ -275,5 +275,6 @@ push:
 	@docker push autonomy/talos:$(TAG)
 	@docker push autonomy/talos:latest
 
+.PHONY: clean
 clean:
 	@-rm -rf build images vendor
