@@ -13,6 +13,8 @@ services:
     volumes:
       # os config
       - ./userdata/master-1.yaml:/run/userdata.yaml
+      # Images
+      - ../../images:/usr/images
       # state dirs
       - /var/log
       - /var/lib/containerd/
@@ -38,6 +40,8 @@ services:
     volumes:
       # os config
       - ./userdata/master-2.yaml:/run/userdata.yaml
+      # Images
+      - ../../images:/usr/images
       # state dirs
       - /var/log
       - /var/lib/containerd/
@@ -63,6 +67,8 @@ services:
     volumes:
       # os config
       - ./userdata/master-3.yaml:/run/userdata.yaml
+      # Images
+      - ../../images:/usr/images
       # state dirs
       - /var/log
       - /var/lib/containerd/
@@ -88,6 +94,8 @@ services:
     volumes:
       # os config
       - ./userdata/worker-1.yaml:/run/userdata.yaml
+      # Images
+      - ../../images:/usr/images
       # state dirs
       - /var/log
       - /var/lib/containerd/
