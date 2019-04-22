@@ -5,10 +5,9 @@
 package system
 
 import (
-	"log"
 	"sync"
+	"time"
 
-	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -16,6 +15,13 @@ import (
 
 type singleton struct {
 	UserData *userdata.UserData
+
+	// State of running services by ID
+	State map[string]*ServiceRunner
+
+	mu          sync.Mutex
+	wg          sync.WaitGroup
+	terminating bool
 }
 
 var instance *singleton
@@ -42,64 +48,77 @@ type Service interface {
 // nolint: golint
 func Services(data *userdata.UserData) *singleton {
 	once.Do(func() {
-		instance = &singleton{UserData: data}
+		instance = &singleton{
+			UserData: data,
+			State:    make(map[string]*ServiceRunner),
+		}
 	})
 	return instance
-}
-
-func runService(runnr runner.Runner) error {
-	if runnr == nil {
-		// special case - run nothing (TODO: we should handle it better, e.g. in PreFunc)
-		return nil
-	}
-
-	if err := runnr.Open(); err != nil {
-		return errors.Wrap(err, "error opening runner")
-	}
-
-	// nolint: errcheck
-	defer runnr.Close()
-
-	if err := runnr.Run(); err != nil {
-		return errors.Wrap(err, "error running service")
-	}
-
-	return nil
 }
 
 // Start will invoke the service's Pre, Condition, and Type funcs. If the any
 // error occurs in the Pre or Condition invocations, it is up to the caller to
 // to restart the service.
 func (s *singleton) Start(services ...Service) {
-	for _, service := range services {
-		go func(service Service) {
-			id := service.ID(s.UserData)
-			if err := service.PreFunc(s.UserData); err != nil {
-				log.Printf("failed to run pre stage of service %q: %v", id, err)
-				return
-			}
-
-			_, err := service.ConditionFunc(s.UserData)()
-			if err != nil {
-				log.Printf("service %q condition failed: %v", id, err)
-				return
-			}
-
-			log.Printf("starting service %q", id)
-			runnr, err := service.Runner(s.UserData)
-			if err != nil {
-				log.Printf("failed to create runner for service %q: %v", id, err)
-				return
-			}
-
-			if err := runService(runnr); err != nil {
-				log.Printf("failed running service %q: %v", id, err)
-			}
-
-			if err := service.PostFunc(s.UserData); err != nil {
-				log.Printf("failed to run post stage of service %q: %v", id, err)
-				return
-			}
-		}(service)
+	s.mu.Lock()
+	if s.terminating {
+		return
 	}
+	defer s.mu.Unlock()
+
+	for _, service := range services {
+		id := service.ID(s.UserData)
+
+		if _, exists := s.State[id]; exists {
+			// service already started?
+			// TODO: it might be nice to handle case when service
+			//       should be restarted (e.g. kubeadm after reset)
+			continue
+		}
+
+		svcrunner := NewServiceRunner(service, s.UserData)
+		s.State[id] = svcrunner
+
+		s.wg.Add(1)
+		go func(svcrunner *ServiceRunner) {
+			defer s.wg.Done()
+
+			svcrunner.Start()
+		}(svcrunner)
+	}
+}
+
+// ShutdownHackySleep is a variable to allow tests to override it
+//
+// TODO: part of a hack below
+var ShutdownHackySleep = 10 * time.Second
+
+// Shutdown all the services
+func (s *singleton) Shutdown() {
+	s.mu.Lock()
+	if s.terminating {
+		s.mu.Unlock()
+		return
+	}
+	s.terminating = true
+
+	// TODO: this is a hack, we stop all service runners but containerd/udevd first.
+	//       Tis is required for correct shutdown until service dependencies
+	//       are implemented properly.
+	for name, svcrunner := range s.State {
+		if name != "containerd" && name != "udevd" {
+			svcrunner.Shutdown()
+		}
+	}
+
+	// TODO: 2nd part of a hack above
+	//       sleep a bit to let containers actually terminate before stopping containerd
+	time.Sleep(ShutdownHackySleep)
+
+	for _, svcrunner := range s.State {
+		svcrunner.Shutdown()
+	}
+	s.mu.Unlock()
+
+	s.wg.Wait()
 }

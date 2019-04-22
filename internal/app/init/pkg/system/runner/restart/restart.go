@@ -5,10 +5,11 @@
 package restart
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 )
 
@@ -42,9 +43,6 @@ type Options struct {
 	Type Type
 	// RestartInterval is the interval between restarts for failed runs
 	RestartInterval time.Duration
-	// GracefulShutdownTimeout is the time to wait for process to exit after SIGTERM
-	// before sending SIGKILL
-	GracefulShutdownTimeout time.Duration
 }
 
 // Option is the functional option func.
@@ -98,20 +96,20 @@ func WithRestartInterval(interval time.Duration) Option {
 }
 
 // Open implements the Runner interface
-func (r *restarter) Open() error {
-	return r.wrappedRunner.Open()
+func (r *restarter) Open(ctx context.Context) error {
+	return r.wrappedRunner.Open(ctx)
 }
 
 // Run implements the Runner interface
 // nolint: gocyclo
-func (r *restarter) Run() error {
+func (r *restarter) Run(eventSink events.Recorder) error {
 	defer close(r.stopped)
 
 	for {
 		errCh := make(chan error)
 
 		go func() {
-			errCh <- r.wrappedRunner.Run()
+			errCh <- r.wrappedRunner.Run(eventSink)
 		}()
 
 		var err error
@@ -137,17 +135,18 @@ func (r *restarter) Run() error {
 			if err == nil {
 				return nil
 			}
-			log.Printf("error running %s, going to restart until it succeeds: %s", r.wrappedRunner, err)
+			eventSink(events.StateWaiting, "Error running %s, going to restart until it succeeds: %s", r.wrappedRunner, err)
 		case Forever:
 			if err == nil {
-				log.Printf("runner %s exited without error, going to restart it", r.wrappedRunner)
+				eventSink(events.StateWaiting, "Runner %s exited without error, going to restart it", r.wrappedRunner)
 			} else {
-				log.Printf("error running %v, going to restart forever: %s", r.wrappedRunner, err)
+				eventSink(events.StateWaiting, "Error running %v, going to restart forever: %s", r.wrappedRunner, err)
 			}
 		}
 
 		select {
 		case <-r.stop:
+			eventSink(events.StateStopping, "Aborting restart sequence")
 			return nil
 		case <-time.After(r.opts.RestartInterval):
 		}

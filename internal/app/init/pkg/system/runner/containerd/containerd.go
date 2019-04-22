@@ -7,7 +7,6 @@ package containerd
 import (
 	"context"
 	"fmt"
-	"log"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -19,6 +18,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -56,10 +56,10 @@ func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Opt
 }
 
 // Open implements the Runner interface.
-func (c *containerdRunner) Open() error {
+func (c *containerdRunner) Open(ctx context.Context) error {
 
 	// Wait for the containerd socket.
-	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)()
+	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)(ctx)
 	if err != nil {
 		return err
 	}
@@ -77,8 +77,15 @@ func (c *containerdRunner) Open() error {
 		return err
 	}
 
-	// Create the container.
+	// See if there's previous container/snapshot to clean up
+	var oldcontainer containerd.Container
+	if oldcontainer, err = c.client.LoadContainer(c.ctx, c.args.ID); err == nil {
+		if err = oldcontainer.Delete(c.ctx, containerd.WithSnapshotCleanup); err != nil {
+			return errors.Wrap(err, "error deleting old container instance")
+		}
+	}
 
+	// Create the container.
 	specOpts := c.newOCISpecOpts(image)
 	containerOpts := c.newContainerOpts(image, specOpts)
 	c.container, err = c.client.NewContainer(
@@ -110,7 +117,9 @@ func (c *containerdRunner) Close() error {
 }
 
 // Run implements runner.Runner interface
-func (c *containerdRunner) Run() error {
+//
+// nolint: gocyclo
+func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	defer close(c.stopped)
 
 	// Create the task and start it.
@@ -123,6 +132,8 @@ func (c *containerdRunner) Run() error {
 	if err = task.Start(c.ctx); err != nil {
 		return errors.Wrapf(err, "failed to start task: %q", c.args.ID)
 	}
+
+	eventSink(events.StateRunning, "Started task %s (PID %d) for container %s", task.ID(), task.Pid(), c.container.ID())
 
 	statusC, err := task.Wait(c.ctx)
 	if err != nil {
@@ -138,10 +149,11 @@ func (c *containerdRunner) Run() error {
 		return nil
 	case <-c.stop:
 		// graceful stop the task
-		log.Printf("sending SIGTERM to %v", c.args.ID)
+		eventSink(events.StateStopping, "Sending SIGTERM to task %s (PID %d, container %s)", task.ID(), task.Pid(), c.container.ID())
 
-		// nolint: errcheck
-		_ = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll)
+		if err = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll); err != nil {
+			return errors.Wrap(err, "error sending SIGTERM")
+		}
 	}
 
 	select {
@@ -150,13 +162,15 @@ func (c *containerdRunner) Run() error {
 		return nil
 	case <-time.After(c.opts.GracefulShutdownTimeout):
 		// kill the process
-		log.Printf("sending SIGKILL to %v", c.args.ID)
+		eventSink(events.StateStopping, "Sending SIGKILL to task %s (PID %d, container %s)", task.ID(), task.Pid(), c.container.ID())
 
-		// nolint: errcheck
-		_ = task.Kill(c.ctx, syscall.SIGKILL, containerd.WithKillAll)
+		if err = task.Kill(c.ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
+			return errors.Wrap(err, "error sending SIGKILL")
+		}
 	}
 
 	<-statusC
+
 	return nil
 }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
@@ -217,7 +218,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 		),
 	)
 
-	err = cr.Open()
+	err = cr.Open(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +226,8 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 	// nolint: errcheck
 	defer cr.Close()
 
-	err = cr.Run()
+	// TODO: should this go through system.Services?
+	err = cr.Run(events.NullRecorder)
 	if err != nil {
 		return nil, err
 	}

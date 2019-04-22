@@ -7,7 +7,9 @@ package containerd_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -19,6 +21,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
@@ -31,6 +34,10 @@ const (
 	containerdNamespace = "talostest"
 	busyboxImage        = "docker.io/library/busybox:latest"
 )
+
+func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
+}
 
 type ContainerdSuite struct {
 	suite.Suite
@@ -61,12 +68,12 @@ func (suite *ContainerdSuite) SetupSuite() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithEnv([]string{"PATH=/rootfs/bin:" + constants.PATH}),
 	)
-	suite.Require().NoError(suite.containerdRunner.Open())
+	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
 	go func() {
 		defer suite.containerdWg.Done()
 		defer func() { suite.Require().NoError(suite.containerdRunner.Close()) }()
-		suite.Require().NoError(suite.containerdRunner.Run())
+		suite.Require().NoError(suite.containerdRunner.Run(MockEventSink))
 	}()
 
 	suite.client, err = containerd.New(constants.ContainerdAddress)
@@ -97,10 +104,10 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 		runner.WithContainerImage(busyboxImage),
 	)
 
-	suite.Require().NoError(r.Open())
+	suite.Require().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run())
+	suite.Assert().NoError(r.Run(MockEventSink))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -115,17 +122,52 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		runner.WithContainerImage(busyboxImage),
 	)
 
-	suite.Require().NoError(r.Open())
+	suite.Require().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	// running same container twice should be fine
 	// (checks that containerd state is cleaned up properly)
 	for i := 0; i < 2; i++ {
-
-		suite.Assert().NoError(r.Run())
+		suite.Assert().NoError(r.Run(MockEventSink))
 		// calling stop when Run has finished is no-op
 		suite.Assert().NoError(r.Stop())
+
+		// TODO: workaround containerd (?) bug: https://github.com/docker/for-linux/issues/643
+		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func (suite *ContainerdSuite) TestContainerCleanup() {
+	// create two runners with the same container ID
+	//
+	// open first runner, but don't close it; second runner should be
+	// able to start the container by cleaning up container created by the first
+	// runner
+	r1 := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+		ID:          "cleanup1",
+		ProcessArgs: []string{"/bin/sh", "-c", "exit 1"},
+	},
+		runner.WithLogPath(suite.tmpDir),
+		runner.WithNamespace(containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+	)
+
+	suite.Require().NoError(r1.Open(context.Background()))
+
+	r2 := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+		ID:          "cleanup1",
+		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
+	},
+		runner.WithLogPath(suite.tmpDir),
+		runner.WithNamespace(containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+	)
+	suite.Require().NoError(r2.Open(context.Background()))
+	defer func() { suite.Assert().NoError(r2.Close()) }()
+
+	suite.Assert().NoError(r2.Run(MockEventSink))
+	// calling stop when Run has finished is no-op
+	suite.Assert().NoError(r2.Stop())
 }
 
 func (suite *ContainerdSuite) TestRunLogs() {
@@ -138,10 +180,10 @@ func (suite *ContainerdSuite) TestRunLogs() {
 		runner.WithContainerImage(busyboxImage),
 	)
 
-	suite.Require().NoError(r.Open())
+	suite.Require().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run())
+	suite.Assert().NoError(r.Run(MockEventSink))
 
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)
@@ -180,13 +222,13 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 		restart.WithRestartInterval(5*time.Millisecond),
 	)
 
-	suite.Require().NoError(r.Open())
+	suite.Require().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run()
+		done <- r.Run(MockEventSink)
 	}()
 
 	time.Sleep(500 * time.Millisecond)
@@ -237,13 +279,13 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 		runner.WithContainerImage(busyboxImage),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond))
 
-	suite.Require().NoError(r.Open())
+	suite.Require().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run()
+		done <- r.Run(MockEventSink)
 	}()
 
 	time.Sleep(50 * time.Millisecond)
