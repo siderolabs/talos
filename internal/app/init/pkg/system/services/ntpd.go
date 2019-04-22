@@ -13,6 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -41,7 +42,7 @@ func (n *NTPd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
 	return conditions.None()
 }
 
-func (n *NTPd) Start(data *userdata.UserData) error {
+func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	image := "talos/ntpd"
 
 	args := runner.Args{
@@ -58,7 +59,7 @@ func (n *NTPd) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.NewRunner(
+	return restart.New(containerd.NewRunner(
 		data,
 		&args,
 		runner.WithContainerImage(image),
@@ -67,7 +68,7 @@ func (n *NTPd) Start(data *userdata.UserData) error {
 			containerd.WithMemoryLimit(int64(1000000*32)),
 			oci.WithMounts(mounts),
 		),
-	)
-
-	return r.Run()
+	),
+		restart.WithType(restart.Forever),
+	), nil
 }

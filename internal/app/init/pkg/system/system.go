@@ -8,7 +8,9 @@ import (
 	"log"
 	"sync"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -23,11 +25,11 @@ var once sync.Once
 type Service interface {
 	// ID is the service id.
 	ID(*userdata.UserData) string
-	// PreFunc is invoked before a command is executed.
+	// PreFunc is invoked before a runner is created
 	PreFunc(*userdata.UserData) error
-	// Start
-	Start(*userdata.UserData) error
-	// PostFunc is invoked after a command is executed.
+	// Runner creates runner for the service
+	Runner(*userdata.UserData) (runner.Runner, error)
+	// PostFunc is invoked after a runner is closed.
 	PostFunc(*userdata.UserData) error
 	// ConditionFunc describes the conditions under which a service should
 	// start.
@@ -43,6 +45,26 @@ func Services(data *userdata.UserData) *singleton {
 		instance = &singleton{UserData: data}
 	})
 	return instance
+}
+
+func runService(runnr runner.Runner) error {
+	if runnr == nil {
+		// special case - run nothing (TODO: we should handle it better, e.g. in PreFunc)
+		return nil
+	}
+
+	if err := runnr.Open(); err != nil {
+		return errors.Wrap(err, "error opening runner")
+	}
+
+	// nolint: errcheck
+	defer runnr.Close()
+
+	if err := runnr.Run(); err != nil {
+		return errors.Wrap(err, "error running service")
+	}
+
+	return nil
 }
 
 // Start will invoke the service's Pre, Condition, and Type funcs. If the any
@@ -64,9 +86,14 @@ func (s *singleton) Start(services ...Service) {
 			}
 
 			log.Printf("starting service %q", id)
-			if err := service.Start(s.UserData); err != nil {
-				log.Printf("failed to start service %q: %v", id, err)
+			runnr, err := service.Runner(s.UserData)
+			if err != nil {
+				log.Printf("failed to create runner for service %q: %v", id, err)
 				return
+			}
+
+			if err := runService(runnr); err != nil {
+				log.Printf("failed running service %q: %v", id, err)
 			}
 
 			if err := service.PostFunc(s.UserData); err != nil {

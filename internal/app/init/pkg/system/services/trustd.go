@@ -13,6 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -41,7 +42,7 @@ func (t *Trustd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 	return conditions.None()
 }
 
-func (t *Trustd) Start(data *userdata.UserData) error {
+func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	image := "talos/trustd"
 
 	// Set the process arguments.
@@ -62,7 +63,7 @@ func (t *Trustd) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.NewRunner(
+	return restart.New(containerd.NewRunner(
 		data,
 		&args,
 		runner.WithContainerImage(image),
@@ -71,7 +72,7 @@ func (t *Trustd) Start(data *userdata.UserData) error {
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithMounts(mounts),
 		),
-	)
-
-	return r.Run()
+	),
+		restart.WithType(restart.Forever),
+	), nil
 }

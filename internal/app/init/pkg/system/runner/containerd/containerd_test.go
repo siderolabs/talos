@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -57,13 +58,14 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.containerdRunner = process.NewRunner(
 		&userdata.UserData{},
 		args,
-		runner.WithType(runner.Once),
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithEnv([]string{"PATH=/rootfs/bin:" + constants.PATH}),
 	)
+	suite.Require().NoError(suite.containerdRunner.Open())
 	suite.containerdWg.Add(1)
 	go func() {
 		defer suite.containerdWg.Done()
+		defer func() { suite.Require().NoError(suite.containerdRunner.Close()) }()
 		suite.Require().NoError(suite.containerdRunner.Run())
 	}()
 
@@ -90,11 +92,13 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 		ID:          "test",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
-		runner.WithType(runner.Once),
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 	)
+
+	suite.Require().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run())
 	// calling stop when Run has finished is no-op
@@ -102,18 +106,21 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 }
 
 func (suite *ContainerdSuite) TestRunTwice() {
+	r := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+		ID:          "runtwice",
+		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
+	},
+		runner.WithLogPath(suite.tmpDir),
+		runner.WithNamespace(containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+	)
+
+	suite.Require().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
 	// running same container twice should be fine
 	// (checks that containerd state is cleaned up properly)
 	for i := 0; i < 2; i++ {
-		r := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
-			ID:          "runtwice",
-			ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
-		},
-			runner.WithType(runner.Once),
-			runner.WithLogPath(suite.tmpDir),
-			runner.WithNamespace(containerdNamespace),
-			runner.WithContainerImage(busyboxImage),
-		)
 
 		suite.Assert().NoError(r.Run())
 		// calling stop when Run has finished is no-op
@@ -126,11 +133,13 @@ func (suite *ContainerdSuite) TestRunLogs() {
 		ID:          "logtest",
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	},
-		runner.WithType(runner.Once),
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 	)
+
+	suite.Require().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run())
 
@@ -154,13 +163,11 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	// nolint: errcheck
 	_ = os.Remove(testFile)
 
-	r := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := restart.New(containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "endless",
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile + " && echo ok || (echo fail; false)"},
 	},
-		runner.WithType(runner.Forever),
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithRestartInterval(5*time.Millisecond),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithOCISpecOpts(
@@ -168,7 +175,13 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 				{Type: "bind", Destination: testDir, Source: testDir, Options: []string{"bind", "ro"}},
 			}),
 		),
+	),
+		restart.WithType(restart.Forever),
+		restart.WithRestartInterval(5*time.Millisecond),
 	)
+
+	suite.Require().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
@@ -217,14 +230,15 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 func (suite *ContainerdSuite) TestStopSigKill() {
 	r := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while true; do sleep 1; done"},
+		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
-		runner.WithType(runner.Forever),
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
-		runner.WithRestartInterval(5*time.Millisecond),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond))
+
+	suite.Require().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 

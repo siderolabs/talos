@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -41,7 +42,7 @@ func (p *Proxyd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc
 	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt", "/etc/kubernetes/admin.conf")
 }
 
-func (p *Proxyd) Start(data *userdata.UserData) error {
+func (p *Proxyd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	image := "talos/proxyd"
 
 	// Set the process arguments.
@@ -62,7 +63,7 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	r := containerd.NewRunner(
+	return restart.New(containerd.NewRunner(
 		data,
 		&args,
 		runner.WithContainerImage(image),
@@ -72,7 +73,7 @@ func (p *Proxyd) Start(data *userdata.UserData) error {
 			oci.WithMounts(mounts),
 			oci.WithPrivileged,
 		),
-	)
-
-	return r.Run()
+	),
+		restart.WithType(restart.Forever),
+	), nil
 }

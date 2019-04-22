@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -39,7 +40,10 @@ func (suite *ProcessSuite) TestRunSuccess() {
 	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "test",
 		ProcessArgs: []string{"/bin/bash", "-c", "exit 0"},
-	}, runner.WithType(runner.Once), runner.WithLogPath(suite.tmpDir))
+	}, runner.WithLogPath(suite.tmpDir))
+
+	suite.Assert().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run())
 	// calling stop when Run has finished is no-op
@@ -50,7 +54,10 @@ func (suite *ProcessSuite) TestRunLogs() {
 	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "logtest",
 		ProcessArgs: []string{"/bin/bash", "-c", "echo -n \"Test 1\nTest 2\n\""},
-	}, runner.WithType(runner.Once), runner.WithLogPath(suite.tmpDir))
+	}, runner.WithLogPath(suite.tmpDir))
+
+	suite.Assert().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run())
 
@@ -71,10 +78,13 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	// nolint: errcheck
 	_ = os.Remove(testFile)
 
-	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := restart.New(process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "restarter",
 		ProcessArgs: []string{"/bin/bash", "-c", "echo \"ran\"; test -f " + testFile},
-	}, runner.WithType(runner.Once), runner.WithLogPath(suite.tmpDir), runner.WithRestartInterval(time.Millisecond))
+	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
+
+	suite.Assert().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	var wg sync.WaitGroup
 
@@ -108,10 +118,13 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	// nolint: errcheck
 	_ = os.Remove(testFile)
 
-	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := restart.New(process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "endless",
 		ProcessArgs: []string{"/bin/bash", "-c", "test -f " + testFile},
-	}, runner.WithType(runner.Forever), runner.WithLogPath(suite.tmpDir), runner.WithRestartInterval(5*time.Millisecond))
+	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
+
+	suite.Assert().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
@@ -148,9 +161,14 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 func (suite *ProcessSuite) TestStopSigKill() {
 	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/bash", "-c", "trap -- '' SIGTERM; while true; do sleep 1; done"},
-	}, runner.WithType(runner.Forever), runner.WithLogPath(suite.tmpDir),
-		runner.WithRestartInterval(5*time.Millisecond), runner.WithGracefulShutdownTimeout(10*time.Millisecond))
+		ProcessArgs: []string{"/bin/bash", "-c", "trap -- '' SIGTERM; while :; do :; done"},
+	},
+		runner.WithLogPath(suite.tmpDir),
+		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
+	)
+
+	suite.Assert().NoError(r.Open())
+	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
