@@ -1,3 +1,18 @@
+# [v0.1.0-alpha.23](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2019-04-24)
+
+
+### Bug Fixes
+
+* **osd:** Fix osctl ps output ([#554](https://github.com/talos-systems/talos/issues/554)) ([46bdf23](https://github.com/talos-systems/talos/commit/46bdf23))
+
+
+### Features
+
+* detect if an install has already occurred ([#549](https://github.com/talos-systems/talos/issues/549)) ([0d6abdf](https://github.com/talos-systems/talos/commit/0d6abdf))
+* **osctl:** Add osctl top ([#560](https://github.com/talos-systems/talos/issues/560)) ([3f358b1](https://github.com/talos-systems/talos/commit/3f358b1))
+
+
+
 # [v0.1.0-alpha.22](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2019-04-15)
 
 
