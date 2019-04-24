@@ -5,7 +5,9 @@
 package reg
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"io/ioutil"
 	"log"
 	"os"
@@ -24,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/proc"
 	"github.com/talos-systems/talos/internal/pkg/version"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/vishvananda/netlink"
@@ -373,4 +376,24 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (data *proto
 	data = &proto.Data{Bytes: []byte(v)}
 
 	return data, err
+}
+
+// Top implements the proto.OSDServer interface
+func (r *Registrator) Top(ctx context.Context, in *empty.Empty) (reply *proto.TopReply, err error) {
+	var procs []proc.ProcessList
+	procs, err = proc.List()
+	if err != nil {
+		return
+	}
+
+	var plist bytes.Buffer
+	enc := gob.NewEncoder(&plist)
+	err = enc.Encode(procs)
+	if err != nil {
+		return
+	}
+
+	p := &proto.ProcessList{Bytes: plist.Bytes()}
+	reply = &proto.TopReply{ProcessList: p}
+	return
 }
