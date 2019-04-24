@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/proc"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // versionCmd represents the version command
@@ -51,9 +52,6 @@ func topUI(c *client.Client) {
 
 	l := widgets.NewList()
 	l.Title = "Top"
-	// TODO see if we can dynamically get this
-	// x, y, w, h
-	l.SetRect(0, 0, 65, 30)
 	l.TextStyle.Fg = ui.ColorYellow
 
 	draw := func(procs []proc.ProcessList) {
@@ -65,10 +63,19 @@ func topUI(c *client.Client) {
 		s := make([]string, 0, len(procs))
 		s = append(s, fmt.Sprintf("%s %s %s %s %s %s %s %s", "PID", "State", "Threads", "CPU Time", "VirtMem", "ResMem", "Command", "Exec/Args"))
 		for _, p := range procs {
-			//log.Printf("Sorted RSS: %+v", p)
 			s = append(s, p.String())
 		}
 		l.Rows = s
+
+		// Attempt to get terminal dimensions
+		// Since we're getting this data on each call
+		// we'll be able to handle terminal window resizing
+		w, h, err := terminal.GetSize(0)
+		if err != nil {
+			log.Fatal("Unable to determine terminal size")
+		}
+		// x, y, w, h
+		l.SetRect(0, 0, w, h)
 
 		ui.Render(l)
 	}
