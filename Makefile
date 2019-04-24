@@ -1,7 +1,7 @@
 SHA = $(shell gitmeta git sha)
 TAG = $(shell gitmeta image tag)
 
-KERNEL_IMAGE ?= autonomy/kernel:8fd9a83
+KERNEL_IMAGE ?= autonomy/kernel:d1a36fb
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:255b4fd
 ROOTFS_IMAGE ?= autonomy/rootfs-base:255b4fd
 INITRAMFS_IMAGE ?= autonomy/initramfs-base:255b4fd
