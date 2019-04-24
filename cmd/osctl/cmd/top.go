@@ -46,10 +46,10 @@ var topCmd = &cobra.Command{
 	},
 }
 
-//var sort string
+var sortMethod string
 
 func init() {
-	//	topCmd.Flags().StringVarP(&sort, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
+	topCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
 	rootCmd.AddCommand(topCmd)
 }
 
@@ -58,27 +58,8 @@ func topUI(c *client.Client) {
 	l := widgets.NewParagraph()
 	l.Title = "Top"
 
-	rss := func(p1, p2 *proc.ProcessList) bool {
-		// Reverse sort ( Descending )
-		return p1.ResidentMemory > p2.ResidentMemory
-	}
-
-	/*
-		cpu := func(p1, p2 *proc.ProcessList) bool {
-			// Reverse sort ( Descending )
-			return p1.CPUTime > p2.CPUTime
-		}
-	*/
-
-	draw := func(procs []proc.ProcessList) {
-		by(rss).sort(procs)
-		s := make([]string, 0, len(procs))
-		s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command | Exec/Args")
-		for _, p := range procs {
-			s = append(s, fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s | %s", p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), p.Command, p.Executable))
-		}
-
-		l.Text = columnize.SimpleFormat(s)
+	draw := func(output string) {
+		l.Text = output
 
 		// Attempt to get terminal dimensions
 		// Since we're getting this data on each call
@@ -93,12 +74,13 @@ func topUI(c *client.Client) {
 		ui.Render(l)
 	}
 
-	procs, err := c.Top()
+	procs, err := topOutput(c)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	draw(procs)
+
 	uiEvents := ui.PollEvents()
 	ticker := time.NewTicker(time.Second).C
 	for {
@@ -107,9 +89,13 @@ func topUI(c *client.Client) {
 			switch e.ID {
 			case "q", "<C-c>":
 				return
+			case "r", "m":
+				sortMethod = "rss"
+			case "c":
+				sortMethod = "cpu"
 			}
 		case <-ticker:
-			procs, err := c.Top()
+			procs, err := topOutput(c)
 			if err != nil {
 				log.Println(err)
 				return
@@ -147,4 +133,40 @@ func (s *procSorter) Swap(i, j int) {
 // Less is part of sort.Interface. It is implemented by calling the "by" closure in the sorter.
 func (s *procSorter) Less(i, j int) bool {
 	return s.by(&s.procs[i], &s.procs[j])
+}
+
+// Sort Methods
+var rss = func(p1, p2 *proc.ProcessList) bool {
+	// Reverse sort ( Descending )
+	return p1.ResidentMemory > p2.ResidentMemory
+}
+
+var cpu = func(p1, p2 *proc.ProcessList) bool {
+	// Reverse sort ( Descending )
+	return p1.CPUTime > p2.CPUTime
+}
+
+func topOutput(c *client.Client) (output string, err error) {
+	procs, err := c.Top()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	switch sortMethod {
+	case "cpu":
+		by(cpu).sort(procs)
+	default:
+		by(rss).sort(procs)
+	}
+
+	s := make([]string, 0, len(procs))
+	s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command | Exec/Args")
+	for _, p := range procs {
+		s = append(s, fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s | %s", p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), p.Command, p.Executable))
+	}
+
+	output = columnize.SimpleFormat(s)
+
+	return
 }
