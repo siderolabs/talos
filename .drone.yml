@@ -1,14 +1,6 @@
 kind: pipeline
 name: default
 
-services:
-- name: docker
-  image: docker:dind
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-
 steps:
 - name: fetch
   image: docker:git
@@ -30,9 +22,6 @@ steps:
     BINDIR: /usr/local/bin
   commands:
     - make lint
-  volumes:
-  - name: dockersock
-    path: /var/run
   depends_on:
   - fetch
 
@@ -43,9 +32,6 @@ steps:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
   commands:
     - make
-  volumes:
-  - name: dockersock
-    path: /var/run
   depends_on:
   - fetch
 
@@ -57,9 +43,6 @@ steps:
     BINDIR: /usr/local/bin
   commands:
     - make test
-  volumes:
-  - name: dockersock
-    path: /var/run
   depends_on:
   - fetch
   - build
@@ -83,9 +66,6 @@ steps:
   commands:
     - cd hack/dev
     - make integration
-  volumes:
-  - name: dockersock
-    path: /var/run
   depends_on:
   - build
   when:
@@ -102,9 +82,6 @@ steps:
   commands:
   - make login
   - make push
-  volumes:
-  - name: dockersock
-    path: /var/run
   when:
     event:
       exclude:
@@ -127,7 +104,3 @@ steps:
     event: tag
   depends_on:
   - basic-integration
-
-volumes:
-- name: dockersock
-  temp: {}
