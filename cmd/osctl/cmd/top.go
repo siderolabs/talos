@@ -10,8 +10,10 @@ import (
 	"sort"
 	"time"
 
+	"code.cloudfoundry.org/bytefmt"
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -44,28 +46,39 @@ var topCmd = &cobra.Command{
 	},
 }
 
+//var sort string
+
 func init() {
+	//	topCmd.Flags().StringVarP(&sort, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
 	rootCmd.AddCommand(topCmd)
 }
 
 func topUI(c *client.Client) {
 
-	l := widgets.NewList()
+	l := widgets.NewParagraph()
 	l.Title = "Top"
-	l.TextStyle.Fg = ui.ColorYellow
+
+	rss := func(p1, p2 *proc.ProcessList) bool {
+		// Reverse sort ( Descending )
+		return p1.ResidentMemory > p2.ResidentMemory
+	}
+
+	/*
+		cpu := func(p1, p2 *proc.ProcessList) bool {
+			// Reverse sort ( Descending )
+			return p1.CPUTime > p2.CPUTime
+		}
+	*/
 
 	draw := func(procs []proc.ProcessList) {
-		rss := func(p1, p2 *proc.ProcessList) bool {
-			// Reverse sort ( Descending )
-			return p1.ResidentMemory > p2.ResidentMemory
-		}
 		by(rss).sort(procs)
 		s := make([]string, 0, len(procs))
-		s = append(s, fmt.Sprintf("%s %s %s %s %s %s %s %s", "PID", "State", "Threads", "CPU Time", "VirtMem", "ResMem", "Command", "Exec/Args"))
+		s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command | Exec/Args")
 		for _, p := range procs {
-			s = append(s, p.String())
+			s = append(s, fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s | %s", p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), p.Command, p.Executable))
 		}
-		l.Rows = s
+
+		l.Text = columnize.SimpleFormat(s)
 
 		// Attempt to get terminal dimensions
 		// Since we're getting this data on each call

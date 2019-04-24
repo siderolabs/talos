@@ -50,6 +50,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190416084830-8368d24ba045
+	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/sirupsen/logrus v1.0.6 // indirect
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3
