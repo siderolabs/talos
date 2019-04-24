@@ -37,6 +37,18 @@ var topCmd = &cobra.Command{
 			helpers.Fatalf("error constructing client: %s", err)
 		}
 
+		if oneTime {
+			var output string
+			output, err = topOutput(c)
+			if err != nil {
+				log.Fatal(err)
+			}
+			// Note this is unlimited output of process lines
+			// we arent artificially limited by the box we would otherwise draw
+			fmt.Println(output)
+			return
+		}
+
 		if err := ui.Init(); err != nil {
 			log.Fatalf("failed to initialize termui: %v", err)
 		}
@@ -47,9 +59,11 @@ var topCmd = &cobra.Command{
 }
 
 var sortMethod string
+var oneTime bool
 
 func init() {
 	topCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
+	topCmd.Flags().BoolVarP(&oneTime, "once", "1", false, "Print the current top output ( no gui/auto refresh )")
 	rootCmd.AddCommand(topCmd)
 }
 
@@ -163,7 +177,9 @@ func topOutput(c *client.Client) (output string, err error) {
 	s := make([]string, 0, len(procs))
 	s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command | Exec/Args")
 	for _, p := range procs {
-		s = append(s, fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s | %s", p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), p.Command, p.Executable))
+		s = append(s,
+			fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s | %s",
+				p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), p.Command, p.Executable))
 	}
 
 	output = columnize.SimpleFormat(s)
