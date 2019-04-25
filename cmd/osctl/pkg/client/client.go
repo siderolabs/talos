@@ -13,6 +13,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"text/tabwriter"
 
@@ -270,4 +271,29 @@ func (c *Client) Top() (pl []proc.ProcessList, err error) {
 	dec := gob.NewDecoder(buf)
 	err = dec.Decode(&pl)
 	return
+}
+
+// DF implements the proto.OSDClient interface.
+func (c *Client) DF() (err error) {
+	ctx := context.Background()
+	reply, err := c.client.DF(ctx, &empty.Empty{})
+	if err != nil {
+		fmt.Printf("one or more error encountered: %+v", err)
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "FILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
+	for _, r := range reply.Stats {
+		percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
+
+		if math.IsNaN(percentAvailable) {
+			continue
+		}
+
+		fmt.Fprintf(w, "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n", r.Filesystem, float64(r.Size)*1e-9, float64(r.Size-r.Available)*1e-9, float64(r.Available)*1e-9, percentAvailable, r.MountedOn)
+	}
+	if err := w.Flush(); err != nil {
+		return err
+	}
+
+	return nil
 }
