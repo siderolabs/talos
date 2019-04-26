@@ -15,6 +15,7 @@ service OSD {
   rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Restart(RestartRequest) returns (RestartReply) {}
   rpc Routes(google.protobuf.Empty) returns (RoutesReply) {}
+  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
   rpc Stats(StatsRequest) returns (StatsReply) {}
   rpc Top(google.protobuf.Empty) returns (TopReply) {}
   rpc DF(google.protobuf.Empty) returns (DFReply) {}
@@ -59,6 +60,9 @@ message RestartRequest {
 
 // The response message containing the restart status.
 message RestartReply {}
+
+// The response message containing the shutdown status.
+message ShutdownReply {}
 
 // The response message containing the restart status.
 message ResetReply {}
