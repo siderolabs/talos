@@ -31,6 +31,7 @@ enter: kubeconfig
 manifests: kubeconfig
 	@./kubectl.sh apply -f /manifests/psp.yaml
 	@./kubectl.sh apply -f /manifests/cni.yaml
+	@./kubectl.sh apply -f /manifests/coredns.yaml
 
 integration: up
 	@./integration.sh
