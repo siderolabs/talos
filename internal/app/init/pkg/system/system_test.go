@@ -4,11 +4,27 @@
 
 package system_test
 
-import "testing"
+import (
+	"testing"
 
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
+	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system"
+)
+
+type SystemServicesSuite struct {
+	suite.Suite
+}
+
+func (suite *SystemServicesSuite) TestStartShutdown() {
+	prevShutdownHackySleep := system.ShutdownHackySleep
+	defer func() { system.ShutdownHackySleep = prevShutdownHackySleep }()
+
+	system.ShutdownHackySleep = 0
+
+	system.Services(nil).Start(&MockService{name: "containerd"}, &MockService{name: "proxyd"})
+	system.Services(nil).Shutdown()
+}
+
+func TestSystemServicesSuite(t *testing.T) {
+	suite.Run(t, new(SystemServicesSuite))
 }

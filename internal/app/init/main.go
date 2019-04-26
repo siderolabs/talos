@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -30,6 +32,7 @@ import (
 var (
 	switchRoot  *bool
 	inContainer *bool
+	rebootFlag  = unix.LINUX_REBOOT_CMD_RESTART
 )
 
 func init() {
@@ -140,6 +143,7 @@ func initram() (err error) {
 	return nil
 }
 
+// nolint: gocyclo
 func root() (err error) {
 	if !*inContainer {
 		// Setup logging to /dev/kmsg.
@@ -175,25 +179,39 @@ func root() (err error) {
 		}
 	}
 
-	go func() {
-		if err := listenForPowerButton(); err != nil {
-			log.Printf("WARNING: power off events will be ignored: %+v", err)
-		}
-	}()
+	poweroffCh, err := listenForPowerButton()
+	if err != nil {
+		log.Printf("WARNING: power off events will be ignored: %+v", err)
+	}
+
+	startupErrCh := make(chan error)
+	termCh := make(chan os.Signal, 1)
+	signal.Notify(termCh, syscall.SIGTERM)
 
 	// Get a handle to the system services API.
 	svcs := system.Services(data)
+	defer svcs.Shutdown()
 
 	// Start containerd.
 	svcs.Start(&services.Containerd{})
 
-	go startSystemServices(data)
-	go startKubernetesServices(data)
+	go startSystemServices(startupErrCh, data)
+	go startKubernetesServices(startupErrCh, data)
+
+	select {
+	case <-poweroffCh:
+		// poweroff, proceed to shutdown but mark as poweroff
+		rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
+	case err = <-startupErrCh:
+		panic(err)
+	case <-termCh:
+		log.Printf("SIGTERM received, rebooting...")
+	}
 
 	return nil
 }
 
-func startSystemServices(data *userdata.UserData) {
+func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
 	var err error
 
 	svcs := system.Services(data)
@@ -226,7 +244,8 @@ func startSystemServices(data *userdata.UserData) {
 		},
 	}
 	if err = ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
-		panic(err)
+		startupErrCh <- err
+		return
 	}
 
 	log.Println("starting system services")
@@ -257,7 +276,7 @@ func startSystemServices(data *userdata.UserData) {
 	}
 }
 
-func startKubernetesServices(data *userdata.UserData) {
+func startKubernetesServices(startupErrCh chan<- error, data *userdata.UserData) {
 	svcs := system.Services(data)
 
 	// Import the Kubernetes images.
@@ -277,7 +296,8 @@ func startKubernetesServices(data *userdata.UserData) {
 		},
 	}
 	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
-		panic(err)
+		startupErrCh <- err
+		return
 	}
 
 	log.Println("starting kubernetes services")
@@ -287,6 +307,45 @@ func startKubernetesServices(data *userdata.UserData) {
 	)
 }
 
+func sync() {
+	syncdone := make(chan struct{})
+
+	go func() {
+		defer close(syncdone)
+		unix.Sync()
+	}()
+
+	log.Printf("Waiting for sync...")
+
+	for i := 29; i >= 0; i-- {
+		select {
+		case <-syncdone:
+			log.Printf("Sync done")
+			return
+		case <-time.After(time.Second):
+		}
+		if i != 0 {
+			log.Printf("Waiting %d more seconds for sync to finish", i)
+		}
+	}
+
+	log.Printf("Sync hasn't completed in time, aborting...")
+}
+
+func reboot() {
+	// See http://man7.org/linux/man-pages/man2/reboot.2.html.
+	sync()
+
+	// nolint: errcheck
+	unix.Reboot(rebootFlag)
+
+	if *inContainer {
+		return
+	}
+
+	select {}
+}
+
 func recovery() {
 	if r := recover(); r != nil {
 		log.Printf("recovered from: %+v\n", r)
@@ -294,15 +353,24 @@ func recovery() {
 			log.Printf("rebooting in %d seconds\n", i)
 			time.Sleep(1 * time.Second)
 		}
-
-		// nolint: errcheck
-		unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
 	}
-
-	select {}
 }
 
 func main() {
+	// This is main entrypoint into init() execution, after kernel boot control is passsed
+	// to this function.
+	//
+	// When initram() finishes, it execs into itself with -switch-root flag, so control is passed
+	// once again into this function.
+	//
+	// When init() terminates either on normal shutdown (reboot, poweroff), or due to panic, control
+	// goes through recovery() and reboot() functions below, which finalize node state - sync buffers,
+	// initiate poweroff or reboot. Also on shutdown, other deferred function are called, for example
+	// services are gracefully shutdown.
+
+	// on any return from init.main(), initiate host reboot or shutdown
+	defer reboot()
+	// handle any panics in the main goroutine, and proceed to reboot() above
 	defer recovery()
 
 	// TODO(andrewrynhard): Remove this and be explicit.
@@ -310,16 +378,14 @@ func main() {
 		panic(errors.New("error setting PATH"))
 	}
 
-	if *switchRoot {
+	switch {
+	case *switchRoot:
 		if err := root(); err != nil {
 			panic(errors.Wrap(err, "boot failed"))
 		}
 
-		// Hang forever.
-		select {}
-	}
-
-	if *inContainer {
+		// root() hangs until reboot
+	case *inContainer:
 		if err := container(); err != nil {
 			panic(errors.Wrap(err, "failed to prepare container based deploy"))
 		}
@@ -327,14 +393,13 @@ func main() {
 			panic(errors.Wrap(err, "boot failed"))
 		}
 
-		// Hang forever.
-		select {}
-	}
+		// root() hangs until reboot
+	default:
+		if err := initram(); err != nil {
+			panic(errors.Wrap(err, "early boot failed"))
+		}
 
-	if err := initram(); err != nil {
-		panic(errors.Wrap(err, "early boot failed"))
+		// We should never reach this point if things are working as intended.
+		panic(errors.New("unknown error"))
 	}
-
-	// We should never reach this point if things are working as intended.
-	panic(errors.New("unknown error"))
 }

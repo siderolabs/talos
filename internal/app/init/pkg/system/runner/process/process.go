@@ -5,15 +5,16 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	processlogger "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process/log"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -48,15 +49,15 @@ func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Opt
 }
 
 // Open implements the Runner interface.
-func (p *processRunner) Open() error {
+func (p *processRunner) Open(ctx context.Context) error {
 	return nil
 }
 
 // Run implements the Runner interface.
-func (p *processRunner) Run() error {
+func (p *processRunner) Run(eventSink events.Recorder) error {
 	defer close(p.stopped)
 
-	return p.run()
+	return p.run(eventSink)
 }
 
 // Stop implements the Runner interface
@@ -101,7 +102,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 	return cmd, nil
 }
 
-func (p *processRunner) run() error {
+func (p *processRunner) run(eventSink events.Recorder) error {
 	cmd, err := p.build()
 	if err != nil {
 		return errors.Wrap(err, "error building command")
@@ -110,6 +111,8 @@ func (p *processRunner) run() error {
 	if err = cmd.Start(); err != nil {
 		return errors.Wrap(err, "error starting process")
 	}
+
+	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmd.Process.Pid)
 
 	waitCh := make(chan error)
 
@@ -123,7 +126,7 @@ func (p *processRunner) run() error {
 		return err
 	case <-p.stop:
 		// graceful stop the service
-		log.Printf("sending SIGTERM to %s", p)
+		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
 		// nolint: errcheck
 		_ = cmd.Process.Signal(syscall.SIGTERM)
@@ -135,7 +138,7 @@ func (p *processRunner) run() error {
 		return nil
 	case <-time.After(p.opts.GracefulShutdownTimeout):
 		// kill the process
-		log.Printf("sending SIGKILL to %s", p)
+		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
 
 		// nolint: errcheck
 		_ = cmd.Process.Signal(syscall.SIGKILL)
@@ -147,5 +150,5 @@ func (p *processRunner) run() error {
 }
 
 func (p *processRunner) String() string {
-	return fmt.Sprintf("Process(%v)", p.args.ProcessArgs)
+	return fmt.Sprintf("Process(%q)", p.args.ProcessArgs)
 }

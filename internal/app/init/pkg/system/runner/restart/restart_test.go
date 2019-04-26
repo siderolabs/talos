@@ -5,12 +5,16 @@
 package restart_test
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"log"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 )
 
@@ -25,7 +29,7 @@ type MockRunner struct {
 	stopped chan struct{}
 }
 
-func (m *MockRunner) Open() error {
+func (m *MockRunner) Open(ctx context.Context) error {
 	m.stop = make(chan struct{})
 	m.stopped = make(chan struct{})
 	return nil
@@ -36,7 +40,7 @@ func (m *MockRunner) Close() error {
 	return nil
 }
 
-func (m *MockRunner) Run() error {
+func (m *MockRunner) Run(eventSink events.Recorder) error {
 	defer close(m.stopped)
 
 	select {
@@ -63,6 +67,10 @@ func (m *MockRunner) String() string {
 	return "MockRunner()"
 }
 
+func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
+}
+
 func (suite *RestartSuite) TestString() {
 	suite.Assert().Equal("Restart(UntilSuccess, MockRunner())", restart.New(&MockRunner{}, restart.WithType(restart.UntilSuccess)).String())
 }
@@ -73,7 +81,7 @@ func (suite *RestartSuite) TestRunOnce() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.Once))
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	failed := errors.New("failed")
@@ -82,7 +90,7 @@ func (suite *RestartSuite) TestRunOnce() {
 		mock.exitCh <- failed
 	}()
 
-	suite.Assert().EqualError(r.Run(), failed.Error())
+	suite.Assert().EqualError(r.Run(MockEventSink), failed.Error())
 	suite.Assert().NoError(r.Stop())
 }
 
@@ -92,13 +100,13 @@ func (suite *RestartSuite) TestRunOnceStop() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.Once))
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run()
+		errCh <- r.Run(MockEventSink)
 	}()
 
 	suite.Assert().NoError(r.Stop())
@@ -111,14 +119,14 @@ func (suite *RestartSuite) TestRunUntilSuccess() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	failed := errors.New("failed")
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run()
+		errCh <- r.Run(MockEventSink)
 	}()
 
 	mock.exitCh <- failed
@@ -137,14 +145,14 @@ func (suite *RestartSuite) TestRunForever() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.Forever), restart.WithRestartInterval(time.Millisecond))
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	failed := errors.New("failed")
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run()
+		errCh <- r.Run(MockEventSink)
 	}()
 
 	mock.exitCh <- failed

@@ -5,18 +5,21 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
+
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 )
 
 // Runner describes the requirements for running a process.
 type Runner interface {
 	fmt.Stringer
-	Open() error
-	Run() error
+	Open(ctx context.Context) error
+	Run(events.Recorder) error
 	Stop() error
 	Close() error
 }

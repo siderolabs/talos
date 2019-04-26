@@ -5,16 +5,17 @@
 package conditions
 
 import (
+	"context"
 	"os"
 	"time"
 )
 
 // ConditionFunc is the signature that all condition funcs must have.
-type ConditionFunc = func() (bool, error)
+type ConditionFunc = func(ctx context.Context) (bool, error)
 
 // None is a service condition that has no conditions.
 func None() ConditionFunc {
-	return func() (bool, error) {
+	return func(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 }
@@ -22,7 +23,7 @@ func None() ConditionFunc {
 // FileExists is a service condition that checks for the existence of a file
 // once and only once.
 func FileExists(file string) ConditionFunc {
-	return func() (bool, error) {
+	return func(ctx context.Context) (bool, error) {
 		_, err := os.Stat(file)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -39,9 +40,9 @@ func FileExists(file string) ConditionFunc {
 // WaitForFileToExist is a service condition that will wait for the existence of
 // a file.
 func WaitForFileToExist(file string) ConditionFunc {
-	return func() (bool, error) {
+	return func(ctx context.Context) (bool, error) {
 		for {
-			exists, err := FileExists(file)()
+			exists, err := FileExists(file)(ctx)
 			if err != nil {
 				return false, err
 			}
@@ -49,7 +50,12 @@ func WaitForFileToExist(file string) ConditionFunc {
 			if exists {
 				return true, nil
 			}
-			time.Sleep(1 * time.Second)
+
+			select {
+			case <-ctx.Done():
+				return false, ctx.Err()
+			case <-time.After(1 * time.Second):
+			}
 		}
 	}
 }
@@ -57,23 +63,25 @@ func WaitForFileToExist(file string) ConditionFunc {
 // WaitForFilesToExist is a service condition that will wait for the existence a
 // set of files.
 func WaitForFilesToExist(files ...string) ConditionFunc {
-	return func() (exists bool, err error) {
-	L:
+	return func(ctx context.Context) (bool, error) {
 		for {
+			allExist := true
 			for _, f := range files {
-				exists, err = FileExists(f)()
+				exists, err := FileExists(f)(ctx)
 				if err != nil {
 					return false, err
 				}
-				if !exists {
-					time.Sleep(1 * time.Second)
-					continue L
-				}
+				allExist = allExist && exists
 			}
-			if exists {
+			if allExist {
 				return true, nil
 			}
-			time.Sleep(1 * time.Second)
+
+			select {
+			case <-ctx.Done():
+				return false, ctx.Err()
+			case <-time.After(1 * time.Second):
+			}
 		}
 	}
 }

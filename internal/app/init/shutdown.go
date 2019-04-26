@@ -5,10 +5,11 @@
 package main
 
 import (
+	"log"
+
 	"github.com/mdlayher/genetlink"
 	"github.com/mdlayher/netlink"
 	"github.com/pkg/errors"
-	"golang.org/x/sys/unix"
 )
 
 const (
@@ -17,19 +18,19 @@ const (
 	acpiGenlMcastGroupName = "acpi_mc_group"
 )
 
-func listenForPowerButton() (err error) {
+func listenForPowerButton() (poweroffCh <-chan struct{}, err error) {
 	// Get the acpi_event family.
 
 	conn, err := genetlink.Dial(nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// nolint: errcheck
 	defer conn.Close()
 
 	f, err := conn.GetFamily(acpiGenlFamilyName)
 	if netlink.IsNotExist(err) {
-		return errors.Wrap(err, acpiGenlFamilyName+" not available")
+		return nil, errors.Wrap(err, acpiGenlFamilyName+" not available")
 	}
 
 	var id uint32
@@ -39,22 +40,25 @@ func listenForPowerButton() (err error) {
 		}
 	}
 	if err = conn.JoinGroup(id); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Listen for ACPI events.
+	ch := make(chan struct{})
 
-	msgs, _, err := conn.Receive()
-	if err != nil {
-		return err
-	}
-	if len(msgs) > 0 {
-		// TODO(andrewrynhard): Stop all running containerd tasks.
-		// See http://man7.org/linux/man-pages/man2/reboot.2.html.
-		unix.Sync()
-		// nolint: errcheck
-		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
-	}
+	go func() {
+		for {
+			msgs, _, err := conn.Receive()
+			if err != nil {
+				log.Printf("error reading from ACPI channel: %s", err)
+				return
+			}
+			if len(msgs) > 0 {
+				close(ch)
+				return
+			}
+		}
+	}()
 
-	return nil
+	return ch, nil
 }

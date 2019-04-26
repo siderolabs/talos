@@ -5,7 +5,10 @@
 package process_test
 
 import (
+	"context"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -13,11 +16,16 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
+
+func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
+}
 
 type ProcessSuite struct {
 	suite.Suite
@@ -42,10 +50,10 @@ func (suite *ProcessSuite) TestRunSuccess() {
 		ProcessArgs: []string{"/bin/bash", "-c", "exit 0"},
 	}, runner.WithLogPath(suite.tmpDir))
 
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run())
+	suite.Assert().NoError(r.Run(MockEventSink))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -56,10 +64,10 @@ func (suite *ProcessSuite) TestRunLogs() {
 		ProcessArgs: []string{"/bin/bash", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	}, runner.WithLogPath(suite.tmpDir))
 
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run())
+	suite.Assert().NoError(r.Run(MockEventSink))
 
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)
@@ -83,7 +91,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		ProcessArgs: []string{"/bin/bash", "-c", "echo \"ran\"; test -f " + testFile},
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	var wg sync.WaitGroup
@@ -91,7 +99,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		suite.Assert().NoError(r.Run())
+		suite.Assert().NoError(r.Run(MockEventSink))
 	}()
 
 	time.Sleep(200 * time.Millisecond)
@@ -123,13 +131,13 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 		ProcessArgs: []string{"/bin/bash", "-c", "test -f " + testFile},
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
 
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run()
+		done <- r.Run(MockEventSink)
 	}()
 
 	time.Sleep(40 * time.Millisecond)
@@ -167,13 +175,13 @@ func (suite *ProcessSuite) TestStopSigKill() {
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
 	)
 
-	suite.Assert().NoError(r.Open())
+	suite.Assert().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run()
+		done <- r.Run(MockEventSink)
 	}()
 
 	time.Sleep(100 * time.Millisecond)
