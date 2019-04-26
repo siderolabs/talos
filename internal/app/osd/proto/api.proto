@@ -17,6 +17,7 @@ service OSD {
   rpc Routes(google.protobuf.Empty) returns (RoutesReply) {}
   rpc Stats(StatsRequest) returns (StatsReply) {}
   rpc Top(google.protobuf.Empty) returns (TopReply) {}
+  rpc DF(google.protobuf.Empty) returns (DFReply) {}
   rpc Version(google.protobuf.Empty) returns (Data) {}
 }
 
@@ -89,3 +90,14 @@ message TopRequest {}
 message TopReply { ProcessList process_list = 1; }
 
 message ProcessList { bytes bytes = 1; }
+
+// The response message containing the requested df stats.
+message DFReply { repeated DFStat stats = 1; }
+
+// The response message containing the requested processes.
+message DFStat {
+  string filesystem = 1;
+  uint64 size = 2;
+  uint64 available = 3;
+  string mounted_on = 4;
+}
