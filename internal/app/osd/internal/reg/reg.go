@@ -242,10 +242,20 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 
 // Reboot implements the proto.OSDServer interface.
 func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto.RebootReply, err error) {
-	// nolint: errcheck
-	unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
-
 	reply = &proto.RebootReply{}
+
+	// nolint: errcheck
+	defer unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
+
+	return
+}
+
+// Shutdown implements the proto.OSDServer interface.
+func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *proto.ShutdownReply, err error) {
+	reply = &proto.ShutdownReply{}
+
+	// nolint: errcheck
+	defer unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
 
 	return
 }

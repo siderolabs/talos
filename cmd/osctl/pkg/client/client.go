@@ -188,6 +188,17 @@ func (c *Client) Reboot() (err error) {
 	return nil
 }
 
+// Shutdown implements the proto.OSDClient interface.
+func (c *Client) Shutdown() (err error) {
+	ctx := context.Background()
+	_, err = c.client.Shutdown(ctx, &empty.Empty{})
+	if err != nil {
+		return
+	}
+
+	return nil
+}
+
 // Dmesg implements the proto.OSDClient interface.
 // nolint: dupl
 func (c *Client) Dmesg() (err error) {
