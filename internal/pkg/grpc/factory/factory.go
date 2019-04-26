@@ -7,6 +7,8 @@ package factory
 import (
 	"crypto/tls"
 	"net"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -22,6 +24,7 @@ type Registrator interface {
 // Options is the functional options struct.
 type Options struct {
 	Port          int
+	SocketPath    string
 	Network       string
 	Config        *tls.Config
 	ServerOptions []grpc.ServerOption
@@ -34,6 +37,13 @@ type Option func(*Options)
 func Port(o int) Option {
 	return func(args *Options) {
 		args.Port = o
+	}
+}
+
+// SocketPath sets the listen unix file socket path of the server.
+func SocketPath(o string) Option {
+	return func(args *Options) {
+		args.SocketPath = o
 	}
 }
 
@@ -61,7 +71,8 @@ func ServerOptions(o ...grpc.ServerOption) Option {
 // NewDefaultOptions initializes the Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
-		Network: "tcp",
+		Network:    "tcp",
+		SocketPath: "/run/factory/factory.sock",
 	}
 
 	for _, setter := range setters {
@@ -71,38 +82,54 @@ func NewDefaultOptions(setters ...Option) *Options {
 	return opts
 }
 
-// Listen configures TLS for mutual authtentication by loading the CA into a
-// CertPool and configuring the server's policy for TLS Client Authentication.
-// Once TLS is configured, the gRPC options are built to make use of the TLS
-// configuration and the receiver (Server) is registered to the gRPC server.
-// Finally the gRPC server is started.
-func Listen(r Registrator, setters ...Option) (err error) {
+// NewServer builds grpc server and binds it to the Registrator
+func NewServer(r Registrator, setters ...Option) *grpc.Server {
 	opts := NewDefaultOptions(setters...)
-
-	if opts.Network == "tcp" && opts.Port == 0 {
-		return errors.Errorf("a port is required for TCP listener")
-	}
 
 	server := grpc.NewServer(opts.ServerOptions...)
 	r.Register(server)
 
+	return server
+}
+
+// NewListener builds listener for grpc server
+func NewListener(setters ...Option) (net.Listener, error) {
+	opts := NewDefaultOptions(setters...)
+
+	if opts.Network == "tcp" && opts.Port == 0 {
+		return nil, errors.New("a port is required for TCP listener")
+	}
+
 	var address string
 	switch opts.Network {
 	case "unix":
-		address = "/run/factory/factory.sock"
+		address = opts.SocketPath
+
+		// make any dirs on the path to the listening socket
+		if err := os.MkdirAll(filepath.Dir(address), 0700); err != nil {
+			return nil, errors.Wrap(err, "error creating containing directory for the file socket")
+		}
 	case "tcp":
 		address = ":" + strconv.Itoa(opts.Port)
 	default:
-		return errors.Errorf("unknown network: %s", opts.Network)
-	}
-	listener, err := net.Listen(opts.Network, address)
-	if err != nil {
-		return
-	}
-	err = server.Serve(listener)
-	if err != nil {
-		return
+		return nil, errors.Errorf("unknown network: %s", opts.Network)
 	}
 
-	return nil
+	return net.Listen(opts.Network, address)
+}
+
+// ListenAndServe configures TLS for mutual authtentication by loading the CA into a
+// CertPool and configuring the server's policy for TLS Client Authentication.
+// Once TLS is configured, the gRPC options are built to make use of the TLS
+// configuration and the receiver (Server) is registered to the gRPC server.
+// Finally the gRPC server is started.
+func ListenAndServe(r Registrator, setters ...Option) (err error) {
+	server := NewServer(r, setters...)
+	listener, err := NewListener(setters...)
+
+	if err != nil {
+		return err
+	}
+
+	return server.Serve(listener)
 }

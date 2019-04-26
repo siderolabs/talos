@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
+	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -41,12 +42,16 @@ import (
 // Registrator is the concrete type that implements the factory.Registrator and
 // proto.OSDServer interfaces.
 type Registrator struct {
+	// every Init service API is proxied via OSD
+	*InitServiceClient
+
 	Data *userdata.UserData
 }
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
 	proto.RegisterOSDServer(s, r)
+	initproto.RegisterInitServer(s, r)
 }
 
 // Kubeconfig implements the proto.OSDServer interface. The admin kubeconfig is
@@ -238,26 +243,6 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.
 	reply = &proto.ResetReply{}
 
 	return reply, nil
-}
-
-// Reboot implements the proto.OSDServer interface.
-func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto.RebootReply, err error) {
-	reply = &proto.RebootReply{}
-
-	// nolint: errcheck
-	defer unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
-
-	return
-}
-
-// Shutdown implements the proto.OSDServer interface.
-func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *proto.ShutdownReply, err error) {
-	reply = &proto.ShutdownReply{}
-
-	// nolint: errcheck
-	defer unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
-
-	return
 }
 
 // Dmesg implements the proto.OSDServer interface. The klogctl syscall is used

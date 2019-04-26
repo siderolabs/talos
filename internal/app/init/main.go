@@ -17,6 +17,7 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform"
+	"github.com/talos-systems/talos/internal/app/init/internal/reg"
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs"
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/mount"
 	"github.com/talos-systems/talos/internal/app/init/pkg/network"
@@ -24,6 +25,7 @@ import (
 	ctrdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/services"
 	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"golang.org/x/sys/unix"
@@ -192,6 +194,23 @@ func root() (err error) {
 	svcs := system.Services(data)
 	defer svcs.Shutdown()
 
+	// Instantiate internal init API
+	api := reg.NewRegistrator(data)
+	server := factory.NewServer(api)
+	listener, err := factory.NewListener(
+		factory.Network("unix"),
+		factory.SocketPath(constants.InitSocketPath),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer server.Stop()
+
+	go func() {
+		// nolint: errcheck
+		server.Serve(listener)
+	}()
+
 	// Start containerd.
 	svcs.Start(&services.Containerd{})
 
@@ -199,13 +218,20 @@ func root() (err error) {
 	go startKubernetesServices(startupErrCh, data)
 
 	select {
+	case <-api.ShutdownCh:
+		log.Printf("poweroff via API received")
+		// poweroff, proceed to shutdown but mark as poweroff
+		rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
 	case <-poweroffCh:
+		log.Printf("poweroff via ACPI")
 		// poweroff, proceed to shutdown but mark as poweroff
 		rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
 	case err = <-startupErrCh:
 		panic(err)
 	case <-termCh:
 		log.Printf("SIGTERM received, rebooting...")
+	case <-api.RebootCh:
+		log.Printf("reboot via API received, rebooting...")
 	}
 
 	return nil
@@ -315,21 +341,21 @@ func sync() {
 		unix.Sync()
 	}()
 
-	log.Printf("Waiting for sync...")
+	log.Printf("waiting for sync...")
 
 	for i := 29; i >= 0; i-- {
 		select {
 		case <-syncdone:
-			log.Printf("Sync done")
+			log.Printf("sync done")
 			return
 		case <-time.After(time.Second):
 		}
 		if i != 0 {
-			log.Printf("Waiting %d more seconds for sync to finish", i)
+			log.Printf("waiting %d more seconds for sync to finish", i)
 		}
 	}
 
-	log.Printf("Sync hasn't completed in time, aborting...")
+	log.Printf("sync hasn't completed in time, aborting...")
 }
 
 func reboot() {

@@ -1,0 +1,20 @@
+
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+
+// The Init service definition.
+service Init {
+  rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
+  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
+}
+
+
+// The response message containing the reboot status.
+message RebootReply {}
+
+// The response message containing the shutdown status.
+message ShutdownReply {}
+

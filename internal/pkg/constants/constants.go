@@ -99,6 +99,9 @@ const (
 
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
+
+	// InitSocketPath is the path to file socket of init API
+	InitSocketPath = "/var/lib/init/init.sock"
 )
 
 // See https://linux.die.net/man/3/klogctl

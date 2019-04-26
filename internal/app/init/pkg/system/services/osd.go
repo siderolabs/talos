@@ -62,6 +62,7 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: "/var/lib/init", Source: "/var/lib/init", Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
