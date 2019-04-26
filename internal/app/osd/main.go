@@ -38,9 +38,17 @@ func main() {
 		log.Fatalf("credentials: %v", err)
 	}
 
+	initClient, err := reg.NewInitServiceClient()
+	if err != nil {
+		log.Fatalf("init client: %v", err)
+	}
+
 	log.Println("Starting osd")
-	err = factory.Listen(
-		&reg.Registrator{Data: data},
+	err = factory.ListenAndServe(
+		&reg.Registrator{
+			Data:              data,
+			InitServiceClient: initClient,
+		},
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(
 			grpc.Creds(

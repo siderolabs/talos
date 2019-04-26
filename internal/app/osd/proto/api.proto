@@ -6,16 +6,16 @@ package proto;
 import "google/protobuf/empty.proto";
 
 // The OSD service definition.
+//
+// OSD Service also implements all the API of Init Service
 service OSD {
   rpc Dmesg(google.protobuf.Empty) returns (Data) {}
   rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
   rpc Logs(LogsRequest) returns (stream Data) {}
   rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
-  rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
   rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Restart(RestartRequest) returns (RestartReply) {}
   rpc Routes(google.protobuf.Empty) returns (RoutesReply) {}
-  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
   rpc Stats(StatsRequest) returns (StatsReply) {}
   rpc Top(google.protobuf.Empty) returns (TopReply) {}
   rpc DF(google.protobuf.Empty) returns (DFReply) {}
@@ -61,14 +61,8 @@ message RestartRequest {
 // The response message containing the restart status.
 message RestartReply {}
 
-// The response message containing the shutdown status.
-message ShutdownReply {}
-
 // The response message containing the restart status.
 message ResetReply {}
-
-// The response message containing the restart status.
-message RebootReply {}
 
 // The request message containing the process name.
 message LogsRequest {

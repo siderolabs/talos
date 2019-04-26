@@ -13,10 +13,14 @@ RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.
 WORKDIR /trustd
 COPY ./internal/app/trustd/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+WORKDIR /init
+COPY ./internal/app/init/proto ./proto
+RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
 FROM scratch AS proto
 COPY --from=proto-build /osd/proto/api.pb.go /internal/app/osd/proto/
 COPY --from=proto-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
+COPY --from=proto-build /init/proto/api.pb.go /internal/app/init/proto/
 
 # The base provides a common image to build the Talos source code.
 

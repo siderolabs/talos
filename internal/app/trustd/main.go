@@ -46,7 +46,7 @@ func main() {
 		data.Services.Trustd.Password,
 	)
 
-	err = factory.Listen(
+	err = factory.ListenAndServe(
 		&reg.Registrator{Data: data.Security.OS},
 		factory.Port(constants.TrustdPort),
 		factory.ServerOptions(

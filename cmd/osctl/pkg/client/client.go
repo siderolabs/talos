@@ -19,6 +19,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/proc"
 	"google.golang.org/grpc"
@@ -37,8 +38,9 @@ type Credentials struct {
 // Client implements the proto.OSDClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
-	conn   *grpc.ClientConn
-	client proto.OSDClient
+	conn       *grpc.ClientConn
+	client     proto.OSDClient
+	initClient initproto.InitClient
 }
 
 // NewDefaultClientCredentials initializes ClientCredentials using default paths
@@ -101,6 +103,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	}
 
 	c.client = proto.NewOSDClient(c.conn)
+	c.initClient = initproto.NewInitClient(c.conn)
 
 	return c, nil
 }
@@ -180,7 +183,7 @@ func (c *Client) Reset() (err error) {
 // Reboot implements the proto.OSDClient interface.
 func (c *Client) Reboot() (err error) {
 	ctx := context.Background()
-	_, err = c.client.Reboot(ctx, &empty.Empty{})
+	_, err = c.initClient.Reboot(ctx, &empty.Empty{})
 	if err != nil {
 		return
 	}
@@ -191,7 +194,7 @@ func (c *Client) Reboot() (err error) {
 // Shutdown implements the proto.OSDClient interface.
 func (c *Client) Shutdown() (err error) {
 	ctx := context.Background()
-	_, err = c.client.Shutdown(ctx, &empty.Empty{})
+	_, err = c.initClient.Shutdown(ctx, &empty.Empty{})
 	if err != nil {
 		return
 	}
