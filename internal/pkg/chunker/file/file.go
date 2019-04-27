@@ -8,8 +8,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
+	"os"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/chunker"
+	"gopkg.in/fsnotify.v1"
 )
 
 // Options is the functional options struct.
@@ -34,12 +38,7 @@ type File struct {
 }
 
 // Source is an interface describing the source of a File.
-type Source interface {
-	io.ReaderAt
-	io.Seeker
-	io.Closer
-	io.Writer
-}
+type Source = *os.File
 
 // NewChunker initializes a Chunker with default values.
 func NewChunker(source Source, setters ...Option) chunker.Chunker {
@@ -64,8 +63,6 @@ func (c *File) Read(ctx context.Context) <-chan []byte {
 
 	go func(ch chan []byte) {
 		defer close(ch)
-		// nolint: errcheck
-		defer c.source.Close()
 
 		offset, err := c.source.Seek(0, io.SeekStart)
 		if err != nil {
@@ -90,14 +87,58 @@ func (c *File) Read(ctx context.Context) <-chan []byte {
 					b := make([]byte, n)
 					copy(b, buf[:n])
 					ch <- b
-				}
-				// Clear the buffer.
-				for i := 0; i < n; i++ {
-					buf[i] = 0
+
+					// Clear the buffer.
+					for i := 0; i < n; i++ {
+						buf[i] = 0
+					}
+				} else if err := watch(c.source.Name()); err != nil {
+					log.Printf("failed to watch: %v\n", err)
+					return
 				}
 			}
 		}
 	}(ch)
 
 	return ch
+}
+
+func watch(path string) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	// nolint: errcheck
+	defer watcher.Close()
+
+	errChan := make(chan error)
+
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				switch event.Op {
+				case fsnotify.Write:
+					errChan <- nil
+					return
+				case fsnotify.Remove:
+					errChan <- errors.Errorf("file was removed while watching: %s", path)
+					return
+				default:
+					log.Printf("ignoring fsnotify event: %v\n", event)
+				}
+			case err := <-watcher.Errors:
+				errChan <- err
+				return
+			}
+		}
+	}()
+
+	if err := watcher.Add(path); err != nil {
+		return err
+	}
+
+	e := <-errChan
+
+	return e
 }
