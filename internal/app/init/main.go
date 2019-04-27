@@ -251,23 +251,28 @@ func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
 			},
 		},
 		{
-			Path: "/usr/images/proxyd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/proxyd"),
-			},
-		},
-		{
-			Path: "/usr/images/trustd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/trustd"),
-			},
-		},
-		{
 			Path: "/usr/images/ntpd.tar",
 			Options: []containerd.ImportOpt{
 				containerd.WithIndexName("talos/ntpd"),
 			},
 		},
+	}
+	if !data.IsWorker() {
+		masterReqs := []*ctrdrunner.ImportRequest{
+			{
+				Path: "/usr/images/proxyd.tar",
+				Options: []containerd.ImportOpt{
+					containerd.WithIndexName("talos/proxyd"),
+				},
+			},
+			{
+				Path: "/usr/images/trustd.tar",
+				Options: []containerd.ImportOpt{
+					containerd.WithIndexName("talos/trustd"),
+				},
+			},
+		}
+		reqs = append(reqs, masterReqs...)
 	}
 	if err = ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
 		startupErrCh <- err
@@ -312,14 +317,14 @@ func startKubernetesServices(startupErrCh chan<- error, data *userdata.UserData)
 			Path: "/usr/images/hyperkube.tar",
 		},
 		{
-			Path: "/usr/images/etcd.tar",
-		},
-		{
 			Path: "/usr/images/coredns.tar",
 		},
 		{
 			Path: "/usr/images/pause.tar",
 		},
+	}
+	if !data.IsWorker() {
+		reqs = append(reqs, &ctrdrunner.ImportRequest{Path: "/usr/images/etcd.tar"})
 	}
 	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
 		startupErrCh <- err
