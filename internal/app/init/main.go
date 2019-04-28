@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/internal/reg"
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs"
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/mount"
+	"github.com/talos-systems/talos/internal/app/init/internal/security/kspp"
 	"github.com/talos-systems/talos/internal/app/init/pkg/network"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
 	ctrdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
@@ -122,6 +123,11 @@ func initram() (err error) {
 	// Setup logging to /dev/kmsg.
 	_, err = kmsg("[talos] [initramfs]")
 	if err != nil {
+		return err
+	}
+	// Enforce KSPP kernel parameters.
+	log.Println("checking for KSPP kernel parameters")
+	if err = kspp.EnforceKSPPKernelParameters(); err != nil {
 		return err
 	}
 	// Discover the platform.
