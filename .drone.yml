@@ -1,3 +1,4 @@
+---
 kind: pipeline
 name: default
 
@@ -131,3 +132,30 @@ steps:
 volumes:
 - name: dockersock
   temp: {}
+
+---
+kind: pipeline
+name: notify
+
+clone:
+  disable: true
+
+steps:
+- name: slack
+  image: plugins/slack
+  settings:
+    webhook:
+      from_secret: slack_webhook
+    channel: proj-talos-maint
+  when:
+    status:
+    - success
+    - failure
+
+trigger:
+  status:
+  - success
+  - failure
+
+depends_on:
+- default
