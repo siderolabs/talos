@@ -17,17 +17,16 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Credentials implements credentials.PerRPCCredentials. It uses a basic
-// username and password lookup to authenticate users.
+// Credentials implements credentials.PerRPCCredentials. It uses a basic token
+// lookup to authenticate users.
 type Credentials struct {
-	Username, Password string
+	Token string
 }
 
-// NewCredentials initializes ClientCredentials with the username, and password.
-func NewCredentials(username, password string) (creds *Credentials) {
+// NewCredentials initializes ClientCredentials with the token.
+func NewCredentials(token string) (creds *Credentials) {
 	creds = &Credentials{
-		Username: username,
-		Password: password,
+		Token: token,
 	}
 
 	return creds
@@ -54,11 +53,10 @@ func NewConnection(address string, port int, creds credentials.PerRPCCredentials
 	return conn, nil
 }
 
-// GetRequestMetadata sets the value for the "username" and "password" keys.
+// GetRequestMetadata sets the value for the "token" key.
 func (b *Credentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
 	return map[string]string{
-		"username": b.Username,
-		"password": b.Password,
+		"token": b.Token,
 	}, nil
 }
 
@@ -70,8 +68,7 @@ func (b *Credentials) RequireTransportSecurity() bool {
 
 func (b *Credentials) authorize(ctx context.Context) error {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if len(md["username"]) > 0 && md["username"][0] == b.Username &&
-			len(md["password"]) > 0 && md["password"][0] == b.Password {
+		if len(md["token"]) > 0 && md["token"][0] == b.Token {
 			return nil
 		}
 

@@ -28,6 +28,7 @@ policies:
       - osinstall
       - rootfs
       - tools
+      - trustd
       - '*'
 - type: license
   spec:

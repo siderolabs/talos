@@ -66,8 +66,7 @@ services:
       ipvs:
         scheduler: lc
   trustd:
-    username: '{{ .TrustdInfo.Username }}'
-    password: '{{ .TrustdInfo.Password }}'
+    token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ .Endpoints }} ]
     certSANs: [ "{{ index .MasterIPs .Index }}" ]
 `
