@@ -132,15 +132,12 @@ func initram() (err error) {
 		return err
 	}
 	// Setup hostname if provided
-	var kargs map[string]string
-	if kargs, err = kernel.ParseProcCmdline(); err != nil {
-		if hostname, ok := kargs[constants.KernelParamHostname]; ok {
-			log.Println("setting hostname")
-			if err = unix.Sethostname([]byte(hostname)); err != nil {
-				return err
-			}
-			log.Printf("hostname is: %s", hostname)
+	if hostname, ok := kernel.GetParameter(constants.KernelParamHostname); ok {
+		log.Println("setting hostname")
+		if err = unix.Sethostname([]byte(hostname)); err != nil {
+			return err
 		}
+		log.Printf("hostname is: %s", hostname)
 	}
 	// Discover the platform.
 	log.Println("discovering the platform")
