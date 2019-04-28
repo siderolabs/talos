@@ -41,10 +41,7 @@ func main() {
 		log.Fatalf("credentials: %v", err)
 	}
 
-	creds := basic.NewCredentials(
-		data.Services.Trustd.Username,
-		data.Services.Trustd.Password,
-	)
+	creds := basic.NewCredentials(data.Services.Trustd.Token)
 
 	err = factory.ListenAndServe(
 		&reg.Registrator{Data: data.Security.OS},

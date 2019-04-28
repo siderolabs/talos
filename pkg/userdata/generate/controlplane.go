@@ -30,8 +30,7 @@ services:
           node-labels: ""
           feature-gates: ExperimentalCriticalPodAnnotation=true
   trustd:
-    username: '{{ .TrustdInfo.Username }}'
-    password: '{{ .TrustdInfo.Password }}'
+    token: '{{ .TrustdInfo.Token }}'
     endpoints: [ "{{ index .MasterIPs 0 }}" ]
     bootstrapNode: "{{ index .MasterIPs 0 }}"
     certSANs: [ "{{ index .MasterIPs .Index }}" ]

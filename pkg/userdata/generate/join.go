@@ -26,7 +26,6 @@ services:
           feature-gates: ExperimentalCriticalPodAnnotation=true
       token: '{{ .KubeadmTokens.BootstrapToken }}'
   trustd:
-    username: '{{ .TrustdInfo.Username }}'
-    password: '{{ .TrustdInfo.Password }}'
+    token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}} ]
 `

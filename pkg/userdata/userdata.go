@@ -272,8 +272,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type Trustd struct {
 	CommonServiceOptions `yaml:",inline"`
 
-	Username      string   `yaml:"username"`
-	Password      string   `yaml:"password"`
+	Token         string   `yaml:"token"`
 	Endpoints     []string `yaml:"endpoints,omitempty"`
 	CertSANs      []string `yaml:"certSANs,omitempty"`
 	BootstrapNode string   `yaml:"bootstrapNode,omitempty"`

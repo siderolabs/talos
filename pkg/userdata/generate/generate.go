@@ -56,8 +56,7 @@ type KubeadmTokens struct {
 
 // TrustdInfo holds the trustd credentials.
 type TrustdInfo struct {
-	Username string
-	Password string
+	Token string
 }
 
 // RandomString returns a string of length n.
@@ -81,8 +80,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	}
 
 	trustdInfo := &TrustdInfo{
-		Username: RandomString(14),
-		Password: RandomString(24),
+		Token: RandomString(6) + "." + RandomString(16),
 	}
 
 	// Generate Kubernetes CA.
