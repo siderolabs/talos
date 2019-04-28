@@ -15,6 +15,10 @@ const (
 	// platform.
 	KernelParamPlatform = "talos.platform"
 
+	// KernelParamHostname is the kernel parameter name for specifying the
+	// hostname.
+	KernelParamHostname = "talos.hostname"
+
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 

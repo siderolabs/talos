@@ -7,7 +7,11 @@ package network
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
+
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 
 	"github.com/talos-systems/dhcp/dhcpv4"
 	"github.com/talos-systems/dhcp/dhcpv4/client4"
@@ -49,6 +53,11 @@ func Dhclient(ifname string) (int, error) {
 			dhcpv4.OptionDNSDomainSearchList,
 			dhcpv4.OptionNTPServers,
 		),
+	}
+
+	// Send hostname in Option 12 if we have it
+	if hostname, err := os.Hostname(); err != nil {
+		modifiers = append(modifiers, dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
 	}
 
 	var err error
@@ -95,6 +104,15 @@ func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, e
 			if m.HostName() != "" {
 				hostname = m.HostName()
 			}
+
+			// Ignore DHCP-offered hostname if the kernel parameter is set
+			var kargs map[string]string
+			if kargs, err = kernel.ParseProcCmdline(); err != nil {
+				if kernHostname, ok := kargs[constants.KernelParamHostname]; ok {
+					hostname = kernHostname
+				}
+			}
+
 			log.Printf("using hostname: %s", hostname)
 			if err = unix.Sethostname([]byte(hostname)); err != nil {
 				return nil, err

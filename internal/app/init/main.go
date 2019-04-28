@@ -29,6 +29,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/services"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"golang.org/x/sys/unix"
@@ -129,6 +130,17 @@ func initram() (err error) {
 	log.Println("checking for KSPP kernel parameters")
 	if err = kspp.EnforceKSPPKernelParameters(); err != nil {
 		return err
+	}
+	// Setup hostname if provided
+	var kargs map[string]string
+	if kargs, err = kernel.ParseProcCmdline(); err != nil {
+		if hostname, ok := kargs[constants.KernelParamHostname]; ok {
+			log.Println("setting hostname")
+			if err = unix.Sethostname([]byte(hostname)); err != nil {
+				return err
+			}
+			log.Printf("hostname is: %s", hostname)
+		}
 	}
 	// Discover the platform.
 	log.Println("discovering the platform")
