@@ -33,7 +33,6 @@ services:
         taints: []
         kubeletExtraArgs:
           node-labels: ""
-          feature-gates: ExperimentalCriticalPodAnnotation=true
       ---
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
@@ -55,6 +54,11 @@ services:
         dnsDomain: {{ .ServiceDomain }}
         podSubnet: {{ index .PodNet 0 }}
         serviceSubnet: {{ index .ServiceNet 0 }}
+      ---
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      kind: KubeletConfiguration
+      featureGates:
+        ExperimentalCriticalPodAnnotation: true
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
       kind: KubeProxyConfiguration

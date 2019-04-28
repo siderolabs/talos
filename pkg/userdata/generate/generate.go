@@ -12,6 +12,7 @@ import (
 	"errors"
 	"math/rand"
 	"net"
+	"strings"
 	"text/template"
 
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -162,6 +163,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		ServiceNet:    []string{"10.96.0.0/12"},
 		ServiceDomain: "cluster.local",
 		ClusterName:   clustername,
+		Endpoints:     strings.Join(masterIPs[1:], ", "),
 		KubeadmTokens: kubeadmTokens,
 		TrustdInfo:    trustdInfo,
 	}

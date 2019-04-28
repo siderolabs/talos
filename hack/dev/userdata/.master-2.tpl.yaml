@@ -27,10 +27,6 @@ services:
       nodeRegistration:
         name: master-2
         criSocket: /run/containerd/containerd.sock
-    ignorePreflightErrors:
-      - FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
-      - Swap
-      - SystemVerification
   trustd:
     username: dev
     password: talos_trust_dev
