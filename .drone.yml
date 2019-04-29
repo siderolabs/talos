@@ -44,8 +44,9 @@ steps:
   pull: always
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+    BINDIR: /usr/local/bin
   commands:
-    - make
+    - make drone
   volumes:
   - name: dockersock
     path: /var/run
