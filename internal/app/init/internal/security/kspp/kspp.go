@@ -18,18 +18,13 @@ var RequiredKSPPKernelParameters = map[string]string{"page_poison": "1", "slab_n
 // EnforceKSPPKernelParameters verifies that all required KSPP kernel
 // parameters are present with the right value.
 func EnforceKSPPKernelParameters() error {
-	arguments, err := kernel.ParseProcCmdline()
-	if err != nil {
-		return err
-	}
-
 	var result *multierror.Error
 	for param, expected := range RequiredKSPPKernelParameters {
 		var (
 			ok  bool
 			val string
 		)
-		if val, ok = arguments[param]; !ok {
+		if val, ok = kernel.GetParameter(param); !ok {
 			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s is required", param))
 			continue
 		}

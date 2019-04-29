@@ -35,12 +35,7 @@ func (b *BareMetal) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
-	arguments, err := kernel.ParseProcCmdline()
-	if err != nil {
-		return
-	}
-
-	option, ok := arguments[constants.KernelParamUserData]
+	option, ok := kernel.GetParameter(constants.KernelParamUserData)
 	if !ok {
 		return data, errors.Errorf("no user data option was found")
 	}

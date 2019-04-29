@@ -27,11 +27,7 @@ type Platform interface {
 
 // NewPlatform is a helper func for discovering the current platform.
 func NewPlatform() (p Platform, err error) {
-	arguments, err := kernel.ParseProcCmdline()
-	if err != nil {
-		return
-	}
-	if platform, ok := arguments[constants.KernelParamPlatform]; ok {
+	if platform, ok := kernel.GetParameter(constants.KernelParamPlatform); ok {
 		switch platform {
 		case "aws":
 			if aws.IsEC2() {

@@ -53,3 +53,14 @@ func ParseKernelBootParameters(parameters []byte) (parsed map[string]string) {
 
 	return
 }
+
+// GetParameter attempts to get a specific kernel
+// boot time parameter.
+func GetParameter(parameter string) (string, bool) {
+	kargs, err := ParseProcCmdline()
+	if err != nil {
+		return "", false
+	}
+	value, ok := kargs[parameter]
+	return value, ok
+}
