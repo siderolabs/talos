@@ -11,16 +11,17 @@ VPATH = $(PATH)
 BUILDKIT_VERSION ?= v0.5.0
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
-BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 BUILDKIT_CONTAINER_NAME ?= talos-buildkit
 BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}' 2>/dev/null)
 BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}' 2>/dev/null)
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
+BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 endif
 ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
+BUILDKIT_CACHE ?= ""
 endif
 
 BINDIR ?= ./bin
