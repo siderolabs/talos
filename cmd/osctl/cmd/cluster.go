@@ -7,9 +7,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net"
 	"sync"
 
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
@@ -69,8 +72,19 @@ func create() (err error) {
 
 	// Ensure the image is present.
 
+	distributionRef, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return err
+	}
+
+	// In order to pull an image, the reference must be in canononical
+	// format (e.g. domain/repo/image:tag).
+	image = distributionRef.String()
+
+	// To filter the images, we need a familiar name
+	// (e.g. domain/repo/image:tag => repo/image:tag)
 	filters := filters.NewArgs()
-	filters.Add("reference", image)
+	filters.Add("reference", reference.FamiliarName(distributionRef))
 
 	images, err := cli.ImageList(ctx, types.ImageListOptions{Filters: filters})
 	if err != nil {
@@ -79,7 +93,11 @@ func create() (err error) {
 
 	if len(images) == 0 {
 		fmt.Println("downloading", image)
-		if _, err = cli.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
+		var reader io.ReadCloser
+		if reader, err = cli.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
+			return err
+		}
+		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
 			return err
 		}
 	}
@@ -264,7 +282,7 @@ func saveConfig(input *generate.Input) (err error) {
 }
 
 func init() {
-	clusterUpCmd.Flags().StringVar(&image, "image", "autonomy/talos:"+version.Tag, "the image to use")
+	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)
