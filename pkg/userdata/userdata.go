@@ -18,6 +18,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -35,9 +36,11 @@ import (
 // Env represents a set of environment variables.
 type Env = map[string]string
 
+type Version string
+
 // UserData represents the user data.
 type UserData struct {
-	Version    string      `yaml:"version"`
+	Version    Version     `yaml:"version"`
 	Security   *Security   `yaml:"security"`
 	Networking *Networking `yaml:"networking"`
 	Services   *Services   `yaml:"services"`
@@ -45,6 +48,44 @@ type UserData struct {
 	Debug      bool        `yaml:"debug"`
 	Env        Env         `yaml:"env,omitempty"`
 	Install    *Install    `yaml:"install,omitempty"`
+}
+
+type WorkerData UserData
+
+// Validate ensures the necessary configuration for a
+// worker node is present
+func (w *WorkerData) Validate() error {
+	var result *multierror.Error
+	result = multierror.Append(result, w.Version.Validate())
+	//result = multierror.Append(result, w.Services.Init.Validate())
+	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
+	//result = multierror.Append(result, w.Services.Trustd.Validate())
+	return result
+}
+
+type InitData UserData
+
+func (i *InitData) Validate() error {
+	var result *multierror.Error
+	result = multierror.Append(result, i.Version.Validate())
+	result = multierror.Append(result, w.Security.OS.Validate())
+	//result = multierror.Append(result, w.Security.Kubernetes.Validate())
+	//result = multierror.Append(result, w.Services.Init.Validate())
+	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
+	//result = multierror.Append(result, w.Trustd.Validate())
+	return result
+
+}
+
+type MasterData UserData
+
+func (m *MasterData) Validate() error {
+	var result *multierror.Error
+	result = multierror.Append(result, m.Version.Validate())
+	//result = multierror.Append(result, w.Services.Init.Validate())
+	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
+	//result = multierror.Append(result, w.Trustd.Validate())
+	return result
 }
 
 // Security represents the set of options available to configure security.
