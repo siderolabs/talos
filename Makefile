@@ -7,13 +7,14 @@ ROOTFS_IMAGE ?= autonomy/rootfs-base:255b4fd
 INITRAMFS_IMAGE ?= autonomy/initramfs-base:255b4fd
 
 # TODO(andrewrynhard): Move this logic to a shell script.
-VPATH = $(PATH)
 BUILDKIT_VERSION ?= v0.5.0
+KUBECTL_VERSION ?= v1.14.1
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
 BUILDKIT_CONTAINER_NAME ?= talos-buildkit
 BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}' 2>/dev/null)
 BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}' 2>/dev/null)
+
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
@@ -22,6 +23,13 @@ endif
 ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
 BUILDKIT_CACHE ?= ""
+endif
+
+ifeq ($(UNAME_S),Linux)
+KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
+endif
+ifeq ($(UNAME_S),Darwin)
+KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/amd64/kubectl
 endif
 
 BINDIR ?= ./bin
@@ -61,8 +69,14 @@ buildctl: $(BINDIR)/buildctl
 
 $(BINDIR)/buildctl:
 	@mkdir -p $(BINDIR)
-	@wget -qO - $(BUILDCTL_ARCHIVE) | \
-		tar -zxf - -C $(BINDIR) --strip-components 1 bin/buildctl
+	@curl -L $(BUILDCTL_ARCHIVE) | tar -zxf - -C $(BINDIR) --strip-components 1 bin/buildctl
+
+kubectl: $(BINDIR)/kubectl
+
+$(BINDIR)/kubectl:
+	@mkdir -p $(BINDIR)
+	@curl -L -o $(BINDIR)/kubectl $(KUBECTL_ARCHIVE)
+	@chmod +x $(BINDIR)/kubectl
 
 .PHONY: buildkitd
 buildkitd:

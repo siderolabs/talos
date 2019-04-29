@@ -37,9 +37,9 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
       clusterName: {{ .ClusterName }}
-      controlPlaneEndpoint: {{ index .MasterIPs 0 }}
+      controlPlaneEndpoint: {{ index .MasterIPs 0 }}:443
       apiServer:
-        certSANs: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}} ]
+        certSANs: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}}, "127.0.0.1" ]
         extraArgs:
           runtime-config: settings.k8s.io/v1alpha1=true
           feature-gates: ExperimentalCriticalPodAnnotation=true
@@ -68,5 +68,5 @@ services:
   trustd:
     token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ .Endpoints }} ]
-    certSANs: [ "{{ index .MasterIPs .Index }}" ]
+    certSANs: [ "{{ index .MasterIPs .Index }}", "127.0.0.1" ]
 `
