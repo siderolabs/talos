@@ -1,19 +1,16 @@
 package userdata
 
 import (
-	"encoding/base64"
 	"errors"
-	"net"
 
 	"github.com/hashicorp/go-multierror"
+	"golang.org/x/xerrors"
 )
 
 var (
-	ErrInvalidVersion = errors.New("Invalid config version")
+	ErrInvalidVersion  = errors.New("Invalid config version")
+	ErrRequiredSection = errors.New("Required userdata section")
 
-	ErrRequiredSectionMissingSecurity       = errors.New("Required section 'security' missing")
-	ErrRequiredSectionMissingSecurityOS     = errors.New("Required section 'security.os' missing")
-	ErrRequiredSectionMissingSecurityKube   = errors.New("Required section 'security.kubernetes' missing")
 	ErrRequiredSectionMissingSecurityOSCA   = errors.New("")
 	ErrRequiredSectionMissingSecurityKubeCA = errors.New("")
 
@@ -25,40 +22,79 @@ var (
 	ErrSecurityKubeCAKeyNotBase64Encoded = errors.New("")
 )
 
-func ValidateUserData(data *UserData) (err error) {
-	if data.Version != "1" {
-		err = multierror.Append(err, ErrInvalidVersion)
+// TODO Maybe look at top level Validate function that
+// does switch type against the various userdata bits
+// and calls the appropriate function
+
+func ValidateUserData(data *UserData) error {
+	var result *multierror.Error
+
+	if data.Version == "" {
+		result = multierror.Append(result, xerrors.Errorf("%q: %w", "version", ErrRequiredSection))
 	}
+
+	if data.Version != "1" {
+		result = multierror.Append(result, xerrors.Errorf("%q: %w", data.Version, ErrInvalidVersion))
+	}
+
+	return result.ErrorOrNil()
 }
 
-func ValidateSecurity(data *Security) (err error) {
+func ValidateSecurity(data *Security) error {
+	var result *multierror.Error
 	if data == nil {
-		err = multierror.Append(err, ErrRequiredSectionMissingSecurity)
+		result = multierror.Append(result, xerrors.Errorf("%q: %w", "security", ErrRequiredSection))
 	}
+
 	if data.OS == nil {
-		err = multierror.Append(err, ErrRequiredSectionMissingSecurityOS)
+		result = multierror.Append(result, xerrors.Errorf("%q: %w", "security.os", ErrRequiredSection))
+	} else {
+		result = multierror.Append(result, ValidateOSSecurity(data.OS))
 	}
 	if data.Kubernetes == nil {
-		err = multierror.Append(err, ErrRequiredSectionMissingSecurityKube)
+		result = multierror.Append(result, xerrors.Errorf("%q: %w", "security.kubernetes", ErrRequiredSection))
 	}
+
+	/*
+		var err error
+		if err = ValidateOSSecurity(data.OS); err != nil {
+			// Both of these result + error are multierror.Error
+			// result = []error{}
+			// err = []error{}
+			result = multierror.Append(result, err)
+		}
+	*/
+
+	return result.ErrorOrNil()
+
 }
 
-func ValidateOSSecurity(data *OSSecurity) (err error) {
+func ValidateOSSecurity(data *OSSecurity) error {
+	var result *multierror.Error
+
 	if data.CA == nil {
-		err = multierror.Append(err, ErrRequiredSectionMissingSecurityOSCA)
-	}
-	if data.CA.Crt == nil {
-	}
-	if data.CA.Key == nil {
+		result = multierror.Append(result, xerrors.Errorf("%q: %w", "security.os.ca", ErrRequiredSection))
 	}
 
-	if _, err = base64.StdEncoding.DecodeString(data.CA.Crt); err != nil {
-		err = multierror.Append(err, ErrSecurityOSCACrtNotBase64Encoded)
-	}
-	if _, err = base64.StdEncoding.DecodeString(data.CA.Key); err != nil {
-		err = multierror.Append(err, ErrSecurityOSCAKeyNotBase64Encoded)
-	}
+	/*
+		if data.CA.Crt == nil {
+		}
+		if data.CA.Key == nil {
+		}
+
+		/*
+			if _, err = base64.StdEncoding.DecodeString(data.CA.Crt); err != nil {
+				err = multierror.Append(err, ErrSecurityOSCACrtNotBase64Encoded)
+			}
+			if _, err = base64.StdEncoding.DecodeString(data.CA.Key); err != nil {
+				err = multierror.Append(err, ErrSecurityOSCAKeyNotBase64Encoded)
+			}
+	*/
+
+	return result.ErrorOrNil()
 }
+
+/*
 func ValidateKubernetesSecurity(data *KubernetesSecurity) (err error) {
 	if data.CA == nil {
 		err = multierror.Append(err, ErrRequiredSectionMissingSecurityKubeCA)
@@ -262,3 +298,4 @@ func ValidateCRT(data *CRT) (err error) {
 func ValidateNTPd(data *NTPd) (err error) {
 	return
 }
+*/

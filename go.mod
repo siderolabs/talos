@@ -70,6 +70,7 @@ require (
 	golang.org/x/sys v0.0.0-20190312061237-fead79001313
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
+	golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
 	google.golang.org/genproto v0.0.0-20181221175505-bd9b4fb69e2f // indirect
 	google.golang.org/grpc v1.17.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect

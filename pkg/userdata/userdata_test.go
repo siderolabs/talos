@@ -15,7 +15,7 @@ import (
 )
 
 // nolint: lll
-const testConfig = `version: ""
+const testConfig = `version: "1"
 security:
   os:
     ca:
