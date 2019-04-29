@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/talos-systems/talos/pkg/userdata/generate"
 )
 
@@ -77,6 +78,37 @@ func NewNode(clusterName string, req *Request) (err error) {
 
 	switch req.Type {
 	case generate.TypeInit:
+		var osdPort nat.Port
+		osdPort, err = nat.NewPort("tcp", "50000")
+		if err != nil {
+			return err
+		}
+
+		var apiServerPort nat.Port
+		apiServerPort, err = nat.NewPort("tcp", "443")
+		if err != nil {
+			return err
+		}
+
+		containerConfig.ExposedPorts = nat.PortSet{
+			osdPort:       struct{}{},
+			apiServerPort: struct{}{},
+		}
+
+		hostConfig.PortBindings = nat.PortMap{
+			osdPort: []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "50000",
+				},
+			},
+			apiServerPort: []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "6443",
+				},
+			},
+		}
 		fallthrough
 	case generate.TypeControlPlane:
 		containerConfig.Volumes["/var/lib/etcd"] = struct{}{}

@@ -38,25 +38,11 @@ osctl cluster create
 
 > Note: You can download `osctl` from the latest [release](https://github.com/talos-systems/talos/releases/latest).
 
-Now, enter a container in the newly created network:
+Once the cluster is up, download the kubeconfig:
 
 ```bash
-docker run \
-	--rm \
-	-it \
-	--net=talos \
-	-e KUBECONFIG=/tmp/kubeconfig \
-	-v $(which osctl):/bin/osctl:ro \
-	-v $HOME/.talos/config:/root/.talos/config \
-	k8s.gcr.io/hyperkube:v1.14.1
-```
-
-> Note: If you are on MacOS be sure to mount `osctl-linux-amd64`.
-
-Once inside the container, download the kubeconfig:
-
-```bash
-osctl kubeconfig > $KUBECONFIG
+osctl kubeconfig > kubeconfig
+kubectl --kubeconfig kubeconfig config set-cluster talos_default --server https://127.0.0.1:6443
 ```
 
 > Note: It can take up to a minute for the kubeconfig to be available.

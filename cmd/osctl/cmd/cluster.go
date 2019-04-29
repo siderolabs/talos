@@ -246,6 +246,9 @@ func saveConfig(input *generate.Input) (err error) {
 	if err != nil {
 		return err
 	}
+
+	newConfig.Contexts[clusterName].Target = "127.0.0.1"
+
 	c, err := config.Open(talosconfig)
 	if err != nil {
 		return err
