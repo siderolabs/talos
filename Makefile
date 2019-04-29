@@ -8,7 +8,7 @@ INITRAMFS_IMAGE ?= autonomy/initramfs-base:255b4fd
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 VPATH = $(PATH)
-BUILDKIT_VERSION ?= v0.4.0
+BUILDKIT_VERSION ?= v0.5.0
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
 BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
@@ -41,7 +41,14 @@ DOCKER_ARGS ?=
 # to allow tests to run containerd
 DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/
 
-all: ci rootfs initramfs kernel installer talos
+all: ci drone
+
+.PHONY: drone
+drone: rootfs initramfs kernel installer talos
+
+.PHONY: ci
+ci: builddeps buildkitd
+
 
 .PHONY: builddeps
 builddeps: gitmeta buildctl
@@ -52,7 +59,7 @@ gitmeta:
 buildctl: $(BINDIR)/buildctl
 
 $(BINDIR)/buildctl:
-	@mkdir $(BINDIR)
+	@mkdir -p $(BINDIR)
 	@wget -qO - $(BUILDCTL_ARCHIVE) | \
 		tar -zxf - -C $(BINDIR) --strip-components 1 bin/buildctl
 
@@ -77,9 +84,6 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 	@sleep 5
 endif
 endif
-
-.PHONY: ci
-ci: builddeps buildkitd
 
 .PHONY: binaries
 binaries: buildkitd
