@@ -23,9 +23,11 @@ For details on the design and usage of Talos, see the [documentation](https://do
 
 ```bash
 $ kubectl get nodes -o wide
-NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE                              KERNEL-VERSION   CONTAINER-RUNTIME
-192.168.124.200   Ready    master   50s   v1.13.2   192.168.124.200   <none>        Talos (v0.1.0-alpha.16) by Autonomy   4.19.10-talos    containerd://1.2.2
-192.168.124.201   Ready    worker   26s   v1.13.2   192.168.124.201   <none>        Talos (v0.1.0-alpha.16) by Autonomy   4.19.10-talos    containerd://1.2.2
+NAME       STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                  KERNEL-VERSION   CONTAINER-RUNTIME
+master-1   Ready    master   79s   v1.14.1   10.5.0.2      <none>        Talos (v0.1.0-alpha.24)   4.19.34-talos    containerd://1.2.6
+master-2   Ready    master   42s   v1.14.1   10.5.0.3      <none>        Talos (v0.1.0-alpha.24)   4.19.34-talos    containerd://1.2.6
+master-3   Ready    master   42s   v1.14.1   10.5.0.4      <none>        Talos (v0.1.0-alpha.24)   4.19.34-talos    containerd://1.2.6
+worker-1   Ready    worker   44s   v1.14.1   10.5.0.5      <none>        Talos (v0.1.0-alpha.24)   4.19.34-talos    containerd://1.2.6
 ```
 
 ## Quick Start
@@ -115,23 +117,27 @@ Query `system` services:
 
 ```bash
 $ osctl ps
-NAMESPACE   ID       IMAGE          PID    STATUS
-system      blockd   talos/blockd   1461   RUNNING
-system      osd      talos/osd      1449   RUNNING
-system      proxyd   talos/proxyd   2754   RUNNING
-system      trustd   talos/trustd   1451   RUNNING
+NAMESPACE   ID       IMAGE          PID   STATUS
+system      ntpd     talos/ntpd     101   RUNNING
+system      osd      talos/osd      107   RUNNING
+system      proxyd   talos/proxyd   393   RUNNING
+system      trustd   talos/trustd   115   RUNNING
 ```
 
 or query the containers in the `k8s.io` [`namespace`](https://github.com/containerd/containerd/blob/master/docs/namespaces.md):
 
 ```bash
 $ osctl ps -k
-NAMESPACE   ID                                                                 IMAGE                                                                     PID    STATUS
-k8s.io      0ca1fc5944d6ed075a33197921e0ca4dd4937ae243e428b570fea87ff34f1811   sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e   2341   RUNNING
-k8s.io      356fc70fa1ba691deadf544b9ab4ade2256084a090a711eec3e70fc810709374   sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e   2342   RUNNING
-...
-k8s.io      e42ec788edc1e3af71cb6fa151dd8cc1076906dbe09d7099697f36069e38b5a8   sha256:4ff8d484069d463252df6a461ba13f073b247a4f19e421b3117c584d39b4a67f   2508   RUNNING
-k8s.io      kubelet                                                            k8s.gcr.io/hyperkube:v1.13.2                                              2068   RUNNING
+NAMESPACE   ID                                                                     IMAGE                          PID   STATUS
+k8s.io      kube-system/kube-scheduler-master-1:kube-scheduler                     k8s.gcr.io/hyperkube:v1.14.1   783   RUNNING
+k8s.io      kube-system/kube-scheduler-master-1                                    k8s.gcr.io/pause:3.1           564   RUNNING
+k8s.io      kube-system/kube-controller-manager-master-1:kube-controller-manager   k8s.gcr.io/hyperkube:v1.14.1   744   RUNNING
+k8s.io      kube-system/kube-controller-manager-master-1                           k8s.gcr.io/pause:3.1           594   RUNNING
+k8s.io      kube-system/kube-apiserver-master-1                                    k8s.gcr.io/pause:3.1           593   RUNNING
+k8s.io      kube-system/kube-apiserver-master-1:kube-apiserver                     k8s.gcr.io/hyperkube:v1.14.1   796   RUNNING
+k8s.io      kube-system/etcd-master-1                                              k8s.gcr.io/pause:3.1           592   RUNNING
+k8s.io      kube-system/etcd-master-1:etcd                                         k8s.gcr.io/etcd:3.3.10         805   RUNNING
+k8s.io      kubelet                                                                k8s.gcr.io/hyperkube:v1.14.1   446   RUNNING
 ```
 
 ## Community
