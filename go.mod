@@ -14,7 +14,7 @@ require (
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/coreos/go-systemd v0.0.0-20180828140353-eee3db372b31 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // indirect
+	github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20170721190031-9461782956ad // indirect
