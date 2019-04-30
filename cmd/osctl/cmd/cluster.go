@@ -72,34 +72,8 @@ func create() (err error) {
 
 	// Ensure the image is present.
 
-	distributionRef, err := reference.ParseNormalizedNamed(image)
-	if err != nil {
+	if err = ensureImageExists(ctx, cli, image); err != nil {
 		return err
-	}
-
-	// In order to pull an image, the reference must be in canononical
-	// format (e.g. domain/repo/image:tag).
-	image = distributionRef.String()
-
-	// To filter the images, we need a familiar name
-	// (e.g. domain/repo/image:tag => repo/image:tag)
-	filters := filters.NewArgs()
-	filters.Add("reference", reference.FamiliarName(distributionRef))
-
-	images, err := cli.ImageList(ctx, types.ImageListOptions{Filters: filters})
-	if err != nil {
-		return err
-	}
-
-	if len(images) == 0 {
-		fmt.Println("downloading", image)
-		var reader io.ReadCloser
-		if reader, err = cli.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
-			return err
-		}
-		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
-			return err
-		}
 	}
 
 	// Generate all PKI and tokens required by Talos.
@@ -213,6 +187,45 @@ func destroy() error {
 	return destroyNetwork(cli)
 }
 
+func ensureImageExists(ctx context.Context, cli *client.Client, image string) error {
+	// In order to pull an image, the reference must be in canononical
+	// format (e.g. domain/repo/image:tag).
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return err
+	}
+
+	image = ref.String()
+
+	// To filter the images, we need a familiar name and a tag
+	// (e.g. domain/repo/image:tag => repo/image:tag).
+	familiarName := reference.FamiliarName(ref)
+	tag := ""
+	if tagged, isTagged := ref.(reference.Tagged); isTagged {
+		tag = tagged.Tag()
+	}
+
+	filters := filters.NewArgs()
+	filters.Add("reference", familiarName+":"+tag)
+
+	images, err := cli.ImageList(ctx, types.ImageListOptions{Filters: filters})
+	if err != nil {
+		return err
+	}
+
+	if len(images) == 0 {
+		fmt.Println("downloading", image)
+		var reader io.ReadCloser
+		if reader, err = cli.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
+			return err
+		}
+		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 func createNetwork(cli *client.Client) (types.NetworkCreateResponse, error) {
 	options := types.NetworkCreate{
 		Labels: map[string]string{
