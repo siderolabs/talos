@@ -133,7 +133,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd binaries osd trustd proxyd ntpd
+rootfs: buildkitd binaries osd trustd proxyd ntpd udevd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
@@ -239,6 +239,7 @@ osinstall-linux-amd64: buildkitd
 udevd: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
+		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 

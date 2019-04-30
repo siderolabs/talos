@@ -203,7 +203,6 @@ COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
 ARG ROOTFS_IMAGE
 FROM ${ROOTFS_IMAGE} AS rootfs-build
 COPY --from=kernel /modules /lib/modules
-COPY --from=udevd-build /udevd /bin/udevd
 COPY images /usr/images
 
 ARG TOOLCHAIN_IMAGE

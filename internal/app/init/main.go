@@ -300,6 +300,12 @@ func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
 				containerd.WithIndexName("talos/ntpd"),
 			},
 		},
+		{
+			Path: "/usr/images/udevd.tar",
+			Options: []containerd.ImportOpt{
+				containerd.WithIndexName("talos/udevd"),
+			},
+		},
 	}
 	if !data.IsWorker() {
 		masterReqs := []*ctrdrunner.ImportRequest{

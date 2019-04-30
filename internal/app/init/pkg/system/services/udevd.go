@@ -7,9 +7,11 @@ package services
 import (
 	"fmt"
 
+	"github.com/containerd/containerd/oci"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -40,10 +42,18 @@ func (c *Udevd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc 
 
 // Runner implements the Service interface.
 func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
+	image := "talos/udevd"
+
 	// Set the process arguments.
-	args := &runner.Args{
+	args := runner.Args{
 		ID:          c.ID(data),
-		ProcessArgs: []string{"/bin/udevd"},
+		ProcessArgs: []string{"/udevd"},
+	}
+
+	// Set the mounts.
+	mounts := []specs.Mount{
+		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
 	env := []string{}
@@ -51,10 +61,18 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	return restart.New(process.NewRunner(
+	return restart.New(containerd.NewRunner(
 		data,
-		args,
+		&args,
+		runner.WithContainerImage(image),
 		runner.WithEnv(env),
+		runner.WithOCISpecOpts(
+			containerd.WithRootfsPropagation("shared"),
+			oci.WithMounts(mounts),
+			oci.WithHostNamespace(specs.NetworkNamespace),
+			oci.WithHostNamespace(specs.UTSNamespace),
+			oci.WithPrivileged,
+		),
 	),
 		restart.WithType(restart.Forever),
 	), nil
