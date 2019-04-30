@@ -28,7 +28,10 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 		return nil, fmt.Errorf("at least one root of trust endpoint is required")
 	}
 
-	creds := basic.NewCredentials(data.Services.Trustd.Token)
+	creds, err := basic.NewCredentials(data.Services.Trustd)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: In the case of failure, attempt to generate the identity from
 	// another RoT.

@@ -58,7 +58,10 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 			return nil
 		}
 
-		creds := basic.NewCredentials(data.Services.Trustd.Token)
+		creds, err := basic.NewCredentials(data.Services.Trustd)
+		if err != nil {
+			return err
+		}
 
 		files := []string{
 			constants.AuditPolicyPathInitramfs,

@@ -41,7 +41,10 @@ func main() {
 		log.Fatalf("credentials: %v", err)
 	}
 
-	creds := basic.NewCredentials(data.Services.Trustd.Token)
+	creds, err := basic.NewCredentials(data.Services.Trustd)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = factory.ListenAndServe(
 		&reg.Registrator{Data: data.Security.OS},
@@ -50,7 +53,7 @@ func main() {
 			grpc.Creds(
 				credentials.NewTLS(config),
 			),
-			grpc.UnaryInterceptor(creds.UnaryInterceptor),
+			grpc.UnaryInterceptor(creds.UnaryInterceptor()),
 		),
 	)
 	if err != nil {
