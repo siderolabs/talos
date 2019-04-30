@@ -92,12 +92,6 @@ type Security struct {
 	Kubernetes *KubernetesSecurity `yaml:"kubernetes"`
 }
 
-// KubernetesSecurity represents the set of security options specific to
-// Kubernetes.
-type KubernetesSecurity struct {
-	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
-}
-
 // Networking represents the set of options available to configure networking.
 type Networking struct {
 	Kubernetes struct{} `yaml:"kubernetes"`
