@@ -57,9 +57,9 @@ type WorkerData UserData
 func (w *WorkerData) Validate() error {
 	var result *multierror.Error
 	result = multierror.Append(result, w.Version.Validate())
-	//result = multierror.Append(result, w.Services.Init.Validate())
+	result = multierror.Append(result, w.Services.Init.Validate())
 	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
-	//result = multierror.Append(result, w.Services.Trustd.Validate())
+	result = multierror.Append(result, w.Services.Trustd.Validate())
 	return result
 }
 
@@ -68,11 +68,11 @@ type InitData UserData
 func (i *InitData) Validate() error {
 	var result *multierror.Error
 	result = multierror.Append(result, i.Version.Validate())
-	result = multierror.Append(result, w.Security.OS.Validate())
-	//result = multierror.Append(result, w.Security.Kubernetes.Validate())
-	//result = multierror.Append(result, w.Services.Init.Validate())
-	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
-	//result = multierror.Append(result, w.Trustd.Validate())
+	result = multierror.Append(result, i.Security.OS.Validate())
+	//result = multierror.Append(result, i.Security.Kubernetes.Validate())
+	result = multierror.Append(result, i.Services.Init.Validate())
+	//result = multierror.Append(result, i.Services.Kubeadm.Validate())
+	result = multierror.Append(result, i.Services.Trustd.Validate())
 	return result
 
 }
@@ -82,9 +82,9 @@ type MasterData UserData
 func (m *MasterData) Validate() error {
 	var result *multierror.Error
 	result = multierror.Append(result, m.Version.Validate())
-	//result = multierror.Append(result, w.Services.Init.Validate())
-	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
-	//result = multierror.Append(result, w.Trustd.Validate())
+	result = multierror.Append(result, m.Services.Init.Validate())
+	//result = multierror.Append(result, m.Services.Kubeadm.Validate())
+	result = multierror.Append(result, m.Services.Trustd.Validate())
 	return result
 }
 

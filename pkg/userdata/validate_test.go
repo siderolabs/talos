@@ -3,9 +3,8 @@ package userdata
 import (
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/talos/pkg/userdata/generate"
-	yaml "gopkg.in/yaml.v2"
 )
 
 type validateSuite struct {
@@ -16,16 +15,40 @@ func TestValidateSuite(t *testing.T) {
 	suite.Run(t, new(validateSuite))
 }
 
-func (suite *GenerateSuite) SetupSuite() {
-
-	input, err = generate.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"})
-	suite.Require().NoError(err)
+func (suite *validateSuite) TestValidateWorkerData() {
+	wd := genWorkerData()
+	err := (*WorkerData)(wd).Validate()
+	suite.Require().NoError(err.(*multierror.Error).ErrorOrNil())
 }
 
-func (suite *GenerateSuite) TestGenerateInitSuccess() {
-	dataString, err := generate.Userdata(generate.TypeInit, input)
-	suite.Require().NoError(err)
-	data := &userdata.UserData{}
-	err = yaml.Unmarshal([]byte(dataString), data)
-	suite.Require().NoError(err)
+func genWorkerData() *UserData {
+	return &UserData{
+		Version: "1",
+		Services: &Services{
+			Init: &Init{
+				CNI: "flannel",
+			},
+			Kubeadm: &Kubeadm{
+				ConfigurationStr: joinConfig,
+			},
+			Trustd: &Trustd{
+				Token: "yolotoken",
+			},
+		},
+	}
 }
+
+var joinConfig = `---
+   apiVersion: kubeadm.k8s.io/v1beta1
+      kind: JoinConfiguration
+      discovery:
+        bootstrapToken:
+          token: 'yolobootstraptoken'
+          unsafeSkipCAVerification: true
+          apiServerEndpoint: 127.0.0.1:443
+      nodeRegistration:
+        taints: []
+        kubeletExtraArgs:
+          node-labels: ""
+          feature-gates: ExperimentalCriticalPodAnnotation=true
+      token: 'yolotoken'`
