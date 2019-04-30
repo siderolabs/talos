@@ -164,6 +164,16 @@ talos-gce: installer
 	@tar -C $(PWD)/build -Sczf $(PWD)/build/$@.tar.gz disk.raw
 	@rm $(PWD)/build/disk.raw
 
+.PHONY: talos-aws
+talos-aws: installer
+	@docker run \
+		--rm \
+		-i \
+		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
+		autonomy/installer:$(TAG) ami -var regions=${AWS_REGIONS}
+
 .PHONY: talos-raw
 talos-raw: installer
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n rootfs -l
