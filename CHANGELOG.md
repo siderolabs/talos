@@ -1,3 +1,30 @@
+# [v0.1.0-alpha.24](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.23...v0.1.0-alpha.24) (2019-04-30)
+
+
+### Bug Fixes
+
+* Explicitly set upstream/forward servers for coredns in dev setup ([#578](https://github.com/talos-systems/talos/issues/578)) ([50c51ac](https://github.com/talos-systems/talos/commit/50c51ac))
+* **osctl:** fix issue with downloading image ([#597](https://github.com/talos-systems/talos/issues/597)) ([0a4a48b](https://github.com/talos-systems/talos/commit/0a4a48b))
+* **osd:** read log files only on write events ([#583](https://github.com/talos-systems/talos/issues/583)) ([13f9177](https://github.com/talos-systems/talos/commit/13f9177))
+
+
+### Features
+
+* **init:** Add support for hostname kernel parameter ([#591](https://github.com/talos-systems/talos/issues/591)) ([7127998](https://github.com/talos-systems/talos/commit/7127998))
+* **init:** enforce KSPP kernel parameters ([#585](https://github.com/talos-systems/talos/issues/585)) ([020d11d](https://github.com/talos-systems/talos/commit/020d11d))
+* **init:** implement graceful shutdown of 'init' ([#562](https://github.com/talos-systems/talos/issues/562)) ([505b502](https://github.com/talos-systems/talos/commit/505b502))
+* **init:** implement init gRPC API, forward reboot to init ([#579](https://github.com/talos-systems/talos/issues/579)) ([ab2917e](https://github.com/talos-systems/talos/commit/ab2917e))
+* **init:** load only the images required by the node type ([#582](https://github.com/talos-systems/talos/issues/582)) ([2a4b56d](https://github.com/talos-systems/talos/commit/2a4b56d))
+* **osctl:** add ability to create docker based clusters ([#584](https://github.com/talos-systems/talos/issues/584)) ([9b4fec0](https://github.com/talos-systems/talos/commit/9b4fec0))
+* **osctl:** add df command ([#569](https://github.com/talos-systems/talos/issues/569)) ([a8fa1f5](https://github.com/talos-systems/talos/commit/a8fa1f5))
+* **osctl:** expose osd and api server ports on master-1 ([#592](https://github.com/talos-systems/talos/issues/592)) ([6e555c4](https://github.com/talos-systems/talos/commit/6e555c4))
+* **trustd:** use a token instead of username and password ([#586](https://github.com/talos-systems/talos/issues/586)) ([ea99788](https://github.com/talos-systems/talos/commit/ea99788))
+* add ability to generate userdata secrets ([#581](https://github.com/talos-systems/talos/issues/581)) ([2066221](https://github.com/talos-systems/talos/commit/2066221))
+* add package for generating userdata ([#574](https://github.com/talos-systems/talos/issues/574)) ([2f6d5e0](https://github.com/talos-systems/talos/commit/2f6d5e0))
+* add shutdown command ([#577](https://github.com/talos-systems/talos/issues/577)) ([fc05224](https://github.com/talos-systems/talos/commit/fc05224))
+
+
+
 # [v0.1.0-alpha.23](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2019-04-24)
 
 
