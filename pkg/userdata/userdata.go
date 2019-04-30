@@ -36,8 +36,6 @@ import (
 // Env represents a set of environment variables.
 type Env = map[string]string
 
-type Version string
-
 // UserData represents the user data.
 type UserData struct {
 	Version    Version     `yaml:"version"`
@@ -92,12 +90,6 @@ func (m *MasterData) Validate() error {
 type Security struct {
 	OS         *OSSecurity         `yaml:"os"`
 	Kubernetes *KubernetesSecurity `yaml:"kubernetes"`
-}
-
-// OSSecurity represents the set of security options specific to the OS.
-type OSSecurity struct {
-	CA       *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
-	Identity *x509.PEMEncodedCertificateAndKey `yaml:"identity"`
 }
 
 // KubernetesSecurity represents the set of security options specific to
