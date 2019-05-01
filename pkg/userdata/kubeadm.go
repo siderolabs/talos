@@ -15,7 +15,6 @@ import (
 	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
 )
 
-// Init describes the configuration of the init service.
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`

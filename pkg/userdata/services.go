@@ -5,6 +5,9 @@
 package userdata
 
 import (
+	"net"
+	"strconv"
+
 	"github.com/hashicorp/go-multierror"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/xerrors"
@@ -25,6 +28,7 @@ type Services struct {
 	NTPd    *NTPd    `yaml:"ntp"`
 }
 
+// Validate triggers the specified validation checks to run
 func (s *Services) Validate(checks ...ServiceCheck) error {
 	var result *multierror.Error
 
@@ -35,8 +39,10 @@ func (s *Services) Validate(checks ...ServiceCheck) error {
 	return result.ErrorOrNil()
 }
 
+// ServiceCheck defines the function type for checks
 type ServiceCheck func(*Services) error
 
+// CheckServices ensures the minimum necessary services config has been provided
 func CheckServices() ServiceCheck {
 	return func(s *Services) error {
 		var result *multierror.Error
@@ -102,8 +108,10 @@ type Trustd struct {
 	BootstrapNode string   `yaml:"bootstrapNode,omitempty"`
 }
 
+// TrustdCheck defines the function type for checks
 type TrustdCheck func(*Trustd) error
 
+// Validate triggers the specified validation checks to run
 func (t *Trustd) Validate(checks ...TrustdCheck) error {
 	var result *multierror.Error
 
@@ -114,6 +122,7 @@ func (t *Trustd) Validate(checks ...TrustdCheck) error {
 	return result.ErrorOrNil()
 }
 
+// CheckTrustdToken ensures that a trustd token has been specified
 func CheckTrustdToken() TrustdCheck {
 	return func(t *Trustd) error {
 		var result *multierror.Error
@@ -126,6 +135,7 @@ func CheckTrustdToken() TrustdCheck {
 	}
 }
 
+// CheckTrustdEndpoints ensures that the trustd endpoints have been specified
 func CheckTrustdEndpoints() TrustdCheck {
 	return func(t *Trustd) error {
 		var result *multierror.Error
@@ -134,16 +144,26 @@ func CheckTrustdEndpoints() TrustdCheck {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints", t.Endpoints, ErrRequiredSection))
 		}
 
+		for idx, endpoint := range t.Endpoints {
+			if ip := net.ParseIP(endpoint); ip == nil {
+				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints["+strconv.Itoa(idx)+"]", endpoint, ErrInvalidAddress))
+			}
+
+		}
+
 		return result.ErrorOrNil()
 	}
 }
 
+// Init describes the configuration of the init service.
 type Init struct {
 	CNI string `yaml:"cni,omitempty"`
 }
 
+// InitCheck defines the function type for checks
 type InitCheck func(*Init) error
 
+// Validate triggers the specified validation checks to run
 func (i *Init) Validate(checks ...InitCheck) error {
 	var result *multierror.Error
 
@@ -154,6 +174,7 @@ func (i *Init) Validate(checks ...InitCheck) error {
 	return result.ErrorOrNil()
 }
 
+// CheckInitCNI ensures that a valid cni driver has been specified
 func CheckInitCNI() InitCheck {
 	return func(i *Init) error {
 		var result *multierror.Error

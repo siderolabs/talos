@@ -19,8 +19,10 @@ type KubernetesSecurity struct {
 	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 }
 
+// KubeSecurityCheck defines the function type for checks
 type KubeSecurityCheck func(*KubernetesSecurity) error
 
+// Validate triggers the specified validation checks to run
 func (k *KubernetesSecurity) Validate(checks ...KubeSecurityCheck) error {
 	var result *multierror.Error
 
@@ -31,6 +33,8 @@ func (k *KubernetesSecurity) Validate(checks ...KubeSecurityCheck) error {
 	return result.ErrorOrNil()
 }
 
+// CheckKubeCA verfies the KubernetesSecurity settings are valid
+// nolint: dupl
 func CheckKubeCA() KubeSecurityCheck {
 	return func(k *KubernetesSecurity) error {
 		var result *multierror.Error
@@ -57,6 +61,7 @@ func CheckKubeCA() KubeSecurityCheck {
 		// during yaml unmarshal, so we have the bytes if it was successful )
 		var block *pem.Block
 		block, _ = pem.Decode(k.CA.Crt)
+		// nolint: gocritic
 		if block == nil {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.crt", k.CA.Crt, ErrInvalidCert))
 		} else {
@@ -66,6 +71,7 @@ func CheckKubeCA() KubeSecurityCheck {
 		}
 
 		block, _ = pem.Decode(k.CA.Key)
+		// nolint: gocritic
 		if block == nil {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.key", k.CA.Key, ErrInvalidCert))
 		} else {

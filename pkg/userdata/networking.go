@@ -21,8 +21,10 @@ type Device struct {
 	Bond      *Bond   `yaml:"bond"`
 }
 
+// NetworkDeviceCheck defines the function type for checks
 type NetworkDeviceCheck func(*Device) error
 
+// Validate triggers the specified validation checks to run
 func (d *Device) Validate(checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
@@ -33,6 +35,7 @@ func (d *Device) Validate(checks ...NetworkDeviceCheck) error {
 	return result.ErrorOrNil()
 }
 
+// CheckDeviceInterface ensures that the interface has been specified
 func CheckDeviceInterface() NetworkDeviceCheck {
 	return func(d *Device) error {
 		var result *multierror.Error
@@ -45,18 +48,23 @@ func CheckDeviceInterface() NetworkDeviceCheck {
 	}
 }
 
+// CheckDeviceAddressing ensures that an appropriate addressing method
+// has been specified
 func CheckDeviceAddressing() NetworkDeviceCheck {
 	return func(d *Device) error {
 		var result *multierror.Error
 
-		if d.DHCP == true && d.CIDR != "" {
+		// Test for both dhcp and cidr specified
+		if d.DHCP && d.CIDR != "" {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
 		}
 
+		// test for neither dhcp nor cidr specified
 		if !d.DHCP && d.CIDR == "" {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
 		}
 
+		// ensure cidr is a valid address
 		if d.CIDR != "" {
 			if _, _, err := net.ParseCIDR(d.CIDR); err != nil {
 				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.CIDR", "", err))
@@ -67,6 +75,7 @@ func CheckDeviceAddressing() NetworkDeviceCheck {
 	}
 }
 
+// CheckDeviceRoutes ensures that the specified routes are valid
 func CheckDeviceRoutes() NetworkDeviceCheck {
 	return func(d *Device) error {
 		var result *multierror.Error
@@ -78,11 +87,10 @@ func CheckDeviceRoutes() NetworkDeviceCheck {
 		for idx, route := range d.Routes {
 			if _, _, err := net.ParseCIDR(route.Network); err != nil {
 				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network, ErrInvalidAddress))
-
 			}
+
 			if ip := net.ParseIP(route.Gateway); ip == nil {
 				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway, ErrInvalidAddress))
-
 			}
 		}
 		return result.ErrorOrNil()

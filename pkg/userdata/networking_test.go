@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package userdata
 
 import (
@@ -39,35 +43,18 @@ func (suite *validateSuite) TestValidateDevice() {
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().NoError(err)
 
+	// nolint: gofmt
 	dev.Routes = []Route{Route{Gateway: "yolo"}}
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().Error(err)
 
+	// nolint: gofmt
 	dev.Routes = []Route{Route{Gateway: "yolo", Network: "totes"}}
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().Error(err)
 
+	// nolint: gofmt
 	dev.Routes = []Route{Route{Gateway: "192.168.1.1", Network: "192.168.1.0/24"}}
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().NoError(err)
 }
-
-/*
-	os.CA = &x509.PEMEncodedCertificateAndKey{}
-	err = os.Validate(CheckOSCA())
-	suite.Require().Error(err)
-	suite.Assert().Equal(4, len(err.(*multierror.Error).Errors))
-
-	// Test for invalid certs
-	os.CA.Crt = []byte("-----BEGIN Rubbish-----\n-----END Rubbish-----")
-	os.CA.Key = []byte("-----BEGIN EC Fluffy KEY-----\n-----END EC Fluffy KEY-----")
-	err = os.Validate(CheckOSCA())
-	suite.Require().Error(err)
-
-	// Successful test
-	os.CA.Crt = []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----")
-	os.CA.Key = []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----")
-	err = os.Validate(CheckOSCA())
-	suite.Require().NoError(err)
-}
-*/

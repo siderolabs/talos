@@ -9,8 +9,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// Version represents the config file version
 type Version string
 
+// Validate triggers the specified validation checks to run
 func (v Version) Validate() error {
 	var result *multierror.Error
 	if v == "" {

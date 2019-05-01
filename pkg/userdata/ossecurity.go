@@ -19,8 +19,10 @@ type OSSecurity struct {
 	Identity *x509.PEMEncodedCertificateAndKey `yaml:"identity"`
 }
 
+// OSSecurityCheck defines the function type for checks
 type OSSecurityCheck func(*OSSecurity) error
 
+// Validate triggers the specified validation checks to run
 func (o *OSSecurity) Validate(checks ...OSSecurityCheck) error {
 	var result *multierror.Error
 
@@ -31,6 +33,8 @@ func (o *OSSecurity) Validate(checks ...OSSecurityCheck) error {
 	return result.ErrorOrNil()
 }
 
+// CheckOSCA verfies the OSSecurity settings are valid
+// nolint: dupl
 func CheckOSCA() OSSecurityCheck {
 	return func(o *OSSecurity) error {
 		var result *multierror.Error
@@ -57,6 +61,7 @@ func CheckOSCA() OSSecurityCheck {
 		// during yaml unmarshal, so we have the bytes if it was successful )
 		var block *pem.Block
 		block, _ = pem.Decode(o.CA.Crt)
+		// nolint: gocritic
 		if block == nil {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.os.ca.crt", o.CA.Crt, ErrInvalidCert))
 		} else {
@@ -66,6 +71,7 @@ func CheckOSCA() OSSecurityCheck {
 		}
 
 		block, _ = pem.Decode(o.CA.Key)
+		// nolint: gocritic
 		if block == nil {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.os.ca.key", o.CA.Key, ErrInvalidCert))
 		} else {
