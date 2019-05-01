@@ -7,7 +7,6 @@ package userdata
 import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,13 +19,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	kubeadmscheme "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/scheme"
-	kubeadmutil "k8s.io/kubernetes/cmd/kubeadm/app/util"
-	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -100,170 +92,11 @@ type OSNet struct {
 	Devices []Device `yaml:"devices"`
 }
 
-// Device represents a network interface
-type Device struct {
-	Interface string  `yaml:"interface"`
-	CIDR      string  `yaml:"cidr"`
-	DHCP      bool    `yaml:"dhcp"`
-	Routes    []Route `yaml:"routes"`
-	Bond      *Bond   `yaml:"bond"`
-}
-
-// Bond contains the various options for configuring a
-// bonded interface
-type Bond struct {
-	Mode       string   `yaml:"mode"`
-	HashPolicy string   `yaml:"hashpolicy"`
-	LACPRate   string   `yaml:"lacprate"`
-	Interfaces []string `yaml:"interfaces"`
-}
-
-// Route represents a network route
-type Route struct {
-	Network string `yaml:"network"`
-	Gateway string `yaml:"gateway"`
-}
-
 // File represents a file to write to disk.
 type File struct {
 	Contents    string      `yaml:"contents"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
-}
-
-// Install represents the installation options for preparing a node.
-type Install struct {
-	Boot         *BootDevice    `yaml:"boot,omitempty"`
-	Root         *RootDevice    `yaml:"root"`
-	Data         *InstallDevice `yaml:"data,omitempty"`
-	ExtraDevices []*ExtraDevice `yaml:"extraDevices,omitempty"`
-	Wipe         bool           `yaml:"wipe"`
-	Force        bool           `yaml:"force"`
-}
-
-// BootDevice represents the install options specific to the boot partition.
-type BootDevice struct {
-	InstallDevice `yaml:",inline"`
-
-	Kernel    string `yaml:"kernel"`
-	Initramfs string `yaml:"initramfs"`
-}
-
-// RootDevice represents the install options specific to the root partition.
-type RootDevice struct {
-	InstallDevice `yaml:",inline"`
-
-	Rootfs string `yaml:"rootfs"`
-}
-
-// InstallDevice represents the specific directions for each partition.
-type InstallDevice struct {
-	Device string `yaml:"device,omitempty"`
-	Size   uint   `yaml:"size,omitempty"`
-}
-
-// ExtraDevice represents the options available for partitioning, formatting,
-// and mounting extra disks.
-type ExtraDevice struct {
-	Device     string                  `yaml:"device,omitempty"`
-	Partitions []*ExtraDevicePartition `yaml:"partitions,omitempty"`
-}
-
-// ExtraDevicePartition represents the options for a device partition.
-type ExtraDevicePartition struct {
-	Size       uint   `yaml:"size,omitempty"`
-	MountPoint string `yaml:"mountpoint,omitempty"`
-}
-
-// Init describes the configuration of the init service.
-// Kubeadm describes the set of configuration options available for kubeadm.
-type Kubeadm struct {
-	CommonServiceOptions `yaml:",inline"`
-
-	// ConfigurationStr is converted to Configuration and back in Marshal/UnmarshalYAML
-	Configuration    runtime.Object `yaml:"-"`
-	ConfigurationStr string         `yaml:"configuration"`
-
-	ExtraArgs             []string `yaml:"extraArgs,omitempty"`
-	CertificateKey        string   `yaml:"certificateKey,omitempty"`
-	IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
-	bootstrap             bool
-	controlPlane          bool
-}
-
-// MarshalYAML implements the yaml.Marshaler interface.
-func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
-	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
-	if err != nil {
-		return nil, err
-	}
-
-	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
-	if err != nil {
-		return nil, err
-	}
-
-	if kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...) {
-		kdm.bootstrap = true
-	}
-	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
-		kdm.bootstrap = false
-	}
-
-	kdm.ConfigurationStr = string(b)
-
-	type KubeadmAlias Kubeadm
-
-	return (*KubeadmAlias)(kdm), nil
-}
-
-// UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type KubeadmAlias Kubeadm
-
-	if err := unmarshal((*KubeadmAlias)(kdm)); err != nil {
-		return err
-	}
-
-	b := []byte(kdm.ConfigurationStr)
-
-	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
-	if err != nil {
-		return err
-	}
-
-	if kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...) {
-		// Since the ClusterConfiguration is embedded in the InitConfiguration
-		// struct, it is required to (un)marshal it a special way. The kubeadm
-		// API exposes one function (MarshalKubeadmConfigObject) to handle the
-		// marshaling, but does not yet have that convenience for
-		// unmarshaling.
-		cfg, err := configutil.BytesToInitConfiguration(b)
-		if err != nil {
-			return err
-		}
-		kdm.Configuration = cfg
-		kdm.bootstrap = true
-	}
-	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
-		cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(b, kubeadmapi.SchemeGroupVersion, kubeadmscheme.Codecs)
-		if err != nil {
-			return err
-		}
-		kdm.Configuration = cfg
-		kdm.bootstrap = false
-		joinConfiguration, ok := cfg.(*kubeadm.JoinConfiguration)
-		if !ok {
-			return errors.New("expected JoinConfiguration")
-		}
-		if joinConfiguration.ControlPlane == nil {
-			kdm.controlPlane = false
-		} else {
-			kdm.controlPlane = true
-		}
-	}
-
-	return nil
 }
 
 // WriteFiles writes the requested files to disk.
@@ -279,6 +112,30 @@ func (data *UserData) WriteFiles() (err error) {
 	}
 
 	return nil
+}
+
+// IsBootstrap indicates if the current kubeadm configuration is a master init
+// configuration.
+func (data *UserData) IsBootstrap() bool {
+	return data.Services.Kubeadm.bootstrap
+}
+
+// IsControlPlane indicates if the current kubeadm configuration is a worker
+// acting as a master.
+func (data *UserData) IsControlPlane() bool {
+	return data.Services.Kubeadm.controlPlane
+}
+
+// IsMaster indicates if the current kubeadm configuration is a master
+// configuration.
+func (data *UserData) IsMaster() bool {
+	return data.Services.Kubeadm.bootstrap || data.Services.Kubeadm.controlPlane
+}
+
+// IsWorker indicates if the current kubeadm configuration is a worker
+// configuration.
+func (data *UserData) IsWorker() bool {
+	return !data.IsMaster()
 }
 
 // NewIdentityCSR creates a new CSR for the node's identity certificate.
@@ -392,28 +249,4 @@ func Open(p string) (data *UserData, err error) {
 	}
 
 	return data, nil
-}
-
-// IsBootstrap indicates if the current kubeadm configuration is a master init
-// configuration.
-func (data *UserData) IsBootstrap() bool {
-	return data.Services.Kubeadm.bootstrap
-}
-
-// IsControlPlane indicates if the current kubeadm configuration is a worker
-// acting as a master.
-func (data *UserData) IsControlPlane() bool {
-	return data.Services.Kubeadm.controlPlane
-}
-
-// IsMaster indicates if the current kubeadm configuration is a master
-// configuration.
-func (data *UserData) IsMaster() bool {
-	return data.Services.Kubeadm.bootstrap || data.Services.Kubeadm.controlPlane
-}
-
-// IsWorker indicates if the current kubeadm configuration is a worker
-// configuration.
-func (data *UserData) IsWorker() bool {
-	return !data.IsMaster()
 }
