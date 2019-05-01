@@ -18,8 +18,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 
@@ -33,9 +31,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Env represents a set of environment variables.
-type Env = map[string]string
-
 // UserData represents the user data.
 type UserData struct {
 	Version    Version     `yaml:"version"`
@@ -48,6 +43,7 @@ type UserData struct {
 	Install    *Install    `yaml:"install,omitempty"`
 }
 
+/*
 type WorkerData UserData
 
 // Validate ensures the necessary configuration for a
@@ -85,6 +81,7 @@ func (m *MasterData) Validate() error {
 	result = multierror.Append(result, m.Services.Trustd.Validate())
 	return result
 }
+*/
 
 // Security represents the set of options available to configure security.
 type Security struct {
@@ -125,18 +122,6 @@ type Bond struct {
 type Route struct {
 	Network string `yaml:"network"`
 	Gateway string `yaml:"gateway"`
-}
-
-// Services represents the set of services available to configure.
-type Services struct {
-	Init    *Init    `yaml:"init"`
-	Kubelet *Kubelet `yaml:"kubelet"`
-	Kubeadm *Kubeadm `yaml:"kubeadm"`
-	Trustd  *Trustd  `yaml:"trustd"`
-	Proxyd  *Proxyd  `yaml:"proxyd"`
-	OSD     *OSD     `yaml:"osd"`
-	CRT     *CRT     `yaml:"crt"`
-	NTPd    *NTPd    `yaml:"ntp"`
 }
 
 // File represents a file to write to disk.
@@ -191,16 +176,6 @@ type ExtraDevicePartition struct {
 }
 
 // Init describes the configuration of the init service.
-type Init struct {
-	CNI string `yaml:"cni,omitempty"`
-}
-
-// Kubelet describes the configuration of the kubelet service.
-type Kubelet struct {
-	CommonServiceOptions `yaml:",inline"`
-	ExtraMounts          []specs.Mount `yaml:"extraMounts"`
-}
-
 // Kubeadm describes the set of configuration options available for kubeadm.
 type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`
@@ -289,49 +264,6 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
-}
-
-// Trustd describes the configuration of the Root of Trust (RoT) service. The
-// username and password are used by master nodes, and worker nodes. The master
-// nodes use them to authenticate clients, while the workers use them to
-// authenticate as a client. The endpoints should only be specified in the
-// worker user data, and should include all master nodes participating as a RoT.
-type Trustd struct {
-	CommonServiceOptions `yaml:",inline"`
-
-	Token         string   `yaml:"token"`
-	Username      string   `yaml:"username"`
-	Password      string   `yaml:"password"`
-	Endpoints     []string `yaml:"endpoints,omitempty"`
-	CertSANs      []string `yaml:"certSANs,omitempty"`
-	BootstrapNode string   `yaml:"bootstrapNode,omitempty"`
-}
-
-// OSD describes the configuration of the osd service.
-type OSD struct {
-	CommonServiceOptions `yaml:",inline"`
-}
-
-// Proxyd describes the configuration of the proxyd service.
-type Proxyd struct {
-	CommonServiceOptions `yaml:",inline"`
-}
-
-// CRT describes the configuration of the container runtime service.
-type CRT struct {
-	CommonServiceOptions `yaml:",inline"`
-}
-
-// CommonServiceOptions represents the set of options common to all services.
-type CommonServiceOptions struct {
-	Env Env `yaml:"env,omitempty"`
-}
-
-// NTPd describes the configuration of the ntp service.
-type NTPd struct {
-	CommonServiceOptions `yaml:",inline"`
-
-	Server string `yaml:"server,omitempty"`
 }
 
 // WriteFiles writes the requested files to disk.
