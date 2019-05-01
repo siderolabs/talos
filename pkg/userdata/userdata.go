@@ -273,6 +273,8 @@ type Trustd struct {
 	CommonServiceOptions `yaml:",inline"`
 
 	Token         string   `yaml:"token"`
+	Username      string   `yaml:"username"`
+	Password      string   `yaml:"password"`
 	Endpoints     []string `yaml:"endpoints,omitempty"`
 	CertSANs      []string `yaml:"certSANs,omitempty"`
 	BootstrapNode string   `yaml:"bootstrapNode,omitempty"`
