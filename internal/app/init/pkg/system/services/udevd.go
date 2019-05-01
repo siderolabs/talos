@@ -52,6 +52,7 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 
 	// Set the mounts.
 	mounts := []specs.Mount{
+		// NB: We must mount /dev to ensure that changes on the host are reflected in the container.
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 	}
@@ -71,6 +72,7 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 			oci.WithMounts(mounts),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithHostNamespace(specs.UTSNamespace),
+			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,
 		),
 	),
