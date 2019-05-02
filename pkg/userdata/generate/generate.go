@@ -16,6 +16,8 @@ import (
 	"text/template"
 
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/userdata"
+	"gopkg.in/yaml.v2"
 )
 
 // CertStrings holds the string representation of a certificate and key.
@@ -204,8 +206,23 @@ func Userdata(t Type, in *Input) (string, error) {
 		return "", errors.New("failed to determine userdata type to generate")
 	}
 
-	ud, err := renderTemplate(in, template)
+	var err error
+	var ud string
+
+	ud, err = renderTemplate(in, template)
 	if err != nil {
+		return "", err
+	}
+
+	// Create an actual userdata struct from the
+	// generated data so we can call validate
+	// and ensure we are providing proper data
+	data := &userdata.UserData{}
+	if err = yaml.Unmarshal([]byte(ud), data); err != nil {
+		return "", err
+	}
+
+	if err = data.Validate(); err != nil {
 		return "", err
 	}
 

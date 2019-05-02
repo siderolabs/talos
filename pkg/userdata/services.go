@@ -122,7 +122,7 @@ func (t *Trustd) Validate(checks ...TrustdCheck) error {
 	return result.ErrorOrNil()
 }
 
-// CheckTrustdToken ensures that a trustd token has been specified
+// CheckTrustdAuth ensures that a trustd token has been specified
 func CheckTrustdAuth() TrustdCheck {
 	return func(t *Trustd) error {
 		var result *multierror.Error

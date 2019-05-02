@@ -36,6 +36,8 @@ type UserData struct {
 	Install    *Install    `yaml:"install,omitempty"`
 }
 
+// Validate ensures the required fields are present in the userdata
+// nolint: gocyclo
 func (data *UserData) Validate() error {
 	var result *multierror.Error
 
