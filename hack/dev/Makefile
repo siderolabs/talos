@@ -4,6 +4,8 @@ OS_IMAGE_NAME ?= autonomy/talos
 TAG = $(shell gitmeta image tag)
 DOCKER_COMPOSE ?= IMAGE=$(OS_IMAGE_NAME) TAG=$(TAG) docker-compose
 IP_ADDR ?= 10.5.0.6
+# Calico + Flannel supported
+CNI ?= calico
 
 export TALOSCONFIG = $(PWD)/talosconfig
 
@@ -30,7 +32,7 @@ enter: kubeconfig
 .PHONY: manifests
 manifests: kubeconfig
 	@./kubectl.sh apply -f /manifests/psp.yaml
-	@./kubectl.sh apply -f /manifests/cni.yaml
+	@./kubectl.sh apply -f /manifests/$(CNI).yaml
 	@./kubectl.sh apply -f /manifests/coredns.yaml
 
 .PHONY: clean
