@@ -204,10 +204,32 @@ func Userdata(t Type, in *Input) (string, error) {
 		return "", errors.New("failed to determine userdata type to generate")
 	}
 
-	ud, err := renderTemplate(in, template)
+	var err error
+	var ud string
+
+	ud, err = renderTemplate(in, template)
 	if err != nil {
 		return "", err
 	}
+
+	// TODO: We cant implement this currently because of
+	// issues with kubeadm dependency mismatch between
+	// talos and clusterapi//kubebuilder.
+	// We should figure out way we can work around/through
+	// this
+	/*
+		// Create an actual userdata struct from the
+		// generated data so we can call validate
+		// and ensure we are providing proper data
+		data := &userdata.UserData{}
+		if err = yaml.Unmarshal([]byte(ud), data); err != nil {
+			return "", err
+		}
+
+		if err = data.Validate(); err != nil {
+			return "", err
+		}
+	*/
 
 	return ud, nil
 }
