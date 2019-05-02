@@ -5,14 +5,67 @@
 package userdata
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	yaml "gopkg.in/yaml.v2"
 )
+
+type validateSuite struct {
+	suite.Suite
+}
+
+func TestValidateSuite(t *testing.T) {
+	suite.Run(t, new(validateSuite))
+}
+
+func (suite *validateSuite) TestDownloadRetry() {
+	// Disable logging for test
+	log.SetOutput(ioutil.Discard)
+	ts := testUDServer()
+	defer ts.Close()
+
+	_, err := Download(ts.URL, nil)
+	suite.Require().NoError(err)
+	log.SetOutput(os.Stderr)
+}
+
+func (suite *validateSuite) TestKubeadmMarshal() {
+	var kubeadm Kubeadm
+
+	err := yaml.Unmarshal([]byte(kubeadmConfig), &kubeadm)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), "test", kubeadm.CertificateKey)
+
+	out, err := yaml.Marshal(&kubeadm)
+	suite.Require().NoError(err)
+
+	assert.Equal(suite.T(), kubeadmConfig, string(out))
+}
+
+func testUDServer() *httptest.Server {
+	var count int
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count++
+		log.Printf("Request %d\n", count)
+		if count == 4 {
+			// nolint: errcheck
+			w.Write([]byte(testConfig))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+
+	return ts
+}
 
 // nolint: lll
 const testConfig = `version: "1"
@@ -76,16 +129,6 @@ install:
     device: /dev/sda
     size: 1024000000
 `
-
-func TestDownloadRetry(t *testing.T) {
-	ts := testUDServer()
-	defer ts.Close()
-
-	_, err := Download(ts.URL, nil)
-	if err != nil {
-		t.Error("Failed to download userdata", err)
-	}
-}
 
 // nolint: lll
 const kubeadmConfig = `configuration: |
@@ -174,34 +217,3 @@ const kubeadmConfig = `configuration: |
     sourceVip: ""
 certificateKey: test
 `
-
-func TestKubeadmMarshal(t *testing.T) {
-	var kubeadm Kubeadm
-
-	err := yaml.Unmarshal([]byte(kubeadmConfig), &kubeadm)
-	assert.NoError(t, err)
-
-	assert.Equal(t, "test", kubeadm.CertificateKey)
-
-	out, err := yaml.Marshal(&kubeadm)
-	assert.NoError(t, err)
-
-	assert.Equal(t, kubeadmConfig, string(out))
-}
-
-func testUDServer() *httptest.Server {
-	var count int
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		count++
-		log.Printf("Request %d\n", count)
-		if count == 4 {
-			// nolint: errcheck
-			w.Write([]byte(testConfig))
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-	}))
-
-	return ts
-}

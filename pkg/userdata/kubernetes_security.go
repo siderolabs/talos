@@ -19,11 +19,11 @@ type KubernetesSecurity struct {
 	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 }
 
-// KubeSecurityCheck defines the function type for checks
-type KubeSecurityCheck func(*KubernetesSecurity) error
+// KubernetesSecurityCheck defines the function type for checks
+type KubernetesSecurityCheck func(*KubernetesSecurity) error
 
 // Validate triggers the specified validation checks to run
-func (k *KubernetesSecurity) Validate(checks ...KubeSecurityCheck) error {
+func (k *KubernetesSecurity) Validate(checks ...KubernetesSecurityCheck) error {
 	var result *multierror.Error
 
 	for _, check := range checks {
@@ -33,9 +33,9 @@ func (k *KubernetesSecurity) Validate(checks ...KubeSecurityCheck) error {
 	return result.ErrorOrNil()
 }
 
-// CheckKubeCA verfies the KubernetesSecurity settings are valid
+// CheckKubernetesCA verfies the KubernetesSecurity settings are valid
 // nolint: dupl
-func CheckKubeCA() KubeSecurityCheck {
+func CheckKubernetesCA() KubernetesSecurityCheck {
 	return func(k *KubernetesSecurity) error {
 		var result *multierror.Error
 

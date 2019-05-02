@@ -11,12 +11,12 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (suite *validateSuite) TestValidateKubeSecurity() {
+func (suite *validateSuite) TestValidateKubernetesSecurity() {
 	var err error
 
 	// Test for missing required sections
 	kube := &KubernetesSecurity{}
-	err = kube.Validate(CheckKubeCA())
+	err = kube.Validate(CheckKubernetesCA())
 	suite.Require().Error(err)
 	// Embedding the check in suite.Assert().Equal(true, xerrors.Is had issues )
 	if !xerrors.Is(err.(*multierror.Error).Errors[0], ErrRequiredSection) {
@@ -25,19 +25,19 @@ func (suite *validateSuite) TestValidateKubeSecurity() {
 	}
 
 	kube.CA = &x509.PEMEncodedCertificateAndKey{}
-	err = kube.Validate(CheckKubeCA())
+	err = kube.Validate(CheckKubernetesCA())
 	suite.Require().Error(err)
 	suite.Assert().Equal(4, len(err.(*multierror.Error).Errors))
 
 	// Test for invalid certs
 	kube.CA.Crt = []byte("-----BEGIN Rubbish-----\n-----END Rubbish-----")
 	kube.CA.Key = []byte("-----BEGIN EC Fluffy KEY-----\n-----END EC Fluffy KEY-----")
-	err = kube.Validate(CheckKubeCA())
+	err = kube.Validate(CheckKubernetesCA())
 	suite.Require().Error(err)
 
 	// Successful test
 	kube.CA.Crt = []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----")
 	kube.CA.Key = []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----")
-	err = kube.Validate(CheckKubeCA())
+	err = kube.Validate(CheckKubernetesCA())
 	suite.Require().NoError(err)
 }
