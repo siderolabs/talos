@@ -31,7 +31,7 @@ func (suite *validateSuite) TestValidateTrustd() {
 
 	svc := &Services{}
 	svc.Trustd = &Trustd{}
-	err = svc.Trustd.Validate(CheckTrustdToken(), CheckTrustdEndpoints())
+	err = svc.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpoints())
 	suite.Require().Error(err)
 	suite.Assert().Equal(2, len(err.(*multierror.Error).Errors))
 
@@ -40,7 +40,13 @@ func (suite *validateSuite) TestValidateTrustd() {
 	suite.Require().NoError(err)
 
 	svc.Trustd.Token = "yolo"
-	err = svc.Trustd.Validate(CheckTrustdToken())
+	err = svc.Trustd.Validate(CheckTrustdAuth())
+	suite.Require().NoError(err)
+
+	svc.Trustd.Token = ""
+	svc.Trustd.Username = "bob"
+	svc.Trustd.Password = "burger"
+	err = svc.Trustd.Validate(CheckTrustdAuth())
 	suite.Require().NoError(err)
 }
 

@@ -17,6 +17,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 
@@ -35,45 +36,45 @@ type UserData struct {
 	Install    *Install    `yaml:"install,omitempty"`
 }
 
-/*
-type WorkerData UserData
-
-// Validate ensures the necessary configuration for a
-// worker node is present
-func (w *WorkerData) Validate() error {
+func (data *UserData) Validate() error {
 	var result *multierror.Error
-	result = multierror.Append(result, w.Version.Validate())
-	result = multierror.Append(result, w.Services.Init.Validate())
-	//result = multierror.Append(result, w.Services.Kubeadm.Validate())
-	result = multierror.Append(result, w.Services.Trustd.Validate())
-	return result
+
+	var nodeType string
+
+	switch {
+	case data.IsBootstrap():
+		nodeType = "init"
+	case data.IsMaster():
+		nodeType = "master"
+	case data.IsWorker():
+		nodeType = "worker"
+	default:
+		// TODO make an error
+		return result.ErrorOrNil()
+	}
+
+	// All nodeType checks
+	result = multierror.Append(result, data.Services.Validate(CheckServices()))
+	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpoints()))
+	result = multierror.Append(result, data.Services.Init.Validate(CheckInitCNI()))
+
+	// Surely there's a better way to do this
+	if data.Networking != nil && data.Networking.OS != nil {
+		for _, dev := range data.Networking.OS.Devices {
+			result = multierror.Append(result, dev.Validate(CheckDeviceInterface(), CheckDeviceAddressing(), CheckDeviceRoutes()))
+		}
+	}
+
+	switch nodeType {
+	case "init":
+		result = multierror.Append(result, data.Security.OS.Validate(CheckOSCA()))
+		result = multierror.Append(result, data.Security.Kubernetes.Validate(CheckKubernetesCA()))
+	case "master":
+	case "worker":
+	}
+
+	return result.ErrorOrNil()
 }
-
-type InitData UserData
-
-func (i *InitData) Validate() error {
-	var result *multierror.Error
-	result = multierror.Append(result, i.Version.Validate())
-	result = multierror.Append(result, i.Security.OS.Validate())
-	//result = multierror.Append(result, i.Security.Kubernetes.Validate())
-	result = multierror.Append(result, i.Services.Init.Validate())
-	//result = multierror.Append(result, i.Services.Kubeadm.Validate())
-	result = multierror.Append(result, i.Services.Trustd.Validate())
-	return result
-
-}
-
-type MasterData UserData
-
-func (m *MasterData) Validate() error {
-	var result *multierror.Error
-	result = multierror.Append(result, m.Version.Validate())
-	result = multierror.Append(result, m.Services.Init.Validate())
-	//result = multierror.Append(result, m.Services.Kubeadm.Validate())
-	result = multierror.Append(result, m.Services.Trustd.Validate())
-	return result
-}
-*/
 
 // Security represents the set of options available to configure security.
 type Security struct {
@@ -102,6 +103,7 @@ type File struct {
 // WriteFiles writes the requested files to disk.
 func (data *UserData) WriteFiles() (err error) {
 	for _, f := range data.Files {
+		// TODO isnt there a const for the data mountpoint
 		p := path.Join("/var", f.Path)
 		if err = os.MkdirAll(path.Dir(p), os.ModeDir); err != nil {
 			return
@@ -193,7 +195,7 @@ func Download(url string, headers *map[string]string) (data *UserData, err error
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return data, err
+		return
 	}
 
 	if headers != nil {
@@ -202,10 +204,11 @@ func Download(url string, headers *map[string]string) (data *UserData, err error
 		}
 	}
 
+	var resp *http.Response
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		resp, err := client.Do(req)
+		resp, err = client.Do(req)
 		if err != nil {
-			return data, err
+			return
 		}
 		// nolint: errcheck
 		defer resp.Body.Close()
@@ -229,8 +232,7 @@ func Download(url string, headers *map[string]string) (data *UserData, err error
 		if err := yaml.Unmarshal(dataBytes, data); err != nil {
 			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
 		}
-
-		return data, nil
+		return data, data.Validate()
 	}
 	return data, fmt.Errorf("failed to download userdata from: %s", url)
 }

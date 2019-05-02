@@ -123,12 +123,16 @@ func (t *Trustd) Validate(checks ...TrustdCheck) error {
 }
 
 // CheckTrustdToken ensures that a trustd token has been specified
-func CheckTrustdToken() TrustdCheck {
+func CheckTrustdAuth() TrustdCheck {
 	return func(t *Trustd) error {
 		var result *multierror.Error
 
-		if t.Token == "" {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.token", t.Token, ErrRequiredSection))
+		if t.Token == "" && (t.Username == "" || t.Password == "") {
+			if t.Token == "" {
+				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.token", t.Token, ErrRequiredSection))
+			} else {
+				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.username:password", t.Username+":"+t.Password, ErrRequiredSection))
+			}
 		}
 
 		return result.ErrorOrNil()

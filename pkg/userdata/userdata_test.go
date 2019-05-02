@@ -111,7 +111,7 @@ services:
   trustd:
     username: 'test'
     password: 'test'
-    endpoints: []
+    endpoints: [ "1.2.3.4" ]
     certSANs: []
 install:
   wipe: true
