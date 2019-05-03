@@ -26,6 +26,7 @@ policies:
       - osctl
       - osd
       - osinstall
+      - proposal
       - rootfs
       - tools
       - trustd
