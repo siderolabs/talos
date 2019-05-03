@@ -93,7 +93,6 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
       localAPIEndpoint:
-        advertiseAddress: 127.0.0.1
         bindPort: 6443
       bootstrapTokens:
       - token: '1qbsj9.3oz5hsk6grdfp98b'
@@ -102,6 +101,7 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
       clusterName: test
+      kubernetesVersion: v1.14.1
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
       kind: KubeProxyConfiguration

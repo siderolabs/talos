@@ -16,7 +16,7 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: JoinConfiguration
       controlPlane:
-        apiEndpoint:
+        localAPIEndpoint:
           advertiseAddress: {{ index .MasterIPs .Index }}
           bindPort: 6443
       discovery:

@@ -23,7 +23,7 @@ services:
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
-      apiEndpoint:
+      localAPIEndpoint:
         advertiseAddress: {{ index .MasterIPs .Index }}
         bindPort: 6443
       bootstrapTokens:
@@ -37,6 +37,7 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
       clusterName: {{ .ClusterName }}
+      kubernetesVersion: {{ .KubernetesVersion }}
       controlPlaneEndpoint: {{ index .MasterIPs 0 }}:443
       apiServer:
         certSANs: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}}, "127.0.0.1" ]
