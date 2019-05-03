@@ -69,9 +69,6 @@ func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 		// For GPT, the partition type should be 0xee (EFI GPT).
 		if bytes.Equal(buf, []byte{0xee}) {
 			bd.table = gpt.NewGPT(devname, f)
-		} else {
-			err = errors.New("failed to find GUID partition table")
-			return nil, err
 		}
 	}
 

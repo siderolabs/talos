@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/googlecloud"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/packet"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/vmware"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/iso"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -43,6 +44,8 @@ func NewPlatform() (p Platform, err error) {
 			p = &baremetal.BareMetal{}
 		case "packet":
 			p = &packet.Packet{}
+		case "iso":
+			p = &iso.ISO{}
 		default:
 			return nil, fmt.Errorf("platform not supported: %s", platform)
 		}

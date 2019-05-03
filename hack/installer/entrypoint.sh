@@ -70,9 +70,18 @@ function create_iso() {
   mkdir -p /mnt/boot/isolinux
   cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/boot/isolinux/isolinux.bin
   cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/boot/isolinux/ldlinux.c32
-  create_extlinux_conf /mnt/boot/isolinux/isolinux.conf
-  tar -xpvzf /generated/rootfs.tar.gz -C /mnt
-  mkisofs -o ${ISO_IMAGE} -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table .
+  TALOS_USERDATA=none
+  TALOS_PLATFORM=iso
+  EXTRA_KERNEL_PARAMS="random.trust_cpu=on printk.devkmsg=on"
+  create_extlinux_conf /mnt/boot/isolinux/isolinux.cfg
+  cp -v /generated/boot/vmlinuz /mnt/boot
+  cp -v /generated/boot/initramfs.xz /mnt/boot
+  mkdir -p /mnt/usr/install
+  cp -v /generated/rootfs.tar.gz /mnt/usr/install/rootfs.tar.gz
+  cp -v /generated/boot/vmlinuz /mnt/usr/install/vmlinuz
+  cp -v /generated/boot/initramfs.xz /mnt/usr/install/initramfs.xz
+  mkisofs -V TALOS -o ${ISO_IMAGE} -r -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /mnt
+  isohybrid ${ISO_IMAGE}
 }
 
 function create_ami() {
@@ -124,7 +133,7 @@ DEFAULT Talos
 LABEL Talos
   KERNEL /boot/vmlinuz
   INITRD /boot/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 console=ttyS0,9600 talos.userdata=${TALOS_USERDATA} talos.platform=${TALOS_PLATFORM}
+  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 ${KERNEL_SERIAL_PORT} talos.userdata=${TALOS_USERDATA} talos.platform=${TALOS_PLATFORM}
 EOF
 }
 
@@ -148,6 +157,7 @@ ROOTFS_SIZE=$(tar -tvf /generated/rootfs.tar.gz --exclude=./var | awk '{s+=$3} E
 INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
 # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
 KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
+KERNEL_SERIAL_PORT="console=ttyS0,9600"
 EXTRA_KERNEL_PARAMS=""
 
 case "$1" in
@@ -215,6 +225,9 @@ case "$1" in
     create_vmdk
     ;;
   iso)
+    # We don't want serial port here because we need to prompt the user, and
+    # the only way that seems to work is if no serial port is defined.
+    KERNEL_SERIAL_PORT=""
     create_iso
     ;;
   ami)

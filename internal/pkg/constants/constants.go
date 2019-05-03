@@ -46,6 +46,10 @@ const (
 	// the root path.
 	RootMountPoint = "/"
 
+	// ISOFilesystemLabel is the label of the ISO file system for the Talos
+	// installer.
+	ISOFilesystemLabel = "TALOS"
+
 	// PATH defines all locations where executables are stored.
 	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"
 
