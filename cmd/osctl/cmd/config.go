@@ -7,11 +7,16 @@ package cmd
 import (
 	"encoding/base64"
 	"io/ioutil"
+	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/generate"
+	"gopkg.in/yaml.v2"
 )
 
 // configCmd represents the config command.
@@ -110,8 +115,42 @@ var configAddCmd = &cobra.Command{
 	},
 }
 
+// configGenerateCmd represents the config generate command.
+var configGenerateCmd = &cobra.Command{
+	Use:   "generate",
+	Short: "Generate a set of configuration files",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			log.Fatal("expected a cluster name and comma delimited list of IP addresses")
+		}
+		input, err := generate.NewInput(args[0], strings.Split(args[1], ","))
+		if err != nil {
+			helpers.Fatalf("failed to generate PKI and tokens: %v", err)
+		}
+
+		types := []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin}
+		for _, t := range types {
+			data, err := generate.Userdata(t, input)
+			if err != nil {
+				helpers.Fatalf("failed to generate configuration file for type %s: %v", t.String(), err)
+			}
+			ud := &userdata.UserData{}
+			if err = yaml.Unmarshal([]byte(data), ud); err != nil {
+				helpers.Fatalf("%v", err)
+			}
+			if err = ud.Validate(); err != nil {
+				helpers.Fatalf("validation for userdata type %s failed: %v", t.String(), err)
+			}
+			if err = ioutil.WriteFile(strings.ToLower(t.String())+".yaml", []byte(data), 0644); err != nil {
+				helpers.Fatalf("%v", err)
+			}
+		}
+	},
+}
+
 func init() {
-	configCmd.AddCommand(configContextCmd, configTargetCmd, configAddCmd)
+	configCmd.AddCommand(configContextCmd, configTargetCmd, configAddCmd, configGenerateCmd)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
