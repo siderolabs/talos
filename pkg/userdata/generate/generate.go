@@ -15,6 +15,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
@@ -26,16 +27,17 @@ type CertStrings struct {
 
 // Input holds info about certs, ips, and node type.
 type Input struct {
-	Certs         *Certs
-	MasterIPs     []string
-	Index         int
-	ClusterName   string
-	ServiceDomain string
-	PodNet        []string
-	ServiceNet    []string
-	Endpoints     string
-	KubeadmTokens *KubeadmTokens
-	TrustdInfo    *TrustdInfo
+	Certs             *Certs
+	MasterIPs         []string
+	Index             int
+	ClusterName       string
+	ServiceDomain     string
+	PodNet            []string
+	ServiceNet        []string
+	Endpoints         string
+	KubernetesVersion string
+	KubeadmTokens     *KubeadmTokens
+	TrustdInfo        *TrustdInfo
 }
 
 // Certs holds the base64 encoded keys and certificates.
@@ -155,15 +157,16 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	}
 
 	input = &Input{
-		Certs:         certs,
-		MasterIPs:     masterIPs,
-		PodNet:        []string{"10.244.0.0/16"},
-		ServiceNet:    []string{"10.96.0.0/12"},
-		ServiceDomain: "cluster.local",
-		ClusterName:   clustername,
-		Endpoints:     strings.Join(masterIPs[1:], ", "),
-		KubeadmTokens: kubeadmTokens,
-		TrustdInfo:    trustdInfo,
+		Certs:             certs,
+		MasterIPs:         masterIPs,
+		PodNet:            []string{"10.244.0.0/16"},
+		ServiceNet:        []string{"10.96.0.0/12"},
+		ServiceDomain:     "cluster.local",
+		ClusterName:       clustername,
+		Endpoints:         strings.Join(masterIPs[1:], ", "),
+		KubernetesVersion: constants.KubernetesVersion,
+		KubeadmTokens:     kubeadmTokens,
+		TrustdInfo:        trustdInfo,
 	}
 
 	return input, nil
