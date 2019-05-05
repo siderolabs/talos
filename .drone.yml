@@ -65,7 +65,6 @@ steps:
   - name: dockersock
     path: /var/run
   depends_on:
-  - fetch
   - build
 
 - name: coverage
@@ -95,6 +94,22 @@ steps:
   - build
   when:
     event: pull_request
+
+- name: iso
+  image: autonomy/build-container:latest
+  pull: always
+  environment:
+    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+    BINDIR: /usr/local/bin
+  commands:
+    - make talos-iso
+  volumes:
+  - name: dockersock
+    path: /var/run
+  when:
+    event: tag
+  depends_on:
+  - basic-integration
 
 - name: push
   image: autonomy/build-container:latest
@@ -132,6 +147,7 @@ steps:
     event: tag
   depends_on:
   - basic-integration
+  - iso
 
 volumes:
 - name: dockersock
