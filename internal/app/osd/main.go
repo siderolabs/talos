@@ -5,10 +5,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/talos/internal/app/osd/internal/reg"
+	bully "github.com/talos-systems/talos/internal/pkg/bully/server"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
 	"github.com/talos-systems/talos/internal/pkg/grpc/tls"
@@ -43,12 +47,27 @@ func main() {
 		log.Fatalf("init client: %v", err)
 	}
 
+	registrator := &reg.Registrator{
+		Data:              data,
+		InitServiceClient: initClient,
+	}
+
+	if data.IsMaster() {
+		bully := bully.NewBullyServer(uint32(0), "", data.Services.Trustd.Endpoints...)
+		if err = bully.Join(); err != nil {
+			log.Fatal(err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if _, err = bully.Elect(ctx, &empty.Empty{}); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	log.Println("Starting osd")
+
 	err = factory.ListenAndServe(
-		&reg.Registrator{
-			Data:              data,
-			InitServiceClient: initClient,
-		},
+		registrator,
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(
 			grpc.Creds(

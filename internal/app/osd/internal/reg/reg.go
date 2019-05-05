@@ -29,6 +29,8 @@ import (
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
+	bullyproto "github.com/talos-systems/talos/internal/pkg/bully/proto"
+	bully "github.com/talos-systems/talos/internal/pkg/bully/server"
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/proc"
@@ -42,8 +44,10 @@ import (
 // Registrator is the concrete type that implements the factory.Registrator and
 // proto.OSDServer interfaces.
 type Registrator struct {
-	// every Init service API is proxied via OSD
+	// Every Init service API is proxied via OSD.
 	*InitServiceClient
+	// Leadership election.
+	*bully.Bully
 
 	Data *userdata.UserData
 }
@@ -52,6 +56,7 @@ type Registrator struct {
 func (r *Registrator) Register(s *grpc.Server) {
 	proto.RegisterOSDServer(s, r)
 	initproto.RegisterInitServer(s, r)
+	bullyproto.RegisterBullyServer(s, r)
 }
 
 // Kubeconfig implements the proto.OSDServer interface. The admin kubeconfig is
