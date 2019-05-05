@@ -1,3 +1,23 @@
+# [v0.1.0-alpha.25](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2019-05-05)
+
+
+### Bug Fixes
+
+* add support for trustd username and password auth back in ([#604](https://github.com/talos-systems/talos/issues/604)) ([f045b10](https://github.com/talos-systems/talos/commit/f045b10))
+* **init:** start udevd with parent cgroup devices ([#605](https://github.com/talos-systems/talos/issues/605)) ([e4c5385](https://github.com/talos-systems/talos/commit/e4c5385))
+* **osctl:** ensure image is present ([#599](https://github.com/talos-systems/talos/issues/599)) ([13739b4](https://github.com/talos-systems/talos/commit/13739b4))
+
+
+### Features
+
+* **init:** run udevd as a container ([#601](https://github.com/talos-systems/talos/issues/601)) ([0df1d9c](https://github.com/talos-systems/talos/commit/0df1d9c))
+* Add calico manifests for local dev setup ([#608](https://github.com/talos-systems/talos/issues/608)) ([a1ea03a](https://github.com/talos-systems/talos/commit/a1ea03a))
+* add support for ISO based installations ([#606](https://github.com/talos-systems/talos/issues/606)) ([00eb065](https://github.com/talos-systems/talos/commit/00eb065))
+* Validate userdata ([#593](https://github.com/talos-systems/talos/issues/593)) ([a5d31d9](https://github.com/talos-systems/talos/commit/a5d31d9))
+* **osctl:** add config generate command ([e4ba1ac](https://github.com/talos-systems/talos/commit/e4ba1ac))
+
+
+
 # [v0.1.0-alpha.24](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.23...v0.1.0-alpha.24) (2019-04-30)
 
 
