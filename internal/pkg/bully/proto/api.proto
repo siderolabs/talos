@@ -1,0 +1,35 @@
+
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+
+// The Bully service represents a bully cluster.
+service Bully {
+  rpc Elect(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Pid(google.protobuf.Empty) returns (PidValue) {}
+  rpc Send(MessageWithPid) returns (MessageWithPid) {}
+}
+
+// PidValue represents the process PID.
+message PidValue { uint32 value = 1; }
+
+// Message represents the 3 bully message types required by the algorithm.
+enum Message {
+  ELECTION = 0;
+  OK = 1;
+  COORDINATOR = 2;
+}
+
+// MessageRequest represents a message between any two processes.
+message MessageWithPid {
+  PidValue pid = 1;
+  Message message = 2;
+}
+
+// Process represents a bully process.
+message Process {
+  PidValue pid = 1;
+  string address = 2;
+}

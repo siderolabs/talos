@@ -16,11 +16,15 @@ RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.
 WORKDIR /init
 COPY ./internal/app/init/proto ./proto
 RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
+WORKDIR /bully
+COPY ./internal/pkg/bully/proto ./proto
+RUN protoc -I/usr/local/include -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
 FROM scratch AS proto
 COPY --from=proto-build /osd/proto/api.pb.go /internal/app/osd/proto/
 COPY --from=proto-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
 COPY --from=proto-build /init/proto/api.pb.go /internal/app/init/proto/
+COPY --from=proto-build /bully/proto/api.pb.go /internal/pkg/bully/proto/
 
 # The base provides a common image to build the Talos source code.
 
@@ -39,6 +43,7 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=proto /internal/app ./internal/app
+COPY --from=proto /internal/pkg/bully/proto ./internal/pkg/bully/proto
 RUN go list -mod=readonly all >/dev/null
 
 # The osd target builds the osd binary.
