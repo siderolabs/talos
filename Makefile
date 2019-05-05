@@ -164,9 +164,9 @@ talos-gce: installer
 	@tar -C $(PWD)/build -Sczf $(PWD)/build/$@.tar.gz disk.raw
 	@rm $(PWD)/build/disk.raw
 
-.PHONY: image-iso
-image-iso: installer
-	@docker run --rm -it -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
+.PHONY: talos-iso
+talos-iso: installer
+	@docker run --rm -i -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
 
 .PHONY: talos-aws
 talos-aws: installer
