@@ -141,7 +141,7 @@ FROM base AS osinstall-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
-WORKDIR /src/internal/app/osinstall
+WORKDIR /src/cmd/osinstall
 RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osinstall-linux-amd64
 RUN chmod +x /osinstall-linux-amd64
 

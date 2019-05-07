@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/talos/internal/app/osinstall/internal/userdata"
+	"github.com/talos-systems/talos/cmd/osinstall/internal/userdata"
 )
 
 // validateCmd reads in a userData file and attempts to parse it
