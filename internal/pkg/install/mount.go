@@ -37,10 +37,10 @@ func Mount() (err error) {
 // nolint: dupl
 func mountpoints() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel, constants.BootPartitionLabel} {
+	for _, name := range []string{constants.CurrentRootPartitionLabel(), constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		var target string
 		switch name {
-		case constants.RootPartitionLabel:
+		case constants.CurrentRootPartitionLabel():
 			target = constants.RootMountPoint
 		case constants.DataPartitionLabel:
 			target = constants.DataMountPoint
