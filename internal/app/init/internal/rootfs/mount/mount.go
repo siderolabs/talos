@@ -155,7 +155,7 @@ func ExtraDevices(data *userdata.UserData) (err error) {
 func (i *Initializer) MountOwned() (err error) {
 	iter := i.owned.Iter()
 	for iter.Next() {
-		if iter.Key() == constants.RootPartitionLabel {
+		if iter.Key() == constants.CurrentRootPartitionLabel() {
 			if err = mount.WithRetry(iter.Value(), mount.WithPrefix(i.prefix), mount.WithReadOnly(true), mount.WithShared(true)); err != nil {
 				return errors.Errorf("error mounting partitions: %v", err)
 			}
@@ -244,10 +244,11 @@ func (i *Initializer) Switch() (err error) {
 // nolint: dupl
 func mountpoints() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.RootPartitionLabel, constants.DataPartitionLabel, constants.BootPartitionLabel} {
+	for _, name := range []string{constants.CurrentRootPartitionLabel(), constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		var target string
 		switch name {
-		case constants.RootPartitionLabel:
+		case constants.CurrentRootPartitionLabel():
+			log.Printf("using root parititon with label %s", name)
 			target = constants.RootMountPoint
 		case constants.DataPartitionLabel:
 			target = constants.DataMountPoint

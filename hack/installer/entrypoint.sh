@@ -14,7 +14,7 @@ function create_image() {
       parted -s -a optimal ${RAW_IMAGE} mkpart primary fat32 0 $((${INITRAMFS_SIZE} + 50))M
       parted ${RAW_IMAGE} name 1 ESP
       parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
-      parted ${RAW_IMAGE} name 2 ROOT
+      parted ${RAW_IMAGE} name 2 ROOT-A
       parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
       parted ${RAW_IMAGE} name 3 DATA
       losetup ${DEVICE} ${RAW_IMAGE}
@@ -26,7 +26,7 @@ function create_image() {
       parted -s -a optimal ${DEVICE} mkpart primary fat32 0 $((${INITRAMFS_SIZE} + 50))M
       parted ${DEVICE} name 1 ESP
       parted -s -a optimal ${DEVICE} mkpart primary xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
-      parted ${DEVICE} name 2 ROOT
+      parted ${DEVICE} name 2 ROOT-A
       parted -s -a optimal ${DEVICE} mkpart primary xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
       parted ${DEVICE} name 3 DATA
       extract_boot_partition ${DEVICE}1
@@ -36,7 +36,7 @@ function create_image() {
   else
     if [ "$RAW" = true ] ; then
       parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs 0 $((${ROOTFS_SIZE} + 50))M
-      parted ${RAW_IMAGE} name 1 ROOT
+      parted ${RAW_IMAGE} name 1 ROOT-A
       parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${ROOTFS_SIZE} + 50))M 100%
       parted ${RAW_IMAGE} name 2 DATA
       losetup ${DEVICE} ${RAW_IMAGE}
@@ -45,7 +45,7 @@ function create_image() {
       extract_data_partition ${DEVICE}p2
     else
       parted -s -a optimal ${DEVICE} mkpart primary xfs 0 $((${ROOTFS_SIZE} + 50))M
-      parted ${DEVICE} name 1 ROOT
+      parted ${DEVICE} name 1 ROOT-A
       parted -s -a optimal ${DEVICE} mkpart primary xfs $((${ROOTFS_SIZE} + 50))M 100%
       parted ${DEVICE} name 2 DATA
       extract_root_partition ${DEVICE}1
@@ -110,7 +110,7 @@ function extract_boot_partition() {
 
 function extract_root_partition() {
   local partition=$1
-  mkfs.xfs -f -n ftype=1 -L ROOT ${partition}
+  mkfs.xfs -f -n ftype=1 -L ROOT-A ${partition}
   mount -v ${partition} /mnt
   tar -xpvzf /generated/rootfs.tar.gz --exclude="./var" -C /mnt
   umount -v /mnt

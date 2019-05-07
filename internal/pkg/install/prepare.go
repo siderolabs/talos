@@ -146,7 +146,7 @@ func VerifyRootDevice(data *userdata.UserData) (err error) {
 	}
 
 	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.RootPartitionLabel); err != nil {
+		if err = VerifyDiskAvailability(constants.CurrentRootPartitionLabel()); err != nil {
 			return errors.Wrap(err, "failed to verify disk availability")
 		}
 	}
@@ -275,9 +275,18 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		MountBase: "/tmp",
 	}
 
-	rootTarget := &Target{
+	rootATarget := &Target{
 		Device:    data.Install.Root.Device,
-		Label:     constants.RootPartitionLabel,
+		Label:     constants.RootAPartitionLabel,
+		Size:      data.Install.Root.Size,
+		Force:     data.Install.Force,
+		Test:      false,
+		MountBase: "/tmp",
+	}
+
+	rootBTarget := &Target{
+		Device:    data.Install.Root.Device,
+		Label:     constants.RootBPartitionLabel,
 		Size:      data.Install.Root.Size,
 		Force:     data.Install.Force,
 		Test:      false,
@@ -293,7 +302,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		MountBase: "/tmp",
 	}
 
-	for _, target := range []*Target{bootTarget, rootTarget, dataTarget} {
+	for _, target := range []*Target{bootTarget, rootATarget, rootBTarget, dataTarget} {
 		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
 	}
 
@@ -354,7 +363,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		// EFI System Partition
 		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
-	case constants.RootPartitionLabel:
+	case constants.CurrentRootPartitionLabel():
 		// Root Partition
 		var typeID string
 		switch runtime.GOARCH {

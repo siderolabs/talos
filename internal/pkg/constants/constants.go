@@ -6,6 +6,7 @@ package constants
 
 import (
 	"github.com/containerd/containerd/defaults"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
@@ -22,6 +23,10 @@ const (
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"
+
+	// KernelCurrentRoot is the kernel parameter name for specifying the
+	// current root partition.
+	KernelCurrentRoot = "talos.root"
 
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
@@ -42,9 +47,13 @@ const (
 	// the data path.
 	DataMountPoint = "/var"
 
-	// RootPartitionLabel is the label of the partition to use for mounting at
+	// RootAPartitionLabel is the label of the partition to use for mounting at
 	// the root path.
-	RootPartitionLabel = "ROOT"
+	RootAPartitionLabel = "ROOT-A"
+
+	// RootBPartitionLabel is the label of the partition to use for mounting at
+	// the root path.
+	RootBPartitionLabel = "ROOT-B"
 
 	// RootMountPoint is the label of the partition to use for mounting at
 	// the root path.
@@ -149,3 +158,33 @@ const (
 const (
 	ContainerdAddress = defaults.DefaultAddress
 )
+
+// CurrentRootPartitionLabel returns the label of the currently active root
+// partition.
+func CurrentRootPartitionLabel() string {
+	param, _ := kernel.GetParameter(RootBPartitionLabel)
+	switch param {
+	case "B":
+		return RootBPartitionLabel
+	case "A":
+		fallthrough
+	default:
+		return RootAPartitionLabel
+	}
+}
+
+// NextRootPartitionLabel returns the label of the currently active root
+// partition.
+func NextRootPartitionLabel() string {
+	current := CurrentRootPartitionLabel()
+	switch current {
+	case RootAPartitionLabel:
+		return RootBPartitionLabel
+	case RootBPartitionLabel:
+		return RootAPartitionLabel
+	}
+
+	// We should never reach this since CurrentRootPartitionLabel is guaranteed
+	// to return one of the two possible labels.
+	return "UNKNOWN"
+}
