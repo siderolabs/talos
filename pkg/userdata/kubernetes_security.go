@@ -5,18 +5,17 @@
 package userdata
 
 import (
-	"encoding/pem"
-	"strings"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"golang.org/x/xerrors"
 )
 
 // KubernetesSecurity represents the set of security options specific to
 // Kubernetes.
 type KubernetesSecurity struct {
-	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	CA         *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	SA         *x509.PEMEncodedCertificateAndKey `yaml:"sa"`
+	FrontProxy *x509.PEMEncodedCertificateAndKey `yaml:"frontproxy"`
+	Etcd       *x509.PEMEncodedCertificateAndKey `yaml:"etcd"`
 }
 
 // KubernetesSecurityCheck defines the function type for checks
@@ -34,52 +33,28 @@ func (k *KubernetesSecurity) Validate(checks ...KubernetesSecurityCheck) error {
 }
 
 // CheckKubernetesCA verfies the KubernetesSecurity settings are valid
-// nolint: dupl
 func CheckKubernetesCA() KubernetesSecurityCheck {
 	return func(k *KubernetesSecurity) error {
-		var result *multierror.Error
-
-		// Verify the required sections are present
-		if k.CA == nil {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca", "", ErrRequiredSection))
+		certs := []certTest{
+			{
+				Cert:     k.CA,
+				Path:     "security.kubernetes.ca",
+				Required: true,
+			},
+			{
+				Cert: k.SA,
+				Path: "security.kubernetes.sa",
+			},
+			{
+				Cert: k.FrontProxy,
+				Path: "security.kubernetes.frontproxy",
+			},
+			{
+				Cert: k.Etcd,
+				Path: "security.kubernetes.etcd",
+			},
 		}
 
-		// Bail early since we're already missing the required sections
-		if result.ErrorOrNil() != nil {
-			return result.ErrorOrNil()
-		}
-
-		if k.CA.Crt == nil {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.crt", "", ErrRequiredSection))
-		}
-
-		if k.CA.Key == nil {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.key", "", ErrRequiredSection))
-		}
-
-		// test if k.CA fields are present ( x509 package handles the b64 decode
-		// during yaml unmarshal, so we have the bytes if it was successful )
-		var block *pem.Block
-		block, _ = pem.Decode(k.CA.Crt)
-		// nolint: gocritic
-		if block == nil {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.crt", k.CA.Crt, ErrInvalidCert))
-		} else {
-			if block.Type != "CERTIFICATE" {
-				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.crt", k.CA.Crt, ErrInvalidCertType))
-			}
-		}
-
-		block, _ = pem.Decode(k.CA.Key)
-		// nolint: gocritic
-		if block == nil {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.key", k.CA.Key, ErrInvalidCert))
-		} else {
-			if !strings.HasSuffix(block.Type, "PRIVATE KEY") {
-				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "security.kubernetes.ca.key", k.CA.Key, ErrInvalidCertType))
-			}
-		}
-
-		return result.ErrorOrNil()
+		return checkCertKeyPair(certs)
 	}
 }

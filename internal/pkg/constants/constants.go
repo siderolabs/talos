@@ -4,7 +4,11 @@
 
 package constants
 
-import "github.com/containerd/containerd/defaults"
+import (
+	"github.com/containerd/containerd/defaults"
+	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
+	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
+)
 
 const (
 	// KernelParamUserData is the kernel parameter name for specifying the URL
@@ -63,10 +67,28 @@ const (
 	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
 
 	// KubeadmCACert is the path to the root CA certificate.
-	KubeadmCACert = "/etc/kubernetes/pki/ca.crt"
+	KubeadmCACert = v1beta1.DefaultCertificatesDir + "/" + constants.CACertName
 
 	// KubeadmCAKey is the path to the root CA private key.
-	KubeadmCAKey = "/etc/kubernetes/pki/ca.key"
+	KubeadmCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.CAKeyName
+
+	// KubeadmSACert is the path to the SA certificate.
+	KubeadmSACert = v1beta1.DefaultCertificatesDir + "/" + constants.ServiceAccountPublicKeyName
+
+	// KubeadmSAKey is the path to the SA private key.
+	KubeadmSAKey = v1beta1.DefaultCertificatesDir + "/" + constants.ServiceAccountPrivateKeyName
+
+	// KubeadmFrontProxyCACert is the path to the front proxy CA certificate.
+	KubeadmFrontProxyCACert = v1beta1.DefaultCertificatesDir + "/" + constants.FrontProxyCACertName
+
+	// KubeadmFrontProxyCAKey is the path to the front proxy CA private key.
+	KubeadmFrontProxyCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.FrontProxyCAKeyName
+
+	// KubeadmEtcdCACert is the path to the etcd CA certificate.
+	KubeadmEtcdCACert = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdCACertName
+
+	// KubeadmEtcdCAKey is the path to the etcd CA private key.
+	KubeadmEtcdCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdCAKeyName
 
 	// KubernetesVersion is the enforced target version of the control plane.
 	KubernetesVersion = "v1.14.1"

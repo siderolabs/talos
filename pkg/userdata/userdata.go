@@ -15,11 +15,13 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"golang.org/x/xerrors"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -253,4 +255,59 @@ func Open(p string) (data *UserData, err error) {
 	}
 
 	return data, nil
+}
+
+type certTest struct {
+	Cert     *x509.PEMEncodedCertificateAndKey
+	Path     string
+	Required bool
+}
+
+// nolint: gocyclo
+func checkCertKeyPair(certs []certTest) error {
+	var result *multierror.Error
+	for _, cert := range certs {
+		// Verify the required sections are present
+		if cert.Required && cert.Cert == nil {
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path, "", ErrRequiredSection))
+		}
+
+		// Bail early since we're already missing the required sections
+		if result.ErrorOrNil() != nil {
+			continue
+		}
+
+		if cert.Cert.Crt == nil {
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".crt", "", ErrRequiredSection))
+		}
+
+		if cert.Cert.Key == nil {
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".key", "", ErrRequiredSection))
+		}
+
+		// test if CA fields are present ( x509 package handles the b64 decode
+		// during yaml unmarshal, so we have the bytes if it was successful )
+		var block *pem.Block
+		block, _ = pem.Decode(cert.Cert.Crt)
+		// nolint: gocritic
+		if block == nil {
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".crt", cert.Cert.Crt, ErrInvalidCert))
+		} else {
+			if block.Type != "CERTIFICATE" {
+				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".crt", cert.Cert.Crt, ErrInvalidCertType))
+			}
+		}
+
+		block, _ = pem.Decode(cert.Cert.Key)
+		// nolint: gocritic
+		if block == nil {
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".key", cert.Cert.Key, ErrInvalidCert))
+		} else {
+			if !strings.HasSuffix(block.Type, "PRIVATE KEY") {
+				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".key", cert.Cert.Key, ErrInvalidCertType))
+			}
+		}
+	}
+
+	return result.ErrorOrNil()
 }
