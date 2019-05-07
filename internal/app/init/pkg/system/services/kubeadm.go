@@ -44,14 +44,48 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
+// nolint: gocyclo
 func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 	if err = writeKubeadmConfig(data); err != nil {
 		return err
 	}
 
 	if data.IsBootstrap() {
-		if err = writeKubeadmPKIFiles(data.Security.Kubernetes.CA); err != nil {
-			return err
+		// Write out all certs we've been provided
+		certs := []struct {
+			Cert     *x509.PEMEncodedCertificateAndKey
+			CertPath string
+			KeyPath  string
+		}{
+			{
+				Cert:     data.Security.Kubernetes.CA,
+				CertPath: constants.KubeadmCACert,
+				KeyPath:  constants.KubeadmCAKey,
+			},
+			{
+				Cert:     data.Security.Kubernetes.SA,
+				CertPath: constants.KubeadmSACert,
+				KeyPath:  constants.KubeadmSAKey,
+			},
+			{
+				Cert:     data.Security.Kubernetes.FrontProxy,
+				CertPath: constants.KubeadmFrontProxyCACert,
+				KeyPath:  constants.KubeadmFrontProxyCAKey,
+			},
+			{
+				Cert:     data.Security.Kubernetes.Etcd,
+				CertPath: constants.KubeadmEtcdCACert,
+				KeyPath:  constants.KubeadmEtcdCAKey,
+			},
+		}
+
+		for _, cert := range certs {
+			if cert.Cert == nil {
+				continue
+			}
+			if err = writeKubeadmPKIFiles(cert.Cert, cert.CertPath, cert.KeyPath); err != nil {
+				return err
+			}
 		}
 	} else if data.IsControlPlane() {
 		if data.Services.Trustd == nil || data.Services.Trustd.BootstrapNode == "" {
@@ -235,25 +269,25 @@ func writeKubeadmConfig(data *userdata.UserData) (err error) {
 	return nil
 }
 
-func writeKubeadmPKIFiles(data *x509.PEMEncodedCertificateAndKey) (err error) {
+func writeKubeadmPKIFiles(data *x509.PEMEncodedCertificateAndKey, cert string, key string) (err error) {
 	if data == nil {
 		return nil
 	}
 	if data.Crt != nil {
 
-		if err = os.MkdirAll(path.Dir(constants.KubeadmCACert), 0600); err != nil {
+		if err = os.MkdirAll(path.Dir(cert), 0600); err != nil {
 			return err
 		}
-		if err = ioutil.WriteFile(constants.KubeadmCACert, data.Crt, 0400); err != nil {
-			return fmt.Errorf("write %s: %v", constants.KubeadmCACert, err)
+		if err = ioutil.WriteFile(cert, data.Crt, 0400); err != nil {
+			return fmt.Errorf("write %s: %v", cert, err)
 		}
 	}
 	if data.Key != nil {
-		if err = os.MkdirAll(path.Dir(constants.KubeadmCAKey), 0600); err != nil {
+		if err = os.MkdirAll(path.Dir(key), 0600); err != nil {
 			return err
 		}
-		if err = ioutil.WriteFile(constants.KubeadmCAKey, data.Key, 0400); err != nil {
-			return fmt.Errorf("write %s: %v", constants.KubeadmCAKey, err)
+		if err = ioutil.WriteFile(key, data.Key, 0400); err != nil {
+			return fmt.Errorf("write %s: %v", key, err)
 		}
 	}
 	return nil

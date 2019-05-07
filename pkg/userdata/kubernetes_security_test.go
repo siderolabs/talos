@@ -36,8 +36,22 @@ func (suite *validateSuite) TestValidateKubernetesSecurity() {
 	suite.Require().Error(err)
 
 	// Successful test
-	kube.CA.Crt = []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----")
-	kube.CA.Key = []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----")
+	kube.CA = &x509.PEMEncodedCertificateAndKey{
+		Crt: []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+		Key: []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----"),
+	}
+	kube.SA = &x509.PEMEncodedCertificateAndKey{
+		Crt: []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+		Key: []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----"),
+	}
+	kube.FrontProxy = &x509.PEMEncodedCertificateAndKey{
+		Crt: []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+		Key: []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----"),
+	}
+	kube.Etcd = &x509.PEMEncodedCertificateAndKey{
+		Crt: []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+		Key: []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----"),
+	}
 	err = kube.Validate(CheckKubernetesCA())
 	suite.Require().NoError(err)
 }
