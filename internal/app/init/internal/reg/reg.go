@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/talos/internal/app/init/proto"
+	"github.com/talos-systems/talos/internal/pkg/upgrade"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 )
@@ -61,4 +62,23 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *pro
 	}
 
 	return
+}
+
+// Upgrade initiates a Talos upgrade
+func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (data *proto.UpgradeReply, err error) {
+
+	if err = upgrade.NewUpgrade(in.Url); err != nil {
+		return data, err
+	}
+
+	// Trigger reboot
+	defer func() {
+		if _, err = r.Reboot(ctx, &empty.Empty{}); err != nil {
+			return
+		}
+	}()
+
+	// profit
+	data = &proto.UpgradeReply{Ack: "Upgrade completed, rebooting node"}
+	return data, err
 }

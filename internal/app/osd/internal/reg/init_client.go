@@ -38,7 +38,12 @@ func (c *InitServiceClient) Reboot(ctx context.Context, empty *empty.Empty) (*pr
 	return c.InitClient.Reboot(ctx, empty)
 }
 
-// Shutdown executes init Shutdown() API
+// Shutdown executes init Shutdown() API.
 func (c *InitServiceClient) Shutdown(ctx context.Context, empty *empty.Empty) (*proto.ShutdownReply, error) {
 	return c.InitClient.Shutdown(ctx, empty)
+}
+
+// Upgrade executes the init Upgrade() API.
+func (c *InitServiceClient) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (data *proto.UpgradeReply, err error) {
+	return c.InitClient.Upgrade(ctx, in)
 }

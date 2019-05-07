@@ -17,14 +17,14 @@ import (
 var (
 	ca           string
 	crt          string
+	csr          string
+	hours        int
+	ip           string
 	key          string
+	kubernetes   bool
+	name         string
 	organization string
 	rsa          bool
-	name         string
-	csr          string
-	ip           string
-	hours        int
-	kubernetes   bool
 	talosconfig  string
 	target       string
 	userdataFile string
