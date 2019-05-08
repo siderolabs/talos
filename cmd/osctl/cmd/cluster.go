@@ -29,6 +29,7 @@ import (
 var (
 	clusterName string
 	image       string
+	workers     int
 )
 
 // clusterCmd represents the cluster command
@@ -95,7 +96,7 @@ func create() (err error) {
 		return err
 	}
 
-	// Create the nodes.
+	// Create the master nodes.
 
 	requests := []*node.Request{
 		{
@@ -119,15 +120,36 @@ func create() (err error) {
 			Name:  "master-3",
 			IP:    net.ParseIP(ips[2]),
 		},
-		{
+	}
+
+	if err := createNodes(requests); err != nil {
+		return err
+	}
+
+	// Create the worker nodes.
+
+	requests = []*node.Request{}
+	for i := 0; i < workers; i++ {
+		r := &node.Request{
 			Type:  generate.TypeJoin,
 			Input: input,
 			Image: image,
-			Name:  "worker-1",
-			IP:    net.ParseIP(ips[3]),
-		},
+			Name:  fmt.Sprintf("worker-%d", i),
+		}
+		requests = append(requests, r)
 	}
 
+	if err := createNodes(requests); err != nil {
+		return err
+	}
+
+	// Create and save the osctl configuration file.
+
+	return saveConfig(input)
+}
+
+// nolint: gocyclo
+func createNodes(requests []*node.Request) (err error) {
 	var wg sync.WaitGroup
 	wg.Add(len(requests))
 
@@ -145,9 +167,7 @@ func create() (err error) {
 
 	wg.Wait()
 
-	// Create and save the osctl configuration file.
-
-	return saveConfig(input)
+	return nil
 }
 
 func destroy() error {
@@ -297,6 +317,7 @@ func saveConfig(input *generate.Input) (err error) {
 func init() {
 	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
+	clusterCmd.PersistentFlags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)
 	rootCmd.AddCommand(clusterCmd)
