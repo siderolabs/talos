@@ -31,12 +31,12 @@ func (suite *validateSuite) TestValidateTrustd() {
 
 	svc := &Services{}
 	svc.Trustd = &Trustd{}
-	err = svc.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpoints())
+	err = svc.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsArePresent())
 	suite.Require().Error(err)
 	suite.Assert().Equal(2, len(err.(*multierror.Error).Errors))
 
 	svc.Trustd.Endpoints = []string{"1.2.3.4"}
-	err = svc.Trustd.Validate(CheckTrustdEndpoints())
+	err = svc.Trustd.Validate(CheckTrustdEndpointsAreValidIPs())
 	suite.Require().NoError(err)
 
 	svc.Trustd.Token = "yolo"
