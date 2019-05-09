@@ -277,6 +277,11 @@ func checkCertKeyPair(certs []certTest) error {
 			continue
 		}
 
+		// If it isn't required, there is a chance that it is nil.
+		if cert.Cert == nil {
+			continue
+		}
+
 		if cert.Cert.Crt == nil {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", cert.Path+".crt", "", ErrRequiredSection))
 		}

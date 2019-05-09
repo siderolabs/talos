@@ -7,6 +7,7 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -59,6 +60,10 @@ func (c *Config) Save(p string) (err error) {
 	configBytes, err := yaml.Marshal(c)
 	if err != nil {
 		return
+	}
+
+	if err = os.MkdirAll(filepath.Dir(p), 0700); err != nil {
+		return err
 	}
 
 	if err = ioutil.WriteFile(p, configBytes, 0600); err != nil {

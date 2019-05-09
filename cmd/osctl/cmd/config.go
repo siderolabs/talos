@@ -131,7 +131,8 @@ var configGenerateCmd = &cobra.Command{
 
 		types := []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin}
 		for _, t := range types {
-			data, err := generate.Userdata(t, input)
+			var data string
+			data, err = generate.Userdata(t, input)
 			if err != nil {
 				helpers.Fatalf("failed to generate configuration file for type %s: %v", t.String(), err)
 			}
@@ -145,6 +146,14 @@ var configGenerateCmd = &cobra.Command{
 			if err = ioutil.WriteFile(strings.ToLower(t.String())+".yaml", []byte(data), 0644); err != nil {
 				helpers.Fatalf("%v", err)
 			}
+		}
+
+		data, err := generate.Talosconfig(input)
+		if err != nil {
+			helpers.Fatalf("failed to generate talosconfig: %v", err)
+		}
+		if err = ioutil.WriteFile("talosconfig", []byte(data), 0644); err != nil {
+			helpers.Fatalf("%v", err)
 		}
 	},
 }
