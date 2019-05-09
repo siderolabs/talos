@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -41,108 +40,27 @@ func Install(args string, data *userdata.UserData) (err error) {
 		return nil
 	}
 
-	// Install the bootloader.
+	manifest := NewManifest(data)
+	for _, targets := range manifest.Targets {
+		for _, target := range targets {
+			// Handle any pre-setup work that's required
+			switch target.Label {
+			case constants.BootPartitionLabel:
+				// Install/Update the bootloader.
+				if err = syslinux.Prepare(target.Device); err != nil {
+					return err
+				}
+			case constants.DataPartitionLabel:
+				// Do nothing
+				continue
+			case constants.NextRootPartitionLabel():
+				// Do nothing
+				continue
+			}
 
-	if err = syslinux.Prepare(data.Install.Boot.Device); err != nil {
-		return err
-	}
-
-	// Download and extract all artifacts.
-
-	dataURLs := make(map[string][]string)
-	dataURLs[path.Join(constants.NewRoot, constants.RootMountPoint)] = []string{data.Install.Root.Rootfs}
-
-	if data.Install.Boot != nil {
-		dataURLs[path.Join(constants.NewRoot, constants.BootMountPoint)] = []string{data.Install.Boot.Kernel, data.Install.Boot.Initramfs}
-	}
-
-	var sourceFile *os.File
-	var destFile *os.File
-
-	var previousMountPoint string
-	for dest, urls := range dataURLs {
-		if dest != previousMountPoint {
-			log.Printf("downloading assets for %s\n", dest)
-			previousMountPoint = dest
-		}
-
-		if err = os.MkdirAll(dest, os.ModeDir); err != nil {
-			return err
-		}
-
-		// Extract artifact if necessary, otherwise place at root of partition/filesystem
-		for _, artifact := range urls {
-			var u *url.URL
-			if u, err = url.Parse(artifact); err != nil {
+			// Handles the download and extraction of assets
+			if err = target.Install(); err != nil {
 				return err
-			}
-			switch u.Scheme {
-			case "http":
-				fallthrough
-			case "https":
-				log.Printf("downloading %s\n", artifact)
-
-				sourceFile, err = download(u, dest)
-				if err != nil {
-					return err
-				}
-
-				// TODO add support for checksum validation of downloaded file
-			case "file":
-				source := u.Path
-				log.Printf("copying %s to %s\n", artifact, filepath.Join(dest, filepath.Base(source)))
-				sourceFile, err = os.Open(source)
-				if err != nil {
-					return err
-				}
-
-				destFile, err = os.Create(filepath.Join(dest, filepath.Base(source)))
-				if err != nil {
-					return err
-				}
-			}
-
-			switch {
-			case strings.HasSuffix(sourceFile.Name(), ".tar") || strings.HasSuffix(sourceFile.Name(), ".tar.gz"):
-				log.Printf("extracting %s to %s\n", sourceFile.Name(), dest)
-
-				err = untar(sourceFile, dest)
-				if err != nil {
-					log.Printf("failed to extract %s to %s\n", sourceFile.Name(), dest)
-					return err
-				}
-
-				if err = sourceFile.Close(); err != nil {
-					log.Printf("failed to close %s", sourceFile.Name())
-					return err
-				}
-
-				if err = os.Remove(sourceFile.Name()); err != nil {
-					log.Printf("failed to remove %s", sourceFile.Name())
-					return err
-				}
-			case strings.HasPrefix(sourceFile.Name(), "/") && destFile != nil:
-				log.Printf("Copying %s to %s\n", sourceFile.Name(), destFile.Name())
-
-				if _, err = io.Copy(destFile, sourceFile); err != nil {
-					log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
-					return err
-				}
-
-				if err = destFile.Close(); err != nil {
-					log.Printf("failed to close %s", destFile.Name())
-					return err
-				}
-
-				if err = sourceFile.Close(); err != nil {
-					log.Printf("failed to close %s", sourceFile.Name())
-					return err
-				}
-			default:
-				if err = sourceFile.Close(); err != nil {
-					log.Printf("failed to close %s", sourceFile.Name())
-					return err
-				}
 			}
 		}
 	}
@@ -267,6 +185,8 @@ func download(artifact *url.URL, base string) (*os.File, error) {
 
 	// Reset downloadedFile file position to 0 so we can immediately read from it
 	_, err = downloadedFile.Seek(0, 0)
+
+	// TODO add support for checksum validation of downloaded file
 
 	return downloadedFile, err
 }

@@ -5,11 +5,16 @@
 package install
 
 import (
+	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -133,6 +138,10 @@ func ExecuteManifest(data *userdata.UserData, manifest *Manifest) (err error) {
 
 // VerifyRootDevice verifies the supplied root device options.
 func VerifyRootDevice(data *userdata.UserData) (err error) {
+	if data.Install == nil || data.Install.Root == nil {
+		return errors.New("a root device is required")
+	}
+
 	if data.Install.Root.Device == "" {
 		return errors.New("a root device is required")
 	}
@@ -156,7 +165,15 @@ func VerifyRootDevice(data *userdata.UserData) (err error) {
 
 // VerifyDataDevice verifies the supplied data device options.
 func VerifyDataDevice(data *userdata.UserData) (err error) {
+	// Set data device to root device if not specified
+	if data.Install.Data == nil {
+		data.Install.Data = &userdata.InstallDevice{}
+	}
+
 	if data.Install.Data.Device == "" {
+		// We can safely assume root device is defined at this point
+		// because VerifyRootDevice should have been called first in
+		// in the chain
 		data.Install.Data.Device = data.Install.Root.Device
 	}
 
@@ -175,19 +192,27 @@ func VerifyDataDevice(data *userdata.UserData) (err error) {
 
 // VerifyBootDevice verifies the supplied boot device options.
 func VerifyBootDevice(data *userdata.UserData) (err error) {
-	if data.Install.Boot != nil {
-		if data.Install.Boot.Device == "" {
-			data.Install.Boot.Device = data.Install.Root.Device
-		}
-		if data.Install.Boot.Size == 0 {
-			data.Install.Boot.Size = DefaultSizeBootDevice
-		}
-		if data.Install.Boot.Kernel == "" {
-			data.Install.Boot.Kernel = DefaultKernelURL
-		}
-		if data.Install.Boot.Initramfs == "" {
-			data.Install.Boot.Initramfs = DefaultInitramfsURL
-		}
+	if data.Install.Boot == nil {
+		data.Install.Boot = &userdata.BootDevice{}
+	}
+
+	if data.Install.Boot.Device == "" {
+		// We can safely assume root device is defined at this point
+		// because VerifyRootDevice should have been called first in
+		// in the chain
+		data.Install.Boot.Device = data.Install.Root.Device
+	}
+
+	if data.Install.Boot.Size == 0 {
+		data.Install.Boot.Size = DefaultSizeBootDevice
+	}
+
+	if data.Install.Boot.Kernel == "" {
+		data.Install.Boot.Kernel = DefaultKernelURL
+	}
+
+	if data.Install.Boot.Initramfs == "" {
+		data.Install.Boot.Initramfs = DefaultInitramfsURL
 	}
 
 	if !data.Install.Force {
@@ -267,39 +292,41 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	}
 
 	bootTarget := &Target{
-		Device:    data.Install.Boot.Device,
-		Label:     constants.BootPartitionLabel,
-		Size:      data.Install.Boot.Size,
-		Force:     data.Install.Force,
-		Test:      false,
-		MountBase: "/tmp",
+		Device:     data.Install.Boot.Device,
+		Label:      constants.BootPartitionLabel,
+		Size:       data.Install.Boot.Size,
+		Force:      data.Install.Force,
+		Test:       false,
+		Assets:     []string{data.Install.Boot.Kernel, data.Install.Boot.Initramfs},
+		MountPoint: path.Join(constants.NewRoot, constants.BootMountPoint),
 	}
 
 	rootATarget := &Target{
-		Device:    data.Install.Root.Device,
-		Label:     constants.RootAPartitionLabel,
-		Size:      data.Install.Root.Size,
-		Force:     data.Install.Force,
-		Test:      false,
-		MountBase: "/tmp",
+		Device:     data.Install.Root.Device,
+		Label:      constants.RootAPartitionLabel,
+		Size:       data.Install.Root.Size,
+		Force:      data.Install.Force,
+		Test:       false,
+		Assets:     []string{data.Install.Root.Rootfs},
+		MountPoint: path.Join(constants.NewRoot, constants.RootMountPoint),
 	}
 
 	rootBTarget := &Target{
-		Device:    data.Install.Root.Device,
-		Label:     constants.RootBPartitionLabel,
-		Size:      data.Install.Root.Size,
-		Force:     data.Install.Force,
-		Test:      false,
-		MountBase: "/tmp",
+		Device:     data.Install.Root.Device,
+		Label:      constants.RootBPartitionLabel,
+		Size:       data.Install.Root.Size,
+		Force:      data.Install.Force,
+		Test:       false,
+		MountPoint: path.Join(constants.NewRoot, constants.RootMountPoint),
 	}
 
 	dataTarget := &Target{
-		Device:    data.Install.Data.Device,
-		Label:     constants.DataPartitionLabel,
-		Size:      data.Install.Data.Size,
-		Force:     data.Install.Force,
-		Test:      false,
-		MountBase: "/tmp",
+		Device:     data.Install.Data.Device,
+		Label:      constants.DataPartitionLabel,
+		Size:       data.Install.Data.Size,
+		Force:      data.Install.Force,
+		Test:       false,
+		MountPoint: path.Join(constants.NewRoot, constants.DataMountPoint),
 	}
 
 	for _, target := range []*Target{bootTarget, rootATarget, rootBTarget, dataTarget} {
@@ -313,11 +340,10 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 
 		for _, part := range extra.Partitions {
 			extraTarget := &Target{
-				Device:    extra.Device,
-				Size:      part.Size,
-				Force:     data.Install.Force,
-				Test:      false,
-				MountBase: "/tmp",
+				Device: extra.Device,
+				Size:   part.Size,
+				Force:  data.Install.Force,
+				Test:   false,
 			}
 
 			manifest.Targets[extra.Device] = append(manifest.Targets[extra.Device], extraTarget)
@@ -336,13 +362,14 @@ type Manifest struct {
 // Target represents an installation partition.
 type Target struct {
 	Label          string
-	MountBase      string
+	MountPoint     string
 	Device         string
 	FileSystemType string
 	PartitionName  string
 	Size           uint
 	Force          bool
 	Test           bool
+	Assets         []string
 	BlockDevice    *blockdevice.BlockDevice
 }
 
@@ -409,4 +436,104 @@ func (t *Target) Format() error {
 		opts = append(opts, xfs.WithLabel(t.Label))
 	}
 	return xfs.MakeFS(t.PartitionName, opts...)
+}
+
+// Install handles downloading the necessary assets and extracting them to
+// the appropriate locations
+// nolint: gocyclo
+func (t *Target) Install() error {
+	// Download and extract all artifacts.
+	var sourceFile *os.File
+	var destFile *os.File
+	var err error
+
+	if err = os.MkdirAll(t.MountPoint, os.ModeDir); err != nil {
+		return err
+	}
+
+	// Extract artifact if necessary, otherwise place at root of partition/filesystem
+	for _, artifact := range t.Assets {
+		var u *url.URL
+		if u, err = url.Parse(artifact); err != nil {
+			return err
+		}
+
+		sourceFile = nil
+		destFile = nil
+
+		// Handle fetching of asset
+		switch u.Scheme {
+		case "http":
+			fallthrough
+		case "https":
+			log.Printf("downloading %s\n", artifact)
+
+			sourceFile, err = download(u, t.MountPoint)
+			if err != nil {
+				return err
+			}
+		case "file":
+			source := u.Path
+			log.Printf("copying %s to %s\n", artifact, filepath.Join(t.MountPoint, filepath.Base(source)))
+			sourceFile, err = os.Open(source)
+			if err != nil {
+				return err
+			}
+
+			destFile, err = os.Create(filepath.Join(t.MountPoint, filepath.Base(source)))
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unsupported path scheme, got %s but supported %s", u.Scheme, "https://|http://|file://")
+		}
+
+		// Handle extraction/Installation
+		switch {
+		// tar
+		case strings.HasSuffix(sourceFile.Name(), ".tar") || strings.HasSuffix(sourceFile.Name(), ".tar.gz"):
+			log.Printf("extracting %s to %s\n", sourceFile.Name(), t.MountPoint)
+
+			err = untar(sourceFile, t.MountPoint)
+			if err != nil {
+				log.Printf("failed to extract %s to %s\n", sourceFile.Name(), t.MountPoint)
+				return err
+			}
+
+			if err = sourceFile.Close(); err != nil {
+				log.Printf("failed to close %s", sourceFile.Name())
+				return err
+			}
+
+			if err = os.Remove(sourceFile.Name()); err != nil {
+				log.Printf("failed to remove %s", sourceFile.Name())
+				return err
+			}
+		// single file
+		case strings.HasPrefix(sourceFile.Name(), "/") && destFile != nil:
+			log.Printf("copying %s to %s\n", sourceFile.Name(), destFile.Name())
+
+			if _, err = io.Copy(destFile, sourceFile); err != nil {
+				log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
+				return err
+			}
+
+			if err = destFile.Close(); err != nil {
+				log.Printf("failed to close %s", destFile.Name())
+				return err
+			}
+
+			if err = sourceFile.Close(); err != nil {
+				log.Printf("failed to close %s", sourceFile.Name())
+				return err
+			}
+		default:
+			if err = sourceFile.Close(); err != nil {
+				log.Printf("failed to close %s", sourceFile.Name())
+				return err
+			}
+		}
+	}
+
+	return nil
 }
