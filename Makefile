@@ -241,14 +241,6 @@ osctl-darwin-amd64: buildkitd
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
-.PHONY: osinstall-linux-amd64
-osinstall-linux-amd64: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
 .PHONY: udevd
 udevd: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
