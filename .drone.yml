@@ -136,6 +136,7 @@ steps:
   image: autonomy/build-container:latest
   pull: always
   environment:
+    PACKER_LOG: "1"
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
     BINDIR: /usr/local/bin
     AWS_ACCESS_KEY_ID:
