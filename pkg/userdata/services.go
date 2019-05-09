@@ -139,20 +139,30 @@ func CheckTrustdAuth() TrustdCheck {
 	}
 }
 
-// CheckTrustdEndpoints ensures that the trustd endpoints have been specified
-func CheckTrustdEndpoints() TrustdCheck {
+// CheckTrustdEndpointsAreValidIPs ensures that the specified trustd endpoints
+/// are valid IP addresses.
+func CheckTrustdEndpointsAreValidIPs() TrustdCheck {
 	return func(t *Trustd) error {
 		var result *multierror.Error
-
-		if len(t.Endpoints) == 0 {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints", t.Endpoints, ErrRequiredSection))
-		}
 
 		for idx, endpoint := range t.Endpoints {
 			if ip := net.ParseIP(endpoint); ip == nil {
 				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints["+strconv.Itoa(idx)+"]", endpoint, ErrInvalidAddress))
 			}
 
+		}
+
+		return result.ErrorOrNil()
+	}
+}
+
+// CheckTrustdEndpointsArePresent ensures that tustd endpoints are present.
+func CheckTrustdEndpointsArePresent() TrustdCheck {
+	return func(t *Trustd) error {
+		var result *multierror.Error
+
+		if len(t.Endpoints) == 0 {
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints", t.Endpoints, ErrRequiredSection))
 		}
 
 		return result.ErrorOrNil()

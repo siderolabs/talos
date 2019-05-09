@@ -59,7 +59,7 @@ func (data *UserData) Validate() error {
 
 	// All nodeType checks
 	result = multierror.Append(result, data.Services.Validate(CheckServices()))
-	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpoints()))
+	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsAreValidIPs()))
 	result = multierror.Append(result, data.Services.Init.Validate(CheckInitCNI()))
 
 	// Surely there's a better way to do this
@@ -74,7 +74,9 @@ func (data *UserData) Validate() error {
 		result = multierror.Append(result, data.Security.OS.Validate(CheckOSCA()))
 		result = multierror.Append(result, data.Security.Kubernetes.Validate(CheckKubernetesCA()))
 	case "master":
+		result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
 	case "worker":
+		result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
 	}
 
 	return result.ErrorOrNil()
