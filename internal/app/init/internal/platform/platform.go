@@ -31,11 +31,7 @@ func NewPlatform() (p Platform, err error) {
 	if platform, ok := kernel.GetParameter(constants.KernelParamPlatform); ok {
 		switch platform {
 		case "aws":
-			if aws.IsEC2() {
-				p = &aws.AWS{}
-			} else {
-				return nil, fmt.Errorf("failed to verify EC2 PKCS7 signature")
-			}
+			p = &aws.AWS{}
 		case "googlecloud":
 			p = &googlecloud.GoogleCloud{}
 		case "vmware":
