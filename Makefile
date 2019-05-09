@@ -176,7 +176,7 @@ talos-aws: installer
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
-		autonomy/installer:$(TAG) ami -var regions=${AWS_REGIONS}
+		autonomy/installer:$(TAG) ami -var regions=${AWS_PUBLISH_REGIONS} -var visibility=all
 
 .PHONY: talos-raw
 talos-raw: installer

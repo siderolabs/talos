@@ -132,6 +132,28 @@ steps:
   depends_on:
   - basic-integration
 
+- name: ami
+  image: autonomy/build-container:latest
+  pull: always
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_DEFAULT_REGION: us-west-2
+    AWS_PUBLISH_REGIONS: us-west-1,us-west-2,us-east-1,us-east-2,eu-central-1
+  commands:
+  - make talos-aws
+  volumes:
+  - name: dockersock
+    path: /var/run
+  when:
+    event:
+      exclude:
+      - pull_request
+  depends_on:
+  - push
+
 - name: release
   image: plugins/github-release
   settings:
@@ -148,6 +170,7 @@ steps:
   depends_on:
   - basic-integration
   - iso
+  - ami
 
 volumes:
 - name: dockersock
