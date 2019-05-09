@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,7 +64,18 @@ func Install(args string, data *userdata.UserData) (err error) {
 		}
 	}
 
-	if err = syslinux.Install(args); err != nil {
+	extlinuxconf := &syslinux.ExtlinuxConf{
+		Default: constants.CurrentRootPartitionLabel(),
+		Labels: []*syslinux.ExtlinuxConfLabel{
+			{
+				Root:   constants.CurrentRootPartitionLabel(),
+				Kernel: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
+				Initrd: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Initramfs)),
+				Append: args,
+			},
+		},
+	}
+	if err = syslinux.Install(filepath.Join(constants.NewRoot, constants.BootMountPoint), extlinuxconf); err != nil {
 		return err
 	}
 
@@ -156,14 +166,17 @@ func untar(tarball *os.File, dst string) error {
 	}
 }
 
-func download(artifact *url.URL, base string) (*os.File, error) {
-	downloadedFile, err := os.Create(filepath.Join(base, filepath.Base(artifact.Path)))
+func download(artifact, dest string) (*os.File, error) {
+	if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+		return nil, err
+	}
+	downloadedFile, err := os.Create(dest)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the data
-	resp, err := http.Get(artifact.String())
+	resp, err := http.Get(artifact)
 	if err != nil {
 		return downloadedFile, err
 	}

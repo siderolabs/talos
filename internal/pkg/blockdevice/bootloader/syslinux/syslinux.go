@@ -6,24 +6,42 @@ package syslinux
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"text/template"
-
-	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/version"
 )
 
-const extlinuxConfig = `DEFAULT Talos
-  SAY Talos ({{ .Version }})
-LABEL Talos
-  KERNEL /vmlinuz
-  INITRD /initramfs.xz
-  APPEND {{ .Append }}`
+const extlinuxConf = `DEFAULT {{ .Default }}
+  SAY Talos
+{{- range .Labels }}
+INCLUDE /{{ .Root }}/include.conf
+{{ end }}`
+
+const extlinuxConfLabel = `LABEL {{ .Root }}
+  KERNEL {{ .Kernel }}
+  INITRD {{ .Initrd }}
+  APPEND {{ .Append }}
+`
 
 const gptmbrbin = "/usr/lib/syslinux/gptmbr.bin"
+
+// ExtlinuxConf reprsents the syslinux extlinux.conf file.
+type ExtlinuxConf struct {
+	Default string
+	Labels  []*ExtlinuxConfLabel
+}
+
+// ExtlinuxConfLabel reprsents a label in the syslinux extlinux.conf file.
+type ExtlinuxConfLabel struct {
+	Root   string
+	Kernel string
+	Initrd string
+	Append string
+}
 
 // Syslinux represents the syslinux bootloader.
 type Syslinux struct{}
@@ -50,33 +68,60 @@ func Prepare(dev string) (err error) {
 
 // Install implements the Bootloader interface. It sets up extlinux with the
 // specified kernel parameters.
-func Install(args string) (err error) {
-	aux := struct {
-		Version string
-		Append  string
-	}{
-		Version: version.Tag,
-		Append:  args,
+func Install(base string, config interface{}) (err error) {
+	extlinuxconf, ok := config.(*ExtlinuxConf)
+	if !ok {
+		return errors.New("expected extlinux")
 	}
 
-	b := []byte{}
-	wr := bytes.NewBuffer(b)
-	t := template.Must(template.New("extlinux").Parse(extlinuxConfig))
-	if err = t.Execute(wr, aux); err != nil {
+	path := filepath.Join(base, "extlinux", "extlinux.conf")
+	if err = WriteExtlinuxConf(base, path, extlinuxconf); err != nil {
 		return err
 	}
 
-	if err = os.MkdirAll(constants.NewRoot+"/boot/extlinux", os.ModeDir); err != nil {
+	if err = cmd("extlinux", "--install", filepath.Dir(path)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// WriteExtlinuxConf write extlinux.conf to disk.
+func WriteExtlinuxConf(base, path string, extlinuxconf *ExtlinuxConf) (err error) {
+	b := []byte{}
+	wr := bytes.NewBuffer(b)
+	t := template.Must(template.New("extlinux").Parse(extlinuxConf))
+	if err = t.Execute(wr, extlinuxconf); err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(path)
+	if err = os.MkdirAll(dir, os.ModeDir); err != nil {
 		return err
 	}
 
 	log.Println("writing extlinux.conf to disk")
-	if err = ioutil.WriteFile(constants.NewRoot+"/boot/extlinux/extlinux.conf", wr.Bytes(), 0600); err != nil {
+	if err = ioutil.WriteFile(path, wr.Bytes(), 0600); err != nil {
 		return err
 	}
 
-	if err = cmd("extlinux", "--install", constants.NewRoot+"/boot/extlinux"); err != nil {
-		return err
+	for _, label := range extlinuxconf.Labels {
+		b = []byte{}
+		wr = bytes.NewBuffer(b)
+		t = template.Must(template.New("extlinux").Parse(extlinuxConfLabel))
+		if err = t.Execute(wr, label); err != nil {
+			return err
+		}
+
+		dir = filepath.Join(base, label.Root)
+		if err = os.MkdirAll(dir, os.ModeDir); err != nil {
+			return err
+		}
+
+		log.Printf("writing extlinux label %s to disk", label.Root)
+		if err = ioutil.WriteFile(filepath.Join(dir, "include.conf"), wr.Bytes(), 0600); err != nil {
+			return err
+		}
 	}
 
 	return nil

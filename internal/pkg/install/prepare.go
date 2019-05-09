@@ -292,22 +292,36 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	}
 
 	bootTarget := &Target{
-		Device:     data.Install.Boot.Device,
-		Label:      constants.BootPartitionLabel,
-		Size:       data.Install.Boot.Size,
-		Force:      data.Install.Force,
-		Test:       false,
-		Assets:     []string{data.Install.Boot.Kernel, data.Install.Boot.Initramfs},
+		Device: data.Install.Boot.Device,
+		Label:  constants.BootPartitionLabel,
+		Size:   data.Install.Boot.Size,
+		Force:  data.Install.Force,
+		Test:   false,
+		Assets: []*Asset{
+			{
+				Source:      data.Install.Boot.Kernel,
+				Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
+			},
+			{
+				Source:      data.Install.Boot.Initramfs,
+				Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Initramfs)),
+			},
+		},
 		MountPoint: path.Join(constants.NewRoot, constants.BootMountPoint),
 	}
 
 	rootATarget := &Target{
-		Device:     data.Install.Root.Device,
-		Label:      constants.RootAPartitionLabel,
-		Size:       data.Install.Root.Size,
-		Force:      data.Install.Force,
-		Test:       false,
-		Assets:     []string{data.Install.Root.Rootfs},
+		Device: data.Install.Root.Device,
+		Label:  constants.RootAPartitionLabel,
+		Size:   data.Install.Root.Size,
+		Force:  data.Install.Force,
+		Test:   false,
+		Assets: []*Asset{
+			{
+				Source:      data.Install.Root.Rootfs,
+				Destination: filepath.Base(data.Install.Root.Rootfs),
+			},
+		},
 		MountPoint: path.Join(constants.NewRoot, constants.RootMountPoint),
 	}
 
@@ -369,8 +383,14 @@ type Target struct {
 	Size           uint
 	Force          bool
 	Test           bool
-	Assets         []string
+	Assets         []*Asset
 	BlockDevice    *blockdevice.BlockDevice
+}
+
+// Asset represents a file required by a target.
+type Asset struct {
+	Source      string
+	Destination string
 }
 
 // Partition creates a new partition on the specified device
@@ -452,9 +472,9 @@ func (t *Target) Install() error {
 	}
 
 	// Extract artifact if necessary, otherwise place at root of partition/filesystem
-	for _, artifact := range t.Assets {
+	for _, asset := range t.Assets {
 		var u *url.URL
-		if u, err = url.Parse(artifact); err != nil {
+		if u, err = url.Parse(asset.Source); err != nil {
 			return err
 		}
 
@@ -466,21 +486,27 @@ func (t *Target) Install() error {
 		case "http":
 			fallthrough
 		case "https":
-			log.Printf("downloading %s\n", artifact)
-
-			sourceFile, err = download(u, t.MountPoint)
+			log.Printf("downloading %s\n", asset.Source)
+			dest := filepath.Join(t.MountPoint, asset.Destination)
+			sourceFile, err = download(u.String(), dest)
 			if err != nil {
 				return err
 			}
 		case "file":
 			source := u.Path
-			log.Printf("copying %s to %s\n", artifact, filepath.Join(t.MountPoint, filepath.Base(source)))
+			dest := filepath.Join(t.MountPoint, asset.Destination)
+
+			log.Printf("copying %s to %s\n", asset.Source, dest)
 			sourceFile, err = os.Open(source)
 			if err != nil {
 				return err
 			}
 
-			destFile, err = os.Create(filepath.Join(t.MountPoint, filepath.Base(source)))
+			if err = os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+				return err
+			}
+
+			destFile, err = os.Create(dest)
 			if err != nil {
 				return err
 			}
