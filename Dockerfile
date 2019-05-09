@@ -135,19 +135,6 @@ FROM scratch AS udevd
 COPY --from=udevd-build /udevd /udevd
 ENTRYPOINT ["/udevd"]
 
-# The osinstall target builds the installer image.
-
-FROM base AS osinstall-linux-amd64-build
-ARG SHA
-ARG TAG
-ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
-WORKDIR /src/cmd/osinstall
-RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osinstall-linux-amd64
-RUN chmod +x /osinstall-linux-amd64
-
-FROM scratch AS osinstall-linux-amd64
-COPY --from=osinstall-linux-amd64-build /osinstall-linux-amd64 /osinstall-linux-amd64
-
 # The binaries target allows for parallel compilation of all binaries.
 
 FROM scratch AS binaries-build
@@ -159,12 +146,10 @@ COPY --from=ntpd / /
 COPY --from=udevd / /
 COPY --from=osctl-linux-amd64 / /
 COPY --from=osctl-darwin-amd64 / /
-COPY --from=osinstall-linux-amd64 / /
 
 FROM scratch AS binaries
 COPY --from=binaries-build /osctl-linux-amd64 /osctl-linux-amd64
 COPY --from=binaries-build /osctl-darwin-amd64 /osctl-darwin-amd64
-COPY --from=binaries-build /osinstall-linux-amd64 /osinstall-linux-amd64
 
 # The kernel target is the linux kernel.
 
