@@ -316,8 +316,8 @@ func saveConfig(input *generate.Input) (err error) {
 
 func init() {
 	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
+	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
-	clusterCmd.PersistentFlags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)
 	rootCmd.AddCommand(clusterCmd)
