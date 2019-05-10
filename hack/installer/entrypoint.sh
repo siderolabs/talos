@@ -106,7 +106,7 @@ function extract_boot_partition() {
   extlinux --install /mnt/extlinux
   create_extlinux_conf /mnt/extlinux/extlinux.conf
   mkdir -p /mnt/ROOT-A
-  create_extlinux_conf_label /mnt/ROOT-A
+  create_extlinux_conf_label /mnt/ROOT-A/include.conf
   cp -v /generated/boot/vmlinuz /mnt/ROOT-A
   cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
   umount -v /mnt
