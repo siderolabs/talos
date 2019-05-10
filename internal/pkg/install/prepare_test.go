@@ -88,14 +88,23 @@ func (suite *validateSuite) TestTargetInstall() {
 	// Attempt to download and copy files
 	target := &Target{
 		MountPoint: dir,
-		Assets:     []string{"file://" + tempfile.Name(), ts.URL + "/yolo"},
+		Assets: []*Asset{
+			{
+				Source:      "file://" + tempfile.Name(),
+				Destination: "/path/relative/to/mountpoint/example",
+			},
+			{
+				Source:      ts.URL + "/yolo",
+				Destination: "/path/relative/to/mountpoint/yolo",
+			},
+		},
 	}
 
 	suite.Require().NoError(target.Install())
 
-	for _, expectedFile := range []string{filepath.Base(tempfile.Name()), "yolo"} {
+	for _, expectedFile := range target.Assets {
 		// Verify downloaded/copied file is at the appropriate location
-		_, err := os.Stat(filepath.Join(target.MountPoint, expectedFile))
+		_, err := os.Stat(filepath.Join(target.MountPoint, expectedFile.Destination))
 		suite.Require().NoError(err)
 	}
 }

@@ -7,5 +7,5 @@ package bootloader
 // Bootloader describes a bootloader.
 type Bootloader interface {
 	Prepare(string) error
-	Install(string) error
+	Install(string, interface{}) error
 }

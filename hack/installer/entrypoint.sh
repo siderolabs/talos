@@ -67,20 +67,22 @@ function create_vmdk() {
 }
 
 function create_iso() {
-  mkdir -p /mnt/boot/isolinux
-  cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/boot/isolinux/isolinux.bin
-  cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/boot/isolinux/ldlinux.c32
+  mkdir -p /mnt/isolinux
+  cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/isolinux/isolinux.bin
+  cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/isolinux/ldlinux.c32
   TALOS_USERDATA=none
   TALOS_PLATFORM=iso
   EXTRA_KERNEL_PARAMS="random.trust_cpu=on printk.devkmsg=on"
-  create_extlinux_conf /mnt/boot/isolinux/isolinux.cfg
-  cp -v /generated/boot/vmlinuz /mnt/boot
-  cp -v /generated/boot/initramfs.xz /mnt/boot
+  create_extlinux_conf /mnt/isolinux/isolinux.cfg
+  mkdir -p /mnt/ROOT-A
+  create_extlinux_conf_label /mnt/ROOT-A/include.conf
+  cp -v /generated/boot/vmlinuz /mnt/ROOT-A
+  cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
   mkdir -p /mnt/usr/install
   cp -v /generated/rootfs.tar.gz /mnt/usr/install/rootfs.tar.gz
   cp -v /generated/boot/vmlinuz /mnt/usr/install/vmlinuz
   cp -v /generated/boot/initramfs.xz /mnt/usr/install/initramfs.xz
-  mkisofs -V TALOS -o ${ISO_IMAGE} -r -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /mnt
+  mkisofs -V TALOS -o ${ISO_IMAGE} -r -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /mnt
   isohybrid ${ISO_IMAGE}
 }
 
@@ -100,11 +102,13 @@ function extract_boot_partition() {
   local partition=$1
   mkfs.vfat ${partition}
   mount -v ${partition} /mnt
-  mkdir -pv /mnt/boot/extlinux
-  extlinux --install /mnt/boot/extlinux
-  create_extlinux_conf /mnt/boot/extlinux/extlinux.conf
-  cp -v /generated/boot/vmlinuz /mnt/boot
-  cp -v /generated/boot/initramfs.xz /mnt/boot
+  mkdir -pv /mnt/extlinux
+  extlinux --install /mnt/extlinux
+  create_extlinux_conf /mnt/extlinux/extlinux.conf
+  mkdir -p /mnt/ROOT-A
+  create_extlinux_conf_label /mnt/ROOT-A
+  cp -v /generated/boot/vmlinuz /mnt/ROOT-A
+  cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
   umount -v /mnt
 }
 
@@ -128,11 +132,17 @@ function create_extlinux_conf() {
   # AWS recommends setting the nvme_core.io_timeout to the highest value possible.
   # See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
   cat <<EOF >$1
-DEFAULT Talos
-  SAY Talos (${VERSION})
-LABEL Talos
-  KERNEL /boot/vmlinuz
-  INITRD /boot/initramfs.xz
+DEFAULT ROOT-A
+  SAY Talos
+INCLUDE /ROOT-A/include.conf
+EOF
+}
+
+function create_extlinux_conf_label() {
+  cat <<EOF >$1
+LABEL ROOT-A
+  KERNEL /ROOT-A/vmlinuz
+  INITRD /ROOT-A/initramfs.xz
   APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 ${KERNEL_SERIAL_PORT} talos.userdata=${TALOS_USERDATA} talos.platform=${TALOS_PLATFORM}
 EOF
 }
