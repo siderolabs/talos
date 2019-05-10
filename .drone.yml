@@ -150,12 +150,13 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  when:
-    event:
-      exclude:
-      - pull_request
+  # when:
+  #   event:
+  #     exclude:
+  #     - pull_request
   depends_on:
-  - push
+  - build
+  # - push
 
 - name: release
   image: plugins/github-release

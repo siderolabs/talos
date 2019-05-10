@@ -245,7 +245,7 @@ WORKDIR /
 COPY --from=kernel /vmlinuz /generated/boot/vmlinuz
 COPY --from=rootfs /rootfs.tar.gz /generated/rootfs.tar.gz
 COPY --from=initramfs /initramfs.xz /generated/boot/initramfs.xz
-RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip -o /tmp/packer.zip \
+RUN curl -L https://releases.hashicorp.com/packer/1.4.0/packer_1.4.0_linux_amd64.zip -o /tmp/packer.zip \
     && unzip -d /tmp /tmp/packer.zip \
     && mv /tmp/packer /bin \
     && rm /tmp/packer.zip
