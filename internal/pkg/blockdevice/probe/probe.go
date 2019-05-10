@@ -111,7 +111,7 @@ func All() (probed []*ProbedBlockDevice, err error) {
 // FileSystem probes the provided path's file system.
 func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 	var f *os.File
-	if f, err = os.Open(path); err != nil {
+	if f, err = os.OpenFile(path, os.O_RDONLY, os.ModeDevice); err != nil {
 		return nil, err
 	}
 	// nolint: errcheck
