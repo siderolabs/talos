@@ -7,7 +7,9 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -71,9 +73,11 @@ func topUI(c *client.Client) {
 
 	l := widgets.NewParagraph()
 	l.Title = "Top"
+	l.WrapText = false
 
-	draw := func(output string) {
-		l.Text = output
+	var processOutput string
+
+	draw := func() {
 
 		// Attempt to get terminal dimensions
 		// Since we're getting this data on each call
@@ -85,15 +89,24 @@ func topUI(c *client.Client) {
 		// x, y, w, h
 		l.SetRect(0, 0, w, h)
 
+		processOutput, err = topOutput(c)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		// Dont refresh if we dont have any output
+		if processOutput == "" {
+			return
+		}
+
+		// Truncate our output based on terminal size
+		l.Text = processOutput
+
 		ui.Render(l)
 	}
 
-	procs, err := topOutput(c)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	draw(procs)
+	draw()
 
 	uiEvents := ui.PollEvents()
 	ticker := time.NewTicker(time.Second).C
@@ -109,12 +122,7 @@ func topUI(c *client.Client) {
 				sortMethod = "cpu"
 			}
 		case <-ticker:
-			procs, err := topOutput(c)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			draw(procs)
+			draw()
 		}
 	}
 }
@@ -163,8 +171,11 @@ var cpu = func(p1, p2 *proc.ProcessList) bool {
 func topOutput(c *client.Client) (output string, err error) {
 	procs, err := c.Top()
 	if err != nil {
-		log.Println(err)
-		return
+		// TODO: Figure out how to expose errors to client without messing
+		// up display
+		// TODO: Update server side code to not throw an error when process
+		// no longer exists ( /proc/1234/comm no such file or directory )
+		return output, nil
 	}
 
 	switch sortMethod {
@@ -175,14 +186,22 @@ func topOutput(c *client.Client) (output string, err error) {
 	}
 
 	s := make([]string, 0, len(procs))
-	s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command | Exec/Args")
+	s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command")
+	var cmdline string
 	for _, p := range procs {
+		switch {
+		case p.Executable == "":
+			cmdline = p.Command
+		case p.Args != "" && strings.Fields(p.Args)[0] == filepath.Base(strings.Fields(p.Executable)[0]):
+			cmdline = strings.Replace(p.Args, strings.Fields(p.Args)[0], p.Executable, 1)
+		default:
+			cmdline = p.Args
+		}
+
 		s = append(s,
-			fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s | %s",
-				p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), p.Command, p.Executable))
+			fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s",
+				p.Pid, p.State, p.NumThreads, p.CPUTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), cmdline))
 	}
 
-	output = columnize.SimpleFormat(s)
-
-	return
+	return columnize.SimpleFormat(s), err
 }
