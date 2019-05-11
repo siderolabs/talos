@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 )
 
@@ -105,7 +106,15 @@ func NewListener(setters ...Option) (net.Listener, error) {
 	case "unix":
 		address = opts.SocketPath
 
-		// make any dirs on the path to the listening socket
+		// Unlink the address or we will get the error:
+		// bind: address already in use.
+		if _, err := os.Stat(address); err == nil {
+			if err := unix.Unlink(address); err != nil {
+				return nil, err
+			}
+		}
+
+		// Make any dirs on the path to the listening socket.
 		if err := os.MkdirAll(filepath.Dir(address), 0700); err != nil {
 			return nil, errors.Wrap(err, "error creating containing directory for the file socket")
 		}
