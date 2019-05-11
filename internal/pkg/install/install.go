@@ -64,9 +64,9 @@ func Install(args string, data *userdata.UserData) (err error) {
 		}
 	}
 
-	extlinuxconf := &syslinux.ExtlinuxConf{
+	syslinuxcfg := &syslinux.Cfg{
 		Default: constants.CurrentRootPartitionLabel(),
-		Labels: []*syslinux.ExtlinuxConfLabel{
+		Labels: []*syslinux.Label{
 			{
 				Root:   constants.CurrentRootPartitionLabel(),
 				Kernel: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
@@ -75,7 +75,7 @@ func Install(args string, data *userdata.UserData) (err error) {
 			},
 		},
 	}
-	if err = syslinux.Install(filepath.Join(constants.NewRoot, constants.BootMountPoint), extlinuxconf); err != nil {
+	if err = syslinux.Install(filepath.Join(constants.NewRoot, constants.BootMountPoint), syslinuxcfg); err != nil {
 		return err
 	}
 

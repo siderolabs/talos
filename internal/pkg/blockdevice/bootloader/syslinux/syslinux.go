@@ -15,28 +15,32 @@ import (
 	"text/template"
 )
 
-const extlinuxConf = `DEFAULT {{ .Default }}
+const syslinuxCfgTpl = `DEFAULT {{ .Default }}
   SAY Talos
 {{- range .Labels }}
-INCLUDE /{{ .Root }}/include.conf
-{{ end }}`
+INCLUDE /{{ .Root }}/include.cfg
+{{- end }}`
 
-const extlinuxConfLabel = `LABEL {{ .Root }}
+const syslinuxLabelTpl = `LABEL {{ .Root }}
   KERNEL {{ .Kernel }}
   INITRD {{ .Initrd }}
   APPEND {{ .Append }}
 `
 
-const gptmbrbin = "/usr/lib/syslinux/gptmbr.bin"
+const (
+	gptmbrbin   = "/usr/lib/syslinux/gptmbr.bin"
+	syslinuxefi = "/usr/lib/syslinux/syslinux.efi"
+	ldlinuxe64  = "/usr/lib/syslinux/ldlinux.e64"
+)
 
-// ExtlinuxConf reprsents the syslinux extlinux.conf file.
-type ExtlinuxConf struct {
+// Cfg reprsents the syslinux.cfg file.
+type Cfg struct {
 	Default string
-	Labels  []*ExtlinuxConfLabel
+	Labels  []*Label
 }
 
-// ExtlinuxConfLabel reprsents a label in the syslinux extlinux.conf file.
-type ExtlinuxConfLabel struct {
+// Label reprsents a label in the syslinux.cfg file.
+type Label struct {
 	Root   string
 	Kernel string
 	Initrd string
@@ -46,7 +50,7 @@ type ExtlinuxConfLabel struct {
 // Syslinux represents the syslinux bootloader.
 type Syslinux struct{}
 
-// Prepare implements the Bootloader interface. It works by invoking writing
+// Prepare implements the Bootloader interface. It works by writing
 // gptmbr.bin to a block device.
 func Prepare(dev string) (err error) {
 	b, err := ioutil.ReadFile(gptmbrbin)
@@ -66,32 +70,59 @@ func Prepare(dev string) (err error) {
 	return nil
 }
 
-// Install implements the Bootloader interface. It sets up extlinux with the
+// Install implements the Bootloader interface. It sets up syslinux with the
 // specified kernel parameters.
 func Install(base string, config interface{}) (err error) {
-	extlinuxconf, ok := config.(*ExtlinuxConf)
+	syslinuxcfg, ok := config.(*Cfg)
 	if !ok {
-		return errors.New("expected extlinux")
+		return errors.New("expected a syslinux config")
 	}
 
-	path := filepath.Join(base, "extlinux", "extlinux.conf")
-	if err = WriteExtlinuxConf(base, path, extlinuxconf); err != nil {
+	efiDir := filepath.Join(base, "EFI", "BOOT")
+	if err = os.MkdirAll(efiDir, 0700); err != nil {
 		return err
 	}
 
-	if err = cmd("extlinux", "--install", filepath.Dir(path)); err != nil {
+	input, err := ioutil.ReadFile(syslinuxefi)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(efiDir+"/BOOTX64.EFI", input, 0600)
+	if err != nil {
+		return err
+	}
+
+	input, err = ioutil.ReadFile(ldlinuxe64)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(efiDir+"/ldlinux.e64", input, 0600)
+	if err != nil {
+		return err
+	}
+
+	paths := []string{filepath.Join(base, "syslinux", "syslinux.cfg"), filepath.Join(base, "EFI", "syslinux", "syslinux.cfg")}
+	for _, path := range paths {
+		if err = WriteSyslinuxCfg(base, path, syslinuxcfg); err != nil {
+			return err
+		}
+	}
+
+	if err = cmd("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// WriteExtlinuxConf write extlinux.conf to disk.
-func WriteExtlinuxConf(base, path string, extlinuxconf *ExtlinuxConf) (err error) {
+// WriteSyslinuxCfg write syslinux.cfg to disk.
+func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 	b := []byte{}
 	wr := bytes.NewBuffer(b)
-	t := template.Must(template.New("extlinux").Parse(extlinuxConf))
-	if err = t.Execute(wr, extlinuxconf); err != nil {
+	t := template.Must(template.New("syslinux").Parse(syslinuxCfgTpl))
+	if err = t.Execute(wr, syslinuxcfg); err != nil {
 		return err
 	}
 
@@ -100,15 +131,15 @@ func WriteExtlinuxConf(base, path string, extlinuxconf *ExtlinuxConf) (err error
 		return err
 	}
 
-	log.Println("writing extlinux.conf to disk")
+	log.Println("writing syslinux.cfg to disk")
 	if err = ioutil.WriteFile(path, wr.Bytes(), 0600); err != nil {
 		return err
 	}
 
-	for _, label := range extlinuxconf.Labels {
+	for _, label := range syslinuxcfg.Labels {
 		b = []byte{}
 		wr = bytes.NewBuffer(b)
-		t = template.Must(template.New("extlinux").Parse(extlinuxConfLabel))
+		t = template.Must(template.New("syslinux").Parse(syslinuxLabelTpl))
 		if err = t.Execute(wr, label); err != nil {
 			return err
 		}
@@ -118,8 +149,8 @@ func WriteExtlinuxConf(base, path string, extlinuxconf *ExtlinuxConf) (err error
 			return err
 		}
 
-		log.Printf("writing extlinux label %s to disk", label.Root)
-		if err = ioutil.WriteFile(filepath.Join(dir, "include.conf"), wr.Bytes(), 0600); err != nil {
+		log.Printf("writing syslinux label %s to disk", label.Root)
+		if err = ioutil.WriteFile(filepath.Join(dir, "include.cfg"), wr.Bytes(), 0600); err != nil {
 			return err
 		}
 	}
