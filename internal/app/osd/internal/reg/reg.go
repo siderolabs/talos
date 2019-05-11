@@ -98,14 +98,14 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 // Stats implements the proto.OSDServer interface.
 // nolint: gocyclo
 func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply *proto.StatsReply, err error) {
-	client, _, err := connect(in.Namespace)
+	client, nsctx, err := connect(in.Namespace)
 	if err != nil {
 		return nil, err
 	}
 	// nolint: errcheck
 	defer client.Close()
 
-	containers, err := client.Containers(ctx)
+	containers, err := client.Containers(nsctx)
 	if err != nil {
 		return nil, err
 	}
@@ -113,20 +113,20 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 	stats := []*proto.Stat{}
 
 	for _, container := range containers {
-		task, err := container.Task(ctx, nil)
+		task, err := container.Task(nsctx, nil)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		status, err := task.Status(ctx)
+		status, err := task.Status(nsctx)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
 		if status.Status == containerd.Running {
-			metrics, err := task.Metrics(ctx)
+			metrics, err := task.Metrics(nsctx)
 			if err != nil {
 				log.Println(err)
 				continue
