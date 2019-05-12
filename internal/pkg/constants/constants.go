@@ -162,8 +162,12 @@ const (
 // CurrentRootPartitionLabel returns the label of the currently active root
 // partition.
 func CurrentRootPartitionLabel() string {
-	param, _ := kernel.GetParameter(KernelCurrentRoot)
-	switch param {
+	var param *string
+	if param = kernel.Cmdline().Get(KernelCurrentRoot).First(); param == nil {
+		return RootAPartitionLabel
+	}
+
+	switch *param {
 	case "B":
 		return RootBPartitionLabel
 	case "A":

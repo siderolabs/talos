@@ -10,26 +10,31 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 )
 
-// RequiredKSPPKernelParameters is the set of kernel parameters required to
-// satisfy the KSPP.
-// # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
-var RequiredKSPPKernelParameters = map[string]string{"page_poison": "1", "slab_nomerge": "", "pti": "on"}
+var (
+	// RequiredKSPPKernelParameters is the set of kernel parameters required to
+	// satisfy the KSPP.
+	// # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
+	RequiredKSPPKernelParameters = kernel.Parameters{
+		kernel.NewParameter("page_poison").Append("1"),
+		kernel.NewParameter("slab_nomerge").Append(""),
+		kernel.NewParameter("pti").Append("on"),
+	}
+)
 
 // EnforceKSPPKernelParameters verifies that all required KSPP kernel
 // parameters are present with the right value.
 func EnforceKSPPKernelParameters() error {
 	var result *multierror.Error
-	for param, expected := range RequiredKSPPKernelParameters {
-		var (
-			ok  bool
-			val string
-		)
-		if val, ok = kernel.GetParameter(param); !ok {
-			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s is required", param))
+	for _, values := range RequiredKSPPKernelParameters {
+		var val *string
+		if val = kernel.Cmdline().Get(values.Key()).First(); val == nil {
+			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s is required", values.Key()))
 			continue
 		}
-		if val != expected {
-			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s was found with value %s, expected %s", param, val, expected))
+
+		expected := values.First()
+		if *val != *expected {
+			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s was found with value %s, expected %s", values.Key(), *val, *expected))
 		}
 	}
 

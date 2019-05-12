@@ -27,12 +27,12 @@ func (vmw *VMware) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
-	option, ok := kernel.GetParameter(constants.KernelParamUserData)
-	if !ok {
+	var option *string
+	if option = kernel.Cmdline().Get(constants.KernelParamUserData).First(); option == nil {
 		return data, fmt.Errorf("no user data option was found")
 	}
 
-	if option == constants.UserDataGuestInfo {
+	if *option == constants.UserDataGuestInfo {
 		ok, err := vmcheck.IsVirtualWorld()
 		if err != nil {
 			return data, err

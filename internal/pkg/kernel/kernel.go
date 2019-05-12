@@ -7,60 +7,221 @@ package kernel
 import (
 	"io/ioutil"
 	"strings"
+	"sync"
 )
 
-// ReadProcCmdline reads /proc/cmdline.
-func ReadProcCmdline() (cmdlineBytes []byte, err error) {
-	cmdlineBytes, err = ioutil.ReadFile("/proc/cmdline")
+// NewDefaultCmdline returns a set of kernel parameters that serve as the base
+// for all Talos installations.
+// nolint: golint
+func NewDefaultCmdline() *cmdline {
+	cmdline := NewCmdline("")
+	cmdline.Append("page_poison", "1")
+	cmdline.Append("slab_nomerge", "")
+	cmdline.Append("pti", "on")
+	cmdline.Append("consoleblank", "0")
+	cmdline.Append("console", "ttyS1,115200n8")
+	// NB: We make console=tty0 the last device on the list since the last
+	// device will be used when you open /dev/console.
+	cmdline.Append("console", "tty0")
+	cmdline.Append("nvme_core.io_timeout", "4294967295")
+	cmdline.Append("random.trust_cpu", "on")
+
+	return cmdline
+}
+
+// Key represents a key in a kernel parameter key-value pair.
+type Key = string
+
+// Parameter represents a value in a kernel parameter key-value pair.
+type Parameter struct {
+	key    Key
+	values []string
+}
+
+// NewParameter initializes and returns a Parameter.
+func NewParameter(k string) *Parameter {
+	return &Parameter{
+		key:    k,
+		values: []string{},
+	}
+}
+
+// Append appends a string to a value's internal representation.
+func (v *Parameter) Append(s string) *Parameter {
+	v.values = append(v.values, s)
+
+	return v
+}
+
+// First attempts to return the first string of a value's internal
+// representation.
+func (v *Parameter) First() *string {
+	switch {
+	case v == nil:
+		return nil
+	case v.values == nil:
+		return nil
+	case len(v.values) > 0:
+		return &v.values[0]
+	default:
+		return nil
+	}
+}
+
+// Get attempts to get a string from a value's internal representation.
+func (v *Parameter) Get(idx int) *string {
+	if len(v.values) > idx {
+		return &v.values[idx]
+	}
+
+	return nil
+}
+
+// Contains returns a boolean indicating the existence of a value.
+func (v *Parameter) Contains(s string) (ok bool) {
+	for _, value := range v.values {
+		if ok = s == value; ok {
+			return ok
+		}
+	}
+
+	return ok
+}
+
+// Key returns the value's key.
+func (v *Parameter) Key() string {
+	return v.key
+}
+
+// Parameters represents /proc/cmdline.
+type Parameters []*Parameter
+
+// String returns a string representation of all parameters.
+func (p Parameters) String() string {
+	s := ""
+	for _, v := range p {
+		for _, val := range v.values {
+			if val == "" {
+				s += v.key + " "
+			} else {
+				s += v.key + "=" + val + " "
+			}
+		}
+	}
+
+	return strings.TrimRight(s, " ")
+}
+
+type cmdline struct {
+	sync.Mutex
+	Parameters
+}
+
+var instance *cmdline
+var once sync.Once
+
+// Cmdline returns a representation of /proc/cmdline.
+// nolint: golint
+func Cmdline() *cmdline {
+	once.Do(func() {
+		var err error
+		if instance, err = read(); err != nil {
+			panic(err)
+		}
+	})
+
+	return instance
+}
+
+// NewCmdline initializes and returns a representation of the cmdline values
+// specified by `parameters`.
+// nolint: golint
+func NewCmdline(parameters string) *cmdline {
+	parsed := parse(parameters)
+	c := &cmdline{sync.Mutex{}, parsed}
+
+	return c
+}
+
+// Get gets a kernel parameter.
+func (c *cmdline) Get(k string) (value *Parameter) {
+	c.Lock()
+	defer c.Unlock()
+	for _, value := range c.Parameters {
+		if value.key == k {
+			return value
+		}
+	}
+
+	return nil
+}
+
+// Set sets a kernel parameter.
+func (c *cmdline) Set(k string, v *Parameter) {
+	c.Lock()
+	defer c.Unlock()
+	for i, value := range c.Parameters {
+		if value.key == k {
+			c.Parameters = append(c.Parameters[:i], append([]*Parameter{v}, c.Parameters[i:]...)...)
+			return
+		}
+	}
+}
+
+// Append appends a kernel parameter.
+func (c *cmdline) Append(k string, v string) {
+	c.Lock()
+	defer c.Unlock()
+	for _, value := range c.Parameters {
+		if value.key == k {
+			value.Append(v)
+			return
+		}
+	}
+	insert(&c.Parameters, k, v)
+}
+
+// Bytes returns the byte slice representation of the cmdline struct.
+func (c *cmdline) Bytes() []byte {
+	return []byte(c.String())
+}
+
+func insert(values *Parameters, key, value string) {
+	for _, v := range *values {
+		if v.key == key {
+			v.Append(value)
+			return
+		}
+	}
+	*values = append(*values, &Parameter{key: key, values: []string{value}})
+}
+
+func parse(parameters string) (parsed Parameters) {
+	line := strings.TrimSuffix(parameters, "\n")
+	fields := strings.Fields(line)
+	parsed = make(Parameters, 0)
+	for _, arg := range fields {
+		kv := strings.SplitN(arg, "=", 2)
+		switch len(kv) {
+		case 1:
+			insert(&parsed, kv[0], "")
+		case 2:
+			insert(&parsed, kv[0], kv[1])
+		}
+	}
+
+	return parsed
+}
+
+func read() (c *cmdline, err error) {
+	var parameters []byte
+	parameters, err = ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return nil, err
 	}
 
-	return cmdlineBytes, nil
-}
+	parsed := parse(string(parameters))
+	c = &cmdline{sync.Mutex{}, parsed}
 
-// ParseProcCmdline parses /proc/cmdline and returns a map reprentation of the
-// kernel parameters.
-func ParseProcCmdline() (cmdline map[string]string, err error) {
-	var cmdlineBytes []byte
-	cmdlineBytes, err = ReadProcCmdline()
-	if err != nil {
-		return
-	}
-
-	cmdline = ParseKernelBootParameters(cmdlineBytes)
-
-	return
-}
-
-// ParseKernelBootParameters parses kernel boot time parameters
-//
-// Ref: http://man7.org/linux/man-pages/man7/bootparam.7.html
-func ParseKernelBootParameters(parameters []byte) (parsed map[string]string) {
-	parsed = map[string]string{}
-
-	line := strings.TrimSuffix(string(parameters), "\n")
-	for _, arg := range strings.Fields(line) {
-		kv := strings.SplitN(arg, "=", 2)
-		// TODO: doesn't handle duplicate key names well (overwrites
-		//       previous value)
-		if len(kv) == 1 {
-			parsed[kv[0]] = ""
-		} else {
-			parsed[kv[0]] = kv[1]
-		}
-	}
-
-	return
-}
-
-// GetParameter attempts to get a specific kernel
-// boot time parameter.
-func GetParameter(parameter string) (string, bool) {
-	kargs, err := ParseProcCmdline()
-	if err != nil {
-		return "", false
-	}
-	value, ok := kargs[parameter]
-	return value, ok
+	return c, nil
 }

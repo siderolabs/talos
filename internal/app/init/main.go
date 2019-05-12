@@ -131,13 +131,14 @@ func initram() (err error) {
 	if err = kspp.EnforceKSPPKernelParameters(); err != nil {
 		return err
 	}
-	// Setup hostname if provided
-	if hostname, ok := kernel.GetParameter(constants.KernelParamHostname); ok {
+	// Setup hostname if provided.
+	var hostname *string
+	if hostname = kernel.Cmdline().Get(constants.KernelParamHostname).First(); hostname != nil {
 		log.Println("setting hostname")
-		if err = unix.Sethostname([]byte(hostname)); err != nil {
+		if err = unix.Sethostname([]byte(*hostname)); err != nil {
 			return err
 		}
-		log.Printf("hostname is: %s", hostname)
+		log.Printf("hostname is: %s", *hostname)
 	}
 	// Discover the platform.
 	log.Println("discovering the platform")

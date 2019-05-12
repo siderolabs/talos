@@ -10,12 +10,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -104,21 +104,12 @@ func (i *ISO) Install(data *userdata.UserData) error {
 		return err
 	}
 
-	params := []string{
-		"page_poison=1",
-		"slab_nomerge",
-		"pti=on",
-		"nvme_core.io_timeout=4294967295",
-		"consoleblank=0",
-		"console=tty0",
-		"console=ttyS0,9600",
-		"random.trust_cpu=on",
-		"talos.platform=bare-metal",
-		"talos.userdata=" + endpoint,
-	}
-
-	if err := install.Install(strings.Join(params, " "), data); err != nil {
-		return err
+	cmdline := kernel.NewDefaultCmdline()
+	cmdline.Append("initrd", filepath.Join("/", constants.CurrentRootPartitionLabel(), "initramfs.xz"))
+	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
+	cmdline.Append(constants.KernelParamUserData, endpoint)
+	if err = install.Install(cmdline.String(), data); err != nil {
+		return errors.Wrap(err, "failed to install")
 	}
 
 	// nolint: errcheck

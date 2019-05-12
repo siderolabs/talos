@@ -5,8 +5,7 @@
 package platform
 
 import (
-	"fmt"
-
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/baremetal"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/aws"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/googlecloud"
@@ -28,23 +27,27 @@ type Platform interface {
 
 // NewPlatform is a helper func for discovering the current platform.
 func NewPlatform() (p Platform, err error) {
-	if platform, ok := kernel.GetParameter(constants.KernelParamPlatform); ok {
-		switch platform {
-		case "aws":
-			p = &aws.AWS{}
-		case "googlecloud":
-			p = &googlecloud.GoogleCloud{}
-		case "vmware":
-			p = &vmware.VMware{}
-		case "bare-metal":
-			p = &baremetal.BareMetal{}
-		case "packet":
-			p = &packet.Packet{}
-		case "iso":
-			p = &iso.ISO{}
-		default:
-			return nil, fmt.Errorf("platform not supported: %s", platform)
-		}
+	var platform *string
+	if platform = kernel.Cmdline().Get(constants.KernelParamPlatform).First(); platform == nil {
+		return nil, errors.Errorf("kernel parameter %s was not found", constants.KernelParamPlatform)
 	}
+
+	switch *platform {
+	case "aws":
+		p = &aws.AWS{}
+	case "googlecloud":
+		p = &googlecloud.GoogleCloud{}
+	case "vmware":
+		p = &vmware.VMware{}
+	case "bare-metal":
+		p = &baremetal.BareMetal{}
+	case "packet":
+		p = &packet.Packet{}
+	case "iso":
+		p = &iso.ISO{}
+	default:
+		return nil, errors.Errorf("platform not supported: %s", *platform)
+	}
+
 	return p, nil
 }
