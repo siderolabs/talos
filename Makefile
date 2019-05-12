@@ -3,8 +3,8 @@ TAG = $(shell gitmeta image tag)
 
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:0b40011
-ROOTFS_IMAGE ?= autonomy/rootfs-base:255b4fd
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:255b4fd
+ROOTFS_IMAGE ?= autonomy/rootfs-base:cb457dc
+INITRAMFS_IMAGE ?= autonomy/initramfs-base:cb457dc
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0

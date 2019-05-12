@@ -75,7 +75,7 @@ function create_iso() {
   EXTRA_KERNEL_PARAMS="random.trust_cpu=on printk.devkmsg=on"
   create_extlinux_conf /mnt/isolinux/isolinux.cfg
   mkdir -p /mnt/ROOT-A
-  create_extlinux_conf_label /mnt/ROOT-A/include.conf
+  create_extlinux_conf_label /mnt/ROOT-A/include.cfg
   cp -v /generated/boot/vmlinuz /mnt/ROOT-A
   cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
   mkdir -p /mnt/usr/install
@@ -106,7 +106,7 @@ function extract_boot_partition() {
   extlinux --install /mnt/extlinux
   create_extlinux_conf /mnt/extlinux/extlinux.conf
   mkdir -p /mnt/ROOT-A
-  create_extlinux_conf_label /mnt/ROOT-A/include.conf
+  create_extlinux_conf_label /mnt/ROOT-A/include.cfg
   cp -v /generated/boot/vmlinuz /mnt/ROOT-A
   cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
   umount -v /mnt
@@ -134,7 +134,7 @@ function create_extlinux_conf() {
   cat <<EOF >$1
 DEFAULT ROOT-A
   SAY Talos
-INCLUDE /ROOT-A/include.conf
+INCLUDE /ROOT-A/include.cfg
 EOF
 }
 
