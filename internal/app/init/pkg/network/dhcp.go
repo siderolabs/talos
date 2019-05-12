@@ -106,8 +106,9 @@ func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, e
 			}
 
 			// Ignore DHCP-offered hostname if the kernel parameter is set
-			if kernHostname, ok := kernel.GetParameter(constants.KernelParamHostname); ok {
-				hostname = kernHostname
+			var kernHostname *string
+			if kernHostname = kernel.Cmdline().Get(constants.KernelParamHostname).First(); kernHostname != nil {
+				hostname = *kernHostname
 			}
 
 			log.Printf("using hostname: %s", hostname)

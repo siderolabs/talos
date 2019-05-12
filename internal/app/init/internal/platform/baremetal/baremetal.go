@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
@@ -35,12 +36,12 @@ func (b *BareMetal) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
-	option, ok := kernel.GetParameter(constants.KernelParamUserData)
-	if !ok {
+	var option *string
+	if option = kernel.Cmdline().Get(constants.KernelParamUserData).First(); option == nil {
 		return data, errors.Errorf("no user data option was found")
 	}
 
-	if option == constants.UserDataCIData {
+	if *option == constants.UserDataCIData {
 		var dev *probe.ProbedBlockDevice
 		dev, err = probe.GetDevWithFileSystemLabel(constants.UserDataCIData)
 		if err != nil {
@@ -67,7 +68,7 @@ func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
 		return data, nil
 	}
 
-	return userdata.Download(option, nil)
+	return userdata.Download(*option, nil)
 }
 
 // Prepare implements the platform.Platform interface.
@@ -75,17 +76,20 @@ func (b *BareMetal) Prepare(data *userdata.UserData) (err error) {
 	return install.Prepare(data)
 }
 
-// Install provides the functionality to install talos by
-// download the necessary bits and write them to a target device
-// nolint: gocyclo, dupl
+// Install provides the functionality to install talos by downloading the
+// required artifacts and writing them to a target device.
+// nolint: dupl
 func (b *BareMetal) Install(data *userdata.UserData) (err error) {
-	var cmdlineBytes []byte
-	cmdlineBytes, err = kernel.ReadProcCmdline()
-	if err != nil {
-		return err
+	var endpoint *string
+	if endpoint = kernel.Cmdline().Get(constants.KernelParamUserData).First(); endpoint == nil {
+		return errors.Errorf("failed to find %s in kernel parameters", constants.KernelParamUserData)
 	}
-	if err = install.Install(string(cmdlineBytes), data); err != nil {
-		return errors.Wrap(err, "failed to install to bare metal")
+	cmdline := kernel.NewDefaultCmdline()
+	cmdline.Append("initrd", filepath.Join("/", constants.CurrentRootPartitionLabel(), "initramfs.xz"))
+	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
+	cmdline.Append(constants.KernelParamUserData, *endpoint)
+	if err = install.Install(cmdline.String(), data); err != nil {
+		return errors.Wrap(err, "failed to install")
 	}
 
 	return nil
