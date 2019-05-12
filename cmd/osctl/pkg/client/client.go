@@ -292,8 +292,9 @@ func (c *Client) DF() (err error) {
 	ctx := context.Background()
 	reply, err := c.client.DF(ctx, &empty.Empty{})
 	if err != nil {
-		fmt.Printf("one or more error encountered: %+v", err)
+		return fmt.Errorf("one or more error encountered: %+v", err)
 	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "FILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
 	for _, r := range reply.Stats {
