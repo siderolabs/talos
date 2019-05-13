@@ -12,7 +12,6 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 )
 
@@ -109,7 +108,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 		// Unlink the address or we will get the error:
 		// bind: address already in use.
 		if _, err := os.Stat(address); err == nil {
-			if err := unix.Unlink(address); err != nil {
+			if err := os.Remove(address); err != nil {
 				return nil, err
 			}
 		}
