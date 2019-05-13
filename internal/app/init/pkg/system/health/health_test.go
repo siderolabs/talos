@@ -107,7 +107,7 @@ func (suite *CheckSuite) TestCheckAbort() {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(10 * time.Millisecond):
+		case <-time.After(25 * time.Millisecond):
 			return nil
 		}
 	}
