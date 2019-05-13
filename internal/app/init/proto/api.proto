@@ -9,6 +9,7 @@ import "google/protobuf/empty.proto";
 service Init {
   rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
+  rpc Upgrade(UpgradeRequest) returns (UpgradeReply) {}
 }
 
 
@@ -18,3 +19,8 @@ message RebootReply {}
 // The response message containing the shutdown status.
 message ShutdownReply {}
 
+message UpgradeRequest {
+	string url = 1;
+}
+
+message UpgradeReply { string ack = 1; }

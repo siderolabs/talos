@@ -11,6 +11,7 @@ require (
 	github.com/containerd/cri v1.11.1
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
+	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20180828140353-eee3db372b31 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
