@@ -5,6 +5,8 @@
 package install
 
 import (
+	"log"
+
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -50,6 +52,11 @@ func mountpoints() (mountpoints *mount.Points, err error) {
 
 		var dev *probe.ProbedBlockDevice
 		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
+			if name == constants.BootPartitionLabel {
+				// A bootloader is not always required.
+				log.Println("WARNING: no ESP partition was found")
+				continue
+			}
 			return nil, errors.Errorf("failed to find device with label %s: %v", name, err)
 		}
 

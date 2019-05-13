@@ -2,9 +2,9 @@ SHA = $(shell gitmeta git sha)
 TAG = $(shell gitmeta image tag)
 
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:0b40011
-ROOTFS_IMAGE ?= autonomy/rootfs-base:cb457dc
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:cb457dc
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:c28db88
+ROOTFS_IMAGE ?= autonomy/rootfs-base:c28db88
+INITRAMFS_IMAGE ?= autonomy/initramfs-base:c28db88
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0
@@ -159,17 +159,17 @@ proto: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: talos-gce
-talos-gce: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -l -f -p googlecloud -u none -e 'random.trust_cpu=on'
+talos-gce:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
 	@tar -C $(PWD)/build -Sczf $(PWD)/build/$@.tar.gz disk.raw
 	@rm $(PWD)/build/disk.raw
 
 .PHONY: talos-iso
-talos-iso: installer
+talos-iso:
 	@docker run --rm -i -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
 
 .PHONY: talos-aws
-talos-aws: installer
+talos-aws:
 	@docker run \
 		--rm \
 		-i \
@@ -179,8 +179,8 @@ talos-aws: installer
 		autonomy/installer:$(TAG) ami -var regions=${AWS_PUBLISH_REGIONS} -var visibility=all
 
 .PHONY: talos-raw
-talos-raw: installer
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) disk -n rootfs -l
+talos-raw:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n rootfs -r -b
 
 .PHONY: talos
 talos: buildkitd

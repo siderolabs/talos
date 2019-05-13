@@ -229,22 +229,29 @@ COPY --from=talos-build /rootfs /
 COPY --from=init-build /init /init
 ENTRYPOINT ["/init"]
 
-# The installer target generates an image that can be used to install Talos to
-# various environments.
 # The kernel target is the linux kernel.
 
 ARG KERNEL_IMAGE
 FROM ${KERNEL_IMAGE} as kernel
 
+# The installer target generates an image that can be used to install Talos to
+# various environments.
 
 FROM alpine:3.8 AS installer
-RUN apk --update add bash curl gzip e2fsprogs tar cdrkit parted syslinux util-linux xfsprogs xz sgdisk sfdisk qemu-img unzip
-WORKDIR /usr/local/src/syslinux
-RUN curl -L https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz | tar --strip-components=1 -xJ
-WORKDIR /
-COPY --from=kernel /vmlinuz /generated/boot/vmlinuz
-COPY --from=rootfs /rootfs.tar.gz /generated/rootfs.tar.gz
-COPY --from=initramfs /initramfs.xz /generated/boot/initramfs.xz
+RUN apk --update add \
+        bash \
+        cdrkit \
+        curl \
+        qemu-img \
+        syslinux \
+        unzip \
+        util-linux \
+        xfsprogs
+COPY --from=kernel /vmlinuz /usr/install/vmlinuz
+COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
+COPY --from=rootfs /rootfs.tar.gz /usr/install/rootfs.tar.gz
+COPY --from=initramfs-build /usr/lib/syslinux/ /usr/lib/syslinux
+COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /bin/osctl
 RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip -o /tmp/packer.zip \
     && unzip -d /tmp /tmp/packer.zip \
     && mv /tmp/packer /bin \

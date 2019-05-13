@@ -18,11 +18,14 @@ func NewDefaultCmdline() *cmdline {
 	cmdline.Append("page_poison", "1")
 	cmdline.Append("slab_nomerge", "")
 	cmdline.Append("pti", "on")
+	// TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
 	cmdline.Append("consoleblank", "0")
 	cmdline.Append("console", "ttyS1,115200n8")
 	// NB: We make console=tty0 the last device on the list since the last
 	// device will be used when you open /dev/console.
 	cmdline.Append("console", "tty0")
+	// AWS recommends setting the nvme_core.io_timeout to the highest value possible.
+	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
 	cmdline.Append("nvme_core.io_timeout", "4294967295")
 	cmdline.Append("random.trust_cpu", "on")
 

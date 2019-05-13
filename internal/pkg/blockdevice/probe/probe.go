@@ -60,9 +60,12 @@ func probe(devpath string) (devpaths []string) {
 	name := filepath.Base(devpath)
 	for _, p := range pt.Partitions() {
 		var partpath string
-		if strings.HasPrefix(name, "nvme") {
+		switch {
+		case strings.HasPrefix(name, "nvme"):
+			fallthrough
+		case strings.HasPrefix(name, "loop"):
 			partpath = fmt.Sprintf("/dev/%sp%d", name, p.No())
-		} else {
+		default:
 			partpath = fmt.Sprintf("/dev/%s%d", name, p.No())
 		}
 		// nolint: errcheck

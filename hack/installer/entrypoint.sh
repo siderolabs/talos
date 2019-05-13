@@ -2,204 +2,100 @@
 
 set -Eeuo pipefail
 
-function create_image() {
-  if [ "$RAW" = true ] ; then
-    parted -s ${RAW_IMAGE} mklabel gpt
-  else
-    parted -s ${DEVICE} mklabel gpt
-  fi
+function create_isolinuxcfg() {
 
-  if [ "$FULL" = true ] ; then
-    if [ "$RAW" = true ] ; then
-      parted -s -a optimal ${RAW_IMAGE} mkpart primary fat32 0 $((${INITRAMFS_SIZE} + 50))M
-      parted ${RAW_IMAGE} name 1 ESP
-      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
-      parted ${RAW_IMAGE} name 2 ROOT-A
-      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
-      parted ${RAW_IMAGE} name 3 DATA
-      losetup ${DEVICE} ${RAW_IMAGE}
-      partx -av ${DEVICE}
-      extract_boot_partition ${DEVICE}p1
-      extract_root_partition ${DEVICE}p2
-      extract_data_partition ${DEVICE}p3
-    else
-      parted -s -a optimal ${DEVICE} mkpart primary fat32 0 $((${INITRAMFS_SIZE} + 50))M
-      parted ${DEVICE} name 1 ESP
-      parted -s -a optimal ${DEVICE} mkpart primary xfs $((${INITRAMFS_SIZE} + 50))M $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M
-      parted ${DEVICE} name 2 ROOT-A
-      parted -s -a optimal ${DEVICE} mkpart primary xfs $((${ROOTFS_SIZE} + ${INITRAMFS_SIZE} + 100))M 100%
-      parted ${DEVICE} name 3 DATA
-      extract_boot_partition ${DEVICE}1
-      extract_root_partition ${DEVICE}2
-      extract_data_partition ${DEVICE}3
-    fi
-  else
-    if [ "$RAW" = true ] ; then
-      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs 0 $((${ROOTFS_SIZE} + 50))M
-      parted ${RAW_IMAGE} name 1 ROOT-A
-      parted -s -a optimal ${RAW_IMAGE} mkpart primary xfs $((${ROOTFS_SIZE} + 50))M 100%
-      parted ${RAW_IMAGE} name 2 DATA
-      losetup ${DEVICE} ${RAW_IMAGE}
-      partx -av ${DEVICE}
-      extract_root_partition ${DEVICE}p1
-      extract_data_partition ${DEVICE}p2
-    else
-      parted -s -a optimal ${DEVICE} mkpart primary xfs 0 $((${ROOTFS_SIZE} + 50))M
-      parted ${DEVICE} name 1 ROOT-A
-      parted -s -a optimal ${DEVICE} mkpart primary xfs $((${ROOTFS_SIZE} + 50))M 100%
-      parted ${DEVICE} name 2 DATA
-      extract_root_partition ${DEVICE}1
-      extract_data_partition ${DEVICE}2
-    fi
-  fi
-
-  sgdisk ${DEVICE} --attributes=1:set:2
-
-  dd if=/usr/local/src/syslinux/efi64/mbr/gptmbr.bin of=${DEVICE}
-
-  if [ "$RAW" = true ] ; then
-    cleanup
-  fi
+  cat <<EOF >$1
+DEFAULT ISO
+  SAY Talos
+LABEL ISO
+  KERNEL /vmlinuz
+  INITRD /initramfs.xz
+  APPEND page_poison=1 slab_nomerge pti=on random.trust_cpu=on consoleblank=0 console=tty0 talos.platform=iso
+EOF
 }
 
-function create_vmdk() {
-  qemu-img convert -f raw -O vmdk ${RAW_IMAGE} ${VMDK_IMAGE}
+function setup_raw_device(){
+  printf "Creating RAW device, this may take a moment..."
+  if [[ -f ${TALOS_RAW} ]]; then
+    rm ${TALOS_RAW}
+  fi
+  dd if=/dev/zero of="${TALOS_RAW}" bs=512M count=10
+  DEVICE=$(losetup -f)
+  # NB: Since we use BLKRRPART to tell the kernel to re-read the partition
+  # table, it is required to create a partitioned loop device. The BLKRRPART
+  # command is meaningful only for partitionable devices.
+  losetup -P ${DEVICE} ${TALOS_RAW}
+  printf "done\n"
+}
+
+function install_talos() {
+  osctl install --bootloader="${WITH_BOOTLOADER}" --device="${DEVICE}" --platform="${TALOS_PLATFORM}" --userdata="${TALOS_USERDATA}"
 }
 
 function create_iso() {
   mkdir -p /mnt/isolinux
-  cp -v /usr/local/src/syslinux/bios/core/isolinux.bin /mnt/isolinux/isolinux.bin
-  cp -v /usr/local/src/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 /mnt/isolinux/ldlinux.c32
-  TALOS_USERDATA=none
-  TALOS_PLATFORM=iso
-  EXTRA_KERNEL_PARAMS="random.trust_cpu=on printk.devkmsg=on"
-  create_extlinux_conf /mnt/isolinux/isolinux.cfg
-  mkdir -p /mnt/ROOT-A
-  create_extlinux_conf_label /mnt/ROOT-A/include.cfg
-  cp -v /generated/boot/vmlinuz /mnt/ROOT-A
-  cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
+  cp -v /usr/lib/syslinux/isolinux.bin /mnt/isolinux/isolinux.bin
+  cp -v /usr/lib/syslinux/ldlinux.c32 /mnt/isolinux/ldlinux.c32
+
+  create_isolinuxcfg /mnt/isolinux/isolinux.cfg
+  cp -v /usr/install/vmlinuz /mnt/vmlinuz
+  cp -v /usr/install/initramfs.xz /mnt/initramfs.xz
+
   mkdir -p /mnt/usr/install
-  cp -v /generated/rootfs.tar.gz /mnt/usr/install/rootfs.tar.gz
-  cp -v /generated/boot/vmlinuz /mnt/usr/install/vmlinuz
-  cp -v /generated/boot/initramfs.xz /mnt/usr/install/initramfs.xz
-  mkisofs -V TALOS -o ${ISO_IMAGE} -r -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /mnt
-  isohybrid ${ISO_IMAGE}
+  cp -v /usr/install/rootfs.tar.gz /mnt/usr/install/rootfs.tar.gz
+  cp -v /usr/install/vmlinuz /mnt/usr/install/vmlinuz
+  cp -v /usr/install/initramfs.xz /mnt/usr/install/initramfs.xz
+
+  mkisofs -V TALOS -o ${TALOS_ISO} -r -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /mnt
+  isohybrid ${TALOS_ISO}
+}
+
+function create_vmdk() {
+  qemu-img convert -f raw -O vmdk ${TALOS_RAW} ${TALOS_VMDK}
 }
 
 function create_ami() {
   packer build -var "version=${VERSION}" "${@}" /packer.json
 }
 
-function size_xz() {
-  xz --robot --list $1 | awk 'END { printf("%.0f", $5*0.000001)}'
-}
-
-function size_gz() {
-  gzip --list $1 | awk 'END { printf("%.0f", $2*0.000001)}'
-}
-
-function extract_boot_partition() {
-  local partition=$1
-  mkfs.vfat ${partition}
-  mount -v ${partition} /mnt
-  mkdir -pv /mnt/extlinux
-  extlinux --install /mnt/extlinux
-  create_extlinux_conf /mnt/extlinux/extlinux.conf
-  mkdir -p /mnt/ROOT-A
-  create_extlinux_conf_label /mnt/ROOT-A/include.cfg
-  cp -v /generated/boot/vmlinuz /mnt/ROOT-A
-  cp -v /generated/boot/initramfs.xz /mnt/ROOT-A
-  umount -v /mnt
-}
-
-function extract_root_partition() {
-  local partition=$1
-  mkfs.xfs -f -n ftype=1 -L ROOT-A ${partition}
-  mount -v ${partition} /mnt
-  tar -xpvzf /generated/rootfs.tar.gz --exclude="./var" -C /mnt
-  umount -v /mnt
-}
-
-function extract_data_partition() {
-  local partition=$1
-  mkfs.xfs -f -n ftype=1 -L DATA ${partition}
-  mount -v ${partition} /mnt
-  tar -xpvzf /generated/rootfs.tar.gz --strip-components=2 -C /mnt "./var"
-  umount -v /mnt
-}
-
-function create_extlinux_conf() {
-  # AWS recommends setting the nvme_core.io_timeout to the highest value possible.
-  # See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
-  cat <<EOF >$1
-DEFAULT ROOT-A
-  SAY Talos
-INCLUDE /ROOT-A/include.cfg
-EOF
-}
-
-function create_extlinux_conf_label() {
-  cat <<EOF >$1
-LABEL ROOT-A
-  KERNEL /ROOT-A/vmlinuz
-  INITRD /ROOT-A/initramfs.xz
-  APPEND ${KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS} ${EXTRA_KERNEL_PARAMS} nvme_core.io_timeout=4294967295 consoleblank=0 console=tty0 ${KERNEL_SERIAL_PORT} talos.userdata=${TALOS_USERDATA} talos.platform=${TALOS_PLATFORM}
-EOF
-}
-
 function cleanup {
   umount 2>/dev/null || true
-  partx -d ${DEVICE} 2>/dev/null || true
   losetup -d ${DEVICE} 2>/dev/null || true
 }
 
-# Defaults
+function usage() {
+  printf "entrypoint.sh -p <platform> -u <userdata> [b|d|l|n]"
+}
 
-TALOS_USERDATA=""
-TALOS_PLATFORM=""
-RAW_IMAGE="/out/disk.raw"
-VMDK_IMAGE="/out/disk.vmdk"
-ISO_IMAGE="/out/talos.iso"
-FULL=false
-RAW=false
-TOTAL_SIZE=$(size_gz /generated/rootfs.tar.gz)
-ROOTFS_SIZE=$(tar -tvf /generated/rootfs.tar.gz --exclude=./var | awk '{s+=$3} END { printf "%.0f", s*0.000001}')
-INITRAMFS_SIZE=$(size_xz /generated/boot/initramfs.xz)
-# TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
-KERNEL_SELF_PROTECTION_PROJECT_KERNEL_PARAMS="page_poison=1 slab_nomerge pti=on"
-KERNEL_SERIAL_PORT="console=ttyS0,9600"
-EXTRA_KERNEL_PARAMS=""
+TALOS_RAW="/out/talos.raw"
+TALOS_ISO="/out/talos.iso"
+TALOS_VMDK="/out/talos.vmdk"
+TALOS_PLATFORM="bare-metal"
+TALOS_USERDATA="none"
+WITH_BOOTLOADER="true"
 
 case "$1" in
-  disk)
-    shift
-    while getopts "b:fln:p:u:e:" opt; do
+  install)
+   shift
+    while getopts "bd:n:p:ru:" opt; do
       case ${opt} in
         b )
+          echo "Creating disk without bootloader installed"
+          WITH_BOOTLOADER="false"
+          ;;
+        d )
           DEVICE=${OPTARG}
-          echo "Using block device ${DEVICE} as installation media"
-          ;;
-        e )
-          EXTRA_KERNEL_PARAMS=${OPTARG}
-          echo "Using extra kernel params ${EXTRA_KERNEL_PARAMS}"
-          ;;
-        f )
-          echo "Creating full disk"
-          FULL=true
-          ;;
-        l )
-          trap cleanup ERR
-          dd if=/dev/zero of=${RAW_IMAGE} bs=1M count=$(($TOTAL_SIZE+$INITRAMFS_SIZE+150))
-          DEVICE=$(losetup -f)
-          RAW=true
-          echo "Using loop device ${RAW_IMAGE} as installation media"
           ;;
         n )
-          RAW_IMAGE="/out/${OPTARG}.raw"
+          TALOS_RAW="/out/${OPTARG}.raw"
           ;;
         p )
           TALOS_PLATFORM=${OPTARG}
           echo "Using kernel parameter talos.platform=${TALOS_PLATFORM}"
+          ;;
+       r )
+          trap cleanup EXIT
+          setup_raw_device
           ;;
         u )
           TALOS_USERDATA=${OPTARG}
@@ -215,36 +111,27 @@ case "$1" in
           ;;
       esac
     done
-    shift $((OPTIND -1))
+    shift $((OPTIND-1))
 
-    if [ "$FULL" = true ] ; then
-      if [ -z "${TALOS_PLATFORM}" ]; then
-        echo "The platform flag '-p' must be specified"
-        exit 1
-      fi
-
-      if [ -z "${TALOS_USERDATA}" ]; then
-        echo "The userdata flag '-u' must be specified"
-        exit 1
-      fi
+    if [ ! "${TALOS_PLATFORM}" ] || [ ! "${TALOS_USERDATA}" ]; then
+      usage
+      exit 1
     fi
-    echo -e "Creating disk\n\t/: ${ROOTFS_SIZE}Mb\n\t/boot: ${INITRAMFS_SIZE}Mb"
-    create_image
+
+    trap cleanup EXIT
+    echo "Using device ${DEVICE} as installation media"
+    install_talos
+    ;;
+  iso)
+    create_iso
     ;;
   vmdk)
     create_vmdk
-    ;;
-  iso)
-    # We don't want serial port here because we need to prompt the user, and
-    # the only way that seems to work is if no serial port is defined.
-    KERNEL_SERIAL_PORT=""
-    create_iso
     ;;
   ami)
     shift
     create_ami "${@}"
     ;;
   *)
-      trap - ERR
       exec "$@"
 esac
