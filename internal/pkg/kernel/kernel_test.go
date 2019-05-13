@@ -89,11 +89,15 @@ func (suite *KernelSuite) TestCmdlineSet() {
 			&Parameter{key: "console", values: nil},
 			&Parameter{key: "console", values: nil},
 		},
+		{
+			"initrd=initramfs.xz",
+			"initrd",
+			&Parameter{key: "initrd", values: []string{"/ROOT-A/initramfs.xz"}},
+			&Parameter{key: "initrd", values: []string{"/ROOT-A/initramfs.xz"}},
+		},
 	} {
 		cmdline := NewCmdline(t.params)
-		println("BEFORE:", cmdline.Get(t.k))
 		cmdline.Set(t.k, t.v)
-		println("AFTER:", cmdline.Get(t.k))
 		suite.Assert().Equal(t.expected, cmdline.Get(t.k))
 	}
 }
