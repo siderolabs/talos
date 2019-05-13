@@ -25,11 +25,11 @@ func listenForPowerButton() (poweroffCh <-chan struct{}, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
-	defer conn.Close()
 
 	f, err := conn.GetFamily(acpiGenlFamilyName)
 	if netlink.IsNotExist(err) {
+		// nolint: errcheck
+		conn.Close()
 		return nil, errors.Wrap(err, acpiGenlFamilyName+" not available")
 	}
 
@@ -40,6 +40,8 @@ func listenForPowerButton() (poweroffCh <-chan struct{}, err error) {
 		}
 	}
 	if err = conn.JoinGroup(id); err != nil {
+		// nolint: errcheck
+		conn.Close()
 		return nil, err
 	}
 
@@ -47,6 +49,9 @@ func listenForPowerButton() (poweroffCh <-chan struct{}, err error) {
 	ch := make(chan struct{})
 
 	go func() {
+		// nolint: errcheck
+		defer conn.Close()
+
 		for {
 			msgs, _, err := conn.Receive()
 			if err != nil {
