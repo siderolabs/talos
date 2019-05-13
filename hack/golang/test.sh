@@ -6,7 +6,7 @@ CGO_ENABLED=1
 
 perform_tests() {
   echo "Performing tests"
-  go test -v -covermode=atomic -coverprofile=artifacts/coverage.txt ./...
+  go test -v -covermode=atomic -coverprofile=artifacts/coverage.txt -p 4 ./...
 }
 
 perform_short_tests() {

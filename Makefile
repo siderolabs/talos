@@ -204,7 +204,6 @@ test: buildkitd
 		--opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < /tmp/$@.tar
-	@docker run -i --rm $(DOCKER_TEST_ARGS) autonomy/$@:$(TAG) /bin/test.sh --short
 	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
 		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/test.sh && \
 		cp ./.artifacts/coverage.txt coverage.txt
