@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -27,6 +28,8 @@ type ServiceRunner struct {
 
 	state  events.ServiceState
 	events events.ServiceEvents
+
+	healthState health.State
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
@@ -58,6 +61,32 @@ func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, messag
 	}
 
 	svcrunner.state = newstate
+	svcrunner.events.Push(event)
+
+	log.Printf("service[%s](%s): %s", svcrunner.id, svcrunner.state, event.Message)
+}
+
+func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
+	svcrunner.mu.Lock()
+	defer svcrunner.mu.Unlock()
+
+	// service not running, suppress event
+	if svcrunner.state != events.StateRunning {
+		return
+	}
+
+	var message string
+	if *change.New.Healthy {
+		message = "Health check successful"
+	} else {
+		message = fmt.Sprintf("Health check failed: %s", change.New.LastMessage)
+	}
+
+	event := events.ServiceEvent{
+		Message:   message,
+		State:     svcrunner.state,
+		Timestamp: time.Now(),
+	}
 	svcrunner.events.Push(event)
 
 	log.Printf("service[%s](%s): %s", svcrunner.id, svcrunner.state, event.Message)
@@ -107,6 +136,7 @@ func (svcrunner *ServiceRunner) Start() {
 	}
 }
 
+// nolint: gocyclo
 func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 	if runnr == nil {
 		// special case - run nothing (TODO: we should handle it better, e.g. in PreFunc)
@@ -125,6 +155,42 @@ func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 	go func() {
 		errCh <- runnr.Run(svcrunner.UpdateState)
 	}()
+
+	if healthSvc, ok := svcrunner.service.(HealthcheckedService); ok {
+		var healthWg sync.WaitGroup
+		defer healthWg.Wait()
+
+		healthWg.Add(1)
+		go func() {
+			defer healthWg.Done()
+
+			// nolint: errcheck
+			health.Run(svcrunner.ctx, healthSvc.HealthSettings(svcrunner.userData), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.userData))
+		}()
+
+		notifyCh := make(chan health.StateChange, 2)
+		svcrunner.healthState.Subscribe(notifyCh)
+		defer svcrunner.healthState.Unsubscribe(notifyCh)
+
+		healthWg.Add(1)
+		go func() {
+			defer healthWg.Done()
+
+			for {
+				select {
+				case <-svcrunner.ctx.Done():
+					return
+				case change := <-notifyCh:
+					svcrunner.healthUpdate(change)
+				}
+			}
+		}()
+
+	}
+
+	// when service run finishes, cancel context, this is important if service
+	// terminates on its own before being terminated by Stop()
+	defer svcrunner.ctxCancel()
 
 	select {
 	case <-svcrunner.ctx.Done():

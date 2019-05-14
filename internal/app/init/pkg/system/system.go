@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -26,21 +24,6 @@ type singleton struct {
 
 var instance *singleton
 var once sync.Once
-
-// Service is an interface describing a system service.
-type Service interface {
-	// ID is the service id.
-	ID(*userdata.UserData) string
-	// PreFunc is invoked before a runner is created
-	PreFunc(*userdata.UserData) error
-	// Runner creates runner for the service
-	Runner(*userdata.UserData) (runner.Runner, error)
-	// PostFunc is invoked after a runner is closed.
-	PostFunc(*userdata.UserData) error
-	// ConditionFunc describes the conditions under which a service should
-	// start.
-	ConditionFunc(*userdata.UserData) conditions.ConditionFunc
-}
 
 // Services returns the instance of the system services API.
 // TODO(andrewrynhard): This should be a gRPC based API availale on a local

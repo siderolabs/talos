@@ -6,9 +6,13 @@ package system_test
 
 import (
 	"context"
+	"sync/atomic"
+	"time"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -50,6 +54,38 @@ func (m *MockService) ConditionFunc(*userdata.UserData) conditions.ConditionFunc
 	}
 
 	return conditions.None()
+}
+
+type MockHealthcheckedService struct {
+	MockService
+
+	notHealthy uint32
+}
+
+func (m *MockHealthcheckedService) SetHealthy(healthy bool) {
+	if healthy {
+		atomic.StoreUint32(&m.notHealthy, 0)
+	} else {
+		atomic.StoreUint32(&m.notHealthy, 1)
+	}
+}
+
+func (m *MockHealthcheckedService) HealthFunc(*userdata.UserData) health.Check {
+	return func(context.Context) error {
+		if atomic.LoadUint32(&m.notHealthy) == 0 {
+			return nil
+		}
+
+		return errors.New("not healthy")
+	}
+}
+
+func (m *MockHealthcheckedService) HealthSettings(*userdata.UserData) *health.Settings {
+	return &health.Settings{
+		InitialDelay: time.Millisecond,
+		Timeout:      time.Second,
+		Period:       time.Millisecond,
+	}
 }
 
 type MockRunner struct {

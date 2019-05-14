@@ -72,6 +72,9 @@ func (suite *CheckSuite) TestHealthChange() {
 
 	var state health.State
 
+	notifyCh := make(chan health.StateChange, 2)
+	state.Subscribe(notifyCh)
+
 	errCh := make(chan error)
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -94,6 +97,18 @@ func (suite *CheckSuite) TestHealthChange() {
 	ctxCancel()
 
 	suite.Assert().EqualError(<-errCh, context.Canceled.Error())
+
+	state.Unsubscribe(notifyCh)
+
+	close(notifyCh)
+
+	change := <-notifyCh
+	suite.Assert().Nil(change.Old.Healthy)
+	suite.Assert().False(*change.New.Healthy)
+
+	change = <-notifyCh
+	suite.Assert().False(*change.Old.Healthy)
+	suite.Assert().True(*change.New.Healthy)
 }
 
 func (suite *CheckSuite) TestCheckAbort() {
@@ -107,7 +122,7 @@ func (suite *CheckSuite) TestCheckAbort() {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(25 * time.Millisecond):
+		case <-time.After(10 * time.Millisecond):
 			return nil
 		}
 	}
