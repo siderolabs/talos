@@ -186,7 +186,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 > Talos tightly integrates with Kubernetes, and is not meant to be a general use operating system.
 > This allows us to dramatically decrease the footprint of Talos, and in turn improve a number of other areas like security, predictability, and reliability.
 > In addition to this, interaction with the host is done through a secure gRPC API.
-> If you want to run Kubernetes with zero cruft, Talos is the perect fit.
+> If you want to run Kubernetes with zero cruft, Talos is the perfect fit.
 
 ## License
 
