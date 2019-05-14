@@ -1,3 +1,36 @@
+# [v0.1.0-alpha.26](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2019-05-13)
+
+
+### Bug Fixes
+
+* allow no trustd endpoints to be specified ([#634](https://github.com/talos-systems/talos/issues/634)) ([265a94f](https://github.com/talos-systems/talos/commit/265a94f))
+* Update filesystem check to open device as a device ([#641](https://github.com/talos-systems/talos/issues/641)) ([8548271](https://github.com/talos-systems/talos/commit/8548271))
+* use the correct param in root label check ([#622](https://github.com/talos-systems/talos/issues/622)) ([9d1cc92](https://github.com/talos-systems/talos/commit/9d1cc92))
+* **init:** don't close ACPI listen handle too early ([#647](https://github.com/talos-systems/talos/issues/647)) ([3dc5606](https://github.com/talos-systems/talos/commit/3dc5606))
+* **init:** unlink unix bind address ([#643](https://github.com/talos-systems/talos/issues/643)) ([967e547](https://github.com/talos-systems/talos/commit/967e547))
+* **osctl:** Fix formatting of command/args to be useful ([#638](https://github.com/talos-systems/talos/issues/638)) ([3d5d419](https://github.com/talos-systems/talos/commit/3d5d419))
+* **osctl:** Fix panic on osctl df if error is returned ([#646](https://github.com/talos-systems/talos/issues/646)) ([5485b9e](https://github.com/talos-systems/talos/commit/5485b9e))
+* **osctl:** output talosconfig on generate ([#627](https://github.com/talos-systems/talos/issues/627)) ([9b5b2f0](https://github.com/talos-systems/talos/commit/9b5b2f0))
+* **osd:** Use correct context in stats endpoint ([#644](https://github.com/talos-systems/talos/issues/644)) ([a6989db](https://github.com/talos-systems/talos/commit/a6989db))
+
+
+### Features
+
+* add ability to create multiple entries in extlinux.conf ([#636](https://github.com/talos-systems/talos/issues/636)) ([64c4835](https://github.com/talos-systems/talos/commit/64c4835))
+* Add additional kubernetes certs ([#619](https://github.com/talos-systems/talos/issues/619)) ([2c0ec43](https://github.com/talos-systems/talos/commit/2c0ec43))
+* add helper package for cordon and drain ([#626](https://github.com/talos-systems/talos/issues/626)) ([fca2b9d](https://github.com/talos-systems/talos/commit/fca2b9d))
+* **init:** Add upgrade endpoint ([#623](https://github.com/talos-systems/talos/issues/623)) ([0b33280](https://github.com/talos-systems/talos/commit/0b33280))
+* add support for UEFI ([#642](https://github.com/talos-systems/talos/issues/642)) ([3c52f5e](https://github.com/talos-systems/talos/commit/3c52f5e))
+* **init:** core health check package ([#632](https://github.com/talos-systems/talos/issues/632)) ([995f4c6](https://github.com/talos-systems/talos/commit/995f4c6))
+* **osctl:** add flag for number of workers to create ([#625](https://github.com/talos-systems/talos/issues/625)) ([2ea7e05](https://github.com/talos-systems/talos/commit/2ea7e05))
+* improve package for /proc/cmdline parsing and management ([#645](https://github.com/talos-systems/talos/issues/645)) ([ff58642](https://github.com/talos-systems/talos/commit/ff58642))
+* remove EC2 verification step ([#631](https://github.com/talos-systems/talos/issues/631)) ([5160cbc](https://github.com/talos-systems/talos/commit/5160cbc))
+* update partition layout to accomodate upgrades ([#621](https://github.com/talos-systems/talos/issues/621)) ([86e17c9](https://github.com/talos-systems/talos/commit/86e17c9))
+* update toolchain ([#628](https://github.com/talos-systems/talos/issues/628)) ([08789a0](https://github.com/talos-systems/talos/commit/08789a0))
+* upgrade Linux to v4.19.40 ([#630](https://github.com/talos-systems/talos/issues/630)) ([21c0b05](https://github.com/talos-systems/talos/commit/21c0b05))
+
+
+
 # [v0.1.0-alpha.25](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2019-05-05)
 
 
