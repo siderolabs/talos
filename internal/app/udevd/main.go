@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 
+	"github.com/mdlayher/kobject"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/udevd/internal/drivers/scsi"
-	"github.com/talos-systems/talos/internal/app/udevd/internal/uevent"
 )
 
 func init() {
@@ -22,87 +22,82 @@ func init() {
 }
 
 func watch() error {
-	k, err := uevent.Dial()
+	client, err := kobject.New()
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
-	defer k.Close()
-
-	for u := range k.Watch() {
-		if u.Error != nil {
-			log.Printf("uevent error: %+v\n", err)
+	for {
+		event, err := client.Receive()
+		if err != nil {
+			log.Printf("failed to receive event: %v", err)
 			continue
 		}
-		if err := handle(u.Message); err != nil {
-			log.Printf("event handler error: %+v\n", err)
+		if err = handle(event); err != nil {
+			log.Printf("%v", err)
 		}
 	}
-
-	return nil
 }
 
 // nolint: gocyclo
-func handle(message *uevent.Message) (err error) {
-	if message.Subsystem == uevent.SubsystemBlock {
-		var devname, devtype, partn string
-		var ok bool
+func handle(event *kobject.Event) (err error) {
+	if event.Subsystem != "block" {
+		return nil
+	}
+	var devname, devtype, partn string
+	var ok bool
 
-		if devname, ok = message.Values["DEVNAME"]; !ok {
-			return errors.Errorf("DEVNAME not found\n")
-		}
+	if devname, ok = event.Values["DEVNAME"]; !ok {
+		return errors.Errorf("DEVNAME not found\n")
+	}
 
-		devpath := path.Join("/dev", devname)
-		devtype = message.Values["DEVTYPE"]
+	devpath := filepath.Join("/dev", devname)
+	devtype = event.Values["DEVTYPE"]
 
-		var device *scsi.Device
-		if device, err = scsi.NewDevice(devpath); err != nil {
-			return errors.Errorf("error opening %s: %+v\n", devpath, err)
-		}
-		// nolint: errcheck
-		defer device.Close()
+	var device *scsi.Device
+	if device, err = scsi.NewDevice(devpath); err != nil {
+		return errors.Errorf("error opening %s: %+v\n", devpath, err)
+	}
+	// nolint: errcheck
+	defer device.Close()
 
-		if err = device.Identify(); err != nil {
-			return errors.Errorf("error identifying %s: %+v\n", devpath, err)
-		}
+	if err = device.Identify(); err != nil {
+		return errors.Errorf("error identifying %s: %+v\n", devpath, err)
+	}
 
-		if device.WWN == "" {
-			log.Printf("no wwn found for %s\n", devpath)
-			return nil
-		}
+	if device.WWN == "" {
+		log.Printf("no wwn found for %s\n", devpath)
+		return nil
+	}
 
-		oldname := fmt.Sprintf("../../%s", devname)
-		newname := fmt.Sprintf("/dev/disk/by-id/wwn-%s", device.WWN)
+	oldname := fmt.Sprintf("../../%s", devname)
+	newname := fmt.Sprintf("/dev/disk/by-id/wwn-%s", device.WWN)
 
-		if partn, ok = message.Values["PARTN"]; ok && devtype == "partition" {
-			newname += "-part" + partn
-		}
+	if partn, ok = event.Values["PARTN"]; ok && devtype == "partition" {
+		newname += "-part" + partn
+	}
+	switch event.Action {
+	case kobject.Add:
+		log.Printf("creating symlink %s -> %s\n", newname, oldname)
 
-		switch message.Action {
-		case uevent.ActionAdd:
-			log.Printf("creating symlink %s -> %s\n", newname, oldname)
-
-			if _, err = os.Lstat(newname); err == nil {
-				if err = os.Remove(newname); err != nil {
-					log.Printf("failed to remove symlink: %v\n", err)
-				}
+		if _, err = os.Lstat(newname); err == nil {
+			if err = os.Remove(newname); err != nil {
+				log.Printf("failed to remove symlink: %v\n", err)
 			}
-
-			if err = os.Symlink(oldname, newname); err != nil {
-				return errors.Errorf("failed to create symlink %s: %+v", newname, err)
-			}
-		case uevent.ActionRemove:
-			log.Printf("removing symlink %s -> %s\n", newname, oldname)
-
-			if _, err = os.Lstat(newname); err == nil {
-				if err = os.Remove(newname); err != nil {
-					log.Printf("failed to remove symlink: %v\n", err)
-				}
-			}
-		default:
-			log.Printf("unhandled action %q on %s", message.Action, devname)
 		}
 
+		if err = os.Symlink(oldname, newname); err != nil {
+			return errors.Errorf("failed to create symlink %s: %+v", newname, err)
+		}
+	case kobject.Remove:
+		log.Printf("removing symlink %s -> %s\n", newname, oldname)
+
+		if _, err = os.Lstat(newname); err == nil {
+			if err = os.Remove(newname); err != nil {
+				log.Printf("failed to remove symlink: %v\n", err)
+			}
+		}
+	default:
+		log.Printf("unhandled action %q on %s", event.Action, devname)
 	}
 
 	return nil
