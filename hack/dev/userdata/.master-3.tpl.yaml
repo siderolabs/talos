@@ -1,40 +1,59 @@
-version: ""
-security: null
-networking:
-  os: {}
-  kubernetes: {}
 services:
   init:
     cni: flannel
-  kubelet: null
   kubeadm:
     certificateKey: ChangeMe
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
-      kind: JoinConfiguration
-      caCertPath: /etc/kubernetes/pki/ca.crt
-      controlPlane:
-        localAPIEndpoint:
-          advertiseAddress: 10.5.0.8
-          bindPort: 6443
-      discovery:
-        bootstrapToken:
-          apiServerEndpoint: 10.5.0.6:443
-          token: 1qbsj9.3oz5hsk6grdfp98b
-          unsafeSkipCAVerification: true
-        timeout: 5m0s
-        tlsBootstrapToken: 1qbsj9.3oz5hsk6grdfp98b
+      kind: InitConfiguration
+      bootstrapTokens:
+      - token: 1qbsj9.3oz5hsk6grdfp98b
+        ttl: 0s
       nodeRegistration:
         name: master-3
         criSocket: /run/containerd/containerd.sock
+      localAPIEndpoint:
+        advertiseAddress: 10.5.0.8
+        bindPort: 6443
+      ---
+      apiVersion: kubeadm.k8s.io/v1beta1
+      kind: ClusterConfiguration
+      controlPlaneEndpoint: 10.5.0.8:443
+      apiServer:
+        certSANs:
+        - 127.0.0.1
+        - 10.5.0.6
+        - 10.5.0.7
+        - 10.5.0.8
+      networking:
+        dnsDomain: cluster.local
+        podSubnet: 10.244.0.1/16
+        serviceSubnet: 10.96.0.1/12
+      etcd:
+        local:
+          serverCertSANs:
+            - master-3
+            - 10.5.0.8
+          peerCertSANs:
+            - master-3
+            - 10.5.0.8
+          extraArgs:
+            initial-cluster: master-1=https://10.5.0.6:2380,master-2=https://10.5.0.7:2380,master-3=https://10.5.0.8:2380
+            initial-cluster-state: new
+            listen-peer-urls: https://10.5.0.8:2380
+            listen-client-urls: https://10.5.0.8:2379
+            advertise-client-urls: https://10.5.0.8:2379
+            initial-advertise-peer-urls: https://10.5.0.8:2380
+      ---
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      kind: KubeletConfiguration
+      featureGates:
+        ExperimentalCriticalPodAnnotation: true
   trustd:
-    username: dev
-    password: talos_trust_dev
+    username: 'dev'
+    password: 'talos_trust_dev'
     endpoints:
-    - 10.5.0.6
-    bootstrapNode: 10.5.0.6
-  proxyd: null
-  osd: null
-  crt: null
-files: []
-debug: false
+      - 10.5.0.6
+      - 10.5.0.7
+      - 10.5.0.8
+debug: true

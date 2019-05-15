@@ -58,8 +58,8 @@ func EnforceAuditingRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	return nil
 }
 
-// EnforceSecretRequirements enforces CIS requirements for secrets.
-func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
+// CreateEncryptionToken generates an encryption token to be used for secrets
+func CreateEncryptionToken() error {
 	if _, err := os.Stat(constants.EncryptionConfigInitramfsPath); !os.IsNotExist(err) {
 		return nil
 	}
@@ -96,6 +96,12 @@ func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	if err := ioutil.WriteFile(constants.EncryptionConfigInitramfsPath, buf.Bytes(), 0400); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// EnforceSecretRequirements enforces CIS requirements for secrets.
+func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
 	cfg.APIServer.ExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
 	vol := kubeadmapi.HostPathMount{
 		Name:      "encryptionconfig",
@@ -142,11 +148,16 @@ func EnforceExtraRequirements(cfg *kubeadmapi.InitConfiguration) error {
 }
 
 // EnforceMasterRequirements enforces the CIS requirements for master nodes.
-func EnforceMasterRequirements(cfg *kubeadmapi.InitConfiguration) error {
+func EnforceMasterRequirements(cfg *kubeadmapi.InitConfiguration, generateSecret bool) error {
 	ensureFieldsAreNotNil(cfg)
 
 	if err := EnforceAuditingRequirements(cfg); err != nil {
 		return err
+	}
+	if generateSecret {
+		if err := CreateEncryptionToken(); err != nil {
+			return err
+		}
 	}
 	if err := EnforceSecretRequirements(cfg); err != nil {
 		return err

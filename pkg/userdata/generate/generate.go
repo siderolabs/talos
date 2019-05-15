@@ -40,6 +40,7 @@ type Input struct {
 	KubeadmTokens     *KubeadmTokens
 	TrustdInfo        *TrustdInfo
 	InitToken         *token.Token
+	IP                net.IP
 }
 
 // Certs holds the base64 encoded keys and certificates.
@@ -171,7 +172,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		ServiceNet:        []string{"10.96.0.0/12"},
 		ServiceDomain:     "cluster.local",
 		ClusterName:       clustername,
-		Endpoints:         strings.Join(masterIPs[1:], ", "),
+		Endpoints:         strings.Join(masterIPs, ", "),
 		KubernetesVersion: constants.KubernetesVersion,
 		KubeadmTokens:     kubeadmTokens,
 		TrustdInfo:        trustdInfo,
@@ -248,10 +249,17 @@ func Userdata(t Type, in *Input) (string, error) {
 
 // renderTemplate will output a templated string.
 func renderTemplate(in *Input, udTemplate string) (string, error) {
-	templ := template.Must(template.New("udTemplate").Parse(udTemplate))
+	// So we can have a simple add func
+	funcs := template.FuncMap{"add": add}
+
+	templ := template.Must(template.New("udTemplate").Funcs(funcs).Parse(udTemplate))
 	var buf bytes.Buffer
 	if err := templ.Execute(&buf, in); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func add(a, b int) int {
+	return a + b
 }
