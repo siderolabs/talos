@@ -5,11 +5,18 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/defaults"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/talos-systems/talos/internal/app/init/pkg/system"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
@@ -62,3 +69,34 @@ func (c *Containerd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		restart.WithType(restart.Forever),
 	), nil
 }
+
+// HealthFunc implements the HealthcheckedService interface
+func (c *Containerd) HealthFunc(*userdata.UserData) health.Check {
+	return func(ctx context.Context) error {
+		client, err := containerd.New(constants.ContainerdAddress)
+		if err != nil {
+			return err
+		}
+
+		resp, err := client.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{})
+		if err != nil {
+			return err
+		}
+
+		if resp.Status != grpc_health_v1.HealthCheckResponse_SERVING {
+			return errors.Errorf("unexpected serving status: %d", resp.Status)
+		}
+
+		return nil
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface
+func (c *Containerd) HealthSettings(*userdata.UserData) *health.Settings {
+	return &health.DefaultSettings
+}
+
+// Verify healthchecked interface
+var (
+	_ system.HealthcheckedService = &Containerd{}
+)

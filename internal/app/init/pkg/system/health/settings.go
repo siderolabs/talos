@@ -17,7 +17,7 @@ type Settings struct {
 
 // DefaultSettings provides some default health check settings
 var DefaultSettings = Settings{
-	InitialDelay: 500 * time.Millisecond,
+	InitialDelay: 200 * time.Millisecond,
 	Period:       time.Second,
 	Timeout:      500 * time.Millisecond,
 }
