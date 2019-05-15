@@ -36,6 +36,7 @@ func (k *Kubelet) PreFunc(data *userdata.UserData) error {
 	requiredMounts := []string{
 		"/dev/disk/by-path",
 		"/etc/kubernetes",
+		"/etc/kubernetes/manifests",
 		"/run",
 		"/sys/fs/cgroup",
 		"/usr/libexec/kubernetes",
@@ -93,11 +94,12 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "sysfs", Destination: "/sys", Source: "/sys", Options: []string{"bind", "ro"}},
+		{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
@@ -131,7 +133,7 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
-			containerd.WithRootfsPropagation("slave"),
+			containerd.WithRootfsPropagation("shared"),
 			oci.WithMounts(mounts),
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithParentCgroupDevices,
