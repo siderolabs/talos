@@ -88,6 +88,27 @@ func Test_PartNo(t *testing.T) {
 			},
 			want: "10",
 		},
+		{
+			name: "loop0p1",
+			args: args{
+				devname: "loop0p1",
+			},
+			want: "1",
+		},
+		{
+			name: "loop7p11",
+			args: args{
+				devname: "loop7p11",
+			},
+			want: "11",
+		},
+		{
+			name: "loop4p4",
+			args: args{
+				devname: "loop4p4",
+			},
+			want: "4",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -140,6 +161,30 @@ func Test_DevnameFromPartname(t *testing.T) {
 				partno:  "11",
 			},
 			want: "nvme1n2",
+		},
+		{
+			name: "loop0p1",
+			args: args{
+				devname: "loop0p1",
+				partno:  "1",
+			},
+			want: "loop0",
+		},
+		{
+			name: "loop7p11",
+			args: args{
+				devname: "loop7p11",
+				partno:  "11",
+			},
+			want: "loop7",
+		},
+		{
+			name: "loop4p1",
+			args: args{
+				devname: "loop4p1",
+				partno:  "4",
+			},
+			want: "loop4",
 		},
 	}
 	for _, tt := range tests {

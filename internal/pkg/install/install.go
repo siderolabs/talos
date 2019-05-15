@@ -64,6 +64,10 @@ func Install(args string, data *userdata.UserData) (err error) {
 		}
 	}
 
+	if data.Install.Boot == nil {
+		return nil
+	}
+
 	syslinuxcfg := &syslinux.Cfg{
 		Default: constants.CurrentRootPartitionLabel(),
 		Labels: []*syslinux.Label{

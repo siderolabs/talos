@@ -193,7 +193,7 @@ func VerifyDataDevice(data *userdata.UserData) (err error) {
 // VerifyBootDevice verifies the supplied boot device options.
 func VerifyBootDevice(data *userdata.UserData) (err error) {
 	if data.Install.Boot == nil {
-		data.Install.Boot = &userdata.BootDevice{}
+		return nil
 	}
 
 	if data.Install.Boot.Device == "" {
@@ -279,11 +279,9 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		Targets: map[string][]*Target{},
 	}
 
-	// Initialize any slices we need.
+	// Initialize any slices we need. Note that a boot paritition is not
+	// required.
 
-	if manifest.Targets[data.Install.Boot.Device] == nil {
-		manifest.Targets[data.Install.Boot.Device] = []*Target{}
-	}
 	if manifest.Targets[data.Install.Root.Device] == nil {
 		manifest.Targets[data.Install.Root.Device] = []*Target{}
 	}
@@ -291,23 +289,26 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		manifest.Targets[data.Install.Data.Device] = []*Target{}
 	}
 
-	bootTarget := &Target{
-		Device: data.Install.Boot.Device,
-		Label:  constants.BootPartitionLabel,
-		Size:   data.Install.Boot.Size,
-		Force:  data.Install.Force,
-		Test:   false,
-		Assets: []*Asset{
-			{
-				Source:      data.Install.Boot.Kernel,
-				Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
+	var bootTarget *Target
+	if data.Install.Boot != nil {
+		bootTarget = &Target{
+			Device: data.Install.Boot.Device,
+			Label:  constants.BootPartitionLabel,
+			Size:   data.Install.Boot.Size,
+			Force:  data.Install.Force,
+			Test:   false,
+			Assets: []*Asset{
+				{
+					Source:      data.Install.Boot.Kernel,
+					Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
+				},
+				{
+					Source:      data.Install.Boot.Initramfs,
+					Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Initramfs)),
+				},
 			},
-			{
-				Source:      data.Install.Boot.Initramfs,
-				Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Initramfs)),
-			},
-		},
-		MountPoint: path.Join(constants.NewRoot, constants.BootMountPoint),
+			MountPoint: path.Join(constants.NewRoot, constants.BootMountPoint),
+		}
 	}
 
 	rootATarget := &Target{
@@ -344,6 +345,9 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	}
 
 	for _, target := range []*Target{bootTarget, rootATarget, rootBTarget, dataTarget} {
+		if target == nil {
+			continue
+		}
 		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
 	}
 
@@ -440,7 +444,16 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		return err
 	}
 
-	t.PartitionName = t.Device + strconv.Itoa(int(part.No()))
+	// TODO(andrewrynhard): We should really have a custom type that has all
+	// the methods we need. This switch statement shows up in some form in
+	// multiple places.
+	switch dev := t.Device; {
+	case strings.HasPrefix(dev, "/dev/nvme"):
+	case strings.HasPrefix(dev, "/dev/loop"):
+		t.PartitionName = t.Device + "p" + strconv.Itoa(int(part.No()))
+	default:
+		t.PartitionName = t.Device + strconv.Itoa(int(part.No()))
+	}
 
 	return nil
 }

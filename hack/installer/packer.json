@@ -51,8 +51,14 @@
         {
             "type": "shell",
             "inline": [
+                "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
                 "curl -fsSL get.docker.com | sudo sh",
-                "sudo docker run --privileged --volume /dev:/dev autonomy/installer:{{ user `version` }} disk -b /dev/xvdf -f -p aws -u none -e 'random.trust_cpu=on'"
+                "sudo docker run --privileged --volume /dev:/dev autonomy/installer:{{ user `version` }} install -d /dev/xvdf -p aws -u none"
             ]
         }
     ]

@@ -7,15 +7,22 @@ package cmd
 
 import (
 	"log"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/talos/cmd/osctl/internal/userdata"
+	// "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/install"
-	udata "github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 var (
-	kernelParams string
+	bootloader bool
+	device     string
+	endpoint   string
+	platform   string
 )
 
 // installCmd reads in a userData file and attempts to parse it
@@ -24,33 +31,60 @@ var installCmd = &cobra.Command{
 	Short: "Install Talos to a specified disk",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		var ud *udata.UserData
 		var err error
-		if userdataFile != "" {
-			ud, err = userdata.UserData(userdataFile)
-			if err != nil {
-				log.Fatal(err)
-			}
+		data := &userdata.UserData{
+			Install: &userdata.Install{
+				Force: true,
+				Root: &userdata.RootDevice{
+					Rootfs: "file:///usr/install/rootfs.tar.gz",
+					InstallDevice: userdata.InstallDevice{
+						Device: device,
+						Size:   2048 * 1000 * 1000,
+					},
+				},
+				Data: &userdata.InstallDevice{
+					Device: device,
+					Size:   512 * 1000 * 1000,
+				},
+			},
+		}
 
-			err = install.Prepare(ud)
-			if err != nil {
-				log.Fatal(err)
+		if bootloader {
+			data.Install.Boot = &userdata.BootDevice{
+				Kernel:    "file:///usr/install/vmlinuz",
+				Initramfs: "file:///usr/install/initramfs.xz",
+				InstallDevice: userdata.InstallDevice{
+					Device: device,
+					Size:   512 * 1000 * 1000,
+				},
 			}
 		}
-		err = install.Mount()
-		if err != nil {
+
+		if err = install.Prepare(data); err != nil {
 			log.Fatal(err)
 		}
 
-		err = install.Install(kernelParams, ud)
-		if err != nil {
+		if err = install.Mount(); err != nil {
 			log.Fatal(err)
 		}
+
+		cmdline := kernel.NewDefaultCmdline()
+		cmdline.Append("initrd", filepath.Join("/", constants.RootAPartitionLabel, "initramfs.xz"))
+		cmdline.Append(constants.KernelParamPlatform, platform)
+		cmdline.Append(constants.KernelParamUserData, endpoint)
+
+		if err = install.Install(cmdline.String(), data); err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("Talos (%s) installation complete", version.Tag)
 	},
 }
 
 func init() {
-	installCmd.Flags().StringVarP(&kernelParams, "kernel-parameters", "k", "", "kernel parameter flags")
-	installCmd.Flags().StringVarP(&userdataFile, "userdata", "u", "", "path or url of userdata file")
+	installCmd.Flags().BoolVar(&bootloader, "bootloader", true, "Install a booloader to the specified device")
+	installCmd.Flags().StringVar(&device, "device", "", "The path to the device to install to")
+	installCmd.Flags().StringVar(&endpoint, "userdata", "", "The value of "+constants.KernelParamUserData)
+	installCmd.Flags().StringVar(&platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.AddCommand(installCmd)
 }
