@@ -36,7 +36,7 @@ func NewInitializer(prefix string) (initializer *Initializer, err error) {
 	special := mount.NewMountPoints()
 	special.Set("dev", mount.NewMountPoint("devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"))
 	special.Set("proc", mount.NewMountPoint("proc", "/proc", "proc", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""))
-	special.Set("sys", mount.NewMountPoint("sysfs", "/sys", "sysfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""))
+	special.Set("sys", mount.NewMountPoint("sysfs", "/sys", "sysfs", 0, ""))
 	special.Set("run", mount.NewMountPoint("tmpfs", "/run", "tmpfs", 0, ""))
 	special.Set("tmp", mount.NewMountPoint("tmpfs", "/tmp", "tmpfs", 0, ""))
 
