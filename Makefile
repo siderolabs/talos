@@ -2,9 +2,9 @@ SHA = $(shell gitmeta git sha)
 TAG = $(shell gitmeta image tag)
 
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:c28db88
-ROOTFS_IMAGE ?= autonomy/rootfs-base:c28db88
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:c28db88
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:53d30e2
+ROOTFS_IMAGE ?= autonomy/rootfs-base:53d30e2
+INITRAMFS_IMAGE ?= autonomy/initramfs-base:53d30e2
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0
