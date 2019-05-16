@@ -77,6 +77,8 @@ func (c *Containerd) HealthFunc(*userdata.UserData) health.Check {
 		if err != nil {
 			return err
 		}
+		// nolint: errcheck
+		defer client.Close()
 
 		resp, err := client.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
