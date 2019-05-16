@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
+	"github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -213,4 +214,17 @@ func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 // Shutdown completes when Start() returns
 func (svcrunner *ServiceRunner) Shutdown() {
 	svcrunner.ctxCancel()
+}
+
+// AsProto returns protobuf struct with the state of the service runner
+func (svcrunner *ServiceRunner) AsProto() *proto.ServiceInfo {
+	svcrunner.mu.Lock()
+	defer svcrunner.mu.Unlock()
+
+	return &proto.ServiceInfo{
+		Id:     svcrunner.id,
+		State:  svcrunner.state.String(),
+		Events: svcrunner.events.AsProto(events.MaxEventsToKeep),
+		Health: svcrunner.healthState.AsProto(),
+	}
 }

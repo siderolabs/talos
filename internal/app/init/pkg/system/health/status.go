@@ -7,6 +7,10 @@ package health
 import (
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
+
+	"github.com/talos-systems/talos/internal/app/init/proto"
 )
 
 // Status of the healthcheck
@@ -102,4 +106,19 @@ func (state *State) Get() Status {
 	defer state.Unlock()
 
 	return state.status
+}
+
+// AsProto returns protobuf-ready health state
+func (state *State) AsProto() *proto.ServiceHealth {
+	status := state.Get()
+
+	// nolint: errcheck
+	tspb, _ := ptypes.TimestampProto(status.LastChange)
+
+	return &proto.ServiceHealth{
+		Unknown:     status.Healthy == nil,
+		Healthy:     status.Healthy != nil && *status.Healthy,
+		LastMessage: status.LastMessage,
+		LastChange:  tspb,
+	}
 }

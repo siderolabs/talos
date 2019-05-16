@@ -6,6 +6,10 @@ package events
 
 import (
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
+
+	"github.com/talos-systems/talos/internal/app/init/proto"
 )
 
 // MaxEventsToKeep is maximum number of events to keep per service before dropping old entries
@@ -94,6 +98,28 @@ func (events *ServiceEvents) Get(count int) (result []ServiceEvent) {
 	}
 
 	return
+}
+
+// AsProto returns protobuf-ready serialized snapshot
+func (events *ServiceEvents) AsProto(count int) *proto.ServiceEvents {
+	eventList := events.Get(count)
+
+	result := &proto.ServiceEvents{
+		Events: make([]*proto.ServiceEvent, len(eventList)),
+	}
+
+	for i := range eventList {
+		// nolint: errcheck
+		tspb, _ := ptypes.TimestampProto(eventList[i].Timestamp)
+
+		result.Events[i] = &proto.ServiceEvent{
+			Msg:   eventList[i].Message,
+			State: eventList[i].State.String(),
+			Ts:    tspb,
+		}
+	}
+
+	return result
 }
 
 // Recorder adds new event to the history of events, formatting message with args using Sprintf
