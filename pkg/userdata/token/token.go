@@ -34,7 +34,7 @@ func NewToken() (*Token, error) {
 
 // FromString returns a token parsed from a string.
 func FromString(input string) (*Token, error) {
-	uuid, err := uuid.FromBytes([]byte(input))
+	uuid, err := uuid.Parse(input)
 	if err != nil {
 		return nil, err
 	}
@@ -56,4 +56,33 @@ func (t *Token) Expired() bool {
 	}
 
 	return t2-t1 < BootstrapTTL
+}
+
+func (t *Token) String() string {
+	return t.uuid.String()
+}
+
+// UnmarshalYAML implements the unmarshaller interface so we can
+// represent a UUID v1 token as a string.
+func (t *Token) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var stoken string
+
+	if err := unmarshal(&stoken); err != nil {
+		return err
+	}
+
+	token, err := FromString(stoken)
+	if err != nil {
+		return err
+	}
+
+	*t = *token
+
+	return nil
+}
+
+// MarshalYAML implements the marshaller interface so we can
+// represent a UUID v1 token as a string.
+func (t *Token) MarshalYAML() (interface{}, error) {
+	return t.uuid.String(), nil
 }

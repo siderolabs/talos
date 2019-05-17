@@ -50,7 +50,7 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 		return err
 	}
 
-	if data.IsBootstrap() {
+	if data.Services.Kubeadm.IsBootstrap() {
 		// Write out all certs we've been provided
 		certs := []struct {
 			Cert     *x509.PEMEncodedCertificateAndKey
@@ -87,7 +87,7 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 				return err
 			}
 		}
-	} else if data.IsControlPlane() {
+	} else if data.Services.Kubeadm.IsControlPlane() {
 		if data.Services.Trustd == nil || data.Services.Trustd.BootstrapNode == "" {
 			return nil
 		}
@@ -156,7 +156,7 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 	certificateKey := "--certificate-key=" + encoded
 
 	switch {
-	case data.IsBootstrap():
+	case data.Services.Kubeadm.IsBootstrap():
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"init",
@@ -167,7 +167,7 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 			"--skip-certificate-key-print",
 			"--experimental-upload-certs",
 		}
-	case data.IsControlPlane():
+	case data.Services.Kubeadm.IsControlPlane():
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"join",
@@ -228,7 +228,7 @@ func enforceMasterOverrides(initConfiguration *kubeadmapi.InitConfiguration) {
 
 func writeKubeadmConfig(data *userdata.UserData) (err error) {
 	var b []byte
-	if data.IsBootstrap() {
+	if data.Services.Kubeadm.IsBootstrap() {
 		initConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
 		if !ok {
 			return errors.New("expected InitConfiguration")

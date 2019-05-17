@@ -7,6 +7,7 @@ package userdata
 import (
 	"errors"
 
+	"github.com/talos-systems/talos/pkg/userdata/token"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
@@ -23,10 +24,10 @@ type Kubeadm struct {
 	Configuration    runtime.Object `yaml:"-"`
 	ConfigurationStr string         `yaml:"configuration"`
 
-	ExtraArgs             []string `yaml:"extraArgs,omitempty"`
-	CertificateKey        string   `yaml:"certificateKey,omitempty"`
-	IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
-	bootstrap             bool
+	ExtraArgs             []string     `yaml:"extraArgs,omitempty"`
+	CertificateKey        string       `yaml:"certificateKey,omitempty"`
+	IgnorePreflightErrors []string     `yaml:"ignorePreflightErrors,omitempty"`
+	Token                 *token.Token `yaml:"initToken,omitempty"`
 	controlPlane          bool
 }
 
@@ -35,18 +36,6 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
 	if err != nil {
 		return nil, err
-	}
-
-	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
-	if err != nil {
-		return nil, err
-	}
-
-	if kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...) {
-		kdm.bootstrap = true
-	}
-	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
-		kdm.bootstrap = false
 	}
 
 	kdm.ConfigurationStr = string(b)
@@ -82,7 +71,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return err
 		}
 		kdm.Configuration = cfg
-		kdm.bootstrap = true
+		kdm.controlPlane = true
 	}
 	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
 		cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(b, kubeadmapi.SchemeGroupVersion, kubeadmscheme.Codecs)
@@ -90,7 +79,6 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return err
 		}
 		kdm.Configuration = cfg
-		kdm.bootstrap = false
 		joinConfiguration, ok := cfg.(*kubeadm.JoinConfiguration)
 		if !ok {
 			return errors.New("expected JoinConfiguration")
@@ -106,4 +94,22 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
+}
+
+// IsControlPlane indicates if the current kubeadm configuration is a worker
+// acting as a master.
+func (kdm *Kubeadm) IsControlPlane() bool {
+	return kdm.controlPlane
+}
+
+// IsBootstrap indicates if the current kubeadm configuration is a master init
+// configuration.
+func (kdm *Kubeadm) IsBootstrap() bool {
+	return kdm.Token != nil && kdm.IsControlPlane() && !kdm.Token.Expired()
+}
+
+// IsWorker indicates if the current kubeadm configuration is a worker
+// configuration.
+func (kdm *Kubeadm) IsWorker() bool {
+	return !kdm.IsControlPlane()
 }

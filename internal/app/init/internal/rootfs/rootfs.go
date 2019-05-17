@@ -91,7 +91,7 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 
 func generatePKI(data *userdata.UserData) (err error) {
 	log.Println("generating node identity PKI")
-	if data.IsBootstrap() {
+	if data.Services.Kubeadm.IsBootstrap() {
 		log.Println("generating PKI locally")
 		var csr *x509.CertificateSigningRequest
 		if csr, err = data.NewIdentityCSR(); err != nil {

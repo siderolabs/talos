@@ -308,7 +308,7 @@ func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
 			},
 		},
 	}
-	if !data.IsWorker() {
+	if data.Services.Kubeadm.IsControlPlane() {
 		masterReqs := []*ctrdrunner.ImportRequest{
 			{
 				Path: "/usr/images/proxyd.tar",
@@ -338,7 +338,7 @@ func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
 		&services.NTPd{},
 	)
 	// Start the services common to all master nodes.
-	if data.IsMaster() {
+	if data.Services.Kubeadm.IsControlPlane() {
 		svcs.Start(
 			&services.Trustd{},
 			&services.Proxyd{},
@@ -374,7 +374,7 @@ func startKubernetesServices(startupErrCh chan<- error, data *userdata.UserData)
 			Path: "/usr/images/pause.tar",
 		},
 	}
-	if !data.IsWorker() {
+	if data.Services.Kubeadm.IsControlPlane() {
 		reqs = append(reqs, &ctrdrunner.ImportRequest{Path: "/usr/images/etcd.tar"})
 	}
 	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {

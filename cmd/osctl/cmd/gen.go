@@ -7,6 +7,7 @@ package cmd
 import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"path"
@@ -16,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/userdata/token"
 )
 
 // genCmd represents the gen command
@@ -39,13 +41,13 @@ var caCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("error generating CA: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0400); err != nil {
+		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0600); err != nil {
 			helpers.Fatalf("error writing CA certificate: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".sha256", []byte(x509.Hash(ca.Crt)), 0400); err != nil {
+		if err := ioutil.WriteFile(organization+".sha256", []byte(x509.Hash(ca.Crt)), 0600); err != nil {
 			helpers.Fatalf("error writing certificate hash: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0400); err != nil {
+		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0600); err != nil {
 			helpers.Fatalf("error writing key: %s", err)
 		}
 	},
@@ -61,7 +63,7 @@ var keyCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("error generating key: %s", err)
 		}
-		if err := ioutil.WriteFile(name+".key", key.KeyPEM, 0400); err != nil {
+		if err := ioutil.WriteFile(name+".key", key.KeyPEM, 0600); err != nil {
 			helpers.Fatalf("error writing key: %s", err)
 		}
 	},
@@ -97,7 +99,7 @@ var csrCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("error generating CSR: %s", err)
 		}
-		if err := ioutil.WriteFile(strings.TrimSuffix(key, path.Ext(key))+".csr", csr.X509CertificateRequestPEM, 0400); err != nil {
+		if err := ioutil.WriteFile(strings.TrimSuffix(key, path.Ext(key))+".csr", csr.X509CertificateRequestPEM, 0600); err != nil {
 			helpers.Fatalf("error writing CSR: %s", err)
 		}
 	},
@@ -149,7 +151,7 @@ var crtCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("error signing certificate: %s", err)
 		}
-		if err := ioutil.WriteFile(name+".crt", signedCrt.X509CertificatePEM, 0400); err != nil {
+		if err := ioutil.WriteFile(name+".crt", signedCrt.X509CertificatePEM, 0600); err != nil {
 			helpers.Fatalf("error writing certificate: %s", err)
 		}
 	},
@@ -177,12 +179,26 @@ var keypairCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("error generating CA: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0400); err != nil {
+		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0600); err != nil {
 			helpers.Fatalf("error writing certificate: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0400); err != nil {
+		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0600); err != nil {
 			helpers.Fatalf("error writing key: %s", err)
 		}
+	},
+}
+
+// inittoken represents the gen token command
+var inittokenCmd = &cobra.Command{
+	Use:   "token",
+	Short: "Generates a UUIDv1 token",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		initToken, err := token.NewToken()
+		if err != nil {
+			helpers.Fatalf("Failed to generate new init token: %s", err)
+		}
+		fmt.Println(initToken.String())
 	},
 }
 
@@ -213,6 +229,6 @@ func init() {
 	csrCmd.Flags().StringVar(&ip, "ip", "", "generate the certificate for this IP address")
 	helpers.Should(cobra.MarkFlagRequired(csrCmd.Flags(), "ip"))
 
-	genCmd.AddCommand(caCmd, keypairCmd, keyCmd, csrCmd, crtCmd)
+	genCmd.AddCommand(caCmd, keypairCmd, keyCmd, csrCmd, crtCmd, inittokenCmd)
 	rootCmd.AddCommand(genCmd)
 }

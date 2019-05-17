@@ -56,7 +56,7 @@ func testUDServer() *httptest.Server {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		count++
 		log.Printf("Request %d\n", count)
-		if count == 4 {
+		if count == 3 {
 			// nolint: errcheck
 			w.Write([]byte(testConfig))
 			return
@@ -97,6 +97,7 @@ services:
   init:
     cni: flannel
   kubeadm:
+    initToken: 528d1ad6-3485-49ad-94cd-0f44a35877ac
     certificateKey: 'test'
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
@@ -225,4 +226,5 @@ const kubeadmConfig = `configuration: |
     networkName: ""
     sourceVip: ""
 certificateKey: test
+initToken: 528d1ad6-3485-49ad-94cd-0f44a35877ac
 `

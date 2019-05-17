@@ -19,6 +19,7 @@ up: talosconfig
 down:
 	@$(DOCKER_COMPOSE) down -v $(SERVICES)
 
+.PHONY: talosconfig
 talosconfig:
 	@mkdir -p pki
 	@./gen.sh $(IP_ADDR)

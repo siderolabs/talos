@@ -43,20 +43,6 @@ type UserData struct {
 func (data *UserData) Validate() error {
 	var result *multierror.Error
 
-	var nodeType string
-
-	switch {
-	case data.IsBootstrap():
-		nodeType = "init"
-	case data.IsMaster():
-		nodeType = "master"
-	case data.IsWorker():
-		nodeType = "worker"
-	default:
-		// TODO make an error
-		return result.ErrorOrNil()
-	}
-
 	// All nodeType checks
 	result = multierror.Append(result, data.Services.Validate(CheckServices()))
 	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsAreValidIPs()))
@@ -69,13 +55,13 @@ func (data *UserData) Validate() error {
 		}
 	}
 
-	switch nodeType {
-	case "init":
+	switch {
+	case data.Services.Kubeadm.IsBootstrap():
 		result = multierror.Append(result, data.Security.OS.Validate(CheckOSCA()))
 		result = multierror.Append(result, data.Security.Kubernetes.Validate(CheckKubernetesCA()))
-	case "master":
+	case data.Services.Kubeadm.IsControlPlane():
 		result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
-	case "worker":
+	case data.Services.Kubeadm.IsWorker():
 		result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
 	}
 
@@ -120,30 +106,6 @@ func (data *UserData) WriteFiles() (err error) {
 	}
 
 	return nil
-}
-
-// IsBootstrap indicates if the current kubeadm configuration is a master init
-// configuration.
-func (data *UserData) IsBootstrap() bool {
-	return data.Services.Kubeadm.bootstrap
-}
-
-// IsControlPlane indicates if the current kubeadm configuration is a worker
-// acting as a master.
-func (data *UserData) IsControlPlane() bool {
-	return data.Services.Kubeadm.controlPlane
-}
-
-// IsMaster indicates if the current kubeadm configuration is a master
-// configuration.
-func (data *UserData) IsMaster() bool {
-	return data.Services.Kubeadm.bootstrap || data.Services.Kubeadm.controlPlane
-}
-
-// IsWorker indicates if the current kubeadm configuration is a worker
-// configuration.
-func (data *UserData) IsWorker() bool {
-	return !data.IsMaster()
 }
 
 // NewIdentityCSR creates a new CSR for the node's identity certificate.
