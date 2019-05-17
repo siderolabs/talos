@@ -6,12 +6,11 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/chunker"
 	"gopkg.in/fsnotify.v1"
 )
@@ -57,88 +56,99 @@ func NewChunker(source Source, setters ...Option) chunker.Chunker {
 }
 
 // Read implements ChunkReader.
+//
+// nolint: gocyclo
 func (c *File) Read(ctx context.Context) <-chan []byte {
 	// Create a buffered channel of length 1.
 	ch := make(chan []byte, 1)
 
+	filename := c.source.Name()
+
 	go func(ch chan []byte) {
 		defer close(ch)
 
-		offset, err := c.source.Seek(0, io.SeekStart)
+		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
+			log.Printf("failed to watch: %v\n", err)
 			return
 		}
+		// nolint: errcheck
+		defer watcher.Close()
+
+		if err = watcher.Add(filepath.Dir(filename)); err != nil {
+			log.Printf("failed to watch add: %v\n", err)
+			return
+		}
+		offset, err := c.source.Seek(0, io.SeekStart)
+		if err != nil {
+			log.Printf("failed to seek: %v\n", err)
+			return
+		}
+
 		buf := make([]byte, c.options.Size)
+
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
+			for {
 				n, err := c.source.ReadAt(buf, offset)
-				if err != nil {
-					if err != io.EOF {
-						fmt.Printf("read error: %s\n", err.Error())
-						break
-					}
+				if err != nil && err != io.EOF {
+					log.Printf("read error: %s\n", err.Error())
+					return
 				}
+
 				offset += int64(n)
-				if n != 0 {
+
+				if n > 0 {
 					// Copy the buffer since we will modify it in the next loop.
 					b := make([]byte, n)
 					copy(b, buf[:n])
-					ch <- b
 
-					// Clear the buffer.
-					for i := 0; i < n; i++ {
-						buf[i] = 0
+				DELIVER:
+					select {
+					case <-ctx.Done():
+						return
+					case event := <-watcher.Events:
+						// drain events while waiting for the buffer to be delivered
+						// otherwise inotify() queue might overflow
+						if event.Name == filename && event.Op == fsnotify.Write {
+							// clear EOF condition (if there was one) to make sure
+							// we read more data
+							err = nil
+						}
+						goto DELIVER
+					case ch <- b:
 					}
-				} else if err := watch(c.source.Name()); err != nil {
-					log.Printf("failed to watch: %v\n", err)
-					return
 				}
+
+				if err == io.EOF || n == 0 {
+					break
+				}
+			}
+
+		WATCH:
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-watcher.Events:
+				if event.Name != filename {
+					// ignore events for other files
+					goto WATCH
+				}
+				switch event.Op {
+				case fsnotify.Write:
+					// new data, run one more loop copying data back to the client
+				case fsnotify.Remove:
+					log.Printf("file was removed while watching: %s", filename)
+					return
+				default:
+					log.Printf("ignoring fsnotify event: %v\n", event)
+					goto WATCH
+				}
+			case err := <-watcher.Errors:
+				log.Printf("failed to watch: %v\n", err)
+				return
 			}
 		}
 	}(ch)
 
 	return ch
-}
-
-func watch(path string) error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer watcher.Close()
-
-	errChan := make(chan error)
-
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				switch event.Op {
-				case fsnotify.Write:
-					errChan <- nil
-					return
-				case fsnotify.Remove:
-					errChan <- errors.Errorf("file was removed while watching: %s", path)
-					return
-				default:
-					log.Printf("ignoring fsnotify event: %v\n", event)
-				}
-			case err := <-watcher.Errors:
-				errChan <- err
-				return
-			}
-		}
-	}()
-
-	if err := watcher.Add(path); err != nil {
-		return err
-	}
-
-	e := <-errChan
-
-	return e
 }
