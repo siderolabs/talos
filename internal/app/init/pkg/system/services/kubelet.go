@@ -5,16 +5,23 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/app/init/internal/rootfs/cni"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
@@ -143,3 +150,40 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 		restart.WithType(restart.Forever),
 	), nil
 }
+
+// HealthFunc implements the HealthcheckedService interface
+func (k *Kubelet) HealthFunc(*userdata.UserData) health.Check {
+	return func(ctx context.Context) error {
+		req, err := http.NewRequest("GET", "http://localhost:10248/healthz", nil)
+		if err != nil {
+			return err
+		}
+		req = req.WithContext(ctx)
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return errors.Errorf("expected HTTP status OK, got %s", resp.Status)
+		}
+
+		return nil
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface
+func (k *Kubelet) HealthSettings(*userdata.UserData) *health.Settings {
+	settings := health.DefaultSettings
+	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup
+
+	return &settings
+}
+
+// Verify healthchecked interface
+var (
+	_ system.HealthcheckedService = &Kubelet{}
+)
