@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/containerd/cgroups"
@@ -271,57 +272,33 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 // be requested and the contents of the log file are streamed in chunks.
 // nolint: gocyclo
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
-	var (
-		client *containerd.Client
-		ctx    context.Context
-		pods   []*pod
-		task   *tasks.GetResponse
-	)
+	var filename string
 
-	pods, err = podInfo(req.Namespace)
-	if err != nil {
-		return err
+	switch {
+	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
+		filename = filepath.Join("/var/log", req.Id+".log")
+	default:
+		if filename, err = k8slogs(req); err != nil {
+			return err
+		}
 	}
-	client, ctx, err = connect(req.Namespace)
+
+	var file *os.File
+	file, err = os.OpenFile(filename, os.O_RDONLY, 0)
 	if err != nil {
-		return err
+		return
 	}
-	// nolint: errcheck
-	defer client.Close()
 
-	for _, containers := range pods {
-		for _, container := range containers.Containers {
-			if container.Display != req.Id {
-				continue
-			}
+	chunk := filechunker.NewChunker(file)
 
-			if container.LogFile == "" {
-				task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: container.ID})
-				if err != nil {
-					return
-				}
+	if chunk == nil {
+		err = errors.New("no log reader found")
+		return
+	}
 
-				container.LogFile = task.Process.Stdout
-			}
-
-			var file *os.File
-			file, err = os.OpenFile(container.LogFile, os.O_RDONLY, 0)
-			if err != nil {
-				return
-			}
-
-			chunk := filechunker.NewChunker(file)
-
-			if chunk == nil {
-				err = errors.New("no log reader found")
-				return
-			}
-
-			for data := range chunk.Read(l.Context()) {
-				if err = l.Send(&proto.Data{Bytes: data}); err != nil {
-					return
-				}
-			}
+	for data := range chunk.Read(l.Context()) {
+		if err = l.Send(&proto.Data{Bytes: data}); err != nil {
+			return
 		}
 	}
 
@@ -461,4 +438,46 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 	}
 
 	return reply, multiErr.ErrorOrNil()
+}
+
+func k8slogs(req *proto.LogsRequest) (string, error) {
+	var (
+		client *containerd.Client
+		ctx    context.Context
+		err    error
+		pods   []*pod
+		task   *tasks.GetResponse
+	)
+
+	pods, err = podInfo(req.Namespace)
+	if err != nil {
+		return "", err
+	}
+	client, ctx, err = connect(req.Namespace)
+	if err != nil {
+		return "", err
+	}
+	// nolint: errcheck
+	defer client.Close()
+
+	for _, containers := range pods {
+		for _, container := range containers.Containers {
+			if container.Display != req.Id {
+				continue
+			}
+
+			if container.LogFile == "" {
+				task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: container.ID})
+				if err != nil {
+					return "", err
+				}
+
+				container.LogFile = task.Process.Stdout
+			}
+
+			return container.LogFile, nil
+		}
+	}
+
+	return "", nil
 }
