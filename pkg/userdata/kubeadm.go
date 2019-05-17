@@ -95,9 +95,12 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if !ok {
 			return errors.New("expected JoinConfiguration")
 		}
-		if joinConfiguration.ControlPlane == nil {
+		if kdm.CertificateKey == "" {
 			kdm.controlPlane = false
 		} else {
+			if joinConfiguration.ControlPlane == nil {
+				joinConfiguration.ControlPlane = &kubeadmapi.JoinControlPlane{}
+			}
 			kdm.controlPlane = true
 		}
 	}
