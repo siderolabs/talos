@@ -24,7 +24,6 @@ services:
         kubeletExtraArgs:
           node-labels: ""
           feature-gates: ExperimentalCriticalPodAnnotation=true
-      token: '{{ .KubeadmTokens.BootstrapToken }}'
   trustd:
     token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}} ]

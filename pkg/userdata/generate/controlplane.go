@@ -15,10 +15,6 @@ services:
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: JoinConfiguration
-      controlPlane:
-        localAPIEndpoint:
-          advertiseAddress: {{ index .MasterIPs .Index }}
-          bindPort: 6443
       discovery:
         bootstrapToken:
           token: '{{ .KubeadmTokens.BootstrapToken }}'
@@ -32,6 +28,5 @@ services:
   trustd:
     token: '{{ .TrustdInfo.Token }}'
     endpoints: [ "{{ index .MasterIPs 0 }}" ]
-    bootstrapNode: "{{ index .MasterIPs 0 }}"
     certSANs: [ "{{ index .MasterIPs .Index }}" ]
 `

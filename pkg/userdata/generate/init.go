@@ -24,7 +24,6 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
       localAPIEndpoint:
-        advertiseAddress: {{ index .MasterIPs .Index }}
         bindPort: 6443
       bootstrapTokens:
       - token: '{{ .KubeadmTokens.BootstrapToken }}'
