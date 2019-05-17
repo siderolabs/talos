@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system"
 	"github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/pkg/upgrade"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -81,4 +82,19 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 	// profit
 	data = &proto.UpgradeReply{Ack: "Upgrade completed, rebooting node"}
 	return data, err
+}
+
+// ServiceList returns list of the registered services and their status
+func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *proto.ServiceListReply, err error) {
+	services := system.Services(r.Data).List()
+
+	result = &proto.ServiceListReply{
+		Services: make([]*proto.ServiceInfo, len(services)),
+	}
+
+	for i := range services {
+		result.Services[i] = services[i].AsProto()
+	}
+
+	return result, nil
 }

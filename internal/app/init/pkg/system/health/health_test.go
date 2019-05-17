@@ -51,6 +51,11 @@ func (suite *CheckSuite) TestHealthy() {
 
 	suite.Assert().EqualError(<-errCh, context.Canceled.Error())
 	suite.Assert().True(called > 2)
+
+	protoHealth := state.AsProto()
+	suite.Assert().False(protoHealth.Unknown)
+	suite.Assert().True(protoHealth.Healthy)
+	suite.Assert().Equal("", protoHealth.LastMessage)
 }
 
 func (suite *CheckSuite) TestHealthChange() {

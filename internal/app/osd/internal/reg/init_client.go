@@ -47,3 +47,8 @@ func (c *InitServiceClient) Shutdown(ctx context.Context, empty *empty.Empty) (*
 func (c *InitServiceClient) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (data *proto.UpgradeReply, err error) {
 	return c.InitClient.Upgrade(ctx, in)
 }
+
+// ServiceList executes the init ServiceList() API.
+func (c *InitServiceClient) ServiceList(ctx context.Context, empty *empty.Empty) (data *proto.ServiceListReply, err error) {
+	return c.InitClient.ServiceList(ctx, empty)
+}

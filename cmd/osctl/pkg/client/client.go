@@ -108,6 +108,11 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	return c, nil
 }
 
+// Close shuts down client protocol
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
 // Kubeconfig implements the proto.OSDClient interface.
 func (c *Client) Kubeconfig() (err error) {
 	ctx := context.Background()
@@ -323,4 +328,28 @@ func (c *Client) Upgrade(asseturl string) (err error) {
 	}
 	fmt.Println(reply.Ack)
 	return
+}
+
+// ServiceList returns list of services with their state
+func (c *Client) ServiceList(ctx context.Context) (*initproto.ServiceListReply, error) {
+	return c.initClient.ServiceList(ctx, &empty.Empty{})
+}
+
+// ServiceInfo returns info about a single service
+//
+// This is implemented via service list API, as we don't have many services
+// If service with given id is not registered, function returns nil
+func (c *Client) ServiceInfo(ctx context.Context, id string) (*initproto.ServiceInfo, error) {
+	reply, err := c.initClient.ServiceList(ctx, &empty.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, svc := range reply.Services {
+		if svc.Id == id {
+			return svc, nil
+		}
+	}
+
+	return nil, nil
 }

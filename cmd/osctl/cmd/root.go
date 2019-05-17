@@ -10,6 +10,7 @@ import (
 	"path"
 
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
@@ -55,4 +56,23 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		helpers.Fatalf("%s", err)
 	}
+}
+
+// setupClient wraps common code to initialize osd client
+func setupClient(action func(*client.Client)) {
+	creds, err := client.NewDefaultClientCredentials(talosconfig)
+	if err != nil {
+		helpers.Fatalf("error getting client credentials: %s", err)
+	}
+	if target != "" {
+		creds.Target = target
+	}
+	c, err := client.NewClient(constants.OsdPort, creds)
+	if err != nil {
+		helpers.Fatalf("error constructing client: %s", err)
+	}
+	// nolint: errcheck
+	defer c.Close()
+
+	action(c)
 }

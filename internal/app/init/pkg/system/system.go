@@ -5,6 +5,7 @@
 package system
 
 import (
+	"sort"
 	"sync"
 	"time"
 
@@ -104,4 +105,21 @@ func (s *singleton) Shutdown() {
 	s.mu.Unlock()
 
 	s.wg.Wait()
+}
+
+// List returns snapshot of ServiceRunner instances
+func (s *singleton) List() (result []*ServiceRunner) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	result = make([]*ServiceRunner, 0, len(s.State))
+	for _, svcrunner := range s.State {
+		result = append(result, svcrunner)
+	}
+
+	// TODO: results should be sorted properly with topological sort on dependencies
+	//       but, we don't have dependencies yet, so sort by service id for now to get stable order
+	sort.Slice(result, func(i, j int) bool { return result[i].id < result[j].id })
+
+	return
 }

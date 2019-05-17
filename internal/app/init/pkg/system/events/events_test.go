@@ -48,6 +48,11 @@ func (suite *EventsSuite) TestSome() {
 	suite.assertEvents([]string{"0", "1", "2", "3", "4"}, e.Get(5))
 	suite.assertEvents([]string{"0", "1", "2", "3", "4"}, e.Get(6))
 	suite.assertEvents([]string{"0", "1", "2", "3", "4"}, e.Get(100))
+
+	protoEvents := e.AsProto(1)
+	suite.Assert().Len(protoEvents.Events, 1)
+	suite.Assert().Equal("4", protoEvents.Events[0].Msg)
+	suite.Assert().Equal("Initialized", protoEvents.Events[0].State)
 }
 
 func (suite *EventsSuite) TestOverflow() {

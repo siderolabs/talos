@@ -57,6 +57,12 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 		events.StateRunning,
 		events.StateFinished,
 	}, sr)
+
+	protoService := sr.AsProto()
+	suite.Assert().Equal("MockRunner", protoService.Id)
+	suite.Assert().Equal("Finished", protoService.State)
+	suite.Assert().True(protoService.Health.Unknown)
+	suite.Assert().Len(protoService.Events.Events, 5)
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
