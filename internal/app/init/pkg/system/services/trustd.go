@@ -6,11 +6,15 @@
 package services
 
 import (
+	"context"
 	"fmt"
+	"net"
 
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
@@ -76,3 +80,26 @@ func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		restart.WithType(restart.Forever),
 	), nil
 }
+
+// HealthFunc implements the HealthcheckedService interface
+func (t *Trustd) HealthFunc(*userdata.UserData) health.Check {
+	return func(ctx context.Context) error {
+		var d net.Dialer
+		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "localhost", constants.TrustdPort))
+		if err != nil {
+			return err
+		}
+
+		return conn.Close()
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface
+func (t *Trustd) HealthSettings(*userdata.UserData) *health.Settings {
+	return &health.DefaultSettings
+}
+
+// Verify healthchecked interface
+var (
+	_ system.HealthcheckedService = &Trustd{}
+)
