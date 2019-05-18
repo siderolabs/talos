@@ -21,9 +21,10 @@ import (
 
 // serviceCmd represents the service command
 var serviceCmd = &cobra.Command{
-	Use:   "service [<id>]",
-	Short: "Retrieve the state of a service (or all services)",
-	Long:  ``,
+	Use:     "service [<id>]",
+	Aliases: []string{"services"},
+	Short:   "Retrieve the state of a service (or all services)",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
 			helpers.Should(cmd.Usage())
