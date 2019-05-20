@@ -47,6 +47,9 @@ ${OSCTL} inject os \
 	--key talos.key \
 	../userdata/master-1.yaml
 
+# Inject bootstrap/init token
+echo "Injecting init token"
+${OSCTL} inject token ../userdata/master-1.yaml
 
 # Inject Kubernetes PKI
 

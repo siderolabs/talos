@@ -17,6 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/userdata/token"
 )
 
 // CertStrings holds the string representation of a certificate and key.
@@ -38,6 +39,7 @@ type Input struct {
 	KubernetesVersion string
 	KubeadmTokens     *KubeadmTokens
 	TrustdInfo        *TrustdInfo
+	InitToken         *token.Token
 }
 
 // Certs holds the base64 encoded keys and certificates.
@@ -95,6 +97,12 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	// Generate Talos CA.
 	opts = []x509.Option{x509.RSA(false), x509.Organization("talos-os")}
 	osCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the init token
+	tok, err := token.NewToken()
 	if err != nil {
 		return nil, err
 	}
@@ -167,6 +175,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		KubernetesVersion: constants.KubernetesVersion,
 		KubeadmTokens:     kubeadmTokens,
 		TrustdInfo:        trustdInfo,
+		InitToken:         tok,
 	}
 
 	return input, nil

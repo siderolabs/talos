@@ -32,7 +32,6 @@ services:
     password: talos_trust_dev
     endpoints:
     - 10.5.0.6
-    - 10.5.0.7
     bootstrapNode: 10.5.0.6
   proxyd: null
   osd: null

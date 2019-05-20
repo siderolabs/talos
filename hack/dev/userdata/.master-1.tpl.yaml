@@ -36,4 +36,7 @@ services:
   trustd:
     username: 'dev'
     password: 'talos_trust_dev'
+    endpoints:
+      - 10.5.0.7
+      - 10.5.0.8
 debug: true

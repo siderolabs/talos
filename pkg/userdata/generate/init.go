@@ -19,6 +19,7 @@ services:
   init:
     cni: flannel
   kubeadm:
+    initToken: {{ .InitToken }}
     certificateKey: '{{ .KubeadmTokens.CertKey }}'
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
