@@ -1,3 +1,27 @@
+# [v0.1.0-alpha.27](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2019-05-20)
+
+
+### Bug Fixes
+
+* add libressl to rootfs ([#659](https://github.com/talos-systems/talos/issues/659)) ([4bdcccf](https://github.com/talos-systems/talos/commit/4bdcccf))
+* **init:** fix containerd healthcheck leaking memory in init/containerd ([#661](https://github.com/talos-systems/talos/issues/661)) ([d034987](https://github.com/talos-systems/talos/commit/d034987))
+* **init:** mount /sys into kubelet container ([#660](https://github.com/talos-systems/talos/issues/660)) ([98d76d8](https://github.com/talos-systems/talos/commit/98d76d8))
+* **osctl:** output config without localAPIEndpoint ([#665](https://github.com/talos-systems/talos/issues/665)) ([d36d440](https://github.com/talos-systems/talos/commit/d36d440))
+* **osd:** Read talos service logs from file ([#663](https://github.com/talos-systems/talos/issues/663)) ([dd3d3fa](https://github.com/talos-systems/talos/commit/dd3d3fa))
+
+
+### Features
+
+* **init:** implement health checks for services ([#656](https://github.com/talos-systems/talos/issues/656)) ([1dde9f8](https://github.com/talos-systems/talos/commit/1dde9f8))
+* add bootstrap token package ([#657](https://github.com/talos-systems/talos/issues/657)) ([ea4d3c4](https://github.com/talos-systems/talos/commit/ea4d3c4))
+* **init:** implement healthchecks for the services ([#667](https://github.com/talos-systems/talos/issues/667)) ([54168ce](https://github.com/talos-systems/talos/commit/54168ce))
+* **init:** implement services list API and osctl service CLI ([#662](https://github.com/talos-systems/talos/issues/662)) ([75b2ce7](https://github.com/talos-systems/talos/commit/75b2ce7))
+* add plural alias of service command ([#670](https://github.com/talos-systems/talos/issues/670)) ([496bb83](https://github.com/talos-systems/talos/commit/496bb83))
+* use github.com/mdlayher/kobject ([#653](https://github.com/talos-systems/talos/issues/653)) ([92fb18e](https://github.com/talos-systems/talos/commit/92fb18e))
+* use osctl in installer ([#654](https://github.com/talos-systems/talos/issues/654)) ([18a1536](https://github.com/talos-systems/talos/commit/18a1536))
+
+
+
 # [v0.1.0-alpha.26](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2019-05-13)
 
 
