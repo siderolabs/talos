@@ -276,7 +276,7 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 
 	switch {
 	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
-		filename = filepath.Join("/var/log", req.Id+".log")
+		filename = filepath.Join("/var/log", filepath.Base(req.Id)+".log")
 	default:
 		if filename, err = k8slogs(req); err != nil {
 			return err
