@@ -40,7 +40,7 @@ func (suite *ProcessSuite) SetupSuite() {
 	suite.Require().NoError(err)
 }
 
-func (suite *ProcessSuite) TeardownSuite() {
+func (suite *ProcessSuite) TearDownSuite() {
 	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
