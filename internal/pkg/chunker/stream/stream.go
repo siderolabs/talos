@@ -70,22 +70,24 @@ func (c *Stream) Read(ctx context.Context) <-chan []byte {
 			case <-ctx.Done():
 				return
 			default:
-				n, err := c.source.Read(buf)
-				if err != nil {
-					if err != io.EOF {
-						fmt.Printf("read error: %s\n", err.Error())
-						break
-					}
+			}
+
+			n, err := c.source.Read(buf)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Printf("read error: %s\n", err.Error())
 				}
-				if n != 0 {
-					// Copy the buffer since we will modify it in the next loop.
-					b := make([]byte, n)
-					copy(b, buf[:n])
-					ch <- b
-				}
-				// Clear the buffer.
-				for i := 0; i < n; i++ {
-					buf[i] = 0
+				break
+			}
+			if n != 0 {
+				// Copy the buffer since we will modify it in the next loop.
+				b := make([]byte, n)
+				copy(b, buf[:n])
+
+				select {
+				case <-ctx.Done():
+					return
+				case ch <- b:
 				}
 			}
 		}
