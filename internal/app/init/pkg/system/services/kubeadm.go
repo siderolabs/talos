@@ -123,11 +123,9 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (k *Kubeadm) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
-	files := []string{constants.ContainerdAddress}
-
-	return conditions.WaitForFilesToExist(files...)
+// Condition implements the Service interface.
+func (k *Kubeadm) Condition(data *userdata.UserData) conditions.Condition {
+	return conditions.WaitForFileToExist(constants.ContainerdAddress)
 }
 
 // Runner implements the Service interface.

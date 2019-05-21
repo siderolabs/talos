@@ -41,8 +41,8 @@ func (p *Proxyd) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (p *Proxyd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
+// Condition implements the Service interface.
+func (p *Proxyd) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt", "/etc/kubernetes/admin.conf")
 }
 

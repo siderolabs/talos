@@ -22,7 +22,7 @@ type MockService struct {
 	preError    error
 	runnerError error
 	runner      runner.Runner
-	condition   conditions.ConditionFunc
+	condition   conditions.Condition
 	postError   error
 }
 
@@ -48,7 +48,7 @@ func (m *MockService) PostFunc(*userdata.UserData) error {
 	return m.postError
 }
 
-func (m *MockService) ConditionFunc(*userdata.UserData) conditions.ConditionFunc {
+func (m *MockService) Condition(*userdata.UserData) conditions.Condition {
 	if m.condition != nil {
 		return m.condition
 	}

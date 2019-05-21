@@ -37,8 +37,8 @@ func (n *NTPd) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (n *NTPd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
+// Condition implements the Service interface.
+func (n *NTPd) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.None()
 }
 

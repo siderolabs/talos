@@ -42,8 +42,8 @@ func (o *OSD) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (o *OSD) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
+// Condition implements the Service interface.
+func (o *OSD) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.None()
 }
 

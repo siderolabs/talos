@@ -66,8 +66,8 @@ func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (k *Kubelet) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
+// Condition implements the Service interface.
+func (k *Kubelet) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", constants.ContainerdAddress)
 }
 
