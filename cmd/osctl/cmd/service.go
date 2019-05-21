@@ -97,7 +97,7 @@ func (svc serviceInfoWrapper) LastUpdated() string {
 		return ""
 	}
 
-	// nolint: error
+	// nolint: errcheck
 	ts, _ := ptypes.Timestamp(svc.Events.Events[len(svc.Events.Events)-1].Ts)
 
 	return time.Since(ts).Round(time.Second).String()
