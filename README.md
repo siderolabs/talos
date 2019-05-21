@@ -153,12 +153,12 @@ Follow us on Twitter for the latest on Talos, or join our slack for in-depth dis
   </a>
 </p>
 
-Join our weekly Zoom meetings:
+Join our weekly [Zoom](https://zoom.us/j/3595189922) meetings:
 
-https://zoom.us/j/3595189922
+- Office hours Mondays at 17:00 UTC
+- Maintainer hours Thursdays at 17:00 UTC
 
-- Office hours Mondays at 5:00 UTC
-- Maintainer hours Thursdays at 5:00 UTC
+> Note: You can check this time against your timezone [here](https://everytimezone.com/s/6bb1045a).
 
 ## Contributing
 
