@@ -43,8 +43,8 @@ func (c *Containerd) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (c *Containerd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
+// Condition implements the Service interface.
+func (c *Containerd) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.None()
 }
 

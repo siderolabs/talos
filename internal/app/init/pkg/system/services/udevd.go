@@ -35,8 +35,8 @@ func (c *Udevd) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// ConditionFunc implements the Service interface.
-func (c *Udevd) ConditionFunc(data *userdata.UserData) conditions.ConditionFunc {
+// Condition implements the Service interface.
+func (c *Udevd) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.None()
 }
 

@@ -25,7 +25,7 @@ type ImportRequest struct {
 
 // Import imports the images specified by the import requests.
 func Import(namespace string, reqs ...*ImportRequest) error {
-	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)(context.Background())
+	err := conditions.WaitForFileToExist(constants.ContainerdAddress).Wait(context.Background())
 	if err != nil {
 		return err
 	}

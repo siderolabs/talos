@@ -6,82 +6,13 @@ package conditions
 
 import (
 	"context"
-	"os"
-	"time"
+	"fmt"
 )
 
-// ConditionFunc is the signature that all condition funcs must have.
-type ConditionFunc = func(ctx context.Context) (bool, error)
-
-// None is a service condition that has no conditions.
-func None() ConditionFunc {
-	return func(ctx context.Context) (bool, error) {
-		return true, nil
-	}
-}
-
-// FileExists is a service condition that checks for the existence of a file
-// once and only once.
-func FileExists(file string) ConditionFunc {
-	return func(ctx context.Context) (bool, error) {
-		_, err := os.Stat(file)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return false, nil
-			}
-
-			return false, err
-		}
-
-		return true, nil
-	}
-}
-
-// WaitForFileToExist is a service condition that will wait for the existence of
-// a file.
-func WaitForFileToExist(file string) ConditionFunc {
-	return func(ctx context.Context) (bool, error) {
-		for {
-			exists, err := FileExists(file)(ctx)
-			if err != nil {
-				return false, err
-			}
-
-			if exists {
-				return true, nil
-			}
-
-			select {
-			case <-ctx.Done():
-				return false, ctx.Err()
-			case <-time.After(1 * time.Second):
-			}
-		}
-	}
-}
-
-// WaitForFilesToExist is a service condition that will wait for the existence a
-// set of files.
-func WaitForFilesToExist(files ...string) ConditionFunc {
-	return func(ctx context.Context) (bool, error) {
-		for {
-			allExist := true
-			for _, f := range files {
-				exists, err := FileExists(f)(ctx)
-				if err != nil {
-					return false, err
-				}
-				allExist = allExist && exists
-			}
-			if allExist {
-				return true, nil
-			}
-
-			select {
-			case <-ctx.Done():
-				return false, ctx.Err()
-			case <-time.After(1 * time.Second):
-			}
-		}
-	}
+// Condition is a object which Wait()s for some condition to become true.
+//
+// Condition can describe itself via String() method.
+type Condition interface {
+	fmt.Stringer
+	Wait(ctx context.Context) error
 }

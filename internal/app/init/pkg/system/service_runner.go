@@ -111,8 +111,9 @@ func (svcrunner *ServiceRunner) Start() {
 		return
 	}
 
-	svcrunner.UpdateState(events.StateWaiting, "Waiting for conditions")
-	_, err := svcrunner.service.ConditionFunc(svcrunner.userData)(svcrunner.ctx)
+	condition := svcrunner.service.Condition(svcrunner.userData)
+	svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", condition)
+	err := condition.Wait(svcrunner.ctx)
 	if err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
 		return

@@ -17,24 +17,24 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 )
 
-type ConditionsSuite struct {
+type FilesSuite struct {
 	suite.Suite
 
 	tempDir string
 }
 
-func (suite *ConditionsSuite) SetupSuite() {
+func (suite *FilesSuite) SetupSuite() {
 	var err error
 	suite.tempDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
 }
 
-func (suite *ConditionsSuite) TearDownSuite() {
+func (suite *FilesSuite) TearDownSuite() {
 	suite.Require().NoError(os.RemoveAll(suite.tempDir))
 }
 
-func (suite *ConditionsSuite) createFile(name string) (path string) {
+func (suite *FilesSuite) createFile(name string) (path string) {
 	path = filepath.Join(suite.tempDir, name)
 	f, err := os.Create(path)
 	suite.Require().NoError(err)
@@ -44,32 +44,22 @@ func (suite *ConditionsSuite) createFile(name string) (path string) {
 	return
 }
 
-func (suite *ConditionsSuite) TestFileExists() {
-	exists, err := conditions.FileExists("no-such-file")(context.Background())
-	suite.Require().NoError(err)
-	suite.Require().False(exists)
-
-	exists, err = conditions.FileExists(suite.createFile("a.txt"))(context.Background())
-	suite.Require().NoError(err)
-	suite.Require().True(exists)
+func (suite *FilesSuite) TestString() {
+	suite.Require().Equal("for file \"abc.txt\" to exist", conditions.WaitForFileToExist("abc.txt").String())
 }
 
-func (suite *ConditionsSuite) TestWaitForFileToExist() {
+func (suite *FilesSuite) TestWaitForFileToExist() {
 	path := suite.createFile("w.txt")
 
-	exists, err := conditions.WaitForFileToExist(path)(context.Background())
+	err := conditions.WaitForFileToExist(path).Wait(context.Background())
 	suite.Require().NoError(err)
-	suite.Require().True(exists)
 
 	suite.Require().NoError(os.Remove(path))
 
 	errCh := make(chan error)
 
 	go func() {
-		exists, err = conditions.WaitForFileToExist(path)(context.Background())
-		suite.Require().True(exists)
-
-		errCh <- err
+		errCh <- conditions.WaitForFileToExist(path).Wait(context.Background())
 	}()
 
 	time.Sleep(50 * time.Millisecond)
@@ -88,8 +78,7 @@ func (suite *ConditionsSuite) TestWaitForFileToExist() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	go func() {
-		_, err = conditions.WaitForFileToExist(path)(ctx)
-		errCh <- err
+		errCh <- conditions.WaitForFileToExist(path).Wait(ctx)
 	}()
 
 	time.Sleep(50 * time.Millisecond)
@@ -105,23 +94,19 @@ func (suite *ConditionsSuite) TestWaitForFileToExist() {
 	suite.Require().EqualError(<-errCh, context.Canceled.Error())
 }
 
-func (suite *ConditionsSuite) TestWaitForFilesToExist() {
+func (suite *FilesSuite) TestWaitForAllFilesToExist() {
 	pathA := suite.createFile("wA.txt")
 	pathB := suite.createFile("wB.txt")
 
-	exists, err := conditions.WaitForFilesToExist(pathA, pathB)(context.Background())
+	err := conditions.WaitForFilesToExist(pathA, pathB).Wait(context.Background())
 	suite.Require().NoError(err)
-	suite.Require().True(exists)
 
 	suite.Require().NoError(os.Remove(pathB))
 
 	errCh := make(chan error)
 
 	go func() {
-		exists, err = conditions.WaitForFilesToExist(pathA, pathB)(context.Background())
-		suite.Require().True(exists)
-
-		errCh <- err
+		errCh <- conditions.WaitForFilesToExist(pathA, pathB).Wait(context.Background())
 	}()
 
 	time.Sleep(50 * time.Millisecond)
@@ -141,8 +126,7 @@ func (suite *ConditionsSuite) TestWaitForFilesToExist() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	go func() {
-		_, err = conditions.WaitForFilesToExist(pathA, pathB)(ctx)
-		errCh <- err
+		errCh <- conditions.WaitForFilesToExist(pathA, pathB).Wait(ctx)
 	}()
 
 	time.Sleep(50 * time.Millisecond)
@@ -158,6 +142,6 @@ func (suite *ConditionsSuite) TestWaitForFilesToExist() {
 	suite.Require().EqualError(<-errCh, context.Canceled.Error())
 }
 
-func TestConditionsSuite(t *testing.T) {
-	suite.Run(t, new(ConditionsSuite))
+func TestFilesSuite(t *testing.T) {
+	suite.Run(t, new(FilesSuite))
 }

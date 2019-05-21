@@ -59,7 +59,7 @@ func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Opt
 func (c *containerdRunner) Open(ctx context.Context) error {
 
 	// Wait for the containerd socket.
-	_, err := conditions.WaitForFileToExist(constants.ContainerdAddress)(ctx)
+	err := conditions.WaitForFileToExist(constants.ContainerdAddress).Wait(ctx)
 	if err != nil {
 		return err
 	}

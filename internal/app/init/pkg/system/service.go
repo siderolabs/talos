@@ -21,9 +21,9 @@ type Service interface {
 	Runner(*userdata.UserData) (runner.Runner, error)
 	// PostFunc is invoked after a runner is closed.
 	PostFunc(*userdata.UserData) error
-	// ConditionFunc describes the conditions under which a service should
+	// Condition describes the conditions under which a service should
 	// start.
-	ConditionFunc(*userdata.UserData) conditions.ConditionFunc
+	Condition(*userdata.UserData) conditions.Condition
 }
 
 // HealthcheckedService is a service which provides health check
