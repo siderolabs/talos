@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 
+	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
@@ -34,7 +35,16 @@ func (o *OSD) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (o *OSD) PreFunc(data *userdata.UserData) error {
-	return os.MkdirAll("/etc/kubernetes", os.ModeDir)
+	if err := os.MkdirAll("/etc/kubernetes", os.ModeDir); err != nil {
+		return err
+	}
+
+	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+		Path: "/usr/images/osd.tar",
+		Options: []containerdapi.ImportOpt{
+			containerdapi.WithIndexName("talos/osd"),
+		},
+	})
 }
 
 // PostFunc implements the Service interface.
@@ -44,7 +54,12 @@ func (o *OSD) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (o *OSD) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.None()
+	return nil
+}
+
+// DependsOn implements the Service interface.
+func (o *OSD) DependsOn(data *userdata.UserData) []string {
+	return []string{"containerd"}
 }
 
 func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {

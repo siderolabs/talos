@@ -46,6 +46,24 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 // PreFunc implements the Service interface.
 // nolint: gocyclo
 func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
+	reqs := []*containerd.ImportRequest{
+		{
+			Path: "/usr/images/hyperkube.tar",
+		},
+		{
+			Path: "/usr/images/coredns.tar",
+		},
+		{
+			Path: "/usr/images/pause.tar",
+		},
+	}
+	if data.Services.Kubeadm.IsControlPlane() {
+		reqs = append(reqs, &containerd.ImportRequest{Path: "/usr/images/etcd.tar"})
+	}
+	if err = containerd.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
+		return err
+	}
+
 	if err = writeKubeadmConfig(data); err != nil {
 		return err
 	}
@@ -125,7 +143,18 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 // Condition implements the Service interface.
 func (k *Kubeadm) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.WaitForFileToExist(constants.ContainerdAddress)
+	return nil
+}
+
+// DependsOn implements the Service interface.
+func (k *Kubeadm) DependsOn(data *userdata.UserData) []string {
+	deps := []string{"containerd"}
+
+	if data.Services.Kubeadm.IsControlPlane() {
+		deps = append(deps, "trustd")
+	}
+
+	return deps
 }
 
 // Runner implements the Service interface.

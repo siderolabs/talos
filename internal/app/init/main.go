@@ -15,8 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform"
 	"github.com/talos-systems/talos/internal/app/init/internal/reg"
@@ -25,7 +23,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/internal/security/kspp"
 	"github.com/talos-systems/talos/internal/app/init/pkg/network"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
-	ctrdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/services"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
@@ -231,7 +228,6 @@ func root() (err error) {
 		log.Printf("WARNING: power off events will be ignored: %+v", err)
 	}
 
-	startupErrCh := make(chan error)
 	termCh := make(chan os.Signal, 1)
 	signal.Notify(termCh, syscall.SIGTERM)
 
@@ -256,11 +252,8 @@ func root() (err error) {
 		server.Serve(listener)
 	}()
 
-	// Start containerd.
-	svcs.Start(&services.Containerd{})
-
-	go startSystemServices(startupErrCh, data)
-	go startKubernetesServices(startupErrCh, data)
+	startSystemServices(data)
+	startKubernetesServices(data)
 
 	select {
 	case <-api.ShutdownCh:
@@ -271,8 +264,6 @@ func root() (err error) {
 		log.Printf("poweroff via ACPI")
 		// poweroff, proceed to shutdown but mark as poweroff
 		rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
-	case err = <-startupErrCh:
-		panic(err)
 	case <-termCh:
 		log.Printf("SIGTERM received, rebooting...")
 	case <-api.RebootCh:
@@ -282,57 +273,13 @@ func root() (err error) {
 	return nil
 }
 
-func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
-	var err error
-
+func startSystemServices(data *userdata.UserData) {
 	svcs := system.Services(data)
-
-	// Import the system images.
-	reqs := []*ctrdrunner.ImportRequest{
-		{
-			Path: "/usr/images/osd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/osd"),
-			},
-		},
-		{
-			Path: "/usr/images/ntpd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/ntpd"),
-			},
-		},
-		{
-			Path: "/usr/images/udevd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("talos/udevd"),
-			},
-		},
-	}
-	if data.Services.Kubeadm.IsControlPlane() {
-		masterReqs := []*ctrdrunner.ImportRequest{
-			{
-				Path: "/usr/images/proxyd.tar",
-				Options: []containerd.ImportOpt{
-					containerd.WithIndexName("talos/proxyd"),
-				},
-			},
-			{
-				Path: "/usr/images/trustd.tar",
-				Options: []containerd.ImportOpt{
-					containerd.WithIndexName("talos/trustd"),
-				},
-			},
-		}
-		reqs = append(reqs, masterReqs...)
-	}
-	if err = ctrdrunner.Import(constants.SystemContainerdNamespace, reqs...); err != nil {
-		startupErrCh <- err
-		return
-	}
 
 	log.Println("starting system services")
 	// Start the services common to all nodes.
 	svcs.Start(
+		&services.Containerd{},
 		&services.Udevd{},
 		&services.OSD{},
 		&services.NTPd{},
@@ -358,29 +305,8 @@ func startSystemServices(startupErrCh chan<- error, data *userdata.UserData) {
 	}
 }
 
-func startKubernetesServices(startupErrCh chan<- error, data *userdata.UserData) {
+func startKubernetesServices(data *userdata.UserData) {
 	svcs := system.Services(data)
-
-	// Import the Kubernetes images.
-
-	reqs := []*ctrdrunner.ImportRequest{
-		{
-			Path: "/usr/images/hyperkube.tar",
-		},
-		{
-			Path: "/usr/images/coredns.tar",
-		},
-		{
-			Path: "/usr/images/pause.tar",
-		},
-	}
-	if data.Services.Kubeadm.IsControlPlane() {
-		reqs = append(reqs, &ctrdrunner.ImportRequest{Path: "/usr/images/etcd.tar"})
-	}
-	if err := ctrdrunner.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
-		startupErrCh <- err
-		return
-	}
 
 	log.Println("starting kubernetes services")
 	svcs.Start(

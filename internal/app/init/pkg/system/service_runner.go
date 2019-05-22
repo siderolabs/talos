@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
@@ -32,6 +33,8 @@ type ServiceRunner struct {
 
 	healthState health.State
 
+	stateSubscribers map[StateEvent][]chan<- struct{}
+
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 }
@@ -41,19 +44,19 @@ func NewServiceRunner(service Service, userData *userdata.UserData) *ServiceRunn
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	return &ServiceRunner{
-		service:   service,
-		userData:  userData,
-		id:        service.ID(userData),
-		ctx:       ctx,
-		ctxCancel: ctxCancel,
-		state:     events.StateInitialized,
+		service:          service,
+		userData:         userData,
+		id:               service.ID(userData),
+		ctx:              ctx,
+		ctxCancel:        ctxCancel,
+		state:            events.StateInitialized,
+		stateSubscribers: make(map[StateEvent][]chan<- struct{}),
 	}
 }
 
 // UpdateState implements events.Recorder
 func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, message string, args ...interface{}) {
 	svcrunner.mu.Lock()
-	defer svcrunner.mu.Unlock()
 
 	event := events.ServiceEvent{
 		Message:   fmt.Sprintf(message, args...),
@@ -65,14 +68,25 @@ func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, messag
 	svcrunner.events.Push(event)
 
 	log.Printf("service[%s](%s): %s", svcrunner.id, svcrunner.state, event.Message)
+
+	isUp := svcrunner.inStateLocked(StateEventUp)
+	isDown := svcrunner.inStateLocked(StateEventDown)
+	svcrunner.mu.Unlock()
+
+	if isUp {
+		svcrunner.notifyEvent(StateEventUp)
+	}
+	if isDown {
+		svcrunner.notifyEvent(StateEventDown)
+	}
 }
 
 func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	svcrunner.mu.Lock()
-	defer svcrunner.mu.Unlock()
 
 	// service not running, suppress event
 	if svcrunner.state != events.StateRunning {
+		svcrunner.mu.Unlock()
 		return
 	}
 
@@ -91,6 +105,13 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	svcrunner.events.Push(event)
 
 	log.Printf("service[%s](%s): %s", svcrunner.id, svcrunner.state, event.Message)
+
+	isUp := svcrunner.inStateLocked(StateEventUp)
+	svcrunner.mu.Unlock()
+
+	if isUp {
+		svcrunner.notifyEvent(StateEventUp)
+	}
 }
 
 // GetEventHistory returns history of events for this service
@@ -104,18 +125,35 @@ func (svcrunner *ServiceRunner) GetEventHistory(count int) []events.ServiceEvent
 // Start initializes the service and runs it
 //
 // Start should be run in a goroutine.
+// nolint: gocyclo
 func (svcrunner *ServiceRunner) Start() {
+	condition := svcrunner.service.Condition(svcrunner.userData)
+	dependencies := svcrunner.service.DependsOn(svcrunner.userData)
+	if len(dependencies) > 0 {
+		serviceConditions := make([]conditions.Condition, len(dependencies))
+		for i := range dependencies {
+			serviceConditions[i] = WaitForService(StateEventUp, dependencies[i])
+		}
+		serviceDependencies := conditions.WaitForAll(serviceConditions...)
+		if condition != nil {
+			condition = conditions.WaitForAll(serviceDependencies, condition)
+		} else {
+			condition = serviceDependencies
+		}
+	}
+
+	if condition != nil {
+		svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", condition)
+		err := condition.Wait(svcrunner.ctx)
+		if err != nil {
+			svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
+			return
+		}
+	}
+
 	svcrunner.UpdateState(events.StatePreparing, "Running pre state")
 	if err := svcrunner.service.PreFunc(svcrunner.userData); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
-		return
-	}
-
-	condition := svcrunner.service.Condition(svcrunner.userData)
-	svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", condition)
-	err := condition.Wait(svcrunner.ctx)
-	if err != nil {
-		svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
 		return
 	}
 
@@ -123,6 +161,11 @@ func (svcrunner *ServiceRunner) Start() {
 	runnr, err := svcrunner.service.Runner(svcrunner.userData)
 	if err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to create runner: %v", err)
+		return
+	}
+
+	if runnr == nil {
+		svcrunner.UpdateState(events.StateSkipped, "Service skipped")
 		return
 	}
 
@@ -227,5 +270,79 @@ func (svcrunner *ServiceRunner) AsProto() *proto.ServiceInfo {
 		State:  svcrunner.state.String(),
 		Events: svcrunner.events.AsProto(events.MaxEventsToKeep),
 		Health: svcrunner.healthState.AsProto(),
+	}
+}
+
+// Subscribe to a specific event for this service.
+//
+// Channel `ch` should be buffered or it should have listener attached to it,
+// as event might be delivered before Subscribe() returns.
+func (svcrunner *ServiceRunner) Subscribe(event StateEvent, ch chan<- struct{}) {
+	svcrunner.mu.Lock()
+
+	if svcrunner.inStateLocked(event) {
+		svcrunner.mu.Unlock()
+
+		// svcrunner is already in expected state, notify immediately
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+
+		return
+	}
+
+	svcrunner.stateSubscribers[event] = append(svcrunner.stateSubscribers[event], ch)
+	svcrunner.mu.Unlock()
+}
+
+// Unsubscribe cancels subscription established with Subscribe.
+func (svcrunner *ServiceRunner) Unsubscribe(event StateEvent, ch chan<- struct{}) {
+	svcrunner.mu.Lock()
+	defer svcrunner.mu.Unlock()
+
+	channels := svcrunner.stateSubscribers[event]
+
+	for i := 0; i < len(channels); {
+		if channels[i] == ch {
+			channels[i], channels[len(channels)-1] = channels[len(channels)-1], nil
+			channels = channels[:len(channels)-1]
+		} else {
+			i++
+		}
+	}
+
+	svcrunner.stateSubscribers[event] = channels
+}
+
+func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
+	svcrunner.mu.Lock()
+	channels := append([]chan<- struct{}(nil), svcrunner.stateSubscribers[event]...)
+	svcrunner.mu.Unlock()
+
+	for _, ch := range channels {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+	}
+}
+
+func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
+	switch event {
+	case StateEventUp:
+		// check if service supports health checks
+		_, supportsHealth := svcrunner.service.(HealthcheckedService)
+		health := svcrunner.healthState.Get()
+
+		// up when:
+		//   a) either skipped
+		//   b) or running and healthy (if supports health checks)
+		return svcrunner.state == events.StateSkipped || svcrunner.state == events.StateRunning && (!supportsHealth || (health.Healthy != nil && *health.Healthy))
+	case StateEventDown:
+		// down when in any of the terminal states
+		return svcrunner.state == events.StateFailed || svcrunner.state == events.StateFinished || svcrunner.state == events.StateSkipped
+	default:
+		panic("unsupported event")
 	}
 }

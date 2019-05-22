@@ -18,12 +18,14 @@ import (
 )
 
 type MockService struct {
-	name        string
-	preError    error
-	runnerError error
-	runner      runner.Runner
-	condition   conditions.Condition
-	postError   error
+	name         string
+	preError     error
+	runnerError  error
+	nilRunner    bool
+	runner       runner.Runner
+	condition    conditions.Condition
+	postError    error
+	dependencies []string
 }
 
 func (m *MockService) ID(*userdata.UserData) string {
@@ -41,6 +43,10 @@ func (m *MockService) Runner(*userdata.UserData) (runner.Runner, error) {
 		return m.runner, m.runnerError
 	}
 
+	if m.nilRunner {
+		return nil, nil
+	}
+
 	return &MockRunner{exitCh: make(chan error)}, m.runnerError
 }
 
@@ -49,11 +55,11 @@ func (m *MockService) PostFunc(*userdata.UserData) error {
 }
 
 func (m *MockService) Condition(*userdata.UserData) conditions.Condition {
-	if m.condition != nil {
-		return m.condition
-	}
+	return m.condition
+}
 
-	return conditions.None()
+func (m *MockService) DependsOn(*userdata.UserData) []string {
+	return m.dependencies
 }
 
 type MockHealthcheckedService struct {

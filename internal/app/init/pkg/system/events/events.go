@@ -27,6 +27,7 @@ const (
 	StateStopping
 	StateFinished
 	StateFailed
+	StateSkipped
 )
 
 func (state ServiceState) String() string {
@@ -45,6 +46,8 @@ func (state ServiceState) String() string {
 		return "Finished"
 	case StateFailed:
 		return "Failed"
+	case StateSkipped:
+		return "Skipped"
 	default:
 		return "Unknown"
 	}

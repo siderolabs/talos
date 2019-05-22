@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 
+	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
@@ -33,7 +34,12 @@ func (t *Trustd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (t *Trustd) PreFunc(data *userdata.UserData) error {
-	return nil
+	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+		Path: "/usr/images/trustd.tar",
+		Options: []containerdapi.ImportOpt{
+			containerdapi.WithIndexName("talos/trustd"),
+		},
+	})
 }
 
 // PostFunc implements the Service interface.
@@ -43,7 +49,12 @@ func (t *Trustd) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (t *Trustd) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.None()
+	return nil
+}
+
+// DependsOn implements the Service interface.
+func (t *Trustd) DependsOn(data *userdata.UserData) []string {
+	return []string{"containerd"}
 }
 
 func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {

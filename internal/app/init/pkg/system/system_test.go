@@ -6,6 +6,7 @@ package system_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
@@ -16,12 +17,13 @@ type SystemServicesSuite struct {
 }
 
 func (suite *SystemServicesSuite) TestStartShutdown() {
-	prevShutdownHackySleep := system.ShutdownHackySleep
-	defer func() { system.ShutdownHackySleep = prevShutdownHackySleep }()
-
-	system.ShutdownHackySleep = 0
-
-	system.Services(nil).Start(&MockService{name: "containerd"}, &MockService{name: "proxyd"})
+	system.Services(nil).Start(
+		&MockService{name: "containerd"},
+		&MockService{name: "proxyd", dependencies: []string{"containerd"}},
+		&MockService{name: "trustd", dependencies: []string{"containerd", "proxyd"}},
+		&MockService{name: "osd", dependencies: []string{"containerd"}},
+	)
+	time.Sleep(10 * time.Millisecond)
 	system.Services(nil).Shutdown()
 }
 

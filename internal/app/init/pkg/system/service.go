@@ -24,6 +24,8 @@ type Service interface {
 	// Condition describes the conditions under which a service should
 	// start.
 	Condition(*userdata.UserData) conditions.Condition
+	// DependsOn returns list of service IDs this service depends on.
+	DependsOn(*userdata.UserData) []string
 }
 
 // HealthcheckedService is a service which provides health check

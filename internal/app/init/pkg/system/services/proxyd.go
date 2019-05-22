@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 
+	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
@@ -19,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -33,7 +35,16 @@ func (p *Proxyd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (p *Proxyd) PreFunc(data *userdata.UserData) error {
-	return os.MkdirAll("/etc/kubernetes", os.ModeDir)
+	if err := os.MkdirAll("/etc/kubernetes", os.ModeDir); err != nil {
+		return err
+	}
+
+	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+		Path: "/usr/images/proxyd.tar",
+		Options: []containerdapi.ImportOpt{
+			containerdapi.WithIndexName("talos/proxyd"),
+		},
+	})
 }
 
 // PostFunc implements the Service interface.
@@ -44,6 +55,11 @@ func (p *Proxyd) PostFunc(data *userdata.UserData) (err error) {
 // Condition implements the Service interface.
 func (p *Proxyd) Condition(data *userdata.UserData) conditions.Condition {
 	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt", "/etc/kubernetes/admin.conf")
+}
+
+// DependsOn implements the Service interface.
+func (p *Proxyd) DependsOn(data *userdata.UserData) []string {
+	return []string{"containerd"}
 }
 
 func (p *Proxyd) Runner(data *userdata.UserData) (runner.Runner, error) {
