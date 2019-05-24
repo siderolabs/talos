@@ -2,9 +2,9 @@ SHA = $(shell gitmeta git sha)
 TAG = $(shell gitmeta image tag)
 
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:53d30e2
-ROOTFS_IMAGE ?= autonomy/rootfs-base:53d30e2
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:53d30e2
+TOOLCHAIN_IMAGE ?= andrewrynhard/toolchain:arm64
+ROOTFS_IMAGE ?= andrewrynhard/rootfs:arm64
+INITRAMFS_IMAGE ?= andrewrynhard/initramfs:arm64
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0
@@ -17,19 +17,19 @@ BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAIN
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
+BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-arm64.tar.gz
 BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 endif
 ifeq ($(UNAME_S),Darwin)
-BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
+BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-arm64.tar.gz
 BUILDKIT_CACHE ?= ""
 endif
 
 ifeq ($(UNAME_S),Linux)
-KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
+KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/linux/arm64/kubectl
 endif
 ifeq ($(UNAME_S),Darwin)
-KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/amd64/kubectl
+KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/arm64/kubectl
 endif
 
 BINDIR ?= ./bin

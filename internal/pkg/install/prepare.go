@@ -422,6 +422,8 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 			typeID = "44479540-F297-41B2-9AF7-D131D5F0458A"
 		case "amd64":
 			typeID = "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
+		case "arm64":
+			typeID = "B921B045-1DF0-41C3-AF44-4C6F280D3FAE"
 		default:
 			return errors.Errorf("%s", "unsupported cpu architecture")
 		}
