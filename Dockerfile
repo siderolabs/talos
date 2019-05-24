@@ -30,6 +30,8 @@ ENV GOPATH /toolchain/gopath
 RUN mkdir -p ${GOPATH}
 ENV GO111MODULE on
 ENV CGO_ENABLED 0
+ENV GOARCH arm
+ENV GOARM 7
 WORKDIR /src
 COPY ./go.mod ./
 COPY ./go.sum ./
@@ -57,16 +59,16 @@ ENTRYPOINT ["/osd"]
 
 # The osctl targets build the osctl binaries.
 
-FROM base AS osctl-linux-amd64-build
+FROM base AS osctl-linux-arm-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -a -ldflags "-s -w -linkmode external -extldflags \"-static\" -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
-RUN chmod +x /osctl-linux-amd64
+RUN GOOS=linux GOARCH=arm CGO_ENABLED=1 go build -a -ldflags "-s -w -linkmode external -extldflags \"-static\" -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-arm
+RUN chmod +x /osctl-linux-arm
 
-FROM scratch AS osctl-linux-amd64
-COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /osctl-linux-amd64
+FROM scratch AS osctl-linux-arm
+COPY --from=osctl-linux-arm-build /osctl-linux-arm /osctl-linux-arm
 
 FROM base AS osctl-darwin-amd64-build
 ARG SHA
@@ -144,11 +146,11 @@ COPY --from=trustd / /
 COPY --from=proxyd / /
 COPY --from=ntpd / /
 COPY --from=udevd / /
-COPY --from=osctl-linux-amd64 / /
+COPY --from=osctl-linux-arm / /
 COPY --from=osctl-darwin-amd64 / /
 
 FROM scratch AS binaries
-COPY --from=binaries-build /osctl-linux-amd64 /osctl-linux-amd64
+COPY --from=binaries-build /osctl-linux-arm /osctl-linux-arm
 COPY --from=binaries-build /osctl-darwin-amd64 /osctl-darwin-amd64
 
 # The kernel target is the linux kernel.
@@ -243,7 +245,6 @@ RUN apk --update add \
         cdrkit \
         curl \
         qemu-img \
-        syslinux \
         unzip \
         util-linux \
         xfsprogs
@@ -251,8 +252,8 @@ COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=rootfs /rootfs.tar.gz /usr/install/rootfs.tar.gz
 COPY --from=initramfs-build /usr/lib/syslinux/ /usr/lib/syslinux
-COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /bin/osctl
-RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip -o /tmp/packer.zip \
+COPY --from=osctl-linux-arm-build /osctl-linux-arm /bin/osctl
+RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_arm.zip -o /tmp/packer.zip \
     && unzip -d /tmp /tmp/packer.zip \
     && mv /tmp/packer /bin \
     && rm /tmp/packer.zip
