@@ -68,7 +68,12 @@ func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (k *Kubelet) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env", constants.ContainerdAddress)
+	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env")
+}
+
+// DependsOn implements the Service interface.
+func (k *Kubelet) DependsOn(data *userdata.UserData) []string {
+	return []string{"containerd", "kubeadm"}
 }
 
 // Runner implements the Service interface.

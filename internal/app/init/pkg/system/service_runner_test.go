@@ -30,7 +30,9 @@ func (suite *ServiceRunnerSuite) assertStateSequence(expectedStates []events.Ser
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlow() {
-	sr := system.NewServiceRunner(&MockService{}, nil)
+	sr := system.NewServiceRunner(&MockService{
+		condition: conditions.None(),
+	}, nil)
 
 	finished := make(chan struct{})
 	go func() {
@@ -51,8 +53,8 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 	<-finished
 
 	suite.assertStateSequence([]events.ServiceState{
-		events.StatePreparing,
 		events.StateWaiting,
+		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
 		events.StateFinished,
@@ -88,7 +90,6 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
-		events.StateWaiting,
 		events.StatePreparing,
 		events.StateRunning,
 		events.StateRunning, // one more notification when service is healthy
@@ -97,7 +98,11 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
-	m := MockHealthcheckedService{}
+	m := MockHealthcheckedService{
+		MockService: MockService{
+			condition: conditions.None(),
+		},
+	}
 	sr := system.NewServiceRunner(&m, nil)
 
 	finished := make(chan struct{})
@@ -121,8 +126,8 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	<-finished
 
 	suite.assertStateSequence([]events.ServiceState{
-		events.StatePreparing,
 		events.StateWaiting,
+		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
 		events.StateRunning, // initial: healthy
@@ -154,9 +159,22 @@ func (suite *ServiceRunnerSuite) TestRunnerStageFail() {
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
-		events.StateWaiting,
 		events.StatePreparing,
 		events.StateFailed,
+	}, sr)
+}
+
+func (suite *ServiceRunnerSuite) TestRunnerStageSkipped() {
+	svc := &MockService{
+		nilRunner: true,
+	}
+	sr := system.NewServiceRunner(svc, nil)
+	sr.Start()
+
+	suite.assertStateSequence([]events.ServiceState{
+		events.StatePreparing,
+		events.StatePreparing,
+		events.StateSkipped,
 	}, sr)
 }
 
@@ -186,7 +204,6 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	<-finished
 
 	suite.assertStateSequence([]events.ServiceState{
-		events.StatePreparing,
 		events.StateWaiting,
 		events.StateFailed,
 	}, sr)
@@ -194,6 +211,7 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 
 func (suite *ServiceRunnerSuite) TestPostStateFail() {
 	svc := &MockService{
+		condition: conditions.None(),
 		postError: errors.New("post failed"),
 	}
 	sr := system.NewServiceRunner(svc, nil)
@@ -210,8 +228,8 @@ func (suite *ServiceRunnerSuite) TestPostStateFail() {
 	<-finished
 
 	suite.assertStateSequence([]events.ServiceState{
-		events.StatePreparing,
 		events.StateWaiting,
+		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
 		events.StateFinished,
@@ -237,7 +255,6 @@ func (suite *ServiceRunnerSuite) TestRunFail() {
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
-		events.StateWaiting,
 		events.StatePreparing,
 		events.StateRunning,
 		events.StateFailed,

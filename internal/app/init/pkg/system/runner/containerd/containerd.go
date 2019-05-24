@@ -17,7 +17,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -57,15 +56,8 @@ func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Opt
 
 // Open implements the Runner interface.
 func (c *containerdRunner) Open(ctx context.Context) error {
-
-	// Wait for the containerd socket.
-	err := conditions.WaitForFileToExist(constants.ContainerdAddress).Wait(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Create the containerd client.
-
+	var err error
 	c.ctx = namespaces.WithNamespace(context.Background(), c.opts.Namespace)
 	c.client, err = containerd.New(constants.ContainerdAddress)
 	if err != nil {

@@ -45,7 +45,12 @@ func (c *Containerd) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (c *Containerd) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.None()
+	return nil
+}
+
+// DependsOn implements the Service interface.
+func (c *Containerd) DependsOn(data *userdata.UserData) []string {
+	return nil
 }
 
 // Runner implements the Service interface.

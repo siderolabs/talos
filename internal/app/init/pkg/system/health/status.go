@@ -81,11 +81,13 @@ func (state *State) Unsubscribe(ch chan<- StateChange) {
 	state.Lock()
 	defer state.Unlock()
 
-	for i := range state.subscribers {
+	for i := 0; i < len(state.subscribers); {
 		if state.subscribers[i] == ch {
 			state.subscribers[i] = state.subscribers[len(state.subscribers)-1]
 			state.subscribers[len(state.subscribers)-1] = nil
 			state.subscribers = state.subscribers[:len(state.subscribers)-1]
+		} else {
+			i++
 		}
 	}
 }

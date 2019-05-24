@@ -5,10 +5,12 @@
 package system
 
 import (
+	"context"
 	"sort"
 	"sync"
 	"time"
 
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -27,8 +29,6 @@ var instance *singleton
 var once sync.Once
 
 // Services returns the instance of the system services API.
-// TODO(andrewrynhard): This should be a gRPC based API availale on a local
-// unix socket.
 // nolint: golint
 func Services(data *userdata.UserData) *singleton {
 	once.Do(func() {
@@ -45,10 +45,10 @@ func Services(data *userdata.UserData) *singleton {
 // to restart the service.
 func (s *singleton) Start(services ...Service) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.terminating {
 		return
 	}
-	defer s.mu.Unlock()
 
 	for _, service := range services {
 		id := service.ID(s.UserData)
@@ -72,11 +72,6 @@ func (s *singleton) Start(services ...Service) {
 	}
 }
 
-// ShutdownHackySleep is a variable to allow tests to override it
-//
-// TODO: part of a hack below
-var ShutdownHackySleep = 10 * time.Second
-
 // Shutdown all the services
 func (s *singleton) Shutdown() {
 	s.mu.Lock()
@@ -85,24 +80,44 @@ func (s *singleton) Shutdown() {
 		return
 	}
 	s.terminating = true
-
-	// TODO: this is a hack, we stop all service runners but containerd/udevd first.
-	//       Tis is required for correct shutdown until service dependencies
-	//       are implemented properly.
+	stateCopy := make(map[string]*ServiceRunner)
 	for name, svcrunner := range s.State {
-		if name != "containerd" && name != "udevd" {
-			svcrunner.Shutdown()
+		stateCopy[name] = svcrunner
+	}
+	s.mu.Unlock()
+
+	// build reverse dependencies
+	reverseDependencies := make(map[string][]string)
+
+	for name, svcrunner := range stateCopy {
+		for _, dependency := range svcrunner.service.DependsOn(s.UserData) {
+			reverseDependencies[dependency] = append(reverseDependencies[dependency], name)
 		}
 	}
 
-	// TODO: 2nd part of a hack above
-	//       sleep a bit to let containers actually terminate before stopping containerd
-	time.Sleep(ShutdownHackySleep)
+	// shutdown all the services waiting for rev deps
+	var shutdownWg sync.WaitGroup
 
-	for _, svcrunner := range s.State {
-		svcrunner.Shutdown()
+	// wait max 30 seconds for reverse deps to shut down
+	shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCtxCancel()
+
+	for name, svcrunner := range stateCopy {
+		shutdownWg.Add(1)
+		go func(svcrunner *ServiceRunner, reverseDeps []string) {
+			defer shutdownWg.Done()
+			conds := make([]conditions.Condition, len(reverseDeps))
+			for i := range reverseDeps {
+				conds[i] = WaitForService(StateEventDown, reverseDeps[i])
+			}
+
+			// nolint: errcheck
+			_ = conditions.WaitForAll(conds...).Wait(shutdownCtx)
+
+			svcrunner.Shutdown()
+		}(svcrunner, reverseDependencies[name])
 	}
-	s.mu.Unlock()
+	shutdownWg.Wait()
 
 	s.wg.Wait()
 }

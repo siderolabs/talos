@@ -8,6 +8,7 @@ package services
 import (
 	"fmt"
 
+	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
@@ -29,7 +30,12 @@ func (n *NTPd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (n *NTPd) PreFunc(data *userdata.UserData) error {
-	return nil
+	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+		Path: "/usr/images/ntpd.tar",
+		Options: []containerdapi.ImportOpt{
+			containerdapi.WithIndexName("talos/ntpd"),
+		},
+	})
 }
 
 // PostFunc implements the Service interface.
@@ -39,7 +45,12 @@ func (n *NTPd) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (n *NTPd) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.None()
+	return nil
+}
+
+// DependsOn implements the Service interface.
+func (n *NTPd) DependsOn(data *userdata.UserData) []string {
+	return []string{"containerd"}
 }
 
 func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
