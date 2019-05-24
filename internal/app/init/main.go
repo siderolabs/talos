@@ -279,6 +279,7 @@ func startSystemServices(data *userdata.UserData) {
 	log.Println("starting system services")
 	// Start the services common to all nodes.
 	svcs.Start(
+		&services.Networkd{},
 		&services.Containerd{},
 		&services.Udevd{},
 		&services.OSD{},
@@ -292,17 +293,6 @@ func startSystemServices(data *userdata.UserData) {
 		)
 	}
 
-	// Launch dhclient
-	// nolint: errcheck
-	if data == nil || data.Networking == nil || data.Networking.OS == nil {
-		network.DHCPd(network.DefaultInterface)
-	} else {
-		for _, netconf := range data.Networking.OS.Devices {
-			if netconf.DHCP {
-				network.DHCPd(netconf.Interface)
-			}
-		}
-	}
 }
 
 func startKubernetesServices(data *userdata.UserData) {
