@@ -34,7 +34,7 @@ func (o *OSD) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (o *OSD) PreFunc(data *userdata.UserData) error {
+func (o *OSD) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	if err := os.MkdirAll("/etc/kubernetes", os.ModeDir); err != nil {
 		return err
 	}

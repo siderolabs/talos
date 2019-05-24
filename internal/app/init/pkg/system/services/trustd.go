@@ -33,7 +33,7 @@ func (t *Trustd) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (t *Trustd) PreFunc(data *userdata.UserData) error {
+func (t *Trustd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
 		Path: "/usr/images/trustd.tar",
 		Options: []containerdapi.ImportOpt{

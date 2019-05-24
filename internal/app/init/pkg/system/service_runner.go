@@ -152,7 +152,7 @@ func (svcrunner *ServiceRunner) Start() {
 	}
 
 	svcrunner.UpdateState(events.StatePreparing, "Running pre state")
-	if err := svcrunner.service.PreFunc(svcrunner.userData); err != nil {
+	if err := svcrunner.service.PreFunc(svcrunner.ctx, svcrunner.userData); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
 		return
 	}

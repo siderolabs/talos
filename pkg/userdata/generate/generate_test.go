@@ -5,6 +5,7 @@
 package generate_test
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -32,6 +33,7 @@ func (suite *GenerateSuite) SetupSuite() {
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
+	input.IP = net.ParseIP("10.0.1.5")
 	dataString, err := generate.Userdata(generate.TypeInit, input)
 	suite.Require().NoError(err)
 	data := &userdata.UserData{}
@@ -40,6 +42,7 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
+	input.IP = net.ParseIP("10.0.1.6")
 	dataString, err := generate.Userdata(generate.TypeControlPlane, input)
 	suite.Require().NoError(err)
 	data := &userdata.UserData{}

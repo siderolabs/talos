@@ -34,7 +34,7 @@ func (c *Containerd) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (c *Containerd) PreFunc(data *userdata.UserData) error {
+func (c *Containerd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
 }
 

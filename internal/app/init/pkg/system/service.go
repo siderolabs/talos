@@ -5,6 +5,8 @@
 package system
 
 import (
+	"context"
+
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
@@ -16,7 +18,7 @@ type Service interface {
 	// ID is the service id.
 	ID(*userdata.UserData) string
 	// PreFunc is invoked before a runner is created
-	PreFunc(*userdata.UserData) error
+	PreFunc(context.Context, *userdata.UserData) error
 	// Runner creates runner for the service
 	Runner(*userdata.UserData) (runner.Runner, error)
 	// PostFunc is invoked after a runner is closed.

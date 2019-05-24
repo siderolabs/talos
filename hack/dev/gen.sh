@@ -37,30 +37,29 @@ ${OSCTL} gen crt \
 	--csr developer.csr \
 	--name developer
 
-# Inject OS PKI
 
-echo "Injecting OS PKI"
-cp ../userdata/.master-1.tpl.yaml ../userdata/master-1.yaml
-chmod 600 ../userdata/master-1.yaml
-${OSCTL} inject os \
-	--crt talos.crt \
-	--key talos.key \
-	../userdata/master-1.yaml
+echo "Injecting PKI ( kubernetes/OS )"
+for node in master-1 master-2 master-3; do
+  cp ../userdata/.${node}.tpl.yaml ../userdata/${node}.yaml
+  chmod 600 ../userdata/${node}.yaml
 
-# Inject bootstrap/init token
+  # Inject OS PKI
+  ${OSCTL} inject os \
+  	--crt talos.crt \
+  	--key talos.key \
+  	../userdata/${node}.yaml
+
+  # Inject Kubernetes PKI
+  ${OSCTL} inject kubernetes \
+  	--crt kubernetes.crt \
+  	--key kubernetes.key \
+  	../userdata/${node}.yaml
+done
+
+# Inject bootstrap/init token for master-1
 echo "Injecting init token"
 ${OSCTL} inject token ../userdata/master-1.yaml
 
-# Inject Kubernetes PKI
-
-echo "Injecting Kubernetes PKI"
-${OSCTL} inject kubernetes \
-	--crt kubernetes.crt \
-	--key kubernetes.key \
-	../userdata/master-1.yaml
-
-cp ../userdata/.master-2.tpl.yaml ../userdata/master-2.yaml
-cp ../userdata/.master-3.tpl.yaml ../userdata/master-3.yaml
 cp ../userdata/.worker.tpl.yaml ../userdata/worker-1.yaml
 
 # Configure osctl

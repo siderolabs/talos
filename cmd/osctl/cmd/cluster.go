@@ -81,12 +81,14 @@ func create() (err error) {
 
 	fmt.Println("generating PKI and tokens")
 
-	ips := []string{"10.5.0.2", "10.5.0.3", "10.5.0.4", "10.5.0.5"}
+	ips := []string{"10.5.0.2", "10.5.0.3", "10.5.0.4"}
 
 	input, err := generate.NewInput(clusterName, ips)
 	if err != nil {
 		return err
 	}
+	input2 := *input
+	input3 := *input
 
 	// Setup the network.
 
@@ -108,14 +110,14 @@ func create() (err error) {
 		},
 		{
 			Type:  generate.TypeControlPlane,
-			Input: input,
+			Input: &input2,
 			Image: image,
 			Name:  "master-2",
 			IP:    net.ParseIP(ips[1]),
 		},
 		{
 			Type:  generate.TypeControlPlane,
-			Input: input,
+			Input: &input3,
 			Image: image,
 			Name:  "master-3",
 			IP:    net.ParseIP(ips[2]),
@@ -129,7 +131,7 @@ func create() (err error) {
 	// Create the worker nodes.
 
 	requests = []*node.Request{}
-	for i := 0; i < workers; i++ {
+	for i := 1; i <= workers; i++ {
 		r := &node.Request{
 			Type:  generate.TypeJoin,
 			Input: input,
@@ -153,16 +155,20 @@ func createNodes(requests []*node.Request) (err error) {
 	var wg sync.WaitGroup
 	wg.Add(len(requests))
 
-	for _, req := range requests {
-		go func(req *node.Request) {
+	for idx, req := range requests {
+		go func(idx int, req *node.Request) {
 			fmt.Println("creating node", req.Name)
+			req.Input.Index = idx
+			if req.IP != nil {
+				req.Input.IP = req.IP
+			}
 
 			if err = node.NewNode(clusterName, req); err != nil {
 				helpers.Fatalf("failed to create node: %v", err)
 			}
 
 			wg.Done()
-		}(req)
+		}(idx, req)
 	}
 
 	wg.Wait()
