@@ -81,5 +81,5 @@ services:
   trustd:
     token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ .Endpoints }} ]
-    certSANs: [ "{{ index .MasterIPs .Index }}", "127.0.0.1" ]
+    certSANs: [ "{{ .IP }}", "127.0.0.1" ]
 `

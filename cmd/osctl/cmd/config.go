@@ -8,7 +8,9 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -129,23 +131,24 @@ var configGenerateCmd = &cobra.Command{
 			helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 		}
 
-		types := []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin}
-		for _, t := range types {
-			var data string
-			data, err = generate.Userdata(t, input)
-			if err != nil {
-				helpers.Fatalf("failed to generate configuration file for type %s: %v", t.String(), err)
+		var udType generate.Type
+		for idx, master := range strings.Split(args[1], ",") {
+			input.Index = idx + 1
+			input.IP = net.ParseIP(master)
+			if input.Index == 1 {
+				udType = generate.TypeInit
+			} else {
+				udType = generate.TypeControlPlane
 			}
-			ud := &userdata.UserData{}
-			if err = yaml.Unmarshal([]byte(data), ud); err != nil {
-				helpers.Fatalf("%v", err)
+
+			if err = writeUserdata(input, udType, "master-"+strconv.Itoa(input.Index)); err != nil {
+				helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(input.Index), err)
 			}
-			if err = ud.Validate(); err != nil {
-				helpers.Fatalf("validation for userdata type %s failed: %v", t.String(), err)
-			}
-			if err = ioutil.WriteFile(strings.ToLower(t.String())+".yaml", []byte(data), 0644); err != nil {
-				helpers.Fatalf("%v", err)
-			}
+		}
+		input.IP = nil
+
+		if err = writeUserdata(input, generate.TypeJoin, "worker"); err != nil {
+			helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
 		}
 
 		data, err := generate.Talosconfig(input)
@@ -156,6 +159,26 @@ var configGenerateCmd = &cobra.Command{
 			helpers.Fatalf("%v", err)
 		}
 	},
+}
+
+func writeUserdata(input *generate.Input, t generate.Type, name string) (err error) {
+	var data string
+	data, err = generate.Userdata(t, input)
+	if err != nil {
+		return err
+	}
+	ud := &userdata.UserData{}
+	if err = yaml.Unmarshal([]byte(data), ud); err != nil {
+		return err
+	}
+	if err = ud.Validate(); err != nil {
+		return err
+
+	}
+	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
+		return err
+	}
+	return nil
 }
 
 func init() {
