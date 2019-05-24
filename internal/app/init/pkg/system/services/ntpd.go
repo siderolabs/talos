@@ -6,6 +6,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 
 	containerdapi "github.com/containerd/containerd"
@@ -29,7 +30,7 @@ func (n *NTPd) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (n *NTPd) PreFunc(data *userdata.UserData) error {
+func (n *NTPd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
 		Path: "/usr/images/ntpd.tar",
 		Options: []containerdapi.ImportOpt{

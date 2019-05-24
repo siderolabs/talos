@@ -5,6 +5,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 
 	containerdapi "github.com/containerd/containerd"
@@ -28,7 +29,7 @@ func (c *Udevd) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (c *Udevd) PreFunc(data *userdata.UserData) error {
+func (c *Udevd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
 		Path: "/usr/images/udevd.tar",
 		Options: []containerdapi.ImportOpt{

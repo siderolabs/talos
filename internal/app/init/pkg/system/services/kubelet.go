@@ -39,7 +39,7 @@ func (k *Kubelet) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (k *Kubelet) PreFunc(data *userdata.UserData) error {
+func (k *Kubelet) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	requiredMounts := []string{
 		"/dev/disk/by-path",
 		"/etc/kubernetes",

@@ -37,7 +37,7 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 // nolint: gocyclo
-func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
+func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
 	reqs := []*containerd.ImportRequest{
 		{
 			Path: "/usr/images/hyperkube.tar",
@@ -96,10 +96,10 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 	for _, fileRequest := range kubeadm.FileSet() {
 
 		// Handle all file requests in parallel
-		go func(fileRequest *proto.ReadFileRequest) {
+		go func(ctx context.Context, fileRequest *proto.ReadFileRequest) {
 			defer wg.Done()
 
-			ctx, ctxCancel := context.WithCancel(context.Background())
+			trustctx, ctxCancel := context.WithCancel(ctx)
 			defer ctxCancel()
 
 			// Have a single chan shared across all clients
@@ -109,11 +109,11 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 			// kick off a goroutine for each trustd client
 			// to fetch the given file
 			for _, trustdClient := range trustds {
-				go kubeadm.Download(ctx, trustdClient, fileRequest, content)
+				go kubeadm.Download(trustctx, trustdClient, fileRequest, content)
 			}
 
 			select {
-			case <-ctx.Done():
+			case <-trustctx.Done():
 				return
 			case filecontent := <-content:
 				// TODO replace this with proper error handling
@@ -123,7 +123,7 @@ func (k *Kubeadm) PreFunc(data *userdata.UserData) (err error) {
 				kubeadm.WriteTrustdFiles(fileRequest.Path, filecontent)
 			}
 
-		}(fileRequest)
+		}(ctx, fileRequest)
 	}
 	wg.Wait()
 

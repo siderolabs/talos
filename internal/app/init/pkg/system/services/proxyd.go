@@ -34,7 +34,7 @@ func (p *Proxyd) ID(data *userdata.UserData) string {
 }
 
 // PreFunc implements the Service interface.
-func (p *Proxyd) PreFunc(data *userdata.UserData) error {
+func (p *Proxyd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	if err := os.MkdirAll("/etc/kubernetes", os.ModeDir); err != nil {
 		return err
 	}
