@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 var (
@@ -45,19 +44,13 @@ func init() {
 }
 
 func remoteUpgrade() error {
-	creds, err := client.NewDefaultClientCredentials(talosconfig)
-	if err != nil {
-		return err
-	}
-	if target != "" {
-		creds.Target = target
-	}
-	c, err := client.NewClient(constants.OsdPort, creds)
-	if err != nil {
-		return err
-	}
+	var err error
 
-	// TODO: See if we can validate version and prevent
-	// starting upgrades to an unknown version
-	return c.Upgrade(assetURL)
+	setupClient(func(c *client.Client) {
+		// TODO: See if we can validate version and prevent
+		// starting upgrades to an unknown version
+		err = c.Upgrade(assetURL)
+	})
+
+	return err
 }

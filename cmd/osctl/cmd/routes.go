@@ -6,10 +6,11 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // routesCmd represents the net routes command
@@ -18,21 +19,16 @@ var routesCmd = &cobra.Command{
 	Short: "List network routes",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
-		}
-		if target != "" {
-			creds.Target = target
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
+		if len(args) != 0 {
+			helpers.Should(cmd.Usage())
+			os.Exit(1)
 		}
 
-		if err := c.Routes(); err != nil {
-			helpers.Fatalf("error getting routes: %s", err)
-		}
+		setupClient(func(c *client.Client) {
+			if err := c.Routes(); err != nil {
+				helpers.Fatalf("error getting routes: %s", err)
+			}
+		})
 	},
 }
 

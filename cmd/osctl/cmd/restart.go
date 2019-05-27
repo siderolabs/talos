@@ -32,31 +32,24 @@ var restartCmd = &cobra.Command{
 			}
 			os.Exit(1)
 		}
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		var namespace string
-		if kubernetes {
-			namespace = criconstants.K8sContainerdNamespace
-		} else {
-			namespace = constants.SystemContainerdNamespace
-		}
-		r := &proto.RestartRequest{
-			Id:        args[0],
-			Namespace: namespace,
-			Timeout:   timeout,
-		}
-		if err := c.Restart(r); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+
+		setupClient(func(c *client.Client) {
+			var namespace string
+			if kubernetes {
+				namespace = criconstants.K8sContainerdNamespace
+			} else {
+				namespace = constants.SystemContainerdNamespace
+			}
+			r := &proto.RestartRequest{
+				Id:        args[0],
+				Namespace: namespace,
+				Timeout:   timeout,
+			}
+			if err := c.Restart(r); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		})
 	},
 }
 

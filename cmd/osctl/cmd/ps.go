@@ -6,6 +6,8 @@
 package cmd
 
 import (
+	"os"
+
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -19,26 +21,22 @@ var psCmd = &cobra.Command{
 	Short: "List processes",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
+		if len(args) != 0 {
+			helpers.Should(cmd.Usage())
+			os.Exit(1)
 		}
-		if target != "" {
-			creds.Target = target
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
-		}
-		var namespace string
-		if kubernetes {
-			namespace = criconstants.K8sContainerdNamespace
-		} else {
-			namespace = constants.SystemContainerdNamespace
-		}
-		if err := c.Processes(namespace); err != nil {
-			helpers.Fatalf("error getting process list: %s", err)
-		}
+
+		setupClient(func(c *client.Client) {
+			var namespace string
+			if kubernetes {
+				namespace = criconstants.K8sContainerdNamespace
+			} else {
+				namespace = constants.SystemContainerdNamespace
+			}
+			if err := c.Processes(namespace); err != nil {
+				helpers.Fatalf("error getting process list: %s", err)
+			}
+		})
 	},
 }
 

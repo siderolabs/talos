@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // dmesgCmd represents the dmesg command
@@ -23,20 +22,12 @@ var dmesgCmd = &cobra.Command{
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
-		}
-		if target != "" {
-			creds.Target = target
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
-		}
-		if err := c.Dmesg(); err != nil {
-			helpers.Fatalf("error getting dmesg: %s", err)
-		}
+
+		setupClient(func(c *client.Client) {
+			if err := c.Dmesg(); err != nil {
+				helpers.Fatalf("error getting dmesg: %s", err)
+			}
+		})
 	},
 }
 

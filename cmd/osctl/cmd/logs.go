@@ -25,30 +25,22 @@ var logsCmd = &cobra.Command{
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
-		}
-		if target != "" {
-			creds.Target = target
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
-		}
-		var namespace string
-		if kubernetes {
-			namespace = criconstants.K8sContainerdNamespace
-		} else {
-			namespace = constants.SystemContainerdNamespace
-		}
-		r := &proto.LogsRequest{
-			Id:        args[0],
-			Namespace: namespace,
-		}
-		if err := c.Logs(r); err != nil {
-			helpers.Fatalf("error fetching logs: %s", err)
-		}
+
+		setupClient(func(c *client.Client) {
+			var namespace string
+			if kubernetes {
+				namespace = criconstants.K8sContainerdNamespace
+			} else {
+				namespace = constants.SystemContainerdNamespace
+			}
+			r := &proto.LogsRequest{
+				Id:        args[0],
+				Namespace: namespace,
+			}
+			if err := c.Logs(r); err != nil {
+				helpers.Fatalf("error fetching logs: %s", err)
+			}
+		})
 	},
 }
 
