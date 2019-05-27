@@ -5,8 +5,8 @@
 package network
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -21,30 +21,33 @@ import (
 
 // DHCPd runs the dhclient process with a certain frequency to maintain a fresh
 // dhcp lease
-func DHCPd(ifname string) {
-	go func() {
-		var oldLifetime int
-		var lifetime int
-		var err error
-		log.Printf("setting up DHCP on interface %s", ifname)
-		for {
-			log.Println("obtaining DHCP lease")
-			lifetime, err = Dhclient(ifname)
-			if err != nil {
-				log.Printf("failed to obtain dhcp lease for %s: %+v", ifname, err)
+func (service *Service) DHCPd(ctx context.Context, ifname string) {
+	var oldLifetime int
+	var lifetime int
+	var err error
+	service.logger.Printf("setting up DHCP on interface %s", ifname)
+	for {
+		service.logger.Println("obtaining DHCP lease")
+		lifetime, err = service.Dhclient(ctx, ifname)
+		if err != nil {
+			service.logger.Printf("failed to obtain dhcp lease for %s: %+v", ifname, err)
 
-				// Attempt to renew on a shorter interval to not lose network connectivity
-				lifetime = oldLifetime / 2
-			}
-			oldLifetime = lifetime
-			time.Sleep((time.Duration(lifetime / 2)) * time.Second)
+			// Attempt to renew on a shorter interval to not lose network connectivity
+			lifetime = oldLifetime / 2
 		}
-	}()
+		oldLifetime = lifetime
+
+		select {
+		case <-time.After((time.Duration(lifetime / 2)) * time.Second):
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 // Dhclient handles the enture DHCP client interaction from a request to setting
 // the received address on the interface
-func Dhclient(ifname string) (int, error) {
+func (service *Service) Dhclient(ctx context.Context, ifname string) (int, error) {
 	// TODO: Figure out how we want to pass around ntp servers
 	modifiers := []dhcpv4.Modifier{
 		dhcpv4.WithRequestedOptions(
@@ -63,7 +66,7 @@ func Dhclient(ifname string) (int, error) {
 	var err error
 	var netconf *netboot.NetConf
 	// make dhcp request
-	if netconf, err = dhclient4(ifname, modifiers...); err != nil {
+	if netconf, err = service.dhclient4(ctx, ifname, modifiers...); err != nil {
 		return 0, err
 	}
 
@@ -76,7 +79,7 @@ func Dhclient(ifname string) (int, error) {
 }
 
 // nolint: gocyclo
-func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, error) {
+func (service *Service) dhclient4(ctx context.Context, ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, error) {
 	attempts := 10
 	client := client4.NewClient()
 	var (
@@ -84,11 +87,15 @@ func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, e
 		err  error
 	)
 	for attempt := 0; attempt < attempts; attempt++ {
-		log.Printf("requesting DHCP lease: attempt %d of %d", attempt+1, attempts)
+		service.logger.Printf("requesting DHCP lease: attempt %d of %d", attempt+1, attempts)
 		conv, err = client.Exchange(ifname, modifiers...)
 		if err != nil && attempt < attempts {
-			log.Printf("failed to request DHCP lease: %v", err)
-			time.Sleep(time.Duration(attempt) * time.Second)
+			service.logger.Printf("failed to request DHCP lease: %v", err)
+			select {
+			case <-time.After(time.Duration(attempt) * time.Second):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
 			continue
 		}
 		break
@@ -97,7 +104,7 @@ func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, e
 	for _, m := range conv {
 		if m.OpCode == dhcpv4.OpcodeBootReply && m.MessageType() == dhcpv4.MessageTypeOffer {
 			if m.YourIPAddr != nil {
-				log.Printf("using IP address %s", m.YourIPAddr.String())
+				service.logger.Printf("using IP address %s", m.YourIPAddr.String())
 			}
 
 			hostname := m.YourIPAddr.String()
@@ -111,7 +118,7 @@ func dhclient4(ifname string, modifiers ...dhcpv4.Modifier) (*netboot.NetConf, e
 				hostname = *kernHostname
 			}
 
-			log.Printf("using hostname: %s", hostname)
+			service.logger.Printf("using hostname: %s", hostname)
 			if err = unix.Sethostname([]byte(hostname)); err != nil {
 				return nil, err
 			}

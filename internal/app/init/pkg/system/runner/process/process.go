@@ -15,8 +15,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
+	processlogger "github.com/talos-systems/talos/internal/app/init/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
-	processlogger "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process/log"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )

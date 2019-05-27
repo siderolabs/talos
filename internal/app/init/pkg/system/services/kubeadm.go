@@ -137,7 +137,7 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 // DependsOn implements the Service interface.
 func (k *Kubeadm) DependsOn(data *userdata.UserData) []string {
-	deps := []string{"containerd"}
+	deps := []string{"containerd", "networkd"}
 
 	if data.Services.Kubeadm.IsControlPlane() {
 		deps = append(deps, "trustd")

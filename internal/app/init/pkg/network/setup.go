@@ -5,6 +5,7 @@
 package network
 
 import (
+	"context"
 	"log"
 	"syscall"
 
@@ -46,7 +47,8 @@ func SetupNetwork(data *userdata.UserData) (err error) {
 		}
 
 		if netconf.DHCP {
-			if _, err = Dhclient(netconf.Interface); err != nil {
+			// TODO: this calls out to 'networkd' inline
+			if _, err = NewService().Dhclient(context.Background(), netconf.Interface); err != nil {
 				log.Printf("failed to obtain dhcp lease for %s: %+v", netconf.Interface, err)
 				continue
 			}
@@ -77,7 +79,8 @@ func defaultNetworkSetup() (err error) {
 		return err
 	}
 
-	if _, err = Dhclient(DefaultInterface); err != nil {
+	// TODO: this calls out to 'networkd' inline
+	if _, err = NewService().Dhclient(context.Background(), DefaultInterface); err != nil {
 		return err
 	}
 
