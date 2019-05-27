@@ -5,10 +5,11 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/version"
 )
 
@@ -22,6 +23,11 @@ var versionCmd = &cobra.Command{
 	Short: "Prints the version",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 0 {
+			helpers.Should(cmd.Usage())
+			os.Exit(1)
+		}
+
 		if shortVersion {
 			version.PrintShortVersion()
 		} else {
@@ -29,17 +35,11 @@ var versionCmd = &cobra.Command{
 				helpers.Fatalf("error printing long version: %s", err)
 			}
 		}
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
-		}
-		if err := c.Version(); err != nil {
-			helpers.Fatalf("error getting version: %s", err)
-		}
+		setupClient(func(c *client.Client) {
+			if err := c.Version(); err != nil {
+				helpers.Fatalf("error getting version: %s", err)
+			}
+		})
 	},
 }
 

@@ -6,10 +6,11 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // resetCmd represents the reset command
@@ -18,20 +19,16 @@ var resetCmd = &cobra.Command{
 	Short: "Reset a node",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
+		if len(args) != 0 {
+			helpers.Should(cmd.Usage())
+			os.Exit(1)
 		}
-		if target != "" {
-			creds.Target = target
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
-		}
-		if err := c.Reset(); err != nil {
-			helpers.Fatalf("error executing reset: %s", err)
-		}
+
+		setupClient(func(c *client.Client) {
+			if err := c.Reset(); err != nil {
+				helpers.Fatalf("error executing reset: %s", err)
+			}
+		})
 	},
 }
 

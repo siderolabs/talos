@@ -6,10 +6,11 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // dfCmd represents the df command.
@@ -18,21 +19,16 @@ var dfCmd = &cobra.Command{
 	Short: "List disk usage",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
-		}
-		if target != "" {
-			creds.Target = target
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
+		if len(args) != 0 {
+			helpers.Should(cmd.Usage())
+			os.Exit(1)
 		}
 
-		if err := c.DF(); err != nil {
-			helpers.Fatalf("error getting df: %s", err)
-		}
+		setupClient(func(c *client.Client) {
+			if err := c.DF(); err != nil {
+				helpers.Fatalf("error getting df: %s", err)
+			}
+		})
 	},
 }
 

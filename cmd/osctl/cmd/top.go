@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -19,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/proc"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -30,33 +30,33 @@ var topCmd = &cobra.Command{
 	Short: "Streams top output",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		creds, err := client.NewDefaultClientCredentials(talosconfig)
-		if err != nil {
-			helpers.Fatalf("error getting client credentials: %s", err)
-		}
-		c, err := client.NewClient(constants.OsdPort, creds)
-		if err != nil {
-			helpers.Fatalf("error constructing client: %s", err)
+		if len(args) != 0 {
+			helpers.Should(cmd.Usage())
+			os.Exit(1)
 		}
 
-		if oneTime {
-			var output string
-			output, err = topOutput(c)
-			if err != nil {
-				log.Fatal(err)
+		setupClient(func(c *client.Client) {
+			var err error
+
+			if oneTime {
+				var output string
+				output, err = topOutput(c)
+				if err != nil {
+					log.Fatal(err)
+				}
+				// Note this is unlimited output of process lines
+				// we arent artificially limited by the box we would otherwise draw
+				fmt.Println(output)
+				return
 			}
-			// Note this is unlimited output of process lines
-			// we arent artificially limited by the box we would otherwise draw
-			fmt.Println(output)
-			return
-		}
 
-		if err := ui.Init(); err != nil {
-			log.Fatalf("failed to initialize termui: %v", err)
-		}
-		defer ui.Close()
+			if err = ui.Init(); err != nil {
+				log.Fatalf("failed to initialize termui: %v", err)
+			}
+			defer ui.Close()
 
-		topUI(c)
+			topUI(c)
+		})
 	},
 }
 
