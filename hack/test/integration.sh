@@ -34,10 +34,9 @@ ${OSCTL} config target 10.5.0.2
 
 run "until osctl kubeconfig > ${KUBECONFIG}; do cat ${KUBECONFIG}; sleep 5; done"
 run "until kubectl get nodes -o json | jq '.items | length' | grep 4 >/dev/null; do kubectl get nodes -o wide; sleep 5; done"
-# TODO(andrewrynhard): Uncomment the following after upgrading to Kubernetes 1.15.
-#run "kubectl apply -f /manifests"
-#run "kubectl wait --for=condition=ready=true --all nodes"
-#run "kubectl wait --timeout=300s --for=condition=ready=true --all pods -n kube-system"
-#run "kubectl wait --timeout=300s --for=condition=available=true --all deployments -n kube-system"
+run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
+run "kubectl wait --for=condition=ready=true --all nodes"
+# Verify that we have an HA controlplane
+run "kubectl get nodes -l node-role.kubernetes.io/master='' -o json | jq '.items | length' | grep 3 >/dev/null"
 
 exit 0
