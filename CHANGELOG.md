@@ -1,3 +1,33 @@
+# [v0.1.0-alpha.28](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2019-06-04)
+
+
+### Bug Fixes
+
+* Address lint warning for unknown linter ([#676](https://github.com/talos-systems/talos/issues/676)) ([b6a01d6](https://github.com/talos-systems/talos/commit/b6a01d6))
+* **init:** consider 'finished' services to be 'up' ([#699](https://github.com/talos-systems/talos/issues/699)) ([7b7f4d4](https://github.com/talos-systems/talos/commit/7b7f4d4))
+* **init:** move directory creation to kubeadm pre-func ([#688](https://github.com/talos-systems/talos/issues/688)) ([20f4d77](https://github.com/talos-systems/talos/commit/20f4d77))
+* **osctl:** don't print message on first ^C ([#704](https://github.com/talos-systems/talos/issues/704)) ([f96d3ce](https://github.com/talos-systems/talos/commit/f96d3ce))
+* **osctl:** Generate correct config with master IPs ([#681](https://github.com/talos-systems/talos/issues/681)) ([6cf260c](https://github.com/talos-systems/talos/commit/6cf260c))
+* don't set BUILDKIT_CACHE to empty string in Makefile ([#705](https://github.com/talos-systems/talos/issues/705)) ([16530db](https://github.com/talos-systems/talos/commit/16530db))
+* ensure shebang at top of userdata ([#695](https://github.com/talos-systems/talos/issues/695)) ([313a988](https://github.com/talos-systems/talos/commit/313a988))
+* **osd:** consistent container ids in stats, ps and reset ([#707](https://github.com/talos-systems/talos/issues/707)) ([d9f4f37](https://github.com/talos-systems/talos/commit/d9f4f37)), closes [#689](https://github.com/talos-systems/talos/issues/689) [#690](https://github.com/talos-systems/talos/issues/690)
+* **osd:** Sanitize request.id for log streams ([#673](https://github.com/talos-systems/talos/issues/673)) ([b0dab6e](https://github.com/talos-systems/talos/commit/b0dab6e))
+
+
+### Features
+
+* **init:** Add initToken parameter to userdata ([#664](https://github.com/talos-systems/talos/issues/664)) ([a64de7e](https://github.com/talos-systems/talos/commit/a64de7e))
+* **init:** Add support for control plane join config ([#700](https://github.com/talos-systems/talos/issues/700)) ([8537e7e](https://github.com/talos-systems/talos/commit/8537e7e))
+* **init:** expose networkd as goroutine-based server ([#682](https://github.com/talos-systems/talos/issues/682)) ([40a5b7c](https://github.com/talos-systems/talos/commit/40a5b7c))
+* **init:** implement service dependencies, correct start and shutdown ([#680](https://github.com/talos-systems/talos/issues/680)) ([a0188af](https://github.com/talos-systems/talos/commit/a0188af))
+* **init:** Prioritize usage of local userdata ([#694](https://github.com/talos-systems/talos/issues/694)) ([a1e635a](https://github.com/talos-systems/talos/commit/a1e635a))
+* **init:** update 'waiting' state descritpion when conditions change ([#698](https://github.com/talos-systems/talos/issues/698)) ([32826e3](https://github.com/talos-systems/talos/commit/32826e3))
+* **osctl:** handle ^C by aborting context ([#693](https://github.com/talos-systems/talos/issues/693)) ([ca95469](https://github.com/talos-systems/talos/commit/ca95469))
+* leave etcd before upgrading ([#702](https://github.com/talos-systems/talos/issues/702)) ([b330d3b](https://github.com/talos-systems/talos/commit/b330d3b))
+* upgrade Kubernetes to v1.15.0-beta.1 ([#696](https://github.com/talos-systems/talos/issues/696)) ([f95f8f8](https://github.com/talos-systems/talos/commit/f95f8f8))
+
+
+
 # [v0.1.0-alpha.27](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2019-05-20)
 
 
@@ -602,6 +632,3 @@
 * **init:** user data ([#17](https://github.com/talos-systems/talos/issues/17)) ([3ee01ae](https://github.com/talos-systems/talos/commit/3ee01ae))
 * **kernel:** enable nf_tables and ebtables modules ([#41](https://github.com/talos-systems/talos/issues/41)) ([cf53a27](https://github.com/talos-systems/talos/commit/cf53a27))
 * **rootfs:** upgrade cri-o and cri-tools ([#35](https://github.com/talos-systems/talos/issues/35)) ([0095227](https://github.com/talos-systems/talos/commit/0095227))
-
-
-
