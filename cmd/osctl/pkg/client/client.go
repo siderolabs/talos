@@ -12,10 +12,6 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
-	"io"
-	"math"
-	"os"
-	"text/tabwriter"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
@@ -114,172 +110,90 @@ func (c *Client) Close() error {
 }
 
 // Kubeconfig implements the proto.OSDClient interface.
-func (c *Client) Kubeconfig() (err error) {
-	ctx := context.Background()
+func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 	r, err := c.client.Kubeconfig(ctx, &empty.Empty{})
 	if err != nil {
-		return
+		return nil, err
 	}
-	fmt.Print(string(r.Bytes))
-
-	return nil
+	return r.Bytes, nil
 }
 
 // Stats implements the proto.OSDClient interface.
-func (c *Client) Stats(namespace string) (err error) {
-	ctx := context.Background()
-	reply, err := c.client.Stats(ctx, &proto.StatsRequest{Namespace: namespace})
-	if err != nil {
-		return
-	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAMESPACE\tID\tMEMORY(MB)\tCPU")
-	for _, s := range reply.Stats {
-		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, s.Id, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
-	}
-	if err := w.Flush(); err != nil {
-		return err
-	}
-
-	return nil
+func (c *Client) Stats(ctx context.Context, namespace string) (reply *proto.StatsReply, err error) {
+	reply, err = c.client.Stats(ctx, &proto.StatsRequest{Namespace: namespace})
+	return
 }
 
 // Processes implements the proto.OSDClient interface.
-func (c *Client) Processes(namespace string) (err error) {
-	ctx := context.Background()
-	reply, err := c.client.Processes(ctx, &proto.ProcessesRequest{Namespace: namespace})
-	if err != nil {
-		return
-	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
-	for _, p := range reply.Processes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, p.Id, p.Image, p.Pid, p.Status)
-	}
-	if err := w.Flush(); err != nil {
-		return err
-	}
-
-	return nil
+func (c *Client) Processes(ctx context.Context, namespace string) (reply *proto.ProcessesReply, err error) {
+	reply, err = c.client.Processes(ctx, &proto.ProcessesRequest{Namespace: namespace})
+	return
 }
 
 // Restart implements the proto.OSDClient interface.
-func (c *Client) Restart(r *proto.RestartRequest) (err error) {
-	ctx := context.Background()
-	_, err = c.client.Restart(ctx, r)
-	if err != nil {
-		return
-	}
-
-	return nil
+func (c *Client) Restart(ctx context.Context, namespace, id string, timeoutSecs int32) (err error) {
+	_, err = c.client.Restart(ctx, &proto.RestartRequest{
+		Id:        id,
+		Namespace: namespace,
+		Timeout:   timeoutSecs,
+	})
+	return
 }
 
 // Reset implements the proto.OSDClient interface.
-func (c *Client) Reset() (err error) {
-	ctx := context.Background()
+func (c *Client) Reset(ctx context.Context) (err error) {
 	_, err = c.client.Reset(ctx, &empty.Empty{})
-	if err != nil {
-		return
-	}
-
-	return nil
+	return
 }
 
 // Reboot implements the proto.OSDClient interface.
-func (c *Client) Reboot() (err error) {
-	ctx := context.Background()
+func (c *Client) Reboot(ctx context.Context) (err error) {
 	_, err = c.initClient.Reboot(ctx, &empty.Empty{})
-	if err != nil {
-		return
-	}
-
-	return nil
+	return
 }
 
 // Shutdown implements the proto.OSDClient interface.
-func (c *Client) Shutdown() (err error) {
-	ctx := context.Background()
+func (c *Client) Shutdown(ctx context.Context) (err error) {
 	_, err = c.initClient.Shutdown(ctx, &empty.Empty{})
-	if err != nil {
-		return
-	}
-
-	return nil
+	return
 }
 
 // Dmesg implements the proto.OSDClient interface.
-// nolint: dupl
-func (c *Client) Dmesg() (err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (c *Client) Dmesg(ctx context.Context) ([]byte, error) {
 	data, err := c.client.Dmesg(ctx, &empty.Empty{})
 	if err != nil {
-		return
+		return nil, err
 	}
-	fmt.Print(string(data.Bytes))
 
-	return nil
+	return data.Bytes, nil
 }
 
 // Logs implements the proto.OSDClient interface.
-func (c *Client) Logs(r *proto.LogsRequest) (err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stream, err := c.client.Logs(ctx, r)
-	if err != nil {
-		return
-	}
-	for {
-		data, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				return err
-			}
-
-			return err
-		}
-		fmt.Print(string(data.Bytes))
-	}
+func (c *Client) Logs(ctx context.Context, namespace, id string) (stream proto.OSD_LogsClient, err error) {
+	stream, err = c.client.Logs(ctx, &proto.LogsRequest{
+		Namespace: namespace,
+		Id:        id,
+	})
+	return
 }
 
 // Version implements the proto.OSDClient interface.
-// nolint: dupl
-func (c *Client) Version() (err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (c *Client) Version(ctx context.Context) ([]byte, error) {
 	data, err := c.client.Version(ctx, &empty.Empty{})
 	if err != nil {
-		return
+		return nil, err
 	}
-	fmt.Print(string(data.Bytes))
-
-	return nil
+	return data.Bytes, nil
 }
 
 // Routes implements the proto.OSDClient interface.
-func (c *Client) Routes() (err error) {
-	ctx := context.Background()
-	reply, err := c.client.Routes(ctx, &empty.Empty{})
-	if err != nil {
-		return
-	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY")
-	for _, r := range reply.Routes {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", r.Interface, r.Destination, r.Gateway)
-	}
-	if err := w.Flush(); err != nil {
-		return err
-	}
-
-	return nil
+func (c *Client) Routes(ctx context.Context) (reply *proto.RoutesReply, err error) {
+	reply, err = c.client.Routes(ctx, &empty.Empty{})
+	return
 }
 
 // Top implements the proto.OSDClient interface.
-// nolint: dupl
-func (c *Client) Top() (pl []proc.ProcessList, err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (c *Client) Top(ctx context.Context) (pl []proc.ProcessList, err error) {
 	var reply *proto.TopReply
 	reply, err = c.client.Top(ctx, &empty.Empty{})
 	if err != nil {
@@ -293,41 +207,18 @@ func (c *Client) Top() (pl []proc.ProcessList, err error) {
 }
 
 // DF implements the proto.OSDClient interface.
-func (c *Client) DF() (err error) {
-	ctx := context.Background()
-	reply, err := c.client.DF(ctx, &empty.Empty{})
-	if err != nil {
-		return fmt.Errorf("one or more error encountered: %+v", err)
-	}
-
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "FILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
-	for _, r := range reply.Stats {
-		percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
-
-		if math.IsNaN(percentAvailable) {
-			continue
-		}
-
-		fmt.Fprintf(w, "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n", r.Filesystem, float64(r.Size)*1e-9, float64(r.Size-r.Available)*1e-9, float64(r.Available)*1e-9, percentAvailable, r.MountedOn)
-	}
-	if err := w.Flush(); err != nil {
-		return err
-	}
-
-	return nil
+func (c *Client) DF(ctx context.Context) (*proto.DFReply, error) {
+	return c.client.DF(ctx, &empty.Empty{})
 }
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSDClient
 // interface
-func (c *Client) Upgrade(asseturl string) (err error) {
-	ctx := context.Background()
+func (c *Client) Upgrade(ctx context.Context, asseturl string) (string, error) {
 	reply, err := c.initClient.Upgrade(ctx, &initproto.UpgradeRequest{Url: asseturl})
 	if err != nil {
-		return
+		return "", err
 	}
-	fmt.Println(reply.Ack)
-	return
+	return reply.Ack, nil
 }
 
 // ServiceList returns list of services with their state

@@ -6,11 +6,15 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
 )
 
 // routesCmd represents the net routes command
@@ -25,11 +29,23 @@ var routesCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			if err := c.Routes(); err != nil {
+			reply, err := c.Routes(context.TODO())
+			if err != nil {
 				helpers.Fatalf("error getting routes: %s", err)
 			}
+
+			routesRender(reply)
 		})
 	},
+}
+
+func routesRender(reply *proto.RoutesReply) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY")
+	for _, r := range reply.Routes {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", r.Interface, r.Destination, r.Gateway)
+	}
+	helpers.Should(w.Flush())
 }
 
 func init() {

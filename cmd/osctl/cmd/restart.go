@@ -6,13 +6,13 @@
 package cmd
 
 import (
-	"fmt"
+	"context"
 	"os"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
-	"github.com/talos-systems/talos/internal/app/osd/proto"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
@@ -40,14 +40,8 @@ var restartCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			r := &proto.RestartRequest{
-				Id:        args[0],
-				Namespace: namespace,
-				Timeout:   timeout,
-			}
-			if err := c.Restart(r); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+			if err := c.Restart(context.TODO(), namespace, args[0], timeout); err != nil {
+				helpers.Fatalf("error restarting process: %s", err)
 			}
 		})
 	},

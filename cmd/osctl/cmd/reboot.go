@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ var rebootCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			if err := c.Reboot(); err != nil {
+			if err := c.Reboot(context.TODO()); err != nil {
 				helpers.Fatalf("error executing reboot: %s", err)
 			}
 		})

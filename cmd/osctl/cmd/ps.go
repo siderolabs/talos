@@ -6,12 +6,16 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"text/tabwriter"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
@@ -33,11 +37,24 @@ var psCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			if err := c.Processes(namespace); err != nil {
+			reply, err := c.Processes(context.TODO(), namespace)
+
+			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)
 			}
+
+			processesRender(reply)
 		})
 	},
+}
+
+func processesRender(reply *proto.ProcessesReply) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
+	for _, p := range reply.Processes {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, p.Id, p.Image, p.Pid, p.Status)
+	}
+	helpers.Should(w.Flush())
 }
 
 func init() {

@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -36,9 +37,12 @@ var versionCmd = &cobra.Command{
 			}
 		}
 		setupClient(func(c *client.Client) {
-			if err := c.Version(); err != nil {
+			version, err := c.Version(context.TODO())
+			if err != nil {
 				helpers.Fatalf("error getting version: %s", err)
 			}
+			_, err = os.Stdout.Write(version)
+			helpers.Should(err)
 		})
 	},
 }
