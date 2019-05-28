@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -40,24 +39,6 @@ func (k *Kubelet) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (k *Kubelet) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	requiredMounts := []string{
-		"/dev/disk/by-path",
-		"/etc/kubernetes",
-		"/etc/kubernetes/manifests",
-		"/run",
-		"/sys/fs/cgroup",
-		"/usr/libexec/kubernetes",
-		"/var/lib/containerd",
-		"/var/lib/kubelet",
-		"/var/log/pods",
-	}
-
-	for _, dir := range requiredMounts {
-		if err := os.MkdirAll(dir, os.ModeDir); err != nil {
-			return fmt.Errorf("create %s: %s", dir, err.Error())
-		}
-	}
-
 	return nil
 }
 
