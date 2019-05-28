@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -40,7 +41,7 @@ var topCmd = &cobra.Command{
 
 			if oneTime {
 				var output string
-				output, err = topOutput(c)
+				output, err = topOutput(context.TODO(), c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -55,7 +56,7 @@ var topCmd = &cobra.Command{
 			}
 			defer ui.Close()
 
-			topUI(c)
+			topUI(context.TODO(), c)
 		})
 	},
 }
@@ -69,7 +70,8 @@ func init() {
 	rootCmd.AddCommand(topCmd)
 }
 
-func topUI(c *client.Client) {
+// nolint: gocyclo
+func topUI(ctx context.Context, c *client.Client) {
 
 	l := widgets.NewParagraph()
 	l.Title = "Top"
@@ -89,7 +91,7 @@ func topUI(c *client.Client) {
 		// x, y, w, h
 		l.SetRect(0, 0, w, h)
 
-		processOutput, err = topOutput(c)
+		processOutput, err = topOutput(ctx, c)
 		if err != nil {
 			log.Println(err)
 			return
@@ -112,6 +114,8 @@ func topUI(c *client.Client) {
 	ticker := time.NewTicker(time.Second).C
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case e := <-uiEvents:
 			switch e.ID {
 			case "q", "<C-c>":
@@ -168,8 +172,8 @@ var cpu = func(p1, p2 *proc.ProcessList) bool {
 	return p1.CPUTime > p2.CPUTime
 }
 
-func topOutput(c *client.Client) (output string, err error) {
-	procs, err := c.Top()
+func topOutput(ctx context.Context, c *client.Client) (output string, err error) {
+	procs, err := c.Top(ctx)
 	if err != nil {
 		// TODO: Figure out how to expose errors to client without messing
 		// up display

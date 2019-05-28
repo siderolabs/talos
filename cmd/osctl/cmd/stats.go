@@ -6,12 +6,16 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"text/tabwriter"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
@@ -33,11 +37,23 @@ var statsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			if err := c.Stats(namespace); err != nil {
+			reply, err := c.Stats(context.TODO(), namespace)
+			if err != nil {
 				helpers.Fatalf("error getting stats: %s", err)
 			}
+
+			statsRender(reply)
 		})
 	},
+}
+
+func statsRender(reply *proto.StatsReply) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NAMESPACE\tID\tMEMORY(MB)\tCPU")
+	for _, s := range reply.Stats {
+		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, s.Id, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+	}
+	helpers.Should(w.Flush())
 }
 
 func init() {

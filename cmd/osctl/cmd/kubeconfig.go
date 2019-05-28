@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -25,9 +26,12 @@ var kubeconfigCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			if err := c.Kubeconfig(); err != nil {
+			kubeconfig, err := c.Kubeconfig(context.TODO())
+			if err != nil {
 				helpers.Fatalf("error fetching kubeconfig: %s", err)
 			}
+			_, err = os.Stdout.Write(kubeconfig)
+			helpers.Should(err)
 		})
 	},
 }

@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ var shutdownCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			if err := c.Shutdown(); err != nil {
+			if err := c.Shutdown(context.TODO()); err != nil {
 				helpers.Fatalf("error executing shutdown: %s", err)
 			}
 		})

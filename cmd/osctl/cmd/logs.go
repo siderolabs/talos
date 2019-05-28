@@ -5,13 +5,14 @@
 package cmd
 
 import (
+	"context"
+	"io"
 	"os"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
@@ -33,12 +34,23 @@ var logsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			r := &proto.LogsRequest{
-				Id:        args[0],
-				Namespace: namespace,
-			}
-			if err := c.Logs(r); err != nil {
+
+			stream, err := c.Logs(context.TODO(), namespace, args[0])
+			if err != nil {
 				helpers.Fatalf("error fetching logs: %s", err)
+			}
+
+			for {
+				data, err := stream.Recv()
+				if err != nil {
+					if err == io.EOF {
+						return
+					}
+					helpers.Fatalf("error streaming logs: %s", err)
+				}
+
+				_, err = os.Stdout.Write(data.Bytes)
+				helpers.Should(err)
 			}
 		})
 	},

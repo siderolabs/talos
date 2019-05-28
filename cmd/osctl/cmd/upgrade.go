@@ -6,6 +6,9 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -44,13 +47,20 @@ func init() {
 }
 
 func remoteUpgrade() error {
-	var err error
+	var (
+		err error
+		ack string
+	)
 
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent
 		// starting upgrades to an unknown version
-		err = c.Upgrade(assetURL)
+		ack, err = c.Upgrade(context.TODO(), assetURL)
 	})
+
+	if err == nil {
+		fmt.Println(ack)
+	}
 
 	return err
 }
