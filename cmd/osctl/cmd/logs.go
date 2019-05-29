@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"io"
 	"os"
 
@@ -35,7 +34,7 @@ var logsCmd = &cobra.Command{
 				namespace = constants.SystemContainerdNamespace
 			}
 
-			stream, err := c.Logs(context.TODO(), namespace, args[0])
+			stream, err := c.Logs(globalCtx, namespace, args[0])
 			if err != nil {
 				helpers.Fatalf("error fetching logs: %s", err)
 			}

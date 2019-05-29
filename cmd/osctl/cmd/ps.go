@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -37,7 +36,7 @@ var psCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			reply, err := c.Processes(context.TODO(), namespace)
+			reply, err := c.Processes(globalCtx, namespace)
 
 			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)

@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -29,7 +28,7 @@ var routesCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			reply, err := c.Routes(context.TODO())
+			reply, err := c.Routes(globalCtx)
 			if err != nil {
 				helpers.Fatalf("error getting routes: %s", err)
 			}

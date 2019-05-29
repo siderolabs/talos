@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -26,7 +25,7 @@ var resetCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			if err := c.Reset(context.TODO()); err != nil {
+			if err := c.Reset(globalCtx); err != nil {
 				helpers.Fatalf("error executing reset: %s", err)
 			}
 		})
