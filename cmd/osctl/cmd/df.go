@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"os"
@@ -30,7 +29,7 @@ var dfCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			dfRender(c.DF(context.TODO()))
+			dfRender(c.DF(globalCtx))
 		})
 	},
 }

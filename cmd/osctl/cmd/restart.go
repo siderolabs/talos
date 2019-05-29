@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
@@ -40,7 +39,7 @@ var restartCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			if err := c.Restart(context.TODO(), namespace, args[0], timeout); err != nil {
+			if err := c.Restart(globalCtx, namespace, args[0], timeout); err != nil {
 				helpers.Fatalf("error restarting process: %s", err)
 			}
 		})

@@ -5,9 +5,13 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"os/signal"
 	"os/user"
 	"path"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -38,9 +42,33 @@ var rootCmd = &cobra.Command{
 	Long:  ``,
 }
 
+// Global context to be used in the commands.
+//
+// Cobra doesn't have a way to pass it around, so we have to use global variable.
+// Context is initialized in Execute, and initial value is failsafe default.
+var globalCtx = context.Background()
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	var globalCtxCancel context.CancelFunc
+	globalCtx, globalCtxCancel = context.WithCancel(context.Background())
+	defer globalCtxCancel()
+
+	// listen for ^C and SIGTERM and abort context
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case <-sigCh:
+			signal.Stop(sigCh)
+			fmt.Fprintln(os.Stderr, "Signal received, aborting, press Ctrl+C once again to abort immediately...")
+			globalCtxCancel()
+		case <-globalCtx.Done():
+		}
+	}()
+
 	var (
 		defaultTalosConfig string
 		ok                 bool

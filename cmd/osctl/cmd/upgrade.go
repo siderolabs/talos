@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -55,7 +54,7 @@ func remoteUpgrade() error {
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent
 		// starting upgrades to an unknown version
-		ack, err = c.Upgrade(context.TODO(), assetURL)
+		ack, err = c.Upgrade(globalCtx, assetURL)
 	})
 
 	if err == nil {

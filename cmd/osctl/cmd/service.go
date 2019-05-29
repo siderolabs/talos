@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -42,7 +41,7 @@ var serviceCmd = &cobra.Command{
 }
 
 func serviceList(c *client.Client) {
-	reply, err := c.ServiceList(context.TODO())
+	reply, err := c.ServiceList(globalCtx)
 	if err != nil {
 		helpers.Fatalf("error listing services: %s", err)
 	}
@@ -59,7 +58,7 @@ func serviceList(c *client.Client) {
 }
 
 func serviceInfo(c *client.Client, id string) {
-	s, err := c.ServiceInfo(context.TODO(), id)
+	s, err := c.ServiceInfo(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error listing services: %s", err)
 	}

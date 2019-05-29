@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -25,7 +24,7 @@ var dmesgCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			msg, err := c.Dmesg(context.TODO())
+			msg, err := c.Dmesg(globalCtx)
 			if err != nil {
 				helpers.Fatalf("error getting dmesg: %s", err)
 			}

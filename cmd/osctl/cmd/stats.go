@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -37,7 +36,7 @@ var statsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			reply, err := c.Stats(context.TODO(), namespace)
+			reply, err := c.Stats(globalCtx, namespace)
 			if err != nil {
 				helpers.Fatalf("error getting stats: %s", err)
 			}

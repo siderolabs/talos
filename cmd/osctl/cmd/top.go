@@ -41,7 +41,7 @@ var topCmd = &cobra.Command{
 
 			if oneTime {
 				var output string
-				output, err = topOutput(context.TODO(), c)
+				output, err = topOutput(globalCtx, c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -56,7 +56,7 @@ var topCmd = &cobra.Command{
 			}
 			defer ui.Close()
 
-			topUI(context.TODO(), c)
+			topUI(globalCtx, c)
 		})
 	},
 }
