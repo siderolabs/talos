@@ -45,7 +45,7 @@ func (suite *FilesSuite) createFile(name string) (path string) {
 }
 
 func (suite *FilesSuite) TestString() {
-	suite.Require().Equal("for file \"abc.txt\" to exist", conditions.WaitForFileToExist("abc.txt").String())
+	suite.Require().Equal("file \"abc.txt\" to exist", conditions.WaitForFileToExist("abc.txt").String())
 }
 
 func (suite *FilesSuite) TestWaitForFileToExist() {

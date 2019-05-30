@@ -132,9 +132,68 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 		events.StateRunning,
 		events.StateRunning, // initial: healthy
 		events.StateRunning, // not healthy
-		events.StateRunning, // one again healthy
+		events.StateRunning, // once again healthy
 		events.StateFinished,
 	}, sr)
+}
+
+func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
+	oldWaitConditionCheckInterval := system.WaitConditionCheckInterval
+	system.WaitConditionCheckInterval = 10 * time.Millisecond
+	defer func() {
+		system.WaitConditionCheckInterval = oldWaitConditionCheckInterval
+	}()
+
+	cond1 := NewMockCondition("cond1")
+	cond2 := NewMockCondition("cond2")
+	sr := system.NewServiceRunner(&MockService{
+		condition: conditions.WaitForAll(cond1, cond2),
+	}, nil)
+
+	finished := make(chan struct{})
+	go func() {
+		defer close(finished)
+		sr.Start()
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+
+	select {
+	case <-finished:
+		suite.Require().Fail("service running should be still running")
+	default:
+	}
+
+	close(cond1.done)
+
+	time.Sleep(50 * time.Millisecond)
+
+	select {
+	case <-finished:
+		suite.Require().Fail("service running should be still running")
+	default:
+	}
+
+	close(cond2.done)
+
+	time.Sleep(50 * time.Millisecond)
+
+	sr.Shutdown()
+
+	<-finished
+
+	suite.assertStateSequence([]events.ServiceState{
+		events.StateWaiting,
+		events.StateWaiting,
+		events.StatePreparing,
+		events.StatePreparing,
+		events.StateRunning,
+		events.StateFinished,
+	}, sr)
+
+	events := sr.GetEventHistory(10000)
+	suite.Assert().Equal("Waiting for cond1, cond2", events[0].Message)
+	suite.Assert().Equal("Waiting for cond2", events[1].Message)
 }
 
 func (suite *ServiceRunnerSuite) TestPreStageFail() {

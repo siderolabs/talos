@@ -120,3 +120,28 @@ func (m *MockRunner) Stop() error {
 func (m *MockRunner) String() string {
 	return "MockRunner()"
 }
+
+type MockCondition struct {
+	done chan struct{}
+	desc string
+}
+
+func NewMockCondition(desc string) *MockCondition {
+	return &MockCondition{
+		done: make(chan struct{}),
+		desc: desc,
+	}
+}
+
+func (m *MockCondition) String() string {
+	return m.desc
+}
+
+func (m *MockCondition) Wait(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-m.done:
+		return nil
+	}
+}
