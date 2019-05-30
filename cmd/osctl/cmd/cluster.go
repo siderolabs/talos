@@ -158,7 +158,14 @@ func createNodes(requests []*node.Request) (err error) {
 	for idx, req := range requests {
 		go func(idx int, req *node.Request) {
 			fmt.Println("creating node", req.Name)
+			// We'll use this to denote the previous node
+			// IP so we can coordinate how each control plane
+			// node comes up
+			// 1 <- 2 <- 3 <- 4 <- 5 ...
 			req.Input.Index = idx
+			if req.Input.Index > 0 {
+				req.Input.Index--
+			}
 			if req.IP != nil {
 				req.Input.IP = req.IP
 			}

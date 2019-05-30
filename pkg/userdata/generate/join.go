@@ -26,5 +26,5 @@ services:
           feature-gates: ExperimentalCriticalPodAnnotation=true
   trustd:
     token: '{{ .TrustdInfo.Token }}'
-    endpoints: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}} ]
+    endpoints: [ {{ .Endpoints }} ]
 `

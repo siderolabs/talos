@@ -60,7 +60,8 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...) {
+	switch {
+	case kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...):
 		// Since the ClusterConfiguration is embedded in the InitConfiguration
 		// struct, it is required to (un)marshal it a special way. The kubeadm
 		// API exposes one function (MarshalKubeadmConfigObject) to handle the
@@ -72,8 +73,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		}
 		kdm.Configuration = cfg
 		kdm.controlPlane = true
-	}
-	if kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...) {
+	case kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...):
 		cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(b, kubeadmapi.SchemeGroupVersion, kubeadmscheme.Codecs)
 		if err != nil {
 			return err
@@ -83,12 +83,8 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if !ok {
 			return errors.New("expected JoinConfiguration")
 		}
-		if kdm.CertificateKey == "" {
-			kdm.controlPlane = false
-		} else {
-			if joinConfiguration.ControlPlane == nil {
-				joinConfiguration.ControlPlane = &kubeadmapi.JoinControlPlane{}
-			}
+
+		if joinConfiguration.ControlPlane != nil {
 			kdm.controlPlane = true
 		}
 	}

@@ -24,13 +24,15 @@ services:
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
+      localAPIEndpoint:
+        bindPort: 6443
       bootstrapTokens:
       - token: '{{ .KubeadmTokens.BootstrapToken }}'
         ttl: 0s
-      localAPIEndpoint:
-        bindPort: 6443
       nodeRegistration:
-        criSocket: /run/containerd/containerd.sock
+        taints: []
+        kubeletExtraArgs:
+          node-labels: ""
       ---
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
@@ -53,21 +55,6 @@ services:
         dnsDomain: {{ .ServiceDomain }}
         podSubnet: {{ index .PodNet 0 }}
         serviceSubnet: {{ index .ServiceNet 0 }}
-      etcd:
-        local:
-          serverCertSANs:
-            - master-{{ .Index }}
-            - {{ .IP }}
-          peerCertSANs:
-            - master-{{ .Index }}
-            - {{ .IP }}
-          extraArgs:
-            initial-cluster: {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}master-{{add $i 1}}=https://{{$ip}}:2380{{end}}
-            initial-cluster-state: new
-            listen-peer-urls: https://{{ .IP }}:2380
-            listen-client-urls: https://{{ .IP }}:2379
-            advertise-client-urls: https://{{ .IP }}:2379
-            initial-advertise-peer-urls: https://{{ .IP }}:2380
       ---
       apiVersion: kubelet.config.k8s.io/v1beta1
       kind: KubeletConfiguration

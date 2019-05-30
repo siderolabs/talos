@@ -6,8 +6,6 @@ package services
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -25,6 +23,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 )
 
 // Kubeadm implements the Service interface. It serves as the concrete type with
@@ -95,7 +95,7 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 	}
 
 	if data.Services.Kubeadm.IsWorker() || data.Services.Kubeadm.IsBootstrap() || data.Services.Trustd == nil {
-		log.Println("Skipping retrieval of files from peers via trustd")
+		log.Println("skipping retrieval of files from peers via trustd")
 		return nil
 	}
 
@@ -109,6 +109,7 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 	var wg sync.WaitGroup
 	wg.Add(len(kubeadm.FileSet()))
 
+	log.Println("retrieving needed files via trustd")
 	// Generate a list of files we need to request
 	// ( filtered by ones we already have ) and
 	// Get assets from remote nodes
@@ -188,32 +189,26 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 	ignorePreflightErrors = append(ignorePreflightErrors, data.Services.Kubeadm.IgnorePreflightErrors...)
 	ignore := "--ignore-preflight-errors=" + strings.Join(ignorePreflightErrors, ",")
 
-	// sha256 provided key to make it exactly 32 bytes, as required by kubeadm:
-	//   https://github.com/kubernetes/kubernetes/blob/master/cmd/kubeadm/app/constants/constants.go : CertificateKeySize
-	hashedKey := sha256.Sum256([]byte(data.Services.Kubeadm.CertificateKey))
-	encoded := hex.EncodeToString(hashedKey[:])
-	certificateKey := "--certificate-key=" + encoded
-
-	switch {
-	case data.Services.Kubeadm.IsControlPlane():
+	switch data.Services.Kubeadm.Configuration.(type) {
+	case *kubeadmapi.InitConfiguration:
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"init",
 			"--config=/etc/kubernetes/kubeadm-config.yaml",
-			certificateKey,
 			ignore,
 			"--skip-token-print",
 			"--skip-certificate-key-print",
-			"--experimental-upload-certs",
 		}
 	// Worker
-	default:
+	case *kubeadmapi.JoinConfiguration:
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"join",
 			"--config=/etc/kubernetes/kubeadm-config.yaml",
 			ignore,
 		}
+	default:
+		return nil, errors.New("invalid kubeadm configuration type")
 	}
 
 	args.ProcessArgs = append(args.ProcessArgs, data.Services.Kubeadm.ExtraArgs...)

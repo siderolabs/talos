@@ -1,3 +1,5 @@
+#!talos
+
 version: ""
 security: null
 networking:
