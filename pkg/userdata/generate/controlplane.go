@@ -4,7 +4,7 @@
 
 package generate
 
-const controlPlaneTempl = `---
+const controlPlaneTempl = `#!talos
 version: ""
 security:
   os:

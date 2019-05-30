@@ -9,8 +9,7 @@ func Talosconfig(in *Input) (string, error) {
 	return renderTemplate(in, talosconfigTempl)
 }
 
-const talosconfigTempl = `---
-context: {{ .ClusterName }}
+const talosconfigTempl = `context: {{ .ClusterName }}
 contexts:
   {{ .ClusterName }}:
     target: {{ index .MasterIPs 0 }}
