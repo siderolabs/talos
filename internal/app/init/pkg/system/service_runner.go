@@ -20,6 +20,12 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
+// WaitConditionCheckInterval is time between checking for wait condition
+// description changes.
+//
+// Exposed here for unit-tests to override
+var WaitConditionCheckInterval = time.Second
+
 // ServiceRunner wraps the state of the service (running, stopped, ...)
 type ServiceRunner struct {
 	mu sync.Mutex
@@ -122,6 +128,33 @@ func (svcrunner *ServiceRunner) GetEventHistory(count int) []events.ServiceEvent
 	return svcrunner.events.Get(count)
 }
 
+func (svcrunner *ServiceRunner) waitFor(condition conditions.Condition) error {
+	description := condition.String()
+	svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", description)
+
+	errCh := make(chan error)
+	go func() {
+		errCh <- condition.Wait(svcrunner.ctx)
+	}()
+
+	ticker := time.NewTicker(WaitConditionCheckInterval)
+	defer ticker.Stop()
+
+	// update state if condition description changes (some conditions are satisfied)
+	for {
+		select {
+		case err := <-errCh:
+			return err
+		case <-ticker.C:
+			newDescription := condition.String()
+			if newDescription != description && newDescription != "" {
+				description = newDescription
+				svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", description)
+			}
+		}
+	}
+}
+
 // Start initializes the service and runs it
 //
 // Start should be run in a goroutine.
@@ -143,9 +176,7 @@ func (svcrunner *ServiceRunner) Start() {
 	}
 
 	if condition != nil {
-		svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", condition)
-		err := condition.Wait(svcrunner.ctx)
-		if err != nil {
+		if err := svcrunner.waitFor(condition); err != nil {
 			svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
 			return
 		}
@@ -328,6 +359,7 @@ func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 	}
 }
 
+// nolint: gocyclo
 func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:
@@ -336,9 +368,9 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 		health := svcrunner.healthState.Get()
 
 		// up when:
-		//   a) either skipped
+		//   a) either skipped or already finished
 		//   b) or running and healthy (if supports health checks)
-		return svcrunner.state == events.StateSkipped || svcrunner.state == events.StateRunning && (!supportsHealth || (health.Healthy != nil && *health.Healthy))
+		return svcrunner.state == events.StateSkipped || svcrunner.state == events.StateFinished || svcrunner.state == events.StateRunning && (!supportsHealth || (health.Healthy != nil && *health.Healthy))
 	case StateEventDown:
 		// down when in any of the terminal states
 		return svcrunner.state == events.StateFailed || svcrunner.state == events.StateFinished || svcrunner.state == events.StateSkipped
