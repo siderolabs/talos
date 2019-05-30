@@ -28,12 +28,13 @@ import (
 
 // UserData represents the user data.
 type UserData struct {
+	Debug      bool        `yaml:"debug"`
+	Container  bool        `yaml:"container"`
+	Files      []*File     `yaml:"files"`
 	Version    Version     `yaml:"version"`
 	Security   *Security   `yaml:"security"`
 	Networking *Networking `yaml:"networking"`
 	Services   *Services   `yaml:"services"`
-	Files      []*File     `yaml:"files"`
-	Debug      bool        `yaml:"debug"`
 	Env        Env         `yaml:"env,omitempty"`
 	Install    *Install    `yaml:"install,omitempty"`
 }

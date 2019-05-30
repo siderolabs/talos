@@ -77,6 +77,7 @@ func container() (err error) {
 		if decoded, err = base64.StdEncoding.DecodeString(*userdataArg); err != nil {
 			return err
 		}
+		decoded = append(decoded, []byte("\ncontainer: true")...)
 		if err = ioutil.WriteFile(constants.UserDataPath, decoded, 0400); err != nil {
 			return err
 		}
@@ -286,12 +287,17 @@ func startSystemServices(data *userdata.UserData) {
 	log.Println("starting system services")
 	// Start the services common to all nodes.
 	svcs.Start(
-		&services.Networkd{},
 		&services.Containerd{},
 		&services.Udevd{},
 		&services.OSD{},
 		&services.NTPd{},
 	)
+
+	// Only start networkd if we're not running in a container
+	if !*inContainer {
+		svcs.Start(&services.Networkd{})
+	}
+
 	// Start the services common to all master nodes.
 	if data.Services.Kubeadm.IsControlPlane() {
 		svcs.Start(
