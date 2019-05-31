@@ -33,7 +33,7 @@ func (filename file) Wait(ctx context.Context) error {
 }
 
 func (filename file) String() string {
-	return fmt.Sprintf("for file %q to exist", string(filename))
+	return fmt.Sprintf("file %q to exist", string(filename))
 }
 
 // WaitForFileToExist is a service condition that will wait for the existence of
