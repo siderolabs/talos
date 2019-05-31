@@ -99,6 +99,12 @@ const (
 	// KubeadmEtcdCAKey is the path to the etcd CA private key.
 	KubeadmEtcdCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdCAKeyName
 
+	// KubeadmEtcdPeerCert is the path to the etcd CA certificate.
+	KubeadmEtcdPeerCert = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdPeerCertName
+
+	// KubeadmEtcdPeerKey is the path to the etcd CA private key.
+	KubeadmEtcdPeerKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
+
 	// KubernetesVersion is the enforced target version of the control plane.
 	KubernetesVersion = "v1.15.0-beta.1"
 
