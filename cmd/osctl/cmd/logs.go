@@ -10,6 +10,9 @@ import (
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -42,7 +45,7 @@ var logsCmd = &cobra.Command{
 			for {
 				data, err := stream.Recv()
 				if err != nil {
-					if err == io.EOF {
+					if err == io.EOF || status.Code(err) == codes.Canceled {
 						return
 					}
 					helpers.Fatalf("error streaming logs: %s", err)

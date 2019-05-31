@@ -59,13 +59,22 @@ func Execute() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
+	exited := make(chan struct{})
+	defer close(exited)
+
 	go func() {
+		select {
+		case <-sigCh:
+			globalCtxCancel()
+		case <-globalCtx.Done():
+			return
+		}
+
 		select {
 		case <-sigCh:
 			signal.Stop(sigCh)
 			fmt.Fprintln(os.Stderr, "Signal received, aborting, press Ctrl+C once again to abort immediately...")
-			globalCtxCancel()
-		case <-globalCtx.Done():
+		case <-exited:
 		}
 	}()
 
