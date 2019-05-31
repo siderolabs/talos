@@ -17,7 +17,7 @@ up: talosconfig
 
 .PHONY: down
 down:
-	@$(DOCKER_COMPOSE) down -v $(SERVICES)
+	-@$(DOCKER_COMPOSE) down -v $(SERVICES)
 
 .PHONY: talosconfig
 talosconfig:

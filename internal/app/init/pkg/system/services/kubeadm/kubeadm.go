@@ -84,10 +84,13 @@ func writeJoinConfig(data *userdata.UserData) (b []byte, err error) {
 func WriteConfig(data *userdata.UserData) (err error) {
 	var b []byte
 
-	if data.Services.Kubeadm.IsControlPlane() {
-		b, err = writeInitConfig(data)
-	} else {
+	switch data.Services.Kubeadm.Configuration.(type) {
+	case *kubeadmapi.JoinConfiguration:
 		b, err = writeJoinConfig(data)
+	case *kubeadmapi.InitConfiguration:
+		b, err = writeInitConfig(data)
+	default:
+		return errors.New("unsupported kubeadm configuration")
 	}
 	if err != nil {
 		return err

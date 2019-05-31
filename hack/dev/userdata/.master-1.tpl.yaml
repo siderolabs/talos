@@ -1,3 +1,5 @@
+#!talos
+
 services:
   init:
     cni: flannel
@@ -29,21 +31,6 @@ services:
         dnsDomain: cluster.local
         podSubnet: 10.244.0.1/16
         serviceSubnet: 10.96.0.1/12
-      etcd:
-        local:
-          serverCertSANs:
-            - master-1
-            - 10.5.0.6
-          peerCertSANs:
-            - master-1
-            - 10.5.0.6
-          extraArgs:
-            initial-cluster: master-1=https://10.5.0.6:2380,master-2=https://10.5.0.7:2380,master-3=https://10.5.0.8:2380
-            initial-cluster-state: new
-            listen-peer-urls: https://10.5.0.6:2380
-            listen-client-urls: https://10.5.0.6:2379
-            advertise-client-urls: https://10.5.0.6:2379
-            initial-advertise-peer-urls: https://10.5.0.6:2380
       ---
       apiVersion: kubelet.config.k8s.io/v1beta1
       kind: KubeletConfiguration
