@@ -4,7 +4,7 @@
 
 package generate
 
-const initTempl = `---
+const initTempl = `#!talos
 version: ""
 security:
   os:

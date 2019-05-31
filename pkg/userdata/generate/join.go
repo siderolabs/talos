@@ -4,7 +4,7 @@
 
 package generate
 
-const workerTempl = `---
+const workerTempl = `#!talos
 version: ""
 security: null
 services:
