@@ -184,7 +184,7 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 		ID: k.ID(data),
 	}
 
-	ignorePreflightErrors := []string{"cri", "kubeletversion", "numcpu", "requiredipvskernelmodulesavailable"}
+	ignorePreflightErrors := []string{"cri", "kubeletversion", "numcpu", "ipvsproxiercheck"}
 	ignorePreflightErrors = append(ignorePreflightErrors, data.Services.Kubeadm.IgnorePreflightErrors...)
 	ignore := "--ignore-preflight-errors=" + strings.Join(ignorePreflightErrors, ",")
 

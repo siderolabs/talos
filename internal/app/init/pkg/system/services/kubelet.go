@@ -80,10 +80,9 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 	if err != nil {
 		return nil, err
 	}
-	argsString := strings.TrimPrefix(string(fileBytes), "KUBELET_KUBEADM_ARGS=")
-	argsString = strings.TrimSuffix(argsString, "\n")
+	argsString := strings.TrimPrefix(string(fileBytes), "KUBELET_KUBEADM_ARGS=\"")
+	argsString = strings.TrimSuffix(argsString, "\"\n")
 	args.ProcessArgs = append(args.ProcessArgs, strings.Split(argsString, " ")...)
-
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
