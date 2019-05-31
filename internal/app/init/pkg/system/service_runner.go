@@ -363,17 +363,29 @@ func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:
-		// check if service supports health checks
-		_, supportsHealth := svcrunner.service.(HealthcheckedService)
-		health := svcrunner.healthState.Get()
-
 		// up when:
 		//   a) either skipped or already finished
 		//   b) or running and healthy (if supports health checks)
-		return svcrunner.state == events.StateSkipped || svcrunner.state == events.StateFinished || svcrunner.state == events.StateRunning && (!supportsHealth || (health.Healthy != nil && *health.Healthy))
+		switch svcrunner.state {
+		case events.StateSkipped, events.StateFinished:
+			return true
+		case events.StateRunning:
+			// check if service supports health checks
+			_, supportsHealth := svcrunner.service.(HealthcheckedService)
+			health := svcrunner.healthState.Get()
+
+			return !supportsHealth || (health.Healthy != nil && *health.Healthy)
+		default:
+			return false
+		}
 	case StateEventDown:
 		// down when in any of the terminal states
-		return svcrunner.state == events.StateFailed || svcrunner.state == events.StateFinished || svcrunner.state == events.StateSkipped
+		switch svcrunner.state {
+		case events.StateFailed, events.StateFinished, events.StateSkipped:
+			return true
+		default:
+			return false
+		}
 	default:
 		panic("unsupported event")
 	}
