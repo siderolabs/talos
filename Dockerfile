@@ -29,6 +29,7 @@ FROM ${TOOLCHAIN_IMAGE} AS base
 ENV GOPATH /toolchain/gopath
 RUN mkdir -p ${GOPATH}
 ENV GO111MODULE on
+ENV GOPROXY https://proxy.golang.org
 ENV CGO_ENABLED 0
 WORKDIR /src
 COPY ./go.mod ./
