@@ -14,17 +14,19 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/containerd/cgroups"
-	"github.com/containerd/containerd"
-	tasks "github.com/containerd/containerd/api/services/tasks/v1"
-	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
@@ -32,12 +34,10 @@ import (
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/proc"
 	"github.com/talos-systems/talos/internal/pkg/version"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/vishvananda/netlink"
-	"golang.org/x/sys/unix"
-	"google.golang.org/grpc"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -72,9 +72,21 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 
 // Processes implements the proto.OSDServer interface.
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
-	pods, err := podInfo(in.Namespace)
+	inspector, err := containers.NewInspector(ctx, in.Namespace)
 	if err != nil {
 		return nil, err
+	}
+	// nolint: errcheck
+	defer inspector.Close()
+
+	pods, err := inspector.Pods()
+	if err != nil {
+		// fatal error
+		if pods == nil {
+			return nil, err
+		}
+		// TODO: only some failed, need to handle it better via client
+		log.Println(err.Error())
 	}
 
 	processes := []*proto.Process{}
@@ -86,7 +98,7 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 				Id:        container.Display,
 				Image:     container.Image,
 				Pid:       container.Pid,
-				Status:    container.Status,
+				Status:    strings.ToUpper(string(container.Status.Status)),
 			}
 			processes = append(processes, process)
 		}
@@ -99,41 +111,32 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 // Stats implements the proto.OSDServer interface.
 // nolint: gocyclo
 func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply *proto.StatsReply, err error) {
-	client, nsctx, err := connect(in.Namespace)
+	inspector, err := containers.NewInspector(ctx, in.Namespace)
 	if err != nil {
 		return nil, err
 	}
 	// nolint: errcheck
-	defer client.Close()
+	defer inspector.Close()
 
-	containers, err := client.Containers(nsctx)
+	pods, err := inspector.Pods()
 	if err != nil {
-		return nil, err
+		// fatal error
+		if pods == nil {
+			return nil, err
+		}
+		// TODO: only some failed, need to handle it better via client
+		log.Println(err.Error())
 	}
 
 	stats := []*proto.Stat{}
 
-	for _, container := range containers {
-		task, err := container.Task(nsctx, nil)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		status, err := task.Status(nsctx)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		if status.Status == containerd.Running {
-			metrics, err := task.Metrics(nsctx)
-			if err != nil {
-				log.Println(err)
+	for _, containers := range pods {
+		for _, container := range containers.Containers {
+			if container.Metrics == nil {
 				continue
 			}
 
-			anydata, err := typeurl.UnmarshalAny(metrics.Data)
+			anydata, err := typeurl.UnmarshalAny(container.Metrics.Data)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -155,7 +158,7 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 
 			stat := &proto.Stat{
 				Namespace:   in.Namespace,
-				Id:          container.ID(),
+				Id:          container.Display,
 				MemoryUsage: used,
 				CpuUsage:    data.CPU.Usage.Total,
 			}
@@ -171,23 +174,37 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 }
 
 // Restart implements the proto.OSDServer interface.
-func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (reply *proto.RestartReply, err error) {
-	ctx = namespaces.WithNamespace(ctx, in.Namespace)
-	client, err := containerd.New(constants.ContainerdAddress)
+func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (*proto.RestartReply, error) {
+	inspector, err := containers.NewInspector(ctx, in.Namespace)
 	if err != nil {
 		return nil, err
 	}
 	// nolint: errcheck
-	defer client.Close()
-	task := client.TaskService()
-	_, err = task.Kill(ctx, &tasks.KillRequest{ContainerID: in.Id, Signal: uint32(unix.SIGTERM)})
+	defer inspector.Close()
+
+	pods, err := inspector.Pods()
 	if err != nil {
-		return nil, err
+		// fatal error
+		if pods == nil {
+			return nil, err
+		}
+		// TODO: only some failed, need to handle it better via client
 	}
 
-	reply = &proto.RestartReply{}
+	for _, containers := range pods {
+		for _, container := range containers.Containers {
+			if container.Display != in.Id {
+				continue
+			}
 
-	return
+			err = container.Kill(syscall.SIGTERM)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return &proto.RestartReply{}, nil
 }
 
 // Reset implements the proto.OSDServer interface.
@@ -278,7 +295,7 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
 		filename = filepath.Join("/var/log", filepath.Base(req.Id)+".log")
 	default:
-		if filename, err = k8slogs(req); err != nil {
+		if filename, err = k8slogs(l.Context(), req); err != nil {
 			return err
 		}
 	}
@@ -440,25 +457,22 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 	return reply, multiErr.ErrorOrNil()
 }
 
-func k8slogs(req *proto.LogsRequest) (string, error) {
-	var (
-		client *containerd.Client
-		ctx    context.Context
-		err    error
-		pods   []*pod
-		task   *tasks.GetResponse
-	)
-
-	pods, err = podInfo(req.Namespace)
-	if err != nil {
-		return "", err
-	}
-	client, ctx, err = connect(req.Namespace)
+func k8slogs(ctx context.Context, req *proto.LogsRequest) (string, error) {
+	inspector, err := containers.NewInspector(ctx, req.Namespace)
 	if err != nil {
 		return "", err
 	}
 	// nolint: errcheck
-	defer client.Close()
+	defer inspector.Close()
+
+	pods, err := inspector.Pods()
+	if err != nil {
+		// fatal error
+		if pods == nil {
+			return "", err
+		}
+		// TODO: only some failed, need to handle it better via client
+	}
 
 	for _, containers := range pods {
 		for _, container := range containers.Containers {
@@ -467,12 +481,7 @@ func k8slogs(req *proto.LogsRequest) (string, error) {
 			}
 
 			if container.LogFile == "" {
-				task, err = client.TaskService().Get(ctx, &tasks.GetRequest{ContainerID: container.ID})
-				if err != nil {
-					return "", err
-				}
-
-				container.LogFile = task.Process.Stdout
+				return container.GetProcessStdout()
 			}
 
 			return container.LogFile, nil
