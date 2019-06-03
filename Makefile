@@ -22,7 +22,7 @@ BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 endif
 ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
-BUILDKIT_CACHE ?= ""
+BUILDKIT_CACHE ?= 
 endif
 
 ifeq ($(UNAME_S),Linux)
