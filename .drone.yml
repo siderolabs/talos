@@ -85,6 +85,9 @@ steps:
     BINDIR: /usr/local/bin
   commands:
     - make integration
+    - cp build/osctl-linux-amd64 /tmp/osctl
+    - cd /tmp
+    - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
   volumes:
   - name: dockersock
     path: /var/run
