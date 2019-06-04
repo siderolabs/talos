@@ -10,7 +10,6 @@ import (
 	"os"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
@@ -103,14 +102,22 @@ func (suite *ContainersSuite) TestRunSuccess() {
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	var wg sync.WaitGroup
+	runningCh := make(chan struct{})
 
 	wg.Add(1)
 	go func() {
+		runningSink := func(state events.ServiceState, message string, args ...interface{}) {
+			if state == events.StateRunning {
+				close(runningCh)
+			}
+		}
+
 		defer wg.Done()
-		suite.Assert().NoError(r.Run(MockEventSink))
+		suite.Assert().NoError(r.Run(runningSink))
 	}()
 
-	time.Sleep(200 * time.Millisecond)
+	// wait for the container to be started actually
+	<-runningCh
 
 	i, err := containers.NewInspector(context.Background(), containerdNamespace)
 	suite.Assert().NoError(err)
