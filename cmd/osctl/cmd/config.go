@@ -133,16 +133,17 @@ var configGenerateCmd = &cobra.Command{
 
 		var udType generate.Type
 		for idx, master := range strings.Split(args[1], ",") {
-			input.Index = idx + 1
+			input.Index = idx
 			input.IP = net.ParseIP(master)
-			if input.Index == 1 {
+			if input.Index == 0 {
 				udType = generate.TypeInit
 			} else {
+				input.Index--
 				udType = generate.TypeControlPlane
 			}
 
-			if err = writeUserdata(input, udType, "master-"+strconv.Itoa(input.Index)); err != nil {
-				helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(input.Index), err)
+			if err = writeUserdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
+				helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 			}
 		}
 		input.IP = nil
