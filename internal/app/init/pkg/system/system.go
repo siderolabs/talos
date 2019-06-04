@@ -79,8 +79,8 @@ func (s *singleton) Shutdown() {
 		s.mu.Unlock()
 		return
 	}
-	s.terminating = true
 	stateCopy := make(map[string]*ServiceRunner)
+	s.terminating = true
 	for name, svcrunner := range s.State {
 		stateCopy[name] = svcrunner
 	}
@@ -137,4 +137,40 @@ func (s *singleton) List() (result []*ServiceRunner) {
 	sort.Slice(result, func(i, j int) bool { return result[i].id < result[j].id })
 
 	return
+}
+
+// Stop will initiate a shutdown of the specified service.
+func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) {
+	if len(serviceIDs) == 0 {
+		return
+	}
+
+	s.mu.Lock()
+	if s.terminating {
+		s.mu.Unlock()
+		return
+	}
+
+	// Copy current service state
+	stateCopy := make(map[string]*ServiceRunner)
+	for _, id := range serviceIDs {
+		if _, ok := s.State[id]; !ok {
+			// Maybe log that it was a non existent service?
+			continue
+		}
+		stateCopy[id] = s.State[id]
+	}
+	s.mu.Unlock()
+
+	conds := make([]conditions.Condition, len(stateCopy))
+
+	// Initiate a shutdown on the specific service
+	for id, svcrunner := range stateCopy {
+		svcrunner.Shutdown()
+		conds = append(conds, WaitForService(StateEventDown, id))
+	}
+
+	// Wait for service to actually shut down
+	// nolint: errcheck
+	conditions.WaitForAll(conds...).Wait(ctx)
 }

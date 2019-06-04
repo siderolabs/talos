@@ -5,6 +5,7 @@
 package system_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -29,4 +30,14 @@ func (suite *SystemServicesSuite) TestStartShutdown() {
 
 func TestSystemServicesSuite(t *testing.T) {
 	suite.Run(t, new(SystemServicesSuite))
+}
+
+func (suite *SystemServicesSuite) TestStartStop() {
+	system.Services(nil).Start(
+		&MockService{name: "yolo"},
+	)
+	time.Sleep(10 * time.Millisecond)
+	system.Services(nil).Stop(
+		context.TODO(), "yolo",
+	)
 }
