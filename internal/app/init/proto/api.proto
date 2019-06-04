@@ -55,3 +55,6 @@ message ServiceHealth {
   google.protobuf.Timestamp lastChange = 4;
 }
 
+message StopRequest { string id = 1; }
+
+message StopReply { string resp = 1; }

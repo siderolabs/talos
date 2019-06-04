@@ -6,6 +6,7 @@ package reg
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -97,4 +98,15 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 	}
 
 	return result, nil
+}
+
+// Stop implements the proto.InitServer interface and stops a
+// service running on Talos.
+func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *proto.StopReply, err error) {
+	if err = system.Services(r.Data).Stop(ctx, in.Id); err != nil {
+		return &proto.StopReply{}, err
+	}
+
+	reply = &proto.StopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
+	return reply, err
 }

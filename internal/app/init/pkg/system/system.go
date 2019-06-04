@@ -6,6 +6,7 @@ package system
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -140,7 +141,7 @@ func (s *singleton) List() (result []*ServiceRunner) {
 }
 
 // Stop will initiate a shutdown of the specified service.
-func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) {
+func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) {
 	if len(serviceIDs) == 0 {
 		return
 	}
@@ -155,8 +156,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) {
 	stateCopy := make(map[string]*ServiceRunner)
 	for _, id := range serviceIDs {
 		if _, ok := s.State[id]; !ok {
-			// Maybe log that it was a non existent service?
-			continue
+			return fmt.Errorf("service not found: %s", id)
 		}
 		stateCopy[id] = s.State[id]
 	}
@@ -171,6 +171,5 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) {
 	}
 
 	// Wait for service to actually shut down
-	// nolint: errcheck
-	conditions.WaitForAll(conds...).Wait(ctx)
+	return conditions.WaitForAll(conds...).Wait(ctx)
 }
