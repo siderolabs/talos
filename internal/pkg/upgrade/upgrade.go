@@ -5,11 +5,9 @@
 package upgrade
 
 import (
-	"context"
-	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/bootloader/syslinux"
@@ -19,28 +17,14 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/kubernetes"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
 	"golang.org/x/sys/unix"
 )
 
 // NewUpgrade initiates a Talos upgrade
 func NewUpgrade(url string) (err error) {
-	var data *userdata.UserData
-	if data, err = userdata.Open(constants.UserDataPath); err != nil {
-		return err
-	}
-
 	var hostname string
 	if hostname, err = os.Hostname(); err != nil {
 		return
-	}
-
-	if data.Services.Kubeadm.IsControlPlane() {
-		if err = leaveEtcd(hostname); err != nil {
-			return err
-		}
 	}
 
 	if err = upgradeRoot(url); err != nil {
@@ -61,51 +45,6 @@ func NewUpgrade(url string) (err error) {
 	}
 
 	return err
-}
-
-func leaveEtcd(hostname string) (err error) {
-	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubeadmEtcdPeerCert,
-		KeyFile:       constants.KubeadmEtcdPeerKey,
-		TrustedCAFile: constants.KubeadmEtcdCACert,
-	}
-	tlsConfig, err := tlsInfo.ClientConfig()
-	if err != nil {
-		return err
-	}
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-		TLS:         tlsConfig,
-	})
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer cli.Close()
-
-	resp, err := cli.MemberList(context.Background())
-	if err != nil {
-		return err
-	}
-
-	var id *uint64
-	for _, member := range resp.Members {
-		if member.Name == hostname {
-			id = &member.ID
-		}
-	}
-	if id == nil {
-		return errors.Errorf("failed to find %q in list of etcd members", hostname)
-	}
-
-	log.Println("leaving etcd cluster")
-	_, err = cli.MemberRemove(context.Background(), *id)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func upgradeRoot(url string) (err error) {
@@ -217,4 +156,19 @@ func upgradeBoot(url string) error {
 	}
 
 	return syslinux.Install(constants.BootMountPoint, bootcfg)
+}
+
+// Reset calls kubeadm reset to clean up a kubernetes installation
+func Reset() (err error) {
+	// TODO find some way to flex on debug info
+	// can add in -v10 for additional debugging
+	cmd := exec.Command(
+		"kubeadm",
+		"reset",
+		"--force")
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }

@@ -73,7 +73,20 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 		return data, err
 	}
 
+	// stop kubelet
+	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
+		return data, err
+	}
+
+	// kubeadm Reset
+	if err = upgrade.Reset(); err != nil {
+		return data, err
+	}
+
 	// Trigger reboot
+	// we need to use defer to ensure we send back a response to the client.
+	// we're calling this at the end of the stack so we can be sure
+	// we dont boot the node in an err situation
 	defer func() {
 		if _, err = r.Reboot(ctx, &empty.Empty{}); err != nil {
 			return
