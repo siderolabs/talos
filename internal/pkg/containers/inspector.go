@@ -2,110 +2,137 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package reg
+package containers
 
 import (
 	"context"
-	"log"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
-type container struct {
-	Display string // Friendly Name
-	Name    string // container name
-	ID      string // container sha/id
-	Digest  string // Container Digest
-	Image   string
-	Status  string // Running state of container
-	Pid     uint32
-	LogFile string
+// Inspector gather information about pods & containers
+type Inspector struct {
+	client *containerd.Client
+	nsctx  context.Context
 }
 
-type pod struct {
-	Name    string
-	Sandbox string
+// NewInspector builds new Inspector instance in specified namespace
+func NewInspector(ctx context.Context, namespace string) (*Inspector, error) {
+	var err error
 
-	Containers []*container
+	i := Inspector{}
+	i.client, err = containerd.New(constants.ContainerdAddress)
+	if err != nil {
+		return nil, err
+	}
+	i.nsctx = namespaces.WithNamespace(ctx, namespace)
+
+	return &i, nil
 }
 
-func connect(namespace string) (*containerd.Client, context.Context, error) {
-	client, err := containerd.New(constants.ContainerdAddress)
-	return client, namespaces.WithNamespace(context.Background(), namespace), err
+// Close frees associated resources
+func (i *Inspector) Close() error {
+	return i.client.Close()
 }
 
+// Images returns a hash of image digest -> name
+func (i *Inspector) Images() (map[string]string, error) {
+	images, err := i.client.ListImages(i.nsctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	// create a map[sha]name for easier lookups later
+	imageList := make(map[string]string, len(images))
+	for _, image := range images {
+		if strings.HasPrefix(image.Name(), "sha256:") {
+			continue
+		}
+		imageList[image.Target().Digest.String()] = image.Name()
+	}
+	return imageList, nil
+}
+
+// Pods collects information about running pods & containers
+//
 // nolint: gocyclo
-func podInfo(namespace string) ([]*pod, error) {
-	pods := []*pod{}
-
-	client, ctx, err := connect(namespace)
+func (i *Inspector) Pods() ([]*Pod, error) {
+	imageList, err := i.Images()
 	if err != nil {
-		return pods, err
-	}
-	// nolint: errcheck
-	defer client.Close()
-
-	var imageList map[string]string
-	imageList, err = images(namespace)
-	if err != nil {
-		return pods, err
+		return nil, err
 	}
 
-	containers, err := client.Containers(ctx)
+	containers, err := i.client.Containers(i.nsctx)
 	if err != nil {
-		return pods, err
+		return nil, err
 	}
+
+	var (
+		multiErr *multierror.Error
+		pods     []*Pod
+	)
 
 	for _, cntr := range containers {
-		cp := &container{}
+		cp := &Container{}
 
-		info, err := cntr.Info(ctx)
+		info, err := cntr.Info(i.nsctx)
 		if err != nil {
-			log.Println(err)
+			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
 
-		spec, err := cntr.Spec(ctx)
+		spec, err := cntr.Spec(i.nsctx)
 		if err != nil {
-			log.Println(err)
+			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
 
-		img, err := cntr.Image(ctx)
+		img, err := cntr.Image(i.nsctx)
 		if err != nil {
-			log.Println(err)
+			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
 
-		task, err := cntr.Task(ctx, nil)
+		task, err := cntr.Task(i.nsctx, nil)
 		if err != nil {
-			log.Println(err)
+			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
 
-		status, err := task.Status(ctx)
+		status, err := task.Status(i.nsctx)
 		if err != nil {
-			log.Println(err)
+			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
 
+		cp.inspector = i
 		cp.ID = cntr.ID()
 		cp.Name = cntr.ID()
 		cp.Display = cntr.ID()
 		cp.Digest = img.Target().Digest.String()
 		cp.Image = imageList[img.Target().Digest.String()]
 		cp.Pid = task.Pid()
-		cp.Status = strings.ToUpper(string(status.Status))
+		cp.Status = status
 
 		if cname, ok := info.Labels["io.kubernetes.pod.name"]; ok {
 			if cns, ok := info.Labels["io.kubernetes.pod.namespace"]; ok {
 				cp.Display = path.Join(cns, cname)
 			}
+		}
+
+		if status.Status == containerd.Running {
+			metrics, err := task.Metrics(i.nsctx)
+			if err != nil {
+				multiErr = multierror.Append(multiErr, err)
+			}
+			cp.Metrics = metrics
 		}
 
 		// Save off an identifier for the pod
@@ -142,9 +169,9 @@ func podInfo(namespace string) ([]*pod, error) {
 		}
 
 		if !found {
-			p := &pod{
+			p := &Pod{
 				Name:       podName,
-				Containers: []*container{cp},
+				Containers: []*Container{cp},
 			}
 			if sandbox != "" {
 				p.Sandbox = sandbox
@@ -165,29 +192,5 @@ func podInfo(namespace string) ([]*pod, error) {
 		}
 	}
 
-	return pods, nil
-}
-
-func images(namespace string) (map[string]string, error) {
-	client, ctx, err := connect(namespace)
-	if err != nil {
-		return nil, err
-	}
-	// nolint: errcheck
-	defer client.Close()
-
-	images, err := client.ListImages(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	// create a map[sha]name for easier lookups later
-	imageList := make(map[string]string, len(images))
-	for _, image := range images {
-		if strings.HasPrefix(image.Name(), "sha256:") {
-			continue
-		}
-		imageList[image.Target().Digest.String()] = image.Name()
-	}
-	return imageList, nil
+	return pods, multiErr.ErrorOrNil()
 }

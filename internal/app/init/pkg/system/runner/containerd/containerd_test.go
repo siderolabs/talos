@@ -51,6 +51,7 @@ type ContainerdSuite struct {
 	image  containerd.Image
 }
 
+// nolint: dupl
 func (suite *ContainerdSuite) SetupSuite() {
 	var err error
 
