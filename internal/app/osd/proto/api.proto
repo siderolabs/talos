@@ -13,6 +13,7 @@ service OSD {
   rpc Dmesg(google.protobuf.Empty) returns (Data) {}
   rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
   rpc Logs(LogsRequest) returns (stream Data) {}
+  rpc LS(LSRequest) returns (stream FileInfo) {}
   rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
   rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Restart(RestartRequest) returns (RestartReply) {}
@@ -99,3 +100,38 @@ message DFStat {
   uint64 available = 3;
   string mounted_on = 4;
 }
+
+// LSRequest describes a request to list the contents of a directory
+message LSRequest {
+
+  // Root indicates the root directory for the list.  If not indicated, '/' is presumed.
+  string root = 1;
+
+  // Recurse indicates that subdirectories should be recursed.
+  bool recurse = 2;
+
+  // RecursionDepth indicates how many levels of subdirectories should be recursed.  The default (0) indicates that no limit should be enforced.
+  int32 recursion_depth = 3;
+}
+
+// FileInfo describes a file or directory's information
+message FileInfo {
+
+  // Name is the name (including prefixed path) of the file or directory
+  string name = 1;
+
+  // Size indicates the number of bytes contained within the file
+  int64 size = 2;
+
+  // Mode is the bitmap of UNIX mode/permission flags of the file
+  uint32 mode = 3;
+
+  // Modified indicates the UNIX timestamp at which the file was last modified
+  int64 modified = 4; // TODO: unix timestamp or include proto's Date type
+
+  // IsDir indicates that the file is a directory
+  bool is_dir = 5;
+
+  // Error describes any error encountered while trying to read the file information.
+  string error = 6;
+} 
