@@ -123,6 +123,7 @@ steps:
     DOCKER_PASSWORD:
       from_secret: docker_password
   commands:
+  - make gitmeta
   - make login
   - make push
   volumes:

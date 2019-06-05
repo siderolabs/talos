@@ -39,8 +39,8 @@ endif
 BINDIR ?= ./bin
 CONFORM_VERSION ?= 57c9dbd
 
-SHA = $(shell $(BINDIR)/gitmeta git sha)
-TAG = $(shell $(BINDIR)/gitmeta image tag)
+SHA := $(shell $(BINDIR)/gitmeta git sha)
+TAG := $(shell $(BINDIR)/gitmeta image tag)
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -299,7 +299,7 @@ login:
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
 
 .PHONY: push
-push:
+push: gitmeta
 	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
 	@docker push autonomy/installer:$(TAG)
 	@docker push autonomy/installer:latest
