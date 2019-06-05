@@ -1,6 +1,3 @@
-SHA = $(shell gitmeta git sha)
-TAG = $(shell gitmeta image tag)
-
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:80220d2
 ROOTFS_IMAGE ?= autonomy/rootfs-base:80220d2
@@ -22,7 +19,7 @@ BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 endif
 ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
-BUILDKIT_CACHE ?= 
+BUILDKIT_CACHE ?=
 endif
 
 ifeq ($(UNAME_S),Linux)
@@ -32,8 +29,18 @@ ifeq ($(UNAME_S),Darwin)
 KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/amd64/kubectl
 endif
 
+ifeq ($(UNAME_S),Linux)
+GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.0/gitmeta-linux-amd64
+endif
+ifeq ($(UNAME_S),Darwin)
+GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.0/gitmeta-darwin-amd64
+endif
+
 BINDIR ?= ./bin
 CONFORM_VERSION ?= 57c9dbd
+
+SHA = $(shell $(BINDIR)/gitmeta git sha)
+TAG = $(shell $(BINDIR)/gitmeta image tag)
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -62,8 +69,12 @@ ci: builddeps buildkitd
 .PHONY: builddeps
 builddeps: gitmeta buildctl
 
-gitmeta:
-	GO111MODULE=off go get github.com/talos-systems/gitmeta
+gitmeta: $(BINDIR)/gitmeta
+
+$(BINDIR)/gitmeta:
+	@mkdir -p $(BINDIR)
+	@curl -L $(GITMETA) -o $(BINDIR)/gitmeta
+	@chmod +x $(BINDIR)/gitmeta
 
 buildctl: $(BINDIR)/buildctl
 
