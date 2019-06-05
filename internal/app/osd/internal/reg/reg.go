@@ -9,6 +9,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,6 +34,7 @@ import (
 	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
+	"github.com/talos-systems/talos/internal/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/containers"
@@ -185,26 +188,18 @@ func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (*p
 	// nolint: errcheck
 	defer inspector.Close()
 
-	pods, err := inspector.Pods()
+	container, err := inspector.Container(in.Id)
 	if err != nil {
-		// fatal error
-		if pods == nil {
-			return nil, err
-		}
-		// TODO: only some failed, need to handle it better via client
+		return nil, err
 	}
 
-	for _, containers := range pods {
-		for _, container := range containers.Containers {
-			if container.Display != in.Id {
-				continue
-			}
+	if container == nil {
+		return nil, fmt.Errorf("container %q not found", in.Id)
+	}
 
-			err = container.Kill(syscall.SIGTERM)
-			if err != nil {
-				return nil, err
-			}
-		}
+	err = container.Kill(syscall.SIGTERM)
+	if err != nil {
+		return nil, err
 	}
 
 	return &proto.RestartReply{}, nil
@@ -292,28 +287,27 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *proto.D
 // be requested and the contents of the log file are streamed in chunks.
 // nolint: gocyclo
 func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err error) {
-	var filename string
+	var chunk chunker.Chunker
 
 	switch {
 	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
-		filename = filepath.Join("/var/log", filepath.Base(req.Id)+".log")
+		filename := filepath.Join("/var/log", filepath.Base(req.Id)+".log")
+		var file *os.File
+		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
+		if err != nil {
+			return
+		}
+		// nolint: errcheck
+		defer file.Close()
+
+		chunk = filechunker.NewChunker(file)
 	default:
-		if filename, err = k8slogs(l.Context(), req); err != nil {
+		var file io.Closer
+		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
 			return err
 		}
-	}
-
-	var file *os.File
-	file, err = os.OpenFile(filename, os.O_RDONLY, 0)
-	if err != nil {
-		return
-	}
-
-	chunk := filechunker.NewChunker(file)
-
-	if chunk == nil {
-		err = errors.New("no log reader found")
-		return
+		// nolint: errcheck
+		defer file.Close()
 	}
 
 	for data := range chunk.Read(l.Context()) {
@@ -511,38 +505,23 @@ func (r *Registrator) LS(req *proto.LSRequest, s proto.OSD_LSServer) error {
 	})
 }
 
-func k8slogs(ctx context.Context, req *proto.LogsRequest) (string, error) {
+func k8slogs(ctx context.Context, req *proto.LogsRequest) (chunker.Chunker, io.Closer, error) {
 	inspector, err := containers.NewInspector(ctx, req.Namespace)
 	if err != nil {
-		return "", err
+		return nil, nil, err
 	}
 	// nolint: errcheck
 	defer inspector.Close()
 
-	pods, err := inspector.Pods()
+	container, err := inspector.Container(req.Id)
 	if err != nil {
-		// fatal error
-		if pods == nil {
-			return "", err
-		}
-		// TODO: only some failed, need to handle it better via client
+		return nil, nil, err
+	}
+	if container == nil {
+		return nil, nil, fmt.Errorf("container %q not found", req.Id)
 	}
 
-	for _, containers := range pods {
-		for _, container := range containers.Containers {
-			if container.Display != req.Id {
-				continue
-			}
-
-			if container.LogFile == "" {
-				return container.GetProcessStdout()
-			}
-
-			return container.LogFile, nil
-		}
-	}
-
-	return "", nil
+	return container.GetLogChunker()
 }
 
 func atMaxDepth(max int, root, cur string) bool {

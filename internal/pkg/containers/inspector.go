@@ -6,13 +6,15 @@ package containers
 
 import (
 	"context"
+	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
@@ -60,7 +62,181 @@ func (i *Inspector) Images() (map[string]string, error) {
 	return imageList, nil
 }
 
-// Pods collects information about running pods & containers
+//nolint: gocyclo
+func (i *Inspector) containerInfo(cntr containerd.Container, imageList map[string]string, singleLookup bool) (*Container, error) {
+	cp := &Container{}
+
+	info, err := cntr.Info(i.nsctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting container info for %q", cntr.ID())
+	}
+
+	spec, err := cntr.Spec(i.nsctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting container spec for %q", cntr.ID())
+	}
+
+	img, err := cntr.Image(i.nsctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting container image for %q", cntr.ID())
+	}
+
+	task, err := cntr.Task(i.nsctx, nil)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			// running task not found, skip container
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "error getting container task for %q", cntr.ID())
+	}
+
+	status, err := task.Status(i.nsctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting task status for %q", cntr.ID())
+	}
+
+	cp.inspector = i
+	cp.ID = cntr.ID()
+	cp.Name = cntr.ID()
+	cp.Display = cntr.ID()
+	cp.RestartCount = "0"
+	cp.Digest = img.Target().Digest.String()
+	cp.Image = cp.Digest
+	if imageList != nil {
+		if resolved, ok := imageList[cp.Image]; ok {
+			cp.Image = resolved
+		}
+	}
+	cp.Pid = task.Pid()
+	cp.Status = status
+
+	var (
+		cname, cns string
+		ok         bool
+	)
+
+	if cname, ok = info.Labels["io.kubernetes.pod.name"]; ok {
+		if cns, ok = info.Labels["io.kubernetes.pod.namespace"]; ok {
+			cp.Display = path.Join(cns, cname)
+		}
+	}
+
+	if status.Status == containerd.Running {
+		metrics, err := task.Metrics(i.nsctx)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error pulling metrics for %q", cntr.ID())
+		}
+		cp.Metrics = metrics
+	}
+
+	// Save off an identifier for the pod
+	// this is typically the container name (non-k8s namespace)
+	// or will be k8s namespace"/"k8s pod name":"container name
+	cp.PodName = cp.Display
+
+	// Pull restart count
+	// TODO: this doesn't work as CRI doesn't publish this to containerd annotations
+	if _, ok := spec.Annotations["io.kubernetes.container.restartCount"]; ok {
+		cp.RestartCount = spec.Annotations["io.kubernetes.container.restartCount"]
+	}
+
+	// Typically on the 'infrastructure' container, aka k8s.gcr.io/pause
+	if _, ok := spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]; ok {
+		cp.Sandbox = spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]
+	} else if singleLookup && cns != "" && cname != "" {
+		// try to find matching infrastructure container and pull sandbox from it
+		query := fmt.Sprintf("labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q", cns, cname)
+
+		infraContainers, err := i.client.Containers(i.nsctx, query)
+		if err == nil {
+			for j := range infraContainers {
+				if infraSpec, err := infraContainers[j].Spec(i.nsctx); err == nil {
+					if spec.Annotations["io.kubernetes.sandbox-id"] != infraSpec.Annotations["io.kubernetes.sandbox-id"] {
+						continue
+					}
+
+					if sandbox, found := infraSpec.Annotations["io.kubernetes.cri.sandbox-log-directory"]; found {
+						cp.Sandbox = sandbox
+						break
+					}
+				}
+			}
+		}
+
+	}
+
+	// Typically on actual application containers inside the pod/sandbox
+	if _, ok := info.Labels["io.kubernetes.container.name"]; ok {
+		cp.Name = info.Labels["io.kubernetes.container.name"]
+		cp.Display = cp.Display + ":" + info.Labels["io.kubernetes.container.name"]
+	}
+
+	return cp, nil
+}
+
+// Container returns info about a single container.
+//
+// If container is not found, Container returns nil
+//
+//nolint: gocyclo
+func (i *Inspector) Container(id string) (*Container, error) {
+	var (
+		query           string
+		skipWithK8sName bool
+	)
+
+	// if id looks like k8s one, ns/pod:container, parse it and build query
+	slashIdx := strings.Index(id, "/")
+	if slashIdx > 0 {
+		name := ""
+		namespace, pod := id[:slashIdx], id[slashIdx+1:]
+		semicolonIdx := strings.LastIndex(pod, ":")
+		if semicolonIdx > 0 {
+			name = pod[semicolonIdx+1:]
+			pod = pod[:semicolonIdx]
+		}
+		query = fmt.Sprintf("labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q", namespace, pod)
+		if name != "" {
+			query += fmt.Sprintf(",labels.\"io.kubernetes.container.name\"==%q", name)
+		} else {
+			skipWithK8sName = true
+		}
+	} else {
+		query = fmt.Sprintf("id==%q", id)
+	}
+
+	containers, err := i.client.Containers(i.nsctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(containers) == 0 {
+		return nil, nil
+	}
+
+	var cntr *Container
+
+	for j := range containers {
+		if skipWithK8sName {
+			var labels map[string]string
+			if labels, err = containers[j].Labels(i.nsctx); err == nil {
+				if _, found := labels["io.kubernetes.container.name"]; found {
+					continue
+				}
+			}
+		}
+
+		cntr, err = i.containerInfo(containers[j], nil, true)
+		if err == nil && cntr != nil {
+			break
+		}
+	}
+
+	return cntr, err
+
+}
+
+// Pods collects information about running pods & containers.
 //
 // nolint: gocyclo
 func (i *Inspector) Pods() ([]*Pod, error) {
@@ -80,76 +256,14 @@ func (i *Inspector) Pods() ([]*Pod, error) {
 	)
 
 	for _, cntr := range containers {
-		cp := &Container{}
-
-		info, err := cntr.Info(i.nsctx)
+		cp, err := i.containerInfo(cntr, imageList, false)
 		if err != nil {
 			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
-
-		spec, err := cntr.Spec(i.nsctx)
-		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
+		if cp == nil {
+			// not running container
 			continue
-		}
-
-		img, err := cntr.Image(i.nsctx)
-		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
-			continue
-		}
-
-		task, err := cntr.Task(i.nsctx, nil)
-		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
-			continue
-		}
-
-		status, err := task.Status(i.nsctx)
-		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
-			continue
-		}
-
-		cp.inspector = i
-		cp.ID = cntr.ID()
-		cp.Name = cntr.ID()
-		cp.Display = cntr.ID()
-		cp.Digest = img.Target().Digest.String()
-		cp.Image = imageList[img.Target().Digest.String()]
-		cp.Pid = task.Pid()
-		cp.Status = status
-
-		if cname, ok := info.Labels["io.kubernetes.pod.name"]; ok {
-			if cns, ok := info.Labels["io.kubernetes.pod.namespace"]; ok {
-				cp.Display = path.Join(cns, cname)
-			}
-		}
-
-		if status.Status == containerd.Running {
-			metrics, err := task.Metrics(i.nsctx)
-			if err != nil {
-				multiErr = multierror.Append(multiErr, err)
-			}
-			cp.Metrics = metrics
-		}
-
-		// Save off an identifier for the pod
-		// this is typically the container name (non-k8s namespace)
-		// or will be k8s namespace"/"k8s pod name":"container name
-		podName := cp.Display
-
-		// Typically on actual application containers inside the pod/sandbox
-		if _, ok := info.Labels["io.kubernetes.container.name"]; ok {
-			cp.Name = info.Labels["io.kubernetes.container.name"]
-			cp.Display = cp.Display + ":" + info.Labels["io.kubernetes.container.name"]
-		}
-
-		// Typically on the 'infrastructure' container, aka k8s.gcr.io/pause
-		var sandbox string
-		if _, ok := spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]; ok {
-			sandbox = spec.Annotations["io.kubernetes.cri.sandbox-log-directory"]
 		}
 
 		// Figure out if we need to create a new pod or append
@@ -157,11 +271,11 @@ func (i *Inspector) Pods() ([]*Pod, error) {
 		// Also set pod sandbox ID if defined
 		found := false
 		for _, pod := range pods {
-			if pod.Name != podName {
+			if pod.Name != cp.PodName {
 				continue
 			}
-			if sandbox != "" {
-				pod.Sandbox = sandbox
+			if cp.Sandbox != "" {
+				pod.Sandbox = cp.Sandbox
 			}
 			pod.Containers = append(pod.Containers, cp)
 			found = true
@@ -170,11 +284,9 @@ func (i *Inspector) Pods() ([]*Pod, error) {
 
 		if !found {
 			p := &Pod{
-				Name:       podName,
+				Name:       cp.PodName,
 				Containers: []*Container{cp},
-			}
-			if sandbox != "" {
-				p.Sandbox = sandbox
+				Sandbox:    cp.Sandbox,
 			}
 			pods = append(pods, p)
 		}
@@ -186,8 +298,8 @@ func (i *Inspector) Pods() ([]*Pod, error) {
 	// filepath to the location of the logfile
 	for _, contents := range pods {
 		for _, cntr := range contents.Containers {
-			if strings.Contains(cntr.Display, ":") && contents.Sandbox != "" {
-				cntr.LogFile = filepath.Join(contents.Sandbox, cntr.Name, "0.log")
+			if cntr.Sandbox == "" && contents.Sandbox != "" {
+				cntr.Sandbox = contents.Sandbox
 			}
 		}
 	}
