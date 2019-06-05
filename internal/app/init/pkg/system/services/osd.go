@@ -106,7 +106,7 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 func (o *OSD) HealthFunc(*userdata.UserData) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
-		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "localhost", constants.OsdPort))
+		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.OsdPort))
 		if err != nil {
 			return err
 		}

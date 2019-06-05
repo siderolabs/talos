@@ -96,7 +96,7 @@ func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {
 func (t *Trustd) HealthFunc(*userdata.UserData) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
-		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "localhost", constants.TrustdPort))
+		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.TrustdPort))
 		if err != nil {
 			return err
 		}

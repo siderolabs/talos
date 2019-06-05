@@ -139,7 +139,7 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface
 func (k *Kubelet) HealthFunc(*userdata.UserData) health.Check {
 	return func(ctx context.Context) error {
-		req, err := http.NewRequest("GET", "http://localhost:10248/healthz", nil)
+		req, err := http.NewRequest("GET", "http://127.0.0.1:10248/healthz", nil)
 		if err != nil {
 			return err
 		}
