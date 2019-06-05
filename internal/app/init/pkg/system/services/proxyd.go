@@ -102,7 +102,7 @@ func (p *Proxyd) Runner(data *userdata.UserData) (runner.Runner, error) {
 func (p *Proxyd) HealthFunc(*userdata.UserData) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
-		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "localhost", 443))
+		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 443))
 		if err != nil {
 			return err
 		}
