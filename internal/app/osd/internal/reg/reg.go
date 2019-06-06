@@ -10,7 +10,6 @@ import (
 	"context"
 	"encoding/gob"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -85,8 +84,6 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 		if pods == nil {
 			return nil, err
 		}
-		// TODO: only some failed, need to handle it better via client
-		log.Println(err.Error())
 	}
 
 	processes := []*proto.Process{}
@@ -104,13 +101,12 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 		}
 	}
 
-	return &proto.ProcessesReply{Processes: processes}, nil
-
+	return &proto.ProcessesReply{Processes: processes}, err
 }
 
 // Stats implements the proto.OSDServer interface.
 // nolint: gocyclo
-func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply *proto.StatsReply, err error) {
+func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (*proto.StatsReply, error) {
 	inspector, err := containers.NewInspector(ctx, in.Namespace)
 	if err != nil {
 		return nil, err
@@ -124,8 +120,6 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 		if pods == nil {
 			return nil, err
 		}
-		// TODO: only some failed, need to handle it better via client
-		log.Println(err.Error())
 	}
 
 	stats := []*proto.Stat{}
@@ -136,15 +130,15 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 				continue
 			}
 
-			anydata, err := typeurl.UnmarshalAny(container.Metrics.Data)
-			if err != nil {
-				log.Println(err)
+			anydata, e := typeurl.UnmarshalAny(container.Metrics.Data)
+			if e != nil {
+				err = multierror.Append(err, e)
 				continue
 			}
 
 			data, ok := anydata.(*cgroups.Metrics)
 			if !ok {
-				log.Println(errors.New("failed to convert metric data to cgroups.Metrics"))
+				err = multierror.Append(err, errors.New("failed to convert metric data to cgroups.Metrics"))
 				continue
 			}
 
@@ -168,9 +162,7 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 
 	}
 
-	reply = &proto.StatsReply{Stats: stats}
-
-	return reply, nil
+	return &proto.StatsReply{Stats: stats}, err
 }
 
 // Restart implements the proto.OSDServer interface.

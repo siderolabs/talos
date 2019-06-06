@@ -38,11 +38,17 @@ var psCmd = &cobra.Command{
 			}
 			reply, err := c.Processes(globalCtx, namespace)
 
-			if err != nil {
+			if reply == nil && err != nil {
+				// fatal error
 				helpers.Fatalf("error getting process list: %s", err)
 			}
 
 			processesRender(reply)
+
+			if err != nil {
+				// some errors encountered, but not fatal
+				fmt.Fprintf(os.Stderr, "errors while listing processes: %s", err)
+			}
 		})
 	},
 }
