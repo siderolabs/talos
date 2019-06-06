@@ -230,11 +230,6 @@ COPY --from=talos-build /rootfs /
 COPY --from=init-build /init /init
 ENTRYPOINT ["/init"]
 
-# The kernel target is the linux kernel.
-
-ARG KERNEL_IMAGE
-FROM ${KERNEL_IMAGE} as kernel
-
 # The installer target generates an image that can be used to install Talos to
 # various environments.
 
