@@ -47,20 +47,29 @@ func NewDefaultClientCredentials(p string) (creds *Credentials, err error) {
 		return
 	}
 
-	caBytes, err := base64.StdEncoding.DecodeString(c.Contexts[c.Context].CA)
+	if c.Context == "" {
+		return nil, fmt.Errorf("'context' key is not set in the config")
+	}
+
+	context := c.Contexts[c.Context]
+	if context == nil {
+		return nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
+	}
+
+	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
 	if err != nil {
 		return
 	}
-	crtBytes, err := base64.StdEncoding.DecodeString(c.Contexts[c.Context].Crt)
+	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
 	if err != nil {
 		return
 	}
-	keyBytes, err := base64.StdEncoding.DecodeString(c.Contexts[c.Context].Key)
+	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
 	if err != nil {
 		return
 	}
 	creds = &Credentials{
-		Target: c.Contexts[c.Context].Target,
+		Target: context.Target,
 		ca:     caBytes,
 		crt:    crtBytes,
 		key:    keyBytes,
