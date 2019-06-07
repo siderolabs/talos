@@ -162,7 +162,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	}
 	s.mu.Unlock()
 
-	conds := make([]conditions.Condition, len(stateCopy))
+	conds := make([]conditions.Condition, 0, len(stateCopy))
 
 	// Initiate a shutdown on the specific service
 	for id, svcrunner := range stateCopy {
