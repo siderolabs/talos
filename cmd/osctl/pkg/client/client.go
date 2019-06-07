@@ -220,6 +220,11 @@ func (c *Client) DF(ctx context.Context) (*proto.DFReply, error) {
 	return c.client.DF(ctx, &empty.Empty{})
 }
 
+// LS implements the proto.OSDClient interface.
+func (c *Client) LS(ctx context.Context, req proto.LSRequest) (stream proto.OSD_LSClient, err error) {
+	return c.client.LS(ctx, &req)
+}
+
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSDClient
 // interface
 func (c *Client) Upgrade(ctx context.Context, asseturl string) (string, error) {

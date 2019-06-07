@@ -39,6 +39,9 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
+// OSPathSeparator is the string version of the os.PathSeparator
+const OSPathSeparator = string(os.PathSeparator)
+
 // Registrator is the concrete type that implements the factory.Registrator and
 // proto.OSDServer interfaces.
 type Registrator struct {
@@ -449,6 +452,57 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 	return reply, multiErr.ErrorOrNil()
 }
 
+// LS implements the proto.OSDServer interface.
+func (r *Registrator) LS(req *proto.LSRequest, s proto.OSD_LSServer) error {
+
+	if req == nil {
+		req = new(proto.LSRequest)
+	}
+	if !strings.HasPrefix(req.Root, OSPathSeparator) {
+		// Make sure we use complete paths
+		req.Root = OSPathSeparator + req.Root
+	}
+	req.Root = strings.TrimSuffix(req.Root, OSPathSeparator)
+	if req.Root == "" {
+		req.Root = "/"
+	}
+
+	var maxDepth int
+	if req.Recurse {
+		if req.RecursionDepth == 0 {
+			maxDepth = -1
+		} else {
+			maxDepth = int(req.RecursionDepth)
+		}
+	}
+
+	return filepath.Walk(req.Root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			// Send errors upstream so that we do not abort the path walk
+			return s.Send(&proto.FileInfo{
+				Name:  path,
+				Error: err.Error(),
+			})
+		}
+
+		err = s.Send(&proto.FileInfo{
+			Name:     path,
+			Size:     info.Size(),
+			Mode:     uint32(info.Mode()),
+			Modified: info.ModTime().Unix(),
+			IsDir:    info.IsDir(),
+		})
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() && atMaxDepth(maxDepth, req.Root, path) {
+			return filepath.SkipDir
+		}
+		return nil
+	})
+}
+
 func k8slogs(ctx context.Context, req *proto.LogsRequest) (string, error) {
 	inspector, err := containers.NewInspector(ctx, req.Namespace)
 	if err != nil {
@@ -481,4 +535,15 @@ func k8slogs(ctx context.Context, req *proto.LogsRequest) (string, error) {
 	}
 
 	return "", nil
+}
+
+func atMaxDepth(max int, root, cur string) bool {
+	if max < 0 {
+		return false
+	}
+	if root == cur {
+		// always recurse the root directory
+		return false
+	}
+	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= max
 }
