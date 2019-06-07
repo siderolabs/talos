@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"io"
@@ -15,37 +16,50 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
-	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // ReverseProxy represents a reverse proxy server.
 type ReverseProxy struct {
 	ConnectTimeout int
 	Config         *tls.Config
+	Context        context.Context
 	current        *backend.Backend
 	backends       map[string]*backend.Backend
 	mux            *sync.Mutex
+	ctxCancel      context.CancelFunc
 }
 
+// Exposed for testing purposes
+var caCertFile = "/etc/kubernetes/pki/ca.crt"
+
 // NewReverseProxy initializes a ReverseProxy.
-func NewReverseProxy() (r *ReverseProxy, err error) {
+// nolint: interfacer
+func NewReverseProxy(ip net.IP) (r *ReverseProxy, err error) {
 	config, err := tlsConfig()
 	if err != nil {
 		return
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	r = &ReverseProxy{
 		ConnectTimeout: 100,
 		Config:         config,
 		mux:            &sync.Mutex{},
-		backends:       map[string]*backend.Backend{},
+		backends: map[string]*backend.Backend{
+			"bootstrap": {
+				UID:         "bootstrap",
+				Addr:        ip.String(),
+				Connections: 0,
+			},
+		},
+		Context:   ctx,
+		ctxCancel: cancel,
 	}
 
 	return r, nil
@@ -126,49 +140,29 @@ func (r *ReverseProxy) DecrementBackend(uid string) {
 }
 
 // Watch uses the Kubernetes informer API to watch events for the API server.
-func (r *ReverseProxy) Watch() (err error) {
-	kubeconfig := "/etc/kubernetes/admin.conf"
+func (r *ReverseProxy) Watch(kubeClient kubernetes.Interface) {
+	informers := informers.NewSharedInformerFactory(kubeClient, 0)
+	podInformer := informers.Core().V1().Pods().Informer()
+	podInformer.AddEventHandler(&cache.ResourceEventHandlerFuncs{
+		AddFunc:    r.AddFunc(),
+		DeleteFunc: r.DeleteFunc(),
+		UpdateFunc: r.UpdateFunc(),
+	})
 
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return
-	}
-	ips, err := pkgnet.IPAddrs()
-	if err != nil {
-		return
-	}
-	if len(ips) == 0 {
-		return errors.New("no IP address found for bootstrap backend")
-	}
-	ip := ips[0]
-	// Update the host to the node's IP.
-	config.Host = ip.String() + ":6443"
-	// Add the node for the purposes of bootstrapping. If we don't do this, the
-	// kubelet won't be able reach the API server before it becomes healthy.
-	r.AddBackend("bootstrap", ip.String())
-	log.Printf("registered bootstrap backend with IP: %s", ip.String())
+	// Make sure informers are running.
+	informers.Start(r.Context.Done())
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return
-	}
+	// This is not required in tests, but it serves as a proof-of-concept by
+	// ensuring that the informer goroutine have warmed up and called List before
+	// we send any events to it.
+	cache.WaitForCacheSync(r.Context.Done(), podInformer.HasSynced)
 
-	restclient := clientset.CoreV1().RESTClient()
-	watchlist := cache.NewListWatchFromClient(restclient, "pods", "kube-system", fields.Everything())
-	_, controller := cache.NewInformer(
-		watchlist,
-		&v1.Pod{},
-		time.Minute*5,
-		cache.ResourceEventHandlerFuncs{
-			AddFunc:    r.AddFunc(),
-			DeleteFunc: r.DeleteFunc(),
-			UpdateFunc: r.UpdateFunc(),
-		},
-	)
-	stop := make(chan struct{})
-	controller.Run(stop)
+	<-r.Context.Done()
+}
 
-	return nil
+// Shutdown initiates a shutdown for the reverse proxy
+func (r *ReverseProxy) Shutdown() {
+	r.ctxCancel()
 }
 
 // AddFunc is a ResourceEventHandlerFunc.
@@ -204,33 +198,8 @@ func (r *ReverseProxy) AddFunc() func(obj interface{}) {
 // UpdateFunc is a ResourceEventHandlerFunc.
 func (r *ReverseProxy) UpdateFunc() func(oldObj, newObj interface{}) {
 	return func(oldObj, newObj interface{}) {
-		// nolint: errcheck
-		old := oldObj.(*v1.Pod)
-		// nolint: errcheck
-		new := newObj.(*v1.Pod)
-
-		if !isAPIServer(old) {
-			return
-		}
-
-		// Remove the backend if any container is not ready.
-		for _, status := range new.Status.ContainerStatuses {
-			if !status.Ready {
-				if deleted := r.DeleteBackend(old.Status.PodIP); deleted {
-					log.Printf("deregistered unhealthy API server %s (UID: %q) with IP: %s", old.Name, old.UID, old.Status.PodIP)
-				}
-				break
-			}
-		}
-
-		// We need an IP address to register.
-		if old.Status.PodIP == "" && new.Status.PodIP != "" {
-			r.AddBackend(string(new.UID), new.Status.PodIP)
-			log.Printf("registered API server %s (UID: %q) with IP: %s", new.Name, new.UID, new.Status.PodIP)
-			if deleted := r.DeleteBackend("bootstrap"); deleted {
-				log.Println("deregistered bootstrap backend")
-			}
-		}
+		r.AddFunc()(newObj)
+		r.DeleteFunc()(oldObj)
 	}
 }
 
@@ -255,7 +224,10 @@ func (r *ReverseProxy) setCurrent() {
 	for _, b := range r.backends {
 		switch {
 		case b.Connections == 0:
-			fallthrough
+			// If backend has no connections, we don't
+			// need to go further
+			r.current = b
+			return
 		case b.Connections < least:
 			least = b.Connections
 			r.current = b
@@ -289,13 +261,11 @@ func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
 	}
 
 	r.IncrementBackend(uid)
-
-	r.joinConnections(uid, c1, c2)
+	r.joinConnections(c1, c2)
+	r.DecrementBackend(uid)
 }
 
-func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
-	defer r.DecrementBackend(uid)
-
+func (r *ReverseProxy) joinConnections(c1 net.Conn, c2 net.Conn) {
 	tcp1, ok := c1.(*net.TCPConn)
 	if !ok {
 		return
@@ -322,20 +292,26 @@ func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
 	wg.Add(2)
 	go join(tcp1, tcp2)
 	go join(tcp2, tcp1)
+
+	// Wait for connection to terminate
 	wg.Wait()
 }
 
 func tlsConfig() (config *tls.Config, err error) {
-	caCert, err := ioutil.ReadFile("/etc/kubernetes/pki/ca.crt")
+	if caCertFile == "" {
+		return &tls.Config{}, err
+	}
+
+	caCert, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		return
+		return config, err
 	}
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caCert)
 
 	config = &tls.Config{RootCAs: certPool}
 
-	return config, nil
+	return config, err
 }
 
 func isAPIServer(pod *v1.Pod) bool {
@@ -353,4 +329,15 @@ func isAPIServer(pod *v1.Pod) bool {
 	}
 
 	return false
+}
+
+// Backends returns back a copy of the current backends known to proxyd
+func (r *ReverseProxy) Backends() map[string]*backend.Backend {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	backends := make(map[string]*backend.Backend)
+	for name, be := range r.backends {
+		backends[name] = be
+	}
+	return backends
 }
