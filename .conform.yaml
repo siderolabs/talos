@@ -23,6 +23,7 @@ policies:
       - init
       - initramfs
       - kernel
+      - proxyd
       - osctl
       - osd
       - rootfs
