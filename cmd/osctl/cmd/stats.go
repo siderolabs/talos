@@ -37,17 +37,11 @@ var statsCmd = &cobra.Command{
 				namespace = constants.SystemContainerdNamespace
 			}
 			reply, err := c.Stats(globalCtx, namespace)
-			if reply == nil && err != nil {
-				// fatal error
+			if err != nil {
 				helpers.Fatalf("error getting stats: %s", err)
 			}
 
 			statsRender(reply)
-
-			if err != nil {
-				// some errors encountered, but not fatal
-				fmt.Fprintf(os.Stderr, "errors while getting stats: %s", err)
-			}
 		})
 	},
 }
