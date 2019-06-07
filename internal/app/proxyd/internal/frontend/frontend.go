@@ -244,7 +244,7 @@ func (r *ReverseProxy) DeleteFunc() func(obj interface{}) {
 			return
 		}
 
-		if deleted := r.DeleteBackend(pod.Status.PodIP); deleted {
+		if deleted := r.DeleteBackend(string(pod.UID)); deleted {
 			log.Printf("deregistered API server %s (UID: %q) with IP: %s", pod.Name, pod.UID, pod.Status.PodIP)
 		}
 	}
