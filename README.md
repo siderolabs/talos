@@ -151,6 +151,9 @@ Follow us on Twitter for the latest on Talos, or join our slack for in-depth dis
   <a href="https://slack.dev.talos-systems.io">
     <img alt="Slack Invite" src="https://slack.dev.talos-systems.io/badge.svg">
   </a>
+  <a href="https://groups.google.com/a/talos-systems.com/forum/#!forum/community">
+    <img alt="Google Group" src="https://img.shields.io/badge/Google Groups-Talos Systems Community-blue.svg">
+  </a>
 </p>
 
 Join our weekly [Zoom](https://zoom.us/j/3595189922) meetings:
@@ -158,6 +161,7 @@ Join our weekly [Zoom](https://zoom.us/j/3595189922) meetings:
 - Office hours Mondays at 17:00 UTC
 - Maintainer hours Thursdays at 17:00 UTC
 
+You can subscribe to these meetings by joining the Google group above.
 > Note: You can check this time against your timezone [here](https://everytimezone.com/s/6bb1045a).
 
 ## Contributing
