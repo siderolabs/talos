@@ -95,6 +95,19 @@ func (suite *ContainerdSuite) TearDownSuite() {
 	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
+func (suite *ContainerdSuite) getLogContents(filename string) []byte {
+	logFile, err := os.Open(filepath.Join(suite.tmpDir, filename))
+	suite.Assert().NoError(err)
+
+	// nolint: errcheck
+	defer logFile.Close()
+
+	logContents, err := ioutil.ReadAll(logFile)
+	suite.Assert().NoError(err)
+
+	return logContents
+}
+
 func (suite *ContainerdSuite) TestRunSuccess() {
 	r := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "test",
@@ -232,7 +245,12 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 		done <- r.Run(MockEventSink)
 	}()
 
-	time.Sleep(500 * time.Millisecond)
+	for i := 0; i < 10; i++ {
+		time.Sleep(500 * time.Millisecond)
+		if bytes.Contains(suite.getLogContents("endless.log"), []byte("fail\n")) {
+			break
+		}
+	}
 
 	select {
 	case err := <-done:
@@ -245,7 +263,12 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	suite.Assert().NoError(err)
 	suite.Assert().NoError(f.Close())
 
-	time.Sleep(500 * time.Millisecond)
+	for i := 0; i < 10; i++ {
+		time.Sleep(500 * time.Millisecond)
+		if bytes.Contains(suite.getLogContents("endless.log"), []byte("ok\n")) {
+			break
+		}
+	}
 
 	select {
 	case err = <-done:
@@ -257,14 +280,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	suite.Assert().NoError(r.Stop())
 	<-done
 
-	logFile, err := os.Open(filepath.Join(suite.tmpDir, "endless.log"))
-	suite.Assert().NoError(err)
-
-	// nolint: errcheck
-	defer logFile.Close()
-
-	logContents, err := ioutil.ReadAll(logFile)
-	suite.Assert().NoError(err)
+	logContents := suite.getLogContents("endless.log")
 
 	suite.Assert().Truef(bytes.Contains(logContents, []byte("ok\n")), "logContents doesn't contain success entry: %v", logContents)
 	suite.Assert().Truef(bytes.Contains(logContents, []byte("fail\n")), "logContents doesn't contain fail entry: %v", logContents)
