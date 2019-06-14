@@ -140,11 +140,10 @@ func (c *Client) Processes(ctx context.Context, namespace string) (reply *proto.
 }
 
 // Restart implements the proto.OSDClient interface.
-func (c *Client) Restart(ctx context.Context, namespace, id string, timeoutSecs int32) (err error) {
+func (c *Client) Restart(ctx context.Context, namespace, id string) (err error) {
 	_, err = c.client.Restart(ctx, &proto.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
-		Timeout:   timeoutSecs,
 	})
 	return
 }
