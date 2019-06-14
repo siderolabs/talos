@@ -15,10 +15,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
-var (
-	timeout int32
-)
-
 // restartCmd represents the restart command
 var restartCmd = &cobra.Command{
 	Use:   "restart",
@@ -39,7 +35,7 @@ var restartCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			if err := c.Restart(globalCtx, namespace, args[0], timeout); err != nil {
+			if err := c.Restart(globalCtx, namespace, args[0]); err != nil {
 				helpers.Fatalf("error restarting process: %s", err)
 			}
 		})
@@ -47,7 +43,7 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Flags().Int32VarP(&timeout, "timeout", "t", 60, "the timeout duration in seconds")
+	restartCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	rootCmd.AddCommand(restartCmd)
 }

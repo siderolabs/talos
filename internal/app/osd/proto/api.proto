@@ -56,7 +56,6 @@ message Stat {
 message RestartRequest {
   string namespace = 1;
   string id = 2;
-  int32 timeout = 3;
 }
 
 // The response message containing the restart status.
