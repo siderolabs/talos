@@ -97,8 +97,6 @@ steps:
     path: /tmp
   depends_on:
   - build
-  when:
-    event: pull_request
 
 - name: e2e-integration
   image: autonomy/build-container:latest
