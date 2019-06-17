@@ -28,7 +28,8 @@ import (
 
 const (
 	containerdNamespace = "inspecttest"
-	busyboxImage        = "docker.io/library/busybox:latest"
+	busyboxImage        = "docker.io/library/busybox:1.30.1"
+	busyboxImageDigest  = "sha256:4b6ad3a68d34da29bf7c8ccb5d355ba8b4babcad1f99798204e7abb43e54ee3d"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -268,7 +269,7 @@ func (suite *ContainersSuite) TestContainerNonK8s() {
 	suite.Assert().Equal("shelltest", cntr.Name)
 	suite.Assert().Equal("shelltest", cntr.Display)
 	suite.Assert().Equal("shelltest", cntr.ID)
-	suite.Assert().Equal("sha256:c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f", cntr.Image) // image is not resolved
+	suite.Assert().Equal(busyboxImageDigest, cntr.Image) // image is not resolved
 	suite.Assert().Equal(containerd.Running, cntr.Status.Status)
 
 	cntr, err = i.Container("nosuchcontainer")
@@ -292,7 +293,7 @@ func (suite *ContainersSuite) TestContainerK8s() {
 	suite.Assert().Equal("test1", cntr.ID)
 	suite.Assert().Equal("sandbox", cntr.Sandbox)
 	suite.Assert().Equal("", cntr.GetLogFile())
-	suite.Assert().Equal("sha256:c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f", cntr.Image) // image is not resolved
+	suite.Assert().Equal(busyboxImageDigest, cntr.Image) // image is not resolved
 	suite.Assert().Equal(containerd.Running, cntr.Status.Status)
 
 	cntr, err = i.Container("ns1/fun:run")
@@ -303,7 +304,7 @@ func (suite *ContainersSuite) TestContainerK8s() {
 	suite.Assert().Equal("test2", cntr.ID)
 	suite.Assert().Equal("sandbox", cntr.Sandbox)
 	suite.Assert().Equal("sandbox/run/0.log", cntr.GetLogFile())
-	suite.Assert().Equal("sha256:c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f", cntr.Image) // image is not resolved
+	suite.Assert().Equal(busyboxImageDigest, cntr.Image) // image is not resolved
 	suite.Assert().Equal(containerd.Running, cntr.Status.Status)
 
 	cntr, err = i.Container("ns2/fun:run")
