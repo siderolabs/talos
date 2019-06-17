@@ -206,6 +206,10 @@ talos: buildkitd
 integration:
 	@KUBERNETES_VERSION=v1.14.1 ./hack/test/integration.sh
 
+.PHONY: e2e
+e2e:
+	@KUBERNETES_VERSION=v1.14.1 ./hack/test/e2e.sh
+
 .PHONY: test
 test: buildkitd
 	@mkdir -p build
