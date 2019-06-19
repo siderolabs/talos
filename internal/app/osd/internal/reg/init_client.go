@@ -6,6 +6,7 @@ package reg
 
 import (
 	"context"
+	"io"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/talos/internal/app/init/proto"
@@ -51,4 +52,28 @@ func (c *InitServiceClient) Upgrade(ctx context.Context, in *proto.UpgradeReques
 // ServiceList executes the init ServiceList() API.
 func (c *InitServiceClient) ServiceList(ctx context.Context, empty *empty.Empty) (data *proto.ServiceListReply, err error) {
 	return c.InitClient.ServiceList(ctx, empty)
+}
+
+// CopyOut executes the init CopyOut() API.
+func (c *InitServiceClient) CopyOut(req *proto.CopyOutRequest, srv proto.Init_CopyOutServer) error {
+	client, err := c.InitClient.CopyOut(srv.Context(), req)
+	if err != nil {
+		return err
+	}
+
+	for {
+		msg, err := client.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		err = srv.SendMsg(msg)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
