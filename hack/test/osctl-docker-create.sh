@@ -46,7 +46,7 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	 done"
 
 ## Deploy needed manifests
-run "kubectl apply -f /manifests/psp.yaml -f /manifests/calico.yaml -f /manifests/coredns.yaml"
+run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml -f /manifests/coredns.yaml"
 
 ## Wait for all nodes ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
