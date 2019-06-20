@@ -23,10 +23,7 @@ services:
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: JoinConfiguration
-      controlPlane:
-        localAPIEndpoint:
-          advertiseAddress: {{ .IP }}
-          bindPort: 6443
+      controlPlane: {}
       discovery:
         bootstrapToken:
           token: '{{ .KubeadmTokens.BootstrapToken }}'
