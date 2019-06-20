@@ -29,18 +29,11 @@ ifeq ($(UNAME_S),Darwin)
 KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/amd64/kubectl
 endif
 
-ifeq ($(UNAME_S),Linux)
-GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.0/gitmeta-linux-amd64
-endif
-ifeq ($(UNAME_S),Darwin)
-GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.0/gitmeta-darwin-amd64
-endif
-
 BINDIR ?= ./bin
 CONFORM_VERSION ?= 57c9dbd
 
-SHA := $(shell $(BINDIR)/gitmeta git sha)
-TAG := $(shell $(BINDIR)/gitmeta image tag)
+SHA := $(shell git describe --always --dirty='-dirty' --exclude '.*')
+TAG := $(shell git describe --tags --exact-match 2>/dev/null || git describe --always --dirty='-dirty')
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -67,14 +60,7 @@ ci: builddeps buildkitd
 
 
 .PHONY: builddeps
-builddeps: gitmeta buildctl
-
-gitmeta: $(BINDIR)/gitmeta
-
-$(BINDIR)/gitmeta:
-	@mkdir -p $(BINDIR)
-	@curl -L $(GITMETA) -o $(BINDIR)/gitmeta
-	@chmod +x $(BINDIR)/gitmeta
+builddeps: buildctl
 
 buildctl: $(BINDIR)/buildctl
 
@@ -303,7 +289,7 @@ login:
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
 
 .PHONY: push
-push: gitmeta
+push:
 	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
 	@docker push autonomy/installer:$(TAG)
 	@docker push autonomy/installer:latest
@@ -314,3 +300,8 @@ push: gitmeta
 .PHONY: clean
 clean:
 	@-rm -rf build images vendor
+
+.PHONY: version
+version:
+	@echo "Version:   $(SHA)"
+	@echo "Image tag: $(TAG)"
