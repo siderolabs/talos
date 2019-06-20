@@ -24,8 +24,6 @@ services:
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: InitConfiguration
-      localAPIEndpoint:
-        bindPort: 6443
       bootstrapTokens:
       - token: '{{ .KubeadmTokens.BootstrapToken }}'
         ttl: 0s
