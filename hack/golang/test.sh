@@ -6,12 +6,12 @@ CGO_ENABLED=1
 
 perform_tests() {
   echo "Performing tests"
-  go test -v -covermode=atomic -coverprofile=artifacts/coverage.txt -p 4 ./...
+  go test -v -covermode=atomic -coverprofile=artifacts/coverage.txt -p 1 ./...
 }
 
 perform_short_tests() {
   echo "Performing short tests"
-  go test -v -short ./...
+  go test -v -short -p 1 ./...
 }
 
 case $1 in
