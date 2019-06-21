@@ -14,6 +14,7 @@ data:
         cache 30
         loop
         reload
+        ready
         loadbalance
     }
 kind: ConfigMap
