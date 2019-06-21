@@ -17,7 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/app/osd/proto"
+	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 )
 
 // lsCmd represents the ls command
@@ -45,7 +45,7 @@ var lsCmd = &cobra.Command{
 				helpers.Fatalf("failed to parse depth flag: %v", err)
 			}
 
-			stream, err := c.LS(globalCtx, proto.LSRequest{
+			stream, err := c.LS(globalCtx, initproto.LSRequest{
 				Root:           rootDir,
 				Recurse:        recurse,
 				RecursionDepth: recursionDepth,

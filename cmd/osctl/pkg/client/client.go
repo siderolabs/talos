@@ -225,8 +225,8 @@ func (c *Client) DF(ctx context.Context) (*proto.DFReply, error) {
 }
 
 // LS implements the proto.OSDClient interface.
-func (c *Client) LS(ctx context.Context, req proto.LSRequest) (stream proto.OSD_LSClient, err error) {
-	return c.client.LS(ctx, &req)
+func (c *Client) LS(ctx context.Context, req initproto.LSRequest) (stream initproto.Init_LSClient, err error) {
+	return c.initClient.LS(ctx, &req)
 }
 
 // CopyOut implements the proto.OSDClient interface
