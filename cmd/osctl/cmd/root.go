@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"os/user"
 	"path"
 	"syscall"
 
@@ -83,11 +82,11 @@ func Execute() {
 		ok                 bool
 	)
 	if defaultTalosConfig, ok = os.LookupEnv(constants.TalosConfigEnvVar); !ok {
-		u, err := user.Current()
+		home, err := os.UserHomeDir()
 		if err != nil {
 			return
 		}
-		defaultTalosConfig = path.Join(u.HomeDir, ".talos", "config")
+		defaultTalosConfig = path.Join(home, ".talos", "config")
 	}
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	if err := rootCmd.Execute(); err != nil {
