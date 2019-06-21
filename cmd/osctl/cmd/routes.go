@@ -40,9 +40,9 @@ var routesCmd = &cobra.Command{
 
 func routesRender(reply *proto.RoutesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY")
+	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
 	for _, r := range reply.Routes {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", r.Interface, r.Destination, r.Gateway)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d\n", r.Interface, r.Destination, r.Gateway, r.Metric)
 	}
 	helpers.Should(w.Flush())
 }

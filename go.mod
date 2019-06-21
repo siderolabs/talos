@@ -35,6 +35,7 @@ require (
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jsimonetti/rtnetlink v0.0.0-20190606172950-9527aa82566a
 	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
