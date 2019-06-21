@@ -1,7 +1,7 @@
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:80220d2
-ROOTFS_IMAGE ?= autonomy/rootfs-base:80220d2
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:80220d2
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:3e85af2
+ROOTFS_IMAGE ?= autonomy/rootfs-base:3e85af2
+INITRAMFS_IMAGE ?= autonomy/initramfs-base:3e85af2
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0
