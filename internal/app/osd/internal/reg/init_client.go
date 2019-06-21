@@ -54,15 +54,9 @@ func (c *InitServiceClient) ServiceList(ctx context.Context, empty *empty.Empty)
 	return c.InitClient.ServiceList(ctx, empty)
 }
 
-// CopyOut executes the init CopyOut() API.
-func (c *InitServiceClient) CopyOut(req *proto.CopyOutRequest, srv proto.Init_CopyOutServer) error {
-	client, err := c.InitClient.CopyOut(srv.Context(), req)
-	if err != nil {
-		return err
-	}
-
+func copyClientServer(msg interface{}, client grpc.ClientStream, srv grpc.ServerStream) error {
 	for {
-		msg, err := client.Recv()
+		err := client.RecvMsg(msg)
 		if err == io.EOF {
 			break
 		}
@@ -76,4 +70,28 @@ func (c *InitServiceClient) CopyOut(req *proto.CopyOutRequest, srv proto.Init_Co
 	}
 
 	return nil
+}
+
+// CopyOut executes the init CopyOut() API.
+func (c *InitServiceClient) CopyOut(req *proto.CopyOutRequest, srv proto.Init_CopyOutServer) error {
+	client, err := c.InitClient.CopyOut(srv.Context(), req)
+	if err != nil {
+		return err
+	}
+
+	var msg proto.StreamingData
+
+	return copyClientServer(&msg, client, srv)
+}
+
+// LS executes the init LS() API.
+func (c *InitServiceClient) LS(req *proto.LSRequest, srv proto.Init_LSServer) error {
+	client, err := c.InitClient.LS(srv.Context(), req)
+	if err != nil {
+		return err
+	}
+
+	var msg proto.FileInfo
+
+	return copyClientServer(&msg, client, srv)
 }
