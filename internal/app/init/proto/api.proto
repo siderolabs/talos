@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 // The Init service definition.
 service Init {
+  rpc CopyOut(CopyOutRequest) returns (stream StreamingData) {}
   rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
   rpc Upgrade(UpgradeRequest) returns (UpgradeReply) {}
@@ -58,3 +59,17 @@ message ServiceHealth {
 message StopRequest { string id = 1; }
 
 message StopReply { string resp = 1; }
+
+// StreamingData is used to stream back responses
+message StreamingData {
+  bytes bytes = 1;
+  string errors = 2;
+}
+
+// CopyOutRequest describes a request to copy data out of Talos node
+//
+// CopyOut produces .tar.gz archive which is streamed back to the caller
+message CopyOutRequest {
+  // Root path to start copying data out, it might be either a file or directory
+  string root_path = 1;
+}

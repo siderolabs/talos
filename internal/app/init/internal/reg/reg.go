@@ -7,14 +7,20 @@ package reg
 import (
 	"context"
 	"fmt"
+	"io"
+	"path/filepath"
 	"sync/atomic"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/init/pkg/system"
 	"github.com/talos-systems/talos/internal/app/init/proto"
+	"github.com/talos-systems/talos/internal/pkg/archiver"
+	"github.com/talos-systems/talos/internal/pkg/chunker/stream"
 	"github.com/talos-systems/talos/internal/pkg/upgrade"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"google.golang.org/grpc"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -122,4 +128,44 @@ func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *p
 
 	reply = &proto.StopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
 	return reply, err
+}
+
+// CopyOut implements the proto.InitServer interface and copies data out of Talos node
+func (r *Registrator) CopyOut(req *proto.CopyOutRequest, s proto.Init_CopyOutServer) error {
+	path := req.RootPath
+	path = filepath.Clean(path)
+
+	if !filepath.IsAbs(path) {
+		return errors.Errorf("path is not absolute %v", path)
+	}
+
+	pr, pw := io.Pipe()
+
+	errCh := make(chan error, 1)
+
+	ctx, ctxCancel := context.WithCancel(s.Context())
+	defer ctxCancel()
+
+	go func() {
+		// nolint: errcheck
+		defer pw.Close()
+		errCh <- archiver.TarGz(ctx, path, pw)
+	}()
+
+	chunker := stream.NewChunker(pr)
+	chunkCh := chunker.Read(ctx)
+
+	for data := range chunkCh {
+		err := s.SendMsg(&proto.StreamingData{Bytes: data})
+		if err != nil {
+			ctxCancel()
+		}
+	}
+
+	archiveErr := <-errCh
+	if archiveErr != nil {
+		return s.SendMsg(&proto.StreamingData{Errors: archiveErr.Error()})
+	}
+
+	return nil
 }

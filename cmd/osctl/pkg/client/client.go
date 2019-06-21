@@ -11,15 +11,20 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/gob"
+	"errors"
 	"fmt"
+	"io"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
+
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/proc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // Credentials represents the set of values required to initialize a vaild
@@ -222,6 +227,52 @@ func (c *Client) DF(ctx context.Context) (*proto.DFReply, error) {
 // LS implements the proto.OSDClient interface.
 func (c *Client) LS(ctx context.Context, req proto.LSRequest) (stream proto.OSD_LSClient, err error) {
 	return c.client.LS(ctx, &req)
+}
+
+// CopyOut implements the proto.OSDClient interface
+func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-chan error, error) {
+	stream, err := c.initClient.CopyOut(ctx, &initproto.CopyOutRequest{
+		RootPath: rootPath,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	errCh := make(chan error)
+
+	pr, pw := io.Pipe()
+
+	go func() {
+		//nolint: errcheck
+		defer pw.Close()
+		defer close(errCh)
+
+		for {
+
+			data, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF || status.Code(err) == codes.Canceled {
+					return
+				}
+				//nolint: errcheck
+				pw.CloseWithError(err)
+				return
+			}
+
+			if data.Bytes != nil {
+				_, err = pw.Write(data.Bytes)
+				if err != nil {
+					return
+				}
+			}
+
+			if data.Errors != "" {
+				errCh <- errors.New(data.Errors)
+			}
+		}
+	}()
+
+	return pr, errCh, nil
 }
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSDClient
