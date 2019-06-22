@@ -14,6 +14,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-./hack/test/osctl-docker-create.sh
+./hack/test/osctl-cluster-create.sh
 
 exit 0
