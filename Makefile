@@ -202,13 +202,13 @@ talos: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-.PHONY: integration
-integration:
-	@KUBERNETES_VERSION=v1.15.0 ./hack/test/integration.sh
+.PHONY: basic-integration
+basic-integration:
+	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
 
 .PHONY: e2e
-e2e:
-	@KUBERNETES_VERSION=v1.15.0 ./hack/test/e2e.sh
+e2e-integration:
+	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
 
 .PHONY: test
 test: buildkitd

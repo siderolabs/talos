@@ -17,7 +17,7 @@ SONOBUOY_URL="https://github.com/heptio/sonobuoy/releases/download/v${SONOBUOY_V
 
 ## Total number of nodes we'll be waiting to come up
 NUM_NODES=4
-MASTER_IPS="139.178.69.76" #,139.178.69.77,139.178.69.78"
+MASTER_IPS="147.75.91.216" #,147.75.91.217,147.75.91.218"
 
 ## Long timeout due to packet provisioning times
 TIMEOUT=900
@@ -48,7 +48,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-./hack/test/osctl-docker-create.sh
+./hack/test/osctl-cluster-create.sh
 
 ## Drop in capi stuff
 wget -O ${PWD}/hack/test/manifests/provider-components.yaml ${PROVIDER_COMPONENTS}
@@ -59,7 +59,7 @@ e2e_run "kubectl apply -f /e2emanifests/provider-components.yaml -f /e2emanifest
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 until kubectl wait --timeout=1s --for=condition=Ready -n cluster-api-provider-talos-system pod/cluster-api-provider-talos-controller-manager-0
 		 do
-		   if  [[ \$(date +%s) -gt \$timeout ]] 
+		   if  [[ \$(date +%s) -gt \$timeout ]]
 		   then
 		     exit 1
 		   fi
@@ -87,7 +87,7 @@ e2e_run "apt-get update && apt-get install wget
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 until kubectl get cm -n cluster-api-provider-talos-system talos-test-cluster-master-0
 		 do
-		   if  [[ \$(date +%s) -gt \$timeout ]] 
+		   if  [[ \$(date +%s) -gt \$timeout ]]
 		   then
 		     exit 1
 		   fi
@@ -99,7 +99,7 @@ e2e_run "kubectl get cm -n cluster-api-provider-talos-system talos-test-cluster-
 ## Wait for kubeconfig from capi master-0
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 until /bin/osctl --talosconfig ${TALOSCONFIG}-capi kubeconfig > ${KUBECONFIG}-capi
-		 do 
+		 do
 		   if  [[ \$(date +%s) -gt \$timeout ]]
 		   then
 		     exit 1
@@ -110,7 +110,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 ##  Wait for nodes to check in
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 until KUBECONFIG=${KUBECONFIG}-capi kubectl get nodes -o json | jq '.items | length' | grep ${NUM_NODES} >/dev/null
-		 do 
+		 do
 		   if  [[ \$(date +%s) -gt \$timeout ]]
 		   then
 			exit 1
@@ -128,7 +128,7 @@ e2e_run "KUBECONFIG=${KUBECONFIG}-capi kubectl wait --timeout=${TIMEOUT}s --for=
 # ## Verify that we have an HA controlplane
 # e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 # 		 until KUBECONFIG=${KUBECONFIG}-capi kubectl get nodes -l node-role.kubernetes.io/master='' -o json | jq '.items | length' | grep 3 > /dev/null
-# 		 do 
+# 		 do
 # 		   if  [[ \$(date +%s) -gt \$timeout ]]
 # 		   then
 # 			exit 1
