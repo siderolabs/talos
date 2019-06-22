@@ -204,11 +204,11 @@ talos: buildkitd
 
 .PHONY: integration
 integration:
-	@KUBERNETES_VERSION=v1.14.1 ./hack/test/integration.sh
+	@KUBERNETES_VERSION=v1.15.0 ./hack/test/integration.sh
 
 .PHONY: e2e
 e2e:
-	@KUBERNETES_VERSION=v1.14.1 ./hack/test/e2e.sh
+	@KUBERNETES_VERSION=v1.15.0 ./hack/test/e2e.sh
 
 .PHONY: test
 test: buildkitd
