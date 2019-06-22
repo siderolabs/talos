@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,9 +24,9 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
+	"github.com/jsimonetti/rtnetlink"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
-	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -317,41 +318,48 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 }
 
 // Routes implements the proto.OSDServer interface.
-func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (data *proto.RoutesReply, err error) {
-	routeList, err := netlink.RouteList(nil, 2)
+func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (*proto.RoutesReply, error) {
+	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to open socket to rtnetlink: %v", err)
+	}
+	// nolint: errcheck
+	defer conn.Close()
+
+	list, err := conn.Route.List()
+	if err != nil {
+		return nil, errors.Errorf("failed to get route list: %v", err)
 	}
 
 	routes := []*proto.Route{}
 
-	for _, route := range routeList {
-		link, _err := netlink.LinkByIndex(route.LinkIndex)
-		if _err != nil {
-			err = _err
-			return nil, err
+	for _, rMesg := range list {
+
+		var ifaceName string
+		ifaceData, err := conn.Link.Get(rMesg.Attributes.OutIface)
+		if err != nil {
+			return nil, errors.Errorf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
+		}
+		if ifaceData.Attributes != nil {
+			ifaceName = ifaceData.Attributes.Name
 		}
 
-		destination := "0.0.0.0"
-		if route.Dst != nil {
-			destination = route.Dst.String()
-		}
+		routes = append(routes, &proto.Route{
+			Interface:   ifaceName,
+			Destination: toCIDR(rMesg.Family, rMesg.Attributes.Dst, int(rMesg.DstLength)),
+			Gateway:     rMesg.Attributes.Gateway.String(),
+			Metric:      rMesg.Attributes.Priority,
+			Scope:       uint32(rMesg.Scope),
+			Source:      toCIDR(rMesg.Family, rMesg.Attributes.Src, int(rMesg.SrcLength)),
+			Family:      proto.AddressFamily(rMesg.Family),
+			Protocol:    proto.RouteProtocol(rMesg.Protocol),
+			Flags:       rMesg.Flags,
+		})
 
-		gateway := "0.0.0.0"
-		if route.Gw != nil {
-			gateway = route.Gw.String()
-		}
-
-		routeMessage := &proto.Route{
-			Interface:   link.Attrs().Name,
-			Destination: destination,
-			Gateway:     gateway,
-		}
-		routes = append(routes, routeMessage)
 	}
-
-	data = &proto.RoutesReply{Routes: routes}
-	return data, err
+	return &proto.RoutesReply{
+		Routes: routes,
+	}, nil
 }
 
 // Version implements the proto.OSDServer interface.
@@ -467,4 +475,16 @@ func k8slogs(ctx context.Context, req *proto.LogsRequest) (chunker.Chunker, io.C
 	}
 
 	return container.GetLogChunker()
+}
+
+func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
+	var netLen = 32
+	if family == unix.AF_INET6 {
+		netLen = 128
+	}
+	ipNet := &net.IPNet{
+		IP:   prefix,
+		Mask: net.CIDRMask(prefixLen, netLen),
+	}
+	return ipNet.String()
 }
