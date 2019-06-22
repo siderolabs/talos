@@ -41,6 +41,7 @@ COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=proto /internal/app ./internal/app
 RUN go list -mod=readonly all >/dev/null
+RUN ! go mod tidy -v 2>&1 | grep .
 
 # The osd target builds the osd binary.
 
