@@ -60,7 +60,7 @@ DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/co
 all: ci drone
 
 .PHONY: drone
-drone: rootfs initramfs kernel installer talos
+drone: rootfs initramfs kernel binaries installer talos
 
 .PHONY: ci
 ci: builddeps buildkitd
@@ -144,7 +144,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd binaries osd trustd proxyd ntpd udevd
+rootfs: buildkitd osd trustd proxyd ntpd udevd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \

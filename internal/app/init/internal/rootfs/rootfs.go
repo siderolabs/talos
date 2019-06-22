@@ -9,6 +9,7 @@ import (
 	"log"
 	stdlibnet "net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -78,12 +79,23 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 		return
 	}
 	// Save the user data to disk.
-	dataBytes, err := yaml.Marshal(data)
-	if err != nil {
-		return
+	if _, err = os.Stat(filepath.Join(s, constants.UserDataPath)); os.IsNotExist(err) || inContainer {
+		log.Println("saving userdata to disk")
+		var dataBytes []byte
+		dataBytes, err = yaml.Marshal(data)
+		if err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(filepath.Join(s, constants.UserDataPath), dataBytes, 0400); err != nil {
+			return err
+		}
+	} else {
+		log.Println("using existing userdata on disk")
 	}
-	if err = ioutil.WriteFile(constants.UserDataPath, dataBytes, 0400); err != nil {
-		return
+
+	if err != nil {
+		log.Printf("encountered error reading userdata: %v", err)
+		return err
 	}
 
 	return nil

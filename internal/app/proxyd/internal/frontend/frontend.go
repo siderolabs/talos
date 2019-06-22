@@ -5,8 +5,10 @@
 package frontend
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,9 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
-	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -27,15 +28,17 @@ import (
 
 // ReverseProxy represents a reverse proxy server.
 type ReverseProxy struct {
-	ConnectTimeout int
-	Config         *tls.Config
-	current        *backend.Backend
-	backends       map[string]*backend.Backend
-	mux            *sync.Mutex
+	ConnectTimeout  int
+	Config          *tls.Config
+	current         *backend.Backend
+	backends        map[string]*backend.Backend
+	endpoints       []string
+	cancelBootstrap context.CancelFunc
+	mux             *sync.Mutex
 }
 
 // NewReverseProxy initializes a ReverseProxy.
-func NewReverseProxy() (r *ReverseProxy, err error) {
+func NewReverseProxy(endpoints []string) (r *ReverseProxy, err error) {
 	config, err := tlsConfig()
 	if err != nil {
 		return
@@ -46,6 +49,7 @@ func NewReverseProxy() (r *ReverseProxy, err error) {
 		Config:         config,
 		mux:            &sync.Mutex{},
 		backends:       map[string]*backend.Backend{},
+		endpoints:      endpoints,
 	}
 
 	return r, nil
@@ -74,11 +78,18 @@ func (r *ReverseProxy) Listen(address string) (err error) {
 }
 
 // AddBackend adds a backend.
-func (r *ReverseProxy) AddBackend(uid, addr string) {
+func (r *ReverseProxy) AddBackend(uid, addr string) (added bool) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
+	if _, ok := r.backends[uid]; ok {
+		added = false
+		return
+	}
 	r.backends[uid] = &backend.Backend{UID: uid, Addr: addr, Connections: 0}
+	added = true
 	r.setCurrent()
+
+	return added
 }
 
 // DeleteBackend deletes a backend.
@@ -127,30 +138,25 @@ func (r *ReverseProxy) DecrementBackend(uid string) {
 
 // Watch uses the Kubernetes informer API to watch events for the API server.
 func (r *ReverseProxy) Watch() (err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	r.bootstrap(ctx)
+	r.cancelBootstrap = cancel
+
 	kubeconfig := "/etc/kubernetes/admin.conf"
+	if err = conditions.WaitForFilesToExist(kubeconfig).Wait(ctx); err != nil {
+		return err
+	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return
+		return err
 	}
-	ips, err := pkgnet.IPAddrs()
-	if err != nil {
-		return
-	}
-	if len(ips) == 0 {
-		return errors.New("no IP address found for bootstrap backend")
-	}
-	ip := ips[0]
-	// Update the host to the node's IP.
-	config.Host = ip.String() + ":6443"
-	// Add the node for the purposes of bootstrapping. If we don't do this, the
-	// kubelet won't be able reach the API server before it becomes healthy.
-	r.AddBackend("bootstrap", ip.String())
-	log.Printf("registered bootstrap backend with IP: %s", ip.String())
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return
+		return err
 	}
 
 	restclient := clientset.CoreV1().RESTClient()
@@ -195,9 +201,7 @@ func (r *ReverseProxy) AddFunc() func(obj interface{}) {
 
 		r.AddBackend(string(pod.UID), pod.Status.PodIP)
 		log.Printf("registered API server %s (UID: %q) with IP: %s", pod.Name, pod.UID, pod.Status.PodIP)
-		if deleted := r.DeleteBackend("bootstrap"); deleted {
-			log.Println("deregistered bootstrap backend")
-		}
+		r.stopBootstrapBackends()
 	}
 }
 
@@ -219,7 +223,7 @@ func (r *ReverseProxy) UpdateFunc() func(oldObj, newObj interface{}) {
 				if deleted := r.DeleteBackend(old.Status.PodIP); deleted {
 					log.Printf("deregistered unhealthy API server %s (UID: %q) with IP: %s", old.Name, old.UID, old.Status.PodIP)
 				}
-				break
+				return
 			}
 		}
 
@@ -227,9 +231,7 @@ func (r *ReverseProxy) UpdateFunc() func(oldObj, newObj interface{}) {
 		if old.Status.PodIP == "" && new.Status.PodIP != "" {
 			r.AddBackend(string(new.UID), new.Status.PodIP)
 			log.Printf("registered API server %s (UID: %q) with IP: %s", new.Name, new.UID, new.Status.PodIP)
-			if deleted := r.DeleteBackend("bootstrap"); deleted {
-				log.Println("deregistered bootstrap backend")
-			}
+			r.stopBootstrapBackends()
 		}
 	}
 }
@@ -353,4 +355,56 @@ func isAPIServer(pod *v1.Pod) bool {
 	}
 
 	return false
+}
+
+func (r *ReverseProxy) stopBootstrapBackends() {
+	if r.endpoints != nil {
+		r.cancelBootstrap()
+		r.endpoints = nil
+	}
+}
+
+// nolint: gocyclo
+func (r *ReverseProxy) bootstrap(ctx context.Context) {
+	for idx, endpoint := range r.endpoints {
+		go func(c context.Context, i int, e string) {
+			ticker := time.NewTicker(1 * time.Second)
+			defer ticker.Stop()
+			uid := fmt.Sprintf("bootstrap-%d", i)
+			addr := net.JoinHostPort(e, "6443")
+			for {
+				select {
+				case <-ticker.C:
+					conn, err := net.Dial("tcp", addr)
+					if err != nil {
+						// Remove backend.
+						if deleted := r.DeleteBackend(uid); deleted {
+							log.Printf("deregistered bootstrap backend with IP: %s", e)
+						}
+						continue
+					}
+					// Add backend.
+					if added := r.AddBackend(uid, e); added {
+						log.Printf("registered bootstrap backend with IP: %s", e)
+					}
+
+					// We intentionally do not defer closing the connection
+					// because that could cause too many file descriptors to be
+					// open if the bootstrap phase takes too long.
+					if conn != nil {
+						if err := conn.Close(); err != nil {
+							log.Printf("WARNING: failed to close connection to %s", e)
+						}
+					}
+				case <-c.Done():
+					// Transition to kubernetes based health discovery.
+					if deleted := r.DeleteBackend(uid); !deleted {
+						log.Printf("failed to delete bootstrap backend %q", uid)
+					}
+					log.Printf("deregistered bootstrap backend with IP: %s", e)
+					return
+				}
+			}
+		}(ctx, idx, endpoint)
+	}
 }
