@@ -7,7 +7,7 @@ services:
   image: docker:dind
   privileged: true
   command:
-    - --dns=1.1.1.1
+    - --dns=8.8.8.8
   volumes:
   - name: dockersock
     path: /var/run
@@ -101,6 +101,8 @@ steps:
 - name: e2e-integration
   image: autonomy/build-container:latest
   pull: always
+  ## Ignore errors for now, until we get the flakiness resolved in beta
+  err_ignore: true 
   environment:
     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
     BINDIR: /usr/local/bin
@@ -117,11 +119,14 @@ steps:
     path: /var/run
   - name: tmp
     path: /tmp
-  depends_on:
-  - basic-integration
   when:
-    cron:
-      - nightly
+    event:
+      - push
+      - tag
+    branch:
+      - master
+  depends_on:
+    - basic-integration
 
 - name: iso
   image: autonomy/build-container:latest
@@ -137,6 +142,7 @@ steps:
   when:
     event: tag
   depends_on:
+## Should change to e2e once we get things more stable
   - basic-integration
 
 - name: push
@@ -159,6 +165,7 @@ steps:
       exclude:
       - pull_request
   depends_on:
+## Should change to e2e once we get things more stable
   - basic-integration
 
 - name: release
@@ -175,6 +182,7 @@ steps:
   when:
     event: tag
   depends_on:
+## Should change to e2e once we get things more stable
   - basic-integration
   - iso
 
@@ -185,6 +193,7 @@ volumes:
   temp: {}
 
 ---
+
 kind: pipeline
 name: notify
 

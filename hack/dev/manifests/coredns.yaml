@@ -13,6 +13,7 @@ data:
         forward . 1.1.1.1 8.8.8.8
         cache 30
         loop
+        ready
         reload
         loadbalance
     }

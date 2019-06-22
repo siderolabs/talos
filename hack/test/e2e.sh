@@ -12,12 +12,15 @@ CAPT_VERSION="0.1.0-alpha.1"
 PROVIDER_COMPONENTS="https://github.com/talos-systems/cluster-api-provider-talos/releases/download/v${CAPT_VERSION}/provider-components.yaml"
 KUSTOMIZE_VERSION="1.0.11"
 KUSTOMIZE_URL="https://github.com/kubernetes-sigs/kustomize/releases/download/v${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64"
+SONOBUOY_VERSION="0.14.3"
+SONOBUOY_URL="https://github.com/heptio/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_amd64.tar.gz"
 
 ## Total number of nodes we'll be waiting to come up
-NUM_NODES=2
+NUM_NODES=4
+MASTER_IPS="139.178.69.76" #,139.178.69.77,139.178.69.78"
 
 ## Long timeout due to packet provisioning times
-TIMEOUT=600
+TIMEOUT=900
 
 e2e_run() {
 	docker run \
@@ -60,8 +63,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		   then
 		     exit 1
 		   fi
-
-		   kubectl describe po -n cluster-api-provider-talos-system cluster-api-provider-talos-controller-manager-0
+		   echo 'Waiting to CAPT pod to be available...'
 		   sleep 5
 		 done"
 
@@ -71,12 +73,12 @@ e2e_run "kubectl wait --timeout=${TIMEOUT}s --for=condition=Ready -n cluster-api
 ## Create cluster and create machines in packet
 ## TODO: Accept list of IPs as env var for the master-ips bit.
 git clone --branch v${CAPT_VERSION} https://github.com/talos-systems/cluster-api-provider-talos.git ${TMP}/cluster-api-provider-talos
-sed -i "s/\[x.x.x.x, y.y.y.y, z.z.z.z\]/\[139.178.69.76\]/" ${TMP}/cluster-api-provider-talos/config/samples/cluster-deployment/packet/master-ips.yaml
+sed -i "s/\[x.x.x.x, y.y.y.y, z.z.z.z\]/\[${MASTER_IPS}\]/" ${TMP}/cluster-api-provider-talos/config/samples/cluster-deployment/packet/master-ips.yaml
 sed -i "s/{{PROJECT_ID}}/${PACKET_PROJECT_ID}/g; s/{{PXE_SERVER}}/${PACKET_PXE_SERVER}/g;" ${TMP}/cluster-api-provider-talos/config/samples/cluster-deployment/packet/platform-config-*.yaml
 
 ## Download kustomize and template out capi cluster, then deploy it
-e2e_run "apt update && apt install wget
-		 wget -O /usr/local/bin/kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64
+e2e_run "apt-get update && apt-get install wget
+		 wget -O /usr/local/bin/kustomize ${KUSTOMIZE_URL}
   	     chmod +x /usr/local/bin/kustomize
          kustomize build ${TMP}/cluster-api-provider-talos/config/samples/cluster-deployment/packet > /e2emanifests/packet-cluster.yaml
 		 kubectl apply -f /e2emanifests/packet-cluster.yaml"
@@ -105,7 +107,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		   sleep 5
 		 done"
 
-##  Wait for 2 nodes to check in
+##  Wait for nodes to check in
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 until KUBECONFIG=${KUBECONFIG}-capi kubectl get nodes -o json | jq '.items | length' | grep ${NUM_NODES} >/dev/null
 		 do 
@@ -118,12 +120,27 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 done"
 
 ##  Apply psp and flannel
-e2e_run "KUBECONFIG=${KUBECONFIG}-capi kubectl apply -f /manifests/psp.yaml -f /manifests/calico.yaml"
+e2e_run "KUBECONFIG=${KUBECONFIG}-capi kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
 
 ##  Wait for nodes ready
 e2e_run "KUBECONFIG=${KUBECONFIG}-capi kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
 
-## Verify that we have an HA controlplane
-e2e_run "KUBECONFIG=${KUBECONFIG}-capi kubectl get nodes -o wide"
+# ## Verify that we have an HA controlplane
+# e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+# 		 until KUBECONFIG=${KUBECONFIG}-capi kubectl get nodes -l node-role.kubernetes.io/master='' -o json | jq '.items | length' | grep 3 > /dev/null
+# 		 do 
+# 		   if  [[ \$(date +%s) -gt \$timeout ]]
+# 		   then
+# 			exit 1
+# 		   fi
+# 		   KUBECONFIG=${KUBECONFIG}-capi kubectl get nodes -l node-role.kubernetes.io/master='' -o json | jq '.items | length'
+# 		   sleep 5
+# 		 done"
+
+## Download sonobuoy and run conformance
+e2e_run "apt-get update && apt-get install wget
+		 wget -O /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
+		 tar -xvf /tmp/sonobuoy.tar.gz -C /usr/local/bin
+		 sonobuoy run --kubeconfig ${KUBECONFIG}-capi --wait --skip-preflight --kube-conformance-image-version v1.14.3 --plugin e2e"
 
 exit 0
