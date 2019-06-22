@@ -3,197 +3,196 @@ kind: pipeline
 name: default
 
 services:
-- name: docker
-  image: docker:dind
-  privileged: true
-  command:
-    - --dns=8.8.8.8
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
+  - name: docker
+    image: docker:dind
+    privileged: true
+    command:
+      - --dns=8.8.8.8
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
 
 steps:
-- name: fetch
-  image: docker:git
-  commands:
-  - git fetch --tags
-  when:
-    event: tag
+  - name: fetch
+    image: docker:git
+    commands:
+      - git fetch --tags
+    when:
+      event: tag
 
-- name: conform
-  image: autonomy/conform:c539351
-  depends_on:
-  - fetch
+  - name: conform
+    image: autonomy/conform:c539351
+    depends_on:
+      - fetch
 
-- name: lint
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-    BINDIR: /usr/local/bin
-  commands:
-    - make lint
-  volumes:
-  - name: dockersock
-    path: /var/run
-  depends_on:
-  - fetch
+  - name: lint
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make lint
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - fetch
 
-- name: build
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-    BINDIR: /usr/local/bin
-  commands:
-    - make drone
-  volumes:
-  - name: dockersock
-    path: /var/run
-  depends_on:
-  - fetch
+  - name: build
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make drone
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - fetch
 
-- name: test
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-    BINDIR: /usr/local/bin
-  commands:
-    - make test
-  volumes:
-  - name: dockersock
-    path: /var/run
-  depends_on:
-  - build
+  - name: test
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make test
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - build
 
-- name: coverage
-  image: plugins/codecov
-  settings:
-    token:
-      from_secret: codecov_token
-    files:
-     - coverage.txt
-  depends_on:
-  - test
+  - name: coverage
+    image: plugins/codecov
+    settings:
+      token:
+        from_secret: codecov_token
+      files:
+        - coverage.txt
+    depends_on:
+      - test
 
-- name: basic-integration
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-    BINDIR: /usr/local/bin
-  commands:
-    - make integration
-    - cp build/osctl-linux-amd64 /tmp/osctl
-    - cd /tmp
-    - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - build
+  - name: basic-integration
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make basic-integration
+      - cp build/osctl-linux-amd64 /tmp/osctl
+      - cd /tmp
+      - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
+    depends_on:
+      - build
 
-- name: e2e-integration
-  image: autonomy/build-container:latest
-  pull: always
-  ## Ignore errors for now, until we get the flakiness resolved in beta
-  err_ignore: true 
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-    BINDIR: /usr/local/bin
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-    PACKET_PROJECT_ID:
-      from_secret: packet_project_id
-    PACKET_PXE_SERVER:
-      from_secret: packet_pxe_server
-  commands:
-    - make e2e
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  when:
-    event:
-      - push
-      - tag
-    branch:
-      - master
-  depends_on:
-    - basic-integration
+  - name: e2e-integration
+    image: autonomy/build-container:latest
+    pull: always
+    ## Ignore errors for now, until we get the flakiness resolved in beta
+    err_ignore: true
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+      PACKET_AUTH_TOKEN:
+        from_secret: packet_auth_token
+      PACKET_PROJECT_ID:
+        from_secret: packet_project_id
+      PACKET_PXE_SERVER:
+        from_secret: packet_pxe_server
+    commands:
+      - make e2e-integration
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
+    when:
+      event:
+        - push
+        - tag
+      branch:
+        - master
+    depends_on:
+      - basic-integration
 
-- name: iso
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-    BINDIR: /usr/local/bin
-  commands:
-    - make talos-iso
-  volumes:
-  - name: dockersock
-    path: /var/run
-  when:
-    event: tag
-  depends_on:
-## Should change to e2e once we get things more stable
-  - basic-integration
+  - name: iso
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make talos-iso
+    volumes:
+      - name: dockersock
+        path: /var/run
+    when:
+      event: tag
+    depends_on:
+      ## Should change to e2e once we get things more stable
+      - basic-integration
 
-- name: push
-  image: autonomy/build-container:latest
-  pull: always
-  environment:
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-  commands:
-  - make gitmeta
-  - make login
-  - make push
-  volumes:
-  - name: dockersock
-    path: /var/run
-  when:
-    event:
-      exclude:
-      - pull_request
-  depends_on:
-## Should change to e2e once we get things more stable
-  - basic-integration
+  - name: push
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      DOCKER_USERNAME:
+        from_secret: docker_username
+      DOCKER_PASSWORD:
+        from_secret: docker_password
+    commands:
+      - make gitmeta
+      - make login
+      - make push
+    volumes:
+      - name: dockersock
+        path: /var/run
+    when:
+      event:
+        exclude:
+          - pull_request
+    depends_on:
+      ## Should change to e2e once we get things more stable
+      - basic-integration
 
-- name: release
-  image: plugins/github-release
-  settings:
-    api_key:
-      from_secret: github_token
-    draft: true
-    files:
-    - build/*
-    checksum:
-    - sha256
-    - sha512
-  when:
-    event: tag
-  depends_on:
-## Should change to e2e once we get things more stable
-  - basic-integration
-  - iso
+  - name: release
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_token
+      draft: true
+      files:
+        - build/*
+      checksum:
+        - sha256
+        - sha512
+    when:
+      event: tag
+    depends_on:
+      ## Should change to e2e once we get things more stable
+      - basic-integration
+      - iso
 
 volumes:
-- name: dockersock
-  temp: {}
-- name: tmp
-  temp: {}
+  - name: dockersock
+    temp: {}
+  - name: tmp
+    temp: {}
 
 ---
-
 kind: pipeline
 name: notify
 
@@ -201,21 +200,21 @@ clone:
   disable: true
 
 steps:
-- name: slack
-  image: plugins/slack
-  settings:
-    webhook:
-      from_secret: slack_webhook
-    channel: proj-talos-maint
-  when:
-    status:
-    - success
-    - failure
+  - name: slack
+    image: plugins/slack
+    settings:
+      webhook:
+        from_secret: slack_webhook
+      channel: proj-talos-maint
+    when:
+      status:
+        - success
+        - failure
 
 trigger:
   status:
-  - success
-  - failure
+    - success
+    - failure
 
 depends_on:
-- default
+  - default
