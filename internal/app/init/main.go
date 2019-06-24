@@ -150,18 +150,11 @@ func initram() (err error) {
 	}
 	// Retrieve the user data.
 	var data *userdata.UserData
-	if _, err = os.Stat(constants.UserDataPath); os.IsNotExist(err) {
-		log.Printf("retrieving user data")
-		data, err = p.UserData()
-	} else {
-		log.Printf("reading user data")
-		data, err = userdata.Open(constants.UserDataPath)
-	}
-	if err != nil {
-		log.Printf("encountered error reading userdata: %v", err)
+	log.Printf("retrieving user data")
+	if data, err = p.UserData(); err != nil {
+		log.Printf("encountered error retrieving userdata: %v", err)
 		return err
 	}
-
 	// Setup custom network.
 	if err = network.SetupNetwork(data); err != nil {
 		return err

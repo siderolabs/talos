@@ -60,7 +60,7 @@ func format(procs procfs.Procs) ([]ProcessList, error) {
 		if err != nil {
 			return nil, err
 		}
-		stats, err = proc.NewStat()
+		stats, err = proc.Stat()
 		if err != nil {
 			return nil, err
 		}

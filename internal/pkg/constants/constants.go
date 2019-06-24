@@ -112,7 +112,7 @@ const (
 	KubernetesImage = "k8s.gcr.io/hyperkube:" + KubernetesVersion
 
 	// UserDataPath is the path to the downloaded user data.
-	UserDataPath = "/run/userdata.yaml"
+	UserDataPath = "/var/userdata.yaml"
 
 	// UserDataCIData is the volume label for NoCloud cloud-init.
 	// See https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html#datasource-nocloud.

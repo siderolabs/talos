@@ -54,7 +54,7 @@ func (p *Proxyd) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (p *Proxyd) Condition(data *userdata.UserData) conditions.Condition {
-	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt", "/etc/kubernetes/admin.conf")
+	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt")
 }
 
 // DependsOn implements the Service interface.
@@ -68,14 +68,14 @@ func (p *Proxyd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          p.ID(data),
-		ProcessArgs: []string{"/proxyd"},
+		ProcessArgs: []string{"/proxyd", "--userdata=" + constants.UserDataPath},
 	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/etc/kubernetes/admin.conf", Source: "/etc/kubernetes/admin.conf", Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: "/etc/kubernetes/pki/ca.crt", Source: "/etc/kubernetes/pki/ca.crt", Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}

@@ -46,6 +46,7 @@ func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
+// nolint: gocyclo
 func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type KubeadmAlias Kubeadm
 
@@ -71,6 +72,9 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if err != nil {
 			return err
 		}
+		if err := configutil.SetInitDynamicDefaults(cfg); err != nil {
+			return err
+		}
 		kdm.Configuration = cfg
 		kdm.controlPlane = true
 	case kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...):
@@ -79,12 +83,14 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return err
 		}
 		kdm.Configuration = cfg
-		joinConfiguration, ok := cfg.(*kubeadm.JoinConfiguration)
+		joinCfg, ok := cfg.(*kubeadm.JoinConfiguration)
 		if !ok {
 			return errors.New("expected JoinConfiguration")
 		}
-
-		if joinConfiguration.ControlPlane != nil {
+		if err := configutil.SetJoinDynamicDefaults(joinCfg); err != nil {
+			return err
+		}
+		if joinCfg.ControlPlane != nil {
 			kdm.controlPlane = true
 		}
 	}
