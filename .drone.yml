@@ -98,35 +98,35 @@ steps:
     depends_on:
       - build
 
-  - name: e2e-integration
-    image: autonomy/build-container:latest
-    pull: always
-    ## Ignore errors for now, until we get the flakiness resolved in beta
-    err_ignore: true
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-      PACKET_AUTH_TOKEN:
-        from_secret: packet_auth_token
-      PACKET_PROJECT_ID:
-        from_secret: packet_project_id
-      PACKET_PXE_SERVER:
-        from_secret: packet_pxe_server
-    commands:
-      - make e2e-integration
-    volumes:
-      - name: dockersock
-        path: /var/run
-      - name: tmp
-        path: /tmp
-    when:
-      event:
-        - push
-        - tag
-      branch:
-        - master
-    depends_on:
-      - basic-integration
+  # - name: e2e-integration
+  #   image: autonomy/build-container:latest
+  #   pull: always
+  #   ## Ignore errors for now, until we get the flakiness resolved in beta
+  #   err_ignore: true
+  #   environment:
+  #     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+  #     BINDIR: /usr/local/bin
+  #     PACKET_AUTH_TOKEN:
+  #       from_secret: packet_auth_token
+  #     PACKET_PROJECT_ID:
+  #       from_secret: packet_project_id
+  #     PACKET_PXE_SERVER:
+  #       from_secret: packet_pxe_server
+  #   commands:
+  #     - make e2e-integration
+  #   volumes:
+  #     - name: dockersock
+  #       path: /var/run
+  #     - name: tmp
+  #       path: /tmp
+  #   when:
+  #     event:
+  #       - push
+  #       - tag
+  #     branch:
+  #       - master
+  #   depends_on:
+  #     - basic-integration
 
   - name: iso
     image: autonomy/build-container:latest
