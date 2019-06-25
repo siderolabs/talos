@@ -19,6 +19,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
+	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -153,6 +154,20 @@ func (r *ReverseProxy) Watch() (err error) {
 	if err != nil {
 		return err
 	}
+
+	// Discovey local non loopback ips
+	ips, err := pkgnet.IPAddrs()
+	if err != nil {
+		log.Fatalf("failed to get local address: %v", err)
+	}
+	if len(ips) == 0 {
+		log.Fatalf("no IP address found for local api server")
+	}
+	ip := ips[0]
+
+	// Overwrite defined host so we can target local apiserver
+	// and bypass the admin.conf host which is configured for proxyd
+	config.Host = ip.String() + ":6443"
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
