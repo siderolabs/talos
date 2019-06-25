@@ -6,11 +6,9 @@ package archiver
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/hashicorp/go-multierror"
+	"strings"
 )
 
 // FileItem is unit of work for archive
@@ -19,67 +17,74 @@ type FileItem struct {
 	RelPath  string
 	FileInfo os.FileInfo
 	Link     string
+	Error    error
+}
+
+type walkerOptions struct {
+	skipRoot        bool
+	maxRecurseDepth int
+}
+
+// WalkerOption configures Walker.
+type WalkerOption func(*walkerOptions)
+
+// WithSkipRoot skips root path if it's a directory.
+func WithSkipRoot() WalkerOption {
+	return func(o *walkerOptions) {
+		o.skipRoot = true
+	}
+}
+
+// WithMaxRecurseDepth controls maximum recursion depth while walking file tree.
+//
+// Value of -1 disables depth control
+func WithMaxRecurseDepth(maxDepth int) WalkerOption {
+	return func(o *walkerOptions) {
+		o.maxRecurseDepth = maxDepth
+	}
 }
 
 // Walker provides a channel of file info/paths for archival
 //
 //nolint: gocyclo
-func Walker(ctx context.Context, rootPath string) (<-chan FileItem, <-chan error, error) {
+func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-chan FileItem, error) {
+	var opts walkerOptions
+	opts.maxRecurseDepth = -1
+	for _, o := range options {
+		o(&opts)
+	}
+
 	_, err := os.Stat(rootPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ch := make(chan FileItem)
-	errCh := make(chan error, 1)
 
 	go func() {
 		defer close(ch)
 
-		multiErr := &multierror.Error{}
-
-		defer func() {
-			errCh <- multiErr.ErrorOrNil()
-		}()
-
 		err := filepath.Walk(rootPath, func(path string, fileInfo os.FileInfo, walkErr error) error {
-			if walkErr != nil {
-				multiErr = multierror.Append(multiErr, walkErr)
+			item := FileItem{
+				FullPath: path,
+				FileInfo: fileInfo,
+				Error:    walkErr,
+			}
+
+			if path == rootPath && !fileInfo.IsDir() {
+				// only one file
+				item.RelPath = filepath.Base(path)
+			} else if item.Error == nil {
+				item.RelPath, item.Error = filepath.Rel(rootPath, path)
+			}
+
+			if item.Error == nil && path == rootPath && opts.skipRoot && fileInfo.IsDir() {
+				// skip containing directory
 				return nil
 			}
 
-			var (
-				relPath string
-				err     error
-			)
-
-			if path == rootPath {
-				if fileInfo.IsDir() {
-					// skip containing directory
-					return nil
-				}
-
-				// only one file
-				relPath = filepath.Base(path)
-			} else {
-				relPath, err = filepath.Rel(rootPath, path)
-				if err != nil {
-					return err
-				}
-			}
-
-			item := FileItem{
-				FullPath: path,
-				RelPath:  relPath,
-				FileInfo: fileInfo,
-			}
-
-			if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-				item.Link, err = os.Readlink(path)
-				if err != nil {
-					multiErr = multierror.Append(multiErr, fmt.Errorf("error reading symlink %q: %s", path, err))
-					return nil
-				}
+			if item.Error == nil && fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+				item.Link, item.Error = os.Readlink(path)
 			}
 
 			select {
@@ -88,14 +93,35 @@ func Walker(ctx context.Context, rootPath string) (<-chan FileItem, <-chan error
 			case ch <- item:
 			}
 
+			if item.Error == nil && fileInfo.IsDir() && atMaxDepth(opts.maxRecurseDepth, rootPath, path) {
+				return filepath.SkipDir
+			}
+
 			return nil
 		})
 
 		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
+			select {
+			case <-ctx.Done():
+			case ch <- FileItem{Error: err}:
+			}
 		}
 
 	}()
 
-	return ch, errCh, nil
+	return ch, nil
+}
+
+// OSPathSeparator is the string version of the os.PathSeparator
+const OSPathSeparator = string(os.PathSeparator)
+
+func atMaxDepth(max int, root, cur string) bool {
+	if max < 0 {
+		return false
+	}
+	if root == cur {
+		// always recurse the root directory
+		return false
+	}
+	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= max
 }

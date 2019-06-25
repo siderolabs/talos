@@ -19,20 +19,19 @@ type WalkerSuite struct {
 }
 
 func (suite *WalkerSuite) TestIterationDir() {
-	ch, errCh, err := archiver.Walker(context.Background(), suite.tmpDir)
+	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithSkipRoot())
 	suite.Require().NoError(err)
 
 	relPaths := []string(nil)
 
 	for fi := range ch {
+		suite.Require().NoError(fi.Error)
 		relPaths = append(relPaths, fi.RelPath)
 
 		if fi.RelPath == "usr/bin/mv" {
 			suite.Assert().Equal("/usr/bin/cp", fi.Link)
 		}
 	}
-
-	suite.Require().NoError(<-errCh)
 
 	suite.Assert().Equal([]string{
 		"dev", "dev/random",
@@ -42,24 +41,39 @@ func (suite *WalkerSuite) TestIterationDir() {
 		relPaths)
 }
 
-func (suite *WalkerSuite) TestIterationFile() {
-	ch, errCh, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "usr/bin/cp"))
+func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
+	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(1))
 	suite.Require().NoError(err)
 
 	relPaths := []string(nil)
 
 	for fi := range ch {
+		suite.Require().NoError(fi.Error)
 		relPaths = append(relPaths, fi.RelPath)
 	}
 
-	suite.Require().NoError(<-errCh)
+	suite.Assert().Equal([]string{
+		".", "dev", "etc", "lib", "usr"},
+		relPaths)
+}
+
+func (suite *WalkerSuite) TestIterationFile() {
+	ch, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "usr/bin/cp"))
+	suite.Require().NoError(err)
+
+	relPaths := []string(nil)
+
+	for fi := range ch {
+		suite.Require().NoError(fi.Error)
+		relPaths = append(relPaths, fi.RelPath)
+	}
 
 	suite.Assert().Equal([]string{"cp"},
 		relPaths)
 }
 
 func (suite *WalkerSuite) TestIterationNotFound() {
-	_, _, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "doesntlivehere"))
+	_, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "doesntlivehere"))
 	suite.Require().Error(err)
 }
 

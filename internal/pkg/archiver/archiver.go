@@ -13,7 +13,7 @@ import (
 
 // TarGz produces .tar.gz archive of filesystem starting at rootPath
 func TarGz(ctx context.Context, rootPath string, output io.Writer) error {
-	paths, errCh, err := Walker(ctx, rootPath)
+	paths, err := Walker(ctx, rootPath, WithSkipRoot())
 	if err != nil {
 		return err
 	}
@@ -24,10 +24,6 @@ func TarGz(ctx context.Context, rootPath string, output io.Writer) error {
 
 	err = Tar(ctx, paths, zw)
 	if err != nil {
-		return err
-	}
-
-	if err = <-errCh; err != nil {
 		return err
 	}
 

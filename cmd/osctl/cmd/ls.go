@@ -61,12 +61,12 @@ var lsCmd = &cobra.Command{
 						if err == io.EOF || status.Code(err) == codes.Canceled {
 							return
 						}
-						helpers.Fatalf("error streaming logs: %s", err)
+						helpers.Fatalf("error streaming results: %s", err)
 					}
 					if info.Error != "" {
 						fmt.Fprintf(os.Stderr, "error reading file %s: %s\n", info.Name, info.Error)
 					} else {
-						fmt.Println(info.Name)
+						fmt.Println(info.RelativeName)
 					}
 				}
 			}
@@ -80,17 +80,21 @@ var lsCmd = &cobra.Command{
 						helpers.Should(w.Flush())
 						return
 					}
-					helpers.Fatalf("error streaming logs: %s", err)
+					helpers.Fatalf("error streaming results: %s", err)
 				}
 
 				if info.Error != "" {
 					fmt.Fprintf(os.Stderr, "error reading file %s: %s\n", info.Name, info.Error)
 				} else {
+					name := info.RelativeName
+					if info.Link != "" {
+						name += " -> " + info.Link
+					}
 					fmt.Fprintf(w, "%s\t%d\t%s\t%s\n",
 						os.FileMode(info.Mode).String(),
 						info.Size,
 						time.Unix(info.Modified, 0).Format("Jan 2 2006"),
-						info.Name,
+						name,
 					)
 				}
 			}
