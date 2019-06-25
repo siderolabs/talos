@@ -2,12 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// nolint: dupl,golint
 package services
 
 import (
 	"context"
 	"fmt"
-	"os/exec"
 
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
@@ -16,48 +16,43 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-// Udevd implements the Service interface. It serves as the concrete type with
+// UdevdTrigger implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Udevd struct{}
+type UdevdTrigger struct{}
 
 // ID implements the Service interface.
-func (c *Udevd) ID(data *userdata.UserData) string {
-	return "udevd"
+func (c *UdevdTrigger) ID(data *userdata.UserData) string {
+	return "udevd-trigger"
 }
 
 // PreFunc implements the Service interface.
-func (c *Udevd) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	cmd := exec.Command(
-		"/bin/udevadm",
-		"hwdb",
-		"--update",
-	)
-	return cmd.Run()
+func (c *UdevdTrigger) PreFunc(ctx context.Context, data *userdata.UserData) error {
+	return nil
 }
 
 // PostFunc implements the Service interface.
-func (c *Udevd) PostFunc(data *userdata.UserData) (err error) {
+func (c *UdevdTrigger) PostFunc(data *userdata.UserData) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Udevd) Condition(data *userdata.UserData) conditions.Condition {
+func (c *UdevdTrigger) Condition(data *userdata.UserData) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Udevd) DependsOn(data *userdata.UserData) []string {
-	return nil
+func (c *UdevdTrigger) DependsOn(data *userdata.UserData) []string {
+	return []string{"udevd"}
 }
 
 // Runner implements the Service interface.
-func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (c *UdevdTrigger) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID: c.ID(data),
 		ProcessArgs: []string{
-			"/bin/udevd",
-			"--resolve-names=never",
+			"/bin/udevadm",
+			"trigger",
 		},
 	}
 
@@ -71,6 +66,6 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		args,
 		runner.WithEnv(env),
 	),
-		restart.WithType(restart.Forever),
+		restart.WithType(restart.Once),
 	), nil
 }

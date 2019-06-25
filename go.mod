@@ -48,7 +48,6 @@ require (
 	github.com/jsimonetti/rtnetlink v0.0.0-20190606172950-9527aa82566a
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
-	github.com/mdlayher/kobject v0.0.0-20190419142510-b96c97ecd94c
 	github.com/mdlayher/netlink v0.0.0-20190419142405-71c9566a34ae
 	github.com/onsi/ginkgo v1.6.0 // indirect
 	github.com/onsi/gomega v1.4.1 // indirect
