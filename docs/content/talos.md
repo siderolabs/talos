@@ -1,7 +1,9 @@
 ---
 title: "Talos"
-date: 2018-10-29T19:40:55-07:00
 menu:
+  main:
+    name: Documentation
+    weight: 30
   docs:
     weight: 1
 ---
