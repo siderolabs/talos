@@ -12,7 +12,7 @@ services:
     command: --in-container
     volumes:
       # os config
-      - ./userdata/master-1.yaml:/run/userdata.yaml
+      - ./userdata/master-1.yaml:/var/userdata.yaml
       # state dirs
       - /var/log
       - /var/lib/containerd/
@@ -37,7 +37,7 @@ services:
     command: --in-container
     volumes:
       # os config
-      - ./userdata/master-2.yaml:/run/userdata.yaml
+      - ./userdata/master-2.yaml:/var/userdata.yaml
       # state dirs
       - /var/log
       - /var/lib/containerd/
@@ -62,7 +62,7 @@ services:
     command: --in-container
     volumes:
       # os config
-      - ./userdata/master-3.yaml:/run/userdata.yaml
+      - ./userdata/master-3.yaml:/var/userdata.yaml
       # state dirs
       - /var/log
       - /var/lib/containerd/
@@ -87,7 +87,7 @@ services:
     command: --in-container
     volumes:
       # os config
-      - ./userdata/worker-1.yaml:/run/userdata.yaml
+      - ./userdata/worker-1.yaml:/var/userdata.yaml
       # state dirs
       - /var/log
       - /var/lib/containerd/
