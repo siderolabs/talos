@@ -9,9 +9,8 @@ menu:
     weight: 30
 ---
 
-Configuring the worker nodes is much more simple in comparison to configuring the master nodes.
-Using the `trustd` API, worker nodes submit a `CSR`, and, if authenticated, receive a valid `osd` certificate.
-Similarly, using a `kubeadm` token, the node joins an existing cluster.
+Configuring the worker nodes is simple in comparison to configuring the master nodes.
+Using the `trustd` API, worker nodes submit a `CSR`, and, if authenticated, receive a valid `osd` certificate. Similarly, using a `kubeadm` token, the node joins an existing cluster.
 
 We need to specify:
 

@@ -16,4 +16,4 @@ Based on the concept of a Root of Trust, `trustd` is a simple daemon responsible
 Once trust is established, various methods become available to the trustee.
 It can, for example, accept a write request from another node to place a file on disk.
 
-We imagine that the number available methods will grow as Talos gets tested in the real world.
+Additional methods and capability will be added to the `trustd` component in support of new functionality in the rest of the Talos environment.

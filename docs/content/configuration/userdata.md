@@ -9,12 +9,11 @@ menu:
     weight: 20
 ---
 
-Talos User Data is responsible for the host and Kubernetes configuration.
-Talos user data is indepent of cloud config / cloud init.
+Talos User Data is responsible for the host and Kubernetes configuration, and it is independent of other cloud config / cloud init data.
 
 ## Version
 
-Version represents the Talos userdata configuration version. This denotes
+``Version`` represents the Talos userdata configuration version. This denotes
 what the schema of the configuration file.
 
 ```yaml
@@ -23,15 +22,15 @@ version: "1"
 
 ## Security
 
-Security contains all of the certificate information for Talos.
+``Security`` contains all of the certificate information for Talos.
 
 ### OS
 
-OS handles the certificate configuration for Talos components ( osd, trustd, etc ).
+``OS`` handles the certificate configuration for Talos components (osd, trustd, etc.).
 
 #### CA
 
-OS.CA contains the certificate/key pair.
+``OS.CA`` contains the certificate/key pair.
 
 ```yaml
 security:
@@ -43,11 +42,11 @@ security:
 
 ### Kubernetes
 
-Kubernetes handles the certificate configuration for Kubernetes components ( api server ).
+Kubernetes handles the certificate configuration for Kubernetes components (api server).
 
 #### CA
 
-Kubernetes.CA contains the certificate/key pair for the apiserver.
+``Kubernetes.CA`` contains the certificate/key pair for the apiserver.
 
 ```yaml
 security:
@@ -59,9 +58,8 @@ security:
 
 #### SA
 
-Kubernetes.SA contains the certificate/key pair for the default service account.
-This item is optional, if it is not provided a certificate/key pair will be
-generated.
+``Kubernetes.SA`` contains the certificate/key pair for the default service account.
+This item is optional. If it is not provided, a certificate/key pair will be generated.
 
 ```yaml
 security:
@@ -73,9 +71,8 @@ security:
 
 #### FrontProxy
 
-Kubernetes.FrontProxy contains the certificate/key pair for the [Front Proxy](https://kubernetes.io/docs/tasks/access-kubernetes-api/setup-extension-api-server/).
-This item is optional, if it is not provided a certificate/key pair will be
-generated.
+``Kubernetes.FrontProxy`` contains the certificate/key pair for the [Front Proxy](https://kubernetes.io/docs/tasks/access-kubernetes-api/setup-extension-api-server/).
+This item is optional. If it is not provided, a certificate/key pair will be generated.
 
 ```yaml
 security:
@@ -87,9 +84,8 @@ security:
 
 #### Etcd
 
-Kubernetes.Etcd contains the certificate/key pair for [etcd](https://kubernetes.io/docs/concepts/overview/components/#etcd).
-This item is optional, if it is not provided a certificate/key pair will be
-generated.
+``Kubernetes.Etcd`` contains the certificate/key pair for [etcd](https://kubernetes.io/docs/concepts/overview/components/#etcd).
+This item is optional. If it is not provided, a certificate/key pair will be generated.
 
 ```yaml
 security:
@@ -101,13 +97,13 @@ security:
 
 ## Networking
 
-Networking allows for the customization of the host networking.
+``Networking`` allows for the customization of the host networking.
 
 **Note** Bonding is currently not supported.
 
 ### OS
 
-OS contains a list of host networking devices and their respective configurations.
+``OS`` contains a list of host networking devices and their respective configurations.
 
 #### Devices
 
@@ -129,13 +125,13 @@ This is the interface name that should be configured.
 
 ##### CIDR
 
-CIDR is used to specify a static IP address to the interface.
+``CIDR`` is used to specify a static IP address to the interface.
 
-**Note** This option is mutually exclusive with DHCP.
+**Note:** This option is mutually exclusive with DHCP.
 
 ##### DHCP
 
-DHCP is used to specify that this device should be configured via DHCP.
+``DHCP`` is used to specify that this device should be configured via DHCP.
 
 The following DHCP options are supported:
 
@@ -146,18 +142,16 @@ OptionDNSDomainSearchList
 OptionNTPServers
 ```
 
-**Note** This option is mutually exclusive with CIDR.
+**Note:** This option is mutually exclusive with CIDR.
 
 ##### Routes
 
-Routes is used to specify static routes that may be necessary.
-This parameter is optional.
+``Routes`` is used to specify static routes that may be necessary. This parameter is optional.
 
 ## Services
 ### Init
 
-Init allows for the customizatin of the CNI plugin. This translates to
-additional host mounts.
+``Init`` allows for the customizatin of the CNI plugin. This translates to additional host mounts.
 
 ```yaml
 services:
@@ -165,12 +159,12 @@ services:
     cni: [flannel|calico]
 ```
 
-**Note** This options will be deprecated
+**Note:** This option will eventually be deprecated.
 
 ### Kubelet
 #### ExtraMounts
 
-Kubelet.ExtraMounts allows you to specify additional host mounts that should be presented
+``Kubelet.ExtraMounts`` allows you to specify additional host mounts that should be presented
 to kubelet.
 
 ```yaml
@@ -183,7 +177,7 @@ services:
 ### Kubeadm
 #### Configuration
 
-Kubeadm.Configuration contains the various kubeadm configs as a yaml block of yaml configs.
+``Kubeadm.Configuration`` contains the various kubeadm configs as a yaml block of yaml configs.
 
 ```yaml
 services:
@@ -208,7 +202,7 @@ services:
 
 #### ExtraArgs
 
-Kubeadm.Extraargs contains an additional list of arguments that can be passed into kubeadm.
+``Kubeadm.extraArgs`` contains an additional list of arguments that can be passed into kubeadm.
 
 ```yaml
 services:
@@ -410,14 +404,13 @@ install:
     rootfs: <path or url to rootfs.tar.gz>
 ```
 
-**Note** The asset name **must** be named `rootfs.tar.gz`.
+**Note:** The asset name **must** be named `rootfs.tar.gz`.
 
 ### Data
 #### Device
 
-The device name to use for the `/var` partition. This should be specified as the
-unpartitioned block device. If this parameter is omitted, the value of
-`install.root.device` is used.
+``Device`` specifies the device name to use for the `/var` partition. This should be specified as the
+unpartitioned block device. If this parameter is omitted, the value of `install.root.device` is used.
 
 ```yaml
 install:
@@ -427,9 +420,8 @@ install:
 
 #### Size
 
-The size of the `/var` partition in bytes. If this parameter is omitted, a default
-value of 1GB will be used. This partition will auto extend to consume the remainder
-of the unpartitioned space on the disk.
+``Size`` defines the size of the `/var` partition in bytes. If this parameter is omitted, a default
+value of 1GB will be used. This partition will auto extend to consume the remainder of the unpartitioned space on the disk.
 
 ```yaml
 install:
@@ -439,7 +431,7 @@ install:
 
 ### Wipe
 
-Wipe denotes if the disk should be wiped ( zero's written ) before it is partitioned.
+``Wipe`` denotes if the disk should be wiped ( zero's written ) before it is partitioned.
 
 ```
 install:
@@ -448,7 +440,7 @@ install:
 
 ### Force
 
-Force allows the partitiong to proceed if there is already a filesystem detected.
+``Force`` allows the partitiong to proceed if there is already a filesystem detected.
 
 ```
 install:
@@ -457,7 +449,7 @@ install:
 
 ### ExtraDevices
 
-ExtraDevices allows for the extension of the partitioning scheme on the specified
+``ExtraDevices`` allows for the extension of the partitioning scheme on the specified
 device. These new partitions will be formatted as `xfs` filesystems.
 
 ```yaml
@@ -471,14 +463,13 @@ install:
 
 #### Device
 
-ExtraDevices.Device specifies a device to use for additional host mountpoints.
+``ExtraDevices.Device`` specifies a device to use for additional host mountpoints.
 
 #### Partitions
 ##### Size
 
-Size specifies the size in bytes of the new partition.
+``Size`` specifies the size in bytes of the new partition.
 
 ##### MountPoint
 
-Mountpoint specifies where the device should be mounted.
-
+``Mountpoint`` specifies where the device should be mounted.
