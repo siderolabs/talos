@@ -13,11 +13,11 @@
 
 ---
 
-**Talos** is a modern operating system for Kubernetes that provides a number of capabilities. A few are:
+**Talos** is a modern Linux distribution designed to be secure, immutable, and minimal. All system management is done via an API, and there is no shell or interactive console. Some of the capabilities and benefits provided by Talos include:
 
-- **Security**: reduce your attack surface by practicing the Principle of Least Privilege (PoLP) and enforcing mutual TLS (mTLS).
-- **Predictability**: remove needless variables and reduce unknown factors from your environment using immutable infrastructure.
-- **Evolvability**: simplify and increase your ability to easily accommodate future changes to your architecture.
+- **Security**: Talos reduces your attack surface by practicing the Principle of Least Privilege (PoLP) and by securing the API with mutual TLS (mTLS) authentication.
+- **Predictability**: Talos eliminates unneeded variables and reduces unknown factors in your environment by employing immutable infrastructure ideology.
+- **Evolvability**: Talos simplifies your architecture and increases your ability to easily accommodate future changes.
 
 For details on the design and usage of Talos, see the [documentation](https://docs.talos-systems.com).
 
@@ -142,35 +142,15 @@ k8s.io      kubelet                                                             
 
 ## Community
 
-Follow us on Twitter for the latest on Talos, or join our slack for in-depth discussions!
-
-<p>
-  <a href="https://twitter.com/talossystems">
-    <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/talossystems.svg?style=social">
-  </a>
-  <a href="https://slack.dev.talos-systems.io">
-    <img alt="Slack Invite" src="https://slack.dev.talos-systems.io/badge.svg">
-  </a>
-  <a href="https://groups.google.com/a/talos-systems.com/forum/#!forum/community">
-    <img alt="Google Group" src="https://img.shields.io/badge/Google Groups-Talos Systems Community-blue.svg">
-  </a>
-</p>
-
-Join our weekly [Zoom](https://zoom.us/j/3595189922) meetings:
-
-- Office hours Mondays at 17:00 UTC
-- Maintainer hours Thursdays at 17:00 UTC
-
-You can subscribe to these meetings by joining the Google group above.
-> Note: You can check this time against your timezone [here](https://everytimezone.com/s/6bb1045a).
+See [community](docs/content/community/index.md)
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+See [contributing](CONTRIBUTING.md)
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md)
+See [CHANGELOG](CHANGELOG.md)
 
 ## FAQs
 
