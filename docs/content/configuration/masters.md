@@ -9,12 +9,12 @@ menu:
     weight: 20
 ---
 
-Configuring master nodes in a Talos Kubernetes cluster is a two part process:
+Configuring master nodes in a Talos Kubernetes cluster is a two-part process:
 
 - configuring the Talos specific options
 - and configuring the Kubernetes specific options
 
-To get started, create a YAML file we will use in the following steps:
+To get started, create a YAML file to use in the following steps:
 
 ```bash
 touch <node-name>.yaml
@@ -41,7 +41,7 @@ security:
   ...
 ```
 
-This process only needs to be performed on you initial node's configuration file.
+This process only needs to be performed on your initial node's configuration file.
 
 ### Configuring `trustd`
 
@@ -49,11 +49,11 @@ Each master node participates as a Root of Trust in the cluster.
 The responsibilities of `trustd` include:
 
 - certificate as a service
-- and Kubernetes PKI distribution amongst master nodes
+- Kubernetes PKI distribution amongst master nodes
 
-The auth done between `trustd` and a client is, for now, a simple username and password combination.
-Having these credentials gives a client the power to request a certifcate that identifies itself.
-In the `<node-name>.yaml`, add the follwing:
+The authorization between `trustd` and a client is, for now, a simple username and password combination.
+Having these credentials gives a client the power to request a certificate that identifies itself.
+In the `<node-name>.yaml` file, add the following:
 
 ```yaml
 security:

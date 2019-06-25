@@ -1,7 +1,7 @@
 ---
 title: "KVM"
 date: 2018-10-29T19:40:55-07:00
-draft: false
+draft: true
 menu:
   docs:
     parent: 'guides'
@@ -16,7 +16,8 @@ docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- talos-systems/talos:latest image -b /dev/sdb -f -p bare-metal -u http://${IP}:8080/master.yaml
+ talos-systems/talos:latest image -b /dev/sdb -f \
+ -p bare-metal -u http://${IP}:8080/master.yaml
 ```
 
 {{% note %}}`http://${IP}:8080/master.yaml` should be reachable by the VM and contain a valid master configuration file.{{% /note %}}
@@ -49,7 +50,8 @@ docker run \
  --rm \
  --privileged \
  --volume /dev:/dev \
- talos-systems/talos:latest image -b /dev/sdc -f -p bare-metal -u http://${IP}:8080/worker.yaml
+ talos-systems/talos:latest image -b /dev/sdc -f \
+ -p bare-metal -u http://${IP}:8080/worker.yaml
 ```
 
 {{% note %}}`http://${IP}:8080/worker.yaml` should be reachable by the VM and contain a valid worker configuration file.{{% /note %}}

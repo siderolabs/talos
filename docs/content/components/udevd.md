@@ -7,4 +7,4 @@ menu:
     parent: 'components'
 ---
 
-udevd handles the kernel device notifications and sets up the necessary links in `/dev`.
+Udevd handles the kernel device notifications and sets up the necessary links in `/dev`.
