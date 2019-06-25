@@ -41,4 +41,4 @@ Join our weekly [Zoom](https://zoom.us/j/3595189922) meetings:
 
 You can subscribe to these meetings by joining the Google group above.
 
-{{% note %}} You can check this time against your timezone [here](https://everytimezone.com/s/6bb1045a).{{% /note %}}
+_You can check this time against your time zone using <a href="https://everytimezone.com/s/6bb1045a">everytimezone.com</a>._
