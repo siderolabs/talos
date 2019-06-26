@@ -35,6 +35,8 @@ message Process {
   string image = 3;
   uint32 pid = 4;
   string status = 5;
+  string pod_id = 6;
+  string name = 7;
 }
 
 // The request message containing the containerd namespace.
@@ -49,6 +51,8 @@ message Stat {
   string id = 2;
   uint64 memory_usage = 4;
   uint64 cpu_usage = 5;
+  string pod_id = 6;
+  string name = 7;
 }
 
 // The request message containing the process to restart.
@@ -86,7 +90,7 @@ message Route {
 
   // Gateway is the gateway address to which traffic to this destination should be sent
   string gateway = 3;
-  
+
   // Metric is the priority of the route, where lower metrics have higher priorities
   uint32 metric = 4;
 

@@ -8,6 +8,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 	"text/tabwriter"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
@@ -47,10 +49,20 @@ var statsCmd = &cobra.Command{
 }
 
 func statsRender(reply *proto.StatsReply) {
+	sort.Slice(reply.Stats,
+		func(i, j int) bool {
+			return strings.Compare(reply.Stats[i].Id, reply.Stats[j].Id) < 0
+		})
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NAMESPACE\tID\tMEMORY(MB)\tCPU")
 	for _, s := range reply.Stats {
-		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, s.Id, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+		display := s.Id
+		if s.Id != s.PodId {
+			// container in a sandbox
+			display = "└─ " + display
+		}
+		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 	}
 	helpers.Should(w.Flush())
 }

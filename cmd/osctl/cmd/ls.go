@@ -86,15 +86,15 @@ var lsCmd = &cobra.Command{
 				if info.Error != "" {
 					fmt.Fprintf(os.Stderr, "error reading file %s: %s\n", info.Name, info.Error)
 				} else {
-					name := info.RelativeName
+					display := info.RelativeName
 					if info.Link != "" {
-						name += " -> " + info.Link
+						display += " -> " + info.Link
 					}
 					fmt.Fprintf(w, "%s\t%d\t%s\t%s\n",
 						os.FileMode(info.Mode).String(),
 						info.Size,
 						time.Unix(info.Modified, 0).Format("Jan 2 2006"),
-						name,
+						display,
 					)
 				}
 			}

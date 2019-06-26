@@ -8,6 +8,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 	"text/tabwriter"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
@@ -48,10 +50,20 @@ var psCmd = &cobra.Command{
 }
 
 func processesRender(reply *proto.ProcessesReply) {
+	sort.Slice(reply.Processes,
+		func(i, j int) bool {
+			return strings.Compare(reply.Processes[i].Id, reply.Processes[j].Id) < 0
+		})
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 	for _, p := range reply.Processes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, p.Id, p.Image, p.Pid, p.Status)
+		display := p.Id
+		if p.Id != p.PodId {
+			// container in a sandbox
+			display = "└─ " + display
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, display, p.Image, p.Pid, p.Status)
 	}
 	helpers.Should(w.Flush())
 }

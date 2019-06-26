@@ -95,11 +95,13 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 
 	processes := []*proto.Process{}
 
-	for _, containers := range pods {
-		for _, container := range containers.Containers {
+	for _, pod := range pods {
+		for _, container := range pod.Containers {
 			process := &proto.Process{
 				Namespace: in.Namespace,
 				Id:        container.Display,
+				PodId:     pod.Name,
+				Name:      container.Name,
 				Image:     container.Image,
 				Pid:       container.Pid,
 				Status:    strings.ToUpper(string(container.Status.Status)),
@@ -134,8 +136,8 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 
 	stats := []*proto.Stat{}
 
-	for _, containers := range pods {
-		for _, container := range containers.Containers {
+	for _, pod := range pods {
+		for _, container := range pod.Containers {
 			if container.Metrics == nil {
 				continue
 			}
@@ -163,6 +165,8 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 			stat := &proto.Stat{
 				Namespace:   in.Namespace,
 				Id:          container.Display,
+				PodId:       pod.Name,
+				Name:        container.Name,
 				MemoryUsage: used,
 				CpuUsage:    data.CPU.Usage.Total,
 			}
