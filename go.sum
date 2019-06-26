@@ -138,8 +138,6 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0j
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851 h1:QYJTEbSDJvDBQenHYMxoiBQPgZ4QUcm75vACe3dkW7o=
 github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851/go.mod h1:EsbsAEUEs15qC1cosAwxgCWV0Qhd8TmkxnA9Kw1Vhl4=
-github.com/mdlayher/kobject v0.0.0-20190419142510-b96c97ecd94c h1:s14yMY3JN4o8mZvVM8CvvuDRWhX8H9YJMlzm4I4bDTQ=
-github.com/mdlayher/kobject v0.0.0-20190419142510-b96c97ecd94c/go.mod h1:JN5xYMYTkQk5BRB+kbsYTwtLAsIi550X3JzghwUSR4I=
 github.com/mdlayher/netlink v0.0.0-20190313131330-258ea9dff42c h1:qYXI+3AN4zBWsTF5drEu1akWPu2juaXPs58tZ4/GaCg=
 github.com/mdlayher/netlink v0.0.0-20190313131330-258ea9dff42c/go.mod h1:eQB3mZE4aiYnlUsyGGCOpPETfdQq4Jhsgf1fk3cwQaA=
 github.com/mdlayher/netlink v0.0.0-20190409211403-11939a169225/go.mod h1:eQB3mZE4aiYnlUsyGGCOpPETfdQq4Jhsgf1fk3cwQaA=

@@ -123,20 +123,6 @@ FROM scratch AS ntpd
 COPY --from=ntpd-build /ntpd /ntpd
 ENTRYPOINT ["/ntpd"]
 
-# The udevd target builds the udevd image.
-
-FROM base AS udevd-build
-ARG SHA
-ARG TAG
-ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
-WORKDIR /src/internal/app/udevd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /udevd
-RUN chmod +x /udevd
-
-FROM scratch AS udevd
-COPY --from=udevd-build /udevd /udevd
-ENTRYPOINT ["/udevd"]
-
 # The binaries target allows for parallel compilation of all binaries.
 
 FROM scratch AS binaries-build
@@ -145,7 +131,6 @@ COPY --from=osd / /
 COPY --from=trustd / /
 COPY --from=proxyd / /
 COPY --from=ntpd / /
-COPY --from=udevd / /
 COPY --from=osctl-linux-amd64 / /
 COPY --from=osctl-darwin-amd64 / /
 
@@ -236,14 +221,14 @@ ENTRYPOINT ["/init"]
 
 FROM alpine:3.8 AS installer
 RUN apk --update add \
-        bash \
-        cdrkit \
-        curl \
-        qemu-img \
-        syslinux \
-        unzip \
-        util-linux \
-        xfsprogs
+    bash \
+    cdrkit \
+    curl \
+    qemu-img \
+    syslinux \
+    unzip \
+    util-linux \
+    xfsprogs
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=rootfs /rootfs.tar.gz /usr/install/rootfs.tar.gz

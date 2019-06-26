@@ -1,7 +1,7 @@
 KERNEL_IMAGE ?= autonomy/kernel:1f83e85
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:3e85af2
-ROOTFS_IMAGE ?= autonomy/rootfs-base:3e85af2
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:3e85af2
+TOOLCHAIN_IMAGE ?= autonomy/toolchain:0d43bc8
+ROOTFS_IMAGE ?= autonomy/rootfs-base:0d43bc8
+INITRAMFS_IMAGE ?= autonomy/initramfs-base:0d43bc8
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0
@@ -144,7 +144,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd osd trustd proxyd ntpd udevd
+rootfs: buildkitd osd trustd proxyd ntpd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
@@ -252,14 +252,6 @@ osctl-darwin-amd64: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: udevd
-udevd: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 

@@ -282,6 +282,7 @@ func startSystemServices(data *userdata.UserData) {
 		&services.Networkd{},
 		&services.Containerd{},
 		&services.Udevd{},
+		&services.UdevdTrigger{},
 		&services.OSD{},
 		&services.NTPd{},
 	)
