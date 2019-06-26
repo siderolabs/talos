@@ -58,6 +58,7 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/bin/udevd",
 			"--resolve-names=never",
+			"-D",
 		},
 	}
 
