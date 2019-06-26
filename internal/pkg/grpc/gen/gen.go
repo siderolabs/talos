@@ -77,14 +77,16 @@ func (g *Generator) Identity(data *userdata.UserData) (err error) {
 }
 
 func poll(g *Generator, in *proto.CertificateRequest, data *userdata.OSSecurity) (err error) {
-	timeout := time.NewTimer(time.Minute * 5).C
-	tick := time.NewTicker(time.Second * 5).C
+	timeout := time.NewTimer(time.Minute * 5)
+	defer timeout.Stop()
+	tick := time.NewTicker(time.Second * 5)
+	defer tick.Stop()
 
 	for {
 		select {
-		case <-timeout:
+		case <-timeout.C:
 			return fmt.Errorf("timeout waiting for certificate")
-		case <-tick:
+		case <-tick.C:
 			resp, _err := g.Certificate(in)
 			if _err != nil {
 				log.Println(_err)
