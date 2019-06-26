@@ -178,7 +178,7 @@ func (r *ReverseProxy) Watch() (err error) {
 		return err
 	}
 
-	labelSelector := labels.FormatLabels(map[string]string{"component": "kube-apiserver", "k8s-app": "self-hosted-kube-apiserver"})
+	labelSelector := labels.FormatLabels(map[string]string{"component": "kube-apiserver"})
 	watchlist := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			options.FieldSelector = fields.Everything().String()
