@@ -3,7 +3,7 @@ title: "Talos"
 menu:
   main:
     name: Documentation
-    weight: 30
+    weight: 10
   docs:
     weight: 1
 ---
