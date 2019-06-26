@@ -25,14 +25,13 @@ type TarSuite struct {
 
 //nolint: gocyclo
 func (suite *TarSuite) TestArchiveDir() {
-	ch, errCh, err := archiver.Walker(context.Background(), suite.tmpDir)
+	ch, err := archiver.Walker(context.Background(), suite.tmpDir)
 	suite.Require().NoError(err)
 
 	var buf bytes.Buffer
 
 	err = archiver.Tar(context.Background(), ch, &buf)
 	suite.Require().NoError(err)
-	suite.Require().NoError(<-errCh)
 
 	pathsSeen := map[string]struct{}{}
 
@@ -80,14 +79,13 @@ func (suite *TarSuite) TestArchiveDir() {
 }
 
 func (suite *TarSuite) TestArchiveFile() {
-	ch, errCh, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "/usr/bin/cp"))
+	ch, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "/usr/bin/cp"))
 	suite.Require().NoError(err)
 
 	var buf bytes.Buffer
 
 	err = archiver.Tar(context.Background(), ch, &buf)
 	suite.Require().NoError(err)
-	suite.Require().NoError(<-errCh)
 
 	tr := tar.NewReader(&buf)
 	for {

@@ -199,40 +199,33 @@ func (r *Registrator) LS(req *proto.LSRequest, s proto.Init_LSServer) error {
 		}
 	}
 
-	return filepath.Walk(req.Root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			// Send errors upstream so that we do not abort the path walk
-			return s.Send(&proto.FileInfo{
-				Name:  path,
-				Error: err.Error(),
+	files, err := archiver.Walker(s.Context(), req.Root, archiver.WithMaxRecurseDepth(maxDepth))
+	if err != nil {
+		return err
+	}
+
+	for fi := range files {
+		if fi.Error != nil {
+			err = s.Send(&proto.FileInfo{
+				Name:         fi.FullPath,
+				RelativeName: fi.RelPath,
+				Error:        fi.Error.Error(),
+			})
+		} else {
+			err = s.Send(&proto.FileInfo{
+				Name:         fi.FullPath,
+				RelativeName: fi.RelPath,
+				Size:         fi.FileInfo.Size(),
+				Mode:         uint32(fi.FileInfo.Mode()),
+				Modified:     fi.FileInfo.ModTime().Unix(),
+				IsDir:        fi.FileInfo.IsDir(),
+				Link:         fi.Link,
 			})
 		}
-
-		err = s.Send(&proto.FileInfo{
-			Name:     path,
-			Size:     info.Size(),
-			Mode:     uint32(info.Mode()),
-			Modified: info.ModTime().Unix(),
-			IsDir:    info.IsDir(),
-		})
 		if err != nil {
 			return err
 		}
-
-		if info.IsDir() && atMaxDepth(maxDepth, req.Root, path) {
-			return filepath.SkipDir
-		}
-		return nil
-	})
-}
-
-func atMaxDepth(max int, root, cur string) bool {
-	if max < 0 {
-		return false
 	}
-	if root == cur {
-		// always recurse the root directory
-		return false
-	}
-	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= max
+
+	return nil
 }

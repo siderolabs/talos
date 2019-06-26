@@ -7,9 +7,12 @@ package archiver
 import (
 	"archive/tar"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
+
+	multierror "github.com/hashicorp/go-multierror"
 )
 
 // Tar creates .tar archive and writes it to output for every item in paths channel
@@ -20,11 +23,18 @@ func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 	//nolint: errcheck
 	defer tw.Close()
 
+	var multiErr *multierror.Error
+
 	for fi := range paths {
+		if fi.Error != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("skipping %q: %s", fi.FullPath, fi.Error))
+			continue
+		}
+
 		header, err := tar.FileInfoHeader(fi.FileInfo, fi.Link)
 		if err != nil {
 			// not supported by tar
-			log.Printf("skipping %q: %s", fi.FullPath, err)
+			multiErr = multierror.Append(multiErr, fmt.Errorf("skipping %q: %s", fi.FullPath, err))
 			continue
 		}
 
@@ -53,7 +63,7 @@ func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 		if !skipData {
 			fp, err = os.Open(fi.FullPath)
 			if err != nil {
-				log.Printf("skipping %q: %s", fi.FullPath, err)
+				multiErr = multierror.Append(multiErr, fmt.Errorf("skipping %q: %s", fi.FullPath, err))
 				continue
 			}
 		}
@@ -62,18 +72,24 @@ func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 		if err != nil {
 			//nolint: errcheck
 			fp.Close()
-			return err
+			multiErr = multierror.Append(multiErr, err)
+			return multiErr
 		}
 
 		if !skipData {
 			err = archiveFile(ctx, tw, fi, fp)
 			if err != nil {
-				return err
+				multiErr = multierror.Append(multiErr, err)
+				return multiErr
 			}
 		}
 	}
 
-	return tw.Close()
+	if err := tw.Close(); err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	return multiErr.ErrorOrNil()
 }
 
 func archiveFile(ctx context.Context, tw io.Writer, fi FileItem, fp *os.File) error {

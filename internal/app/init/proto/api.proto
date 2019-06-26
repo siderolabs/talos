@@ -108,4 +108,10 @@ message FileInfo {
 
   // Error describes any error encountered while trying to read the file information.
   string error = 6;
+
+  // Link is filled with symlink target
+  string link = 7;
+
+  // RelativeName is the name of the file or directory relative to the RootPath
+  string relative_name = 8;
 }
