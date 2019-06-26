@@ -21,7 +21,11 @@ import (
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
 	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -174,8 +178,20 @@ func (r *ReverseProxy) Watch() (err error) {
 		return err
 	}
 
-	restclient := clientset.CoreV1().RESTClient()
-	watchlist := cache.NewListWatchFromClient(restclient, "pods", "kube-system", fields.Everything())
+	labelSelector := labels.FormatLabels(map[string]string{"component": "kube-apiserver", "k8s-app": "self-hosted-kube-apiserver"})
+	watchlist := &cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			options.FieldSelector = fields.Everything().String()
+			options.LabelSelector = labelSelector
+			return clientset.CoreV1().Pods(metav1.NamespaceSystem).List(options)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			options.FieldSelector = fields.Everything().String()
+			options.LabelSelector = labelSelector
+			return clientset.CoreV1().Pods(metav1.NamespaceSystem).Watch(options)
+		},
+	}
+
 	_, controller := cache.NewInformer(
 		watchlist,
 		&v1.Pod{},
@@ -198,12 +214,13 @@ func (r *ReverseProxy) AddFunc() func(obj interface{}) {
 		// nolint: errcheck
 		pod := obj.(*v1.Pod)
 
-		if !isAPIServer(pod) {
+		// We need an IP address to register.
+		if pod.Status.PodIP == "" {
 			return
 		}
 
-		// We need an IP address to register.
-		if pod.Status.PodIP == "" {
+		// Return early if the pod is not running.
+		if pod.Status.Phase != v1.PodRunning {
 			return
 		}
 
@@ -228,7 +245,11 @@ func (r *ReverseProxy) UpdateFunc() func(oldObj, newObj interface{}) {
 		// nolint: errcheck
 		new := newObj.(*v1.Pod)
 
-		if !isAPIServer(old) {
+		// Remove the backend if the pod is not running.
+		if new.Status.Phase != v1.PodRunning {
+			if deleted := r.DeleteBackend(old.Status.PodIP); deleted {
+				log.Printf("deregistered unhealthy API server %s (UID: %q, pod phase is %s) with IP: %s", old.Name, old.UID, old.Status.PodIP, new.Status.Phase)
+			}
 			return
 		}
 
@@ -236,7 +257,7 @@ func (r *ReverseProxy) UpdateFunc() func(oldObj, newObj interface{}) {
 		for _, status := range new.Status.ContainerStatuses {
 			if !status.Ready {
 				if deleted := r.DeleteBackend(old.Status.PodIP); deleted {
-					log.Printf("deregistered unhealthy API server %s (UID: %q) with IP: %s", old.Name, old.UID, old.Status.PodIP)
+					log.Printf("deregistered unhealthy API server %s (UID: %q, container %s is not ready) with IP: %s", old.Name, old.UID, old.Status.PodIP, status.Name)
 				}
 				return
 			}
@@ -256,10 +277,6 @@ func (r *ReverseProxy) DeleteFunc() func(obj interface{}) {
 	return func(obj interface{}) {
 		// nolint: errcheck
 		pod := obj.(*v1.Pod)
-
-		if !isAPIServer(pod) {
-			return
-		}
 
 		if deleted := r.DeleteBackend(string(pod.UID)); deleted {
 			log.Printf("deregistered API server %s (UID: %q) with IP: %s", pod.Name, pod.UID, pod.Status.PodIP)
@@ -353,23 +370,6 @@ func tlsConfig() (config *tls.Config, err error) {
 	config = &tls.Config{RootCAs: certPool}
 
 	return config, nil
-}
-
-func isAPIServer(pod *v1.Pod) bool {
-	// This is used for non-self-hosted deployments.
-	if component, ok := pod.Labels["component"]; ok {
-		if component == "kube-apiserver" {
-			return true
-		}
-	}
-	// This is used for self-hosted deployments.
-	if k8sApp, ok := pod.Labels["k8s-app"]; ok {
-		if k8sApp == "self-hosted-kube-apiserver" {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (r *ReverseProxy) stopBootstrapBackends() {
