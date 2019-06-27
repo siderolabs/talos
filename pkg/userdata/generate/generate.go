@@ -5,12 +5,13 @@
 package generate
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/rand"
 	stdlibx509 "crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
-	"math/rand"
 	"net"
 	"strings"
 	"text/template"
@@ -64,28 +65,90 @@ type TrustdInfo struct {
 	Token string
 }
 
-// RandomString returns a string of length n.
-func RandomString(n int) string {
-	var letter = []rune("abcdefghijklmnopqrstuvwxy0123456789")
+// randBytes returns a random string consisting of the characters in
+// validBootstrapTokenChars, with the length customized by the parameter
+func randBytes(length int) (string, error) {
 
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letter[rand.Intn(len(letter))]
+	// validBootstrapTokenChars defines the characters a bootstrap token can consist of
+	const validBootstrapTokenChars = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+	// len("0123456789abcdefghijklmnopqrstuvwxyz") = 36 which doesn't evenly divide
+	// the possible values of a byte: 256 mod 36 = 4. Discard any random bytes we
+	// read that are >= 252 so the bytes we evenly divide the character set.
+	const maxByteValue = 252
+
+	var (
+		b     byte
+		err   error
+		token = make([]byte, length)
+	)
+
+	reader := bufio.NewReaderSize(rand.Reader, length*2)
+	for i := range token {
+		for {
+			if b, err = reader.ReadByte(); err != nil {
+				return "", err
+			}
+			if b < maxByteValue {
+				break
+			}
+		}
+		token[i] = validBootstrapTokenChars[int(b)%len(validBootstrapTokenChars)]
 	}
-	return string(b)
+
+	return string(token), err
+}
+
+//genToken will generate a token of the format abc.123 (like kubeadm/trustd), where the length of the first string (before the dot)
+//and length of the second string (after dot) are specified as inputs
+func genToken(lenFirst int, lenSecond int) (string, error) {
+
+	var err error
+	var tokenTemp = make([]string, 2)
+
+	tokenTemp[0], err = randBytes(lenFirst)
+	if err != nil {
+		return "", err
+	}
+	tokenTemp[1], err = randBytes(lenSecond)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenTemp[0] + "." + tokenTemp[1], nil
 }
 
 // NewInput generates the sensitive data required to generate all userdata
 // types.
 // nolint: gocyclo
 func NewInput(clustername string, masterIPs []string) (input *Input, err error) {
+
+	//Gen trustd token strings
+	kubeadmBootstrapToken, err := genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	//TODO: Can be dropped
+	//Gen kubeadm cert key
+	kubeadmCertKey, err := randBytes(26)
+	if err != nil {
+		return nil, err
+	}
+
+	//Gen trustd token strings
+	trustdToken, err := genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
 	kubeadmTokens := &KubeadmTokens{
-		BootstrapToken: RandomString(6) + "." + RandomString(16),
-		CertKey:        RandomString(26),
+		BootstrapToken: kubeadmBootstrapToken,
+		CertKey:        kubeadmCertKey,
 	}
 
 	trustdInfo := &TrustdInfo{
-		Token: RandomString(6) + "." + RandomString(16),
+		Token: trustdToken,
 	}
 
 	// Generate Kubernetes CA.
