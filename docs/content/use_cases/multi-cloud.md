@@ -1,5 +1,5 @@
 ---
-title: "Mult-Cloud"
+title: "Multi-Cloud"
 draft: false
 menu:
   docs:
