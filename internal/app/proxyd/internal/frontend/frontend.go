@@ -153,10 +153,12 @@ func (r *ReverseProxy) Watch(kubeClient kubernetes.Interface) (err error) {
 		},
 	}
 
+	// Use a 1m cache refresh to make sure if there was a network interruption
+	// we can quickly :tm: add the backends back once the network has recovered
 	_, controller := cache.NewInformer(
 		watchlist,
 		&v1.Pod{},
-		time.Minute*5,
+		time.Minute*1,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    r.AddFunc(),
 			DeleteFunc: r.DeleteFunc(),
@@ -259,14 +261,11 @@ func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
 		return
 	}
 
-	uid := backend.UID
-	addr := backend.Addr
-
-	c2, err := net.DialTimeout("tcp", addr+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
+	c2, err := net.DialTimeout("tcp", backend.Addr+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
 	if err != nil {
-		log.Printf("dial %v: %v", addr, err)
-		// nolint: errcheck
-		c1.Close()
+		log.Printf("dial %v failed, deleting backend: %v", backend.Addr, err)
+		r.DeleteBackend(backend.UID)
+		r.proxyConnection(c1)
 		return
 	}
 
@@ -275,9 +274,9 @@ func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
 		return
 	}
 
-	r.IncrementBackend(uid)
+	r.IncrementBackend(backend.UID)
 
-	r.joinConnections(uid, c1, c2)
+	r.joinConnections(backend.UID, c1, c2)
 }
 
 func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
