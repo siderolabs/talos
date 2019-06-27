@@ -78,3 +78,11 @@ For example, to view current running containers, run `osctl ps` for a list of co
 To view the logs of a container, use `osctl logs <container>` or `osctl logs -k <container>`.
 
 {{% note %}}We only set up port forwarding to master-1 so other nodes will not be directly accessible.{{% /note %}}
+
+## Cleaning Up
+
+To cleanup, run:
+
+```
+osctl cluster destroy
+```
