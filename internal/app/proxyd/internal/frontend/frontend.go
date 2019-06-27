@@ -6,20 +6,15 @@ package frontend
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
-	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -28,13 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // ReverseProxy represents a reverse proxy server.
 type ReverseProxy struct {
 	ConnectTimeout  int
-	Config          *tls.Config
 	current         *backend.Backend
 	backends        map[string]*backend.Backend
 	endpoints       []string
@@ -43,18 +36,13 @@ type ReverseProxy struct {
 }
 
 // NewReverseProxy initializes a ReverseProxy.
-func NewReverseProxy(endpoints []string) (r *ReverseProxy, err error) {
-	config, err := tlsConfig()
-	if err != nil {
-		return
-	}
-
+func NewReverseProxy(endpoints []string, bCancel context.CancelFunc) (r *ReverseProxy, err error) {
 	r = &ReverseProxy{
-		ConnectTimeout: 100,
-		Config:         config,
-		mux:            &sync.Mutex{},
-		backends:       map[string]*backend.Backend{},
-		endpoints:      endpoints,
+		ConnectTimeout:  100,
+		mux:             &sync.Mutex{},
+		backends:        map[string]*backend.Backend{},
+		endpoints:       endpoints,
+		cancelBootstrap: bCancel,
 	}
 
 	return r, nil
@@ -86,12 +74,18 @@ func (r *ReverseProxy) Listen(address string) (err error) {
 func (r *ReverseProxy) AddBackend(uid, addr string) (added bool) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
+
+	// Check if we already have this backend added
 	if _, ok := r.backends[uid]; ok {
 		added = false
 		return
 	}
+
+	// Add new backend
 	r.backends[uid] = &backend.Backend{UID: uid, Addr: addr, Connections: 0}
 	added = true
+
+	// Update current backend
 	r.setCurrent()
 
 	return added
@@ -142,53 +136,20 @@ func (r *ReverseProxy) DecrementBackend(uid string) {
 }
 
 // Watch uses the Kubernetes informer API to watch events for the API server.
-func (r *ReverseProxy) Watch() (err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (r *ReverseProxy) Watch(kubeClient kubernetes.Interface) (err error) {
 
-	r.bootstrap(ctx)
-	r.cancelBootstrap = cancel
-
-	kubeconfig := "/etc/kubernetes/admin.conf"
-	if err = conditions.WaitForFilesToExist(kubeconfig).Wait(ctx); err != nil {
-		return err
-	}
-
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return err
-	}
-
-	// Discovey local non loopback ips
-	ips, err := pkgnet.IPAddrs()
-	if err != nil {
-		log.Fatalf("failed to get local address: %v", err)
-	}
-	if len(ips) == 0 {
-		log.Fatalf("no IP address found for local api server")
-	}
-	ip := ips[0]
-
-	// Overwrite defined host so we can target local apiserver
-	// and bypass the admin.conf host which is configured for proxyd
-	config.Host = ip.String() + ":6443"
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
+	// Filter for only apiservers
 	labelSelector := labels.FormatLabels(map[string]string{"component": "kube-apiserver"})
 	watchlist := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			options.FieldSelector = fields.Everything().String()
 			options.LabelSelector = labelSelector
-			return clientset.CoreV1().Pods(metav1.NamespaceSystem).List(options)
+			return kubeClient.CoreV1().Pods(metav1.NamespaceSystem).List(options)
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 			options.FieldSelector = fields.Everything().String()
 			options.LabelSelector = labelSelector
-			return clientset.CoreV1().Pods(metav1.NamespaceSystem).Watch(options)
+			return kubeClient.CoreV1().Pods(metav1.NamespaceSystem).Watch(options)
 		},
 	}
 
@@ -211,16 +172,17 @@ func (r *ReverseProxy) Watch() (err error) {
 // AddFunc is a ResourceEventHandlerFunc.
 func (r *ReverseProxy) AddFunc() func(obj interface{}) {
 	return func(obj interface{}) {
-		// nolint: errcheck
-		pod := obj.(*v1.Pod)
-
-		// We need an IP address to register.
-		if pod.Status.PodIP == "" {
+		pod, ok := obj.(*v1.Pod)
+		if !ok {
 			return
 		}
 
-		// Return early if the pod is not running.
-		if pod.Status.Phase != v1.PodRunning {
+		switch {
+		case pod.Status.PodIP == "":
+			// We need an IP address to register.
+			return
+		case pod.Status.Phase != v1.PodRunning:
+			// Return early if the pod is not running.
 			return
 		}
 
@@ -231,8 +193,10 @@ func (r *ReverseProxy) AddFunc() func(obj interface{}) {
 			}
 		}
 
-		r.AddBackend(string(pod.UID), pod.Status.PodIP)
-		log.Printf("registered API server %s (UID: %q) with IP: %s", pod.Name, pod.UID, pod.Status.PodIP)
+		if added := r.AddBackend(string(pod.UID), pod.Status.PodIP); added {
+			log.Printf("registered API server %s (UID: %q) with IP: %s", pod.Name, pod.UID, pod.Status.PodIP)
+		}
+
 		r.stopBootstrapBackends()
 	}
 }
@@ -240,35 +204,21 @@ func (r *ReverseProxy) AddFunc() func(obj interface{}) {
 // UpdateFunc is a ResourceEventHandlerFunc.
 func (r *ReverseProxy) UpdateFunc() func(oldObj, newObj interface{}) {
 	return func(oldObj, newObj interface{}) {
-		// nolint: errcheck
-		old := oldObj.(*v1.Pod)
-		// nolint: errcheck
-		new := newObj.(*v1.Pod)
-
-		// Remove the backend if the pod is not running.
-		if new.Status.Phase != v1.PodRunning {
-			if deleted := r.DeleteBackend(old.Status.PodIP); deleted {
-				log.Printf("deregistered unhealthy API server %s (UID: %q, pod phase is %s) with IP: %s", old.Name, old.UID, old.Status.PodIP, new.Status.Phase)
-			}
+		newPod, ok := newObj.(*v1.Pod)
+		if !ok {
 			return
 		}
 
 		// Remove the backend if any container is not ready.
-		for _, status := range new.Status.ContainerStatuses {
+		for _, status := range newPod.Status.ContainerStatuses {
 			if !status.Ready {
-				if deleted := r.DeleteBackend(old.Status.PodIP); deleted {
-					log.Printf("deregistered unhealthy API server %s (UID: %q, container %s is not ready) with IP: %s", old.Name, old.UID, old.Status.PodIP, status.Name)
-				}
+				r.DeleteFunc()(oldObj)
 				return
 			}
 		}
 
-		// We need an IP address to register.
-		if old.Status.PodIP == "" && new.Status.PodIP != "" {
-			r.AddBackend(string(new.UID), new.Status.PodIP)
-			log.Printf("registered API server %s (UID: %q) with IP: %s", new.Name, new.UID, new.Status.PodIP)
-			r.stopBootstrapBackends()
-		}
+		// Refresh backend
+		r.AddFunc()(newObj)
 	}
 }
 
@@ -289,7 +239,10 @@ func (r *ReverseProxy) setCurrent() {
 	for _, b := range r.backends {
 		switch {
 		case b.Connections == 0:
-			fallthrough
+			// If backend has no connections, we don't
+			// need to go further
+			r.current = b
+			return
 		case b.Connections < least:
 			least = b.Connections
 			r.current = b
@@ -359,19 +312,6 @@ func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
 	wg.Wait()
 }
 
-func tlsConfig() (config *tls.Config, err error) {
-	caCert, err := ioutil.ReadFile("/etc/kubernetes/pki/ca.crt")
-	if err != nil {
-		return
-	}
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(caCert)
-
-	config = &tls.Config{RootCAs: certPool}
-
-	return config, nil
-}
-
 func (r *ReverseProxy) stopBootstrapBackends() {
 	if r.endpoints != nil {
 		r.cancelBootstrap()
@@ -379,8 +319,9 @@ func (r *ReverseProxy) stopBootstrapBackends() {
 	}
 }
 
+// Bootstrap handles the initial startup phase of proxyd
 // nolint: gocyclo
-func (r *ReverseProxy) bootstrap(ctx context.Context) {
+func (r *ReverseProxy) Bootstrap(ctx context.Context) {
 	for idx, endpoint := range r.endpoints {
 		go func(c context.Context, i int, e string) {
 			ticker := time.NewTicker(1 * time.Second)
@@ -422,4 +363,21 @@ func (r *ReverseProxy) bootstrap(ctx context.Context) {
 			}
 		}(ctx, idx, endpoint)
 	}
+}
+
+// Backends returns back a copy of the current backends known to proxyd
+func (r *ReverseProxy) Backends() map[string]*backend.Backend {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	backends := make(map[string]*backend.Backend)
+	for uid, addr := range r.backends {
+		backends[uid] = addr
+	}
+	return backends
+}
+
+// Shutdown initiates a shutdown for the reverse proxy
+// TODO fill this out
+func (r *ReverseProxy) Shutdown() {
+	log.Println("shutdown")
 }
