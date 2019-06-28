@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
 	"github.com/talos-systems/talos/internal/pkg/grpc/tls"
+	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -28,6 +29,10 @@ func init() {
 }
 
 func main() {
+	if err := startup.RandSeed(); err != nil {
+		log.Fatalf("startup: %s", err)
+	}
+
 	data, err := userdata.Open(*dataPath)
 	if err != nil {
 		log.Fatalf("open user data: %v", err)

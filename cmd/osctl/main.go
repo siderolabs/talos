@@ -4,8 +4,14 @@
 
 package main
 
-import "github.com/talos-systems/talos/cmd/osctl/cmd"
+import (
+	"github.com/talos-systems/talos/cmd/osctl/cmd"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/pkg/startup"
+)
 
 func main() {
+	helpers.Should(startup.RandSeed())
+
 	cmd.Execute()
 }

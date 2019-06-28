@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
+	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -29,6 +30,10 @@ func init() {
 }
 
 func main() {
+	if err := startup.RandSeed(); err != nil {
+		log.Fatalf("startup: %s", err)
+	}
+
 	data, err := userdata.Open(*dataPath)
 	if err != nil {
 		log.Fatalf("open user data: %v", err)

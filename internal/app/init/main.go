@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"golang.org/x/sys/unix"
@@ -371,6 +372,10 @@ func main() {
 	defer reboot()
 	// handle any panics in the main goroutine, and proceed to reboot() above
 	defer recovery()
+
+	if err := startup.RandSeed(); err != nil {
+		panic(err)
+	}
 
 	// TODO(andrewrynhard): Remove this and be explicit.
 	if err := os.Setenv("PATH", constants.PATH); err != nil {

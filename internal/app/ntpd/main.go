@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/beevik/ntp"
+	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -39,6 +40,10 @@ func init() {
 // New instantiates a new ntp instance against a given server
 // If no servers are specified, the default will be used
 func main() {
+	if err := startup.RandSeed(); err != nil {
+		log.Fatalf("startup: %s", err)
+	}
+
 	server := DEFAULTSERVER
 
 	data, err := userdata.Open(*dataPath)
