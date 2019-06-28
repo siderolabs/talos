@@ -26,6 +26,7 @@ var (
 	ip           string
 	key          string
 	kubernetes   bool
+	useCRI       bool
 	name         string
 	organization string
 	rsa          bool

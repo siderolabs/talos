@@ -38,7 +38,11 @@ var psCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			reply, err := c.Processes(globalCtx, namespace)
+			driver := proto.ContainerDriver_CONTAINERD
+			if useCRI {
+				driver = proto.ContainerDriver_CRI
+			}
+			reply, err := c.Processes(globalCtx, namespace, driver)
 
 			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)
@@ -70,6 +74,7 @@ func processesRender(reply *proto.ProcessesReply) {
 
 func init() {
 	psCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	psCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	psCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(psCmd)
 }

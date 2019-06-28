@@ -101,6 +101,7 @@ require (
 	k8s.io/cloud-provider v0.0.0-20190323031113-9c9d72d1bf90 // indirect
 	k8s.io/cluster-bootstrap v0.0.0-20190313124217-0fa624df11e9 // indirect
 	k8s.io/component-base v0.0.0-20190313120452-4727f38490bc // indirect
+	k8s.io/cri-api v0.0.0-20190620080320-8a10675a4b1e
 	k8s.io/klog v0.2.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580 // indirect
 	k8s.io/kube-proxy v0.0.0-20190320190624-78a1c9778e0e // indirect

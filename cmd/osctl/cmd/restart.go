@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
@@ -35,7 +36,11 @@ var restartCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			if err := c.Restart(globalCtx, namespace, args[0]); err != nil {
+			driver := proto.ContainerDriver_CONTAINERD
+			if useCRI {
+				driver = proto.ContainerDriver_CRI
+			}
+			if err := c.Restart(globalCtx, namespace, driver, args[0]); err != nil {
 				helpers.Fatalf("error restarting process: %s", err)
 			}
 		})
@@ -45,5 +50,6 @@ var restartCmd = &cobra.Command{
 func init() {
 	restartCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	restartCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	rootCmd.AddCommand(restartCmd)
 }

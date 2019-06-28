@@ -38,7 +38,11 @@ var statsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			reply, err := c.Stats(globalCtx, namespace)
+			driver := proto.ContainerDriver_CONTAINERD
+			if useCRI {
+				driver = proto.ContainerDriver_CRI
+			}
+			reply, err := c.Stats(globalCtx, namespace, driver)
 			if err != nil {
 				helpers.Fatalf("error getting stats: %s", err)
 			}
@@ -69,6 +73,7 @@ func statsRender(reply *proto.StatsReply) {
 
 func init() {
 	statsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	statsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	statsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(statsCmd)
 }

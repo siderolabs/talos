@@ -133,22 +133,29 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 }
 
 // Stats implements the proto.OSDClient interface.
-func (c *Client) Stats(ctx context.Context, namespace string) (reply *proto.StatsReply, err error) {
-	reply, err = c.client.Stats(ctx, &proto.StatsRequest{Namespace: namespace})
+func (c *Client) Stats(ctx context.Context, namespace string, driver proto.ContainerDriver) (reply *proto.StatsReply, err error) {
+	reply, err = c.client.Stats(ctx, &proto.StatsRequest{
+		Namespace: namespace,
+		Driver:    driver,
+	})
 	return
 }
 
 // Processes implements the proto.OSDClient interface.
-func (c *Client) Processes(ctx context.Context, namespace string) (reply *proto.ProcessesReply, err error) {
-	reply, err = c.client.Processes(ctx, &proto.ProcessesRequest{Namespace: namespace})
+func (c *Client) Processes(ctx context.Context, namespace string, driver proto.ContainerDriver) (reply *proto.ProcessesReply, err error) {
+	reply, err = c.client.Processes(ctx, &proto.ProcessesRequest{
+		Namespace: namespace,
+		Driver:    driver,
+	})
 	return
 }
 
 // Restart implements the proto.OSDClient interface.
-func (c *Client) Restart(ctx context.Context, namespace, id string) (err error) {
+func (c *Client) Restart(ctx context.Context, namespace string, driver proto.ContainerDriver, id string) (err error) {
 	_, err = c.client.Restart(ctx, &proto.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
+		Driver:    driver,
 	})
 	return
 }
@@ -182,9 +189,10 @@ func (c *Client) Dmesg(ctx context.Context) ([]byte, error) {
 }
 
 // Logs implements the proto.OSDClient interface.
-func (c *Client) Logs(ctx context.Context, namespace, id string) (stream proto.OSD_LogsClient, err error) {
+func (c *Client) Logs(ctx context.Context, namespace string, driver proto.ContainerDriver, id string) (stream proto.OSD_LogsClient, err error) {
 	stream, err = c.client.Logs(ctx, &proto.LogsRequest{
 		Namespace: namespace,
+		Driver:    driver,
 		Id:        id,
 	})
 	return

@@ -22,8 +22,17 @@ service OSD {
   rpc Version(google.protobuf.Empty) returns (Data) {}
 }
 
+enum ContainerDriver {
+  CONTAINERD = 0;
+  CRI = 1;
+}
+
 // The request message containing the containerd namespace.
-message ProcessesRequest { string namespace = 1; }
+message ProcessesRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  ContainerDriver driver = 2;
+}
 
 // The response message containing the requested processes.
 message ProcessesReply { repeated Process processes = 1; }
@@ -40,7 +49,11 @@ message Process {
 }
 
 // The request message containing the containerd namespace.
-message StatsRequest { string namespace = 1; }
+message StatsRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  ContainerDriver driver = 2;
+}
 
 // The response message containing the requested stats.
 message StatsReply { repeated Stat stats = 1; }
@@ -59,6 +72,8 @@ message Stat {
 message RestartRequest {
   string namespace = 1;
   string id = 2;
+  // driver might be default "containerd" or "cri"
+  ContainerDriver driver = 3;
 }
 
 // The response message containing the restart status.
@@ -71,6 +86,8 @@ message ResetReply {}
 message LogsRequest {
   string namespace = 1;
   string id = 2;
+  // driver might be default "containerd" or "cri"
+  ContainerDriver driver = 3;
 }
 
 // The response message containing the requested logs.
