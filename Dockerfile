@@ -195,9 +195,13 @@ COPY hack/golang/test.sh /bin
 
 # The lint target performs linting on the codebase.
 
-FROM base AS lint
+ARG TOOLCHAIN_IMAGE
+FROM ${TOOLCHAIN_IMAGE} AS golangci-lint
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.16.0
+
+FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
+COPY --from=golangci-lint /toolchain/bin/golangci-lint /toolchain/bin/
 RUN golangci-lint run --config golangci-lint.yaml
 
 # The talos target generates a docker image that can be used to run Talos
