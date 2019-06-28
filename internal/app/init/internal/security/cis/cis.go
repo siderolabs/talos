@@ -6,12 +6,11 @@ package cis
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"text/template"
-	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/constants"
 
@@ -64,20 +63,12 @@ func CreateEncryptionToken() error {
 		return nil
 	}
 
-	random := func(min, max int) int {
-		return rand.Intn(max-min) + min
+	encryptionKey := make([]byte, 32)
+	if _, err := rand.Read(encryptionKey); err != nil {
+		return err
 	}
-	var encryptionKeySecret string
-	seed := time.Now().Unix()
-	rand.Seed(seed)
-	for i := 0; i < 32; i++ {
-		n := random(0, 94)
-		start := "!"
-		encryptionKeySecret += string(start[0] + byte(n))
-	}
-	data := []byte(encryptionKeySecret)
 
-	str := base64.StdEncoding.EncodeToString(data)
+	str := base64.StdEncoding.EncodeToString(encryptionKey)
 	aux := struct {
 		AESCBCEncryptionSecret string
 	}{
