@@ -22,11 +22,6 @@ steps:
     when:
       event: tag
 
-  - name: conform
-    image: autonomy/conform:c539351
-    depends_on:
-      - fetch
-
   - name: lint
     image: autonomy/build-container:latest
     pull: always
