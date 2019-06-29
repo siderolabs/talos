@@ -1,5 +1,5 @@
-workflow "on push, run conform" {
-  on       = "push"
+workflow "Conform" {
+  on       = "pull_request"
 
   resolves = [
     "conform"
