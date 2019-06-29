@@ -7,7 +7,7 @@ workflow "on push, run conform" {
 }
 
 action "conform" {
-  uses    = "docker://talos-systems/conform:v0.1.0-alpha.12"
+  uses    = "docker://autonomy/conform:v0.1.0-alpha.12"
 
   secrets = [
     "GITHUB_TOKEN"
