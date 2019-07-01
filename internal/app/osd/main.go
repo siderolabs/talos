@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
@@ -38,7 +39,7 @@ func main() {
 		log.Fatalf("open user data: %v", err)
 	}
 
-	tlsCertProvider, err := tls.NewRenewingFileCertificateProvider(ctx, data)
+	tlsCertProvider, err := tls.NewRenewingFileCertificateProvider(context.TODO(), data)
 	if err != nil {
 		log.Fatalln("failed to create new dynamic certificate provider:", err)
 	}
