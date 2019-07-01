@@ -7,8 +7,8 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -24,26 +24,70 @@ const (
 	ServerOnly
 )
 
-// NewConfig initializes a TLS config for the specified type.
-func NewConfig(t Type, data *userdata.OSSecurity) (config *tls.Config, err error) {
-	certPool := x509.NewCertPool()
-	if ok := certPool.AppendCertsFromPEM(data.CA.Crt); !ok {
-		return nil, fmt.Errorf("failed to append client certs")
-	}
+// ConfigOptionFunc describes a configuration option function for the TLS config
+type ConfigOptionFunc func(*tls.Config) error
 
-	certificate, err := tls.X509KeyPair(data.Identity.Crt, data.Identity.Key)
-	if err != nil {
-		return nil, fmt.Errorf("could not load server key pair: %s", err)
+// WithClientAuthType declares the server's policy regardling TLS Client Authentication
+func WithClientAuthType(t Type) func(*tls.Config) error {
+	return func(cfg *tls.Config) error {
+		switch t {
+		case Mutual:
+			cfg.ClientAuth = tls.RequireAndVerifyClientCert
+		case ServerOnly:
+			cfg.ClientAuth = tls.NoClientCert
+		default:
+			return errors.Errorf("unhandled client auth type %+v", t)
+		}
+		return nil
 	}
+}
 
-	config = &tls.Config{
-		// Set the root certificate authorities to use the self-signed
-		// certificate.
-		RootCAs: certPool,
-		// Validate certificates against the provided CA.
-		ClientCAs: certPool,
-		// Present the certificate to the other side.
-		Certificates: []tls.Certificate{certificate},
+// WithCertificateProvider declares a dynamic provider for the client
+// certificate.
+//
+// NOTE: specifying this option will CLEAR any configured Certificates, since
+// they would otherwise override this option
+//
+func WithCertificateProvider(p CertificateProvider) func(*tls.Config) error {
+	return func(cfg *tls.Config) error {
+		if p == nil {
+			return errors.New("no provider")
+		}
+		cfg.Certificates = nil
+		cfg.GetCertificate = p.GetCertificate
+		return nil
+	}
+}
+
+// WithKeypair declares a specific TLS keypair to be used.  This can be called
+// multiple times to add additional keypairs.
+func WithKeypair(cert tls.Certificate) func(*tls.Config) error {
+	return func(cfg *tls.Config) error {
+		cfg.Certificates = append(cfg.Certificates, cert)
+		return nil
+	}
+}
+
+// WithCACertPEM declares a PEM-encoded CA Certificate to be used.
+func WithCACertPEM(ca []byte) func(*tls.Config) error {
+	return func(cfg *tls.Config) error {
+		if len(ca) == 0 {
+			return errors.New("no CA cert provided")
+		}
+		if ok := cfg.ClientCAs.AppendCertsFromPEM(ca); !ok {
+			return errors.New("failed to append CA certificate to ClientCAs pool")
+		}
+		if ok := cfg.RootCAs.AppendCertsFromPEM(ca); !ok {
+			return errors.New("failed to append CA certificate to RootCAs pool")
+		}
+		return nil
+	}
+}
+
+func defaultConfig() *tls.Config {
+	return &tls.Config{
+		RootCAs:   x509.NewCertPool(),
+		ClientCAs: x509.NewCertPool(),
 		// Use the X25519 elliptic curve for the ECDHE key exchange algorithm.
 		CurvePreferences:       []tls.CurveID{tls.X25519},
 		SessionTicketsDisabled: true,
@@ -54,13 +98,33 @@ func NewConfig(t Type, data *userdata.OSSecurity) (config *tls.Config, err error
 		// TLS 1.2
 		MinVersion: tls.VersionTLS12,
 	}
+}
 
-	switch t {
-	case Mutual:
-		config.ClientAuth = tls.RequireAndVerifyClientCert
-	case ServerOnly:
-		config.ClientAuth = tls.NoClientCert
+// NewConfigWithOpts returns a new TLS Configuration modified by any provided configuration options
+func NewConfigWithOpts(opts ...ConfigOptionFunc) (cfg *tls.Config, err error) {
+	cfg = defaultConfig()
+
+	for _, f := range opts {
+		if err = f(cfg); err != nil {
+			return
+		}
+	}
+	return
+}
+
+// NewConfig initializes a TLS config for the specified type.
+func NewConfig(t Type, data *userdata.OSSecurity) (config *tls.Config, err error) {
+	config = defaultConfig()
+
+	if err = WithClientAuthType(t)(config); err != nil {
+		return nil, errors.Wrap(err, "failed to apply ClientAuthType preference")
+	}
+	if err = WithCACertPEM(data.CA.Crt)(config); err != nil {
+		return nil, errors.Wrap(err, "failed to apply CA Certificate from UserData")
+	}
+	if err = WithCertificateProvider(&userDataCertificateProvider{data: data})(config); err != nil {
+		return nil, errors.Wrap(err, "failed to apply userdata-sourced CertificateProvider")
 	}
 
-	return config, nil
+	return
 }

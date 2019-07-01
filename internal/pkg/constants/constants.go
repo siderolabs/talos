@@ -156,6 +156,9 @@ const (
 
 	// RootfsAsset defines a well known name for our rootfs filename
 	RootfsAsset = "rootfs.tar.gz"
+
+	// NodeCertFile is the filename where the current Talos Node Certificate may be found
+	NodeCertFile = "/var/talos-node.crt"
 )
 
 // See https://linux.die.net/man/3/klogctl
