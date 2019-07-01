@@ -41,7 +41,8 @@ Following that, the default CNI (flannel) configuration will be applied.
 ### Retreive and Configure the `kubeconfig`
 
 ```bash
-osctl kubeconfig | sed -e 's/10.5.0.2:/127.0.0.1:6/' > kubeconfig
+osctl kubeconfig > kubeconfig
+kubectl --kubeconfig kubeconfig config set-cluster talos_default --server https://127.0.0.1:6443
 ```
 
 ### Apply a Pod Security Policy
@@ -77,3 +78,11 @@ For example, to view current running containers, run `osctl ps` for a list of co
 To view the logs of a container, use `osctl logs <container>` or `osctl logs -k <container>`.
 
 {{% note %}}We only set up port forwarding to master-1 so other nodes will not be directly accessible.{{% /note %}}
+
+## Cleaning Up
+
+To cleanup, run:
+
+```
+osctl cluster destroy
+```
