@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"io/ioutil"
+	"log"
 	"sync"
 	"time"
 
@@ -17,11 +18,13 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
+/*
 // minFileCacheInterval is the minimum amount of time a file-based cert is presumed to be good, before re-checking the file
 var minFileCacheInterval = time.Minute
 
 // maxFileCacheInterval is the maximum amount of time a file-based cert is presumed to be good, before re-checking the file
 var maxFileCacheInterval = time.Hour
+*/
 
 // CertificateProvider describes an interface by which TLS certificates may be managed
 type CertificateProvider interface {
@@ -75,6 +78,7 @@ func (p *userDataCertificateProvider) UpdateCertificate(h *tls.ClientHelloInfo, 
 	return nil
 }
 
+/*
 type fileCertificateProvider struct {
 	singleCertificateProvider
 
@@ -96,7 +100,10 @@ func (p *fileCertificateProvider) watchFiles(keyFile, certFile string) {
 		}
 
 		<-time.After(nextCheck)
-		p.loadKeyPair()
+		if err := p.loadKeyPair(); err != nil {
+			log.Println("failed to load keypair:", err)
+			continue
+		}
 	}
 }
 
@@ -106,9 +113,9 @@ func (p *fileCertificateProvider) loadKeyPair() error {
 		return errors.Wrapf(err, "failed to load key pair (%s, %s)", p.certFile, p.keyFile)
 	}
 
-	p.UpdateCertificate(nil, &c)
-	return nil
+	return p.UpdateCertificate(nil, &c)
 }
+*/
 
 type renewingFileCertificateProvider struct {
 	singleCertificateProvider
@@ -142,7 +149,9 @@ func NewRenewingFileCertificateProvider(ctx context.Context, data *userdata.User
 		certFile: constants.NodeCertFile,
 	}
 
-	p.loadInitialCert()
+	if err = p.loadInitialCert(); err != nil {
+		return nil, errors.Wrap(err, "failed to load initial certificate")
+	}
 
 	go p.manageUpdates(ctx)
 
@@ -185,7 +194,10 @@ func (p *renewingFileCertificateProvider) manageUpdates(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		}
-		p.renewCert()
+		if err := p.renewCert(); err != nil {
+			log.Println("failed to renew certificate:", err)
+			continue
+		}
 	}
 }
 

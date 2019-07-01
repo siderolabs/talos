@@ -45,7 +45,7 @@ func main() {
 	}
 	config, err := tls.NewConfigWithOpts(
 		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(data.CA.Crt),
+		tls.WithCACertPEM(data.Security.OS.CA.Crt),
 		tls.WithCertificateProvider(tlsCertProvider))
 	if err != nil {
 		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
