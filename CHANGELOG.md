@@ -1,4 +1,4 @@
-# [](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-02)
+# [v0.1.0-beta.1](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-02)
 
 
 ### Bug Fixes
