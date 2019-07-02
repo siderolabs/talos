@@ -19,14 +19,6 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-/*
-// minFileCacheInterval is the minimum amount of time a file-based cert is presumed to be good, before re-checking the file
-var minFileCacheInterval = time.Minute
-
-// maxFileCacheInterval is the maximum amount of time a file-based cert is presumed to be good, before re-checking the file
-var maxFileCacheInterval = time.Hour
-*/
-
 // CertificateProvider describes an interface by which TLS certificates may be managed
 type CertificateProvider interface {
 
@@ -78,45 +70,6 @@ func (p *userDataCertificateProvider) UpdateCertificate(h *tls.ClientHelloInfo, 
 	// No-op
 	return nil
 }
-
-/*
-type fileCertificateProvider struct {
-	singleCertificateProvider
-
-	certFile, keyFile string
-}
-
-func (p *fileCertificateProvider) watchFiles(keyFile, certFile string) {
-	var nextCheck, certCheck time.Duration
-	for {
-
-		nextCheck = maxFileCacheInterval
-		if p.cert != nil && p.cert.Leaf != nil {
-			if certCheck = time.Until(p.cert.Leaf.NotAfter) / 2; certCheck < nextCheck {
-				nextCheck = certCheck
-			}
-		}
-		if nextCheck < minFileCacheInterval {
-			nextCheck = minFileCacheInterval
-		}
-
-		<-time.After(nextCheck)
-		if err := p.loadKeyPair(); err != nil {
-			log.Println("failed to load keypair:", err)
-			continue
-		}
-	}
-}
-
-func (p *fileCertificateProvider) loadKeyPair() error {
-	c, err := tls.LoadX509KeyPair(p.certFile, p.keyFile)
-	if err != nil {
-		return errors.Wrapf(err, "failed to load key pair (%s, %s)", p.certFile, p.keyFile)
-	}
-
-	return p.UpdateCertificate(nil, &c)
-}
-*/
 
 type renewingFileCertificateProvider struct {
 	singleCertificateProvider
