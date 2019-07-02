@@ -1,3 +1,13 @@
+# [](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-02)
+
+
+### Bug Fixes
+
+* move to crypto/rand for token gen ([#794](https://github.com/talos-systems/talos/issues/794)) ([402c597](https://github.com/talos-systems/talos/commit/402c597))
+* **init:** secret data at rest encryption key should be truly random ([#799](https://github.com/talos-systems/talos/issues/799)) ([349aabf](https://github.com/talos-systems/talos/commit/349aabf))
+
+
+
 # [v0.1.0-beta.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.1.0-beta.0) (2019-06-27)
 
 
