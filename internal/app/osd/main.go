@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
@@ -38,9 +39,16 @@ func main() {
 		log.Fatalf("open user data: %v", err)
 	}
 
-	config, err := tls.NewConfig(tls.Mutual, data.Security.OS)
+	tlsCertProvider, err := tls.NewRenewingFileCertificateProvider(context.TODO(), data)
 	if err != nil {
-		log.Fatalf("credentials: %v", err)
+		log.Fatalln("failed to create new dynamic certificate provider:", err)
+	}
+	config, err := tls.NewConfigWithOpts(
+		tls.WithClientAuthType(tls.Mutual),
+		tls.WithCACertPEM(data.Security.OS.CA.Crt),
+		tls.WithCertificateProvider(tlsCertProvider))
+	if err != nil {
+		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
 	}
 
 	initClient, err := reg.NewInitServiceClient()

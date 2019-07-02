@@ -5,6 +5,8 @@
 package constants
 
 import (
+	"time"
+
 	"github.com/containerd/containerd/defaults"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
@@ -156,6 +158,12 @@ const (
 
 	// RootfsAsset defines a well known name for our rootfs filename
 	RootfsAsset = "rootfs.tar.gz"
+
+	// NodeCertFile is the filename where the current Talos Node Certificate may be found
+	NodeCertFile = "/var/talos-node.crt"
+
+	// NodeCertRenewalInterval is the default interval at which Talos Node Certifications should be renewed
+	NodeCertRenewalInterval = 24 * time.Hour
 )
 
 // See https://linux.die.net/man/3/klogctl
