@@ -7,14 +7,11 @@ package containers
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 
-	"github.com/containerd/containerd"
-	tasks "github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/api/types"
 
 	"github.com/talos-systems/talos/internal/pkg/chunker"
@@ -24,7 +21,7 @@ import (
 
 // Container presents information about a container
 type Container struct {
-	inspector *Inspector
+	Inspector Inspector
 
 	Display      string // Friendly Name
 	Name         string // container name
@@ -33,24 +30,25 @@ type Container struct {
 	Image        string
 	PodName      string
 	Sandbox      string
-	Status       containerd.Status // Running state of container
-	Pid          uint32
+	Status       string // Running state of container
 	RestartCount string
+	LogPath      string
 	Metrics      *types.Metric
+	Pid          uint32
+	IsPodSandbox bool // real container or just pod sandbox
 }
 
 // GetProcessStderr returns process stderr
 func (c *Container) GetProcessStderr() (string, error) {
-	task, err := c.inspector.client.TaskService().Get(c.inspector.nsctx, &tasks.GetRequest{ContainerID: c.ID})
-	if err != nil {
-		return "", err
-	}
-
-	return task.Process.Stderr, nil
+	return c.Inspector.GetProcessStderr(c.ID)
 }
 
 // GetLogFile returns path to log file, k8s-style
 func (c *Container) GetLogFile() string {
+	if c.LogPath != "" {
+		return c.LogPath
+	}
+
 	if c.Sandbox == "" || !strings.Contains(c.Display, ":") {
 		return ""
 	}
@@ -60,14 +58,12 @@ func (c *Container) GetLogFile() string {
 
 // Kill sends signal to container task
 func (c *Container) Kill(signal syscall.Signal) error {
-	_, err := c.inspector.client.TaskService().Kill(c.inspector.nsctx, &tasks.KillRequest{ContainerID: c.ID, Signal: uint32(signal)})
-	return err
+	return c.Inspector.Kill(c.ID, c.IsPodSandbox, signal)
 }
 
 // GetLogChunker returns chunker for container log file
 func (c *Container) GetLogChunker() (chunker.Chunker, io.Closer, error) {
 	logFile := c.GetLogFile()
-	log.Printf("logFile = %q", logFile)
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_RDONLY, 0)
 		if err != nil {

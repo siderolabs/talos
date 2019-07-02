@@ -15,6 +15,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
@@ -36,8 +37,12 @@ var logsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
+			driver := proto.ContainerDriver_CONTAINERD
+			if useCRI {
+				driver = proto.ContainerDriver_CRI
+			}
 
-			stream, err := c.Logs(globalCtx, namespace, args[0])
+			stream, err := c.Logs(globalCtx, namespace, driver, args[0])
 			if err != nil {
 				helpers.Fatalf("error fetching logs: %s", err)
 			}
@@ -60,6 +65,7 @@ var logsCmd = &cobra.Command{
 
 func init() {
 	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	logsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	logsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(logsCmd)
 }

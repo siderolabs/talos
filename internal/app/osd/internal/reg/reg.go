@@ -21,6 +21,7 @@ import (
 
 	"github.com/containerd/cgroups"
 	"github.com/containerd/containerd/oci"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/containerd/typeurl"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
@@ -39,6 +40,8 @@ import (
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/containers"
+	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
+	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	"github.com/talos-systems/talos/internal/pkg/proc"
 	"github.com/talos-systems/talos/internal/pkg/version"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -76,7 +79,7 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *pr
 
 // Processes implements the proto.OSDServer interface.
 func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest) (reply *proto.ProcessesReply, err error) {
-	inspector, err := containers.NewInspector(ctx, in.Namespace)
+	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +107,7 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 				Name:      container.Name,
 				Image:     container.Image,
 				Pid:       container.Pid,
-				Status:    strings.ToUpper(string(container.Status.Status)),
+				Status:    container.Status,
 			}
 			processes = append(processes, process)
 		}
@@ -117,7 +120,7 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 // Stats implements the proto.OSDServer interface.
 // nolint: gocyclo
 func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply *proto.StatsReply, err error) {
-	inspector, err := containers.NewInspector(ctx, in.Namespace)
+	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +186,7 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 
 // Restart implements the proto.OSDServer interface.
 func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (*proto.RestartReply, error) {
-	inspector, err := containers.NewInspector(ctx, in.Namespace)
+	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
 	}
@@ -462,8 +465,23 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 
 	return reply, multiErr.ErrorOrNil()
 }
+
+func getContainerInspector(ctx context.Context, namespace string, driver proto.ContainerDriver) (containers.Inspector, error) {
+	switch driver {
+	case proto.ContainerDriver_CRI:
+		if namespace != criconstants.K8sContainerdNamespace {
+			return nil, errors.New("CRI inspector is supported only for K8s namespace")
+		}
+		return cri.NewInspector(ctx)
+	case proto.ContainerDriver_CONTAINERD:
+		return containerd.NewInspector(ctx, namespace)
+	default:
+		return nil, errors.Errorf("unsupported driver %q", driver)
+	}
+}
+
 func k8slogs(ctx context.Context, req *proto.LogsRequest) (chunker.Chunker, io.Closer, error) {
-	inspector, err := containers.NewInspector(ctx, req.Namespace)
+	inspector, err := getContainerInspector(ctx, req.Namespace, req.Driver)
 	if err != nil {
 		return nil, nil, err
 	}
