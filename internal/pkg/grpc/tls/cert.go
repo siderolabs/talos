@@ -7,6 +7,7 @@ package tls
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"io/ioutil"
 	"log"
 	"sync"
@@ -180,13 +181,26 @@ func (p *renewingFileCertificateProvider) loadInitialCert() error {
 }
 
 func (p *renewingFileCertificateProvider) manageUpdates(ctx context.Context) {
-	var nextRenewal time.Duration
+	var nextRenewal = constants.NodeCertRenewalInterval
 
 	for ctx.Err() == nil {
 		if c, _ := p.GetCertificate(nil); c != nil { // nolint: errcheck
-			if c.Leaf != nil {
-				nextRenewal = time.Until(c.Leaf.NotAfter) / 2
+			if len(c.Certificate) > 0 {
+				cert, err := x509.ParseCertificate(c.Certificate[0])
+				if err == nil {
+					nextRenewal = time.Until(cert.NotAfter) / 2
+				} else {
+					log.Println("failed to parse current leaf certificate")
+				}
+			} else {
+				log.Println("current leaf certificate not found")
 			}
+		} else {
+			log.Println("certificate not found")
+		}
+
+		if nextRenewal > constants.NodeCertRenewalInterval {
+			nextRenewal = constants.NodeCertRenewalInterval
 		}
 
 		select {
