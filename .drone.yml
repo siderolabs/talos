@@ -2,18 +2,6 @@
 kind: pipeline
 name: default
 
-services:
-  - name: docker
-    image: docker:dind
-    privileged: true
-    command:
-      - --dns=8.8.8.8
-    volumes:
-      - name: dockersock
-        path: /var/run
-      - name: tmp
-        path: /tmp
-
 steps:
   - name: fetch
     image: docker:git
@@ -31,8 +19,8 @@ steps:
     commands:
       - make lint
     volumes:
-      - name: dockersock
-        path: /var/run
+      - name: docker-socket
+        path: /var/run/docker.sock
     depends_on:
       - fetch
 
@@ -45,27 +33,29 @@ steps:
     commands:
       - make drone
     volumes:
-      - name: dockersock
-        path: /var/run
+      - name: docker-socket
+        path: /var/run/docker.sock
     depends_on:
-      - fetch
+      - lint
 
   - name: test
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
+    image: 'autonomy/test:${DRONE_COMMIT_SHA:0:7}'
+    privileged: true
     commands:
-      - make test
+      - cd /src
+      - test.sh
+      - cp /src/coverage.txt /drone/src/coverage.txt
     volumes:
-      - name: dockersock
-        path: /var/run
+      - name: docker-socket
+        path: /var/run/docker.sock
+      - name: containerd
+        path: /var/lib/containerd
     depends_on:
       - build
 
   - name: coverage
     image: plugins/codecov
+    pull: always
     settings:
       token:
         from_secret: codecov_token
@@ -82,12 +72,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make basic-integration
-      - cp build/osctl-linux-amd64 /tmp/osctl
-      - cd /tmp
-      - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
     volumes:
-      - name: dockersock
-        path: /var/run
+      - name: docker-socket
+        path: /var/run/docker.sock
       - name: tmp
         path: /tmp
     depends_on:
@@ -96,7 +83,6 @@ steps:
   # - name: e2e-integration
   #   image: autonomy/build-container:latest
   #   pull: always
-  #   ## Ignore errors for now, until we get the flakiness resolved in beta
   #   err_ignore: true
   #   environment:
   #     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
@@ -110,8 +96,8 @@ steps:
   #   commands:
   #     - make e2e-integration
   #   volumes:
-  #     - name: dockersock
-  #       path: /var/run
+  #     - name: docker-socket
+  #       path: /var/run/docker.sock
   #     - name: tmp
   #       path: /tmp
   #   when:
@@ -122,40 +108,6 @@ steps:
   #       - master
   #   depends_on:
   #     - basic-integration
-
-  - name: iso
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make talos-iso
-    volumes:
-      - name: dockersock
-        path: /var/run
-    when:
-      event: tag
-    depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
-
-  - name: gce
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make talos-gce
-    volumes:
-      - name: dockersock
-        path: /var/run
-    when:
-      event: tag
-    depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
 
   - name: push
     image: autonomy/build-container:latest
@@ -170,15 +122,46 @@ steps:
       - make login
       - make push
     volumes:
-      - name: dockersock
-        path: /var/run
+      - name: docker-socket
+        path: /var/run/docker.sock
     when:
       event:
         exclude:
           - pull_request
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
+
+  - name: iso
+    image: 'autonomy/installer:${DRONE_COMMIT_SHA:0:7}'
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - entrypoint.sh iso
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+    when:
+      event: tag
+    depends_on:
+      - push
+
+  - name: gce
+    image: 'autonomy/installer:${DRONE_COMMIT_SHA:0:7}'
+    pull: always
+    privileged: true
+    commands:
+      - mkdir /out
+      - bash entrypoint.sh install -n disk -r -p googlecloud -u none
+      - tar -C /out -czf ./build/talos-gce.tar.gz disk.raw
+    volumes:
+      - name: dev
+        path: /dev
+    when:
+      event: tag
+    depends_on:
+      - push
 
   - name: release
     image: plugins/github-release
@@ -194,17 +177,20 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
       - iso
       - gce
 
 volumes:
-  - name: dockersock
-    temp: {}
+  - name: docker-socket
+    host:
+      path: /run/docker.sock
+  - name: dev
+    host:
+      path: /dev
   - name: tmp
     temp: {}
-
+  - name: containerd
+    temp: {}
 ---
 kind: pipeline
 name: notify

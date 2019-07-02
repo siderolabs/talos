@@ -5,28 +5,28 @@ set -eou pipefail
 ## If we take longer than 5m in docker, we're probably boned anyways
 TIMEOUT=300
 
+CONTAINER_ID=$(docker ps -f label=io.drone.build.number=${DRONE_BUILD_NUMBER} -f label=io.drone.repo.namespace=${DRONE_REPO_NAMESPACE} -f label=io.drone.repo.name=${DRONE_REPO_NAME} -f label=io.drone.step.name=basic-integration --format='{{ .ID }}')
+
 run() {
 	docker run \
 	 	--rm \
 	 	--interactive \
-	 	--net=integration \
+	 	--net="${DRONE_COMMIT_SHA:0:7}" \
 		--entrypoint=bash \
-		--mount type=bind,source=${TMP},target=${TMP} \
-		--mount type=bind,source=${PWD}/hack/dev/manifests,target=/manifests \
-	 	-v ${OSCTL}:/bin/osctl:ro \
+		--volumes-from=${CONTAINER_ID} \
 	 	-e KUBECONFIG=${KUBECONFIG} \
 	 	-e TALOSCONFIG=${TALOSCONFIG} \
 	 	k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
 }
 
-${OSCTL} cluster create --name integration
+${OSCTL} cluster create --name "${DRONE_COMMIT_SHA:0:7}"
 ${OSCTL} config target 10.5.0.2
 
 ## Fetch kubeconfig
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-	 until osctl kubeconfig > ${KUBECONFIG}
+	 until ${OSCTL} kubeconfig > ${KUBECONFIG}
 	 do
-	   if  [[ \$(date +%s) -gt \$timeout ]] 
+	   if  [[ \$(date +%s) -gt \$timeout ]]
 	   then
 	     exit 1
 	   fi
@@ -34,9 +34,9 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	 done"
 
 ## Wait for all nodes to report in
-run "timeout=\$((\$(date +%s) + ${TIMEOUT})) 
+run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until kubectl get nodes -o json | jq '.items | length' | grep 4 >/dev/null
-	 do 
+	 do
 	   if  [[ \$(date +%s) -gt \$timeout ]]
 	   then
 	     exit 1
@@ -46,7 +46,8 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	 done"
 
 ## Deploy needed manifests
-run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml -f /manifests/coredns.yaml"
+MANIFESTS="${PWD}/hack/dev/manifests"
+run "kubectl apply -f ${MANIFESTS}/psp.yaml -f ${MANIFESTS}/flannel.yaml -f ${MANIFESTS}/coredns.yaml"
 
 ## Wait for all nodes ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
