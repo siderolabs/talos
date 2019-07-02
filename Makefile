@@ -172,8 +172,8 @@ proto: buildkitd
 .PHONY: talos-gce
 talos-gce:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
-	@tar -C $(PWD)/build -Sczf $(PWD)/build/$@.tar.gz disk.raw
-	@rm $(PWD)/build/disk.raw
+	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.raw
+	@rm -rf $(PWD)/build/disk.raw
 
 .PHONY: talos-iso
 talos-iso:
