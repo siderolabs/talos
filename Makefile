@@ -300,3 +300,22 @@ push: gitmeta
 .PHONY: clean
 clean:
 	@-rm -rf build images vendor
+
+.PHONY: talos-azure
+talos-azure:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-n disk \
+		-r \
+		-p azure \
+		-u none \
+		-e rootdelay=300
+	@docker run --rm -v $(PWD)/build:/out $(DOCKER_ARGS) \
+		--entrypoint qemu-img \
+		autonomy/installer:$(TAG) \
+		convert \
+		-f raw \
+		-o subformat=fixed,force_size \
+		-O vpc /out/disk.raw /out/talos-azure.vhd
