@@ -11,15 +11,16 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
 )
 
 // Mount discovers the appropriate partitions by label and mounts them up
 // to the appropriate mountpoint.
 // TODO: See if we can consolidate this with rootfs/mount
-func Mount() (err error) {
+func Mount(data *userdata.UserData) (err error) {
 	var mp *mount.Points
-	if mp, err = mountpoints(); err != nil {
+	if mp, err = mountpoints(data.Install.Boot.InstallDevice.Device); err != nil {
 		return errors.Errorf("error initializing block devices: %v", err)
 	}
 
@@ -37,7 +38,7 @@ func Mount() (err error) {
 }
 
 // nolint: dupl
-func mountpoints() (mountpoints *mount.Points, err error) {
+func mountpoints(devpath string) (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
 	for _, name := range []string{constants.CurrentRootPartitionLabel(), constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		var target string
@@ -51,7 +52,7 @@ func mountpoints() (mountpoints *mount.Points, err error) {
 		}
 
 		var dev *probe.ProbedBlockDevice
-		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
+		if dev, err = probe.DevForFileSystemLabel(devpath, name); err != nil {
 			if name == constants.BootPartitionLabel {
 				// A bootloader is not always required.
 				log.Println("WARNING: no ESP partition was found")

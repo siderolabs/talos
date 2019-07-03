@@ -17,13 +17,13 @@ import (
 // Exists checks if Talos has already been installed to a block device.
 // It works by searching for a filesystem with a well known label, and then,
 // if the  filesystem exists, checking for the existence of a file.
-func Exists() (bool, error) {
+func Exists(devpath string) (bool, error) {
 	var (
 		err error
 		dev *probe.ProbedBlockDevice
 	)
 
-	if dev, err = probe.GetDevWithFileSystemLabel(constants.BootPartitionLabel); err == nil {
+	if dev, err = probe.DevForFileSystemLabel(devpath, constants.BootPartitionLabel); err == nil {
 		// nolint: errcheck
 		defer dev.Close()
 		if dev.SuperBlock != nil {
