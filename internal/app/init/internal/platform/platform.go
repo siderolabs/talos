@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/baremetal"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/aws"
+	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/azure"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/googlecloud"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/packet"
 	"github.com/talos-systems/talos/internal/app/init/internal/platform/cloud/vmware"
@@ -35,16 +36,18 @@ func NewPlatform() (p Platform, err error) {
 	switch *platform {
 	case "aws":
 		p = &aws.AWS{}
-	case "googlecloud":
-		p = &googlecloud.GoogleCloud{}
-	case "vmware":
-		p = &vmware.VMware{}
+	case "azure":
+		p = &azure.Azure{}
 	case "bare-metal":
 		p = &baremetal.BareMetal{}
-	case "packet":
-		p = &packet.Packet{}
+	case "googlecloud":
+		p = &googlecloud.GoogleCloud{}
 	case "iso":
 		p = &iso.ISO{}
+	case "packet":
+		p = &packet.Packet{}
+	case "vmware":
+		p = &vmware.VMware{}
 	default:
 		return nil, errors.Errorf("platform not supported: %s", *platform)
 	}
