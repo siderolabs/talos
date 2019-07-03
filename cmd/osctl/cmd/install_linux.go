@@ -64,7 +64,7 @@ var installCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err = install.Mount(); err != nil {
+		if err = install.Mount(data); err != nil {
 			log.Fatal(err)
 		}
 
