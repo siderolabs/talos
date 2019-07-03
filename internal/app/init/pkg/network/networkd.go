@@ -39,7 +39,7 @@ func (svc *Service) Main(ctx context.Context, data *userdata.UserData, logWriter
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			svc.DHCPd(ctx, DefaultInterface)
+			svc.DHCPd(ctx, defaultInterface())
 		}()
 	} else {
 		for _, netconf := range data.Networking.OS.Devices {

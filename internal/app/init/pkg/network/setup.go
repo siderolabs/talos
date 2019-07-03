@@ -10,6 +10,8 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/vishvananda/netlink"
 )
@@ -75,12 +77,12 @@ func defaultNetworkSetup() (err error) {
 	if err = StaticAddress(userdata.Device{Interface: "lo", CIDR: "127.0.0.1/8"}); err != nil && err != syscall.EEXIST {
 		return err
 	}
-	if err = ifup(DefaultInterface); err != nil {
+
+	if err = ifup(defaultInterface()); err != nil {
 		return err
 	}
-
 	// TODO: this calls out to 'networkd' inline
-	if _, err = NewService().Dhclient(context.Background(), DefaultInterface); err != nil {
+	if _, err = NewService().Dhclient(context.Background(), defaultInterface()); err != nil {
 		return err
 	}
 
@@ -108,4 +110,13 @@ func ifup(ifname string) (err error) {
 	}
 
 	return nil
+}
+
+func defaultInterface() string {
+	netif := DefaultInterface
+	if option := kernel.Cmdline().Get(constants.KernelParamDefaultInterface).First(); option != nil {
+		netif = *option
+	}
+
+	return netif
 }

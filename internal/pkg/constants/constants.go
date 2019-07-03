@@ -26,6 +26,10 @@ const (
 	// hostname.
 	KernelParamHostname = "talos.hostname"
 
+	// KernelParamDefaultInterface is the kernel parameter for specifying the
+	// initial interface used to bootstrap the node
+	KernelParamDefaultInterface = "talos.interface"
+
 	// KernelCurrentRoot is the kernel parameter name for specifying the
 	// current root partition.
 	KernelCurrentRoot = "talos.root"
