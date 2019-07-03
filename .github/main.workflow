@@ -7,7 +7,7 @@ workflow "Conform Pull Request" {
 }
 
 action "conform" {
-  uses    = "docker://autonomy/conform:v0.1.0-alpha.13"
+  uses    = "docker://autonomy/conform:v0.1.0-alpha.14"
 
   secrets = [
     "GITHUB_TOKEN"
