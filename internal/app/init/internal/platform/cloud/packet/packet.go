@@ -29,7 +29,7 @@ func (p *Packet) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (p *Packet) UserData() (data *userdata.UserData, err error) {
-	return userdata.Download(PacketUserDataEndpoint, nil)
+	return userdata.Download(PacketUserDataEndpoint)
 }
 
 // Prepare implements the platform.Platform interface.

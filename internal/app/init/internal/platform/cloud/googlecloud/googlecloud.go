@@ -23,7 +23,7 @@ func (gc *GoogleCloud) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (gc *GoogleCloud) UserData() (data *userdata.UserData, err error) {
-	return userdata.Download(GCUserDataEndpoint, &map[string]string{"Metadata-Flavor": "Google"})
+	return userdata.Download(GCUserDataEndpoint, userdata.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 
 // Prepare implements the platform.Platform interface and handles initial host preparation.

@@ -5,6 +5,7 @@
 package userdata
 
 import (
+	"encoding/base64"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -31,7 +32,12 @@ func (suite *validateSuite) TestDownloadRetry() {
 	ts := testUDServer()
 	defer ts.Close()
 
-	_, err := Download(ts.URL, nil)
+	var err error
+
+	_, err = Download(ts.URL, WithMaxWait(0.1))
+	suite.Require().NoError(err)
+
+	_, err = Download(ts.URL, WithFormat(b64), WithRetries(1), WithHeaders(map[string]string{"Metadata": "true", "format": b64}))
 	suite.Require().NoError(err)
 	log.SetOutput(os.Stderr)
 }
@@ -56,12 +62,17 @@ func testUDServer() *httptest.Server {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		count++
 		log.Printf("Request %d\n", count)
-		if count == 3 {
+		if count < 2 {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		if r.Header.Get("format") == b64 {
+			// nolint: errcheck
+			w.Write([]byte(base64.StdEncoding.EncodeToString([]byte(testConfig))))
+		} else {
 			// nolint: errcheck
 			w.Write([]byte(testConfig))
-			return
 		}
-		w.WriteHeader(http.StatusInternalServerError)
 	}))
 
 	return ts

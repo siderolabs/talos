@@ -68,7 +68,7 @@ func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
 		return data, nil
 	}
 
-	return userdata.Download(*option, nil)
+	return userdata.Download(*option)
 }
 
 // Prepare implements the platform.Platform interface.
