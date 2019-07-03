@@ -9,10 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"math"
 	stdlibnet "net"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -151,58 +148,6 @@ func (data *UserData) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err
 	}
 
 	return csr, nil
-}
-
-// Download initializes a UserData struct from a remote URL.
-// nolint: gocyclo
-func Download(url string, headers *map[string]string) (data *UserData, err error) {
-	// TODO(andrewrynhard): Implement functional options.
-	maxRetries := 10
-	maxWait := float64(64)
-
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return
-	}
-
-	if headers != nil {
-		for k, v := range *headers {
-			req.Header.Set(k, v)
-		}
-	}
-
-	var resp *http.Response
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		resp, err = client.Do(req)
-		if err != nil {
-			return
-		}
-		// nolint: errcheck
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("Received %d\n", resp.StatusCode)
-			snooze := math.Pow(2, float64(attempt))
-			if snooze > maxWait {
-				snooze = maxWait
-			}
-			time.Sleep(time.Duration(snooze) * time.Second)
-			continue
-		}
-
-		dataBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return data, fmt.Errorf("read user data: %s", err.Error())
-		}
-
-		data = &UserData{}
-		if err := yaml.Unmarshal(dataBytes, data); err != nil {
-			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
-		}
-		return data, data.Validate()
-	}
-	return data, fmt.Errorf("failed to download userdata from: %s", url)
 }
 
 // Open is a convenience function that reads the user data from disk, and

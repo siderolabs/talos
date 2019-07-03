@@ -118,7 +118,7 @@ func (a *AWS) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (a *AWS) UserData() (*userdata.UserData, error) {
-	return userdata.Download(AWSUserDataEndpoint, nil)
+	return userdata.Download(AWSUserDataEndpoint)
 }
 
 // Prepare implements the platform.Platform interface and handles initial host preparation.
