@@ -68,7 +68,7 @@ func Prepare(data *userdata.UserData) (err error) {
 	}
 
 	var exists bool
-	if exists, err = Exists(); err != nil {
+	if exists, err = Exists(data.Install.Boot.InstallDevice.Device); err != nil {
 		return err
 	}
 

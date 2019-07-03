@@ -30,6 +30,84 @@ type ProbedBlockDevice struct {
 	Path       string
 }
 
+// All probes a block device's file system for the given label.
+func All() (probed []*ProbedBlockDevice, err error) {
+	var infos []os.FileInfo
+	if infos, err = ioutil.ReadDir("/sys/block"); err != nil {
+		return nil, err
+	}
+
+	for _, info := range infos {
+		devpath := "/dev/" + info.Name()
+		probed, err = probeFilesystem(devpath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return probed, nil
+}
+
+// FileSystem probes the provided path's file system.
+func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
+	var f *os.File
+	if f, err = os.OpenFile(path, os.O_RDONLY, os.ModeDevice); err != nil {
+		return nil, err
+	}
+	// nolint: errcheck
+	defer f.Close()
+
+	superblocks := []filesystem.SuperBlocker{
+		&iso9660.SuperBlock{},
+		&vfat.SuperBlock{},
+		&xfs.SuperBlock{},
+	}
+
+	for _, sb := range superblocks {
+		if _, err = f.Seek(sb.Offset(), io.SeekStart); err != nil {
+			return nil, err
+		}
+
+		err = binary.Read(f, binary.BigEndian, sb)
+		if err != nil {
+			return nil, err
+		}
+		if sb.Is() {
+			return sb, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// GetDevWithFileSystemLabel probes all known block device's file systems for
+// the given label.
+func GetDevWithFileSystemLabel(value string) (probe *ProbedBlockDevice, err error) {
+	var probed []*ProbedBlockDevice
+	if probed, err = All(); err != nil {
+		return nil, err
+	}
+
+	return filterByLabel(probed, value)
+}
+
+// DevForFileSystemLabel probes a block device's file systems for the
+// given label.
+func DevForFileSystemLabel(devpath, value string) (probe *ProbedBlockDevice, err error) {
+	var probed []*ProbedBlockDevice
+	probed, err = probeFilesystem(devpath)
+	if err != nil {
+		return nil, err
+	}
+
+	probe, err = filterByLabel(probed, value)
+	if err != nil {
+		return nil, err
+	}
+
+	return probe, err
+}
+
 func probe(devpath string) (devpaths []string) {
 	devpaths = []string{}
 
@@ -77,79 +155,32 @@ func probe(devpath string) (devpaths []string) {
 	return devpaths
 }
 
-// All probes a block device's file system for the given label.
-func All() (probed []*ProbedBlockDevice, err error) {
-	var infos []os.FileInfo
-	if infos, err = ioutil.ReadDir("/sys/block"); err != nil {
-		return nil, err
-	}
-
-	for _, info := range infos {
-		devpath := "/dev/" + info.Name()
-		for _, path := range probe(devpath) {
-			var (
-				bd *blockdevice.BlockDevice
-				sb filesystem.SuperBlocker
-			)
-			// We ignore the error here because there is the
-			// possibility that opening the block device fails for
-			// good reason (e.g. no partition table, read-only
-			// filesystem), but the block device does have a
-			// filesystem. This is currently a limitation in our
-			// blockdevice package. We should make that package
-			// better and update the code here.
-			// nolint: errcheck
-			bd, _ = blockdevice.Open(devpath)
-			if sb, err = FileSystem(path); err != nil {
-				return nil, errors.Wrap(err, "unexpected error when reading super block")
-			}
-
-			probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: path})
+func probeFilesystem(devpath string) (probed []*ProbedBlockDevice, err error) {
+	for _, path := range probe(devpath) {
+		var (
+			bd *blockdevice.BlockDevice
+			sb filesystem.SuperBlocker
+		)
+		// We ignore the error here because there is the
+		// possibility that opening the block device fails for
+		// good reason (e.g. no partition table, read-only
+		// filesystem), but the block device does have a
+		// filesystem. This is currently a limitation in our
+		// blockdevice package. We should make that package
+		// better and update the code here.
+		// nolint: errcheck
+		bd, _ = blockdevice.Open(devpath)
+		if sb, err = FileSystem(path); err != nil {
+			return nil, errors.Wrap(err, "unexpected error when reading super block")
 		}
+
+		probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: path})
 	}
 
 	return probed, nil
 }
 
-// FileSystem probes the provided path's file system.
-func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
-	var f *os.File
-	if f, err = os.OpenFile(path, os.O_RDONLY, os.ModeDevice); err != nil {
-		return nil, err
-	}
-	// nolint: errcheck
-	defer f.Close()
-
-	superblocks := []filesystem.SuperBlocker{
-		&iso9660.SuperBlock{},
-		&vfat.SuperBlock{},
-		&xfs.SuperBlock{},
-	}
-
-	for _, sb := range superblocks {
-		if _, err = f.Seek(sb.Offset(), io.SeekStart); err != nil {
-			return nil, err
-		}
-
-		err = binary.Read(f, binary.BigEndian, sb)
-		if err != nil {
-			return nil, err
-		}
-		if sb.Is() {
-			return sb, nil
-		}
-	}
-
-	return nil, nil
-}
-
-// GetDevWithFileSystemLabel probes a block device's file system for the given label.
-func GetDevWithFileSystemLabel(value string) (probe *ProbedBlockDevice, err error) {
-	var probed []*ProbedBlockDevice
-	if probed, err = All(); err != nil {
-		return nil, err
-	}
-
+func filterByLabel(probed []*ProbedBlockDevice, value string) (probe *ProbedBlockDevice, err error) {
 	for _, probe = range probed {
 		switch sb := probe.SuperBlock.(type) {
 		case *iso9660.SuperBlock:
