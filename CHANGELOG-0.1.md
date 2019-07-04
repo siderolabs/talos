@@ -1,681 +1,693 @@
-# [v0.1.0-beta.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.1.0-beta.0) (2019-06-27)
+# [0.1.0-beta.1](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-04)
+
 
 ### Bug Fixes
 
-* Add gitmeta as dependency for push ([#718](https://github.com/andrewrynhard/talos/issues/718)) ([8a5acff](https://github.com/andrewrynhard/talos/commit/8a5acff))
-* containers test by locking image to specific tag ([#734](https://github.com/andrewrynhard/talos/issues/734)) ([89b876c](https://github.com/andrewrynhard/talos/commit/89b876c))
-* ensure index remains in bounds for ud gen ([#710](https://github.com/andrewrynhard/talos/issues/710)) ([921114d](https://github.com/andrewrynhard/talos/commit/921114d))
-* **init:** Add modules mountpoint for kube services ([#767](https://github.com/andrewrynhard/talos/issues/767)) ([d935ee0](https://github.com/andrewrynhard/talos/commit/d935ee0))
-* **init:** fix leaky ticker ([#784](https://github.com/andrewrynhard/talos/issues/784)) ([4aaa7f6](https://github.com/andrewrynhard/talos/commit/4aaa7f6))
-* **init:** use 127.0.0.1 IP in healthchecks to avoid resolver weirdness ([#715](https://github.com/andrewrynhard/talos/issues/715)) ([7a4a677](https://github.com/andrewrynhard/talos/commit/7a4a677))
-* **osctl:** allow '-target' flag for `osctl restart` ([#732](https://github.com/andrewrynhard/talos/issues/732)) ([0c0a034](https://github.com/andrewrynhard/talos/commit/0c0a034))
-* **osctl:** avoid panic on empty 'talosconfig' ([#725](https://github.com/andrewrynhard/talos/issues/725)) ([f5969d2](https://github.com/andrewrynhard/talos/commit/f5969d2))
-* **osctl:** display non-fatal errors from ps/stats in osctl ([#724](https://github.com/andrewrynhard/talos/issues/724)) ([f200eb7](https://github.com/andrewrynhard/talos/commit/f200eb7))
-* **osctl:** Revert "display non-fatal errors from ps/stats in osctl ([#724](https://github.com/andrewrynhard/talos/issues/724))" ([#727](https://github.com/andrewrynhard/talos/issues/727)) ([fb320a8](https://github.com/andrewrynhard/talos/commit/fb320a8))
-* **proxyd:** Add support for dropping broken backends ([#790](https://github.com/andrewrynhard/talos/issues/790)) ([6a0684a](https://github.com/andrewrynhard/talos/commit/6a0684a))
-* run basic-integration on nightly cron ([#735](https://github.com/andrewrynhard/talos/issues/735)) ([1178896](https://github.com/andrewrynhard/talos/commit/1178896))
-* top-level docs now appear properly with sidebar ([#785](https://github.com/andrewrynhard/talos/issues/785)) ([19594b3](https://github.com/andrewrynhard/talos/commit/19594b3))
-* update hack/dev for new userdata location ([#777](https://github.com/andrewrynhard/talos/issues/777)) ([0131f83](https://github.com/andrewrynhard/talos/commit/0131f83))
-* we don't need no stinkin' localapiendpoint ([#741](https://github.com/andrewrynhard/talos/issues/741)) ([8a89ecd](https://github.com/andrewrynhard/talos/commit/8a89ecd))
-* **proxyd:** Fix backend deletion ([#729](https://github.com/andrewrynhard/talos/issues/729)) ([c88b6fc](https://github.com/andrewrynhard/talos/commit/c88b6fc))
-* **proxyd:** remove self-hosted label in listwatch ([#782](https://github.com/andrewrynhard/talos/issues/782)) ([007290a](https://github.com/andrewrynhard/talos/commit/007290a))
-* **proxyd:** Use local apiserver endpoint ([#776](https://github.com/andrewrynhard/talos/issues/776)) ([acf975b](https://github.com/andrewrynhard/talos/commit/acf975b))
+* move to crypto/rand for token gen ([#794](https://github.com/talos-systems/talos/issues/794)) ([402c597](https://github.com/talos-systems/talos/commit/402c597))
+* **init:** secret data at rest encryption key should be truly random ([#799](https://github.com/talos-systems/talos/issues/799)) ([349aabf](https://github.com/talos-systems/talos/commit/349aabf))
+* probe specified install device ([#818](https://github.com/talos-systems/talos/issues/818)) ([#820](https://github.com/talos-systems/talos/issues/820)) ([3010bd5](https://github.com/talos-systems/talos/commit/3010bd5))
+
+
+
+# [0.1.0-beta.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.1.0-beta.0) (2019-06-27)
+
+
+### Bug Fixes
+
+* Add gitmeta as dependency for push ([#718](https://github.com/talos-systems/talos/issues/718)) ([8a5acff](https://github.com/talos-systems/talos/commit/8a5acff))
+* containers test by locking image to specific tag ([#734](https://github.com/talos-systems/talos/issues/734)) ([89b876c](https://github.com/talos-systems/talos/commit/89b876c))
+* ensure index remains in bounds for ud gen ([#710](https://github.com/talos-systems/talos/issues/710)) ([921114d](https://github.com/talos-systems/talos/commit/921114d))
+* **init:** Add modules mountpoint for kube services ([#767](https://github.com/talos-systems/talos/issues/767)) ([d935ee0](https://github.com/talos-systems/talos/commit/d935ee0))
+* **init:** fix leaky ticker ([#784](https://github.com/talos-systems/talos/issues/784)) ([4aaa7f6](https://github.com/talos-systems/talos/commit/4aaa7f6))
+* **init:** use 127.0.0.1 IP in healthchecks to avoid resolver weirdness ([#715](https://github.com/talos-systems/talos/issues/715)) ([7a4a677](https://github.com/talos-systems/talos/commit/7a4a677))
+* **osctl:** allow '-target' flag for `osctl restart` ([#732](https://github.com/talos-systems/talos/issues/732)) ([0c0a034](https://github.com/talos-systems/talos/commit/0c0a034))
+* **osctl:** avoid panic on empty 'talosconfig' ([#725](https://github.com/talos-systems/talos/issues/725)) ([f5969d2](https://github.com/talos-systems/talos/commit/f5969d2))
+* **osctl:** display non-fatal errors from ps/stats in osctl ([#724](https://github.com/talos-systems/talos/issues/724)) ([f200eb7](https://github.com/talos-systems/talos/commit/f200eb7))
+* **osctl:** Revert "display non-fatal errors from ps/stats in osctl ([#724](https://github.com/talos-systems/talos/issues/724))" ([#727](https://github.com/talos-systems/talos/issues/727)) ([fb320a8](https://github.com/talos-systems/talos/commit/fb320a8))
+* **proxyd:** Add support for dropping broken backends ([#790](https://github.com/talos-systems/talos/issues/790)) ([6a0684a](https://github.com/talos-systems/talos/commit/6a0684a))
+* run basic-integration on nightly cron ([#735](https://github.com/talos-systems/talos/issues/735)) ([1178896](https://github.com/talos-systems/talos/commit/1178896))
+* top-level docs now appear properly with sidebar ([#785](https://github.com/talos-systems/talos/issues/785)) ([19594b3](https://github.com/talos-systems/talos/commit/19594b3))
+* update hack/dev for new userdata location ([#777](https://github.com/talos-systems/talos/issues/777)) ([0131f83](https://github.com/talos-systems/talos/commit/0131f83))
+* we don't need no stinkin' localapiendpoint ([#741](https://github.com/talos-systems/talos/issues/741)) ([8a89ecd](https://github.com/talos-systems/talos/commit/8a89ecd))
+* **proxyd:** Fix backend deletion ([#729](https://github.com/talos-systems/talos/issues/729)) ([c88b6fc](https://github.com/talos-systems/talos/commit/c88b6fc))
+* **proxyd:** remove self-hosted label in listwatch ([#782](https://github.com/talos-systems/talos/issues/782)) ([007290a](https://github.com/talos-systems/talos/commit/007290a))
+* **proxyd:** Use local apiserver endpoint ([#776](https://github.com/talos-systems/talos/issues/776)) ([acf975b](https://github.com/talos-systems/talos/commit/acf975b))
 
 
 ### Features
 
-* **ci:** enable nightly e2e tests ([#716](https://github.com/andrewrynhard/talos/issues/716)) ([4ba12fe](https://github.com/andrewrynhard/talos/commit/4ba12fe))
-* **init:** Add service stop api ([#708](https://github.com/andrewrynhard/talos/issues/708)) ([d68e303](https://github.com/andrewrynhard/talos/commit/d68e303))
-* **init:** Add support for kubeadm reset during upgrade ([#714](https://github.com/andrewrynhard/talos/issues/714)) ([0d5f521](https://github.com/andrewrynhard/talos/commit/0d5f521))
-* **init:** Add support for stopping individual services ([#706](https://github.com/andrewrynhard/talos/issues/706)) ([1a01440](https://github.com/andrewrynhard/talos/commit/1a01440))
-* **init:** Implement 'ls' command ([#721](https://github.com/andrewrynhard/talos/issues/721)) ([532a53b](https://github.com/andrewrynhard/talos/commit/532a53b)), closes [#719](https://github.com/andrewrynhard/talos/issues/719)
-* **init:** move 'ls' API to init from osd ([#755](https://github.com/andrewrynhard/talos/issues/755)) ([76071ab](https://github.com/andrewrynhard/talos/commit/76071ab)), closes [#752](https://github.com/andrewrynhard/talos/issues/752)
-* **init:** unify filesystem walkers for `ls`/`cp` APIs ([#779](https://github.com/andrewrynhard/talos/issues/779)) ([6d5ee0c](https://github.com/andrewrynhard/talos/commit/6d5ee0c))
-* add support for upgrading init nodes ([#761](https://github.com/andrewrynhard/talos/issues/761)) ([ebc725a](https://github.com/andrewrynhard/talos/commit/ebc725a))
-* **osctl:** implement 'cp' to copy files out of the Talos node ([#740](https://github.com/andrewrynhard/talos/issues/740)) ([9ed45f7](https://github.com/andrewrynhard/talos/commit/9ed45f7))
-* **osctl:** improve output of `stats` and `ps` commands ([#788](https://github.com/andrewrynhard/talos/issues/788)) ([17f28d3](https://github.com/andrewrynhard/talos/commit/17f28d3))
-* **osd:** extend Routes API ([#756](https://github.com/andrewrynhard/talos/issues/756)) ([81163ce](https://github.com/andrewrynhard/talos/commit/81163ce))
-* enable debug in udevd service ([#783](https://github.com/andrewrynhard/talos/issues/783)) ([fde6b4b](https://github.com/andrewrynhard/talos/commit/fde6b4b))
-* use eudev for udevd ([#780](https://github.com/andrewrynhard/talos/issues/780)) ([85afe4f](https://github.com/andrewrynhard/talos/commit/85afe4f))
+* **ci:** enable nightly e2e tests ([#716](https://github.com/talos-systems/talos/issues/716)) ([4ba12fe](https://github.com/talos-systems/talos/commit/4ba12fe))
+* **init:** Add service stop api ([#708](https://github.com/talos-systems/talos/issues/708)) ([d68e303](https://github.com/talos-systems/talos/commit/d68e303))
+* **init:** Add support for kubeadm reset during upgrade ([#714](https://github.com/talos-systems/talos/issues/714)) ([0d5f521](https://github.com/talos-systems/talos/commit/0d5f521))
+* **init:** Add support for stopping individual services ([#706](https://github.com/talos-systems/talos/issues/706)) ([1a01440](https://github.com/talos-systems/talos/commit/1a01440))
+* **init:** Implement 'ls' command ([#721](https://github.com/talos-systems/talos/issues/721)) ([532a53b](https://github.com/talos-systems/talos/commit/532a53b)), closes [#719](https://github.com/talos-systems/talos/issues/719)
+* **init:** move 'ls' API to init from osd ([#755](https://github.com/talos-systems/talos/issues/755)) ([76071ab](https://github.com/talos-systems/talos/commit/76071ab)), closes [#752](https://github.com/talos-systems/talos/issues/752)
+* **init:** unify filesystem walkers for `ls`/`cp` APIs ([#779](https://github.com/talos-systems/talos/issues/779)) ([6d5ee0c](https://github.com/talos-systems/talos/commit/6d5ee0c))
+* add support for upgrading init nodes ([#761](https://github.com/talos-systems/talos/issues/761)) ([ebc725a](https://github.com/talos-systems/talos/commit/ebc725a))
+* **osctl:** implement 'cp' to copy files out of the Talos node ([#740](https://github.com/talos-systems/talos/issues/740)) ([9ed45f7](https://github.com/talos-systems/talos/commit/9ed45f7))
+* **osctl:** improve output of `stats` and `ps` commands ([#788](https://github.com/talos-systems/talos/issues/788)) ([17f28d3](https://github.com/talos-systems/talos/commit/17f28d3))
+* **osd:** extend Routes API ([#756](https://github.com/talos-systems/talos/issues/756)) ([81163ce](https://github.com/talos-systems/talos/commit/81163ce))
+* enable debug in udevd service ([#783](https://github.com/talos-systems/talos/issues/783)) ([fde6b4b](https://github.com/talos-systems/talos/commit/fde6b4b))
+* use eudev for udevd ([#780](https://github.com/talos-systems/talos/issues/780)) ([85afe4f](https://github.com/talos-systems/talos/commit/85afe4f))
 
 
 ### Performance Improvements
 
-* **proxyd:** filter listwatch and remove backend on non-running pod ([#781](https://github.com/andrewrynhard/talos/issues/781)) ([5f26992](https://github.com/andrewrynhard/talos/commit/5f26992))
+* **proxyd:** filter listwatch and remove backend on non-running pod ([#781](https://github.com/talos-systems/talos/issues/781)) ([5f26992](https://github.com/talos-systems/talos/commit/5f26992))
 
 
 
-# [0.1.0-alpha.28](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2019-06-04)
-
-
-### Bug Fixes
-
-* Address lint warning for unknown linter ([#676](https://github.com/andrewrynhard/talos/issues/676)) ([b6a01d6](https://github.com/andrewrynhard/talos/commit/b6a01d6))
-* **init:** consider 'finished' services to be 'up' ([#699](https://github.com/andrewrynhard/talos/issues/699)) ([7b7f4d4](https://github.com/andrewrynhard/talos/commit/7b7f4d4))
-* **init:** move directory creation to kubeadm pre-func ([#688](https://github.com/andrewrynhard/talos/issues/688)) ([20f4d77](https://github.com/andrewrynhard/talos/commit/20f4d77))
-* **osctl:** don't print message on first ^C ([#704](https://github.com/andrewrynhard/talos/issues/704)) ([f96d3ce](https://github.com/andrewrynhard/talos/commit/f96d3ce))
-* **osctl:** Generate correct config with master IPs ([#681](https://github.com/andrewrynhard/talos/issues/681)) ([6cf260c](https://github.com/andrewrynhard/talos/commit/6cf260c))
-* don't set BUILDKIT_CACHE to empty string in Makefile ([#705](https://github.com/andrewrynhard/talos/issues/705)) ([16530db](https://github.com/andrewrynhard/talos/commit/16530db))
-* ensure shebang at top of userdata ([#695](https://github.com/andrewrynhard/talos/issues/695)) ([313a988](https://github.com/andrewrynhard/talos/commit/313a988))
-* **osd:** consistent container ids in stats, ps and reset ([#707](https://github.com/andrewrynhard/talos/issues/707)) ([d9f4f37](https://github.com/andrewrynhard/talos/commit/d9f4f37)), closes [#689](https://github.com/andrewrynhard/talos/issues/689) [#690](https://github.com/andrewrynhard/talos/issues/690)
-* **osd:** Sanitize request.id for log streams ([#673](https://github.com/andrewrynhard/talos/issues/673)) ([b0dab6e](https://github.com/andrewrynhard/talos/commit/b0dab6e))
-
-
-### Features
-
-* **init:** Add initToken parameter to userdata ([#664](https://github.com/andrewrynhard/talos/issues/664)) ([a64de7e](https://github.com/andrewrynhard/talos/commit/a64de7e))
-* **init:** Add support for control plane join config ([#700](https://github.com/andrewrynhard/talos/issues/700)) ([8537e7e](https://github.com/andrewrynhard/talos/commit/8537e7e))
-* **init:** expose networkd as goroutine-based server ([#682](https://github.com/andrewrynhard/talos/issues/682)) ([40a5b7c](https://github.com/andrewrynhard/talos/commit/40a5b7c))
-* **init:** implement service dependencies, correct start and shutdown ([#680](https://github.com/andrewrynhard/talos/issues/680)) ([a0188af](https://github.com/andrewrynhard/talos/commit/a0188af))
-* **init:** Prioritize usage of local userdata ([#694](https://github.com/andrewrynhard/talos/issues/694)) ([a1e635a](https://github.com/andrewrynhard/talos/commit/a1e635a))
-* **init:** update 'waiting' state descritpion when conditions change ([#698](https://github.com/andrewrynhard/talos/issues/698)) ([32826e3](https://github.com/andrewrynhard/talos/commit/32826e3))
-* **osctl:** handle ^C by aborting context ([#693](https://github.com/andrewrynhard/talos/issues/693)) ([ca95469](https://github.com/andrewrynhard/talos/commit/ca95469))
-* leave etcd before upgrading ([#702](https://github.com/andrewrynhard/talos/issues/702)) ([b330d3b](https://github.com/andrewrynhard/talos/commit/b330d3b))
-* upgrade Kubernetes to v1.15.0-beta.1 ([#696](https://github.com/andrewrynhard/talos/issues/696)) ([f95f8f8](https://github.com/andrewrynhard/talos/commit/f95f8f8))
-
-
-
-# [0.1.0-alpha.27](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2019-05-20)
+# [0.1.0-alpha.28](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2019-06-04)
 
 
 ### Bug Fixes
 
-* add libressl to rootfs ([#659](https://github.com/andrewrynhard/talos/issues/659)) ([4bdcccf](https://github.com/andrewrynhard/talos/commit/4bdcccf))
-* **init:** fix containerd healthcheck leaking memory in init/containerd ([#661](https://github.com/andrewrynhard/talos/issues/661)) ([d034987](https://github.com/andrewrynhard/talos/commit/d034987))
-* **init:** mount /sys into kubelet container ([#660](https://github.com/andrewrynhard/talos/issues/660)) ([98d76d8](https://github.com/andrewrynhard/talos/commit/98d76d8))
-* **osctl:** output config without localAPIEndpoint ([#665](https://github.com/andrewrynhard/talos/issues/665)) ([d36d440](https://github.com/andrewrynhard/talos/commit/d36d440))
-* **osd:** Read talos service logs from file ([#663](https://github.com/andrewrynhard/talos/issues/663)) ([dd3d3fa](https://github.com/andrewrynhard/talos/commit/dd3d3fa))
+* Address lint warning for unknown linter ([#676](https://github.com/talos-systems/talos/issues/676)) ([b6a01d6](https://github.com/talos-systems/talos/commit/b6a01d6))
+* **init:** consider 'finished' services to be 'up' ([#699](https://github.com/talos-systems/talos/issues/699)) ([7b7f4d4](https://github.com/talos-systems/talos/commit/7b7f4d4))
+* **init:** move directory creation to kubeadm pre-func ([#688](https://github.com/talos-systems/talos/issues/688)) ([20f4d77](https://github.com/talos-systems/talos/commit/20f4d77))
+* **osctl:** don't print message on first ^C ([#704](https://github.com/talos-systems/talos/issues/704)) ([f96d3ce](https://github.com/talos-systems/talos/commit/f96d3ce))
+* **osctl:** Generate correct config with master IPs ([#681](https://github.com/talos-systems/talos/issues/681)) ([6cf260c](https://github.com/talos-systems/talos/commit/6cf260c))
+* don't set BUILDKIT_CACHE to empty string in Makefile ([#705](https://github.com/talos-systems/talos/issues/705)) ([16530db](https://github.com/talos-systems/talos/commit/16530db))
+* ensure shebang at top of userdata ([#695](https://github.com/talos-systems/talos/issues/695)) ([313a988](https://github.com/talos-systems/talos/commit/313a988))
+* **osd:** consistent container ids in stats, ps and reset ([#707](https://github.com/talos-systems/talos/issues/707)) ([d9f4f37](https://github.com/talos-systems/talos/commit/d9f4f37)), closes [#689](https://github.com/talos-systems/talos/issues/689) [#690](https://github.com/talos-systems/talos/issues/690)
+* **osd:** Sanitize request.id for log streams ([#673](https://github.com/talos-systems/talos/issues/673)) ([b0dab6e](https://github.com/talos-systems/talos/commit/b0dab6e))
 
 
 ### Features
 
-* **init:** implement health checks for services ([#656](https://github.com/andrewrynhard/talos/issues/656)) ([1dde9f8](https://github.com/andrewrynhard/talos/commit/1dde9f8))
-* add bootstrap token package ([#657](https://github.com/andrewrynhard/talos/issues/657)) ([ea4d3c4](https://github.com/andrewrynhard/talos/commit/ea4d3c4))
-* **init:** implement healthchecks for the services ([#667](https://github.com/andrewrynhard/talos/issues/667)) ([54168ce](https://github.com/andrewrynhard/talos/commit/54168ce))
-* **init:** implement services list API and osctl service CLI ([#662](https://github.com/andrewrynhard/talos/issues/662)) ([75b2ce7](https://github.com/andrewrynhard/talos/commit/75b2ce7))
-* add plural alias of service command ([#670](https://github.com/andrewrynhard/talos/issues/670)) ([496bb83](https://github.com/andrewrynhard/talos/commit/496bb83))
-* use github.com/mdlayher/kobject ([#653](https://github.com/andrewrynhard/talos/issues/653)) ([92fb18e](https://github.com/andrewrynhard/talos/commit/92fb18e))
-* use osctl in installer ([#654](https://github.com/andrewrynhard/talos/issues/654)) ([18a1536](https://github.com/andrewrynhard/talos/commit/18a1536))
+* **init:** Add initToken parameter to userdata ([#664](https://github.com/talos-systems/talos/issues/664)) ([a64de7e](https://github.com/talos-systems/talos/commit/a64de7e))
+* **init:** Add support for control plane join config ([#700](https://github.com/talos-systems/talos/issues/700)) ([8537e7e](https://github.com/talos-systems/talos/commit/8537e7e))
+* **init:** expose networkd as goroutine-based server ([#682](https://github.com/talos-systems/talos/issues/682)) ([40a5b7c](https://github.com/talos-systems/talos/commit/40a5b7c))
+* **init:** implement service dependencies, correct start and shutdown ([#680](https://github.com/talos-systems/talos/issues/680)) ([a0188af](https://github.com/talos-systems/talos/commit/a0188af))
+* **init:** Prioritize usage of local userdata ([#694](https://github.com/talos-systems/talos/issues/694)) ([a1e635a](https://github.com/talos-systems/talos/commit/a1e635a))
+* **init:** update 'waiting' state descritpion when conditions change ([#698](https://github.com/talos-systems/talos/issues/698)) ([32826e3](https://github.com/talos-systems/talos/commit/32826e3))
+* **osctl:** handle ^C by aborting context ([#693](https://github.com/talos-systems/talos/issues/693)) ([ca95469](https://github.com/talos-systems/talos/commit/ca95469))
+* leave etcd before upgrading ([#702](https://github.com/talos-systems/talos/issues/702)) ([b330d3b](https://github.com/talos-systems/talos/commit/b330d3b))
+* upgrade Kubernetes to v1.15.0-beta.1 ([#696](https://github.com/talos-systems/talos/issues/696)) ([f95f8f8](https://github.com/talos-systems/talos/commit/f95f8f8))
 
 
 
-# [0.1.0-alpha.26](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2019-05-14)
+# [0.1.0-alpha.27](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2019-05-20)
 
 
 ### Bug Fixes
 
-* allow no trustd endpoints to be specified ([#634](https://github.com/andrewrynhard/talos/issues/634)) ([265a94f](https://github.com/andrewrynhard/talos/commit/265a94f))
-* Update filesystem check to open device as a device ([#641](https://github.com/andrewrynhard/talos/issues/641)) ([8548271](https://github.com/andrewrynhard/talos/commit/8548271))
-* use the correct param in root label check ([#622](https://github.com/andrewrynhard/talos/issues/622)) ([9d1cc92](https://github.com/andrewrynhard/talos/commit/9d1cc92))
-* **init:** don't close ACPI listen handle too early ([#647](https://github.com/andrewrynhard/talos/issues/647)) ([3dc5606](https://github.com/andrewrynhard/talos/commit/3dc5606))
-* **init:** unlink unix bind address ([#643](https://github.com/andrewrynhard/talos/issues/643)) ([967e547](https://github.com/andrewrynhard/talos/commit/967e547))
-* **osctl:** Fix formatting of command/args to be useful ([#638](https://github.com/andrewrynhard/talos/issues/638)) ([3d5d419](https://github.com/andrewrynhard/talos/commit/3d5d419))
-* **osctl:** Fix panic on osctl df if error is returned ([#646](https://github.com/andrewrynhard/talos/issues/646)) ([5485b9e](https://github.com/andrewrynhard/talos/commit/5485b9e))
-* **osctl:** output talosconfig on generate ([#627](https://github.com/andrewrynhard/talos/issues/627)) ([9b5b2f0](https://github.com/andrewrynhard/talos/commit/9b5b2f0))
-* **osd:** Use correct context in stats endpoint ([#644](https://github.com/andrewrynhard/talos/issues/644)) ([a6989db](https://github.com/andrewrynhard/talos/commit/a6989db))
+* add libressl to rootfs ([#659](https://github.com/talos-systems/talos/issues/659)) ([4bdcccf](https://github.com/talos-systems/talos/commit/4bdcccf))
+* **init:** fix containerd healthcheck leaking memory in init/containerd ([#661](https://github.com/talos-systems/talos/issues/661)) ([d034987](https://github.com/talos-systems/talos/commit/d034987))
+* **init:** mount /sys into kubelet container ([#660](https://github.com/talos-systems/talos/issues/660)) ([98d76d8](https://github.com/talos-systems/talos/commit/98d76d8))
+* **osctl:** output config without localAPIEndpoint ([#665](https://github.com/talos-systems/talos/issues/665)) ([d36d440](https://github.com/talos-systems/talos/commit/d36d440))
+* **osd:** Read talos service logs from file ([#663](https://github.com/talos-systems/talos/issues/663)) ([dd3d3fa](https://github.com/talos-systems/talos/commit/dd3d3fa))
 
 
 ### Features
 
-* add ability to create multiple entries in extlinux.conf ([#636](https://github.com/andrewrynhard/talos/issues/636)) ([64c4835](https://github.com/andrewrynhard/talos/commit/64c4835))
-* Add additional kubernetes certs ([#619](https://github.com/andrewrynhard/talos/issues/619)) ([2c0ec43](https://github.com/andrewrynhard/talos/commit/2c0ec43))
-* add helper package for cordon and drain ([#626](https://github.com/andrewrynhard/talos/issues/626)) ([fca2b9d](https://github.com/andrewrynhard/talos/commit/fca2b9d))
-* **init:** Add upgrade endpoint ([#623](https://github.com/andrewrynhard/talos/issues/623)) ([0b33280](https://github.com/andrewrynhard/talos/commit/0b33280))
-* add support for UEFI ([#642](https://github.com/andrewrynhard/talos/issues/642)) ([3c52f5e](https://github.com/andrewrynhard/talos/commit/3c52f5e))
-* **init:** core health check package ([#632](https://github.com/andrewrynhard/talos/issues/632)) ([995f4c6](https://github.com/andrewrynhard/talos/commit/995f4c6))
-* **osctl:** add flag for number of workers to create ([#625](https://github.com/andrewrynhard/talos/issues/625)) ([2ea7e05](https://github.com/andrewrynhard/talos/commit/2ea7e05))
-* improve package for /proc/cmdline parsing and management ([#645](https://github.com/andrewrynhard/talos/issues/645)) ([ff58642](https://github.com/andrewrynhard/talos/commit/ff58642))
-* remove EC2 verification step ([#631](https://github.com/andrewrynhard/talos/issues/631)) ([5160cbc](https://github.com/andrewrynhard/talos/commit/5160cbc))
-* update partition layout to accomodate upgrades ([#621](https://github.com/andrewrynhard/talos/issues/621)) ([86e17c9](https://github.com/andrewrynhard/talos/commit/86e17c9))
-* update toolchain ([#628](https://github.com/andrewrynhard/talos/issues/628)) ([08789a0](https://github.com/andrewrynhard/talos/commit/08789a0))
-* upgrade Linux to v4.19.40 ([#630](https://github.com/andrewrynhard/talos/issues/630)) ([21c0b05](https://github.com/andrewrynhard/talos/commit/21c0b05))
+* **init:** implement health checks for services ([#656](https://github.com/talos-systems/talos/issues/656)) ([1dde9f8](https://github.com/talos-systems/talos/commit/1dde9f8))
+* add bootstrap token package ([#657](https://github.com/talos-systems/talos/issues/657)) ([ea4d3c4](https://github.com/talos-systems/talos/commit/ea4d3c4))
+* **init:** implement healthchecks for the services ([#667](https://github.com/talos-systems/talos/issues/667)) ([54168ce](https://github.com/talos-systems/talos/commit/54168ce))
+* **init:** implement services list API and osctl service CLI ([#662](https://github.com/talos-systems/talos/issues/662)) ([75b2ce7](https://github.com/talos-systems/talos/commit/75b2ce7))
+* add plural alias of service command ([#670](https://github.com/talos-systems/talos/issues/670)) ([496bb83](https://github.com/talos-systems/talos/commit/496bb83))
+* use github.com/mdlayher/kobject ([#653](https://github.com/talos-systems/talos/issues/653)) ([92fb18e](https://github.com/talos-systems/talos/commit/92fb18e))
+* use osctl in installer ([#654](https://github.com/talos-systems/talos/issues/654)) ([18a1536](https://github.com/talos-systems/talos/commit/18a1536))
 
 
 
-# [0.1.0-alpha.25](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2019-05-05)
+# [0.1.0-alpha.26](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2019-05-14)
 
 
 ### Bug Fixes
 
-* add support for trustd username and password auth back in ([#604](https://github.com/andrewrynhard/talos/issues/604)) ([f045b10](https://github.com/andrewrynhard/talos/commit/f045b10))
-* **init:** start udevd with parent cgroup devices ([#605](https://github.com/andrewrynhard/talos/issues/605)) ([e4c5385](https://github.com/andrewrynhard/talos/commit/e4c5385))
-* **osctl:** ensure image is present ([#599](https://github.com/andrewrynhard/talos/issues/599)) ([13739b4](https://github.com/andrewrynhard/talos/commit/13739b4))
+* allow no trustd endpoints to be specified ([#634](https://github.com/talos-systems/talos/issues/634)) ([265a94f](https://github.com/talos-systems/talos/commit/265a94f))
+* Update filesystem check to open device as a device ([#641](https://github.com/talos-systems/talos/issues/641)) ([8548271](https://github.com/talos-systems/talos/commit/8548271))
+* use the correct param in root label check ([#622](https://github.com/talos-systems/talos/issues/622)) ([9d1cc92](https://github.com/talos-systems/talos/commit/9d1cc92))
+* **init:** don't close ACPI listen handle too early ([#647](https://github.com/talos-systems/talos/issues/647)) ([3dc5606](https://github.com/talos-systems/talos/commit/3dc5606))
+* **init:** unlink unix bind address ([#643](https://github.com/talos-systems/talos/issues/643)) ([967e547](https://github.com/talos-systems/talos/commit/967e547))
+* **osctl:** Fix formatting of command/args to be useful ([#638](https://github.com/talos-systems/talos/issues/638)) ([3d5d419](https://github.com/talos-systems/talos/commit/3d5d419))
+* **osctl:** Fix panic on osctl df if error is returned ([#646](https://github.com/talos-systems/talos/issues/646)) ([5485b9e](https://github.com/talos-systems/talos/commit/5485b9e))
+* **osctl:** output talosconfig on generate ([#627](https://github.com/talos-systems/talos/issues/627)) ([9b5b2f0](https://github.com/talos-systems/talos/commit/9b5b2f0))
+* **osd:** Use correct context in stats endpoint ([#644](https://github.com/talos-systems/talos/issues/644)) ([a6989db](https://github.com/talos-systems/talos/commit/a6989db))
 
 
 ### Features
 
-* **init:** run udevd as a container ([#601](https://github.com/andrewrynhard/talos/issues/601)) ([0df1d9c](https://github.com/andrewrynhard/talos/commit/0df1d9c))
-* Add calico manifests for local dev setup ([#608](https://github.com/andrewrynhard/talos/issues/608)) ([a1ea03a](https://github.com/andrewrynhard/talos/commit/a1ea03a))
-* add support for ISO based installations ([#606](https://github.com/andrewrynhard/talos/issues/606)) ([00eb065](https://github.com/andrewrynhard/talos/commit/00eb065))
-* Validate userdata ([#593](https://github.com/andrewrynhard/talos/issues/593)) ([a5d31d9](https://github.com/andrewrynhard/talos/commit/a5d31d9))
-* **osctl:** add config generate command ([e4ba1ac](https://github.com/andrewrynhard/talos/commit/e4ba1ac))
+* add ability to create multiple entries in extlinux.conf ([#636](https://github.com/talos-systems/talos/issues/636)) ([64c4835](https://github.com/talos-systems/talos/commit/64c4835))
+* Add additional kubernetes certs ([#619](https://github.com/talos-systems/talos/issues/619)) ([2c0ec43](https://github.com/talos-systems/talos/commit/2c0ec43))
+* add helper package for cordon and drain ([#626](https://github.com/talos-systems/talos/issues/626)) ([fca2b9d](https://github.com/talos-systems/talos/commit/fca2b9d))
+* **init:** Add upgrade endpoint ([#623](https://github.com/talos-systems/talos/issues/623)) ([0b33280](https://github.com/talos-systems/talos/commit/0b33280))
+* add support for UEFI ([#642](https://github.com/talos-systems/talos/issues/642)) ([3c52f5e](https://github.com/talos-systems/talos/commit/3c52f5e))
+* **init:** core health check package ([#632](https://github.com/talos-systems/talos/issues/632)) ([995f4c6](https://github.com/talos-systems/talos/commit/995f4c6))
+* **osctl:** add flag for number of workers to create ([#625](https://github.com/talos-systems/talos/issues/625)) ([2ea7e05](https://github.com/talos-systems/talos/commit/2ea7e05))
+* improve package for /proc/cmdline parsing and management ([#645](https://github.com/talos-systems/talos/issues/645)) ([ff58642](https://github.com/talos-systems/talos/commit/ff58642))
+* remove EC2 verification step ([#631](https://github.com/talos-systems/talos/issues/631)) ([5160cbc](https://github.com/talos-systems/talos/commit/5160cbc))
+* update partition layout to accomodate upgrades ([#621](https://github.com/talos-systems/talos/issues/621)) ([86e17c9](https://github.com/talos-systems/talos/commit/86e17c9))
+* update toolchain ([#628](https://github.com/talos-systems/talos/issues/628)) ([08789a0](https://github.com/talos-systems/talos/commit/08789a0))
+* upgrade Linux to v4.19.40 ([#630](https://github.com/talos-systems/talos/issues/630)) ([21c0b05](https://github.com/talos-systems/talos/commit/21c0b05))
 
 
 
-# [0.1.0-alpha.24](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.23...v0.1.0-alpha.24) (2019-04-30)
+# [0.1.0-alpha.25](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2019-05-05)
 
 
 ### Bug Fixes
 
-* Explicitly set upstream/forward servers for coredns in dev setup ([#578](https://github.com/andrewrynhard/talos/issues/578)) ([50c51ac](https://github.com/andrewrynhard/talos/commit/50c51ac))
-* **osctl:** fix issue with downloading image ([#597](https://github.com/andrewrynhard/talos/issues/597)) ([0a4a48b](https://github.com/andrewrynhard/talos/commit/0a4a48b))
-* **osd:** read log files only on write events ([#583](https://github.com/andrewrynhard/talos/issues/583)) ([13f9177](https://github.com/andrewrynhard/talos/commit/13f9177))
+* add support for trustd username and password auth back in ([#604](https://github.com/talos-systems/talos/issues/604)) ([f045b10](https://github.com/talos-systems/talos/commit/f045b10))
+* **init:** start udevd with parent cgroup devices ([#605](https://github.com/talos-systems/talos/issues/605)) ([e4c5385](https://github.com/talos-systems/talos/commit/e4c5385))
+* **osctl:** ensure image is present ([#599](https://github.com/talos-systems/talos/issues/599)) ([13739b4](https://github.com/talos-systems/talos/commit/13739b4))
 
 
 ### Features
 
-* **init:** Add support for hostname kernel parameter ([#591](https://github.com/andrewrynhard/talos/issues/591)) ([7127998](https://github.com/andrewrynhard/talos/commit/7127998))
-* **init:** enforce KSPP kernel parameters ([#585](https://github.com/andrewrynhard/talos/issues/585)) ([020d11d](https://github.com/andrewrynhard/talos/commit/020d11d))
-* **init:** implement graceful shutdown of 'init' ([#562](https://github.com/andrewrynhard/talos/issues/562)) ([505b502](https://github.com/andrewrynhard/talos/commit/505b502))
-* **init:** implement init gRPC API, forward reboot to init ([#579](https://github.com/andrewrynhard/talos/issues/579)) ([ab2917e](https://github.com/andrewrynhard/talos/commit/ab2917e))
-* **init:** load only the images required by the node type ([#582](https://github.com/andrewrynhard/talos/issues/582)) ([2a4b56d](https://github.com/andrewrynhard/talos/commit/2a4b56d))
-* **osctl:** add ability to create docker based clusters ([#584](https://github.com/andrewrynhard/talos/issues/584)) ([9b4fec0](https://github.com/andrewrynhard/talos/commit/9b4fec0))
-* **osctl:** add df command ([#569](https://github.com/andrewrynhard/talos/issues/569)) ([a8fa1f5](https://github.com/andrewrynhard/talos/commit/a8fa1f5))
-* **osctl:** expose osd and api server ports on master-1 ([#592](https://github.com/andrewrynhard/talos/issues/592)) ([6e555c4](https://github.com/andrewrynhard/talos/commit/6e555c4))
-* **trustd:** use a token instead of username and password ([#586](https://github.com/andrewrynhard/talos/issues/586)) ([ea99788](https://github.com/andrewrynhard/talos/commit/ea99788))
-* add ability to generate userdata secrets ([#581](https://github.com/andrewrynhard/talos/issues/581)) ([2066221](https://github.com/andrewrynhard/talos/commit/2066221))
-* add package for generating userdata ([#574](https://github.com/andrewrynhard/talos/issues/574)) ([2f6d5e0](https://github.com/andrewrynhard/talos/commit/2f6d5e0))
-* add shutdown command ([#577](https://github.com/andrewrynhard/talos/issues/577)) ([fc05224](https://github.com/andrewrynhard/talos/commit/fc05224))
+* **init:** run udevd as a container ([#601](https://github.com/talos-systems/talos/issues/601)) ([0df1d9c](https://github.com/talos-systems/talos/commit/0df1d9c))
+* Add calico manifests for local dev setup ([#608](https://github.com/talos-systems/talos/issues/608)) ([a1ea03a](https://github.com/talos-systems/talos/commit/a1ea03a))
+* add support for ISO based installations ([#606](https://github.com/talos-systems/talos/issues/606)) ([00eb065](https://github.com/talos-systems/talos/commit/00eb065))
+* Validate userdata ([#593](https://github.com/talos-systems/talos/issues/593)) ([a5d31d9](https://github.com/talos-systems/talos/commit/a5d31d9))
+* **osctl:** add config generate command ([e4ba1ac](https://github.com/talos-systems/talos/commit/e4ba1ac))
 
 
 
-# [0.1.0-alpha.23](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2019-04-24)
+# [0.1.0-alpha.24](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.23...v0.1.0-alpha.24) (2019-04-30)
 
 
 ### Bug Fixes
 
-* **osd:** Fix osctl ps output ([#554](https://github.com/andrewrynhard/talos/issues/554)) ([46bdf23](https://github.com/andrewrynhard/talos/commit/46bdf23))
+* Explicitly set upstream/forward servers for coredns in dev setup ([#578](https://github.com/talos-systems/talos/issues/578)) ([50c51ac](https://github.com/talos-systems/talos/commit/50c51ac))
+* **osctl:** fix issue with downloading image ([#597](https://github.com/talos-systems/talos/issues/597)) ([0a4a48b](https://github.com/talos-systems/talos/commit/0a4a48b))
+* **osd:** read log files only on write events ([#583](https://github.com/talos-systems/talos/issues/583)) ([13f9177](https://github.com/talos-systems/talos/commit/13f9177))
 
 
 ### Features
 
-* detect if an install has already occurred ([#549](https://github.com/andrewrynhard/talos/issues/549)) ([0d6abdf](https://github.com/andrewrynhard/talos/commit/0d6abdf))
-* **osctl:** Add osctl top ([#560](https://github.com/andrewrynhard/talos/issues/560)) ([3f358b1](https://github.com/andrewrynhard/talos/commit/3f358b1))
+* **init:** Add support for hostname kernel parameter ([#591](https://github.com/talos-systems/talos/issues/591)) ([7127998](https://github.com/talos-systems/talos/commit/7127998))
+* **init:** enforce KSPP kernel parameters ([#585](https://github.com/talos-systems/talos/issues/585)) ([020d11d](https://github.com/talos-systems/talos/commit/020d11d))
+* **init:** implement graceful shutdown of 'init' ([#562](https://github.com/talos-systems/talos/issues/562)) ([505b502](https://github.com/talos-systems/talos/commit/505b502))
+* **init:** implement init gRPC API, forward reboot to init ([#579](https://github.com/talos-systems/talos/issues/579)) ([ab2917e](https://github.com/talos-systems/talos/commit/ab2917e))
+* **init:** load only the images required by the node type ([#582](https://github.com/talos-systems/talos/issues/582)) ([2a4b56d](https://github.com/talos-systems/talos/commit/2a4b56d))
+* **osctl:** add ability to create docker based clusters ([#584](https://github.com/talos-systems/talos/issues/584)) ([9b4fec0](https://github.com/talos-systems/talos/commit/9b4fec0))
+* **osctl:** add df command ([#569](https://github.com/talos-systems/talos/issues/569)) ([a8fa1f5](https://github.com/talos-systems/talos/commit/a8fa1f5))
+* **osctl:** expose osd and api server ports on master-1 ([#592](https://github.com/talos-systems/talos/issues/592)) ([6e555c4](https://github.com/talos-systems/talos/commit/6e555c4))
+* **trustd:** use a token instead of username and password ([#586](https://github.com/talos-systems/talos/issues/586)) ([ea99788](https://github.com/talos-systems/talos/commit/ea99788))
+* add ability to generate userdata secrets ([#581](https://github.com/talos-systems/talos/issues/581)) ([2066221](https://github.com/talos-systems/talos/commit/2066221))
+* add package for generating userdata ([#574](https://github.com/talos-systems/talos/issues/574)) ([2f6d5e0](https://github.com/talos-systems/talos/commit/2f6d5e0))
+* add shutdown command ([#577](https://github.com/talos-systems/talos/issues/577)) ([fc05224](https://github.com/talos-systems/talos/commit/fc05224))
 
 
 
-# [0.1.0-alpha.22](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2019-04-16)
+# [0.1.0-alpha.23](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2019-04-24)
 
 
 ### Bug Fixes
 
-* remove redundant netlink connection, use netlink.IsNotExist in init ([#511](https://github.com/andrewrynhard/talos/issues/511)) ([72f60b4](https://github.com/andrewrynhard/talos/commit/72f60b4))
+* **osd:** Fix osctl ps output ([#554](https://github.com/talos-systems/talos/issues/554)) ([46bdf23](https://github.com/talos-systems/talos/commit/46bdf23))
 
 
 ### Features
 
-* **initramfs:** Add support for specifying static routes ([#513](https://github.com/andrewrynhard/talos/issues/513)) ([3151f9d](https://github.com/andrewrynhard/talos/commit/3151f9d))
-* add support for extra disk management ([#524](https://github.com/andrewrynhard/talos/issues/524)) ([2faf36b](https://github.com/andrewrynhard/talos/commit/2faf36b))
-* log the xfs_growfs of the data partition ([#537](https://github.com/andrewrynhard/talos/issues/537)) ([47d2bbd](https://github.com/andrewrynhard/talos/commit/47d2bbd))
-* remove blockd ([#536](https://github.com/andrewrynhard/talos/issues/536)) ([a817e74](https://github.com/andrewrynhard/talos/commit/a817e74))
-* upgrade containerd to v1.2.6 ([#532](https://github.com/andrewrynhard/talos/issues/532)) ([a106e42](https://github.com/andrewrynhard/talos/commit/a106e42))
-* upgrade Kubernetes to v1.14.1 ([#530](https://github.com/andrewrynhard/talos/issues/530)) ([ae9e6ac](https://github.com/andrewrynhard/talos/commit/ae9e6ac))
-* upgrade Linux to v4.19.34 ([#531](https://github.com/andrewrynhard/talos/issues/531)) ([038e17c](https://github.com/andrewrynhard/talos/commit/038e17c))
+* detect if an install has already occurred ([#549](https://github.com/talos-systems/talos/issues/549)) ([0d6abdf](https://github.com/talos-systems/talos/commit/0d6abdf))
+* **osctl:** Add osctl top ([#560](https://github.com/talos-systems/talos/issues/560)) ([3f358b1](https://github.com/talos-systems/talos/commit/3f358b1))
 
 
 
-# [0.1.0-alpha.21](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2019-04-08)
+# [0.1.0-alpha.22](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2019-04-16)
 
 
 ### Bug Fixes
 
-* **osctl:** add missing flags ([#479](https://github.com/andrewrynhard/talos/issues/479)) ([380ba21](https://github.com/andrewrynhard/talos/commit/380ba21))
-* check link state before bringing it up ([#497](https://github.com/andrewrynhard/talos/issues/497)) ([7fac0df](https://github.com/andrewrynhard/talos/commit/7fac0df))
-* create GCE disk as disk.raw ([#498](https://github.com/andrewrynhard/talos/issues/498)) ([67d7abe](https://github.com/andrewrynhard/talos/commit/67d7abe))
-* remove static resolv.conf ([#491](https://github.com/andrewrynhard/talos/issues/491)) ([0926e72](https://github.com/andrewrynhard/talos/commit/0926e72))
+* remove redundant netlink connection, use netlink.IsNotExist in init ([#511](https://github.com/talos-systems/talos/issues/511)) ([72f60b4](https://github.com/talos-systems/talos/commit/72f60b4))
 
 
 ### Features
 
-* add network configuration support ([#476](https://github.com/andrewrynhard/talos/issues/476)) ([7d4db80](https://github.com/andrewrynhard/talos/commit/7d4db80))
+* **initramfs:** Add support for specifying static routes ([#513](https://github.com/talos-systems/talos/issues/513)) ([3151f9d](https://github.com/talos-systems/talos/commit/3151f9d))
+* add support for extra disk management ([#524](https://github.com/talos-systems/talos/issues/524)) ([2faf36b](https://github.com/talos-systems/talos/commit/2faf36b))
+* log the xfs_growfs of the data partition ([#537](https://github.com/talos-systems/talos/issues/537)) ([47d2bbd](https://github.com/talos-systems/talos/commit/47d2bbd))
+* remove blockd ([#536](https://github.com/talos-systems/talos/issues/536)) ([a817e74](https://github.com/talos-systems/talos/commit/a817e74))
+* upgrade containerd to v1.2.6 ([#532](https://github.com/talos-systems/talos/issues/532)) ([a106e42](https://github.com/talos-systems/talos/commit/a106e42))
+* upgrade Kubernetes to v1.14.1 ([#530](https://github.com/talos-systems/talos/issues/530)) ([ae9e6ac](https://github.com/talos-systems/talos/commit/ae9e6ac))
+* upgrade Linux to v4.19.34 ([#531](https://github.com/talos-systems/talos/issues/531)) ([038e17c](https://github.com/talos-systems/talos/commit/038e17c))
 
 
 
-# [0.1.0-alpha.20](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2019-04-02)
+# [0.1.0-alpha.21](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2019-04-08)
 
 
 ### Bug Fixes
 
-* revert runc to v1.0.0-rc.6 ([#470](https://github.com/andrewrynhard/talos/issues/470)) ([9bc2f8f](https://github.com/andrewrynhard/talos/commit/9bc2f8f))
+* **osctl:** add missing flags ([#479](https://github.com/talos-systems/talos/issues/479)) ([380ba21](https://github.com/talos-systems/talos/commit/380ba21))
+* check link state before bringing it up ([#497](https://github.com/talos-systems/talos/issues/497)) ([7fac0df](https://github.com/talos-systems/talos/commit/7fac0df))
+* create GCE disk as disk.raw ([#498](https://github.com/talos-systems/talos/issues/498)) ([67d7abe](https://github.com/talos-systems/talos/commit/67d7abe))
+* remove static resolv.conf ([#491](https://github.com/talos-systems/talos/issues/491)) ([0926e72](https://github.com/talos-systems/talos/commit/0926e72))
 
 
 ### Features
 
-* add power off functionality ([#462](https://github.com/andrewrynhard/talos/issues/462)) ([2e9a7ec](https://github.com/andrewrynhard/talos/commit/2e9a7ec))
-* **initramfs:** add support for refreshing dhcp lease ([#454](https://github.com/andrewrynhard/talos/issues/454)) ([75d1d89](https://github.com/andrewrynhard/talos/commit/75d1d89))
-* add basic ntp implementation ([#459](https://github.com/andrewrynhard/talos/issues/459)) ([3693cff](https://github.com/andrewrynhard/talos/commit/3693cff))
-* add packet support ([#473](https://github.com/andrewrynhard/talos/issues/473)) ([19f712e](https://github.com/andrewrynhard/talos/commit/19f712e))
-* dd bootloader components ([#438](https://github.com/andrewrynhard/talos/issues/438)) ([226697e](https://github.com/andrewrynhard/talos/commit/226697e))
-* install bootloader to block device ([#455](https://github.com/andrewrynhard/talos/issues/455)) ([31a00ef](https://github.com/andrewrynhard/talos/commit/31a00ef))
-* remove DenyEscalatingExec admission plugin ([#457](https://github.com/andrewrynhard/talos/issues/457)) ([6ae6118](https://github.com/andrewrynhard/talos/commit/6ae6118))
-* upgrade containerd to v1.2.5 ([#463](https://github.com/andrewrynhard/talos/issues/463)) ([30774fc](https://github.com/andrewrynhard/talos/commit/30774fc))
-* upgrade Kubernetes to v1.14.0 ([#466](https://github.com/andrewrynhard/talos/issues/466)) ([50253b8](https://github.com/andrewrynhard/talos/commit/50253b8))
-* upgrade Linux to v4.19.31 ([#464](https://github.com/andrewrynhard/talos/issues/464)) ([da21b90](https://github.com/andrewrynhard/talos/commit/da21b90))
-* upgrade runc to v1.0.0-rc.7 ([#469](https://github.com/andrewrynhard/talos/issues/469)) ([8dba7db](https://github.com/andrewrynhard/talos/commit/8dba7db))
+* add network configuration support ([#476](https://github.com/talos-systems/talos/issues/476)) ([7d4db80](https://github.com/talos-systems/talos/commit/7d4db80))
 
 
 
-# [0.1.0-alpha.19](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.18...v0.1.0-alpha.19) (2019-03-11)
+# [0.1.0-alpha.20](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2019-04-02)
 
 
 ### Bug Fixes
 
-* add initialization for userdata download ([#367](https://github.com/andrewrynhard/talos/issues/367)) ([12eeab2](https://github.com/andrewrynhard/talos/commit/12eeab2)), closes [#363](https://github.com/andrewrynhard/talos/issues/363)
-* add iptables to rootfs ([#378](https://github.com/andrewrynhard/talos/issues/378)) ([eed7388](https://github.com/andrewrynhard/talos/commit/eed7388))
-* add missing mounts and remove memory limits ([#442](https://github.com/andrewrynhard/talos/issues/442)) ([a2cee67](https://github.com/andrewrynhard/talos/commit/a2cee67))
-* assign to existing target variable ([#436](https://github.com/andrewrynhard/talos/issues/436)) ([9f1e54c](https://github.com/andrewrynhard/talos/commit/9f1e54c))
-* delay `gitmeta` until needed in Makefile ([#407](https://github.com/andrewrynhard/talos/issues/407)) ([0ed9bc8](https://github.com/andrewrynhard/talos/commit/0ed9bc8))
-* distribute PKI from initial master to joining masters ([#426](https://github.com/andrewrynhard/talos/issues/426)) ([7528d89](https://github.com/andrewrynhard/talos/commit/7528d89))
-* **initramfs:** fix case where we download a non archive file ([#421](https://github.com/andrewrynhard/talos/issues/421)) ([83d979d](https://github.com/andrewrynhard/talos/commit/83d979d))
-* ensure DNS works in early boot ([#382](https://github.com/andrewrynhard/talos/issues/382)) ([078a664](https://github.com/andrewrynhard/talos/commit/078a664))
-* fallback on IP address when DHCP reply has no hostname ([#432](https://github.com/andrewrynhard/talos/issues/432)) ([08ee6c4](https://github.com/andrewrynhard/talos/commit/08ee6c4))
-* join masters in serial ([#437](https://github.com/andrewrynhard/talos/issues/437)) ([b6e6c46](https://github.com/andrewrynhard/talos/commit/b6e6c46))
-* mount /dev/shm as tmpfs ([#445](https://github.com/andrewrynhard/talos/issues/445)) ([1ee326b](https://github.com/andrewrynhard/talos/commit/1ee326b))
-* output userdata fails, ignore numcpu for kubeadm ([#398](https://github.com/andrewrynhard/talos/issues/398)) ([8e30f95](https://github.com/andrewrynhard/talos/commit/8e30f95))
-* write config changes to specified config file ([#416](https://github.com/andrewrynhard/talos/issues/416)) ([6d8e94d](https://github.com/andrewrynhard/talos/commit/6d8e94d))
+* revert runc to v1.0.0-rc.6 ([#470](https://github.com/talos-systems/talos/issues/470)) ([9bc2f8f](https://github.com/talos-systems/talos/commit/9bc2f8f))
 
 
 ### Features
 
-* add `docker-os` make target, Kubeadm.ExtraArgs, and a dev Makefile ([#446](https://github.com/andrewrynhard/talos/issues/446)) ([98e3920](https://github.com/andrewrynhard/talos/commit/98e3920))
-* add arg to target nodes per command ([#435](https://github.com/andrewrynhard/talos/issues/435)) ([0cf8dda](https://github.com/andrewrynhard/talos/commit/0cf8dda))
-* add automated PKI for joining nodes ([#406](https://github.com/andrewrynhard/talos/issues/406)) ([9e947c3](https://github.com/andrewrynhard/talos/commit/9e947c3))
-* add config flag to osctl ([#413](https://github.com/andrewrynhard/talos/issues/413)) ([4d5350e](https://github.com/andrewrynhard/talos/commit/4d5350e))
-* add container based deploy support to init ([#447](https://github.com/andrewrynhard/talos/issues/447)) ([b5f398d](https://github.com/andrewrynhard/talos/commit/b5f398d))
-* add DHCP client ([#427](https://github.com/andrewrynhard/talos/issues/427)) ([ee232b8](https://github.com/andrewrynhard/talos/commit/ee232b8))
-* add dosfstools to initramfs and rootfs ([#444](https://github.com/andrewrynhard/talos/issues/444)) ([d706803](https://github.com/andrewrynhard/talos/commit/d706803))
-* add gcloud integration ([#385](https://github.com/andrewrynhard/talos/issues/385)) ([85e35d3](https://github.com/andrewrynhard/talos/commit/85e35d3))
-* add hostname to node certificate SAN ([#415](https://github.com/andrewrynhard/talos/issues/415)) ([52d2660](https://github.com/andrewrynhard/talos/commit/52d2660))
-* add osinstall cli utility ([#368](https://github.com/andrewrynhard/talos/issues/368)) ([8ee9022](https://github.com/andrewrynhard/talos/commit/8ee9022))
-* add route printing to osctl ([#404](https://github.com/andrewrynhard/talos/issues/404)) ([a2704ee](https://github.com/andrewrynhard/talos/commit/a2704ee))
-* add TALOSCONFIG env var ([#422](https://github.com/andrewrynhard/talos/issues/422)) ([c63ef44](https://github.com/andrewrynhard/talos/commit/c63ef44))
-* allow user specified IP addresses in SANs ([#425](https://github.com/andrewrynhard/talos/issues/425)) ([b59f632](https://github.com/andrewrynhard/talos/commit/b59f632))
-* change AWS instance type to t2.micro ([#399](https://github.com/andrewrynhard/talos/issues/399)) ([a55b84a](https://github.com/andrewrynhard/talos/commit/a55b84a))
-* create certificates with all non-loopback addresses ([#424](https://github.com/andrewrynhard/talos/issues/424)) ([dce3e2c](https://github.com/andrewrynhard/talos/commit/dce3e2c))
-* log to stdout when in container mode ([#450](https://github.com/andrewrynhard/talos/issues/450)) ([1f08961](https://github.com/andrewrynhard/talos/commit/1f08961))
-* update gcc to 8.3.0, drop gcompat ([#433](https://github.com/andrewrynhard/talos/issues/433)) ([9de34cd](https://github.com/andrewrynhard/talos/commit/9de34cd))
-* upgrade containerd to v1.2.4 ([#395](https://github.com/andrewrynhard/talos/issues/395)) ([b963f5a](https://github.com/andrewrynhard/talos/commit/b963f5a))
-* upgrade linux to v4.19.23 ([#402](https://github.com/andrewrynhard/talos/issues/402)) ([c50b2e6](https://github.com/andrewrynhard/talos/commit/c50b2e6))
-* upgrade musl to 1.1.21 ([#401](https://github.com/andrewrynhard/talos/issues/401)) ([d8594f4](https://github.com/andrewrynhard/talos/commit/d8594f4))
-* **hack:** add osctl/kubelet dev tooling and document usage ([#449](https://github.com/andrewrynhard/talos/issues/449)) ([4f530e8](https://github.com/andrewrynhard/talos/commit/4f530e8))
+* add power off functionality ([#462](https://github.com/talos-systems/talos/issues/462)) ([2e9a7ec](https://github.com/talos-systems/talos/commit/2e9a7ec))
+* **initramfs:** add support for refreshing dhcp lease ([#454](https://github.com/talos-systems/talos/issues/454)) ([75d1d89](https://github.com/talos-systems/talos/commit/75d1d89))
+* add basic ntp implementation ([#459](https://github.com/talos-systems/talos/issues/459)) ([3693cff](https://github.com/talos-systems/talos/commit/3693cff))
+* add packet support ([#473](https://github.com/talos-systems/talos/issues/473)) ([19f712e](https://github.com/talos-systems/talos/commit/19f712e))
+* dd bootloader components ([#438](https://github.com/talos-systems/talos/issues/438)) ([226697e](https://github.com/talos-systems/talos/commit/226697e))
+* install bootloader to block device ([#455](https://github.com/talos-systems/talos/issues/455)) ([31a00ef](https://github.com/talos-systems/talos/commit/31a00ef))
+* remove DenyEscalatingExec admission plugin ([#457](https://github.com/talos-systems/talos/issues/457)) ([6ae6118](https://github.com/talos-systems/talos/commit/6ae6118))
+* upgrade containerd to v1.2.5 ([#463](https://github.com/talos-systems/talos/issues/463)) ([30774fc](https://github.com/talos-systems/talos/commit/30774fc))
+* upgrade Kubernetes to v1.14.0 ([#466](https://github.com/talos-systems/talos/issues/466)) ([50253b8](https://github.com/talos-systems/talos/commit/50253b8))
+* upgrade Linux to v4.19.31 ([#464](https://github.com/talos-systems/talos/issues/464)) ([da21b90](https://github.com/talos-systems/talos/commit/da21b90))
+* upgrade runc to v1.0.0-rc.7 ([#469](https://github.com/talos-systems/talos/issues/469)) ([8dba7db](https://github.com/talos-systems/talos/commit/8dba7db))
 
 
 
-# [0.1.0-alpha.18](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.17...v0.1.0-alpha.18) (2019-02-16)
+# [0.1.0-alpha.19](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.18...v0.1.0-alpha.19) (2019-03-11)
 
 
 ### Bug Fixes
 
-* add libblkid to the rootfs ([#345](https://github.com/andrewrynhard/talos/issues/345)) ([76bc58b](https://github.com/andrewrynhard/talos/commit/76bc58b))
-* Minor adjustments to makefile ([#340](https://github.com/andrewrynhard/talos/issues/340)) ([eced2f2](https://github.com/andrewrynhard/talos/commit/eced2f2)), closes [#338](https://github.com/andrewrynhard/talos/issues/338)
-
-
-
-# [0.1.0-alpha.17](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
+* add initialization for userdata download ([#367](https://github.com/talos-systems/talos/issues/367)) ([12eeab2](https://github.com/talos-systems/talos/commit/12eeab2)), closes [#363](https://github.com/talos-systems/talos/issues/363)
+* add iptables to rootfs ([#378](https://github.com/talos-systems/talos/issues/378)) ([eed7388](https://github.com/talos-systems/talos/commit/eed7388))
+* add missing mounts and remove memory limits ([#442](https://github.com/talos-systems/talos/issues/442)) ([a2cee67](https://github.com/talos-systems/talos/commit/a2cee67))
+* assign to existing target variable ([#436](https://github.com/talos-systems/talos/issues/436)) ([9f1e54c](https://github.com/talos-systems/talos/commit/9f1e54c))
+* delay `gitmeta` until needed in Makefile ([#407](https://github.com/talos-systems/talos/issues/407)) ([0ed9bc8](https://github.com/talos-systems/talos/commit/0ed9bc8))
+* distribute PKI from initial master to joining masters ([#426](https://github.com/talos-systems/talos/issues/426)) ([7528d89](https://github.com/talos-systems/talos/commit/7528d89))
+* **initramfs:** fix case where we download a non archive file ([#421](https://github.com/talos-systems/talos/issues/421)) ([83d979d](https://github.com/talos-systems/talos/commit/83d979d))
+* ensure DNS works in early boot ([#382](https://github.com/talos-systems/talos/issues/382)) ([078a664](https://github.com/talos-systems/talos/commit/078a664))
+* fallback on IP address when DHCP reply has no hostname ([#432](https://github.com/talos-systems/talos/issues/432)) ([08ee6c4](https://github.com/talos-systems/talos/commit/08ee6c4))
+* join masters in serial ([#437](https://github.com/talos-systems/talos/issues/437)) ([b6e6c46](https://github.com/talos-systems/talos/commit/b6e6c46))
+* mount /dev/shm as tmpfs ([#445](https://github.com/talos-systems/talos/issues/445)) ([1ee326b](https://github.com/talos-systems/talos/commit/1ee326b))
+* output userdata fails, ignore numcpu for kubeadm ([#398](https://github.com/talos-systems/talos/issues/398)) ([8e30f95](https://github.com/talos-systems/talos/commit/8e30f95))
+* write config changes to specified config file ([#416](https://github.com/talos-systems/talos/issues/416)) ([6d8e94d](https://github.com/talos-systems/talos/commit/6d8e94d))
 
 
 ### Features
 
-* disable session tickets ([#334](https://github.com/andrewrynhard/talos/issues/334)) ([b226f5f](https://github.com/andrewrynhard/talos/commit/b226f5f))
-* upgrade Kubernetes to v1.13.3 ([#335](https://github.com/andrewrynhard/talos/issues/335)) ([1219ae7](https://github.com/andrewrynhard/talos/commit/1219ae7))
+* add `docker-os` make target, Kubeadm.ExtraArgs, and a dev Makefile ([#446](https://github.com/talos-systems/talos/issues/446)) ([98e3920](https://github.com/talos-systems/talos/commit/98e3920))
+* add arg to target nodes per command ([#435](https://github.com/talos-systems/talos/issues/435)) ([0cf8dda](https://github.com/talos-systems/talos/commit/0cf8dda))
+* add automated PKI for joining nodes ([#406](https://github.com/talos-systems/talos/issues/406)) ([9e947c3](https://github.com/talos-systems/talos/commit/9e947c3))
+* add config flag to osctl ([#413](https://github.com/talos-systems/talos/issues/413)) ([4d5350e](https://github.com/talos-systems/talos/commit/4d5350e))
+* add container based deploy support to init ([#447](https://github.com/talos-systems/talos/issues/447)) ([b5f398d](https://github.com/talos-systems/talos/commit/b5f398d))
+* add DHCP client ([#427](https://github.com/talos-systems/talos/issues/427)) ([ee232b8](https://github.com/talos-systems/talos/commit/ee232b8))
+* add dosfstools to initramfs and rootfs ([#444](https://github.com/talos-systems/talos/issues/444)) ([d706803](https://github.com/talos-systems/talos/commit/d706803))
+* add gcloud integration ([#385](https://github.com/talos-systems/talos/issues/385)) ([85e35d3](https://github.com/talos-systems/talos/commit/85e35d3))
+* add hostname to node certificate SAN ([#415](https://github.com/talos-systems/talos/issues/415)) ([52d2660](https://github.com/talos-systems/talos/commit/52d2660))
+* add osinstall cli utility ([#368](https://github.com/talos-systems/talos/issues/368)) ([8ee9022](https://github.com/talos-systems/talos/commit/8ee9022))
+* add route printing to osctl ([#404](https://github.com/talos-systems/talos/issues/404)) ([a2704ee](https://github.com/talos-systems/talos/commit/a2704ee))
+* add TALOSCONFIG env var ([#422](https://github.com/talos-systems/talos/issues/422)) ([c63ef44](https://github.com/talos-systems/talos/commit/c63ef44))
+* allow user specified IP addresses in SANs ([#425](https://github.com/talos-systems/talos/issues/425)) ([b59f632](https://github.com/talos-systems/talos/commit/b59f632))
+* change AWS instance type to t2.micro ([#399](https://github.com/talos-systems/talos/issues/399)) ([a55b84a](https://github.com/talos-systems/talos/commit/a55b84a))
+* create certificates with all non-loopback addresses ([#424](https://github.com/talos-systems/talos/issues/424)) ([dce3e2c](https://github.com/talos-systems/talos/commit/dce3e2c))
+* log to stdout when in container mode ([#450](https://github.com/talos-systems/talos/issues/450)) ([1f08961](https://github.com/talos-systems/talos/commit/1f08961))
+* update gcc to 8.3.0, drop gcompat ([#433](https://github.com/talos-systems/talos/issues/433)) ([9de34cd](https://github.com/talos-systems/talos/commit/9de34cd))
+* upgrade containerd to v1.2.4 ([#395](https://github.com/talos-systems/talos/issues/395)) ([b963f5a](https://github.com/talos-systems/talos/commit/b963f5a))
+* upgrade linux to v4.19.23 ([#402](https://github.com/talos-systems/talos/issues/402)) ([c50b2e6](https://github.com/talos-systems/talos/commit/c50b2e6))
+* upgrade musl to 1.1.21 ([#401](https://github.com/talos-systems/talos/issues/401)) ([d8594f4](https://github.com/talos-systems/talos/commit/d8594f4))
+* **hack:** add osctl/kubelet dev tooling and document usage ([#449](https://github.com/talos-systems/talos/issues/449)) ([4f530e8](https://github.com/talos-systems/talos/commit/4f530e8))
 
 
 
-# [0.1.0-alpha.16](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
+# [0.1.0-alpha.18](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.17...v0.1.0-alpha.18) (2019-02-16)
 
 
 ### Bug Fixes
 
-* raw image output ([#307](https://github.com/andrewrynhard/talos/issues/307)) ([8836577](https://github.com/andrewrynhard/talos/commit/8836577))
-* use version tag for container tags ([#308](https://github.com/andrewrynhard/talos/issues/308)) ([07570a3](https://github.com/andrewrynhard/talos/commit/07570a3))
-* **init:** update probe for NVMe ([#323](https://github.com/andrewrynhard/talos/issues/323)) ([d8bf727](https://github.com/andrewrynhard/talos/commit/d8bf727))
-* **osctl:** compile static binary with CGO enabeld ([#328](https://github.com/andrewrynhard/talos/issues/328)) ([fa14741](https://github.com/andrewrynhard/talos/commit/fa14741))
+* add libblkid to the rootfs ([#345](https://github.com/talos-systems/talos/issues/345)) ([76bc58b](https://github.com/talos-systems/talos/commit/76bc58b))
+* Minor adjustments to makefile ([#340](https://github.com/talos-systems/talos/issues/340)) ([eced2f2](https://github.com/talos-systems/talos/commit/eced2f2)), closes [#338](https://github.com/talos-systems/talos/issues/338)
+
+
+
+# [0.1.0-alpha.17](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
 
 
 ### Features
 
-* import core service containers from local store ([#309](https://github.com/andrewrynhard/talos/issues/309)) ([25fca3d](https://github.com/andrewrynhard/talos/commit/25fca3d))
-* **osctl:** add stats command ([#314](https://github.com/andrewrynhard/talos/issues/314)) ([62bb226](https://github.com/andrewrynhard/talos/commit/62bb226))
-* **osctl:** output namespace ([#312](https://github.com/andrewrynhard/talos/issues/312)) ([3c5f99f](https://github.com/andrewrynhard/talos/commit/3c5f99f))
-* upgrade containerd to v1.2.2 ([#318](https://github.com/andrewrynhard/talos/issues/318)) ([a2b2e7e](https://github.com/andrewrynhard/talos/commit/a2b2e7e))
-* upgrade Kubernetes to v1.13.2 ([#319](https://github.com/andrewrynhard/talos/issues/319)) ([5cadd83](https://github.com/andrewrynhard/talos/commit/5cadd83))
-* use musl libc ([#316](https://github.com/andrewrynhard/talos/issues/316)) ([26c4418](https://github.com/andrewrynhard/talos/commit/26c4418))
+* disable session tickets ([#334](https://github.com/talos-systems/talos/issues/334)) ([b226f5f](https://github.com/talos-systems/talos/commit/b226f5f))
+* upgrade Kubernetes to v1.13.3 ([#335](https://github.com/talos-systems/talos/issues/335)) ([1219ae7](https://github.com/talos-systems/talos/commit/1219ae7))
 
 
 
-# [0.1.0-alpha.15](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
+# [0.1.0-alpha.16](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
 
 
 ### Bug Fixes
 
-* **gpt:** do not inform kernel of partition when writing ([#237](https://github.com/andrewrynhard/talos/issues/237)) ([fa9f77e](https://github.com/andrewrynhard/talos/commit/fa9f77e))
-* **image:** install gzip ([#272](https://github.com/andrewrynhard/talos/issues/272)) ([d4db548](https://github.com/andrewrynhard/talos/commit/d4db548))
-* **init:** address linter errors ([#251](https://github.com/andrewrynhard/talos/issues/251)) ([ff83876](https://github.com/andrewrynhard/talos/commit/ff83876))
-* **init:** don't create the EncryptionConfig if it exists ([#282](https://github.com/andrewrynhard/talos/issues/282)) ([0c32c95](https://github.com/andrewrynhard/talos/commit/0c32c95))
-* **init:** no memory limit for container runtime ([#289](https://github.com/andrewrynhard/talos/issues/289)) ([fdac043](https://github.com/andrewrynhard/talos/commit/fdac043))
-* **init:** revert e94095b and fix bad attribute lookups ([#274](https://github.com/andrewrynhard/talos/issues/274)) ([b3f12a2](https://github.com/andrewrynhard/talos/commit/b3f12a2))
-* **init:** unmount / last ([#249](https://github.com/andrewrynhard/talos/issues/249)) ([ee95933](https://github.com/andrewrynhard/talos/commit/ee95933))
-* **init:** use PARTLABEL to identity Talos block devices ([#238](https://github.com/andrewrynhard/talos/issues/238)) ([a3dd113](https://github.com/andrewrynhard/talos/commit/a3dd113))
-* **init:** use smaller default install sizes ([#240](https://github.com/andrewrynhard/talos/issues/240)) ([b50afcb](https://github.com/andrewrynhard/talos/commit/b50afcb))
-* **init:** use text/template ([#228](https://github.com/andrewrynhard/talos/issues/228)) ([08dd81a](https://github.com/andrewrynhard/talos/commit/08dd81a))
-* **init:** use the correct blkid lookup values ([#243](https://github.com/andrewrynhard/talos/issues/243)) ([e74f4c1](https://github.com/andrewrynhard/talos/commit/e74f4c1))
-* **initramfs:** fix bare metal install ([#245](https://github.com/andrewrynhard/talos/issues/245)) ([c171c51](https://github.com/andrewrynhard/talos/commit/c171c51))
-* **initramfs:** fix hardcoded version ([#275](https://github.com/andrewrynhard/talos/issues/275)) ([72eaa72](https://github.com/andrewrynhard/talos/commit/72eaa72))
-* **initramfs:** fix printf statement ([#250](https://github.com/andrewrynhard/talos/issues/250)) ([678951b](https://github.com/andrewrynhard/talos/commit/678951b))
-* **initramfs:** imports ([#276](https://github.com/andrewrynhard/talos/issues/276)) ([55fc13e](https://github.com/andrewrynhard/talos/commit/55fc13e))
-* disable AlwaysPullImages admission plugin ([#273](https://github.com/andrewrynhard/talos/issues/273)) ([1bb002c](https://github.com/andrewrynhard/talos/commit/1bb002c))
-* symlink kubernetes libexec directory ([#294](https://github.com/andrewrynhard/talos/issues/294)) ([3de4323](https://github.com/andrewrynhard/talos/commit/3de4323))
-* **initramfs:** minor fixes for booting from bare metal ([#241](https://github.com/andrewrynhard/talos/issues/241)) ([7564144](https://github.com/andrewrynhard/talos/commit/7564144))
-* **kernel:** add missing kernel config options ([#236](https://github.com/andrewrynhard/talos/issues/236)) ([c48a2ef](https://github.com/andrewrynhard/talos/commit/c48a2ef))
+* raw image output ([#307](https://github.com/talos-systems/talos/issues/307)) ([8836577](https://github.com/talos-systems/talos/commit/8836577))
+* use version tag for container tags ([#308](https://github.com/talos-systems/talos/issues/308)) ([07570a3](https://github.com/talos-systems/talos/commit/07570a3))
+* **init:** update probe for NVMe ([#323](https://github.com/talos-systems/talos/issues/323)) ([d8bf727](https://github.com/talos-systems/talos/commit/d8bf727))
+* **osctl:** compile static binary with CGO enabeld ([#328](https://github.com/talos-systems/talos/issues/328)) ([fa14741](https://github.com/talos-systems/talos/commit/fa14741))
 
 
 ### Features
 
-* **image:** build AMI with random.trust_cpu=on ([#287](https://github.com/andrewrynhard/talos/issues/287)) ([648ce5b](https://github.com/andrewrynhard/talos/commit/648ce5b))
-* **init:** add label and force options for xfs ([#244](https://github.com/andrewrynhard/talos/issues/244)) ([e320fd1](https://github.com/andrewrynhard/talos/commit/e320fd1))
-* **init:** add support for installing to a device ([#225](https://github.com/andrewrynhard/talos/issues/225)) ([79c96cf](https://github.com/andrewrynhard/talos/commit/79c96cf))
-* udevd service ([#231](https://github.com/andrewrynhard/talos/issues/231)) ([0c65fc6](https://github.com/andrewrynhard/talos/commit/0c65fc6))
-* **init:** create CNI mounts ([#226](https://github.com/andrewrynhard/talos/issues/226)) ([aa08f15](https://github.com/andrewrynhard/talos/commit/aa08f15))
-* add filesystem probing library ([#298](https://github.com/andrewrynhard/talos/issues/298)) ([42b722b](https://github.com/andrewrynhard/talos/commit/42b722b))
-* **init:** enable PSP admission plugin ([#230](https://github.com/andrewrynhard/talos/issues/230)) ([d0a0d1f](https://github.com/andrewrynhard/talos/commit/d0a0d1f))
-* atomic partition table operations ([#234](https://github.com/andrewrynhard/talos/issues/234)) ([a2d079e](https://github.com/andrewrynhard/talos/commit/a2d079e))
-* upgrade Kubernetes to v1.13.1 ([#291](https://github.com/andrewrynhard/talos/issues/291)) ([f5f948e](https://github.com/andrewrynhard/talos/commit/f5f948e))
-* use Containerd as CRI ([#292](https://github.com/andrewrynhard/talos/issues/292)) ([23f7adb](https://github.com/andrewrynhard/talos/commit/23f7adb))
-* **init:** reboot node on panic ([#284](https://github.com/andrewrynhard/talos/issues/284)) ([5140fbe](https://github.com/andrewrynhard/talos/commit/5140fbe))
-* **initramfs:** API for creating new partition tables ([#227](https://github.com/andrewrynhard/talos/issues/227)) ([374343a](https://github.com/andrewrynhard/talos/commit/374343a))
-* **initramfs:** retry userdata download ([#283](https://github.com/andrewrynhard/talos/issues/283)) ([028bdec](https://github.com/andrewrynhard/talos/commit/028bdec))
-* **kernel:** upgrade Linux to v4.19.10 ([#293](https://github.com/andrewrynhard/talos/issues/293)) ([a8292cb](https://github.com/andrewrynhard/talos/commit/a8292cb))
+* import core service containers from local store ([#309](https://github.com/talos-systems/talos/issues/309)) ([25fca3d](https://github.com/talos-systems/talos/commit/25fca3d))
+* **osctl:** add stats command ([#314](https://github.com/talos-systems/talos/issues/314)) ([62bb226](https://github.com/talos-systems/talos/commit/62bb226))
+* **osctl:** output namespace ([#312](https://github.com/talos-systems/talos/issues/312)) ([3c5f99f](https://github.com/talos-systems/talos/commit/3c5f99f))
+* upgrade containerd to v1.2.2 ([#318](https://github.com/talos-systems/talos/issues/318)) ([a2b2e7e](https://github.com/talos-systems/talos/commit/a2b2e7e))
+* upgrade Kubernetes to v1.13.2 ([#319](https://github.com/talos-systems/talos/issues/319)) ([5cadd83](https://github.com/talos-systems/talos/commit/5cadd83))
+* use musl libc ([#316](https://github.com/talos-systems/talos/issues/316)) ([26c4418](https://github.com/talos-systems/talos/commit/26c4418))
 
 
 
-# [0.1.0-alpha.14](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-11-21)
+# [0.1.0-alpha.15](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
 
 
 ### Bug Fixes
 
-* **hack:** remove privileged options from debug manifest ([#224](https://github.com/andrewrynhard/talos/issues/224)) ([9c77b49](https://github.com/andrewrynhard/talos/commit/9c77b49))
-* **init:** allow custom image for kubeadm ([#212](https://github.com/andrewrynhard/talos/issues/212)) ([0bbd8a4](https://github.com/andrewrynhard/talos/commit/0bbd8a4))
-* **init:** avoid kernel panic on recover ([#216](https://github.com/andrewrynhard/talos/issues/216)) ([74aafac](https://github.com/andrewrynhard/talos/commit/74aafac))
-* **init:** ensure VMware user data is not empty ([#217](https://github.com/andrewrynhard/talos/issues/217)) ([f00e05a](https://github.com/andrewrynhard/talos/commit/f00e05a))
-* **init:** log to kmsg after /dev is mounted ([#218](https://github.com/andrewrynhard/talos/issues/218)) ([fde2639](https://github.com/andrewrynhard/talos/commit/fde2639))
-* **init:** retry mounts ([#220](https://github.com/andrewrynhard/talos/issues/220)) ([51118bd](https://github.com/andrewrynhard/talos/commit/51118bd))
+* **gpt:** do not inform kernel of partition when writing ([#237](https://github.com/talos-systems/talos/issues/237)) ([fa9f77e](https://github.com/talos-systems/talos/commit/fa9f77e))
+* **image:** install gzip ([#272](https://github.com/talos-systems/talos/issues/272)) ([d4db548](https://github.com/talos-systems/talos/commit/d4db548))
+* **init:** address linter errors ([#251](https://github.com/talos-systems/talos/issues/251)) ([ff83876](https://github.com/talos-systems/talos/commit/ff83876))
+* **init:** don't create the EncryptionConfig if it exists ([#282](https://github.com/talos-systems/talos/issues/282)) ([0c32c95](https://github.com/talos-systems/talos/commit/0c32c95))
+* **init:** no memory limit for container runtime ([#289](https://github.com/talos-systems/talos/issues/289)) ([fdac043](https://github.com/talos-systems/talos/commit/fdac043))
+* **init:** revert e94095b and fix bad attribute lookups ([#274](https://github.com/talos-systems/talos/issues/274)) ([b3f12a2](https://github.com/talos-systems/talos/commit/b3f12a2))
+* **init:** unmount / last ([#249](https://github.com/talos-systems/talos/issues/249)) ([ee95933](https://github.com/talos-systems/talos/commit/ee95933))
+* **init:** use PARTLABEL to identity Talos block devices ([#238](https://github.com/talos-systems/talos/issues/238)) ([a3dd113](https://github.com/talos-systems/talos/commit/a3dd113))
+* **init:** use smaller default install sizes ([#240](https://github.com/talos-systems/talos/issues/240)) ([b50afcb](https://github.com/talos-systems/talos/commit/b50afcb))
+* **init:** use text/template ([#228](https://github.com/talos-systems/talos/issues/228)) ([08dd81a](https://github.com/talos-systems/talos/commit/08dd81a))
+* **init:** use the correct blkid lookup values ([#243](https://github.com/talos-systems/talos/issues/243)) ([e74f4c1](https://github.com/talos-systems/talos/commit/e74f4c1))
+* **initramfs:** fix bare metal install ([#245](https://github.com/talos-systems/talos/issues/245)) ([c171c51](https://github.com/talos-systems/talos/commit/c171c51))
+* **initramfs:** fix hardcoded version ([#275](https://github.com/talos-systems/talos/issues/275)) ([72eaa72](https://github.com/talos-systems/talos/commit/72eaa72))
+* **initramfs:** fix printf statement ([#250](https://github.com/talos-systems/talos/issues/250)) ([678951b](https://github.com/talos-systems/talos/commit/678951b))
+* **initramfs:** imports ([#276](https://github.com/talos-systems/talos/issues/276)) ([55fc13e](https://github.com/talos-systems/talos/commit/55fc13e))
+* disable AlwaysPullImages admission plugin ([#273](https://github.com/talos-systems/talos/issues/273)) ([1bb002c](https://github.com/talos-systems/talos/commit/1bb002c))
+* symlink kubernetes libexec directory ([#294](https://github.com/talos-systems/talos/issues/294)) ([3de4323](https://github.com/talos-systems/talos/commit/3de4323))
+* **initramfs:** minor fixes for booting from bare metal ([#241](https://github.com/talos-systems/talos/issues/241)) ([7564144](https://github.com/talos-systems/talos/commit/7564144))
+* **kernel:** add missing kernel config options ([#236](https://github.com/talos-systems/talos/issues/236)) ([c48a2ef](https://github.com/talos-systems/talos/commit/c48a2ef))
 
 
 ### Features
 
-* **init:** add calico support ([#223](https://github.com/andrewrynhard/talos/issues/223)) ([f16a130](https://github.com/andrewrynhard/talos/commit/f16a130))
-* **init:** add VMware support ([#200](https://github.com/andrewrynhard/talos/issues/200)) ([48b2ea3](https://github.com/andrewrynhard/talos/commit/48b2ea3))
-* **init:** log to /dev/kmsg ([#214](https://github.com/andrewrynhard/talos/issues/214)) ([b30ed5d](https://github.com/andrewrynhard/talos/commit/b30ed5d))
-* **init:** service env var option ([#219](https://github.com/andrewrynhard/talos/issues/219)) ([0c80b7e](https://github.com/andrewrynhard/talos/commit/0c80b7e))
-* **kernel:** add igb and ixgb drivers ([#221](https://github.com/andrewrynhard/talos/issues/221)) ([4696527](https://github.com/andrewrynhard/talos/commit/4696527))
-* **kernel:** add low level SCSI support ([#215](https://github.com/andrewrynhard/talos/issues/215)) ([325de5b](https://github.com/andrewrynhard/talos/commit/325de5b))
-* **kernel:** add raw iptables support ([#222](https://github.com/andrewrynhard/talos/issues/222)) ([86ef4fc](https://github.com/andrewrynhard/talos/commit/86ef4fc))
-* **kernel:** add vmxnet3 support ([#213](https://github.com/andrewrynhard/talos/issues/213)) ([0244d18](https://github.com/andrewrynhard/talos/commit/0244d18))
+* **image:** build AMI with random.trust_cpu=on ([#287](https://github.com/talos-systems/talos/issues/287)) ([648ce5b](https://github.com/talos-systems/talos/commit/648ce5b))
+* **init:** add label and force options for xfs ([#244](https://github.com/talos-systems/talos/issues/244)) ([e320fd1](https://github.com/talos-systems/talos/commit/e320fd1))
+* **init:** add support for installing to a device ([#225](https://github.com/talos-systems/talos/issues/225)) ([79c96cf](https://github.com/talos-systems/talos/commit/79c96cf))
+* udevd service ([#231](https://github.com/talos-systems/talos/issues/231)) ([0c65fc6](https://github.com/talos-systems/talos/commit/0c65fc6))
+* **init:** create CNI mounts ([#226](https://github.com/talos-systems/talos/issues/226)) ([aa08f15](https://github.com/talos-systems/talos/commit/aa08f15))
+* add filesystem probing library ([#298](https://github.com/talos-systems/talos/issues/298)) ([42b722b](https://github.com/talos-systems/talos/commit/42b722b))
+* **init:** enable PSP admission plugin ([#230](https://github.com/talos-systems/talos/issues/230)) ([d0a0d1f](https://github.com/talos-systems/talos/commit/d0a0d1f))
+* atomic partition table operations ([#234](https://github.com/talos-systems/talos/issues/234)) ([a2d079e](https://github.com/talos-systems/talos/commit/a2d079e))
+* upgrade Kubernetes to v1.13.1 ([#291](https://github.com/talos-systems/talos/issues/291)) ([f5f948e](https://github.com/talos-systems/talos/commit/f5f948e))
+* use Containerd as CRI ([#292](https://github.com/talos-systems/talos/issues/292)) ([23f7adb](https://github.com/talos-systems/talos/commit/23f7adb))
+* **init:** reboot node on panic ([#284](https://github.com/talos-systems/talos/issues/284)) ([5140fbe](https://github.com/talos-systems/talos/commit/5140fbe))
+* **initramfs:** API for creating new partition tables ([#227](https://github.com/talos-systems/talos/issues/227)) ([374343a](https://github.com/talos-systems/talos/commit/374343a))
+* **initramfs:** retry userdata download ([#283](https://github.com/talos-systems/talos/issues/283)) ([028bdec](https://github.com/talos-systems/talos/commit/028bdec))
+* **kernel:** upgrade Linux to v4.19.10 ([#293](https://github.com/talos-systems/talos/issues/293)) ([a8292cb](https://github.com/talos-systems/talos/commit/a8292cb))
 
 
 
-# [0.1.0-alpha.13](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
+# [0.1.0-alpha.14](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-11-21)
 
 
 ### Bug Fixes
 
-* **hack:** add /etc/kubernetes to CIS benchmark jobs ([#199](https://github.com/andrewrynhard/talos/issues/199)) ([fc84b62](https://github.com/andrewrynhard/talos/commit/fc84b62))
-* **image:** VMDK generation ([#204](https://github.com/andrewrynhard/talos/issues/204)) ([9d4f791](https://github.com/andrewrynhard/talos/commit/9d4f791))
-* **init:** node join ([#195](https://github.com/andrewrynhard/talos/issues/195)) ([157ef67](https://github.com/andrewrynhard/talos/commit/157ef67))
-* **init:** use kubeadm experimental-control-plane ([#194](https://github.com/andrewrynhard/talos/issues/194)) ([2fd7112](https://github.com/andrewrynhard/talos/commit/2fd7112))
-* **osctl:** build Linux binary with CGO ([#196](https://github.com/andrewrynhard/talos/issues/196)) ([ab82aa7](https://github.com/andrewrynhard/talos/commit/ab82aa7))
-* **osctl:** nil pointer when injecting kubernetes PKI ([#187](https://github.com/andrewrynhard/talos/issues/187)) ([160702b](https://github.com/andrewrynhard/talos/commit/160702b))
+* **hack:** remove privileged options from debug manifest ([#224](https://github.com/talos-systems/talos/issues/224)) ([9c77b49](https://github.com/talos-systems/talos/commit/9c77b49))
+* **init:** allow custom image for kubeadm ([#212](https://github.com/talos-systems/talos/issues/212)) ([0bbd8a4](https://github.com/talos-systems/talos/commit/0bbd8a4))
+* **init:** avoid kernel panic on recover ([#216](https://github.com/talos-systems/talos/issues/216)) ([74aafac](https://github.com/talos-systems/talos/commit/74aafac))
+* **init:** ensure VMware user data is not empty ([#217](https://github.com/talos-systems/talos/issues/217)) ([f00e05a](https://github.com/talos-systems/talos/commit/f00e05a))
+* **init:** log to kmsg after /dev is mounted ([#218](https://github.com/talos-systems/talos/issues/218)) ([fde2639](https://github.com/talos-systems/talos/commit/fde2639))
+* **init:** retry mounts ([#220](https://github.com/talos-systems/talos/issues/220)) ([51118bd](https://github.com/talos-systems/talos/commit/51118bd))
 
 
 ### Features
 
-* upgrade Containerd to v1.2.0 ([#190](https://github.com/andrewrynhard/talos/issues/190)) ([47787f7](https://github.com/andrewrynhard/talos/commit/47787f7))
-* upgrade Kubernetes to v1.13.0-alpha.3 ([#189](https://github.com/andrewrynhard/talos/issues/189)) ([91825fa](https://github.com/andrewrynhard/talos/commit/91825fa))
-* embed the kubeadm config ([#205](https://github.com/andrewrynhard/talos/issues/205)) ([160ce41](https://github.com/andrewrynhard/talos/commit/160ce41))
-* **init:** add NoCloud user-data support ([#209](https://github.com/andrewrynhard/talos/issues/209)) ([b584904](https://github.com/andrewrynhard/talos/commit/b584904))
-* **init:** enforce CIS requirements ([#198](https://github.com/andrewrynhard/talos/issues/198)) ([0c41de9](https://github.com/andrewrynhard/talos/commit/0c41de9))
-* **init:** enforce use of hyperkube and Kubernetes version ([#207](https://github.com/andrewrynhard/talos/issues/207)) ([0081a89](https://github.com/andrewrynhard/talos/commit/0081a89))
-* **kernel:** add virtio support ([#208](https://github.com/andrewrynhard/talos/issues/208)) ([ff97c8c](https://github.com/andrewrynhard/talos/commit/ff97c8c))
-* **kernel:** upgrade Linux to v4.19.1 ([#192](https://github.com/andrewrynhard/talos/issues/192)) ([36b899b](https://github.com/andrewrynhard/talos/commit/36b899b))
-* **rootfs:** upgrade crictl to v1.12.0 ([#191](https://github.com/andrewrynhard/talos/issues/191)) ([f7ad93c](https://github.com/andrewrynhard/talos/commit/f7ad93c))
+* **init:** add calico support ([#223](https://github.com/talos-systems/talos/issues/223)) ([f16a130](https://github.com/talos-systems/talos/commit/f16a130))
+* **init:** add VMware support ([#200](https://github.com/talos-systems/talos/issues/200)) ([48b2ea3](https://github.com/talos-systems/talos/commit/48b2ea3))
+* **init:** log to /dev/kmsg ([#214](https://github.com/talos-systems/talos/issues/214)) ([b30ed5d](https://github.com/talos-systems/talos/commit/b30ed5d))
+* **init:** service env var option ([#219](https://github.com/talos-systems/talos/issues/219)) ([0c80b7e](https://github.com/talos-systems/talos/commit/0c80b7e))
+* **kernel:** add igb and ixgb drivers ([#221](https://github.com/talos-systems/talos/issues/221)) ([4696527](https://github.com/talos-systems/talos/commit/4696527))
+* **kernel:** add low level SCSI support ([#215](https://github.com/talos-systems/talos/issues/215)) ([325de5b](https://github.com/talos-systems/talos/commit/325de5b))
+* **kernel:** add raw iptables support ([#222](https://github.com/talos-systems/talos/issues/222)) ([86ef4fc](https://github.com/talos-systems/talos/commit/86ef4fc))
+* **kernel:** add vmxnet3 support ([#213](https://github.com/talos-systems/talos/issues/213)) ([0244d18](https://github.com/talos-systems/talos/commit/0244d18))
 
 
 
-# [0.1.0-alpha.12](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
-
-
-### Features
-
-* upgrade Kubernetes to v1.13.0-alpha.2 ([#173](https://github.com/andrewrynhard/talos/issues/173)) ([60adafb](https://github.com/andrewrynhard/talos/commit/60adafb))
-* add blockd service ([#172](https://github.com/andrewrynhard/talos/issues/172)) ([aa65101](https://github.com/andrewrynhard/talos/commit/aa65101))
-
-
-
-# [0.1.0-alpha.11](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-18)
+# [0.1.0-alpha.13](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
 
 
 ### Bug Fixes
 
-* **image:** align VERSION env var with pkg/version ([#168](https://github.com/andrewrynhard/talos/issues/168)) ([04bb2da](https://github.com/andrewrynhard/talos/commit/04bb2da))
-* **init:** add /dev and /usr/libexec/kubernetes to docker service ([#160](https://github.com/andrewrynhard/talos/issues/160)) ([7268e92](https://github.com/andrewrynhard/talos/commit/7268e92))
-* **init:** disable megacheck until it gains module support ([#167](https://github.com/andrewrynhard/talos/issues/167)) ([9a6542f](https://github.com/andrewrynhard/talos/commit/9a6542f))
-* **kernel:** remove slub_debug kernel param ([#157](https://github.com/andrewrynhard/talos/issues/157)) ([bbc3097](https://github.com/andrewrynhard/talos/commit/bbc3097))
+* **hack:** add /etc/kubernetes to CIS benchmark jobs ([#199](https://github.com/talos-systems/talos/issues/199)) ([fc84b62](https://github.com/talos-systems/talos/commit/fc84b62))
+* **image:** VMDK generation ([#204](https://github.com/talos-systems/talos/issues/204)) ([9d4f791](https://github.com/talos-systems/talos/commit/9d4f791))
+* **init:** node join ([#195](https://github.com/talos-systems/talos/issues/195)) ([157ef67](https://github.com/talos-systems/talos/commit/157ef67))
+* **init:** use kubeadm experimental-control-plane ([#194](https://github.com/talos-systems/talos/issues/194)) ([2fd7112](https://github.com/talos-systems/talos/commit/2fd7112))
+* **osctl:** build Linux binary with CGO ([#196](https://github.com/talos-systems/talos/issues/196)) ([ab82aa7](https://github.com/talos-systems/talos/commit/ab82aa7))
+* **osctl:** nil pointer when injecting kubernetes PKI ([#187](https://github.com/talos-systems/talos/issues/187)) ([160702b](https://github.com/talos-systems/talos/commit/160702b))
 
 
 ### Features
 
-* upgrade Kubernetes to v1.13.0-alpha.1 ([#162](https://github.com/andrewrynhard/talos/issues/162)) ([2c80522](https://github.com/andrewrynhard/talos/commit/2c80522))
-* **ami:** enable ena support ([#164](https://github.com/andrewrynhard/talos/issues/164)) ([d542c83](https://github.com/andrewrynhard/talos/commit/d542c83))
-* **init:** mount partitions dynamically ([#169](https://github.com/andrewrynhard/talos/issues/169)) ([453bc48](https://github.com/andrewrynhard/talos/commit/453bc48))
-* **kernel:** enable NVMe support ([#170](https://github.com/andrewrynhard/talos/issues/170)) ([fc38380](https://github.com/andrewrynhard/talos/commit/fc38380))
+* upgrade Containerd to v1.2.0 ([#190](https://github.com/talos-systems/talos/issues/190)) ([47787f7](https://github.com/talos-systems/talos/commit/47787f7))
+* upgrade Kubernetes to v1.13.0-alpha.3 ([#189](https://github.com/talos-systems/talos/issues/189)) ([91825fa](https://github.com/talos-systems/talos/commit/91825fa))
+* embed the kubeadm config ([#205](https://github.com/talos-systems/talos/issues/205)) ([160ce41](https://github.com/talos-systems/talos/commit/160ce41))
+* **init:** add NoCloud user-data support ([#209](https://github.com/talos-systems/talos/issues/209)) ([b584904](https://github.com/talos-systems/talos/commit/b584904))
+* **init:** enforce CIS requirements ([#198](https://github.com/talos-systems/talos/issues/198)) ([0c41de9](https://github.com/talos-systems/talos/commit/0c41de9))
+* **init:** enforce use of hyperkube and Kubernetes version ([#207](https://github.com/talos-systems/talos/issues/207)) ([0081a89](https://github.com/talos-systems/talos/commit/0081a89))
+* **kernel:** add virtio support ([#208](https://github.com/talos-systems/talos/issues/208)) ([ff97c8c](https://github.com/talos-systems/talos/commit/ff97c8c))
+* **kernel:** upgrade Linux to v4.19.1 ([#192](https://github.com/talos-systems/talos/issues/192)) ([36b899b](https://github.com/talos-systems/talos/commit/36b899b))
+* **rootfs:** upgrade crictl to v1.12.0 ([#191](https://github.com/talos-systems/talos/issues/191)) ([f7ad93c](https://github.com/talos-systems/talos/commit/f7ad93c))
 
 
 
-# [0.1.0-alpha.10](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2018-10-13)
+# [0.1.0-alpha.12](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
 
 
 ### Features
 
-* upgrade all core components ([#153](https://github.com/andrewrynhard/talos/issues/153)) ([92ef602](https://github.com/andrewrynhard/talos/commit/92ef602))
-* **kernel:** configure Kernel Self Protection Project recommendations ([#152](https://github.com/andrewrynhard/talos/issues/152)) ([b34debe](https://github.com/andrewrynhard/talos/commit/b34debe))
+* upgrade Kubernetes to v1.13.0-alpha.2 ([#173](https://github.com/talos-systems/talos/issues/173)) ([60adafb](https://github.com/talos-systems/talos/commit/60adafb))
+* add blockd service ([#172](https://github.com/talos-systems/talos/issues/172)) ([aa65101](https://github.com/talos-systems/talos/commit/aa65101))
 
 
 
-# [0.1.0-alpha.9](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.8...v0.1.0-alpha.9) (2018-09-20)
+# [0.1.0-alpha.11](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-18)
 
 
 ### Bug Fixes
 
-* **init:** address linter error ([#146](https://github.com/andrewrynhard/talos/issues/146)) ([46e895a](https://github.com/andrewrynhard/talos/commit/46e895a))
+* **image:** align VERSION env var with pkg/version ([#168](https://github.com/talos-systems/talos/issues/168)) ([04bb2da](https://github.com/talos-systems/talos/commit/04bb2da))
+* **init:** add /dev and /usr/libexec/kubernetes to docker service ([#160](https://github.com/talos-systems/talos/issues/160)) ([7268e92](https://github.com/talos-systems/talos/commit/7268e92))
+* **init:** disable megacheck until it gains module support ([#167](https://github.com/talos-systems/talos/issues/167)) ([9a6542f](https://github.com/talos-systems/talos/commit/9a6542f))
+* **kernel:** remove slub_debug kernel param ([#157](https://github.com/talos-systems/talos/issues/157)) ([bbc3097](https://github.com/talos-systems/talos/commit/bbc3097))
 
 
 ### Features
 
-* run system services via containerd ([#149](https://github.com/andrewrynhard/talos/issues/149)) ([8f09202](https://github.com/andrewrynhard/talos/commit/8f09202))
-* **kernel:** upgrade Linux to v4.18.5 ([#147](https://github.com/andrewrynhard/talos/issues/147)) ([80b5e36](https://github.com/andrewrynhard/talos/commit/80b5e36))
+* upgrade Kubernetes to v1.13.0-alpha.1 ([#162](https://github.com/talos-systems/talos/issues/162)) ([2c80522](https://github.com/talos-systems/talos/commit/2c80522))
+* **ami:** enable ena support ([#164](https://github.com/talos-systems/talos/issues/164)) ([d542c83](https://github.com/talos-systems/talos/commit/d542c83))
+* **init:** mount partitions dynamically ([#169](https://github.com/talos-systems/talos/issues/169)) ([453bc48](https://github.com/talos-systems/talos/commit/453bc48))
+* **kernel:** enable NVMe support ([#170](https://github.com/talos-systems/talos/issues/170)) ([fc38380](https://github.com/talos-systems/talos/commit/fc38380))
 
 
 
-# [0.1.0-alpha.8](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.7...v0.1.0-alpha.8) (2018-08-28)
+# [0.1.0-alpha.10](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2018-10-13)
 
 
 ### Features
 
-* HA control plane ([#144](https://github.com/andrewrynhard/talos/issues/144)) ([260d55c](https://github.com/andrewrynhard/talos/commit/260d55c))
-* list and restart processes ([#141](https://github.com/andrewrynhard/talos/issues/141)) ([db0cb37](https://github.com/andrewrynhard/talos/commit/db0cb37))
-* **kernel:** upgrade Linux to v4.17.15 ([#140](https://github.com/andrewrynhard/talos/issues/140)) ([aab4316](https://github.com/andrewrynhard/talos/commit/aab4316))
-* **osd:** node reset and reboot ([#142](https://github.com/andrewrynhard/talos/issues/142)) ([0514ff4](https://github.com/andrewrynhard/talos/commit/0514ff4))
+* upgrade all core components ([#153](https://github.com/talos-systems/talos/issues/153)) ([92ef602](https://github.com/talos-systems/talos/commit/92ef602))
+* **kernel:** configure Kernel Self Protection Project recommendations ([#152](https://github.com/talos-systems/talos/issues/152)) ([b34debe](https://github.com/talos-systems/talos/commit/b34debe))
 
 
 
-# [0.1.0-alpha.7](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.6...v0.1.0-alpha.7) (2018-08-11)
+# [0.1.0-alpha.9](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.8...v0.1.0-alpha.9) (2018-09-20)
 
 
 ### Bug Fixes
 
-* **init:** make /etc/hosts writable ([#125](https://github.com/andrewrynhard/talos/issues/125)) ([4014872](https://github.com/andrewrynhard/talos/commit/4014872))
-* **init:** read kubeadm env file ([#136](https://github.com/andrewrynhard/talos/issues/136)) ([d8a3a79](https://github.com/andrewrynhard/talos/commit/d8a3a79))
-* **initramfs:** align go tests with upstream change ([#133](https://github.com/andrewrynhard/talos/issues/133)) ([275ede7](https://github.com/andrewrynhard/talos/commit/275ede7))
+* **init:** address linter error ([#146](https://github.com/talos-systems/talos/issues/146)) ([46e895a](https://github.com/talos-systems/talos/commit/46e895a))
 
 
 ### Features
 
-* upgrade Kubernetes to v1.11.2 ([#139](https://github.com/andrewrynhard/talos/issues/139)) ([37df8a3](https://github.com/andrewrynhard/talos/commit/37df8a3))
-* **conformance:** add conformance image ([#126](https://github.com/andrewrynhard/talos/issues/126)) ([6b661c3](https://github.com/andrewrynhard/talos/commit/6b661c3))
-* **conformance:** add quick mode config ([#129](https://github.com/andrewrynhard/talos/issues/129)) ([6185ac5](https://github.com/andrewrynhard/talos/commit/6185ac5))
-* **hack:**  add CIS Kubernetes Benchmark script ([#134](https://github.com/andrewrynhard/talos/issues/134)) ([deea44b](https://github.com/andrewrynhard/talos/commit/deea44b))
-* **hack:** use ubuntu 18.04 image in debug pod ([#135](https://github.com/andrewrynhard/talos/issues/135)) ([73597c3](https://github.com/andrewrynhard/talos/commit/73597c3))
-* **image:** make AMI regions a variable ([#137](https://github.com/andrewrynhard/talos/issues/137)) ([79bb464](https://github.com/andrewrynhard/talos/commit/79bb464))
-* **init:** add file creation option ([#132](https://github.com/andrewrynhard/talos/issues/132)) ([5058b74](https://github.com/andrewrynhard/talos/commit/5058b74))
-* **init:** debug option ([#138](https://github.com/andrewrynhard/talos/issues/138)) ([6058af2](https://github.com/andrewrynhard/talos/commit/6058af2))
-* **initramfs:** check for self-hosted-kube-apiserver label ([#130](https://github.com/andrewrynhard/talos/issues/130)) ([5d0fa41](https://github.com/andrewrynhard/talos/commit/5d0fa41))
-* **kernel:** upgrade Linux to v4.17.10 ([#128](https://github.com/andrewrynhard/talos/issues/128)) ([cb1a939](https://github.com/andrewrynhard/talos/commit/cb1a939))
+* run system services via containerd ([#149](https://github.com/talos-systems/talos/issues/149)) ([8f09202](https://github.com/talos-systems/talos/commit/8f09202))
+* **kernel:** upgrade Linux to v4.18.5 ([#147](https://github.com/talos-systems/talos/issues/147)) ([80b5e36](https://github.com/talos-systems/talos/commit/80b5e36))
 
 
 
-# [0.1.0-alpha.6](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.5...v0.1.0-alpha.6) (2018-07-24)
+# [0.1.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.7...v0.1.0-alpha.8) (2018-08-28)
+
+
+### Features
+
+* HA control plane ([#144](https://github.com/talos-systems/talos/issues/144)) ([260d55c](https://github.com/talos-systems/talos/commit/260d55c))
+* list and restart processes ([#141](https://github.com/talos-systems/talos/issues/141)) ([db0cb37](https://github.com/talos-systems/talos/commit/db0cb37))
+* **kernel:** upgrade Linux to v4.17.15 ([#140](https://github.com/talos-systems/talos/issues/140)) ([aab4316](https://github.com/talos-systems/talos/commit/aab4316))
+* **osd:** node reset and reboot ([#142](https://github.com/talos-systems/talos/issues/142)) ([0514ff4](https://github.com/talos-systems/talos/commit/0514ff4))
+
+
+
+# [0.1.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.6...v0.1.0-alpha.7) (2018-08-11)
 
 
 ### Bug Fixes
 
-* **rootfs:** don't remove the docker binary ([#119](https://github.com/andrewrynhard/talos/issues/119)) ([eabd76c](https://github.com/andrewrynhard/talos/commit/eabd76c))
+* **init:** make /etc/hosts writable ([#125](https://github.com/talos-systems/talos/issues/125)) ([4014872](https://github.com/talos-systems/talos/commit/4014872))
+* **init:** read kubeadm env file ([#136](https://github.com/talos-systems/talos/issues/136)) ([d8a3a79](https://github.com/talos-systems/talos/commit/d8a3a79))
+* **initramfs:** align go tests with upstream change ([#133](https://github.com/talos-systems/talos/issues/133)) ([275ede7](https://github.com/talos-systems/talos/commit/275ede7))
 
 
 ### Features
 
-* add a debug pod manifest ([#120](https://github.com/andrewrynhard/talos/issues/120)) ([dc9e2fe](https://github.com/andrewrynhard/talos/commit/dc9e2fe))
-* run the kubelet in a container ([#122](https://github.com/andrewrynhard/talos/issues/122)) ([90d3078](https://github.com/andrewrynhard/talos/commit/90d3078))
-* upgrade Kubernetes to v1.11.1 ([#123](https://github.com/andrewrynhard/talos/issues/123)) ([b48884b](https://github.com/andrewrynhard/talos/commit/b48884b))
-* **image:** generate image ([#114](https://github.com/andrewrynhard/talos/issues/114)) ([f6adabe](https://github.com/andrewrynhard/talos/commit/f6adabe))
-* **initramfs:** rewrite user data ([#121](https://github.com/andrewrynhard/talos/issues/121)) ([0036bd1](https://github.com/andrewrynhard/talos/commit/0036bd1))
-* **initramfs:** set the platform explicitly ([#124](https://github.com/andrewrynhard/talos/issues/124)) ([ca93ede](https://github.com/andrewrynhard/talos/commit/ca93ede))
+* upgrade Kubernetes to v1.11.2 ([#139](https://github.com/talos-systems/talos/issues/139)) ([37df8a3](https://github.com/talos-systems/talos/commit/37df8a3))
+* **conformance:** add conformance image ([#126](https://github.com/talos-systems/talos/issues/126)) ([6b661c3](https://github.com/talos-systems/talos/commit/6b661c3))
+* **conformance:** add quick mode config ([#129](https://github.com/talos-systems/talos/issues/129)) ([6185ac5](https://github.com/talos-systems/talos/commit/6185ac5))
+* **hack:**  add CIS Kubernetes Benchmark script ([#134](https://github.com/talos-systems/talos/issues/134)) ([deea44b](https://github.com/talos-systems/talos/commit/deea44b))
+* **hack:** use ubuntu 18.04 image in debug pod ([#135](https://github.com/talos-systems/talos/issues/135)) ([73597c3](https://github.com/talos-systems/talos/commit/73597c3))
+* **image:** make AMI regions a variable ([#137](https://github.com/talos-systems/talos/issues/137)) ([79bb464](https://github.com/talos-systems/talos/commit/79bb464))
+* **init:** add file creation option ([#132](https://github.com/talos-systems/talos/issues/132)) ([5058b74](https://github.com/talos-systems/talos/commit/5058b74))
+* **init:** debug option ([#138](https://github.com/talos-systems/talos/issues/138)) ([6058af2](https://github.com/talos-systems/talos/commit/6058af2))
+* **initramfs:** check for self-hosted-kube-apiserver label ([#130](https://github.com/talos-systems/talos/issues/130)) ([5d0fa41](https://github.com/talos-systems/talos/commit/5d0fa41))
+* **kernel:** upgrade Linux to v4.17.10 ([#128](https://github.com/talos-systems/talos/issues/128)) ([cb1a939](https://github.com/talos-systems/talos/commit/cb1a939))
 
 
 
-# [0.1.0-alpha.5](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.4...v0.1.0-alpha.5) (2018-07-02)
+# [0.1.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.5...v0.1.0-alpha.6) (2018-07-24)
 
 
 ### Bug Fixes
 
-* create build directory ([#108](https://github.com/andrewrynhard/talos/issues/108)) ([9321d7a](https://github.com/andrewrynhard/talos/commit/9321d7a))
-* field tag should be yaml instead of json ([#100](https://github.com/andrewrynhard/talos/issues/100)) ([c0e7996](https://github.com/andrewrynhard/talos/commit/c0e7996))
+* **rootfs:** don't remove the docker binary ([#119](https://github.com/talos-systems/talos/issues/119)) ([eabd76c](https://github.com/talos-systems/talos/commit/eabd76c))
 
 
 ### Features
 
-* **init:** configurable kubelet arguments ([#99](https://github.com/andrewrynhard/talos/issues/99)) ([5bd0879](https://github.com/andrewrynhard/talos/commit/5bd0879))
-* **init:** platform discovery ([#101](https://github.com/andrewrynhard/talos/issues/101)) ([b1a7a82](https://github.com/andrewrynhard/talos/commit/b1a7a82))
-* **initramfs:** Kubernetes API reverse proxy ([#107](https://github.com/andrewrynhard/talos/issues/107)) ([ea1edbb](https://github.com/andrewrynhard/talos/commit/ea1edbb))
-* **kernel:** enable Ceph ([#105](https://github.com/andrewrynhard/talos/issues/105)) ([d5b6eca](https://github.com/andrewrynhard/talos/commit/d5b6eca))
-* **rootfs:** install cut ([#106](https://github.com/andrewrynhard/talos/issues/106)) ([9823c35](https://github.com/andrewrynhard/talos/commit/9823c35))
-* **rootfs:** upgrade Docker to v17.03.2-ce ([#111](https://github.com/andrewrynhard/talos/issues/111)) ([fa4f787](https://github.com/andrewrynhard/talos/commit/fa4f787))
-* **rootfs:** upgrade Kubernetes to v1.11.0-beta.1 ([#104](https://github.com/andrewrynhard/talos/issues/104)) ([5519410](https://github.com/andrewrynhard/talos/commit/5519410))
+* add a debug pod manifest ([#120](https://github.com/talos-systems/talos/issues/120)) ([dc9e2fe](https://github.com/talos-systems/talos/commit/dc9e2fe))
+* run the kubelet in a container ([#122](https://github.com/talos-systems/talos/issues/122)) ([90d3078](https://github.com/talos-systems/talos/commit/90d3078))
+* upgrade Kubernetes to v1.11.1 ([#123](https://github.com/talos-systems/talos/issues/123)) ([b48884b](https://github.com/talos-systems/talos/commit/b48884b))
+* **image:** generate image ([#114](https://github.com/talos-systems/talos/issues/114)) ([f6adabe](https://github.com/talos-systems/talos/commit/f6adabe))
+* **initramfs:** rewrite user data ([#121](https://github.com/talos-systems/talos/issues/121)) ([0036bd1](https://github.com/talos-systems/talos/commit/0036bd1))
+* **initramfs:** set the platform explicitly ([#124](https://github.com/talos-systems/talos/issues/124)) ([ca93ede](https://github.com/talos-systems/talos/commit/ca93ede))
 
 
 
-# [0.1.0-alpha.4](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.3...v0.1.0-alpha.4) (2018-05-20)
+# [0.1.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.4...v0.1.0-alpha.5) (2018-07-02)
 
 
 ### Bug Fixes
 
-* force the kernel to reread partition table ([#88](https://github.com/andrewrynhard/talos/issues/88)) ([c843201](https://github.com/andrewrynhard/talos/commit/c843201))
-* use commit SHA on master and tag name on tags ([#98](https://github.com/andrewrynhard/talos/issues/98)) ([2bd7b89](https://github.com/andrewrynhard/talos/commit/2bd7b89))
-* **init:** conditionally set version in /etc/os-release ([#97](https://github.com/andrewrynhard/talos/issues/97)) ([65c2c32](https://github.com/andrewrynhard/talos/commit/65c2c32))
-* **init:** use /proc/net/pnp as resolv.conf ([#87](https://github.com/andrewrynhard/talos/issues/87)) ([2aed515](https://github.com/andrewrynhard/talos/commit/2aed515))
-* **initramfs:** build variables ([#93](https://github.com/andrewrynhard/talos/issues/93)) ([b55ce73](https://github.com/andrewrynhard/talos/commit/b55ce73))
-* **initramfs:** escape double quotes ([#96](https://github.com/andrewrynhard/talos/issues/96)) ([63a0728](https://github.com/andrewrynhard/talos/commit/63a0728))
-* **initramfs:** invalid reference to template variable ([#94](https://github.com/andrewrynhard/talos/issues/94)) ([3dc22fa](https://github.com/andrewrynhard/talos/commit/3dc22fa))
-* **initramfs:** quote -X flag ([#95](https://github.com/andrewrynhard/talos/issues/95)) ([068017a](https://github.com/andrewrynhard/talos/commit/068017a))
+* create build directory ([#108](https://github.com/talos-systems/talos/issues/108)) ([9321d7a](https://github.com/talos-systems/talos/commit/9321d7a))
+* field tag should be yaml instead of json ([#100](https://github.com/talos-systems/talos/issues/100)) ([c0e7996](https://github.com/talos-systems/talos/commit/c0e7996))
 
 
 ### Features
 
-* add version command ([#85](https://github.com/andrewrynhard/talos/issues/85)) ([a55daaf](https://github.com/andrewrynhard/talos/commit/a55daaf))
-* dynamic resolv.conf ([#86](https://github.com/andrewrynhard/talos/issues/86)) ([325ae5c](https://github.com/andrewrynhard/talos/commit/325ae5c))
-* osctl configuration file ([#90](https://github.com/andrewrynhard/talos/issues/90)) ([a16008e](https://github.com/andrewrynhard/talos/commit/a16008e))
-* upgrade kubernetes to v1.11.0-beta.0 ([#92](https://github.com/andrewrynhard/talos/issues/92)) ([8701fcb](https://github.com/andrewrynhard/talos/commit/8701fcb))
-* **init:** verify EC2 PKCS7 signature ([#84](https://github.com/andrewrynhard/talos/issues/84)) ([7bf0abd](https://github.com/andrewrynhard/talos/commit/7bf0abd))
+* **init:** configurable kubelet arguments ([#99](https://github.com/talos-systems/talos/issues/99)) ([5bd0879](https://github.com/talos-systems/talos/commit/5bd0879))
+* **init:** platform discovery ([#101](https://github.com/talos-systems/talos/issues/101)) ([b1a7a82](https://github.com/talos-systems/talos/commit/b1a7a82))
+* **initramfs:** Kubernetes API reverse proxy ([#107](https://github.com/talos-systems/talos/issues/107)) ([ea1edbb](https://github.com/talos-systems/talos/commit/ea1edbb))
+* **kernel:** enable Ceph ([#105](https://github.com/talos-systems/talos/issues/105)) ([d5b6eca](https://github.com/talos-systems/talos/commit/d5b6eca))
+* **rootfs:** install cut ([#106](https://github.com/talos-systems/talos/issues/106)) ([9823c35](https://github.com/talos-systems/talos/commit/9823c35))
+* **rootfs:** upgrade Docker to v17.03.2-ce ([#111](https://github.com/talos-systems/talos/issues/111)) ([fa4f787](https://github.com/talos-systems/talos/commit/fa4f787))
+* **rootfs:** upgrade Kubernetes to v1.11.0-beta.1 ([#104](https://github.com/talos-systems/talos/issues/104)) ([5519410](https://github.com/talos-systems/talos/commit/5519410))
 
 
 
-# [0.1.0-alpha.3](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.2...v0.1.0-alpha.3) (2018-05-15)
+# [0.1.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.3...v0.1.0-alpha.4) (2018-05-20)
 
 
 ### Bug Fixes
 
-* **generate:** use xvda instead of sda ([#77](https://github.com/andrewrynhard/talos/issues/77)) ([e18cf83](https://github.com/andrewrynhard/talos/commit/e18cf83))
-* **init:** bad variable name and missing package ([#78](https://github.com/andrewrynhard/talos/issues/78)) ([7c37272](https://github.com/andrewrynhard/talos/commit/7c37272))
+* force the kernel to reread partition table ([#88](https://github.com/talos-systems/talos/issues/88)) ([c843201](https://github.com/talos-systems/talos/commit/c843201))
+* use commit SHA on master and tag name on tags ([#98](https://github.com/talos-systems/talos/issues/98)) ([2bd7b89](https://github.com/talos-systems/talos/commit/2bd7b89))
+* **init:** conditionally set version in /etc/os-release ([#97](https://github.com/talos-systems/talos/issues/97)) ([65c2c32](https://github.com/talos-systems/talos/commit/65c2c32))
+* **init:** use /proc/net/pnp as resolv.conf ([#87](https://github.com/talos-systems/talos/issues/87)) ([2aed515](https://github.com/talos-systems/talos/commit/2aed515))
+* **initramfs:** build variables ([#93](https://github.com/talos-systems/talos/issues/93)) ([b55ce73](https://github.com/talos-systems/talos/commit/b55ce73))
+* **initramfs:** escape double quotes ([#96](https://github.com/talos-systems/talos/issues/96)) ([63a0728](https://github.com/talos-systems/talos/commit/63a0728))
+* **initramfs:** invalid reference to template variable ([#94](https://github.com/talos-systems/talos/issues/94)) ([3dc22fa](https://github.com/talos-systems/talos/commit/3dc22fa))
+* **initramfs:** quote -X flag ([#95](https://github.com/talos-systems/talos/issues/95)) ([068017a](https://github.com/talos-systems/talos/commit/068017a))
 
 
 ### Features
 
-* automate signed certificates ([#81](https://github.com/andrewrynhard/talos/issues/81)) ([d517737](https://github.com/andrewrynhard/talos/commit/d517737))
-* raw kubeadm configuration in user data ([#79](https://github.com/andrewrynhard/talos/issues/79)) ([fc98614](https://github.com/andrewrynhard/talos/commit/fc98614))
-* **init:** don't print kubeadm token ([#74](https://github.com/andrewrynhard/talos/issues/74)) ([2f48972](https://github.com/andrewrynhard/talos/commit/2f48972))
-* **kernel:** compile with Linux guest support ([#75](https://github.com/andrewrynhard/talos/issues/75)) ([67e092a](https://github.com/andrewrynhard/talos/commit/67e092a))
+* add version command ([#85](https://github.com/talos-systems/talos/issues/85)) ([a55daaf](https://github.com/talos-systems/talos/commit/a55daaf))
+* dynamic resolv.conf ([#86](https://github.com/talos-systems/talos/issues/86)) ([325ae5c](https://github.com/talos-systems/talos/commit/325ae5c))
+* osctl configuration file ([#90](https://github.com/talos-systems/talos/issues/90)) ([a16008e](https://github.com/talos-systems/talos/commit/a16008e))
+* upgrade kubernetes to v1.11.0-beta.0 ([#92](https://github.com/talos-systems/talos/issues/92)) ([8701fcb](https://github.com/talos-systems/talos/commit/8701fcb))
+* **init:** verify EC2 PKCS7 signature ([#84](https://github.com/talos-systems/talos/issues/84)) ([7bf0abd](https://github.com/talos-systems/talos/commit/7bf0abd))
 
 
 
-# [0.1.0-alpha.2](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.1...v0.1.0-alpha.2) (2018-05-09)
-
-
-### Features
-
-* upgrade Kubernetes to v1.10.2 ([#61](https://github.com/andrewrynhard/talos/issues/61)) ([dcf3a71](https://github.com/andrewrynhard/talos/commit/dcf3a71))
-* **generate:** set RAW disk sizes dynamically ([#71](https://github.com/andrewrynhard/talos/issues/71)) ([5701ea6](https://github.com/andrewrynhard/talos/commit/5701ea6))
-* **init:** gRPC with mutual TLS authentication ([#64](https://github.com/andrewrynhard/talos/issues/64)) ([f6686bc](https://github.com/andrewrynhard/talos/commit/f6686bc))
-* **rootfs:** upgrade CRI-O to v1.10.1 ([#70](https://github.com/andrewrynhard/talos/issues/70)) ([ff61573](https://github.com/andrewrynhard/talos/commit/ff61573))
-
-
-
-# [0.1.0-alpha.1](https://github.com/andrewrynhard/talos/compare/v0.1.0-alpha.0...v0.1.0-alpha.1) (2018-04-20)
+# [0.1.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.2...v0.1.0-alpha.3) (2018-05-15)
 
 
 ### Bug Fixes
 
-* generate /etc/hosts and /etc/resolv.conf ([#54](https://github.com/andrewrynhard/talos/issues/54)) ([5bd43ab](https://github.com/andrewrynhard/talos/commit/5bd43ab))
-* **init:** enable hierarchical accounting and reclaim ([#59](https://github.com/andrewrynhard/talos/issues/59)) ([68d95c2](https://github.com/andrewrynhard/talos/commit/68d95c2))
-* **init:** missing parameter ([#55](https://github.com/andrewrynhard/talos/issues/55)) ([1a89469](https://github.com/andrewrynhard/talos/commit/1a89469))
-* **init:** printf formatting ([#51](https://github.com/andrewrynhard/talos/issues/51)) ([b0782b6](https://github.com/andrewrynhard/talos/commit/b0782b6))
-* **init:** remove unused code ([#56](https://github.com/andrewrynhard/talos/issues/56)) ([0c62bda](https://github.com/andrewrynhard/talos/commit/0c62bda))
-* **init:** switch_root implementation ([#49](https://github.com/andrewrynhard/talos/issues/49)) ([b614179](https://github.com/andrewrynhard/talos/commit/b614179))
+* **generate:** use xvda instead of sda ([#77](https://github.com/talos-systems/talos/issues/77)) ([e18cf83](https://github.com/talos-systems/talos/commit/e18cf83))
+* **init:** bad variable name and missing package ([#78](https://github.com/talos-systems/talos/issues/78)) ([7c37272](https://github.com/talos-systems/talos/commit/7c37272))
 
 
 ### Features
 
-* docker as an optional container runtime ([#57](https://github.com/andrewrynhard/talos/issues/57)) ([3a60bdc](https://github.com/andrewrynhard/talos/commit/3a60bdc))
-* upgrade to Kubernetes v1.10.1 ([#50](https://github.com/andrewrynhard/talos/issues/50)) ([46616d1](https://github.com/andrewrynhard/talos/commit/46616d1))
-* **generate:** enable kernel logging ([#58](https://github.com/andrewrynhard/talos/issues/58)) ([71d97c8](https://github.com/andrewrynhard/talos/commit/71d97c8))
-* **kernel:** use LTS kernel v4.14.34 ([#48](https://github.com/andrewrynhard/talos/issues/48)) ([4c9a810](https://github.com/andrewrynhard/talos/commit/4c9a810))
+* automate signed certificates ([#81](https://github.com/talos-systems/talos/issues/81)) ([d517737](https://github.com/talos-systems/talos/commit/d517737))
+* raw kubeadm configuration in user data ([#79](https://github.com/talos-systems/talos/issues/79)) ([fc98614](https://github.com/talos-systems/talos/commit/fc98614))
+* **init:** don't print kubeadm token ([#74](https://github.com/talos-systems/talos/issues/74)) ([2f48972](https://github.com/talos-systems/talos/commit/2f48972))
+* **kernel:** compile with Linux guest support ([#75](https://github.com/talos-systems/talos/issues/75)) ([67e092a](https://github.com/talos-systems/talos/commit/67e092a))
 
 
 
-# [0.1.0-alpha.0](https://github.com/andrewrynhard/talos/compare/aba4615...v0.1.0-alpha.0) (2018-04-03)
+# [0.1.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.1...v0.1.0-alpha.2) (2018-05-09)
+
+
+### Features
+
+* upgrade Kubernetes to v1.10.2 ([#61](https://github.com/talos-systems/talos/issues/61)) ([dcf3a71](https://github.com/talos-systems/talos/commit/dcf3a71))
+* **generate:** set RAW disk sizes dynamically ([#71](https://github.com/talos-systems/talos/issues/71)) ([5701ea6](https://github.com/talos-systems/talos/commit/5701ea6))
+* **init:** gRPC with mutual TLS authentication ([#64](https://github.com/talos-systems/talos/issues/64)) ([f6686bc](https://github.com/talos-systems/talos/commit/f6686bc))
+* **rootfs:** upgrade CRI-O to v1.10.1 ([#70](https://github.com/talos-systems/talos/issues/70)) ([ff61573](https://github.com/talos-systems/talos/commit/ff61573))
+
+
+
+# [0.1.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.0...v0.1.0-alpha.1) (2018-04-20)
 
 
 ### Bug Fixes
 
-* **init:** address crio errors and warns ([#40](https://github.com/andrewrynhard/talos/issues/40)) ([7536d72](https://github.com/andrewrynhard/talos/commit/7536d72))
-* **init:** don't create CRI-O CNI configurations ([#36](https://github.com/andrewrynhard/talos/issues/36)) ([8a7c424](https://github.com/andrewrynhard/talos/commit/8a7c424))
-* **init:** make log handling non-blocking ([#37](https://github.com/andrewrynhard/talos/issues/37)) ([f244075](https://github.com/andrewrynhard/talos/commit/f244075))
-* **init:** typo in service subnet field; pin version of Kubernetes ([#10](https://github.com/andrewrynhard/talos/issues/10)) ([8427ddf](https://github.com/andrewrynhard/talos/commit/8427ddf))
-* **rootfs:** install conntrack ([#27](https://github.com/andrewrynhard/talos/issues/27)) ([1067958](https://github.com/andrewrynhard/talos/commit/1067958))
+* generate /etc/hosts and /etc/resolv.conf ([#54](https://github.com/talos-systems/talos/issues/54)) ([5bd43ab](https://github.com/talos-systems/talos/commit/5bd43ab))
+* **init:** enable hierarchical accounting and reclaim ([#59](https://github.com/talos-systems/talos/issues/59)) ([68d95c2](https://github.com/talos-systems/talos/commit/68d95c2))
+* **init:** missing parameter ([#55](https://github.com/talos-systems/talos/issues/55)) ([1a89469](https://github.com/talos-systems/talos/commit/1a89469))
+* **init:** printf formatting ([#51](https://github.com/talos-systems/talos/issues/51)) ([b0782b6](https://github.com/talos-systems/talos/commit/b0782b6))
+* **init:** remove unused code ([#56](https://github.com/talos-systems/talos/issues/56)) ([0c62bda](https://github.com/talos-systems/talos/commit/0c62bda))
+* **init:** switch_root implementation ([#49](https://github.com/talos-systems/talos/issues/49)) ([b614179](https://github.com/talos-systems/talos/commit/b614179))
 
 
 ### Features
 
-* enable IPVS ([#42](https://github.com/andrewrynhard/talos/issues/42)) ([168c598](https://github.com/andrewrynhard/talos/commit/168c598))
-* initial implementation ([#2](https://github.com/andrewrynhard/talos/issues/2)) ([aba4615](https://github.com/andrewrynhard/talos/commit/aba4615))
-* mount ROOT partition as RO ([#11](https://github.com/andrewrynhard/talos/issues/11)) ([29bdd6d](https://github.com/andrewrynhard/talos/commit/29bdd6d))
-* update Kubernetes to v1.10.0 ([#26](https://github.com/andrewrynhard/talos/issues/26)) ([9a11837](https://github.com/andrewrynhard/talos/commit/9a11837))
-* update Kubernetes to v1.10.0-rc.1 ([#25](https://github.com/andrewrynhard/talos/issues/25)) ([901461c](https://github.com/andrewrynhard/talos/commit/901461c))
-* update to linux 4.15.13 ([#30](https://github.com/andrewrynhard/talos/issues/30)) ([e418d29](https://github.com/andrewrynhard/talos/commit/e418d29))
-* use CRI-O as the container runtime ([#12](https://github.com/andrewrynhard/talos/issues/12)) ([7785d6f](https://github.com/andrewrynhard/talos/commit/7785d6f))
-* **init:** add node join functionality ([#38](https://github.com/andrewrynhard/talos/issues/38)) ([0251868](https://github.com/andrewrynhard/talos/commit/0251868))
-* **init:** basic process managment ([#6](https://github.com/andrewrynhard/talos/issues/6)) ([6c1038b](https://github.com/andrewrynhard/talos/commit/6c1038b))
-* **init:** provide and endpoint for getting logs of running processes ([#9](https://github.com/andrewrynhard/talos/issues/9)) ([37d80cf](https://github.com/andrewrynhard/talos/commit/37d80cf))
-* **init:** set kubelet log level to 4 ([#13](https://github.com/andrewrynhard/talos/issues/13)) ([9597b21](https://github.com/andrewrynhard/talos/commit/9597b21))
-* **init:** use CoreDNS by default ([#39](https://github.com/andrewrynhard/talos/issues/39)) ([a8e3d50](https://github.com/andrewrynhard/talos/commit/a8e3d50))
-* **init:** user data ([#17](https://github.com/andrewrynhard/talos/issues/17)) ([3ee01ae](https://github.com/andrewrynhard/talos/commit/3ee01ae))
-* **kernel:** enable nf_tables and ebtables modules ([#41](https://github.com/andrewrynhard/talos/issues/41)) ([cf53a27](https://github.com/andrewrynhard/talos/commit/cf53a27))
-* **rootfs:** upgrade cri-o and cri-tools ([#35](https://github.com/andrewrynhard/talos/issues/35)) ([0095227](https://github.com/andrewrynhard/talos/commit/0095227))
+* docker as an optional container runtime ([#57](https://github.com/talos-systems/talos/issues/57)) ([3a60bdc](https://github.com/talos-systems/talos/commit/3a60bdc))
+* upgrade to Kubernetes v1.10.1 ([#50](https://github.com/talos-systems/talos/issues/50)) ([46616d1](https://github.com/talos-systems/talos/commit/46616d1))
+* **generate:** enable kernel logging ([#58](https://github.com/talos-systems/talos/issues/58)) ([71d97c8](https://github.com/talos-systems/talos/commit/71d97c8))
+* **kernel:** use LTS kernel v4.14.34 ([#48](https://github.com/talos-systems/talos/issues/48)) ([4c9a810](https://github.com/talos-systems/talos/commit/4c9a810))
+
+
+
+# [0.1.0-alpha.0](https://github.com/talos-systems/talos/compare/aba4615...v0.1.0-alpha.0) (2018-04-03)
+
+
+### Bug Fixes
+
+* **init:** address crio errors and warns ([#40](https://github.com/talos-systems/talos/issues/40)) ([7536d72](https://github.com/talos-systems/talos/commit/7536d72))
+* **init:** don't create CRI-O CNI configurations ([#36](https://github.com/talos-systems/talos/issues/36)) ([8a7c424](https://github.com/talos-systems/talos/commit/8a7c424))
+* **init:** make log handling non-blocking ([#37](https://github.com/talos-systems/talos/issues/37)) ([f244075](https://github.com/talos-systems/talos/commit/f244075))
+* **init:** typo in service subnet field; pin version of Kubernetes ([#10](https://github.com/talos-systems/talos/issues/10)) ([8427ddf](https://github.com/talos-systems/talos/commit/8427ddf))
+* **rootfs:** install conntrack ([#27](https://github.com/talos-systems/talos/issues/27)) ([1067958](https://github.com/talos-systems/talos/commit/1067958))
+
+
+### Features
+
+* enable IPVS ([#42](https://github.com/talos-systems/talos/issues/42)) ([168c598](https://github.com/talos-systems/talos/commit/168c598))
+* initial implementation ([#2](https://github.com/talos-systems/talos/issues/2)) ([aba4615](https://github.com/talos-systems/talos/commit/aba4615))
+* mount ROOT partition as RO ([#11](https://github.com/talos-systems/talos/issues/11)) ([29bdd6d](https://github.com/talos-systems/talos/commit/29bdd6d))
+* update Kubernetes to v1.10.0 ([#26](https://github.com/talos-systems/talos/issues/26)) ([9a11837](https://github.com/talos-systems/talos/commit/9a11837))
+* update Kubernetes to v1.10.0-rc.1 ([#25](https://github.com/talos-systems/talos/issues/25)) ([901461c](https://github.com/talos-systems/talos/commit/901461c))
+* update to linux 4.15.13 ([#30](https://github.com/talos-systems/talos/issues/30)) ([e418d29](https://github.com/talos-systems/talos/commit/e418d29))
+* use CRI-O as the container runtime ([#12](https://github.com/talos-systems/talos/issues/12)) ([7785d6f](https://github.com/talos-systems/talos/commit/7785d6f))
+* **init:** add node join functionality ([#38](https://github.com/talos-systems/talos/issues/38)) ([0251868](https://github.com/talos-systems/talos/commit/0251868))
+* **init:** basic process managment ([#6](https://github.com/talos-systems/talos/issues/6)) ([6c1038b](https://github.com/talos-systems/talos/commit/6c1038b))
+* **init:** provide and endpoint for getting logs of running processes ([#9](https://github.com/talos-systems/talos/issues/9)) ([37d80cf](https://github.com/talos-systems/talos/commit/37d80cf))
+* **init:** set kubelet log level to 4 ([#13](https://github.com/talos-systems/talos/issues/13)) ([9597b21](https://github.com/talos-systems/talos/commit/9597b21))
+* **init:** use CoreDNS by default ([#39](https://github.com/talos-systems/talos/issues/39)) ([a8e3d50](https://github.com/talos-systems/talos/commit/a8e3d50))
+* **init:** user data ([#17](https://github.com/talos-systems/talos/issues/17)) ([3ee01ae](https://github.com/talos-systems/talos/commit/3ee01ae))
+* **kernel:** enable nf_tables and ebtables modules ([#41](https://github.com/talos-systems/talos/issues/41)) ([cf53a27](https://github.com/talos-systems/talos/commit/cf53a27))
+* **rootfs:** upgrade cri-o and cri-tools ([#35](https://github.com/talos-systems/talos/issues/35)) ([0095227](https://github.com/talos-systems/talos/commit/0095227))
