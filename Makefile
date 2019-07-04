@@ -60,7 +60,7 @@ DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/co
 all: ci drone
 
 .PHONY: drone
-drone: rootfs initramfs kernel binaries installer talos
+drone: rootfs initramfs kernel binaries installer talos test
 
 .PHONY: ci
 ci: builddeps buildkitd
@@ -212,16 +212,7 @@ e2e-integration:
 
 .PHONY: test
 test: buildkitd
-	@mkdir -p build
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=/tmp/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-	@docker load < /tmp/$@.tar
-	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
-		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/test.sh && \
-		cp ./.artifacts/coverage.txt coverage.txt
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) build --output type=docker,name=docker.io/autonomy/$@:$(TAG) --opt target=$@ $(COMMON_ARGS) | docker load
 
 .PHONY: dev-test
 dev-test:
