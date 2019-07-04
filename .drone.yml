@@ -32,25 +32,145 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make lint
-    volumes:
-      - name: dockersock
-        path: /var/run
     depends_on:
       - fetch
 
-  - name: build
+  - name: build-init
     image: autonomy/build-container:latest
     pull: always
     environment:
       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
     commands:
-      - make drone
+      - make initramfs
+    depends_on:
+      - lint
+
+  - name: build-osd
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make osd
+    depends_on:
+      - lint
+
+  - name: build-trustd
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make trustd
+    depends_on:
+      - lint
+
+  - name: build-proxyd
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make proxyd
+    depends_on:
+      - lint
+
+  - name: build-ntpd
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make ntpd
+    depends_on:
+      - lint
+
+  - name: build-test
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make test-container
     volumes:
       - name: dockersock
         path: /var/run
     depends_on:
-      - fetch
+      - lint
+
+  - name: build-osctl-darwin
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make osctl-darwin-amd64
+    depends_on:
+      - lint
+
+  - name: build-osctl-linux
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make osctl-linux-amd64
+    depends_on:
+      - lint
+
+  - name: rootfs
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make rootfs
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - build-osd
+      - build-proxyd
+      - build-trustd
+      - build-ntpd
+
+  - name: installer
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make installer
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - rootfs
+
+  - name: talos-image
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make talos
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - rootfs
+      - build-init
 
   - name: test
     image: autonomy/build-container:latest
@@ -62,9 +182,11 @@ steps:
       - make test
     volumes:
       - name: dockersock
-        path: /var/run
+        path: /var/run/
     depends_on:
-      - build
+      - build-test
+      - build-osd
+      - build-proxyd
 
   - name: coverage
     image: plugins/codecov
@@ -93,7 +215,7 @@ steps:
       - name: tmp
         path: /tmp
     depends_on:
-      - build
+      - talos-image
 
   # - name: e2e-integration
   #   image: autonomy/build-container:latest
