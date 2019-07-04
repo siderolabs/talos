@@ -30,10 +30,10 @@ KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(K
 endif
 
 ifeq ($(UNAME_S),Linux)
-GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.0/gitmeta-linux-amd64
+GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.2/gitmeta-linux-amd64
 endif
 ifeq ($(UNAME_S),Darwin)
-GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.0/gitmeta-darwin-amd64
+GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.2/gitmeta-darwin-amd64
 endif
 
 BINDIR ?= ./bin
