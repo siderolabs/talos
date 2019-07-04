@@ -11,6 +11,8 @@ services:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: dev
+        path: /dev
       - name: tmp
         path: /tmp
 
@@ -151,6 +153,8 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: dev
+        path: /dev
     when:
       event: tag
     depends_on:
@@ -202,6 +206,9 @@ steps:
 volumes:
   - name: dockersock
     temp: {}
+  - name: dev
+    host:
+      path: /dev
   - name: tmp
     temp: {}
 
