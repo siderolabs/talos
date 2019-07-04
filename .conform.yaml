@@ -1,45 +1,47 @@
 policies:
-- type: commit
-  spec:
-    headerLength: 89
-    dco: true
-    gpg: false
-    imperative: true
-    conventional:
-      types:
-      - chore
-      - docs
-      - perf
-      - refactor
-      - style
-      - test
-      scopes:
-      - ami
-      - ci
-      - conformance
-      - gpt
-      - hack
-      - image
-      - init
-      - initramfs
-      - kernel
-      - proxyd
-      - osctl
-      - osd
-      - rootfs
-      - tools
-      - trustd
-      - '*'
-- type: license
-  spec:
-    skipPaths:
-    - .git/
-    - .buildkit/
-    includeSuffixes:
-    - .go
-    excludeSuffixes:
-    - .pb.go
-    header: |
-      /* This Source Code Form is subject to the terms of the Mozilla Public
-       * License, v. 2.0. If a copy of the MPL was not distributed with this
-       * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+  - type: commit
+    spec:
+      headerLength: 89
+      dco: true
+      gpg: false
+      imperative: true
+      maximumOfOneCommit: true
+      requireCommitBody: true
+      conventional:
+        types:
+          - chore
+          - docs
+          - perf
+          - refactor
+          - style
+          - test
+        scopes:
+          - ami
+          - ci
+          - conformance
+          - gpt
+          - hack
+          - image
+          - init
+          - initramfs
+          - kernel
+          - proxyd
+          - osctl
+          - osd
+          - rootfs
+          - tools
+          - trustd
+          - '*'
+  - type: license
+    spec:
+      skipPaths:
+        - .git/
+        - .buildkit/
+      includeSuffixes:
+        - .go
+      excludeSuffixes:
+        - .pb.go
+      header: |
+        /* This Source Code Form is subject to the terms of the Mozilla Public
+         * License, v. 2.0. If a copy of the MPL was not distributed with this
+         * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
