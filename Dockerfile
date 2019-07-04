@@ -233,17 +233,14 @@ RUN apk --update add \
     unzip \
     util-linux \
     xfsprogs
-COPY --from=kernel /vmlinuz /usr/install/vmlinuz
-COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
-COPY --from=rootfs /rootfs.tar.gz /usr/install/rootfs.tar.gz
-COPY --from=initramfs-build /usr/lib/syslinux/ /usr/lib/syslinux
-COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /bin/osctl
-RUN curl -L https://releases.hashicorp.com/packer/1.3.1/packer_1.3.1_linux_amd64.zip -o /tmp/packer.zip \
-    && unzip -d /tmp /tmp/packer.zip \
-    && mv /tmp/packer /bin \
-    && rm /tmp/packer.zip
+COPY --from=hashicorp/packer:1.4.2 /bin/packer /bin/packer
 COPY hack/installer/packer.json /packer.json
 COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
+COPY --from=kernel /vmlinuz /usr/install/vmlinuz
+COPY --from=initramfs-build /usr/lib/syslinux/ /usr/lib/syslinux
+COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
+COPY --from=rootfs /rootfs.tar.gz /usr/install/rootfs.tar.gz
+COPY --from=osctl-linux-amd64-build /osctl-linux-amd64 /bin/osctl
 ARG TAG
 ENV VERSION ${TAG}
 ENTRYPOINT ["entrypoint.sh"]

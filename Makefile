@@ -210,15 +210,18 @@ basic-integration:
 e2e-integration:
 	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
 
-.PHONY: test
-test: buildkitd
+.PHONY: test-container
+test-container: buildkitd
 	@mkdir -p build
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-		--output type=docker,dest=/tmp/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
+		--output type=docker,dest=/tmp/test.tar,name=docker.io/autonomy/test:$(TAG) \
+		--opt target=test \
 		$(COMMON_ARGS)
-	@docker load < /tmp/$@.tar
+	@docker load < /tmp/test.tar
+
+.PHONY: test
+test: buildkitd test-container
 	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
 		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/test.sh && \
 		cp ./.artifacts/coverage.txt coverage.txt
