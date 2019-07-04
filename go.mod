@@ -63,7 +63,8 @@ require (
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
 	github.com/talos-systems/dhcp v0.0.0-20190403231749-dd8bdda8e381
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
