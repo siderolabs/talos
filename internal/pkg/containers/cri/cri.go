@@ -153,6 +153,9 @@ func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) 
 				PodName:      podName,
 				Status:       sandboxStatus.State.String(),
 				IsPodSandbox: true,
+				Metrics:      &ctrs.ContainerMetrics{
+					// assume pod sandbox uses zero
+				},
 			},
 		},
 	}
@@ -236,6 +239,15 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 		return nil, err
 	}
 
+	metrics, err := i.client.ListContainerStats(i.ctx, &runtimeapi.ContainerStatsFilter{})
+	if err != nil {
+		return nil, err
+	}
+	metricsPerContainer := map[string]*runtimeapi.ContainerStats{}
+	for _, metric := range metrics {
+		metricsPerContainer[metric.Attributes.Id] = metric
+	}
+
 	images, err := i.Images()
 	if err != nil {
 		return nil, err
@@ -272,6 +284,18 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 
 		if imageName, ok := images[ctr.Digest]; ok {
 			ctr.Image = imageName
+		}
+
+		if metrics := metricsPerContainer[ctr.ID]; metrics != nil {
+			ctr.Metrics = &ctrs.ContainerMetrics{}
+
+			if metrics.Memory != nil && metrics.Memory.WorkingSetBytes != nil {
+				ctr.Metrics.MemoryUsage = metrics.Memory.WorkingSetBytes.Value
+			}
+
+			if metrics.Cpu != nil && metrics.Cpu.UsageCoreNanoSeconds != nil {
+				ctr.Metrics.CPUUsage = metrics.Cpu.UsageCoreNanoSeconds.Value
+			}
 		}
 
 		pod.Containers = append(pod.Containers, ctr)

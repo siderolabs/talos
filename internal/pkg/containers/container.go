@@ -12,8 +12,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/containerd/containerd/api/types"
-
 	"github.com/talos-systems/talos/internal/pkg/chunker"
 	"github.com/talos-systems/talos/internal/pkg/chunker/file"
 	"github.com/talos-systems/talos/internal/pkg/chunker/stream"
@@ -33,9 +31,15 @@ type Container struct {
 	Status       string // Running state of container
 	RestartCount string
 	LogPath      string
-	Metrics      *types.Metric
+	Metrics      *ContainerMetrics
 	Pid          uint32
 	IsPodSandbox bool // real container or just pod sandbox
+}
+
+// ContainerMetrics represents container cgroup stats
+type ContainerMetrics struct {
+	MemoryUsage uint64
+	CPUUsage    uint64
 }
 
 // GetProcessStderr returns process stderr

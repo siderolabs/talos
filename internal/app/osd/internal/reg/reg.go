@@ -19,10 +19,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/containerd/cgroups"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
-	"github.com/containerd/typeurl"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
@@ -145,33 +143,13 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 				continue
 			}
 
-			anydata, err := typeurl.UnmarshalAny(container.Metrics.Data)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			data, ok := anydata.(*cgroups.Metrics)
-			if !ok {
-				log.Println(errors.New("failed to convert metric data to cgroups.Metrics"))
-				continue
-			}
-
-			var used uint64
-			mem := data.Memory
-			if mem.Usage != nil {
-				if mem.TotalInactiveFile < mem.Usage.Usage {
-					used = mem.Usage.Usage - mem.TotalInactiveFile
-				}
-			}
-
 			stat := &proto.Stat{
 				Namespace:   in.Namespace,
 				Id:          container.Display,
 				PodId:       pod.Name,
 				Name:        container.Name,
-				MemoryUsage: used,
-				CpuUsage:    data.CPU.Usage.Total,
+				MemoryUsage: container.Metrics.MemoryUsage,
+				CpuUsage:    container.Metrics.CPUUsage,
 			}
 
 			stats = append(stats, stat)
