@@ -109,6 +109,21 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 	return data, err
 }
 
+// Reset initiates a Talos upgrade
+func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
+	// stop kubelet
+	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
+		return data, err
+	}
+
+	// kubeadm Reset
+	if err = upgrade.Reset(); err != nil {
+		return data, err
+	}
+
+	return data, err
+}
+
 // ServiceList returns list of the registered services and their status
 func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *proto.ServiceListReply, err error) {
 	services := system.Services(r.Data).List()
