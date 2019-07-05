@@ -39,25 +39,6 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 // PreFunc implements the Service interface.
 // nolint: gocyclo
 func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
-	requiredMounts := []string{
-		"/dev/disk/by-path",
-		"/etc/kubernetes",
-		"/etc/kubernetes/manifests",
-		"/lib/modules",
-		"/run",
-		"/sys/fs/cgroup",
-		"/usr/libexec/kubernetes",
-		"/var/lib/containerd",
-		"/var/lib/kubelet",
-		"/var/log/pods",
-	}
-
-	for _, dir := range requiredMounts {
-		if err = os.MkdirAll(dir, os.ModeDir); err != nil {
-			return errors.Wrapf(err, "create %s", dir)
-		}
-	}
-
 	reqs := []*containerd.ImportRequest{
 		{
 			Path: "/usr/images/hyperkube.tar",
