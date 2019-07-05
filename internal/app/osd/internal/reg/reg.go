@@ -281,7 +281,11 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (*proto.Route
 		var ifaceName string
 		ifaceData, err := conn.Link.Get(rMesg.Attributes.OutIface)
 		if err != nil {
-			return nil, errors.Errorf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
+			log.Printf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
+			// TODO: Remove once we get this sorted on why there's a
+			// failure here
+			log.Printf("%+v", rMesg)
+			continue
 		}
 		if ifaceData.Attributes != nil {
 			ifaceName = ifaceData.Attributes.Name

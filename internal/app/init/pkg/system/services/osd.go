@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
@@ -35,10 +34,6 @@ func (o *OSD) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (o *OSD) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	if err := os.MkdirAll("/etc/kubernetes", os.ModeDir); err != nil {
-		return err
-	}
-
 	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
 		Path: "/usr/images/osd.tar",
 		Options: []containerdapi.ImportOpt{

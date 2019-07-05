@@ -66,6 +66,24 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 		}
 	}
 
+	// Create required directories that are not part of FHS.
+	for _, path := range []string{"/etc/kubernetes/manifests", "/etc/cni", "/var/lib/kubelet", "/var/log/pods", "/usr/libexec/kubernetes"} {
+		if err = os.MkdirAll(filepath.Join(s, path), 0700); err != nil {
+			return err
+		}
+	}
+	// Create symlinks to /etc/ssl/certs as required by the control plane.
+	for _, path := range []string{"/etc/pki", "/usr/share/ca-certificates", "/usr/local/share/ca-certificates", "/etc/ca-certificates"} {
+		target := filepath.Join(s, path)
+		if _, err = os.Stat(target); os.IsNotExist(err) {
+			if err = os.MkdirAll(filepath.Dir(target), 0700); err != nil {
+				return err
+			}
+			if err = os.Symlink("/etc/ssl/certs", target); err != nil {
+				return err
+			}
+		}
+	}
 	// Create /etc/os-release.
 	if err = etc.OSRelease(s); err != nil {
 		return
