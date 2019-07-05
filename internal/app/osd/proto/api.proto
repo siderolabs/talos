@@ -14,7 +14,6 @@ service OSD {
   rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
   rpc Logs(LogsRequest) returns (stream Data) {}
   rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
-  rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Restart(RestartRequest) returns (RestartReply) {}
   rpc Routes(google.protobuf.Empty) returns (RoutesReply) {}
   rpc Stats(StatsRequest) returns (StatsReply) {}
@@ -78,9 +77,6 @@ message RestartRequest {
 
 // The response message containing the restart status.
 message RestartReply {}
-
-// The response message containing the restart status.
-message ResetReply {}
 
 // The request message containing the process name.
 message LogsRequest {
