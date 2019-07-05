@@ -1,3 +1,23 @@
+# [v0.2.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.0...v0.2.0-alpha.1) (2019-07-05)
+
+
+### Bug Fixes
+
+* **init:** secret data at rest encryption key should be truly random ([#797](https://github.com/talos-systems/talos/issues/797)) ([6b0a66b](https://github.com/talos-systems/talos/commit/6b0a66b))
+* append probed block devices ([2c6bf9b](https://github.com/talos-systems/talos/commit/2c6bf9b))
+* move to crypto/rand for token gen ([#794](https://github.com/talos-systems/talos/issues/794)) ([18f59d8](https://github.com/talos-systems/talos/commit/18f59d8))
+* probe specified install device ([#818](https://github.com/talos-systems/talos/issues/818)) ([cca60ed](https://github.com/talos-systems/talos/commit/cca60ed))
+* use existing logic to perform reset ([5d8ee0a](https://github.com/talos-systems/talos/commit/5d8ee0a))
+
+
+### Features
+
+* **initramfs:** Add kernel arg for default interface ([c194621](https://github.com/talos-systems/talos/commit/c194621))
+* **osd:** implement container metrics for CRI inspector ([#824](https://github.com/talos-systems/talos/issues/824)) ([5d91d76](https://github.com/talos-systems/talos/commit/5d91d76))
+* **osd:** implement CRI inspector for containers ([#817](https://github.com/talos-systems/talos/issues/817)) ([237e903](https://github.com/talos-systems/talos/commit/237e903))
+
+
+
 # [0.2.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.2.0-alpha.0) (2019-06-27)
 
 
