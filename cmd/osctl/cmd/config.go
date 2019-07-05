@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -131,6 +132,11 @@ var configGenerateCmd = &cobra.Command{
 			helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 		}
 
+		workingDir, err := os.Getwd()
+		if err != nil {
+			helpers.Fatalf("failed to fetch current working dir: %v", err)
+		}
+
 		var udType generate.Type
 		for idx, master := range strings.Split(args[1], ",") {
 			input.Index = idx
@@ -145,12 +151,14 @@ var configGenerateCmd = &cobra.Command{
 			if err = writeUserdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
 				helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 			}
+			fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 		}
 		input.IP = nil
 
 		if err = writeUserdata(input, generate.TypeJoin, "worker"); err != nil {
 			helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
 		}
+		fmt.Println("created file", workingDir+"/worker.yaml")
 
 		data, err := generate.Talosconfig(input)
 		if err != nil {
@@ -159,6 +167,7 @@ var configGenerateCmd = &cobra.Command{
 		if err = ioutil.WriteFile("talosconfig", []byte(data), 0644); err != nil {
 			helpers.Fatalf("%v", err)
 		}
+		fmt.Println("created file", workingDir+"/talosconfig")
 	},
 }
 
