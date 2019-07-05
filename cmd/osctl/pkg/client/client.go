@@ -155,7 +155,7 @@ func (c *Client) Restart(ctx context.Context, namespace, id string) (err error) 
 
 // Reset implements the proto.OSDClient interface.
 func (c *Client) Reset(ctx context.Context) (err error) {
-	_, err = c.client.Reset(ctx, &empty.Empty{})
+	_, err = c.initClient.Reset(ctx, &empty.Empty{})
 	return
 }
 

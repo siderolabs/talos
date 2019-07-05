@@ -20,19 +20,14 @@ import (
 	"syscall"
 
 	"github.com/containerd/cgroups"
-	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
-	containerdrunner "github.com/talos-systems/talos/internal/app/init/pkg/system/runner/containerd"
 	initproto "github.com/talos-systems/talos/internal/app/init/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/chunker"
@@ -205,62 +200,6 @@ func (r *Registrator) Restart(ctx context.Context, in *proto.RestartRequest) (*p
 	}
 
 	return &proto.RestartReply{}, nil
-}
-
-// Reset implements the proto.OSDServer interface.
-func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (reply *proto.ResetReply, err error) {
-	// TODO(andrewrynhard): Delete all system tasks and containers.
-
-	// Set the process arguments.
-	args := runner.Args{
-		ID:          "reset",
-		ProcessArgs: []string{"/bin/kubeadm", "reset", "--force"},
-	}
-
-	// Set the mounts.
-	// nolint: dupl
-	mounts := []specs.Mount{
-		{Type: "cgroup", Destination: "/sys/fs/cgroup", Options: []string{"ro"}},
-		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/docker", Source: "/var/lib/docker", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
-		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/bin/crictl", Source: "/bin/crictl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/bin/kubeadm", Source: "/bin/kubeadm", Options: []string{"bind", "ro"}},
-	}
-
-	cr := containerdrunner.NewRunner(
-		r.Data,
-		&args,
-		runner.WithContainerImage(constants.KubernetesImage),
-		runner.WithOCISpecOpts(
-			containerdrunner.WithMemoryLimit(int64(1000000*512)),
-			containerdrunner.WithRootfsPropagation("slave"),
-			oci.WithMounts(mounts),
-			oci.WithHostNamespace(specs.PIDNamespace),
-			oci.WithParentCgroupDevices,
-			oci.WithPrivileged,
-		),
-	)
-
-	err = cr.Open(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// nolint: errcheck
-	defer cr.Close()
-
-	// TODO: should this go through system.Services?
-	err = cr.Run(events.NullRecorder)
-	if err != nil {
-		return nil, err
-	}
-
-	reply = &proto.ResetReply{}
-
-	return reply, nil
 }
 
 // Dmesg implements the proto.OSDServer interface. The klogctl syscall is used
