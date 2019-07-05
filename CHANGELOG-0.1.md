@@ -1,10 +1,11 @@
-# [0.1.0-beta.1](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-04)
+# [0.1.0-beta.1](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-05)
 
 
 ### Bug Fixes
 
-* move to crypto/rand for token gen ([#794](https://github.com/talos-systems/talos/issues/794)) ([402c597](https://github.com/talos-systems/talos/commit/402c597))
 * **init:** secret data at rest encryption key should be truly random ([#799](https://github.com/talos-systems/talos/issues/799)) ([349aabf](https://github.com/talos-systems/talos/commit/349aabf))
+* append probed block devices ([f2c990f](https://github.com/talos-systems/talos/commit/f2c990f))
+* move to crypto/rand for token gen ([#794](https://github.com/talos-systems/talos/issues/794)) ([402c597](https://github.com/talos-systems/talos/commit/402c597))
 * probe specified install device ([#818](https://github.com/talos-systems/talos/issues/818)) ([#820](https://github.com/talos-systems/talos/issues/820)) ([3010bd5](https://github.com/talos-systems/talos/commit/3010bd5))
 
 
