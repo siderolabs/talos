@@ -11,6 +11,7 @@ service Init {
   rpc CopyOut(CopyOutRequest) returns (stream StreamingData) {}
   rpc LS(LSRequest) returns (stream FileInfo) {}
   rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
+  rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
   rpc Upgrade(UpgradeRequest) returns (UpgradeReply) {}
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply) {}
@@ -19,6 +20,9 @@ service Init {
 
 // The response message containing the reboot status.
 message RebootReply {}
+
+// The response message containing the restart status.
+message ResetReply {}
 
 // The response message containing the shutdown status.
 message ShutdownReply {}

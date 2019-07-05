@@ -35,13 +35,13 @@ func NewInitServiceClient() (*InitServiceClient, error) {
 }
 
 // Reboot executes init Reboot() API
-func (c *InitServiceClient) Reboot(ctx context.Context, empty *empty.Empty) (*proto.RebootReply, error) {
-	return c.InitClient.Reboot(ctx, empty)
+func (c *InitServiceClient) Reboot(ctx context.Context, in *empty.Empty) (*proto.RebootReply, error) {
+	return c.InitClient.Reboot(ctx, in)
 }
 
 // Shutdown executes init Shutdown() API.
-func (c *InitServiceClient) Shutdown(ctx context.Context, empty *empty.Empty) (*proto.ShutdownReply, error) {
-	return c.InitClient.Shutdown(ctx, empty)
+func (c *InitServiceClient) Shutdown(ctx context.Context, in *empty.Empty) (*proto.ShutdownReply, error) {
+	return c.InitClient.Shutdown(ctx, in)
 }
 
 // Upgrade executes the init Upgrade() API.
@@ -49,9 +49,14 @@ func (c *InitServiceClient) Upgrade(ctx context.Context, in *proto.UpgradeReques
 	return c.InitClient.Upgrade(ctx, in)
 }
 
+// Reset executes the init Reset() API.
+func (c *InitServiceClient) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
+	return c.InitClient.Reset(ctx, in)
+}
+
 // ServiceList executes the init ServiceList() API.
-func (c *InitServiceClient) ServiceList(ctx context.Context, empty *empty.Empty) (data *proto.ServiceListReply, err error) {
-	return c.InitClient.ServiceList(ctx, empty)
+func (c *InitServiceClient) ServiceList(ctx context.Context, in *empty.Empty) (data *proto.ServiceListReply, err error) {
+	return c.InitClient.ServiceList(ctx, in)
 }
 
 func copyClientServer(msg interface{}, client grpc.ClientStream, srv grpc.ServerStream) error {
