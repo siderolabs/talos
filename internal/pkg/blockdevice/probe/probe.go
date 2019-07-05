@@ -31,7 +31,7 @@ type ProbedBlockDevice struct {
 }
 
 // All probes a block device's file system for the given label.
-func All() (probed []*ProbedBlockDevice, err error) {
+func All() (all []*ProbedBlockDevice, err error) {
 	var infos []os.FileInfo
 	if infos, err = ioutil.ReadDir("/sys/block"); err != nil {
 		return nil, err
@@ -39,13 +39,15 @@ func All() (probed []*ProbedBlockDevice, err error) {
 
 	for _, info := range infos {
 		devpath := "/dev/" + info.Name()
+		var probed []*ProbedBlockDevice
 		probed, err = probeFilesystem(devpath)
 		if err != nil {
 			return nil, err
 		}
+		all = append(all, probed...)
 	}
 
-	return probed, nil
+	return all, nil
 }
 
 // FileSystem probes the provided path's file system.
