@@ -25,6 +25,8 @@ import (
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
@@ -187,8 +189,7 @@ func RequiredFiles() []string {
 
 // FileSet compares the list of required files to the ones
 // already present on the node and returns the delta
-func FileSet() []*proto.ReadFileRequest {
-	files := RequiredFiles()
+func FileSet(files []string) []*proto.ReadFileRequest {
 
 	fileRequests := []*proto.ReadFileRequest{}
 	// Check to see if we already have the file locally
@@ -254,6 +255,11 @@ func download(ctx context.Context, client proto.TrustdClient, file *proto.ReadFi
 			break
 		}
 
+		// Context canceled, no need to do anything
+		if status.Code(err) == codes.Canceled {
+			break
+		}
+
 		// Error case
 		log.Printf("failed to read file %s: %+v", file, err)
 
@@ -268,6 +274,12 @@ func download(ctx context.Context, client proto.TrustdClient, file *proto.ReadFi
 			return []byte{}
 		case <-time.After(time.Duration(snooze) * time.Second):
 		}
+	}
+
+	// Handle case where context was canceled or request otherwise failed
+	// and we dont have an actual response
+	if resp == nil {
+		return []byte{}
 	}
 
 	return resp.Data
