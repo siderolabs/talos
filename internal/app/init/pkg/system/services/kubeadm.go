@@ -108,13 +108,13 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 
 	// Wait for all files to get synced
 	var wg sync.WaitGroup
-	wg.Add(len(kubeadm.FileSet()))
+	wg.Add(len(kubeadm.FileSet(kubeadm.RequiredFiles())))
 
 	log.Println("retrieving needed files via trustd")
 	// Generate a list of files we need to request
 	// ( filtered by ones we already have ) and
 	// Get assets from remote nodes
-	for _, fileRequest := range kubeadm.FileSet() {
+	for _, fileRequest := range kubeadm.FileSet(kubeadm.RequiredFiles()) {
 
 		// Handle all file requests in parallel
 		go func(ctx context.Context, fileRequest *proto.ReadFileRequest) {

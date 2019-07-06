@@ -3,7 +3,7 @@
 set -eou pipefail
 
 export TMP="$(mktemp -d)"
-export OSCTL="${PWD}/build/osctl-linux-amd64"
+export OSCTL="${PWD}/out/linux_amd64/osctl-linux-amd64"
 export TALOSCONFIG="${TMP}/talosconfig"
 export KUBECONFIG="${TMP}/kubeconfig"
 

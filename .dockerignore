@@ -1,10 +1,9 @@
 **
 !cmd
 !hack
-!images/*.tar
 !internal
+!out/linux_amd64/images
+!out/linux_arm64/images
 !pkg
-!vendor
-!web
 !go.mod
 !go.sum

@@ -4,12 +4,12 @@ name: default
 
 services:
   - name: docker
-    image: docker:dind
+    image: docker:19.03.0-rc3-dind
     privileged: true
     command:
       - --dns=8.8.8.8
     volumes:
-      - name: dockersock
+      - name: docker-socket
         path: /var/run
       - name: dev
         path: /dev
@@ -27,151 +27,49 @@ steps:
   - name: lint
     image: autonomy/build-container:latest
     pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
     commands:
-      - make lint
-    depends_on:
-      - fetch
-
-  - name: build-init
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make initramfs
-    depends_on:
-      - lint
-
-  - name: build-osd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make osd
-    depends_on:
-      - lint
-
-  - name: build-trustd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make trustd
-    depends_on:
-      - lint
-
-  - name: build-proxyd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make proxyd
-    depends_on:
-      - lint
-
-  - name: build-ntpd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make ntpd
-    depends_on:
-      - lint
-
-  - name: build-osctl-darwin
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make osctl-darwin-amd64
-    depends_on:
-      - lint
-
-  - name: build-osctl-linux
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make osctl-linux-amd64
-    depends_on:
-      - lint
-
-  - name: rootfs
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make rootfs
+      - make ARCH=amd64 lint
     volumes:
-      - name: dockersock
+      - name: docker-socket
+        path: /var/run
+
+  - name: build-amd64
+    image: autonomy/build-container:latest
+    pull: always
+    commands:
+      - docker buildx create --name amd64 --driver docker-container --use tcp://docker-amd64.ci.svc:2375
+      - mkdir -p ./out/linux_amd64/images
+      - make ARCH=amd64
+    volumes:
+      - name: docker-socket
         path: /var/run
     depends_on:
-      - build-osd
-      - build-proxyd
-      - build-trustd
-      - build-ntpd
+      - lint
 
-  - name: installer
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make installer
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - rootfs
-
-  - name: talos-image
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make talos
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - rootfs
-      - build-init
+  # - name: build-arm64
+  #   image: autonomy/build-container:latest
+  #   pull: always
+  #   commands:
+  #     - docker buildx create --name arm64 --driver docker-container --use tcp://docker-arm64.ci.svc:2375
+  #     - mkdir -p ./out/linux_arm64/images
+  #     - make ARCH=arm64
+  #   volumes:
+  #     - name: docker-socket
+  #       path: /var/run
+  #   depends_on:
+  #     - lint
+  #   err_ignore: true
 
   - name: test
     image: autonomy/build-container:latest
     pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
     commands:
       - make test
     volumes:
-      - name: dockersock
-        path: /var/run/
+      - name: docker-socket
+        path: /var/run
     depends_on:
-      - build-osd
-      - build-proxyd
+      - build-amd64
 
   - name: coverage
     image: plugins/codecov
@@ -186,79 +84,42 @@ steps:
   - name: basic-integration
     image: autonomy/build-container:latest
     pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
     commands:
-      - make basic-integration
-      - cp build/osctl-linux-amd64 /tmp/osctl
-      - cd /tmp
-      - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
+      - make integration
     volumes:
-      - name: dockersock
+      - name: docker-socket
         path: /var/run
       - name: tmp
         path: /tmp
     depends_on:
-      - talos-image
-
-  # - name: e2e-integration
-  #   image: autonomy/build-container:latest
-  #   pull: always
-  #   ## Ignore errors for now, until we get the flakiness resolved in beta
-  #   err_ignore: true
-  #   environment:
-  #     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-  #     BINDIR: /usr/local/bin
-  #     PACKET_AUTH_TOKEN:
-  #       from_secret: packet_auth_token
-  #     PACKET_PROJECT_ID:
-  #       from_secret: packet_project_id
-  #     PACKET_PXE_SERVER:
-  #       from_secret: packet_pxe_server
-  #   commands:
-  #     - make e2e-integration
-  #   volumes:
-  #     - name: dockersock
-  #       path: /var/run
-  #     - name: tmp
-  #       path: /tmp
-  #   when:
-  #     event:
-  #       - push
-  #       - tag
-  #     branch:
-  #       - master
-  #   depends_on:
-  #     - basic-integration
+      - coverage
+    when:
+      event: pull_request
 
   - name: iso
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
     commands:
       - make talos-iso
     volumes:
-      - name: dockersock
+      - name: docker-socket
         path: /var/run
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
 
   - name: gce
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
     commands:
       - make talos-gce
     volumes:
-      - name: dockersock
+      - name: docker-socket
         path: /var/run
       - name: dev
         path: /dev
@@ -281,14 +142,13 @@ steps:
       - make login
       - make push
     volumes:
-      - name: dockersock
+      - name: docker-socket
         path: /var/run
     when:
       event:
         exclude:
           - pull_request
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
 
   - name: release
@@ -305,20 +165,18 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
+      - push
       - iso
       - gce
 
 volumes:
-  - name: dockersock
+  - name: docker-socket
     temp: {}
   - name: dev
     host:
       path: /dev
   - name: tmp
     temp: {}
-
 ---
 kind: pipeline
 name: notify

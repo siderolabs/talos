@@ -1,206 +1,54 @@
-KERNEL_IMAGE ?= autonomy/kernel:1f83e85
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:6cf146a
-ROOTFS_IMAGE ?= autonomy/rootfs-base:6cf146a
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:6cf146a
+ARCH ?= amd64
 
-# TODO(andrewrynhard): Move this logic to a shell script.
-BUILDKIT_VERSION ?= v0.5.0
-KUBECTL_VERSION ?= v1.14.1
-BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
-BUILDKIT_HOST ?= tcp://0.0.0.0:1234
-BUILDKIT_CONTAINER_NAME ?= talos-buildkit
-BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}' 2>/dev/null)
-BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}' 2>/dev/null)
+SHA = $(shell gitmeta git sha)
+TAG = $(shell gitmeta image tag)-$(ARCH)
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
-BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
-endif
-ifeq ($(UNAME_S),Darwin)
-BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
-BUILDKIT_CACHE ?=
-endif
+TOOLS_REGISTRY := docker.io
+TOOLS_USERNAME := andrewrynhard
+TOOLS_REPO := tools
+TOOLS_TAG := ee30671
+TOOLS := $(TOOLS_REGISTRY)/$(TOOLS_USERNAME)/$(TOOLS_REPO):$(TOOLS_TAG)
 
-ifeq ($(UNAME_S),Linux)
-KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
-endif
-ifeq ($(UNAME_S),Darwin)
-KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/amd64/kubectl
-endif
+PROGRESS := auto
+PLATFORM := linux/$(ARCH)
+PUSH := false
+CACHE_FROM := type=local,src=./out/cache
+CACHE_TO := type=local,dest=./out/cache
 
-ifeq ($(UNAME_S),Linux)
-GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.2/gitmeta-linux-amd64
-endif
-ifeq ($(UNAME_S),Darwin)
-GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.2/gitmeta-darwin-amd64
-endif
+BUILD = docker buildx build
+COMMON_ARGS  = --progress=$(PROGRESS)
+COMMON_ARGS += --platform=$(PLATFORM)
+COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
+COMMON_ARGS += --build-arg=SHA=$(SHA)
+COMMON_ARGS += --build-arg=TAG=$(TAG)
+COMMON_ARGS += --file=./Dockerfile
+# COMMON_ARGS += --cache-from=$(CACHE_FROM)
+# COMMON_ARGS += --cache-to=$(CACHE_TO)
+EXTRA_ARGS ?=
 
-BINDIR ?= ./bin
-CONFORM_VERSION ?= 57c9dbd
+OUT_PATH = ./out/linux_$(ARCH)
+IMAGE_PATH = $(OUT_PATH)/images
 
-SHA := $(shell $(BINDIR)/gitmeta git sha)
-TAG := $(shell $(BINDIR)/gitmeta image tag)
+all: kernel initramfs rootfs talos osctl-linux installer
 
-COMMON_ARGS = --progress=plain
-COMMON_ARGS += --frontend=dockerfile.v0
-COMMON_ARGS += --local context=.
-COMMON_ARGS += --local dockerfile=.
-COMMON_ARGS += --opt build-arg:KERNEL_IMAGE=$(KERNEL_IMAGE)
-COMMON_ARGS += --opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
-COMMON_ARGS += --opt build-arg:ROOTFS_IMAGE=$(ROOTFS_IMAGE)
-COMMON_ARGS += --opt build-arg:INITRAMFS_IMAGE=$(INITRAMFS_IMAGE)
-COMMON_ARGS += --opt build-arg:SHA=$(SHA)
-COMMON_ARGS += --opt build-arg:TAG=$(TAG)
+.PHONY: help
+help: ## This help menu.
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-DOCKER_ARGS ?=
-# to allow tests to run containerd
-DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/
+.PHONY: generate
+generate: ## Generates the source code from protobuf definitions.
+	@$(BUILD) $(COMMON_ARGS) $(EXTRA_ARGS) --target=$@ --output=type=local,dest=. .
 
-all: ci drone
+.PHONY: base
+base: ## Builds a base image that is used for all builds.
+	@$(BUILD) $(COMMON_ARGS) $(EXTRA_ARGS) --target=$@ .
 
-.PHONY: drone
-drone: rootfs initramfs kernel binaries installer talos
-
-.PHONY: ci
-ci: builddeps buildkitd
-
-
-.PHONY: builddeps
-builddeps: gitmeta buildctl
-
-gitmeta: $(BINDIR)/gitmeta
-
-$(BINDIR)/gitmeta:
-	@mkdir -p $(BINDIR)
-	@curl -L $(GITMETA) -o $(BINDIR)/gitmeta
-	@chmod +x $(BINDIR)/gitmeta
-
-buildctl: $(BINDIR)/buildctl
-
-$(BINDIR)/buildctl:
-	@mkdir -p $(BINDIR)
-	@curl -L $(BUILDCTL_ARCHIVE) | tar -zxf - -C $(BINDIR) --strip-components 1 bin/buildctl
-
-kubectl: $(BINDIR)/kubectl
-
-$(BINDIR)/kubectl:
-	@mkdir -p $(BINDIR)
-	@curl -L -o $(BINDIR)/kubectl $(KUBECTL_ARCHIVE)
-	@chmod +x $(BINDIR)/kubectl
-
-.PHONY: buildkitd
-buildkitd:
-ifeq (tcp://0.0.0.0:1234,$(findstring tcp://0.0.0.0:1234,$(BUILDKIT_HOST)))
-ifeq ($(BUILDKIT_CONTAINER_STOPPED),$(BUILDKIT_CONTAINER_NAME))
-	@echo "Removing exited talos-buildkit container"
-	@docker rm $(BUILDKIT_CONTAINER_NAME)
-endif
-ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
-	@echo "Starting talos-buildkit container"
-	@docker run \
-		--name $(BUILDKIT_CONTAINER_NAME) \
-		-d \
-		--privileged \
-		-p 1234:1234 \
-		$(BUILDKIT_CACHE) \
-		$(BUILDKIT_IMAGE) \
-		--addr $(BUILDKIT_HOST)
-	@echo "Wait for buildkitd to become available"
-	@sleep 5
-endif
-endif
-
-.PHONY: binaries
-binaries: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-base: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: kernel
-kernel: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-	@-rm -rf ./build/modules
-
-.PHONY: initramfs
-initramfs: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: rootfs
-rootfs: buildkitd osd trustd proxyd ntpd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: installer
-installer: buildkitd
-	@mkdir -p build
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-	@docker load < build/$@.tar
-
-.PHONY: proto
-proto: buildkitd
-	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=./ \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: talos-gce
-talos-gce:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
-	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.raw
-	@rm -rf $(PWD)/build/disk.raw
-
-.PHONY: talos-iso
-talos-iso:
-	@docker run --rm -i -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
-
-.PHONY: talos-aws
-talos-aws:
-	@docker run \
-		--rm \
-		-i \
-		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
-		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
-		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
-		autonomy/installer:$(TAG) ami -var regions=${AWS_PUBLISH_REGIONS} -var visibility=all
-
-.PHONY: talos-raw
-talos-raw:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n rootfs -r -b
-
-.PHONY: talos
-talos: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-	@docker load < build/$@.tar
+.PHONY: test
+test: ## Performs unit and functional tests.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --tag=autonomy/$@:$(TAG) --load .
+	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts \
+		&& docker run -i --rm --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/ -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /toolchain/bin/test.sh \
+		&& cp ./.artifacts/coverage.txt coverage.txt
 
 .PHONY: basic-integration
 basic-integration:
@@ -210,99 +58,70 @@ basic-integration:
 e2e-integration:
 	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
 
-.PHONY: test
-test: buildkitd
-	@mkdir -p build
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=/tmp/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-	@docker load < /tmp/$@.tar
-	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
-		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/$@.sh && \
-		cp ./.artifacts/coverage.txt coverage.txt
-
-.PHONY: dev-test
-dev-test:
-	@docker run -i --rm $(DOCKER_TEST_ARGS) \
-		-v $(PWD)/internal:/src/internal:ro \
-		-v $(PWD)/pkg:/src/pkg:ro \
-		-v $(PWD)/cmd:/src/cmd:ro \
-		autonomy/test:$(TAG) \
-		go test -v ./...
-
 .PHONY: lint
-lint: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+lint: ## Runs linting on the source.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ .
 
-.PHONY: osctl-linux-amd64
-osctl-linux-amd64: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+.PHONY: kernel
+kernel: ## Copies the kernel to $(OUT_PATH).
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --output=type=local,dest=$(OUT_PATH) .
+
+.PHONY: initramfs
+initramfs: ## Builds the compressed initramfs and outputs it to ./out/initramfs.xz.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --output=type=local,dest=$(OUT_PATH) .
+
+.PHONY: rootfs
+rootfs: ntpd osd proxyd trustd ## Builds the compressed rootfs and outputs it to ./out/rootfs.tar.gz.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --output=type=local,dest=$(OUT_PATH) .
+
+.PHONY: integration
+integration:
+	@docker load <$(OUT_PATH)/talos-$(ARCH).tar
+	@KUBERNETES_VERSION=v1.14.1 ./hack/test/integration.sh
+
+.PHONY: e2e
+e2e:
+	@docker load <$(OUT_PATH)/talos-$(ARCH).tar
+	@KUBERNETES_VERSION=v1.14.1 ./hack/test/e2e.sh
+
+talos: ## Builds the container image for Talos.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --tag=autonomy/$@:$(TAG) --output=type=docker,dest=$(OUT_PATH)/$@-$(ARCH).tar .
+
+.PHONY: installer
+installer: ## Builds the container image for the Talos installer.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --tag=autonomy/$@:$(TAG) --output=type=docker,dest=$(OUT_PATH)/$@-$(ARCH).tar .
+
+.PHONY: osctl-linux
+osctl-linux: ## Builds the osctl binary for linux.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --output=type=local,dest=$(OUT_PATH) .
 
 .PHONY: osctl-darwin-amd64
-osctl-darwin-amd64: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+osctl-darwin-amd64: ## Builds the osctl binary for darwin.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ --output=type=local,dest=$(OUT_PATH) .
 
-.PHONY: osd
-osd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: trustd
-trustd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: proxyd
-proxyd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+.PHONY: init
+init: ## Builds the init binary.
+	@$(BUILD) $(COMMON_ARGS) --target=$@ .
 
 .PHONY: ntpd
-ntpd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+ntpd: $(IMAGE_PATH)/ntpd.tar ## Builds the ntpd container and outputs it to ./out/images/ntpd.tar.
+$(IMAGE_PATH)/ntpd.tar:
+	@$(BUILD) $(COMMON_ARGS) --target=ntpd --tag=autonomy/ntpd:$(TAG) --output=type=docker,dest=$(IMAGE_PATH)/ntpd.tar .
 
-images:
-	@mkdir images
+.PHONY: osd
+osd: $(IMAGE_PATH)/osd.tar ## Builds the osd container and outputs it to ./out/images/osd.tar.
+$(IMAGE_PATH)/osd.tar:
+	@$(BUILD) $(COMMON_ARGS) --target=osd --tag=autonomy/osd:$(TAG) --output=type=docker,dest=./$(IMAGE_PATH)/osd.tar .
 
-.PHONY: login
-login:
-	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
+.PHONY: proxyd
+proxyd: $(IMAGE_PATH)/proxyd.tar ## Builds the proxyd container and outputs it to ./out/images/proxyd.tar.
+$(IMAGE_PATH)/proxyd.tar:
+	@$(BUILD) $(COMMON_ARGS) --target=proxyd --tag=autonomy/proxyd:$(TAG) --output=type=docker,dest=./$(IMAGE_PATH)/proxyd.tar .
 
-.PHONY: push
-push: gitmeta
-	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
-	@docker push autonomy/installer:$(TAG)
-	@docker push autonomy/installer:latest
-	@docker tag autonomy/talos:$(TAG) autonomy/talos:latest
-	@docker push autonomy/talos:$(TAG)
-	@docker push autonomy/talos:latest
+.PHONY: trustd
+trustd: $(IMAGE_PATH)/trustd.tar ## Builds the trustd container and outputs it to ./out/images/trustd.tar.
+$(IMAGE_PATH)/trustd.tar:
+	@$(BUILD) $(COMMON_ARGS) --target=trustd --tag=autonomy/trustd:$(TAG) --output=type=docker,dest=./$(IMAGE_PATH)/trustd.tar .
 
-.PHONY: clean
 clean:
-	@-rm -rf build images vendor
+	-@rm -rf ./out

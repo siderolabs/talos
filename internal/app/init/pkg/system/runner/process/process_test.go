@@ -47,7 +47,7 @@ func (suite *ProcessSuite) TearDownSuite() {
 func (suite *ProcessSuite) TestRunSuccess() {
 	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "test",
-		ProcessArgs: []string{"/bin/bash", "-c", "exit 0"},
+		ProcessArgs: []string{"/toolchain/bin/bash", "-c", "exit 0"},
 	}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
@@ -61,7 +61,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 func (suite *ProcessSuite) TestRunLogs() {
 	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "logtest",
-		ProcessArgs: []string{"/bin/bash", "-c", "echo -n \"Test 1\nTest 2\n\""},
+		ProcessArgs: []string{"/toolchain/bin/bash", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
@@ -88,7 +88,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	r := restart.New(process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "restarter",
-		ProcessArgs: []string{"/bin/bash", "-c", "echo \"ran\"; test -f " + testFile},
+		ProcessArgs: []string{"/toolchain/bin/bash", "-c", "echo \"ran\"; test -f " + testFile},
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 
 	suite.Assert().NoError(r.Open(context.Background()))
@@ -128,7 +128,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 
 	r := restart.New(process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "endless",
-		ProcessArgs: []string{"/bin/bash", "-c", "test -f " + testFile},
+		ProcessArgs: []string{"/toolchain/bin/bash", "-c", "test -f " + testFile},
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
 
 	suite.Assert().NoError(r.Open(context.Background()))
@@ -169,7 +169,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 func (suite *ProcessSuite) TestStopSigKill() {
 	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "nokill",
-		ProcessArgs: []string{"/bin/bash", "-c", "trap -- '' SIGTERM; while :; do :; done"},
+		ProcessArgs: []string{"/toolchain/bin/bash", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),

@@ -1,26 +1,16 @@
-bin
-build
-cache
-images
-vendor
+out
 .vscode
 
-# vim Swap
+# Vim
 [._]*.s[a-v][a-z]
 [._]*.sw[a-p]
 [._]s[a-rt-v][a-z]
 [._]ss[a-gi-z]
 [._]sw[a-p]
 
-# protoc-generated files
-*.pb.go
-
 # Go
 coverage.txt
 .artifacts/
-
-# buildkit cache
-.buildkit/
 
 sha256sum.txt
 sha512sum.txt
