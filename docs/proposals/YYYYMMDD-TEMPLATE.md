@@ -2,8 +2,6 @@
 
 Author(s): [Author Name, Co-Author Name]
 
-Last updated: [Date]
-
 ## Abstract
 
 [A short summary of the proposal.]
