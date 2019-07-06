@@ -90,20 +90,6 @@ steps:
     depends_on:
       - lint
 
-  - name: build-test
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make test-container
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - lint
-
   - name: build-osctl-darwin
     image: autonomy/build-container:latest
     pull: always
@@ -184,7 +170,6 @@ steps:
       - name: dockersock
         path: /var/run/
     depends_on:
-      - build-test
       - build-osd
       - build-proxyd
 
