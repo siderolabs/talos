@@ -1,3 +1,5 @@
+# syntax = docker/dockerfile:1.1-experimental
+
 ARG KERNEL_IMAGE
 ARG TOOLCHAIN_IMAGE
 ARG ROOTFS_IMAGE
@@ -50,7 +52,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/osd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
 RUN chmod +x /osd
 
 FROM scratch AS osd
@@ -64,7 +66,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -linkmode external -extldflags \"-static\" -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
+RUN --mount=type=cache,target=/root/.cache GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -linkmode external -extldflags \"-static\" -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 
 FROM scratch AS osctl-linux-amd64
@@ -75,7 +77,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
+RUN --mount=type=cache,target=/root/.cache GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 
 FROM scratch AS osctl-darwin-amd64
@@ -88,7 +90,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/trustd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
 RUN chmod +x /trustd
 
 FROM scratch AS trustd
@@ -102,7 +104,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/proxyd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
 RUN chmod +x /proxyd
 
 FROM scratch AS proxyd
@@ -116,7 +118,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/ntpd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
 RUN chmod +x /ntpd
 
 FROM scratch AS ntpd
@@ -150,7 +152,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/init
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
 RUN chmod +x /init
 
 FROM scratch AS init
