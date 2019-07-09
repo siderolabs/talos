@@ -211,7 +211,7 @@ e2e-integration:
 	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
 
 .PHONY: test
-test: buildkitd
+test: buildkitd osd proxyd
 	@mkdir -p build
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \

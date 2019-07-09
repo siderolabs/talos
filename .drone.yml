@@ -15,6 +15,14 @@ services:
         path: /dev
       - name: tmp
         path: /tmp
+  - name: buildkit
+    image: moby/buildkit:v0.5.1
+    privileged: true
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
+      - name: buildkit-storage
+        path: /var/lib/buildkit
 
 steps:
   - name: fetch
@@ -32,9 +40,26 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make lint
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - fetch
 
+  # We'll use this step to load the hyperkube image to save
+  # some time for the integration test later
+  #- name: seed-image
+  #  image: autonomy/build-container:latest
+  #  commands:
+  #    - docker pull k8s.gcr.io/hyperkube:v1.15.0
+  #  volumes:
+  #    - name: dockersock
+  #      path: /var/run
+  #  depends_on:
+  #    - lint
+
+  # This next chunk of builds contain all the app level builds
+  # for talos.
   - name: build-init
     image: autonomy/build-container:latest
     pull: always
@@ -43,6 +68,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make initramfs
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
@@ -54,6 +82,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make osd
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
@@ -65,6 +96,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make trustd
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
@@ -76,6 +110,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make proxyd
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
@@ -87,6 +124,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make ntpd
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
@@ -98,6 +138,9 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make osctl-darwin-amd64
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
@@ -109,9 +152,14 @@ steps:
       BINDIR: /usr/local/bin
     commands:
       - make osctl-linux-amd64
+    volumes:
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - lint
 
+  # Once all of the app level builds are complete we can proceed
+  # to building out the rootfs
   - name: rootfs
     image: autonomy/build-container:latest
     pull: always
@@ -123,6 +171,8 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - build-osd
       - build-proxyd
@@ -140,6 +190,8 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - rootfs
 
@@ -154,9 +206,12 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - rootfs
       - build-init
+      - build-osctl-linux
 
   - name: test
     image: autonomy/build-container:latest
@@ -169,6 +224,8 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run/
+      - name: buildkitsock
+        path: /run/buildkit
     depends_on:
       - rootfs
 
@@ -186,7 +243,6 @@ steps:
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
     commands:
       - make basic-integration
@@ -242,6 +298,8 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: buildkitsock
+        path: /run/buildkit
     when:
       event: tag
     depends_on:
@@ -261,6 +319,8 @@ steps:
         path: /var/run
       - name: dev
         path: /dev
+      - name: buildkitsock
+        path: /run/buildkit
     when:
       event: tag
     depends_on:
@@ -282,6 +342,8 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run
+      - name: buildkitsock
+        path: /run/buildkit
     when:
       event:
         exclude:
@@ -317,6 +379,11 @@ volumes:
       path: /dev
   - name: tmp
     temp: {}
+  - name: buildkitsock
+    temp: {}
+  - name: buildkit-storage
+    temp:
+      meduim: memory
 
 ---
 kind: pipeline

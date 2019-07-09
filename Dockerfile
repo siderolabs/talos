@@ -191,8 +191,9 @@ COPY --from=rootfs-archive /rootfs.tar.gz /rootfs.tar.gz
 # The test target performs tests on the source code.
 
 FROM base AS test
-COPY --from=rootfs-build / /rootfs
-ENV PATH /rootfs/bin:$PATH
+COPY --from=rootfs-build /usr/images/osd.tar /rootfs/usr/images/osd.tar
+COPY --from=rootfs-build /usr/images/proxyd.tar /rootfs/usr/images/proxyd.tar
+#ENV PATH /rootfs/bin:$PATH
 COPY hack/golang/test.sh /bin
 
 # The lint target performs linting on the codebase.
