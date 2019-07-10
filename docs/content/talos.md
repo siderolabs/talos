@@ -8,7 +8,12 @@ menu:
     weight: 1
 ---
 
-**Talos** is a modern OS designed to be secure, immutable, and minimal. All system management is done via an API, and there is no shell or interactive console. Some of the capabilities and benefits provided by Talos include:
+<div>
+<!-- WORKS without tailwind classes... -->
+  <img src="/images/certified-kubernetes-color.svg" style="max-width: 20%; float: right; margin: 2rem;"/>
+<!-- DOES NOT WORK >  <img src="/images/certified-kubernetes-color.svg" class="m-16 float-right max-w-xs"/> -->
+  <p><b>Talos</b> is a modern Linux distribution designed to be secure, immutable, and minimal. All system management is done via an API, and there is no shell or interactive console. Some of the capabilities and benefits provided by Talos include:</p>
+</div>
 
 - **Security**: Talos reduces your attack surface by practicing the Principle of Least Privilege (PoLP) and by securing the API with mutual TLS (mTLS) authentication.
 - **Predictability**: Talos eliminates unneeded variables and reduces unknown factors in your environment by employing immutable infrastructure ideology.
