@@ -16,7 +16,7 @@ type NetworkdSuite struct {
 	suite.Suite
 }
 
-func TestFrontendSuite(t *testing.T) {
+func TestNetworkdSuite(t *testing.T) {
 	// Hide all our state transition messages
 	//log.SetOutput(ioutil.Discard)
 	suite.Run(t, new(NetworkdSuite))
@@ -106,4 +106,8 @@ func (suite *NetworkdSuite) TestParse() {
 	}
 
 	// suite.Assert().NoError(err)
+}
+
+func (suite *NetworkdSuite) TestParse() {
+
 }

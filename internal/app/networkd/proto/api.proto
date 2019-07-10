@@ -33,4 +33,10 @@ message GetRequest {
 }
 
 // The response message containing the restart status.
-message GetReply {}
+message GetReply {
+	repeated NetworkInterface interfaces = 1;
+}
+
+message NetworkInterface {
+	string name = 1;
+}

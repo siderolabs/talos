@@ -6,7 +6,9 @@ package reg
 
 import (
 	"context"
+	"log"
 
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/proto"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
@@ -31,6 +33,17 @@ func (r *Registrator) Register(s *grpc.Server) {
 }
 
 func (r *Registrator) Get(ctx context.Context, s *proto.GetRequest) (reply *proto.GetReply, err error) {
+	log.Printf("%+v", s)
+	nwd, _ := networkd.New()
+	nwd.Parse(&userdata.UserData{})
+	reply = &proto.GetReply{}
+
+	for _, netif := range nwd.Interfaces {
+		p := &proto.NetworkInterface{
+			Name: netif.Name,
+		}
+		reply.Interfaces = append(reply.Interfaces, p)
+	}
 
 	return reply, err
 }
