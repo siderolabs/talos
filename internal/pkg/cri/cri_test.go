@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"sync"
 	"testing"
 	"time"
@@ -21,17 +20,12 @@ import (
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
-	"github.com/talos-systems/talos/internal/pkg/containers/cri"
-	criclient "github.com/talos-systems/talos/internal/pkg/cri"
+	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (
-	busyboxImage       = "docker.io/library/busybox:1.30.1"
-	busyboxImageDigest = "sha256:64f5d945efcc0f39ab11b3cd4ba403cc9fefe1fa3613123ca016cf3708e8cafb"
-	pauseImage         = "k8s.gcr.io/pause:3.1"
-	pauseImageDigest   = "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e"
+	busyboxImage = "docker.io/library/busybox:1.30.1"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -47,13 +41,9 @@ type CRISuite struct {
 	containerdWg      sync.WaitGroup
 	containerdAddress string
 
-	client    *criclient.Client
+	client    *cri.Client
 	ctx       context.Context
 	ctxCancel context.CancelFunc
-
-	inspector ctrs.Inspector
-
-	pods []string
 }
 
 // nolint: dupl
@@ -93,18 +83,12 @@ func (suite *CRISuite) SetupSuite() {
 		suite.Require().NoError(suite.containerdRunner.Run(MockEventSink))
 	}()
 
-	suite.client, err = criclient.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
-	suite.Require().NoError(err)
-
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
-
-	suite.inspector, err = cri.NewInspector(suite.ctx, cri.WithCRIEndpoint("unix:"+suite.containerdAddress))
+	suite.client, err = cri.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
 	suite.Require().NoError(err)
 }
 
 func (suite *CRISuite) TearDownSuite() {
 	suite.ctxCancel()
-	suite.Require().NoError(suite.inspector.Close())
 
 	suite.Require().NoError(suite.client.Close())
 
@@ -116,9 +100,13 @@ func (suite *CRISuite) TearDownSuite() {
 
 func (suite *CRISuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
+}
 
-	suite.pods = nil
+func (suite *CRISuite) TearDownTest() {
+	suite.ctxCancel()
+}
 
+func (suite *CRISuite) TestRunSandboxContainer() {
 	podSandboxConfig := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
 			Name:      "etcd-master-1",
@@ -142,7 +130,6 @@ func (suite *CRISuite) SetupTest() {
 
 	podSandboxID, err := suite.client.RunPodSandbox(suite.ctx, podSandboxConfig, "")
 	suite.Require().NoError(err)
-	suite.pods = append(suite.pods, podSandboxID)
 	suite.Require().Len(podSandboxID, 64)
 
 	imageRef, err := suite.client.PullImage(suite.ctx, &runtimeapi.ImageSpec{
@@ -173,86 +160,42 @@ func (suite *CRISuite) SetupTest() {
 
 	err = suite.client.StartContainer(suite.ctx, ctrID)
 	suite.Require().NoError(err)
+
+	_, err = suite.client.ContainerStats(suite.ctx, ctrID)
+	suite.Require().NoError(err)
+
+	_, _, err = suite.client.ContainerStatus(suite.ctx, ctrID)
+	suite.Require().NoError(err)
+
+	err = suite.client.StopContainer(suite.ctx, ctrID, 10)
+	suite.Require().NoError(err)
+
+	err = suite.client.RemoveContainer(suite.ctx, ctrID)
+	suite.Require().NoError(err)
+
+	err = suite.client.StopPodSandbox(suite.ctx, podSandboxID)
+	suite.Require().NoError(err)
+
+	err = suite.client.RemovePodSandbox(suite.ctx, podSandboxID)
+	suite.Require().NoError(err)
 }
 
-func (suite *CRISuite) TearDownTest() {
-	for _, pod := range suite.pods {
-		suite.Require().NoError(suite.client.StopPodSandbox(suite.ctx, pod))
-		suite.Require().NoError(suite.client.RemovePodSandbox(suite.ctx, pod))
-	}
+func (suite *CRISuite) TestList() {
+	pods, err := suite.client.ListPodSandbox(suite.ctx, &runtimeapi.PodSandboxFilter{})
+	suite.Require().NoError(err)
+	suite.Require().Len(pods, 0)
 
-	suite.ctxCancel()
+	containers, err := suite.client.ListContainers(suite.ctx, &runtimeapi.ContainerFilter{})
+	suite.Require().NoError(err)
+	suite.Require().Len(containers, 0)
+
+	containerStats, err := suite.client.ListContainerStats(suite.ctx, &runtimeapi.ContainerStatsFilter{})
+	suite.Require().NoError(err)
+	suite.Require().Len(containerStats, 0)
+
+	_, err = suite.client.ListImages(suite.ctx, &runtimeapi.ImageFilter{})
+	suite.Require().NoError(err)
 }
-
-func (suite *CRISuite) TestPods() {
-	pods, err := suite.inspector.Pods()
-	suite.Require().NoError(err)
-
-	suite.Require().Len(pods, 1)
-
-	suite.Assert().Equal("kube-system/etcd-master-1", pods[0].Name)
-
-	suite.Require().Len(pods[0].Containers, 2)
-
-	suite.Assert().Equal(pods[0].Name, pods[0].Containers[0].Display)
-	suite.Assert().Equal(pods[0].Name, pods[0].Containers[0].Name)
-	suite.Assert().Equal("SANDBOX_READY", pods[0].Containers[0].Status)
-	suite.Assert().Equal(pauseImageDigest, pods[0].Containers[0].Digest)
-	suite.Assert().Equal(pauseImage, pods[0].Containers[0].Image)
-	suite.Assert().True(pods[0].Containers[0].Pid > 0)
-
-	suite.Assert().Equal("kube-system/etcd-master-1:etcd", pods[0].Containers[1].Display)
-	suite.Assert().Equal("etcd", pods[0].Containers[1].Name)
-	suite.Assert().Equal(busyboxImage, pods[0].Containers[1].Image)
-	suite.Assert().Equal(busyboxImageDigest, pods[0].Containers[1].Digest)
-	suite.Assert().Equal("CONTAINER_RUNNING", pods[0].Containers[1].Status)
-	suite.Assert().Equal("1", pods[0].Containers[1].RestartCount)
-	suite.Assert().True(pods[0].Containers[1].Pid > 0)
-}
-
-func (suite *CRISuite) TestContainer() {
-	defer func() {
-		r := recover()
-		if r != nil {
-			t := suite.T()
-			t.Errorf("test panicked: %v %s", r, debug.Stack())
-			t.FailNow()
-		}
-	}()
-
-	container, err := suite.inspector.Container("kube-system/etcd-master-1")
-	suite.Require().NoError(err)
-
-	suite.Assert().Equal("kube-system/etcd-master-1", container.Display)
-	suite.Assert().Equal(container.Display, container.Name)
-	suite.Assert().Equal("SANDBOX_READY", container.Status)
-	suite.Assert().Equal(pauseImageDigest, container.Digest)
-	suite.Assert().True(container.Pid > 0)
-
-	container, err = suite.inspector.Container("kube-system/etcd-master-1:etcd")
-	suite.Require().NoError(err)
-
-	suite.Assert().Equal("kube-system/etcd-master-1:etcd", container.Display)
-	suite.Assert().Equal("etcd", container.Name)
-	suite.Assert().Equal("CONTAINER_RUNNING", container.Status)
-	suite.Assert().Equal(busyboxImageDigest, container.Image)
-	suite.Assert().Equal(busyboxImageDigest, container.Digest)
-	suite.Assert().Equal("1", container.RestartCount)
-	suite.Assert().True(container.Pid > 0)
-
-	container, err = suite.inspector.Container("kube-system/etcd-master-1:etcd2")
-	suite.Require().NoError(err)
-	suite.Require().Nil(container)
-
-	container, err = suite.inspector.Container("kube-system/etcd-master-2")
-	suite.Require().NoError(err)
-	suite.Require().Nil(container)
-
-	container, err = suite.inspector.Container("talos")
-	suite.Require().NoError(err)
-	suite.Require().Nil(container)
-}
-
 func TestCRISuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")
