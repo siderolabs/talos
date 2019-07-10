@@ -16,10 +16,11 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
+	criclient "github.com/talos-systems/talos/internal/pkg/cri"
 )
 
 type inspector struct {
-	client *Client
+	client *criclient.Client
 	ctx    context.Context
 }
 
@@ -52,7 +53,7 @@ func NewInspector(ctx context.Context, options ...Option) (ctrs.Inspector, error
 	i := inspector{
 		ctx: ctx,
 	}
-	i.client, err = NewClient(opt.criEndpoint, 10*time.Second)
+	i.client, err = criclient.NewClient(opt.criEndpoint, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
