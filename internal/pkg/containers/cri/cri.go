@@ -23,14 +23,36 @@ type inspector struct {
 	ctx    context.Context
 }
 
+type inspectorOptions struct {
+	criEndpoint string
+}
+
+// Option configures containerd Inspector
+type Option func(*inspectorOptions)
+
+// WithCRIEndpoint configures CRI endpoint to use
+func WithCRIEndpoint(endpoint string) Option {
+	return func(o *inspectorOptions) {
+		o.criEndpoint = endpoint
+	}
+}
+
 // NewInspector builds new Inspector instance for CRI
-func NewInspector(ctx context.Context) (ctrs.Inspector, error) {
+func NewInspector(ctx context.Context, options ...Option) (ctrs.Inspector, error) {
 	var err error
+
+	opt := inspectorOptions{
+		criEndpoint: "unix:" + constants.ContainerdAddress,
+	}
+
+	for _, o := range options {
+		o(&opt)
+	}
 
 	i := inspector{
 		ctx: ctx,
 	}
-	i.client, err = NewClient("unix:"+constants.ContainerdAddress, 10*time.Second)
+	i.client, err = NewClient(opt.criEndpoint, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}

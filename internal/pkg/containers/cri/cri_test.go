@@ -8,6 +8,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"sync"
 	"testing"
@@ -41,8 +42,9 @@ type CRISuite struct {
 
 	tmpDir string
 
-	containerdRunner runner.Runner
-	containerdWg     sync.WaitGroup
+	containerdRunner  runner.Runner
+	containerdWg      sync.WaitGroup
+	containerdAddress string
 
 	client    *cri.Client
 	ctx       context.Context
@@ -57,13 +59,24 @@ type CRISuite struct {
 func (suite *CRISuite) SetupSuite() {
 	var err error
 
-	args := &runner.Args{
-		ID:          "containerd",
-		ProcessArgs: []string{"/rootfs/bin/containerd"},
-	}
-
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
+	suite.Require().NoError(os.Mkdir(stateDir, 0777))
+	suite.Require().NoError(os.Mkdir(rootDir, 0777))
+
+	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
+
+	args := &runner.Args{
+		ID: "containerd",
+		ProcessArgs: []string{
+			"/rootfs/bin/containerd",
+			"--address", suite.containerdAddress,
+			"--state", stateDir,
+			"--root", rootDir,
+		},
+	}
 
 	suite.containerdRunner = process.NewRunner(
 		&userdata.UserData{},
@@ -79,12 +92,12 @@ func (suite *CRISuite) SetupSuite() {
 		suite.Require().NoError(suite.containerdRunner.Run(MockEventSink))
 	}()
 
-	suite.client, err = cri.NewClient("unix:"+constants.ContainerdAddress, 30*time.Second)
+	suite.client, err = cri.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
 	suite.Require().NoError(err)
 
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
 
-	suite.inspector, err = cri.NewInspector(suite.ctx)
+	suite.inspector, err = cri.NewInspector(suite.ctx, cri.WithCRIEndpoint("unix:"+suite.containerdAddress))
 	suite.Require().NoError(err)
 }
 

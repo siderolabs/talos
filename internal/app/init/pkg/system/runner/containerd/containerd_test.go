@@ -44,8 +44,9 @@ type ContainerdSuite struct {
 
 	tmpDir string
 
-	containerdRunner runner.Runner
-	containerdWg     sync.WaitGroup
+	containerdRunner  runner.Runner
+	containerdWg      sync.WaitGroup
+	containerdAddress string
 
 	client *containerd.Client
 	image  containerd.Image
@@ -55,13 +56,24 @@ type ContainerdSuite struct {
 func (suite *ContainerdSuite) SetupSuite() {
 	var err error
 
-	args := &runner.Args{
-		ID:          "containerd",
-		ProcessArgs: []string{"/rootfs/bin/containerd"},
-	}
-
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
+	suite.Require().NoError(os.Mkdir(stateDir, 0777))
+	suite.Require().NoError(os.Mkdir(rootDir, 0777))
+
+	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
+
+	args := &runner.Args{
+		ID: "containerd",
+		ProcessArgs: []string{
+			"/rootfs/bin/containerd",
+			"--address", suite.containerdAddress,
+			"--state", stateDir,
+			"--root", rootDir,
+		},
+	}
 
 	suite.containerdRunner = process.NewRunner(
 		&userdata.UserData{},
@@ -77,7 +89,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		suite.Require().NoError(suite.containerdRunner.Run(MockEventSink))
 	}()
 
-	suite.client, err = containerd.New(constants.ContainerdAddress)
+	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
 
 	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
@@ -116,6 +128,7 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
@@ -134,6 +147,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
@@ -164,6 +178,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
 	suite.Require().NoError(r1.Open(context.Background()))
@@ -175,6 +190,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 	suite.Require().NoError(r2.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r2.Close()) }()
@@ -192,6 +208,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
@@ -231,6 +248,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 				{Type: "bind", Destination: testDir, Source: testDir, Options: []string{"bind", "ro"}},
 			}),
 		),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	),
 		restart.WithType(restart.Forever),
 		restart.WithRestartInterval(5*time.Millisecond),
@@ -294,7 +312,9 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
-		runner.WithGracefulShutdownTimeout(10*time.Millisecond))
+		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
+		runner.WithContainerdAddress(suite.containerdAddress),
+	)
 
 	suite.Require().NoError(r.Open(context.Background()))
 	defer func() { suite.Assert().NoError(r.Close()) }()
@@ -333,7 +353,8 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 			},
 		},
 	}
-	suite.Assert().NoError(containerdrunner.Import(containerdNamespace, reqs...))
+	suite.Assert().NoError(containerdrunner.NewImporter(
+		containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
 
 	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
 	for _, imageName := range []string{"testtalos/osd", "testtalos/proxyd"} {
@@ -358,7 +379,8 @@ func (suite *ContainerdSuite) TestImportFail() {
 			},
 		},
 	}
-	suite.Assert().Error(containerdrunner.Import(containerdNamespace, reqs...))
+	suite.Assert().Error(containerdrunner.NewImporter(
+		containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
 }
 
 func TestContainerdSuite(t *testing.T) {

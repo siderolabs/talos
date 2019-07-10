@@ -8,6 +8,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -41,8 +42,9 @@ type ContainerdSuite struct {
 
 	tmpDir string
 
-	containerdRunner runner.Runner
-	containerdWg     sync.WaitGroup
+	containerdRunner  runner.Runner
+	containerdWg      sync.WaitGroup
+	containerdAddress string
 
 	client *containerd.Client
 	image  containerd.Image
@@ -71,13 +73,24 @@ func WithAnnotations(annotations map[string]string) oci.SpecOpts {
 func (suite *ContainerdSuite) SetupSuite() {
 	var err error
 
-	args := &runner.Args{
-		ID:          "containerd",
-		ProcessArgs: []string{"/rootfs/bin/containerd"},
-	}
-
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
+	suite.Require().NoError(os.Mkdir(stateDir, 0777))
+	suite.Require().NoError(os.Mkdir(rootDir, 0777))
+
+	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
+
+	args := &runner.Args{
+		ID: "containerd",
+		ProcessArgs: []string{
+			"/rootfs/bin/containerd",
+			"--address", suite.containerdAddress,
+			"--state", stateDir,
+			"--root", rootDir,
+		},
+	}
 
 	suite.containerdRunner = process.NewRunner(
 		&userdata.UserData{},
@@ -93,7 +106,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		suite.Require().NoError(suite.containerdRunner.Run(MockEventSink))
 	}()
 
-	suite.client, err = containerd.New(constants.ContainerdAddress)
+	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
 
 	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
@@ -119,9 +132,9 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 	runningCh := make(chan struct{}, len(runners))
 
 	for _, r := range runners {
-		suite.containerRunners = append(suite.containerRunners, r)
-
 		suite.Require().NoError(r.Open(context.Background()))
+
+		suite.containerRunners = append(suite.containerRunners, r)
 
 		suite.containersWg.Add(1)
 		go func(r runner.Runner) {
@@ -168,6 +181,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 			"io.kubernetes.cri.sandbox-log-directory": "sandbox",
 			"io.kubernetes.cri.sandbox-id":            "c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f",
 		})),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	), containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
 		ID:          "test2",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
@@ -183,6 +197,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 		runner.WithOCISpecOpts(WithAnnotations(map[string]string{
 			"io.kubernetes.cri.sandbox-id": "c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f",
 		})),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	))
 }
 
@@ -194,9 +209,10 @@ func (suite *ContainerdSuite) TestPodsNonK8s() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	))
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace)
+	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	pods, err := i.Pods()
@@ -218,7 +234,7 @@ func (suite *ContainerdSuite) TestPodsNonK8s() {
 func (suite *ContainerdSuite) TestPodsK8s() {
 	suite.runK8sContainers()
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace)
+	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	pods, err := i.Pods()
@@ -258,9 +274,10 @@ func (suite *ContainerdSuite) TestContainerNonK8s() {
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithNamespace(containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
 	))
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace)
+	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	cntr, err := i.Container("shelltest")
@@ -282,7 +299,7 @@ func (suite *ContainerdSuite) TestContainerNonK8s() {
 func (suite *ContainerdSuite) TestContainerK8s() {
 	suite.runK8sContainers()
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace)
+	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	cntr, err := i.Container("ns1/fun")

@@ -23,15 +23,51 @@ type ImportRequest struct {
 	Options []containerd.ImportOpt
 }
 
+// Importer implements image import
+type Importer struct {
+	namespace string
+	options   importerOptions
+}
+
+type importerOptions struct {
+	containerdAddress string
+}
+
+// ImporterOption configures containerd Inspector
+type ImporterOption func(*importerOptions)
+
+// WithContainerdAddress configures containerd address to use
+func WithContainerdAddress(address string) ImporterOption {
+	return func(o *importerOptions) {
+		o.containerdAddress = address
+	}
+}
+
+// NewImporter builds new Importer
+func NewImporter(namespace string, options ...ImporterOption) *Importer {
+	importer := &Importer{
+		namespace: namespace,
+		options: importerOptions{
+			containerdAddress: constants.ContainerdAddress,
+		},
+	}
+
+	for _, opt := range options {
+		opt(&importer.options)
+	}
+
+	return importer
+}
+
 // Import imports the images specified by the import requests.
-func Import(namespace string, reqs ...*ImportRequest) error {
-	err := conditions.WaitForFileToExist(constants.ContainerdAddress).Wait(context.Background())
+func (i *Importer) Import(reqs ...*ImportRequest) error {
+	err := conditions.WaitForFileToExist(i.options.containerdAddress).Wait(context.Background())
 	if err != nil {
 		return err
 	}
 
-	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	client, err := containerd.New(constants.ContainerdAddress)
+	ctx := namespaces.WithNamespace(context.Background(), i.namespace)
+	client, err := containerd.New(i.options.containerdAddress)
 	if err != nil {
 		return err
 	}
@@ -77,4 +113,9 @@ func Import(namespace string, reqs ...*ImportRequest) error {
 	}
 
 	return result.ErrorOrNil()
+}
+
+// Import imports the images specified by the import requests.
+func Import(namespace string, reqs ...*ImportRequest) error {
+	return NewImporter(namespace).Import(reqs...)
 }

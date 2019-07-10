@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/containerd/oci"
 
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
+	"github.com/talos-systems/talos/internal/pkg/constants"
 )
 
 // Runner describes the requirements for running a process.
@@ -35,6 +36,8 @@ type Options struct {
 	// Env describes the service's environment variables. Elements should be in
 	// the format <key=<value>
 	Env []string
+	// ContainerdAddress is containerd socket address.
+	ContainerdAddress string
 	// ContainerOpts describes the container options.
 	ContainerOpts []containerd.NewContainerOpts
 	// OCISpecOpts describes the OCI spec options.
@@ -60,6 +63,7 @@ func DefaultOptions() *Options {
 		Namespace:               "system",
 		LogPath:                 "/var/log",
 		GracefulShutdownTimeout: 10 * time.Second,
+		ContainerdAddress:       constants.ContainerdAddress,
 	}
 }
 
@@ -74,6 +78,13 @@ func WithEnv(o []string) Option {
 func WithNamespace(o string) Option {
 	return func(args *Options) {
 		args.Namespace = o
+	}
+}
+
+// WithContainerdAddress sets the containerd socket path.
+func WithContainerdAddress(a string) Option {
+	return func(args *Options) {
+		args.ContainerdAddress = a
 	}
 }
 
