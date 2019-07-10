@@ -5,7 +5,6 @@
 package networkd
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -95,19 +94,18 @@ func (suite *NetworkdSuite) TestParse() {
 	}
 
 	for _, test := range tests {
-		nwd, err := New()
+		err := New()
 		suite.Assert().NoError(err)
 
-		err = nwd.Parse(test.UserData)
+		err = Parse(test.UserData)
 		suite.Assert().NoError(err)
-		for _, dev := range nwd.Interfaces {
-			log.Printf("%+v", dev)
-		}
+		suite.Assert().NotEqual(len(Instance().List()), 0)
+		suite.Assert().Equal(Instance().Get("lo"), "lo")
 	}
 
 	// suite.Assert().NoError(err)
 }
 
-func (suite *NetworkdSuite) TestParse() {
+func (suite *NetworkdSuite) TestSomething() {
 
 }

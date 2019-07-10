@@ -6,13 +6,13 @@ package reg
 
 import (
 	"context"
-	"log"
 	"math/rand"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/proto"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -36,6 +36,9 @@ func (suite *NetworkdSuite) TestGet() {
 	suite.Assert().NoError(err)
 	defer server.Stop()
 
+	err = networkd.New()
+	suite.Assert().NoError(err)
+
 	// nolint: errcheck
 	go server.Serve(listener)
 
@@ -44,13 +47,14 @@ func (suite *NetworkdSuite) TestGet() {
 	nwdClient := proto.NewNetworkdClient(conn)
 
 	gr := &proto.GetRequest{
-		Func: "get",
-		App:  "networkd",
-		Args: []string{"-i", "lo"},
+		Func:     "get",
+		App:      "networkd",
+		Resource: "interface",
+		Args:     []string{"-i", "lo"},
 	}
 	resp, err := nwdClient.Get(context.Background(), gr)
 	suite.Assert().NoError(err)
-	log.Println(resp)
+	suite.Assert().Equal(resp.Interfaces[0].Name, "lo")
 
 	/*
 		return &InitServiceClient{

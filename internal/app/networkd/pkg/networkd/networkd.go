@@ -7,6 +7,7 @@ package networkd
 import (
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -15,9 +16,11 @@ import (
 )
 
 type networkd struct {
-	Conn             *rtnl.Conn
-	Interfaces       []*NetworkInterface
-	DefaultInterface string
+	conn             *rtnl.Conn
+	interfaces       []*NetworkInterface
+	defaultInterface string
+
+	mu sync.Mutex
 }
 
 type NetworkInterface struct {
@@ -28,41 +31,51 @@ type NetworkInterface struct {
 	// TODO need something in here for bonding config
 }
 
-func New() (nwd *networkd, err error) {
-	conn, err := rtnl.Dial(nil)
-	if err != nil {
-		return nwd, err
-	}
+// Representation of internal network state
+var state *networkd
+
+func New() (err error) {
 
 	// Set up a default interface to bootstrap with.
 	// Used for pulling initial userdata.
+	// This can be overridden by the kernel command line
 	defaultInterface := "eth0"
 
 	if option := kernel.Cmdline().Get(constants.KernelParamDefaultInterface).First(); option != nil {
 		defaultInterface = *option
 	}
 
-	nwd = &networkd{
-		Conn:             conn,
-		DefaultInterface: defaultInterface,
-	}
-
-	err = nwd.discover()
-
-	return nwd, err
-}
-
-func (n *networkd) discover() (err error) {
-	// Discover local interfaces
-	var links []*net.Interface
-	links, err = n.Conn.Links()
+	// Netlink connection
+	conn, err := rtnl.Dial(nil)
 	if err != nil {
 		return err
 	}
 
-	n.Interfaces = make([]*NetworkInterface, len(links))
+	// Initialize our internal state
+	state = &networkd{
+		conn:             conn,
+		defaultInterface: defaultInterface,
+	}
+
+	// Discover local interfaces
+	err = state.discover()
+
+	return err
+}
+
+func (n *networkd) discover() (err error) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	var links []*net.Interface
+	links, err = n.conn.Links()
+	if err != nil {
+		return err
+	}
+
+	n.interfaces = make([]*NetworkInterface, len(links))
 	for idx, link := range links {
-		n.Interfaces[idx] = &NetworkInterface{
+		n.interfaces[idx] = &NetworkInterface{
 			Name: link.Name,
 			Link: link,
 		}
@@ -73,7 +86,7 @@ func (n *networkd) discover() (err error) {
 
 // Parse merges the passed in userdata with the locally discovered
 // network interfaces and defines the configuration for the interface
-func (n *networkd) Parse(data *userdata.UserData) (err error) {
+func Parse(data *userdata.UserData) (err error) {
 
 	// Skip out on any custom network configuration if
 	// not specified
@@ -81,23 +94,26 @@ func (n *networkd) Parse(data *userdata.UserData) (err error) {
 		return err
 	}
 
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
 	// Add any bond interfaces
 	for _, netifconf := range data.Networking.OS.Devices {
 		// Just going to gauge by interface name for now
 		// can probably reaffirm with BondConfig ( whatever
 		// that ends up looking like )
 		if strings.HasPrefix(netifconf.Interface, "bond") {
-			n.Interfaces = append(n.Interfaces, &NetworkInterface{
+			state.interfaces = append(state.interfaces, &NetworkInterface{
 				Name: netifconf.Interface,
 			})
 		}
 	}
 
-	if err = n.configureAddressing(data); err != nil {
+	if err = state.configureAddressing(data); err != nil {
 		return err
 	}
 
-	n.configureRoutes(data)
+	state.configureRoutes(data)
 
 	return err
 }
@@ -126,7 +142,7 @@ func (n *networkd) configureAddressing(data *userdata.UserData) (err error) {
 	// Handle mapping config defined in userdata to local interface
 	// configuration
 	for _, netifconf := range data.Networking.OS.Devices {
-		for _, netif := range n.Interfaces {
+		for _, netif := range n.interfaces {
 			if netifconf.Interface == netif.Name {
 				var ac AddressConfig
 				ac, err = NewAddress(netifconf)
@@ -152,11 +168,18 @@ func (n *networkd) configureRoutes(data *userdata.UserData) {
 			continue
 		}
 
-		for _, netif := range n.Interfaces {
+		for _, netif := range n.interfaces {
 			if netifconf.Interface == netif.Name {
 				netif.Routes = netifconf.Routes
 				break
 			}
 		}
 	}
+}
+
+func (n *networkd) Interfaces() []*NetworkInterface {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	return n.interfaces
 }

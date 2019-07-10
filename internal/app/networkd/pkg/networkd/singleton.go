@@ -10,7 +10,7 @@ import (
 
 type singleton struct {
 	// State of running services by ID
-	state networkd
+	state *networkd
 
 	mu sync.Mutex
 }
@@ -19,27 +19,39 @@ var instance *singleton
 var once sync.Once
 
 // Services returns the instance of the system services API.
-func Conn() *singleton {
+func Instance() *singleton {
 	once.Do(func() {
-		nwd, err = New()
-
 		instance = &singleton{
-			state: networkd,
+			state: state,
 		}
 	})
 	return instance
 }
 
-func (c *Conn) List() []string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (s *singleton) List() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	ifnames := make([]string, 0, len(c.state.Interfaces))
-	for _, v := range c.state.Interfaces {
+	ifnames := make([]string, 0, len(s.state.Interfaces()))
+	for _, v := range s.state.Interfaces() {
 		ifnames = append(ifnames, v.Name)
 	}
 
 	return ifnames
 }
 
-func (c *Conn) Describe(string netif) {}
+func (s *singleton) Get(target string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, v := range s.state.Interfaces() {
+		if v.Name == target {
+			// TODO add more interesting information
+			return v.Name
+		}
+	}
+
+	return ""
+}
+
+func (s *singleton) Describe(netif string) {}

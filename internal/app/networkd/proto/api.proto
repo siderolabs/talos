@@ -29,7 +29,8 @@ service Networkd {
 message GetRequest {
 	string func = 1;
   string app = 2;
-  repeated string args = 3;
+  string resource = 3;
+  repeated string args = 4;
 }
 
 // The response message containing the restart status.
