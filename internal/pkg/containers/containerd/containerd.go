@@ -30,12 +30,34 @@ type inspector struct {
 	nsctx  context.Context
 }
 
+type inspectorOptions struct {
+	containerdAddress string
+}
+
+// Option configures containerd Inspector
+type Option func(*inspectorOptions)
+
+// WithContainerdAddress configures containerd address to use
+func WithContainerdAddress(address string) Option {
+	return func(o *inspectorOptions) {
+		o.containerdAddress = address
+	}
+}
+
 // NewInspector builds new Inspector instance in specified namespace
-func NewInspector(ctx context.Context, namespace string) (ctrs.Inspector, error) {
+func NewInspector(ctx context.Context, namespace string, options ...Option) (ctrs.Inspector, error) {
 	var err error
 
+	opt := inspectorOptions{
+		containerdAddress: constants.ContainerdAddress,
+	}
+
+	for _, o := range options {
+		o(&opt)
+	}
+
 	i := inspector{}
-	i.client, err = containerd.New(constants.ContainerdAddress)
+	i.client, err = containerd.New(opt.containerdAddress)
 	if err != nil {
 		return nil, err
 	}

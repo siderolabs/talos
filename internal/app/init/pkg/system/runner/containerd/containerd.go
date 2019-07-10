@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -59,7 +58,7 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 	// Create the containerd client.
 	var err error
 	c.ctx = namespaces.WithNamespace(context.Background(), c.opts.Namespace)
-	c.client, err = containerd.New(constants.ContainerdAddress)
+	c.client, err = containerd.New(c.opts.ContainerdAddress)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ COMMON_ARGS += --opt build-arg:TAG=$(TAG)
 
 DOCKER_ARGS ?=
 # to allow tests to run containerd
-DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/
+DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/ -v /tmp/
 
 all: ci drone
 
