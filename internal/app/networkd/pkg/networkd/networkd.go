@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-type Networkd struct {
+type networkd struct {
 	Conn             *rtnl.Conn
 	Interfaces       []*NetworkInterface
 	DefaultInterface string
@@ -28,7 +28,7 @@ type NetworkInterface struct {
 	// TODO need something in here for bonding config
 }
 
-func New() (nwd *Networkd, err error) {
+func New() (nwd *networkd, err error) {
 	conn, err := rtnl.Dial(nil)
 	if err != nil {
 		return nwd, err
@@ -42,7 +42,7 @@ func New() (nwd *Networkd, err error) {
 		defaultInterface = *option
 	}
 
-	nwd = &Networkd{
+	nwd = &networkd{
 		Conn:             conn,
 		DefaultInterface: defaultInterface,
 	}
@@ -52,7 +52,7 @@ func New() (nwd *Networkd, err error) {
 	return nwd, err
 }
 
-func (n *Networkd) discover() (err error) {
+func (n *networkd) discover() (err error) {
 	// Discover local interfaces
 	var links []*net.Interface
 	links, err = n.Conn.Links()
@@ -73,7 +73,7 @@ func (n *Networkd) discover() (err error) {
 
 // Parse merges the passed in userdata with the locally discovered
 // network interfaces and defines the configuration for the interface
-func (n *Networkd) Parse(data *userdata.UserData) (err error) {
+func (n *networkd) Parse(data *userdata.UserData) (err error) {
 
 	// Skip out on any custom network configuration if
 	// not specified
@@ -122,7 +122,7 @@ func validNetworkUserData(data *userdata.UserData) bool {
 	return true
 }
 
-func (n *Networkd) configureAddressing(data *userdata.UserData) (err error) {
+func (n *networkd) configureAddressing(data *userdata.UserData) (err error) {
 	// Handle mapping config defined in userdata to local interface
 	// configuration
 	for _, netifconf := range data.Networking.OS.Devices {
@@ -144,7 +144,7 @@ func (n *Networkd) configureAddressing(data *userdata.UserData) (err error) {
 	return err
 }
 
-func (n *Networkd) configureRoutes(data *userdata.UserData) {
+func (n *networkd) configureRoutes(data *userdata.UserData) {
 	// Handle mapping config defined in userdata to local interface
 	// configuration
 	for _, netifconf := range data.Networking.OS.Devices {

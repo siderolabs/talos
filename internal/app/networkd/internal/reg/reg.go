@@ -34,7 +34,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 
 func (r *Registrator) Get(ctx context.Context, s *proto.GetRequest) (reply *proto.GetReply, err error) {
 	log.Printf("%+v", s)
-	nwd, _ := networkd.New()
+	nwd := networkd.Conn()
 	nwd.Parse(&userdata.UserData{})
 	reply = &proto.GetReply{}
 
