@@ -154,6 +154,9 @@ const (
 	// InitSocketPath is the path to file socket of init API
 	InitSocketPath = "/var/lib/init/init.sock"
 
+	// NetworkdSocketPath is the path to file socket of networkd API
+	NetworkdSocketPath = "/var/lib/networkd/networkd.sock"
+
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
 

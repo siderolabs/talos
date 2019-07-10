@@ -1,0 +1,36 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// The Init service definition.
+service Networkd {
+/*
+  rpc CopyOut(CopyOutRequest) returns (stream StreamingData) {}
+  rpc LS(LSRequest) returns (stream FileInfo) {}
+  rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
+  rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
+  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
+  rpc Upgrade(UpgradeRequest) returns (UpgradeReply) {}
+  rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply) {}
+*/
+
+  rpc Get(GetRequest) returns (GetReply) {}
+}
+
+
+// The response message containing the reboot status.
+message GetRequest {
+	string func = 1;
+  string app = 2;
+  repeated string args = 3;
+}
+
+// The response message containing the restart status.
+message GetReply {}
