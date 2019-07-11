@@ -14,6 +14,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+export TALOS_IMG="docker.io/autonomy/talos:$(./bin/gitmeta image tag)"
 ./hack/test/osctl-cluster-create.sh
 
 exit 0

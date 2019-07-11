@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-name: default
+name: e2e
 
 services:
   - name: docker
@@ -8,6 +8,8 @@ services:
     privileged: true
     command:
       - --dns=8.8.8.8
+      - --dns=8.8.4.4
+      - --mtu=1440
     volumes:
       - name: dockersock
         path: /var/run
@@ -17,297 +19,28 @@ services:
         path: /tmp
 
 steps:
-  - name: fetch
-    image: docker:git
-    commands:
-      - git fetch --tags
-    when:
-      event: tag
-
-  - name: lint
+  - name: e2e-integration
     image: autonomy/build-container:latest
     pull: always
+    ## Ignore errors for now, until we get the flakiness resolved in beta
+    err_ignore: true
     environment:
       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
-    commands:
-      - make lint
-    depends_on:
-      - fetch
-
-  - name: build-init
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make initramfs
-    depends_on:
-      - lint
-
-  - name: build-osd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make osd
-    depends_on:
-      - lint
-
-  - name: build-trustd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make trustd
-    depends_on:
-      - lint
-
-  - name: build-proxyd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make proxyd
-    depends_on:
-      - lint
-
-  - name: build-ntpd
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make ntpd
-    depends_on:
-      - lint
-
-  - name: build-osctl-darwin
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make osctl-darwin-amd64
-    depends_on:
-      - lint
-
-  - name: build-osctl-linux
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
+      PACKET_AUTH_TOKEN:
+        from_secret: packet_auth_token
+      PACKET_PROJECT_ID:
+        from_secret: packet_project_id
+      PACKET_PXE_SERVER:
+        from_secret: packet_pxe_server
     commands:
       - make osctl-linux-amd64
-    depends_on:
-      - lint
-
-  - name: rootfs
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make rootfs
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - build-osd
-      - build-proxyd
-      - build-trustd
-      - build-ntpd
-
-  - name: installer
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make installer
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - rootfs
-
-  - name: talos-image
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make talos
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - rootfs
-      - build-init
-
-  - name: test
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make test
-    volumes:
-      - name: dockersock
-        path: /var/run/
-    depends_on:
-      - rootfs
-
-  - name: coverage
-    image: plugins/codecov
-    settings:
-      token:
-        from_secret: codecov_token
-      files:
-        - coverage.txt
-    depends_on:
-      - test
-
-  - name: basic-integration
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make basic-integration
-      - cp build/osctl-linux-amd64 /tmp/osctl
-      - cd /tmp
-      - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
+      - make e2e-integration
     volumes:
       - name: dockersock
         path: /var/run
       - name: tmp
         path: /tmp
-    depends_on:
-      - talos-image
-
-  # - name: e2e-integration
-  #   image: autonomy/build-container:latest
-  #   pull: always
-  #   ## Ignore errors for now, until we get the flakiness resolved in beta
-  #   err_ignore: true
-  #   environment:
-  #     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-  #     BINDIR: /usr/local/bin
-  #     PACKET_AUTH_TOKEN:
-  #       from_secret: packet_auth_token
-  #     PACKET_PROJECT_ID:
-  #       from_secret: packet_project_id
-  #     PACKET_PXE_SERVER:
-  #       from_secret: packet_pxe_server
-  #   commands:
-  #     - make e2e-integration
-  #   volumes:
-  #     - name: dockersock
-  #       path: /var/run
-  #     - name: tmp
-  #       path: /tmp
-  #   when:
-  #     event:
-  #       - push
-  #       - tag
-  #     branch:
-  #       - master
-  #   depends_on:
-  #     - basic-integration
-
-  - name: iso
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make talos-iso
-    volumes:
-      - name: dockersock
-        path: /var/run
-    when:
-      event: tag
-    depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
-
-  - name: gce
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make talos-gce
-    volumes:
-      - name: dockersock
-        path: /var/run
-      - name: dev
-        path: /dev
-    when:
-      event: tag
-    depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
-
-  - name: push
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      DOCKER_USERNAME:
-        from_secret: docker_username
-      DOCKER_PASSWORD:
-        from_secret: docker_password
-    commands:
-      - make gitmeta
-      - make login
-      - make push
-    volumes:
-      - name: dockersock
-        path: /var/run
-    when:
-      event:
-        exclude:
-          - pull_request
-    depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
-
-  - name: release
-    image: plugins/github-release
-    settings:
-      api_key:
-        from_secret: github_token
-      draft: true
-      files:
-        - build/*
-      checksum:
-        - sha256
-        - sha512
-    when:
-      event: tag
-    depends_on:
-      ## Should change to e2e once we get things more stable
-      - basic-integration
-      - iso
-      - gce
 
 volumes:
   - name: dockersock
@@ -318,29 +51,319 @@ volumes:
   - name: tmp
     temp: {}
 
----
-kind: pipeline
-name: notify
+# ---
+# kind: pipeline
+# name: default
 
-clone:
-  disable: true
+# services:
+#   - name: docker
+#     image: docker:dind
+#     privileged: true
+#     command:
+#       - --dns=8.8.8.8
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#       - name: dev
+#         path: /dev
+#       - name: tmp
+#         path: /tmp
 
-steps:
-  - name: slack
-    image: plugins/slack
-    settings:
-      webhook:
-        from_secret: slack_webhook
-      channel: proj-talos-maint
-    when:
-      status:
-        - success
-        - failure
+# steps:
+#   - name: fetch
+#     image: docker:git
+#     commands:
+#       - git fetch --tags
+#     when:
+#       event: tag
 
-trigger:
-  status:
-    - success
-    - failure
+#   - name: lint
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make lint
+#     depends_on:
+#       - fetch
 
-depends_on:
-  - default
+#   - name: build-init
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make initramfs
+#     depends_on:
+#       - lint
+
+#   - name: build-osd
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make osd
+#     depends_on:
+#       - lint
+
+#   - name: build-trustd
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make trustd
+#     depends_on:
+#       - lint
+
+#   - name: build-proxyd
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make proxyd
+#     depends_on:
+#       - lint
+
+#   - name: build-ntpd
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make ntpd
+#     depends_on:
+#       - lint
+
+#   - name: build-osctl-darwin
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make osctl-darwin-amd64
+#     depends_on:
+#       - lint
+
+#   - name: build-osctl-linux
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make osctl-linux-amd64
+#     depends_on:
+#       - lint
+
+#   - name: rootfs
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make rootfs
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#     depends_on:
+#       - build-osd
+#       - build-proxyd
+#       - build-trustd
+#       - build-ntpd
+
+#   - name: installer
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make installer
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#     depends_on:
+#       - rootfs
+
+#   - name: talos-image
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make talos
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#     depends_on:
+#       - rootfs
+#       - build-init
+
+#   - name: test
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make test
+#     volumes:
+#       - name: dockersock
+#         path: /var/run/
+#     depends_on:
+#       - rootfs
+
+#   - name: coverage
+#     image: plugins/codecov
+#     settings:
+#       token:
+#         from_secret: codecov_token
+#       files:
+#         - coverage.txt
+#     depends_on:
+#       - test
+
+#   - name: basic-integration
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make basic-integration
+#       - cp build/osctl-linux-amd64 /tmp/osctl
+#       - cd /tmp
+#       - ./osctl config generate cluster.local 1.2.3.4,2.3.4.5,3.4.5.6
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#       - name: tmp
+#         path: /tmp
+#     depends_on:
+#       - talos-image
+
+#   - name: iso
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make talos-iso
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#     when:
+#       event: tag
+#     depends_on:
+#       ## Should change to e2e once we get things more stable
+#       - basic-integration
+
+#   - name: gce
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+#       BINDIR: /usr/local/bin
+#     commands:
+#       - make talos-gce
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#       - name: dev
+#         path: /dev
+#     when:
+#       event: tag
+#     depends_on:
+#       ## Should change to e2e once we get things more stable
+#       - basic-integration
+
+#   - name: push
+#     image: autonomy/build-container:latest
+#     pull: always
+#     environment:
+#       DOCKER_USERNAME:
+#         from_secret: docker_username
+#       DOCKER_PASSWORD:
+#         from_secret: docker_password
+#     commands:
+#       - make gitmeta
+#       - make login
+#       - make push
+#     volumes:
+#       - name: dockersock
+#         path: /var/run
+#     when:
+#       event:
+#         exclude:
+#           - pull_request
+#     depends_on:
+#       ## Should change to e2e once we get things more stable
+#       - basic-integration
+
+#   - name: release
+#     image: plugins/github-release
+#     settings:
+#       api_key:
+#         from_secret: github_token
+#       draft: true
+#       files:
+#         - build/*
+#       checksum:
+#         - sha256
+#         - sha512
+#     when:
+#       event: tag
+#     depends_on:
+#       ## Should change to e2e once we get things more stable
+#       - basic-integration
+#       - iso
+#       - gce
+
+# volumes:
+#   - name: dockersock
+#     temp: {}
+#   - name: dev
+#     host:
+#       path: /dev
+#   - name: tmp
+#     temp: {}
+
+# ---
+# kind: pipeline
+# name: notify
+
+# clone:
+#   disable: true
+
+# steps:
+#   - name: slack
+#     image: plugins/slack
+#     settings:
+#       webhook:
+#         from_secret: slack_webhook
+#       channel: proj-talos-maint
+#     when:
+#       status:
+#         - success
+#         - failure
+
+# trigger:
+#   status:
+#     - success
+#     - failure
+
+# depends_on:
+#   - default

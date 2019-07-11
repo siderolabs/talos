@@ -48,6 +48,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+export TALOS_IMG="docker.io/autonomy/talos:latest"
 ./hack/test/osctl-cluster-create.sh
 
 ## Drop in capi stuff
