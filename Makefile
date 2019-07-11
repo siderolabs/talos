@@ -1,4 +1,4 @@
-KERNEL_IMAGE ?= autonomy/kernel:1f83e85
+KERNEL_IMAGE ?= autonomy/kernel:87a888a
 TOOLCHAIN_IMAGE ?= autonomy/toolchain:6cf146a
 ROOTFS_IMAGE ?= autonomy/rootfs-base:6cf146a
 INITRAMFS_IMAGE ?= autonomy/initramfs-base:6cf146a

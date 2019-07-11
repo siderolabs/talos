@@ -176,7 +176,7 @@ COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
 
 ARG ROOTFS_IMAGE
 FROM ${ROOTFS_IMAGE} AS rootfs-build
-COPY --from=kernel /modules /lib/modules
+COPY --from=kernel /modules /
 COPY images /usr/images
 
 ARG TOOLCHAIN_IMAGE
