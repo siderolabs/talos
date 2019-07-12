@@ -184,6 +184,14 @@ func (c *cmdline) Append(k string, v string) {
 	insert(&c.Parameters, k, v)
 }
 
+// AppendAll appends a set of kernel parameters.
+func (c *cmdline) AppendAll(args []string) error {
+	parameters := parse(strings.Join(args, " "))
+	c.Parameters = append(c.Parameters, parameters...)
+
+	return nil
+}
+
 // Bytes returns the byte slice representation of the cmdline struct.
 func (c *cmdline) Bytes() []byte {
 	return []byte(c.String())
