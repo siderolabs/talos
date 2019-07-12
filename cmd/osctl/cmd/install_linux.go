@@ -19,10 +19,11 @@ import (
 )
 
 var (
-	bootloader bool
-	device     string
-	endpoint   string
-	platform   string
+	bootloader      bool
+	device          string
+	endpoint        string
+	platform        string
+	extraKernelArgs []string
 )
 
 // installCmd reads in a userData file and attempts to parse it
@@ -34,7 +35,8 @@ var installCmd = &cobra.Command{
 		var err error
 		data := &userdata.UserData{
 			Install: &userdata.Install{
-				Force: true,
+				Force:           true,
+				ExtraKernelArgs: extraKernelArgs,
 				Root: &userdata.RootDevice{
 					Rootfs: "file:///usr/install/rootfs.tar.gz",
 					InstallDevice: userdata.InstallDevice{
@@ -72,6 +74,9 @@ var installCmd = &cobra.Command{
 		cmdline.Append("initrd", filepath.Join("/", constants.RootAPartitionLabel, "initramfs.xz"))
 		cmdline.Append(constants.KernelParamPlatform, platform)
 		cmdline.Append(constants.KernelParamUserData, endpoint)
+		if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {
+			log.Fatal(err)
+		}
 
 		if err = install.Install(cmdline.String(), data); err != nil {
 			log.Fatal(err)
@@ -86,5 +91,6 @@ func init() {
 	installCmd.Flags().StringVar(&device, "device", "", "The path to the device to install to")
 	installCmd.Flags().StringVar(&endpoint, "userdata", "", "The value of "+constants.KernelParamUserData)
 	installCmd.Flags().StringVar(&platform, "platform", "", "The value of "+constants.KernelParamPlatform)
+	installCmd.Flags().StringSliceVar(&extraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.AddCommand(installCmd)
 }

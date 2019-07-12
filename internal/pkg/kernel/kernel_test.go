@@ -128,6 +128,30 @@ func (suite *KernelSuite) TestCmdlineAppend() {
 	}
 }
 
+func (suite *KernelSuite) TestCmdlineAppendAll() {
+	for _, t := range []struct {
+		initial  string
+		params   []string
+		expected string
+	}{
+		{
+			"ip=dhcp console=x",
+			[]string{"root=/dev/sda", "root=/dev/sdb"},
+			"ip=dhcp console=x root=/dev/sda root=/dev/sdb",
+		},
+		{
+			"root=/dev/sdb",
+			[]string{"this=that=those"},
+			"root=/dev/sdb this=that=those",
+		},
+	} {
+		cmdline := NewCmdline(t.initial)
+		err := cmdline.AppendAll(t.params)
+		suite.Assert().NoError(err)
+		suite.Assert().Equal(t.expected, cmdline.String())
+	}
+}
+
 func (suite *KernelSuite) TestCmdlineString() {
 	for _, t := range []struct {
 		params   string
