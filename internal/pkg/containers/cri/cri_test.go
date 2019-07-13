@@ -72,7 +72,7 @@ func (suite *CRISuite) SetupSuite() {
 	args := &runner.Args{
 		ID: "containerd",
 		ProcessArgs: []string{
-			"/rootfs/bin/containerd",
+			"/bin/containerd",
 			"--address", suite.containerdAddress,
 			"--state", stateDir,
 			"--root", rootDir,
@@ -83,7 +83,7 @@ func (suite *CRISuite) SetupSuite() {
 		&userdata.UserData{},
 		args,
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithEnv([]string{"PATH=/rootfs/bin:" + constants.PATH}),
+		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
@@ -257,7 +257,7 @@ func TestCRISuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")
 	}
-	_, err := os.Stat("/rootfs/bin/containerd")
+	_, err := os.Stat("/bin/containerd")
 	if err != nil {
 		t.Skip("containerd binary is not available, skipping the test")
 	}

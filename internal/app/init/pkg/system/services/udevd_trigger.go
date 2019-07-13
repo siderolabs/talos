@@ -51,7 +51,7 @@ func (c *UdevdTrigger) Runner(data *userdata.UserData) (runner.Runner, error) {
 	args := &runner.Args{
 		ID: c.ID(data),
 		ProcessArgs: []string{
-			"/bin/udevadm",
+			"/sbin/udevadm",
 			"trigger",
 		},
 	}

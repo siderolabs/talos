@@ -28,7 +28,7 @@ func (c *Udevd) ID(data *userdata.UserData) string {
 // PreFunc implements the Service interface.
 func (c *Udevd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 	cmd := exec.Command(
-		"/bin/udevadm",
+		"/sbin/udevadm",
 		"hwdb",
 		"--update",
 	)
@@ -56,7 +56,7 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	args := &runner.Args{
 		ID: c.ID(data),
 		ProcessArgs: []string{
-			"/bin/udevd",
+			"/sbin/udevd",
 			"--resolve-names=never",
 			"-D",
 		},

@@ -66,6 +66,12 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 		}
 	}
 
+	// Create required directories that are not part of FHS.
+	for _, p := range []string{"/etc/kubernetes/manifests", "/etc/cni", "/var/lib/kubelet", "/var/log/pods", "/usr/libexec/kubernetes"} {
+		if err = os.MkdirAll(filepath.Join(s, p), 0700); err != nil {
+			return err
+		}
+	}
 	// Create /etc/os-release.
 	if err = etc.OSRelease(s); err != nil {
 		return
