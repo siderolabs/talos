@@ -121,7 +121,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.R
 		return data, err
 	}
 
-	return data, err
+	return &proto.ResetReply{}, err
 }
 
 // ServiceList returns list of the registered services and their status
