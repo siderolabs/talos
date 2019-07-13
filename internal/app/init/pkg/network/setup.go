@@ -68,21 +68,24 @@ func SetupNetwork(data *userdata.UserData) (err error) {
 
 // Maybe look at adjusting this to accept an interface value from a kernel arg
 func defaultNetworkSetup() (err error) {
+	log.Println("bringing up lo")
 	if err = ifup("lo"); err != nil {
 		return err
 	}
 	// TODO should this be lo0
 	// Set up the appropriate addr on loopback
-	log.Println("Setting static ip for lo")
+	log.Println("setting static ip for lo")
 	if err = StaticAddress(userdata.Device{Interface: "lo", CIDR: "127.0.0.1/8"}); err != nil && err != syscall.EEXIST {
 		return err
 	}
 
-	if err = ifup(defaultInterface()); err != nil {
+	iface := defaultInterface()
+	log.Printf("bringing up %s\n", iface)
+	if err = ifup(iface); err != nil {
 		return err
 	}
 	// TODO: this calls out to 'networkd' inline
-	if _, err = NewService().Dhclient(context.Background(), defaultInterface()); err != nil {
+	if _, err = NewService().Dhclient(context.Background(), iface); err != nil {
 		return err
 	}
 
