@@ -80,7 +80,7 @@ func WithRetry(mountpoint *Point, setters ...Option) (err error) {
 	opts := NewDefaultOptions(setters...)
 
 	if opts.ReadOnly {
-		mountpoint.flags |= unix.O_RDONLY
+		mountpoint.flags |= unix.MS_RDONLY
 	}
 
 	target := path.Join(opts.Prefix, mountpoint.target)
