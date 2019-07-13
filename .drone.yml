@@ -97,7 +97,7 @@ steps:
       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
     commands:
-      - make osctl-darwin-amd64
+      - make osctl-darwin
     depends_on:
       - lint
 
@@ -108,7 +108,7 @@ steps:
       BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
       BINDIR: /usr/local/bin
     commands:
-      - make osctl-linux-amd64
+      - make osctl-linux
     depends_on:
       - lint
 

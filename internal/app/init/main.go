@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -188,12 +189,40 @@ func initram() (err error) {
 	return nil
 }
 
+func createOverlay(path string) error {
+	log.Printf("mounting overlay for %s\n", path)
+
+	parts := strings.Split(path, "/")
+	prefix := strings.Join(parts[1:], "-")
+	diff := fmt.Sprintf("/var/%s-diff", prefix)
+	workdir := fmt.Sprintf("/var/%s-workdir", prefix)
+
+	for _, s := range []string{diff, workdir} {
+		if err := os.MkdirAll(s, 0700); err != nil {
+			return err
+		}
+	}
+
+	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", path, diff, workdir)
+	if err := unix.Mount("overlay", path, "overlay", 0, opts); err != nil {
+		return errors.Errorf("error creating overlay mount to %s: %v", path, err)
+	}
+
+	return nil
+}
+
 // nolint: gocyclo
 func root() (err error) {
 	if !*inContainer {
 		// Setup logging to /dev/kmsg.
 		if _, err = kmsg("[talos]"); err != nil {
 			return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
+		}
+
+		for _, overlay := range []string{"/etc/kubernetes", "/etc/cni", "/usr/libexec/kubernetes", "/usr/etc/udev", "/opt"} {
+			if err = createOverlay(overlay); err != nil {
+				return err
+			}
 		}
 	}
 

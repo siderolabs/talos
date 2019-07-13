@@ -68,7 +68,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	args := &runner.Args{
 		ID: "containerd",
 		ProcessArgs: []string{
-			"/rootfs/bin/containerd",
+			"/bin/containerd",
 			"--address", suite.containerdAddress,
 			"--state", stateDir,
 			"--root", rootDir,
@@ -79,7 +79,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		&userdata.UserData{},
 		args,
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithEnv([]string{"PATH=/rootfs/bin:" + constants.PATH}),
+		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
@@ -341,13 +341,13 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 func (suite *ContainerdSuite) TestImportSuccess() {
 	reqs := []*containerdrunner.ImportRequest{
 		{
-			Path: "/rootfs/usr/images/osd.tar",
+			Path: "/usr/images/osd.tar",
 			Options: []containerd.ImportOpt{
 				containerd.WithIndexName("testtalos/osd"),
 			},
 		},
 		{
-			Path: "/rootfs/usr/images/proxyd.tar",
+			Path: "/usr/images/proxyd.tar",
 			Options: []containerd.ImportOpt{
 				containerd.WithIndexName("testtalos/proxyd"),
 			},
@@ -367,13 +367,13 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 func (suite *ContainerdSuite) TestImportFail() {
 	reqs := []*containerdrunner.ImportRequest{
 		{
-			Path: "/rootfs/usr/images/osd.tar",
+			Path: "/usr/images/osd.tar",
 			Options: []containerd.ImportOpt{
 				containerd.WithIndexName("testtalos/osd2"),
 			},
 		},
 		{
-			Path: "/rootfs/usr/images/nothere.tar",
+			Path: "/usr/images/nothere.tar",
 			Options: []containerd.ImportOpt{
 				containerd.WithIndexName("testtalos/nothere"),
 			},
@@ -387,7 +387,7 @@ func TestContainerdSuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")
 	}
-	_, err := os.Stat("/rootfs/bin/containerd")
+	_, err := os.Stat("/bin/containerd")
 	if err != nil {
 		t.Skip("containerd binary is not available, skipping the test")
 	}

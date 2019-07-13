@@ -1,7 +1,4 @@
-KERNEL_IMAGE ?= autonomy/kernel:87a888a
-TOOLCHAIN_IMAGE ?= autonomy/toolchain:6cf146a
-ROOTFS_IMAGE ?= autonomy/rootfs-base:6cf146a
-INITRAMFS_IMAGE ?= autonomy/initramfs-base:6cf146a
+TOOLS ?= autonomy/tools:b4e3778
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.5.0
@@ -46,10 +43,7 @@ COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
 COMMON_ARGS += --local context=.
 COMMON_ARGS += --local dockerfile=.
-COMMON_ARGS += --opt build-arg:KERNEL_IMAGE=$(KERNEL_IMAGE)
-COMMON_ARGS += --opt build-arg:TOOLCHAIN_IMAGE=$(TOOLCHAIN_IMAGE)
-COMMON_ARGS += --opt build-arg:ROOTFS_IMAGE=$(ROOTFS_IMAGE)
-COMMON_ARGS += --opt build-arg:INITRAMFS_IMAGE=$(INITRAMFS_IMAGE)
+COMMON_ARGS += --opt build-arg:TOOLS=$(TOOLS)
 COMMON_ARGS += --opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --opt build-arg:TAG=$(TAG)
 
@@ -161,8 +155,8 @@ installer: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-.PHONY: proto
-proto: buildkitd
+.PHONY: generate
+generate: buildkitd
 	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=./ \
@@ -240,15 +234,15 @@ lint: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: osctl-linux-amd64
-osctl-linux-amd64: buildkitd
+osctl-linux: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
-.PHONY: osctl-darwin-amd64
-osctl-darwin-amd64: buildkitd
+.PHONY: osctl-darwin
+osctl-darwin: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
