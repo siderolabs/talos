@@ -211,8 +211,8 @@ COPY --from=rootfs-archive /rootfs.tar.gz /rootfs.tar.gz
 
 FROM scratch AS talos
 COPY --from=rootfs-base / /
-COPY --from=init /init /init
-ENTRYPOINT ["/init"]
+COPY --from=init /init /sbin/init
+ENTRYPOINT ["/sbin/init"]
 
 # The installer target generates an image that can be used to install Talos to
 # various environments.
