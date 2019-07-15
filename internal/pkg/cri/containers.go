@@ -80,10 +80,10 @@ func (c *Client) ListContainers(ctx context.Context, filter *runtimeapi.Containe
 }
 
 // ContainerStatus returns the container status.
-func (c *Client) ContainerStatus(ctx context.Context, containerID string) (*runtimeapi.ContainerStatus, map[string]string, error) {
+func (c *Client) ContainerStatus(ctx context.Context, containerID string, verbose bool) (*runtimeapi.ContainerStatus, map[string]string, error) {
 	resp, err := c.runtimeClient.ContainerStatus(ctx, &runtimeapi.ContainerStatusRequest{
 		ContainerId: containerID,
-		Verbose:     true,
+		Verbose:     verbose,
 	})
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "ContainerStatus %q from runtime service failed", containerID)
