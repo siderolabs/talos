@@ -206,7 +206,7 @@ func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) 
 }
 
 func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Container, error) {
-	containerStatus, containerInfo, err := i.client.ContainerStatus(i.ctx, container.Id)
+	containerStatus, containerInfo, err := i.client.ContainerStatus(i.ctx, container.Id, true)
 	if err != nil {
 		return nil, err
 	}

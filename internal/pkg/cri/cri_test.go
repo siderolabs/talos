@@ -137,6 +137,11 @@ func (suite *CRISuite) TestRunSandboxContainer() {
 	}, podSandboxConfig)
 	suite.Require().NoError(err)
 
+	_, err = suite.client.ImageStatus(suite.ctx, &runtimeapi.ImageSpec{
+		Image: imageRef,
+	})
+	suite.Require().NoError(err)
+
 	ctrID, err := suite.client.CreateContainer(suite.ctx, podSandboxID,
 		&runtimeapi.ContainerConfig{
 			Metadata: &runtimeapi.ContainerMetadata{
@@ -164,7 +169,7 @@ func (suite *CRISuite) TestRunSandboxContainer() {
 	_, err = suite.client.ContainerStats(suite.ctx, ctrID)
 	suite.Require().NoError(err)
 
-	_, _, err = suite.client.ContainerStatus(suite.ctx, ctrID)
+	_, _, err = suite.client.ContainerStatus(suite.ctx, ctrID, true)
 	suite.Require().NoError(err)
 
 	err = suite.client.StopContainer(suite.ctx, ctrID, 10)

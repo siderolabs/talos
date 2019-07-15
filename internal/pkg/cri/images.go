@@ -36,3 +36,21 @@ func (c *Client) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter)
 	return resp.Images, nil
 
 }
+
+// ImageStatus returns the status of the image.
+func (c *Client) ImageStatus(ctx context.Context, image *runtimeapi.ImageSpec) (*runtimeapi.Image, error) {
+	resp, err := c.imagesClient.ImageStatus(ctx, &runtimeapi.ImageStatusRequest{
+		Image: image,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "ImageStatus %q from image service failed", image.Image)
+	}
+
+	if resp.Image != nil {
+		if resp.Image.Id == "" || resp.Image.Size_ == 0 {
+			return nil, errors.Errorf("Id or size of image %q is not set", image.Image)
+		}
+	}
+
+	return resp.Image, nil
+}
