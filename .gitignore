@@ -25,5 +25,4 @@ coverage.txt
 sha256sum.txt
 sha512sum.txt
 
-**/provider-components.yaml
 **/packet-cluster.yaml

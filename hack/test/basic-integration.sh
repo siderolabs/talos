@@ -2,6 +2,7 @@
 
 set -eou pipefail
 
+export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="$(mktemp -d)"
 export OSCTL="${PWD}/build/osctl-linux-amd64"
 export TALOSCONFIG="${TMP}/talosconfig"

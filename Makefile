@@ -36,8 +36,8 @@ endif
 BINDIR ?= ./bin
 CONFORM_VERSION ?= 57c9dbd
 
-SHA := $(shell $(BINDIR)/gitmeta git sha)
-TAG := $(shell $(BINDIR)/gitmeta image tag)
+SHA ?= $(shell $(BINDIR)/gitmeta git sha)
+TAG ?= $(shell $(BINDIR)/gitmeta image tag)
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -195,11 +195,12 @@ talos: buildkitd
 
 .PHONY: basic-integration
 basic-integration:
-	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
+	@KUBERNETES_VERSION=v1.15.0 TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: e2e
 e2e-integration:
-	@KUBERNETES_VERSION=v1.15.0 ./hack/test/$@.sh
+    ## TODO(rsmitty): Bump this k8s version back up once the bug is fixed where kubectl can't scale crds
+	@KUBERNETES_VERSION=v1.14.4 TAG=latest ./hack/test/$@.sh
 
 .PHONY: test
 test: buildkitd
