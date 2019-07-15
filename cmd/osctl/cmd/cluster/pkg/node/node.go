@@ -42,10 +42,9 @@ func NewNode(clusterName string, req *Request) (err error) {
 	// Create the container config.
 
 	containerConfig := &container.Config{
-		Hostname:   req.Name,
-		Image:      req.Image,
-		Entrypoint: strslice.StrSlice{"/init"},
-		Cmd:        strslice.StrSlice{"--in-container", "--userdata=" + b64data},
+		Hostname: req.Name,
+		Image:    req.Image,
+		Cmd:      strslice.StrSlice{"--in-container", "--userdata=" + b64data},
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": clusterName,
