@@ -19,7 +19,7 @@ run() {
 	 	k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
 }
 
-${OSCTL} cluster create --name integration
+${OSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440
 ${OSCTL} config target 10.5.0.2
 
 ## Fetch kubeconfig

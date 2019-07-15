@@ -213,36 +213,6 @@ steps:
     depends_on:
       - talos-image
 
-  # - name: e2e-integration
-  #   image: autonomy/build-container:latest
-  #   pull: always
-  #   ## Ignore errors for now, until we get the flakiness resolved in beta
-  #   err_ignore: true
-  #   environment:
-  #     BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-  #     BINDIR: /usr/local/bin
-  #     PACKET_AUTH_TOKEN:
-  #       from_secret: packet_auth_token
-  #     PACKET_PROJECT_ID:
-  #       from_secret: packet_project_id
-  #     PACKET_PXE_SERVER:
-  #       from_secret: packet_pxe_server
-  #   commands:
-  #     - make e2e-integration
-  #   volumes:
-  #     - name: dockersock
-  #       path: /var/run
-  #     - name: tmp
-  #       path: /tmp
-  #   when:
-  #     event:
-  #       - push
-  #       - tag
-  #     branch:
-  #       - master
-  #   depends_on:
-  #     - basic-integration
-
   - name: kernel
     image: autonomy/build-container:latest
     pull: always
@@ -367,6 +337,84 @@ volumes:
   - name: tmp
     temp: {}
 
+trigger:
+  cron: 
+    exclude: [ nightly ]
+
+---
+kind: pipeline
+name: e2e
+
+services:
+  - name: docker
+    image: docker:dind
+    privileged: true
+    command:
+      - --dns=8.8.8.8
+      - --dns=8.8.4.4
+      - --mtu=1440
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+      - name: tmp
+        path: /tmp
+
+steps:
+  - name: gce
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+      GCE_SVC_ACCT:
+        from_secret: gce_svc_acct
+      TAG: latest
+    commands:
+      - make talos-gce
+      - ./hack/test/gce-setup.sh
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+
+  - name: e2e-integration
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+      PACKET_AUTH_TOKEN:
+        from_secret: packet_auth_token
+      PACKET_PROJECT_ID:
+        from_secret: packet_project_id
+      PACKET_PXE_SERVER:
+        from_secret: packet_pxe_server
+      GCE_SVC_ACCT:
+        from_secret: gce_svc_acct
+    commands:
+      - make osctl-linux
+      - make e2e-integration
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
+
+volumes:
+  - name: dockersock
+    temp: {}
+  - name: dev
+    host:
+      path: /dev
+  - name: tmp
+    temp: {}
+
+trigger:
+  cron: [ nightly ]
+
 ---
 kind: pipeline
 name: notify
@@ -393,3 +441,4 @@ trigger:
 
 depends_on:
   - default
+  - e2e
