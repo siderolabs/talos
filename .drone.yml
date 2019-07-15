@@ -231,6 +231,23 @@ steps:
   #   depends_on:
   #     - basic-integration
 
+  - name: kernel
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make kernel
+    volumes:
+      - name: dockersock
+        path: /var/run
+    when:
+      event: tag
+    depends_on:
+      ## Should change to e2e once we get things more stable
+      - basic-integration
+
   - name: iso
     image: autonomy/build-container:latest
     pull: always
@@ -306,6 +323,7 @@ steps:
     depends_on:
       ## Should change to e2e once we get things more stable
       - basic-integration
+      - kernel
       - iso
       - gce
 

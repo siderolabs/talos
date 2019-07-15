@@ -141,7 +141,8 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:2ac99a0 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:ebaa167 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:ebaa167 /boot/vmlinux /vmlinux
 
 # The initramfs target provides the Talos initramfs image.
 
@@ -190,7 +191,7 @@ COPY --from=docker.io/autonomy/crictl:ddbeea1 / /rootfs
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libblkid.* /rootfs/lib
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libuuid.* /rootfs/lib
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:2ac99a0 /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/kernel:ebaa167 /lib/modules /rootfs/lib/modules
 COPY images/*.tar /rootfs/usr/images
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
