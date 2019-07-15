@@ -1,3 +1,22 @@
+# [v0.2.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.1...v0.2.0-alpha.2) (2019-07-15)
+
+
+### Bug Fixes
+
+* **init:** Dont log an error when context canceled ([551e24e](https://github.com/talos-systems/talos/commit/551e24e)), closes [#723](https://github.com/talos-systems/talos/issues/723)
+* return non-nil response in reset ([c40802b](https://github.com/talos-systems/talos/commit/c40802b))
+* **init:** Fix routes endpoint ([58537fa](https://github.com/talos-systems/talos/commit/58537fa)), closes [#795](https://github.com/talos-systems/talos/issues/795)
+
+
+### Features
+
+* add install flag for extra kernel args ([d197d5c](https://github.com/talos-systems/talos/commit/d197d5c))
+* update kernel ([666f04f](https://github.com/talos-systems/talos/commit/666f04f))
+* Use individual component steps for drone ([c1ec77e](https://github.com/talos-systems/talos/commit/c1ec77e))
+* use new pkgs for initramfs and rootfs ([1e9548d](https://github.com/talos-systems/talos/commit/1e9548d))
+
+
+
 # [v0.2.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.0...v0.2.0-alpha.1) (2019-07-05)
 
 
@@ -18,7 +37,7 @@
 
 
 
-# [0.2.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.2.0-alpha.0) (2019-06-27)
+# [v0.2.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.2.0-alpha.0) (2019-06-27)
 
 
 ### Bug Fixes
