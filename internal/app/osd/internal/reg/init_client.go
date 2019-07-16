@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/talos-systems/talos/internal/app/init/proto"
+	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"google.golang.org/grpc"
 )

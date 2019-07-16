@@ -27,7 +27,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	initproto "github.com/talos-systems/talos/internal/app/init/proto"
+	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"

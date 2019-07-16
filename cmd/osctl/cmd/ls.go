@@ -17,7 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	initproto "github.com/talos-systems/talos/internal/app/init/proto"
+	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 )
 
 // lsCmd represents the ls command
