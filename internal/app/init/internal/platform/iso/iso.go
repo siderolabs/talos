@@ -108,6 +108,7 @@ func (i *ISO) Install(data *userdata.UserData) error {
 	cmdline.Append("initrd", filepath.Join("/", constants.CurrentRootPartitionLabel(), "initramfs.xz"))
 	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
 	cmdline.Append(constants.KernelParamUserData, endpoint)
+
 	if err = install.Install(cmdline.String(), data); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}

@@ -88,9 +88,11 @@ func (b *BareMetal) Install(data *userdata.UserData) (err error) {
 	cmdline.Append("initrd", filepath.Join("/", constants.CurrentRootPartitionLabel(), "initramfs.xz"))
 	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
 	cmdline.Append(constants.KernelParamUserData, *endpoint)
+
 	if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {
 		return err
 	}
+
 	if err = install.Install(cmdline.String(), data); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}
