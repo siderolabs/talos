@@ -46,6 +46,17 @@ steps:
     depends_on:
       - lint
 
+  - name: build-machined
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make machined
+    depends_on:
+      - lint
+
   - name: build-osd
     image: autonomy/build-container:latest
     pull: always
@@ -124,6 +135,7 @@ steps:
       - name: dockersock
         path: /var/run
     depends_on:
+      - build-machined
       - build-osd
       - build-proxyd
       - build-trustd

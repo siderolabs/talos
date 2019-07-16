@@ -17,9 +17,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/events"
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/runner/process"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"

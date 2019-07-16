@@ -138,7 +138,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd osd trustd proxyd ntpd
+rootfs: buildkitd machined osd trustd proxyd ntpd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
@@ -246,6 +246,13 @@ osctl-darwin: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
+		--opt target=$@ \
+		$(COMMON_ARGS)
+
+.PHONY: machined
+machined: buildkitd images
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 

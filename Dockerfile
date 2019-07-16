@@ -29,13 +29,13 @@ RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /trustd
 COPY ./internal/app/trustd/proto ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
-WORKDIR /init
-COPY ./internal/app/init/proto ./proto
+WORKDIR /machined
+COPY ./internal/app/machined/proto ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 FROM scratch AS generate
 COPY --from=generate-build /osd/proto/api.pb.go /internal/app/osd/proto/
 COPY --from=generate-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
-COPY --from=generate-build /init/proto/api.pb.go /internal/app/init/proto/
+COPY --from=generate-build /machined/proto/api.pb.go /internal/app/machined/proto/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -63,6 +63,18 @@ RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.S
 RUN chmod +x /init
 FROM scratch AS init
 COPY --from=init-build /init /init
+
+# The machined target builds the machined image.
+
+FROM base AS machined-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
+WORKDIR /src/internal/app/machined
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
+RUN chmod +x /machined
+FROM scratch AS machined
+COPY --from=machined-build /machined /machined
 
 # The ntpd target builds the ntpd image.
 
@@ -192,6 +204,7 @@ COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libblkid.* /rootfs/li
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libuuid.* /rootfs/lib
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libkmod.* /rootfs/lib
 COPY --from=docker.io/autonomy/kernel:ebaa167 /lib/modules /rootfs/lib/modules
+COPY --from=machined /machined /rootfs/sbin/machined
 COPY images/*.tar /rootfs/usr/images
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
@@ -212,8 +225,7 @@ COPY --from=rootfs-archive /rootfs.tar.gz /rootfs.tar.gz
 
 FROM scratch AS talos
 COPY --from=rootfs-base / /
-COPY --from=init /init /sbin/init
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["/sbin/machined"]
 
 # The installer target generates an image that can be used to install Talos to
 # various environments.

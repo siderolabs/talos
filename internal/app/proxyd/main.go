@@ -9,7 +9,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/talos-systems/talos/internal/app/init/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
 	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
