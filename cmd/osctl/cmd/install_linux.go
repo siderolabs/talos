@@ -91,6 +91,6 @@ func init() {
 	installCmd.Flags().StringVar(&device, "device", "", "The path to the device to install to")
 	installCmd.Flags().StringVar(&endpoint, "userdata", "", "The value of "+constants.KernelParamUserData)
 	installCmd.Flags().StringVar(&platform, "platform", "", "The value of "+constants.KernelParamPlatform)
-	installCmd.Flags().StringSliceVar(&extraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
+	installCmd.Flags().StringArrayVar(&extraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.AddCommand(installCmd)
 }

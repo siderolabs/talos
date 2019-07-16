@@ -29,7 +29,7 @@ function setup_raw_device(){
 }
 
 function install_talos() {
-  osctl install --bootloader="${WITH_BOOTLOADER}" --device="${DEVICE}" --platform="${TALOS_PLATFORM}" --userdata="${TALOS_USERDATA}"
+  osctl install --bootloader="${WITH_BOOTLOADER}" --device="${DEVICE}" --platform="${TALOS_PLATFORM}" --userdata="${TALOS_USERDATA}" ${EXTRA_ARGS}
 }
 
 function create_iso() {
@@ -73,11 +73,12 @@ TALOS_VMDK="/out/talos.vmdk"
 TALOS_PLATFORM="bare-metal"
 TALOS_USERDATA="none"
 WITH_BOOTLOADER="true"
+EXTRA_ARGS=""
 
 case "$1" in
   install)
    shift
-    while getopts "bd:n:p:ru:" opt; do
+    while getopts "bd:n:p:ru:e:" opt; do
       case ${opt} in
         b )
           echo "Creating disk without bootloader installed"
@@ -86,6 +87,9 @@ case "$1" in
         d )
           DEVICE=${OPTARG}
           ;;
+        e )
+          EXTRA_ARGS="${EXTRA_ARGS} --extra-kernel-arg=${OPTARG}"
+          ;;
         n )
           TALOS_RAW="/out/${OPTARG}.raw"
           ;;
@@ -93,7 +97,7 @@ case "$1" in
           TALOS_PLATFORM=${OPTARG}
           echo "Using kernel parameter talos.platform=${TALOS_PLATFORM}"
           ;;
-       r )
+        r )
           trap cleanup EXIT
           setup_raw_device
           ;;
