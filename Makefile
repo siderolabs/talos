@@ -165,7 +165,7 @@ generate: buildkitd
 
 .PHONY: talos-gce
 talos-gce:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -b -p googlecloud -u none
 	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.raw
 	@rm -rf $(PWD)/build/disk.raw
 
