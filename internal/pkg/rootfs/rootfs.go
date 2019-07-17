@@ -74,8 +74,8 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 	}
 	// Create symlinks to /etc/ssl/certs as required by the control plane.
 	for _, path := range []string{"/etc/pki", "/usr/share/ca-certificates", "/usr/local/share/ca-certificates", "/etc/ca-certificates"} {
-		if _, err = os.Stat(path); os.IsNotExist(err) {
-			target := filepath.Join(s, path)
+		target := filepath.Join(s, path)
+		if _, err = os.Stat(target); os.IsNotExist(err) {
 			if err = os.MkdirAll(filepath.Dir(target), 0700); err != nil {
 				return err
 			}
