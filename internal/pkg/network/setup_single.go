@@ -12,5 +12,5 @@ import (
 
 func setupSingleLink(netconf userdata.Device) (err error) {
 	log.Printf("bringing up single link interface %s", netconf.Interface)
-	return ifup(netconf.Interface)
+	return ifup(netconf.Interface, netconf.MTU)
 }
