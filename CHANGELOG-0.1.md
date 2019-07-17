@@ -1,4 +1,14 @@
-# [0.1.0-beta.1](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-05)
+# [v0.1.0-rc.0](https://github.com/andrewrynhard/talos/compare/v0.1.0-beta.1...v0.1.0-rc.0) (2019-07-17)
+
+
+### Bug Fixes
+
+* use existing logic to perform reset ([bbaf8e2](https://github.com/andrewrynhard/talos/commit/bbaf8e2)), closes [#795](https://github.com/andrewrynhard/talos/issues/795)
+* use existing logic to perform reset ([c325b99](https://github.com/andrewrynhard/talos/commit/c325b99))
+
+
+
+# [v0.1.0-beta.1](https://github.com/talos-systems/talos/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2019-07-05)
 
 
 ### Bug Fixes
@@ -10,7 +20,7 @@
 
 
 
-# [0.1.0-beta.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.1.0-beta.0) (2019-06-27)
+# [v0.1.0-beta.0](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.28...v0.1.0-beta.0) (2019-06-27)
 
 
 ### Bug Fixes
@@ -58,7 +68,7 @@
 
 
 
-# [0.1.0-alpha.28](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2019-06-04)
+# [v0.1.0-alpha.28](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2019-06-04)
 
 
 ### Bug Fixes
@@ -88,7 +98,7 @@
 
 
 
-# [0.1.0-alpha.27](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2019-05-20)
+# [v0.1.0-alpha.27](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2019-05-20)
 
 
 ### Bug Fixes
@@ -112,7 +122,7 @@
 
 
 
-# [0.1.0-alpha.26](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2019-05-14)
+# [v0.1.0-alpha.26](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2019-05-14)
 
 
 ### Bug Fixes
@@ -145,7 +155,7 @@
 
 
 
-# [0.1.0-alpha.25](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2019-05-05)
+# [v0.1.0-alpha.25](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2019-05-05)
 
 
 ### Bug Fixes
@@ -165,7 +175,7 @@
 
 
 
-# [0.1.0-alpha.24](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.23...v0.1.0-alpha.24) (2019-04-30)
+# [v0.1.0-alpha.24](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.23...v0.1.0-alpha.24) (2019-04-30)
 
 
 ### Bug Fixes
@@ -192,7 +202,7 @@
 
 
 
-# [0.1.0-alpha.23](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2019-04-24)
+# [v0.1.0-alpha.23](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2019-04-24)
 
 
 ### Bug Fixes
@@ -207,7 +217,7 @@
 
 
 
-# [0.1.0-alpha.22](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2019-04-16)
+# [v0.1.0-alpha.22](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2019-04-16)
 
 
 ### Bug Fixes
@@ -227,7 +237,7 @@
 
 
 
-# [0.1.0-alpha.21](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2019-04-08)
+# [v0.1.0-alpha.21](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2019-04-08)
 
 
 ### Bug Fixes
@@ -244,7 +254,7 @@
 
 
 
-# [0.1.0-alpha.20](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2019-04-02)
+# [v0.1.0-alpha.20](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2019-04-02)
 
 
 ### Bug Fixes
@@ -268,7 +278,7 @@
 
 
 
-# [0.1.0-alpha.19](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.18...v0.1.0-alpha.19) (2019-03-11)
+# [v0.1.0-alpha.19](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.18...v0.1.0-alpha.19) (2019-03-11)
 
 
 ### Bug Fixes
@@ -314,7 +324,7 @@
 
 
 
-# [0.1.0-alpha.18](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.17...v0.1.0-alpha.18) (2019-02-16)
+# [v0.1.0-alpha.18](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.17...v0.1.0-alpha.18) (2019-02-16)
 
 
 ### Bug Fixes
@@ -324,7 +334,7 @@
 
 
 
-# [0.1.0-alpha.17](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
+# [v0.1.0-alpha.17](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.16...v0.1.0-alpha.17) (2019-02-15)
 
 
 ### Features
@@ -334,7 +344,7 @@
 
 
 
-# [0.1.0-alpha.16](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
+# [v0.1.0-alpha.16](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2019-01-25)
 
 
 ### Bug Fixes
@@ -356,7 +366,7 @@
 
 
 
-# [0.1.0-alpha.15](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
+# [v0.1.0-alpha.15](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.14...v0.1.0-alpha.15) (2019-01-02)
 
 
 ### Bug Fixes
@@ -401,7 +411,7 @@
 
 
 
-# [0.1.0-alpha.14](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-11-21)
+# [v0.1.0-alpha.14](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2018-11-21)
 
 
 ### Bug Fixes
@@ -427,7 +437,7 @@
 
 
 
-# [0.1.0-alpha.13](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
+# [v0.1.0-alpha.13](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2018-11-15)
 
 
 ### Bug Fixes
@@ -454,7 +464,7 @@
 
 
 
-# [0.1.0-alpha.12](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
+# [v0.1.0-alpha.12](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.11...v0.1.0-alpha.12) (2018-11-02)
 
 
 ### Features
@@ -464,7 +474,7 @@
 
 
 
-# [0.1.0-alpha.11](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-18)
+# [v0.1.0-alpha.11](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.10...v0.1.0-alpha.11) (2018-10-18)
 
 
 ### Bug Fixes
@@ -484,7 +494,7 @@
 
 
 
-# [0.1.0-alpha.10](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2018-10-13)
+# [v0.1.0-alpha.10](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2018-10-13)
 
 
 ### Features
@@ -494,7 +504,7 @@
 
 
 
-# [0.1.0-alpha.9](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.8...v0.1.0-alpha.9) (2018-09-20)
+# [v0.1.0-alpha.9](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.8...v0.1.0-alpha.9) (2018-09-20)
 
 
 ### Bug Fixes
@@ -509,7 +519,7 @@
 
 
 
-# [0.1.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.7...v0.1.0-alpha.8) (2018-08-28)
+# [v0.1.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.7...v0.1.0-alpha.8) (2018-08-28)
 
 
 ### Features
@@ -521,7 +531,7 @@
 
 
 
-# [0.1.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.6...v0.1.0-alpha.7) (2018-08-11)
+# [v0.1.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.6...v0.1.0-alpha.7) (2018-08-11)
 
 
 ### Bug Fixes
@@ -546,7 +556,7 @@
 
 
 
-# [0.1.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.5...v0.1.0-alpha.6) (2018-07-24)
+# [v0.1.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.5...v0.1.0-alpha.6) (2018-07-24)
 
 
 ### Bug Fixes
@@ -565,7 +575,7 @@
 
 
 
-# [0.1.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.4...v0.1.0-alpha.5) (2018-07-02)
+# [v0.1.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.4...v0.1.0-alpha.5) (2018-07-02)
 
 
 ### Bug Fixes
@@ -586,7 +596,7 @@
 
 
 
-# [0.1.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.3...v0.1.0-alpha.4) (2018-05-20)
+# [v0.1.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.3...v0.1.0-alpha.4) (2018-05-20)
 
 
 ### Bug Fixes
@@ -611,7 +621,7 @@
 
 
 
-# [0.1.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.2...v0.1.0-alpha.3) (2018-05-15)
+# [v0.1.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.2...v0.1.0-alpha.3) (2018-05-15)
 
 
 ### Bug Fixes
@@ -629,7 +639,7 @@
 
 
 
-# [0.1.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.1...v0.1.0-alpha.2) (2018-05-09)
+# [v0.1.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.1...v0.1.0-alpha.2) (2018-05-09)
 
 
 ### Features
@@ -641,7 +651,7 @@
 
 
 
-# [0.1.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.0...v0.1.0-alpha.1) (2018-04-20)
+# [v0.1.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.1.0-alpha.0...v0.1.0-alpha.1) (2018-04-20)
 
 
 ### Bug Fixes
@@ -663,7 +673,7 @@
 
 
 
-# [0.1.0-alpha.0](https://github.com/talos-systems/talos/compare/aba4615...v0.1.0-alpha.0) (2018-04-03)
+# [v0.1.0-alpha.0](https://github.com/talos-systems/talos/compare/aba4615...v0.1.0-alpha.0) (2018-04-03)
 
 
 ### Bug Fixes
