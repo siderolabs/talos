@@ -7,7 +7,9 @@ package network
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/constants"
@@ -116,6 +118,13 @@ func (service *Service) dhclient4(ctx context.Context, ifname string, modifiers 
 			var kernHostname *string
 			if kernHostname = kernel.Cmdline().Get(constants.KernelParamHostname).First(); kernHostname != nil {
 				hostname = *kernHostname
+			}
+
+			// Truncate hostname to be betta
+			// Allow IP addrs to be valid hostnames for the time being
+			if ok := net.ParseIP(hostname); ok != nil {
+				// Pull out the first part of a potential FQDN
+				hostname = strings.Split(hostname, ".")[0]
 			}
 
 			service.logger.Printf("using hostname: %s", hostname)
