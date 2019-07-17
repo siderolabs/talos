@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -63,7 +64,7 @@ func Hosts(s, hostname, ip string) (err error) {
 
 	// The kubelet wants to manage /etc/hosts. Create a symlink there that
 	// points to a writable file.
-	return createSymlink("/run/hosts", path.Join(s, "/etc/hosts"))
+	return createSymlink("/run/hosts", filepath.Join(s, "/etc/hosts"))
 }
 
 // ResolvConf copies the resolv.conf generated in the early boot to the new
@@ -74,10 +75,21 @@ func ResolvConf(s string) (err error) {
 		return err
 	}
 
-	return ioutil.WriteFile(path.Join(s, "/etc/resolv.conf"), source, 0644)
+	target := filepath.Join(s, "/var/resolv.conf")
+	if err = ioutil.WriteFile(target, source, 0644); err != nil {
+		return err
+	}
+
+	// We need to create this here since the rootfs is writable at this point,
+	// and the file must exist when bind mounting later.
+	dummy := filepath.Join(s, "/etc/resolv.conf")
+	if _, err = os.Create(dummy); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-//
 func createSymlink(source string, target string) (err error) {
 	if _, err = os.Lstat(target); err == nil {
 		if err = os.Remove(target); err != nil {
