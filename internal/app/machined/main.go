@@ -139,6 +139,10 @@ func root() (err error) {
 				return err
 			}
 		}
+
+		if err = unix.Mount("/var/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
+			return err
+		}
 	}
 
 	// Read the user data.
