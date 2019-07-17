@@ -29,6 +29,7 @@ import (
 var (
 	clusterName string
 	image       string
+	networkMTU  string
 	workers     int
 )
 
@@ -272,6 +273,9 @@ func createNetwork(cli *client.Client) (types.NetworkCreateResponse, error) {
 				},
 			},
 		},
+		Options: map[string]string{
+			"com.docker.network.driver.mtu": networkMTU,
+		},
 	}
 
 	return cli.NetworkCreate(context.Background(), clusterName, options)
@@ -329,6 +333,7 @@ func saveConfig(input *generate.Input) (err error) {
 
 func init() {
 	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
+	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
