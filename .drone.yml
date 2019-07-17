@@ -296,6 +296,25 @@ steps:
       ## Should change to e2e once we get things more stable
       - basic-integration
 
+  - name: azure
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make talos-azure
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+    when:
+      event: tag
+    depends_on:
+      ## Should change to e2e once we get things more stable
+      - basic-integration
+
   - name: push
     image: autonomy/build-container:latest
     pull: always
