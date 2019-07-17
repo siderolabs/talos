@@ -5,7 +5,12 @@
 package azure
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/talos-systems/talos/pkg/userdata"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -43,33 +48,39 @@ func (a *Azure) Prepare(data *userdata.UserData) (err error) {
 }
 
 func hostname() (err error) {
+	var req *http.Request
+	var resp *http.Response
 
-	// TODO get this sorted; assuming we need to set appropriate headers
-	return err
+	req, err = http.NewRequest("GET", AzureHostnameEndpoint, nil)
+	if err != nil {
+		return
+	}
 
-	/*
-		resp, err := http.Get(AzureHostnameEndpoint)
-		if err != nil {
-			return
-		}
-		// nolint: errcheck
-		defer resp.Body.Close()
+	req.Header.Add("Metadata", "true")
 
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("download user data: %d", resp.StatusCode)
-		}
+	client := &http.Client{}
+	resp, err = client.Do(req)
+	if err != nil {
+		return
+	}
 
-		dataBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return
-		}
+	// nolint: errcheck
+	defer resp.Body.Close()
 
-		if err = unix.Sethostname(dataBytes); err != nil {
-			return
-		}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch hostname from metadata service: %d", resp.StatusCode)
+	}
 
-		return nil
-	*/
+	dataBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	if err = unix.Sethostname(dataBytes); err != nil {
+		return
+	}
+
+	return nil
 }
 
 // Install implements the platform.Platform interface and handles additional system setup.
