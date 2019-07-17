@@ -19,6 +19,7 @@ type Device struct {
 	DHCP      bool    `yaml:"dhcp"`
 	Routes    []Route `yaml:"routes"`
 	Bond      *Bond   `yaml:"bond"`
+	MTU       int     `yaml:"mtu"`
 }
 
 // NetworkDeviceCheck defines the function type for checks

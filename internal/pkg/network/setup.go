@@ -69,7 +69,7 @@ func SetupNetwork(data *userdata.UserData) (err error) {
 // Maybe look at adjusting this to accept an interface value from a kernel arg
 func defaultNetworkSetup() (err error) {
 	log.Println("bringing up lo")
-	if err = ifup("lo"); err != nil {
+	if err = ifup("lo", 0); err != nil {
 		return err
 	}
 	// TODO should this be lo0
@@ -81,7 +81,7 @@ func defaultNetworkSetup() (err error) {
 
 	iface := defaultInterface()
 	log.Printf("bringing up %s\n", iface)
-	if err = ifup(iface); err != nil {
+	if err = ifup(iface, 0); err != nil {
 		return err
 	}
 	// TODO: this calls out to 'networkd' inline
@@ -92,7 +92,7 @@ func defaultNetworkSetup() (err error) {
 	return nil
 }
 
-func ifup(ifname string) (err error) {
+func ifup(ifname string, mtu int) (err error) {
 	var link netlink.Link
 	if link, err = netlink.LinkByName(ifname); err != nil {
 		return err
@@ -102,6 +102,11 @@ func ifup(ifname string) (err error) {
 	case netlink.OperUnknown:
 		fallthrough
 	case netlink.OperDown:
+		if mtu > 0 {
+			if err = netlink.LinkSetMTU(link, mtu); err != nil {
+				return err
+			}
+		}
 		if err = netlink.LinkSetUp(link); err != nil && err != syscall.EEXIST {
 			log.Printf("im failing here in operdown for %s", ifname)
 			return err
