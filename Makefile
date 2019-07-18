@@ -1,7 +1,7 @@
 TOOLS ?= autonomy/tools:b4e3778
 
 # TODO(andrewrynhard): Move this logic to a shell script.
-BUILDKIT_VERSION ?= v0.5.0
+BUILDKIT_VERSION ?= master@sha256:455f06ede03149051ce2734d9639c28aed1b6e8b8a0c607cb813e29b469a07d6
 KUBECTL_VERSION ?= v1.14.1
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
@@ -41,6 +41,7 @@ TAG := $(shell $(BINDIR)/gitmeta image tag)
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
+COMMON_ARGS += --allow security.insecure
 COMMON_ARGS += --local context=.
 COMMON_ARGS += --local dockerfile=.
 COMMON_ARGS += --opt build-arg:TOOLS=$(TOOLS)
@@ -99,7 +100,8 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 		-p 1234:1234 \
 		$(BUILDKIT_CACHE) \
 		$(BUILDKIT_IMAGE) \
-		--addr $(BUILDKIT_HOST)
+		--addr $(BUILDKIT_HOST) \
+		--allow-insecure-entitlement security.insecure
 	@echo "Wait for buildkitd to become available"
 	@sleep 5
 endif
@@ -209,22 +211,9 @@ test: buildkitd
 	@mkdir -p build
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-		--output type=docker,dest=/tmp/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
 		--opt target=$@ \
+		--output type=local,dest=./ \
 		$(COMMON_ARGS)
-	@docker load < /tmp/$@.tar
-	@trap "rm -rf ./.artifacts" EXIT; mkdir -p ./.artifacts && \
-		docker run -i --rm $(DOCKER_TEST_ARGS) -v $(PWD)/.artifacts:/src/artifacts autonomy/$@:$(TAG) /bin/$@.sh && \
-		cp ./.artifacts/coverage.txt coverage.txt
-
-.PHONY: dev-test
-dev-test:
-	@docker run -i --rm $(DOCKER_TEST_ARGS) \
-		-v $(PWD)/internal:/src/internal:ro \
-		-v $(PWD)/pkg:/src/pkg:ro \
-		-v $(PWD)/cmd:/src/cmd:ro \
-		autonomy/test:$(TAG) \
-		go test -v ./...
 
 .PHONY: lint
 lint: buildkitd

@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:1.1-experimental
+# syntax = smira/dockerfile:master-experimental
 
 ARG TOOLS
 FROM $TOOLS AS tools
@@ -71,7 +71,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/machined
-RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
+RUN --mount=type=cache,target=/root/.cache  go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
 RUN chmod +x /machined
 FROM scratch AS machined
 COPY --from=machined-build /machined /machined
@@ -109,7 +109,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/proxyd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
+RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
 RUN chmod +x /proxyd
 FROM scratch AS proxyd
 COPY --from=proxyd-build /proxyd /proxyd
@@ -135,7 +135,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
+RUN --mount=type=cache,target=/root/.cache GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 FROM scratch AS osctl-linux
 COPY --from=osctl-linux-build /osctl-linux-amd64 /osctl-linux-amd64
@@ -145,7 +145,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
+RUN --mount=type=cache,target=/root/.cache GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 FROM scratch AS osctl-darwin
 COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
@@ -254,13 +254,16 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # The test target performs tests on the source code.
 
-FROM base AS test
+FROM base AS test-runner
 RUN unlink /etc/ssl
 COPY --from=rootfs-base / /
 COPY hack/golang/test.sh /bin
+RUN --security=insecure --mount=type=cache,target=/tmp --mount=type=cache,target=/root/.cache /bin/test.sh
+FROM scratch AS test
+COPY --from=test-runner /src/coverage.txt /coverage.txt
 
 # The lint target performs linting on the source code.
 
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
-RUN golangci-lint run --config golangci-lint.yaml
+RUN --mount=type=cache,target=/root/.cache golangci-lint run --config golangci-lint.yaml
