@@ -16,7 +16,7 @@ menu:
 
 For details on the various components that make up Talos, please see the [components]({{< ref "/docs/components" >}}) section.
 
-To get started with talos, see the [Getting Started Guide]({{< ref "/docs/guides/getting_started" >}}).
+To get started with Talos, see the [Getting Started Guide]({{< ref "/docs/guides/getting_started" >}}).
 
 If you need help, or if you have questions or comments, we would love to hear from you! Please join our community on [Slack](https://slack.dev.talos-systems.io), [GitHub](https://github.com/talos-systems), or the mailing list.
 

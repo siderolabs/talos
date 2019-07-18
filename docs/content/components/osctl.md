@@ -15,4 +15,4 @@ menu:
 - `osctl dmesg` - retrieve kernel logs
 - `osctl ps` - view running services
 - `osctl top` - view node resources
-- `osctl services` - view status of talos services
+- `osctl services` - view status of Talos services

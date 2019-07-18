@@ -38,7 +38,7 @@ Once the above finishes successfully, your talosconfig(`~/.talos/config`) will b
 Once the cluster is available, the pod security policies will need to be applied to allow the control plane to come up.
 Following that, the default CNI (flannel) configuration will be applied.
 
-### Retreive and Configure the `kubeconfig`
+### Retrieve and Configure the `kubeconfig`
 
 ```bash
 osctl kubeconfig > kubeconfig
