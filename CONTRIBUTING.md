@@ -16,7 +16,7 @@ Let's talk about some of the guidelines we have when making a contribution to Ta
 
 ### Git Commits
 
-You probably noticed we use have a funny way of writing commit messages.
+You probably noticed we use a funny way of writing commit messages.
 Indeed we do, but its based on a specification called [Conventional Commits](https://www.conventionalcommits.org).
 Don't worry, it won't be _too_ much of hassle.
 We have a small tool that you can use to remind you of our policy.
@@ -58,7 +58,7 @@ In the `Makefile` there are a variety of targets, the most common are:
 * `kernel` creates the `vmlinuz` Linux kernel executable.
 * `initamfs` creates the `initramfs.xz` initial RAMdisk filesystem.
 * `image-vanilla` creates the `image.raw` file that can be used as a image volume for VMs.
-* `osctl-linux-amd64` and `osctl-darwin-amd64` make the `osctl` CLI tool for Linux & OSX respectivly.
+* `osctl-linux-amd64` and `osctl-darwin-amd64` make the `osctl` CLI tool for Linux & OSX respectively.
 * `rootfs` creates an archive of the root filesystem preloaded with all the components needed to launch Talos & Kubernetes.
 
 # Buildkit

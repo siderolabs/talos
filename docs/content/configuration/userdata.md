@@ -151,7 +151,7 @@ OptionNTPServers
 ## Services
 ### Init
 
-``Init`` allows for the customizatin of the CNI plugin. This translates to additional host mounts.
+``Init`` allows for the customization of the CNI plugin. This translates to additional host mounts.
 
 ```yaml
 services:
@@ -440,7 +440,7 @@ install:
 
 ### Force
 
-``Force`` allows the partitiong to proceed if there is already a filesystem detected.
+``Force`` allows the partitioning to proceed if there is already a filesystem detected.
 
 ```
 install:

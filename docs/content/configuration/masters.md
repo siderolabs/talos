@@ -49,7 +49,7 @@ Each master node participates as a Root of Trust in the cluster.
 The responsibilities of `trustd` include:
 
 - certificate as a service
-- Kubernetes PKI distribution amongst master nodes
+- Kubernetes PKI distribution among master nodes
 
 The authorization between `trustd` and a client is, for now, a simple username and password combination.
 Having these credentials gives a client the power to request a certificate that identifies itself.

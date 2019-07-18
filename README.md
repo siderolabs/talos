@@ -30,7 +30,7 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 - Twitter: [@talossystems](https://twitter.com/talossystems)
 - Email: [info@talos-systems.com](mailto:info@talos-systems.com)
 
-If your interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
+If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
 We hold two weekly meetings targeted for different audiences.
 
 ### Office Hours
@@ -40,7 +40,7 @@ We hold two weekly meetings targeted for different audiences.
 
 ### Maintainers and Contributors
 
-When attending this meeting, please add yourself to the [meeting notes](https://docs.google.com/document/d/1xBhfYg2TK8gtXtaMe3ojXeDS1qRN6MJ-Wo7IjNJSCwQ/edit#) as an atendee. If you would like to discuss a specific topic, we encourage you to add it to the agenda.
+When attending this meeting, please add yourself to the [meeting notes](https://docs.google.com/document/d/1xBhfYg2TK8gtXtaMe3ojXeDS1qRN6MJ-Wo7IjNJSCwQ/edit#) as an attendee. If you would like to discuss a specific topic, we encourage you to add it to the agenda.
 
 - When: Thursdays at 17:00 UTC.
 - Where: [zoom](https://zoom.us/j/3595189922).
