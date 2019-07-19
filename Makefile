@@ -108,12 +108,7 @@ endif
 endif
 
 .PHONY: binaries
-binaries: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+binaries: osctl-linux osctl-darwin
 
 base: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
@@ -222,7 +217,7 @@ lint: buildkitd
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
-.PHONY: osctl-linux-amd64
+.PHONY: osctl-linux
 osctl-linux: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
