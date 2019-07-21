@@ -52,13 +52,6 @@ func (i *ISO) UserData() (data *userdata.UserData, err error) {
 					Size:   512 * 1000 * 1000,
 				},
 			},
-			Root: &userdata.RootDevice{
-				Rootfs: "file:///rootfs.tar.gz",
-				InstallDevice: userdata.InstallDevice{
-					Device: "/dev/sda",
-					Size:   2048 * 1000 * 1000,
-				},
-			},
 			Data: &userdata.InstallDevice{
 				Device: "/dev/sda",
 				Size:   2048 * 1000 * 1000,
@@ -82,7 +75,7 @@ func (i *ISO) Prepare(data *userdata.UserData) (err error) {
 		return err
 	}
 
-	for _, f := range []string{"/tmp/usr/install/vmlinuz", "/tmp/usr/install/initramfs.xz", "/tmp/usr/install/rootfs.tar.gz"} {
+	for _, f := range []string{"/tmp/usr/install/vmlinuz", "/tmp/usr/install/initramfs.xz"} {
 		source, err := ioutil.ReadFile(f)
 		if err != nil {
 			return err
@@ -105,7 +98,7 @@ func (i *ISO) Install(data *userdata.UserData) error {
 	}
 
 	cmdline := kernel.NewDefaultCmdline()
-	cmdline.Append("initrd", filepath.Join("/", constants.CurrentRootPartitionLabel(), "initramfs.xz"))
+	cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
 	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
 	cmdline.Append(constants.KernelParamUserData, endpoint)
 

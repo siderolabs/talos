@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/defaults"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
@@ -52,14 +51,6 @@ const (
 	// DataMountPoint is the label of the partition to use for mounting at
 	// the data path.
 	DataMountPoint = "/var"
-
-	// RootAPartitionLabel is the label of the partition to use for mounting at
-	// the root path.
-	RootAPartitionLabel = "ROOT-A"
-
-	// RootBPartitionLabel is the label of the partition to use for mounting at
-	// the root path.
-	RootBPartitionLabel = "ROOT-B"
 
 	// RootMountPoint is the label of the partition to use for mounting at
 	// the root path.
@@ -161,7 +152,7 @@ const (
 	InitramfsAsset = "initramfs.xz"
 
 	// RootfsAsset defines a well known name for our rootfs filename
-	RootfsAsset = "rootfs.tar.gz"
+	RootfsAsset = "rootfs.sqsh"
 
 	// NodeCertFile is the filename where the current Talos Node Certificate may be found
 	NodeCertFile = "/var/talos-node.crt"
@@ -185,37 +176,3 @@ const (
 const (
 	ContainerdAddress = defaults.DefaultAddress
 )
-
-// CurrentRootPartitionLabel returns the label of the currently active root
-// partition.
-func CurrentRootPartitionLabel() string {
-	var param *string
-	if param = kernel.Cmdline().Get(KernelCurrentRoot).First(); param == nil {
-		return RootAPartitionLabel
-	}
-
-	switch *param {
-	case RootBPartitionLabel:
-		return RootBPartitionLabel
-	case RootAPartitionLabel:
-		fallthrough
-	default:
-		return RootAPartitionLabel
-	}
-}
-
-// NextRootPartitionLabel returns the label of the currently active root
-// partition.
-func NextRootPartitionLabel() string {
-	current := CurrentRootPartitionLabel()
-	switch current {
-	case RootAPartitionLabel:
-		return RootBPartitionLabel
-	case RootBPartitionLabel:
-		return RootAPartitionLabel
-	}
-
-	// We should never reach this since CurrentRootPartitionLabel is guaranteed
-	// to return one of the two possible labels.
-	return "UNKNOWN"
-}

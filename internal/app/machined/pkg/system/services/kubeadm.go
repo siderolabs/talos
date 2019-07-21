@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 
+	containerdapi "github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -39,33 +41,28 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 // PreFunc implements the Service interface.
 // nolint: gocyclo
 func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
-	reqs := []*containerd.ImportRequest{
-		{
-			Path: "/usr/images/hyperkube.tar",
-		},
-		{
-			Path: "/usr/images/coredns.tar",
-		},
-		{
-			Path: "/usr/images/pause.tar",
-		},
-	}
-
-	// Write out all certs we've been provided
 	if data.Services.Kubeadm.IsControlPlane() {
-		reqs = append(reqs, &containerd.ImportRequest{Path: "/usr/images/etcd.tar"})
-
 		if err = kubeadm.WritePKIFiles(data); err != nil {
 			return err
 		}
 	}
 
-	if err = containerd.Import(criconstants.K8sContainerdNamespace, reqs...); err != nil {
+	if err = kubeadm.WriteConfig(data); err != nil {
 		return err
 	}
 
-	if err = kubeadm.WriteConfig(data); err != nil {
+	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
+	client, err := containerdapi.New(constants.ContainerdAddress)
+	if err != nil {
 		return err
+	}
+	// nolint: errcheck
+	defer client.Close()
+
+	// Pull the image and unpack it.
+
+	if _, err = client.Pull(containerdctx, constants.KubernetesImage, containerdapi.WithPullUnpack); err != nil {
+		return fmt.Errorf("failed to pull image %q: %v", constants.KubernetesImage, err)
 	}
 
 	// Run kubeadm init phase certs all. This should fill in whatever gaps

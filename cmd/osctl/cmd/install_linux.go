@@ -37,13 +37,6 @@ var installCmd = &cobra.Command{
 			Install: &userdata.Install{
 				Force:           true,
 				ExtraKernelArgs: extraKernelArgs,
-				Root: &userdata.RootDevice{
-					Rootfs: "file:///usr/install/rootfs.tar.gz",
-					InstallDevice: userdata.InstallDevice{
-						Device: device,
-						Size:   2048 * 1000 * 1000,
-					},
-				},
 				Data: &userdata.InstallDevice{
 					Device: device,
 					Size:   512 * 1000 * 1000,
@@ -71,7 +64,7 @@ var installCmd = &cobra.Command{
 		}
 
 		cmdline := kernel.NewDefaultCmdline()
-		cmdline.Append("initrd", filepath.Join("/", constants.RootAPartitionLabel, "initramfs.xz"))
+		cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
 		cmdline.Append(constants.KernelParamPlatform, platform)
 		cmdline.Append(constants.KernelParamUserData, endpoint)
 		if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {

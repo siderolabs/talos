@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/cgroups"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
+	"gopkg.in/freddierice/go-losetup.v1"
 )
 
 // Initializer represents the early boot initialization control.
@@ -79,7 +80,7 @@ func (i *Initializer) MoveSpecial() (err error) {
 	iter := i.special.Iter()
 	for iter.Next() {
 		mountpoint := mount.NewMountPoint(iter.Value().Target(), iter.Value().Target(), "", unix.MS_MOVE, "")
-		if err := mount.WithRetry(mountpoint, mount.WithPrefix(i.prefix)); err != nil {
+		if err = mount.WithRetry(mountpoint, mount.WithPrefix(i.prefix)); err != nil {
 			return errors.Errorf("error moving mount point %s: %v", iter.Value().Target(), err)
 		}
 	}
@@ -87,11 +88,11 @@ func (i *Initializer) MoveSpecial() (err error) {
 		return iter.Err()
 	}
 
-	if err := mount.WithRetry(mount.NewMountPoint("tmpfs", "/dev/shm", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""), mount.WithPrefix(i.prefix)); err != nil {
+	if err = mount.WithRetry(mount.NewMountPoint("tmpfs", "/dev/shm", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""), mount.WithPrefix(i.prefix)); err != nil {
 		return errors.Errorf("error mounting mount point %s: %v", "/dev/shm", err)
 	}
 
-	if err := mount.WithRetry(mount.NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"), mount.WithPrefix(i.prefix)); err != nil {
+	if err = mount.WithRetry(mount.NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"), mount.WithPrefix(i.prefix)); err != nil {
 		return errors.Errorf("error mounting mount point %s: %v", "/dev/pts", err)
 	}
 
@@ -100,7 +101,18 @@ func (i *Initializer) MoveSpecial() (err error) {
 
 // InitOwned initializes and mounts the OS owned block devices in the early boot
 // stage.
+//
+// nolint: gocyclo
 func (i *Initializer) InitOwned() (err error) {
+	var dev losetup.Device
+	dev, err = losetup.Attach("/"+constants.RootfsAsset, 0, true)
+	if err != nil {
+		return err
+	}
+	m := mount.NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY, "")
+	if err = mount.WithRetry(m, mount.WithPrefix(i.prefix), mount.WithReadOnly(true), mount.WithShared(true)); err != nil {
+		return errors.Wrap(err, "failed to mount squashfs")
+	}
 	var owned *mount.Points
 	if owned, err = mountpoints(); err != nil {
 		return errors.Errorf("error initializing owned block devices: %v", err)
@@ -155,14 +167,8 @@ func ExtraDevices(data *userdata.UserData) (err error) {
 func (i *Initializer) MountOwned() (err error) {
 	iter := i.owned.Iter()
 	for iter.Next() {
-		if iter.Key() == constants.CurrentRootPartitionLabel() {
-			if err = mount.WithRetry(iter.Value(), mount.WithPrefix(i.prefix), mount.WithReadOnly(true), mount.WithShared(true)); err != nil {
-				return errors.Errorf("error mounting partitions: %v", err)
-			}
-		} else {
-			if err = mount.WithRetry(iter.Value(), mount.WithPrefix(i.prefix)); err != nil {
-				return errors.Errorf("error mounting partitions: %v", err)
-			}
+		if err = mount.WithRetry(iter.Value(), mount.WithPrefix(i.prefix)); err != nil {
+			return errors.Errorf("error mounting partitions: %v", err)
 		}
 	}
 	if iter.Err() != nil {
@@ -191,17 +197,14 @@ func (i *Initializer) UnmountOwned() (err error) {
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
 // nolint: gocyclo
 func (i *Initializer) Switch() (err error) {
-	// Unmount the ROOT and DATA block devices.
 	if err = i.UnmountOwned(); err != nil {
 		return err
 	}
 
-	// Mount the ROOT and DATA block devices at the new root.
 	if err = i.MountOwned(); err != nil {
 		return errors.Wrap(err, "error mounting block device")
 	}
 
-	// Move the special mount points to the new root.
 	if err = i.MoveSpecial(); err != nil {
 		return errors.Wrap(err, "error moving special devices")
 	}
@@ -234,8 +237,10 @@ func (i *Initializer) Switch() (err error) {
 		return errors.Wrap(err, "error deleting initramfs")
 	}
 
-	if err = unix.Exec("/sbin/machined", []string{"/sbin/machined"}, []string{}); err != nil {
-		return errors.Wrap(err, "error executing /sbin/machined")
+	// Note that /sbin/init is machined. We call it init since this is the
+	// convention.
+	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, []string{}); err != nil {
+		return errors.Wrap(err, "error executing /sbin/init")
 	}
 
 	return nil
@@ -244,12 +249,9 @@ func (i *Initializer) Switch() (err error) {
 // nolint: dupl
 func mountpoints() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.CurrentRootPartitionLabel(), constants.DataPartitionLabel, constants.BootPartitionLabel} {
+	for _, name := range []string{constants.DataPartitionLabel, constants.BootPartitionLabel} {
 		var target string
 		switch name {
-		case constants.CurrentRootPartitionLabel():
-			log.Printf("using root parititon with label %s", name)
-			target = constants.RootMountPoint
 		case constants.DataPartitionLabel:
 			target = constants.DataMountPoint
 		case constants.BootPartitionLabel:
