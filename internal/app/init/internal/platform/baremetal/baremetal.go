@@ -85,7 +85,7 @@ func (b *BareMetal) Install(data *userdata.UserData) (err error) {
 		return errors.Errorf("failed to find %s in kernel parameters", constants.KernelParamUserData)
 	}
 	cmdline := kernel.NewDefaultCmdline()
-	cmdline.Append("initrd", filepath.Join("/", constants.CurrentRootPartitionLabel(), "initramfs.xz"))
+	cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
 	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
 	cmdline.Append(constants.KernelParamUserData, *endpoint)
 

@@ -1,4 +1,4 @@
-TOOLS ?= autonomy/tools:b4e3778
+TOOLS ?= autonomy/tools:b473afb
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= master@sha256:455f06ede03149051ce2734d9639c28aed1b6e8b8a0c607cb813e29b469a07d6
@@ -137,7 +137,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd machined osd trustd proxyd ntpd
+rootfs: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \

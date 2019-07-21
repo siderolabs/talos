@@ -369,43 +369,6 @@ install:
 
 **Note** The asset name **must** be named `initramfs.xz`.
 
-### Root
-#### Device
-
-The device name to use for the `/` partition. This should be specified as the
-unpartitioned block device.
-
-```yaml
-install:
-  root:
-    device: <name of device to use>
-```
-
-#### Size
-
-The size of the `/` partition in bytes. If this parameter is omitted, a default
-value of 2GB will be used.
-
-```yaml
-install:
-  root:
-    size: <size in bytes>
-```
-
-#### Rootfs
-
-This parameter can be used to specify a custom root filesystem to use. If this
-parameter is omitted, the most recent Talos release will be used ( fetched from
-github releases ).
-
-```yaml
-install:
-  root:
-    rootfs: <path or url to rootfs.tar.gz>
-```
-
-**Note:** The asset name **must** be named `rootfs.tar.gz`.
-
 ### Data
 #### Device
 

@@ -6,13 +6,14 @@ package syslinux
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"text/template"
+
+	"github.com/pkg/errors"
 )
 
 const syslinuxCfgTpl = `DEFAULT {{ .Default }}
@@ -111,7 +112,7 @@ func Install(base string, config interface{}) (err error) {
 	}
 
 	if err = cmd("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
-		return err
+		return errors.Wrap(err, "failed to install extlinux")
 	}
 
 	return nil

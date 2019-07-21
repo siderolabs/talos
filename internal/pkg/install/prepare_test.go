@@ -33,7 +33,7 @@ func (suite *validateSuite) TestNewManifest() {
 	suite.Require().NoError(err)
 
 	manifests := NewManifest(data)
-	assert.Equal(suite.T(), 4, len(manifests.Targets["/dev/sda"]))
+	assert.Equal(suite.T(), 2, len(manifests.Targets["/dev/sda"]))
 }
 
 func (suite *validateSuite) TestVerifyDevice() {
@@ -42,22 +42,17 @@ func (suite *validateSuite) TestVerifyDevice() {
 	err := yaml.Unmarshal([]byte(testConfig), data)
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(VerifyRootDevice(data))
 	suite.Require().NoError(VerifyBootDevice(data))
 	suite.Require().NoError(VerifyDataDevice(data))
 
-	// No impact because we can infer all data from
-	// data.install.Root.Device and defaults
+	// No impact because we can infer all data from the data device and
+	// defaults.
 	data.Install.Boot = nil
 	suite.Require().NoError(VerifyBootDevice(data))
-	// No impact because we can infer all data from
-	// data.install.Root.Device and defaults
-	data.Install.Data = nil
+	data.Install.Data = &userdata.InstallDevice{
+		Device: "/dev/sda",
+	}
 	suite.Require().NoError(VerifyDataDevice(data))
-	// Root is our base for the partitions, so
-	// hard fail here
-	data.Install.Root = nil
-	suite.Require().Error(VerifyRootDevice(data))
 }
 
 func (suite *validateSuite) TestTargetInstall() {
@@ -169,9 +164,6 @@ install:
   wipe: true
   force: true
   boot:
-    device: /dev/sda
-    size: 1024000000
-  root:
     device: /dev/sda
     size: 1024000000
   data:

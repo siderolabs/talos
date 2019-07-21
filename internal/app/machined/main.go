@@ -140,7 +140,19 @@ func root() (err error) {
 			}
 		}
 
+		if err = unix.Mount("/var/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
+			return errors.Wrap(err, "failed to create bind mount for /etc/hosts")
+		}
 		if err = unix.Mount("/var/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
+			return errors.Wrap(err, "failed to create bind mount for /etc/resolv.conf")
+		}
+		if err = unix.Mount("/var/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
+			return errors.Wrap(err, "failed to create bind mount for /etc/os-release")
+		}
+	}
+
+	for _, p := range []string{"/var/log", "/var/lib/kubelet", "/var/log/pods"} {
+		if err = os.MkdirAll(p, 0700); err != nil {
 			return err
 		}
 	}

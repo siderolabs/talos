@@ -52,9 +52,6 @@ func Install(args string, data *userdata.UserData) (err error) {
 			case constants.DataPartitionLabel:
 				// Do nothing
 				continue
-			case constants.NextRootPartitionLabel():
-				// Do nothing
-				continue
 			}
 
 			// Handles the download and extraction of assets
@@ -69,12 +66,12 @@ func Install(args string, data *userdata.UserData) (err error) {
 	}
 
 	syslinuxcfg := &syslinux.Cfg{
-		Default: constants.CurrentRootPartitionLabel(),
+		Default: "default",
 		Labels: []*syslinux.Label{
 			{
-				Root:   constants.CurrentRootPartitionLabel(),
-				Kernel: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
-				Initrd: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Initramfs)),
+				Root:   "default",
+				Kernel: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Kernel)),
+				Initrd: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Initramfs)),
 				Append: args,
 			},
 		},
@@ -82,7 +79,6 @@ func Install(args string, data *userdata.UserData) (err error) {
 	if err = syslinux.Install(filepath.Join(constants.NewRoot, constants.BootMountPoint), syslinuxcfg); err != nil {
 		return err
 	}
-
 	if err = ioutil.WriteFile(filepath.Join(constants.NewRoot, constants.BootMountPoint, "installed"), []byte{}, 0400); err != nil {
 		return err
 	}

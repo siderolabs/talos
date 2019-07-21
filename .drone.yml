@@ -35,17 +35,6 @@ steps:
     depends_on:
       - fetch
 
-  - name: build-init
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make initramfs
-    depends_on:
-      - lint
-
   - name: build-machined
     image: autonomy/build-container:latest
     pull: always
@@ -141,6 +130,20 @@ steps:
       - build-trustd
       - build-ntpd
 
+  - name: initramfs
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make initramfs
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - rootfs
+
   - name: installer
     image: autonomy/build-container:latest
     pull: always
@@ -154,6 +157,7 @@ steps:
         path: /var/run
     depends_on:
       - rootfs
+      - initramfs
 
   - name: talos-image
     image: autonomy/build-container:latest
@@ -168,7 +172,6 @@ steps:
         path: /var/run
     depends_on:
       - rootfs
-      - build-init
 
   - name: test
     image: autonomy/build-container:latest

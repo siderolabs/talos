@@ -84,6 +84,7 @@ func WithRetry(mountpoint *Point, setters ...Option) (err error) {
 	}
 
 	target := path.Join(opts.Prefix, mountpoint.target)
+
 	if err = os.MkdirAll(target, os.ModeDir); err != nil {
 		return errors.Errorf("error creating mount point directory %s: %v", target, err)
 	}

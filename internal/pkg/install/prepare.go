@@ -10,9 +10,7 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -48,9 +46,6 @@ var (
 	// TODO(andrewrynhard): We need to setup infrastructure for publishing artifacts and not depend on GitHub.
 	DefaultURLBase = "https://github.com/talos-systems/talos/releases/download/" + version.Tag
 
-	// DefaultRootfsURL is the URL to the rootfs.
-	DefaultRootfsURL = DefaultURLBase + "/rootfs.tar.gz"
-
 	// DefaultKernelURL is the URL to the kernel.
 	DefaultKernelURL = DefaultURLBase + "/vmlinuz"
 
@@ -79,9 +74,6 @@ func Prepare(data *userdata.UserData) (err error) {
 
 	// Verify that the target device(s) can satisify the requested options.
 
-	if err = VerifyRootDevice(data); err != nil {
-		return errors.Wrap(err, "failed to prepare root device")
-	}
 	if err = VerifyDataDevice(data); err != nil {
 		return errors.Wrap(err, "failed to prepare data device")
 	}
@@ -136,33 +128,6 @@ func ExecuteManifest(data *userdata.UserData, manifest *Manifest) (err error) {
 	return nil
 }
 
-// VerifyRootDevice verifies the supplied root device options.
-func VerifyRootDevice(data *userdata.UserData) (err error) {
-	if data.Install == nil || data.Install.Root == nil {
-		return errors.New("a root device is required")
-	}
-
-	if data.Install.Root.Device == "" {
-		return errors.New("a root device is required")
-	}
-
-	if data.Install.Root.Size == 0 {
-		data.Install.Root.Size = DefaultSizeRootDevice
-	}
-
-	if data.Install.Root.Rootfs == "" {
-		data.Install.Root.Rootfs = DefaultRootfsURL
-	}
-
-	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.CurrentRootPartitionLabel()); err != nil {
-			return errors.Wrap(err, "failed to verify disk availability")
-		}
-	}
-
-	return nil
-}
-
 // VerifyDataDevice verifies the supplied data device options.
 func VerifyDataDevice(data *userdata.UserData) (err error) {
 	// Set data device to root device if not specified
@@ -171,10 +136,7 @@ func VerifyDataDevice(data *userdata.UserData) (err error) {
 	}
 
 	if data.Install.Data.Device == "" {
-		// We can safely assume root device is defined at this point
-		// because VerifyRootDevice should have been called first in
-		// in the chain
-		data.Install.Data.Device = data.Install.Root.Device
+		return errors.New("a data device is required")
 	}
 
 	if data.Install.Data.Size == 0 {
@@ -197,10 +159,10 @@ func VerifyBootDevice(data *userdata.UserData) (err error) {
 	}
 
 	if data.Install.Boot.Device == "" {
-		// We can safely assume root device is defined at this point
-		// because VerifyRootDevice should have been called first in
+		// We can safely assume data device is defined at this point
+		// because VerifyDataDevice should have been called first in
 		// in the chain
-		data.Install.Boot.Device = data.Install.Root.Device
+		data.Install.Boot.Device = data.Install.Data.Device
 	}
 
 	if data.Install.Boot.Size == 0 {
@@ -282,9 +244,6 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	// Initialize any slices we need. Note that a boot paritition is not
 	// required.
 
-	if manifest.Targets[data.Install.Root.Device] == nil {
-		manifest.Targets[data.Install.Root.Device] = []*Target{}
-	}
 	if manifest.Targets[data.Install.Data.Device] == nil {
 		manifest.Targets[data.Install.Data.Device] = []*Target{}
 	}
@@ -300,39 +259,15 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 			Assets: []*Asset{
 				{
 					Source:      data.Install.Boot.Kernel,
-					Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Kernel)),
+					Destination: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Kernel)),
 				},
 				{
 					Source:      data.Install.Boot.Initramfs,
-					Destination: filepath.Join("/", constants.CurrentRootPartitionLabel(), filepath.Base(data.Install.Boot.Initramfs)),
+					Destination: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Initramfs)),
 				},
 			},
-			MountPoint: path.Join(constants.NewRoot, constants.BootMountPoint),
+			MountPoint: filepath.Join(constants.NewRoot, constants.BootMountPoint),
 		}
-	}
-
-	rootATarget := &Target{
-		Device: data.Install.Root.Device,
-		Label:  constants.RootAPartitionLabel,
-		Size:   data.Install.Root.Size,
-		Force:  data.Install.Force,
-		Test:   false,
-		Assets: []*Asset{
-			{
-				Source:      data.Install.Root.Rootfs,
-				Destination: filepath.Base(data.Install.Root.Rootfs),
-			},
-		},
-		MountPoint: path.Join(constants.NewRoot, constants.RootMountPoint),
-	}
-
-	rootBTarget := &Target{
-		Device:     data.Install.Root.Device,
-		Label:      constants.RootBPartitionLabel,
-		Size:       data.Install.Root.Size,
-		Force:      data.Install.Force,
-		Test:       false,
-		MountPoint: path.Join(constants.NewRoot, constants.RootMountPoint),
 	}
 
 	dataTarget := &Target{
@@ -341,10 +276,10 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		Size:       data.Install.Data.Size,
 		Force:      data.Install.Force,
 		Test:       false,
-		MountPoint: path.Join(constants.NewRoot, constants.DataMountPoint),
+		MountPoint: filepath.Join(constants.NewRoot, constants.DataMountPoint),
 	}
 
-	for _, target := range []*Target{bootTarget, rootATarget, rootBTarget, dataTarget} {
+	for _, target := range []*Target{bootTarget, dataTarget} {
 		if target == nil {
 			continue
 		}
@@ -414,18 +349,6 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		// EFI System Partition
 		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
-	case constants.CurrentRootPartitionLabel():
-		// Root Partition
-		var typeID string
-		switch runtime.GOARCH {
-		case "386":
-			typeID = "44479540-F297-41B2-9AF7-D131D5F0458A"
-		case "amd64":
-			typeID = "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
-		default:
-			return errors.Errorf("%s", "unsupported cpu architecture")
-		}
-		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label))
 	case constants.DataPartitionLabel:
 		// Data Partition
 		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"

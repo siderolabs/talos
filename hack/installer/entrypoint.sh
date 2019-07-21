@@ -42,7 +42,6 @@ function create_iso() {
   cp -v /usr/install/initramfs.xz /mnt/initramfs.xz
 
   mkdir -p /mnt/usr/install
-  cp -v /usr/install/rootfs.tar.gz /mnt/usr/install/rootfs.tar.gz
   cp -v /usr/install/vmlinuz /mnt/usr/install/vmlinuz
   cp -v /usr/install/initramfs.xz /mnt/usr/install/initramfs.xz
 

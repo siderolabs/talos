@@ -58,13 +58,11 @@ func Hosts(s, hostname, ip string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile("/run/hosts", writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /etc/hosts: %v", err)
+	if err := ioutil.WriteFile(filepath.Join(s, "/var/hosts"), writer.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write /var/hosts: %v", err)
 	}
 
-	// The kubelet wants to manage /etc/hosts. Create a symlink there that
-	// points to a writable file.
-	return createSymlink("/run/hosts", filepath.Join(s, "/etc/hosts"))
+	return nil
 }
 
 // ResolvConf copies the resolv.conf generated in the early boot to the new
@@ -80,28 +78,7 @@ func ResolvConf(s string) (err error) {
 		return err
 	}
 
-	// We need to create this here since the rootfs is writable at this point,
-	// and the file must exist when bind mounting later.
-	dummy := filepath.Join(s, "/etc/resolv.conf")
-	if _, err = os.Create(dummy); err != nil {
-		return err
-	}
-
 	return nil
-}
-
-func createSymlink(source string, target string) (err error) {
-	if _, err = os.Lstat(target); err == nil {
-		if err = os.Remove(target); err != nil {
-			return fmt.Errorf("remove symlink %s: %v", target, err)
-		}
-	}
-	if err = os.Symlink(source, target); err != nil {
-		return fmt.Errorf("symlink %s -> %s: %v", target, source, err)
-	}
-
-	return nil
-
 }
 
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
@@ -135,8 +112,8 @@ func OSRelease(s string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile(path.Join(s, "/etc/os-release"), writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /etc/os-release: %v", err)
+	if err := ioutil.WriteFile(path.Join(s, "/var/os-release"), writer.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write /var/os-release: %v", err)
 	}
 
 	return nil
