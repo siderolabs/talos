@@ -284,6 +284,7 @@ steps:
     depends_on:
       ## Should change to e2e once we get things more stable
       - basic-integration
+      - gce
 
   - name: push
     image: autonomy/build-container:latest
@@ -338,8 +339,8 @@ volumes:
     temp: {}
 
 trigger:
-  cron: 
-    exclude: [ nightly ]
+  cron:
+    exclude: [nightly]
 
 ---
 kind: pipeline
@@ -413,7 +414,7 @@ volumes:
     temp: {}
 
 trigger:
-  cron: [ nightly ]
+  cron: [nightly]
 
 ---
 kind: pipeline
