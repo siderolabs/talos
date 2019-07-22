@@ -311,3 +311,4 @@ talos-azure:
 		-f raw \
 		-o subformat=fixed,force_size \
 		-O vpc /out/disk.raw /out/talos-azure.vhd
+	@rm -rf $(PWD)/build/disk.raw
