@@ -10,6 +10,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
 	"github.com/talos-systems/talos/internal/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -33,18 +34,24 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 		return nil, err
 	}
 
-	// TODO: In the case of failure, attempt to generate the identity from
-	// another RoT.
+	// Loop through trustd endpoints and attempt to download PKI
 	var conn *grpc.ClientConn
-	conn, err = basic.NewConnection(data.Services.Trustd.Endpoints[0], port, creds)
-	if err != nil {
-		return nil, err
+	var multiError *multierror.Error
+	for i := 0; i < len(data.Services.Trustd.Endpoints); i++ {
+		conn, err = basic.NewConnection(data.Services.Trustd.Endpoints[i], port, creds)
+		if err != nil {
+			multiError = multierror.Append(multiError, err)
+			//Unable to connect, bail and attempt to contact next endpoint
+			continue
+		}
+		client := proto.NewTrustdClient(conn)
+		return &Generator{client: client}, nil
 	}
-	client := proto.NewTrustdClient(conn)
 
-	return &Generator{
-		client: client,
-	}, nil
+	// We were unable to connect to any trustd endpoint
+	// Return error from last attempt.
+	return nil, multiError.ErrorOrNil()
+
 }
 
 // Certificate implements the proto.TrustdClient interface.
