@@ -328,6 +328,7 @@ steps:
       - kernel
       - iso
       - gce
+      - azure
 
 volumes:
   - name: dockersock
