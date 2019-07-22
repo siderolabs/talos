@@ -310,5 +310,6 @@ talos-azure:
 		convert \
 		-f raw \
 		-o subformat=fixed,force_size \
-		-O vpc /out/disk.raw /out/talos-azure.vhd
-	@rm -rf $(PWD)/build/disk.raw
+		-O vpc /out/disk.raw /out/disk.vhd
+	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.vhd
+	@rm -rf $(PWD)/build/disk.raw $(PWD)/build/disk.vhd
