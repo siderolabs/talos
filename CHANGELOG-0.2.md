@@ -1,3 +1,26 @@
+# [v0.2.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.2...v0.2.0-alpha.3) (2019-07-22)
+
+
+### Bug Fixes
+
+* create symlinks to /etc/ssl/certs ([fe2b81f](https://github.com/talos-systems/talos/commit/fe2b81f))
+* Fix integration of extra kernel args ([e9482a4](https://github.com/talos-systems/talos/commit/e9482a4))
+* make /etc/resolv.conf writable ([88bdedf](https://github.com/talos-systems/talos/commit/88bdedf))
+* Only generate pki from trustd if not control plane ([a15499d](https://github.com/talos-systems/talos/commit/a15499d))
+* prefix file stat with rootfs prefix ([75ea516](https://github.com/talos-systems/talos/commit/75ea516))
+* Truncate hostname if necessary ([f650e32](https://github.com/talos-systems/talos/commit/f650e32))
+
+
+### Features
+
+* **init:** Add azure as a supported platform ([7adef1e](https://github.com/talos-systems/talos/commit/7adef1e))
+* add machined ([8e8aae9](https://github.com/talos-systems/talos/commit/8e8aae9))
+* allow mtu specification for network devices ([4a31b66](https://github.com/talos-systems/talos/commit/4a31b66))
+* allow specification of mtu for cluster create ([6fd685d](https://github.com/talos-systems/talos/commit/6fd685d))
+* set default mtu for gce platform ([c9f0dbb](https://github.com/talos-systems/talos/commit/c9f0dbb))
+
+
+
 # [v0.2.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.1...v0.2.0-alpha.2) (2019-07-15)
 
 
