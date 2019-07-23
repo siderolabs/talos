@@ -1,4 +1,4 @@
-# syntax = smira/dockerfile:master-experimental
+# syntax = docker/dockerfile-upstream:master-experimental
 
 ARG TOOLS
 FROM $TOOLS AS tools
@@ -258,7 +258,8 @@ FROM base AS test-runner
 RUN unlink /etc/ssl
 COPY --from=rootfs-base / /
 COPY hack/golang/test.sh /bin
-RUN --security=insecure --mount=type=cache,target=/tmp --mount=type=cache,target=/root/.cache /bin/test.sh
+ARG TESTPKGS
+RUN --security=insecure --mount=type=cache,target=/tmp --mount=type=cache,target=/root/.cache /bin/test.sh ${TESTPKGS}
 FROM scratch AS test
 COPY --from=test-runner /src/coverage.txt /coverage.txt
 
