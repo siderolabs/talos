@@ -52,6 +52,8 @@ DOCKER_ARGS ?=
 # to allow tests to run containerd
 DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/ -v /tmp/
 
+TESTPKGS ?= ./...
+
 all: ci drone
 
 .PHONY: drone
@@ -209,6 +211,7 @@ test: buildkitd
 		build \
 		--opt target=$@ \
 		--output type=local,dest=./ \
+		--opt build-arg:TESTPKGS=$(TESTPKGS) \
 		$(COMMON_ARGS)
 
 .PHONY: lint

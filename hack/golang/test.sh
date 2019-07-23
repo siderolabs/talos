@@ -2,24 +2,23 @@
 
 set -e
 
-CGO_ENABLED=1
-
 perform_tests() {
-  echo "Performing tests"
-  go test -v -covermode=atomic -coverprofile=coverage.txt ./...
+  echo "Performing tests on $1"
+  go test -v -covermode=atomic -coverprofile=coverage.txt "$1"
 }
 
 perform_short_tests() {
-  echo "Performing short tests"
-  go test -v -short ./...
+  echo "Performing short tests on $1"
+  go test -v -short "$1"
 }
 
 case $1 in
   --short)
-  perform_short_tests
+  shift
+  perform_short_tests "${1:-./...}"
   ;;
   *)
-  perform_tests
+  perform_tests "${1:-./...}"
   ;;
 esac
 
