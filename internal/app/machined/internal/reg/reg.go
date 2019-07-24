@@ -5,6 +5,7 @@
 package reg
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -14,7 +15,9 @@ import (
 	"sync/atomic"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
@@ -243,4 +246,69 @@ func (r *Registrator) LS(req *proto.LSRequest, s proto.Init_LSServer) error {
 	}
 
 	return nil
+}
+
+// DF implements the proto.OSDServer interface.
+func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFReply, err error) {
+	file, err := os.Open("/proc/mounts")
+	if err != nil {
+		return nil, err
+	}
+	// nolint: errcheck
+	defer file.Close()
+
+	var (
+		stat     unix.Statfs_t
+		multiErr *multierror.Error
+	)
+
+	stats := []*proto.DFStat{}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+
+		if len(fields) < 2 {
+			continue
+		}
+
+		filesystem := fields[0]
+		mountpoint := fields[1]
+
+		f, err := os.Stat(mountpoint)
+		if err != nil {
+			multiErr = multierror.Append(multiErr, err)
+			continue
+		}
+
+		if mode := f.Mode(); !mode.IsDir() {
+			continue
+		}
+
+		if err := unix.Statfs(mountpoint, &stat); err != nil {
+			multiErr = multierror.Append(multiErr, err)
+			continue
+		}
+
+		totalSize := uint64(stat.Bsize) * stat.Blocks
+		totalAvail := uint64(stat.Bsize) * stat.Bavail
+
+		stat := &proto.DFStat{
+			Filesystem: filesystem,
+			Size:       totalSize,
+			Available:  totalAvail,
+			MountedOn:  mountpoint,
+		}
+
+		stats = append(stats, stat)
+	}
+
+	if err := scanner.Err(); err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	reply = &proto.DFReply{
+		Stats: stats,
+	}
+
+	return reply, multiErr.ErrorOrNil()
 }

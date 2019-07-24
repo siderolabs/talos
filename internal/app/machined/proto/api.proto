@@ -9,6 +9,7 @@ import "google/protobuf/timestamp.proto";
 // The Init service definition.
 service Init {
   rpc CopyOut(CopyOutRequest) returns (stream StreamingData) {}
+  rpc DF(google.protobuf.Empty) returns (DFReply) {}
   rpc LS(LSRequest) returns (stream FileInfo) {}
   rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
   rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
@@ -16,7 +17,6 @@ service Init {
   rpc Upgrade(UpgradeRequest) returns (UpgradeReply) {}
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply) {}
 }
-
 
 // The response message containing the reboot status.
 message RebootReply {}
@@ -27,15 +27,11 @@ message ResetReply {}
 // The response message containing the shutdown status.
 message ShutdownReply {}
 
-message UpgradeRequest {
-	string url = 1;
-}
+message UpgradeRequest { string url = 1; }
 
 message UpgradeReply { string ack = 1; }
 
-message ServiceListReply {
-  repeated ServiceInfo services = 1;
-}
+message ServiceListReply { repeated ServiceInfo services = 1; }
 
 message ServiceInfo {
   string id = 1;
@@ -44,9 +40,7 @@ message ServiceInfo {
   ServiceHealth health = 4;
 }
 
-message ServiceEvents {
-  repeated ServiceEvent events = 1;
-}
+message ServiceEvents { repeated ServiceEvent events = 1; }
 
 message ServiceEvent {
   string msg = 1;
@@ -82,13 +76,15 @@ message CopyOutRequest {
 // LSRequest describes a request to list the contents of a directory
 message LSRequest {
 
-  // Root indicates the root directory for the list.  If not indicated, '/' is presumed.
+  // Root indicates the root directory for the list.  If not indicated, '/' is
+  // presumed.
   string root = 1;
 
   // Recurse indicates that subdirectories should be recursed.
   bool recurse = 2;
 
-  // RecursionDepth indicates how many levels of subdirectories should be recursed.  The default (0) indicates that no limit should be enforced.
+  // RecursionDepth indicates how many levels of subdirectories should be
+  // recursed.  The default (0) indicates that no limit should be enforced.
   int32 recursion_depth = 3;
 }
 
@@ -110,7 +106,8 @@ message FileInfo {
   // IsDir indicates that the file is a directory
   bool is_dir = 5;
 
-  // Error describes any error encountered while trying to read the file information.
+  // Error describes any error encountered while trying to read the file
+  // information.
   string error = 6;
 
   // Link is filled with symlink target
@@ -118,4 +115,15 @@ message FileInfo {
 
   // RelativeName is the name of the file or directory relative to the RootPath
   string relative_name = 8;
+}
+
+// The response message containing the requested df stats.
+message DFReply { repeated DFStat stats = 1; }
+
+// The response message containing the requested processes.
+message DFStat {
+  string filesystem = 1;
+  uint64 size = 2;
+  uint64 available = 3;
+  string mounted_on = 4;
 }
