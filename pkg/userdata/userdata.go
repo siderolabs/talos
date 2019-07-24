@@ -42,7 +42,7 @@ func (data *UserData) Validate() error {
 
 	// All nodeType checks
 	result = multierror.Append(result, data.Services.Validate(CheckServices()))
-	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsAreValidIPs()))
+	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsAreValidIPsOrHostnames()))
 	result = multierror.Append(result, data.Services.Init.Validate(CheckInitCNI()))
 
 	// Surely there's a better way to do this

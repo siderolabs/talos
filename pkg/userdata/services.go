@@ -6,12 +6,22 @@ package userdata
 
 import (
 	"net"
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/go-multierror"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/xerrors"
 )
+
+// ValidHostnamePattern is a pattern which should match valid DNS hostnames according to RFC1123
+const ValidHostnamePattern = `^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`
+
+var validHostnameRegex *regexp.Regexp
+
+func init() {
+	validHostnameRegex = regexp.MustCompile(ValidHostnamePattern)
+}
 
 // Env represents a set of environment variables.
 type Env = map[string]string
@@ -139,17 +149,20 @@ func CheckTrustdAuth() TrustdCheck {
 	}
 }
 
-// CheckTrustdEndpointsAreValidIPs ensures that the specified trustd endpoints
-/// are valid IP addresses.
-func CheckTrustdEndpointsAreValidIPs() TrustdCheck {
+// CheckTrustdEndpointsAreValidIPsOrHostnames ensures that the specified trustd endpoints
+/// are valid IP addresses or DNS hostnames.
+func CheckTrustdEndpointsAreValidIPsOrHostnames() TrustdCheck {
 	return func(t *Trustd) error {
 		var result *multierror.Error
 
 		for idx, endpoint := range t.Endpoints {
-			if ip := net.ParseIP(endpoint); ip == nil {
-				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints["+strconv.Itoa(idx)+"]", endpoint, ErrInvalidAddress))
+			if ip := net.ParseIP(endpoint); ip != nil {
+				continue
 			}
-
+			if validHostnameRegex.MatchString(endpoint) {
+				continue
+			}
+			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.trustd.endpoints["+strconv.Itoa(idx)+"]", endpoint, ErrInvalidAddress))
 		}
 
 		return result.ErrorOrNil()
