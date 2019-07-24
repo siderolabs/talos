@@ -100,3 +100,8 @@ func (c *InitServiceClient) LS(req *proto.LSRequest, srv proto.Init_LSServer) er
 
 	return copyClientServer(&msg, client, srv)
 }
+
+// DF implements the proto.OSDServer interface.
+func (c *InitServiceClient) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFReply, err error) {
+	return c.InitClient.DF(ctx, in)
+}

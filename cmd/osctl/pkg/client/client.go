@@ -228,8 +228,8 @@ func (c *Client) Top(ctx context.Context) (pl []proc.ProcessList, err error) {
 }
 
 // DF implements the proto.OSDClient interface.
-func (c *Client) DF(ctx context.Context) (*proto.DFReply, error) {
-	return c.client.DF(ctx, &empty.Empty{})
+func (c *Client) DF(ctx context.Context) (*initproto.DFReply, error) {
+	return c.initClient.DF(ctx, &empty.Empty{})
 }
 
 // LS implements the proto.OSDClient interface.

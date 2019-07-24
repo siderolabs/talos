@@ -5,7 +5,6 @@
 package reg
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/gob"
@@ -16,12 +15,10 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
@@ -320,71 +317,6 @@ func (r *Registrator) Top(ctx context.Context, in *empty.Empty) (reply *proto.To
 	p := &proto.ProcessList{Bytes: plist.Bytes()}
 	reply = &proto.TopReply{ProcessList: p}
 	return
-}
-
-// DF implements the proto.OSDServer interface.
-func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFReply, err error) {
-	file, err := os.Open("/proc/mounts")
-	if err != nil {
-		return nil, err
-	}
-	// nolint: errcheck
-	defer file.Close()
-
-	var (
-		stat     unix.Statfs_t
-		multiErr *multierror.Error
-	)
-
-	stats := []*proto.DFStat{}
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
-
-		if len(fields) < 2 {
-			continue
-		}
-
-		filesystem := fields[0]
-		mountpoint := fields[1]
-
-		f, err := os.Stat(mountpoint)
-		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
-			continue
-		}
-
-		if mode := f.Mode(); !mode.IsDir() {
-			continue
-		}
-
-		if err := unix.Statfs(mountpoint, &stat); err != nil {
-			multiErr = multierror.Append(multiErr, err)
-			continue
-		}
-
-		totalSize := uint64(stat.Bsize) * stat.Blocks
-		totalAvail := uint64(stat.Bsize) * stat.Bavail
-
-		stat := &proto.DFStat{
-			Filesystem: filesystem,
-			Size:       totalSize,
-			Available:  totalAvail,
-			MountedOn:  mountpoint,
-		}
-
-		stats = append(stats, stat)
-	}
-
-	if err := scanner.Err(); err != nil {
-		multiErr = multierror.Append(multiErr, err)
-	}
-
-	reply = &proto.DFReply{
-		Stats: stats,
-	}
-
-	return reply, multiErr.ErrorOrNil()
 }
 
 func getContainerInspector(ctx context.Context, namespace string, driver proto.ContainerDriver) (containers.Inspector, error) {
