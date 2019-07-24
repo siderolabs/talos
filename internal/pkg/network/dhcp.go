@@ -122,7 +122,7 @@ func (service *Service) dhclient4(ctx context.Context, ifname string, modifiers 
 
 			// Truncate hostname to be betta
 			// Allow IP addrs to be valid hostnames for the time being
-			if ok := net.ParseIP(hostname); ok != nil {
+			if ok := net.ParseIP(hostname); ok == nil {
 				// Pull out the first part of a potential FQDN
 				hostname = strings.Split(hostname, ".")[0]
 			}
