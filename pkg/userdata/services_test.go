@@ -35,8 +35,8 @@ func (suite *validateSuite) TestValidateTrustd() {
 	suite.Require().Error(err)
 	suite.Assert().Equal(2, len(err.(*multierror.Error).Errors))
 
-	svc.Trustd.Endpoints = []string{"1.2.3.4"}
-	err = svc.Trustd.Validate(CheckTrustdEndpointsAreValidIPs())
+	svc.Trustd.Endpoints = []string{"1.2.3.4", "master", "master.testdomain.com", "many-dotted.hostname.with.much.depth.and.odd.tld.engineering", "2001:db8::2"}
+	err = svc.Trustd.Validate(CheckTrustdEndpointsAreValidIPsOrHostnames())
 	suite.Require().NoError(err)
 
 	svc.Trustd.Token = "yolo"
