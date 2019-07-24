@@ -96,7 +96,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/osd
-RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
+RUN --mount=type=cache,target=/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
 RUN chmod +x /osd
 FROM scratch AS osd
 COPY --from=osd-build /osd /osd
@@ -109,7 +109,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/proxyd
-RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
+RUN --mount=type=cache,target=/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
 RUN chmod +x /proxyd
 FROM scratch AS proxyd
 COPY --from=proxyd-build /proxyd /proxyd
@@ -122,7 +122,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/trustd
-RUN --mount=type=cache,target=/root/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
+RUN --mount=type=cache,target=/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
 RUN chmod +x /trustd
 FROM scratch AS trustd
 COPY --from=trustd-build /trustd /trustd
@@ -135,7 +135,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/root/.cache GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 FROM scratch AS osctl-linux
 COPY --from=osctl-linux-build /osctl-linux-amd64 /osctl-linux-amd64
@@ -145,7 +145,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/root/.cache GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 FROM scratch AS osctl-darwin
 COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
@@ -259,7 +259,7 @@ RUN unlink /etc/ssl
 COPY --from=rootfs-base / /
 COPY hack/golang/test.sh /bin
 ARG TESTPKGS
-RUN --security=insecure --mount=type=cache,target=/tmp --mount=type=cache,target=/root/.cache /bin/test.sh ${TESTPKGS}
+RUN --security=insecure --mount=type=cache,target=/tmp --mount=type=cache,target=/.cache /bin/test.sh ${TESTPKGS}
 FROM scratch AS test
 COPY --from=test-runner /src/coverage.txt /coverage.txt
 
@@ -267,4 +267,4 @@ COPY --from=test-runner /src/coverage.txt /coverage.txt
 
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
-RUN --mount=type=cache,target=/root/.cache golangci-lint run --config golangci-lint.yaml
+RUN --mount=type=cache,target=/.cache golangci-lint run --config golangci-lint.yaml
