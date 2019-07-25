@@ -5,11 +5,12 @@
 package cgroups
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
+
+	"github.com/pkg/errors"
 
 	"golang.org/x/sys/unix"
 )
@@ -28,31 +29,33 @@ var (
 func Mount(s string) error {
 	target := path.Join(s, "/sys/fs/cgroup")
 	if err := os.MkdirAll(target, os.ModeDir); err != nil {
-		return fmt.Errorf("failed to create %s: %s", target, err.Error())
+		return errors.Errorf("failed to create %s: %+v", target, err)
 	}
-	if err := unix.Mount("tmpfs", target, "tmpfs", 0, ""); err != nil {
-		return fmt.Errorf("failed to mount %s: %s", target, err.Error())
+	if err := unix.Mount("tmpfs", target, "tmpfs", unix.MS_NOSUID|unix.MS_NODEV|unix.MS_NOEXEC|unix.MS_RELATIME, "mode=755"); err != nil {
+		return errors.Errorf("failed to mount %s: %+v", target, err)
 	}
 
 	cgroups := []string{
+		"blkio",
+		"cpu",
+		"cpuacct",
+		"cpuset",
+		"devices",
+		"freezer",
 		"hugetlb",
 		"memory",
 		"net_cls",
+		"net_prio",
 		"perf_event",
-		"cpu",
-		"devices",
 		"pids",
-		"blkio",
-		"freezer",
-		"cpuset",
 	}
 	for _, c := range cgroups {
 		p := path.Join(s, "/sys/fs/cgroup", c)
 		if err := os.MkdirAll(p, os.ModeDir); err != nil {
-			return fmt.Errorf("failed to create %s: %s", p, err.Error())
+			return errors.Errorf("failed to create %s: %+v", p, err)
 		}
-		if err := unix.Mount("cgroup", p, "cgroup", 0, ""); err != nil {
-			return fmt.Errorf("failed to mount %s: %s", p, err.Error())
+		if err := unix.Mount(c, p, "cgroup", unix.MS_NOSUID|unix.MS_NODEV|unix.MS_NOEXEC|unix.MS_RELATIME, c); err != nil {
+			return errors.Errorf("failed to mount %s: %+v", p, err)
 		}
 	}
 
