@@ -149,8 +149,6 @@ func generatePKI(data *userdata.UserData) (err error) {
 	return nil
 }
 
-// We can ignore setting kernel.kexec_load_disabled = 1 because modules are
-// disabled in the kernel config.
 func kernelHardening() (err error) {
 	props := []*proc.SystemProperty{
 		{
@@ -165,6 +163,7 @@ func kernelHardening() (err error) {
 			Key:   "kernel.perf_event_paranoid",
 			Value: "3",
 		},
+		// We can skip this sysctl because CONFIG_KEXEC is not set.
 		// {
 		// 	Key:   "kernel.kexec_load_disabled",
 		// 	Value: "1",
@@ -177,14 +176,14 @@ func kernelHardening() (err error) {
 			Key:   "user.max_user_namespaces",
 			Value: "0",
 		},
-		// {
-		// 	Key:   "kernel.unprivileged_bpf_disabled",
-		// 	Value: "1",
-		// },
-		// {
-		// 	Key:   "net.core.bpf_jit_harden",
-		// 	Value: "2",
-		// },
+		{
+			Key:   "kernel.unprivileged_bpf_disabled",
+			Value: "1",
+		},
+		{
+			Key:   "net.core.bpf_jit_harden",
+			Value: "2",
+		},
 	}
 
 	for _, prop := range props {
