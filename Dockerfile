@@ -193,6 +193,10 @@ COPY images/ntpd.tar /rootfs/usr/images/
 COPY images/osd.tar /rootfs/usr/images/
 COPY images/proxyd.tar /rootfs/usr/images/
 COPY images/trustd.tar /rootfs/usr/images/
+# NB: We run the cleanup step before creating extra directories, files, and
+# symlinks to avoid accidentally cleaning them up.
+COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
+RUN cleanup.sh /rootfs
 RUN touch /rootfs/etc/resolv.conf
 RUN touch /rootfs/etc/hosts
 RUN touch /rootfs/etc/os-release
@@ -202,8 +206,6 @@ RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
-COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
-RUN cleanup.sh /rootfs
 
 FROM rootfs-base AS rootfs-squashfs
 COPY --from=rootfs / /rootfs
