@@ -19,7 +19,7 @@ function setup_raw_device(){
   if [[ -f ${TALOS_RAW} ]]; then
     rm ${TALOS_RAW}
   fi
-  dd if=/dev/zero of="${TALOS_RAW}" bs=512M count=10
+  dd if=/dev/zero of="${TALOS_RAW}" bs=1M count=0 seek=544
   DEVICE=$(losetup -f)
   # NB: Since we use BLKRRPART to tell the kernel to re-read the partition
   # table, it is required to create a partitioned loop device. The BLKRRPART

@@ -39,7 +39,7 @@ var installCmd = &cobra.Command{
 				ExtraKernelArgs: extraKernelArgs,
 				Data: &userdata.InstallDevice{
 					Device: device,
-					Size:   512 * 1000 * 1000,
+					Size:   16 * 1024 * 1024,
 				},
 			},
 		}
@@ -50,7 +50,7 @@ var installCmd = &cobra.Command{
 				Initramfs: "file:///usr/install/initramfs.xz",
 				InstallDevice: userdata.InstallDevice{
 					Device: device,
-					Size:   512 * 1000 * 1000,
+					Size:   512 * 1024 * 1024,
 				},
 			}
 		}
