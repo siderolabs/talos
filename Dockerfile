@@ -38,6 +38,17 @@ COPY --from=generate-build /osd/proto/api.pb.go /internal/app/osd/proto/
 COPY --from=generate-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
 COPY --from=generate-build /machined/proto/api.pb.go /internal/app/machined/proto/
 
+# The version target generates common version constants
+
+FROM build as generate-version
+COPY ./internal/pkg/version ./internal/pkg/version
+COPY ./hack/gen ./hack/gen
+ARG SHA
+ARG TAG
+RUN SHA=${SHA} TAG=${TAG} go generate ./internal/pkg/version/version.go
+FROM scratch AS version
+COPY --from=generate-version /src/internal/pkg/version /internal/pkg/version
+
 # The base target provides a container that can be used to build all Talos
 # assets.
 
@@ -50,17 +61,16 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=generate /internal/app ./internal/app
+COPY --from=version /internal/pkg/version ./internal/pkg/version
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 
 # The init target builds the init binary.
 
 FROM base AS init-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/init
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /init
+RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos" -o /init
 RUN chmod +x /init
 
 FROM scratch AS init
@@ -69,11 +79,9 @@ COPY --from=init-build /init /init
 # The machined target builds the machined image.
 
 FROM base AS machined-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/machined
-RUN --mount=type=cache,target=/.cache  go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
+RUN --mount=type=cache,target=/.cache/go-build go build -mod=readonly -v -ldflags "-s -w -X ${VERSION_PKG}.Name=Server" -o /machined
 RUN chmod +x /machined
 
 FROM scratch AS machined
@@ -82,11 +90,9 @@ COPY --from=machined-build /machined /machined
 # The ntpd target builds the ntpd image.
 
 FROM base AS ntpd-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/ntpd
-RUN go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
+RUN  --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server" -o /ntpd
 RUN chmod +x /ntpd
 
 FROM scratch AS ntpd
@@ -96,11 +102,9 @@ ENTRYPOINT ["/ntpd"]
 # The osd target builds the osd image.
 
 FROM base AS osd-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/osd
-RUN --mount=type=cache,target=/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server" -o /osd
 RUN chmod +x /osd
 
 FROM scratch AS osd
@@ -110,11 +114,9 @@ ENTRYPOINT ["/osd"]
 # The proxyd target builds the proxyd image.
 
 FROM base AS proxyd-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/proxyd
-RUN --mount=type=cache,target=/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
+RUN  --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server" -o /proxyd
 RUN chmod +x /proxyd
 
 FROM scratch AS proxyd
@@ -124,11 +126,9 @@ ENTRYPOINT ["/proxyd"]
 # The trustd target builds the trustd image.
 
 FROM base AS trustd-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/trustd
-RUN --mount=type=cache,target=/.cache go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
+RUN  --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server" -o /trustd
 RUN chmod +x /trustd
 
 FROM scratch AS trustd
@@ -138,22 +138,18 @@ ENTRYPOINT ["/trustd"]
 # The osctl targets build the osctl binaries.
 
 FROM base AS osctl-linux-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
+RUN  --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 
 FROM scratch AS osctl-linux
 COPY --from=osctl-linux-build /osctl-linux-amd64 /osctl-linux-amd64
 
 FROM base AS osctl-darwin-build
-ARG SHA
-ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go build -a -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 
 FROM scratch AS osctl-darwin
@@ -271,7 +267,7 @@ RUN unlink /etc/ssl
 COPY --from=rootfs / /
 COPY hack/golang/test.sh /bin
 ARG TESTPKGS
-RUN --security=insecure --mount=type=cache,target=/tmp --mount=type=cache,target=/.cache /bin/test.sh ${TESTPKGS}
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache/go-build /bin/test.sh ${TESTPKGS}
 FROM scratch AS test
 COPY --from=test-runner /src/coverage.txt /coverage.txt
 
@@ -279,4 +275,4 @@ COPY --from=test-runner /src/coverage.txt /coverage.txt
 
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
-RUN --mount=type=cache,target=/.cache golangci-lint run --config golangci-lint.yaml
+RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml

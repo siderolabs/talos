@@ -46,8 +46,10 @@ captures ownership and permission bits.`,
 			var wg sync.WaitGroup
 
 			wg.Add(1)
+
 			go func() {
 				defer wg.Done()
+
 				for err := range errCh {
 					fmt.Fprintln(os.Stderr, err.Error())
 				}

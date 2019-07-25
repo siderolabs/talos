@@ -22,6 +22,9 @@ coverage.txt
 # buildkit cache
 .buildkit/
 
+# generated files
+internal/pkg/version/tags.go
+
 sha256sum.txt
 sha512sum.txt
 

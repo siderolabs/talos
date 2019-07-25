@@ -11,15 +11,11 @@ import (
 	"text/template"
 )
 
+//go:generate ../../../hack/gen/version-gen.sh .//tags.go
+
 var (
 	// Name is set at build time.
 	Name string
-	// Tag is set at build time.
-	Tag string
-	// SHA is set at build time.
-	SHA string
-	// Built is set at build time.
-	Built string
 )
 
 const versionTemplate = `{{ .Name }}:

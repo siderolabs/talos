@@ -72,3 +72,4 @@ ${OSCTL} config add "talos-local" \
 ${OSCTL} config context "talos-local"
 ${OSCTL} config target "${IP_ADDR}"
 
+echo
