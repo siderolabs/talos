@@ -33,9 +33,6 @@ const (
 	// TODO(andrewrynhard): We should inspect the tarball's uncompressed size and dynamically set the root partition's size.
 	DefaultSizeRootDevice = 2048 * 1000 * 1000
 
-	// DefaultSizeDataDevice is the default size of the data partition.
-	DefaultSizeDataDevice = 1024 * 1000 * 1000
-
 	// DefaultSizeBootDevice is the default size of the boot partition.
 	// TODO(andrewrynhard): We should inspect the sizes of the artifacts and dynamically set the boot partition's size.
 	DefaultSizeBootDevice = 512 * 1000 * 1000
@@ -137,10 +134,6 @@ func VerifyDataDevice(data *userdata.UserData) (err error) {
 
 	if data.Install.Data.Device == "" {
 		return errors.New("a data device is required")
-	}
-
-	if data.Install.Data.Size == 0 {
-		data.Install.Data.Size = DefaultSizeDataDevice
 	}
 
 	if !data.Install.Force {
