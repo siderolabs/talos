@@ -218,14 +218,6 @@ COPY --from=rootfs-base /rootfs /
 
 FROM build AS initramfs-archive
 WORKDIR /initramfs
-COPY --from=docker.io/autonomy/fhs:8467184 / /initramfs
-COPY --from=docker.io/autonomy/ca-certificates:20f39f7 / /initramfs
-COPY --from=docker.io/autonomy/dosfstools:767dee6 / /initramfs
-COPY --from=docker.io/autonomy/musl:9bc7430 / /initramfs
-COPY --from=docker.io/autonomy/syslinux:85e1f9c / /initramfs
-COPY --from=docker.io/autonomy/xfsprogs:5e50579 / /initramfs
-COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
-RUN cleanup.sh /initramfs
 COPY --from=rootfs-squashfs /rootfs.sqsh .
 COPY --from=init /init .
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz

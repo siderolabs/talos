@@ -99,20 +99,26 @@ func (i *Initializer) MoveSpecial() (err error) {
 	return nil
 }
 
-// InitOwned initializes and mounts the OS owned block devices in the early boot
+// Rootfs initializes and mounts the OS owned block devices in the early boot
 // stage.
-//
-// nolint: gocyclo
-func (i *Initializer) InitOwned() (err error) {
+func (i *Initializer) Rootfs() (err error) {
 	var dev losetup.Device
 	dev, err = losetup.Attach("/"+constants.RootfsAsset, 0, true)
 	if err != nil {
 		return err
 	}
+
 	m := mount.NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY, "")
 	if err = mount.WithRetry(m, mount.WithPrefix(i.prefix), mount.WithReadOnly(true), mount.WithShared(true)); err != nil {
 		return errors.Wrap(err, "failed to mount squashfs")
 	}
+
+	return nil
+}
+
+// InitOwned initializes and mounts the OS owned block devices in the early boot
+// stage.
+func (i *Initializer) InitOwned() (err error) {
 	var owned *mount.Points
 	if owned, err = mountpoints(); err != nil {
 		return errors.Errorf("error initializing owned block devices: %v", err)
@@ -197,14 +203,6 @@ func (i *Initializer) UnmountOwned() (err error) {
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
 // nolint: gocyclo
 func (i *Initializer) Switch() (err error) {
-	if err = i.UnmountOwned(); err != nil {
-		return err
-	}
-
-	if err = i.MountOwned(); err != nil {
-		return errors.Wrap(err, "error mounting block device")
-	}
-
 	if err = i.MoveSpecial(); err != nil {
 		return errors.Wrap(err, "error moving special devices")
 	}

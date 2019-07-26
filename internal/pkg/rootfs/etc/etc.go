@@ -5,18 +5,20 @@
 package etc
 
 import (
-	"bufio"
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 
+	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/version"
+
+	"golang.org/x/sys/unix"
 )
 
 const hostsTemplate = `
@@ -38,7 +40,21 @@ BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 `
 
 // Hosts renders a valid /etc/hosts file and writes it to disk.
-func Hosts(s, hostname, ip string) (err error) {
+func Hosts() (err error) {
+	var h *string
+	if h = kernel.Cmdline().Get(constants.KernelParamHostname).First(); h != nil {
+		if err = unix.Sethostname([]byte(*h)); err != nil {
+			return err
+		}
+	}
+
+	ip := ip()
+
+	var hostname string
+	if hostname, err = os.Hostname(); err != nil {
+		return err
+	}
+
 	data := struct {
 		IP       string
 		Hostname string
@@ -58,8 +74,12 @@ func Hosts(s, hostname, ip string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile(filepath.Join(s, "/var/hosts"), writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /var/hosts: %v", err)
+	if err = ioutil.WriteFile("/run/hosts", writer.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write /run/hosts: %v", err)
+	}
+
+	if err = unix.Mount("/run/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
+		return errors.Wrap(err, "failed to create bind mount for /etc/hosts")
 	}
 
 	return nil
@@ -67,15 +87,17 @@ func Hosts(s, hostname, ip string) (err error) {
 
 // ResolvConf copies the resolv.conf generated in the early boot to the new
 // root.
-func ResolvConf(s string) (err error) {
-	source, err := ioutil.ReadFile("/etc/resolv.conf")
-	if err != nil {
+func ResolvConf() (err error) {
+	target := "/run/resolv.conf"
+	var f *os.File
+	if f, err = os.OpenFile(target, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
 		return err
 	}
+	// nolint: errcheck
+	defer f.Close()
 
-	target := filepath.Join(s, "/var/resolv.conf")
-	if err = ioutil.WriteFile(target, source, 0644); err != nil {
-		return err
+	if err = unix.Mount("/run/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
+		return errors.Wrap(err, "failed to create bind mount for /etc/resolv.conf")
 	}
 
 	return nil
@@ -83,7 +105,7 @@ func ResolvConf(s string) (err error) {
 
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
 // node's OS Image field is reported by the node from /etc/os-release.
-func OSRelease(s string) (err error) {
+func OSRelease() (err error) {
 	var v string
 	switch version.Tag {
 	case "none":
@@ -112,46 +134,29 @@ func OSRelease(s string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile(path.Join(s, "/var/os-release"), writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /var/os-release: %v", err)
+	if err = ioutil.WriteFile("/run/os-release", writer.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write /run/os-release: %v", err)
+	}
+
+	if err = unix.Mount("/run/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
+		return errors.Wrap(err, "failed to create bind mount for /etc/os-release")
 	}
 
 	return nil
 }
 
-// DefaultGateway parses /proc/net/route for the IP address of the default
-// gateway.
-func DefaultGateway() (s string, err error) {
-	handle, err := os.Open("/proc/net/route")
+func ip() string {
+	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return
+		return ""
 	}
-	// nolint: errcheck
-	defer handle.Close()
-	scanner := bufio.NewScanner(handle)
-
-	for scanner.Scan() {
-		parts := strings.Split(scanner.Text(), "\t")
-		if len(parts) < 3 {
-			return s, fmt.Errorf("expected at least 3 fields from /proc/net/route, got %d", len(parts))
-		}
-		// Skip the header.
-		if parts[0] == "Iface" {
-			continue
-		}
-		destination := parts[1]
-		gateway := parts[2]
-		// We are looking for the default gateway.
-		if destination == "00000000" {
-			var decoded []byte
-			decoded, err = hex.DecodeString(gateway)
-			if err != nil {
-				return
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
 			}
-			s = fmt.Sprintf("%v.%v.%v.%v", decoded[3], decoded[2], decoded[1], decoded[0])
-			break
 		}
 	}
 
-	return s, nil
+	return ""
 }

@@ -17,13 +17,17 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/reg"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
+	"github.com/talos-systems/talos/internal/pkg/network"
 	"github.com/talos-systems/talos/internal/pkg/rootfs"
+	"github.com/talos-systems/talos/internal/pkg/rootfs/etc"
 	"github.com/talos-systems/talos/internal/pkg/rootfs/mount"
+	"github.com/talos-systems/talos/internal/pkg/security/kspp"
 	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 
@@ -128,26 +132,94 @@ func createOverlay(path string) error {
 
 // nolint: gocyclo
 func root() (err error) {
+	// Create /etc/os-release.
+	if err = etc.OSRelease(); err != nil {
+		return
+	}
+
 	if !*inContainer {
 		// Setup logging to /dev/kmsg.
 		if _, err = kmsg("[talos]"); err != nil {
 			return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
 		}
 
+		// Enforce KSPP kernel parameters.
+		log.Println("checking for KSPP kernel parameters")
+		if err = kspp.EnforceKSPPKernelParameters(); err != nil {
+			return err
+		}
+
+		// Create /etc/hosts.
+		log.Println("creating /etc/hosts")
+		if err = etc.Hosts(); err != nil {
+			return err
+		}
+
+		// Create /etc/resolv.conf.
+		log.Println("creating /etc/resolv.conf")
+		if err = etc.ResolvConf(); err != nil {
+			return
+		}
+
+		// Discover the platform.
+		var p platform.Platform
+		if p, err = platform.NewPlatform(); err != nil {
+			return err
+		}
+		log.Printf("platform is %s", p.Name())
+
+		// Setup basic network.
+		log.Println("setting up basic network")
+		if err = network.InitNetwork(); err != nil {
+			return err
+		}
+
+		// Retrieve the user data.
+		var data *userdata.UserData
+		log.Printf("retrieving user data")
+		if data, err = p.UserData(); err != nil {
+			log.Printf("encountered error retrieving userdata: %v", err)
+			return err
+		}
+
+		// Setup custom network.
+		log.Println("setting up user defined network")
+		if err = network.SetupNetwork(data); err != nil {
+			return err
+		}
+
+		// Perform any tasks required by a particular platform.
+		log.Printf("performing platform specific tasks")
+		if err = p.Prepare(data); err != nil {
+			return err
+		}
+
+		var initializer *mount.Initializer
+		if initializer, err = mount.NewInitializer(""); err != nil {
+			return err
+		}
+
+		// Mount the owned partitions.
+		log.Printf("mounting the owned partitions")
+		if err = initializer.InitOwned(); err != nil {
+			return err
+		}
+
+		// Install handles additional system setup
+		if err = p.Install(data); err != nil {
+			return err
+		}
+
+		// Prepare the necessary files in the rootfs.
+		log.Println("preparing the root filesystem")
+		if err = rootfs.Prepare("", false, data); err != nil {
+			return err
+		}
+
 		for _, overlay := range []string{"/etc/kubernetes", "/etc/cni", "/usr/libexec/kubernetes", "/usr/etc/udev", "/opt"} {
 			if err = createOverlay(overlay); err != nil {
 				return err
 			}
-		}
-
-		if err = unix.Mount("/var/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
-			return errors.Wrap(err, "failed to create bind mount for /etc/hosts")
-		}
-		if err = unix.Mount("/var/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
-			return errors.Wrap(err, "failed to create bind mount for /etc/resolv.conf")
-		}
-		if err = unix.Mount("/var/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
-			return errors.Wrap(err, "failed to create bind mount for /etc/os-release")
 		}
 	}
 
