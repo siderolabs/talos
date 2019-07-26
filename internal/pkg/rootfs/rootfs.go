@@ -7,7 +7,6 @@ package rootfs
 import (
 	"io/ioutil"
 	"log"
-	stdlibnet "net"
 	"os"
 	"path/filepath"
 	"time"
@@ -15,28 +14,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/grpc/gen"
-	"github.com/talos-systems/talos/internal/pkg/rootfs/etc"
 	"github.com/talos-systems/talos/internal/pkg/rootfs/proc"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 	yaml "gopkg.in/yaml.v2"
 )
-
-func ip() string {
-	addrs, err := stdlibnet.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*stdlibnet.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-
-	return ""
-}
 
 // Prepare creates the files required by the installed binaries and libraries.
 // nolint: gocyclo
@@ -50,25 +32,8 @@ func Prepare(s string, inContainer bool, data *userdata.UserData) (err error) {
 		if err = kernelHardening(); err != nil {
 			return
 		}
-		// Create /etc/hosts.
-		var hostname string
-		if hostname, err = os.Hostname(); err != nil {
-			return
-		}
-		ip := ip()
-		if err = etc.Hosts(s, hostname, ip); err != nil {
-			return
-		}
-		// Create /etc/resolv.conf.
-		if err = etc.ResolvConf(s); err != nil {
-			return
-		}
 	}
 
-	// Create /etc/os-release.
-	if err = etc.OSRelease(s); err != nil {
-		return
-	}
 	// Generate the identity certificate.
 	if err = generatePKI(data); err != nil {
 		return
