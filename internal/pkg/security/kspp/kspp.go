@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/proc"
 )
 
 var (
@@ -39,4 +40,52 @@ func EnforceKSPPKernelParameters() error {
 	}
 
 	return result.ErrorOrNil()
+}
+
+// EnforceKSPPSysctls verifies that all required KSPP kernel sysctls are set
+// with the right value.
+func EnforceKSPPSysctls() (err error) {
+	props := []*proc.SystemProperty{
+		{
+			Key:   "kernel.kptr_restrict",
+			Value: "1",
+		},
+		{
+			Key:   "kernel.dmesg_restrict",
+			Value: "1",
+		},
+		{
+			Key:   "kernel.perf_event_paranoid",
+			Value: "3",
+		},
+		// We can skip this sysctl because CONFIG_KEXEC is not set.
+		// {
+		// 	Key:   "kernel.kexec_load_disabled",
+		// 	Value: "1",
+		// },
+		{
+			Key:   "kernel.yama.ptrace_scope",
+			Value: "1",
+		},
+		{
+			Key:   "user.max_user_namespaces",
+			Value: "0",
+		},
+		{
+			Key:   "kernel.unprivileged_bpf_disabled",
+			Value: "1",
+		},
+		{
+			Key:   "net.core.bpf_jit_harden",
+			Value: "2",
+		},
+	}
+
+	for _, prop := range props {
+		if err = proc.WriteSystemProperty(prop); err != nil {
+			return
+		}
+	}
+
+	return nil
 }

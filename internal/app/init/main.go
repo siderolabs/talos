@@ -6,26 +6,12 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/init/internal/mount"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/rootfs/mount"
-
-	"golang.org/x/sys/unix"
+	"github.com/talos-systems/talos/internal/pkg/kmsg"
 )
-
-func kmsg(prefix string) (*os.File, error) {
-	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to open /dev/kmsg")
-	}
-	log.SetOutput(out)
-	log.SetPrefix(prefix + " ")
-	log.SetFlags(0)
-
-	return out, nil
-}
 
 // nolint: gocyclo
 func initram() (err error) {
@@ -40,7 +26,7 @@ func initram() (err error) {
 	}
 
 	// Setup logging to /dev/kmsg.
-	_, err = kmsg("[talos] [initramfs]")
+	_, err = kmsg.Setup("[talos] [initramfs]")
 	if err != nil {
 		return err
 	}

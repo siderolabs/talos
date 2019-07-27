@@ -54,14 +54,10 @@ DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/co
 
 TESTPKGS ?= ./...
 
-all: ci drone
-
-.PHONY: drone
-drone: rootfs initramfs kernel binaries installer talos
+all: ci rootfs initramfs kernel osctl installer talos
 
 .PHONY: ci
 ci: builddeps buildkitd
-
 
 .PHONY: builddeps
 builddeps: gitmeta buildctl
@@ -109,8 +105,8 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 endif
 endif
 
-.PHONY: binaries
-binaries: osctl-linux osctl-darwin
+.PHONY: osctl
+osctl: osctl-linux osctl-darwin
 
 base: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
@@ -137,7 +133,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd
+rootfs: buildkitd osd trustd proxyd ntpd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
     --output type=local,dest=build \
@@ -181,6 +177,27 @@ talos-aws:
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
 		autonomy/installer:$(TAG) ami -var regions=${AWS_PUBLISH_REGIONS} -var visibility=all
+
+.PHONY: talos-azure
+talos-azure:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-n disk \
+		-r \
+		-p azure \
+		-u none \
+		-e rootdelay=300
+	@docker run --rm -v $(PWD)/build:/out $(DOCKER_ARGS) \
+		--entrypoint qemu-img \
+		autonomy/installer:$(TAG) \
+		convert \
+		-f raw \
+		-o subformat=fixed,force_size \
+		-O vpc /out/disk.raw /out/disk.vhd
+	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.vhd
+	@rm -rf $(PWD)/build/disk.raw $(PWD)/build/disk.vhd
 
 .PHONY: talos-raw
 talos-raw:
@@ -295,24 +312,3 @@ push: gitmeta
 .PHONY: clean
 clean:
 	@-rm -rf build images vendor
-
-.PHONY: talos-azure
-talos-azure:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
-		autonomy/installer:$(TAG) \
-		install \
-		-n disk \
-		-r \
-		-p azure \
-		-u none \
-		-e rootdelay=300
-	@docker run --rm -v $(PWD)/build:/out $(DOCKER_ARGS) \
-		--entrypoint qemu-img \
-		autonomy/installer:$(TAG) \
-		convert \
-		-f raw \
-		-o subformat=fixed,force_size \
-		-O vpc /out/disk.raw /out/disk.vhd
-	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.vhd
-	@rm -rf $(PWD)/build/disk.raw $(PWD)/build/disk.vhd

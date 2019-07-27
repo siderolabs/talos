@@ -17,6 +17,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 
+	"github.com/talos-systems/talos/internal/app/machined/internal/cni"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -24,7 +25,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/rootfs/cni"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

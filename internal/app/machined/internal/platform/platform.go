@@ -5,6 +5,8 @@
 package platform
 
 import (
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/baremetal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/aws"
@@ -12,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/googlecloud"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/packet"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/vmware"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/container"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/iso"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
@@ -27,19 +30,31 @@ type Platform interface {
 }
 
 // NewPlatform is a helper func for discovering the current platform.
+//
+// nolint: gocyclo
 func NewPlatform() (p Platform, err error) {
-	var platform *string
-	if platform = kernel.Cmdline().Get(constants.KernelParamPlatform).First(); platform == nil {
-		return nil, errors.Errorf("kernel parameter %s was not found", constants.KernelParamPlatform)
+	var platform string
+	if p := kernel.Cmdline().Get(constants.KernelParamPlatform).First(); p != nil {
+		platform = *p
 	}
 
-	switch *platform {
+	if p, ok := os.LookupEnv("PLATFORM"); ok {
+		platform = p
+	}
+
+	if platform == "" {
+		return nil, errors.New("failed to determine platform")
+	}
+
+	switch platform {
 	case "aws":
 		p = &aws.AWS{}
 	case "azure":
 		p = &azure.Azure{}
 	case "bare-metal":
 		p = &baremetal.BareMetal{}
+	case "container":
+		p = &container.Container{}
 	case "googlecloud":
 		p = &googlecloud.GoogleCloud{}
 	case "iso":
@@ -49,7 +64,7 @@ func NewPlatform() (p Platform, err error) {
 	case "vmware":
 		p = &vmware.VMware{}
 	default:
-		return nil, errors.Errorf("platform not supported: %s", *platform)
+		return nil, errors.Errorf("platform not supported: %s", platform)
 	}
 
 	return p, nil

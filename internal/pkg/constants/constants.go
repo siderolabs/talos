@@ -143,7 +143,7 @@ const (
 	TalosConfigEnvVar = "TALOSCONFIG"
 
 	// InitSocketPath is the path to file socket of init API
-	InitSocketPath = "/var/lib/init/init.sock"
+	InitSocketPath = "/run/system/init/init.sock"
 
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"

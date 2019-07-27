@@ -5,377 +5,93 @@
 package main
 
 import (
-	"encoding/base64"
-	"flag"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"os/signal"
-	"strings"
-	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/app/machined/internal/reg"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
+	apiptask "github.com/talos-systems/talos/internal/app/machined/internal/phase/api"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/install"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/network"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/security"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/services"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
+	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/grpc/factory"
-	"github.com/talos-systems/talos/internal/pkg/network"
-	"github.com/talos-systems/talos/internal/pkg/rootfs"
-	"github.com/talos-systems/talos/internal/pkg/rootfs/etc"
-	"github.com/talos-systems/talos/internal/pkg/rootfs/mount"
-	"github.com/talos-systems/talos/internal/pkg/security/kspp"
 	"github.com/talos-systems/talos/internal/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
-
-	"golang.org/x/sys/unix"
-
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 )
 
-var (
-	inContainer *bool
-	rebootFlag  = unix.LINUX_REBOOT_CMD_RESTART
-	userdataArg *string
-)
-
-func init() {
-	inContainer = flag.Bool("in-container", false, "run Talos in a container")
-	userdataArg = flag.String("userdata", "", "the base64 encoded userdata")
-	flag.Parse()
-}
-
-func kmsg(prefix string) (*os.File, error) {
-	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to open /dev/kmsg")
-	}
-	log.SetOutput(out)
-	log.SetPrefix(prefix + " ")
-	log.SetFlags(0)
-
-	return out, nil
-}
-
-func container() (err error) {
-	log.Println("preparing container based deploy")
-
-	log.Println("remounting volumes as shared mounts")
-	targets := []string{"/", "/var/lib/kubelet", "/etc/cni"}
-	for _, t := range targets {
-		if err = unix.Mount("", t, "", unix.MS_SHARED, ""); err != nil {
-			return err
-		}
-	}
-
-	if *userdataArg != "" {
-		log.Printf("writing the user data: %s\n", constants.UserDataPath)
-		var decoded []byte
-		if decoded, err = base64.StdEncoding.DecodeString(*userdataArg); err != nil {
-			return err
-		}
-		if err = ioutil.WriteFile(constants.UserDataPath, decoded, 0400); err != nil {
-			return err
-		}
-	}
-
-	var data *userdata.UserData
-	if data, err = userdata.Open(constants.UserDataPath); err != nil {
+func run() (err error) {
+	if err = startup.RandSeed(); err != nil {
 		return err
 	}
 
-	// Workarounds for running in a container.
-
-	data.Services.Kubeadm.IgnorePreflightErrors = []string{"FileContent--proc-sys-net-bridge-bridge-nf-call-iptables", "Swap", "SystemVerification"}
-	initConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
-	if ok {
-		initConfiguration.ClusterConfiguration.ComponentConfigs.Kubelet.FailSwapOn = false
-		// See https://github.com/kubernetes/kubernetes/issues/58610#issuecomment-359552443
-		max := int32(0)
-		maxPerCore := int32(0)
-		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.Max = &max
-		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.MaxPerCore = &maxPerCore
+	if err = os.Setenv("PATH", constants.PATH); err != nil {
+		return errors.New("error setting PATH")
 	}
 
-	log.Println("preparing the root filesystem")
-	if err = rootfs.Prepare("", true, data); err != nil {
+	data := &userdata.UserData{}
+	phaserunner, err := phase.NewRunner(data)
+	if err != nil {
+		return err
+	}
+
+	phaserunner.Add(
+		phase.NewPhase(
+			"system requirements",
+			security.NewSecurityTask(),
+			rootfs.NewSystemDirectoryTask(),
+			rootfs.NewMountCgroupsTask(),
+			sysctls.NewSysctlsTask(),
+		),
+		phase.NewPhase(
+			"basic system configuration",
+			rootfs.NewNetworkConfigurationTask(),
+			rootfs.NewOSReleaseTask(),
+		),
+		phase.NewPhase(
+			"userdata",
+			userdatatask.NewUserDataTask(),
+		),
+		phase.NewPhase(
+			"mount extra devices",
+			userdatatask.NewExtraDevicesTask(),
+		),
+		phase.NewPhase(
+			"user requests",
+			userdatatask.NewPKITask(),
+			network.NewUserDefinedNetworkTask(),
+			userdatatask.NewExtraEnvVarsTask(),
+			userdatatask.NewExtraFilesTask(),
+		),
+		phase.NewPhase(
+			"installation",
+			install.NewInstallTask(),
+			rootfs.NewMountOverlayTask(),
+		),
+		phase.NewPhase(
+			"setup /var",
+			rootfs.NewVarDirectoriesTask(),
+		),
+		phase.NewPhase(
+			"save userdata",
+			userdatatask.NewSaveUserDataTask(),
+		),
+		phase.NewPhase(
+			"service setup",
+			apiptask.NewAPITask(),
+			services.NewServicesTask(),
+		),
+	)
+
+	if err = phaserunner.Run(); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func createOverlay(path string) error {
-	log.Printf("mounting overlay for %s\n", path)
-
-	parts := strings.Split(path, "/")
-	prefix := strings.Join(parts[1:], "-")
-	diff := fmt.Sprintf("/var/%s-diff", prefix)
-	workdir := fmt.Sprintf("/var/%s-workdir", prefix)
-
-	for _, s := range []string{diff, workdir} {
-		if err := os.MkdirAll(s, 0700); err != nil {
-			return err
-		}
-	}
-
-	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", path, diff, workdir)
-	if err := unix.Mount("overlay", path, "overlay", 0, opts); err != nil {
-		return errors.Errorf("error creating overlay mount to %s: %v", path, err)
-	}
-
-	return nil
-}
-
-// nolint: gocyclo
-func root() (err error) {
-	// Create /etc/os-release.
-	if err = etc.OSRelease(); err != nil {
-		return
-	}
-
-	if !*inContainer {
-		// Setup logging to /dev/kmsg.
-		if _, err = kmsg("[talos]"); err != nil {
-			return fmt.Errorf("failed to setup logging to /dev/kmsg: %v", err)
-		}
-
-		// Enforce KSPP kernel parameters.
-		log.Println("checking for KSPP kernel parameters")
-		if err = kspp.EnforceKSPPKernelParameters(); err != nil {
-			return err
-		}
-
-		// Create /etc/hosts.
-		log.Println("creating /etc/hosts")
-		if err = etc.Hosts(); err != nil {
-			return err
-		}
-
-		// Create /etc/resolv.conf.
-		log.Println("creating /etc/resolv.conf")
-		if err = etc.ResolvConf(); err != nil {
-			return
-		}
-
-		// Discover the platform.
-		var p platform.Platform
-		if p, err = platform.NewPlatform(); err != nil {
-			return err
-		}
-		log.Printf("platform is %s", p.Name())
-
-		// Setup basic network.
-		log.Println("setting up basic network")
-		if err = network.InitNetwork(); err != nil {
-			return err
-		}
-
-		// Retrieve the user data.
-		var data *userdata.UserData
-		log.Printf("retrieving user data")
-		if data, err = p.UserData(); err != nil {
-			log.Printf("encountered error retrieving userdata: %v", err)
-			return err
-		}
-
-		// Setup custom network.
-		log.Println("setting up user defined network")
-		if err = network.SetupNetwork(data); err != nil {
-			return err
-		}
-
-		// Perform any tasks required by a particular platform.
-		log.Printf("performing platform specific tasks")
-		if err = p.Prepare(data); err != nil {
-			return err
-		}
-
-		var initializer *mount.Initializer
-		if initializer, err = mount.NewInitializer(""); err != nil {
-			return err
-		}
-
-		// Mount the owned partitions.
-		log.Printf("mounting the owned partitions")
-		if err = initializer.InitOwned(); err != nil {
-			return err
-		}
-
-		// Install handles additional system setup
-		if err = p.Install(data); err != nil {
-			return err
-		}
-
-		// Prepare the necessary files in the rootfs.
-		log.Println("preparing the root filesystem")
-		if err = rootfs.Prepare("", false, data); err != nil {
-			return err
-		}
-
-		for _, overlay := range []string{"/etc/kubernetes", "/etc/cni", "/usr/libexec/kubernetes", "/usr/etc/udev", "/opt"} {
-			if err = createOverlay(overlay); err != nil {
-				return err
-			}
-		}
-	}
-
-	for _, p := range []string{"/var/log", "/var/lib/kubelet", "/var/log/pods"} {
-		if err = os.MkdirAll(p, 0700); err != nil {
-			return err
-		}
-	}
-
-	// Read the user data.
-	log.Printf("reading the user data: %s\n", constants.UserDataPath)
-	var data *userdata.UserData
-	if data, err = userdata.Open(constants.UserDataPath); err != nil {
-		return err
-	}
-
-	// Mount the extra partitions.
-	log.Printf("mounting the extra partitions")
-	if err = mount.ExtraDevices(data); err != nil {
-		return err
-	}
-
-	// Write any user specified files to disk.
-	log.Println("writing the files specified in the user data to disk")
-	if err = data.WriteFiles(); err != nil {
-		return err
-	}
-
-	// Set the requested environment variables.
-	log.Println("setting environment variables")
-	for key, val := range data.Env {
-		if err = os.Setenv(key, val); err != nil {
-			log.Printf("WARNING failed to set enivronment variable: %v", err)
-		}
-	}
-
-	poweroffCh, err := listenForPowerButton()
-	if err != nil {
-		log.Printf("WARNING: power off events will be ignored: %+v", err)
-	}
-
-	termCh := make(chan os.Signal, 1)
-	signal.Notify(termCh, syscall.SIGTERM)
-
-	// Get a handle to the system services API.
-	svcs := system.Services(data)
-	defer svcs.Shutdown()
-
-	// Instantiate internal init API
-	api := reg.NewRegistrator(data)
-	server := factory.NewServer(api)
-	listener, err := factory.NewListener(
-		factory.Network("unix"),
-		factory.SocketPath(constants.InitSocketPath),
-	)
-	if err != nil {
-		panic(err)
-	}
-	defer server.Stop()
-
-	go func() {
-		// nolint: errcheck
-		server.Serve(listener)
-	}()
-
-	startSystemServices(data)
-	startKubernetesServices(data)
-
-	select {
-	case <-api.ShutdownCh:
-		log.Printf("poweroff via API received")
-		// poweroff, proceed to shutdown but mark as poweroff
-		rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
-	case <-poweroffCh:
-		log.Printf("poweroff via ACPI")
-		// poweroff, proceed to shutdown but mark as poweroff
-		rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
-	case <-termCh:
-		log.Printf("SIGTERM received, rebooting...")
-	case <-api.RebootCh:
-		log.Printf("reboot via API received, rebooting...")
-	}
-
-	return nil
-}
-
-func startSystemServices(data *userdata.UserData) {
-	svcs := system.Services(data)
-
-	log.Println("starting system services")
-	// Start the services common to all nodes.
-	svcs.Start(
-		&services.Networkd{},
-		&services.Containerd{},
-		&services.Udevd{},
-		&services.UdevdTrigger{},
-		&services.OSD{},
-		&services.NTPd{},
-	)
-	// Start the services common to all master nodes.
-	if data.Services.Kubeadm.IsControlPlane() {
-		svcs.Start(
-			&services.Trustd{},
-			&services.Proxyd{},
-		)
-	}
-
-}
-
-func startKubernetesServices(data *userdata.UserData) {
-	svcs := system.Services(data)
-
-	log.Println("starting kubernetes services")
-	svcs.Start(
-		&services.Kubelet{},
-		&services.Kubeadm{},
-	)
-}
-
-func sync() {
-	syncdone := make(chan struct{})
-
-	go func() {
-		defer close(syncdone)
-		unix.Sync()
-	}()
-
-	log.Printf("waiting for sync...")
-
-	for i := 29; i >= 0; i-- {
-		select {
-		case <-syncdone:
-			log.Printf("sync done")
-			return
-		case <-time.After(time.Second):
-		}
-		if i != 0 {
-			log.Printf("waiting %d more seconds for sync to finish", i)
-		}
-	}
-
-	log.Printf("sync hasn't completed in time, aborting...")
-}
-
-func reboot() {
-	// See http://man7.org/linux/man-pages/man2/reboot.2.html.
-	sync()
-
-	// nolint: errcheck
-	unix.Reboot(rebootFlag)
-
-	if *inContainer {
-		return
-	}
-
-	select {}
 }
 
 func recovery() {
@@ -401,26 +117,12 @@ func main() {
 	// services are gracefully shutdown.
 
 	// on any return from init.main(), initiate host reboot or shutdown
-	defer reboot()
 	// handle any panics in the main goroutine, and proceed to reboot() above
 	defer recovery()
 
-	if err := startup.RandSeed(); err != nil {
-		panic(err)
-	}
-
-	// TODO(andrewrynhard): Remove this and be explicit.
-	if err := os.Setenv("PATH", constants.PATH); err != nil {
-		panic(errors.New("error setting PATH"))
-	}
-
-	if *inContainer {
-		if err := container(); err != nil {
-			panic(errors.Wrap(err, "failed to prepare container based deploy"))
-		}
-	}
-
-	if err := root(); err != nil {
+	if err := run(); err != nil {
 		panic(errors.Wrap(err, "boot failed"))
 	}
+
+	select {}
 }
