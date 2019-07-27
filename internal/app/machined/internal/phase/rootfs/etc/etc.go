@@ -74,11 +74,11 @@ func Hosts() (err error) {
 		return
 	}
 
-	if err = ioutil.WriteFile("/run/hosts", writer.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile("/run/system/etc/hosts", writer.Bytes(), 0644); err != nil {
 		return fmt.Errorf("write /run/hosts: %v", err)
 	}
 
-	if err = unix.Mount("/run/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
+	if err = unix.Mount("/run/system/etc/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
 		return errors.Wrap(err, "failed to create bind mount for /etc/hosts")
 	}
 
@@ -88,7 +88,7 @@ func Hosts() (err error) {
 // ResolvConf copies the resolv.conf generated in the early boot to the new
 // root.
 func ResolvConf() (err error) {
-	target := "/run/resolv.conf"
+	target := "/run/system/etc/resolv.conf"
 	var f *os.File
 	if f, err = os.OpenFile(target, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
 		return err
@@ -96,7 +96,7 @@ func ResolvConf() (err error) {
 	// nolint: errcheck
 	defer f.Close()
 
-	if err = unix.Mount("/run/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
+	if err = unix.Mount("/run/system/etc/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
 		return errors.Wrap(err, "failed to create bind mount for /etc/resolv.conf")
 	}
 
@@ -134,11 +134,11 @@ func OSRelease() (err error) {
 		return
 	}
 
-	if err = ioutil.WriteFile("/run/os-release", writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /run/os-release: %v", err)
+	if err = ioutil.WriteFile("/run/system/etc/os-release", writer.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write /run/system/etc/os-release: %v", err)
 	}
 
-	if err = unix.Mount("/run/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
+	if err = unix.Mount("/run/system/etc/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
 		return errors.Wrap(err, "failed to create bind mount for /etc/os-release")
 	}
 

@@ -13,7 +13,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/talos-systems/talos/pkg/userdata/generate"
@@ -44,7 +43,7 @@ func NewNode(clusterName string, req *Request) (err error) {
 	containerConfig := &container.Config{
 		Hostname: req.Name,
 		Image:    req.Image,
-		Cmd:      strslice.StrSlice{"--in-container", "--userdata=" + b64data},
+		Env:      []string{"PLATFORM=container", "USERDATA=" + b64data},
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": clusterName,

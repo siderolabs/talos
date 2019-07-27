@@ -144,9 +144,6 @@ func Reset() (err error) {
 		"--force",
 	)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 

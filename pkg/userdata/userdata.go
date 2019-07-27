@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	stdlibnet "net"
 	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -87,22 +86,6 @@ type File struct {
 	Contents    string      `yaml:"contents"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
-}
-
-// WriteFiles writes the requested files to disk.
-func (data *UserData) WriteFiles() (err error) {
-	for _, f := range data.Files {
-		// TODO isnt there a const for the data mountpoint
-		p := path.Join("/var", f.Path)
-		if err = os.MkdirAll(path.Dir(p), os.ModeDir); err != nil {
-			return
-		}
-		if err = ioutil.WriteFile(p, []byte(f.Contents), f.Permissions); err != nil {
-			return
-		}
-	}
-
-	return nil
 }
 
 // NewIdentityCSR creates a new CSR for the node's identity certificate.

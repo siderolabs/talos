@@ -73,7 +73,7 @@ ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
 WORKDIR /src/internal/app/machined
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
 RUN chmod +x /machined
 
 FROM scratch AS machined
@@ -209,7 +209,7 @@ RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
 
 FROM rootfs-base AS rootfs-squashfs
 COPY --from=rootfs / /rootfs
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100%
+RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
 FROM scratch AS rootfs
 COPY --from=rootfs-base /rootfs /

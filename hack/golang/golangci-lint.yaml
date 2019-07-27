@@ -104,7 +104,6 @@ linters:
   disable-all: false
   fast: false
 
-
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
   # But independently from this option we use default exclude patterns,
@@ -114,6 +113,9 @@ issues:
 
   exclude-rules:
     - path: cmd/osctl/cmd
+      linters:
+        - dupl
+    - path: internal/app/machined/internal/phase
       linters:
         - dupl
 

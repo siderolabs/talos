@@ -26,8 +26,8 @@ var (
 )
 
 // Mount creates the cgroup mount points.
-func Mount(s string) error {
-	target := path.Join(s, "/sys/fs/cgroup")
+func Mount() error {
+	target := "/sys/fs/cgroup"
 	if err := os.MkdirAll(target, os.ModeDir); err != nil {
 		return errors.Errorf("failed to create %s: %+v", target, err)
 	}
@@ -50,7 +50,7 @@ func Mount(s string) error {
 		"pids",
 	}
 	for _, c := range cgroups {
-		p := path.Join(s, "/sys/fs/cgroup", c)
+		p := path.Join("/sys/fs/cgroup", c)
 		if err := os.MkdirAll(p, os.ModeDir); err != nil {
 			return errors.Errorf("failed to create %s: %+v", p, err)
 		}
@@ -60,7 +60,7 @@ func Mount(s string) error {
 	}
 
 	// See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
-	target = path.Join(s, "/sys/fs/cgroup", memoryCgroup, memoryUseHierarchy)
+	target = path.Join("/sys/fs/cgroup", memoryCgroup, memoryUseHierarchy)
 	err := ioutil.WriteFile(target, memoryUseHierarchyContents, memoryUseHierarchyPermissions)
 
 	return err
