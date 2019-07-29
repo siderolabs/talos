@@ -2,8 +2,6 @@
 
 set -eou pipefail
 
-## Update secret with service acct info
-
 ## Setup svc acct
 echo $GCE_SVC_ACCT | base64 -d > /tmp/svc-acct.json
 apk add --no-cache python

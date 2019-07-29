@@ -185,7 +185,7 @@ spec:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /.gce/service-account.json
         - name: PACKET_AUTH_TOKEN
-          value: 'xxx'
+          value: '{{PACKET_AUTH_TOKEN}}'
         image: autonomy/cluster-api-provider-talos:latest
         imagePullPolicy: Always
         name: manager

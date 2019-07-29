@@ -2,7 +2,7 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Cluster
 metadata:
   annotations: null
-  name: talos-e2e
+  name: talos-e2e-gce
 spec:
   clusterNetwork:
     pods:
@@ -18,17 +18,17 @@ spec:
       kind: TalosClusterProviderSpec
       masters:
         ips:
-        - 35.206.100.52
-        - 35.208.36.204
-        - 35.209.145.137
+        - 35.208.196.229
+        - 35.208.64.45
+        - 35.208.118.119
 ---
 apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e
+    cluster.k8s.io/cluster-name: talos-e2e-gce
     set: master
-  name: talos-e2e-master-0
+  name: talos-e2e-gce-master-0
 spec:
   providerSpec:
     value:
@@ -49,9 +49,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e
+    cluster.k8s.io/cluster-name: talos-e2e-gce
     set: master
-  name: talos-e2e-master-1
+  name: talos-e2e-gce-master-1
 spec:
   providerSpec:
     value:
@@ -72,9 +72,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e
+    cluster.k8s.io/cluster-name: talos-e2e-gce
     set: master
-  name: talos-e2e-master-2
+  name: talos-e2e-gce-master-2
 spec:
   providerSpec:
     value:
@@ -95,19 +95,19 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: MachineDeployment
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e
+    cluster.k8s.io/cluster-name: talos-e2e-gce
     set: worker
-  name: talos-e2e-workers
+  name: talos-e2e-gce-workers
 spec:
   replicas: 3
   selector:
     matchLabels:
-      cluster.k8s.io/cluster-name: talos-e2e
+      cluster.k8s.io/cluster-name: talos-e2e-gce
       set: worker
   template:
     metadata:
       labels:
-        cluster.k8s.io/cluster-name: talos-e2e
+        cluster.k8s.io/cluster-name: talos-e2e-gce
         set: worker
     spec:
       providerSpec:
