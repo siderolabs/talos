@@ -194,9 +194,9 @@ talos-azure:
 		convert \
 		-f raw \
 		-o subformat=fixed,force_size \
-		-O vpc /out/disk.raw /out/disk.vhd
-	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.vhd
-	@rm -rf $(PWD)/build/disk.raw $(PWD)/build/disk.vhd
+		-O vpc /out/disk.raw /out/talos-azure.vhd
+	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz talos-azure.vhd
+	@rm -rf $(PWD)/build/disk.raw $(PWD)/build/talos-azure.vhd
 
 .PHONY: talos-raw
 talos-raw:
@@ -211,14 +211,18 @@ talos: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
+.PHONY: osctl-cluster-create
+osctl-cluster-create:
+	@TAG=$(TAG) ./hack/test/$@.sh
+
 .PHONY: basic-integration
 basic-integration:
-	@KUBERNETES_VERSION=v1.15.0 TAG=$(TAG) ./hack/test/$@.sh
+	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: e2e
 e2e-integration:
     ## TODO(rsmitty): Bump this k8s version back up once the bug is fixed where kubectl can't scale crds
-	@KUBERNETES_VERSION=v1.14.4 TAG=latest ./hack/test/$@.sh
+	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: test
 test: buildkitd

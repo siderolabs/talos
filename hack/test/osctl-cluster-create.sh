@@ -2,8 +2,16 @@
 
 set -eou pipefail
 
-## If we take longer than 5m in docker, we're probably boned anyways
-TIMEOUT=300
+export KUBERNETES_VERSION=v1.15.0
+export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
+export TMP="/tmp/e2e"
+export OSCTL="${PWD}/build/osctl-linux-amd64"
+export TALOSCONFIG="${TMP}/talosconfig"
+export KUBECONFIG="${TMP}/kubeconfig"
+export TIMEOUT=300
+
+## Create tmp dir
+mkdir -p $TMP
 
 run() {
 	docker run \
