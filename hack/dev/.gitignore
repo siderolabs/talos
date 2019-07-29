@@ -1,5 +1,0 @@
-pki/
-userdata/*
-!userdata/.*
-talosconfig
-kubeconfig
