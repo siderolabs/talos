@@ -230,7 +230,6 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
 
   - name: iso
@@ -247,7 +246,6 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
 
   - name: gce
@@ -266,7 +264,6 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
 
   - name: azure
@@ -285,7 +282,6 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
       - gce
 
@@ -309,8 +305,32 @@ steps:
         exclude:
           - pull_request
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
+
+  - name: aws
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      AWS_DEFAULT_REGION: us-west-2
+      AWS_PUBLISH_REGIONS: us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1
+    commands:
+      - make talos-aws
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+    when:
+      event: tag
+    depends_on:
+      - basic-integration
+      - push
 
   - name: release
     image: plugins/github-release
@@ -326,7 +346,6 @@ steps:
     when:
       event: tag
     depends_on:
-      ## Should change to e2e once we get things more stable
       - basic-integration
       - kernel
       - iso
