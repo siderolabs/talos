@@ -28,7 +28,7 @@ type serviceCondition struct {
 
 func (sc *serviceCondition) Wait(ctx context.Context) error {
 	instance.mu.Lock()
-	svcrunner := instance.State[sc.service]
+	svcrunner := instance.state[sc.service]
 	instance.mu.Unlock()
 
 	if svcrunner == nil {

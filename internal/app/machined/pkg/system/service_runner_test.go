@@ -320,6 +320,62 @@ func (suite *ServiceRunnerSuite) TestRunFail() {
 	}, sr)
 }
 
+func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
+	sr := system.NewServiceRunner(&MockService{
+		condition: conditions.None(),
+	}, nil)
+
+	finished := make(chan struct{})
+	go func() {
+		defer close(finished)
+		sr.Start()
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+
+	select {
+	case <-finished:
+		suite.Require().Fail("service running should be still running")
+	default:
+	}
+
+	sr.Shutdown()
+
+	<-finished
+
+	finished = make(chan struct{})
+
+	go func() {
+		defer close(finished)
+		sr.Start()
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+
+	select {
+	case <-finished:
+		suite.Require().Fail("service running should be still running")
+	default:
+	}
+
+	sr.Shutdown()
+
+	<-finished
+
+	suite.assertStateSequence([]events.ServiceState{
+		events.StateWaiting,
+		events.StatePreparing,
+		events.StatePreparing,
+		events.StateRunning,
+		events.StateFinished,
+		events.StateWaiting,
+		events.StatePreparing,
+		events.StatePreparing,
+		events.StateRunning,
+		events.StateFinished,
+	}, sr)
+}
+
 func TestServiceRunnerSuite(t *testing.T) {
 	suite.Run(t, new(ServiceRunnerSuite))
 }

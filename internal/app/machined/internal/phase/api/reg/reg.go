@@ -142,6 +142,17 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 	return result, nil
 }
 
+// Start implements the proto.InitServer interface and starts a
+// service running on Talos.
+func (r *Registrator) Start(ctx context.Context, in *proto.StartRequest) (reply *proto.StartReply, err error) {
+	if err = system.Services(r.Data).Start(in.Id); err != nil {
+		return &proto.StartReply{}, err
+	}
+
+	reply = &proto.StartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
+	return reply, err
+}
+
 // Stop implements the proto.InitServer interface and stops a
 // service running on Talos.
 func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *proto.StopReply, err error) {
