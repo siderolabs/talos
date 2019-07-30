@@ -2,42 +2,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package network
+package main
 
 import (
 	"log"
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jsimonetti/rtnetlink"
-	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-// UserDefinedNetwork represents the UserDefinedNetwork task.
-type UserDefinedNetwork struct{}
-
-// NewUserDefinedNetworkTask initializes and returns an UserDefinedNetwork task.
-func NewUserDefinedNetworkTask() phase.Task {
-	return &UserDefinedNetwork{}
+func init() {
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *UserDefinedNetwork) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	switch mode {
-	case runtime.Standard:
-		return task.runtime
-	default:
-		return nil
-	}
-}
-
-func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	// TODO this leaks the rtnetlink abstraction, will fixup later
+func main() {
 
 	// Load up userdata
 	ud, err := userdata.Open("/var/userdata.yaml")
@@ -48,28 +31,12 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 	// Handle netlink connection
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	// Discover local interfaces
 	ints, err := net.Interfaces()
 	if err != nil {
-		return err
-	}
-
-	// Do a one off setup for the loopback interface
-	lostatic := &networkd.Static{
-		NetworkInfo: networkd.NetworkInfo{
-			IP: net.IPv4zero,
-			Net: &net.IPNet{
-				IP:   net.IPv4zero,
-				Mask: net.IPv4Mask(0, 0, 0, 0),
-			},
-		},
-		Resolv: &networkd.Resolver{},
-	}
-	loopback, err := networkd.CreateInterface(networkd.WithName("lo"), networkd.WithAddressing(lostatic))
-	if err = loopback.Setup(conn); err != nil {
 		log.Fatal(err)
 	}
 
@@ -113,16 +80,32 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 			// Configure interface
 			if err = iface.Setup(conn); err != nil {
 				log.Println(err)
+				return
+			}
+
+			var ttl time.Duration
+			for {
+				ttl = iface.Addressing.TTL()
+
+				// TTL of 0 should not be renewed
+				if ttl == 0 {
+					break
+				}
+
+				select {
+				case <-time.After(ttl / 2):
+					// Reconfigure interface ( should be mostly noop )
+					// since we're expecting to get the same dhcp response back
+					if err = iface.Addressing.Configure(conn, netif.Index); err != nil {
+						log.Println(err)
+					}
+				}
+
 			}
 		}()
-		if err != nil {
-			return err
-		}
 	}
 
 	wg.Wait()
-
-	return nil
 }
 
 // userDataLookup generates configuration options for the specified interface

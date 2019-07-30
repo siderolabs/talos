@@ -31,7 +31,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff // indirect
 	github.com/golang/protobuf v1.3.1
 	github.com/google/btree v1.0.0 // indirect
-	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.2.0 // indirect
@@ -42,13 +41,17 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
+	github.com/hugelgupf/socketpair v0.0.0-20190312070548-ac4bdefbf625 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/insomniacslk/dhcp v0.0.0-20190729073401-6d0d21cc6337
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/jsimonetti/rtnetlink v0.0.0-20190606172950-9527aa82566a
 	github.com/lithammer/dedent v1.1.0 // indirect
+	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
 	github.com/mdlayher/netlink v0.0.0-20190419142405-71c9566a34ae
+	github.com/mdlayher/raw v0.0.0-20190606144222-a54781e5f38f // indirect
 	github.com/onsi/ginkgo v1.6.0 // indirect
 	github.com/onsi/gomega v1.4.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
@@ -63,14 +66,10 @@ require (
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709
 	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
-	github.com/talos-systems/dhcp v0.0.0-20190403231749-dd8bdda8e381
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
-	github.com/u-root/u-root v4.0.0+incompatible // indirect
-	github.com/vishvananda/netlink v1.0.0
-	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
+	github.com/u-root/u-root v5.0.0+incompatible // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
@@ -82,7 +81,7 @@ require (
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
-	golang.org/x/sys v0.0.0-20190508220229-2d0786266e9c
+	golang.org/x/sys v0.0.0-20190606122018-79a91cf218c4
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
