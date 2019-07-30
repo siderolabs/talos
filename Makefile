@@ -217,6 +217,16 @@ talos: buildkitd
 osctl-cluster-create:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
+.PHONY: cli
+cli: buildkitd
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
+		--opt target=$@ \
+		--opt build-arg:KUBECTL_VERSION=$(KUBECTL_VERSION) \
+		$(COMMON_ARGS)
+	@docker load < build/$@.tar
+
 .PHONY: basic-integration
 basic-integration:
 	@TAG=$(TAG) ./hack/test/$@.sh

@@ -288,3 +288,17 @@ RUN --mount=type=cache,target=/root/.cache/go-build go test -v -race ${TESTPKGS}
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
 RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
+
+# The cli target builds an image for the CLI toolbox
+
+FROM alpine:3.8 AS cli
+RUN apk --update --no-cache add \
+    bash \
+    curl \
+    jq
+ARG KUBECTL_VERSION
+RUN curl -sfL  -o /bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+RUN chmod +x /bin/kubectl
+COPY --from=osctl-linux-build /osctl-linux-amd64 /bin/osctl
+COPY ./hack/dev/manifests /root/manifests
+WORKDIR /root
