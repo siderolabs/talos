@@ -1,3 +1,18 @@
+# [v0.1.0](https://github.com/andrewrynhard/talos/compare/v0.1.0-rc.0...v0.1.0) (2019-07-30)
+
+
+### Bug Fixes
+
+* mount cgroups properly ([be8f3ba](https://github.com/andrewrynhard/talos/commit/be8f3ba))
+* Only generate pki from trustd if not control plane ([ea142ea](https://github.com/andrewrynhard/talos/commit/ea142ea))
+
+
+### Features
+
+* attempt to connect to all trustd endpoints when downloading PKI ([e0a24de](https://github.com/andrewrynhard/talos/commit/e0a24de)), closes [#891](https://github.com/andrewrynhard/talos/issues/891)
+
+
+
 # [v0.1.0-rc.0](https://github.com/andrewrynhard/talos/compare/v0.1.0-beta.1...v0.1.0-rc.0) (2019-07-17)
 
 
