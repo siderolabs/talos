@@ -54,6 +54,16 @@ func (c *InitServiceClient) Reset(ctx context.Context, in *empty.Empty) (data *p
 	return c.InitClient.Reset(ctx, in)
 }
 
+// Start executes the init Start() API.
+func (c *InitServiceClient) Start(ctx context.Context, in *proto.StartRequest) (data *proto.StartReply, err error) {
+	return c.InitClient.Start(ctx, in)
+}
+
+// Stop executes the init Stop() API.
+func (c *InitServiceClient) Stop(ctx context.Context, in *proto.StopRequest) (data *proto.StopReply, err error) {
+	return c.InitClient.Stop(ctx, in)
+}
+
 // ServiceList executes the init ServiceList() API.
 func (c *InitServiceClient) ServiceList(ctx context.Context, in *empty.Empty) (data *proto.ServiceListReply, err error) {
 	return c.InitClient.ServiceList(ctx, in)

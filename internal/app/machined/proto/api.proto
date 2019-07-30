@@ -14,6 +14,8 @@ service Init {
   rpc Reboot(google.protobuf.Empty) returns (RebootReply) {}
   rpc Reset(google.protobuf.Empty) returns (ResetReply) {}
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply) {}
+  rpc Start(StartRequest) returns (StartReply) {}
+  rpc Stop(StopRequest) returns (StopReply) {}
   rpc Upgrade(UpgradeRequest) returns (UpgradeReply) {}
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply) {}
 }
@@ -54,6 +56,10 @@ message ServiceHealth {
   string lastMessage = 3;
   google.protobuf.Timestamp lastChange = 4;
 }
+
+message StartRequest { string id = 1; }
+
+message StartReply { string resp = 1; }
 
 message StopRequest { string id = 1; }
 

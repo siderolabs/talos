@@ -41,6 +41,7 @@ type ServiceRunner struct {
 
 	stateSubscribers map[StateEvent][]chan<- struct{}
 
+	ctxMu     sync.Mutex
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 }
@@ -53,10 +54,10 @@ func NewServiceRunner(service Service, userData *userdata.UserData) *ServiceRunn
 		service:          service,
 		userData:         userData,
 		id:               service.ID(userData),
-		ctx:              ctx,
-		ctxCancel:        ctxCancel,
 		state:            events.StateInitialized,
 		stateSubscribers: make(map[StateEvent][]chan<- struct{}),
+		ctx:              ctx,
+		ctxCancel:        ctxCancel,
 	}
 }
 
@@ -128,13 +129,13 @@ func (svcrunner *ServiceRunner) GetEventHistory(count int) []events.ServiceEvent
 	return svcrunner.events.Get(count)
 }
 
-func (svcrunner *ServiceRunner) waitFor(condition conditions.Condition) error {
+func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition conditions.Condition) error {
 	description := condition.String()
 	svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", description)
 
 	errCh := make(chan error)
 	go func() {
-		errCh <- condition.Wait(svcrunner.ctx)
+		errCh <- condition.Wait(ctx)
 	}()
 
 	ticker := time.NewTicker(WaitConditionCheckInterval)
@@ -160,6 +161,17 @@ func (svcrunner *ServiceRunner) waitFor(condition conditions.Condition) error {
 // Start should be run in a goroutine.
 // nolint: gocyclo
 func (svcrunner *ServiceRunner) Start() {
+	defer func() {
+		// reset context for the next run
+		svcrunner.ctxMu.Lock()
+		svcrunner.ctx, svcrunner.ctxCancel = context.WithCancel(context.Background())
+		svcrunner.ctxMu.Unlock()
+	}()
+
+	svcrunner.ctxMu.Lock()
+	ctx := svcrunner.ctx
+	svcrunner.ctxMu.Unlock()
+
 	condition := svcrunner.service.Condition(svcrunner.userData)
 	dependencies := svcrunner.service.DependsOn(svcrunner.userData)
 	if len(dependencies) > 0 {
@@ -176,14 +188,14 @@ func (svcrunner *ServiceRunner) Start() {
 	}
 
 	if condition != nil {
-		if err := svcrunner.waitFor(condition); err != nil {
+		if err := svcrunner.waitFor(ctx, condition); err != nil {
 			svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
 			return
 		}
 	}
 
 	svcrunner.UpdateState(events.StatePreparing, "Running pre state")
-	if err := svcrunner.service.PreFunc(svcrunner.ctx, svcrunner.userData); err != nil {
+	if err := svcrunner.service.PreFunc(ctx, svcrunner.userData); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
 		return
 	}
@@ -200,7 +212,7 @@ func (svcrunner *ServiceRunner) Start() {
 		return
 	}
 
-	if err := svcrunner.run(runnr); err != nil {
+	if err := svcrunner.run(ctx, runnr); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed running service: %v", err)
 	} else {
 		svcrunner.UpdateState(events.StateFinished, "Service finished successfully")
@@ -213,13 +225,13 @@ func (svcrunner *ServiceRunner) Start() {
 }
 
 // nolint: gocyclo
-func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
+func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) error {
 	if runnr == nil {
 		// special case - run nothing (TODO: we should handle it better, e.g. in PreFunc)
 		return nil
 	}
 
-	if err := runnr.Open(svcrunner.ctx); err != nil {
+	if err := runnr.Open(ctx); err != nil {
 		return errors.Wrap(err, "error opening runner")
 	}
 
@@ -241,7 +253,7 @@ func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 			defer healthWg.Done()
 
 			// nolint: errcheck
-			health.Run(svcrunner.ctx, healthSvc.HealthSettings(svcrunner.userData), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.userData))
+			health.Run(ctx, healthSvc.HealthSettings(svcrunner.userData), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.userData))
 		}()
 
 		notifyCh := make(chan health.StateChange, 2)
@@ -254,7 +266,7 @@ func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 
 			for {
 				select {
-				case <-svcrunner.ctx.Done():
+				case <-ctx.Done():
 					return
 				case change := <-notifyCh:
 					svcrunner.healthUpdate(change)
@@ -269,7 +281,7 @@ func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 	defer svcrunner.ctxCancel()
 
 	select {
-	case <-svcrunner.ctx.Done():
+	case <-ctx.Done():
 		err := runnr.Stop()
 		<-errCh
 		if err != nil {
@@ -288,6 +300,8 @@ func (svcrunner *ServiceRunner) run(runnr runner.Runner) error {
 //
 // Shutdown completes when Start() returns
 func (svcrunner *ServiceRunner) Shutdown() {
+	svcrunner.ctxMu.Lock()
+	defer svcrunner.ctxMu.Unlock()
 	svcrunner.ctxCancel()
 }
 

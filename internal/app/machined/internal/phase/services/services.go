@@ -36,7 +36,7 @@ func (task *Services) runtime(platform platform.Platform, data *userdata.UserDat
 func startSystemServices(data *userdata.UserData) {
 	svcs := system.Services(data)
 	// Start the services common to all nodes.
-	svcs.Start(
+	svcs.LoadAndStart(
 		&services.Networkd{},
 		&services.Containerd{},
 		&services.Udevd{},
@@ -46,7 +46,7 @@ func startSystemServices(data *userdata.UserData) {
 	)
 	// Start the services common to all master nodes.
 	if data.Services.Kubeadm.IsControlPlane() {
-		svcs.Start(
+		svcs.LoadAndStart(
 			&services.Trustd{},
 			&services.Proxyd{},
 		)
@@ -56,7 +56,7 @@ func startSystemServices(data *userdata.UserData) {
 
 func startKubernetesServices(data *userdata.UserData) {
 	svcs := system.Services(data)
-	svcs.Start(
+	svcs.LoadAndStart(
 		&services.Kubelet{},
 		&services.Kubeadm{},
 	)

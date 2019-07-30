@@ -20,21 +20,44 @@ import (
 
 // serviceCmd represents the service command
 var serviceCmd = &cobra.Command{
-	Use:     "service [<id>]",
+	Use:     "service [<id> [start|stop|restart|status]]",
 	Aliases: []string{"services"},
-	Short:   "Retrieve the state of a service (or all services)",
-	Long:    ``,
+	Short:   "Retrieve the state of a service (or all services), control service state",
+	Long: `Service control command. If run without arguments, lists all the services and their state.
+If service ID is specified, default action 'status' is executed which shows status of a single list service.
+With actions 'start', 'stop', 'restart', service state is updated respectively.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 1 {
+		if len(args) > 2 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
+		action := "status"
+		serviceID := ""
+		if len(args) >= 1 {
+			serviceID = args[0]
+		}
+		if len(args) == 2 {
+			action = args[1]
+		}
+
 		setupClient(func(c *client.Client) {
-			if len(args) == 0 {
-				serviceList(c)
-			} else {
-				serviceInfo(c, args[0])
+			switch action {
+			case "status":
+				if serviceID == "" {
+					serviceList(c)
+				} else {
+					serviceInfo(c, serviceID)
+				}
+			case "start":
+				serviceStart(c, serviceID)
+			case "stop":
+				serviceStop(c, serviceID)
+			case "restart":
+				serviceStop(c, serviceID)
+				serviceStart(c, serviceID)
+			default:
+				helpers.Fatalf("unsupported service action: %q", action)
 			}
 		})
 	},
@@ -85,6 +108,24 @@ func serviceInfo(c *client.Client, id string) {
 	if err := w.Flush(); err != nil {
 		helpers.Fatalf("error writing response: %s", err)
 	}
+}
+
+func serviceStart(c *client.Client, id string) {
+	resp, err := c.Start(globalCtx, id)
+	if err != nil {
+		helpers.Fatalf("error starting service: %s", err)
+	}
+
+	fmt.Fprintln(os.Stderr, resp)
+}
+
+func serviceStop(c *client.Client, id string) {
+	resp, err := c.Stop(globalCtx, id)
+	if err != nil {
+		helpers.Fatalf("error starting service: %s", err)
+	}
+
+	fmt.Fprintln(os.Stderr, resp)
 }
 
 type serviceInfoWrapper struct {

@@ -11,6 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -19,7 +22,14 @@ type singleton struct {
 	UserData *userdata.UserData
 
 	// State of running services by ID
-	State map[string]*ServiceRunner
+	state map[string]*ServiceRunner
+
+	// List of running services at the moment.
+	//
+	// Service might be in any state, but service ID in the map
+	// implies ServiceRunner.Start() method is running at the momemnt
+	runningMu sync.Mutex
+	running   map[string]struct{}
 
 	mu          sync.Mutex
 	wg          sync.WaitGroup
@@ -35,41 +45,94 @@ func Services(data *userdata.UserData) *singleton {
 	once.Do(func() {
 		instance = &singleton{
 			UserData: data,
-			State:    make(map[string]*ServiceRunner),
+			state:    make(map[string]*ServiceRunner),
+			running:  make(map[string]struct{}),
 		}
 	})
 	return instance
 }
 
-// Start will invoke the service's Pre, Condition, and Type funcs. If the any
-// error occurs in the Pre or Condition invocations, it is up to the caller to
-// to restart the service.
-func (s *singleton) Start(services ...Service) {
+// Load adds service to the list of services managed by the runner.
+//
+// Load returns service IDs for each of the services.
+func (s *singleton) Load(services ...Service) []string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.terminating {
-		return
+		return nil
 	}
+
+	ids := make([]string, 0, len(services))
 
 	for _, service := range services {
 		id := service.ID(s.UserData)
+		ids = append(ids, id)
 
-		if _, exists := s.State[id]; exists {
-			// service already started?
-			// TODO: it might be nice to handle case when service
-			//       should be restarted (e.g. kubeadm after reset)
+		if _, exists := s.state[id]; exists {
+			// service already loaded, ignore
 			continue
 		}
 
 		svcrunner := NewServiceRunner(service, s.UserData)
-		s.State[id] = svcrunner
+		s.state[id] = svcrunner
+	}
+
+	return ids
+}
+
+// Start will invoke the service's Pre, Condition, and Type funcs. If the any
+// error occurs in the Pre or Condition invocations, it is up to the caller to
+// to restart the service.
+func (s *singleton) Start(serviceIDs ...string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.terminating {
+		return nil
+	}
+
+	var multiErr *multierror.Error
+
+	for _, id := range serviceIDs {
+		svcrunner := s.state[id]
+		if svcrunner == nil {
+			multiErr = multierror.Append(multiErr, errors.Errorf("service %q not defined", id))
+		}
+
+		s.runningMu.Lock()
+		_, running := s.running[id]
+		s.runningMu.Unlock()
+
+		if running {
+			// service already running, skip
+			continue
+		}
 
 		s.wg.Add(1)
-		go func(svcrunner *ServiceRunner) {
+		go func(id string, svcrunner *ServiceRunner) {
+			defer func() {
+				s.runningMu.Lock()
+				delete(s.running, id)
+				s.runningMu.Unlock()
+			}()
 			defer s.wg.Done()
 
+			s.runningMu.Lock()
+			s.running[id] = struct{}{}
+			s.runningMu.Unlock()
+
 			svcrunner.Start()
-		}(svcrunner)
+		}(id, svcrunner)
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
+// LoadAndStart combines Load and Start into single call.
+func (s *singleton) LoadAndStart(services ...Service) {
+	err := s.Start(s.Load(services...)...)
+	if err != nil {
+		// should never happen
+		panic(err)
 	}
 }
 
@@ -82,7 +145,7 @@ func (s *singleton) Shutdown() {
 	}
 	stateCopy := make(map[string]*ServiceRunner)
 	s.terminating = true
-	for name, svcrunner := range s.State {
+	for name, svcrunner := range s.state {
 		stateCopy[name] = svcrunner
 	}
 	s.mu.Unlock()
@@ -128,8 +191,8 @@ func (s *singleton) List() (result []*ServiceRunner) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result = make([]*ServiceRunner, 0, len(s.State))
-	for _, svcrunner := range s.State {
+	result = make([]*ServiceRunner, 0, len(s.state))
+	for _, svcrunner := range s.state {
 		result = append(result, svcrunner)
 	}
 
@@ -155,10 +218,10 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	// Copy current service state
 	stateCopy := make(map[string]*ServiceRunner)
 	for _, id := range serviceIDs {
-		if _, ok := s.State[id]; !ok {
+		if _, ok := s.state[id]; !ok {
 			return fmt.Errorf("service not found: %s", id)
 		}
-		stateCopy[id] = s.State[id]
+		stateCopy[id] = s.state[id]
 	}
 	s.mu.Unlock()
 
