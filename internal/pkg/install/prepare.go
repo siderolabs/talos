@@ -259,7 +259,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 					Destination: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Initramfs)),
 				},
 			},
-			MountPoint: filepath.Join(constants.NewRoot, constants.BootMountPoint),
+			MountPoint: constants.BootMountPoint,
 		}
 	}
 
@@ -269,7 +269,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		Size:       data.Install.Data.Size,
 		Force:      data.Install.Force,
 		Test:       false,
-		MountPoint: filepath.Join(constants.NewRoot, constants.DataMountPoint),
+		MountPoint: constants.DataMountPoint,
 	}
 
 	for _, target := range []*Target{bootTarget, dataTarget} {

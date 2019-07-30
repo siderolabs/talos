@@ -26,7 +26,7 @@ func Mount(data *userdata.UserData) (err error) {
 
 	iter := mp.Iter()
 	for iter.Next() {
-		if err = mount.WithRetry(iter.Value(), mount.WithPrefix(constants.NewRoot)); err != nil {
+		if err = mount.WithRetry(iter.Value()); err != nil {
 			return errors.Errorf("error mounting partitions: %v", err)
 		}
 	}

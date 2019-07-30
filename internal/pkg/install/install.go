@@ -76,10 +76,10 @@ func Install(args string, data *userdata.UserData) (err error) {
 			},
 		},
 	}
-	if err = syslinux.Install(filepath.Join(constants.NewRoot, constants.BootMountPoint), syslinuxcfg); err != nil {
+	if err = syslinux.Install(constants.BootMountPoint, syslinuxcfg); err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(filepath.Join(constants.NewRoot, constants.BootMountPoint, "installed"), []byte{}, 0400); err != nil {
+	if err = ioutil.WriteFile(filepath.Join(constants.BootMountPoint, "installed"), []byte{}, 0400); err != nil {
 		return err
 	}
 
