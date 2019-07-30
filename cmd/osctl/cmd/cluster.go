@@ -31,7 +31,10 @@ var (
 	image       string
 	networkMTU  string
 	workers     int
+	masters     int
 )
+
+const baseNetwork = "10.5.0.%d"
 
 // clusterCmd represents the cluster command
 var clusterCmd = &cobra.Command{
@@ -72,6 +75,10 @@ func create() (err error) {
 		return err
 	}
 
+	if masters < 1 {
+		helpers.Fatalf("number of masters can't be less than 1")
+	}
+
 	// Ensure the image is present.
 
 	if err = ensureImageExists(ctx, cli, image); err != nil {
@@ -82,14 +89,15 @@ func create() (err error) {
 
 	fmt.Println("generating PKI and tokens")
 
-	ips := []string{"10.5.0.2", "10.5.0.3", "10.5.0.4"}
+	ips := make([]string, masters)
+	for i := range ips {
+		ips[i] = fmt.Sprintf(baseNetwork, i+2)
+	}
 
 	input, err := generate.NewInput(clusterName, ips)
 	if err != nil {
 		return err
 	}
-	input2 := *input
-	input3 := *input
 
 	// Setup the network.
 
@@ -101,28 +109,20 @@ func create() (err error) {
 
 	// Create the master nodes.
 
-	requests := []*node.Request{
-		{
-			Type:  generate.TypeInit,
-			Input: input,
+	requests := make([]*node.Request, masters)
+	for i := range requests {
+		requests[i] = &node.Request{
+			Input: *input,
 			Image: image,
-			Name:  "master-1",
-			IP:    net.ParseIP(ips[0]),
-		},
-		{
-			Type:  generate.TypeControlPlane,
-			Input: &input2,
-			Image: image,
-			Name:  "master-2",
-			IP:    net.ParseIP(ips[1]),
-		},
-		{
-			Type:  generate.TypeControlPlane,
-			Input: &input3,
-			Image: image,
-			Name:  "master-3",
-			IP:    net.ParseIP(ips[2]),
-		},
+			Name:  fmt.Sprintf("master-%d", i+1),
+			IP:    net.ParseIP(ips[i]),
+		}
+
+		if i == 0 {
+			requests[i].Type = generate.TypeInit
+		} else {
+			requests[i].Type = generate.TypeControlPlane
+		}
 	}
 
 	if err := createNodes(requests); err != nil {
@@ -135,7 +135,7 @@ func create() (err error) {
 	for i := 1; i <= workers; i++ {
 		r := &node.Request{
 			Type:  generate.TypeJoin,
-			Input: input,
+			Input: *input,
 			Image: image,
 			Name:  fmt.Sprintf("worker-%d", i),
 		}
@@ -269,7 +269,7 @@ func createNetwork(cli *client.Client) (types.NetworkCreateResponse, error) {
 		IPAM: &network.IPAM{
 			Config: []network.IPAMConfig{
 				{
-					Subnet: "10.5.0.0/24",
+					Subnet: fmt.Sprintf(baseNetwork, 0) + "/24",
 				},
 			},
 		},
@@ -335,6 +335,7 @@ func init() {
 	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
+	clusterUpCmd.Flags().IntVar(&masters, "masters", 3, "the number of masters to create")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)

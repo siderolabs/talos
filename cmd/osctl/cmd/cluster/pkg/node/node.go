@@ -21,7 +21,7 @@ import (
 // Request represents the set of options available for configuring a node.
 type Request struct {
 	Type  generate.Type
-	Input *generate.Input
+	Input generate.Input
 	Image string
 	Name  string
 	IP    net.IP
@@ -31,7 +31,7 @@ type Request struct {
 func NewNode(clusterName string, req *Request) (err error) {
 	// Generate the userdata for the node.
 
-	data, err := generate.Userdata(req.Type, req.Input)
+	data, err := generate.Userdata(req.Type, &req.Input)
 	if err != nil {
 		return err
 	}
