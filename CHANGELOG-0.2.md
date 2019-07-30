@@ -1,3 +1,23 @@
+# [v0.2.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.3...v0.2.0-alpha.4) (2019-07-30)
+
+
+### Bug Fixes
+
+* check proper value of parseip in dhcp ([2208eb5](https://github.com/talos-systems/talos/commit/2208eb5))
+* **trustd:** allow hostnames for trustd endpoints ([8884b85](https://github.com/talos-systems/talos/commit/8884b85)), closes [#666](https://github.com/talos-systems/talos/issues/666)
+* mount cgroups properly ([5a68b8b](https://github.com/talos-systems/talos/commit/5a68b8b))
+* Run cleanup script earlier in rootfs build ([a7d76b9](https://github.com/talos-systems/talos/commit/a7d76b9))
+
+
+### Features
+
+* attempt to connect to all trustd endpoints when downloading PKI ([45def0a](https://github.com/talos-systems/talos/commit/45def0a)), closes [#891](https://github.com/talos-systems/talos/issues/891)
+* enable missing KSPP sysctls ([0b8778d](https://github.com/talos-systems/talos/commit/0b8778d))
+* move df API to init ([b4383e3](https://github.com/talos-systems/talos/commit/b4383e3))
+* run rootfs from squashfs ([0ec17e4](https://github.com/talos-systems/talos/commit/0ec17e4))
+
+
+
 # [v0.2.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.2...v0.2.0-alpha.3) (2019-07-22)
 
 
