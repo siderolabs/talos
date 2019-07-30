@@ -136,7 +136,6 @@ initramfs: buildkitd
 rootfs: buildkitd osd trustd proxyd ntpd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-    --output type=local,dest=build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
