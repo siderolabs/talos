@@ -6,7 +6,8 @@ package phase
 
 import (
 	"log"
-	"sync"
+	goruntime "runtime"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -50,35 +51,67 @@ func NewRunner(data *userdata.UserData) (*Runner, error) {
 	}, nil
 }
 
-// Run executes all phases known to a Runner.
+// Run executes sequentially all phases known to a Runner.
+//
+// If any phase fails, Runner aborts immediately.
 func (r *Runner) Run() error {
 	for _, phase := range r.phases {
-		var (
-			result *multierror.Error
-			wg     sync.WaitGroup
-		)
-		wg.Add(len(phase.tasks))
-		log.Printf("[phase]: %s", phase.name)
-		go func(p *Phase) {
-			for _, task := range p.tasks {
-				defer wg.Done()
-				var f RuntimeFunc
-				if f = task.RuntimeFunc(r.mode); f == nil {
-					// A task is not defined for this runtime mode.
-					continue
-				}
-				if err := f(r.platform, r.data); err != nil {
-					result = multierror.Append(result, err)
-				}
-			}
-		}(phase)
-		wg.Wait()
-		if result != nil {
-			return result.ErrorOrNil()
+		if err := r.runPhase(phase); err != nil {
+			return errors.Wrapf(err, "error running phase %q", phase.name)
 		}
 	}
 
 	return nil
+}
+
+// runPhase runs a phase by running all phase tasks concurrently.
+func (r *Runner) runPhase(phase *Phase) error {
+	errCh := make(chan error)
+
+	start := time.Now()
+	log.Printf("[phase]: %s", phase.name)
+
+	for _, task := range phase.tasks {
+		go r.runTask(task, errCh)
+	}
+
+	var result *multierror.Error
+
+	for range phase.tasks {
+		err := <-errCh
+		if err != nil {
+			log.Printf("[phase]: %s error running task: %s", phase.name, err)
+		}
+		result = multierror.Append(result, err)
+	}
+
+	log.Printf("[phase]: %s done, %s", phase.name, time.Since(start))
+
+	return result.ErrorOrNil()
+}
+
+func (r *Runner) runTask(task Task, errCh chan<- error) {
+	var err error
+
+	defer func() {
+		errCh <- err
+	}()
+
+	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 8192)
+			n := goruntime.Stack(buf, false)
+			err = errors.Errorf("panic recovered: %v\n%s", r, string(buf[:n]))
+		}
+	}()
+
+	var f RuntimeFunc
+	if f = task.RuntimeFunc(r.mode); f == nil {
+		// A task is not defined for this runtime mode.
+		return
+	}
+
+	err = f(r.platform, r.data)
 }
 
 // Add adds a phase to a Runner.
