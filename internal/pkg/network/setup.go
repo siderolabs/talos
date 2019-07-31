@@ -123,7 +123,7 @@ func ifup(ifname string, mtu int) (err error) {
 
 func defaultInterface() string {
 	netif := DefaultInterface
-	if option := kernel.Cmdline().Get(constants.KernelParamDefaultInterface).First(); option != nil {
+	if option := kernel.ProcCmdline().Get(constants.KernelParamDefaultInterface).First(); option != nil {
 		netif = *option
 	}
 

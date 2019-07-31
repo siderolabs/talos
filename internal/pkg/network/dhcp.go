@@ -116,7 +116,7 @@ func (service *Service) dhclient4(ctx context.Context, ifname string, modifiers 
 
 			// Ignore DHCP-offered hostname if the kernel parameter is set
 			var kernHostname *string
-			if kernHostname = kernel.Cmdline().Get(constants.KernelParamHostname).First(); kernHostname != nil {
+			if kernHostname = kernel.ProcCmdline().Get(constants.KernelParamHostname).First(); kernHostname != nil {
 				hostname = *kernHostname
 			}
 

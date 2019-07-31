@@ -25,8 +25,7 @@ import (
 type Platform interface {
 	Name() string
 	UserData() (*userdata.UserData, error)
-	Prepare(*userdata.UserData) error
-	Install(*userdata.UserData) error
+	Initialize(*userdata.UserData) error
 }
 
 // NewPlatform is a helper func for discovering the current platform.
@@ -34,7 +33,7 @@ type Platform interface {
 // nolint: gocyclo
 func NewPlatform() (p Platform, err error) {
 	var platform string
-	if p := kernel.Cmdline().Get(constants.KernelParamPlatform).First(); p != nil {
+	if p := kernel.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
 		platform = *p
 	}
 

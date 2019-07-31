@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/userdata"
 
@@ -37,7 +37,7 @@ func (b *BareMetal) Name() string {
 // UserData implements the platform.Platform interface.
 func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
 	var option *string
-	if option = kernel.Cmdline().Get(constants.KernelParamUserData).First(); option == nil {
+	if option = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); option == nil {
 		return data, errors.Errorf("no user data option was found")
 	}
 
@@ -71,17 +71,12 @@ func (b *BareMetal) UserData() (data *userdata.UserData, err error) {
 	return userdata.Download(*option)
 }
 
-// Prepare implements the platform.Platform interface.
-func (b *BareMetal) Prepare(data *userdata.UserData) (err error) {
-	return install.Prepare(data)
-}
-
-// Install provides the functionality to install talos by downloading the
+// Initialize provides the functionality to install talos by downloading the
 // required artifacts and writing them to a target device.
 // nolint: dupl
-func (b *BareMetal) Install(data *userdata.UserData) (err error) {
+func (b *BareMetal) Initialize(data *userdata.UserData) (err error) {
 	var endpoint *string
-	if endpoint = kernel.Cmdline().Get(constants.KernelParamUserData).First(); endpoint == nil {
+	if endpoint = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); endpoint == nil {
 		return errors.Errorf("failed to find %s in kernel parameters", constants.KernelParamUserData)
 	}
 	cmdline := kernel.NewDefaultCmdline()
@@ -93,7 +88,8 @@ func (b *BareMetal) Install(data *userdata.UserData) (err error) {
 		return err
 	}
 
-	if err = install.Install(cmdline.String(), data); err != nil {
+	i := installer.NewInstaller(cmdline, data)
+	if err = i.Install(); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}
 

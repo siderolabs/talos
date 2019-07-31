@@ -6,22 +6,27 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/app/init/internal/mount"
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/squashfs"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/virtual"
+	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
+	"golang.org/x/sys/unix"
 )
 
 // nolint: gocyclo
-func initram() (err error) {
-	var initializer *mount.Initializer
-	if initializer, err = mount.NewInitializer(constants.NewRoot); err != nil {
+func run() (err error) {
+	// Mount the virtual devices.
+	mountpoints, err := virtual.MountPoints()
+	if err != nil {
 		return err
 	}
-
-	// Mount the special devices.
-	if err = initializer.InitSpecial(); err != nil {
+	virtual := manager.NewManager(mountpoints)
+	if err = virtual.MountAll(); err != nil {
 		return err
 	}
 
@@ -31,23 +36,43 @@ func initram() (err error) {
 		return err
 	}
 
-	// Perform the equivalent of switch_root.
+	// Mount the rootfs.
 	log.Println("mounting the rootfs")
-	if err = initializer.Rootfs(); err != nil {
+	mountpoints, err = squashfs.MountPoints(constants.NewRoot)
+	if err != nil {
+		return err
+	}
+	squashfs := manager.NewManager(mountpoints)
+	if err = squashfs.MountAll(); err != nil {
 		return err
 	}
 
-	// Perform the equivalent of switch_root.
+	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
-	if err = initializer.Switch(); err != nil {
+	if err = switchroot.Switch(constants.NewRoot, virtual); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func recovery() {
+	if r := recover(); r != nil {
+		log.Printf("recovered from: %+v\n", r)
+		for i := 10; i >= 0; i-- {
+			log.Printf("rebooting in %d seconds\n", i)
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	// nolint: errcheck
+	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
+}
+
 func main() {
-	if err := initram(); err != nil {
+	defer recovery()
+
+	if err := run(); err != nil {
 		panic(errors.Wrap(err, "early boot failed"))
 	}
 

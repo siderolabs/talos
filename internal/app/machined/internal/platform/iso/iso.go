@@ -14,9 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
@@ -62,21 +61,21 @@ func (i *ISO) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Prepare implements the platform.Platform interface.
-func (i *ISO) Prepare(data *userdata.UserData) (err error) {
+// Initialize implements the platform.Platform interface.
+func (i *ISO) Initialize(data *userdata.UserData) (err error) {
 	var dev *probe.ProbedBlockDevice
 	dev, err = probe.GetDevWithFileSystemLabel(constants.ISOFilesystemLabel)
 	if err != nil {
 		return errors.Errorf("failed to find %s iso: %v", constants.ISOFilesystemLabel, err)
 	}
 
-	mountpoint := mount.NewMountPoint(dev.Path, "/tmp", dev.SuperBlock.Type(), unix.MS_RDONLY, "")
-	if err = mount.WithRetry(mountpoint); err != nil {
+	if err = unix.Mount(dev.Path, "/tmp", dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
 		return err
 	}
 
 	for _, f := range []string{"/tmp/usr/install/vmlinuz", "/tmp/usr/install/initramfs.xz"} {
-		source, err := ioutil.ReadFile(f)
+		var source []byte
+		source, err = ioutil.ReadFile(f)
 		if err != nil {
 			return err
 		}
@@ -85,11 +84,6 @@ func (i *ISO) Prepare(data *userdata.UserData) (err error) {
 		}
 	}
 
-	return install.Prepare(data)
-}
-
-// Install implements the platform.Platform interface.
-func (i *ISO) Install(data *userdata.UserData) error {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Talos configuration URL: ")
 	endpoint, err := reader.ReadString('\n')
@@ -102,7 +96,8 @@ func (i *ISO) Install(data *userdata.UserData) error {
 	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
 	cmdline.Append(constants.KernelParamUserData, endpoint)
 
-	if err = install.Install(cmdline.String(), data); err != nil {
+	inst := installer.NewInstaller(cmdline, data)
+	if err = inst.Install(); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}
 

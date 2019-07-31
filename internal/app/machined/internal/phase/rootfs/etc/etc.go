@@ -42,7 +42,7 @@ BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 // Hosts renders a valid /etc/hosts file and writes it to disk.
 func Hosts() (err error) {
 	var h *string
-	if h = kernel.Cmdline().Get(constants.KernelParamHostname).First(); h != nil {
+	if h = kernel.ProcCmdline().Get(constants.KernelParamHostname).First(); h != nil {
 		if err = unix.Sethostname([]byte(*h)); err != nil {
 			return err
 		}

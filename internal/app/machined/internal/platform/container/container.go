@@ -40,12 +40,7 @@ func (c *Container) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Prepare implements the platform.Platform interface.
-func (c *Container) Prepare(data *userdata.UserData) (err error) {
-	return nil
-}
-
-// Install implements the platform.Platform interface.
-func (c *Container) Install(data *userdata.UserData) error {
+// Initialize implements the platform.Platform interface.
+func (c *Container) Initialize(data *userdata.UserData) error {
 	return nil
 }

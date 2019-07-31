@@ -5,12 +5,30 @@
 package rootfs
 
 import (
+	// "github.com/pkg/errors"
+	"io/ioutil"
+	"os"
+	"path"
+	"strconv"
+
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/app/machined/internal/mount/cgroups"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/cgroups"
 	"github.com/talos-systems/talos/pkg/userdata"
+)
+
+const (
+	memoryCgroup                  = "memory"
+	memoryUseHierarchy            = "memory.use_hierarchy"
+	memoryUseHierarchyPermissions = os.FileMode(400)
+)
+
+var (
+	memoryUseHierarchyContents = []byte(strconv.Itoa(1))
 )
 
 // MountCgroups represents the MountCgroups task.
@@ -32,8 +50,21 @@ func (task *MountCgroups) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *MountCgroups) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	if err = cgroups.Mount(); err != nil {
-		return errors.Wrap(err, "error mounting cgroups")
+	var mountpoints *mount.Points
+	mountpoints, err = cgroups.MountPoints()
+	if err != nil {
+		return err
+	}
+
+	m := manager.NewManager(mountpoints)
+	if err = m.MountAll(); err != nil {
+		return err
+	}
+
+	// See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
+	target := path.Join("/sys/fs/cgroup", memoryCgroup, memoryUseHierarchy)
+	if err = ioutil.WriteFile(target, memoryUseHierarchyContents, memoryUseHierarchyPermissions); err != nil {
+		return errors.Wrap(err, "failed to enable memory hierarchy support")
 	}
 
 	return nil

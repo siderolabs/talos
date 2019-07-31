@@ -5,11 +5,15 @@
 package userdata
 
 import (
-	"github.com/talos-systems/talos/internal/app/machined/internal/mount"
+	"fmt"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"golang.org/x/sys/unix"
 )
 
 // ExtraDevices represents the ExtraDevices task.
@@ -26,8 +30,20 @@ func (task *ExtraDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *ExtraDevices) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	// Mount the extra devices.
-	if err = mount.ExtraDevices(data); err != nil {
+	if data.Install == nil || data.Install.ExtraDevices == nil {
+		return nil
+	}
+
+	mountpoints := mount.NewMountPoints()
+	for _, extra := range data.Install.ExtraDevices {
+		for i, part := range extra.Partitions {
+			devname := fmt.Sprintf("%s%d", extra.Device, i+1)
+			mountpoints.Set(devname, mount.NewMountPoint(devname, part.MountPoint, "xfs", unix.MS_NOATIME, ""))
+		}
+	}
+
+	extras := manager.NewManager(mountpoints)
+	if err = extras.MountAll(); err != nil {
 		return err
 	}
 
