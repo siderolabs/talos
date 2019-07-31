@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -32,19 +32,14 @@ func (p *Packet) UserData() (data *userdata.UserData, err error) {
 	return userdata.Download(PacketUserDataEndpoint)
 }
 
-// Prepare implements the platform.Platform interface.
-func (p *Packet) Prepare(data *userdata.UserData) (err error) {
-	return install.Prepare(data)
-}
-
-// Install provides the functionality to install talos by downloading the
-// required artifacts and writing them to a target device.
+// Initialize implements the platform.Platform interface.
 // nolint: dupl
-func (p *Packet) Install(data *userdata.UserData) (err error) {
+func (p *Packet) Initialize(data *userdata.UserData) (err error) {
 	var endpoint *string
-	if endpoint = kernel.Cmdline().Get(constants.KernelParamUserData).First(); endpoint == nil {
+	if endpoint = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); endpoint == nil {
 		return errors.Errorf("failed to find %s in kernel parameters", constants.KernelParamUserData)
 	}
+
 	cmdline := kernel.NewDefaultCmdline()
 	cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
 	cmdline.Append(constants.KernelParamPlatform, "packet")
@@ -54,7 +49,8 @@ func (p *Packet) Install(data *userdata.UserData) (err error) {
 		return err
 	}
 
-	if err = install.Install(cmdline.String(), data); err != nil {
+	i := installer.NewInstaller(cmdline, data)
+	if err = i.Install(); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}
 

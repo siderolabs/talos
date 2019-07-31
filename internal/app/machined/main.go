@@ -11,9 +11,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	apiptask "github.com/talos-systems/talos/internal/app/machined/internal/phase/api"
-	"github.com/talos-systems/talos/internal/app/machined/internal/phase/install"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/api"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/network"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/security"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/services"
@@ -45,6 +45,7 @@ func run() (err error) {
 			security.NewSecurityTask(),
 			rootfs.NewSystemDirectoryTask(),
 			rootfs.NewMountCgroupsTask(),
+			rootfs.NewMountSubDevicesTask(),
 			sysctls.NewSysctlsTask(),
 		),
 		phase.NewPhase(
@@ -68,11 +69,11 @@ func run() (err error) {
 			userdatatask.NewExtraFilesTask(),
 		),
 		phase.NewPhase(
-			"installation",
-			install.NewInstallTask(),
+			"platform tasks",
+			platform.NewPlatformTask(),
 		),
 		phase.NewPhase(
-			"overlay",
+			"overlay mounts",
 			rootfs.NewMountOverlayTask(),
 		),
 		phase.NewPhase(
@@ -85,7 +86,7 @@ func run() (err error) {
 		),
 		phase.NewPhase(
 			"service setup",
-			apiptask.NewAPITask(),
+			api.NewAPITask(),
 			services.NewServicesTask(),
 		),
 	)

@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/proc"
+	"github.com/talos-systems/talos/internal/pkg/kernel/sysctl"
 )
 
 var (
@@ -28,7 +28,7 @@ func EnforceKSPPKernelParameters() error {
 	var result *multierror.Error
 	for _, values := range RequiredKSPPKernelParameters {
 		var val *string
-		if val = kernel.Cmdline().Get(values.Key()).First(); val == nil {
+		if val = kernel.ProcCmdline().Get(values.Key()).First(); val == nil {
 			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s is required", values.Key()))
 			continue
 		}
@@ -45,7 +45,7 @@ func EnforceKSPPKernelParameters() error {
 // EnforceKSPPSysctls verifies that all required KSPP kernel sysctls are set
 // with the right value.
 func EnforceKSPPSysctls() (err error) {
-	props := []*proc.SystemProperty{
+	props := []*sysctl.SystemProperty{
 		{
 			Key:   "kernel.kptr_restrict",
 			Value: "1",
@@ -82,7 +82,7 @@ func EnforceKSPPSysctls() (err error) {
 	}
 
 	for _, prop := range props {
-		if err = proc.WriteSystemProperty(prop); err != nil {
+		if err = sysctl.WriteSystemProperty(prop); err != nil {
 			return
 		}
 	}

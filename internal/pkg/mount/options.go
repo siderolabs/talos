@@ -6,9 +6,11 @@ package mount
 
 // Options is the functional options struct.
 type Options struct {
+	Loopback string
 	Prefix   string
 	ReadOnly bool
 	Shared   bool
+	Resize   bool
 }
 
 // Option is the functional option func.
@@ -35,9 +37,18 @@ func WithShared(o bool) Option {
 	}
 }
 
+// WithResize indicates that a the partition for a given mount point should be
+// resized to the maximum allowed.
+func WithResize(o bool) Option {
+	return func(args *Options) {
+		args.Resize = o
+	}
+}
+
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
+		Loopback: "",
 		Prefix:   "",
 		ReadOnly: false,
 		Shared:   false,

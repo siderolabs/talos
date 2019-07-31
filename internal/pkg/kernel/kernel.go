@@ -13,7 +13,7 @@ import (
 // NewDefaultCmdline returns a set of kernel parameters that serve as the base
 // for all Talos installations.
 // nolint: golint
-func NewDefaultCmdline() *cmdline {
+func NewDefaultCmdline() *Cmdline {
 	cmdline := NewCmdline("")
 	cmdline.Append("page_poison", "1")
 	cmdline.Append("slab_nomerge", "")
@@ -122,17 +122,18 @@ func (p Parameters) String() string {
 	return strings.TrimRight(s, " ")
 }
 
-type cmdline struct {
+// Cmdline represents a set of kernel parameters.
+type Cmdline struct {
 	sync.Mutex
 	Parameters
 }
 
-var instance *cmdline
+var instance *Cmdline
 var once sync.Once
 
 // Cmdline returns a representation of /proc/cmdline.
 // nolint: golint
-func Cmdline() *cmdline {
+func ProcCmdline() *Cmdline {
 	once.Do(func() {
 		var err error
 		if instance, err = read(); err != nil {
@@ -146,15 +147,15 @@ func Cmdline() *cmdline {
 // NewCmdline initializes and returns a representation of the cmdline values
 // specified by `parameters`.
 // nolint: golint
-func NewCmdline(parameters string) *cmdline {
+func NewCmdline(parameters string) *Cmdline {
 	parsed := parse(parameters)
-	c := &cmdline{sync.Mutex{}, parsed}
+	c := &Cmdline{sync.Mutex{}, parsed}
 
 	return c
 }
 
 // Get gets a kernel parameter.
-func (c *cmdline) Get(k string) (value *Parameter) {
+func (c *Cmdline) Get(k string) (value *Parameter) {
 	c.Lock()
 	defer c.Unlock()
 	for _, value := range c.Parameters {
@@ -167,7 +168,7 @@ func (c *cmdline) Get(k string) (value *Parameter) {
 }
 
 // Set sets a kernel parameter.
-func (c *cmdline) Set(k string, v *Parameter) {
+func (c *Cmdline) Set(k string, v *Parameter) {
 	c.Lock()
 	defer c.Unlock()
 	for i, value := range c.Parameters {
@@ -179,7 +180,7 @@ func (c *cmdline) Set(k string, v *Parameter) {
 }
 
 // Append appends a kernel parameter.
-func (c *cmdline) Append(k string, v string) {
+func (c *Cmdline) Append(k string, v string) {
 	c.Lock()
 	defer c.Unlock()
 	for _, value := range c.Parameters {
@@ -192,7 +193,7 @@ func (c *cmdline) Append(k string, v string) {
 }
 
 // AppendAll appends a set of kernel parameters.
-func (c *cmdline) AppendAll(args []string) error {
+func (c *Cmdline) AppendAll(args []string) error {
 	parameters := parse(strings.Join(args, " "))
 	c.Parameters = append(c.Parameters, parameters...)
 
@@ -200,7 +201,7 @@ func (c *cmdline) AppendAll(args []string) error {
 }
 
 // Bytes returns the byte slice representation of the cmdline struct.
-func (c *cmdline) Bytes() []byte {
+func (c *Cmdline) Bytes() []byte {
 	return []byte(c.String())
 }
 
@@ -231,7 +232,7 @@ func parse(parameters string) (parsed Parameters) {
 	return parsed
 }
 
-func read() (c *cmdline, err error) {
+func read() (c *Cmdline, err error) {
 	var parameters []byte
 	parameters, err = ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
@@ -239,7 +240,7 @@ func read() (c *cmdline, err error) {
 	}
 
 	parsed := parse(string(parameters))
-	c = &cmdline{sync.Mutex{}, parsed}
+	c = &Cmdline{sync.Mutex{}, parsed}
 
 	return c, nil
 }

@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -83,31 +83,31 @@ func NewUpgrade(url string) (err error) {
 }
 
 func upgradeBoot(url string) error {
-	bootTarget := install.Target{
+	bootTarget := manifest.Target{
 		Label:      constants.BootPartitionLabel,
 		MountPoint: constants.BootMountPoint,
-		Assets:     []*install.Asset{},
+		Assets:     []*manifest.Asset{},
 	}
 
 	// Kernel
-	bootTarget.Assets = append(bootTarget.Assets, &install.Asset{
+	bootTarget.Assets = append(bootTarget.Assets, &manifest.Asset{
 		Source:      url + "/" + constants.KernelAsset,
 		Destination: filepath.Join("/", "default", constants.KernelAsset),
 	})
 
 	// Initramfs
-	bootTarget.Assets = append(bootTarget.Assets, &install.Asset{
+	bootTarget.Assets = append(bootTarget.Assets, &manifest.Asset{
 		Source:      url + "/" + constants.InitramfsAsset,
 		Destination: filepath.Join("/", "default", constants.InitramfsAsset),
 	})
 
 	var err error
-	if err = bootTarget.Install(); err != nil {
+	if err = bootTarget.Save(); err != nil {
 		return err
 	}
 
 	// TODO: Figure out a method to update kernel args
-	nextCmdline := kernel.NewCmdline(kernel.Cmdline().String())
+	nextCmdline := kernel.NewCmdline(kernel.ProcCmdline().String())
 
 	// Set the initrd kernel paramaeter.
 	initParam := kernel.NewParameter("initrd")

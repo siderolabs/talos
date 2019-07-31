@@ -37,11 +37,6 @@ func (a *Azure) UserData() (*userdata.UserData, error) {
 	return userdata.Download(AzureUserDataEndpoint, userdata.WithHeaders(map[string]string{"Metadata": "true"}), userdata.WithFormat("base64"))
 }
 
-// Prepare implements the platform.Platform interface and handles initial host preparation.
-func (a *Azure) Prepare(data *userdata.UserData) (err error) {
-	return nil
-}
-
 func hostname() (err error) {
 
 	// TODO get this sorted; assuming we need to set appropriate headers
@@ -72,7 +67,7 @@ func hostname() (err error) {
 	*/
 }
 
-// Install implements the platform.Platform interface and handles additional system setup.
-func (a *Azure) Install(data *userdata.UserData) (err error) {
+// Initialize implements the platform.Platform interface and handles additional system setup.
+func (a *Azure) Initialize(data *userdata.UserData) (err error) {
 	return hostname()
 }

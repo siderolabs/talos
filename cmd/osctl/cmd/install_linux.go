@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	// "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/version"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -55,14 +55,6 @@ var installCmd = &cobra.Command{
 			}
 		}
 
-		if err = install.Prepare(data); err != nil {
-			log.Fatal(err)
-		}
-
-		if err = install.Mount(data); err != nil {
-			log.Fatal(err)
-		}
-
 		cmdline := kernel.NewDefaultCmdline()
 		cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
 		cmdline.Append(constants.KernelParamPlatform, platform)
@@ -71,7 +63,8 @@ var installCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err = install.Install(cmdline.String(), data); err != nil {
+		i := installer.NewInstaller(cmdline, data)
+		if err = i.Install(); err != nil {
 			log.Fatal(err)
 		}
 

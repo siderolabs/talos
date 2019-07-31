@@ -28,7 +28,7 @@ func (vmw *VMware) Name() string {
 // UserData implements the platform.Platform interface.
 func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
 	var option *string
-	if option = kernel.Cmdline().Get(constants.KernelParamUserData).First(); option == nil {
+	if option = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); option == nil {
 		return data, fmt.Errorf("no user data option was found")
 	}
 
@@ -65,12 +65,7 @@ func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Prepare implements the platform.Platform interface and handles initial host preparation.
-func (vmw *VMware) Prepare(data *userdata.UserData) (err error) {
-	return nil
-}
-
-// Install implements the platform.Platform interface and handles additional system setup.
-func (vmw *VMware) Install(data *userdata.UserData) (err error) {
+// Initialize implements the platform.Platform interface and handles additional system setup.
+func (vmw *VMware) Initialize(data *userdata.UserData) (err error) {
 	return nil
 }

@@ -2,230 +2,55 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package install
+package manifest
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/xfs"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/internal/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/version"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"golang.org/x/sys/unix"
 )
 
-const (
-	// DefaultSizeRootDevice is the default size of the root partition.
-	// TODO(andrewrynhard): We should inspect the tarball's uncompressed size and dynamically set the root partition's size.
-	DefaultSizeRootDevice = 2048 * 1000 * 1000
-
-	// DefaultSizeBootDevice is the default size of the boot partition.
-	// TODO(andrewrynhard): We should inspect the sizes of the artifacts and dynamically set the boot partition's size.
-	DefaultSizeBootDevice = 512 * 1000 * 1000
-)
-
-var (
-	// DefaultURLBase is the base URL for all default artifacts.
-	// TODO(andrewrynhard): We need to setup infrastructure for publishing artifacts and not depend on GitHub.
-	DefaultURLBase = "https://github.com/talos-systems/talos/releases/download/" + version.Tag
-
-	// DefaultKernelURL is the URL to the kernel.
-	DefaultKernelURL = DefaultURLBase + "/vmlinuz"
-
-	// DefaultInitramfsURL is the URL to the initramfs.
-	DefaultInitramfsURL = DefaultURLBase + "/initramfs.xz"
-)
-
-// Prepare handles setting/consolidating/defaulting userdata pieces specific to
-// installation
-// TODO: See if this would be more appropriate in userdata
-// nolint: dupl, gocyclo
-func Prepare(data *userdata.UserData) (err error) {
-	if data.Install == nil {
-		return nil
-	}
-
-	var exists bool
-	if exists, err = Exists(data.Install.Boot.InstallDevice.Device); err != nil {
-		return err
-	}
-
-	if exists {
-		log.Println("found existing installation, skipping prepare step")
-		return nil
-	}
-
-	// Verify that the target device(s) can satisify the requested options.
-
-	if err = VerifyDataDevice(data); err != nil {
-		return errors.Wrap(err, "failed to prepare data device")
-	}
-	if err = VerifyBootDevice(data); err != nil {
-		return errors.Wrap(err, "failed to prepare boot device")
-	}
-
-	manifest := NewManifest(data)
-
-	if data.Install.Wipe {
-		if err = WipeDevices(manifest); err != nil {
-			return errors.Wrap(err, "failed to wipe device(s)")
-		}
-	}
-
-	// Create and format all partitions.
-
-	if err = ExecuteManifest(data, manifest); err != nil {
-		return err
-	}
-
-	return err
+// Manifest represents the instructions for preparing all block devices
+// for an installation.
+type Manifest struct {
+	Targets map[string][]*Target
 }
 
-// ExecuteManifest partitions and formats all disks in a manifest.
-func ExecuteManifest(data *userdata.UserData, manifest *Manifest) (err error) {
-	for dev, targets := range manifest.Targets {
-		var bd *blockdevice.BlockDevice
-		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(data.Install.Force)); err != nil {
-			return err
-		}
-		// nolint: errcheck
-		defer bd.Close()
-
-		for _, target := range targets {
-			if err = target.Partition(bd); err != nil {
-				return errors.Wrap(err, "failed to partition device")
-			}
-		}
-
-		if err = bd.RereadPartitionTable(); err != nil {
-			return err
-		}
-
-		for _, target := range targets {
-			if err = target.Format(); err != nil {
-				return errors.Wrap(err, "failed to format device")
-			}
-		}
-	}
-
-	return nil
+// Target represents an installation partition.
+type Target struct {
+	Label          string
+	MountPoint     string
+	Device         string
+	FileSystemType string
+	PartitionName  string
+	Size           uint
+	Force          bool
+	Test           bool
+	Assets         []*Asset
+	BlockDevice    *blockdevice.BlockDevice
 }
 
-// VerifyDataDevice verifies the supplied data device options.
-func VerifyDataDevice(data *userdata.UserData) (err error) {
-	// Set data device to root device if not specified
-	if data.Install.Data == nil {
-		data.Install.Data = &userdata.InstallDevice{}
-	}
-
-	if data.Install.Data.Device == "" {
-		return errors.New("a data device is required")
-	}
-
-	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.DataPartitionLabel); err != nil {
-			return errors.Wrap(err, "failed to verify disk availability")
-		}
-	}
-
-	return nil
-}
-
-// VerifyBootDevice verifies the supplied boot device options.
-func VerifyBootDevice(data *userdata.UserData) (err error) {
-	if data.Install.Boot == nil {
-		return nil
-	}
-
-	if data.Install.Boot.Device == "" {
-		// We can safely assume data device is defined at this point
-		// because VerifyDataDevice should have been called first in
-		// in the chain
-		data.Install.Boot.Device = data.Install.Data.Device
-	}
-
-	if data.Install.Boot.Size == 0 {
-		data.Install.Boot.Size = DefaultSizeBootDevice
-	}
-
-	if data.Install.Boot.Kernel == "" {
-		data.Install.Boot.Kernel = DefaultKernelURL
-	}
-
-	if data.Install.Boot.Initramfs == "" {
-		data.Install.Boot.Initramfs = DefaultInitramfsURL
-	}
-
-	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.BootPartitionLabel); err != nil {
-			return errors.Wrap(err, "failed to verify disk availability")
-		}
-	}
-	return nil
-}
-
-// VerifyDiskAvailability verifies that no filesystems currently exist with
-// the labels used by the OS.
-func VerifyDiskAvailability(label string) (err error) {
-	var dev *probe.ProbedBlockDevice
-	if dev, err = probe.GetDevWithFileSystemLabel(label); err != nil {
-		// We return here because we only care if we can discover the
-		// device successfully and confirm that the disk is not in use.
-		// TODO(andrewrynhard): We should return a custom error type here
-		// that we can use to confirm the device was not found.
-		return nil
-	}
-	if dev.SuperBlock != nil {
-		return errors.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
-	}
-
-	return nil
-}
-
-// WipeDevices writes zeros to each block device in the preparation manifest.
-func WipeDevices(manifest *Manifest) (err error) {
-	var zero *os.File
-	if zero, err = os.Open("/dev/zero"); err != nil {
-		return err
-	}
-
-	for dev := range manifest.Targets {
-		var f *os.File
-		if f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice); err != nil {
-			return err
-		}
-		var size uint64
-		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
-			return errors.Errorf("failed to got block device size: %v", ret)
-		}
-		if _, err = io.CopyN(f, zero, int64(size)); err != nil {
-			return err
-		}
-
-		if err = f.Close(); err != nil {
-			return err
-		}
-	}
-
-	if err = zero.Close(); err != nil {
-		return err
-	}
-
-	return nil
+// Asset represents a file required by a target.
+type Asset struct {
+	Source      string
+	Destination string
 }
 
 // NewManifest initializes and returns a Manifest.
@@ -259,7 +84,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 					Destination: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Initramfs)),
 				},
 			},
-			MountPoint: filepath.Join(constants.NewRoot, constants.BootMountPoint),
+			MountPoint: constants.BootMountPoint,
 		}
 	}
 
@@ -269,7 +94,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		Size:       data.Install.Data.Size,
 		Force:      data.Install.Force,
 		Test:       false,
-		MountPoint: filepath.Join(constants.NewRoot, constants.DataMountPoint),
+		MountPoint: constants.DataMountPoint,
 	}
 
 	for _, target := range []*Target{bootTarget, dataTarget} {
@@ -299,33 +124,37 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	return manifest
 }
 
-// Manifest represents the instructions for preparing all block devices
-// for an installation.
-type Manifest struct {
-	Targets map[string][]*Target
+// ExecuteManifest partitions and formats all disks in a manifest.
+func (m *Manifest) ExecuteManifest(data *userdata.UserData, manifest *Manifest) (err error) {
+	for dev, targets := range manifest.Targets {
+		var bd *blockdevice.BlockDevice
+		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(data.Install.Force)); err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer bd.Close()
+
+		for _, target := range targets {
+			if err = target.Partition(bd); err != nil {
+				return errors.Wrap(err, "failed to partition device")
+			}
+		}
+
+		if err = bd.RereadPartitionTable(); err != nil {
+			return err
+		}
+
+		for _, target := range targets {
+			if err = target.Format(); err != nil {
+				return errors.Wrap(err, "failed to format device")
+			}
+		}
+	}
+
+	return nil
 }
 
-// Target represents an installation partition.
-type Target struct {
-	Label          string
-	MountPoint     string
-	Device         string
-	FileSystemType string
-	PartitionName  string
-	Size           uint
-	Force          bool
-	Test           bool
-	Assets         []*Asset
-	BlockDevice    *blockdevice.BlockDevice
-}
-
-// Asset represents a file required by a target.
-type Asset struct {
-	Source      string
-	Destination string
-}
-
-// Partition creates a new partition on the specified device
+// Partition creates a new partition on the specified device.
 // nolint: dupl, gocyclo
 func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
@@ -374,7 +203,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	return nil
 }
 
-// Format creates a xfs filesystem on the device/partition
+// Format creates a filesystem on the device/partition.
 func (t *Target) Format() error {
 	log.Printf("formatting partition %s - %s\n", t.PartitionName, t.Label)
 	if t.Label == constants.BootPartitionLabel {
@@ -387,10 +216,10 @@ func (t *Target) Format() error {
 	return xfs.MakeFS(t.PartitionName, opts...)
 }
 
-// Install handles downloading the necessary assets and extracting them to
-// the appropriate locations
+// Save handles downloading the necessary assets and extracting them to
+// the appropriate location.
 // nolint: gocyclo
-func (t *Target) Install() error {
+func (t *Target) Save() error {
 	// Download and extract all artifacts.
 	var sourceFile *os.File
 	var destFile *os.File
@@ -425,7 +254,6 @@ func (t *Target) Install() error {
 			source := u.Path
 			dest := filepath.Join(t.MountPoint, asset.Destination)
 
-			log.Printf("copying %s to %s\n", asset.Source, dest)
 			sourceFile, err = os.Open(source)
 			if err != nil {
 				return err
@@ -491,4 +319,121 @@ func (t *Target) Install() error {
 	}
 
 	return nil
+}
+
+// nolint: gocyclo, dupl
+func untar(tarball *os.File, dst string) error {
+
+	var input io.Reader
+	var err error
+
+	if strings.HasSuffix(tarball.Name(), ".tar.gz") {
+		input, err = gzip.NewReader(tarball)
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer input.(*gzip.Reader).Close()
+	} else {
+		input = tarball
+	}
+
+	tr := tar.NewReader(input)
+
+	for {
+		var header *tar.Header
+
+		header, err = tr.Next()
+
+		switch {
+		case err == io.EOF:
+			err = nil
+			return err
+		case err != nil:
+			return err
+		case header == nil:
+			continue
+		}
+
+		// the target location where the dir/file should be created
+		target := filepath.Join(dst, header.Name)
+
+		// May need to add in support for these
+		/*
+			// Type '1' to '6' are header-only flags and may not have a data body.
+				TypeLink    = '1' // Hard link
+				TypeSymlink = '2' // Symbolic link
+				TypeChar    = '3' // Character device node
+				TypeBlock   = '4' // Block device node
+				TypeDir     = '5' // Directory
+				TypeFifo    = '6' // FIFO node
+		*/
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err = os.MkdirAll(target, 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			var downloadedFileput *os.File
+
+			downloadedFileput, err = os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			if _, err = io.Copy(downloadedFileput, tr); err != nil {
+				return err
+			}
+
+			err = downloadedFileput.Close()
+			if err != nil {
+				return err
+			}
+		case tar.TypeSymlink:
+			dest := filepath.Join(dst, header.Name)
+			source := header.Linkname
+			if err := os.Symlink(source, dest); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func download(artifact, dest string) (*os.File, error) {
+	if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+		return nil, err
+	}
+	downloadedFile, err := os.Create(dest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the data
+	resp, err := http.Get(artifact)
+	if err != nil {
+		return downloadedFile, err
+	}
+
+	// nolint: errcheck
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		// nolint: errcheck
+		downloadedFile.Close()
+		return nil, errors.Errorf("failed to download %s, got %d", artifact, resp.StatusCode)
+	}
+
+	// Write the body to file
+	_, err = io.Copy(downloadedFile, resp.Body)
+	if err != nil {
+		return downloadedFile, err
+	}
+
+	// Reset downloadedFile file position to 0 so we can immediately read from it
+	_, err = downloadedFile.Seek(0, 0)
+
+	// TODO add support for checksum validation of downloaded file
+
+	return downloadedFile, err
 }

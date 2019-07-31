@@ -2,17 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package install
+package installer
 
 import (
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"gopkg.in/yaml.v2"
@@ -24,16 +18,6 @@ type validateSuite struct {
 
 func TestValidateSuite(t *testing.T) {
 	suite.Run(t, new(validateSuite))
-}
-
-func (suite *validateSuite) TestNewManifest() {
-	// Test with whole data
-	data := &userdata.UserData{}
-	err := yaml.Unmarshal([]byte(testConfig), data)
-	suite.Require().NoError(err)
-
-	manifests := NewManifest(data)
-	assert.Equal(suite.T(), 2, len(manifests.Targets["/dev/sda"]))
 }
 
 func (suite *validateSuite) TestVerifyDevice() {
@@ -53,55 +37,6 @@ func (suite *validateSuite) TestVerifyDevice() {
 		Device: "/dev/sda",
 	}
 	suite.Require().NoError(VerifyDataDevice(data))
-}
-
-func (suite *validateSuite) TestTargetInstall() {
-	// Create Temp dirname for mountpoint
-	dir, err := ioutil.TempDir("", "talostest")
-	suite.Require().NoError(err)
-
-	// nolint: errcheck
-	defer os.RemoveAll(dir)
-
-	// Create a tempfile for local copy
-	tempfile, err := ioutil.TempFile("", "example")
-	suite.Require().NoError(err)
-
-	// nolint: errcheck
-	defer os.Remove(dir)
-
-	// Create simple http test server to serve up some content
-	mux := http.NewServeMux()
-	mux.HandleFunc("/yolo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// nolint: errcheck
-		w.Write([]byte(testConfig))
-	}))
-	ts := httptest.NewServer(mux)
-
-	defer ts.Close()
-
-	// Attempt to download and copy files
-	target := &Target{
-		MountPoint: dir,
-		Assets: []*Asset{
-			{
-				Source:      "file://" + tempfile.Name(),
-				Destination: "/path/relative/to/mountpoint/example",
-			},
-			{
-				Source:      ts.URL + "/yolo",
-				Destination: "/path/relative/to/mountpoint/yolo",
-			},
-		},
-	}
-
-	suite.Require().NoError(target.Install())
-
-	for _, expectedFile := range target.Assets {
-		// Verify downloaded/copied file is at the appropriate location
-		_, err := os.Stat(filepath.Join(target.MountPoint, expectedFile.Destination))
-		suite.Require().NoError(err)
-	}
 }
 
 // TODO we should move this to a well defined location
