@@ -105,6 +105,7 @@ func recovery() {
 }
 
 func main() {
+	// TODO: this comment is outdated
 	// This is main entrypoint into init() execution, after kernel boot control is passsed
 	// to this function.
 	//
