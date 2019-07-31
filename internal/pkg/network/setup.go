@@ -102,19 +102,20 @@ func ifup(ifname string, mtu int) (err error) {
 	case netlink.OperUnknown:
 		fallthrough
 	case netlink.OperDown:
-		if mtu > 0 {
-			if err = netlink.LinkSetMTU(link, mtu); err != nil {
-				return err
-			}
-		}
 		if err = netlink.LinkSetUp(link); err != nil && err != syscall.EEXIST {
 			log.Printf("im failing here in operdown for %s", ifname)
 			return err
 		}
 	case netlink.OperUp:
-		return nil
 	default:
 		return errors.Errorf("cannot handle current state of %s: %s", ifname, attrs.OperState.String())
+	}
+
+	// Configure MTU if specified
+	if mtu > 0 {
+		if err = netlink.LinkSetMTU(link, mtu); err != nil {
+			return err
+		}
 	}
 
 	return nil
