@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:master-experimental
+# syntax = docker/dockerfile-upstream:1.1.2-experimental
 
 ARG TOOLS
 FROM $TOOLS AS tools

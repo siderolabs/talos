@@ -1,7 +1,7 @@
 TOOLS ?= autonomy/tools:b473afb
 
 # TODO(andrewrynhard): Move this logic to a shell script.
-BUILDKIT_VERSION ?= master@sha256:455f06ede03149051ce2734d9639c28aed1b6e8b8a0c607cb813e29b469a07d6
+BUILDKIT_VERSION ?= v0.6.0
 KUBECTL_VERSION ?= v1.14.1
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
