@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/talos-systems/talos/internal/pkg/net"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/net"
 	"golang.org/x/xerrors"
 
 	yaml "gopkg.in/yaml.v2"

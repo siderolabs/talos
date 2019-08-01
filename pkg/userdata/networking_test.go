@@ -44,17 +44,17 @@ func (suite *validateSuite) TestValidateDevice() {
 	suite.Require().NoError(err)
 
 	// nolint: gofmt
-	dev.Routes = []Route{Route{Gateway: "yolo"}}
+	dev.Routes = []Route{{Gateway: "yolo"}}
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().Error(err)
 
 	// nolint: gofmt
-	dev.Routes = []Route{Route{Gateway: "yolo", Network: "totes"}}
+	dev.Routes = []Route{{Gateway: "yolo", Network: "totes"}}
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().Error(err)
 
 	// nolint: gofmt
-	dev.Routes = []Route{Route{Gateway: "192.168.1.1", Network: "192.168.1.0/24"}}
+	dev.Routes = []Route{{Gateway: "192.168.1.1", Network: "192.168.1.0/24"}}
 	err = dev.Validate(CheckDeviceRoutes())
 	suite.Require().NoError(err)
 }

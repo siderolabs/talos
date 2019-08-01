@@ -19,10 +19,10 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
-	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/grpc/middleware/auth/basic"
-	"github.com/talos-systems/talos/internal/pkg/security/cis"
+	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

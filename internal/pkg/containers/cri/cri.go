@@ -14,9 +14,9 @@ import (
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 type inspector struct {

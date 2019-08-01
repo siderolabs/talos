@@ -11,11 +11,11 @@ import (
 
 	"github.com/spf13/cobra"
 	// "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (

@@ -7,7 +7,7 @@ package main
 import (
 	"github.com/talos-systems/talos/cmd/osctl/cmd"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/pkg/startup"
+	"github.com/talos-systems/talos/pkg/startup"
 )
 
 func main() {

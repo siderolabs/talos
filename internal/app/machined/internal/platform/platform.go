@@ -8,16 +8,16 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/aws"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/azure"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/baremetal"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/aws"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/azure"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/googlecloud"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/packet"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/cloud/vmware"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/container"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/googlecloud"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/iso"
-	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/packet"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/vmware"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

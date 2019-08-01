@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/services"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
-	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/startup"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

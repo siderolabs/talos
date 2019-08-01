@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/xfs"
-	gptpartition "github.com/talos-systems/talos/internal/pkg/blockdevice/table/gpt/partition"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/blockdevice"
+	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
+	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/talos/pkg/blockdevice/util"
+	"github.com/talos-systems/talos/pkg/constants"
 	"golang.org/x/sys/unix"
 )
 

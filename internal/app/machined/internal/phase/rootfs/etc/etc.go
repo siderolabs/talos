@@ -14,9 +14,9 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/version"
 
 	"golang.org/x/sys/unix"
 )

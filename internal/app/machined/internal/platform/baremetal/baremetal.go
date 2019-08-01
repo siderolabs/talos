@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"golang.org/x/sys/unix"

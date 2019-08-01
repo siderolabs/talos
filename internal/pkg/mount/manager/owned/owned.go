@@ -8,9 +8,9 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/constants"
 	"golang.org/x/sys/unix"
 )
 
