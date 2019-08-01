@@ -2,6 +2,9 @@
 kind: pipeline
 name: default
 
+node:
+  node-role.kubernetes.io/ci: ''
+
 services:
   - name: docker
     image: docker:dind
@@ -369,6 +372,9 @@ trigger:
 kind: pipeline
 name: e2e
 
+node:
+  node-role.kubernetes.io/ci: ''
+
 services:
   - name: docker
     image: docker:dind
@@ -464,6 +470,9 @@ trigger:
 ---
 kind: pipeline
 name: notify
+
+node:
+  node-role.kubernetes.io/ci: ''
 
 clone:
   disable: true
