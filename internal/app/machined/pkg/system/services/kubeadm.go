@@ -23,7 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services/kubeadm"
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
-	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"

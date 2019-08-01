@@ -18,12 +18,12 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/vfat"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/filesystem/xfs"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/table"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/table/gpt/partition"
-	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/blockdevice"
+	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
+	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
+	"github.com/talos-systems/talos/pkg/blockdevice/table"
+	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

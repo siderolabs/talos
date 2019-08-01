@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
-	"github.com/talos-systems/talos/internal/pkg/proc"
+	"github.com/talos-systems/talos/pkg/proc"
 )
 
 // Credentials represents the set of values required to initialize a vaild

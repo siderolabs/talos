@@ -22,9 +22,9 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/proto"
-	"github.com/talos-systems/talos/internal/pkg/archiver"
-	"github.com/talos-systems/talos/internal/pkg/chunker/stream"
 	"github.com/talos-systems/talos/internal/pkg/upgrade"
+	"github.com/talos-systems/talos/pkg/archiver"
+	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

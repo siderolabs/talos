@@ -26,15 +26,15 @@ import (
 
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
-	"github.com/talos-systems/talos/internal/pkg/chunker"
-	filechunker "github.com/talos-systems/talos/internal/pkg/chunker/file"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
-	"github.com/talos-systems/talos/internal/pkg/proc"
-	"github.com/talos-systems/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/pkg/chunker"
+	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/proc"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and

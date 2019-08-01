@@ -12,8 +12,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
-	"github.com/talos-systems/talos/internal/pkg/constants"
-	"github.com/talos-systems/talos/internal/pkg/grpc/middleware/auth/basic"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"gopkg.in/yaml.v2"
 )

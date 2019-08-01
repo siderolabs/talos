@@ -13,16 +13,16 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/internal/pkg/version"
+	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 	"golang.org/x/sys/unix"
 )
 

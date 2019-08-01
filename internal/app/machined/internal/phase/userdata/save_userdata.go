@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
-	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"gopkg.in/yaml.v2"
 )

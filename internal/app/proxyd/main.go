@@ -11,12 +11,12 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
-	"github.com/talos-systems/talos/internal/pkg/startup"
+	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	pkgnet "github.com/talos-systems/talos/internal/pkg/net"
+	pkgnet "github.com/talos-systems/talos/pkg/net"
 )
 
 var (

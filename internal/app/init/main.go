@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/squashfs"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/virtual"
 	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
+	"github.com/talos-systems/talos/pkg/constants"
 	"golang.org/x/sys/unix"
 )
 

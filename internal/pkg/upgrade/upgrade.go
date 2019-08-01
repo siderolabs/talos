@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/kubernetes"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"go.etcd.io/etcd/clientv3"

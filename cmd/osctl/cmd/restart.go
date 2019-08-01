@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
-	"github.com/talos-systems/talos/internal/pkg/constants"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // restartCmd represents the restart command

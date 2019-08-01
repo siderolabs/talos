@@ -8,7 +8,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
-	"github.com/talos-systems/talos/internal/pkg/kernel/sysctl"
+	"github.com/talos-systems/talos/pkg/sysctl"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

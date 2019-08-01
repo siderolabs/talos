@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/beevik/ntp"
-	"github.com/talos-systems/talos/internal/pkg/startup"
+	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

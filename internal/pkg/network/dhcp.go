@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/constants"
 
 	"github.com/talos-systems/dhcp/dhcpv4"
 	"github.com/talos-systems/dhcp/dhcpv4/client4"
