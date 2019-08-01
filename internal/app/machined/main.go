@@ -70,6 +70,9 @@ func run() (err error) {
 		phase.NewPhase(
 			"installation",
 			install.NewInstallTask(),
+		),
+		phase.NewPhase(
+			"overlay",
 			rootfs.NewMountOverlayTask(),
 		),
 		phase.NewPhase(
