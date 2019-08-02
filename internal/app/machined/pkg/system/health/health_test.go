@@ -27,11 +27,11 @@ func (suite *CheckSuite) TestHealthy() {
 		Timeout:      time.Millisecond,
 	}
 
-	var called int
+	var called uint32
 
 	// nolint: unparam
 	check := func(context.Context) error {
-		called++
+		atomic.AddUint32(&called, 1)
 
 		return nil
 	}
@@ -45,7 +45,13 @@ func (suite *CheckSuite) TestHealthy() {
 		errCh <- health.Run(ctx, &settings, &state, check)
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	for i := 0; i < 20; i++ {
+		time.Sleep(10 * time.Millisecond)
+
+		if atomic.LoadUint32(&called) > 2 {
+			break
+		}
+	}
 
 	ctxCancel()
 
