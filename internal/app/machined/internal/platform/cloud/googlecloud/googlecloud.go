@@ -5,6 +5,9 @@
 package googlecloud
 
 import (
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/internal/pkg/network"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -48,5 +51,13 @@ func (gc *GoogleCloud) UserData() (data *userdata.UserData, err error) {
 
 // Initialize implements the platform.Platform interface and handles additional system setup.
 func (gc *GoogleCloud) Initialize(data *userdata.UserData) (err error) {
-	return nil
+	var mountpoints *mount.Points
+	mountpoints, err = owned.MountPointsFromLabels()
+	if err != nil {
+		return err
+	}
+
+	m := manager.NewManager(mountpoints)
+
+	return m.MountAll()
 }

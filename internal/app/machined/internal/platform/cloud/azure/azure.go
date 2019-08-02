@@ -5,6 +5,9 @@
 package azure
 
 import (
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -69,5 +72,16 @@ func hostname() (err error) {
 
 // Initialize implements the platform.Platform interface and handles additional system setup.
 func (a *Azure) Initialize(data *userdata.UserData) (err error) {
+	var mountpoints *mount.Points
+	mountpoints, err = owned.MountPointsFromLabels()
+	if err != nil {
+		return err
+	}
+
+	m := manager.NewManager(mountpoints)
+	if err = m.MountAll(); err != nil {
+		return err
+	}
+
 	return hostname()
 }
