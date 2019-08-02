@@ -52,6 +52,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 		Prefix:   "",
 		ReadOnly: false,
 		Shared:   false,
+		Resize:   false,
 	}
 
 	for _, setter := range setters {

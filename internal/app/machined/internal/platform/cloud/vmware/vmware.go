@@ -10,6 +10,9 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/constants"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
@@ -67,5 +70,13 @@ func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
 
 // Initialize implements the platform.Platform interface and handles additional system setup.
 func (vmw *VMware) Initialize(data *userdata.UserData) (err error) {
-	return nil
+	var mountpoints *mount.Points
+	mountpoints, err = owned.MountPointsFromLabels()
+	if err != nil {
+		return err
+	}
+
+	m := manager.NewManager(mountpoints)
+
+	return m.MountAll()
 }
