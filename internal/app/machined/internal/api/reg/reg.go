@@ -9,10 +9,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
@@ -20,6 +20,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/internal/pkg/upgrade"
@@ -35,19 +36,12 @@ const OSPathSeparator = string(os.PathSeparator)
 // proto.Init interfaces.
 type Registrator struct {
 	Data *userdata.UserData
-
-	ShutdownCh chan struct{}
-	RebootCh   chan struct{}
-
-	rebootCalled uint32
 }
 
 // NewRegistrator builds new Registrator instance
 func NewRegistrator(data *userdata.UserData) *Registrator {
 	return &Registrator{
-		Data:       data,
-		ShutdownCh: make(chan struct{}),
-		RebootCh:   make(chan struct{}),
+		Data: data,
 	}
 }
 
@@ -60,10 +54,8 @@ func (r *Registrator) Register(s *grpc.Server) {
 func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto.RebootReply, err error) {
 	reply = &proto.RebootReply{}
 
-	// make sure channel is closed only once (and initiate either reboot or shutdown)
-	if atomic.CompareAndSwapUint32(&r.rebootCalled, 0, 1) {
-		close(r.RebootCh)
-	}
+	log.Printf("reboot via API received")
+	event.Bus().Publish(event.Reboot)
 
 	return
 }
@@ -72,10 +64,8 @@ func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto
 func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *proto.ShutdownReply, err error) {
 	reply = &proto.ShutdownReply{}
 
-	// make sure channel is closed only once (and initiate either reboot or shutdown)
-	if atomic.CompareAndSwapUint32(&r.rebootCalled, 0, 1) {
-		close(r.ShutdownCh)
-	}
+	log.Printf("shutdown via API received")
+	event.Bus().Publish(event.Shutdown)
 
 	return
 }

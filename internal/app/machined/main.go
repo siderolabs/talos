@@ -10,15 +10,20 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
+
+	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/app/machined/internal/phase/api"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/acpi"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/network"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/security"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/services"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -86,8 +91,9 @@ func run() (err error) {
 		),
 		phase.NewPhase(
 			"service setup",
-			api.NewAPITask(),
+			acpi.NewHandlerTask(),
 			services.NewServicesTask(),
+			signal.NewHandlerTask(),
 		),
 	)
 
@@ -108,26 +114,80 @@ func recovery() {
 	}
 }
 
+func sync() {
+	syncdone := make(chan struct{})
+
+	go func() {
+		defer close(syncdone)
+		unix.Sync()
+	}()
+
+	log.Printf("waiting for sync...")
+
+	for i := 29; i >= 0; i-- {
+		select {
+		case <-syncdone:
+			log.Printf("sync done")
+			return
+		case <-time.After(time.Second):
+		}
+		if i != 0 {
+			log.Printf("waiting %d more seconds for sync to finish", i)
+		}
+	}
+
+	log.Printf("sync hasn't completed in time, aborting...")
+}
+
+var rebootFlag = unix.LINUX_REBOOT_CMD_RESTART
+
+func reboot() {
+	// See http://man7.org/linux/man-pages/man2/reboot.2.html.
+	sync()
+
+	if unix.Reboot(rebootFlag) == nil {
+		select {}
+	}
+}
+
 func main() {
-	// TODO: this comment is outdated
-	// This is main entrypoint into init() execution, after kernel boot control is passsed
-	// to this function.
+	// This is main entrypoint into machined execution, control is passed here from init after switch root.
 	//
-	// When initram() finishes, it execs into itself with -switch-root flag, so control is passed
-	// once again into this function.
-	//
-	// When init() terminates either on normal shutdown (reboot, poweroff), or due to panic, control
+	// When machined terminates either on normal shutdown (reboot, poweroff), or due to panic, control
 	// goes through recovery() and reboot() functions below, which finalize node state - sync buffers,
 	// initiate poweroff or reboot. Also on shutdown, other deferred function are called, for example
 	// services are gracefully shutdown.
+
+	defer reboot()
 
 	// on any return from init.main(), initiate host reboot or shutdown
 	// handle any panics in the main goroutine, and proceed to reboot() above
 	defer recovery()
 
+	// subscribe for events
+	events := make(chan event.Type, 5) // provide some buffer to avoid blocking the bus
+	event.Bus().Subscribe(events)
+	defer event.Bus().Unsubscribe(events)
+
+	// run startup phases
 	if err := run(); err != nil {
 		panic(errors.Wrap(err, "boot failed"))
 	}
 
-	select {}
+	// start services
+	system.Services(nil).StartAll()
+	defer system.Services(nil).Shutdown()
+
+	// wait for events
+	for {
+		switch <-events {
+		case event.Reboot:
+			return
+		case event.Shutdown:
+			rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
+			return
+		case event.Upgrade:
+			// TODO: not implemented yet
+		}
+	}
 }

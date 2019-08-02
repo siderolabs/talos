@@ -100,6 +100,9 @@ func (s *singleton) Start(serviceIDs ...string) error {
 
 		s.runningMu.Lock()
 		_, running := s.running[id]
+		if !running {
+			s.running[id] = struct{}{}
+		}
 		s.runningMu.Unlock()
 
 		if running {
@@ -116,15 +119,24 @@ func (s *singleton) Start(serviceIDs ...string) error {
 			}()
 			defer s.wg.Done()
 
-			s.runningMu.Lock()
-			s.running[id] = struct{}{}
-			s.runningMu.Unlock()
-
 			svcrunner.Start()
 		}(id, svcrunner)
 	}
 
 	return multiErr.ErrorOrNil()
+}
+
+// StartAll starts all the services.
+func (s *singleton) StartAll() {
+	s.mu.Lock()
+	serviceIDs := make([]string, 0, len(s.state))
+	for id := range s.state {
+		serviceIDs = append(serviceIDs, id)
+	}
+	s.mu.Unlock()
+
+	// nolint: errcheck
+	s.Start(serviceIDs...)
 }
 
 // LoadAndStart combines Load and Start into single call.
