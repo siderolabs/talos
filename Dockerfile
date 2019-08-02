@@ -149,6 +149,20 @@ FROM scratch AS trustd
 COPY --from=trustd-build /trustd /trustd
 ENTRYPOINT ["/trustd"]
 
+# The networkd target builds the networkd image.
+
+FROM base AS networkd-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
+WORKDIR /src/internal/app/networkd
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /networkd
+RUN chmod +x /networkd
+
+FROM scratch AS networkd
+COPY --from=networkd-build /networkd /networkd
+ENTRYPOINT ["/networkd"]
+
 # The osctl targets build the osctl binaries.
 
 FROM base AS osctl-linux-build
@@ -207,6 +221,7 @@ COPY images/ntpd.tar /rootfs/usr/images/
 COPY images/osd.tar /rootfs/usr/images/
 COPY images/proxyd.tar /rootfs/usr/images/
 COPY images/trustd.tar /rootfs/usr/images/
+COPY images/networkd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh

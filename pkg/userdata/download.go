@@ -155,8 +155,6 @@ func backoff(attempt float64, wait float64) {
 	if snooze > wait {
 		snooze = wait
 	}
-
 	log.Printf("download attempt %g failed, retrying in %g seconds", attempt, snooze)
-
 	time.Sleep(time.Duration(snooze) * time.Second)
 }
