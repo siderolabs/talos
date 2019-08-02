@@ -48,6 +48,8 @@ func NewRunner(data *userdata.UserData, id string, main FuncMain, setters ...run
 		opts: runner.DefaultOptions(),
 	}
 
+	r.ctx, r.ctxCancel = context.WithCancel(context.Background())
+
 	for _, setter := range setters {
 		setter(r.opts)
 	}
@@ -62,8 +64,6 @@ func (r *goroutineRunner) Open(ctx context.Context) error {
 
 // Run implements the Runner interface.
 func (r *goroutineRunner) Run(eventSink events.Recorder) error {
-	r.ctx, r.ctxCancel = context.WithCancel(context.Background())
-
 	r.wg.Add(1)
 	defer r.wg.Done()
 
@@ -111,6 +111,8 @@ func (r *goroutineRunner) Stop() error {
 	r.ctxCancel()
 
 	r.wg.Wait()
+
+	r.ctx, r.ctxCancel = context.WithCancel(context.Background())
 
 	return nil
 }
