@@ -1,0 +1,134 @@
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Cluster
+metadata:
+  annotations: null
+  name: talos-e2e-azure
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosClusterProviderSpec
+      masters:
+        ips:
+        - 23.99.218.95
+        - 23.99.220.43
+        - 23.99.225.139
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Machine
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-azure
+    set: master
+  name: talos-e2e-azure-master-0
+spec:
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosMachineProviderSpec
+      platform:
+        config: |-
+          location: "centralus"
+          resourcegroup: "talos"
+          instances:
+            type:  "Standard_D2_v3"
+            image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos"
+            network: "talos-vnet"
+            subnet: "default"
+            disks:
+              size: 10
+        type: azure
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Machine
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-azure
+    set: master
+  name: talos-e2e-azure-master-1
+spec:
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosMachineProviderSpec
+      platform:
+        config: |-
+          location: "centralus"
+          resourcegroup: "talos"
+          instances:
+            type:  "Standard_D2_v3"
+            image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos"
+            network: "talos-vnet"
+            subnet: "default"
+            disks:
+              size: 10
+        type: azure
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Machine
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-azure
+    set: master
+  name: talos-e2e-azure-master-2
+spec:
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosMachineProviderSpec
+      platform:
+        config: |-
+          location: "centralus"
+          resourcegroup: "talos"
+          instances:
+            type:  "Standard_D2_v3"
+            image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos"
+            network: "talos-vnet"
+            subnet: "default"
+            disks:
+              size: 10
+        type: azure
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-azure
+    set: worker
+  name: talos-e2e-azure-workers
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      cluster.k8s.io/cluster-name: talos-e2e-azure
+      set: worker
+  template:
+    metadata:
+      labels:
+        cluster.k8s.io/cluster-name: talos-e2e-azure
+        set: worker
+    spec:
+      providerSpec:
+        value:
+          apiVersion: talosproviderconfig/v1alpha1
+          kind: TalosMachineProviderSpec
+          platform:
+            config: |-
+              location: "centralus"
+              resourcegroup: "talos"
+              instances:
+                type:  "Standard_D2_v3"
+                image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos"
+                network: "talos-vnet"
+                subnet: "default"
+                disks:
+                  size: 10
+            type: azure

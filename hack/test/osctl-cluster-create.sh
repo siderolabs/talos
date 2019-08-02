@@ -2,7 +2,7 @@
 
 set -eou pipefail
 
-export KUBERNETES_VERSION=v1.15.0
+export KUBERNETES_VERSION=v1.15.2
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export OSCTL="${PWD}/build/osctl-linux-amd64"

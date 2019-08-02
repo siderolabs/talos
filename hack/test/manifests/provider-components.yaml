@@ -182,6 +182,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: AZURE_AUTH_LOCATION
+          value: /.azure/service-account.json
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /.gce/service-account.json
         - name: PACKET_AUTH_TOKEN
@@ -195,15 +197,17 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 100m
-            memory: 30Mi
+            cpu: 1000m
+            memory: 1000Mi
           requests:
             cpu: 100m
-            memory: 20Mi
+            memory: 100Mi
         volumeMounts:
         - mountPath: /tmp/cert
           name: cert
           readOnly: true
+        - mountPath: /.azure
+          name: azure-credentials
         - mountPath: /.gce
           name: gce-credentials
         - mountPath: /.aws
@@ -216,6 +220,9 @@ spec:
         secret:
           defaultMode: 420
           secretName: cluster-api-provider-talos-webhook-server-secret
+      - name: azure-credentials
+        secret:
+          secretName: azure-credentials
       - name: gce-credentials
         secret:
           secretName: gce-credentials

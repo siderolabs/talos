@@ -219,9 +219,12 @@ osctl-cluster-create:
 basic-integration:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
+.PHONY: capi-setup
+capi-setup:
+	@TAG=$(TAG) ./hack/test/$@.sh
+
 .PHONY: e2e
 e2e-integration:
-    ## TODO(rsmitty): Bump this k8s version back up once the bug is fixed where kubectl can't scale crds
 	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: test
