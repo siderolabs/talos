@@ -14,5 +14,5 @@ tar -xf google-cloud-sdk-253.0.0-linux-x86_64.tar.gz
 ./google-cloud-sdk/bin/gsutil cp ./build/talos-gce.tar.gz gs://talos-e2e
 
 ## Create image from talos-gce
-./google-cloud-sdk/bin/gcloud --quiet --project talos-testbed compute images delete talos-e2e
+./google-cloud-sdk/bin/gcloud --quiet --project talos-testbed compute images delete talos-e2e || true ##Ignore error if image doesn't exist
 ./google-cloud-sdk/bin/gcloud --quiet --project talos-testbed compute images create talos-e2e --source-uri gs://talos-e2e/talos-gce.tar.gz

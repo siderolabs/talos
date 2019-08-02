@@ -1,10 +1,11 @@
-export KUBERNETES_VERSION=v1.14.4
+export KUBERNETES_VERSION=v1.14.5
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export OSCTL="${PWD}/build/osctl-linux-amd64"
 export TALOSCONFIG="${TMP}/talosconfig"
 export KUBECONFIG="${TMP}/kubeconfig"
-## Long timeout due to packet provisioning times
+
+## Long timeout due to provisioning times
 export TIMEOUT=9000
 
 ## Total number of nodes we'll be waiting to come up (3 Masters + 3 Workers)
