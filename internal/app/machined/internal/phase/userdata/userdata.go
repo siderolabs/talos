@@ -8,7 +8,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
-	"github.com/talos-systems/talos/internal/pkg/network"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
@@ -33,11 +32,6 @@ func (task *UserData) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *UserData) standard(platform platform.Platform, data *userdata.UserData) (err error) {
-	// Setup basic networking for the purposes of downloading the userdata.
-	if err = network.InitNetwork(); err != nil {
-		return err
-	}
-
 	var d *userdata.UserData
 	d, err = platform.UserData()
 	if err != nil {

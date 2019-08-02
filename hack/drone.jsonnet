@@ -2,42 +2,43 @@
 // that we create a pipeline for all of the major tasks we need to perform
 // (e.g. builds, E2E testing, conformance testing, releases). Each pipeline
 // after the default builds on a previous pipeline.
+// Generate with `drone jsonnet --source ./hack/drone.jsonnet --stream`
 
-local build_container = "autonomy/build-container:latest";
+local build_container = 'autonomy/build-container:latest';
 
 local volumes = {
   dockersock: {
     pipeline: {
-      name: "dockersock",
+      name: 'dockersock',
       temp: {},
     },
     step: {
       name: $.dockersock.pipeline.name,
-      path: "/var/run",
+      path: '/var/run',
     },
   },
 
   dev: {
     pipeline: {
-      name: "dev",
+      name: 'dev',
       host: {
-        path: "/dev"
+        path: '/dev',
       },
     },
     step: {
       name: $.dev.pipeline.name,
-      path: "/dev",
+      path: '/dev',
     },
   },
 
   tmp: {
     pipeline: {
-      name: "tmp",
+      name: 'tmp',
       temp: {},
     },
     step: {
       name: $.tmp.pipeline.name,
-      path: "/tmp",
+      path: '/tmp',
     },
   },
 
@@ -58,36 +59,36 @@ local volumes = {
 // the way promotions work in drone. Promotions are assumed to be against
 // the master branch, causing improper clones when promoting a pull request.
 local clone = {
-  name: "clone",
-  image: "autonomy/drone-git:latest",
-  pull: "always",
+  name: 'clone',
+  image: 'autonomy/drone-git:latest',
+  pull: 'always',
 };
 
 // This provides the docker service.
 local docker = {
-  name: "docker",
-  image: "docker:19.03-dind",
-  entrypoint: ["dockerd"],
+  name: 'docker',
+  image: 'docker:19.03-dind',
+  entrypoint: ['dockerd'],
   privileged: true,
   command: [
-    "--dns=8.8.8.8",
-    "--dns=8.8.4.4",
-    "--mtu=1440",
-    "--log-level=error",
+    '--dns=8.8.8.8',
+    '--dns=8.8.4.4',
+    '--mtu=1440',
+    '--log-level=error',
   ],
   volumes: volumes.ForStep(),
 };
 
 // This step is used only when `drone exec` is executed.
 local buildkit = {
-  name: "buildkit",
-  image: "moby/buildkit:v0.6.0",
+  name: 'buildkit',
+  image: 'moby/buildkit:v0.6.0',
   privileged: true,
   detach: true,
-  commands: ["buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure"],
+  commands: ['buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure'],
   when: {
     event: {
-      include: [""],
+      include: [''],
     },
   },
 };
@@ -98,11 +99,11 @@ local buildkit = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, target="", depends_on=[clone], environment={}) = {
-  local make = if target == "" then std.format("make %s", name) else std.format("make %s", target),
+local Step(name, target='', depends_on=[clone], environment={}) = {
+  local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
   local common_env_vars = {
-      BUILDKIT_HOST: "${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}",
-      BINDIR: "/usr/local/bin",
+    BUILDKIT_HOST: '${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}',
+    BINDIR: '/usr/local/bin',
   },
 
   name: name,
@@ -116,9 +117,9 @@ local Step(name, target="", depends_on=[clone], environment={}) = {
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
 local Pipeline(name, steps=[], depends_on=[], with_clone=true, with_buildkit=false, with_docker=true) = {
-  local node = {"node-role.kubernetes.io/ci": ""},
+  local node = { 'node-role.kubernetes.io/ci': '' },
 
-  kind: "pipeline",
+  kind: 'pipeline',
   name: name,
   clone: {
     disable: true,
@@ -140,9 +141,10 @@ local osd = Step("osd");
 local trustd = Step("trustd");
 local proxyd = Step("proxyd");
 local ntpd = Step("ntpd");
+local networkd = Step("networkd");
 local osctl_linux = Step("osctl-linux");
 local osctl_darwin = Step("osctl-darwin");
-local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, proxyd, ntpd]);
+local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, proxyd, ntpd, networkd]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
@@ -154,33 +156,33 @@ local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
 local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux]);
 
 local coverage = {
-  name: "coverage",
-  image: "plugins/codecov",
-  settings:{
-    token: {from_secret: "codecov_token"},
-    files: ["coverage.txt"],
+  name: 'coverage',
+  image: 'plugins/codecov',
+  settings: {
+    token: { from_secret: 'codecov_token' },
+    files: ['coverage.txt'],
   },
   when: {
-    event: ["pull_request"],
+    event: ['pull_request'],
   },
   depends_on: [unit_tests.name],
 };
 
 local push = {
-  name: "push",
-  image: "autonomy/build-container:latest",
-  pull: "always",
-  environment:{
-    DOCKER_USERNAME: {from_secret: "docker_username"},
-    DOCKER_PASSWORD: {from_secret: "docker_password"},
+  name: 'push',
+  image: 'autonomy/build-container:latest',
+  pull: 'always',
+  environment: {
+    DOCKER_USERNAME: { from_secret: 'docker_username' },
+    DOCKER_PASSWORD: { from_secret: 'docker_password' },
   },
-  commands: ["make gitmeta", "make login", "make push"],
+  commands: ['make gitmeta', 'make login', 'make push'],
   volumes: volumes.ForStep(),
   when: {
     event: {
       exclude: [
-        "pull_request",
-        "promote",
+        'pull_request',
+        'promote',
       ],
     },
   },
@@ -193,6 +195,7 @@ local default_steps = [
   trustd,
   proxyd,
   ntpd,
+  networkd,
   osctl_linux,
   osctl_darwin,
   rootfs,
@@ -212,18 +215,18 @@ local default_steps = [
 local default_trigger = {
   trigger: {
     cron: {
-      exclude: ["nightly"]
+      exclude: ['nightly'],
     },
     event: {
       exclude: [
-        "tag",
-        "promote",
-      ]
+        'tag',
+        'promote',
+      ],
     },
   },
 };
 
-local default_pipeline = Pipeline("default", default_steps) + default_trigger;
+local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // E2E pipeline.
 
@@ -255,12 +258,12 @@ local e2e_steps = default_steps + [
 local e2e_trigger = {
   trigger: {
     target: {
-      include: ["e2e"]
+      include: ['e2e'],
     },
   },
 };
 
-local e2e_pipeline = Pipeline("e2e", e2e_steps) + e2e_trigger;
+local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
@@ -280,56 +283,56 @@ local conformance_steps = default_steps + [
 local conformance_trigger = {
   trigger: {
     target: {
-      include: ["conformance"]
+      include: ['conformance'],
     },
   },
 };
 
-local conformance_pipeline = Pipeline("conformance", conformance_steps) + conformance_trigger;
+local conformance_pipeline = Pipeline('conformance', conformance_steps) + conformance_trigger;
 
 // Nightly pipeline.
 
 local nightly_trigger = {
   trigger: {
     cron: {
-      include: ["nightly"]
+      include: ['nightly'],
     },
   },
 };
 
-local nightly_pipeline = Pipeline("nightly", conformance_steps) + nightly_trigger;
+local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigger;
 
 // Release pipeline.
 
 local aws_env_vars = {
-  AWS_ACCESS_KEY_ID: {from_secret: "aws_access_key_id"},
-  AWS_SECRET_ACCESS_KEY: {from_secret: "aws_secret_access_key"},
-  AWS_DEFAULT_REGION: "us-west-2",
-  AWS_PUBLISH_REGIONS: "us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1",
+  AWS_ACCESS_KEY_ID: { from_secret: 'aws_access_key_id' },
+  AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
+  AWS_DEFAULT_REGION: 'us-west-2',
+  AWS_PUBLISH_REGIONS: 'us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1',
 };
 
 local ami_trigger = {
   when: {
-    event: ["tag"],
-  }
+    event: ['tag'],
+  },
 };
 
-local kernel = Step("kernel");
-local iso = Step("iso", depends_on=[installer]);
-local image_aws = Step("image-aws", depends_on=[push], environment=aws_env_vars) + ami_trigger;
+local kernel = Step('kernel');
+local iso = Step('iso', depends_on=[installer]);
+local image_aws = Step('image-aws', depends_on=[push], environment=aws_env_vars) + ami_trigger;
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
-local release ={
-  name: "release",
-  image: "plugins/github-release",
-  settings:{
-    api_key: {from_secret: "github_token"},
+local release = {
+  name: 'release',
+  image: 'plugins/github-release',
+  settings: {
+    api_key: { from_secret: 'github_token' },
     draft: true,
-    files: ["build/*"],
-    checksum: ["sha256", "sha512"],
+    files: ['build/*'],
+    checksum: ['sha256', 'sha512'],
   },
   when: {
-    event: ["tag"],
+    event: ['tag'],
   },
   depends_on: [kernel.name, iso.name, image_gcp.name, image_azure.name, image_aws.name, push.name]
 };
@@ -346,22 +349,22 @@ local release_steps = default_steps + [
 local release_trigger = {
   trigger: {
     event: [
-      "tag",
+      'tag',
     ],
   },
 };
 
-local release_pipeline = Pipeline("release", release_steps) + release_trigger;
+local release_pipeline = Pipeline('release', release_steps) + release_trigger;
 
 // Notify pipeline.
 
 local notify = {
-  name: "slack",
-  image: "plugins/slack",
+  name: 'slack',
+  image: 'plugins/slack',
   settings:
     {
-     webhook: {from_secret: "slack_webhook"},
-     channel: "proj-talos-maint",
+      webhook: { from_secret: 'slack_webhook' },
+      channel: 'proj-talos-maint',
     },
 };
 
@@ -369,7 +372,7 @@ local notify_steps = [notify];
 
 local notify_trigger = {
   trigger: {
-    status: ["success", "failure"],
+    status: ['success', 'failure'],
   },
 };
 
@@ -383,7 +386,7 @@ local notify_depends_on = {
   ],
 };
 
-local notify_pipeline = Pipeline("notify", notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false, false) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false, false) + notify_trigger;
 
 // Final configuration file definition.
 

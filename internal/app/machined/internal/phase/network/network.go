@@ -5,12 +5,15 @@
 package network
 
 import (
+	"log"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs/etc"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/network"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -33,12 +36,46 @@ func (task *UserDefinedNetwork) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc
 	}
 }
 
+// nolint: gocyclo
 func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	if err = network.SetupNetwork(data); err != nil {
+	nwd, err := networkd.New()
+	if err != nil {
+		return err
+	}
+
+	// Convert links to nic
+	log.Println("Discovering local network interfaces")
+	netconf, err := nwd.Discover()
+	if err != nil {
+		return err
+	}
+
+	// Configure specified interface
+	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
+	var iface *nic.NetworkInterface
+	for name, opts := range netconf {
+		log.Printf("Creating interface %s", name)
+		iface, err = nic.Create(opts...)
+		if err != nil {
+			return err
+		}
+
+		netIfaces = append(netIfaces, iface)
+	}
+
+	// kick off the addressing mechanism
+	// Add any necessary routes
+	log.Println("Configuring interface addressing")
+	if err = nwd.Configure(netIfaces...); err != nil {
 		return err
 	}
 
 	// Create /etc/hosts.
+	// Priority is:
+	// 1. Userdata
+	// 2. Kernel Arg
+	// 3. DHCP response
+	// 4. failsafe - talos-<ip addr>
 	var hostname string
 	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
 	switch {
@@ -46,12 +83,11 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 		hostname = data.Networking.OS.Hostname
 	case kernelHostname != nil:
 		hostname = *kernelHostname
+	case nwd.Hostname() != "":
+		hostname = nwd.Hostname(netIfaces...)
 	default:
 		// will default in Hosts()
 	}
 
-	if err = etc.Hosts(hostname); err != nil {
-		return err
-	}
-	return nil
+	return etc.Hosts(hostname)
 }

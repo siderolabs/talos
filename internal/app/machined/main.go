@@ -59,6 +59,13 @@ func run() (err error) {
 			rootfs.NewNetworkConfigurationTask(),
 			rootfs.NewOSReleaseTask(),
 		),
+		// Break out network setup into a separate phase
+		// so we can use the well known resolv.conf location
+		// /etc/resolv.conf
+		phase.NewPhase(
+			"initial network",
+			network.NewUserDefinedNetworkTask(),
+		),
 		phase.NewPhase(
 			"userdata",
 			userdatatask.NewUserDataTask(),
@@ -70,7 +77,6 @@ func run() (err error) {
 		phase.NewPhase(
 			"user requests",
 			userdatatask.NewPKITask(),
-			network.NewUserDefinedNetworkTask(),
 			userdatatask.NewExtraEnvVarsTask(),
 			userdatatask.NewExtraFilesTask(),
 		),

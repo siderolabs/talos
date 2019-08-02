@@ -99,6 +99,23 @@ steps:
   depends_on:
   - clone
 
+- name: networkd
+  image: autonomy/build-container:latest
+  commands:
+  - make networkd
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: osctl-linux
   image: autonomy/build-container:latest
   commands:
@@ -153,6 +170,7 @@ steps:
   - trustd
   - proxyd
   - ntpd
+  - networkd
 
 - name: initramfs
   image: autonomy/build-container:latest
@@ -205,22 +223,22 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
-  image: autonomy/build-container:latest
-  commands:
-  - make lint
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
+#- name: lint
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make lint
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - clone
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -472,6 +490,23 @@ steps:
   depends_on:
   - clone
 
+- name: networkd
+  image: autonomy/build-container:latest
+  commands:
+  - make networkd
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: osctl-linux
   image: autonomy/build-container:latest
   commands:
@@ -526,6 +561,7 @@ steps:
   - trustd
   - proxyd
   - ntpd
+  - networkd
 
 - name: initramfs
   image: autonomy/build-container:latest
@@ -578,22 +614,22 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
-  image: autonomy/build-container:latest
-  commands:
-  - make lint
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
+#- name: lint
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make lint
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - clone
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -981,6 +1017,23 @@ steps:
   depends_on:
   - clone
 
+- name: networkd
+  image: autonomy/build-container:latest
+  commands:
+  - make networkd
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: osctl-linux
   image: autonomy/build-container:latest
   commands:
@@ -1035,6 +1088,7 @@ steps:
   - trustd
   - proxyd
   - ntpd
+  - networkd
 
 - name: initramfs
   image: autonomy/build-container:latest
@@ -1087,22 +1141,22 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
-  image: autonomy/build-container:latest
-  commands:
-  - make lint
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
+#- name: lint
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make lint
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - clone
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -1492,6 +1546,23 @@ steps:
   depends_on:
   - clone
 
+- name: networkd
+  image: autonomy/build-container:latest
+  commands:
+  - make networkd
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: osctl-linux
   image: autonomy/build-container:latest
   commands:
@@ -1546,6 +1617,7 @@ steps:
   - trustd
   - proxyd
   - ntpd
+  - networkd
 
 - name: initramfs
   image: autonomy/build-container:latest
@@ -1598,22 +1670,22 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
-  image: autonomy/build-container:latest
-  commands:
-  - make lint
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
+#- name: lint
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make lint
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - clone
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -2003,6 +2075,23 @@ steps:
   depends_on:
   - clone
 
+- name: networkd
+  image: autonomy/build-container:latest
+  commands:
+  - make networkd
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: osctl-linux
   image: autonomy/build-container:latest
   commands:
@@ -2057,6 +2146,7 @@ steps:
   - trustd
   - proxyd
   - ntpd
+  - networkd
 
 - name: initramfs
   image: autonomy/build-container:latest
@@ -2109,22 +2199,22 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
-  image: autonomy/build-container:latest
-  commands:
-  - make lint
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
+#- name: lint
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make lint
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - clone
 
 - name: markdownlint
   image: autonomy/build-container:latest
