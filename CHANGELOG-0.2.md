@@ -1,3 +1,22 @@
+# [](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.4...v) (2019-08-05)
+
+
+### Bug Fixes
+
+* **init:** flip concurrency of tasks/services, fix small issues ([084378a](https://github.com/talos-systems/talos/commit/084378a))
+* create overlay mounts after install ([835d72b](https://github.com/talos-systems/talos/commit/835d72b))
+* mount the owned partitions in cloud platforms ([a9c4a95](https://github.com/talos-systems/talos/commit/a9c4a95))
+* set mtu value regardless of interface state ([bc5fe08](https://github.com/talos-systems/talos/commit/bc5fe08))
+
+
+### Features
+
+* break up osctl cluster create and basic/e2e tests ([38dfddb](https://github.com/talos-systems/talos/commit/38dfddb))
+* **init:** implement complete API for service lifecycle (start/stop) ([9c63f4e](https://github.com/talos-systems/talos/commit/9c63f4e))
+* **osctl:** allow configurable number of masters to `cluster create` ([ac963ad](https://github.com/talos-systems/talos/commit/ac963ad))
+
+
+
 # [v0.2.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.3...v0.2.0-alpha.4) (2019-07-30)
 
 
