@@ -100,7 +100,12 @@ func (suite *CheckSuite) TestHealthChange() {
 
 	atomic.StoreUint32(&healthy, 1)
 
-	time.Sleep(50 * time.Millisecond)
+	for i := 0; i < 10; i++ {
+		time.Sleep(20 * time.Millisecond)
+		if *state.Get().Healthy {
+			break
+		}
+	}
 
 	suite.Require().True(*state.Get().Healthy)
 	suite.Require().Equal("", state.Get().LastMessage)
