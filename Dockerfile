@@ -1,6 +1,12 @@
 # syntax = docker/dockerfile-upstream:1.1.2-experimental
 
+# Meta args applied to stage base names.
+
 ARG TOOLS
+ARG GO_VERSION
+
+# The tools target provides base toolchain for the build.
+
 FROM $TOOLS AS tools
 ENV PATH /toolchain/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
@@ -266,6 +272,16 @@ ARG TESTPKGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache/go-build /bin/test.sh ${TESTPKGS}
 FROM scratch AS test
 COPY --from=test-runner /src/coverage.txt /coverage.txt
+
+# The test-race target performs tests with race detector.
+
+FROM golang:${GO_VERSION} AS test-race
+COPY --from=base /src /src
+COPY --from=base /go/pkg/mod /go/pkg/mod
+WORKDIR /src
+ENV GO111MODULE on
+ARG TESTPKGS
+RUN --mount=type=cache,target=/root/.cache/go-build go test -v -race ${TESTPKGS}
 
 # The lint target performs linting on the source code.
 

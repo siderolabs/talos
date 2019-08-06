@@ -145,6 +145,20 @@ steps:
     depends_on:
       - build.Lint
 
+  - name: test.UnitTestRace
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BINDIR: /usr/local/bin
+    commands:
+      - make test-race
+    volumes:
+      - name: dockersock
+        path: /var/run/
+    depends_on:
+      - build.Lint
+
 # Phase 3
   - name: build.Rootfs
     image: autonomy/build-container:latest
