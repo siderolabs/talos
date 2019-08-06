@@ -3,6 +3,7 @@ TOOLS ?= autonomy/tools:b473afb
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.6.0
 KUBECTL_VERSION ?= v1.14.1
+GO_VERSION ?= 1.12
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
 BUILDKIT_CONTAINER_NAME ?= talos-buildkit
@@ -47,6 +48,7 @@ COMMON_ARGS += --local dockerfile=.
 COMMON_ARGS += --opt build-arg:TOOLS=$(TOOLS)
 COMMON_ARGS += --opt build-arg:SHA=$(SHA)
 COMMON_ARGS += --opt build-arg:TAG=$(TAG)
+COMMON_ARGS += --opt build-arg:GO_VERSION=$(GO_VERSION)
 
 DOCKER_ARGS ?=
 # to allow tests to run containerd
@@ -229,11 +231,18 @@ e2e-integration:
 
 .PHONY: test
 test: buildkitd
-	@mkdir -p build
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--opt target=$@ \
 		--output type=local,dest=./ \
+		--opt build-arg:TESTPKGS=$(TESTPKGS) \
+		$(COMMON_ARGS)
+
+.PHONY: test-race
+test-race: buildkitd
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--opt target=$@ \
 		--opt build-arg:TESTPKGS=$(TESTPKGS) \
 		$(COMMON_ARGS)
 
