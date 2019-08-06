@@ -1,9 +1,9 @@
 ---
 kind: pipeline
-name: default
+name: build
 
 node:
-  node-role.kubernetes.io/ci: ''
+  node-role.kubernetes.io/ci: ""
 
 services:
   - name: docker
@@ -12,6 +12,8 @@ services:
     privileged: true
     command:
       - --dns=8.8.8.8
+      - --log-level=error
+      - --mtu=1440
     volumes:
       - name: dockersock
         path: /var/run
@@ -21,106 +23,134 @@ services:
         path: /tmp
 
 steps:
-  - name: fetch
+# Phase 1
+  - name: git.FetchTags
     image: docker:git
     commands:
       - git fetch --tags
     when:
       event: tag
 
-  - name: lint
+  - name: artifact.Kernel
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+    commands:
+      - make kernel
+    volumes:
+      - name: dockersock
+        path: /var/run
+    when:
+      event: tag
+
+  - name: buildkit
+    detach: true
+    image: moby/buildkit:v0.6.0
+    privileged: true
+    commands:
+      - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
+    when:
+      event:
+        - ""
+
+# Phase 2
+  - name: build.Lint
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make lint
     depends_on:
-      - fetch
+      - git.FetchTags
+      - buildkit
 
-  - name: build-machined
+  - name: build.Machined
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make machined
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: build-osd
+  - name: build.Osd
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make osd
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: build-trustd
+  - name: build.Trustd
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make trustd
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: build-proxyd
+  - name: build.Proxyd
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make proxyd
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: build-ntpd
+  - name: build.Ntpd
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make ntpd
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: build-osctl-darwin
+  - name: build.Osctl-Darwin
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make osctl-darwin
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: build-osctl-linux
+  - name: build.Osctl-Linux
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make osctl-linux
     depends_on:
-      - lint
+      - build.Lint
 
-  - name: rootfs
+# Phase 3
+  - name: build.Rootfs
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make rootfs
@@ -128,17 +158,18 @@ steps:
       - name: dockersock
         path: /var/run
     depends_on:
-      - build-machined
-      - build-osd
-      - build-proxyd
-      - build-trustd
-      - build-ntpd
+      - build.Machined
+      - build.Osd
+      - build.Proxyd
+      - build.Trustd
+      - build.Ntpd
 
-  - name: initramfs
+# Phase 4
+  - name: build.Initramfs
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make initramfs
@@ -146,28 +177,13 @@ steps:
       - name: dockersock
         path: /var/run
     depends_on:
-      - rootfs
+      - build.Rootfs
 
-  - name: installer
+  - name: build.Image
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make installer
-    volumes:
-      - name: dockersock
-        path: /var/run
-    depends_on:
-      - rootfs
-      - initramfs
-
-  - name: talos-image
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make talos
@@ -175,13 +191,13 @@ steps:
       - name: dockersock
         path: /var/run
     depends_on:
-      - rootfs
+      - build.Rootfs
 
-  - name: test
+  - name: test.UnitTest
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make test
@@ -189,9 +205,28 @@ steps:
       - name: dockersock
         path: /var/run/
     depends_on:
-      - rootfs
+      - build.Rootfs
+      - build.Proxyd
+      - build.Osd
 
-  - name: coverage
+
+# Phase 5
+  - name: build.Installer
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+    commands:
+      - make installer
+    volumes:
+      - name: dockersock
+        path: /var/run
+    depends_on:
+      - build.Initramfs
+
+# Phase 5.1
+  - name: test.CoverageReport
     image: plugins/codecov
     settings:
       token:
@@ -199,13 +234,14 @@ steps:
       files:
         - coverage.txt
     depends_on:
-      - test
+      - test.UnitTest
 
-  - name: basic-integration
+# Phase 5.2
+  - name: test.Integration
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make basic-integration
@@ -218,29 +254,15 @@ steps:
       - name: tmp
         path: /tmp
     depends_on:
-      - talos-image
+      - build.Image
+      - build.Osctl-Linux
 
-  - name: kernel
+# Phase 6
+  - name: artifact.Iso
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
-      BINDIR: /usr/local/bin
-    commands:
-      - make kernel
-    volumes:
-      - name: dockersock
-        path: /var/run
-    when:
-      event: tag
-    depends_on:
-      - basic-integration
-
-  - name: iso
-    image: autonomy/build-container:latest
-    pull: always
-    environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make talos-iso
@@ -250,13 +272,13 @@ steps:
     when:
       event: tag
     depends_on:
-      - basic-integration
+      - build.Installer
 
-  - name: gce
+  - name: artifact.Gce
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make talos-gce
@@ -268,13 +290,13 @@ steps:
     when:
       event: tag
     depends_on:
-      - basic-integration
+      - build.Installer
 
-  - name: azure
+  - name: artifact.Azure
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
     commands:
       - make talos-azure
@@ -286,10 +308,10 @@ steps:
     when:
       event: tag
     depends_on:
-      - basic-integration
-      - gce
+      # TODO look into this; are we really dependent on gce here?
+      - artifact.Gce
 
-  - name: push
+  - name: artifact.Push
     image: autonomy/build-container:latest
     pull: always
     environment:
@@ -306,16 +328,15 @@ steps:
         path: /var/run
     when:
       event:
-        exclude:
-          - pull_request
+        - push
     depends_on:
-      - basic-integration
+      - test.Integration
 
-  - name: aws
+  - name: artifact.Aws
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -324,7 +345,9 @@ steps:
       AWS_DEFAULT_REGION: us-west-2
       AWS_PUBLISH_REGIONS: us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1
     commands:
-      - make talos-aws
+      - make talos-aws | tee -a amibuild.log
+      # may need to move note location to prevent git tree from being deer-tay
+      - awk 'BEGIN{ print "Official AMIs:" }; NF == 2  && /ami-/ { print "- "$0 }' amibuild.log > note
     volumes:
       - name: dockersock
         path: /var/run
@@ -333,8 +356,8 @@ steps:
     when:
       event: tag
     depends_on:
-      - basic-integration
-      - push
+      - test.Integration
+      - artifact.Push
 
   - name: release
     image: plugins/github-release
@@ -342,6 +365,7 @@ steps:
       api_key:
         from_secret: github_token
       draft: true
+      note: note
       files:
         - build/*
       checksum:
@@ -350,11 +374,12 @@ steps:
     when:
       event: tag
     depends_on:
-      - basic-integration
-      - kernel
-      - iso
-      - gce
-      - azure
+      - test.Integration
+      - artifact.Kernel
+      - artifact.Iso
+      - artifact.Gce
+      - artifact.Azure
+      - artifact.Aws
 
 volumes:
   - name: dockersock
@@ -367,11 +392,15 @@ volumes:
 
 trigger:
   cron:
-    exclude: [nightly]
+    exclude:
+      - nightly
+  target:
+    exclude:
+      - e2e.promotion
 
 ---
 kind: pipeline
-name: e2e
+name: e2e.cron
 
 node:
   node-role.kubernetes.io/ci: ''
@@ -382,7 +411,7 @@ services:
     privileged: true
     command:
       - --dns=8.8.8.8
-      - --dns=8.8.4.4
+      - --log-level=error
       - --mtu=1440
     volumes:
       - name: dockersock
@@ -393,11 +422,21 @@ services:
         path: /tmp
 
 steps:
-  - name: osctl-cluster-create
+  - name: buildkit
+    detach: true
+    image: moby/buildkit:v0.6.0
+    privileged: true
+    commands:
+      - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
+    when:
+      event:
+        - ""
+
+  - name: build.ClusterCreate
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
       AZURE_SVC_ACCT:
         from_secret: azure_svc_acct
@@ -416,12 +455,14 @@ steps:
         path: /var/run
       - name: tmp
         path: /tmp
+    depends_on:
+      - buildkit
 
-  - name: azure-image
+  - name: build.AzureImage
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
       AZURE_SVC_ACCT:
         from_secret: azure_svc_acct
@@ -437,14 +478,15 @@ steps:
         path: /dev
       - name: tmp
         path: /tmp
+    depends_on:
+      - buildkit
 
-  - name: azure-e2e-integration
+  - name: e2e.Azure
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
-      CONFORMANCE: "true"
       PLATFORM: azure
     commands:
       - make e2e-integration
@@ -454,14 +496,14 @@ steps:
       - name: tmp
         path: /tmp
     depends_on:
-      - azure-image
-      - osctl-cluster-create
+      - build.AzureImage
+      - build.ClusterCreate
 
-  - name: gce-image
+  - name: build.GceImage
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
       GCE_SVC_ACCT:
         from_secret: gce_svc_acct
@@ -475,14 +517,15 @@ steps:
         path: /var/run
       - name: dev
         path: /dev
+    depends_on:
+      - buildkit
 
-  - name: gce-e2e-integration
+  - name: e2e.Gce
     image: autonomy/build-container:latest
     pull: always
     environment:
-      BUILDKIT_HOST: tcp://buildkitd.ci.svc:1234
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
-      CONFORMANCE: "true"
       PLATFORM: gce
     commands:
       - make e2e-integration
@@ -492,8 +535,8 @@ steps:
       - name: tmp
         path: /tmp
     depends_on:
-      - gce-image
-      - osctl-cluster-create
+      - build.GceImage
+      - build.ClusterCreate
 
 volumes:
   - name: dockersock
@@ -505,8 +548,188 @@ volumes:
     temp: {}
 
 trigger:
-  cron: [nightly]
+  cron:
+    include:
+      - nightly
 
+---
+kind: pipeline
+name: e2e.promotion
+
+node:
+  node-role.kubernetes.io/ci: ''
+
+workspace:
+  path: src/github.com/talos-systems/talos
+
+clone:
+  disable: true
+
+services:
+  - name: docker
+    image: docker:dind
+    privileged: true
+    command:
+      - --dns=8.8.8.8
+      - --log-level=error
+      - --mtu=1440
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+      - name: tmp
+        path: /tmp
+
+steps:
+# Phase 1
+  - name: git.CloneRepo
+    image: autonomy/build-container:latest
+    commands:
+      - cd .. && rmdir talos
+      - git clone --depth 1 https://github.com/talos-systems/talos.git
+    # Exclude clone during drone exec
+    when:
+      event:
+        exclude:
+          - ""
+
+  - name: git.FetchSource
+    image: autonomy/build-container:latest
+    commands:
+      - test -n "${DRONE_COMMIT_REF}" && git fetch origin "${DRONE_COMMIT_REF}:pr"
+      - test -n "${DRONE_COMMIT_REF}" && git checkout pr
+    depends_on:
+      - git.CloneRepo
+    # Exclude clone during drone exec
+    when:
+      event:
+        exclude:
+          - ""
+
+  - name: buildkit
+    detach: true
+    image: moby/buildkit:v0.6.0
+    privileged: true
+    commands:
+      - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
+    when:
+      event:
+        - ""
+
+  - name: build.ClusterCreate
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+      AZURE_SVC_ACCT:
+        from_secret: azure_svc_acct
+      GCE_SVC_ACCT:
+        from_secret: gce_svc_acct
+      PACKET_AUTH_TOKEN:
+        from_secret: packet_auth_token
+    commands:
+      - until docker ps; do sleep 1; done
+      - make osctl-linux rootfs talos installer
+      - make osctl-cluster-create
+      - make capi-setup
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
+    depends_on:
+      - git.FetchSource
+      - buildkit
+
+  - name: build.AzureImage
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+      AZURE_SVC_ACCT:
+        from_secret: azure_svc_acct
+    commands:
+      - make talos-azure
+      - ./hack/test/azure-setup.sh
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+      - name: tmp
+        path: /tmp
+    depends_on:
+      - build.ClusterCreate
+
+  - name: e2e.Azure
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+      PLATFORM: azure
+    commands:
+      - make e2e-integration
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
+    depends_on:
+      - build.AzureImage
+
+  - name: build.GceImage
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+      GCE_SVC_ACCT:
+        from_secret: gce_svc_acct
+    commands:
+      - make talos-gce
+      - ./hack/test/gce-setup.sh
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: dev
+        path: /dev
+    depends_on:
+      - build.AzureImage
+
+  - name: e2e.Gce
+    image: autonomy/build-container:latest
+    pull: always
+    environment:
+      BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+      BINDIR: /usr/local/bin
+      PLATFORM: gce
+    commands:
+      - make e2e-integration
+    volumes:
+      - name: dockersock
+        path: /var/run
+      - name: tmp
+        path: /tmp
+    depends_on:
+      - build.GceImage
+
+volumes:
+  - name: dockersock
+    temp: {}
+  - name: dev
+    host:
+      path: /dev
+  - name: tmp
+    temp: {}
+
+trigger:
+  target:
+    include:
+      - e2e.promotion
 ---
 kind: pipeline
 name: notify
@@ -535,5 +758,6 @@ trigger:
     - failure
 
 depends_on:
-  - default
-  - e2e
+  - build
+  - e2e.cron
+  - e2e.promotion

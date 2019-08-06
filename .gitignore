@@ -4,6 +4,10 @@ cache
 images
 vendor
 .vscode
+master*.yaml
+worker*.yaml
+talosconfig
+kubeconfig
 
 # vim Swap
 [._]*.s[a-v][a-z]

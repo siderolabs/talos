@@ -133,7 +133,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd osd trustd proxyd ntpd
+rootfs: buildkitd osd trustd proxyd ntpd machined
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--opt target=$@ \
@@ -310,9 +310,11 @@ login:
 push: gitmeta
 	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
 	@docker push autonomy/installer:$(TAG)
+	# TODO: only push :latest if merge to master?
 	@docker push autonomy/installer:latest
 	@docker tag autonomy/talos:$(TAG) autonomy/talos:latest
 	@docker push autonomy/talos:$(TAG)
+	# TODO: only push :latest if merge to master?
 	@docker push autonomy/talos:latest
 
 .PHONY: clean

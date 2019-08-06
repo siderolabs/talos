@@ -17,7 +17,7 @@ cleanup() {
 trap cleanup EXIT
 
 ## Download kustomize and template out capi cluster, then deploy it
-e2e_run "kubectl apply -f /e2emanifests/${PLATFORM}-cluster.yaml"		   
+e2e_run "kubectl apply -f /e2emanifests/${PLATFORM}-cluster.yaml"
 
 ## Wait for talosconfig in cm then dump it out
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
