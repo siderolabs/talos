@@ -78,7 +78,7 @@ metadata:
   name: kube-flannel-cfg
   namespace: kube-system
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
@@ -87,6 +87,9 @@ metadata:
   name: kube-flannel-ds-amd64
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      app: flannel
   template:
     metadata:
       labels:
