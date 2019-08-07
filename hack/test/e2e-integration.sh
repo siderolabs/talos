@@ -84,12 +84,9 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		   sleep 10
 		 done"
 
-## Download sonobuoy and run conformance
-e2e_run "apt-get update && apt-get install wget
-		 wget --quiet -O /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
-		 tar -xf /tmp/sonobuoy.tar.gz -C /usr/local/bin
-		 sonobuoy run --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi --wait --skip-preflight --plugin e2e
-		 results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi)
-		 sonobuoy e2e --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi \$results"
-
-exit 0
+## Run conformance tests if var is not null
+if [ -n "${CONFORMANCE}" ]
+then
+  echo "Beginning conformance tests..."
+  ./hack/test/conformance.sh
+fi
