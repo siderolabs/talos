@@ -18,10 +18,12 @@ import (
 func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
 	for _, name := range []string{constants.DataPartitionLabel, constants.BootPartitionLabel} {
+		opts := []mount.Option{}
 		var target string
 		switch name {
 		case constants.DataPartitionLabel:
 			target = constants.DataMountPoint
+			opts = append(opts, mount.WithResize(true))
 		case constants.BootPartitionLabel:
 			target = constants.BootMountPoint
 		}
@@ -35,7 +37,7 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 			}
 			return nil, errors.Errorf("probe device for filesystem %s: %v", name, err)
 		}
-		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
+		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
 		mountpoints.Set(name, mountpoint)
 	}
 
