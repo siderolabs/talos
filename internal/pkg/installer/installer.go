@@ -7,7 +7,6 @@ package installer
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"unsafe"
@@ -19,7 +18,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/version"
@@ -72,33 +70,11 @@ func (i *Installer) Install() (err error) {
 		return nil
 	}
 
-	if i.data.Install.Boot != nil {
-		var ok bool
-		if ok, err = exists(i.data.Install.Boot.InstallDevice.Device); err != nil {
-			return err
-		}
-
-		if ok {
-			log.Println("found existing installation")
-			var mountpoints *mount.Points
-			mountpoints, err = owned.MountPointsFromLabels()
-			if err != nil {
-				return err
-			}
-
-			m := manager.NewManager(mountpoints)
-			if err = m.MountAll(); err != nil {
-				return err
-			}
-			return nil
-		}
-
-		if err = VerifyBootDevice(i.data); err != nil {
-			return errors.Wrap(err, "failed to prepare boot device")
-		}
-	}
-
 	// Verify that the target device(s) can satisify the requested options.
+
+	if err = VerifyBootDevice(i.data); err != nil {
+		return errors.Wrap(err, "failed to prepare boot device")
+	}
 
 	if err = VerifyDataDevice(i.data); err != nil {
 		return errors.Wrap(err, "failed to prepare data device")
@@ -118,16 +94,18 @@ func (i *Installer) Install() (err error) {
 
 	// Mount the partitions.
 
-	var mountpoints *mount.Points
-	if i.data.Install.Boot != nil {
-		mountpoints, err = owned.MountPointsForDevice(i.data.Install.Boot.InstallDevice.Device)
+	mountpoints := mount.NewMountPoints()
+	// look for mountpoints across all target devices
+	for dev := range i.manifest.Targets {
+		var mp *mount.Points
+		mp, err = owned.MountPointsForDevice(dev)
 		if err != nil {
 			return err
 		}
-	} else {
-		mountpoints, err = owned.MountPointsFromLabels()
-		if err != nil {
-			return err
+
+		iter := mp.Iter()
+		for iter.Next() {
+			mountpoints.Set(iter.Key(), iter.Value())
 		}
 	}
 
@@ -135,6 +113,9 @@ func (i *Installer) Install() (err error) {
 	if err = m.MountAll(); err != nil {
 		return err
 	}
+
+	// nolint: errcheck
+	defer m.UnmountAll()
 
 	// Install the assets.
 
@@ -215,38 +196,4 @@ func wipe(manifest *manifest.Manifest) (err error) {
 	}
 
 	return nil
-}
-
-func exists(devpath string) (bool, error) {
-	var (
-		err error
-		dev *probe.ProbedBlockDevice
-	)
-
-	if dev, err = probe.DevForFileSystemLabel(devpath, constants.BootPartitionLabel); err == nil {
-		// nolint: errcheck
-		defer dev.Close()
-		if dev.SuperBlock != nil {
-			mountpoint := mount.NewMountPoint(dev.Path, "/tmp", dev.SuperBlock.Type(), 0, "")
-			if err = mountpoint.Mount(); err != nil {
-				return false, err
-			}
-			defer func() {
-				if err = mountpoint.Unmount(); err != nil {
-					log.Printf("WARNING: failed to unmount %s from /tmp", dev.Path)
-				}
-			}()
-			_, err = os.Stat(filepath.Join("tmp", "installed"))
-			switch {
-			case err == nil:
-				return true, nil
-			case os.IsNotExist(err):
-				return false, nil
-			default:
-				return false, err
-			}
-		}
-	}
-
-	return false, nil
 }

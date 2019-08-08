@@ -10,6 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -49,9 +52,27 @@ func (p *Packet) Initialize(data *userdata.UserData) (err error) {
 		return err
 	}
 
-	i := installer.NewInstaller(cmdline, data)
-	if err = i.Install(); err != nil {
-		return errors.Wrap(err, "failed to install")
+	// Attempt to discover a previous installation
+	// An err case should only happen if no partitions
+	// with matching labels were found
+	var mountpoints *mount.Points
+	mountpoints, err = owned.MountPointsFromLabels()
+	if err != nil {
+		// No previous installation was found, attempt an install
+		i := installer.NewInstaller(cmdline, data)
+		if err = i.Install(); err != nil {
+			return errors.Wrap(err, "failed to install")
+		}
+
+		mountpoints, err = owned.MountPointsFromLabels()
+		if err != nil {
+			return err
+		}
+	}
+
+	m := manager.NewManager(mountpoints)
+	if err = m.MountAll(); err != nil {
+		return err
 	}
 
 	return nil

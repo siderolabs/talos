@@ -132,7 +132,7 @@ func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 		return err
 	}
 
-	log.Println("writing syslinux.cfg to disk")
+	log.Printf("writing %s to disk", path)
 	if err = ioutil.WriteFile(path, wr.Bytes(), 0600); err != nil {
 		return err
 	}
