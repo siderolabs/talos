@@ -15,15 +15,17 @@ import (
 )
 
 // MountPointsForDevice returns the mountpoints required to boot the system.
+// This function is called exclusively during installations ( both image
+// creation and bare metall installs ). This is why we want to look up
+// device by specified disk as well as why we don't want to grow any
+// filesystems.
 func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
 	for _, name := range []string{constants.DataPartitionLabel, constants.BootPartitionLabel} {
-		opts := []mount.Option{}
 		var target string
 		switch name {
 		case constants.DataPartitionLabel:
 			target = constants.DataMountPoint
-			opts = append(opts, mount.WithResize(true))
 		case constants.BootPartitionLabel:
 			target = constants.BootMountPoint
 		}
@@ -37,7 +39,7 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 			}
 			return nil, errors.Errorf("probe device for filesystem %s: %v", name, err)
 		}
-		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
+		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
 		mountpoints.Set(name, mountpoint)
 	}
 
@@ -45,6 +47,8 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 }
 
 // MountPointsFromLabels returns the mountpoints required to boot the system.
+// Since this function is called exclusively during boot time, this is when
+// we want to grow the data filesystem.
 func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
 	for _, name := range []string{constants.DataPartitionLabel, constants.BootPartitionLabel} {
@@ -60,13 +64,14 @@ func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 
 		var dev *probe.ProbedBlockDevice
 		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
+			// A bootloader is not always required.
 			if name == constants.BootPartitionLabel {
-				// A bootloader is not always required.
 				log.Println("WARNING: no ESP partition was found")
 				continue
 			}
 			return nil, errors.Errorf("find device with label %s: %v", name, err)
 		}
+
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
 		mountpoints.Set(name, mountpoint)
 	}

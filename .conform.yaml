@@ -25,6 +25,7 @@ policies:
           - init
           - initramfs
           - kernel
+          - machined
           - proxyd
           - osctl
           - osd

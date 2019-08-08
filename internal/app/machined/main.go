@@ -78,6 +78,10 @@ func run() (err error) {
 			platform.NewPlatformTask(),
 		),
 		phase.NewPhase(
+			"installation verification",
+			rootfs.NewCheckInstallTask(),
+		),
+		phase.NewPhase(
 			"overlay mounts",
 			rootfs.NewMountOverlayTask(),
 		),
