@@ -34,7 +34,7 @@ ${OSCTL} config target 10.5.0.2
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	 until osctl kubeconfig > ${KUBECONFIG}
 	 do
-	   if  [[ \$(date +%s) -gt \$timeout ]] 
+	   if  [[ \$(date +%s) -gt \$timeout ]]
 	   then
 	     exit 1
 	   fi
@@ -42,9 +42,9 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	 done"
 
 ## Wait for all nodes to report in
-run "timeout=\$((\$(date +%s) + ${TIMEOUT})) 
+run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until kubectl get nodes -o json | jq '.items | length' | grep 4 >/dev/null
-	 do 
+	 do
 	   if  [[ \$(date +%s) -gt \$timeout ]]
 	   then
 	     exit 1
@@ -52,6 +52,9 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	   kubectl get nodes -o wide
 	   sleep 5
 	 done"
+
+## Give a moment for things to stabilize before applying manifests
+sleep 10
 
 ## Deploy needed manifests
 run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml -f /manifests/coredns.yaml"

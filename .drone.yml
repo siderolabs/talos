@@ -502,6 +502,7 @@ steps:
       BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
       PLATFORM: azure
+      CONFORMANCE: run
     commands:
       - make e2e-integration
     volumes:
@@ -541,6 +542,7 @@ steps:
       BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
       BINDIR: /usr/local/bin
       PLATFORM: gce
+      CONFORMANCE: run
     commands:
       - make e2e-integration
     volumes:
