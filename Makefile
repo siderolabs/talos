@@ -51,8 +51,6 @@ COMMON_ARGS += --opt build-arg:TAG=$(TAG)
 COMMON_ARGS += --opt build-arg:GO_VERSION=$(GO_VERSION)
 
 DOCKER_ARGS ?=
-# to allow tests to run containerd
-DOCKER_TEST_ARGS = --security-opt seccomp:unconfined --privileged -v /var/lib/containerd/ -v /tmp/
 
 TESTPKGS ?= ./...
 
@@ -107,13 +105,18 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 endif
 endif
 
-.PHONY: osctl
-osctl: osctl-linux osctl-darwin
-
 base: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
+		--opt target=$@ \
+		$(COMMON_ARGS)
+
+.PHONY: generate
+generate: buildkitd
+	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+    --output type=local,dest=./ \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
@@ -151,26 +154,8 @@ installer: buildkitd
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
 
-.PHONY: generate
-generate: buildkitd
-	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-    --output type=local,dest=./ \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: talos-gce
-talos-gce:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
-	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz disk.raw
-	@rm -rf $(PWD)/build/disk.raw
-
-.PHONY: talos-iso
-talos-iso:
-	@docker run --rm -i -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
-
-.PHONY: talos-aws
-talos-aws:
+.PHONY: image-aws
+image-aws:
 	@docker run \
 		--rm \
 		-i \
@@ -179,13 +164,13 @@ talos-aws:
 		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
 		autonomy/installer:$(TAG) ami -var regions=${AWS_PUBLISH_REGIONS} -var visibility=all
 
-.PHONY: talos-azure
-talos-azure:
+.PHONY: image-azure
+image-azure:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
 		--privileged $(DOCKER_ARGS) \
 		autonomy/installer:$(TAG) \
 		install \
-		-n disk \
+		-n azure \
 		-r \
 		-p azure \
 		-u none \
@@ -196,41 +181,61 @@ talos-azure:
 		convert \
 		-f raw \
 		-o subformat=fixed,force_size \
-		-O vpc /out/disk.raw /out/talos-azure.vhd
-	@tar -C $(PWD)/build -czf $(PWD)/build/$@.tar.gz talos-azure.vhd
-	@rm -rf $(PWD)/build/disk.raw $(PWD)/build/talos-azure.vhd
+		-O vpc /out/azure.raw /out/azure.vhd
+	@tar -C $(PWD)/build -czf $(PWD)/build/azure.tar.gz azure.vhd
+	@rm -rf $(PWD)/build/azure.raw $(PWD)/build/azure.vhd
+ifeq ($(PUSH),"true")
+        ./hack/test/azure-setup.sh
+endif
 
-.PHONY: talos-raw
-talos-raw:
+.PHONY: push-image-azure
+push-image-azure:
+	./hack/test/azure-setup.sh
+
+.PHONY: image-gce
+image-gce:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
+	@tar -C $(PWD)/build -czf $(PWD)/build/gce.tar.gz disk.raw
+	@rm -rf $(PWD)/build/disk.raw
+ifeq ($(PUSH),"true")
+        ./hack/test/gce-setup.sh
+endif
+
+.PHONY: push-image-gce
+push-image-gce:
+	./hack/test/gce-setup.sh
+
+.PHONY: image-raw
+image-raw:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n rootfs -r -b
 
-.PHONY: talos
-talos: buildkitd
+.PHONY: iso
+iso:
+	@docker run --rm -i -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
+
+.PHONY: container
+container: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
+		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/talos:$(TAG) \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 	@docker load < build/$@.tar
-
-.PHONY: osctl-cluster-create
-osctl-cluster-create:
-	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: basic-integration
 basic-integration:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
-.PHONY: capi-setup
-capi-setup:
+.PHONY: capi
+capi:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
-.PHONY: e2e
+.PHONY: e2e-integration
 e2e-integration:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
-.PHONY: test
-test: buildkitd
+.PHONY: unit-tests
+unit-tests: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--opt target=$@ \
@@ -238,8 +243,8 @@ test: buildkitd
 		--opt build-arg:TESTPKGS=$(TESTPKGS) \
 		$(COMMON_ARGS)
 
-.PHONY: test-race
-test-race: buildkitd
+.PHONY: unit-tests-race
+unit-tests-race: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--opt target=$@ \
@@ -316,7 +321,7 @@ login:
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
 
 .PHONY: push
-push: gitmeta
+push: gitmeta login
 	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
 	@docker push autonomy/installer:$(TAG)
 	# TODO: only push :latest if merge to master?

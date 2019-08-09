@@ -231,10 +231,10 @@ RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 
 FROM scratch AS initramfs
 COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
 
-# The talos target generates a docker image that can be used to run Talos
+# The container target generates a docker image that can be used to run Talos
 # in containers.
 
-FROM scratch AS talos
+FROM scratch AS container
 COPY --from=rootfs / /
 ENTRYPOINT ["/sbin/init"]
 
@@ -264,24 +264,24 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # The test target performs tests on the source code.
 
-FROM base AS test-runner
+FROM base AS unit-tests-runner
 RUN unlink /etc/ssl
 COPY --from=rootfs / /
 COPY hack/golang/test.sh /bin
 ARG TESTPKGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache/go-build /bin/test.sh ${TESTPKGS}
-FROM scratch AS test
-COPY --from=test-runner /src/coverage.txt /coverage.txt
+FROM scratch AS unit-tests
+COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
-# The test-race target performs tests with race detector.
+# The unit-tests-race target performs tests with race detector.
 
-FROM golang:${GO_VERSION} AS test-race
+FROM golang:${GO_VERSION} AS unit-tests-race
 COPY --from=base /src /src
 COPY --from=base /go/pkg/mod /go/pkg/mod
 WORKDIR /src
 ENV GO111MODULE on
 ARG TESTPKGS
-RUN --mount=type=cache,target=/root/.cache/go-build go test -v -race ${TESTPKGS}
+RUN --mount=type=cache,target=/.cache/go-build go test -v -race ${TESTPKGS}
 
 # The lint target performs linting on the source code.
 
