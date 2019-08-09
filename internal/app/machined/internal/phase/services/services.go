@@ -23,17 +23,19 @@ func NewServicesTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *Services) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return task.runtime
+	return func(platform platform.Platform, data *userdata.UserData) error {
+		return task.runtime(data, mode)
+	}
 }
 
-func (task *Services) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	task.startSystemServices(data)
+func (task *Services) runtime(data *userdata.UserData, mode runtime.Mode) (err error) {
+	task.startSystemServices(data, mode)
 	task.startKubernetesServices(data)
 
 	return nil
 }
 
-func (task *Services) startSystemServices(data *userdata.UserData) {
+func (task *Services) startSystemServices(data *userdata.UserData, mode runtime.Mode) {
 	svcs := system.Services(data)
 	// Start the services common to all nodes.
 	svcs.Load(
@@ -41,10 +43,18 @@ func (task *Services) startSystemServices(data *userdata.UserData) {
 		&services.Networkd{},
 		&services.Containerd{},
 		&services.Udevd{},
-		&services.UdevdTrigger{},
 		&services.OSD{},
 		&services.NTPd{},
 	)
+
+	if mode != runtime.Container {
+		// udevd-trigger is causing stalls/unresponsive stuff when running in local mode
+		// TODO: investigate root cause, but workaround for now is to skip it in container mode
+		svcs.Load(
+			&services.UdevdTrigger{},
+		)
+	}
+
 	// Start the services common to all master nodes.
 	if data.Services.Kubeadm.IsControlPlane() {
 		svcs.Load(

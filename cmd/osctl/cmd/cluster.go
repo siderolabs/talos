@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/big"
 	"net"
 	"sync"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/cmd/cluster/pkg/node"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
@@ -27,11 +29,13 @@ import (
 )
 
 var (
-	clusterName string
-	image       string
-	networkMTU  string
-	workers     int
-	masters     int
+	clusterName   string
+	image         string
+	networkMTU    string
+	workers       int
+	masters       int
+	clusterCpus   string
+	clusterMemory int
 )
 
 const baseNetwork = "10.5.0.%d"
@@ -79,6 +83,12 @@ func create() (err error) {
 		helpers.Fatalf("number of masters can't be less than 1")
 	}
 
+	nanoCPUs, err := parseCPUShare()
+	if err != nil {
+		helpers.Fatalf("error parsing --cpus: %s", err)
+	}
+	memory := int64(clusterMemory) * 1024 * 1024
+
 	// Ensure the image is present.
 
 	if err = ensureImageExists(ctx, cli, image); err != nil {
@@ -112,10 +122,12 @@ func create() (err error) {
 	requests := make([]*node.Request, masters)
 	for i := range requests {
 		requests[i] = &node.Request{
-			Input: *input,
-			Image: image,
-			Name:  fmt.Sprintf("master-%d", i+1),
-			IP:    net.ParseIP(ips[i]),
+			Input:    *input,
+			Image:    image,
+			Name:     fmt.Sprintf("master-%d", i+1),
+			IP:       net.ParseIP(ips[i]),
+			Memory:   memory,
+			NanoCPUs: nanoCPUs,
 		}
 
 		if i == 0 {
@@ -134,10 +146,12 @@ func create() (err error) {
 	requests = []*node.Request{}
 	for i := 1; i <= workers; i++ {
 		r := &node.Request{
-			Type:  generate.TypeJoin,
-			Input: *input,
-			Image: image,
-			Name:  fmt.Sprintf("worker-%d", i),
+			Type:     generate.TypeJoin,
+			Input:    *input,
+			Image:    image,
+			Name:     fmt.Sprintf("worker-%d", i),
+			Memory:   memory,
+			NanoCPUs: nanoCPUs,
 		}
 		requests = append(requests, r)
 	}
@@ -331,11 +345,25 @@ func saveConfig(input *generate.Input) (err error) {
 	return c.Save(talosconfig)
 }
 
+func parseCPUShare() (int64, error) {
+	cpu, ok := new(big.Rat).SetString(clusterCpus)
+	if !ok {
+		return 0, errors.Errorf("failed to parsing as a rational number: %s", clusterCpus)
+	}
+	nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
+	if !nano.IsInt() {
+		return 0, errors.New("value is too precise")
+	}
+	return nano.Num().Int64(), nil
+}
+
 func init() {
 	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterUpCmd.Flags().IntVar(&masters, "masters", 3, "the number of masters to create")
+	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
+	clusterUpCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)
