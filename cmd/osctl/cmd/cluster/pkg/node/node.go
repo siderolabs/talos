@@ -25,6 +25,11 @@ type Request struct {
 	Image string
 	Name  string
 	IP    net.IP
+
+	// Share of CPUs, in 1e-9 fractions
+	NanoCPUs int64
+	// Memory limit in bytes
+	Memory int64
 }
 
 // NewNode creates a node as a container.
@@ -60,6 +65,10 @@ func NewNode(clusterName string, req *Request) (err error) {
 	hostConfig := &container.HostConfig{
 		Privileged:  true,
 		SecurityOpt: []string{"seccomp:unconfined"},
+		Resources: container.Resources{
+			NanoCPUs: req.NanoCPUs,
+			Memory:   req.Memory,
+		},
 	}
 
 	// Ensure that the container is created in the talos network.
