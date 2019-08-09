@@ -3,6 +3,7 @@ set -eou pipefail
 
 source ./hack/test/e2e-runner.sh
 
+
 ## Create tmp dir
 mkdir -p $TMP
 
@@ -85,8 +86,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 done"
 
 ## Run conformance tests if var is not null
-if [ -n "${CONFORMANCE}" ]
-then
+if [ ${CONFORMANCE:-"dontrun"} == "run" ]; then
   echo "Beginning conformance tests..."
   ./hack/test/conformance.sh
 fi

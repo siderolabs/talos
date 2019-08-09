@@ -16,7 +16,7 @@ export CAPT_VERSION="0.1.0-alpha.2"
 export PROVIDER_COMPONENTS="https://github.com/talos-systems/cluster-api-provider-talos/releases/download/v${CAPT_VERSION}/provider-components.yaml"
 export KUSTOMIZE_VERSION="1.0.11"
 export KUSTOMIZE_URL="https://github.com/kubernetes-sigs/kustomize/releases/download/v${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64"
-export SONOBUOY_VERSION="0.15.0"
+export SONOBUOY_VERSION="0.15.1"
 export SONOBUOY_URL="https://github.com/heptio/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_amd64.tar.gz"
 
 e2e_run() {
