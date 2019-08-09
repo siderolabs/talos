@@ -93,7 +93,12 @@ func (suite *CheckSuite) TestHealthChange() {
 		errCh <- health.Run(ctx, &settings, &state, check)
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	for i := 0; i < 10; i++ {
+		time.Sleep(20 * time.Millisecond)
+		if *state != nil {
+			break
+		}
+	}
 
 	suite.Require().False(*state.Get().Healthy)
 	suite.Require().Equal("health failed", state.Get().LastMessage)
@@ -152,7 +157,12 @@ func (suite *CheckSuite) TestCheckAbort() {
 		errCh <- health.Run(ctx, &settings, &state, check)
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	for i := 0; i < 10; i++ {
+		time.Sleep(20 * time.Millisecond)
+		if *state != nil {
+			break
+		}
+	}
 
 	suite.Require().False(*state.Get().Healthy)
 	suite.Require().Equal("context deadline exceeded", state.Get().LastMessage)
@@ -177,7 +187,12 @@ func (suite *CheckSuite) TestInitialState() {
 		errCh <- health.Run(ctx, &settings, &state, nil)
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	for i := 0; i < 10; i++ {
+		time.Sleep(20 * time.Millisecond)
+		if *state != nil {
+			break
+		}
+	}
 
 	suite.Require().Nil(state.Get().Healthy)
 	suite.Require().Equal("Unknown", state.Get().LastMessage)
