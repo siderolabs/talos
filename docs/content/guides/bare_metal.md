@@ -19,9 +19,23 @@ osctl config generate <cluster name> <master-1 ip,master-2 ip, master-3 ip>
 
 This will generate 5 files - `master-{1,2,3}.yaml`, `worker.yaml`, and `talosconfig`. The master and worker config files contain just enough config to bootstrap your cluster, and can be further customized as necessary.
 
-These config files should be supplied as machine userdata or some internally accessible url so they can be downloaded during machine bootup. When specifying a remote location to download userdata from, the kernel parameter `talos.autonomy.io/userdata=http://myurl.com`.
+These config files should be supplied as machine userdata or some internally accessible url so they can be downloaded during machine bootup. When specifying a remote location to download userdata from, the kernel parameter `talos.userdata=http://myurl.com`.
 
 An iPXE server such as [coreos/Matchbox](https://github.com/poseidon/matchbox) is recommended.
+
+## Kernel cmdline parameters
+
+The following is the list of related kernel commandline parameters:
+
+  - `talos.userdata` (required) the HTTP(S) URL at which the machine data can be found
+  - `talos.platform` (required) should be 'bare-metal' for bare-metal installs
+  
+ Talos also enforces some minimum requirements from the KSPP (kernel self-protection project):
+ 
+  - `page_poison=1`
+  - `slab_nomerge`
+  - `pti=on`
+  
 
 ## Cluster interaction
 
