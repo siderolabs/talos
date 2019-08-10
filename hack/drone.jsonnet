@@ -199,7 +199,7 @@ local push = {
   when: {
     event: ["push"],
   },
-  depends_on: [container.name],
+  depends_on: [basic_integration.name],
 };
 
 local image_aws = step("image-aws", [push], aws_env_vars);
@@ -263,7 +263,7 @@ local release_step ={
   depends_on: [kernel.name, iso.name, image_gce.name, image_azure.name, image_aws.name, push.name]
 };
 
-local release = apps + artifacts + [
+local release = apps + artifacts + tests + [
   kernel,
   image_azure,
   image_gce,
