@@ -194,6 +194,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	// multiple places.
 	switch dev := t.Device; {
 	case strings.HasPrefix(dev, "/dev/nvme"):
+		fallthrough
 	case strings.HasPrefix(dev, "/dev/loop"):
 		t.PartitionName = t.Device + "p" + strconv.Itoa(int(part.No()))
 	default:
