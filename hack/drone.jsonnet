@@ -58,7 +58,8 @@ local clone = {
   name: "clone",
   image: build_container,
   commands: [
-    "git clone --depth 1 ${DRONE_REPO_LINK} .",
+    "git init",
+    "git remote add origin ${DRONE_REPO_LINK}",
     "git fetch origin ${DRONE_COMMIT_REF}:${DRONE_SOURCE_BRANCH}",
     "git checkout ${DRONE_SOURCE_BRANCH}",
     "git fetch --tags",
