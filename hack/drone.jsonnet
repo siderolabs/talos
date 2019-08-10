@@ -59,9 +59,11 @@ local clone = {
   image: build_container,
   commands: [
     "git init",
-    "git remote add origin ${DRONE_REPO_LINK}",
-    "git fetch origin ${DRONE_COMMIT_REF}:${DRONE_SOURCE_BRANCH}",
-    "git checkout ${DRONE_SOURCE_BRANCH}",
+    "git remote add origin ${DRONE_REMOTE_URL}",
+    "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:",
+    "git checkout ${DRONE_COMMIT_BRANCH}",
+    "git fetch origin ${DRONE_COMMIT_REF}:",
+    "git merge ${DRONE_COMMIT_SHA}",
     "git fetch --tags",
   ],
   when: {
