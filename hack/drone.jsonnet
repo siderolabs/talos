@@ -1,63 +1,68 @@
+// This file contains the logic for building our CI for Drone. The idea here is
+// that we create a pipeline for all of the major tasks we need to perform
+// (e.g. builds, E2E testing, conformance testing, releases). Each pipeline
+// after the default builds on a previous pipeline.
+
 local build_container = "autonomy/build-container:latest";
-local dind_image = "docker:19.03-dind";
-local default_buildkit_endpoint = "tcp://buildkitd.ci.svc:1234";
-local bin_dir = "/usr/local/bin";
-local build_env_vars = {
-    BUILDKIT_HOST: std.format("${BUILDKIT_HOST=%s}", default_buildkit_endpoint),
-    BINDIR: bin_dir,
-};
-local creds_env_vars = {
-    AZURE_SVC_ACCT: {from_secret: "azure_svc_acct"},
-    GCE_SVC_ACCT: {from_secret: "gce_svc_acct"},
-    PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
-};
-local aws_env_vars = {
-    AWS_ACCESS_KEY_ID: {from_secret: "aws_access_key_id"},
-    AWS_SECRET_ACCESS_KEY: {from_secret: "aws_secret_access_key"},
-    AWS_DEFAULT_REGION: "us-west-2",
-    AWS_PUBLISH_REGIONS: "us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1",
-};
-local node = {"node-role.kubernetes.io/ci": ""};
-local volume_dockersock = {
-  name: "dockersock",
-  temp: {},
-};
-local volume_tmp = {
-  name: "tmp",
-  temp: {},
-};
-local volume_dev = {
-  name: "dev",
-  host: {
-    path: "/dev"
-  },
-};
-local pipeline_volumes = [
-  volume_dockersock,
-  volume_tmp,
-  volume_dev,
-];
-local step_volumes = [
-  {
-    name: volume_dockersock.name,
-    path: "/var/run",
-  },
-  {
-    name: volume_tmp.name,
-    path: "/tmp",
-  },
-  {
-    name: volume_dev.name,
-    path: "/dev",
-  },
-];
 
-// Common steps
+local volumes = {
+  dockersock: {
+    pipeline: {
+      name: "dockersock",
+      temp: {},
+    },
+    step: {
+      name: $.dockersock.pipeline.name,
+      path: "/var/run",
+    },
+  },
 
+  dev: {
+    pipeline: {
+      name: "dev",
+      host: {
+        path: "/dev"
+      },
+    },
+    step: {
+      name: $.dev.pipeline.name,
+      path: "/dev",
+    },
+  },
+
+  tmp: {
+    pipeline: {
+      name: "tmp",
+      temp: {},
+    },
+    step: {
+      name: $.tmp.pipeline.name,
+      path: "/tmp",
+    },
+  },
+
+  ForStep(): [
+    self.dockersock.step,
+    self.dev.step,
+    self.tmp.step,
+  ],
+
+  ForPipeline(): [
+    self.dockersock.pipeline,
+    self.dev.pipeline,
+    self.tmp.pipeline,
+  ],
+};
+
+// This step provides our cloning logic. It is a workaround for a limitation in
+// the way promotions work in drone. Promotions are assumed to be against
+// the master branch, causing improper clones when promoting a pull request.
 local clone = {
   name: "clone",
   image: build_container,
   commands: [
+    "git config --global user.email talos@talos.dev",
+    "git config --global user.name talos",
     "git init",
     "git remote add origin ${DRONE_REMOTE_URL}",
     "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:",
@@ -73,9 +78,10 @@ local clone = {
   },
 };
 
+// This provides the docker service.
 local docker = {
   name: "docker",
-  image: dind_image,
+  image: "docker:19.03-dind",
   entrypoint: ["dockerd"],
   privileged: true,
   command: [
@@ -84,9 +90,10 @@ local docker = {
     "--mtu=1440",
     "--log-level=error",
   ],
-  volumes: step_volumes,
+  volumes: volumes.ForStep(),
 };
 
+// This step is used only when `drone exec` is executed.
 local buildkit = {
   name: "buildkit",
   image: "moby/buildkit:v0.6.0",
@@ -100,78 +107,76 @@ local buildkit = {
   },
 };
 
-local notify = {
-  name: "slack",
-  image: "plugins/slack",
-  settings:
-    {
-     webhook: {from_secret: "slack_webhook"},
-     channel: "proj-talos-maint",
-    },
-};
+// Step standardizes the creation of build steps. The name of the step is used
+// as the target when building the make command. For example, if name equals
+// "test", the resulting step command will be "make test". This is done to
+// encourage alignment between this file and the Makefile, and gives us a
+// standardized structure that should make things easier to reason about if we
+// know that each step is essentially a Makefile target.
+local Step(name, target="", depends_on=[clone], environment={}) = {
+  local make = if target == "" then std.format("make %s", name) else std.format("make %s", target),
+  local common_env_vars = {
+      BUILDKIT_HOST: "${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}",
+      BINDIR: "/usr/local/bin",
+  },
 
-// Functions
-
-local step(name, depends_on=[], environment={}, target="") = {
-  name: std.format("%s", name),
+  name: name,
   image: build_container,
-  commands: [if target == "" then std.format("make %s", name) else std.format("make %s", target)],
-  environment: build_env_vars+environment,
-  volumes: step_volumes,
+  commands: [make],
+  environment: common_env_vars + environment,
+  volumes: volumes.ForStep(),
   depends_on: [x.name for x in depends_on],
 };
 
+// Pipeline is a way to standardize the creation of pipelines. It supports
+// using and existing pipeline as a base.
+local Pipeline(name, steps=[], depends_on=[], with_clone=true, with_buildkit=false, with_docker=true) = {
+  local node = {"node-role.kubernetes.io/ci": ""},
 
-local pipeline(name, steps=[]) = {
   kind: "pipeline",
   name: name,
-  node: node,
-  services: if name != "notify" then [docker] else [],
-  volumes: if name != "notify" then pipeline_volumes else [],
   clone: {
     disable: true,
   },
-  steps: if name != "notify" then [clone, buildkit] + steps else steps,
+  node: node,
+  services: [
+    if with_docker then docker,
+    if with_buildkit then buildkit,
+  ],
+  steps: [if with_clone then clone] + steps,
+  volumes: volumes.ForPipeline(),
+  depends_on: [x.name for x in depends_on],
 };
 
-// Apps
+// Default pipeline.
 
-local machined = step("machined", [clone]);
-local osd = step("osd", [clone]);
-local trustd = step("trustd", [clone]);
-local proxyd = step("proxyd", [clone]);
-local ntpd = step("ntpd", [clone]);
-local osctl_linux = step("osctl-linux", [clone]);
-local osctl_darwin = step("osctl-darwin", [clone]);
+// local aws_env_vars = {
+//     AWS_ACCESS_KEY_ID: {from_secret: "aws_access_key_id"},
+//     AWS_SECRET_ACCESS_KEY: {from_secret: "aws_secret_access_key"},
+//     AWS_DEFAULT_REGION: "us-west-2",
+//     AWS_PUBLISH_REGIONS: "us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1",
+// };
 
-// Artifacts
-
-local rootfs =  step("rootfs", [machined, osd, trustd, proxyd, ntpd]);
-local initramfs = step("initramfs", [rootfs]);
-local installer = step("installer", [rootfs]);
-local container = step("container", [rootfs]);
-local image_azure = step("image-azure", [installer]);
-local image_gce = step("image-gce", [installer]);
-local kernel = step("kernel", [clone]);
-local iso = step("iso", [installer]);
-
-// CAPI.
-
-local push_image_azure = step("push-image-azure", [image_azure], creds_env_vars);
-local push_image_gce = step("push-image-gce", [image_gce], creds_env_vars);
-
-// Tests
-
-local lint = step("lint", [clone]);
-local unit_tests = step("unit-tests", [rootfs]);
-local unit_tests_race = step("unit-tests-race", [rootfs]);
-local basic_integration = step("basic-integration", [container, osctl_linux]);
-local capi = step("capi", [basic_integration], creds_env_vars);
-local e2e_integration_azure = step("e2e-integration-azure", [capi, push_image_azure], {PLATFORM: "azure"}, "e2e-integration");
-local e2e_integration_gce = step("e2e-integration-gce", [capi, push_image_gce], {PLATFORM: "gce"}, "e2e-integration");
-local conformance_azure = step("conformance-azure", [capi, push_image_azure], {PLATFORM: "azure", CONFORMANCE: "run"}, "e2e-integration");
-local conformance_gce = step("conformance-gce", [capi, push_image_gce], {PLATFORM: "gce", CONFORMANCE: "run"}, "e2e-integration");
-
+local machined = Step("machined");
+local osd = Step("osd");
+local trustd = Step("trustd");
+local proxyd = Step("proxyd");
+local ntpd = Step("ntpd");
+local osctl_linux = Step("osctl-linux");
+local osctl_darwin = Step("osctl-darwin");
+local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, proxyd, ntpd]);
+local initramfs = Step("initramfs", depends_on=[rootfs]);
+local installer = Step("installer", depends_on=[rootfs]);
+local container = Step("container", depends_on=[rootfs]);
+// local image_aws = Step("image-aws", depends_on=[push], environment=aws_env_vars);
+local image_azure = Step("image-azure", depends_on=[installer]);
+local image_gce = Step("image-gce", depends_on=[installer]);
+local kernel = Step("kernel");
+local iso = Step("iso", depends_on=[installer]);
+local lint = Step("lint");
+local unit_tests = Step("unit-tests", depends_on=[rootfs]);
+local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
+local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux]);
 
 local coverage = {
   name: "coverage",
@@ -180,7 +185,7 @@ local coverage = {
     token: {from_secret: "codecov_token"},
     files: ["coverage.txt"],
   },
-  trigger: {
+  when: {
     event: ["pull_request"],
   },
   depends_on: [unit_tests.name],
@@ -195,85 +200,36 @@ local push = {
     DOCKER_PASSWORD: {from_secret: "docker_password"},
   },
   commands: ["make gitmeta", "make login", "make push"],
-  volumes: step_volumes,
+  volumes: volumes.ForStep(),
   when: {
     event: ["push"],
   },
   depends_on: [basic_integration.name],
 };
 
-local image_aws = step("image-aws", [push], aws_env_vars);
-
-// Steps
-
-local apps = [
-    machined,
-    osd,
-    trustd,
-    proxyd,
-    ntpd,
-    osctl_linux,
-    osctl_darwin,
-];
-
-local artifacts = [
+local default_steps = [
+  machined,
+  osd,
+  trustd,
+  proxyd,
+  ntpd,
+  osctl_linux,
+  osctl_darwin,
+  kernel,
   rootfs,
   initramfs,
-  installer,
   container,
-];
-
-local tests = [
-  lint,
-  unit_tests,
-  unit_tests_race,
-  coverage,
-  basic_integration,
-];
-
-local e2e_setup = apps + artifacts + [
-  image_azure,
-  image_gce,
-  push_image_azure,
-  push_image_gce,
-  basic_integration,
-  capi,
-];
-
-local e2e = e2e_setup + [
-  e2e_integration_azure,
-  e2e_integration_gce,
-];
-
-local conformance = e2e_setup + [
-  conformance_azure,
-  conformance_gce,
-];
-
-
-local release_step ={
-  name: "release",
-  image: "plugins/github-release",
-  settings:{
-    api_key: {from_secret: "github_token"},
-    draft: true,
-    files: ["build/*"],
-    checksum: ["sha256", "sha512"],
-  },
-  depends_on: [kernel.name, iso.name, image_gce.name, image_azure.name, image_aws.name, push.name]
-};
-
-local release = apps + artifacts + tests + [
-  kernel,
+  installer,
   image_azure,
   image_gce,
   iso,
+  lint,
+  unit_tests,
+  // unit_tests_race,
+  coverage,
+  basic_integration,
   push,
-  image_aws,
-  release_step,
 ];
-
-// Triggers
 
 local default_trigger = {
   trigger: {
@@ -286,13 +242,29 @@ local default_trigger = {
   },
 };
 
-local nightly_trigger = {
-  trigger: {
-    cron: {
-      include: ["nightly"]
-    },
-  },
+local default_pipeline = Pipeline("default", default_steps) + default_trigger;
+
+// E2E pipeline.
+
+local creds_env_vars = {
+    AZURE_SVC_ACCT: {from_secret: "azure_svc_acct"},
+    GCE_SVC_ACCT: {from_secret: "gce_svc_acct"},
+    PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
+
+local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_vars);
+local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
+local push_image_gce = Step("push-image-gce", depends_on=[image_gce], environment=creds_env_vars);
+local e2e_integration_azure = Step("e2e-integration-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure"});
+local e2e_integration_gce = Step("e2e-integration-gce", "e2e-integration", depends_on=[capi, push_image_gce], environment={PLATFORM: "gce"});
+
+local e2e_steps = default_steps + [
+  capi,
+  push_image_azure,
+  push_image_gce,
+  e2e_integration_azure,
+  e2e_integration_gce,
+];
 
 local e2e_trigger = {
   trigger: {
@@ -302,6 +274,21 @@ local e2e_trigger = {
   },
 };
 
+local e2e_pipeline = Pipeline("e2e", e2e_steps) + e2e_trigger;
+
+// Conformance pipeline.
+
+local conformance_azure = Step("conformance-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure", CONFORMANCE: "run"});
+local conformance_gce = Step("conformance-gce", "e2e-integration", depends_on=[capi, push_image_gce], environment={PLATFORM: "gce", CONFORMANCE: "run"});
+
+local conformance_steps = default_steps + [
+  push_image_azure,
+  push_image_gce,
+  capi,
+  conformance_azure,
+  conformance_gce,
+];
+
 local conformance_trigger = {
   trigger: {
     target: {
@@ -310,11 +297,63 @@ local conformance_trigger = {
   },
 };
 
+local conformance_pipeline = Pipeline("conformance", conformance_steps) + conformance_trigger;
+
+// Nightly pipeline.
+
+local nightly_trigger = {
+  trigger: {
+    cron: {
+      include: ["nightly"]
+    },
+  },
+};
+
+local nightly_pipeline = Pipeline("nightly", conformance_steps) + nightly_trigger;
+
+// Release pipeline.
+
+// TODO(andrewrynhard): We should run E2E tests on a release.
+local release ={
+  name: "release",
+  image: "plugins/github-release",
+  settings:{
+    api_key: {from_secret: "github_token"},
+    draft: true,
+    files: ["build/*"],
+    checksum: ["sha256", "sha512"],
+  },
+  when: {
+    event: ["tag"],
+  },
+  depends_on: [kernel.name, iso.name, image_gce.name, image_azure.name, /*image_aws.name,*/ push.name]
+};
+
+local release_steps = default_steps + [
+  release
+];
+
 local release_trigger = {
   trigger: {
     event: ["tag"],
   },
 };
+
+local release_pipeline = Pipeline("release", release_steps) + release_trigger;
+
+// Notify pipeline.
+
+local notify = {
+  name: "slack",
+  image: "plugins/slack",
+  settings:
+    {
+     webhook: {from_secret: "slack_webhook"},
+     channel: "proj-talos-maint",
+    },
+};
+
+local notify_steps = [notify];
 
 local notify_trigger = {
   trigger: {
@@ -323,15 +362,18 @@ local notify_trigger = {
 };
 
 local notify_depends_on = {
-  depends_on: ["default", "e2e", "conformance", "nightly", "release"],
+  depends_on: [
+    default_pipeline.name,
+    e2e_pipeline.name,
+    conformance_pipeline.name,
+    nightly_pipeline.name,
+    release_pipeline.name,
+  ],
 };
 
-local default_pipeline = pipeline("default", [ x for x in apps + artifacts + tests ] + [push]) + default_trigger;
-local e2e_pipeline = pipeline("e2e", e2e) + e2e_trigger;
-local conformance_pipeline = pipeline("conformance", conformance) + conformance_trigger;
-local nightly_pipeline = pipeline("nightly", conformance) + nightly_trigger;
-local release_pipeline = pipeline("release", release) + release_trigger;
-local notify_pipeline = pipeline("notify", [notify]) + notify_trigger + notify_depends_on;
+local notify_pipeline = Pipeline("notify", notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false, false) + notify_trigger;
+
+// Final configuration file definition.
 
 [
   default_pipeline,

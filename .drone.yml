@@ -13,6 +13,8 @@ steps:
 - name: clone
   image: autonomy/build-container:latest
   commands:
+  - git config --global user.email talos@talos.dev
+  - git config --global user.name talos
   - git init
   - git remote add origin ${DRONE_REMOTE_URL}
   - "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:"
@@ -25,16 +27,6 @@ steps:
       exclude:
       - ""
 
-- name: buildkit
-  image: moby/buildkit:v0.6.0
-  detach: true
-  commands:
-  - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
-  privileged: true
-  when:
-    event:
-    - ""
-
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -45,10 +37,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -62,10 +54,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -79,10 +71,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -96,10 +88,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -113,10 +105,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -130,10 +122,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -147,10 +139,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: kernel
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -164,10 +173,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - machined
   - osd
@@ -185,27 +194,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - rootfs
-
-- name: installer
-  image: autonomy/build-container:latest
-  commands:
-  - make installer
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
 
@@ -219,12 +211,80 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - rootfs
+
+- name: installer
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: image-azure
+  image: autonomy/build-container:latest
+  commands:
+  - make image-azure
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: image-gce
+  image: autonomy/build-container:latest
+  commands:
+  - make image-gce
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: iso
+  image: autonomy/build-container:latest
+  commands:
+  - make iso
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: lint
   image: autonomy/build-container:latest
@@ -236,10 +296,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -253,27 +313,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - rootfs
-
-- name: unit-tests-race
-  image: autonomy/build-container:latest
-  commands:
-  - make unit-tests-race
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
 
@@ -284,6 +327,9 @@ steps:
     - coverage.txt
     token:
       from_secret: codecov_token
+  when:
+    event:
+    - pull_request
   depends_on:
   - unit-tests
 
@@ -297,10 +343,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - container
   - osctl-linux
@@ -320,10 +366,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   when:
     event:
     - push
@@ -344,19 +390,19 @@ services:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
 
 volumes:
 - name: dockersock
   temp: {}
-- name: tmp
-  temp: {}
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -386,6 +432,8 @@ steps:
 - name: clone
   image: autonomy/build-container:latest
   commands:
+  - git config --global user.email talos@talos.dev
+  - git config --global user.name talos
   - git init
   - git remote add origin ${DRONE_REMOTE_URL}
   - "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:"
@@ -398,16 +446,6 @@ steps:
       exclude:
       - ""
 
-- name: buildkit
-  image: moby/buildkit:v0.6.0
-  detach: true
-  commands:
-  - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
-  privileged: true
-  when:
-    event:
-    - ""
-
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -418,10 +456,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -435,10 +473,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -452,10 +490,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -469,10 +507,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -486,10 +524,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -503,10 +541,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -520,10 +558,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: kernel
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -537,10 +592,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - machined
   - osd
@@ -558,27 +613,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - rootfs
-
-- name: installer
-  image: autonomy/build-container:latest
-  commands:
-  - make installer
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
 
@@ -592,10 +630,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: installer
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - rootfs
 
@@ -609,10 +664,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
 
@@ -626,12 +681,142 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
+
+- name: iso
+  image: autonomy/build-container:latest
+  commands:
+  - make iso
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: lint
+  image: autonomy/build-container:latest
+  commands:
+  - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: unit-tests
+  image: autonomy/build-container:latest
+  commands:
+  - make unit-tests
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: coverage
+  image: plugins/codecov
+  settings:
+    files:
+    - coverage.txt
+    token:
+      from_secret: codecov_token
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - unit-tests
+
+- name: basic-integration
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - container
+  - osctl-linux
+
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make gitmeta
+  - make login
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+    - push
+  depends_on:
+  - basic-integration
+
+- name: capi
+  image: autonomy/build-container:latest
+  commands:
+  - make capi
+  environment:
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - basic-integration
 
 - name: push-image-azure
   image: autonomy/build-container:latest
@@ -649,10 +834,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - image-azure
 
@@ -672,53 +857,12 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - image-gce
-
-- name: basic-integration
-  image: autonomy/build-container:latest
-  commands:
-  - make basic-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - container
-  - osctl-linux
-
-- name: capi
-  image: autonomy/build-container:latest
-  commands:
-  - make capi
-  environment:
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - basic-integration
 
 - name: e2e-integration-azure
   image: autonomy/build-container:latest
@@ -731,10 +875,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - capi
   - push-image-azure
@@ -750,10 +894,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - capi
   - push-image-gce
@@ -772,19 +916,19 @@ services:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
 
 volumes:
 - name: dockersock
   temp: {}
-- name: tmp
-  temp: {}
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -808,6 +952,8 @@ steps:
 - name: clone
   image: autonomy/build-container:latest
   commands:
+  - git config --global user.email talos@talos.dev
+  - git config --global user.name talos
   - git init
   - git remote add origin ${DRONE_REMOTE_URL}
   - "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:"
@@ -820,16 +966,6 @@ steps:
       exclude:
       - ""
 
-- name: buildkit
-  image: moby/buildkit:v0.6.0
-  detach: true
-  commands:
-  - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
-  privileged: true
-  when:
-    event:
-    - ""
-
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -840,10 +976,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -857,10 +993,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -874,10 +1010,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -891,10 +1027,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -908,10 +1044,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -925,10 +1061,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -942,10 +1078,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: kernel
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -959,10 +1112,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - machined
   - osd
@@ -980,27 +1133,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - rootfs
-
-- name: installer
-  image: autonomy/build-container:latest
-  commands:
-  - make installer
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
 
@@ -1014,10 +1150,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: installer
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - rootfs
 
@@ -1031,10 +1184,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
 
@@ -1048,12 +1201,119 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
+
+- name: iso
+  image: autonomy/build-container:latest
+  commands:
+  - make iso
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: lint
+  image: autonomy/build-container:latest
+  commands:
+  - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: unit-tests
+  image: autonomy/build-container:latest
+  commands:
+  - make unit-tests
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: coverage
+  image: plugins/codecov
+  settings:
+    files:
+    - coverage.txt
+    token:
+      from_secret: codecov_token
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - unit-tests
+
+- name: basic-integration
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - container
+  - osctl-linux
+
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make gitmeta
+  - make login
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+    - push
+  depends_on:
+  - basic-integration
 
 - name: push-image-azure
   image: autonomy/build-container:latest
@@ -1071,10 +1331,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - image-azure
 
@@ -1094,30 +1354,12 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - image-gce
-
-- name: basic-integration
-  image: autonomy/build-container:latest
-  commands:
-  - make basic-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - container
-  - osctl-linux
 
 - name: capi
   image: autonomy/build-container:latest
@@ -1135,10 +1377,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - basic-integration
 
@@ -1154,10 +1396,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - capi
   - push-image-azure
@@ -1174,10 +1416,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - capi
   - push-image-gce
@@ -1196,19 +1438,19 @@ services:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
 
 volumes:
 - name: dockersock
   temp: {}
-- name: tmp
-  temp: {}
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1232,6 +1474,8 @@ steps:
 - name: clone
   image: autonomy/build-container:latest
   commands:
+  - git config --global user.email talos@talos.dev
+  - git config --global user.name talos
   - git init
   - git remote add origin ${DRONE_REMOTE_URL}
   - "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:"
@@ -1244,16 +1488,6 @@ steps:
       exclude:
       - ""
 
-- name: buildkit
-  image: moby/buildkit:v0.6.0
-  detach: true
-  commands:
-  - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
-  privileged: true
-  when:
-    event:
-    - ""
-
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -1264,10 +1498,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1281,10 +1515,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1298,10 +1532,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1315,10 +1549,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1332,10 +1566,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1349,10 +1583,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1366,10 +1600,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: kernel
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1383,10 +1634,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - machined
   - osd
@@ -1404,27 +1655,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - rootfs
-
-- name: installer
-  image: autonomy/build-container:latest
-  commands:
-  - make installer
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
 
@@ -1438,10 +1672,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: installer
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - rootfs
 
@@ -1455,10 +1706,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
 
@@ -1472,12 +1723,119 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
+
+- name: iso
+  image: autonomy/build-container:latest
+  commands:
+  - make iso
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: lint
+  image: autonomy/build-container:latest
+  commands:
+  - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: unit-tests
+  image: autonomy/build-container:latest
+  commands:
+  - make unit-tests
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: coverage
+  image: plugins/codecov
+  settings:
+    files:
+    - coverage.txt
+    token:
+      from_secret: codecov_token
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - unit-tests
+
+- name: basic-integration
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - container
+  - osctl-linux
+
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make gitmeta
+  - make login
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+    - push
+  depends_on:
+  - basic-integration
 
 - name: push-image-azure
   image: autonomy/build-container:latest
@@ -1495,10 +1853,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - image-azure
 
@@ -1518,30 +1876,12 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - image-gce
-
-- name: basic-integration
-  image: autonomy/build-container:latest
-  commands:
-  - make basic-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - container
-  - osctl-linux
 
 - name: capi
   image: autonomy/build-container:latest
@@ -1559,10 +1899,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - basic-integration
 
@@ -1578,10 +1918,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - capi
   - push-image-azure
@@ -1598,10 +1938,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - capi
   - push-image-gce
@@ -1620,19 +1960,19 @@ services:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
 
 volumes:
 - name: dockersock
   temp: {}
-- name: tmp
-  temp: {}
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1656,6 +1996,8 @@ steps:
 - name: clone
   image: autonomy/build-container:latest
   commands:
+  - git config --global user.email talos@talos.dev
+  - git config --global user.name talos
   - git init
   - git remote add origin ${DRONE_REMOTE_URL}
   - "git fetch origin +refs/heads/${DRONE_COMMIT_BRANCH}:"
@@ -1668,16 +2010,6 @@ steps:
       exclude:
       - ""
 
-- name: buildkit
-  image: moby/buildkit:v0.6.0
-  detach: true
-  commands:
-  - buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure
-  privileged: true
-  when:
-    event:
-    - ""
-
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -1688,10 +2020,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1705,10 +2037,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1722,10 +2054,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1739,10 +2071,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1756,10 +2088,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1773,10 +2105,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1790,10 +2122,27 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: kernel
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - clone
 
@@ -1807,10 +2156,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - machined
   - osd
@@ -1828,27 +2177,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - rootfs
-
-- name: installer
-  image: autonomy/build-container:latest
-  commands:
-  - make installer
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
 
@@ -1862,108 +2194,29 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - rootfs
 
-- name: lint
+- name: installer
   image: autonomy/build-container:latest
   commands:
-  - make lint
+  - make installer
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
-  depends_on:
-  - clone
-
-- name: unit-tests
-  image: autonomy/build-container:latest
-  commands:
-  - make unit-tests
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
   - name: tmp
     path: /tmp
-  - name: dev
-    path: /dev
   depends_on:
   - rootfs
-
-- name: unit-tests-race
-  image: autonomy/build-container:latest
-  commands:
-  - make unit-tests-race
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - rootfs
-
-- name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
-      from_secret: codecov_token
-  depends_on:
-  - unit-tests
-
-- name: basic-integration
-  image: autonomy/build-container:latest
-  commands:
-  - make basic-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - container
-  - osctl-linux
-
-- name: kernel
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - clone
 
 - name: image-azure
   image: autonomy/build-container:latest
@@ -1975,10 +2228,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
 
@@ -1992,10 +2245,10 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
 
@@ -2009,12 +2262,77 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - installer
+
+- name: lint
+  image: autonomy/build-container:latest
+  commands:
+  - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: unit-tests
+  image: autonomy/build-container:latest
+  commands:
+  - make unit-tests
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - rootfs
+
+- name: coverage
+  image: plugins/codecov
+  settings:
+    files:
+    - coverage.txt
+    token:
+      from_secret: codecov_token
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - unit-tests
+
+- name: basic-integration
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - container
+  - osctl-linux
 
 - name: push
   pull: always
@@ -2031,38 +2349,15 @@ steps:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   when:
     event:
     - push
   depends_on:
   - basic-integration
-
-- name: image-aws
-  image: autonomy/build-container:latest
-  commands:
-  - make image-aws
-  environment:
-    AWS_ACCESS_KEY_ID:
-      from_secret: aws_access_key_id
-    AWS_DEFAULT_REGION: us-west-2
-    AWS_PUBLISH_REGIONS: us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1
-    AWS_SECRET_ACCESS_KEY:
-      from_secret: aws_secret_access_key
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: tmp
-    path: /tmp
-  - name: dev
-    path: /dev
-  depends_on:
-  - push
 
 - name: release
   image: plugins/github-release
@@ -2075,12 +2370,14 @@ steps:
     draft: true
     files:
     - build/*
+  when:
+    event:
+    - tag
   depends_on:
   - kernel
   - iso
   - image-gce
   - image-azure
-  - image-aws
   - push
 
 services:
@@ -2097,19 +2394,19 @@ services:
   volumes:
   - name: dockersock
     path: /var/run
-  - name: tmp
-    path: /tmp
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
 
 volumes:
 - name: dockersock
   temp: {}
-- name: tmp
-  temp: {}
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -2136,6 +2433,16 @@ steps:
     channel: proj-talos-maint
     webhook:
       from_secret: slack_webhook
+
+services:
+volumes:
+- name: dockersock
+  temp: {}
+- name: dev
+  host:
+    path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
