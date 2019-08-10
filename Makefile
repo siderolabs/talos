@@ -54,7 +54,7 @@ DOCKER_ARGS ?=
 
 TESTPKGS ?= ./...
 
-all: ci rootfs initramfs kernel osctl installer talos
+all: ci rootfs initramfs kernel osctl-linux osctl-darwin installer container
 
 .PHONY: ci
 ci: builddeps buildkitd
@@ -184,9 +184,6 @@ image-azure:
 		-O vpc /out/azure.raw /out/azure.vhd
 	@tar -C $(PWD)/build -czf $(PWD)/build/azure.tar.gz azure.vhd
 	@rm -rf $(PWD)/build/azure.raw $(PWD)/build/azure.vhd
-ifeq ($(PUSH),"true")
-        ./hack/test/azure-setup.sh
-endif
 
 .PHONY: push-image-azure
 push-image-azure:
@@ -197,9 +194,6 @@ image-gce:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
 	@tar -C $(PWD)/build -czf $(PWD)/build/gce.tar.gz disk.raw
 	@rm -rf $(PWD)/build/disk.raw
-ifeq ($(PUSH),"true")
-        ./hack/test/gce-setup.sh
-endif
 
 .PHONY: push-image-gce
 push-image-gce:
@@ -314,7 +308,7 @@ ntpd: buildkitd images
 		$(COMMON_ARGS)
 
 images:
-	@mkdir images
+	@mkdir -p images
 
 .PHONY: login
 login:
