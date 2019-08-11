@@ -150,13 +150,6 @@ local Pipeline(name, steps=[], depends_on=[], with_clone=true, with_buildkit=fal
 
 // Default pipeline.
 
-// local aws_env_vars = {
-//     AWS_ACCESS_KEY_ID: {from_secret: "aws_access_key_id"},
-//     AWS_SECRET_ACCESS_KEY: {from_secret: "aws_secret_access_key"},
-//     AWS_DEFAULT_REGION: "us-west-2",
-//     AWS_PUBLISH_REGIONS: "us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1",
-// };
-
 local machined = Step("machined");
 local osd = Step("osd");
 local trustd = Step("trustd");
@@ -168,7 +161,6 @@ local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, proxyd, ntpd])
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
-// local image_aws = Step("image-aws", depends_on=[push], environment=aws_env_vars);
 local image_azure = Step("image-azure", depends_on=[installer]);
 local image_gce = Step("image-gce", depends_on=[installer]);
 local kernel = Step("kernel");
@@ -313,6 +305,21 @@ local nightly_pipeline = Pipeline("nightly", conformance_steps) + nightly_trigge
 
 // Release pipeline.
 
+local aws_env_vars = {
+  AWS_ACCESS_KEY_ID: {from_secret: "aws_access_key_id"},
+  AWS_SECRET_ACCESS_KEY: {from_secret: "aws_secret_access_key"},
+  AWS_DEFAULT_REGION: "us-west-2",
+  AWS_PUBLISH_REGIONS: "us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1",
+};
+
+local ami_trigger = {
+  when: {
+    event: ["tag"],
+  }
+};
+
+local image_aws = Step("image-aws", depends_on=[push], environment=aws_env_vars) + ami_trigger;
+
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release ={
   name: "release",
@@ -326,11 +333,12 @@ local release ={
   when: {
     event: ["tag"],
   },
-  depends_on: [kernel.name, iso.name, image_gce.name, image_azure.name, /*image_aws.name,*/ push.name]
+  depends_on: [kernel.name, iso.name, image_gce.name, image_azure.name, image_aws.name, push.name]
 };
 
 local release_steps = default_steps + [
-  release
+  image_aws,
+  release,
 ];
 
 local release_trigger = {
