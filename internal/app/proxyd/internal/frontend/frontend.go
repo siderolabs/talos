@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
+	tnet "github.com/talos-systems/talos/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -261,7 +262,7 @@ func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
 		return
 	}
 
-	c2, err := net.DialTimeout("tcp", backend.Addr+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
+	c2, err := net.DialTimeout("tcp", tnet.FormatAddress(backend.Addr)+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
 	if err != nil {
 		log.Printf("dial %v failed, deleting backend: %v", backend.Addr, err)
 		r.DeleteBackend(backend.UID)
@@ -326,7 +327,7 @@ func (r *ReverseProxy) Bootstrap(ctx context.Context) {
 			ticker := time.NewTicker(1 * time.Second)
 			defer ticker.Stop()
 			uid := fmt.Sprintf("bootstrap-%d", i)
-			addr := net.JoinHostPort(e, "6443")
+			addr := net.JoinHostPort(tnet.FormatAddress(e), "6443")
 			for {
 				select {
 				case <-ticker.C:
