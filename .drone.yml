@@ -2359,6 +2359,32 @@ steps:
   depends_on:
   - basic-integration
 
+- name: image-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make image-aws
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_DEFAULT_REGION: us-west-2
+    AWS_PUBLISH_REGIONS: us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+    - tag
+  depends_on:
+  - push
+
 - name: release
   image: plugins/github-release
   settings:
@@ -2378,6 +2404,7 @@ steps:
   - iso
   - image-gce
   - image-azure
+  - image-aws
   - push
 
 services:
