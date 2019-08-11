@@ -327,7 +327,7 @@ func (r *ReverseProxy) Bootstrap(ctx context.Context) {
 			ticker := time.NewTicker(1 * time.Second)
 			defer ticker.Stop()
 			uid := fmt.Sprintf("bootstrap-%d", i)
-			addr := net.JoinHostPort(tnet.FormatAddress(e), "6443")
+			addr := net.JoinHostPort(e, "6443")
 			for {
 				select {
 				case <-ticker.C:
