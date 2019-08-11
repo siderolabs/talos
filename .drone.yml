@@ -146,23 +146,6 @@ steps:
   depends_on:
   - clone
 
-- name: kernel
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
-
 - name: rootfs
   image: autonomy/build-container:latest
   commands:
@@ -201,23 +184,6 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
-  image: autonomy/build-container:latest
-  commands:
-  - make container
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - rootfs
-
 - name: installer
   image: autonomy/build-container:latest
   commands:
@@ -235,10 +201,10 @@ steps:
   depends_on:
   - rootfs
 
-- name: image-azure
+- name: container
   image: autonomy/build-container:latest
   commands:
-  - make image-azure
+  - make container
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -250,41 +216,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
-
-- name: image-gce
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gce
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: iso
-  image: autonomy/build-container:latest
-  commands:
-  - make iso
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
+  - rootfs
 
 - name: lint
   image: autonomy/build-container:latest
@@ -302,6 +234,23 @@ steps:
     path: /tmp
   depends_on:
   - clone
+
+- name: image-test
+  image: autonomy/build-container:latest
+  commands:
+  - make image-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: unit-tests
   image: autonomy/build-container:latest
@@ -565,23 +514,6 @@ steps:
   depends_on:
   - clone
 
-- name: kernel
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
-
 - name: rootfs
   image: autonomy/build-container:latest
   commands:
@@ -620,23 +552,6 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
-  image: autonomy/build-container:latest
-  commands:
-  - make container
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - rootfs
-
 - name: installer
   image: autonomy/build-container:latest
   commands:
@@ -654,10 +569,10 @@ steps:
   depends_on:
   - rootfs
 
-- name: image-azure
+- name: container
   image: autonomy/build-container:latest
   commands:
-  - make image-azure
+  - make container
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -669,41 +584,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
-
-- name: image-gce
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gce
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: iso
-  image: autonomy/build-container:latest
-  commands:
-  - make iso
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
+  - rootfs
 
 - name: lint
   image: autonomy/build-container:latest
@@ -721,6 +602,23 @@ steps:
     path: /tmp
   depends_on:
   - clone
+
+- name: image-test
+  image: autonomy/build-container:latest
+  commands:
+  - make image-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: unit-tests
   image: autonomy/build-container:latest
@@ -817,6 +715,40 @@ steps:
     path: /tmp
   depends_on:
   - basic-integration
+
+- name: image-azure
+  image: autonomy/build-container:latest
+  commands:
+  - make image-azure
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: image-gce
+  image: autonomy/build-container:latest
+  commands:
+  - make image-gce
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: push-image-azure
   image: autonomy/build-container:latest
@@ -1085,23 +1017,6 @@ steps:
   depends_on:
   - clone
 
-- name: kernel
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
-
 - name: rootfs
   image: autonomy/build-container:latest
   commands:
@@ -1140,23 +1055,6 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
-  image: autonomy/build-container:latest
-  commands:
-  - make container
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - rootfs
-
 - name: installer
   image: autonomy/build-container:latest
   commands:
@@ -1174,10 +1072,10 @@ steps:
   depends_on:
   - rootfs
 
-- name: image-azure
+- name: container
   image: autonomy/build-container:latest
   commands:
-  - make image-azure
+  - make container
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -1189,41 +1087,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
-
-- name: image-gce
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gce
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: iso
-  image: autonomy/build-container:latest
-  commands:
-  - make iso
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
+  - rootfs
 
 - name: lint
   image: autonomy/build-container:latest
@@ -1241,6 +1105,23 @@ steps:
     path: /tmp
   depends_on:
   - clone
+
+- name: image-test
+  image: autonomy/build-container:latest
+  commands:
+  - make image-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: unit-tests
   image: autonomy/build-container:latest
@@ -1314,6 +1195,40 @@ steps:
     - push
   depends_on:
   - basic-integration
+
+- name: image-azure
+  image: autonomy/build-container:latest
+  commands:
+  - make image-azure
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: image-gce
+  image: autonomy/build-container:latest
+  commands:
+  - make image-gce
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: push-image-azure
   image: autonomy/build-container:latest
@@ -1607,23 +1522,6 @@ steps:
   depends_on:
   - clone
 
-- name: kernel
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
-
 - name: rootfs
   image: autonomy/build-container:latest
   commands:
@@ -1662,23 +1560,6 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
-  image: autonomy/build-container:latest
-  commands:
-  - make container
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - rootfs
-
 - name: installer
   image: autonomy/build-container:latest
   commands:
@@ -1696,10 +1577,10 @@ steps:
   depends_on:
   - rootfs
 
-- name: image-azure
+- name: container
   image: autonomy/build-container:latest
   commands:
-  - make image-azure
+  - make container
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -1711,41 +1592,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
-
-- name: image-gce
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gce
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: iso
-  image: autonomy/build-container:latest
-  commands:
-  - make iso
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
+  - rootfs
 
 - name: lint
   image: autonomy/build-container:latest
@@ -1763,6 +1610,23 @@ steps:
     path: /tmp
   depends_on:
   - clone
+
+- name: image-test
+  image: autonomy/build-container:latest
+  commands:
+  - make image-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: unit-tests
   image: autonomy/build-container:latest
@@ -1836,6 +1700,40 @@ steps:
     - push
   depends_on:
   - basic-integration
+
+- name: image-azure
+  image: autonomy/build-container:latest
+  commands:
+  - make image-azure
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: image-gce
+  image: autonomy/build-container:latest
+  commands:
+  - make image-gce
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: push-image-azure
   image: autonomy/build-container:latest
@@ -2129,23 +2027,6 @@ steps:
   depends_on:
   - clone
 
-- name: kernel
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - clone
-
 - name: rootfs
   image: autonomy/build-container:latest
   commands:
@@ -2184,23 +2065,6 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
-  image: autonomy/build-container:latest
-  commands:
-  - make container
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - rootfs
-
 - name: installer
   image: autonomy/build-container:latest
   commands:
@@ -2218,10 +2082,10 @@ steps:
   depends_on:
   - rootfs
 
-- name: image-azure
+- name: container
   image: autonomy/build-container:latest
   commands:
-  - make image-azure
+  - make container
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -2233,41 +2097,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
-
-- name: image-gce
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gce
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: iso
-  image: autonomy/build-container:latest
-  commands:
-  - make iso
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
+  - rootfs
 
 - name: lint
   image: autonomy/build-container:latest
@@ -2285,6 +2115,23 @@ steps:
     path: /tmp
   depends_on:
   - clone
+
+- name: image-test
+  image: autonomy/build-container:latest
+  commands:
+  - make image-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: unit-tests
   image: autonomy/build-container:latest
@@ -2359,6 +2206,57 @@ steps:
   depends_on:
   - basic-integration
 
+- name: kernel
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: image-azure
+  image: autonomy/build-container:latest
+  commands:
+  - make image-azure
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
+- name: image-gce
+  image: autonomy/build-container:latest
+  commands:
+  - make image-gce
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: image-aws
   image: autonomy/build-container:latest
   commands:
@@ -2384,6 +2282,23 @@ steps:
     - tag
   depends_on:
   - push
+
+- name: iso
+  image: autonomy/build-container:latest
+  commands:
+  - make iso
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
 
 - name: release
   image: plugins/github-release

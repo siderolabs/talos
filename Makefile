@@ -199,9 +199,9 @@ image-gce:
 push-image-gce:
 	./hack/test/gce-setup.sh
 
-.PHONY: image-raw
-image-raw:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n rootfs -r -b
+.PHONY: image-test
+image-test:
+	@docker run --rm -v /dev:/dev -v /tmp:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n test -r -p test -u none
 
 .PHONY: iso
 iso:

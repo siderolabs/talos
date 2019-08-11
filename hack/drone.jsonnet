@@ -161,11 +161,8 @@ local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, proxyd, ntpd])
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
-local image_azure = Step("image-azure", depends_on=[installer]);
-local image_gce = Step("image-gce", depends_on=[installer]);
-local kernel = Step("kernel");
-local iso = Step("iso", depends_on=[installer]);
 local lint = Step("lint");
+local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
 local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux]);
@@ -207,15 +204,12 @@ local default_steps = [
   ntpd,
   osctl_linux,
   osctl_darwin,
-  kernel,
   rootfs,
   initramfs,
-  container,
   installer,
-  image_azure,
-  image_gce,
-  iso,
+  container,
   lint,
+  image_test,
   unit_tests,
   // unit_tests_race,
   coverage,
@@ -244,6 +238,8 @@ local creds_env_vars = {
     PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
+local image_azure = Step("image-azure", depends_on=[installer]);
+local image_gce = Step("image-gce", depends_on=[installer]);
 local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
 local push_image_gce = Step("push-image-gce", depends_on=[image_gce], environment=creds_env_vars);
@@ -252,6 +248,8 @@ local e2e_integration_gce = Step("e2e-integration-gce", "e2e-integration", depen
 
 local e2e_steps = default_steps + [
   capi,
+  image_azure,
+  image_gce,
   push_image_azure,
   push_image_gce,
   e2e_integration_azure,
@@ -274,6 +272,8 @@ local conformance_azure = Step("conformance-azure", "e2e-integration", depends_o
 local conformance_gce = Step("conformance-gce", "e2e-integration", depends_on=[capi, push_image_gce], environment={PLATFORM: "gce", CONFORMANCE: "run"});
 
 local conformance_steps = default_steps + [
+  image_azure,
+  image_gce,
   push_image_azure,
   push_image_gce,
   capi,
@@ -318,6 +318,8 @@ local ami_trigger = {
   }
 };
 
+local kernel = Step("kernel");
+local iso = Step("iso", depends_on=[installer]);
 local image_aws = Step("image-aws", depends_on=[push], environment=aws_env_vars) + ami_trigger;
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
@@ -337,7 +339,11 @@ local release ={
 };
 
 local release_steps = default_steps + [
+  kernel,
+  image_azure,
+  image_gce,
   image_aws,
+  iso,
   release,
 ];
 
