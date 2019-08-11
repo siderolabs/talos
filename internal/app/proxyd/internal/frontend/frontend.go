@@ -333,6 +333,7 @@ func (r *ReverseProxy) Bootstrap(ctx context.Context) {
 				case <-ticker.C:
 					conn, err := net.Dial("tcp", addr)
 					if err != nil {
+						log.Printf("failed to dial bootstrap backend: %+v\n", err)
 						// Remove backend.
 						if deleted := r.DeleteBackend(uid); deleted {
 							log.Printf("deregistered bootstrap backend with IP: %s", e)
