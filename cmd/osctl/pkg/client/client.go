@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
+	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/proc"
 )
 
@@ -107,7 +108,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	})
 
 	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
-	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", clientcreds.Target, port), grpcOpts...)
+	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(clientcreds.Target), port), grpcOpts...)
 	if err != nil {
 		return
 	}

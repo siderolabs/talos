@@ -29,3 +29,15 @@ func IPAddrs() (ips []net.IP, err error) {
 
 	return ips, nil
 }
+
+// FormatAddress checks that the address has a consistent format.
+func FormatAddress(addr string) string {
+	if ip := net.ParseIP(addr); ip != nil {
+		// If this is an IPv6 address, encapsulate it in brackets
+		if ip.To16() != nil {
+			return "[" + ip.String() + "]"
+		}
+		return ip.String()
+	}
+	return addr
+}
