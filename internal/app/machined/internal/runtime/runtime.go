@@ -8,13 +8,17 @@ package runtime
 type Mode int
 
 const (
-	// Standard represents a runtime mode.
-	Standard Mode = iota
+	// Cloud represents a runtime mode.
+	Cloud Mode = iota
 	// Container represents a runtime mode.
 	Container
+	// Interactive represents a runtime mode.
+	Interactive
+	// Metal represents a runtime mode.
+	Metal
 )
 
 // String returns the string representation of a Mode.
 func (m Mode) String() string {
-	return [...]string{"Standard", "Container"}[m]
+	return [...]string{"Cloud", "Container", "Interactive", "Metal"}[m]
 }

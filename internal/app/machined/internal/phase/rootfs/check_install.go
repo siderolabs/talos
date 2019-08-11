@@ -26,10 +26,10 @@ func NewCheckInstallTask() phase.Task {
 // RuntimeFunc returns the runtime function.
 func (task *CheckInstall) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	switch mode {
-	case runtime.Standard:
-		return task.standard
-	default:
+	case runtime.Container:
 		return nil
+	default:
+		return task.standard
 	}
 }
 

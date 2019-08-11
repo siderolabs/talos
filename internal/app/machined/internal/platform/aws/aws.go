@@ -13,9 +13,7 @@ import (
 	"net/http"
 
 	"github.com/fullsailor/pkcs7"
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -123,40 +121,13 @@ func (a *AWS) UserData() (*userdata.UserData, error) {
 	return userdata.Download(AWSUserDataEndpoint)
 }
 
-// Initialize implements the platform.Platform interface and handles additional system setup.
-// nolint: dupl
-func (a *AWS) Initialize(data *userdata.UserData) (err error) {
-	var mountpoints *mount.Points
-	mountpoints, err = owned.MountPointsFromLabels()
-	if err != nil {
-		return err
-	}
-
-	m := manager.NewManager(mountpoints)
-
-	if err = m.MountAll(); err != nil {
-		return err
-	}
-
-	hostnameBytes, err := hostname()
-	if err != nil {
-		return err
-	}
-
-	// Stub out networking
-	if data.Networking == nil {
-		data.Networking = &userdata.Networking{}
-	}
-	if data.Networking.OS == nil {
-		data.Networking.OS = &userdata.OSNet{}
-	}
-
-	data.Networking.OS.Hostname = string(hostnameBytes)
-
-	return err
+// Mode implements the platform.Platform interface.
+func (a *AWS) Mode() runtime.Mode {
+	return runtime.Cloud
 }
 
-func hostname() (hostname []byte, err error) {
+// Hostname gets the hostname from the AWS metadata endpoint.
+func (a *AWS) Hostname() (hostname []byte, err error) {
 	resp, err := http.Get(AWSHostnameEndpoint)
 	if err != nil {
 		return

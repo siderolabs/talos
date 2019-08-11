@@ -9,9 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -44,39 +42,13 @@ func (a *Azure) UserData() (*userdata.UserData, error) {
 	return userdata.Download(AzureUserDataEndpoint, userdata.WithHeaders(map[string]string{"Metadata": "true"}), userdata.WithFormat("base64"))
 }
 
-// Initialize implements the platform.Platform interface and handles additional system setup.
-// nolint: dupl
-func (a *Azure) Initialize(data *userdata.UserData) (err error) {
-	var mountpoints *mount.Points
-	mountpoints, err = owned.MountPointsFromLabels()
-	if err != nil {
-		return err
-	}
-
-	m := manager.NewManager(mountpoints)
-	if err = m.MountAll(); err != nil {
-		return err
-	}
-
-	hostnameBytes, err := hostname()
-	if err != nil {
-		return err
-	}
-
-	// Stub out networking
-	if data.Networking == nil {
-		data.Networking = &userdata.Networking{}
-	}
-	if data.Networking.OS == nil {
-		data.Networking.OS = &userdata.OSNet{}
-	}
-
-	data.Networking.OS.Hostname = string(hostnameBytes)
-
-	return err
+// Mode implements the platform.Platform interface.
+func (a *Azure) Mode() runtime.Mode {
+	return runtime.Cloud
 }
 
-func hostname() (hostname []byte, err error) {
+// Hostname gets the hostname from the Azure metadata endpoint.
+func (a *Azure) Hostname() (hostname []byte, err error) {
 	var req *http.Request
 	var resp *http.Response
 

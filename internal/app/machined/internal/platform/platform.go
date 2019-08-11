@@ -10,12 +10,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/aws"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/azure"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/baremetal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/container"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/googlecloud"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/gcp"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/iso"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform/metal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/packet"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/vmware"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -25,7 +26,8 @@ import (
 type Platform interface {
 	Name() string
 	UserData() (*userdata.UserData, error)
-	Initialize(*userdata.UserData) error
+	Mode() runtime.Mode
+	Hostname() ([]byte, error)
 }
 
 // NewPlatform is a helper func for discovering the current platform.
@@ -50,12 +52,12 @@ func NewPlatform() (p Platform, err error) {
 		p = &aws.AWS{}
 	case "azure":
 		p = &azure.Azure{}
-	case "bare-metal":
-		p = &baremetal.BareMetal{}
+	case "metal":
+		p = &metal.Metal{}
 	case "container":
 		p = &container.Container{}
-	case "googlecloud":
-		p = &googlecloud.GoogleCloud{}
+	case "gcp":
+		p = &gcp.GCP{}
 	case "iso":
 		p = &iso.ISO{}
 	case "packet":

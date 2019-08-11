@@ -10,9 +10,9 @@ tar -xf /tmp/google-cloud-sdk.tar.gz -C /tmp
 /tmp/google-cloud-sdk/install.sh --disable-installation-options --quiet
 /tmp/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file /tmp/svc-acct.json
 
-## Push talos-gce to storage bucket
-/tmp/google-cloud-sdk/bin/gsutil cp ./build/gce.tar.gz gs://talos-e2e/gce-${TAG}.tar.gz
+## Push talos-gcp to storage bucket
+/tmp/google-cloud-sdk/bin/gsutil cp ./build/gcp.tar.gz gs://talos-e2e/gcp-${TAG}.tar.gz
 
-## Create image from talos-gce
+## Create image from talos-gcp
 /tmp/google-cloud-sdk/bin/gcloud --quiet --project talos-testbed compute images delete talos-e2e-${TAG} || true ##Ignore error if image doesn't exist
-/tmp/google-cloud-sdk/bin/gcloud --quiet --project talos-testbed compute images create talos-e2e-${TAG} --source-uri gs://talos-e2e/gce-${TAG}.tar.gz
+/tmp/google-cloud-sdk/bin/gcloud --quiet --project talos-testbed compute images create talos-e2e-${TAG} --source-uri gs://talos-e2e/gcp-${TAG}.tar.gz

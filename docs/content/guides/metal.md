@@ -31,7 +31,7 @@ An iPXE server such as [coreos/Matchbox](https://github.com/poseidon/matchbox) i
 The following is the list of related kernel commandline parameters:
 
 - `talos.userdata` (required) the HTTP(S) URL at which the machine data can be found
-- `talos.platform` (required) should be 'bare-metal' for bare-metal installs
+- `talos.platform` (required) should be 'metal' for bare-metal installs
 
 Talos also enforces some minimum requirements from the KSPP (kernel self-protection project):
 

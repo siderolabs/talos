@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
 
 	"gopkg.in/yaml.v2"
@@ -40,7 +41,12 @@ func (c *Container) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Initialize implements the platform.Platform interface.
-func (c *Container) Initialize(data *userdata.UserData) error {
-	return nil
+// Mode implements the platform.Platform interface.
+func (c *Container) Mode() runtime.Mode {
+	return runtime.Container
+}
+
+// Hostname implements the platform.Platform interface.
+func (c *Container) Hostname() (hostname []byte, err error) {
+	return nil, nil
 }

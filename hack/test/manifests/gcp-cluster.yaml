@@ -2,7 +2,7 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Cluster
 metadata:
   annotations: null
-  name: talos-e2e-{{TAG}}-gce
+  name: talos-e2e-{{TAG}}-gcp
 spec:
   clusterNetwork:
     pods:
@@ -28,9 +28,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
     set: master
-  name: talos-e2e-{{TAG}}-gce-master-0
+  name: talos-e2e-{{TAG}}-gcp-master-0
 spec:
   providerSpec:
     value:
@@ -51,9 +51,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
     set: master
-  name: talos-e2e-{{TAG}}-gce-master-1
+  name: talos-e2e-{{TAG}}-gcp-master-1
 spec:
   providerSpec:
     value:
@@ -74,9 +74,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
     set: master
-  name: talos-e2e-{{TAG}}-gce-master-2
+  name: talos-e2e-{{TAG}}-gcp-master-2
 spec:
   providerSpec:
     value:
@@ -97,19 +97,19 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: MachineDeployment
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
     set: worker
-  name: talos-e2e-{{TAG}}-gce-workers
+  name: talos-e2e-{{TAG}}-gcp-workers
 spec:
   replicas: 3
   selector:
     matchLabels:
-      cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
+      cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
       set: worker
   template:
     metadata:
       labels:
-        cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
+        cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
         set: worker
     spec:
       providerSpec:

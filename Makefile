@@ -190,22 +190,21 @@ image-azure:
 push-image-azure:
 	@TAG=$(TAG) ./hack/test/azure-setup.sh
 
-.PHONY: image-gce
-image-gce:
+.PHONY: image-gcp
+image-gcp:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
 		--privileged $(DOCKER_ARGS) \
 		autonomy/installer:$(TAG) \
 		install \
 		-n disk \
 		-r \
-		-p googlecloud \
+		-p gcp \
 		-u none
-	@tar -C $(PWD)/build -czf $(PWD)/build/gce.tar.gz disk.raw
-	@rm -rf $(PWD)/build/disk.raw
+	@tar -C $(PWD)/build -czf $(PWD)/build/gcp.tar.gz disk.raw
 
-.PHONY: push-image-gce
-push-image-gce:
-	@TAG=$(TAG) ./hack/test/gce-setup.sh
+.PHONY: push-image-gcp
+push-image-gcp:
+	@TAG=$(TAG) ./hack/test/gcp-setup.sh
 
 .PHONY: image-test
 image-test:
