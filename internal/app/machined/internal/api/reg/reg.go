@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/upgrade"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -104,14 +105,19 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 
 // Reset initiates a Talos upgrade
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
-	// stop kubelet
+	// Stop the kubelet.
 	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
 		return data, err
 	}
 
-	// kubeadm Reset
+	// Run `kubeadm reset`.
 	if err = upgrade.Reset(); err != nil {
 		return data, err
+	}
+
+	// Remove the machine config.
+	if err = os.Remove(constants.UserDataPath); err != nil {
+		return nil, err
 	}
 
 	return &proto.ResetReply{}, err
