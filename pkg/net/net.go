@@ -34,7 +34,7 @@ func IPAddrs() (ips []net.IP, err error) {
 func FormatAddress(addr string) string {
 	if ip := net.ParseIP(addr); ip != nil {
 		// If this is an IPv6 address, encapsulate it in brackets
-		if ip.To16() != nil {
+		if ip.To4() == nil {
 			return "[" + ip.String() + "]"
 		}
 		return ip.String()
