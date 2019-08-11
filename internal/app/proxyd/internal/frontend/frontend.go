@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
-	tnet "github.com/talos-systems/talos/pkg/net"
+	// tnet "github.com/talos-systems/talos/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -107,6 +107,8 @@ func (r *ReverseProxy) DeleteBackend(uid string) (deleted bool) {
 
 // GetBackend gets a backend based on least connections algorithm.
 func (r *ReverseProxy) GetBackend() (backend *backend.Backend) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
 	return r.current
 }
 
@@ -238,6 +240,9 @@ func (r *ReverseProxy) DeleteFunc() func(obj interface{}) {
 }
 
 func (r *ReverseProxy) setCurrent() {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+
 	least := uint32(math.MaxUint32)
 	for _, b := range r.backends {
 		switch {
@@ -254,30 +259,42 @@ func (r *ReverseProxy) setCurrent() {
 }
 
 func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
-	backend := r.GetBackend()
-	if backend == nil {
-		log.Printf("no available backend, closing remote connection: %s", c1.RemoteAddr().String())
-		// nolint: errcheck
-		c1.Close()
+	attempts := 0
+	for {
+		if attempts == 10 {
+			// nolint: errcheck
+			c1.Close()
+			return
+		}
+
+		backend := r.GetBackend()
+		if backend == nil {
+			log.Printf("no available backend, closing remote connection: %s", c1.RemoteAddr().String())
+			// nolint: errcheck
+			c1.Close()
+			return
+		}
+
+		// c2, err := net.DialTimeout("tcp", tnet.FormatAddress(backend.Addr)+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
+		c2, err := net.DialTimeout("tcp", backend.Addr+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
+		if err != nil {
+			log.Printf("dial %v failed, deleting backend: %v", backend.Addr, err)
+			r.DeleteBackend(backend.UID)
+			attempts++
+			continue
+		}
+
+		// Ensure the connections are valid.
+		if c1 == nil || c2 == nil {
+			return
+		}
+
+		r.IncrementBackend(backend.UID)
+
+		r.joinConnections(backend.UID, c1, c2)
+
 		return
 	}
-
-	c2, err := net.DialTimeout("tcp", tnet.FormatAddress(backend.Addr)+":6443", time.Duration(r.ConnectTimeout)*time.Millisecond)
-	if err != nil {
-		log.Printf("dial %v failed, deleting backend: %v", backend.Addr, err)
-		r.DeleteBackend(backend.UID)
-		r.proxyConnection(c1)
-		return
-	}
-
-	// Ensure the connections are valid.
-	if c1 == nil || c2 == nil {
-		return
-	}
-
-	r.IncrementBackend(backend.UID)
-
-	r.joinConnections(backend.UID, c1, c2)
 }
 
 func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
@@ -327,7 +344,8 @@ func (r *ReverseProxy) Bootstrap(ctx context.Context) {
 			ticker := time.NewTicker(1 * time.Second)
 			defer ticker.Stop()
 			uid := fmt.Sprintf("bootstrap-%d", i)
-			addr := net.JoinHostPort(tnet.FormatAddress(e), "6443")
+			// addr := net.JoinHostPort(tnet.FormatAddress(e), "6443")
+			addr := net.JoinHostPort(e, "6443")
 			for {
 				select {
 				case <-ticker.C:
