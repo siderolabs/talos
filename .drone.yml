@@ -1196,6 +1196,29 @@ steps:
   depends_on:
   - basic-integration
 
+- name: capi
+  image: autonomy/build-container:latest
+  commands:
+  - make capi
+  environment:
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - basic-integration
+
 - name: image-azure
   image: autonomy/build-container:latest
   commands:
@@ -1275,29 +1298,6 @@ steps:
     path: /tmp
   depends_on:
   - image-gce
-
-- name: capi
-  image: autonomy/build-container:latest
-  commands:
-  - make capi
-  environment:
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - basic-integration
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -1701,6 +1701,29 @@ steps:
   depends_on:
   - basic-integration
 
+- name: capi
+  image: autonomy/build-container:latest
+  commands:
+  - make capi
+  environment:
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - basic-integration
+
 - name: image-azure
   image: autonomy/build-container:latest
   commands:
@@ -1780,29 +1803,6 @@ steps:
     path: /tmp
   depends_on:
   - image-gce
-
-- name: capi
-  image: autonomy/build-container:latest
-  commands:
-  - make capi
-  environment:
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - basic-integration
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -2356,6 +2356,9 @@ node:
 trigger:
   event:
   - tag
+  - promote
+  target:
+  - release
 
 ---
 kind: pipeline
