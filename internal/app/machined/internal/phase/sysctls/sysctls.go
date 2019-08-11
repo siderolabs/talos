@@ -5,6 +5,8 @@
 package sysctls
 
 import (
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
@@ -25,6 +27,15 @@ func (task *Sysctls) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	return task.runtime
 }
 
-func (task *Sysctls) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	return sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"})
+func (task *Sysctls) runtime(platform platform.Platform, data *userdata.UserData) error {
+	var multiErr *multierror.Error
+
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
+		multiErr = multierror.Append(multiErr, errors.Wrapf(err, "failed to set IPv4 forwarding"))
+	}
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
+		multiErr = multierror.Append(multiErr, errors.Wrap(err, "failed to set IPv6 forwarding"))
+	}
+
+	return multiErr.ErrorOrNil()
 }
