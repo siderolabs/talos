@@ -272,11 +272,11 @@ local conformance_azure = Step("conformance-azure", "e2e-integration", depends_o
 local conformance_gce = Step("conformance-gce", "e2e-integration", depends_on=[capi, push_image_gce], environment={PLATFORM: "gce", CONFORMANCE: "run"});
 
 local conformance_steps = default_steps + [
+  capi,
   image_azure,
   image_gce,
   push_image_azure,
   push_image_gce,
-  capi,
   conformance_azure,
   conformance_gce,
 ];
@@ -349,7 +349,13 @@ local release_steps = default_steps + [
 
 local release_trigger = {
   trigger: {
-    event: ["tag"],
+    event: [
+      "tag",
+      "promote",
+    ],
+    target: {
+      include: ["release"]
+    },
   },
 };
 
