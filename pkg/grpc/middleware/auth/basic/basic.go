@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -34,7 +35,7 @@ func NewConnection(address string, port int, creds credentials.PerRPCCredentials
 			})),
 		grpc.WithPerRPCCredentials(creds),
 	)
-	conn, err = grpc.Dial(fmt.Sprintf("%s:%d", address, port), grpcOpts...)
+	conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(address), port), grpcOpts...)
 	if err != nil {
 		return
 	}

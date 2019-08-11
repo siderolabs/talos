@@ -94,7 +94,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.2
-	gotest.tools v2.1.0+incompatible // indirect
+	gotest.tools v2.1.0+incompatible
 	k8s.io/api v0.0.0-20190409021203-6e4e0e4f393b
 	k8s.io/apiextensions-apiserver v0.0.0-20190322231200-1c09d17c1352 // indirect
 	k8s.io/apimachinery v0.0.0-20190404173353-6a84e37a896d
