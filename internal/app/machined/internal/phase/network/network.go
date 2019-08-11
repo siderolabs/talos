@@ -26,10 +26,10 @@ func NewUserDefinedNetworkTask() phase.Task {
 // RuntimeFunc returns the runtime function.
 func (task *UserDefinedNetwork) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	switch mode {
-	case runtime.Standard:
-		return task.runtime
-	default:
+	case runtime.Container:
 		return nil
+	default:
+		return task.runtime
 	}
 }
 

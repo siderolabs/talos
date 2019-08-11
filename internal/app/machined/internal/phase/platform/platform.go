@@ -8,6 +8,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime/initializer"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -25,8 +26,28 @@ func (task *Platform) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *Platform) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	if err = platform.Initialize(data); err != nil {
+	i, err := initializer.New(platform.Mode())
+	if err != nil {
 		return err
+	}
+	if err = i.Initialize(platform, data); err != nil {
+		return err
+	}
+
+	if data.Networking == nil {
+		data.Networking = &userdata.Networking{}
+	}
+	if data.Networking.OS == nil {
+		data.Networking.OS = &userdata.OSNet{}
+	}
+
+	b, err := platform.Hostname()
+	if err != nil {
+		return err
+	}
+
+	if b != nil {
+		data.Networking.OS.Hostname = string(b)
 	}
 
 	return nil

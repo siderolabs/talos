@@ -68,7 +68,7 @@ function usage() {
 TALOS_RAW="/out/talos.raw"
 TALOS_ISO="/out/talos.iso"
 TALOS_VMDK="/out/talos.vmdk"
-TALOS_PLATFORM="bare-metal"
+TALOS_PLATFORM="metal"
 TALOS_USERDATA="none"
 WITH_BOOTLOADER="true"
 EXTRA_ARGS=""

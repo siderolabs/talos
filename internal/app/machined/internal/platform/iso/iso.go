@@ -5,20 +5,9 @@
 package iso
 
 import (
-	"bufio"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/installer"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"golang.org/x/sys/unix"
 )
 
 // ISO is a platform for installing Talos via an ISO image.
@@ -61,51 +50,12 @@ func (i *ISO) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Initialize implements the platform.Platform interface.
-func (i *ISO) Initialize(data *userdata.UserData) (err error) {
-	var dev *probe.ProbedBlockDevice
-	dev, err = probe.GetDevWithFileSystemLabel(constants.ISOFilesystemLabel)
-	if err != nil {
-		return errors.Errorf("failed to find %s iso: %v", constants.ISOFilesystemLabel, err)
-	}
+// Mode implements the platform.Platform interface.
+func (i *ISO) Mode() runtime.Mode {
+	return runtime.Interactive
+}
 
-	if err = unix.Mount(dev.Path, "/tmp", dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
-		return err
-	}
-
-	for _, f := range []string{"/tmp/usr/install/vmlinuz", "/tmp/usr/install/initramfs.xz"} {
-		var source []byte
-		source, err = ioutil.ReadFile(f)
-		if err != nil {
-			return err
-		}
-		if err = ioutil.WriteFile("/"+filepath.Base(f), source, 0644); err != nil {
-			return err
-		}
-	}
-
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Talos configuration URL: ")
-	endpoint, err := reader.ReadString('\n')
-	if err != nil {
-		return err
-	}
-
-	cmdline := kernel.NewDefaultCmdline()
-	cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
-	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
-	cmdline.Append(constants.KernelParamUserData, endpoint)
-
-	inst, err := installer.NewInstaller(cmdline, data)
-	if err != nil {
-		return err
-	}
-	if err = inst.Install(); err != nil {
-		return errors.Wrap(err, "failed to install")
-	}
-
-	// nolint: errcheck
-	unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))
-
-	return nil
+// Hostname implements the platform.Platform interface.
+func (i *ISO) Hostname() (hostname []byte, err error) {
+	return nil, nil
 }

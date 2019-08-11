@@ -744,10 +744,10 @@ steps:
   depends_on:
   - installer
 
-- name: image-gce
+- name: image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make image-gce
+  - make image-gcp
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -784,10 +784,10 @@ steps:
   depends_on:
   - image-azure
 
-- name: push-image-gce
+- name: push-image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make push-image-gce
+  - make push-image-gcp
   environment:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
@@ -805,7 +805,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-gce
+  - image-gcp
 
 - name: e2e-integration-azure
   image: autonomy/build-container:latest
@@ -826,14 +826,14 @@ steps:
   - capi
   - push-image-azure
 
-- name: e2e-integration-gce
+- name: e2e-integration-gcp
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    PLATFORM: gce
+    PLATFORM: gcp
   volumes:
   - name: dockersock
     path: /var/run
@@ -843,7 +843,7 @@ steps:
     path: /tmp
   depends_on:
   - capi
-  - push-image-gce
+  - push-image-gcp
 
 services:
 - name: docker
@@ -1253,10 +1253,10 @@ steps:
   depends_on:
   - installer
 
-- name: image-gce
+- name: image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make image-gce
+  - make image-gcp
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -1293,10 +1293,10 @@ steps:
   depends_on:
   - image-azure
 
-- name: push-image-gce
+- name: push-image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make push-image-gce
+  - make push-image-gcp
   environment:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
@@ -1314,7 +1314,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-gce
+  - image-gcp
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -1336,7 +1336,7 @@ steps:
   - capi
   - push-image-azure
 
-- name: conformance-gce
+- name: conformance-gcp
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -1344,7 +1344,7 @@ steps:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
-    PLATFORM: gce
+    PLATFORM: gcp
   volumes:
   - name: dockersock
     path: /var/run
@@ -1354,7 +1354,7 @@ steps:
     path: /tmp
   depends_on:
   - capi
-  - push-image-gce
+  - push-image-gcp
 
 services:
 - name: docker
@@ -1764,10 +1764,10 @@ steps:
   depends_on:
   - installer
 
-- name: image-gce
+- name: image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make image-gce
+  - make image-gcp
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -1804,10 +1804,10 @@ steps:
   depends_on:
   - image-azure
 
-- name: push-image-gce
+- name: push-image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make push-image-gce
+  - make push-image-gcp
   environment:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
@@ -1825,7 +1825,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-gce
+  - image-gcp
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -1847,7 +1847,7 @@ steps:
   - capi
   - push-image-azure
 
-- name: conformance-gce
+- name: conformance-gcp
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -1855,7 +1855,7 @@ steps:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
-    PLATFORM: gce
+    PLATFORM: gcp
   volumes:
   - name: dockersock
     path: /var/run
@@ -1865,7 +1865,7 @@ steps:
     path: /tmp
   depends_on:
   - capi
-  - push-image-gce
+  - push-image-gcp
 
 services:
 - name: docker
@@ -2269,10 +2269,10 @@ steps:
   depends_on:
   - installer
 
-- name: image-gce
+- name: image-gcp
   image: autonomy/build-container:latest
   commands:
-  - make image-gce
+  - make image-gcp
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -2346,7 +2346,7 @@ steps:
   depends_on:
   - kernel
   - iso
-  - image-gce
+  - image-gcp
   - image-azure
   - image-aws
   - push

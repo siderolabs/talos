@@ -32,7 +32,7 @@ func NewDefaultCmdline() *Cmdline {
 	// device will be used when you open /dev/console.
 	// AWS: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UserProvidedKernels.html
 	// VMWare: https://kb.vmware.com/s/article/2009269
-	// GCE: https://cloud.google.com/compute/docs/instances/interacting-with-serial-console
+	// GCP: https://cloud.google.com/compute/docs/instances/interacting-with-serial-console
 	// Azure: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-upload-generic#general-linux-system-requirements
 	cmdline.Append("console", "tty0")
 	cmdline.Append("console", "tty1")

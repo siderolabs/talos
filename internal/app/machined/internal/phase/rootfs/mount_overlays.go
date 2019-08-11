@@ -36,12 +36,10 @@ func NewMountOverlayTask() phase.Task {
 // RuntimeFunc returns the runtime function.
 func (task *MountOverlay) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	switch mode {
-	case runtime.Standard:
-		return task.standard
 	case runtime.Container:
 		return task.container
 	default:
-		return nil
+		return task.standard
 	}
 }
 

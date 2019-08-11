@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform/container"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -33,11 +32,11 @@ func NewRunner(data *userdata.UserData) (*Runner, error) {
 		return nil, err
 	}
 
-	mode := runtime.Standard
-	switch platform.(type) {
-	case *container.Container:
-		mode = runtime.Container
-	default:
+	mode := platform.Mode()
+	switch mode {
+	case runtime.Metal:
+		fallthrough
+	case runtime.Cloud:
 		// Setup logging to /dev/kmsg.
 		if _, err = kmsg.Setup("[talos]"); err != nil {
 			return nil, errors.Errorf("failed to setup logging to /dev/kmsg: %v", err)

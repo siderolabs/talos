@@ -8,10 +8,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
@@ -68,15 +66,12 @@ func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
 	return data, nil
 }
 
-// Initialize implements the platform.Platform interface and handles additional system setup.
-func (vmw *VMware) Initialize(data *userdata.UserData) (err error) {
-	var mountpoints *mount.Points
-	mountpoints, err = owned.MountPointsFromLabels()
-	if err != nil {
-		return err
-	}
+// Mode implements the platform.Platform interface.
+func (vmw *VMware) Mode() runtime.Mode {
+	return runtime.Cloud
+}
 
-	m := manager.NewManager(mountpoints)
-
-	return m.MountAll()
+// Hostname implements the platform.Platform interface.
+func (vmw *VMware) Hostname() (hostname []byte, err error) {
+	return nil, nil
 }
