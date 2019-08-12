@@ -18,7 +18,7 @@ services:
         bootstrapToken:
           token: '{{ .KubeadmTokens.BootstrapToken }}'
           unsafeSkipCAVerification: true
-          apiServerEndpoint: {{ index .MasterIPs 0 }}:443
+          apiServerEndpoint: "{{ .GetControlPlaneEndpoint "443" }}"
       nodeRegistration:
         taints: []
         kubeletExtraArgs:

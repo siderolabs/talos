@@ -36,9 +36,9 @@ services:
       kind: ClusterConfiguration
       clusterName: {{ .ClusterName }}
       kubernetesVersion: {{ .KubernetesVersion }}
-      controlPlaneEndpoint: {{ .IP }}:443
+      controlPlaneEndpoint: "{{ .GetControlPlaneEndpoint "443" }}"
       apiServer:
-        certSANs: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}}, "127.0.0.1" ]
+        certSANs: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}}, "127.0.0.1", "::1" ]
         extraArgs:
           runtime-config: settings.k8s.io/v1alpha1=true
           feature-gates: ExperimentalCriticalPodAnnotation=true
@@ -51,8 +51,8 @@ services:
           feature-gates: ExperimentalCriticalPodAnnotation=true
       networking:
         dnsDomain: {{ .ServiceDomain }}
-        podSubnet: {{ index .PodNet 0 }}
-        serviceSubnet: {{ index .ServiceNet 0 }}
+        podSubnet: "{{ index .PodNet 0 }}"
+        serviceSubnet: "{{ index .ServiceNet 0 }}"
       ---
       apiVersion: kubelet.config.k8s.io/v1beta1
       kind: KubeletConfiguration
@@ -67,5 +67,5 @@ services:
   trustd:
     token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ .Endpoints }} ]
-    certSANs: [ "{{ .IP }}", "127.0.0.1" ]
+    certSANs: [ "{{ .IP }}", "127.0.0.1", "::1" ]
 `

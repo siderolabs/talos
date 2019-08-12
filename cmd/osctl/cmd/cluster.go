@@ -178,9 +178,6 @@ func createNodes(requests []*node.Request) (err error) {
 			// node comes up
 			// 1 <- 2 <- 3 <- 4 <- 5 ...
 			req.Input.Index = idx
-			if req.Input.Index > 0 {
-				req.Input.Index--
-			}
 			if req.IP != nil {
 				req.Input.IP = req.IP
 			}
