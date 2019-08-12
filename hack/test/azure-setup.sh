@@ -31,8 +31,8 @@ tar -C ${TMP} -xf ./build/azure.tar.gz
 ## Login to azure, push blob, create image from blob
 AZURE_STORAGE_CONNECTION_STRING=$( azcli_run "az storage account show-connection-string -n ${STORAGE_ACCOUNT} -g ${GROUP} -o tsv" )
 
-azcli_run "AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}' az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure.vhd"
+azcli_run "AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}' az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure-${TAG}.vhd"
 
-azcli_run "az image delete --name talos-e2e -g ${GROUP}"
+azcli_run "az image delete --name talos-e2e-${TAG} -g ${GROUP}"
 
-azcli_run "az image create --name talos-e2e --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure.vhd --os-type linux -g ${GROUP}"
+azcli_run "az image create --name talos-e2e-${TAG} --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${GROUP}"
