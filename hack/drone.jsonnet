@@ -191,7 +191,10 @@ local push = {
   commands: ["make gitmeta", "make login", "make push"],
   volumes: volumes.ForStep(),
   when: {
-    event: ["push"],
+    event: {
+      include: ["push"],
+      exclude: ["promote"],
+    },
   },
   depends_on: [basic_integration.name],
 };
@@ -222,8 +225,8 @@ local default_trigger = {
     cron: {
       exclude: ["nightly"]
     },
-    target: {
-      exclude: ["e2e", "conformance", "release"]
+    event: {
+      exclude: ["promote"]
     },
   },
 };
