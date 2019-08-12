@@ -3,26 +3,30 @@ set -eou pipefail
 
 source ./hack/test/e2e-runner.sh
 
-
 ## Create tmp dir
 mkdir -p $TMP
 
+NAME_PREFIX="talos-e2e-${TAG}-${PLATFORM}"
+
 ## Cleanup the platform resources upon any exit
 cleanup() {
- e2e_run "kubectl delete machine talos-e2e-${PLATFORM}-master-0 talos-e2e-${PLATFORM}-master-1 talos-e2e-${PLATFORM}-master-2
-          kubectl scale machinedeployment talos-e2e-${PLATFORM}-workers --replicas=0
-          kubectl delete machinedeployment talos-e2e-${PLATFORM}-workers
-          kubectl delete cluster talos-e2e-${PLATFORM}"
+ e2e_run "kubectl delete machine ${NAME_PREFIX}-master-0 ${NAME_PREFIX}-master-1 ${NAME_PREFIX}-master-2
+          kubectl scale machinedeployment ${NAME_PREFIX}-workers --replicas=0
+          kubectl delete machinedeployment ${NAME_PREFIX}-workers
+          kubectl delete cluster ${NAME_PREFIX}"
 }
 
 trap cleanup EXIT
 
+## Setup the cluster YAML.
+sed "s/{{TAG}}/${TAG}/" ${PWD}/hack/test/manifests/${PLATFORM}-cluster.yaml > ${TMP}/${PLATFORM}-cluster.yaml
+
 ## Download kustomize and template out capi cluster, then deploy it
-e2e_run "kubectl apply -f /e2emanifests/${PLATFORM}-cluster.yaml"
+e2e_run "kubectl apply -f ${TMP}/${PLATFORM}-cluster.yaml"
 
 ## Wait for talosconfig in cm then dump it out
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-		 until kubectl get cm -n cluster-api-provider-talos-system talos-e2e-${PLATFORM}-master-0
+		 until kubectl get cm -n cluster-api-provider-talos-system ${NAME_PREFIX}-master-0
 		 do
 		   if  [[ \$(date +%s) -gt \$timeout ]]
 		   then
@@ -30,7 +34,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		   fi
 		   sleep 10
 		 done
-         kubectl get cm -n cluster-api-provider-talos-system talos-e2e-${PLATFORM}-master-0 -o jsonpath='{.data.talosconfig}' > ${TALOSCONFIG}-${PLATFORM}-capi"
+         kubectl get cm -n cluster-api-provider-talos-system ${NAME_PREFIX}-master-0 -o jsonpath='{.data.talosconfig}' > ${TALOSCONFIG}-${PLATFORM}-capi"
 
 ## Wait for kubeconfig from capi master-0
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))

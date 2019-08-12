@@ -41,6 +41,21 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	   sleep 2
 	 done"
 
+## Wait for the init node to report in
+run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+     until kubectl get node master-1 >/dev/null
+	 do
+	   if  [[ \$(date +%s) -gt \$timeout ]]
+	   then
+	     exit 1
+	   fi
+	   kubectl get nodes -o wide
+	   sleep 5
+	 done"
+
+## Deploy needed manifests
+run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml -f /manifests/coredns.yaml"
+
 ## Wait for all nodes to report in
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until kubectl get nodes -o json | jq '.items | length' | grep 4 >/dev/null
@@ -52,12 +67,6 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 	   kubectl get nodes -o wide
 	   sleep 5
 	 done"
-
-## Give a moment for things to stabilize before applying manifests
-sleep 10
-
-## Deploy needed manifests
-run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml -f /manifests/coredns.yaml"
 
 ## Wait for all nodes ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"

@@ -187,7 +187,7 @@ image-azure:
 
 .PHONY: push-image-azure
 push-image-azure:
-	./hack/test/azure-setup.sh
+	@TAG=$(TAG) ./hack/test/azure-setup.sh
 
 .PHONY: image-gce
 image-gce:
@@ -197,7 +197,7 @@ image-gce:
 
 .PHONY: push-image-gce
 push-image-gce:
-	./hack/test/gce-setup.sh
+	@TAG=$(TAG) ./hack/test/gce-setup.sh
 
 .PHONY: image-test
 image-test:

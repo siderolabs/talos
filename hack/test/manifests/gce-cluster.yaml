@@ -2,33 +2,33 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Cluster
 metadata:
   annotations: null
-  name: talos-e2e-gce
+  name: talos-e2e-{{TAG}}-gce
 spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-      - 192.168.0.0/16
+        - 192.168.0.0/16
     serviceDomain: cluster.local
     services:
       cidrBlocks:
-      - 10.96.0.0/12
+        - 10.96.0.0/12
   providerSpec:
     value:
       apiVersion: talosproviderconfig/v1alpha1
       kind: TalosClusterProviderSpec
       masters:
         ips:
-        - 35.208.196.229
-        - 35.208.64.45
-        - 35.208.118.119
+          - 35.208.196.229
+          - 35.208.64.45
+          - 35.208.118.119
 ---
 apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
     set: master
-  name: talos-e2e-gce-master-0
+  name: talos-e2e-{{TAG}}-gce-master-0
 spec:
   providerSpec:
     value:
@@ -40,7 +40,7 @@ spec:
           project: "talos-testbed"
           instances:
             type:  "n1-standard-2"
-            image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e"
+            image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e-{{TAG}}"
             disks:
               size: 50
         type: gce
@@ -49,9 +49,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
     set: master
-  name: talos-e2e-gce-master-1
+  name: talos-e2e-{{TAG}}-gce-master-1
 spec:
   providerSpec:
     value:
@@ -63,7 +63,7 @@ spec:
           project: "talos-testbed"
           instances:
             type:  "n1-standard-2"
-            image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e"
+            image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e-{{TAG}}"
             disks:
               size: 50
         type: gce
@@ -72,9 +72,9 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
     set: master
-  name: talos-e2e-gce-master-2
+  name: talos-e2e-{{TAG}}-gce-master-2
 spec:
   providerSpec:
     value:
@@ -86,7 +86,7 @@ spec:
           project: "talos-testbed"
           instances:
             type:  "n1-standard-2"
-            image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e"
+            image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e-{{TAG}}"
             disks:
               size: 50
         type: gce
@@ -95,19 +95,19 @@ apiVersion: cluster.k8s.io/v1alpha1
 kind: MachineDeployment
 metadata:
   labels:
-    cluster.k8s.io/cluster-name: talos-e2e-gce
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
     set: worker
-  name: talos-e2e-gce-workers
+  name: talos-e2e-{{TAG}}-gce-workers
 spec:
   replicas: 3
   selector:
     matchLabels:
-      cluster.k8s.io/cluster-name: talos-e2e-gce
+      cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
       set: worker
   template:
     metadata:
       labels:
-        cluster.k8s.io/cluster-name: talos-e2e-gce
+        cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-gce
         set: worker
     spec:
       providerSpec:
@@ -120,7 +120,7 @@ spec:
               project: "talos-testbed"
               instances:
                 type:  "n1-standard-2"
-                image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e"
+                image: "https://www.googleapis.com/compute/v1/projects/talos-testbed/global/images/talos-e2e-{{TAG}}"
                 disks:
                   size: 50
             type: gce
