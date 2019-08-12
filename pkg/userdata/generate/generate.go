@@ -12,14 +12,27 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net"
-	"strings"
 	"text/template"
 
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	tnet "github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/userdata/token"
 )
+
+// DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes
+const DefaultIPv4PodNet = "10.244.0.0/16"
+
+// DefaultIPv4ServiceNet is the network to be used for kubernetes Services when using IPv4-based master nodes
+const DefaultIPv4ServiceNet = "10.96.0.0/12"
+
+// DefaultIPv6PodNet is the network to be used for kubernetes Pods when using IPv6-based master nodes
+const DefaultIPv6PodNet = "fc00:db8:10::/56"
+
+// DefaultIPv6ServiceNet is the network to be used for kubernetes Services when using IPv6-based master nodes
+const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 // CertStrings holds the string representation of a certificate and key.
 type CertStrings struct {
@@ -29,19 +42,61 @@ type CertStrings struct {
 
 // Input holds info about certs, ips, and node type.
 type Input struct {
-	Certs             *Certs
-	MasterIPs         []string
-	Index             int
+	Certs     *Certs
+	MasterIPs []string
+
 	ClusterName       string
 	ServiceDomain     string
 	PodNet            []string
 	ServiceNet        []string
-	Endpoints         string
 	KubernetesVersion string
 	KubeadmTokens     *KubeadmTokens
 	TrustdInfo        *TrustdInfo
 	InitToken         *token.Token
-	IP                net.IP
+
+	//
+	// Runtime variables
+	//
+
+	// Index is the index of the current master
+	Index int
+
+	// IP is the IP address of the current master
+	IP net.IP
+}
+
+// Endpoints returns the formatted set of Master IP addresses
+func (i *Input) Endpoints() (out string) {
+	if i == nil || len(i.MasterIPs) < 1 {
+		panic("cannot Endpoints without any Master IPs")
+	}
+	for index, addr := range i.MasterIPs {
+		if index > 0 {
+			out += ", "
+		}
+		out += fmt.Sprintf(`"%s"`, addr)
+	}
+	return
+}
+
+// GetControlPlaneEndpoint returns the formatted host:port of the first master node
+func (i *Input) GetControlPlaneEndpoint(port string) string {
+
+	if i == nil || len(i.MasterIPs) < 1 {
+		panic("cannot GetControlPlaneEndpoint without any Master IPs")
+	}
+
+	// Each master after the first should reference the next-lower master index.
+	// Thus, master-2 references master-1 and master-3 references master-2.
+	refMaster := 0
+	if i.Index > 1 {
+		refMaster = i.Index - 1
+	}
+
+	if port == "" {
+		return tnet.FormatAddress(i.MasterIPs[refMaster])
+	}
+	return net.JoinHostPort(i.MasterIPs[refMaster], port)
 }
 
 // Certs holds the base64 encoded keys and certificates.
@@ -118,10 +173,33 @@ func genToken(lenFirst int, lenSecond int) (string, error) {
 	return tokenTemp[0] + "." + tokenTemp[1], nil
 }
 
+func isIPv6(addrs ...string) bool {
+	for _, a := range addrs {
+		if ip := net.ParseIP(a); ip != nil {
+			if ip.To4() == nil {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // NewInput generates the sensitive data required to generate all userdata
 // types.
 // nolint: gocyclo
 func NewInput(clustername string, masterIPs []string) (input *Input, err error) {
+
+	var loopbackIP, podNet, serviceNet string
+
+	if isIPv6(masterIPs...) {
+		loopbackIP = "::1"
+		podNet = DefaultIPv6PodNet
+		serviceNet = DefaultIPv6ServiceNet
+	} else {
+		loopbackIP = "127.0.0.1"
+		podNet = DefaultIPv4PodNet
+		serviceNet = DefaultIPv4ServiceNet
+	}
 
 	//Gen trustd token strings
 	kubeadmBootstrapToken, err := genToken(6, 16)
@@ -184,7 +262,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	if err != nil {
 		return nil, err
 	}
-	ips := []net.IP{net.ParseIP("127.0.0.1")}
+	ips := []net.IP{net.ParseIP(loopbackIP)}
 	opts = []x509.Option{x509.IPAddresses(ips)}
 	csr, err := x509.NewCertificateSigningRequest(adminKeyEC, opts...)
 	if err != nil {
@@ -231,11 +309,10 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	input = &Input{
 		Certs:             certs,
 		MasterIPs:         masterIPs,
-		PodNet:            []string{"10.244.0.0/16"},
-		ServiceNet:        []string{"10.96.0.0/12"},
+		PodNet:            []string{podNet},
+		ServiceNet:        []string{serviceNet},
 		ServiceDomain:     "cluster.local",
 		ClusterName:       clustername,
-		Endpoints:         strings.Join(masterIPs, ", "),
 		KubernetesVersion: constants.KubernetesVersion,
 		KubeadmTokens:     kubeadmTokens,
 		TrustdInfo:        trustdInfo,

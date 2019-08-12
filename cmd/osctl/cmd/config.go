@@ -144,7 +144,6 @@ var configGenerateCmd = &cobra.Command{
 			if input.Index == 0 {
 				udType = generate.TypeInit
 			} else {
-				input.Index--
 				udType = generate.TypeControlPlane
 			}
 

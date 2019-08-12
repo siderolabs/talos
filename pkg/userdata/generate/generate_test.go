@@ -5,6 +5,7 @@
 package generate_test
 
 import (
+	"fmt"
 	"net"
 	"testing"
 
@@ -15,7 +16,8 @@ import (
 )
 
 var (
-	input *generate.Input
+	input   *generate.Input
+	inputv6 *generate.Input
 )
 
 type GenerateSuite struct {
@@ -30,8 +32,13 @@ func (suite *GenerateSuite) SetupSuite() {
 	var err error
 	input, err = generate.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"})
 	suite.Require().NoError(err)
+
+	inputv6, err = generate.NewInput("test", []string{"2001:db8::1", "2001:db8::2", "2001:db8::3"})
+	suite.Require().NoError(err)
 }
 
+// TODO: this is triggering a false positive for the dupl test, between TestGenerateControlPlaneSuccess
+// nolint: dupl
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	input.IP = net.ParseIP("10.0.1.5")
 	dataString, err := generate.Userdata(generate.TypeInit, input)
@@ -39,13 +46,29 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	data := &userdata.UserData{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
+
+	inputv6.IP = net.ParseIP("2001:db8::1")
+	dataString, err = generate.Userdata(generate.TypeInit, inputv6)
+	suite.Require().NoError(err)
+	data = &userdata.UserData{}
+	err = yaml.Unmarshal([]byte(dataString), data)
+	suite.Require().NoError(err)
 }
 
+// TODO: this is triggering a false positive for the dupl test, between TestGenerateInitSuccess
+// nolint: dupl
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	input.IP = net.ParseIP("10.0.1.6")
 	dataString, err := generate.Userdata(generate.TypeControlPlane, input)
 	suite.Require().NoError(err)
 	data := &userdata.UserData{}
+	err = yaml.Unmarshal([]byte(dataString), data)
+	suite.Require().NoError(err)
+
+	inputv6.IP = net.ParseIP("2001:db8::2")
+	dataString, err = generate.Userdata(generate.TypeControlPlane, inputv6)
+	suite.Require().NoError(err)
+	data = &userdata.UserData{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
 }
@@ -56,9 +79,63 @@ func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 	data := &userdata.UserData{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
+
+	dataString, err = generate.Userdata(generate.TypeJoin, inputv6)
+	suite.Require().NoError(err)
+	data = &userdata.UserData{}
+	err = yaml.Unmarshal([]byte(dataString), data)
+	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 	_, err := generate.Talosconfig(input)
 	suite.Require().NoError(err)
+
+	_, err = generate.Talosconfig(inputv6)
+	suite.Require().NoError(err)
+}
+
+func (suite *GenerateSuite) TestGetControlPlaneEndpoint() {
+	ep := input.GetControlPlaneEndpoint("6443")
+	suite.Require().Equal(input.MasterIPs[0]+":6443", ep)
+
+	ep = input.GetControlPlaneEndpoint("443")
+	suite.Require().Equal(input.MasterIPs[0]+":443", ep)
+
+	ep = inputv6.GetControlPlaneEndpoint("6443")
+	suite.Require().Equal(fmt.Sprintf("[%s]:6443", inputv6.MasterIPs[0]), ep)
+
+	ep = input.GetControlPlaneEndpoint("")
+	suite.Require().Equal(input.MasterIPs[0], ep)
+
+	ep = inputv6.GetControlPlaneEndpoint("")
+	suite.Require().Equal(fmt.Sprintf("[%s]", inputv6.MasterIPs[0]), ep)
+
+	inputv6.IP = net.ParseIP("2001:db8::1")
+	inputv6.Index = 0
+	suite.Require().Equal(
+		fmt.Sprintf("[%s]", inputv6.MasterIPs[0]),
+		inputv6.GetControlPlaneEndpoint(""),
+	)
+
+	inputv6.IP = net.ParseIP("2001:db8::2")
+	inputv6.Index = 1
+	suite.Require().Equal(
+		fmt.Sprintf("[%s]", inputv6.MasterIPs[0]),
+		inputv6.GetControlPlaneEndpoint(""),
+	)
+
+	inputv6.IP = net.ParseIP("2001:db8::3")
+	inputv6.Index = 2
+	suite.Require().Equal(
+		fmt.Sprintf("[%s]", inputv6.MasterIPs[1]),
+		inputv6.GetControlPlaneEndpoint(""),
+	)
+
+	inputv6.IP = net.ParseIP("2001:db8::d")
+	inputv6.Index = 0
+	suite.Require().Equal(
+		fmt.Sprintf("[%s]", inputv6.MasterIPs[0]),
+		inputv6.GetControlPlaneEndpoint(""),
+	)
 }
