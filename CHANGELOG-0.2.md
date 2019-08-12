@@ -1,4 +1,30 @@
-# [](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.4...v) (2019-08-05)
+# [v0.2.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.5...v0.2.0-alpha.6) (2019-08-12)
+
+
+### Bug Fixes
+
+* enclose address in brackets gRPC client ([5210bf4](https://github.com/talos-systems/talos/commit/5210bf4)), closes [#983](https://github.com/talos-systems/talos/issues/983)
+* **initramfs:** Allow data partition to grow ([53b1330](https://github.com/talos-systems/talos/commit/53b1330))
+* **machined:** Clean up installation process ([da1f732](https://github.com/talos-systems/talos/commit/da1f732)), closes [#955](https://github.com/talos-systems/talos/issues/955)
+* enable IPv6 forwarding ([7691bb0](https://github.com/talos-systems/talos/commit/7691bb0)), closes [#985](https://github.com/talos-systems/talos/issues/985)
+* enclose server address is bracks if IPv6 ([d0ff28a](https://github.com/talos-systems/talos/commit/d0ff28a)), closes [#980](https://github.com/talos-systems/talos/issues/980)
+* format IPv6 host entries properly ([ae77d6e](https://github.com/talos-systems/talos/commit/ae77d6e)), closes [#916](https://github.com/talos-systems/talos/issues/916) [#917](https://github.com/talos-systems/talos/issues/917) [#918](https://github.com/talos-systems/talos/issues/918)
+* stalls in local Docker cluster boot ([ae54f7e](https://github.com/talos-systems/talos/commit/ae54f7e))
+* store PartitionName when on NVMe disk ([6d22744](https://github.com/talos-systems/talos/commit/6d22744)), closes [#978](https://github.com/talos-systems/talos/issues/978)
+* **proxyd:** do not pre-bracket IPv6 backend addrs ([fd76d90](https://github.com/talos-systems/talos/commit/fd76d90)), closes [#996](https://github.com/talos-systems/talos/issues/996)
+* **proxyd:** print bootstrap backend dial errors ([142500c](https://github.com/talos-systems/talos/commit/142500c))
+* **proxyd:** wrap Dial addresses ([63cfd8a](https://github.com/talos-systems/talos/commit/63cfd8a)), closes [#988](https://github.com/talos-systems/talos/issues/988)
+
+
+### Features
+
+* bump k8s version to v1.15.2 ([ec3c77d](https://github.com/talos-systems/talos/commit/ec3c77d))
+* remove the machine config on reset ([ad79e8d](https://github.com/talos-systems/talos/commit/ad79e8d))
+* upgrade kubernetes to v1.16.0-alpha.3 ([902577b](https://github.com/talos-systems/talos/commit/902577b))
+
+
+
+# [v0.2.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.4...v0.2.0-alpha.5) (2019-08-05)
 
 
 ### Bug Fixes
