@@ -321,7 +321,10 @@ steps:
     path: /tmp
   when:
     event:
-    - push
+      include:
+      - push
+      exclude:
+      - promote
   depends_on:
   - basic-integration
 
@@ -360,11 +363,9 @@ trigger:
   cron:
     exclude:
     - nightly
-  target:
+  event:
     exclude:
-    - e2e
-    - conformance
-    - release
+    - promote
 
 ---
 kind: pipeline
@@ -689,7 +690,10 @@ steps:
     path: /tmp
   when:
     event:
-    - push
+      include:
+      - push
+      exclude:
+      - promote
   depends_on:
   - basic-integration
 
@@ -1192,7 +1196,10 @@ steps:
     path: /tmp
   when:
     event:
-    - push
+      include:
+      - push
+      exclude:
+      - promote
   depends_on:
   - basic-integration
 
@@ -1697,7 +1704,10 @@ steps:
     path: /tmp
   when:
     event:
-    - push
+      include:
+      - push
+      exclude:
+      - promote
   depends_on:
   - basic-integration
 
@@ -2202,7 +2212,10 @@ steps:
     path: /tmp
   when:
     event:
-    - push
+      include:
+      - push
+      exclude:
+      - promote
   depends_on:
   - basic-integration
 
