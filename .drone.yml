@@ -2369,9 +2369,6 @@ node:
 trigger:
   event:
   - tag
-  - promote
-  target:
-  - release
 
 ---
 kind: pipeline

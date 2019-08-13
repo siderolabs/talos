@@ -354,11 +354,7 @@ local release_trigger = {
   trigger: {
     event: [
       "tag",
-      "promote",
     ],
-    target: {
-      include: ["release"]
-    },
   },
 };
 
