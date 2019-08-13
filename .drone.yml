@@ -321,9 +321,8 @@ steps:
     path: /tmp
   when:
     event:
-      include:
-      - push
       exclude:
+      - pull_request
       - promote
   depends_on:
   - basic-integration
@@ -365,6 +364,7 @@ trigger:
     - nightly
   event:
     exclude:
+    - tag
     - promote
 
 ---
@@ -690,9 +690,8 @@ steps:
     path: /tmp
   when:
     event:
-      include:
-      - push
       exclude:
+      - pull_request
       - promote
   depends_on:
   - basic-integration
@@ -1196,9 +1195,8 @@ steps:
     path: /tmp
   when:
     event:
-      include:
-      - push
       exclude:
+      - pull_request
       - promote
   depends_on:
   - basic-integration
@@ -1704,9 +1702,8 @@ steps:
     path: /tmp
   when:
     event:
-      include:
-      - push
       exclude:
+      - pull_request
       - promote
   depends_on:
   - basic-integration
@@ -2212,9 +2209,8 @@ steps:
     path: /tmp
   when:
     event:
-      include:
-      - push
       exclude:
+      - pull_request
       - promote
   depends_on:
   - basic-integration

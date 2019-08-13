@@ -192,8 +192,10 @@ local push = {
   volumes: volumes.ForStep(),
   when: {
     event: {
-      include: ["push"],
-      exclude: ["promote"],
+      exclude: [
+        "pull_request",
+        "promote",
+      ],
     },
   },
   depends_on: [basic_integration.name],
@@ -226,7 +228,10 @@ local default_trigger = {
       exclude: ["nightly"]
     },
     event: {
-      exclude: ["promote"]
+      exclude: [
+        "tag",
+        "promote",
+      ]
     },
   },
 };
