@@ -16,11 +16,13 @@ spec:
     value:
       apiVersion: talosproviderconfig/v1alpha1
       kind: TalosClusterProviderSpec
-      masters:
-        ips:
-          - 35.208.196.229
-          - 35.208.64.45
-          - 35.208.118.119
+      platform:
+        config: |-
+          region: "us-central1"
+          project: "talos-testbed"
+        type: gce
+      controlplane:
+        count: 3
 ---
 apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine

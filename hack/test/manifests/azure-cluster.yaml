@@ -16,11 +16,13 @@ spec:
     value:
       apiVersion: talosproviderconfig/v1alpha1
       kind: TalosClusterProviderSpec
-      masters:
-        ips:
-          - 23.99.218.95
-          - 23.99.220.43
-          - 23.99.225.139
+      platform:
+        config: |-
+          resourcegroup: "talos"
+          location: "centralus"
+        type: azure
+      controlplane:
+        count: 3
 ---
 apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
