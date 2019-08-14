@@ -47,6 +47,21 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		   sleep 10
 		 done"
 
+## Wait for the init node to report in
+e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+     until KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi kubectl get nodes -l node-role.kubernetes.io/master='' -o json | jq '.items | length' | grep 1 >/dev/null
+	 do
+	   if  [[ \$(date +%s) -gt \$timeout ]]
+	   then
+	     exit 1
+	   fi
+	   kubectl get nodes -o wide
+	   sleep 5
+	 done"
+
+##  Apply psp and flannel
+e2e_run "KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
+
 ##  Wait for nodes to check in
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		 until KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi kubectl get nodes -o json | jq '.items | length' | grep ${NUM_NODES} >/dev/null
@@ -58,9 +73,6 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 		   KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi kubectl get nodes -o wide
 		   sleep 10
 		 done"
-
-##  Apply psp and flannel
-e2e_run "KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
 
 ## Wait for kube-proxy up
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
