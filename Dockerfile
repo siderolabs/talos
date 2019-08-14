@@ -168,8 +168,8 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:a135947 /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:a135947 /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:36cc240 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:36cc240 /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
@@ -193,7 +193,7 @@ COPY --from=docker.io/autonomy/crictl:ddbeea1 / /rootfs
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libblkid.* /rootfs/lib
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libuuid.* /rootfs/lib
 COPY --from=docker.io/autonomy/base:f9a4941 /toolchain/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:a135947 /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/kernel:36cc240 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY images/ntpd.tar /rootfs/usr/images/
 COPY images/osd.tar /rootfs/usr/images/
