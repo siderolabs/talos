@@ -22,8 +22,10 @@ e2e_run "apt-get update && apt-get install wget
 		 tar -xf /tmp/sonobuoy.tar.gz -C /usr/local/bin
 		 sonobuoy run --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi \
         --wait \
+        --wait-output spinner \
         --skip-preflight \
         --plugin e2e \
-        --kube-conformance-image-version latest
+        --plugin-env e2e.E2E_USE_GO_RUNNER=true \
+        --kube-conformance-image-version v1.16.0-beta.0
 		 results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi)
 		 sonobuoy e2e --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi \$results"
