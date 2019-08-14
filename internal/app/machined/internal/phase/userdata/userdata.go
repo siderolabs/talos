@@ -63,9 +63,7 @@ func (task *UserData) container(platform platform.Platform, data *userdata.UserD
 	if ok {
 		initConfiguration.ClusterConfiguration.ComponentConfigs.Kubelet.FailSwapOn = false
 		// See https://github.com/kubernetes/kubernetes/issues/58610#issuecomment-359552443
-		max := int32(0)
 		maxPerCore := int32(0)
-		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.Max = &max
 		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.MaxPerCore = &maxPerCore
 	}
 

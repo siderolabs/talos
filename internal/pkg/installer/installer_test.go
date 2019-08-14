@@ -83,7 +83,7 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta1
       kind: ClusterConfiguration
       clusterName: test
-      kubernetesVersion: v1.14.1
+      kubernetesVersion: v1.16.0-alpha.3
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
       kind: KubeProxyConfiguration
