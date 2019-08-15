@@ -148,6 +148,9 @@ const (
 	// ProxydSocketPath is the path to file socket of proxyd API
 	ProxydSocketPath = "/run/system/proxyd/proxyd.sock"
 
+	// NtpdSocketPath is the path to file socket of proxyd API
+	NtpdSocketPath = "/run/system/ntpd/ntpd.sock"
+
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
 
