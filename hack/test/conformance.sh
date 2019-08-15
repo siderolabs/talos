@@ -22,7 +22,6 @@ e2e_run "apt-get update && apt-get install wget
 		 tar -xf /tmp/sonobuoy.tar.gz -C /usr/local/bin
 		 sonobuoy run --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi \
         --wait \
-        --wait-output spinner \
         --skip-preflight \
         --plugin e2e \
         --plugin-env e2e.E2E_USE_GO_RUNNER=true \
