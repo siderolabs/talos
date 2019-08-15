@@ -78,7 +78,9 @@ type Networking struct {
 
 // OSNet represents the network interfaces present on the host
 type OSNet struct {
-	Devices []Device `yaml:"devices"`
+	Devices    []Device `yaml:"devices"`
+	Hostname   string   `yaml:"hostname"`
+	Domainname string   `yaml:"domainname"`
 }
 
 // File represents a file to write to disk.

@@ -5,6 +5,10 @@
 package azure
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
@@ -40,37 +44,8 @@ func (a *Azure) UserData() (*userdata.UserData, error) {
 	return userdata.Download(AzureUserDataEndpoint, userdata.WithHeaders(map[string]string{"Metadata": "true"}), userdata.WithFormat("base64"))
 }
 
-func hostname() (err error) {
-
-	// TODO get this sorted; assuming we need to set appropriate headers
-	return err
-
-	/*
-		resp, err := http.Get(AzureHostnameEndpoint)
-		if err != nil {
-			return
-		}
-		// nolint: errcheck
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("download user data: %d", resp.StatusCode)
-		}
-
-		dataBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return
-		}
-
-		if err = unix.Sethostname(dataBytes); err != nil {
-			return
-		}
-
-		return nil
-	*/
-}
-
 // Initialize implements the platform.Platform interface and handles additional system setup.
+// nolint: dupl
 func (a *Azure) Initialize(data *userdata.UserData) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = owned.MountPointsFromLabels()
@@ -83,5 +58,47 @@ func (a *Azure) Initialize(data *userdata.UserData) (err error) {
 		return err
 	}
 
-	return hostname()
+	hostnameBytes, err := hostname()
+	if err != nil {
+		return err
+	}
+
+	// Stub out networking
+	if data.Networking == nil {
+		data.Networking = &userdata.Networking{}
+	}
+	if data.Networking.OS == nil {
+		data.Networking.OS = &userdata.OSNet{}
+	}
+
+	data.Networking.OS.Hostname = string(hostnameBytes)
+
+	return err
+}
+
+func hostname() (hostname []byte, err error) {
+	var req *http.Request
+	var resp *http.Response
+
+	req, err = http.NewRequest("GET", AzureHostnameEndpoint, nil)
+	if err != nil {
+		return
+	}
+
+	req.Header.Add("Metadata", "true")
+
+	client := &http.Client{}
+	resp, err = client.Do(req)
+	if err != nil {
+		return
+	}
+
+	// nolint: errcheck
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return hostname, fmt.Errorf("failed to fetch hostname from metadata service: %d", resp.StatusCode)
+	}
+
+	return ioutil.ReadAll(resp.Body)
 }
