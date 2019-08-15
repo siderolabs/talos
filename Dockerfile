@@ -38,11 +38,15 @@ RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /machined
 COPY ./internal/app/machined/proto ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
+WORKDIR /proxyd
+COPY ./internal/app/proxyd/proto ./proto
+RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
 FROM scratch AS generate
 COPY --from=generate-build /osd/proto/api.pb.go /internal/app/osd/proto/
 COPY --from=generate-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
 COPY --from=generate-build /machined/proto/api.pb.go /internal/app/machined/proto/
+COPY --from=generate-build /proxyd/proto/api.pb.go /internal/app/proxyd/proto/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
