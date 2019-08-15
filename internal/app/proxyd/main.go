@@ -8,9 +8,13 @@ import (
 	"context"
 	"flag"
 	"log"
+	"sync"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
+	"github.com/talos-systems/talos/internal/app/proxyd/internal/reg"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"k8s.io/client-go/kubernetes"
@@ -48,46 +52,70 @@ func main() {
 	// Start up with initial bootstrap config
 	go r.Bootstrap(bootstrapCtx)
 
-	// nolint: errcheck
-	go func() {
-		kubeconfig := "/etc/kubernetes/admin.conf"
-		if err = conditions.WaitForFilesToExist(kubeconfig).Wait(context.Background()); err != nil {
-			log.Fatalf("failed to find %s: %v", kubeconfig, err)
-		}
+	go waitForKube(r)
 
-		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	// Start up reverse proxy
+	go func(r *frontend.ReverseProxy, wg *sync.WaitGroup) {
+		defer wg.Done()
+		if err := r.Listen(":443"); err != nil {
+			log.Fatal(err)
+		}
+	}(r, &wg)
+
+	wg.Add(1)
+	// Start up gRPC server
+	go func(r *frontend.ReverseProxy, wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		err := factory.ListenAndServe(
+			reg.NewRegistrator(r),
+			factory.Network("unix"),
+			factory.SocketPath(constants.ProxydSocketPath),
+		)
 		if err != nil {
-			log.Fatalf("failed to read config %s: %v", kubeconfig, err)
+			log.Fatal(err)
 		}
 
-		// Discover local non loopback ips
-		ips, err := pkgnet.IPAddrs()
-		if err != nil {
-			log.Fatalf("failed to get local address: %v", err)
-		}
-		if len(ips) == 0 {
-			log.Fatalf("no IP address found for local api server")
-		}
-		ip := ips[0]
+	}(r, &wg)
 
-		// Overwrite defined host so we can target local apiserver
-		// and bypass the admin.conf host which is configured for proxyd
-		config.Host = ip.String() + ":6443"
-
-		clientset, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			log.Fatalf("failed to generate a client from %s: %v", kubeconfig, err)
-		}
-
-		if err = r.Watch(clientset); err != nil {
-			log.Fatalf("failed to watch kubernetes api server: %v", err)
-		}
-	}()
-
-	// nolint: errcheck
-	r.Listen(":443")
+	wg.Wait()
 }
 
-func init() {
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+func waitForKube(r *frontend.ReverseProxy) {
+	kubeconfig := "/etc/kubernetes/admin.conf"
+	if err := conditions.WaitForFilesToExist(kubeconfig).Wait(context.Background()); err != nil {
+		log.Fatalf("failed to find %s: %v", kubeconfig, err)
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		log.Fatalf("failed to read config %s: %v", kubeconfig, err)
+	}
+
+	// Discover local non loopback ips
+	ips, err := pkgnet.IPAddrs()
+	if err != nil {
+		log.Fatalf("failed to get local address: %v", err)
+	}
+	if len(ips) == 0 {
+		log.Fatalf("no IP address found for local api server")
+	}
+	ip := ips[0]
+
+	// Overwrite defined host so we can target local apiserver
+	// and bypass the admin.conf host which is configured for proxyd
+	config.Host = ip.String() + ":6443"
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("failed to generate a client from %s: %v", kubeconfig, err)
+	}
+
+	if err = r.Watch(clientset); err != nil {
+		log.Fatalf("failed to watch kubernetes api server: %v", err)
+	}
+
 }

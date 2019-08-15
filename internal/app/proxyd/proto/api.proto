@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// The Init service definition.
+service Proxyd {
+  rpc Backends(google.protobuf.Empty) returns (BackendsReply) {}
+}
+
+// The response message containing the proxyd backend status.
+message BackendsReply {
+	repeated Backend backends = 1;
+}
+
+// Backend represents the proxyd backend
+message Backend {
+  string id = 1;
+  string addr = 2;
+  uint32 connections = 3;
+}
+

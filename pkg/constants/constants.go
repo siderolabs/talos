@@ -145,6 +145,9 @@ const (
 	// InitSocketPath is the path to file socket of init API
 	InitSocketPath = "/run/system/init/init.sock"
 
+	// ProxydSocketPath is the path to file socket of proxyd API
+	ProxydSocketPath = "/run/system/proxyd/proxyd.sock"
+
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
 
