@@ -7,7 +7,7 @@ package userdata
 // Install represents the installation options for preparing a node.
 type Install struct {
 	Boot            *BootDevice    `yaml:"boot,omitempty"`
-	Data            *InstallDevice `yaml:"data,omitempty"`
+	Ephemeral       *InstallDevice `yaml:"ephemeral,omitempty"`
 	ExtraDevices    []*ExtraDevice `yaml:"extraDevices,omitempty"`
 	ExtraKernelArgs []string       `yaml:"extraKernelArgs,omitempty"`
 	Wipe            bool           `yaml:"wipe"`

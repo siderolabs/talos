@@ -37,7 +37,7 @@ var installCmd = &cobra.Command{
 			Install: &userdata.Install{
 				Force:           true,
 				ExtraKernelArgs: extraKernelArgs,
-				Data: &userdata.InstallDevice{
+				Ephemeral: &userdata.InstallDevice{
 					Device: device,
 					Size:   16 * 1024 * 1024,
 				},

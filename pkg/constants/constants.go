@@ -44,13 +44,13 @@ const (
 	// the boot path.
 	BootMountPoint = "/boot"
 
-	// DataPartitionLabel is the label of the partition to use for mounting at
-	// the data path.
-	DataPartitionLabel = "DATA"
+	// EphemeralPartitionLabel is the label of the partition to use for
+	// mounting at the data path.
+	EphemeralPartitionLabel = "EPHEMERAL"
 
-	// DataMountPoint is the label of the partition to use for mounting at
+	// EphemeralMountPoint is the label of the partition to use for mounting at
 	// the data path.
-	DataMountPoint = "/var"
+	EphemeralMountPoint = "/var"
 
 	// RootMountPoint is the label of the partition to use for mounting at
 	// the root path.

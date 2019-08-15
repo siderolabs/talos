@@ -127,7 +127,7 @@ func (i *Installer) Install() (err error) {
 				if err = syslinux.Prepare(target.Device); err != nil {
 					return err
 				}
-			case constants.DataPartitionLabel:
+			case constants.EphemeralPartitionLabel:
 				continue
 			}
 

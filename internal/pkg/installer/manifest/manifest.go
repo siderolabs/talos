@@ -62,8 +62,8 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	// Initialize any slices we need. Note that a boot paritition is not
 	// required.
 
-	if manifest.Targets[data.Install.Data.Device] == nil {
-		manifest.Targets[data.Install.Data.Device] = []*Target{}
+	if manifest.Targets[data.Install.Ephemeral.Device] == nil {
+		manifest.Targets[data.Install.Ephemeral.Device] = []*Target{}
 	}
 
 	var bootTarget *Target
@@ -89,12 +89,12 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 	}
 
 	dataTarget := &Target{
-		Device:     data.Install.Data.Device,
-		Label:      constants.DataPartitionLabel,
-		Size:       data.Install.Data.Size,
+		Device:     data.Install.Ephemeral.Device,
+		Label:      constants.EphemeralPartitionLabel,
+		Size:       data.Install.Ephemeral.Size,
 		Force:      data.Install.Force,
 		Test:       false,
-		MountPoint: constants.DataMountPoint,
+		MountPoint: constants.EphemeralMountPoint,
 	}
 
 	for _, target := range []*Target{bootTarget, dataTarget} {
@@ -171,8 +171,8 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		// EFI System Partition
 		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
-	case constants.DataPartitionLabel:
-		// Data Partition
+	case constants.EphemeralPartitionLabel:
+		// Ephemeral Partition
 		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label))
 	default:

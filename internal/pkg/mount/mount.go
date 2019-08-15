@@ -188,7 +188,7 @@ func (p *Point) ResizePartition() (err error) {
 	}
 
 	for _, partition := range pt.Partitions() {
-		if partition.(*gptpartition.Partition).Name == constants.DataPartitionLabel {
+		if partition.(*gptpartition.Partition).Name == constants.EphemeralPartitionLabel {
 			if err := pt.Resize(partition); err != nil {
 				return err
 			}
