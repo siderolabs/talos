@@ -57,6 +57,7 @@ func NewNode(clusterName string, req *Request) (err error) {
 			"/var/lib/containerd": {},
 			"/var/lib/kubelet":    {},
 			"/etc/cni":            {},
+			"/run":                {},
 		},
 	}
 

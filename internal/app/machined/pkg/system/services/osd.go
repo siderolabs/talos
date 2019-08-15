@@ -35,7 +35,8 @@ func (o *OSD) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (o *OSD) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/osd.tar",
 		Options: []containerdapi.ImportOpt{
 			containerdapi.WithIndexName("talos/osd"),
@@ -55,7 +56,7 @@ func (o *OSD) Condition(data *userdata.UserData) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *OSD) DependsOn(data *userdata.UserData) []string {
-	return []string{"containerd"}
+	return []string{"system-containerd"}
 }
 
 func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
@@ -72,6 +73,7 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: constants.SystemContainerdAddress, Source: constants.SystemContainerdAddress, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"rbind", "rw"}},
@@ -86,6 +88,7 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		data,
 		&args,
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(

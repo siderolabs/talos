@@ -41,6 +41,7 @@ func (task *Services) startSystemServices(data *userdata.UserData, mode runtime.
 	svcs.Load(
 		&services.MachinedAPI{},
 		&services.Networkd{},
+		&services.SystemContainerd{},
 		&services.Containerd{},
 		&services.Udevd{},
 		&services.OSD{},

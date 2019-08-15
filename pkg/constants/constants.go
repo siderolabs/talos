@@ -139,6 +139,9 @@ const (
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
 
+	// SystemContainerdAddress is the path to the system containerd socket.
+	SystemContainerdAddress = "/run/system/containerd/containerd.sock"
+
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 
