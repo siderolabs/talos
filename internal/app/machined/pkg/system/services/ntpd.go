@@ -31,7 +31,8 @@ func (n *NTPd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (n *NTPd) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/ntpd.tar",
 		Options: []containerdapi.ImportOpt{
 			containerdapi.WithIndexName("talos/ntpd"),
@@ -51,7 +52,7 @@ func (n *NTPd) Condition(data *userdata.UserData) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *NTPd) DependsOn(data *userdata.UserData) []string {
-	return []string{"containerd"}
+	return []string{"system-containerd"}
 }
 
 func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
@@ -74,6 +75,7 @@ func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		data,
 		&args,
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(

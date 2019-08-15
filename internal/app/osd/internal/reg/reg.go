@@ -327,7 +327,11 @@ func getContainerInspector(ctx context.Context, namespace string, driver proto.C
 		}
 		return cri.NewInspector(ctx)
 	case proto.ContainerDriver_CONTAINERD:
-		return containerd.NewInspector(ctx, namespace)
+		addr := constants.ContainerdAddress
+		if namespace == constants.SystemContainerdNamespace {
+			addr = constants.SystemContainerdAddress
+		}
+		return containerd.NewInspector(ctx, namespace, containerd.WithContainerdAddress(addr))
 	default:
 		return nil, errors.Errorf("unsupported driver %q", driver)
 	}

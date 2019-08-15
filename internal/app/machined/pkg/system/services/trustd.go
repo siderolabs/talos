@@ -34,7 +34,8 @@ func (t *Trustd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (t *Trustd) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/trustd.tar",
 		Options: []containerdapi.ImportOpt{
 			containerdapi.WithIndexName("talos/trustd"),
@@ -81,6 +82,7 @@ func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		data,
 		&args,
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
