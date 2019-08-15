@@ -41,7 +41,7 @@ spec:
           location: "centralus"
           resourcegroup: "talos"
           instances:
-            type:  "Standard_D2_v3"
+            type:  "Standard_A2_v2"
             image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos-e2e-{{TAG}}"
             network: "talos-vnet"
             subnet: "default"
@@ -66,7 +66,7 @@ spec:
           location: "centralus"
           resourcegroup: "talos"
           instances:
-            type:  "Standard_D2_v3"
+            type:  "Standard_A2_v2"
             image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos-e2e-{{TAG}}"
             network: "talos-vnet"
             subnet: "default"
@@ -91,7 +91,7 @@ spec:
           location: "centralus"
           resourcegroup: "talos"
           instances:
-            type:  "Standard_D2_v3"
+            type:  "Standard_A2_v2"
             image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos-e2e-{{TAG}}"
             network: "talos-vnet"
             subnet: "default"
@@ -127,7 +127,7 @@ spec:
               location: "centralus"
               resourcegroup: "talos"
               instances:
-                type:  "Standard_D2_v3"
+                type:  "Standard_A2_v2"
                 image: "/subscriptions/64739c64-c063-4c9d-bf2c-d1191ed8befa/resourceGroups/talos/providers/Microsoft.Compute/images/talos-e2e-{{TAG}}"
                 network: "talos-vnet"
                 subnet: "default"
