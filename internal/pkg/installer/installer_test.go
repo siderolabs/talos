@@ -33,7 +33,7 @@ func (suite *validateSuite) TestVerifyDevice() {
 	// defaults.
 	data.Install.Boot = nil
 	suite.Require().NoError(VerifyBootDevice(data))
-	data.Install.Data = &userdata.InstallDevice{
+	data.Install.Ephemeral = &userdata.InstallDevice{
 		Device: "/dev/sda",
 	}
 	suite.Require().NoError(VerifyDataDevice(data))
@@ -101,7 +101,7 @@ install:
   boot:
     device: /dev/sda
     size: 1024000000
-  data:
+  ephemeral:
     device: /dev/sda
     size: 1024000000
 `

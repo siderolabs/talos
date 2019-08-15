@@ -141,11 +141,7 @@ install:
     force: true
     device: /dev/sda
     size: 1024000000
-  root:
-    force: true
-    device: /dev/sda
-    size: 1024000000
-  data:
+  ephemeral:
     force: true
     device: /dev/sda
     size: 1024000000

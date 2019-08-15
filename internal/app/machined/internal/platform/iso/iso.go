@@ -51,7 +51,7 @@ func (i *ISO) UserData() (data *userdata.UserData, err error) {
 					Size:   512 * 1000 * 1000,
 				},
 			},
-			Data: &userdata.InstallDevice{
+			Ephemeral: &userdata.InstallDevice{
 				Device: "/dev/sda",
 				Size:   2048 * 1000 * 1000,
 			},

@@ -21,11 +21,11 @@ import (
 // filesystems.
 func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.DataPartitionLabel, constants.BootPartitionLabel} {
+	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
 		var target string
 		switch name {
-		case constants.DataPartitionLabel:
-			target = constants.DataMountPoint
+		case constants.EphemeralPartitionLabel:
+			target = constants.EphemeralMountPoint
 		case constants.BootPartitionLabel:
 			target = constants.BootMountPoint
 		}
@@ -51,12 +51,12 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 // we want to grow the data filesystem.
 func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
-	for _, name := range []string{constants.DataPartitionLabel, constants.BootPartitionLabel} {
+	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
 		opts := []mount.Option{}
 		var target string
 		switch name {
-		case constants.DataPartitionLabel:
-			target = constants.DataMountPoint
+		case constants.EphemeralPartitionLabel:
+			target = constants.EphemeralMountPoint
 			opts = append(opts, mount.WithResize(true))
 		case constants.BootPartitionLabel:
 			target = constants.BootMountPoint

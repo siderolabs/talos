@@ -14,16 +14,16 @@ import (
 // VerifyDataDevice verifies the supplied data device options.
 func VerifyDataDevice(data *userdata.UserData) (err error) {
 	// Set data device to root device if not specified
-	if data.Install.Data == nil {
-		data.Install.Data = &userdata.InstallDevice{}
+	if data.Install.Ephemeral == nil {
+		data.Install.Ephemeral = &userdata.InstallDevice{}
 	}
 
-	if data.Install.Data.Device == "" {
-		return errors.New("a data device is required")
+	if data.Install.Ephemeral.Device == "" {
+		return errors.New("an ephemeral device is required")
 	}
 
 	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.DataPartitionLabel); err != nil {
+		if err = VerifyDiskAvailability(constants.EphemeralPartitionLabel); err != nil {
 			return errors.Wrap(err, "failed to verify disk availability")
 		}
 	}
@@ -41,7 +41,7 @@ func VerifyBootDevice(data *userdata.UserData) (err error) {
 		// We can safely assume data device is defined at this point
 		// because VerifyDataDevice should have been called first in
 		// in the chain
-		data.Install.Boot.Device = data.Install.Data.Device
+		data.Install.Boot.Device = data.Install.Ephemeral.Device
 	}
 
 	if data.Install.Boot.Size == 0 {

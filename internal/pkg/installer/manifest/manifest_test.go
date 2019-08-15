@@ -147,7 +147,7 @@ install:
   boot:
     device: /dev/sda
     size: 1024000000
-  data:
+  ephemeral:
     device: /dev/sda
     size: 1024000000
 `

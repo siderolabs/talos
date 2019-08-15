@@ -1,5 +1,5 @@
 ---
-title: User Data
+title: User ephemeral
 date: 2019-06-21T19:40:55-07:00
 draft: false
 weight: 20
@@ -369,7 +369,8 @@ install:
 
 **Note** The asset name **must** be named `initramfs.xz`.
 
-### Data
+### Ephemeral
+
 #### Device
 
 ``Device`` specifies the device name to use for the `/var` partition. This should be specified as the
@@ -377,7 +378,7 @@ unpartitioned block device. If this parameter is omitted, the value of `install.
 
 ```yaml
 install:
-  data:
+  ephemeral:
     device: <name of device to use>
 ```
 
@@ -388,7 +389,7 @@ value of 1GB will be used. This partition will auto extend to consume the remain
 
 ```yaml
 install:
-  data:
+  ephemeral:
     size: <size in bytes>
 ```
 
