@@ -14,8 +14,6 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 
 	"golang.org/x/sys/unix"
@@ -40,18 +38,16 @@ BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 `
 
 // Hosts renders a valid /etc/hosts file and writes it to disk.
-func Hosts() (err error) {
-	var h *string
-	if h = kernel.ProcCmdline().Get(constants.KernelParamHostname).First(); h != nil {
-		if err = unix.Sethostname([]byte(*h)); err != nil {
-			return err
-		}
-	}
+func Hosts(hostname string) (err error) {
 
 	ip := ip()
 
-	var hostname string
-	if hostname, err = os.Hostname(); err != nil {
+	// If no hostname, set it to `talos-<ip>`, talos-1-2-3-4
+	if hostname == "" {
+		hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(ip, ".", "-"))
+	}
+
+	if err = unix.Sethostname([]byte(hostname)); err != nil {
 		return err
 	}
 

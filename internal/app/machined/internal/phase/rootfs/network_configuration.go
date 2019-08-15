@@ -31,11 +31,6 @@ func (task *NetworkConfiguration) RuntimeFunc(mode runtime.Mode) phase.RuntimeFu
 }
 
 func (task *NetworkConfiguration) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	// Create /etc/hosts.
-	if err = etc.Hosts(); err != nil {
-		return err
-	}
-
 	// Create /etc/resolv.conf.
 	if err = etc.ResolvConf(); err != nil {
 		return err

@@ -6,9 +6,12 @@ package network
 
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs/etc"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/network"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -35,5 +38,20 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 		return err
 	}
 
+	// Create /etc/hosts.
+	var hostname string
+	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
+	switch {
+	case data.Networking != nil && data.Networking.OS != nil && data.Networking.OS.Hostname != "":
+		hostname = data.Networking.OS.Hostname
+	case kernelHostname != nil:
+		hostname = *kernelHostname
+	default:
+		// will default in Hosts()
+	}
+
+	if err = etc.Hosts(hostname); err != nil {
+		return err
+	}
 	return nil
 }

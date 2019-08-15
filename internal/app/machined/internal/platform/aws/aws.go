@@ -17,7 +17,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"golang.org/x/sys/unix"
 )
 
 const (
@@ -125,6 +124,7 @@ func (a *AWS) UserData() (*userdata.UserData, error) {
 }
 
 // Initialize implements the platform.Platform interface and handles additional system setup.
+// nolint: dupl
 func (a *AWS) Initialize(data *userdata.UserData) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = owned.MountPointsFromLabels()
@@ -137,10 +137,26 @@ func (a *AWS) Initialize(data *userdata.UserData) (err error) {
 	if err = m.MountAll(); err != nil {
 		return err
 	}
-	return hostname()
+
+	hostnameBytes, err := hostname()
+	if err != nil {
+		return err
+	}
+
+	// Stub out networking
+	if data.Networking == nil {
+		data.Networking = &userdata.Networking{}
+	}
+	if data.Networking.OS == nil {
+		data.Networking.OS = &userdata.OSNet{}
+	}
+
+	data.Networking.OS.Hostname = string(hostnameBytes)
+
+	return err
 }
 
-func hostname() (err error) {
+func hostname() (hostname []byte, err error) {
 	resp, err := http.Get(AWSHostnameEndpoint)
 	if err != nil {
 		return
@@ -149,17 +165,8 @@ func hostname() (err error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("download user data: %d", resp.StatusCode)
+		return hostname, fmt.Errorf("failed to fetch hostname from metadata service: %d", resp.StatusCode)
 	}
 
-	dataBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-
-	if err = unix.Sethostname(dataBytes); err != nil {
-		return
-	}
-
-	return nil
+	return ioutil.ReadAll(resp.Body)
 }
