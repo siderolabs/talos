@@ -20,26 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/version"
 	"golang.org/x/sys/unix"
-)
-
-const (
-	// DefaultSizeBootDevice is the default size of the boot partition.
-	// TODO(andrewrynhard): We should inspect the sizes of the artifacts and dynamically set the boot partition's size.
-	DefaultSizeBootDevice = 512 * 1000 * 1000
-)
-
-var (
-	// DefaultURLBase is the base URL for all default artifacts.
-	// TODO(andrewrynhard): We need to setup infrastructure for publishing artifacts and not depend on GitHub.
-	DefaultURLBase = "https://github.com/talos-systems/talos/releases/download/" + version.Tag
-
-	// DefaultKernelURL is the URL to the kernel.
-	DefaultKernelURL = DefaultURLBase + "/vmlinuz"
-
-	// DefaultInitramfsURL is the URL to the initramfs.
-	DefaultInitramfsURL = DefaultURLBase + "/initramfs.xz"
 )
 
 // Installer represents the installer logic. It serves as the entrypoint to all
@@ -51,15 +32,18 @@ type Installer struct {
 }
 
 // NewInstaller initializes and returns an Installer.
-func NewInstaller(cmdline *kernel.Cmdline, data *userdata.UserData) *Installer {
-	i := &Installer{
+func NewInstaller(cmdline *kernel.Cmdline, data *userdata.UserData) (i *Installer, err error) {
+	i = &Installer{
 		cmdline: cmdline,
 		data:    data,
 	}
 
-	i.manifest = manifest.NewManifest(data)
+	i.manifest, err = manifest.NewManifest(data)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create installation manifest")
+	}
 
-	return i
+	return i, nil
 }
 
 // Install fetches the necessary data locations and copies or extracts
@@ -68,16 +52,6 @@ func NewInstaller(cmdline *kernel.Cmdline, data *userdata.UserData) *Installer {
 func (i *Installer) Install() (err error) {
 	if i.data.Install == nil {
 		return nil
-	}
-
-	// Verify that the target device(s) can satisify the requested options.
-
-	if err = VerifyBootDevice(i.data); err != nil {
-		return errors.Wrap(err, "failed to prepare boot device")
-	}
-
-	if err = VerifyDataDevice(i.data); err != nil {
-		return errors.Wrap(err, "failed to prepare data device")
 	}
 
 	if i.data.Install.Wipe {

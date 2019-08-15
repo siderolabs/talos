@@ -96,7 +96,10 @@ func (i *ISO) Initialize(data *userdata.UserData) (err error) {
 	cmdline.Append(constants.KernelParamPlatform, "bare-metal")
 	cmdline.Append(constants.KernelParamUserData, endpoint)
 
-	inst := installer.NewInstaller(cmdline, data)
+	inst, err := installer.NewInstaller(cmdline, data)
+	if err != nil {
+		return err
+	}
 	if err = inst.Install(); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}

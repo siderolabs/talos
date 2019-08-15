@@ -32,7 +32,8 @@ func (suite *manifestSuite) TestNewManifest() {
 	err := yaml.Unmarshal([]byte(testConfig), data)
 	suite.Require().NoError(err)
 
-	manifests := NewManifest(data)
+	manifests, err := NewManifest(data)
+	suite.Require().NoError(err)
 	assert.Equal(suite.T(), 2, len(manifests.Targets["/dev/sda"]))
 }
 

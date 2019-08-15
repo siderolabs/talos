@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package installer
+package manifest
 
 import (
 	"github.com/pkg/errors"
@@ -13,13 +13,17 @@ import (
 
 // VerifyDataDevice verifies the supplied data device options.
 func VerifyDataDevice(data *userdata.UserData) (err error) {
+	// Ensure that an installation is specified
+	if data.Install == nil {
+		return errors.New("missing installation definition")
+	}
 	// Set data device to root device if not specified
 	if data.Install.Ephemeral == nil {
-		data.Install.Ephemeral = &userdata.InstallDevice{}
+		return errors.New("missing definition")
 	}
 
 	if data.Install.Ephemeral.Device == "" {
-		return errors.New("an ephemeral device is required")
+		return errors.New("missing disk")
 	}
 
 	if !data.Install.Force {
@@ -33,6 +37,10 @@ func VerifyDataDevice(data *userdata.UserData) (err error) {
 
 // VerifyBootDevice verifies the supplied boot device options.
 func VerifyBootDevice(data *userdata.UserData) (err error) {
+	if data.Install == nil {
+		return nil
+	}
+
 	if data.Install.Boot == nil {
 		return nil
 	}

@@ -25,6 +25,25 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
+)
+
+const (
+	// DefaultSizeBootDevice is the default size of the boot partition.
+	// TODO(andrewrynhard): We should inspect the sizes of the artifacts and dynamically set the boot partition's size.
+	DefaultSizeBootDevice = 512 * 1000 * 1000
+)
+
+var (
+	// DefaultURLBase is the base URL for all default artifacts.
+	// TODO(andrewrynhard): We need to setup infrastructure for publishing artifacts and not depend on GitHub.
+	DefaultURLBase = "https://github.com/talos-systems/talos/releases/download/" + version.Tag
+
+	// DefaultKernelURL is the URL to the kernel.
+	DefaultKernelURL = DefaultURLBase + "/vmlinuz"
+
+	// DefaultInitramfsURL is the URL to the initramfs.
+	DefaultInitramfsURL = DefaultURLBase + "/initramfs.xz"
 )
 
 // Manifest represents the instructions for preparing all block devices
@@ -54,9 +73,19 @@ type Asset struct {
 }
 
 // NewManifest initializes and returns a Manifest.
-func NewManifest(data *userdata.UserData) (manifest *Manifest) {
+func NewManifest(data *userdata.UserData) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Targets: map[string][]*Target{},
+	}
+
+	// Verify that the target device(s) can satisify the requested options.
+
+	if err = VerifyDataDevice(data); err != nil {
+		return nil, errors.Wrap(err, "failed to prepare ephemeral partition")
+	}
+
+	if err = VerifyBootDevice(data); err != nil {
+		return nil, errors.Wrap(err, "failed to prepare boot partition")
 	}
 
 	// Initialize any slices we need. Note that a boot paritition is not
@@ -121,7 +150,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest) {
 		}
 	}
 
-	return manifest
+	return manifest, nil
 }
 
 // ExecuteManifest partitions and formats all disks in a manifest.
