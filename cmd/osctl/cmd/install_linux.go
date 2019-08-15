@@ -63,7 +63,10 @@ var installCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		i := installer.NewInstaller(cmdline, data)
+		i, err := installer.NewInstaller(cmdline, data)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if err = i.Install(); err != nil {
 			log.Fatal(err)
 		}

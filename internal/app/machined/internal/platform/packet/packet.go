@@ -59,7 +59,11 @@ func (p *Packet) Initialize(data *userdata.UserData) (err error) {
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
 		// No previous installation was found, attempt an install
-		i := installer.NewInstaller(cmdline, data)
+		var i *installer.Installer
+		i, err = installer.NewInstaller(cmdline, data)
+		if err != nil {
+			return err
+		}
 		if err = i.Install(); err != nil {
 			return errors.Wrap(err, "failed to install")
 		}
