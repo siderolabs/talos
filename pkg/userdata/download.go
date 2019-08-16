@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -99,6 +100,7 @@ func Download(udURL string, opts ...Option) (data *UserData, err error) {
 	for attempt := 0; attempt < dlOpts.Retries; attempt++ {
 		dataBytes, err = download(req)
 		if err != nil {
+			log.Printf("download failed: %+v", err)
 			backoff(float64(attempt), dlOpts.Wait)
 			continue
 		}
@@ -153,5 +155,8 @@ func backoff(attempt float64, wait float64) {
 	if snooze > wait {
 		snooze = wait
 	}
+
+	log.Printf("download attempt %g failed, retrying in %g seconds", attempt, snooze)
+
 	time.Sleep(time.Duration(snooze) * time.Second)
 }
