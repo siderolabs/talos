@@ -67,10 +67,10 @@ func (prt *Partition) Fields() []*serde.Field {
 		{
 			Offset: 0,
 			Length: 16,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				return prt.Type.MarshalBinary()
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				guid, err := uuid.FromBytes(contents)
 				if err != nil {
 					return fmt.Errorf("invalid GUUID: %v", err)
@@ -87,10 +87,10 @@ func (prt *Partition) Fields() []*serde.Field {
 		{
 			Offset: 16,
 			Length: 16,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				return prt.ID.MarshalBinary()
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				guid, err := uuid.FromBytes(contents)
 				if err != nil {
 					return fmt.Errorf("invalid GUUID: %v", err)
@@ -105,13 +105,13 @@ func (prt *Partition) Fields() []*serde.Field {
 		{
 			Offset: 32,
 			Length: 8,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint64(data, prt.FirstLBA)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				prt.FirstLBA = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -121,13 +121,13 @@ func (prt *Partition) Fields() []*serde.Field {
 		{
 			Offset: 40,
 			Length: 8,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint64(data, prt.LastLBA)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				prt.LastLBA = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -137,13 +137,13 @@ func (prt *Partition) Fields() []*serde.Field {
 		{
 			Offset: 48,
 			Length: 8,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint64(data, prt.Flags)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				prt.Flags = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -153,7 +153,7 @@ func (prt *Partition) Fields() []*serde.Field {
 		{
 			Offset: 56,
 			Length: 72,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				utf16 := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 				name, err := utf16.NewEncoder().Bytes([]byte(prt.Name))
 				if err != nil {
@@ -165,7 +165,7 @@ func (prt *Partition) Fields() []*serde.Field {
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				utf16 := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 				decoded, err := utf16.NewDecoder().Bytes(contents)
 				if err != nil {

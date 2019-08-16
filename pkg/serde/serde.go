@@ -13,11 +13,11 @@ type Serde interface {
 	Fields() []*Field
 }
 
-// FieldSerializerFunc is the func signature for serialization.
-type FieldSerializerFunc = func([]byte, interface{}) error
+// FieldDeserializerFunc is the func signature for serialization.
+type FieldDeserializerFunc = func([]byte, interface{}) error
 
-// FieldDeserializerFunc is the func signature for deserialization.
-type FieldDeserializerFunc = func(uint32, uint32, []byte, interface{}) ([]byte, error)
+// FieldSerializerFunc is the func signature for deserialization.
+type FieldSerializerFunc = func(uint32, uint32, []byte, interface{}) ([]byte, error)
 
 // Field represents a field in a datastructure.
 type Field struct {
@@ -35,8 +35,13 @@ func Ser(t Serde, data []byte, offset uint32, opts interface{}) error {
 			return fmt.Errorf("the field is missing the serializer function")
 		}
 
-		if err := field.SerializerFunc(data[field.start(offset):field.end(offset)], opts); err != nil {
+		contents, err := field.SerializerFunc(field.Offset, field.Length, data, opts)
+		if err != nil {
 			return err
+		}
+
+		if n := copy(data[field.start(offset):field.end(offset)], contents); uint32(n) != field.Length {
+			return fmt.Errorf("expected to write %d elements, wrote %d", field.Length, n)
 		}
 	}
 
@@ -47,16 +52,11 @@ func Ser(t Serde, data []byte, offset uint32, opts interface{}) error {
 func De(t Serde, data []byte, offset uint32, opts interface{}) error {
 	for _, field := range t.Fields() {
 		if field.DeserializerFunc == nil {
-			return fmt.Errorf("the field is missing the deserializer function")
+			return fmt.Errorf("the field is missing the serializer function")
 		}
 
-		contents, err := field.DeserializerFunc(field.Offset, field.Length, data, opts)
-		if err != nil {
+		if err := field.DeserializerFunc(data[field.start(offset):field.end(offset)], opts); err != nil {
 			return err
-		}
-
-		if n := copy(data[field.start(offset):field.end(offset)], contents); uint32(n) != field.Length {
-			return fmt.Errorf("expected to write %d elements, wrote %d", field.Length, n)
 		}
 	}
 

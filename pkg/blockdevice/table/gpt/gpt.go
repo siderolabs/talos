@@ -75,12 +75,12 @@ func (gpt *GPT) Read() error {
 		return err
 	}
 
-	serializedHeader, err := gpt.serializeHeader(primaryTable)
+	serializedHeader, err := gpt.deserializeHeader(primaryTable)
 	if err != nil {
 		return err
 	}
 
-	serializedPartitions, err := gpt.serializePartitions(serializedHeader)
+	serializedPartitions, err := gpt.deserializePartitions(serializedHeader)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (gpt *GPT) Read() error {
 
 // Write writes the partition table to disk.
 func (gpt *GPT) Write() error {
-	partitions, err := gpt.deserializePartitions()
+	partitions, err := gpt.serializePartitions()
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (gpt *GPT) newPMBR(h *header.Header) []byte {
 
 // Write the primary table.
 func (gpt *GPT) writePrimary(partitions []byte) error {
-	header, err := gpt.deserializeHeader(partitions)
+	header, err := gpt.serializeHeader(partitions)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func (gpt *GPT) writePrimary(partitions []byte) error {
 
 // Write the secondary table.
 func (gpt *GPT) writeSecondary(partitions []byte) error {
-	header, err := gpt.deserializeHeader(partitions, header.WithHeaderPrimary(false))
+	header, err := gpt.serializeHeader(partitions, header.WithHeaderPrimary(false))
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,18 @@ func (gpt *GPT) newTable(header, partitions []byte, headerRange, paritionsRange 
 	return table, nil
 }
 
-func (gpt *GPT) serializeHeader(table []byte) (*header.Header, error) {
+func (gpt *GPT) serializeHeader(partitions []byte, setters ...interface{}) ([]byte, error) {
+	data := gpt.lba.Make(1)
+	setters = append(setters, header.WithHeaderArrayBytes(partitions))
+	opts := header.NewDefaultOptions(setters...)
+	if err := serde.Ser(gpt.header, data, 0, opts); err != nil {
+		return nil, errors.Errorf("failed to serialize the header: %v", err)
+	}
+
+	return data, nil
+}
+
+func (gpt *GPT) deserializeHeader(table []byte) (*header.Header, error) {
 	// GPT header is in LBA 1.
 	data, err := gpt.lba.From(table, lba.Range{Start: 1, End: 1})
 	if err != nil {
@@ -373,25 +384,32 @@ func (gpt *GPT) serializeHeader(table []byte) (*header.Header, error) {
 	hdr := header.NewHeader(data, gpt.lba)
 
 	opts := header.NewDefaultOptions(header.WithHeaderTable(table))
-	if err := serde.Ser(hdr, hdr.Bytes(), 0, opts); err != nil {
-		return nil, errors.Errorf("failed to serialize the header: %v", err)
+	if err := serde.De(hdr, hdr.Bytes(), 0, opts); err != nil {
+		return nil, errors.Errorf("failed to deserialize the header: %v", err)
 	}
 
 	return hdr, nil
 }
 
-func (gpt *GPT) deserializeHeader(partitions []byte, setters ...interface{}) ([]byte, error) {
-	data := gpt.lba.Make(1)
-	setters = append(setters, header.WithHeaderArrayBytes(partitions))
-	opts := header.NewDefaultOptions(setters...)
-	if err := serde.De(gpt.header, data, 0, opts); err != nil {
-		return nil, errors.Errorf("failed to deserialize the header: %v", err)
+func (gpt *GPT) serializePartitions() ([]byte, error) {
+	// TODO(andrewrynhard): Should this be a method on the Header struct?
+	data := make([]byte, gpt.header.NumberOfPartitionEntries*gpt.header.PartitionEntrySize)
+
+	for j, p := range gpt.partitions {
+		i := uint32(j)
+		partition, ok := p.(*partition.Partition)
+		if !ok {
+			return nil, errors.Errorf("partition is not a GUID partition table partition")
+		}
+		if err := serde.Ser(partition, data, i*gpt.header.PartitionEntrySize, nil); err != nil {
+			return nil, errors.Errorf("failed to serialize the partitions: %v", err)
+		}
 	}
 
 	return data, nil
 }
 
-func (gpt *GPT) serializePartitions(header *header.Header) ([]table.Partition, error) {
+func (gpt *GPT) deserializePartitions(header *header.Header) ([]table.Partition, error) {
 	partitions := make([]table.Partition, 0, header.NumberOfPartitionEntries)
 
 	for i := uint32(0); i < header.NumberOfPartitionEntries; i++ {
@@ -399,8 +417,8 @@ func (gpt *GPT) serializePartitions(header *header.Header) ([]table.Partition, e
 		data := header.ArrayBytes()[offset : offset+header.PartitionEntrySize]
 		prt := partition.NewPartition(data)
 
-		if err := serde.Ser(prt, header.ArrayBytes(), offset, nil); err != nil {
-			return nil, errors.Errorf("failed to serialize the partitions: %v", err)
+		if err := serde.De(prt, header.ArrayBytes(), offset, nil); err != nil {
+			return nil, errors.Errorf("failed to deserialize the partitions: %v", err)
 		}
 
 		// The first LBA of the partition cannot start before the first usable
@@ -412,24 +430,6 @@ func (gpt *GPT) serializePartitions(header *header.Header) ([]table.Partition, e
 	}
 
 	return partitions, nil
-}
-
-func (gpt *GPT) deserializePartitions() ([]byte, error) {
-	// TODO(andrewrynhard): Should this be a method on the Header struct?
-	data := make([]byte, gpt.header.NumberOfPartitionEntries*gpt.header.PartitionEntrySize)
-
-	for j, p := range gpt.partitions {
-		i := uint32(j)
-		partition, ok := p.(*partition.Partition)
-		if !ok {
-			return nil, errors.Errorf("partition is not a GUID partition table partition")
-		}
-		if err := serde.De(partition, data, i*gpt.header.PartitionEntrySize, nil); err != nil {
-			return nil, errors.Errorf("failed to deserialize the partitions: %v", err)
-		}
-	}
-
-	return data, nil
 }
 
 // InformKernelOfAdd invokes the BLKPG_ADD_PARTITION ioctl.
