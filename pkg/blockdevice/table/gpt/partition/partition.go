@@ -177,20 +177,5 @@ func (prt *Partition) Fields() []*serde.Field {
 				return nil
 			},
 		},
-		{
-			Offset: 72,
-			Length: 56,
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
-				data := make([]byte, length)
-				copy(data, prt.TrailingBytes)
-
-				return data, nil
-			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
-				prt.TrailingBytes = contents
-
-				return nil
-			},
-		},
 	}
 }
