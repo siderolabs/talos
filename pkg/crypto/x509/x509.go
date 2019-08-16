@@ -306,7 +306,7 @@ func NewCertificateFromCSR(ca *x509.Certificate, key *ecdsa.PrivateKey, csr *x50
 func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Certificate, err error) {
 	caPemBlock, _ := pem.Decode(ca)
 	if caPemBlock == nil {
-		return nil, fmt.Errorf("decode PEM: %v", err)
+		return nil, fmt.Errorf("decode CA PEM: %v", err)
 	}
 	caCrt, err := x509.ParseCertificate(caPemBlock.Bytes)
 	if err != nil {
@@ -314,7 +314,7 @@ func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Ce
 	}
 	keyPemBlock, _ := pem.Decode(key)
 	if keyPemBlock == nil {
-		return nil, fmt.Errorf("decode PEM: %v", err)
+		return nil, fmt.Errorf("decode key PEM: %v", err)
 	}
 	caKey, err := x509.ParseECPrivateKey(keyPemBlock.Bytes)
 	if err != nil {

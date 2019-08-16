@@ -26,6 +26,10 @@ type downloadOptions struct {
 	Wait    float64
 }
 
+type version struct {
+	Version string `yaml:"version"`
+}
+
 // Option configures the download options
 type Option func(*downloadOptions)
 
@@ -98,6 +102,7 @@ func Download(udURL string, opts ...Option) (data *UserData, err error) {
 
 	var dataBytes []byte
 	for attempt := 0; attempt < dlOpts.Retries; attempt++ {
+
 		dataBytes, err = download(req)
 		if err != nil {
 			log.Printf("download failed: %+v", err)
@@ -117,11 +122,27 @@ func Download(udURL string, opts ...Option) (data *UserData, err error) {
 			dataBytes = baseBytes
 		}
 
+		version := &version{}
+		if err = yaml.Unmarshal(dataBytes, version); err != nil {
+			return data, fmt.Errorf("failed to parse version: %s", err.Error())
+		}
+
 		data = &UserData{}
+		// If v1, translate and return
+		if version.Version == "v1" {
+			data, err = TranslateV1(string(dataBytes))
+			if err != nil {
+				return data, fmt.Errorf("unmarshal v1 user data: %s", err.Error())
+			}
+			return data, data.Validate()
+		}
+
+		// No version specified, just unmarshal and return
 		if err := yaml.Unmarshal(dataBytes, data); err != nil {
-			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
+			return data, fmt.Errorf("unmarshal v0 user data: %s", err.Error())
 		}
 		return data, data.Validate()
+
 	}
 
 	return data, fmt.Errorf("failed to download userdata from: %s", u.String())

@@ -26,7 +26,8 @@ func TestValidateSuite(t *testing.T) {
 	suite.Run(t, new(validateSuite))
 }
 
-func (suite *validateSuite) TestDownloadRetry() {
+// nolint: dupl
+func (suite *validateSuite) TestV0Download() {
 	// Disable logging for test
 	log.SetOutput(ioutil.Discard)
 	ts := testUDServer()
@@ -34,10 +35,17 @@ func (suite *validateSuite) TestDownloadRetry() {
 
 	var err error
 
-	_, err = Download(ts.URL, WithMaxWait(0.1))
+	// Download plain-text string
+	_, err = Download(ts.URL, WithMaxWait(0.1), WithHeaders(map[string]string{"configVersion": "v0"}))
 	suite.Require().NoError(err)
 
-	_, err = Download(ts.URL, WithFormat(b64), WithRetries(1), WithHeaders(map[string]string{"Metadata": "true", "format": b64}))
+	// Download b64 string
+	_, err = Download(
+		ts.URL,
+		WithFormat(b64),
+		WithRetries(1),
+		WithHeaders(map[string]string{"Metadata": "true", "format": b64, "configVersion": "v0"}),
+	)
 	suite.Require().NoError(err)
 	log.SetOutput(os.Stderr)
 }
@@ -56,8 +64,35 @@ func (suite *validateSuite) TestKubeadmMarshal() {
 	assert.Equal(suite.T(), kubeadmConfig, string(out))
 }
 
+// nolint: dupl
+func (suite *validateSuite) TestV1Download() {
+	// Disable logging for test
+	log.SetOutput(ioutil.Discard)
+	ts := testUDServer()
+	defer ts.Close()
+
+	var err error
+
+	_, err = Download(ts.URL, WithMaxWait(0.1), WithHeaders(map[string]string{"configVersion": "v1"}))
+	suite.Require().NoError(err)
+
+	_, err = Download(
+		ts.URL,
+		WithFormat(b64),
+		WithRetries(1),
+		WithHeaders(map[string]string{"Metadata": "true", "format": b64, "configVersion": "v1"}),
+	)
+	suite.Require().NoError(err)
+	log.SetOutput(os.Stderr)
+}
+
 func testUDServer() *httptest.Server {
 	var count int
+
+	testMap := map[string]string{
+		"v0": testV0Config,
+		"v1": testV1Config,
+	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		count++
@@ -68,10 +103,10 @@ func testUDServer() *httptest.Server {
 
 		if r.Header.Get("format") == b64 {
 			// nolint: errcheck
-			w.Write([]byte(base64.StdEncoding.EncodeToString([]byte(testConfig))))
+			w.Write([]byte(base64.StdEncoding.EncodeToString([]byte(testMap[r.Header.Get("configVersion")]))))
 		} else {
 			// nolint: errcheck
-			w.Write([]byte(testConfig))
+			w.Write([]byte(testMap[r.Header.Get("configVersion")]))
 		}
 	}))
 
@@ -79,7 +114,40 @@ func testUDServer() *httptest.Server {
 }
 
 // nolint: lll
-const testConfig = `version: "1"
+const testV1Config = `version: v1
+machine:
+  type: init
+  token: 57dn7x.k5jc6dum97cotlqb
+  ca:
+    crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+    key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIEVDIFBSSVZBVEUgS0VZLS0tLS0=
+  kubelet: {}
+  network: {}
+  install: {}
+cluster:
+  controlPlane:
+    ips:
+    - 10.254.0.10
+  clusterName: spencer-test
+  network:
+    dnsDomain: cluster.local
+    podSubnets:
+    - 10.244.0.0/16
+    serviceSubnets:
+    - 10.96.0.0/12
+  token: 4iysc6.t3bsjbrd74v91wpv
+  initToken: 22c11be4-c413-11e9-b8e8-309c23e4bd47
+  ca:
+    crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+    key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIEVDIFBSSVZBVEUgS0VZLS0tLS0=
+  apiServer: {}
+  controllerManager: {}
+  scheduler: {}
+  etcd: {}
+`
+
+// nolint: lll
+const testV0Config = `version: ""
 security:
   os:
     ca:
