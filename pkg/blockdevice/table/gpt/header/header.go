@@ -72,10 +72,10 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 0,
 			Length: 8,
 			// Contents: []byte{0x45, 0x46, 0x49, 0x20, 0x50, 0x41, 0x52, 0x54},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				return []byte{0x45, 0x46, 0x49, 0x20, 0x50, 0x41, 0x52, 0x54}, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				signature := string(contents)
 				if signature != "EFI PART" {
 					return fmt.Errorf("expected signature of \"EFI PART\", got %q", signature)
@@ -91,13 +91,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 8,
 			Length: 4,
 			// Contents: []byte{0x00, 0x00, 0x01, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint32(data, hdr.Revision)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				expected := []byte{0x00, 0x00, 0x01, 0x00}
 				if !bytes.Equal(contents, expected) {
 					return fmt.Errorf("expected revision of %v, got %v", expected, contents)
@@ -113,13 +113,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 12,
 			Length: 4,
 			// Contents: []byte{0x5c, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint32(data, hdr.Size)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				hdr.Size = binary.LittleEndian.Uint32(contents)
 				if hdr.Size != HeaderSize {
 					return fmt.Errorf("expected GPT header size of %d, got %d", HeaderSize, hdr.Size)
@@ -133,10 +133,10 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 20,
 			Length: 4,
 			// Contents: []byte{0x00, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				return []byte{0x00, 0x00, 0x00, 0x00}, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				expected := []byte{0x00, 0x00, 0x00, 0x00}
 				if !bytes.Equal(contents, expected) {
 					return fmt.Errorf("expected reserved field to be %v, got %v", expected, contents)
@@ -153,7 +153,7 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 24,
 			Length: 8,
 			// Contents: []byte{0x00, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				o, ok := opts.(*Options)
 				if !ok {
@@ -167,7 +167,7 @@ func (hdr *Header) Fields() []*serde.Field {
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				hdr.CurrentLBA = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -179,7 +179,7 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 32,
 			Length: 8,
 			// Contents: []byte{0x00, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				o, ok := opts.(*Options)
 				if !ok {
@@ -194,7 +194,7 @@ func (hdr *Header) Fields() []*serde.Field {
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				hdr.BackupLBA = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -205,13 +205,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 40,
 			Length: 8,
 			// Contents: []byte{0x00, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint64(data, hdr.FirstUsableLBA)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				hdr.FirstUsableLBA = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -222,13 +222,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 48,
 			Length: 8,
 			// Contents: []byte{0x00, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint64(data, hdr.LastUsableLBA)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				hdr.LastUsableLBA = binary.LittleEndian.Uint64(contents)
 
 				return nil
@@ -239,10 +239,10 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 56,
 			Length: 16,
 			// Contents: []byte{0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				return hdr.GUUID.MarshalBinary()
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				guid, err := uuid.FromBytes(contents)
 				if err != nil {
 					return fmt.Errorf("invalid GUUID: %v", err)
@@ -258,13 +258,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 72,
 			Length: 8,
 			// Contents: []byte{0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint64(data, hdr.PartitionEntriesStartLBA)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				// TODO: Should we verify it is 2 in the case of primary?
 				o, ok := opts.(*Options)
 				if !ok {
@@ -286,13 +286,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 80,
 			Length: 4,
 			// Contents: []byte{0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint32(data, hdr.NumberOfPartitionEntries)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				hdr.NumberOfPartitionEntries = binary.LittleEndian.Uint32(contents)
 
 				return nil
@@ -303,13 +303,13 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 84,
 			Length: 4,
 			// Contents: []byte{0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, length)
 				binary.LittleEndian.PutUint32(data, hdr.PartitionEntrySize)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				length := binary.LittleEndian.Uint32(contents)
 				// This field should be set to a value of: 128 x 2n where n is an integer greater than or equal to zero.
 				if length%128 != 0 {
@@ -326,7 +326,7 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 88,
 			Length: 4,
 			// Contents: []byte{0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				o, ok := opts.(*Options)
 				if !ok {
 					return nil, fmt.Errorf("option is not a GPT header option")
@@ -344,9 +344,9 @@ func (hdr *Header) Fields() []*serde.Field {
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				crc := binary.LittleEndian.Uint32(contents)
-				// Note that hdr.array is expected to be set in offset 72 DeserializerFunc.
+				// Note that hdr.array is expected to be set in offset 72 SerializerFunc.
 				checksum := crc32.ChecksumIEEE(hdr.array)
 				if crc != checksum {
 					return fmt.Errorf("expected partition checksum of %v, got %v", checksum, crc)
@@ -362,12 +362,12 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: HeaderSize,
 			Length: 420,
 			// Contents: []byte{0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				data := make([]byte, 420)
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				expected := make([]byte, 420)
 				if !bytes.Equal(contents, expected) {
 					return fmt.Errorf("expected %d trailing bytes of zeroes", 420)
@@ -383,7 +383,7 @@ func (hdr *Header) Fields() []*serde.Field {
 			Offset: 16,
 			Length: 4,
 			// Contents: []byte{0x00, 0x00, 0x00, 0x00},
-			DeserializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
+			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
 				// Copy the header into a temporary slice and to avoid modifying the original.
 				header := make([]byte, HeaderSize)
 				copy(header, new)
@@ -399,7 +399,7 @@ func (hdr *Header) Fields() []*serde.Field {
 
 				return data, nil
 			},
-			SerializerFunc: func(contents []byte, opts interface{}) error {
+			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				crc := binary.LittleEndian.Uint32(contents)
 
 				// Copy the header into a temporary slice and to avoid modifying the original.
