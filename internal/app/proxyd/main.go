@@ -8,7 +8,6 @@ import (
 	"context"
 	"flag"
 	"log"
-	"sync"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
@@ -54,34 +53,24 @@ func main() {
 
 	go waitForKube(r)
 
-	var wg sync.WaitGroup
+	errch := make(chan error)
 
-	wg.Add(1)
 	// Start up reverse proxy
-	go func(r *frontend.ReverseProxy, wg *sync.WaitGroup) {
-		defer wg.Done()
-		if err := r.Listen(":443"); err != nil {
-			log.Fatal(err)
-		}
-	}(r, &wg)
+	go func() {
+		errch <- r.Listen(":443")
+	}()
 
-	wg.Add(1)
 	// Start up gRPC server
-	go func(r *frontend.ReverseProxy, wg *sync.WaitGroup) {
-		defer wg.Done()
-
-		err := factory.ListenAndServe(
+	go func() {
+		errch <- factory.ListenAndServe(
 			reg.NewRegistrator(r),
 			factory.Network("unix"),
 			factory.SocketPath(constants.ProxydSocketPath),
 		)
-		if err != nil {
-			log.Fatal(err)
-		}
 
-	}(r, &wg)
+	}()
 
-	wg.Wait()
+	log.Fatal(<-errch)
 }
 
 func waitForKube(r *frontend.ReverseProxy) {
