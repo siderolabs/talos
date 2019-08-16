@@ -24,6 +24,8 @@ func NewDefaultCmdline() *Cmdline {
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
 	cmdline.Append("nvme_core.io_timeout", "4294967295")
 	cmdline.Append("random.trust_cpu", "on")
+	// Disable rate limited printk
+	cmdline.Append("printk.devkmsg", "on")
 	// Enable early kernel message logging
 	cmdline.Append("earlyprintk", "ttyS0,115200")
 	// NB: We make console=tty0 the last device on the list since the last
