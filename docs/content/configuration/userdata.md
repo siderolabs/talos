@@ -44,6 +44,7 @@ security:
 
 Kubernetes handles the certificate configuration for Kubernetes components (api server).
 
+<!-- markdownlint-disable MD024 -->
 #### CA
 
 ``Kubernetes.CA`` contains the certificate/key pair for the apiserver.
@@ -101,6 +102,7 @@ security:
 
 **Note** Bonding is currently not supported.
 
+<!-- markdownlint-disable MD024 -->
 ### OS
 
 ``OS`` contains a list of host networking devices and their respective configurations.
@@ -127,7 +129,7 @@ This is the interface name that should be configured.
 
 ``CIDR`` is used to specify a static IP address to the interface.
 
-**Note:** This option is mutually exclusive with DHCP.
+> Note: This option is mutually exclusive with DHCP.
 
 ##### DHCP
 
@@ -135,20 +137,19 @@ This is the interface name that should be configured.
 
 The following DHCP options are supported:
 
-```
-OptionHostName
-OptionClasslessStaticRouteOption
-OptionDNSDomainSearchList
-OptionNTPServers
-```
+- `OptionHostName`
+- `OptionClasslessStaticRouteOption`
+- `OptionDNSDomainSearchList`
+- `OptionNTPServers`
 
-**Note:** This option is mutually exclusive with CIDR.
+> Note: This option is mutually exclusive with CIDR.
 
 ##### Routes
 
 ``Routes`` is used to specify static routes that may be necessary. This parameter is optional.
 
 ## Services
+
 ### Init
 
 ``Init`` allows for the customization of the CNI plugin. This translates to additional host mounts.
@@ -159,9 +160,10 @@ services:
     cni: [flannel|calico]
 ```
 
-**Note:** This option will eventually be deprecated.
+> Note: This option will eventually be deprecated.
 
 ### Kubelet
+
 #### ExtraMounts
 
 ``Kubelet.ExtraMounts`` allows you to specify additional host mounts that should be presented
@@ -175,6 +177,7 @@ services:
 ```
 
 ### Kubeadm
+
 #### Configuration
 
 ``Kubeadm.Configuration`` contains the various kubeadm configs as a yaml block of yaml configs.
@@ -214,6 +217,7 @@ services:
 ```
 
 #### IgnorePreflightErrors
+
 Kubeadm.Ignorepreflighterrors is a list of Kubeadm preflight errors to ignore.
 
 ```yaml
@@ -303,6 +307,7 @@ services:
 ```
 
 ### NTP
+
 #### Server
 
 NTP.Server allows you to customize which NTP server to use. By default it consumes
@@ -320,6 +325,7 @@ Install is primarily used in bare metal situations. It defines the disk layout a
 installation properties.
 
 ### Boot
+
 #### Device
 
 The device name to use for the `/boot` partition. This should be specified as
@@ -371,6 +377,7 @@ install:
 
 ### Ephemeral
 
+<!-- markdownlint-disable MD024 -->
 #### Device
 
 ``Device`` specifies the device name to use for the `/var` partition. This should be specified as the
@@ -382,6 +389,7 @@ install:
     device: <name of device to use>
 ```
 
+<!-- markdownlint-disable MD024 -->
 #### Size
 
 ``Size`` defines the size of the `/var` partition in bytes. If this parameter is omitted, a default
@@ -397,7 +405,7 @@ install:
 
 ``Wipe`` denotes if the disk should be wiped ( zero's written ) before it is partitioned.
 
-```
+```yaml
 install:
   wipe: <bool>
 ```
@@ -406,7 +414,7 @@ install:
 
 ``Force`` allows the partitioning to proceed if there is already a filesystem detected.
 
-```
+```yaml
 install:
   force: <bool>
 ```
@@ -425,11 +433,14 @@ install:
           mountpoint: /var/lib/etcd
 ```
 
+<!-- markdownlint-disable MD024 -->
 #### Device
 
 ``ExtraDevices.Device`` specifies a device to use for additional host mountpoints.
 
 #### Partitions
+
+<!-- markdownlint-disable MD024 -->
 ##### Size
 
 ``Size`` specifies the size in bytes of the new partition.

@@ -222,6 +222,23 @@ steps:
   depends_on:
   - clone
 
+- name: markdownlint
+  image: autonomy/build-container:latest
+  commands:
+  - make markdownlint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: image-test
   image: autonomy/build-container:latest
   commands:
@@ -565,6 +582,23 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: markdownlint
+  image: autonomy/build-container:latest
+  commands:
+  - make markdownlint
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -1057,6 +1091,23 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: markdownlint
+  image: autonomy/build-container:latest
+  commands:
+  - make markdownlint
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -1564,6 +1615,23 @@ steps:
   depends_on:
   - clone
 
+- name: markdownlint
+  image: autonomy/build-container:latest
+  commands:
+  - make markdownlint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
 - name: image-test
   image: autonomy/build-container:latest
   commands:
@@ -2045,6 +2113,23 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - clone
+
+- name: markdownlint
+  image: autonomy/build-container:latest
+  commands:
+  - make markdownlint
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}

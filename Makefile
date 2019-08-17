@@ -252,6 +252,13 @@ lint: buildkitd
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: markdownlint
+markdownlint: buildkitd
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--opt target=$@ \
+		$(COMMON_ARGS)
+
 .PHONY: osctl-linux
 osctl-linux: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \

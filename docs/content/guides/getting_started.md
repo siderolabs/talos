@@ -83,6 +83,6 @@ To view the logs of a container, use `osctl logs <container>` or `osctl logs -k 
 
 To cleanup, run:
 
-```
+```bash
 osctl cluster destroy
 ```

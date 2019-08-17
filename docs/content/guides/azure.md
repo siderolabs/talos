@@ -155,4 +155,3 @@ kubectl --kubeconfig ./kubeconfig get nodes
 
 You will need to apply a PSP and CNI configuration. More details can be found
 in the [getting started](/docs/guides/getting_started) guide.
-
