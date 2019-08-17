@@ -9,11 +9,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/pkg/cmd"
 )
 
 const syslinuxCfgTpl = `DEFAULT {{ .Default }}
@@ -111,7 +111,7 @@ func Install(base string, config interface{}) (err error) {
 		}
 	}
 
-	if err = cmd("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
+	if err = cmd.Run("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
 		return errors.Wrap(err, "failed to install extlinux")
 	}
 
@@ -157,14 +157,4 @@ func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 	}
 
 	return nil
-}
-
-func cmd(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	return cmd.Wait()
 }
