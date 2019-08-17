@@ -296,3 +296,12 @@ RUN --mount=type=cache,target=/.cache/go-build go test -v -race ${TESTPKGS}
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
 RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
+
+# The markdownlint target performs linting on Markdown files.
+
+FROM node:8.16.1-alpine AS markdownlint
+RUN npm install -g markdownlint-cli
+WORKDIR /src
+COPY .markdownlint.json .
+COPY docs .
+RUN markdownlint .

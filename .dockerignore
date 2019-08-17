@@ -1,10 +1,12 @@
 **
 !cmd
+!docs
 !hack
 !images/*.tar
 !internal
 !pkg
 !vendor
 !web
+!.markdownlint.json
 !go.mod
 !go.sum

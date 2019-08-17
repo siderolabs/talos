@@ -147,6 +147,7 @@ local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
 local lint = Step("lint");
+local markdownlint = Step("markdownlint");
 local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
@@ -199,6 +200,7 @@ local default_steps = [
   installer,
   container,
   lint,
+  markdownlint,
   image_test,
   unit_tests,
   // unit_tests_race,
