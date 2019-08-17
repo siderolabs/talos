@@ -8,6 +8,8 @@ package blockdevice
 import (
 	"bytes"
 	"os"
+	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -106,12 +108,23 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKFLSBUF, 0); ret != 0 {
 		return errors.Errorf("flush block device buffers: %v", ret)
 	}
+
 	// Reread the partition table.
-	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
-		return errors.Errorf("re-read partition table: %v", ret)
+	var err error
+	for i := 0; i < 50; i++ {
+		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
+			err = errors.Errorf("re-read partition table: %v", ret)
+			switch ret {
+			case syscall.EBUSY:
+				time.Sleep(100 * time.Millisecond)
+				continue
+			default:
+				return err
+			}
+		}
 	}
 
-	return nil
+	return err
 }
 
 // Device returns the backing file for the block device
