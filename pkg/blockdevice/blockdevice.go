@@ -109,18 +109,24 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 		return errors.Errorf("flush block device buffers: %v", ret)
 	}
 
+	var (
+		err error
+		ret syscall.Errno
+	)
+
 	// Reread the partition table.
-	var err error
 	for i := 0; i < 50; i++ {
-		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret != 0 {
-			err = errors.Errorf("re-read partition table: %v", ret)
-			switch ret {
-			case syscall.EBUSY:
-				time.Sleep(100 * time.Millisecond)
-				continue
-			default:
-				return err
-			}
+		if _, _, ret = unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret == 0 {
+			return nil
+		}
+
+		err = errors.Errorf("re-read partition table: %v", ret)
+		switch ret {
+		case syscall.EBUSY:
+			time.Sleep(100 * time.Millisecond)
+			continue
+		default:
+			return err
 		}
 	}
 
