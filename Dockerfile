@@ -301,7 +301,8 @@ RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golang
 
 FROM node:8.16.1-alpine AS markdownlint
 RUN npm install -g markdownlint-cli
+RUN npm i sentences-per-line
 WORKDIR /src
 COPY .markdownlint.json .
 COPY docs .
-RUN markdownlint .
+RUN markdownlint --rules /node_modules/sentences-per-line/index.js .

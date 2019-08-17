@@ -28,5 +28,5 @@ Author(s): [Author Name, Co-Author Name]
 
 ## Open issues (if applicable)
 
-[A discussion of issues relating to this proposal for which the author does not
-know the solution. This section may be omitted if there are none.]
+[A discussion of issues relating to this proposal for which the author does not know the solution.]
+[This section may be omitted if there are none.]

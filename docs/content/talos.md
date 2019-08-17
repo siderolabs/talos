@@ -8,7 +8,9 @@ menu:
     weight: 1
 ---
 
-**Talos** is a modern OS designed to be secure, immutable, and minimal. All system management is done via an API, and there is no shell or interactive console. Some of the capabilities and benefits provided by Talos include:
+**Talos** is a modern OS designed to be secure, immutable, and minimal.
+All system management is done via an API, and there is no shell or interactive console.
+Some of the capabilities and benefits provided by Talos include:
 
 - **Security**: Talos reduces your attack surface by practicing the Principle of Least Privilege (PoLP) and by securing the API with mutual TLS (mTLS) authentication.
 - **Predictability**: Talos eliminates unneeded variables and reduces unknown factors in your environment by employing immutable infrastructure ideology.
