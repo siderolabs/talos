@@ -13,7 +13,8 @@ Talos User Data is responsible for the host and Kubernetes configuration, and it
 
 ## Version
 
-``Version`` represents the Talos userdata configuration version. This denotes
+``Version`` represents the Talos userdata configuration version.
+This denotes
 what the schema of the configuration file.
 
 ```yaml
@@ -60,7 +61,8 @@ security:
 #### SA
 
 ``Kubernetes.SA`` contains the certificate/key pair for the default service account.
-This item is optional. If it is not provided, a certificate/key pair will be generated.
+This item is optional.
+If it is not provided, a certificate/key pair will be generated.
 
 ```yaml
 security:
@@ -73,7 +75,8 @@ security:
 #### FrontProxy
 
 ``Kubernetes.FrontProxy`` contains the certificate/key pair for the [Front Proxy](https://kubernetes.io/docs/tasks/access-kubernetes-api/setup-extension-api-server/).
-This item is optional. If it is not provided, a certificate/key pair will be generated.
+This item is optional.
+If it is not provided, a certificate/key pair will be generated.
 
 ```yaml
 security:
@@ -86,7 +89,8 @@ security:
 #### Etcd
 
 ``Kubernetes.Etcd`` contains the certificate/key pair for [etcd](https://kubernetes.io/docs/concepts/overview/components/#etcd).
-This item is optional. If it is not provided, a certificate/key pair will be generated.
+This item is optional.
+If it is not provided, a certificate/key pair will be generated.
 
 ```yaml
 security:
@@ -146,13 +150,15 @@ The following DHCP options are supported:
 
 ##### Routes
 
-``Routes`` is used to specify static routes that may be necessary. This parameter is optional.
+``Routes`` is used to specify static routes that may be necessary.
+This parameter is optional.
 
 ## Services
 
 ### Init
 
-``Init`` allows for the customization of the CNI plugin. This translates to additional host mounts.
+``Init`` allows for the customization of the CNI plugin.
+This translates to additional host mounts.
 
 ```yaml
 services:
@@ -166,8 +172,7 @@ services:
 
 #### ExtraMounts
 
-``Kubelet.ExtraMounts`` allows you to specify additional host mounts that should be presented
-to kubelet.
+``Kubelet.ExtraMounts`` allows you to specify additional host mounts that should be presented to kubelet.
 
 ```yaml
 services:
@@ -232,9 +237,8 @@ services:
 #### InitToken
 
 kubeadm.Inittoken denotes that this node should bootstrap the Kubernetes cluster.
-The token is a UUIDv1 token which means it includes a timestamp of when it was
-generated. There is a 1 hour TTL associated with this token where it will perform
-a `kubeadm init` to bootstrap the cluster.
+The token is a UUIDv1 token which means it includes a timestamp of when it was generated.
+There is a 1 hour TTL associated with this token where it will perform a `kubeadm init` to bootstrap the cluster.
 This token is a UUIDv1 token and can be generated via `osctl gen token`.
 
 This token should only be specified on a single master node.
@@ -287,8 +291,9 @@ services:
 
 #### Endpoints
 
-The endpoints denote the other trustd instances. All trustd instances should
-be listed here. These are typically your master nodes.
+The endpoints denote the other trustd instances.
+All trustd instances should be listed here.
+These are typically your master nodes.
 
 ```yaml
 services:
@@ -310,8 +315,8 @@ services:
 
 #### Server
 
-NTP.Server allows you to customize which NTP server to use. By default it consumes
-from pool.ntp.org.
+NTP.Server allows you to customize which NTP server to use.
+By default it consumes from pool.ntp.org.
 
 ```yaml
 services:
@@ -321,16 +326,16 @@ services:
 
 ## Install
 
-Install is primarily used in bare metal situations. It defines the disk layout and
-installation properties.
+Install is primarily used in bare metal situations.
+It defines the disk layout and installation properties.
 
 ### Boot
 
 #### Device
 
-The device name to use for the `/boot` partition. This should be specified as
-the unpartitioned block device. If this parameter is omitted, the value of
-`install.root.device` is used.
+The device name to use for the `/boot` partition.
+This should be specified as the unpartitioned block device.
+If this parameter is omitted, the value of `install.root.device` is used.
 
 ```yaml
 install:
@@ -340,8 +345,8 @@ install:
 
 #### Size
 
-The size of the `/boot` partition in bytes. If this parameter is omitted, a
-default value of 512MB will be used.
+The size of the `/boot` partition in bytes.
+If this parameter is omitted, a default value of 512MB will be used.
 
 ```yaml
 install:
@@ -351,8 +356,8 @@ install:
 
 #### Kernel
 
-This parameter can be used to specify a custom kernel to use. If this parameter
-is omitted, the most recent Talos release will be used ( fetched from github releases ).
+This parameter can be used to specify a custom kernel to use.
+If this parameter is omitted, the most recent Talos release will be used ( fetched from github releases ).
 
 ```yaml
 install:
@@ -364,8 +369,8 @@ install:
 
 #### Initramfs
 
-This parameter can be used to specify a custom initramfs to use. If this parameter
-is omitted, the most recent Talos release will be used ( fetched from github releases ).
+This parameter can be used to specify a custom initramfs to use.
+If this parameter is omitted, the most recent Talos release will be used ( fetched from github releases ).
 
 ```yaml
 install:
@@ -380,8 +385,9 @@ install:
 <!-- markdownlint-disable MD024 -->
 #### Device
 
-``Device`` specifies the device name to use for the `/var` partition. This should be specified as the
-unpartitioned block device. If this parameter is omitted, the value of `install.root.device` is used.
+``Device`` specifies the device name to use for the `/var` partition.
+This should be specified as the unpartitioned block device.
+If this parameter is omitted, the value of `install.root.device` is used.
 
 ```yaml
 install:
@@ -392,8 +398,9 @@ install:
 <!-- markdownlint-disable MD024 -->
 #### Size
 
-``Size`` defines the size of the `/var` partition in bytes. If this parameter is omitted, a default
-value of 1GB will be used. This partition will auto extend to consume the remainder of the unpartitioned space on the disk.
+``Size`` defines the size of the `/var` partition in bytes.
+If this parameter is omitted, a default value of 1GB will be used.
+This partition will auto extend to consume the remainder of the unpartitioned space on the disk.
 
 ```yaml
 install:
@@ -421,8 +428,8 @@ install:
 
 ### ExtraDevices
 
-``ExtraDevices`` allows for the extension of the partitioning scheme on the specified
-device. These new partitions will be formatted as `xfs` filesystems.
+``ExtraDevices`` allows for the extension of the partitioning scheme on the specified device.
+These new partitions will be formatted as `xfs` filesystems.
 
 ```yaml
 install:

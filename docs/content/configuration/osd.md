@@ -10,12 +10,14 @@ menu:
     weight: 10
 ---
 
-The `osd` service enforces a high level of security by using mutual TLS for authentication and authorization. In this section we will configure mutual TLS by generating the certificates for the servers (`osd`) and clients (`osctl`).
+The `osd` service enforces a high level of security by using mutual TLS for authentication and authorization.
+In this section we will configure mutual TLS by generating the certificates for the servers (`osd`) and clients (`osctl`).
 
 ### Cluster Owners
 
 We recommend that the configuration of `osd` be performed by a cluster owner.
-A cluster owner should be a person of authority within an organization, perhaps a director, manager, or senior member of a team. They are responsible for storing the root CA, and distributing the PKI for authorized cluster administrators.
+A cluster owner should be a person of authority within an organization, perhaps a director, manager, or senior member of a team.
+They are responsible for storing the root CA, and distributing the PKI for authorized cluster administrators.
 
 ### Cluster Administrators
 

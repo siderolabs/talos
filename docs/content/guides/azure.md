@@ -9,9 +9,8 @@ menu:
 
 ## Image Creation
 
-For each [Talos release](https://github.com/talos-systems/talos/releases),
-we provide an Azure compatible vhd (`azure.tar.gz`).  If you want to build
-the image locally, you can do so by running:
+For each [Talos release](https://github.com/talos-systems/talos/releases), we provide an Azure compatible vhd (`azure.tar.gz`).
+If you want to build the image locally, you can do so by running:
 
 ```bash
 make installer
@@ -22,9 +21,8 @@ This will produce `build/azure.tar.gz`.
 
 ## Environment Setup
 
-Before proceeding, you'll want to make sure you have `osctl` available and the
-azure cli `az` installed and configured. `osctl` is published on each release
-and is available on our releases page [Talos release](https://github.com/talos-systems/talos/releases).
+Before proceeding, you'll want to make sure you have `osctl` available and the azure cli `az` installed and configured.
+`osctl` is published on each release and is available on our releases page [Talos release](https://github.com/talos-systems/talos/releases).
 If you want to build it locally, you can do so by running:
 
 ```bash
@@ -47,8 +45,7 @@ LOCATION=${LOCATION:-westus2}
 
 ## Upload Image
 
-After downloading or creating the image locally, we'll want to upload it to
-Azure and create an image.
+After downloading or creating the image locally, we'll want to upload it to Azure and create an image.
 
 ```bash
 # Create resource group
@@ -97,8 +94,8 @@ az network nsg rule create -g $GROUP --nsg-name talos -n kube --priority 1004 --
 
 ## Cluster Configuration
 
-After getting the network security group set up, we'll need to allocate public
-IPs for our master nodes. The example below assumes a HA control plane of 3 nodes.
+After getting the network security group set up, we'll need to allocate public IPs for our master nodes.
+The example below assumes a HA control plane of 3 nodes.
 You can adjust this for your needs.
 
 ```bash
@@ -153,5 +150,5 @@ osctl --talosconfig ./talosconfig kubeconfig > kubeconfig
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-You will need to apply a PSP and CNI configuration. More details can be found
-in the [getting started](/docs/guides/getting_started) guide.
+You will need to apply a PSP and CNI configuration.
+More details can be found in the [getting started](/docs/guides/getting_started) guide.
