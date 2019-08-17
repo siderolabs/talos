@@ -116,7 +116,7 @@ base: buildkitd
 generate: buildkitd
 	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-    --output type=local,dest=./ \
+		--output type=local,dest=./ \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
@@ -124,7 +124,7 @@ generate: buildkitd
 kernel: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-    --output type=local,dest=build \
+		--output type=local,dest=build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 	@-rm -rf ./build/modules
@@ -133,7 +133,7 @@ kernel: buildkitd
 initramfs: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-    --output type=local,dest=build \
+		--output type=local,dest=build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
@@ -191,7 +191,14 @@ push-image-azure:
 
 .PHONY: image-gce
 image-gce:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n disk -r -p googlecloud -u none
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-n disk \
+		-r \
+		-p googlecloud \
+		-u none
 	@tar -C $(PWD)/build -czf $(PWD)/build/gce.tar.gz disk.raw
 	@rm -rf $(PWD)/build/disk.raw
 
@@ -263,7 +270,7 @@ markdownlint: buildkitd
 osctl-linux: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-    --output type=local,dest=build \
+		--output type=local,dest=build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
@@ -271,7 +278,7 @@ osctl-linux: buildkitd
 osctl-darwin: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
-    --output type=local,dest=build \
+		--output type=local,dest=build \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
