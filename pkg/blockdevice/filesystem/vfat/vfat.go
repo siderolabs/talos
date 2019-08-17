@@ -5,7 +5,7 @@
 package vfat
 
 import (
-	"os/exec"
+	"github.com/talos-systems/talos/pkg/cmd"
 )
 
 // MakeFS creates a VFAT filesystem on the specified partition.
@@ -20,15 +20,5 @@ func MakeFS(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	return cmd("mkfs.vfat", args...)
-}
-
-func cmd(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	return cmd.Wait()
+	return cmd.Run("mkfs.vfat", args...)
 }
