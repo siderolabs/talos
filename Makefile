@@ -39,6 +39,7 @@ CONFORM_VERSION ?= 57c9dbd
 
 SHA ?= $(shell $(BINDIR)/gitmeta git sha)
 TAG ?= $(shell $(BINDIR)/gitmeta image tag)
+BRANCH ?= $(shell $(BINDIR)/gitmeta git branch)
 
 COMMON_ARGS = --progress=plain
 COMMON_ARGS += --frontend=dockerfile.v0
@@ -330,14 +331,14 @@ login:
 
 .PHONY: push
 push: gitmeta login
-	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
 	@docker push autonomy/installer:$(TAG)
-	# TODO: only push :latest if merge to master?
-	@docker push autonomy/installer:latest
-	@docker tag autonomy/talos:$(TAG) autonomy/talos:latest
 	@docker push autonomy/talos:$(TAG)
-	# TODO: only push :latest if merge to master?
+ifeq ($(BRANCH),master)
+	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
+	@docker tag autonomy/talos:$(TAG) autonomy/talos:latest
+	@docker push autonomy/installer:latest
 	@docker push autonomy/talos:latest
+endif
 
 .PHONY: clean
 clean:
