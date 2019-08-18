@@ -38,7 +38,7 @@ services:
       kubernetesVersion: {{ .KubernetesVersion }}
       controlPlaneEndpoint: "{{ .GetControlPlaneEndpoint "443" }}"
       apiServer:
-        certSANs: [ {{ range $i,$ip := .MasterIPs }}{{if $i}},{{end}}"{{$ip}}"{{end}}, "127.0.0.1", "::1" ]
+        certSANs: [ {{ range $i,$addr := .GetAPIServerSANs }}{{if $i}},{{end}}"{{$addr}}"{{end}} ]
         extraArgs:
           runtime-config: settings.k8s.io/v1alpha1=true
           feature-gates: ExperimentalCriticalPodAnnotation=true

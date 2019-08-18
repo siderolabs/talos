@@ -131,6 +131,7 @@ var configGenerateCmd = &cobra.Command{
 		if err != nil {
 			helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 		}
+		input.AdditionalSubjectAltNames = additionalSANs
 
 		workingDir, err := os.Getwd()
 		if err != nil {
@@ -195,6 +196,7 @@ func init() {
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
+	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additionalSANs", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
 	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
 	helpers.Should(configAddCmd.MarkFlagRequired("key"))

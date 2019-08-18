@@ -42,8 +42,9 @@ type CertStrings struct {
 
 // Input holds info about certs, ips, and node type.
 type Input struct {
-	Certs     *Certs
-	MasterIPs []string
+	Certs                     *Certs
+	MasterIPs                 []string
+	AdditionalSubjectAltNames []string
 
 	ClusterName       string
 	ServiceDomain     string
@@ -97,6 +98,16 @@ func (i *Input) GetControlPlaneEndpoint(port string) string {
 		return tnet.FormatAddress(i.MasterIPs[refMaster])
 	}
 	return net.JoinHostPort(i.MasterIPs[refMaster], port)
+}
+
+// GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server
+func (i *Input) GetAPIServerSANs() []string {
+
+	var list = []string{"127.0.0.1", "::1"}
+	list = append(list, i.MasterIPs...)
+	list = append(list, i.AdditionalSubjectAltNames...)
+
+	return list
 }
 
 // Certs holds the base64 encoded keys and certificates.
