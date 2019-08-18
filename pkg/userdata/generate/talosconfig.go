@@ -12,7 +12,7 @@ func Talosconfig(in *Input) (string, error) {
 const talosconfigTempl = `context: {{ .ClusterName }}
 contexts:
   {{ .ClusterName }}:
-    target: {{ .GetControlPlaneEndpoint "" }}
+    target: "{{ .GetControlPlaneEndpoint "" }}"
     ca: {{ .Certs.OsCert }}
     crt: {{ .Certs.AdminCert }}
     key: {{ .Certs.AdminKey }}
