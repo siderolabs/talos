@@ -5,7 +5,6 @@
 package rootfs
 
 import (
-	// "github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path"
