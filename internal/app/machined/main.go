@@ -49,6 +49,7 @@ func run() (err error) {
 			"system requirements",
 			security.NewSecurityTask(),
 			rootfs.NewSystemDirectoryTask(),
+			rootfs.NewMountBPFFSTask(),
 			rootfs.NewMountCgroupsTask(),
 			rootfs.NewMountSubDevicesTask(),
 			sysctls.NewSysctlsTask(),
