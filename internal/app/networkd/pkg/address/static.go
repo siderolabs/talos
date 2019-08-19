@@ -16,11 +16,12 @@ import (
 // Static implements the Addressing interface
 type Static struct {
 	Device *userdata.Device
+	NetIf  *net.Interface
 }
 
 // Discover doesnt do anything in the static configuration since all
 // the necessary configuration data is supplied via userdata.
-func (s *Static) Discover(ctx context.Context, name string) error {
+func (s *Static) Discover(ctx context.Context) error {
 	return nil
 }
 
@@ -30,13 +31,11 @@ func (s *Static) Name() string {
 }
 
 // Address returns the IP address
-func (s *Static) Address() net.IP {
+func (s *Static) Address() *net.IPNet {
 	// nolint: errcheck
-	ip, _, _ := net.ParseCIDR(s.Device.CIDR)
-	if to4 := ip.To4(); to4 != nil {
-		return to4
-	}
-	return ip
+	ip, ipn, _ := net.ParseCIDR(s.Device.CIDR)
+	ipn.IP = ip
+	return ipn
 }
 
 // Mask returns the netmask.
@@ -50,7 +49,7 @@ func (s *Static) Mask() net.IPMask {
 func (s *Static) MTU() uint32 {
 	mtu := uint32(s.Device.MTU)
 	if mtu == 0 {
-		mtu = 1500
+		mtu = uint32(s.NetIf.MTU)
 	}
 	return mtu
 }
@@ -62,8 +61,8 @@ func (s *Static) TTL() time.Duration {
 }
 
 // Family qualifies the address as ipv4 or ipv6
-func (s *Static) Family() uint8 {
-	if s.Address().To4() != nil {
+func (s *Static) Family() int {
+	if s.Address().IP.To4() != nil {
 		return unix.AF_INET
 	}
 	return unix.AF_INET6
@@ -96,4 +95,10 @@ func (s *Static) Resolvers() []net.IP {
 // TODO: Should we put kernel.get(hostname param) here?
 func (s *Static) Hostname() string {
 	return ""
+}
+
+// Link returns the underlying net.Interface that this address
+// method is configured for
+func (s Static) Link() *net.Interface {
+	return s.NetIf
 }

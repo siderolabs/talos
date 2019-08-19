@@ -40,9 +40,9 @@ func (task *Services) startSystemServices(data *userdata.UserData, mode runtime.
 	// Start the services common to all nodes.
 	svcs.Load(
 		&services.MachinedAPI{},
-		&services.Networkd{},
 		&services.SystemContainerd{},
 		&services.Containerd{},
+		&services.Networkd{},
 		&services.Udevd{},
 		&services.OSD{},
 		&services.NTPd{},

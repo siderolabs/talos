@@ -11,7 +11,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/jsimonetti/rtnetlink"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -19,16 +18,14 @@ import (
 
 // filterInterfaceByName filters network links by name so we only mange links
 // we need to
-func filterInterfaceByName(links []rtnetlink.LinkMessage) (filteredLinks []rtnetlink.LinkMessage) {
+func filterInterfaceByName(links []*net.Interface) (filteredLinks []*net.Interface) {
 	for _, link := range links {
 		switch {
-		case strings.HasPrefix(link.Attributes.Name, "en"):
+		case strings.HasPrefix(link.Name, "en"):
 			filteredLinks = append(filteredLinks, link)
-		case strings.HasPrefix(link.Attributes.Name, "eth"):
+		case strings.HasPrefix(link.Name, "eth"):
 			filteredLinks = append(filteredLinks, link)
-			// TODO Add bond support
-			// case strings.HasPrefix(netif.Name, "bond"):
-		case strings.HasPrefix(link.Attributes.Name, "lo"):
+		case strings.HasPrefix(link.Name, "lo"):
 			filteredLinks = append(filteredLinks, link)
 		}
 	}
@@ -37,23 +34,24 @@ func filterInterfaceByName(links []rtnetlink.LinkMessage) (filteredLinks []rtnet
 }
 
 // parseLinkMessage creates the base set of attributes for nic creation
-func parseLinkMessage(link rtnetlink.LinkMessage) []nic.Option {
+func parseLinkMessage(link *net.Interface) []nic.Option {
 	opts := []nic.Option{}
 
-	opts = append(opts, nic.WithName(link.Attributes.Name))
-	opts = append(opts, nic.WithMTU(link.Attributes.MTU))
-	opts = append(opts, nic.WithIndex(link.Index))
+	opts = append(opts, nic.WithName(link.Name))
+	opts = append(opts, nic.WithMTU(uint32(link.MTU)))
+	opts = append(opts, nic.WithIndex(uint32(link.Index)))
 
 	// Ensure lo has proper loopback address
 	// Ensure MTU for loopback is 64k
 	// https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0cf833aefaa85bbfce3ff70485e5534e09254773
-	if strings.HasPrefix(link.Attributes.Name, "lo") {
+	if strings.HasPrefix(link.Name, "lo") {
 		opts = append(opts, nic.WithAddressing(
 			&address.Static{
 				Device: &userdata.Device{
 					CIDR: "127.0.0.1/8",
 					MTU:  65536,
 				},
+				NetIf: link,
 			},
 		))
 	}
@@ -76,7 +74,7 @@ func writeResolvConf(resolvers []net.IP) error {
 			break
 		}
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
-			log.Println("failde to add some resolver to resolvconf")
+			log.Println("failed to add some resolver to resolvconf")
 			return err
 		}
 	}
