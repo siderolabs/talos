@@ -44,7 +44,7 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 	}
 
 	// Convert links to nic
-	log.Println("Discovering local network interfaces")
+	log.Println("discovering local network interfaces")
 	netconf, err := nwd.Discover()
 	if err != nil {
 		return err
@@ -53,9 +53,8 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 	// Configure specified interface
 	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
 	var iface *nic.NetworkInterface
-	for name, opts := range netconf {
-		log.Printf("Creating interface %s", name)
-		iface, err = nic.Create(opts...)
+	for link, opts := range netconf {
+		iface, err = nic.Create(link, opts...)
 		if err != nil {
 			return err
 		}
@@ -65,7 +64,6 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 
 	// kick off the addressing mechanism
 	// Add any necessary routes
-	log.Println("Configuring interface addressing")
 	if err = nwd.Configure(netIfaces...); err != nil {
 		return err
 	}
@@ -76,6 +74,7 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 	// 2. Kernel Arg
 	// 3. DHCP response
 	// 4. failsafe - talos-<ip addr>
+	// default specified in etc.Hosts()
 	var hostname string
 	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
 	switch {
@@ -83,10 +82,8 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 		hostname = data.Networking.OS.Hostname
 	case kernelHostname != nil:
 		hostname = *kernelHostname
-	case nwd.Hostname() != "":
+	case nwd.Hostname(netIfaces...) != "":
 		hostname = nwd.Hostname(netIfaces...)
-	default:
-		// will default in Hosts()
 	}
 
 	return etc.Hosts(hostname)

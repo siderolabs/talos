@@ -27,12 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Is there any value in returning the low level link or
-	// should the translation to nic be handled here?
-	// links := nwd.Discover()
-
 	// Convert links to nic
-	log.Println("Discovering local network interfaces")
+	log.Println("discovering local network interfaces")
 	netconf, err = nwd.Discover()
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +40,7 @@ func main() {
 		log.Printf("failed to read userdata %s, using defaults: %+v", "/var/userdata.yaml", err)
 	}
 
-	log.Println("Overlaying userdata network configuration")
+	log.Println("overlaying userdata network configuration")
 	// Update nic with userdata specified options
 	if err = netconf.OverlayUserData(ud); err != nil {
 		log.Fatal(err)
@@ -52,10 +48,10 @@ func main() {
 
 	// Configure specified interface
 	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
-	for name, opts := range netconf {
+	for link, opts := range netconf {
 		var iface *nic.NetworkInterface
-		log.Printf("Creating interface %s", name)
-		iface, err = nic.Create(opts...)
+		log.Printf("creating interface %s", link.Name)
+		iface, err = nic.Create(link, opts...)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -65,11 +61,15 @@ func main() {
 
 	// kick off the addressing mechanism
 	// Add any necessary routes
-	log.Println("Configuring interface addressing")
+	log.Println("configuring interface addressing")
 	if err = nwd.Configure(netIfaces...); err != nil {
 		log.Fatal(err)
 	}
 
+	log.Println("interface configuration")
+	nwd.PrintState()
+
+	log.Println("starting renewal watcher")
 	// handle dhcp renewal
 	nwd.Renew(netIfaces...)
 }

@@ -2,6 +2,8 @@ module github.com/talos-systems/talos
 
 go 1.12
 
+replace github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20190820045831-7b9ca088b93d
+
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
 	github.com/beevik/ntp v0.2.0

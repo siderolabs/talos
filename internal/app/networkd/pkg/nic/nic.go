@@ -6,6 +6,7 @@ package nic
 
 import (
 	"errors"
+	"net"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
@@ -35,7 +36,7 @@ type NetworkInterface struct {
 
 // Create returns a NetworkInterface with all of the given setter options
 // applied
-func Create(setters ...Option) (*NetworkInterface, error) {
+func Create(link *net.Interface, setters ...Option) (*NetworkInterface, error) {
 
 	// Default interface setup
 	iface := defaultOptions()
@@ -56,7 +57,7 @@ func Create(setters ...Option) (*NetworkInterface, error) {
 	// TODO: do we want this behavior or to be explicit with userdata
 	// so we dont configure every interface be default?
 	if len(iface.AddressMethod) == 0 {
-		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{})
+		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{NetIf: link})
 	}
 
 	return iface, result.ErrorOrNil()

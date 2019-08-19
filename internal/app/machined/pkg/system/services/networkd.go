@@ -31,7 +31,8 @@ func (n *Networkd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (n *Networkd) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	return containerd.Import(constants.SystemContainerdNamespace, &containerd.ImportRequest{
+	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/networkd.tar",
 		Options: []containerdapi.ImportOpt{
 			containerdapi.WithIndexName("talos/networkd"),
@@ -51,7 +52,7 @@ func (n *Networkd) Condition(data *userdata.UserData) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *Networkd) DependsOn(data *userdata.UserData) []string {
-	return []string{"containerd"}
+	return []string{"system-containerd"}
 }
 
 func (n *Networkd) Runner(data *userdata.UserData) (runner.Runner, error) {
@@ -65,6 +66,7 @@ func (n *Networkd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
@@ -75,9 +77,11 @@ func (n *Networkd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		data,
 		&args,
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
+			containerd.WithMemoryLimit(int64(1000000*32)),
 			oci.WithMounts(mounts),
 		),
 	),
