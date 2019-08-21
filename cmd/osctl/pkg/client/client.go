@@ -23,6 +23,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
+	networkdproto "github.com/talos-systems/talos/internal/app/networkd/proto"
 	ntpdproto "github.com/talos-systems/talos/internal/app/ntpd/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/pkg/net"
@@ -41,10 +42,11 @@ type Credentials struct {
 // Client implements the proto.OSDClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
-	conn       *grpc.ClientConn
-	client     proto.OSDClient
-	initClient initproto.InitClient
-	ntpdClient ntpdproto.NtpdClient
+	conn           *grpc.ClientConn
+	client         proto.OSDClient
+	initClient     initproto.InitClient
+	ntpdClient     ntpdproto.NtpdClient
+	networkdClient networkdproto.NetworkdClient
 }
 
 // NewDefaultClientCredentials initializes ClientCredentials using default paths
@@ -118,6 +120,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 	c.client = proto.NewOSDClient(c.conn)
 	c.initClient = initproto.NewInitClient(c.conn)
 	c.ntpdClient = ntpdproto.NewNtpdClient(c.conn)
+	c.networkdClient = networkdproto.NewNetworkdClient(c.conn)
 
 	return c, nil
 }
@@ -211,9 +214,15 @@ func (c *Client) Version(ctx context.Context) ([]byte, error) {
 	return data.Bytes, nil
 }
 
-// Routes implements the proto.OSDClient interface.
-func (c *Client) Routes(ctx context.Context) (reply *proto.RoutesReply, err error) {
-	reply, err = c.client.Routes(ctx, &empty.Empty{})
+// Routes implements the networkdproto.NetworkdClient interface.
+func (c *Client) Routes(ctx context.Context) (reply *networkdproto.RoutesReply, err error) {
+	reply, err = c.networkdClient.Routes(ctx, &empty.Empty{})
+	return
+}
+
+// Interfaces implements the proto.OSDClient interface.
+func (c *Client) Interfaces(ctx context.Context) (reply *networkdproto.InterfacesReply, err error) {
+	reply, err = c.networkdClient.Interfaces(ctx, &empty.Empty{})
 	return
 }
 

@@ -32,7 +32,7 @@ const (
 // and/or a specified configuration file.
 type Networkd struct {
 	Conn   *rtnl.Conn
-	nlConn *rtnetlink.Conn
+	NlConn *rtnetlink.Conn
 }
 
 // New instantiates a new rtnetlink connection that is used for all subsequent
@@ -51,7 +51,7 @@ func New() (*Networkd, error) {
 		return nil, err
 	}
 
-	return &Networkd{Conn: conn, nlConn: nlConn}, err
+	return &Networkd{Conn: conn, NlConn: nlConn}, err
 }
 
 // Discover enumerates a list of network links on the host and creates a
@@ -231,7 +231,7 @@ func (n *Networkd) Hostname(ifaces ...*nic.NetworkInterface) string {
 // PrintState displays the current links, addresses, and routing table.
 // nolint: gocyclo
 func (n *Networkd) PrintState() {
-	rl, err := n.nlConn.Route.List()
+	rl, err := n.NlConn.Route.List()
 	if err != nil {
 		log.Println(err)
 		return

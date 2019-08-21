@@ -12,19 +12,18 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 	"syscall"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jsimonetti/rtnetlink"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
+	networkdproto "github.com/talos-systems/talos/internal/app/networkd/proto"
 	ntpdproto "github.com/talos-systems/talos/internal/app/ntpd/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/containers"
@@ -44,6 +43,7 @@ type Registrator struct {
 	// every Init service API is proxied via OSD
 	*InitServiceClient
 	*NtpdClient
+	*NetworkdClient
 
 	Data *userdata.UserData
 }
@@ -53,6 +53,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 	proto.RegisterOSDServer(s, r)
 	initproto.RegisterInitServer(s, r)
 	ntpdproto.RegisterNtpdServer(s, r)
+	networkdproto.RegisterNetworkdServer(s, r)
 }
 
 // Kubeconfig implements the proto.OSDServer interface. The admin kubeconfig is
@@ -241,55 +242,6 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 	return nil
 }
 
-// Routes implements the proto.OSDServer interface.
-func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (*proto.RoutesReply, error) {
-	conn, err := rtnetlink.Dial(nil)
-	if err != nil {
-		return nil, errors.Errorf("failed to open socket to rtnetlink: %v", err)
-	}
-	// nolint: errcheck
-	defer conn.Close()
-
-	list, err := conn.Route.List()
-	if err != nil {
-		return nil, errors.Errorf("failed to get route list: %v", err)
-	}
-
-	routes := []*proto.Route{}
-
-	for _, rMesg := range list {
-
-		var ifaceName string
-		ifaceData, err := conn.Link.Get(rMesg.Attributes.OutIface)
-		if err != nil {
-			log.Printf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
-			// TODO: Remove once we get this sorted on why there's a
-			// failure here
-			log.Printf("%+v", rMesg)
-			continue
-		}
-		if ifaceData.Attributes != nil {
-			ifaceName = ifaceData.Attributes.Name
-		}
-
-		routes = append(routes, &proto.Route{
-			Interface:   ifaceName,
-			Destination: toCIDR(rMesg.Family, rMesg.Attributes.Dst, int(rMesg.DstLength)),
-			Gateway:     rMesg.Attributes.Gateway.String(),
-			Metric:      rMesg.Attributes.Priority,
-			Scope:       uint32(rMesg.Scope),
-			Source:      toCIDR(rMesg.Family, rMesg.Attributes.Src, int(rMesg.SrcLength)),
-			Family:      proto.AddressFamily(rMesg.Family),
-			Protocol:    proto.RouteProtocol(rMesg.Protocol),
-			Flags:       rMesg.Flags,
-		})
-
-	}
-	return &proto.RoutesReply{
-		Routes: routes,
-	}, nil
-}
-
 // Version implements the proto.OSDServer interface.
 func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (data *proto.Data, err error) {
 	v, err := version.NewVersion()
@@ -357,16 +309,4 @@ func k8slogs(ctx context.Context, req *proto.LogsRequest) (chunker.Chunker, io.C
 	}
 
 	return container.GetLogChunker()
-}
-
-func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
-	var netLen = 32
-	if family == unix.AF_INET6 {
-		netLen = 128
-	}
-	ipNet := &net.IPNet{
-		IP:   prefix,
-		Mask: net.CIDRMask(prefixLen, netLen),
-	}
-	return ipNet.String()
 }
