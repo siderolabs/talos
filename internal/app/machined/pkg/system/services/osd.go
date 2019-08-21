@@ -78,6 +78,7 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.InitSocketPath), Source: filepath.Dir(constants.InitSocketPath), Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(constants.NtpdSocketPath), Source: filepath.Dir(constants.NtpdSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
