@@ -9,6 +9,9 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -71,5 +74,12 @@ func main() {
 
 	log.Println("starting renewal watcher")
 	// handle dhcp renewal
-	nwd.Renew(netIfaces...)
+	go nwd.Renew(netIfaces...)
+
+	log.Fatalf("%+v", factory.ListenAndServe(
+		reg.NewRegistrator(nwd),
+		factory.Network("unix"),
+		factory.SocketPath(constants.NetworkdSocketPath),
+	),
+	)
 }

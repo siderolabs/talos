@@ -12,13 +12,13 @@ import (
 
 // setMTU sets the link MTU
 func (n *Networkd) setMTU(idx int, mtu uint32) error {
-	msg, err := n.nlConn.Link.Get(uint32(idx))
+	msg, err := n.NlConn.Link.Get(uint32(idx))
 	if err != nil {
 		log.Printf("failed to get link %d\n", idx)
 		return err
 	}
 
-	err = n.nlConn.Link.Set(&rtnetlink.LinkMessage{
+	err = n.NlConn.Link.Set(&rtnetlink.LinkMessage{
 		Family: msg.Family,
 		Type:   msg.Type,
 		Index:  uint32(idx),

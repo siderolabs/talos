@@ -16,10 +16,10 @@ import (
 	"github.com/talos-systems/talos/internal/app/networkd/proto"
 )
 
-// routesCmd represents the net routes command
-var routesCmd = &cobra.Command{
-	Use:   "routes",
-	Short: "List network routes",
+// interfacesCmd represents the net interfaces command
+var interfacesCmd = &cobra.Command{
+	Use:   "interfaces",
+	Short: "List network interfaces",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {
@@ -28,26 +28,28 @@ var routesCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			reply, err := c.Routes(globalCtx)
+			reply, err := c.Interfaces(globalCtx)
 			if err != nil {
-				helpers.Fatalf("error getting routes: %s", err)
+				helpers.Fatalf("error getting interfaces: %s", err)
 			}
 
-			routesRender(reply)
+			intersRender(reply)
 		})
 	},
 }
 
-func routesRender(reply *proto.RoutesReply) {
+func intersRender(reply *proto.InterfacesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
-	for _, r := range reply.Routes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\n", r.Interface, r.Destination, r.Gateway, r.Metric)
+	fmt.Fprintln(w, "INDEX\tNAME\tMAC\tMTU\tADDRESS")
+	for _, r := range reply.Interfaces {
+		for _, addr := range r.Ipaddress {
+			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", r.Index, r.Name, r.Hardwareaddr, r.Mtu, addr)
+		}
 	}
 	helpers.Should(w.Flush())
 }
 
 func init() {
-	routesCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
-	rootCmd.AddCommand(routesCmd)
+	interfacesCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
+	rootCmd.AddCommand(interfacesCmd)
 }

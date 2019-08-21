@@ -8,6 +8,8 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
@@ -63,10 +65,16 @@ func (n *Networkd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		ProcessArgs: []string{"/networkd"},
 	}
 
+	// Ensure socket dir exists
+	if err := os.MkdirAll(filepath.Dir(constants.NetworkdSocketPath), os.ModeDir); err != nil {
+		return nil, err
+	}
+
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(constants.NetworkdSocketPath), Source: filepath.Dir(constants.NetworkdSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
