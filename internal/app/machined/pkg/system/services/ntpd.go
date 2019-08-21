@@ -8,6 +8,8 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
@@ -63,8 +65,14 @@ func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		ProcessArgs: []string{"/ntpd", "--userdata=" + constants.UserDataPath},
 	}
 
+	// Ensure socket dir exists
+	if err := os.MkdirAll(filepath.Dir(constants.NtpdSocketPath), os.ModeDir); err != nil {
+		return nil, err
+	}
+
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: filepath.Dir(constants.NtpdSocketPath), Source: filepath.Dir(constants.NtpdSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}

@@ -56,11 +56,17 @@ func main() {
 		log.Fatalf("init client: %v", err)
 	}
 
+	ntpdClient, err := reg.NewNtpdClient()
+	if err != nil {
+		log.Fatalf("ntp client: %v", err)
+	}
+
 	log.Println("Starting osd")
 	err = factory.ListenAndServe(
 		&reg.Registrator{
 			Data:              data,
 			InitServiceClient: initClient,
+			NtpdClient:        ntpdClient,
 		},
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(

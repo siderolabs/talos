@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
+	ntpdproto "github.com/talos-systems/talos/internal/app/ntpd/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
@@ -42,6 +43,7 @@ import (
 type Registrator struct {
 	// every Init service API is proxied via OSD
 	*InitServiceClient
+	*NtpdClient
 
 	Data *userdata.UserData
 }
@@ -50,6 +52,7 @@ type Registrator struct {
 func (r *Registrator) Register(s *grpc.Server) {
 	proto.RegisterOSDServer(s, r)
 	initproto.RegisterInitServer(s, r)
+	ntpdproto.RegisterNtpdServer(s, r)
 }
 
 // Kubeconfig implements the proto.OSDServer interface. The admin kubeconfig is

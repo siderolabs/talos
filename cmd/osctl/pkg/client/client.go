@@ -23,6 +23,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
+	ntpdproto "github.com/talos-systems/talos/internal/app/ntpd/proto"
 	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/proc"
@@ -43,6 +44,7 @@ type Client struct {
 	conn       *grpc.ClientConn
 	client     proto.OSDClient
 	initClient initproto.InitClient
+	ntpdClient ntpdproto.NtpdClient
 }
 
 // NewDefaultClientCredentials initializes ClientCredentials using default paths
@@ -115,6 +117,7 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 
 	c.client = proto.NewOSDClient(c.conn)
 	c.initClient = initproto.NewInitClient(c.conn)
+	c.ntpdClient = ntpdproto.NewNtpdClient(c.conn)
 
 	return c, nil
 }
@@ -336,4 +339,24 @@ func (c *Client) Stop(ctx context.Context, id string) (string, error) {
 	}
 
 	return r.Resp, nil
+}
+
+// Time returns the time
+func (c *Client) Time(ctx context.Context) (*ntpdproto.TimeReply, error) {
+	r, err := c.ntpdClient.Time(ctx, &empty.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
+
+// TimeCheck returns the time compared to the specified ntp server
+func (c *Client) TimeCheck(ctx context.Context, server string) (*ntpdproto.TimeReply, error) {
+	r, err := c.ntpdClient.TimeCheck(ctx, &ntpdproto.TimeRequest{Server: server})
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
