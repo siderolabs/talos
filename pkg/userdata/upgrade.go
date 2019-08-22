@@ -9,13 +9,12 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 )
 
 // Upgrade performs an upgrade of the userdata.
 func (data *UserData) Upgrade() (ud *UserData, err error) {
-	initConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
+	initConfiguration, ok := data.Services.Kubeadm.InitConfiguration.(*kubeadmapi.InitConfiguration)
 	if !ok {
 		return data, nil
 	}
@@ -24,7 +23,7 @@ func (data *UserData) Upgrade() (ud *UserData, err error) {
 	join := &kubeadmapi.JoinConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "JoinConfiguration",
-			APIVersion: "kubeadm.k8s.io/v1beta1",
+			APIVersion: "kubeadm.k8s.io/v1beta2",
 		},
 		ControlPlane: &kubeadmapi.JoinControlPlane{},
 		Discovery: kubeadmapi.Discovery{
@@ -41,19 +40,15 @@ func (data *UserData) Upgrade() (ud *UserData, err error) {
 		NodeRegistration: initConfiguration.NodeRegistration,
 		CACertPath:       "/etc/kubernetes/pki/ca.crt",
 	}
-	if err = configutil.SetJoinDynamicDefaults(join); err != nil {
-		return nil, err
-	}
 
+	data.Services.Kubeadm.InitConfiguration = nil
 	data.Services.Kubeadm.Token = nil
-	data.Services.Kubeadm.Configuration = join
+	data.Services.Kubeadm.JoinConfiguration = join
 
-	b, err := configutil.MarshalKubeadmConfigObject(join)
+	_, err = data.Services.Kubeadm.MarshalYAML()
 	if err != nil {
 		return nil, err
 	}
-
-	data.Services.Kubeadm.ConfigurationStr = string(b)
 
 	return data, nil
 }

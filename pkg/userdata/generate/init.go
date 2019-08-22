@@ -22,7 +22,7 @@ services:
     initToken: {{ .InitToken }}
     certificateKey: '{{ .KubeadmTokens.CertKey }}'
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: InitConfiguration
       bootstrapTokens:
       - token: '{{ .KubeadmTokens.BootstrapToken }}'
@@ -32,7 +32,7 @@ services:
         kubeletExtraArgs:
           node-labels: ""
       ---
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: ClusterConfiguration
       clusterName: {{ .ClusterName }}
       kubernetesVersion: {{ .KubernetesVersion }}
