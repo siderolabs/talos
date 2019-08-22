@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/download"
 
 	"golang.org/x/sys/unix"
 
@@ -67,7 +68,7 @@ func (b *Metal) UserData() (data *userdata.UserData, err error) {
 		return data, nil
 	}
 
-	return userdata.Download(*option)
+	return download.Download(*option)
 }
 
 // Mode implements the platform.Platform interface.

@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package userdata
+package download
 
 import (
 	"encoding/base64"
@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/translate"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -24,6 +26,10 @@ type downloadOptions struct {
 	Format  string
 	Retries int
 	Wait    float64
+}
+
+type version struct {
+	Version string `yaml:"version"`
 }
 
 // Option configures the download options
@@ -76,7 +82,7 @@ func WithMaxWait(wait float64) Option {
 
 // Download initializes a UserData struct from a remote URL.
 // nolint: gocyclo
-func Download(udURL string, opts ...Option) (data *UserData, err error) {
+func Download(udURL string, opts ...Option) (data *userdata.UserData, err error) {
 	u, err := url.Parse(udURL)
 	if err != nil {
 		return data, err
@@ -98,6 +104,7 @@ func Download(udURL string, opts ...Option) (data *UserData, err error) {
 
 	var dataBytes []byte
 	for attempt := 0; attempt < dlOpts.Retries; attempt++ {
+
 		dataBytes, err = download(req)
 		if err != nil {
 			log.Printf("download failed: %+v", err)
@@ -117,11 +124,30 @@ func Download(udURL string, opts ...Option) (data *UserData, err error) {
 			dataBytes = baseBytes
 		}
 
-		data = &UserData{}
+		version := &version{}
+		if err = yaml.Unmarshal(dataBytes, version); err != nil {
+			return data, fmt.Errorf("failed to parse version: %s", err.Error())
+		}
+
+		data = &userdata.UserData{}
+		if version.Version != "" {
+			trans, err := translate.NewTranslator(version.Version, string(dataBytes))
+			if err != nil {
+				return data, err
+			}
+			data, err = trans.Translate()
+			if err != nil {
+				return data, err
+			}
+			return data, data.Validate()
+		}
+
+		// No version specified, just unmarshal and return
 		if err := yaml.Unmarshal(dataBytes, data); err != nil {
-			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
+			return data, fmt.Errorf("unmarshal v0 user data: %s", err.Error())
 		}
 		return data, data.Validate()
+
 	}
 
 	return data, fmt.Errorf("failed to download userdata from: %s", u.String())

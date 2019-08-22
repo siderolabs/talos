@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/download"
 )
 
 const (
@@ -39,7 +40,7 @@ func (a *Azure) UserData() (*userdata.UserData, error) {
 		return nil, err
 	}
 
-	return userdata.Download(AzureUserDataEndpoint, userdata.WithHeaders(map[string]string{"Metadata": "true"}), userdata.WithFormat("base64"))
+	return download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
 }
 
 // Mode implements the platform.Platform interface.

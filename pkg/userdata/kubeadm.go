@@ -34,7 +34,7 @@ type Kubeadm struct {
 	CertificateKey        string       `yaml:"certificateKey,omitempty"`
 	IgnorePreflightErrors []string     `yaml:"ignorePreflightErrors,omitempty"`
 	Token                 *token.Token `yaml:"initToken,omitempty"`
-	controlPlane          bool
+	ControlPlane          bool
 }
 
 // MarshalYAML implements the yaml.Marshaler interface.
@@ -112,7 +112,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 				return err
 			}
 			kdm.InitConfiguration = cfg
-			kdm.controlPlane = true
+			kdm.ControlPlane = true
 		case kubeadmutil.GroupVersionKindsHasKind(gvks, "JoinConfiguration"):
 			cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(config, kubeadmv1beta2.SchemeGroupVersion, kubeadmscheme.Codecs)
 			if err != nil {
@@ -123,7 +123,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 				return errors.New("expected JoinConfiguration")
 			}
 			if joinCfg.ControlPlane != nil {
-				kdm.controlPlane = true
+				kdm.ControlPlane = true
 			}
 			kdm.JoinConfiguration = cfg
 		case kubeadmutil.GroupVersionKindsHasKind(gvks, "ClusterConfiguration"):
@@ -161,7 +161,7 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 // IsControlPlane indicates if the current kubeadm configuration is a worker
 // acting as a master.
 func (kdm *Kubeadm) IsControlPlane() bool {
-	return kdm.controlPlane
+	return kdm.ControlPlane
 }
 
 // IsBootstrap indicates if the current kubeadm configuration is a master init

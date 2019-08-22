@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Package userdata provides internal representation of machine configs
+// Package v1 provides user-facing v1 machine configs
 // nolint: dupl
-package userdata
+package v1
 
 import (
 	"net"
@@ -15,6 +15,7 @@ import (
 )
 
 // Device represents a network interface
+// nolint: dupl
 type Device struct {
 	Interface string  `yaml:"interface"`
 	CIDR      string  `yaml:"cidr"`
@@ -25,9 +26,11 @@ type Device struct {
 }
 
 // NetworkDeviceCheck defines the function type for checks
+// nolint: dupl
 type NetworkDeviceCheck func(*Device) error
 
 // Validate triggers the specified validation checks to run
+// nolint: dupl
 func (d *Device) Validate(checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
@@ -39,6 +42,7 @@ func (d *Device) Validate(checks ...NetworkDeviceCheck) error {
 }
 
 // CheckDeviceInterface ensures that the interface has been specified
+// nolint: dupl
 func CheckDeviceInterface() NetworkDeviceCheck {
 	return func(d *Device) error {
 		var result *multierror.Error
@@ -53,6 +57,7 @@ func CheckDeviceInterface() NetworkDeviceCheck {
 
 // CheckDeviceAddressing ensures that an appropriate addressing method
 // has been specified
+// nolint: dupl
 func CheckDeviceAddressing() NetworkDeviceCheck {
 	return func(d *Device) error {
 		var result *multierror.Error
@@ -79,6 +84,7 @@ func CheckDeviceAddressing() NetworkDeviceCheck {
 }
 
 // CheckDeviceRoutes ensures that the specified routes are valid
+// nolint: dupl
 func CheckDeviceRoutes() NetworkDeviceCheck {
 	return func(d *Device) error {
 		var result *multierror.Error
@@ -102,6 +108,7 @@ func CheckDeviceRoutes() NetworkDeviceCheck {
 
 // Bond contains the various options for configuring a
 // bonded interface
+// nolint: dupl
 type Bond struct {
 	Mode       string   `yaml:"mode"`
 	HashPolicy string   `yaml:"hashpolicy"`
@@ -110,6 +117,7 @@ type Bond struct {
 }
 
 // Route represents a network route
+// nolint: dupl
 type Route struct {
 	Network string `yaml:"network"`
 	Gateway string `yaml:"gateway"`

@@ -7,6 +7,7 @@ package gcp
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/download"
 )
 
 const (
@@ -24,7 +25,7 @@ func (gc *GCP) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (gc *GCP) UserData() (data *userdata.UserData, err error) {
-	return userdata.Download(GCUserDataEndpoint, userdata.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
+	return download.Download(GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 
 // Mode implements the platform.Platform interface.

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	ud "github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/download"
 )
 
 // UserData provides an abstraction to call the appropriate method to
@@ -15,7 +16,7 @@ import (
 // TODO: Merge this in to internal/pkg/userdata
 func UserData(location string) (userData *ud.UserData, err error) {
 	if strings.HasPrefix(location, "http") {
-		userData, err = ud.Download(location, nil)
+		userData, err = download.Download(location, nil)
 	} else {
 		userData, err = ud.Open(location)
 	}

@@ -15,7 +15,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/talos-systems/talos/pkg/userdata/generate"
+	"github.com/talos-systems/talos/pkg/userdata/v1/generate"
 )
 
 // Request represents the set of options available for configuring a node.

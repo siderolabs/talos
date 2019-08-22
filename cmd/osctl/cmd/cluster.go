@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/cmd/cluster/pkg/node"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/pkg/userdata/generate"
+	"github.com/talos-systems/talos/pkg/userdata/v1/generate"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
