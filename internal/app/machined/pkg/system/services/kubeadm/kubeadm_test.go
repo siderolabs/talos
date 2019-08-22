@@ -45,31 +45,36 @@ func genUD() (ud *userdata.UserData, err error) {
 	return ud, err
 }
 
-func (suite *KubeadmSuite) TestWriteJoinConfig() {
+func (suite *KubeadmSuite) TestEditJoinConfig() {
 	data, err := genUD()
 	suite.Assert().NoError(err)
 
 	// testConfig is an initConfig
-	_, err = writeJoinConfig(data)
+	err = editJoinConfig(data)
 	suite.Assert().Error(err)
 
 	data, err = data.Upgrade()
 	suite.Assert().NoError(err)
-	_, err = writeJoinConfig(data)
+
+	err = editJoinConfig(data)
 	suite.Assert().NoError(err)
 }
 
-func (suite *KubeadmSuite) TestWriteInitConfig() {
+func (suite *KubeadmSuite) TestEditInitConfig() {
 	// Cant test this atm because we run through cis hardening
 	// which automatically generates additional assets in
 	// hardcoded locations
 	data, err := genUD()
 	suite.Assert().NoError(err)
 
+	err = editInitConfig(data)
+	suite.Assert().NoError(err)
+
 	data, err = data.Upgrade()
 	suite.Assert().NoError(err)
+
 	// upgraded config is an joinConfig
-	_, err = writeInitConfig(data)
+	err = editInitConfig(data)
 	suite.Assert().Error(err)
 }
 
@@ -143,7 +148,7 @@ services:
     initToken: d306cd08-a02e-11e9-ae96-acde48001122
     certificateKey: 'dnwrwn05vd2lyghvflnk93nwie'
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: InitConfiguration
       bootstrapTokens:
       - token: 'gcwogs.kflpeg7yievuh1kq'
@@ -153,7 +158,7 @@ services:
         kubeletExtraArgs:
           node-labels: ""
       ---
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: ClusterConfiguration
       clusterName: cluster.local
       kubernetesVersion: v1.15.0

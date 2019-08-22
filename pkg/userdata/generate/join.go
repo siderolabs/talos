@@ -12,7 +12,7 @@ services:
     cni: flannel
   kubeadm:
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: JoinConfiguration
       discovery:
         bootstrapToken:

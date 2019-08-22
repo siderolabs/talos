@@ -5,15 +5,16 @@
 package userdata
 
 import (
+	"bytes"
 	"errors"
 
 	"github.com/talos-systems/talos/pkg/userdata/token"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 	kubeadmscheme "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/scheme"
+	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 	kubeadmutil "k8s.io/kubernetes/cmd/kubeadm/app/util"
-	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
+	kubeletconfigv1beta1scheme "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
+	kubeproxyconfigv1alpha1scheme "k8s.io/kubernetes/pkg/proxy/apis/config/v1alpha1"
 )
 
 // Kubeadm describes the set of configuration options available for kubeadm.
@@ -21,8 +22,13 @@ type Kubeadm struct {
 	CommonServiceOptions `yaml:",inline"`
 
 	// ConfigurationStr is converted to Configuration and back in Marshal/UnmarshalYAML
-	Configuration    runtime.Object `yaml:"-"`
-	ConfigurationStr string         `yaml:"configuration"`
+	InitConfiguration      runtime.Object `yaml:"-"`
+	ClusterConfiguration   runtime.Object `yaml:"-"`
+	JoinConfiguration      runtime.Object `yaml:"-"`
+	KubeletConfiguration   runtime.Object `yaml:"-"`
+	KubeProxyConfiguration runtime.Object `yaml:"-"`
+
+	ConfigurationStr string `yaml:"configuration"`
 
 	ExtraArgs             []string     `yaml:"extraArgs,omitempty"`
 	CertificateKey        string       `yaml:"certificateKey,omitempty"`
@@ -33,12 +39,46 @@ type Kubeadm struct {
 
 // MarshalYAML implements the yaml.Marshaler interface.
 func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
-	b, err := configutil.MarshalKubeadmConfigObject(kdm.Configuration)
-	if err != nil {
-		return nil, err
+
+	// Encode init and cluster configs
+	encodedObjs := [][]byte{}
+	for _, obj := range []runtime.Object{kdm.InitConfiguration, kdm.ClusterConfiguration, kdm.JoinConfiguration} {
+		if obj == nil {
+			continue
+		}
+		encoded, err := kubeadmutil.MarshalToYamlForCodecs(obj, kubeadmv1beta2.SchemeGroupVersion, kubeadmscheme.Codecs)
+		if err != nil {
+			return nil, err
+		}
+		encodedObjs = append(encodedObjs, encoded)
 	}
 
-	kdm.ConfigurationStr = string(b)
+	// Encode proxy config
+	if kdm.KubeProxyConfiguration != nil {
+		if err := kubeproxyconfigv1alpha1scheme.AddToScheme(kubeadmscheme.Scheme); err != nil {
+			return nil, err
+		}
+		encoded, err := kubeadmutil.MarshalToYamlForCodecs(kdm.KubeProxyConfiguration, kubeproxyconfigv1alpha1scheme.SchemeGroupVersion, kubeadmscheme.Codecs)
+		if err != nil {
+			return nil, err
+		}
+		encodedObjs = append(encodedObjs, encoded)
+	}
+
+	// Encode kubelet config
+	if kdm.KubeletConfiguration != nil {
+		if err := kubeletconfigv1beta1scheme.AddToScheme(kubeadmscheme.Scheme); err != nil {
+			return nil, err
+		}
+		encoded, err := kubeadmutil.MarshalToYamlForCodecs(kdm.KubeletConfiguration, kubeletconfigv1beta1scheme.SchemeGroupVersion, kubeadmscheme.Codecs)
+		if err != nil {
+			return nil, err
+		}
+		encodedObjs = append(encodedObjs, encoded)
+	}
+
+	kubeadmConfig := bytes.Join(encodedObjs, []byte("---\n"))
+	kdm.ConfigurationStr = string(kubeadmConfig)
 
 	type KubeadmAlias Kubeadm
 
@@ -56,42 +96,62 @@ func (kdm *Kubeadm) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	b := []byte(kdm.ConfigurationStr)
 
-	gvks, err := kubeadmutil.GroupVersionKindsFromBytes(b)
-	if err != nil {
-		return err
-	}
+	splitConfig := bytes.Split(b, []byte("---\n"))
 
-	switch {
-	case kubeadmutil.GroupVersionKindsHasInitConfiguration(gvks...):
-		// Since the ClusterConfiguration is embedded in the InitConfiguration
-		// struct, it is required to (un)marshal it a special way. The kubeadm
-		// API exposes one function (MarshalKubeadmConfigObject) to handle the
-		// marshaling, but does not yet have that convenience for
-		// unmarshaling.
-		cfg, err := configutil.BytesToInitConfiguration(b)
+	// Range through each config doc, determine kind, set kubeadm struct val
+	for _, config := range splitConfig {
+		gvks, err := kubeadmutil.GroupVersionKindsFromBytes(config)
 		if err != nil {
 			return err
 		}
-		if err := configutil.SetInitDynamicDefaults(cfg); err != nil {
-			return err
-		}
-		kdm.Configuration = cfg
-		kdm.controlPlane = true
-	case kubeadmutil.GroupVersionKindsHasJoinConfiguration(gvks...):
-		cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(b, kubeadmapi.SchemeGroupVersion, kubeadmscheme.Codecs)
-		if err != nil {
-			return err
-		}
-		kdm.Configuration = cfg
-		joinCfg, ok := cfg.(*kubeadm.JoinConfiguration)
-		if !ok {
-			return errors.New("expected JoinConfiguration")
-		}
-		if err := configutil.SetJoinDynamicDefaults(joinCfg); err != nil {
-			return err
-		}
-		if joinCfg.ControlPlane != nil {
+
+		switch {
+		case kubeadmutil.GroupVersionKindsHasKind(gvks, "InitConfiguration"):
+			cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(config, kubeadmv1beta2.SchemeGroupVersion, kubeadmscheme.Codecs)
+			if err != nil {
+				return err
+			}
+			kdm.InitConfiguration = cfg
 			kdm.controlPlane = true
+		case kubeadmutil.GroupVersionKindsHasKind(gvks, "JoinConfiguration"):
+			cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(config, kubeadmv1beta2.SchemeGroupVersion, kubeadmscheme.Codecs)
+			if err != nil {
+				return err
+			}
+			joinCfg, ok := cfg.(*kubeadmv1beta2.JoinConfiguration)
+			if !ok {
+				return errors.New("expected JoinConfiguration")
+			}
+			if joinCfg.ControlPlane != nil {
+				kdm.controlPlane = true
+			}
+			kdm.JoinConfiguration = cfg
+		case kubeadmutil.GroupVersionKindsHasKind(gvks, "ClusterConfiguration"):
+			cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(config, kubeadmv1beta2.SchemeGroupVersion, kubeadmscheme.Codecs)
+			if err != nil {
+				return err
+			}
+			kdm.ClusterConfiguration = cfg
+		case kubeadmutil.GroupVersionKindsHasKind(gvks, "KubeletConfiguration"):
+			err := kubeletconfigv1beta1scheme.AddToScheme(kubeadmscheme.Scheme)
+			if err != nil {
+				return err
+			}
+			cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(config, kubeletconfigv1beta1scheme.SchemeGroupVersion, kubeadmscheme.Codecs)
+			if err != nil {
+				return err
+			}
+			kdm.KubeletConfiguration = cfg
+		case kubeadmutil.GroupVersionKindsHasKind(gvks, "KubeProxyConfiguration"):
+			err := kubeproxyconfigv1alpha1scheme.AddToScheme(kubeadmscheme.Scheme)
+			if err != nil {
+				return err
+			}
+			cfg, err := kubeadmutil.UnmarshalFromYamlForCodecs(config, kubeproxyconfigv1alpha1scheme.SchemeGroupVersion, kubeadmscheme.Codecs)
+			if err != nil {
+				return err
+			}
+			kdm.KubeProxyConfiguration = cfg
 		}
 	}
 

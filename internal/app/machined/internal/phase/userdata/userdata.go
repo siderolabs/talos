@@ -5,12 +5,14 @@
 package userdata
 
 import (
+	"errors"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
-
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 )
 
 // UserData represents the UserData task.
@@ -51,12 +53,22 @@ func (task *UserData) container(platform platform.Platform, data *userdata.UserD
 	*data = *d
 
 	data.Services.Kubeadm.IgnorePreflightErrors = []string{"FileContent--proc-sys-net-bridge-bridge-nf-call-iptables", "Swap", "SystemVerification"}
-	initConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
-	if ok {
-		initConfiguration.ClusterConfiguration.ComponentConfigs.Kubelet.FailSwapOn = false
+	if data.Services.Kubeadm.KubeletConfiguration != nil {
+		kubeletConfig, ok := data.Services.Kubeadm.KubeletConfiguration.(*kubeletconfig.KubeletConfiguration)
+		if !ok {
+			return errors.New("unable to assert kubelet config")
+		}
+		f := false
+		kubeletConfig.FailSwapOn = &f
+	}
+	if data.Services.Kubeadm.KubeProxyConfiguration != nil {
+		kubeproxyConfig, ok := data.Services.Kubeadm.KubeProxyConfiguration.(*kubeproxyconfig.KubeProxyConfiguration)
+		if !ok {
+			return errors.New("unable to assert kubeproxy config")
+		}
 		// See https://github.com/kubernetes/kubernetes/issues/58610#issuecomment-359552443
 		maxPerCore := int32(0)
-		initConfiguration.ClusterConfiguration.ComponentConfigs.KubeProxy.Conntrack.MaxPerCore = &maxPerCore
+		kubeproxyConfig.Conntrack.MaxPerCore = &maxPerCore
 	}
 
 	return nil
