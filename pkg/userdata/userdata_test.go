@@ -179,7 +179,7 @@ services:
     initToken: 528d1ad6-3485-49ad-94cd-0f44a35877ac
     certificateKey: 'test'
     configuration: |
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: InitConfiguration
       localAPIEndpoint:
         bindPort: 6443
@@ -187,7 +187,7 @@ services:
       - token: '1qbsj9.3oz5hsk6grdfp98b'
         ttl: 0s
       ---
-      apiVersion: kubeadm.k8s.io/v1beta1
+      apiVersion: kubeadm.k8s.io/v1beta2
       kind: ClusterConfiguration
       clusterName: test
       kubernetesVersion: v1.16.0-alpha.3

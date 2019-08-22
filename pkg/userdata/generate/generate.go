@@ -197,7 +197,7 @@ func isIPv6(addrs ...string) bool {
 
 // NewInput generates the sensitive data required to generate all userdata
 // types.
-// nolint: gocyclo
+// nolint: dupl,gocyclo
 func NewInput(clustername string, masterIPs []string) (input *Input, err error) {
 
 	var loopbackIP, podNet, serviceNet string

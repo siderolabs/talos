@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,10 +20,11 @@ import (
 	udv0 "github.com/talos-systems/talos/pkg/userdata"
 	udgenv0 "github.com/talos-systems/talos/pkg/userdata/generate"
 	udgenv1 "github.com/talos-systems/talos/pkg/userdata/v1/generate"
+
 	"gopkg.in/yaml.v2"
 )
 
-var generateVersion string
+var genVersion string
 
 // configCmd represents the config command.
 var configCmd = &cobra.Command{
@@ -131,34 +131,25 @@ var configGenerateCmd = &cobra.Command{
 		if len(args) != 2 {
 			log.Fatal("expected a cluster name and comma delimited list of IP addresses")
 		}
-
-		var err error
-		switch generateVersion {
+		switch genVersion {
 		case "v0":
-			err = genV0(args)
+			genV0Userdata(args)
 		case "v1":
-			err = genV1(args)
-		default:
-			err = errors.New("failed to determine version of machine config to generate")
+			genV1Userdata(args)
 		}
-		input.AdditionalSubjectAltNames = additionalSANs
-
-		if err != nil {
-			helpers.Fatalf("Failed to generate configs: %v", err)
-		}
-
 	},
 }
 
-func genV0(args []string) error {
+func genV0Userdata(args []string) {
 	input, err := udgenv0.NewInput(args[0], strings.Split(args[1], ","))
 	if err != nil {
-		return err
+		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
+	input.AdditionalSubjectAltNames = additionalSANs
 
 	workingDir, err := os.Getwd()
 	if err != nil {
-		return err
+		helpers.Fatalf("failed to fetch current working dir: %v", err)
 	}
 
 	var udType udgenv0.Type
@@ -171,30 +162,29 @@ func genV0(args []string) error {
 			udType = udgenv0.TypeControlPlane
 		}
 
-		if err = writeUserdataV0(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
-			return err
+		if err = writeV0Userdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
+			helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 		}
 		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 	}
 	input.IP = nil
 
-	if err = writeUserdataV0(input, udgenv0.TypeJoin, "worker"); err != nil {
-		return err
+	if err = writeV0Userdata(input, udgenv0.TypeJoin, "worker"); err != nil {
+		helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
 	}
 	fmt.Println("created file", workingDir+"/worker.yaml")
 
 	data, err := udgenv0.Talosconfig(input)
 	if err != nil {
-		return err
+		helpers.Fatalf("failed to generate talosconfig: %v", err)
 	}
 	if err = ioutil.WriteFile("talosconfig", []byte(data), 0644); err != nil {
-		return err
+		helpers.Fatalf("%v", err)
 	}
 	fmt.Println("created file", workingDir+"/talosconfig")
-	return nil
 }
 
-func writeUserdataV0(input *udgenv0.Input, t udgenv0.Type, name string) (err error) {
+func writeV0Userdata(input *udgenv0.Input, t udgenv0.Type, name string) (err error) {
 	var data string
 	data, err = udgenv0.Userdata(t, input)
 	if err != nil {
@@ -206,6 +196,7 @@ func writeUserdataV0(input *udgenv0.Input, t udgenv0.Type, name string) (err err
 	}
 	if err = ud.Validate(); err != nil {
 		return err
+
 	}
 	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
 		return err
@@ -213,15 +204,16 @@ func writeUserdataV0(input *udgenv0.Input, t udgenv0.Type, name string) (err err
 	return nil
 }
 
-func genV1(args []string) error {
+func genV1Userdata(args []string) {
 	input, err := udgenv1.NewInput(args[0], strings.Split(args[1], ","))
 	if err != nil {
-		return err
+		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
+	input.AdditionalSubjectAltNames = additionalSANs
 
 	workingDir, err := os.Getwd()
 	if err != nil {
-		return err
+		helpers.Fatalf("failed to fetch current working dir: %v", err)
 	}
 
 	var udType udgenv1.Type
@@ -234,44 +226,44 @@ func genV1(args []string) error {
 			udType = udgenv1.TypeControlPlane
 		}
 
-		if err = writeUserdataV1(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
-			return err
+		if err = writeV1Userdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
+			helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 		}
 		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 	}
 	input.IP = nil
 
-	if err = writeUserdataV1(input, udgenv1.TypeJoin, "worker"); err != nil {
-		return err
+	if err = writeV1Userdata(input, udgenv1.TypeJoin, "worker"); err != nil {
+		helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
 	}
 	fmt.Println("created file", workingDir+"/worker.yaml")
 
 	data, err := udgenv1.Talosconfig(input)
 	if err != nil {
-		return err
+		helpers.Fatalf("failed to generate talosconfig: %v", err)
 	}
 	if err = ioutil.WriteFile("talosconfig", []byte(data), 0644); err != nil {
-		return err
+		helpers.Fatalf("%v", err)
 	}
 	fmt.Println("created file", workingDir+"/talosconfig")
-	return nil
 }
 
-func writeUserdataV1(input *udgenv1.Input, t udgenv1.Type, name string) (err error) {
+func writeV1Userdata(input *udgenv1.Input, t udgenv1.Type, name string) (err error) {
 	var data string
 	data, err = udgenv1.Userdata(t, input)
 	if err != nil {
 		return err
 	}
 
-	translated, err := udv0.TranslateV1(data)
+	ud, err := udv0.TranslateV1(data)
 	if err != nil {
 		return err
 	}
-	if err = translated.Validate(); err != nil {
-		return err
-	}
 
+	if err = ud.Validate(); err != nil {
+		return err
+
+	}
 	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
 		return err
 	}
@@ -284,7 +276,7 @@ func init() {
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additionalSANs", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
-	configGenerateCmd.Flags().StringVar(&generateVersion, "genversion", "v0", "version of machine configs to generate")
+	configGenerateCmd.Flags().StringVar(&genVersion, "genversion", "v1", "desired machine configs to generate")
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
 	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
 	helpers.Should(configAddCmd.MarkFlagRequired("key"))

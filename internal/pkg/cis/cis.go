@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 
 	v1 "k8s.io/api/core/v1"
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 )
 
 const disabled = "false"
@@ -42,7 +42,7 @@ resources:
 // EnforceAuditingRequirements enforces CIS requirements for auditing.
 // TODO(andrewrynhard): Enable audit-log-maxbackup.
 // TODO(andrewrynhard): Enable audit-log-maxsize.
-func EnforceAuditingRequirements(cfg *kubeadmapi.InitConfiguration) error {
+func EnforceAuditingRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	if err := ioutil.WriteFile("/etc/kubernetes/audit-policy.yaml", []byte(auditPolicy), 0400); err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func CreateEncryptionToken() error {
 }
 
 // EnforceSecretRequirements enforces CIS requirements for secrets.
-func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
+func EnforceSecretRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	cfg.APIServer.ExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
 	vol := kubeadmapi.HostPathMount{
 		Name:      "encryptionconfig",
@@ -107,7 +107,7 @@ func EnforceSecretRequirements(cfg *kubeadmapi.InitConfiguration) error {
 }
 
 // EnforceTLSRequirements enforces CIS requirements for TLS.
-func EnforceTLSRequirements(cfg *kubeadmapi.InitConfiguration) error {
+func EnforceTLSRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	// nolint: lll
 	cfg.APIServer.ExtraArgs["tls-cipher-suites"] = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
 
@@ -118,7 +118,7 @@ func EnforceTLSRequirements(cfg *kubeadmapi.InitConfiguration) error {
 // TODO(andrewrynhard): Include any extra user specified plugins.
 // TODO(andrewrynhard): Enable EventRateLimit.
 // TODO(andrewrynhard): Enable AlwaysPullImages (See https://github.com/kubernetes/kubernetes/issues/64333).
-func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.InitConfiguration) error {
+func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	// nolint: lll
 	cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
 
@@ -128,7 +128,7 @@ func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.InitConfiguration) erro
 // EnforceExtraRequirements enforces miscellaneous CIS requirements.
 // TODO(andrewrynhard): Enable anonymous-auth, see https://github.com/kubernetes/kubeadm/issues/798.
 // TODO(andrewrynhard): Enable kubelet-certificate-authority, see https://github.com/kubernetes/kubeadm/issues/118#issuecomment-407202481.
-func EnforceExtraRequirements(cfg *kubeadmapi.InitConfiguration) error {
+func EnforceExtraRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	cfg.APIServer.ExtraArgs["profiling"] = disabled
 	cfg.ControllerManager.ExtraArgs["profiling"] = disabled
 	cfg.Scheduler.ExtraArgs["profiling"] = disabled
@@ -139,7 +139,7 @@ func EnforceExtraRequirements(cfg *kubeadmapi.InitConfiguration) error {
 }
 
 // EnforceMasterRequirements enforces the CIS requirements for master nodes.
-func EnforceMasterRequirements(cfg *kubeadmapi.InitConfiguration, generateSecret bool) error {
+func EnforceMasterRequirements(cfg *kubeadmapi.ClusterConfiguration, generateSecret bool) error {
 	ensureFieldsAreNotNil(cfg)
 
 	if err := EnforceAuditingRequirements(cfg); err != nil {
@@ -171,7 +171,7 @@ func EnforceWorkerRequirements(cfg *kubeadmapi.JoinConfiguration) error {
 	return nil
 }
 
-func ensureFieldsAreNotNil(cfg *kubeadmapi.InitConfiguration) {
+func ensureFieldsAreNotNil(cfg *kubeadmapi.ClusterConfiguration) {
 	if cfg.APIServer.ExtraArgs == nil {
 		cfg.APIServer.ExtraArgs = make(map[string]string)
 	}

@@ -19,6 +19,7 @@ func workerUd(in *Input) (string, error) {
 	}
 
 	cluster := &v1.ClusterConfig{
+		Token: in.KubeadmTokens.BootstrapToken,
 		ControlPlane: &v1.ControlPlaneConfig{
 			IPs: in.MasterIPs,
 		},

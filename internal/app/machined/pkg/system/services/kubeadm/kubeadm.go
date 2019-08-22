@@ -27,9 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	configutil "k8s.io/kubernetes/cmd/kubeadm/app/util/config"
+	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 )
 
 const dirPerm os.FileMode = 0700
@@ -51,53 +49,108 @@ func PhaseCerts() error {
 	return cmd.Run()
 }
 
-func writeInitConfig(data *userdata.UserData) (b []byte, err error) {
-	initConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.InitConfiguration)
+func editFullInitConfig(data *userdata.UserData) (err error) {
+
+	if data.Services.Kubeadm.InitConfiguration == nil {
+		return errors.New("expected InitConfiguration")
+	}
+	err = editInitConfig(data)
+	if err != nil {
+		return err
+	}
+
+	if data.Services.Kubeadm.ClusterConfiguration == nil {
+		return errors.New("expected ClusterConfiguration")
+	}
+	err = editClusterConfig(data)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func editInitConfig(data *userdata.UserData) (err error) {
+	if data.Services.Kubeadm.InitConfiguration == nil {
+		return errors.New("expected InitConfiguration")
+	}
+
+	initConfiguration, ok := data.Services.Kubeadm.InitConfiguration.(*kubeadmv1beta2.InitConfiguration)
 	if !ok {
-		return b, errors.New("expected InitConfiguration")
+		return errors.New("failed InitConfiguration assertion")
+
 	}
 
 	// Hardcodes specific kubeadm config parameters
 	initConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
-	initConfiguration.KubernetesVersion = constants.KubernetesVersion
-	initConfiguration.UseHyperKubeImage = true
 
-	// Apply CIS hardening recommendations; only generate encryption token only if we're the bootstrap node
-	if err = cis.EnforceMasterRequirements(initConfiguration, data.Services.Kubeadm.IsBootstrap()); err != nil {
-		return b, err
-	}
-
-	return configutil.MarshalKubeadmConfigObject(initConfiguration)
+	return nil
 }
 
-func writeJoinConfig(data *userdata.UserData) (b []byte, err error) {
-	joinConfiguration, ok := data.Services.Kubeadm.Configuration.(*kubeadmapi.JoinConfiguration)
-	if !ok {
-		return b, errors.New("expected JoinConfiguration")
+func editJoinConfig(data *userdata.UserData) (err error) {
+	if data.Services.Kubeadm.JoinConfiguration == nil {
+		return errors.New("expected JoinConfiguration")
 	}
+	joinConfiguration, ok := data.Services.Kubeadm.JoinConfiguration.(*kubeadmv1beta2.JoinConfiguration)
+	if !ok {
+		return errors.New("failed JoinConfiguration assertion")
+
+	}
+
 	joinConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
 	if err = cis.EnforceWorkerRequirements(joinConfiguration); err != nil {
-		return b, err
+		return err
 	}
-	return configutil.MarshalKubeadmConfigObject(joinConfiguration)
+	return nil
+}
+
+func editClusterConfig(data *userdata.UserData) (err error) {
+	if data.Services.Kubeadm.ClusterConfiguration == nil {
+		return errors.New("expected ClusterConfiguration")
+	}
+
+	clusterConfiguration, ok := data.Services.Kubeadm.ClusterConfiguration.(*kubeadmv1beta2.ClusterConfiguration)
+	if !ok {
+		return errors.New("failed ClusterConfiguration assertion")
+
+	}
+
+	// Hardcodes specific kubeadm config parameters
+	clusterConfiguration.KubernetesVersion = constants.KubernetesVersion
+	clusterConfiguration.UseHyperKubeImage = true
+
+	// Apply CIS hardening recommendations; only generate encryption token only if we're the bootstrap node
+	if err = cis.EnforceMasterRequirements(clusterConfiguration, data.Services.Kubeadm.IsBootstrap()); err != nil {
+		return err
+	}
+	return nil
 }
 
 // WriteConfig writes out the kubeadm config
 func WriteConfig(data *userdata.UserData) (err error) {
 	var b []byte
 
-	switch data.Services.Kubeadm.Configuration.(type) {
-	case *kubeadmapi.JoinConfiguration:
-		b, err = writeJoinConfig(data)
-	case *kubeadmapi.InitConfiguration:
-		b, err = writeInitConfig(data)
-	default:
+	// Enforce configuration edits
+	// nolint: gocritic
+	if data.Services.Kubeadm.JoinConfiguration != nil {
+		err = editJoinConfig(data)
+	} else if data.Services.Kubeadm.InitConfiguration != nil {
+		err = editFullInitConfig(data)
+	} else {
 		return errors.New("unsupported kubeadm configuration")
 	}
 	if err != nil {
 		return err
 	}
 
+	// Marshal up config string
+	_, err = data.Services.Kubeadm.MarshalYAML()
+	if err != nil {
+		return err
+	}
+	b = []byte(data.Services.Kubeadm.ConfigurationStr)
+
+	// Write out marshaled config
 	p := path.Dir(constants.KubeadmConfig)
 	if err = os.MkdirAll(p, os.ModeDir); err != nil {
 		return fmt.Errorf("create %s: %v", p, err)

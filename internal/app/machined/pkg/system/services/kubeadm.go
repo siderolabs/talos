@@ -25,8 +25,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
-
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
 )
 
 // Kubeadm implements the Service interface. It serves as the concrete type with
@@ -41,7 +39,7 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 // PreFunc implements the Service interface.
 // nolint: gocyclo
 func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.IsControlPlane() {
+	if data.Services.Kubeadm.IsBootstrap() {
 		if err = kubeadm.WritePKIFiles(data); err != nil {
 			return err
 		}
@@ -168,8 +166,8 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 	ignorePreflightErrors = append(ignorePreflightErrors, data.Services.Kubeadm.IgnorePreflightErrors...)
 	ignore := "--ignore-preflight-errors=" + strings.Join(ignorePreflightErrors, ",")
 
-	switch data.Services.Kubeadm.Configuration.(type) {
-	case *kubeadmapi.InitConfiguration:
+	//nolint: gocritic
+	if data.Services.Kubeadm.InitConfiguration != nil {
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"init",
@@ -178,15 +176,15 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 			"--skip-token-print",
 			"--skip-certificate-key-print",
 		}
-	// Worker
-	case *kubeadmapi.JoinConfiguration:
+	} else if data.Services.Kubeadm.JoinConfiguration != nil {
+		// Worker
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"join",
 			"--config=/etc/kubernetes/kubeadm-config.yaml",
 			ignore,
 		}
-	default:
+	} else {
 		return nil, errors.New("invalid kubeadm configuration type")
 	}
 

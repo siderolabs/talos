@@ -14,9 +14,9 @@ import (
 	v1 "github.com/talos-systems/talos/pkg/userdata/v1"
 	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	kubeletConfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	proxyConfig "k8s.io/kubernetes/pkg/proxy/apis/config"
+	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+	kubeadm "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 )
 
 // TranslateV1 takes a v1 NodeConfig and translates it to a UserData struct
@@ -31,7 +31,6 @@ func TranslateV1(ncString string) (*UserData, error) {
 	// Lay down the absolute minimum for all node types
 	ud := &UserData{
 		Version:  "v1",
-		Debug:    true,
 		Security: &Security{},
 		Services: &Services{
 			Init: &Init{
@@ -51,7 +50,6 @@ func TranslateV1(ncString string) (*UserData, error) {
 
 	switch nc.Machine.Type {
 	case "init":
-
 		err = translateV1Init(nc, ud)
 		if err != nil {
 			return nil, err
@@ -160,7 +158,7 @@ func translateV1Init(nc *v1.NodeConfig, ud *UserData) error {
 	kubeadmToken := strings.Split(nc.Cluster.Token, ".")
 
 	// Craft an init kubeadm config
-	ud.Services.Kubeadm.Configuration = &kubeadm.InitConfiguration{
+	initConfig := &kubeadm.InitConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "InitConfiguration",
 			APIVersion: "kubeadm.k8s.io/v1beta2",
@@ -179,45 +177,64 @@ func translateV1Init(nc *v1.NodeConfig, ud *UserData) error {
 		NodeRegistration: kubeadm.NodeRegistrationOptions{
 			KubeletExtraArgs: nc.Machine.Kubelet.ExtraArgs,
 		},
-		ClusterConfiguration: kubeadm.ClusterConfiguration{
-			ComponentConfigs: kubeadm.ComponentConfigs{
-				Kubelet: &kubeletConfig.KubeletConfiguration{
-					FeatureGates: map[string]bool{
-						"ExperimentalCriticalPodAnnotation": true,
-					},
-				},
-				KubeProxy: &proxyConfig.KubeProxyConfiguration{
-					Mode: proxyConfig.ProxyModeIPVS,
-					IPVS: proxyConfig.KubeProxyIPVSConfiguration{
-						Scheduler: "lc",
-					},
-				},
+	}
+
+	clusterConfig := &kubeadm.ClusterConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterConfiguration",
+			APIVersion: "kubeadm.k8s.io/v1beta2",
+		},
+		ClusterName:          nc.Cluster.ClusterName,
+		KubernetesVersion:    constants.KubernetesVersion,
+		ControlPlaneEndpoint: nc.Cluster.ControlPlane.IPs[0] + ":443",
+		Networking: kubeadm.Networking{
+			DNSDomain:     nc.Cluster.Network.DNSDomain,
+			PodSubnet:     nc.Cluster.Network.PodSubnet[0],
+			ServiceSubnet: nc.Cluster.Network.ServiceSubnet[0],
+		},
+		APIServer: kubeadm.APIServer{
+			ControlPlaneComponent: kubeadm.ControlPlaneComponent{
+				ExtraArgs: nc.Cluster.APIServer.ExtraArgs,
 			},
-			ClusterName:          nc.Cluster.ClusterName,
-			KubernetesVersion:    constants.KubernetesVersion,
-			ControlPlaneEndpoint: nc.Cluster.ControlPlane.IPs[0] + ":443",
-			Networking: kubeadm.Networking{
-				DNSDomain:     nc.Cluster.Network.DNSDomain,
-				PodSubnet:     nc.Cluster.Network.PodSubnet[0],
-				ServiceSubnet: nc.Cluster.Network.ServiceSubnet[0],
-			},
-			APIServer: kubeadm.APIServer{
-				ControlPlaneComponent: kubeadm.ControlPlaneComponent{
-					ExtraArgs: nc.Cluster.APIServer.ExtraArgs,
-				},
-				CertSANs: append(nc.Cluster.ControlPlane.IPs, "127.0.0.1", "::1"),
-				TimeoutForControlPlane: &metav1.Duration{
-					Duration: time.Duration(0),
-				},
-			},
-			ControllerManager: kubeadm.ControlPlaneComponent{
-				ExtraArgs: nc.Cluster.ControllerManager.ExtraArgs,
-			},
-			Scheduler: kubeadm.ControlPlaneComponent{
-				ExtraArgs: nc.Cluster.Scheduler.ExtraArgs,
+			CertSANs: append(nc.Cluster.ControlPlane.IPs, "127.0.0.1", "::1"),
+			TimeoutForControlPlane: &metav1.Duration{
+				Duration: time.Duration(0),
 			},
 		},
+		ControllerManager: kubeadm.ControlPlaneComponent{
+			ExtraArgs: nc.Cluster.ControllerManager.ExtraArgs,
+		},
+		Scheduler: kubeadm.ControlPlaneComponent{
+			ExtraArgs: nc.Cluster.Scheduler.ExtraArgs,
+		},
 	}
+
+	kubeletConfig := &kubeletconfig.KubeletConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "KubeletConfiguration",
+			APIVersion: "kubelet.config.k8s.io/v1beta1",
+		},
+		FeatureGates: map[string]bool{
+			"ExperimentalCriticalPodAnnotation": true,
+		},
+	}
+
+	proxyConfig := &kubeproxyconfig.KubeProxyConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "KubeProxyConfiguration",
+			APIVersion: "kubeproxy.config.k8s.io/v1alpha1",
+		},
+		Mode: "ipvs",
+		IPVS: kubeproxyconfig.KubeProxyIPVSConfiguration{
+			Scheduler: "lc",
+		},
+	}
+
+	ud.Services.Kubeadm.InitConfiguration = initConfig
+	ud.Services.Kubeadm.ClusterConfiguration = clusterConfig
+	ud.Services.Kubeadm.KubeletConfiguration = kubeletConfig
+	ud.Services.Kubeadm.KubeProxyConfiguration = proxyConfig
+
 	return nil
 }
 
@@ -243,7 +260,11 @@ func translateV1ControlPlane(nc *v1.NodeConfig, ud *UserData) error {
 	ud.Services.Kubeadm.controlPlane = true
 
 	// Craft a control plane kubeadm config
-	ud.Services.Kubeadm.Configuration = &kubeadm.JoinConfiguration{
+	controlPlaneConfig := &kubeadm.JoinConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "JoinConfiguration",
+			APIVersion: "kubeadm.k8s.io/v1beta2",
+		},
 		ControlPlane: &kubeadm.JoinControlPlane{},
 		Discovery: kubeadm.Discovery{
 			BootstrapToken: &kubeadm.BootstrapTokenDiscovery{
@@ -257,12 +278,18 @@ func translateV1ControlPlane(nc *v1.NodeConfig, ud *UserData) error {
 		},
 	}
 
+	ud.Services.Kubeadm.JoinConfiguration = controlPlaneConfig
+
 	return nil
 }
 
 func translateV1Worker(nc *v1.NodeConfig, ud *UserData) {
 	//Craft a worker kubeadm config
-	ud.Services.Kubeadm.Configuration = &kubeadm.JoinConfiguration{
+	workerConfig := &kubeadm.JoinConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "JoinConfiguration",
+			APIVersion: "kubeadm.k8s.io/v1beta2",
+		},
 		Discovery: kubeadm.Discovery{
 			BootstrapToken: &kubeadm.BootstrapTokenDiscovery{
 				Token:                    nc.Cluster.Token,
@@ -274,4 +301,6 @@ func translateV1Worker(nc *v1.NodeConfig, ud *UserData) {
 			KubeletExtraArgs: nc.Machine.Kubelet.ExtraArgs,
 		},
 	}
+
+	ud.Services.Kubeadm.JoinConfiguration = workerConfig
 }

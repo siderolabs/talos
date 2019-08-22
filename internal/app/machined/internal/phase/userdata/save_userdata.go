@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
@@ -32,12 +33,11 @@ func (task *SaveUserData) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *SaveUserData) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
 	if _, err = os.Stat(constants.UserDataPath); os.IsNotExist(err) {
-		log.Println("saving userdata to disk")
 
 		var dataBytes []byte
 		dataBytes, err = yaml.Marshal(data)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to marshal")
 		}
 
 		if err = ioutil.WriteFile(constants.UserDataPath, dataBytes, 0400); err != nil {
