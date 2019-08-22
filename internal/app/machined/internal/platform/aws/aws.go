@@ -15,6 +15,7 @@ import (
 	"github.com/fullsailor/pkcs7"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/download"
 )
 
 const (
@@ -118,7 +119,7 @@ func (a *AWS) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (a *AWS) UserData() (*userdata.UserData, error) {
-	return userdata.Download(AWSUserDataEndpoint)
+	return download.Download(AWSUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.

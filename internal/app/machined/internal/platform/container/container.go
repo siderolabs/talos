@@ -11,8 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
-
-	"gopkg.in/yaml.v2"
+	"github.com/talos-systems/talos/pkg/userdata/translate"
 )
 
 // Container is a platform for installing Talos via an Container image.
@@ -33,11 +32,14 @@ func (c *Container) UserData() (data *userdata.UserData, err error) {
 	if decoded, err = base64.StdEncoding.DecodeString(s); err != nil {
 		return nil, err
 	}
-	data = &userdata.UserData{}
-	if err = yaml.Unmarshal(decoded, data); err != nil {
+	trans, err := translate.NewTranslator("v1", string(decoded))
+	if err != nil {
 		return nil, err
 	}
-
+	data, err = trans.Translate()
+	if err != nil {
+		return nil, err
+	}
 	return data, nil
 }
 

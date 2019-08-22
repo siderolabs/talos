@@ -7,6 +7,7 @@ package packet
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/userdata/download"
 )
 
 const (
@@ -24,7 +25,7 @@ func (p *Packet) Name() string {
 
 // UserData implements the platform.Platform interface.
 func (p *Packet) UserData() (data *userdata.UserData, err error) {
-	return userdata.Download(PacketUserDataEndpoint)
+	return download.Download(PacketUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.
