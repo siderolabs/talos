@@ -203,7 +203,7 @@ COPY --from=docker.io/autonomy/kernel:36cc240 /boot/vmlinux /vmlinux
 FROM build AS rootfs-base
 COPY --from=docker.io/autonomy/fhs:8467184 / /rootfs
 COPY --from=docker.io/autonomy/ca-certificates:20f39f7 / /rootfs
-COPY --from=docker.io/autonomy/containerd:03821f9 / /rootfs
+COPY --from=docker.io/autonomy/containerd:3ecbc37 / /rootfs
 COPY --from=docker.io/autonomy/cni:063e06f / /rootfs
 COPY --from=docker.io/autonomy/dosfstools:767dee6 / /rootfs
 COPY --from=docker.io/autonomy/eudev:05186a8 / /rootfs
