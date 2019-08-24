@@ -20,6 +20,8 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
+
+	"golang.org/x/sys/unix"
 )
 
 // ProbedBlockDevice represents a probed block device.
@@ -53,7 +55,7 @@ func All() (all []*ProbedBlockDevice, err error) {
 // FileSystem probes the provided path's file system.
 func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 	var f *os.File
-	if f, err = os.OpenFile(path, os.O_RDONLY, os.ModeDevice); err != nil {
+	if f, err = os.OpenFile(path, os.O_RDONLY|unix.O_CLOEXEC, os.ModeDevice); err != nil {
 		return nil, err
 	}
 	// nolint: errcheck

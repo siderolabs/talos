@@ -6,9 +6,7 @@ package gpt
 
 // Options is the functional options struct.
 type Options struct {
-	PrimaryGPT        bool
-	PhysicalBlockSize int
-	LogicalBlockSize  int
+	PrimaryGPT bool
 }
 
 // Option is the functional option func.
@@ -21,26 +19,10 @@ func WithPrimaryGPT(o bool) Option {
 	}
 }
 
-// WithPhysicalBlockSize sets the physical block size.
-func WithPhysicalBlockSize(o int) Option {
-	return func(args *Options) {
-		args.PhysicalBlockSize = o
-	}
-}
-
-// WithLogicalBlockSize sets the logical block size.
-func WithLogicalBlockSize(o int) Option {
-	return func(args *Options) {
-		args.LogicalBlockSize = o
-	}
-}
-
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...interface{}) *Options {
 	opts := &Options{
-		PrimaryGPT:        true,
-		PhysicalBlockSize: 512,
-		LogicalBlockSize:  512,
+		PrimaryGPT: true,
 	}
 
 	for _, setter := range setters {
