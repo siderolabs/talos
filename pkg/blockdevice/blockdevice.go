@@ -28,16 +28,13 @@ type BlockDevice struct {
 
 // Open initializes and returns a block device.
 // TODO(andrewrynhard): Use BLKGETSIZE ioctl to get the size.
-// TODO(andrewrynhard): Use BLKPBSZGET ioctl to get the physical sector size.
-// TODO(andrewrynhard): Use BLKSSZGET ioctl to get the logical sector size
-// and pass them into gpt as options.
 func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 	opts := NewDefaultOptions(setters...)
 
 	bd = &BlockDevice{}
 
 	var f *os.File
-	if f, err = os.OpenFile(devname, os.O_RDWR, os.ModeDevice); err != nil {
+	if f, err = os.OpenFile(devname, os.O_RDWR|unix.O_CLOEXEC, os.ModeDevice); err != nil {
 		return nil, err
 	}
 
@@ -51,9 +48,12 @@ func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 	}()
 
 	if opts.CreateGPT {
-		gpt := gpt.NewGPT(devname, f)
+		var g *gpt.GPT
+		if g, err = gpt.NewGPT(devname, f); err != nil {
+			return nil, err
+		}
 		var pt table.PartitionTable
-		if pt, err = gpt.New(); err != nil {
+		if pt, err = g.New(); err != nil {
 			return nil, err
 		}
 		if err = pt.Write(); err != nil {
@@ -70,7 +70,11 @@ func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 		}
 		// For GPT, the partition type should be 0xee (EFI GPT).
 		if bytes.Equal(buf, []byte{0xee}) {
-			bd.table = gpt.NewGPT(devname, f)
+			var g *gpt.GPT
+			if g, err = gpt.NewGPT(devname, f); err != nil {
+				return nil, err
+			}
+			bd.table = g
 		}
 	}
 
@@ -97,6 +101,9 @@ func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
 
 // RereadPartitionTable invokes the BLKRRPART ioctl to have the kernel read the
 // partition table.
+//
+// NB: Rereading the partition table requires that all partitions be
+// unmounted or it will fail with EBUSY.
 func (bd *BlockDevice) RereadPartitionTable() error {
 	// Flush the file buffers.
 	// NOTE(andrewrynhard): I'm not entirely sure we need this, but

@@ -199,12 +199,6 @@ func (p *Point) ResizePartition() (err error) {
 		return err
 	}
 
-	// NB: Rereading the partition table requires that all partitions be
-	// unmounted or it will fail with EBUSY.
-	if err := bd.RereadPartitionTable(); err != nil {
-		return err
-	}
-
 	return nil
 }
 

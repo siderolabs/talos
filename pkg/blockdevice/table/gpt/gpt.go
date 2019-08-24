@@ -8,17 +8,15 @@ package gpt
 import (
 	"encoding/binary"
 	"os"
-	"syscall"
-	"unsafe"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/pkg/blockdevice/blkpg"
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/header"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/serde"
-	"golang.org/x/sys/unix"
 )
 
 // GPT represents the GUID partition table.
@@ -33,19 +31,21 @@ type GPT struct {
 }
 
 // NewGPT initializes and returns a GUID partition table.
-func NewGPT(devname string, f *os.File, setters ...interface{}) *GPT {
-	opts := NewDefaultOptions(setters...)
+func NewGPT(devname string, f *os.File, setters ...interface{}) (gpt *GPT, err error) {
+	_ = NewDefaultOptions(setters...)
 
-	lba := &lba.LogicalBlockAddresser{
-		PhysicalBlockSize: opts.PhysicalBlockSize,
-		LogicalBlockSize:  opts.LogicalBlockSize,
+	lba, err := lba.New(f)
+	if err != nil {
+		return nil, err
 	}
 
-	return &GPT{
+	gpt = &GPT{
 		lba:     lba,
 		devname: devname,
 		f:       f,
 	}
+
+	return gpt, nil
 }
 
 // Bytes returns the partition table as a byte slice.
@@ -107,6 +107,10 @@ func (gpt *GPT) Write() error {
 		return errors.Errorf("failed to write secondary table: %v", err)
 	}
 
+	if err := gpt.f.Sync(); err != nil {
+		return err
+	}
+
 	return gpt.Read()
 }
 
@@ -156,7 +160,7 @@ func (gpt *GPT) newHeader(size int64) (*header.Header, error) {
 	h.Size = header.HeaderSize
 	h.Reserved = binary.LittleEndian.Uint32([]byte{0x00, 0x00, 0x00, 0x00})
 	h.CurrentLBA = 1
-	h.BackupLBA = uint64(size/int64(gpt.lba.PhysicalBlockSize) - 1)
+	h.BackupLBA = uint64(size/int64(gpt.lba.LogicalBlockSize) - 1)
 	h.FirstUsableLBA = 34
 	h.LastUsableLBA = h.BackupLBA - 33
 	guuid, err := uuid.NewUUID()
@@ -205,7 +209,7 @@ func (gpt *GPT) writePrimary(partitions []byte) error {
 		return err
 	}
 
-	written, err := gpt.f.WriteAt(table, int64(gpt.PhysicalBlockSize()))
+	written, err := gpt.f.WriteAt(table, int64(gpt.lba.LogicalBlockSize))
 	if err != nil {
 		return err
 	}
@@ -230,7 +234,7 @@ func (gpt *GPT) writeSecondary(partitions []byte) error {
 	}
 
 	offset := int64((gpt.header.LastUsableLBA + 1))
-	written, err := gpt.f.WriteAt(table, offset*int64(gpt.PhysicalBlockSize()))
+	written, err := gpt.f.WriteAt(table, offset*int64(gpt.lba.LogicalBlockSize))
 	if err != nil {
 		return err
 	}
@@ -255,7 +259,7 @@ func (gpt *GPT) Repair() error {
 		return err
 	}
 
-	gpt.header.BackupLBA = uint64(size/int64(gpt.lba.PhysicalBlockSize) - 1)
+	gpt.header.BackupLBA = uint64(size/int64(gpt.lba.LogicalBlockSize) - 1)
 	gpt.header.LastUsableLBA = gpt.header.BackupLBA - 33
 
 	return nil
@@ -272,11 +276,11 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 		previous := gpt.partitions[len(gpt.partitions)-1]
 		start = previous.(*partition.Partition).LastLBA + 1
 	}
-	end = start + size/uint64(gpt.PhysicalBlockSize())
+	end = start + size/gpt.lba.LogicalBlockSize
 
 	if end > gpt.header.LastUsableLBA {
 		// TODO(andrewrynhard): This calculation is wrong, fix it.
-		available := (gpt.header.LastUsableLBA - start) * uint64(gpt.PhysicalBlockSize())
+		available := (gpt.header.LastUsableLBA - start) * gpt.lba.LogicalBlockSize
 		return nil, errors.Errorf("requested partition size %d is too big, largest available is %d", size, available)
 	}
 
@@ -286,7 +290,6 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 	}
 
 	partition := &partition.Partition{
-		IsNew:    !opts.Test,
 		Type:     opts.Type,
 		ID:       uuid,
 		FirstLBA: start,
@@ -297,6 +300,10 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 	}
 
 	gpt.partitions = append(gpt.partitions, partition)
+
+	if err := blkpg.InformKernelOfAdd(gpt.f, partition); err != nil {
+		return nil, err
+	}
 
 	return partition, nil
 }
@@ -317,21 +324,16 @@ func (gpt *GPT) Resize(p table.Partition) error {
 		return errors.Errorf("unknown partition %d, only %d available", partition.Number, len(gpt.partitions))
 	}
 
-	partition.IsResized = true
-
 	gpt.partitions[index] = partition
 
-	return nil
+	return blkpg.InformKernelOfResize(gpt.f, partition)
 }
 
 // Delete deletes a partition.
 func (gpt *GPT) Delete(partition table.Partition) error {
-	return nil
-}
-
-// PhysicalBlockSize returns the physical block size.
-func (gpt *GPT) PhysicalBlockSize() int {
-	return gpt.lba.PhysicalBlockSize
+	i := partition.No() - 1
+	gpt.partitions[i] = nil
+	return blkpg.InformKernelOfDelete(gpt.f, partition)
 }
 
 func (gpt *GPT) readPrimary() ([]byte, error) {
@@ -396,6 +398,9 @@ func (gpt *GPT) serializePartitions() ([]byte, error) {
 	data := make([]byte, gpt.header.NumberOfPartitionEntries*gpt.header.PartitionEntrySize)
 
 	for j, p := range gpt.partitions {
+		if p == nil {
+			continue
+		}
 		i := uint32(j)
 		partition, ok := p.(*partition.Partition)
 		if !ok {
@@ -430,43 +435,4 @@ func (gpt *GPT) deserializePartitions(header *header.Header) ([]table.Partition,
 	}
 
 	return partitions, nil
-}
-
-// InformKernelOfAdd invokes the BLKPG_ADD_PARTITION ioctl.
-func (gpt *GPT) InformKernelOfAdd(partition table.Partition) error {
-	return inform(gpt.f.Fd(), partition, unix.BLKPG_ADD_PARTITION, int64(gpt.lba.PhysicalBlockSize))
-}
-
-// InformKernelOfResize invokes the BLKPG_RESIZE_PARTITION ioctl.
-func (gpt *GPT) InformKernelOfResize(partition table.Partition) error {
-	return inform(gpt.f.Fd(), partition, unix.BLKPG_RESIZE_PARTITION, int64(gpt.lba.PhysicalBlockSize))
-}
-
-// InformKernelOfDelete invokes the BLKPG_DEL_PARTITION ioctl.
-func (gpt *GPT) InformKernelOfDelete(partition table.Partition) error {
-	return inform(gpt.f.Fd(), partition, unix.BLKPG_DEL_PARTITION, int64(gpt.lba.PhysicalBlockSize))
-}
-
-func inform(fd uintptr, partition table.Partition, op int32, blocksize int64) error {
-	arg := &unix.BlkpgIoctlArg{
-		Op: op,
-		Data: (*byte)(unsafe.Pointer(&unix.BlkpgPartition{
-			Start:  partition.Start() * blocksize,
-			Length: partition.Length() * blocksize,
-			Pno:    partition.No(),
-		})),
-	}
-
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		fd,
-		unix.BLKPG,
-		uintptr(unsafe.Pointer(arg)),
-	)
-
-	if errno != 0 {
-		return errno
-	}
-
-	return nil
 }

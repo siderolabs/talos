@@ -13,7 +13,6 @@ type Options struct {
 	Type  uuid.UUID
 	Name  string
 	Flags uint64
-	Test  bool
 }
 
 // Option is the functional option func.
@@ -45,14 +44,6 @@ func WithLegacyBIOSBootableAttribute(o bool) Option {
 	}
 }
 
-// WithPartitionTest allows us to disable the IsNew partition
-// check. This is only intended to be used for tests.
-func WithPartitionTest(t bool) Option {
-	return func(args *Options) {
-		args.Test = t
-	}
-}
-
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...interface{}) *Options {
 	// Default to data type "af3dc60f-8384-7247-8e79-3d69d8477de4"
@@ -63,7 +54,6 @@ func NewDefaultOptions(setters ...interface{}) *Options {
 	opts := &Options{
 		Type: guuid,
 		Name: "",
-		Test: false,
 	}
 
 	for _, setter := range setters {

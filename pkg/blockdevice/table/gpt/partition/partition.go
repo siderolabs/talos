@@ -28,9 +28,6 @@ type Partition struct {
 	TrailingBytes []byte    // 128
 
 	Number int32
-
-	IsNew     bool
-	IsResized bool
 }
 
 // NewPartition initializes and returns a new partition.
@@ -52,7 +49,10 @@ func (prt *Partition) Start() int64 {
 
 // Length returns the partition's length in LBA.
 func (prt *Partition) Length() int64 {
-	return int64(prt.LastLBA)
+	// TODO(andrewrynhard): For reasons I don't understand right now, we need
+	// to add 1 in order to align with what partx thinks is the length of the
+	// partition.
+	return int64(prt.LastLBA - prt.FirstLBA + 1)
 }
 
 // No returns the partition's number.

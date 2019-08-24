@@ -169,10 +169,6 @@ func (m *Manifest) ExecuteManifest(data *userdata.UserData, manifest *Manifest) 
 			}
 		}
 
-		if err = bd.RereadPartitionTable(); err != nil {
-			return err
-		}
-
 		for _, target := range targets {
 			if err = target.Format(); err != nil {
 				return errors.Wrap(err, "failed to format device")
@@ -193,7 +189,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		return err
 	}
 
-	opts := []interface{}{partition.WithPartitionTest(t.Test)}
+	opts := []interface{}{}
 
 	switch t.Label {
 	case constants.BootPartitionLabel:

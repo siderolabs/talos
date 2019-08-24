@@ -14,6 +14,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/pkg/cmd"
+
+	"golang.org/x/sys/unix"
 )
 
 const syslinuxCfgTpl = `DEFAULT {{ .Default }}
@@ -58,7 +60,7 @@ func Prepare(dev string) (err error) {
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(dev, os.O_WRONLY, os.ModeDevice)
+	f, err := os.OpenFile(dev, os.O_WRONLY|unix.O_CLOEXEC, os.ModeDevice)
 	if err != nil {
 		return err
 	}
