@@ -8,7 +8,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 case $(uname -s) in
-  LINUX*)
+  Linux*)
     ACCEL=kvm
     ;;
 
