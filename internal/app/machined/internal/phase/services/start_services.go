@@ -13,29 +13,31 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-// Services represents the Services task.
-type Services struct{}
+// StartServices represents the StartServices task.
+type StartServices struct{}
 
-// NewServicesTask initializes and returns an Services task.
-func NewServicesTask() phase.Task {
-	return &Services{}
+// NewStartServicesTask initializes and returns an Services task.
+func NewStartServicesTask() phase.Task {
+	return &StartServices{}
 }
 
 // RuntimeFunc returns the runtime function.
-func (task *Services) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+func (task *StartServices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	return func(platform platform.Platform, data *userdata.UserData) error {
 		return task.runtime(data, mode)
 	}
 }
 
-func (task *Services) runtime(data *userdata.UserData, mode runtime.Mode) (err error) {
-	task.startSystemServices(data, mode)
-	task.startKubernetesServices(data)
+func (task *StartServices) runtime(data *userdata.UserData, mode runtime.Mode) (err error) {
+	task.loadSystemServices(data, mode)
+	task.loadKubernetesServices(data)
+
+	system.Services(nil).StartAll()
 
 	return nil
 }
 
-func (task *Services) startSystemServices(data *userdata.UserData, mode runtime.Mode) {
+func (task *StartServices) loadSystemServices(data *userdata.UserData, mode runtime.Mode) {
 	svcs := system.Services(data)
 	// Start the services common to all nodes.
 	svcs.Load(
@@ -63,10 +65,9 @@ func (task *Services) startSystemServices(data *userdata.UserData, mode runtime.
 			&services.Proxyd{},
 		)
 	}
-
 }
 
-func (task *Services) startKubernetesServices(data *userdata.UserData) {
+func (task *StartServices) loadKubernetesServices(data *userdata.UserData) {
 	svcs := system.Services(data)
 	svcs.Load(
 		&services.Kubelet{},

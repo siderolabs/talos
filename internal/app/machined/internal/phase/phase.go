@@ -56,7 +56,7 @@ func NewRunner(data *userdata.UserData) (*Runner, error) {
 func (r *Runner) Run() error {
 	for _, phase := range r.phases {
 		if err := r.runPhase(phase); err != nil {
-			return errors.Wrapf(err, "error running phase %q", phase.name)
+			return errors.Wrapf(err, "error running phase %q", phase.description)
 		}
 	}
 
@@ -68,7 +68,7 @@ func (r *Runner) runPhase(phase *Phase) error {
 	errCh := make(chan error)
 
 	start := time.Now()
-	log.Printf("[phase]: %s", phase.name)
+	log.Printf("[phase]: %s", phase.description)
 
 	for _, task := range phase.tasks {
 		go r.runTask(task, errCh)
@@ -79,12 +79,12 @@ func (r *Runner) runPhase(phase *Phase) error {
 	for range phase.tasks {
 		err := <-errCh
 		if err != nil {
-			log.Printf("[phase]: %s error running task: %s", phase.name, err)
+			log.Printf("[phase]: %s error running task: %s", phase.description, err)
 		}
 		result = multierror.Append(result, err)
 	}
 
-	log.Printf("[phase]: %s done, %s", phase.name, time.Since(start))
+	log.Printf("[phase]: %s done, %s", phase.description, time.Since(start))
 
 	return result.ErrorOrNil()
 }
@@ -120,16 +120,16 @@ func (r *Runner) Add(phase ...*Phase) {
 
 // Phase represents a phase in the boot process.
 type Phase struct {
-	name  string
-	tasks []Task
+	description string
+	tasks       []Task
 }
 
 // NewPhase initializes and returns a Phase.
-func NewPhase(name string, tasks ...Task) *Phase {
+func NewPhase(description string, tasks ...Task) *Phase {
 	tasks = append([]Task{}, tasks...)
 	return &Phase{
-		name:  name,
-		tasks: tasks,
+		description: description,
+		tasks:       tasks,
 	}
 }
 
