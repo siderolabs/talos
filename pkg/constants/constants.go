@@ -168,6 +168,10 @@ const (
 
 	// NodeCertRenewalInterval is the default interval at which Talos Node Certifications should be renewed
 	NodeCertRenewalInterval = 24 * time.Hour
+
+	// SystemVarPath is the path to write runtime system related files and
+	// directories.
+	SystemVarPath = "/var/system"
 )
 
 // See https://linux.die.net/man/3/klogctl

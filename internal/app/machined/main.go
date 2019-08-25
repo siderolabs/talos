@@ -91,6 +91,7 @@ func run() (err error) {
 		phase.NewPhase(
 			"overlay mounts",
 			rootfs.NewMountOverlayTask(),
+			rootfs.NewMountSharedTask(),
 		),
 		phase.NewPhase(
 			"setup /var",
