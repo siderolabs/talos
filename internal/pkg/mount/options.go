@@ -11,6 +11,7 @@ type Options struct {
 	ReadOnly bool
 	Shared   bool
 	Resize   bool
+	Overlay  bool
 }
 
 // Option is the functional option func.
@@ -45,6 +46,14 @@ func WithResize(o bool) Option {
 	}
 }
 
+// WithOverlay indicates that a the partition for a given mount point should be
+// mounted using overlayfs.
+func WithOverlay(o bool) Option {
+	return func(args *Options) {
+		args.Overlay = o
+	}
+}
+
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
@@ -53,6 +62,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 		ReadOnly: false,
 		Shared:   false,
 		Resize:   false,
+		Overlay:  false,
 	}
 
 	for _, setter := range setters {

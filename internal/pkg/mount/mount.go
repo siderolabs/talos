@@ -5,8 +5,11 @@
 package mount
 
 import (
+	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,7 +21,27 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Point represents a linux mount point.
+// RetryFunc defines the requirements for retrying a mount point operation.
+type RetryFunc func(*Point) error
+
+func retry(f RetryFunc, p *Point) (err error) {
+	for i := 0; i < 50; i++ {
+		if err = f(p); err != nil {
+			switch err {
+			case unix.EBUSY:
+				time.Sleep(100 * time.Millisecond)
+				continue
+			default:
+				return err
+			}
+		}
+		return nil
+	}
+
+	return errors.Errorf("timeout: %+v", err)
+}
+
+// Point represents a Linux mount point.
 type Point struct {
 	source string
 	target string
@@ -85,41 +108,29 @@ func (p *Point) Data() string {
 // Mount attempts to retry a mount on EBUSY. It will attempt a retry
 // every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Mount() (err error) {
+	p.target = path.Join(p.Prefix, p.target)
+
+	if err = ensureDirectory(p.target); err != nil {
+		return err
+	}
+
 	if p.ReadOnly {
 		p.flags |= unix.MS_RDONLY
 	}
 
-	target := path.Join(p.Prefix, p.target)
-
-	if err = os.MkdirAll(target, os.ModeDir); err != nil {
-		return errors.Errorf("error creating mount point directory %s: %v", target, err)
+	switch {
+	case p.Overlay:
+		err = retry(overlay, p)
+	default:
+		err = retry(mount, p)
 	}
-
-	retry := func(source string, target string, fstype string, flags uintptr, data string) (err error) {
-		for i := 0; i < 50; i++ {
-			if err = unix.Mount(source, target, fstype, flags, data); err != nil {
-				switch err {
-				case unix.EBUSY:
-					time.Sleep(100 * time.Millisecond)
-					continue
-				default:
-					return err
-				}
-			}
-
-			return nil
-		}
-
-		return errors.Errorf("mount timeout: %v", err)
-	}
-
-	if err = retry(p.source, target, p.fstype, p.flags, p.data); err != nil {
+	if err != nil {
 		return err
 	}
 
 	if p.Shared {
-		if err = retry("", target, "", unix.MS_SHARED, ""); err != nil {
-			return errors.Errorf("error mounting shared mount point %s: %v", target, err)
+		if err = retry(share, p); err != nil {
+			return errors.Errorf("error sharing mount point %s: %+v", p.target, err)
 		}
 	}
 
@@ -130,24 +141,8 @@ func (p *Point) Mount() (err error) {
 // Unmount attempts to retry an unmount on EBUSY. It will attempt a
 // retry every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Unmount() (err error) {
-	retry := func(target string, flags int) error {
-		for i := 0; i < 50; i++ {
-			if err = unix.Unmount(target, flags); err != nil {
-				switch err {
-				case unix.EBUSY:
-					time.Sleep(100 * time.Millisecond)
-					continue
-				default:
-					return err
-				}
-			}
-			return nil
-		}
-		return errors.Errorf("mount timeout: %v", err)
-	}
-
-	target := path.Join(p.Prefix, p.target)
-	if err := retry(target, 0); err != nil {
+	p.target = path.Join(p.Prefix, p.target)
+	if err := retry(unmount, p); err != nil {
 		return err
 	}
 
@@ -207,6 +202,48 @@ func (p *Point) ResizePartition() (err error) {
 func (p *Point) GrowFilesystem() (err error) {
 	if err = xfs.GrowFS(p.Target()); err != nil {
 		return errors.Wrap(err, "xfs_growfs")
+	}
+
+	return nil
+}
+
+func mount(p *Point) (err error) {
+	return unix.Mount(p.source, p.target, p.fstype, p.flags, p.data)
+}
+
+func unmount(p *Point) error {
+	return unix.Unmount(p.target, 0)
+}
+
+func share(p *Point) error {
+	return unix.Mount("", p.target, "", unix.MS_SHARED, "")
+}
+
+func overlay(p *Point) error {
+	parts := strings.Split(p.target, "/")
+	prefix := strings.Join(parts[1:], "-")
+	diff := fmt.Sprintf(filepath.Join(constants.SystemVarPath, "%s-diff"), prefix)
+	workdir := fmt.Sprintf(filepath.Join(constants.SystemVarPath, "%s-workdir"), prefix)
+
+	for _, target := range []string{diff, workdir} {
+		if err := ensureDirectory(target); err != nil {
+			return err
+		}
+	}
+
+	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", p.target, diff, workdir)
+	if err := unix.Mount("overlay", p.target, "overlay", 0, opts); err != nil {
+		return errors.Errorf("error creating overlay mount to %s: %v", p.target, err)
+	}
+
+	return nil
+}
+
+func ensureDirectory(target string) (err error) {
+	if _, err := os.Stat(target); os.IsNotExist(err) {
+		if err = os.MkdirAll(target, os.ModeDir); err != nil {
+			return errors.Errorf("error creating mount point directory %s: %v", target, err)
+		}
 	}
 
 	return nil
