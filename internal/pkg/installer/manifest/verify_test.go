@@ -31,10 +31,8 @@ func (suite *validateSuite) TestVerifyDevice() {
 
 	// No impact because we can infer all data from the data device and
 	// defaults.
-	data.Install.Boot = nil
+	data.Install.Bootloader = true
 	suite.Require().NoError(VerifyBootDevice(data))
-	data.Install.Ephemeral = &userdata.InstallDevice{
-		Device: "/dev/sda",
-	}
+	data.Install.Disk = "/dev/sda"
 	suite.Require().NoError(VerifyDataDevice(data))
 }

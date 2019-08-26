@@ -5,10 +5,13 @@
 package manifest
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // VerifyDataDevice verifies the supplied data device options.
@@ -18,11 +21,7 @@ func VerifyDataDevice(data *userdata.UserData) (err error) {
 		return errors.New("missing installation definition")
 	}
 	// Set data device to root device if not specified
-	if data.Install.Ephemeral == nil {
-		return errors.New("missing definition")
-	}
-
-	if data.Install.Ephemeral.Device == "" {
+	if data.Install.Disk == "" {
 		return errors.New("missing disk")
 	}
 
@@ -41,27 +40,19 @@ func VerifyBootDevice(data *userdata.UserData) (err error) {
 		return nil
 	}
 
-	if data.Install.Boot == nil {
+	if !data.Install.Bootloader {
 		return nil
 	}
 
-	if data.Install.Boot.Device == "" {
+	if data.Install.Disk == "" {
 		// We can safely assume data device is defined at this point
 		// because VerifyDataDevice should have been called first in
-		// in the chain
-		data.Install.Boot.Device = data.Install.Ephemeral.Device
+		// in the chain, but we verify again just in case.
+		return errors.New("missing disk")
 	}
 
-	if data.Install.Boot.Size == 0 {
-		data.Install.Boot.Size = DefaultSizeBootDevice
-	}
-
-	if data.Install.Boot.Kernel == "" {
-		data.Install.Boot.Kernel = DefaultKernelURL
-	}
-
-	if data.Install.Boot.Initramfs == "" {
-		data.Install.Boot.Initramfs = DefaultInitramfsURL
+	if data.Install.Image == "" {
+		data.Install.Image = fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
 	}
 
 	if !data.Install.Force {

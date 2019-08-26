@@ -69,6 +69,10 @@ func (d *Sequencer) Boot() error {
 			userdatatask.NewExtraFilesTask(),
 		),
 		phase.NewPhase(
+			"start system-containerd",
+			services.NewStartSystemContainerdTask(),
+		),
+		phase.NewPhase(
 			"platform tasks",
 			platform.NewPlatformTask(),
 		),

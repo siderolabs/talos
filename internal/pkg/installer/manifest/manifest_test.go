@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,7 +33,7 @@ func (suite *manifestSuite) TestNewManifest() {
 
 	manifests, err := NewManifest(data)
 	suite.Require().NoError(err)
-	assert.Equal(suite.T(), 2, len(manifests.Targets["/dev/sda"]))
+	assert.Equal(suite.T(), 1, len(manifests.Targets["/dev/sda"]))
 }
 
 func (suite *manifestSuite) TestTargetInstall() {
@@ -46,11 +45,8 @@ func (suite *manifestSuite) TestTargetInstall() {
 	defer os.RemoveAll(dir)
 
 	// Create a tempfile for local copy
-	tempfile, err := ioutil.TempFile("", "example")
+	tempfile, err := ioutil.TempFile(dir, "example")
 	suite.Require().NoError(err)
-
-	// nolint: errcheck
-	defer os.Remove(dir)
 
 	// Create simple http test server to serve up some content
 	mux := http.NewServeMux()
@@ -61,18 +57,12 @@ func (suite *manifestSuite) TestTargetInstall() {
 	ts := httptest.NewServer(mux)
 
 	defer ts.Close()
-
 	// Attempt to download and copy files
 	target := &Target{
-		MountPoint: dir,
 		Assets: []*Asset{
 			{
-				Source:      "file://" + tempfile.Name(),
+				Source:      tempfile.Name(),
 				Destination: "/path/relative/to/mountpoint/example",
-			},
-			{
-				Source:      ts.URL + "/yolo",
-				Destination: "/path/relative/to/mountpoint/yolo",
 			},
 		},
 	}
@@ -80,8 +70,8 @@ func (suite *manifestSuite) TestTargetInstall() {
 	suite.Require().NoError(target.Save())
 
 	for _, expectedFile := range target.Assets {
-		// Verify downloaded/copied file is at the appropriate location
-		_, err := os.Stat(filepath.Join(target.MountPoint, expectedFile.Destination))
+		// Verify copied file is at the appropriate location.
+		_, err := os.Stat(expectedFile.Destination)
 		suite.Require().NoError(err)
 	}
 }
@@ -145,10 +135,6 @@ services:
 install:
   wipe: true
   force: true
-  boot:
-    device: /dev/sda
-    size: 1024000000
-  ephemeral:
-    device: /dev/sda
-    size: 1024000000
+  disk: /dev/sda
+  image: docker.io/autonomy/installer:latest
 `

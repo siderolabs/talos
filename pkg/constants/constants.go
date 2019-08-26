@@ -160,8 +160,14 @@ const (
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
 
+	// KernelAssetPath is the path to the kernel on disk.
+	KernelAssetPath = "/usr/install/" + KernelAsset
+
 	// InitramfsAsset defines a well known name for our initramfs filename
 	InitramfsAsset = "initramfs.xz"
+
+	// InitramfsAssetPath is the path to the initramfs on disk.
+	InitramfsAssetPath = "/usr/install/" + InitramfsAsset
 
 	// RootfsAsset defines a well known name for our rootfs filename
 	RootfsAsset = "rootfs.sqsh"
@@ -175,6 +181,10 @@ const (
 	// SystemVarPath is the path to write runtime system related files and
 	// directories.
 	SystemVarPath = "/var/system"
+
+	// DefaultInstallerImageRepository is the default container repository for
+	// the installer.
+	DefaultInstallerImageRepository = "docker.io/autonomy/installer"
 )
 
 // See https://linux.die.net/man/3/klogctl

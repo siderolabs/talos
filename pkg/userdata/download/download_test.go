@@ -189,12 +189,6 @@ services:
 install:
   wipe: true
   force: true
-  boot:
-    force: true
-    device: /dev/sda
-    size: 1024000000
-  ephemeral:
-    force: true
-    device: /dev/sda
-    size: 1024000000
+  disk: /dev/sda
+  image: docker.io/autonomy/installer:latest
 `

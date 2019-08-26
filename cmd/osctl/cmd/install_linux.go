@@ -37,26 +37,13 @@ var installCmd = &cobra.Command{
 			Install: &userdata.Install{
 				Force:           true,
 				ExtraKernelArgs: extraKernelArgs,
-				Ephemeral: &userdata.InstallDevice{
-					Device: device,
-					Size:   16 * 1024 * 1024,
-				},
+				Disk:            device,
+				Bootloader:      bootloader,
 			},
 		}
 
-		if bootloader {
-			data.Install.Boot = &userdata.BootDevice{
-				Kernel:    "file:///usr/install/vmlinuz",
-				Initramfs: "file:///usr/install/initramfs.xz",
-				InstallDevice: userdata.InstallDevice{
-					Device: device,
-					Size:   512 * 1024 * 1024,
-				},
-			}
-		}
-
 		cmdline := kernel.NewDefaultCmdline()
-		cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
+		cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 		cmdline.Append(constants.KernelParamPlatform, platform)
 		cmdline.Append(constants.KernelParamUserData, endpoint)
 		if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {

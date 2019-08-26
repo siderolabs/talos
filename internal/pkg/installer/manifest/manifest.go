@@ -5,13 +5,8 @@
 package manifest
 
 import (
-	"archive/tar"
-	"compress/gzip"
-	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -55,7 +50,6 @@ type Manifest struct {
 // Target represents an installation partition.
 type Target struct {
 	Label          string
-	MountPoint     string
 	Device         string
 	FileSystemType string
 	PartitionName  string
@@ -91,39 +85,37 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest, err error) {
 	// Initialize any slices we need. Note that a boot paritition is not
 	// required.
 
-	if manifest.Targets[data.Install.Ephemeral.Device] == nil {
-		manifest.Targets[data.Install.Ephemeral.Device] = []*Target{}
+	if manifest.Targets[data.Install.Disk] == nil {
+		manifest.Targets[data.Install.Disk] = []*Target{}
 	}
 
 	var bootTarget *Target
-	if data.Install.Boot != nil {
+	if data.Install.Bootloader {
 		bootTarget = &Target{
-			Device: data.Install.Boot.Device,
+			Device: data.Install.Disk,
 			Label:  constants.BootPartitionLabel,
-			Size:   data.Install.Boot.Size,
+			Size:   512 * 1024 * 1024,
 			Force:  data.Install.Force,
 			Test:   false,
 			Assets: []*Asset{
 				{
-					Source:      data.Install.Boot.Kernel,
-					Destination: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Kernel)),
+					Source:      constants.KernelAssetPath,
+					Destination: filepath.Join(constants.BootMountPoint, "default", constants.KernelAsset),
 				},
 				{
-					Source:      data.Install.Boot.Initramfs,
-					Destination: filepath.Join("/", "default", filepath.Base(data.Install.Boot.Initramfs)),
+					Source:      constants.InitramfsAssetPath,
+					Destination: filepath.Join(constants.BootMountPoint, "default", constants.InitramfsAsset),
 				},
 			},
-			MountPoint: constants.BootMountPoint,
 		}
 	}
 
 	dataTarget := &Target{
-		Device:     data.Install.Ephemeral.Device,
-		Label:      constants.EphemeralPartitionLabel,
-		Size:       data.Install.Ephemeral.Size,
-		Force:      data.Install.Force,
-		Test:       false,
-		MountPoint: constants.EphemeralMountPoint,
+		Device: data.Install.Disk,
+		Label:  constants.EphemeralPartitionLabel,
+		Size:   16 * 1024 * 1024,
+		Force:  data.Install.Force,
+		Test:   false,
 	}
 
 	for _, target := range []*Target{bootTarget, dataTarget} {
@@ -243,224 +235,45 @@ func (t *Target) Format() error {
 	return xfs.MakeFS(t.PartitionName, opts...)
 }
 
-// Save handles downloading the necessary assets and extracting them to
-// the appropriate location.
-// nolint: gocyclo
-func (t *Target) Save() error {
-	// Download and extract all artifacts.
-	var sourceFile *os.File
-	var destFile *os.File
-	var err error
-
-	if err = os.MkdirAll(t.MountPoint, os.ModeDir); err != nil {
-		return err
-	}
-
-	// Extract artifact if necessary, otherwise place at root of partition/filesystem
+// Save copies the assets to the bootloader partition.
+func (t *Target) Save() (err error) {
 	for _, asset := range t.Assets {
-		var u *url.URL
-		if u, err = url.Parse(asset.Source); err != nil {
+		var (
+			sourceFile *os.File
+			destFile   *os.File
+		)
+
+		if sourceFile, err = os.Open(asset.Source); err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer sourceFile.Close()
+
+		if err = os.MkdirAll(filepath.Dir(asset.Destination), os.ModeDir); err != nil {
+			return err
+		}
+		if destFile, err = os.Create(asset.Destination); err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer destFile.Close()
+
+		log.Printf("copying %s to %s\n", sourceFile.Name(), destFile.Name())
+
+		if _, err = io.Copy(destFile, sourceFile); err != nil {
+			log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
 			return err
 		}
 
-		sourceFile = nil
-		destFile = nil
-
-		// Handle fetching of asset
-		switch u.Scheme {
-		case "http":
-			fallthrough
-		case "https":
-			log.Printf("downloading %s\n", asset.Source)
-			dest := filepath.Join(t.MountPoint, asset.Destination)
-			sourceFile, err = download(u.String(), dest)
-			if err != nil {
-				return err
-			}
-		case "file":
-			source := u.Path
-			dest := filepath.Join(t.MountPoint, asset.Destination)
-
-			sourceFile, err = os.Open(source)
-			if err != nil {
-				return err
-			}
-
-			if err = os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
-				return err
-			}
-
-			destFile, err = os.Create(dest)
-			if err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unsupported path scheme, got %s but supported %s", u.Scheme, "https://|http://|file://")
+		if err = destFile.Close(); err != nil {
+			log.Printf("failed to close %s", destFile.Name())
+			return err
 		}
 
-		// Handle extraction/Installation
-		switch {
-		// tar
-		case strings.HasSuffix(sourceFile.Name(), ".tar") || strings.HasSuffix(sourceFile.Name(), ".tar.gz"):
-			log.Printf("extracting %s to %s\n", sourceFile.Name(), t.MountPoint)
-
-			err = untar(sourceFile, t.MountPoint)
-			if err != nil {
-				log.Printf("failed to extract %s to %s\n", sourceFile.Name(), t.MountPoint)
-				return err
-			}
-
-			if err = sourceFile.Close(); err != nil {
-				log.Printf("failed to close %s", sourceFile.Name())
-				return err
-			}
-
-			if err = os.Remove(sourceFile.Name()); err != nil {
-				log.Printf("failed to remove %s", sourceFile.Name())
-				return err
-			}
-		// single file
-		case strings.HasPrefix(sourceFile.Name(), "/") && destFile != nil:
-			log.Printf("copying %s to %s\n", sourceFile.Name(), destFile.Name())
-
-			if _, err = io.Copy(destFile, sourceFile); err != nil {
-				log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
-				return err
-			}
-
-			if err = destFile.Close(); err != nil {
-				log.Printf("failed to close %s", destFile.Name())
-				return err
-			}
-
-			if err = sourceFile.Close(); err != nil {
-				log.Printf("failed to close %s", sourceFile.Name())
-				return err
-			}
-		default:
-			if err = sourceFile.Close(); err != nil {
-				log.Printf("failed to close %s", sourceFile.Name())
-				return err
-			}
+		if err = sourceFile.Close(); err != nil {
+			log.Printf("failed to close %s", sourceFile.Name())
+			return err
 		}
 	}
-
 	return nil
-}
-
-// nolint: gocyclo, dupl
-func untar(tarball *os.File, dst string) error {
-
-	var input io.Reader
-	var err error
-
-	if strings.HasSuffix(tarball.Name(), ".tar.gz") {
-		input, err = gzip.NewReader(tarball)
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer input.(*gzip.Reader).Close()
-	} else {
-		input = tarball
-	}
-
-	tr := tar.NewReader(input)
-
-	for {
-		var header *tar.Header
-
-		header, err = tr.Next()
-
-		switch {
-		case err == io.EOF:
-			err = nil
-			return err
-		case err != nil:
-			return err
-		case header == nil:
-			continue
-		}
-
-		// the target location where the dir/file should be created
-		target := filepath.Join(dst, header.Name)
-
-		// May need to add in support for these
-		/*
-			// Type '1' to '6' are header-only flags and may not have a data body.
-				TypeLink    = '1' // Hard link
-				TypeSymlink = '2' // Symbolic link
-				TypeChar    = '3' // Character device node
-				TypeBlock   = '4' // Block device node
-				TypeDir     = '5' // Directory
-				TypeFifo    = '6' // FIFO node
-		*/
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if err = os.MkdirAll(target, 0755); err != nil {
-				return err
-			}
-		case tar.TypeReg:
-			var downloadedFileput *os.File
-
-			downloadedFileput, err = os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-
-			if _, err = io.Copy(downloadedFileput, tr); err != nil {
-				return err
-			}
-
-			err = downloadedFileput.Close()
-			if err != nil {
-				return err
-			}
-		case tar.TypeSymlink:
-			dest := filepath.Join(dst, header.Name)
-			source := header.Linkname
-			if err := os.Symlink(source, dest); err != nil {
-				return err
-			}
-		}
-	}
-}
-
-func download(artifact, dest string) (*os.File, error) {
-	if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
-		return nil, err
-	}
-	downloadedFile, err := os.Create(dest)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the data
-	resp, err := http.Get(artifact)
-	if err != nil {
-		return downloadedFile, err
-	}
-
-	// nolint: errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		// nolint: errcheck
-		downloadedFile.Close()
-		return nil, errors.Errorf("failed to download %s, got %d", artifact, resp.StatusCode)
-	}
-
-	// Write the body to file
-	_, err = io.Copy(downloadedFile, resp.Body)
-	if err != nil {
-		return downloadedFile, err
-	}
-
-	// Reset downloadedFile file position to 0 so we can immediately read from it
-	_, err = downloadedFile.Seek(0, 0)
-
-	// TODO add support for checksum validation of downloaded file
-
-	return downloadedFile, err
 }

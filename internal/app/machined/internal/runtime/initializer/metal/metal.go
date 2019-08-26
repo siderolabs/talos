@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/machined/internal/event"
+	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
@@ -31,7 +32,7 @@ func (b *Metal) Initialize(platform platform.Platform, data *userdata.UserData) 
 	}
 
 	cmdline := kernel.NewDefaultCmdline()
-	cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
+	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 	cmdline.Append(constants.KernelParamPlatform, strings.ToLower(platform.Name()))
 	cmdline.Append(constants.KernelParamUserData, *endpoint)
 
@@ -45,20 +46,13 @@ func (b *Metal) Initialize(platform platform.Platform, data *userdata.UserData) 
 	var mountpoints *mount.Points
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
-		// No previous installation was found, attempt an install
-		var i *installer.Installer
-		i, err = installer.NewInstaller(cmdline, data)
-		if err != nil {
+		if err = install.Install(data.Install.Image, data.Install.Disk, strings.ToLower(platform.Name())); err != nil {
 			return err
 		}
-		if err = i.Install(); err != nil {
-			return errors.Wrap(err, "failed to install")
-		}
-
-		mountpoints, err = owned.MountPointsFromLabels()
-		if err != nil {
-			return err
-		}
+		event.Bus().Notify(event.Event{Type: event.Reboot})
+		// Prevent the task from returning to prevent the next phase from
+		// running.
+		select {}
 	}
 
 	m := manager.NewManager(mountpoints)

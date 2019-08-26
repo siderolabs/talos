@@ -84,9 +84,8 @@ func NewUpgrade(url string) (err error) {
 
 func upgradeBoot(url string) error {
 	bootTarget := manifest.Target{
-		Label:      constants.BootPartitionLabel,
-		MountPoint: constants.BootMountPoint,
-		Assets:     []*manifest.Asset{},
+		Label:  constants.BootPartitionLabel,
+		Assets: []*manifest.Asset{},
 	}
 
 	// Kernel

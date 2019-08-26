@@ -12,7 +12,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
 	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
@@ -38,15 +38,15 @@ const keyPerm os.FileMode = 0400
 func PhaseCerts() error {
 	// Run kubeadm init phase certs all. This should fill in whatever gaps
 	// we have in the provided certs.
-	cmd := exec.Command(
+	return cmd.Run(
 		"kubeadm",
 		"init",
 		"phase",
 		"certs",
 		"all",
 		"--config",
-		constants.KubeadmConfig)
-	return cmd.Run()
+		constants.KubeadmConfig,
+	)
 }
 
 func editFullInitConfig(data *userdata.UserData) (err error) {

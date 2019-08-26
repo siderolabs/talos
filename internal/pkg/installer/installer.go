@@ -97,7 +97,6 @@ func (i *Installer) Install() (err error) {
 		for _, target := range targets {
 			switch target.Label {
 			case constants.BootPartitionLabel:
-				// Install the bootloader.
 				if err = syslinux.Prepare(target.Device); err != nil {
 					return err
 				}
@@ -114,7 +113,7 @@ func (i *Installer) Install() (err error) {
 
 	// Install the bootloader.
 
-	if i.data.Install.Boot == nil {
+	if !i.data.Install.Bootloader {
 		return nil
 	}
 
@@ -123,8 +122,8 @@ func (i *Installer) Install() (err error) {
 		Labels: []*syslinux.Label{
 			{
 				Root:   "default",
-				Kernel: filepath.Join("/", "default", filepath.Base(i.data.Install.Boot.Kernel)),
-				Initrd: filepath.Join("/", "default", filepath.Base(i.data.Install.Boot.Initramfs)),
+				Initrd: filepath.Join("/", "default", constants.InitramfsAsset),
+				Kernel: filepath.Join("/", "default", constants.KernelAsset),
 				Append: i.cmdline.String(),
 			},
 		},
