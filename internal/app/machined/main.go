@@ -14,9 +14,15 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
+	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
+
+// EventBusObserver is used to subscribe to the event bus.
+type EventBusObserver struct {
+	*event.Embeddable
+}
 
 func recovery() {
 	if r := recover(); r != nil {
@@ -75,9 +81,10 @@ func main() {
 	defer recovery()
 
 	// Subscribe to events.
-	events := make(chan event.Type, 5) // provide some buffer to avoid blocking the bus
-	event.Bus().Subscribe(events)
-	defer event.Bus().Unsubscribe(events)
+	init := EventBusObserver{&event.Embeddable{}}
+	defer close(init.Channel())
+	event.Bus().Register(init)
+	defer event.Bus().Unregister(init)
 
 	// Ensure rng is seeded.
 	if err = startup.RandSeed(); err != nil {
@@ -101,7 +108,7 @@ func main() {
 	// Wait for an event.
 
 	for {
-		switch <-events {
+		switch e := <-init.Channel(); e.Type {
 		case event.Shutdown:
 			rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
 			fallthrough
@@ -116,7 +123,15 @@ func main() {
 				select {}
 			}
 		case event.Upgrade:
-			if err := seq.Upgrade(); err != nil {
+			var (
+				req *proto.UpgradeRequest
+				ok  bool
+			)
+			if req, ok = e.Data.(*proto.UpgradeRequest); !ok {
+				log.Println("cannot perform upgrade, unexpected data type")
+				continue
+			}
+			if err := seq.Upgrade(req); err != nil {
 				panic(errors.Wrap(err, "upgrade failed"))
 			}
 		}

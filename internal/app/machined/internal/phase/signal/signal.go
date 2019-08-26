@@ -44,7 +44,7 @@ func (task *Handler) container(platform platform.Platform, data *userdata.UserDa
 		signal.Stop(termCh)
 
 		log.Printf("shutdown via SIGTERM received")
-		event.Bus().Publish(event.Shutdown)
+		event.Bus().Notify(event.Event{Type: event.Shutdown})
 	}()
 
 	return nil

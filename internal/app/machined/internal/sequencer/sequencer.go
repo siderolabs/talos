@@ -6,13 +6,14 @@ package sequencer
 
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer/v1alpha1"
+	"github.com/talos-systems/talos/internal/app/machined/proto"
 )
 
 // Sequencer describes the boot, shutdown, and upgrade events.
 type Sequencer interface {
 	Boot() error
 	Shutdown() error
-	Upgrade() error
+	Upgrade(*proto.UpgradeRequest) error
 }
 
 // Version represents the sequencer version.
