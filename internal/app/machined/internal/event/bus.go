@@ -4,14 +4,13 @@
 
 package event
 
-import "sync"
-
-// Subscriber is a channel used to receive events from the bus
-type Subscriber chan<- Type
+import (
+	"sync"
+)
 
 type singleton struct {
-	mu          sync.RWMutex
-	subscribers []Subscriber
+	listeners map[Type]Listeners
+	mu        sync.RWMutex
 }
 
 var (
@@ -19,9 +18,9 @@ var (
 	once sync.Once
 )
 
-// Bus represents a singletone middleware which acts a proxy between event publishers and subscribers.
+// Bus represents an event bus.
 //
-//nolint: golint
+// nolint: golint
 func Bus() *singleton {
 	once.Do(func() {
 		bus = &singleton{}
@@ -30,32 +29,42 @@ func Bus() *singleton {
 	return bus
 }
 
-func (s *singleton) Publish(e Type) {
+// Notify implements the Notifier interface.
+func (s *singleton) Notify(e Event) {
 	s.mu.RLock()
-	subscribers := append([]Subscriber{}, s.subscribers...)
+	listeners := append(Listeners{}, s.listeners[e.Type]...)
 	s.mu.RUnlock()
 
-	for _, subscriber := range subscribers {
-		subscriber <- e
+	for _, c := range listeners {
+		c <- e
 	}
 }
 
-func (s *singleton) Subscribe(subsciber Subscriber) {
+// Register implements the Notifier interface.
+func (s *singleton) Register(o Observer, types ...Type) {
 	s.mu.Lock()
-	s.subscribers = append(s.subscribers, subsciber)
-	s.mu.Unlock()
+	defer s.mu.Unlock()
+	if s.listeners == nil {
+		s.listeners = make(map[Type]Listeners)
+	}
+	for _, t := range o.Types() {
+		s.listeners[t] = append(s.listeners[t], o.Channel())
+	}
 }
 
-func (s *singleton) Unsubscribe(subscriber Subscriber) {
+// Unregister implements the Notifier interface.
+func (s *singleton) Unregister(o Observer, types ...Type) {
 	s.mu.Lock()
-	for i := 0; i < len(s.subscribers); {
-		if s.subscribers[i] == subscriber {
-			s.subscribers[i] = s.subscribers[len(s.subscribers)-1]
-			s.subscribers[len(s.subscribers)-1] = nil
-			s.subscribers = s.subscribers[:len(s.subscribers)-1]
-		} else {
-			i++
+	defer s.mu.Unlock()
+	for _, t := range o.Types() {
+		for i := 0; i < len(s.listeners[t]); {
+			if s.listeners[t][i] == o.Channel() {
+				s.listeners[t][i] = s.listeners[t][len(s.listeners[t])-1]
+				s.listeners[t][len(s.listeners[t])-1] = nil
+				s.listeners[t] = s.listeners[t][:len(s.listeners[t])-1]
+			} else {
+				i++
+			}
 		}
 	}
-	s.mu.Unlock()
 }

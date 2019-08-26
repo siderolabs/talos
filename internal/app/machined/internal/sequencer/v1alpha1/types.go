@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
+	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -112,6 +113,6 @@ func (d *Sequencer) Shutdown() error {
 }
 
 // Upgrade implements the Sequencer interface.
-func (d *Sequencer) Upgrade() error {
+func (d *Sequencer) Upgrade(req *proto.UpgradeRequest) error {
 	return nil
 }

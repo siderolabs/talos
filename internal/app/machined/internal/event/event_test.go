@@ -18,39 +18,47 @@ type EventSuite struct {
 
 func (suite *EventSuite) TestBus() {
 	// publish event without subscribers
-	event.Bus().Publish(event.Shutdown)
+	event.Bus().Notify(event.Event{Type: event.Shutdown})
 
-	subscriber1 := make(chan event.Type, 1)
-	subscriber2 := make(chan event.Type, 1)
+	var subscriber1 = struct {
+		*event.Embeddable
+	}{
+		&event.Embeddable{},
+	}
+	var subscriber2 = struct {
+		*event.Embeddable
+	}{
+		&event.Embeddable{},
+	}
 
-	event.Bus().Subscribe(subscriber1)
-	defer event.Bus().Unsubscribe(subscriber1)
+	event.Bus().Register(subscriber1)
+	defer event.Bus().Unregister(subscriber1)
 
-	event.Bus().Subscribe(subscriber2)
-	defer event.Bus().Unsubscribe(subscriber2)
+	event.Bus().Register(subscriber2)
+	defer event.Bus().Unregister(subscriber2)
 
 	select {
-	case <-subscriber1:
+	case <-subscriber1.Channel():
 		suite.Require().Fail("no previous messages should be delivered")
 	default:
 	}
 
 	// test fan-out
-	event.Bus().Publish(event.Reboot)
+	event.Bus().Notify(event.Event{Type: event.Reboot})
 
-	suite.Assert().Equal(event.Reboot, <-subscriber1)
-	suite.Assert().Equal(event.Reboot, <-subscriber2)
+	suite.Assert().Equal(event.Event{Type: event.Reboot, Data: nil}, <-subscriber1.Channel())
+	suite.Assert().Equal(event.Event{Type: event.Reboot, Data: nil}, <-subscriber2.Channel())
 
-	event.Bus().Unsubscribe(subscriber2)
+	event.Bus().Unregister(subscriber2)
 
-	event.Bus().Publish(event.Upgrade)
+	event.Bus().Notify(event.Event{Type: event.Upgrade})
 
 	select {
-	case <-subscriber2:
+	case <-subscriber2.Channel():
 		suite.Require().Fail("message to subscriber2 should not be delivered")
 	default:
 	}
-	suite.Assert().Equal(event.Upgrade, <-subscriber1)
+	suite.Assert().Equal(event.Event{Type: event.Upgrade, Data: nil}, <-subscriber1.Channel())
 }
 
 func TestEventSuite(t *testing.T) {

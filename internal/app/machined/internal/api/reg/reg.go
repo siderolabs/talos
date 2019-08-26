@@ -56,7 +56,7 @@ func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto
 	reply = &proto.RebootReply{}
 
 	log.Printf("reboot via API received")
-	event.Bus().Publish(event.Reboot)
+	event.Bus().Notify(event.Event{Type: event.Reboot})
 
 	return
 }
@@ -66,7 +66,7 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *pro
 	reply = &proto.ShutdownReply{}
 
 	log.Printf("shutdown via API received")
-	event.Bus().Publish(event.Shutdown)
+	event.Bus().Notify(event.Event{Type: event.Shutdown})
 
 	return
 }

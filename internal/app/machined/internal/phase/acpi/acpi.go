@@ -89,7 +89,7 @@ func listenForPowerButton() (err error) {
 			}
 			if len(msgs) > 0 {
 				log.Printf("shutdown via ACPI received")
-				event.Bus().Publish(event.Shutdown)
+				event.Bus().Notify(event.Event{Type: event.Shutdown})
 				return
 			}
 		}
