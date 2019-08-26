@@ -7,10 +7,8 @@ package services
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/defaults"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
@@ -35,7 +33,7 @@ func (c *SystemContainerd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (c *SystemContainerd) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
+	return nil
 }
 
 // PostFunc implements the Service interface.

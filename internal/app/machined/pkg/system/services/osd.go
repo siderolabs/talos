@@ -71,12 +71,11 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.SystemContainerdAddress, Source: constants.SystemContainerdAddress, Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rw"}},
-		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.InitSocketPath), Source: filepath.Dir(constants.InitSocketPath), Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.NtpdSocketPath), Source: filepath.Dir(constants.NtpdSocketPath), Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.NetworkdSocketPath), Source: filepath.Dir(constants.NetworkdSocketPath), Options: []string{"rbind", "rw"}},

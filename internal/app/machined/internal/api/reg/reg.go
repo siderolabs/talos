@@ -73,33 +73,9 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *pro
 
 // Upgrade initiates a Talos upgrade
 func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (data *proto.UpgradeReply, err error) {
+	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: in})
+	data = &proto.UpgradeReply{Ack: "Upgrade request received"}
 
-	if err = upgrade.NewUpgrade(in.Url); err != nil {
-		return data, err
-	}
-
-	// stop kubelet
-	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
-		return data, err
-	}
-
-	// kubeadm Reset
-	if err = upgrade.Reset(); err != nil {
-		return data, err
-	}
-
-	// Trigger reboot
-	// we need to use defer to ensure we send back a response to the client.
-	// we're calling this at the end of the stack so we can be sure
-	// we dont boot the node in an err situation
-	defer func() {
-		if _, err = r.Reboot(ctx, &empty.Empty{}); err != nil {
-			return
-		}
-	}()
-
-	// profit
-	data = &proto.UpgradeReply{Ack: "Upgrade completed, rebooting node"}
 	return data, err
 }
 

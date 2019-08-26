@@ -134,6 +134,7 @@ func main() {
 			if err := seq.Upgrade(req); err != nil {
 				panic(errors.Wrap(err, "upgrade failed"))
 			}
+			event.Bus().Notify(event.Event{Type: event.Reboot})
 		}
 	}
 }
