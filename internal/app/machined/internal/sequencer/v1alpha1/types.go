@@ -7,6 +7,8 @@ package v1alpha1
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/acpi"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/disk"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/kubernetes"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/network"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs"
@@ -14,8 +16,11 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/services"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/upgrade"
 	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
 	"github.com/talos-systems/talos/internal/app/machined/proto"
+	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -109,10 +114,67 @@ func (d *Sequencer) Shutdown() error {
 			services.NewStopServicesTask(),
 		),
 	)
+
 	return phaserunner.Run()
 }
 
 // Upgrade implements the Sequencer interface.
 func (d *Sequencer) Upgrade(req *proto.UpgradeRequest) error {
-	return nil
+	data, err := userdata.Open(constants.UserDataPath)
+	if err != nil {
+		return err
+	}
+	phaserunner, err := phase.NewRunner(data)
+	if err != nil {
+		return err
+	}
+
+	var dev *probe.ProbedBlockDevice
+	dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
+	if err != nil {
+		return err
+	}
+
+	devname := dev.BlockDevice.Device().Name()
+	if err := dev.Close(); err != nil {
+		return err
+	}
+
+	phaserunner.Add(
+		phase.NewPhase(
+			"cordon and drain node",
+			kubernetes.NewCordonAndDrainTask(),
+		),
+		phase.NewPhase(
+			"stop services",
+			services.NewStopNonCrucialServicesTask(),
+		),
+		phase.NewPhase(
+			"kill all tasks",
+			kubernetes.NewKillKubernetesTasksTask(),
+		),
+		phase.NewPhase(
+			"stop containerd",
+			services.NewStopContainerdTask(),
+		),
+		phase.NewPhase(
+			"remove submounts",
+			rootfs.NewUnmountOverlayTask(),
+			rootfs.NewUnmountPodMountsTask(),
+		),
+		phase.NewPhase(
+			"unmount system disk",
+			rootfs.NewUnmountSystemDisksTask(devname),
+		),
+		phase.NewPhase(
+			"reset partition",
+			disk.NewResetDiskTask(devname),
+		),
+		phase.NewPhase(
+			"upgrade",
+			upgrade.NewUpgradeTask(devname, req),
+		),
+	)
+
+	return phaserunner.Run()
 }

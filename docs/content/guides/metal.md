@@ -1,5 +1,5 @@
 ---
-title: Bare Metal
+title: Metal
 date: 2019-06-21T06:25:46-08:00
 draft: false
 menu:

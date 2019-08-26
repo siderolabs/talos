@@ -62,7 +62,7 @@ func (m *Manager) UnmountAll() (err error) {
 	for iter.Next() {
 		mountpoint := iter.Value()
 		if err = mountpoint.Unmount(); err != nil {
-			return errors.Wrap(err, "unomunt")
+			return errors.Wrap(err, "unmount")
 		}
 	}
 	if iter.Err() != nil {

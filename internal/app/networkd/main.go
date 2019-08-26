@@ -38,9 +38,9 @@ func main() {
 	}
 
 	// Load up userdata
-	ud, err = userdata.Open("/var/userdata.yaml")
+	ud, err = userdata.Open(constants.UserDataPath)
 	if err != nil {
-		log.Printf("failed to read userdata %s, using defaults: %+v", "/var/userdata.yaml", err)
+		log.Printf("failed to read userdata %s, using defaults: %+v", constants.UserDataPath, err)
 	}
 
 	log.Println("overlaying userdata network configuration")

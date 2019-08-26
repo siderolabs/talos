@@ -31,7 +31,7 @@ type Metal struct{}
 
 // Name implements the platform.Platform interface.
 func (b *Metal) Name() string {
-	return "Bare Metal"
+	return "Metal"
 }
 
 // UserData implements the platform.Platform interface.
