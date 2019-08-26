@@ -30,7 +30,6 @@ import (
 
 var (
 	clusterName   string
-	image         string
 	networkMTU    string
 	workers       int
 	masters       int

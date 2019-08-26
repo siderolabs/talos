@@ -76,26 +76,11 @@ func (tv1 *V1Translator) Translate() (*userdata.UserData, error) {
 func translateV1Install(nc *v1.NodeConfig, ud *userdata.UserData) {
 
 	ud.Install = &userdata.Install{
-		Wipe:  nc.Machine.Install.Wipe,
-		Force: nc.Machine.Install.Force,
-	}
-
-	if nc.Machine.Install.Boot != nil {
-		ud.Install.Boot = &userdata.BootDevice{
-			InstallDevice: userdata.InstallDevice{
-				Device: nc.Machine.Install.Boot.InstallDisk.Disk,
-				Size:   nc.Machine.Install.Boot.InstallDisk.Size,
-			},
-			Kernel:    nc.Machine.Install.Boot.Kernel,
-			Initramfs: nc.Machine.Install.Boot.Initramfs,
-		}
-	}
-
-	if nc.Machine.Install.Ephemeral != nil {
-		ud.Install.Ephemeral = &userdata.InstallDevice{
-			Device: nc.Machine.Install.Ephemeral.Disk,
-			Size:   nc.Machine.Install.Ephemeral.Size,
-		}
+		Disk:       nc.Machine.Install.Disk,
+		Image:      nc.Machine.Install.Image,
+		Wipe:       nc.Machine.Install.Wipe,
+		Force:      nc.Machine.Install.Force,
+		Bootloader: nc.Machine.Install.Bootloader,
 	}
 
 	if nc.Machine.Install.ExtraDisks != nil {

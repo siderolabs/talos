@@ -42,7 +42,6 @@ func (task *StartServices) loadSystemServices(data *userdata.UserData, mode runt
 	// Start the services common to all nodes.
 	svcs.Load(
 		&services.MachinedAPI{},
-		&services.SystemContainerd{},
 		&services.Containerd{},
 		&services.Networkd{},
 		&services.Udevd{},

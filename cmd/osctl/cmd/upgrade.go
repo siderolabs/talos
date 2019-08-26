@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	assetURL string
-	local    bool
+	image string
+	local bool
 )
 
 // upgradeCmd represents the processes command
@@ -40,7 +40,7 @@ var upgradeCmd = &cobra.Command{
 
 func init() {
 	upgradeCmd.Flags().BoolVarP(&local, "local", "l", false, "operate in local mode")
-	upgradeCmd.Flags().StringVarP(&assetURL, "url", "u", "", "url hosting upgrade assets (excluding filename)")
+	upgradeCmd.Flags().StringVarP(&image, "image", "u", "", "the container image to use for performing the install")
 	upgradeCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(upgradeCmd)
 }
@@ -54,7 +54,7 @@ func remoteUpgrade() error {
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent
 		// starting upgrades to an unknown version
-		ack, err = c.Upgrade(globalCtx, assetURL)
+		ack, err = c.Upgrade(globalCtx, image)
 	})
 
 	if err == nil {

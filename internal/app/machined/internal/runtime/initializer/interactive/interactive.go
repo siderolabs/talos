@@ -57,7 +57,7 @@ func (i *Interactive) Initialize(platform platform.Platform, data *userdata.User
 	}
 
 	cmdline := kernel.NewDefaultCmdline()
-	cmdline.Append("initrd", filepath.Join("/", "default", "initramfs.xz"))
+	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 	cmdline.Append(constants.KernelParamPlatform, strings.ToLower(platform.Name()))
 	cmdline.Append(constants.KernelParamUserData, endpoint)
 

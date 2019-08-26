@@ -10,5 +10,5 @@ import (
 )
 
 func localUpgrade() error {
-	return upgrade.NewUpgrade(assetURL)
+	return upgrade.NewUpgrade(image)
 }

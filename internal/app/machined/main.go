@@ -99,9 +99,12 @@ func main() {
 	// Boot the machine.
 	seq := sequencer.New(sequencer.V1Alpha1)
 
-	if err := seq.Boot(); err != nil {
-		panic(errors.Wrap(err, "boot failed"))
-	}
+	// Start the boot sequence in a go routine so that we can list for events.
+	go func() {
+		if err := seq.Boot(); err != nil {
+			panic(errors.Wrap(err, "boot failed"))
+		}
+	}()
 
 	var rebootFlag = unix.LINUX_REBOOT_CMD_RESTART
 

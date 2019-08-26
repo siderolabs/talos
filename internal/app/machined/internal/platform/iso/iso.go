@@ -31,19 +31,9 @@ func (i *ISO) UserData() (data *userdata.UserData, err error) {
 			},
 		},
 		Install: &userdata.Install{
-			Force: true,
-			Boot: &userdata.BootDevice{
-				Kernel:    "file:///vmlinuz",
-				Initramfs: "file:///initramfs.xz",
-				InstallDevice: userdata.InstallDevice{
-					Device: "/dev/sda",
-					Size:   512 * 1000 * 1000,
-				},
-			},
-			Ephemeral: &userdata.InstallDevice{
-				Device: "/dev/sda",
-				Size:   2048 * 1000 * 1000,
-			},
+			Force:      true,
+			Disk:       "/dev/sda",
+			Bootloader: true,
 		},
 	}
 
