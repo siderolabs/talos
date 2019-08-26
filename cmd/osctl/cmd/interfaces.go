@@ -22,13 +22,14 @@ var interfacesCmd = &cobra.Command{
 	Short: "List network interfaces",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 0 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
 		setupClient(func(c *client.Client) {
-			reply, err := c.Interfaces(globalCtx)
+			var reply *proto.InterfacesReply
+			var err error
+			if len(interfaces) > 0 {
+				reply, err = c.InterfaceStats(globalCtx, interfaces)
+			} else {
+				reply, err = c.Interfaces(globalCtx)
+			}
 			if err != nil {
 				helpers.Fatalf("error getting interfaces: %s", err)
 			}
@@ -46,10 +47,22 @@ func intersRender(reply *proto.InterfacesReply) {
 			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", r.Index, r.Name, r.Hardwareaddr, r.Mtu, addr)
 		}
 	}
+
+	s := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	if len(interfaces) > 0 {
+		for _, r := range reply.Interfaces {
+			fmt.Fprintln(s, "RX PACKETS\tRX BYTES\tRX ERRORS\tRX DROPPED\tTX PACKETS\tTX BYTES\tTX ERRORS\tTX DROPPED")
+			fmt.Fprintf(s, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+				r.Linkstats.RXPackets, r.Linkstats.RXBytes, r.Linkstats.RXErrors, r.Linkstats.RXDropped,
+				r.Linkstats.TXPackets, r.Linkstats.TXBytes, r.Linkstats.TXErrors, r.Linkstats.TXDropped)
+		}
+	}
 	helpers.Should(w.Flush())
+	helpers.Should(s.Flush())
 }
 
 func init() {
+	interfacesCmd.Flags().StringSliceVarP(&interfaces, "interface", "i", []string{}, "list of interface names to display extended interface stats")
 	interfacesCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(interfacesCmd)
 }

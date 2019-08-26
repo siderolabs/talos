@@ -71,6 +71,10 @@ func (suite *NetworkdSuite) TestInterfaces() {
 	resp, err := nClient.Interfaces(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Interfaces), 0)
+
+	resp, err = nClient.InterfaceStats(context.Background(), &proto.InterfaceStatsRequest{Interfaces: []string{"lo"}})
+	suite.Assert().NoError(err)
+	suite.Assert().Equal(1, len(resp.Interfaces))
 }
 
 func (suite *NetworkdSuite) fakeNetworkdRPC() (*grpc.Server, net.Listener) {

@@ -42,3 +42,8 @@ func (c *NetworkdClient) Routes(ctx context.Context, in *empty.Empty) (*proto.Ro
 func (c *NetworkdClient) Interfaces(ctx context.Context, in *empty.Empty) (*proto.InterfacesReply, error) {
 	return c.NetworkdClient.Interfaces(ctx, in)
 }
+
+// InterfaceStats returns additional link stats for the specified interface(s)
+func (c *NetworkdClient) InterfaceStats(ctx context.Context, in *proto.InterfaceStatsRequest) (*proto.InterfacesReply, error) {
+	return c.NetworkdClient.InterfaceStats(ctx, in)
+}

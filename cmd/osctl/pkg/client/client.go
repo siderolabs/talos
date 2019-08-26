@@ -226,6 +226,12 @@ func (c *Client) Interfaces(ctx context.Context) (reply *networkdproto.Interface
 	return
 }
 
+// InterfaceStats implements the proto.OSDClient interface.
+func (c *Client) InterfaceStats(ctx context.Context, ints []string) (reply *networkdproto.InterfacesReply, err error) {
+	reply, err = c.networkdClient.InterfaceStats(ctx, &networkdproto.InterfaceStatsRequest{Interfaces: ints})
+	return
+}
+
 // Top implements the proto.OSDClient interface.
 func (c *Client) Top(ctx context.Context) (pl []proc.ProcessList, err error) {
 	var reply *proto.TopReply

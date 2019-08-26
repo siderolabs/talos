@@ -24,6 +24,7 @@ var (
 	additionalSANs []string
 	csr            string
 	hours          int
+	interfaces     []string
 	ip             string
 	key            string
 	kubernetes     bool
