@@ -1,4 +1,4 @@
-TOOLS ?= autonomy/tools:ea86807
+TOOLS ?= autonomy/tools:a9fa749
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.6.0
