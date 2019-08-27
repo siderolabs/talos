@@ -2375,6 +2375,7 @@ steps:
     path: /tmp
   depends_on:
   - installer
+  - image-azure
 
 - name: image-aws
   image: autonomy/build-container:latest
