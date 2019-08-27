@@ -5,33 +5,33 @@
 package generate
 
 import (
-	v1 "github.com/talos-systems/talos/pkg/userdata/v1"
+	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func controlPlaneUd(in *Input) (string, error) {
 
-	machine := &v1.MachineConfig{
+	machine := &v1alpha1.MachineConfig{
 		Type:  "controlplane",
 		Token: in.TrustdInfo.Token,
-		CA: &v1.MachineCAConfig{
+		CA: &v1alpha1.MachineCAConfig{
 			Crt: in.Certs.OsCert,
 			Key: in.Certs.OsKey,
 		},
-		Kubelet: &v1.KubeletConfig{},
-		Network: &v1.NetworkConfig{},
+		Kubelet: &v1alpha1.KubeletConfig{},
+		Network: &v1alpha1.NetworkConfig{},
 	}
 
-	cluster := &v1.ClusterConfig{
+	cluster := &v1alpha1.ClusterConfig{
 		Token: in.KubeadmTokens.BootstrapToken,
-		ControlPlane: &v1.ControlPlaneConfig{
+		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			IPs:   in.MasterIPs,
 			Index: in.Index,
 		},
 	}
 
-	ud := v1.NodeConfig{
-		Version: "v1",
+	ud := v1alpha1.NodeConfig{
+		Version: "v1alpha1",
 		Machine: machine,
 		Cluster: cluster,
 	}

@@ -5,17 +5,17 @@
 package generate
 
 import (
-	v1 "github.com/talos-systems/talos/pkg/userdata/v1"
+	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func initUd(in *Input) (string, error) {
 
-	machine := &v1.MachineConfig{
+	machine := &v1alpha1.MachineConfig{
 		Type:    "init",
-		Kubelet: &v1.KubeletConfig{},
-		Network: &v1.NetworkConfig{},
-		CA: &v1.MachineCAConfig{
+		Kubelet: &v1alpha1.KubeletConfig{},
+		Network: &v1alpha1.NetworkConfig{},
+		CA: &v1alpha1.MachineCAConfig{
 			Crt: in.Certs.OsCert,
 			Key: in.Certs.OsKey,
 		},
@@ -24,33 +24,33 @@ func initUd(in *Input) (string, error) {
 
 	certSANs := in.GetAPIServerSANs()
 
-	cluster := &v1.ClusterConfig{
+	cluster := &v1alpha1.ClusterConfig{
 		ClusterName: in.ClusterName,
-		ControlPlane: &v1.ControlPlaneConfig{
+		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: in.ControlPlaneEndpoint,
 			IPs:      in.MasterIPs,
 			Index:    in.Index,
 		},
-		APIServer: &v1.APIServerConfig{
+		APIServer: &v1alpha1.APIServerConfig{
 			CertSANs: certSANs,
 		},
-		ControllerManager: &v1.ControllerManagerConfig{},
-		Scheduler:         &v1.SchedulerConfig{},
-		Etcd:              &v1.EtcdConfig{},
-		Network: &v1.ClusterNetworkConfig{
+		ControllerManager: &v1alpha1.ControllerManagerConfig{},
+		Scheduler:         &v1alpha1.SchedulerConfig{},
+		Etcd:              &v1alpha1.EtcdConfig{},
+		Network: &v1alpha1.ClusterNetworkConfig{
 			DNSDomain:     in.ServiceDomain,
 			PodSubnet:     in.PodNet,
 			ServiceSubnet: in.ServiceNet,
 		},
-		CA: &v1.ClusterCAConfig{
+		CA: &v1alpha1.ClusterCAConfig{
 			Crt: in.Certs.K8sCert,
 			Key: in.Certs.K8sKey,
 		},
 		Token: in.KubeadmTokens.BootstrapToken,
 	}
 
-	ud := v1.NodeConfig{
-		Version: "v1",
+	ud := v1alpha1.NodeConfig{
+		Version: "v1alpha1",
 		Machine: machine,
 		Cluster: cluster,
 	}

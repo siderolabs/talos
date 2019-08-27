@@ -32,7 +32,7 @@ func (c *Container) UserData() (data *userdata.UserData, err error) {
 	if decoded, err = base64.StdEncoding.DecodeString(s); err != nil {
 		return nil, err
 	}
-	trans, err := translate.NewTranslator("v1", string(decoded))
+	trans, err := translate.NewTranslator("v1alpha1", string(decoded))
 	if err != nil {
 		return nil, err
 	}
