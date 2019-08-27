@@ -18,8 +18,8 @@ type Translator interface {
 // NewTranslator returns an instance of the translator depending on version
 func NewTranslator(apiVersion string, nodeConfig string) (Translator, error) {
 	switch apiVersion {
-	case "v1":
-		return &V1Translator{nodeConfig: nodeConfig}, nil
+	case "v1alpha1":
+		return &V1Alpha1Translator{nodeConfig: nodeConfig}, nil
 	default:
 		return nil, errors.New("unknown translator")
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
-	v1 "github.com/talos-systems/talos/pkg/userdata/v1"
+	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
@@ -20,23 +20,23 @@ import (
 	kubeadm "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 )
 
-// V1Translator holds info about a v1 machine config translation layer
-type V1Translator struct {
+// V1Alpha1Translator holds info about a v1alpha1 machine config translation layer
+type V1Alpha1Translator struct {
 	nodeConfig string
 }
 
 // Translate takes a v1 NodeConfig and translates it to a UserData struct
-func (tv1 *V1Translator) Translate() (*userdata.UserData, error) {
-	nc := &v1.NodeConfig{}
+func (tv1a1 *V1Alpha1Translator) Translate() (*userdata.UserData, error) {
+	nc := &v1alpha1.NodeConfig{}
 
-	err := yaml.Unmarshal([]byte(tv1.nodeConfig), nc)
+	err := yaml.Unmarshal([]byte(tv1a1.nodeConfig), nc)
 	if err != nil {
 		return nil, err
 	}
 
 	// Lay down the absolute minimum for all node types
 	ud := &userdata.UserData{
-		Version:  "v1",
+		Version:  "v1alpha1",
 		Security: &userdata.Security{},
 		Services: &userdata.Services{
 			Init: &userdata.Init{
@@ -51,32 +51,32 @@ func (tv1 *V1Translator) Translate() (*userdata.UserData, error) {
 	}
 
 	if nc.Machine.Network != nil {
-		translateV1Network(nc, ud)
+		translateV1Alpha1Network(nc, ud)
 	}
 	if nc.Machine.Install != nil {
-		translateV1Install(nc, ud)
+		translateV1Alpha1Install(nc, ud)
 	}
 
 	switch nc.Machine.Type {
 	case "init":
-		err = translateV1Init(nc, ud)
+		err = translateV1Alpha1Init(nc, ud)
 		if err != nil {
 			return nil, err
 		}
 
 	case "controlplane":
-		err = translateV1ControlPlane(nc, ud)
+		err = translateV1Alpha1ControlPlane(nc, ud)
 		if err != nil {
 			return nil, err
 		}
 
 	case "worker":
-		translateV1Worker(nc, ud)
+		translateV1Alpha1Worker(nc, ud)
 	}
 	return ud, nil
 }
 
-func translateV1Network(nc *v1.NodeConfig, ud *userdata.UserData) {
+func translateV1Alpha1Network(nc *v1alpha1.NodeConfig, ud *userdata.UserData) {
 	if ud.Networking == nil {
 		ud.Networking = &userdata.Networking{}
 	}
@@ -115,7 +115,7 @@ func translateV1Network(nc *v1.NodeConfig, ud *userdata.UserData) {
 
 }
 
-func translateV1Install(nc *v1.NodeConfig, ud *userdata.UserData) {
+func translateV1Alpha1Install(nc *v1alpha1.NodeConfig, ud *userdata.UserData) {
 
 	ud.Install = &userdata.Install{
 		Disk:       nc.Machine.Install.Disk,
@@ -149,7 +149,7 @@ func translateV1Install(nc *v1.NodeConfig, ud *userdata.UserData) {
 	}
 }
 
-func translateV1Init(nc *v1.NodeConfig, ud *userdata.UserData) error {
+func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error {
 	// Convert and decode certs back to byte slices
 	osCert, err := base64.StdEncoding.DecodeString(nc.Machine.CA.Crt)
 	if err != nil {
@@ -268,7 +268,7 @@ func translateV1Init(nc *v1.NodeConfig, ud *userdata.UserData) error {
 	return nil
 }
 
-func translateV1ControlPlane(nc *v1.NodeConfig, ud *userdata.UserData) error {
+func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error {
 	// Convert and decode certs back to byte slices
 	osCert, err := base64.StdEncoding.DecodeString(nc.Machine.CA.Crt)
 	if err != nil {
@@ -313,7 +313,7 @@ func translateV1ControlPlane(nc *v1.NodeConfig, ud *userdata.UserData) error {
 	return nil
 }
 
-func translateV1Worker(nc *v1.NodeConfig, ud *userdata.UserData) {
+func translateV1Alpha1Worker(nc *v1alpha1.NodeConfig, ud *userdata.UserData) {
 	//Craft a worker kubeadm config
 	workerConfig := &kubeadm.JoinConfiguration{
 		TypeMeta: metav1.TypeMeta{

@@ -19,19 +19,19 @@ func TestTranslatorSuite(t *testing.T) {
 }
 
 func (suite *translatorSuite) TestTranslation() {
-	tv1, err := NewTranslator("v1", testV1Config)
+	tv1a1, err := NewTranslator("v1alpha1", testV1Alpha1Config)
 	suite.Require().NoError(err)
 
-	ud, err := tv1.Translate()
+	ud, err := tv1a1.Translate()
 	suite.Require().NoError(err)
 
-	suite.Assert().Equal(string(ud.Version), "v1")
+	suite.Assert().Equal(string(ud.Version), "v1alpha1")
 	err = ud.Validate()
 	suite.Require().NoError(err)
 }
 
 // nolint: lll
-const testV1Config = `version: v1
+const testV1Alpha1Config = `version: v1alpha1
 machine:
   type: init
   token: 57dn7x.k5jc6dum97cotlqb

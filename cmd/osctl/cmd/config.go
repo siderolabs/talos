@@ -20,7 +20,7 @@ import (
 	udv0 "github.com/talos-systems/talos/pkg/userdata"
 	udgenv0 "github.com/talos-systems/talos/pkg/userdata/generate"
 	"github.com/talos-systems/talos/pkg/userdata/translate"
-	udgenv1 "github.com/talos-systems/talos/pkg/userdata/v1/generate"
+	udgenv1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
 
 	"gopkg.in/yaml.v2"
 )
@@ -135,8 +135,8 @@ var configGenerateCmd = &cobra.Command{
 		switch genVersion {
 		case "v0":
 			genV0Userdata(args)
-		case "v1":
-			genV1Userdata(args)
+		case "v1alpha1":
+			genV1Alpha1Userdata(args)
 		}
 	},
 }
@@ -205,8 +205,8 @@ func writeV0Userdata(input *udgenv0.Input, t udgenv0.Type, name string) (err err
 	return nil
 }
 
-func genV1Userdata(args []string) {
-	input, err := udgenv1.NewInput(args[0], strings.Split(args[1], ","))
+func genV1Alpha1Userdata(args []string) {
+	input, err := udgenv1alpha1.NewInput(args[0], strings.Split(args[1], ","))
 	if err != nil {
 		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
@@ -218,29 +218,29 @@ func genV1Userdata(args []string) {
 		helpers.Fatalf("failed to fetch current working dir: %v", err)
 	}
 
-	var udType udgenv1.Type
+	var udType udgenv1alpha1.Type
 	for idx, master := range strings.Split(args[1], ",") {
 		input.Index = idx
 		input.IP = net.ParseIP(master)
 		if input.Index == 0 {
-			udType = udgenv1.TypeInit
+			udType = udgenv1alpha1.TypeInit
 		} else {
-			udType = udgenv1.TypeControlPlane
+			udType = udgenv1alpha1.TypeControlPlane
 		}
 
-		if err = writeV1Userdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
+		if err = writeV1Alpha1Userdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
 			helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 		}
 		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 	}
 	input.IP = nil
 
-	if err = writeV1Userdata(input, udgenv1.TypeJoin, "worker"); err != nil {
+	if err = writeV1Alpha1Userdata(input, udgenv1alpha1.TypeJoin, "worker"); err != nil {
 		helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
 	}
 	fmt.Println("created file", workingDir+"/worker.yaml")
 
-	data, err := udgenv1.Talosconfig(input)
+	data, err := udgenv1alpha1.Talosconfig(input)
 	if err != nil {
 		helpers.Fatalf("failed to generate talosconfig: %v", err)
 	}
@@ -250,14 +250,14 @@ func genV1Userdata(args []string) {
 	fmt.Println("created file", workingDir+"/talosconfig")
 }
 
-func writeV1Userdata(input *udgenv1.Input, t udgenv1.Type, name string) (err error) {
+func writeV1Alpha1Userdata(input *udgenv1alpha1.Input, t udgenv1alpha1.Type, name string) (err error) {
 	var data string
-	data, err = udgenv1.Userdata(t, input)
+	data, err = udgenv1alpha1.Userdata(t, input)
 	if err != nil {
 		return err
 	}
 
-	trans, err := translate.NewTranslator("v1", data)
+	trans, err := translate.NewTranslator("v1alpha1", data)
 	if err != nil {
 		return err
 	}

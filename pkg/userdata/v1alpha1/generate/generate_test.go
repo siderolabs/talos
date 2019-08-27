@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	v1 "github.com/talos-systems/talos/pkg/userdata/v1"
-	udgenv1 "github.com/talos-systems/talos/pkg/userdata/v1/generate"
+	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
+	udgenv1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
 	"gopkg.in/yaml.v2"
 )
 
 var (
-	input *udgenv1.Input
+	input *udgenv1alpha1.Input
 )
 
 type GenerateSuite struct {
@@ -28,37 +28,37 @@ func TestGenerateSuite(t *testing.T) {
 
 func (suite *GenerateSuite) SetupSuite() {
 	var err error
-	input, err = udgenv1.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"})
+	input, err = udgenv1alpha1.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"})
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	input.IP = net.ParseIP("10.0.1.5")
-	dataString, err := udgenv1.Userdata(udgenv1.TypeInit, input)
+	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeInit, input)
 	suite.Require().NoError(err)
-	data := &v1.NodeConfig{}
+	data := &v1alpha1.NodeConfig{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	input.IP = net.ParseIP("10.0.1.6")
-	dataString, err := udgenv1.Userdata(udgenv1.TypeControlPlane, input)
+	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeControlPlane, input)
 	suite.Require().NoError(err)
-	data := &v1.NodeConfig{}
+	data := &v1alpha1.NodeConfig{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
-	dataString, err := udgenv1.Userdata(udgenv1.TypeJoin, input)
+	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeJoin, input)
 	suite.Require().NoError(err)
-	data := &v1.NodeConfig{}
+	data := &v1alpha1.NodeConfig{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
-	_, err := udgenv1.Talosconfig(input)
+	_, err := udgenv1alpha1.Talosconfig(input)
 	suite.Require().NoError(err)
 }

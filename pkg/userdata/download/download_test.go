@@ -49,7 +49,7 @@ func (suite *downloadSuite) TestV0Download() {
 }
 
 // nolint: dupl
-func (suite *downloadSuite) TestV1Download() {
+func (suite *downloadSuite) TestV1Alpha1Download() {
 	// Disable logging for test
 	log.SetOutput(ioutil.Discard)
 	ts := testUDServer()
@@ -57,14 +57,14 @@ func (suite *downloadSuite) TestV1Download() {
 
 	var err error
 
-	_, err = Download(ts.URL, WithMaxWait(0.1), WithHeaders(map[string]string{"configVersion": "v1"}))
+	_, err = Download(ts.URL, WithMaxWait(0.1), WithHeaders(map[string]string{"configVersion": "v1alpha1"}))
 	suite.Require().NoError(err)
 
 	_, err = Download(
 		ts.URL,
 		WithFormat(b64),
 		WithRetries(1),
-		WithHeaders(map[string]string{"Metadata": "true", "format": b64, "configVersion": "v1"}),
+		WithHeaders(map[string]string{"Metadata": "true", "format": b64, "configVersion": "v1alpha1"}),
 	)
 	suite.Require().NoError(err)
 	log.SetOutput(os.Stderr)
@@ -74,8 +74,8 @@ func testUDServer() *httptest.Server {
 	var count int
 
 	testMap := map[string]string{
-		"v0": testV0Config,
-		"v1": testV1Config,
+		"v0":       testV0Config,
+		"v1alpha1": testV1Alpha1Config,
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +98,7 @@ func testUDServer() *httptest.Server {
 }
 
 // nolint: lll
-const testV1Config = `version: v1
+const testV1Alpha1Config = `version: v1alpha1
 machine:
   type: init
   token: 57dn7x.k5jc6dum97cotlqb

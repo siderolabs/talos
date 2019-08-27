@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Package v1 provides user-facing v1 machine configs
+// Package v1alpha1 provides user-facing v1alpha1 machine configs
 // nolint: dupl
-package v1
+package v1alpha1
 
 import "errors"
 
