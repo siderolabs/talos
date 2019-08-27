@@ -220,9 +220,7 @@ func translateV1Init(nc *v1.NodeConfig, ud *userdata.UserData) error {
 			Kind:       "KubeletConfiguration",
 			APIVersion: "kubelet.config.k8s.io/v1beta1",
 		},
-		FeatureGates: map[string]bool{
-			"ExperimentalCriticalPodAnnotation": true,
-		},
+		FeatureGates: map[string]bool{},
 	}
 
 	proxyConfig := &kubeproxyconfig.KubeProxyConfiguration{

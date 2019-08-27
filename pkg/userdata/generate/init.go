@@ -41,14 +41,14 @@ services:
         certSANs: [ {{ range $i,$addr := .GetAPIServerSANs }}{{if $i}},{{end}}"{{$addr}}"{{end}} ]
         extraArgs:
           runtime-config: settings.k8s.io/v1alpha1=true
-          feature-gates: ExperimentalCriticalPodAnnotation=true
+          feature-gates: ""
       controllerManager:
         extraArgs:
           terminated-pod-gc-threshold: '100'
-          feature-gates: ExperimentalCriticalPodAnnotation=true
+          feature-gates: ""
       scheduler:
         extraArgs:
-          feature-gates: ExperimentalCriticalPodAnnotation=true
+          feature-gates: ""
       networking:
         dnsDomain: {{ .ServiceDomain }}
         podSubnet: "{{ index .PodNet 0 }}"
@@ -56,8 +56,7 @@ services:
       ---
       apiVersion: kubelet.config.k8s.io/v1beta1
       kind: KubeletConfiguration
-      featureGates:
-        ExperimentalCriticalPodAnnotation: true
+      featureGates: {}
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
       kind: KubeProxyConfiguration
