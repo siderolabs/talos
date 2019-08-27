@@ -1,3 +1,39 @@
+# [v0.2.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.6...v0.2.0-alpha.7) (2019-08-27)
+
+
+### Bug Fixes
+
+* **gpt:** Fix partition naming to be >8 characters ([6745e6b](https://github.com/talos-systems/talos/commit/6745e6b))
+* **machined:** Remove host mounts for specific CNI providers ([ec0f188](https://github.com/talos-systems/talos/commit/ec0f188))
+* enclose target in quotes ([cb12107](https://github.com/talos-systems/talos/commit/cb12107)), closes [#1049](https://github.com/talos-systems/talos/issues/1049)
+* name the serde functions appropriately ([1c7e86c](https://github.com/talos-systems/talos/commit/1c7e86c))
+* verify installation definition ([6940aaf](https://github.com/talos-systems/talos/commit/6940aaf))
+
+
+### Features
+
+* add ability to pass data on event bus ([43e2021](https://github.com/talos-systems/talos/commit/43e2021))
+* Add gRPC server for ntp ([76a9c15](https://github.com/talos-systems/talos/commit/76a9c15))
+* add overlay task ([be8f58c](https://github.com/talos-systems/talos/commit/be8f58c))
+* add sequencer interface ([9eaa2d8](https://github.com/talos-systems/talos/commit/9eaa2d8))
+* add standardized command runner ([e305aca](https://github.com/talos-systems/talos/commit/e305aca))
+* Allow hostname to be specified in userdata ([249acda](https://github.com/talos-systems/talos/commit/249acda))
+* allow specification of additional API SANs ([7b217c7](https://github.com/talos-systems/talos/commit/7b217c7)), closes [#800](https://github.com/talos-systems/talos/issues/800)
+* generate and use v1 machine configs ([f85750c](https://github.com/talos-systems/talos/commit/f85750c))
+* mount /sys/fs/bpf ([2e65cff](https://github.com/talos-systems/talos/commit/2e65cff))
+* perform upgrades via container ([0bdaff1](https://github.com/talos-systems/talos/commit/0bdaff1))
+* rename DATA partition to EPHEMERAL ([a116145](https://github.com/talos-systems/talos/commit/a116145))
+* run dedicated instance of containerd for system services ([794c723](https://github.com/talos-systems/talos/commit/794c723))
+* run installs via container ([d4770d4](https://github.com/talos-systems/talos/commit/d4770d4))
+* upgrade kubernetes to v1.16.0-beta.1 ([739e232](https://github.com/talos-systems/talos/commit/739e232))
+* upgrade Linux to v5.2.8 ([582298a](https://github.com/talos-systems/talos/commit/582298a))
+* use BLKPG ioctl for partition events ([1eb0287](https://github.com/talos-systems/talos/commit/1eb0287))
+* **networkd:** Add grpc endpoint ([692571b](https://github.com/talos-systems/talos/commit/692571b))
+* **osd:** Add ntpd client ([d36007f](https://github.com/talos-systems/talos/commit/d36007f))
+* **proxyd:** Add gRPC server ([70a4788](https://github.com/talos-systems/talos/commit/70a4788))
+
+
+
 # [v0.2.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.5...v0.2.0-alpha.6) (2019-08-12)
 
 
