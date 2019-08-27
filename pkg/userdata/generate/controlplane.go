@@ -33,7 +33,7 @@ services:
         taints: []
         kubeletExtraArgs:
           node-labels: ""
-          feature-gates: ExperimentalCriticalPodAnnotation=true
+          feature-gates: ""
   trustd:
     token: '{{ .TrustdInfo.Token }}'
     endpoints: [ {{ .Endpoints }} ]
