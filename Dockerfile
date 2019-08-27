@@ -13,6 +13,7 @@ RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.16.0
+RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 
 # The build target creates a container that will be used to build Talos source
 # code.
@@ -316,6 +317,12 @@ RUN --mount=type=cache,target=/.cache/go-build go test -v -race ${TESTPKGS}
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
 RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
+
+# The protolint target performs linting on Markdown files.
+
+FROM base AS protolint
+COPY prototool.yaml /src
+RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include .
 
 # The markdownlint target performs linting on Markdown files.
 
