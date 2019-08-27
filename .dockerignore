@@ -10,3 +10,4 @@
 !.markdownlint.json
 !go.mod
 !go.sum
+!prototool.yaml

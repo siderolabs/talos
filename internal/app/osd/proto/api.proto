@@ -1,7 +1,11 @@
-
 syntax = "proto3";
 
 package proto;
+
+option go_package = "proto";
+option java_multiple_files = true;
+option java_outer_classname = "ApiProto";
+option java_package = "com.proto";
 
 import "google/protobuf/empty.proto";
 
@@ -9,14 +13,14 @@ import "google/protobuf/empty.proto";
 //
 // OSD Service also implements all the API of Init Service
 service OSD {
-  rpc Dmesg(google.protobuf.Empty) returns (Data) {}
-  rpc Kubeconfig(google.protobuf.Empty) returns (Data) {}
-  rpc Logs(LogsRequest) returns (stream Data) {}
-  rpc Processes(ProcessesRequest) returns (ProcessesReply) {}
-  rpc Restart(RestartRequest) returns (RestartReply) {}
-  rpc Stats(StatsRequest) returns (StatsReply) {}
-  rpc Top(google.protobuf.Empty) returns (TopReply) {}
-  rpc Version(google.protobuf.Empty) returns (Data) {}
+  rpc Dmesg(google.protobuf.Empty) returns (Data);
+  rpc Kubeconfig(google.protobuf.Empty) returns (Data);
+  rpc Logs(LogsRequest) returns (stream Data);
+  rpc Processes(ProcessesRequest) returns (ProcessesReply);
+  rpc Restart(RestartRequest) returns (RestartReply);
+  rpc Stats(StatsRequest) returns (StatsReply);
+  rpc Top(google.protobuf.Empty) returns (TopReply);
+  rpc Version(google.protobuf.Empty) returns (Data);
 }
 
 enum ContainerDriver {
@@ -32,7 +36,9 @@ message ProcessesRequest {
 }
 
 // The response message containing the requested processes.
-message ProcessesReply { repeated Process processes = 1; }
+message ProcessesReply {
+  repeated Process processes = 1;
+}
 
 // The response message containing the requested processes.
 message Process {
@@ -53,7 +59,9 @@ message StatsRequest {
 }
 
 // The response message containing the requested stats.
-message StatsReply { repeated Stat stats = 1; }
+message StatsReply {
+  repeated Stat stats = 1;
+}
 
 // The response message containing the requested stat.
 message Stat {
@@ -85,10 +93,16 @@ message LogsRequest {
 }
 
 // The response message containing the requested logs.
-message Data { bytes bytes = 1; }
+message Data {
+  bytes bytes = 1;
+}
 
 message TopRequest {}
 
-message TopReply { ProcessList process_list = 1; }
+message TopReply {
+  ProcessList process_list = 1;
+}
 
-message ProcessList { bytes bytes = 1; }
+message ProcessList {
+  bytes bytes = 1;
+}
