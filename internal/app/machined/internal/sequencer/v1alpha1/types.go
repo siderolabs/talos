@@ -148,6 +148,7 @@ func (d *Sequencer) Upgrade(req *proto.UpgradeRequest) error {
 		phase.NewPhase(
 			"cordon and drain node",
 			kubernetes.NewCordonAndDrainTask(),
+			upgrade.NewLeaveEtcdTask(),
 		),
 		phase.NewPhase(
 			"stop services",
