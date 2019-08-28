@@ -30,6 +30,7 @@ import (
 
 var (
 	clusterName   string
+	nodeImage     string
 	networkMTU    string
 	workers       int
 	masters       int
@@ -90,7 +91,7 @@ func create() (err error) {
 
 	// Ensure the image is present.
 
-	if err = ensureImageExists(ctx, cli, image); err != nil {
+	if err = ensureImageExists(ctx, cli, nodeImage); err != nil {
 		return err
 	}
 
@@ -122,7 +123,7 @@ func create() (err error) {
 	for i := range requests {
 		requests[i] = &node.Request{
 			Input:    *input,
-			Image:    image,
+			Image:    nodeImage,
 			Name:     fmt.Sprintf("master-%d", i+1),
 			IP:       net.ParseIP(ips[i]),
 			Memory:   memory,
@@ -147,7 +148,7 @@ func create() (err error) {
 		r := &node.Request{
 			Type:     generate.TypeJoin,
 			Input:    *input,
-			Image:    image,
+			Image:    nodeImage,
 			Name:     fmt.Sprintf("worker-%d", i),
 			Memory:   memory,
 			NanoCPUs: nanoCPUs,
@@ -354,7 +355,7 @@ func parseCPUShare() (int64, error) {
 }
 
 func init() {
-	clusterUpCmd.Flags().StringVar(&image, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
+	clusterUpCmd.Flags().StringVar(&nodeImage, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterUpCmd.Flags().IntVar(&masters, "masters", 3, "the number of masters to create")

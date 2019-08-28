@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	image string
+	upgradeImage string
 )
 
 // upgradeCmd represents the processes command
@@ -31,7 +31,7 @@ var upgradeCmd = &cobra.Command{
 }
 
 func init() {
-	upgradeCmd.Flags().StringVarP(&image, "image", "u", "", "the container image to use for performing the install")
+	upgradeCmd.Flags().StringVarP(&upgradeImage, "image", "u", "", "the container image to use for performing the install")
 	rootCmd.AddCommand(upgradeCmd)
 }
 
@@ -44,7 +44,7 @@ func upgrade() error {
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent starting upgrades to
 		// an unknown version
-		ack, err = c.Upgrade(globalCtx, image)
+		ack, err = c.Upgrade(globalCtx, upgradeImage)
 	})
 
 	if err == nil {
