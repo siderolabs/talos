@@ -5,7 +5,18 @@ set -eou pipefail
 STORAGE_ACCOUNT=talostesting
 STORAGE_CONTAINER=talostesting
 GROUP=talos
-TMP=/tmp/e2e/azure
+TMP=/tmp/e2e
+
+azcli_run() {
+	docker run \
+	 	--rm \
+		--interactive \
+		--entrypoint=bash \
+		--mount type=bind,source=${TMP},target=${TMP} \
+	 	mcr.microsoft.com/azure-cli -c "az login --service-principal --username ${CLIENT_ID} \
+		                                --password ${CLIENT_SECRET} --tenant ${TENANT_ID} > /dev/null && \
+										${1}"
+}
 
 ## Setup svc acct vars
 mkdir -p ${TMP}
@@ -17,17 +28,11 @@ TENANT_ID="$( cat ${TMP}/svc-acct.json | jq -r '.tenantId' )"
 ## Untar image
 tar -C ${TMP} -xf ./build/azure.tar.gz
 
-## Login to azure
-az login --service-principal --username ${CLIENT_ID} --password ${CLIENT_SECRET} --tenant ${TENANT_ID} > /dev/null
+## Login to azure, push blob, create image from blob
+AZURE_STORAGE_CONNECTION_STRING=$( azcli_run "az storage account show-connection-string -n ${STORAGE_ACCOUNT} -g ${GROUP} -o tsv" )
 
-## Get connection string
-AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n ${STORAGE_ACCOUNT} -g ${GROUP} -o tsv)
+azcli_run "AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}' az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure-${TAG}.vhd"
 
-## Push blob
-AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}' az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure-${TAG}.vhd
+azcli_run "az image delete --name talos-e2e-${TAG} -g ${GROUP}"
 
-## Delete image
-az image delete --name talos-e2e-${TAG} -g ${GROUP}
-
-## Create image
-az image create --name talos-e2e-${TAG} --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${GROUP}
+azcli_run "az image create --name talos-e2e-${TAG} --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${GROUP}"
