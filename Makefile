@@ -201,6 +201,7 @@ image-gcp:
 		-p gcp \
 		-u none
 	@tar -C $(PWD)/build -czf $(PWD)/build/gcp.tar.gz disk.raw
+	@rm -rf $(PWD)/build/disk.raw
 
 .PHONY: push-image-gcp
 push-image-gcp:
