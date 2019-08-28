@@ -29,7 +29,7 @@ type Upgrade struct {
 func NewUpgradeTask(devname string, req *proto.UpgradeRequest) phase.Task {
 	return &Upgrade{
 		devname: devname,
-		ref:     req.Url,
+		ref:     req.Image,
 	}
 }
 
