@@ -34,7 +34,7 @@ message ResetReply {}
 message ShutdownReply {}
 
 message UpgradeRequest {
-  string url = 1;
+  string image = 1;
 }
 
 message UpgradeReply {

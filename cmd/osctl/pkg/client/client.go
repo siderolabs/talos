@@ -298,8 +298,8 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-cha
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSDClient
 // interface
-func (c *Client) Upgrade(ctx context.Context, asseturl string) (string, error) {
-	reply, err := c.initClient.Upgrade(ctx, &initproto.UpgradeRequest{Url: asseturl})
+func (c *Client) Upgrade(ctx context.Context, image string) (string, error) {
+	reply, err := c.initClient.Upgrade(ctx, &initproto.UpgradeRequest{Image: image})
 	if err != nil {
 		return "", err
 	}
