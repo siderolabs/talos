@@ -23,7 +23,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/proto"
-	"github.com/talos-systems/talos/internal/pkg/upgrade"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -83,11 +82,6 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
 	// Stop the kubelet.
 	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
-		return data, err
-	}
-
-	// Run `kubeadm reset`.
-	if err = upgrade.Reset(); err != nil {
 		return data, err
 	}
 

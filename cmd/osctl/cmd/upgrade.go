@@ -15,7 +15,6 @@ import (
 
 var (
 	image string
-	local bool
 )
 
 // upgradeCmd represents the processes command
@@ -25,35 +24,27 @@ var upgradeCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if local {
-			if err = localUpgrade(); err != nil {
-				helpers.Fatalf("error upgrading host: %s", err)
-			}
-		} else {
-			if err = remoteUpgrade(); err != nil {
-				helpers.Fatalf("error upgrading host: %s", err)
-			}
+		if err = upgrade(); err != nil {
+			helpers.Fatalf("error upgrading host: %s", err)
 		}
-
 	},
 }
 
 func init() {
-	upgradeCmd.Flags().BoolVarP(&local, "local", "l", false, "operate in local mode")
 	upgradeCmd.Flags().StringVarP(&image, "image", "u", "", "the container image to use for performing the install")
 	upgradeCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(upgradeCmd)
 }
 
-func remoteUpgrade() error {
+func upgrade() error {
 	var (
 		err error
 		ack string
 	)
 
 	setupClient(func(c *client.Client) {
-		// TODO: See if we can validate version and prevent
-		// starting upgrades to an unknown version
+		// TODO: See if we can validate version and prevent starting upgrades to
+		// an unknown version
 		ack, err = c.Upgrade(globalCtx, image)
 	})
 
