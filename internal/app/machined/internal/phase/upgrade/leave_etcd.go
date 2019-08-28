@@ -7,17 +7,43 @@ package upgrade
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
+	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
+	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/userdata"
 
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 )
 
-// LeaveEtcd removes a member of etcd.
-func LeaveEtcd(hostname string) (err error) {
+// LeaveEtcd represents the task for removing a control plane node from etcd.
+type LeaveEtcd struct{}
+
+// NewLeaveEtcdTask initializes and returns a LeaveEtcd task.
+func NewLeaveEtcdTask() phase.Task {
+	return &LeaveEtcd{}
+}
+
+// RuntimeFunc returns the runtime function.
+func (task *LeaveEtcd) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+	return func(platform platform.Platform, data *userdata.UserData) error {
+		return task.standard(data)
+	}
+}
+
+func (task *LeaveEtcd) standard(data *userdata.UserData) (err error) {
+	if data.Services.Kubeadm.IsWorker() {
+		return nil
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
 	tlsInfo := transport.TLSInfo{
 		CertFile:      constants.KubeadmEtcdPeerCert,
 		KeyFile:       constants.KubeadmEtcdPeerKey,
@@ -58,6 +84,5 @@ func LeaveEtcd(hostname string) (err error) {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
