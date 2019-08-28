@@ -60,7 +60,6 @@ var timeCmd = &cobra.Command{
 }
 
 func init() {
-	timeCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	timeCmd.Flags().StringP("check", "c", "pool.ntp.org", "checks server time against specified ntp server")
 	rootCmd.AddCommand(timeCmd)
 }

@@ -57,6 +57,5 @@ func dfRender(reply *proto.DFReply, err error) {
 }
 
 func init() {
-	dfCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(dfCmd)
 }

@@ -91,6 +91,7 @@ func Execute() {
 		defaultTalosConfig = path.Join(home, ".talos", "config")
 	}
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
+	rootCmd.PersistentFlags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	if err := rootCmd.Execute(); err != nil {
 		helpers.Fatalf("%s", err)
 	}

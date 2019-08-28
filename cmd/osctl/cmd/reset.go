@@ -33,6 +33,5 @@ var resetCmd = &cobra.Command{
 }
 
 func init() {
-	resetCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(resetCmd)
 }
