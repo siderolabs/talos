@@ -234,21 +234,6 @@ services:
       ...
 ```
 
-#### InitToken
-
-kubeadm.Inittoken denotes that this node should bootstrap the Kubernetes cluster.
-The token is a UUIDv1 token which means it includes a timestamp of when it was generated.
-There is a 1 hour TTL associated with this token where it will perform a `kubeadm init` to bootstrap the cluster.
-This token is a UUIDv1 token and can be generated via `osctl gen token`.
-
-This token should only be specified on a single master node.
-
-```yaml
-services:
-  kubeadm:
-    initToken: d4171920-80f1-11e9-aeb1-acde48001122
-```
-
 ### Trustd
 
 #### Token

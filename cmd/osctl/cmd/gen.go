@@ -7,7 +7,6 @@ package cmd
 import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"path"
@@ -17,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/userdata/token"
 )
 
 // genCmd represents the gen command
@@ -188,20 +186,6 @@ var keypairCmd = &cobra.Command{
 	},
 }
 
-// inittoken represents the gen token command
-var inittokenCmd = &cobra.Command{
-	Use:   "token",
-	Short: "Generates a UUIDv1 token",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		initToken, err := token.NewToken()
-		if err != nil {
-			helpers.Fatalf("Failed to generate new init token: %s", err)
-		}
-		fmt.Println(initToken.String())
-	},
-}
-
 func init() {
 	// Certificate Authorities
 	caCmd.Flags().StringVar(&organization, "organization", "", "X.509 distinguished name for the Organization")
@@ -229,6 +213,6 @@ func init() {
 	csrCmd.Flags().StringVar(&ip, "ip", "", "generate the certificate for this IP address")
 	helpers.Should(cobra.MarkFlagRequired(csrCmd.Flags(), "ip"))
 
-	genCmd.AddCommand(caCmd, keypairCmd, keyCmd, csrCmd, crtCmd, inittokenCmd)
+	genCmd.AddCommand(caCmd, keypairCmd, keyCmd, csrCmd, crtCmd)
 	rootCmd.AddCommand(genCmd)
 }

@@ -143,7 +143,6 @@ func translateV1Init(nc *v1.NodeConfig, ud *userdata.UserData) error {
 
 	ud.Services.Trustd.CertSANs = []string{nc.Cluster.ControlPlane.IPs[nc.Cluster.ControlPlane.Index], "127.0.0.1", "::1"}
 
-	ud.Services.Kubeadm.Token = nc.Cluster.InitToken
 	ud.Services.Kubeadm.ControlPlane = true
 
 	kubeadmToken := strings.Split(nc.Cluster.Token, ".")

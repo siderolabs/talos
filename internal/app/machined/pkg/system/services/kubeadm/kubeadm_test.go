@@ -145,7 +145,6 @@ services:
   init:
     cni: flannel
   kubeadm:
-    initToken: d306cd08-a02e-11e9-ae96-acde48001122
     certificateKey: 'dnwrwn05vd2lyghvflnk93nwie'
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta2
