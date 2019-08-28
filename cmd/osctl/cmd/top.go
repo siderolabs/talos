@@ -190,7 +190,7 @@ func topOutput(ctx context.Context, c *client.Client) (output string, err error)
 	}
 
 	s := make([]string, 0, len(procs))
-	s = append(s, "PID | State | Threads | CPU Time | VirtMem | ResMem | Command")
+	s = append(s, "PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | COMMAND")
 	var cmdline string
 	for _, p := range procs {
 		switch {
