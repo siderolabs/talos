@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
+PLATFORM=""
+
 source ./hack/test/e2e-runner.sh
 
 ## Create tmp dir
@@ -16,7 +18,7 @@ e2e_run "kubectl apply -f ${TMP}/provider-components.yaml -f ${TMP}/capi-secrets
 ## Wait for talosconfig in cm then dump it out
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
          pod='pod/cluster-api-provider-talos-controller-manager-0'
-         until KUBECONFIG=${TMP}/kubeconfig kubectl wait --timeout=1s --for=condition=Ready -n ${CAPI_NS} ${pod}; do
+         until KUBECONFIG=${TMP}/kubeconfig kubectl wait --timeout=1s --for=condition=Ready -n ${CAPI_NS} \${pod}; do
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            echo 'Waiting to CAPT pod to be available...'
            sleep 10
