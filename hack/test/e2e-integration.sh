@@ -10,10 +10,10 @@ NAME_PREFIX="talos-e2e-${TAG}-${PLATFORM}"
 
 ## Cleanup the platform resources upon any exit
 cleanup() {
- e2e_run "kubectl delete machine ${NAME_PREFIX}-master-0 ${NAME_PREFIX}-master-1 ${NAME_PREFIX}-master-2
-          kubectl scale machinedeployment ${NAME_PREFIX}-workers --replicas=0
-          kubectl delete machinedeployment ${NAME_PREFIX}-workers
-          kubectl delete cluster ${NAME_PREFIX}"
+  e2e_run "KUBECONFIG=${TMP}/kubeconfig kubectl delete machine ${NAME_PREFIX}-master-0 ${NAME_PREFIX}-master-1 ${NAME_PREFIX}-master-2
+           KUBECONFIG=${TMP}/kubeconfig kubectl scale machinedeployment ${NAME_PREFIX}-workers --replicas=0
+           KUBECONFIG=${TMP}/kubeconfig kubectl delete machinedeployment ${NAME_PREFIX}-workers
+           KUBECONFIG=${TMP}/kubeconfig kubectl delete cluster ${NAME_PREFIX}"
 }
 
 trap cleanup EXIT
@@ -22,7 +22,7 @@ trap cleanup EXIT
 sed "s/{{TAG}}/${TAG}/" ${PWD}/hack/test/manifests/${PLATFORM}-cluster.yaml > ${TMPPLATFORM}/cluster.yaml
 
 ## Download kustomize and template out capi cluster, then deploy it
-e2e_run "kubectl apply -f ${TMPPLATFORM}/cluster.yaml"
+e2e_run "KUBECONFIG=${TMP}/kubeconfig kubectl apply -f ${TMPPLATFORM}/cluster.yaml"
 
 ## Wait for talosconfig in cm then dump it out
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -30,7 +30,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            sleep 10
          done
-         kubectl get cm -n ${CAPI_NS} ${NAME_PREFIX}-master-0 -o jsonpath='{.data.talosconfig}' > ${TALOSCONFIG}"
+         KUBECONFIG=${TMP}/kubeconfig kubectl get cm -n ${CAPI_NS} ${NAME_PREFIX}-master-0 -o jsonpath='{.data.talosconfig}' > ${TALOSCONFIG}"
 
 ## Wait for kubeconfig from capi master-0
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
