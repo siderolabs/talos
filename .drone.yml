@@ -14,6 +14,10 @@ steps:
   pull: always
   image: autonomy/drone-git:latest
 
+- name: pull-latest-build-container
+  pull: always
+  image: autonomy/build-container:latest
+
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -30,6 +34,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osd
   image: autonomy/build-container:latest
@@ -47,6 +52,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: trustd
   image: autonomy/build-container:latest
@@ -64,6 +70,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: proxyd
   image: autonomy/build-container:latest
@@ -81,6 +88,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: ntpd
   image: autonomy/build-container:latest
@@ -98,6 +106,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: networkd
   image: autonomy/build-container:latest
@@ -115,6 +124,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-linux
   image: autonomy/build-container:latest
@@ -132,6 +142,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-darwin
   image: autonomy/build-container:latest
@@ -149,6 +160,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: rootfs
   image: autonomy/build-container:latest
@@ -239,6 +251,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: protolint
   image: autonomy/build-container:latest
@@ -256,6 +269,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -273,6 +287,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: image-test
   image: autonomy/build-container:latest
@@ -340,7 +355,6 @@ steps:
   - osctl-linux
 
 - name: push
-  pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
@@ -422,6 +436,10 @@ steps:
   pull: always
   image: autonomy/drone-git:latest
 
+- name: pull-latest-build-container
+  pull: always
+  image: autonomy/build-container:latest
+
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -438,6 +456,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osd
   image: autonomy/build-container:latest
@@ -455,6 +474,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: trustd
   image: autonomy/build-container:latest
@@ -472,6 +492,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: proxyd
   image: autonomy/build-container:latest
@@ -489,6 +510,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: ntpd
   image: autonomy/build-container:latest
@@ -506,6 +528,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: networkd
   image: autonomy/build-container:latest
@@ -523,6 +546,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-linux
   image: autonomy/build-container:latest
@@ -540,6 +564,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-darwin
   image: autonomy/build-container:latest
@@ -557,6 +582,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: rootfs
   image: autonomy/build-container:latest
@@ -647,6 +673,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: protolint
   image: autonomy/build-container:latest
@@ -664,6 +691,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -681,6 +709,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: image-test
   image: autonomy/build-container:latest
@@ -748,7 +777,6 @@ steps:
   - osctl-linux
 
 - name: push
-  pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
@@ -966,6 +994,10 @@ steps:
   pull: always
   image: autonomy/drone-git:latest
 
+- name: pull-latest-build-container
+  pull: always
+  image: autonomy/build-container:latest
+
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -982,6 +1014,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osd
   image: autonomy/build-container:latest
@@ -999,6 +1032,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: trustd
   image: autonomy/build-container:latest
@@ -1016,6 +1050,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: proxyd
   image: autonomy/build-container:latest
@@ -1033,6 +1068,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: ntpd
   image: autonomy/build-container:latest
@@ -1050,6 +1086,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: networkd
   image: autonomy/build-container:latest
@@ -1067,6 +1104,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-linux
   image: autonomy/build-container:latest
@@ -1084,6 +1122,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-darwin
   image: autonomy/build-container:latest
@@ -1101,6 +1140,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: rootfs
   image: autonomy/build-container:latest
@@ -1191,6 +1231,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: protolint
   image: autonomy/build-container:latest
@@ -1208,6 +1249,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -1225,6 +1267,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: image-test
   image: autonomy/build-container:latest
@@ -1292,7 +1335,6 @@ steps:
   - osctl-linux
 
 - name: push
-  pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
@@ -1512,6 +1554,10 @@ steps:
   pull: always
   image: autonomy/drone-git:latest
 
+- name: pull-latest-build-container
+  pull: always
+  image: autonomy/build-container:latest
+
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -1528,6 +1574,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osd
   image: autonomy/build-container:latest
@@ -1545,6 +1592,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: trustd
   image: autonomy/build-container:latest
@@ -1562,6 +1610,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: proxyd
   image: autonomy/build-container:latest
@@ -1579,6 +1628,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: ntpd
   image: autonomy/build-container:latest
@@ -1596,6 +1646,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: networkd
   image: autonomy/build-container:latest
@@ -1613,6 +1664,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-linux
   image: autonomy/build-container:latest
@@ -1630,6 +1682,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-darwin
   image: autonomy/build-container:latest
@@ -1647,6 +1700,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: rootfs
   image: autonomy/build-container:latest
@@ -1737,6 +1791,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: protolint
   image: autonomy/build-container:latest
@@ -1754,6 +1809,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -1771,6 +1827,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: image-test
   image: autonomy/build-container:latest
@@ -1838,7 +1895,6 @@ steps:
   - osctl-linux
 
 - name: push
-  pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
@@ -2058,6 +2114,10 @@ steps:
   pull: always
   image: autonomy/drone-git:latest
 
+- name: pull-latest-build-container
+  pull: always
+  image: autonomy/build-container:latest
+
 - name: machined
   image: autonomy/build-container:latest
   commands:
@@ -2074,6 +2134,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osd
   image: autonomy/build-container:latest
@@ -2091,6 +2152,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: trustd
   image: autonomy/build-container:latest
@@ -2108,6 +2170,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: proxyd
   image: autonomy/build-container:latest
@@ -2125,6 +2188,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: ntpd
   image: autonomy/build-container:latest
@@ -2142,6 +2206,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: networkd
   image: autonomy/build-container:latest
@@ -2159,6 +2224,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-linux
   image: autonomy/build-container:latest
@@ -2176,6 +2242,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: osctl-darwin
   image: autonomy/build-container:latest
@@ -2193,6 +2260,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: rootfs
   image: autonomy/build-container:latest
@@ -2283,6 +2351,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: protolint
   image: autonomy/build-container:latest
@@ -2300,6 +2369,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: markdownlint
   image: autonomy/build-container:latest
@@ -2317,6 +2387,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: image-test
   image: autonomy/build-container:latest
@@ -2384,7 +2455,6 @@ steps:
   - osctl-linux
 
 - name: push
-  pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
@@ -2426,6 +2496,7 @@ steps:
     path: /tmp
   depends_on:
   - clone
+  - pull-latest-build-container
 
 - name: image-azure
   image: autonomy/build-container:latest
@@ -2573,6 +2644,10 @@ clone:
   disable: true
 
 steps:
+- name: pull-latest-build-container
+  pull: always
+  image: autonomy/build-container:latest
+
 - name: slack
   image: plugins/slack
   settings:

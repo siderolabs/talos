@@ -64,6 +64,13 @@ local clone = {
   pull: 'always',
 };
 
+// Update the build container at the beginning of the run
+local updateBuildContainer = {
+	name: 'pull-latest-build-container',
+  image: build_container,
+  pull: 'always',
+};
+
 // This provides the docker service.
 local docker = {
   name: 'docker',
@@ -99,7 +106,7 @@ local buildkit = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, target='', depends_on=[clone], environment={}) = {
+local Step(name, target='', depends_on=[clone,updateBuildContainer], environment={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
   local common_env_vars = {
     BUILDKIT_HOST: '${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}',
@@ -129,7 +136,7 @@ local Pipeline(name, steps=[], depends_on=[], with_clone=true, with_buildkit=fal
     if with_docker then docker,
     if with_buildkit then buildkit,
   ],
-  steps: [if with_clone then clone] + steps,
+  steps: [if with_clone then clone] + [ updateBuildContainer ] + steps,
   volumes: volumes.ForPipeline(),
   depends_on: [x.name for x in depends_on],
 };
@@ -172,7 +179,6 @@ local coverage = {
 local push = {
   name: 'push',
   image: 'autonomy/build-container:latest',
-  pull: 'always',
   environment: {
     DOCKER_USERNAME: { from_secret: 'docker_username' },
     DOCKER_PASSWORD: { from_secret: 'docker_password' },
