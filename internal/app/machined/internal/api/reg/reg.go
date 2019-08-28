@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // OSPathSeparator is the string version of the os.PathSeparator
@@ -80,17 +81,20 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 
 // Reset initiates a Talos upgrade
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
-	// Stop the kubelet.
-	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
-		return data, err
-	}
-
-	// Remove the machine config.
-	if err = os.Remove(constants.UserDataPath); err != nil {
+	ud, err := userdata.Open(constants.UserDataPath)
+	if err != nil {
 		return nil, err
 	}
 
-	return &proto.ResetReply{}, err
+	image := fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
+	if ud.Install != nil && ud.Install.Image != "" {
+		image = ud.Install.Image
+	}
+
+	req := &proto.UpgradeRequest{Image: image}
+	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: req})
+
+	return &proto.ResetReply{}, nil
 }
 
 // ServiceList returns list of the registered services and their status
