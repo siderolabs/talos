@@ -50,6 +50,5 @@ func intersRender(reply *proto.InterfacesReply) {
 }
 
 func init() {
-	interfacesCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(interfacesCmd)
 }

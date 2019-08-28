@@ -103,7 +103,6 @@ var lsCmd = &cobra.Command{
 }
 
 func init() {
-	lsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	lsCmd.Flags().BoolP("long", "l", false, "display additional file details")
 	lsCmd.Flags().BoolP("recurse", "r", false, "recurse into subdirectories")
 	lsCmd.Flags().Int32P("depth", "d", 0, "maximum recursion depth")

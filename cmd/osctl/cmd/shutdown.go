@@ -33,6 +33,5 @@ var shutdownCmd = &cobra.Command{
 }
 
 func init() {
-	shutdownCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(shutdownCmd)
 }

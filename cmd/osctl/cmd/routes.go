@@ -48,6 +48,5 @@ func routesRender(reply *proto.RoutesReply) {
 }
 
 func init() {
-	routesCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(routesCmd)
 }

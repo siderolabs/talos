@@ -75,6 +75,5 @@ func processesRender(reply *proto.ProcessesReply) {
 func init() {
 	psCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	psCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
-	psCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(psCmd)
 }

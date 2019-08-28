@@ -32,7 +32,6 @@ var upgradeCmd = &cobra.Command{
 
 func init() {
 	upgradeCmd.Flags().StringVarP(&image, "image", "u", "", "the container image to use for performing the install")
-	upgradeCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(upgradeCmd)
 }
 

@@ -36,6 +36,5 @@ var dmesgCmd = &cobra.Command{
 }
 
 func init() {
-	dmesgCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(dmesgCmd)
 }

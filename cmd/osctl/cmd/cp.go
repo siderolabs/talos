@@ -140,6 +140,5 @@ captures ownership and permission bits.`,
 }
 
 func init() {
-	cpCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(cpCmd)
 }

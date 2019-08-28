@@ -48,7 +48,6 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	restartCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	rootCmd.AddCommand(restartCmd)

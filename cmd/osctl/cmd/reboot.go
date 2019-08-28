@@ -33,6 +33,5 @@ var rebootCmd = &cobra.Command{
 }
 
 func init() {
-	rebootCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(rebootCmd)
 }

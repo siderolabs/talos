@@ -164,6 +164,5 @@ func (svc serviceInfoWrapper) HealthStatus() string {
 }
 
 func init() {
-	serviceCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(serviceCmd)
 }

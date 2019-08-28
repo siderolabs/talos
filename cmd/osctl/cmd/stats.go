@@ -74,6 +74,5 @@ func statsRender(reply *proto.StatsReply) {
 func init() {
 	statsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	statsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
-	statsCmd.Flags().StringVarP(&target, "target", "t", "", "target the specificed node")
 	rootCmd.AddCommand(statsCmd)
 }
