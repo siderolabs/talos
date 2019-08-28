@@ -1,9 +1,10 @@
 export KUBERNETES_VERSION=v1.14.5
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
+export TMPPLATFORM="${TMP}/${PLATFORM}"
 export OSCTL="${PWD}/build/osctl-linux-amd64"
-export TALOSCONFIG="${TMP}/talosconfig"
-export KUBECONFIG="${TMP}/kubeconfig"
+export TALOSCONFIG="${TMPPLATFORM}/talosconfig"
+export KUBECONFIG="${TMPPLATFORM}/kubeconfig"
 
 ## Long timeout due to provisioning times
 export TIMEOUT=9000
@@ -18,18 +19,19 @@ export KUSTOMIZE_VERSION="1.0.11"
 export KUSTOMIZE_URL="https://github.com/kubernetes-sigs/kustomize/releases/download/v${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64"
 export SONOBUOY_VERSION="0.15.1"
 export SONOBUOY_URL="https://github.com/heptio/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_amd64.tar.gz"
+export CAPI_NS="cluster-api-provider-talos-system"
 
 e2e_run() {
-	docker run \
-	 	--rm \
-		--interactive \
-	 	--net=integration \
-		--entrypoint=bash \
-		--mount type=bind,source=${TMP},target=${TMP} \
-		--mount type=bind,source=${PWD}/hack/dev/manifests,target=/manifests \
-		--mount type=bind,source=${PWD}/hack/test/manifests,target=/e2emanifests \
-	 	-v ${OSCTL}:/bin/osctl:ro \
-	 	-e KUBECONFIG=${KUBECONFIG} \
-	 	-e TALOSCONFIG=${TALOSCONFIG} \
-	 	k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
+  docker run \
+         --rm \
+         --interactive \
+         --net=integration \
+         --entrypoint=bash \
+         --mount type=bind,source=${TMP},target=${TMP} \
+         --mount type=bind,source=${PWD}/hack/dev/manifests,target=/manifests \
+         --mount type=bind,source=${PWD}/hack/test/manifests,target=/e2emanifests \
+         -v ${OSCTL}:/bin/osctl:ro \
+         -e KUBECONFIG=${KUBECONFIG} \
+         -e TALOSCONFIG=${TALOSCONFIG} \
+         k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
 }

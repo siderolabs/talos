@@ -17,14 +17,15 @@ source ./hack/test/e2e-runner.sh
 #          kubectl logs job/kube-bench-node"
 
 # Download sonobuoy and run kubernetes conformance
-e2e_run "apt-get update && apt-get install wget
-		 wget --quiet -O /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
-		 tar -xf /tmp/sonobuoy.tar.gz -C /usr/local/bin
-		 sonobuoy run --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi \
-        --wait \
-        --skip-preflight \
-        --plugin e2e \
-        --plugin-env e2e.E2E_USE_GO_RUNNER=true \
-        --kube-conformance-image-version v1.16.0-beta.0
-		 results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi)
-		 sonobuoy e2e --kubeconfig ${KUBECONFIG}-${PLATFORM}-capi \$results"
+e2e_run "set -eou pipefail
+         apt-get update && apt-get install wget
+         wget --quiet -O /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
+         tar -xf /tmp/sonobuoy.tar.gz -C /usr/local/bin
+         sonobuoy run --kubeconfig ${KUBECONFIG} \
+            --wait \
+            --skip-preflight \
+            --plugin e2e \
+            --plugin-env e2e.E2E_USE_GO_RUNNER=true \
+            --kube-conformance-image-version v1.16.0-beta.0
+         results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG})
+         sonobuoy e2e --kubeconfig ${KUBECONFIG} \$results"
