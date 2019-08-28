@@ -45,8 +45,7 @@ func initUd(in *Input) (string, error) {
 			Crt: in.Certs.K8sCert,
 			Key: in.Certs.K8sKey,
 		},
-		Token:     in.KubeadmTokens.BootstrapToken,
-		InitToken: in.InitToken,
+		Token: in.KubeadmTokens.BootstrapToken,
 	}
 
 	ud := v1.NodeConfig{

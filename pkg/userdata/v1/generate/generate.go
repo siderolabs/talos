@@ -17,7 +17,6 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
-	"github.com/talos-systems/talos/pkg/userdata/token"
 )
 
 // DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes
@@ -51,7 +50,6 @@ type Input struct {
 	KubernetesVersion string
 	KubeadmTokens     *KubeadmTokens
 	TrustdInfo        *TrustdInfo
-	InitToken         *token.Token
 
 	//
 	// Runtime variables
@@ -252,12 +250,6 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		return nil, err
 	}
 
-	// Create the init token
-	tok, err := token.NewToken()
-	if err != nil {
-		return nil, err
-	}
-
 	// Generate the admin talosconfig.
 	adminKey, err := x509.NewKey()
 	if err != nil {
@@ -325,7 +317,6 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		KubernetesVersion: constants.KubernetesVersion,
 		KubeadmTokens:     kubeadmTokens,
 		TrustdInfo:        trustdInfo,
-		InitToken:         tok,
 	}
 
 	return input, nil

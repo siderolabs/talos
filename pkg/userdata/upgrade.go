@@ -42,7 +42,6 @@ func (data *UserData) Upgrade() (ud *UserData, err error) {
 	}
 
 	data.Services.Kubeadm.InitConfiguration = nil
-	data.Services.Kubeadm.Token = nil
 	data.Services.Kubeadm.JoinConfiguration = join
 
 	_, err = data.Services.Kubeadm.MarshalYAML()

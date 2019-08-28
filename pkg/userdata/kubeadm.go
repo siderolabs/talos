@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/talos-systems/talos/pkg/userdata/token"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeadmscheme "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/scheme"
 	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
@@ -30,10 +29,9 @@ type Kubeadm struct {
 
 	ConfigurationStr string `yaml:"configuration"`
 
-	ExtraArgs             []string     `yaml:"extraArgs,omitempty"`
-	CertificateKey        string       `yaml:"certificateKey,omitempty"`
-	IgnorePreflightErrors []string     `yaml:"ignorePreflightErrors,omitempty"`
-	Token                 *token.Token `yaml:"initToken,omitempty"`
+	ExtraArgs             []string `yaml:"extraArgs,omitempty"`
+	CertificateKey        string   `yaml:"certificateKey,omitempty"`
+	IgnorePreflightErrors []string `yaml:"ignorePreflightErrors,omitempty"`
 	ControlPlane          bool
 }
 
@@ -167,7 +165,7 @@ func (kdm *Kubeadm) IsControlPlane() bool {
 // IsBootstrap indicates if the current kubeadm configuration is a master init
 // configuration.
 func (kdm *Kubeadm) IsBootstrap() bool {
-	return kdm.Token != nil && kdm.IsControlPlane() && !kdm.Token.Expired()
+	return kdm.IsControlPlane() && kdm.InitConfiguration != nil
 }
 
 // IsWorker indicates if the current kubeadm configuration is a worker

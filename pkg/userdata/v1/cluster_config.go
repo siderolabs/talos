@@ -4,15 +4,12 @@
 
 package v1
 
-import "github.com/talos-systems/talos/pkg/userdata/token"
-
 // ClusterConfig reperesents the cluster-wide config values
 type ClusterConfig struct {
 	ControlPlane      *ControlPlaneConfig      `yaml:"controlPlane"`
 	ClusterName       string                   `yaml:"clusterName,omitempty"`
 	Network           *ClusterNetworkConfig    `yaml:"network,omitempty"`
 	Token             string                   `yaml:"token,omitempty"`
-	InitToken         *token.Token             `yaml:"initToken,omitempty"`
 	CA                *ClusterCAConfig         `yaml:"ca,omitempty"`
 	APIServer         *APIServerConfig         `yaml:"apiServer,omitempty"`
 	ControllerManager *ControllerManagerConfig `yaml:"controllerManager,omitempty"`

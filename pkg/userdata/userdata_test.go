@@ -75,6 +75,5 @@ const kubeadmConfig = `configuration: |
     serviceSubnet: 10.96.0.0/12
   scheduler: {}
 certificateKey: test
-initToken: 528d1ad6-3485-49ad-94cd-0f44a35877ac
 controlplane: true
 `

@@ -12,7 +12,6 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/userdata/token"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -62,19 +61,6 @@ var injectKubernetesCmd = &cobra.Command{
 	},
 }
 
-// injectTokenCmd represents the inject token command
-// nolint: dupl
-var injectTokenCmd = &cobra.Command{
-	Use:   "token",
-	Short: "inject token data.",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := inject(args, "", "", injectTokenData); err != nil {
-			helpers.Fatalf("%s", err)
-		}
-	},
-}
-
 // nolint: dupl
 func injectOSData(u *userdata.UserData, crt, key string) (err error) {
 	if u.Security == nil {
@@ -99,21 +85,6 @@ func injectIdentityData(u *userdata.UserData, crt, key string) (err error) {
 		return
 	}
 	u.Security.OS.Identity = crtAndKey
-
-	return nil
-}
-
-// nolint: dupl
-func injectTokenData(u *userdata.UserData, crt, key string) (err error) {
-	if u.Services.Kubeadm == nil {
-		helpers.Fatalf("[services.kubeadm] must be defined in userdata")
-	}
-
-	tok, err := token.NewToken()
-	if err != nil {
-		return
-	}
-	u.Services.Kubeadm.Token = tok
 
 	return nil
 }
@@ -185,6 +156,6 @@ func init() {
 	helpers.Should(injectIdentityCmd.MarkFlagRequired("key"))
 	helpers.Should(injectKubernetesCmd.MarkFlagRequired("key"))
 
-	injectCmd.AddCommand(injectOSCmd, injectIdentityCmd, injectKubernetesCmd, injectTokenCmd)
+	injectCmd.AddCommand(injectOSCmd, injectIdentityCmd, injectKubernetesCmd)
 	rootCmd.AddCommand(injectCmd)
 }

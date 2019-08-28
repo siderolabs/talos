@@ -120,7 +120,6 @@ cluster:
     serviceSubnets:
     - 10.96.0.0/12
   token: 4iysc6.t3bsjbrd74v91wpv
-  initToken: 22c11be4-c413-11e9-b8e8-309c23e4bd47
   ca:
     crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
     key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIEVDIFBSSVZBVEUgS0VZLS0tLS0=
@@ -160,7 +159,6 @@ services:
   init:
     cni: flannel
   kubeadm:
-    initToken: 528d1ad6-3485-49ad-94cd-0f44a35877ac
     certificateKey: 'test'
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta2
