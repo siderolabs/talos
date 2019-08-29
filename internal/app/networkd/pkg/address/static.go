@@ -102,3 +102,8 @@ func (s *Static) Hostname() string {
 func (s Static) Link() *net.Interface {
 	return s.NetIf
 }
+
+// Valid denotes if this address method should be used.
+func (s *Static) Valid() bool {
+	return true
+}

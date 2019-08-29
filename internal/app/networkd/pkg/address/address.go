@@ -16,18 +16,19 @@ import (
 // addressing configuration. Currently dhcp(v4) and static methods are
 // supported.
 type Addressing interface {
-	Name() string
-	Discover(context.Context) error
 	Address() *net.IPNet
-	Mask() net.IPMask
-	MTU() uint32
-	TTL() time.Duration
+	Discover(context.Context) error
 	Family() int
-	Scope() uint8
-	Routes() []*Route
-	Resolvers() []net.IP
 	Hostname() string
 	Link() *net.Interface
+	MTU() uint32
+	Mask() net.IPMask
+	Name() string
+	Resolvers() []net.IP
+	Routes() []*Route
+	Scope() uint8
+	TTL() time.Duration
+	Valid() bool
 }
 
 // Route is a representation of a network route
