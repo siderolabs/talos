@@ -87,6 +87,11 @@ func (d *DHCP) Scope() uint8 {
 	return unix.RT_SCOPE_UNIVERSE
 }
 
+// Valid denotes if this address method should be used.
+func (d *DHCP) Valid() bool {
+	return d.Ack != nil
+}
+
 // Routes aggregates all Routers and ClasslessStaticRoutes retrieved from
 // the DHCP offer.
 // rfc3442:

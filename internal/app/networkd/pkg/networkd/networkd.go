@@ -98,6 +98,10 @@ func (n *Networkd) Configure(ifaces ...*nic.NetworkInterface) error {
 				continue
 			}
 
+			if !method.Valid() {
+				continue
+			}
+
 			// Aggregate a list of DNS servers/resolvers
 			resolvers = append(resolvers, method.Resolvers()...)
 		}
@@ -219,6 +223,9 @@ func (n *Networkd) configureInterface(method address.Addressing) error {
 func (n *Networkd) Hostname(ifaces ...*nic.NetworkInterface) string {
 	for _, iface := range ifaces {
 		for _, method := range iface.AddressMethod {
+			if !method.Valid() {
+				continue
+			}
 			if method.Hostname() != "" {
 				return method.Hostname()
 			}
