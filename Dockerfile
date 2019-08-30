@@ -310,7 +310,7 @@ COPY --from=base /go/pkg/mod /go/pkg/mod
 WORKDIR /src
 ENV GO111MODULE on
 ARG TESTPKGS
-RUN --mount=type=cache,target=/root/.cache/go-build go test -v -race ${TESTPKGS}
+RUN --mount=type=cache,target=/root/.cache/go-build go test -v -count 1 -race ${TESTPKGS}
 
 # The lint target performs linting on the source code.
 
