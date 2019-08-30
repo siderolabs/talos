@@ -4,12 +4,12 @@ set -e
 
 perform_tests() {
   echo "Performing tests on $1"
-  go test -v -covermode=atomic -coverprofile=coverage.txt "$1"
+  go test -v -covermode=atomic -coverprofile=coverage.txt -count 1 "$1"
 }
 
 perform_short_tests() {
   echo "Performing short tests on $1"
-  go test -v -short "$1"
+  go test -v -short -count 1 "$1"
 }
 
 case $1 in
