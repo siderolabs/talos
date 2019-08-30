@@ -57,8 +57,13 @@ func (c *Containerd) DependsOn(data *userdata.UserData) []string {
 func (c *Containerd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
-		ID:          c.ID(data),
-		ProcessArgs: []string{"/bin/containerd", "--address", constants.ContainerdAddress},
+		ID: c.ID(data),
+		ProcessArgs: []string{"/bin/containerd",
+			"--address",
+			constants.ContainerdAddress,
+			"--config",
+			"/etc/containerd.toml",
+		},
 	}
 
 	env := []string{}
