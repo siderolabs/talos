@@ -61,6 +61,8 @@ func (c *SystemContainerd) Runner(data *userdata.UserData) (runner.Runner, error
 			"--address", constants.SystemContainerdAddress,
 			"--state", "/run/system/containerd",
 			"--root", "/run/system/lib/containerd",
+			"--config",
+			"/etc/containerd-system.toml",
 		},
 	}
 
