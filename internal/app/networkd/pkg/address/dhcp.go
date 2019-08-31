@@ -13,10 +13,17 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
+	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
 	"golang.org/x/sys/unix"
 )
+
+// MaxRequests is the maximum number of DHCPRequests to make before giving up
+const MaxRequests = 3
+
+// MinRequestLoopTime is the minimum amount of time to wait between failed DHCPRequest attempts
+const MinRequestLoopTime = 3 * time.Second
 
 // DHCP implements the Addressing interface
 type DHCP struct {
@@ -127,7 +134,7 @@ func (d *DHCP) Hostname() string {
 }
 
 // discover handles the actual DHCP conversation.
-func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
+func (d *DHCP) discover() (ack *dhcpv4.DHCPv4, err error) {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,
@@ -158,12 +165,20 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	// nolint: errcheck
 	defer cli.Close()
 
-	_, ack, err := cli.Request(context.Background(), mods...)
-	if err != nil {
-		// TODO: Make this a well defined error so we can make it not fatal
-		log.Println("failed dhcp request")
-		return nil, err
+	// TODO: this may be better handled by retrying indefinitely in the background
+	for i := 0; i < MaxRequests; i++ {
+		started := time.Now()
+
+		_, ack, err = cli.Request(context.Background(), mods...)
+		if err != nil {
+			// TODO: Make this a well defined error so we can make it not fatal
+			log.Println("failed dhcp request:", err)
+		}
+
+		if since := time.Since(started); since < MinRequestLoopTime {
+			time.Sleep(MinRequestLoopTime - since)
+		}
 	}
 
-	return ack, err
+	return ack, errors.Wrap(err, "dhcp requests exhausted")
 }
