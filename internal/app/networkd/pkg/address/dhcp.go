@@ -151,7 +151,10 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 
 	// TODO expose this ( nclient4.WithDebugLogger() ) with some
 	// debug logging option
-	cli, err := nclient4.New(d.NetIf.Name, nclient4.WithTimeout(2*time.Second))
+	cli, err := nclient4.New(d.NetIf.Name,
+		nclient4.WithTimeout(2*time.Second),
+		nclient4.WithRetry(5),
+	)
 	if err != nil {
 		return nil, err
 	}
