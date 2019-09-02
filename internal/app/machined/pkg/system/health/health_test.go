@@ -93,7 +93,13 @@ func (suite *CheckSuite) TestHealthChange() {
 		errCh <- health.Run(ctx, &settings, &state, check)
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	// wait for the first health change
+	for i := 0; i < 20; i++ {
+		if state.Get().Healthy != nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 
 	suite.Require().False(*state.Get().Healthy)
 	suite.Require().Equal("health failed", state.Get().LastMessage)
@@ -138,7 +144,8 @@ func (suite *CheckSuite) TestCheckAbort() {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(50 * time.Millisecond):
+		case <-time.After(50 * time.Second):
+			// should never be triggered, as Timeout is 1ms
 			return nil
 		}
 	}
@@ -152,7 +159,13 @@ func (suite *CheckSuite) TestCheckAbort() {
 		errCh <- health.Run(ctx, &settings, &state, check)
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	// wait for the first health change
+	for i := 0; i < 20; i++ {
+		if state.Get().Healthy != nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 
 	suite.Require().False(*state.Get().Healthy)
 	suite.Require().Equal("context deadline exceeded", state.Get().LastMessage)
@@ -164,7 +177,7 @@ func (suite *CheckSuite) TestCheckAbort() {
 
 func (suite *CheckSuite) TestInitialState() {
 	var settings = health.Settings{
-		InitialDelay: time.Minute,
+		InitialDelay: 5 * time.Minute,
 	}
 
 	var state health.State
@@ -177,7 +190,7 @@ func (suite *CheckSuite) TestInitialState() {
 		errCh <- health.Run(ctx, &settings, &state, nil)
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	suite.Require().Nil(state.Get().Healthy)
 	suite.Require().Equal("Unknown", state.Get().LastMessage)
