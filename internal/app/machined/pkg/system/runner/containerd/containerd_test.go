@@ -140,8 +140,10 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 }
 
 func (suite *ContainerdSuite) TestRunTwice() {
+	const ID = "runtwice"
+
 	r := containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
-		ID:          "runtwice",
+		ID:          ID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -161,7 +163,12 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		suite.Assert().NoError(r.Stop())
 
 		// TODO: workaround containerd (?) bug: https://github.com/docker/for-linux/issues/643
-		time.Sleep(100 * time.Millisecond)
+		for i := 0; i < 100; i++ {
+			time.Sleep(100 * time.Millisecond)
+			if _, err := os.Stat("/containerd-shim/" + containerdNamespace + "/" + ID + "/shim.sock"); err != nil && os.IsNotExist(err) {
+				break
+			}
+		}
 	}
 }
 
