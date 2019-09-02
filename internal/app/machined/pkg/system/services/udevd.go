@@ -7,12 +7,12 @@ package services
 import (
 	"context"
 	"fmt"
-	"os/exec"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -27,12 +27,11 @@ func (c *Udevd) ID(data *userdata.UserData) string {
 
 // PreFunc implements the Service interface.
 func (c *Udevd) PreFunc(ctx context.Context, data *userdata.UserData) error {
-	cmd := exec.Command(
+	return cmd.Run(
 		"/sbin/udevadm",
 		"hwdb",
 		"--update",
 	)
-	return cmd.Run()
 }
 
 // PostFunc implements the Service interface.

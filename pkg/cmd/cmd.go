@@ -5,24 +5,30 @@
 package cmd
 
 import (
-	"bytes"
 	"os/exec"
 
+	"github.com/armon/circbuf"
 	"github.com/pkg/errors"
 )
+
+// MaxStderrLen is maximum length of stderr output captured for error message
+const MaxStderrLen = 4096
 
 // Run executes a command.
 func Run(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	stderr, err := circbuf.NewBuffer(MaxStderrLen)
+	if err != nil {
+		return err
+	}
+	cmd.Stderr = stderr
 
-	if err := cmd.Start(); err != nil {
+	if err = cmd.Start(); err != nil {
 		return errors.Errorf("%s: %s", err, stderr.String())
 	}
 
-	if err := cmd.Wait(); err != nil {
+	if err = cmd.Wait(); err != nil {
 		return errors.Errorf("%s: %s", err, stderr.String())
 	}
 
