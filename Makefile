@@ -13,11 +13,9 @@ BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAIN
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
-BUILDKIT_CACHE ?= -v $(HOME)/.buildkit:/var/lib/buildkit
 endif
 ifeq ($(UNAME_S),Darwin)
 BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
-BUILDKIT_CACHE ?=
 endif
 
 ifeq ($(UNAME_S),Linux)
@@ -97,7 +95,6 @@ ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
 		-d \
 		--privileged \
 		-p 1234:1234 \
-		$(BUILDKIT_CACHE) \
 		$(BUILDKIT_IMAGE) \
 		--addr $(BUILDKIT_HOST) \
 		--allow-insecure-entitlement security.insecure
