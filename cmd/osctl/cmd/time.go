@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -52,9 +54,10 @@ var timeCmd = &cobra.Command{
 				helpers.Fatalf("error parsing remote time: %s", err)
 			}
 
-			fmt.Printf("NTP Server: %s\n", output.Server)
-			fmt.Printf("Local time: %s\n", localtime)
-			fmt.Printf("Remote time: %s\n", remotetime)
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			fmt.Fprintln(w, "NTP-SERVER\tLOCAL-TIME\tREMOTE-TIME")
+			fmt.Fprintf(w, "%s\t%s\t%s\n", output.Server, localtime.String(), remotetime.String())
+			helpers.Should(w.Flush())
 		})
 	},
 }
