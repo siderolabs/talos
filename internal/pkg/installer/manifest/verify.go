@@ -5,13 +5,10 @@
 package manifest
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/version"
 )
 
 // VerifyDataDevice verifies the supplied data device options.
@@ -49,10 +46,6 @@ func VerifyBootDevice(data *userdata.UserData) (err error) {
 		// because VerifyDataDevice should have been called first in
 		// in the chain, but we verify again just in case.
 		return errors.New("missing disk")
-	}
-
-	if data.Install.Image == "" {
-		data.Install.Image = fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
 	}
 
 	if !data.Install.Force {

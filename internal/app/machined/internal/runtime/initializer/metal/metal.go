@@ -5,6 +5,7 @@
 package metal
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // Metal represents an initializer that performs a full installation to a
@@ -46,6 +48,9 @@ func (b *Metal) Initialize(platform platform.Platform, data *userdata.UserData) 
 	var mountpoints *mount.Points
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
+		if data.Install.Image == "" {
+			data.Install.Image = fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
+		}
 		if err = install.Install(data.Install.Image, data.Install.Disk, strings.ToLower(platform.Name())); err != nil {
 			return err
 		}
