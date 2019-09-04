@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -30,7 +31,8 @@ func MockEventSink(state events.ServiceState, message string, args ...interface{
 type ProcessSuite struct {
 	suite.Suite
 
-	tmpDir string
+	tmpDir    string
+	runReaper bool
 }
 
 func (suite *ProcessSuite) SetupSuite() {
@@ -38,9 +40,17 @@ func (suite *ProcessSuite) SetupSuite() {
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	if suite.runReaper {
+		reaper.Run()
+	}
 }
 
 func (suite *ProcessSuite) TearDownSuite() {
+	if suite.runReaper {
+		reaper.Shutdown()
+	}
+
 	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
@@ -191,5 +201,9 @@ func (suite *ProcessSuite) TestStopSigKill() {
 }
 
 func TestProcessSuite(t *testing.T) {
-	suite.Run(t, new(ProcessSuite))
+	for _, runReaper := range []bool{true, false} {
+		func(runReaper bool) {
+			t.Run(fmt.Sprintf("runReaper=%v", runReaper), func(t *testing.T) { suite.Run(t, &ProcessSuite{runReaper: runReaper}) })
+		}(runReaper)
+	}
 }

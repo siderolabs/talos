@@ -18,6 +18,7 @@ import (
 	processlogger "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -108,6 +109,12 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		return errors.Wrap(err, "error building command")
 	}
 
+	notifyCh := make(chan reaper.ProcessInfo, 8)
+	usingReaper := reaper.Notify(notifyCh)
+	if usingReaper {
+		defer reaper.Stop(notifyCh)
+	}
+
 	if err = cmd.Start(); err != nil {
 		return errors.Wrap(err, "error starting process")
 	}
@@ -117,7 +124,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	waitCh := make(chan error)
 
 	go func() {
-		waitCh <- cmd.Wait()
+		waitCh <- reaper.WaitWrapper(usingReaper, notifyCh, cmd)
 	}()
 
 	select {

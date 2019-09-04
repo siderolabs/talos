@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
 	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
@@ -85,6 +86,10 @@ func main() {
 	defer close(init.Channel())
 	event.Bus().Register(init)
 	defer event.Bus().Unregister(init)
+
+	// Initialize process reaper.
+	reaper.Run()
+	defer reaper.Shutdown()
 
 	// Ensure rng is seeded.
 	if err = startup.RandSeed(); err != nil {
