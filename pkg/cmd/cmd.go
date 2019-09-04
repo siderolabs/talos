@@ -9,6 +9,8 @@ import (
 
 	"github.com/armon/circbuf"
 	"github.com/pkg/errors"
+
+	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
 // MaxStderrLen is maximum length of stderr output captured for error message
@@ -24,11 +26,17 @@ func Run(name string, args ...string) error {
 	}
 	cmd.Stderr = stderr
 
+	notifyCh := make(chan reaper.ProcessInfo, 8)
+	usingReaper := reaper.Notify(notifyCh)
+	if usingReaper {
+		defer reaper.Stop(notifyCh)
+	}
+
 	if err = cmd.Start(); err != nil {
 		return errors.Errorf("%s: %s", err, stderr.String())
 	}
 
-	if err = cmd.Wait(); err != nil {
+	if err = reaper.WaitWrapper(usingReaper, notifyCh, cmd); err != nil {
 		return errors.Errorf("%s: %s", err, stderr.String())
 	}
 

@@ -5,17 +5,30 @@
 package cmd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
 type CmdSuite struct {
 	suite.Suite
+
+	runReaper bool
 }
 
-func TestCmdSuite(t *testing.T) {
-	suite.Run(t, new(CmdSuite))
+func (suite *CmdSuite) SetupSuite() {
+	if suite.runReaper {
+		reaper.Run()
+	}
+}
+
+func (suite *CmdSuite) TearDownSuite() {
+	if suite.runReaper {
+		reaper.Shutdown()
+	}
 }
 
 func (suite *CmdSuite) TestRun() {
@@ -41,6 +54,39 @@ func (suite *CmdSuite) TestRun() {
 		{
 			"false",
 			args{
+				"false",
+				[]string{},
+			},
+			true,
+			"exit status 1: ",
+		},
+		{
+			"false with output",
+			args{
+				"/bin/sh",
+				[]string{
+					"-c",
+					"ls /not/found",
+				},
+			},
+			true,
+			"exit status 2: ls: cannot access '/not/found': No such file or directory\n",
+		},
+		{
+			"signal crash",
+			args{
+				"/bin/sh",
+				[]string{
+					"-c",
+					"kill -2 $$",
+				},
+			},
+			true,
+			"signal: interrupt: ",
+		},
+		{
+			"badexec",
+			args{
 				"badcommand",
 				[]string{},
 			},
@@ -53,9 +99,17 @@ func (suite *CmdSuite) TestRun() {
 		err := Run(t.args.name, t.args.args...)
 		if t.wantErr {
 			suite.Assert().Error(err)
-			suite.Assert().Equal(err.Error(), t.errString)
+			suite.Assert().Equal(t.errString, err.Error())
 		} else {
 			suite.Assert().NoError(err)
 		}
+	}
+}
+
+func TestCmdSuite(t *testing.T) {
+	for _, runReaper := range []bool{true, false} {
+		func(runReaper bool) {
+			t.Run(fmt.Sprintf("runReaper=%v", runReaper), func(t *testing.T) { suite.Run(t, &CmdSuite{runReaper: runReaper}) })
+		}(runReaper)
 	}
 }

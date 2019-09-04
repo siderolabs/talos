@@ -27,14 +27,15 @@ type Log struct {
 
 // New initializes and registers a log for a service.
 func New(name, rootPath string) (*Log, error) {
+	logpath := FormatLogPath(name, rootPath)
+
 	mu.Lock()
-	if l, ok := instance[name]; ok {
+	if l, ok := instance[logpath]; ok {
 		mu.Unlock()
 		return l, nil
 	}
 	mu.Unlock()
 
-	logpath := FormatLogPath(name, rootPath)
 	w, err := os.Create(logpath)
 	if err != nil {
 		return nil, fmt.Errorf("create log file: %s", err.Error())
@@ -47,7 +48,7 @@ func New(name, rootPath string) (*Log, error) {
 	}
 
 	mu.Lock()
-	instance[name] = l
+	instance[l.Path] = l
 	mu.Unlock()
 
 	return l, nil
@@ -61,7 +62,7 @@ func (l *Log) Write(p []byte) (n int, err error) {
 // Close implements io.WriteCloser.
 func (l *Log) Close() error {
 	mu.Lock()
-	delete(instance, l.Name)
+	delete(instance, l.Path)
 	mu.Unlock()
 
 	return l.source.Close()
