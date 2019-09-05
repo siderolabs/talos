@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"syscall"
 	"time"
 
@@ -78,34 +79,46 @@ func (n *Networkd) Configure(ifaces ...*nic.NetworkInterface) error {
 	var (
 		err       error
 		resolvers []net.IP
+		mu        sync.Mutex
 	)
 
+	var wg sync.WaitGroup
+
+	wg.Add(len(ifaces))
+
 	for _, iface := range ifaces {
-		// Bring up the interface
-		if err = n.Conn.LinkUp(&net.Interface{Index: int(iface.Index)}); err != nil {
-			log.Printf("failed to bring up %s: %v", iface.Name, err)
-			continue
-		}
-
-		// Generate rtnetlink.AddressMessage for each address method defined on
-		// the interface
-		for _, method := range iface.AddressMethod {
-			log.Printf("configuring %s addressing for %s\n", method.Name(), iface.Name)
-
-			if err = n.configureInterface(method); err != nil {
-				// Treat as non fatal error when failing to configure an interface
-				log.Println(err)
-				continue
+		go func(i *nic.NetworkInterface) {
+			defer wg.Done()
+			// Bring up the interface
+			if err = n.Conn.LinkUp(&net.Interface{Index: int(i.Index)}); err != nil {
+				log.Printf("failed to bring up %s: %v", i.Name, err)
+				return
 			}
 
-			if !method.Valid() {
-				continue
-			}
+			// Generate rtnetlink.AddressMessage for each address method defined on
+			// the interface
+			for _, method := range i.AddressMethod {
+				log.Printf("configuring %s addressing for %s\n", method.Name(), i.Name)
 
-			// Aggregate a list of DNS servers/resolvers
-			resolvers = append(resolvers, method.Resolvers()...)
-		}
+				if err = n.configureInterface(method); err != nil {
+					// Treat as non fatal error when failing to configure an interface
+					log.Println(err)
+					return
+				}
+
+				if !method.Valid() {
+					return
+				}
+
+				// Aggregate a list of DNS servers/resolvers
+				mu.Lock()
+				resolvers = append(resolvers, method.Resolvers()...)
+				mu.Unlock()
+			}
+		}(iface)
 	}
+
+	wg.Wait()
 
 	// Write out resolv.conf
 	if err = writeResolvConf(resolvers); err != nil {
