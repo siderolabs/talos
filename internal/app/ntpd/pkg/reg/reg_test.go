@@ -33,7 +33,8 @@ func TestNtpdSuite(t *testing.T) {
 func (suite *NtpdSuite) TestTime() {
 	testServer := "time.cloudflare.com"
 	// Create ntp client
-	n := ntp.NewNTPClient(testServer)
+	n, err := ntp.NewNTPClient(ntp.WithServer(testServer))
+	suite.Assert().NoError(err)
 
 	// Create gRPC server
 	api := NewRegistrator(n)
@@ -63,7 +64,8 @@ func (suite *NtpdSuite) TestTimeCheck() {
 	// Create ntp client with bogus server
 	// so we can check that we explicitly check the time of the
 	// specified server ( testserver )
-	n := ntp.NewNTPClient("127.0.0.1")
+	n, err := ntp.NewNTPClient(ntp.WithServer("127.0.0.1"))
+	suite.Assert().NoError(err)
 
 	// Create gRPC server
 	api := NewRegistrator(n)

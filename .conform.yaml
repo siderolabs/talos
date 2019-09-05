@@ -27,6 +27,7 @@ policies:
           - kernel
           - machined
           - networkd
+          - ntpd
           - proxyd
           - osctl
           - osd
