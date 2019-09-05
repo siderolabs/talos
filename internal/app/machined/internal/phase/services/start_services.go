@@ -40,21 +40,19 @@ func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
 	svcs.Load(
 		&services.MachinedAPI{},
 		&services.Containerd{},
-		&services.Networkd{},
-		&services.Udevd{},
 		&services.OSD{},
-		&services.NTPd{},
 	)
 
 	if args.Platform().Mode() != runtime.Container {
-		// udevd-trigger is causing stalls/unresponsive stuff when running in local mode
-		// TODO: investigate root cause, but workaround for now is to skip it in container mode
 		svcs.Load(
+			&services.Networkd{},
+			&services.NTPd{},
+			&services.Udevd{},
 			&services.UdevdTrigger{},
 		)
 	}
 
-	// Start the services common to all master nodes.
+	// Start the services common to all control plane nodes.
 
 	switch args.Config().Machine().Type() {
 	case machine.Bootstrap:
