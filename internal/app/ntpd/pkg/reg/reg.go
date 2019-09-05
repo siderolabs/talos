@@ -47,7 +47,11 @@ func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *proto.T
 // TimeCheck issues a query to the specified ntp server and displays the results
 func (r *Registrator) TimeCheck(ctx context.Context, in *proto.TimeRequest) (reply *proto.TimeReply, err error) {
 	reply = &proto.TimeReply{}
-	tc := ntp.NewNTPClient(in.Server)
+	tc, err := ntp.NewNTPClient(ntp.WithServer(in.Server))
+	if err != nil {
+		return reply, err
+	}
+
 	rt, err := tc.Query()
 	if err != nil {
 		return reply, err
