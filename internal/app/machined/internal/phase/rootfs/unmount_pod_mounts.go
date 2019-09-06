@@ -6,7 +6,9 @@ package rootfs
 
 import (
 	"bufio"
-	"os"
+	"bytes"
+	"io/ioutil"
+	"log"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -37,14 +39,14 @@ func (task *UnmountPodMounts) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *UnmountPodMounts) standard(platform platform.Platform, data *userdata.UserData) (err error) {
-	file, err := os.Open("/proc/mounts")
-	if err != nil {
+	var b []byte
+	if b, err = ioutil.ReadFile("/proc/self/mounts"); err != nil {
 		return err
 	}
-	// nolint: errcheck
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	r := bytes.NewReader(b)
+
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 
@@ -54,10 +56,14 @@ func (task *UnmountPodMounts) standard(platform platform.Platform, data *userdat
 
 		mountpoint := fields[1]
 		if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
-			if err := unix.Unmount(mountpoint, 0); err != nil {
-				return errors.Errorf("error creating overlay mount to %s: %v", mountpoint, err)
+			log.Printf("unmounting %s\n", mountpoint)
+			if err = unix.Unmount(mountpoint, 0); err != nil {
+				return errors.Errorf("error unmounting %s: %v", mountpoint, err)
 			}
 		}
+	}
+	if err = scanner.Err(); err != nil {
+		return err
 	}
 
 	return nil

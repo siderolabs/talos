@@ -6,6 +6,7 @@ package kubernetes
 
 import (
 	"context"
+	"log"
 	"syscall"
 
 	"github.com/containerd/containerd"
@@ -59,6 +60,7 @@ func (task *KillKubernetesTasks) standard() (err error) {
 
 	for _, task := range response.Tasks {
 		task := task // https://golang.org/doc/faq#closures_and_goroutines
+		log.Printf("killing task %s", task.ID)
 		g.Go(func() error {
 			if _, err = s.Kill(ctx, &tasks.KillRequest{ContainerID: task.ID, Signal: uint32(syscall.SIGTERM), All: true}); err != nil {
 				return errors.Wrap(err, "error killing task")
