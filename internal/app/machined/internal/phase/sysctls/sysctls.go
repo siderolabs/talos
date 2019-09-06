@@ -36,6 +36,9 @@ func (task *Sysctls) runtime(platform platform.Platform, data *userdata.UserData
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
 		multiErr = multierror.Append(multiErr, errors.Wrap(err, "failed to set IPv6 forwarding"))
 	}
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
+		multiErr = multierror.Append(multiErr, errors.Wrap(err, "failed to set pid_max"))
+	}
 
 	return multiErr.ErrorOrNil()
 }
