@@ -80,5 +80,3 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
        sleep 5
      done"
 
-${LOCALOSCTL} cluster destroy --name integration
-
