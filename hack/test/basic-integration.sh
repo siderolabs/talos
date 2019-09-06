@@ -79,4 +79,3 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
        kubectl get nodes -o wide -l node-role.kubernetes.io/master=''
        sleep 5
      done"
-
