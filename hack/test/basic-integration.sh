@@ -2,13 +2,26 @@
 
 set -eou pipefail
 
+
 export KUBERNETES_VERSION=v1.15.2
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
-export OSCTL="${PWD}/build/osctl-linux-amd64"
 export TALOSCONFIG="${TMP}/talosconfig"
 export KUBECONFIG="${TMP}/kubeconfig"
 export TIMEOUT=300
+export OSCTL="${PWD}/build/osctl-linux-amd64"
+
+case $(uname -s) in
+  Linux*)
+    export LOCALOSCTL="${PWD}/build/osctl-linux-amd64"
+    ;;
+  Darwin*)
+    export LOCALOSCTL="${PWD}/build/osctl-darwin-amd64"
+    ;;
+  *)
+    exit 1
+    ;;
+esac
 
 ## Create tmp dir
 mkdir -p ${TMP}
@@ -27,8 +40,8 @@ run() {
          k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
 }
 
-${OSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0
-${OSCTL} config target 10.5.0.2
+${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0
+${LOCALOSCTL} config target 10.5.0.2
 
 ## Fetch kubeconfig
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -60,4 +73,12 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
 
 ##  Verify that we have an HA controlplane
-run "kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 >/dev/null"
+run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+     until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 >/dev/null; do
+       [[ \$(date +%s) -gt \$timeout ]] && exit 1
+       kubectl get nodes -o wide -l node-role.kubernetes.io/master=''
+       sleep 5
+     done"
+
+${LOCALOSCTL} cluster destroy --name integration
+
