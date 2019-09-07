@@ -74,8 +74,10 @@ func init() {
 func topUI(ctx context.Context, c *client.Client) {
 
 	l := widgets.NewParagraph()
-	l.Title = "Top"
+	l.Border = false
 	l.WrapText = false
+	l.PaddingTop = 0
+	l.PaddingBottom = 0
 
 	var processOutput string
 
