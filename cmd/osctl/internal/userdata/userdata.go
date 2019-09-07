@@ -16,7 +16,7 @@ import (
 // TODO: Merge this in to internal/pkg/userdata
 func UserData(location string) (userData *ud.UserData, err error) {
 	if strings.HasPrefix(location, "http") {
-		userData, err = download.Download(location, nil)
+		userData, err = download.Download(location)
 	} else {
 		userData, err = ud.Open(location)
 	}
