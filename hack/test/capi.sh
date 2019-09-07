@@ -10,8 +10,10 @@ mkdir -p ${TMP}
 
 ## Drop in capi stuff
 sed "s/{{PACKET_AUTH_TOKEN}}/${PACKET_AUTH_TOKEN}/" ${PWD}/hack/test/manifests/provider-components.yaml > ${TMP}/provider-components.yaml
+
 sed -e "s#{{GCE_SVC_ACCT}}#${GCE_SVC_ACCT}#" \
-    -e "s#{{AZURE_SVC_ACCT}}#${AZURE_SVC_ACCT}#" ${PWD}/hack/test/manifests/capi-secrets.yaml > ${TMP}/capi-secrets.yaml
+    -e "s#{{AZURE_SVC_ACCT}}#${AZURE_SVC_ACCT}#" \
+    -e "s#{{AWS_SVC_ACCT}}#${AWS_SVC_ACCT}#" ${PWD}/hack/test/manifests/capi-secrets.yaml > ${TMP}/capi-secrets.yaml
 
 e2e_run "kubectl apply -f ${TMP}/provider-components.yaml -f ${TMP}/capi-secrets.yaml"
 

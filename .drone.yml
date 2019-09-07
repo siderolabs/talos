@@ -813,6 +813,8 @@ steps:
   commands:
   - make capi
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -865,11 +867,30 @@ steps:
   depends_on:
   - installer
 
+- name: image-snap-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make image-snap-aws
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: push-image-azure
   image: autonomy/build-container:latest
   commands:
   - make push-image-azure
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -893,6 +914,8 @@ steps:
   commands:
   - make push-image-gcp
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -910,6 +933,31 @@ steps:
     path: /tmp
   depends_on:
   - image-gcp
+
+- name: push-image-snap-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make push-image-snap-aws
+  environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - image-snap-aws
 
 - name: e2e-integration-azure
   image: autonomy/build-container:latest
@@ -948,6 +996,25 @@ steps:
   depends_on:
   - capi
   - push-image-gcp
+
+- name: e2e-integration-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    PLATFORM: aws
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - capi
+  - push-image-snap-aws
 
 services:
 - name: docker
@@ -1374,6 +1441,8 @@ steps:
   commands:
   - make capi
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -1426,11 +1495,30 @@ steps:
   depends_on:
   - installer
 
+- name: image-snap-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make image-snap-aws
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: push-image-azure
   image: autonomy/build-container:latest
   commands:
   - make push-image-azure
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -1454,6 +1542,8 @@ steps:
   commands:
   - make push-image-gcp
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -1471,6 +1561,31 @@ steps:
     path: /tmp
   depends_on:
   - image-gcp
+
+- name: push-image-snap-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make push-image-snap-aws
+  environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - image-snap-aws
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -1511,6 +1626,26 @@ steps:
   depends_on:
   - capi
   - push-image-gcp
+
+- name: conformance-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    CONFORMANCE: run
+    PLATFORM: aws
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - capi
+  - push-image-snap-aws
 
 services:
 - name: docker
@@ -1937,6 +2072,8 @@ steps:
   commands:
   - make capi
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -1989,11 +2126,30 @@ steps:
   depends_on:
   - installer
 
+- name: image-snap-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make image-snap-aws
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: push-image-azure
   image: autonomy/build-container:latest
   commands:
   - make push-image-azure
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -2017,6 +2173,8 @@ steps:
   commands:
   - make push-image-gcp
   environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
@@ -2034,6 +2192,31 @@ steps:
     path: /tmp
   depends_on:
   - image-gcp
+
+- name: push-image-snap-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make push-image-snap-aws
+  environment:
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - image-snap-aws
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -2074,6 +2257,26 @@ steps:
   depends_on:
   - capi
   - push-image-gcp
+
+- name: conformance-aws
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-integration
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+    CONFORMANCE: run
+    PLATFORM: aws
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - capi
+  - push-image-snap-aws
 
 services:
 - name: docker

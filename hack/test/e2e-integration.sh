@@ -18,9 +18,6 @@ cleanup() {
 
 trap cleanup EXIT
 
-## Setup the cluster YAML.
-sed "s/{{TAG}}/${TAG}/" ${PWD}/hack/test/manifests/${PLATFORM}-cluster.yaml > ${TMPPLATFORM}/cluster.yaml
-
 ## Download kustomize and template out capi cluster, then deploy it
 e2e_run "KUBECONFIG=${TMP}/kubeconfig kubectl apply -f ${TMPPLATFORM}/cluster.yaml"
 

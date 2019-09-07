@@ -154,9 +154,7 @@ installer: buildkitd
 
 .PHONY: image-aws
 image-aws:
-	@docker run \
-		--rm \
-		-i \
+	@docker run --rm -it \
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
@@ -203,6 +201,23 @@ image-gcp:
 .PHONY: push-image-gcp
 push-image-gcp:
 	@TAG=$(TAG) ./hack/test/gcp-setup.sh
+
+.PHONY: image-snap-aws
+image-snap-aws:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-n aws \
+		-r \
+		-p aws \
+		-u none
+	@tar -C $(PWD)/build -czf $(PWD)/build/aws.tar.gz aws.raw
+	@rm -rf $(PWD)/build/aws.raw
+
+.PHONY: push-image-snap-aws
+push-image-snap-aws:
+	@TAG=$(TAG) ./hack/test/aws-setup.sh
 
 .PHONY: image-test
 image-test:

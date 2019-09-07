@@ -31,3 +31,6 @@ az image delete --name talos-e2e-${TAG} -g ${GROUP}
 
 ## Create image
 az image create --name talos-e2e-${TAG} --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${GROUP}
+
+## Setup the cluster YAML.
+sed "s/{{TAG}}/${TAG}/" ${PWD}/hack/test/manifests/azure-cluster.yaml > ${TMP}/cluster.yaml
