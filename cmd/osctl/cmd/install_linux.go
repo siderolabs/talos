@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	// "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
+	localud "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -33,25 +33,39 @@ var installCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		data := &userdata.UserData{
-			Install: &userdata.Install{
-				Force:           true,
-				ExtraKernelArgs: extraKernelArgs,
-				Disk:            device,
-				Bootloader:      bootloader,
-			},
+
+		ud, err := localud.UserData(endpoint)
+		if err != nil {
+			// Ignore userdata load errors, since it need not necessarily exist yet
+			log.Println("failed to source provided userdata; falling back to defaults")
+			ud = &userdata.UserData{
+				Install: &userdata.Install{},
+			}
+		}
+
+		// If this command is being called, it _is_ a force-install.
+		ud.Install.Force = true
+
+		// Since the default for bootloader is "true," if the flag is ever false, it should override the userdata.  Thus we should always override userdata value of bootloader.
+		ud.Install.Bootloader = bootloader
+
+		if len(extraKernelArgs) > 0 {
+			ud.Install.ExtraKernelArgs = append(ud.Install.ExtraKernelArgs, extraKernelArgs...)
+		}
+		if device != "" {
+			ud.Install.Disk = device
 		}
 
 		cmdline := kernel.NewCmdline("")
 		cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 		cmdline.Append(constants.KernelParamPlatform, platform)
 		cmdline.Append(constants.KernelParamUserData, endpoint)
-		if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {
+		if err = cmdline.AppendAll(ud.Install.ExtraKernelArgs); err != nil {
 			log.Fatal(err)
 		}
 		cmdline.AppendDefaults()
 
-		i, err := installer.NewInstaller(cmdline, data)
+		i, err := installer.NewInstaller(cmdline, ud)
 		if err != nil {
 			log.Fatal(err)
 		}
