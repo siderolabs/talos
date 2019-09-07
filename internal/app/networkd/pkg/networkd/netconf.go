@@ -30,6 +30,11 @@ func (n *NetConf) OverlayUserData(data *userdata.UserData) error {
 				continue
 			}
 
+			if device.Ignore {
+				(*n)[link] = append(opts, nic.WithIgnore())
+				continue
+			}
+
 			// Configure Addressing
 			if device.DHCP {
 				d := &address.DHCP{NetIf: link}

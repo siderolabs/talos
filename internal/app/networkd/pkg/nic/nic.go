@@ -10,6 +10,8 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // TODO: Probably should put together some map here
@@ -26,12 +28,21 @@ const (
 // NetworkInterface provides an abstract configuration representation for a
 // network interface
 type NetworkInterface struct {
+	Ignore        bool
 	Name          string
 	Type          int
 	MTU           uint32
 	Index         uint32
 	SubInterfaces []string
 	AddressMethod []address.Addressing
+}
+
+// IsIgnored checks the network interface to see if it should be ignored and not configured
+func (n *NetworkInterface) IsIgnored() bool {
+	if n.Ignore || kernel.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(n.Name) {
+		return true
+	}
+	return false
 }
 
 // Create returns a NetworkInterface with all of the given setter options
