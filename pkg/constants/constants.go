@@ -29,6 +29,9 @@ const (
 	// initial interface used to bootstrap the node
 	KernelParamDefaultInterface = "talos.interface"
 
+	// KernelParamNetworkInterfaceIgnore is the kernel parameter for specifying network interfaces which should be ignored by talos
+	KernelParamNetworkInterfaceIgnore = "talos.network.interface.ignore"
+
 	// KernelCurrentRoot is the kernel parameter name for specifying the
 	// current root partition.
 	KernelCurrentRoot = "talos.root"

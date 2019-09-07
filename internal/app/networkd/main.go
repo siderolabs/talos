@@ -59,6 +59,10 @@ func main() {
 			log.Fatal(err)
 		}
 
+		if iface.IsIgnored() {
+			continue
+		}
+
 		netIfaces = append(netIfaces, iface)
 	}
 

@@ -82,6 +82,10 @@ func (v *Parameter) First() *string {
 
 // Get attempts to get a string from a value's internal representation.
 func (v *Parameter) Get(idx int) *string {
+	if v == nil {
+		return nil
+	}
+
 	if len(v.values) > idx {
 		return &v.values[idx]
 	}
@@ -91,6 +95,10 @@ func (v *Parameter) Get(idx int) *string {
 
 // Contains returns a boolean indicating the existence of a value.
 func (v *Parameter) Contains(s string) (ok bool) {
+	if v == nil {
+		return ok
+	}
+
 	for _, value := range v.values {
 		if ok = s == value; ok {
 			return ok

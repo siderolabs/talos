@@ -22,6 +22,14 @@ func defaultOptions() *NetworkInterface {
 	}
 }
 
+// WithIgnore indicates that the interface should not be processed by talos.
+func WithIgnore() Option {
+	return func(n *NetworkInterface) (err error) {
+		n.Ignore = true
+		return
+	}
+}
+
 // WithName sets the name of the interface to the given name.
 func WithName(o string) Option {
 	return func(n *NetworkInterface) (err error) {

@@ -59,6 +59,10 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 			return err
 		}
 
+		if iface.IsIgnored() {
+			continue
+		}
+
 		netIfaces = append(netIfaces, iface)
 	}
 
