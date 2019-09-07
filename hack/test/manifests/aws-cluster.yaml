@@ -1,0 +1,128 @@
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Cluster
+metadata:
+  annotations: null
+  name: talos-e2e-{{TAG}}-aws
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosClusterProviderSpec
+      platform:
+        config: |-
+          region: "{{REGION}}"
+        type: aws
+      controlplane:
+        count: 3
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Machine
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
+    set: master
+  name: talos-e2e-{{TAG}}-aws-master-0
+spec:
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosMachineProviderSpec
+      platform:
+        config: |-
+          region: "{{REGION}}"
+          instances:
+            type:  "t3.small"
+            ami: "{{AMI}}"
+            keypair: "e2e"
+            disks:
+              size: 10
+        type: aws
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Machine
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
+    set: master
+  name: talos-e2e-{{TAG}}-aws-master-1
+spec:
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosMachineProviderSpec
+      platform:
+        config: |-
+          region: "{{REGION}}"
+          instances:
+            type:  "t3.small"
+            ami: "{{AMI}}"
+            keypair: "e2e"
+            disks:
+              size: 10
+        type: aws
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: Machine
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
+    set: master
+  name: talos-e2e-{{TAG}}-aws-master-2
+spec:
+  providerSpec:
+    value:
+      apiVersion: talosproviderconfig/v1alpha1
+      kind: TalosMachineProviderSpec
+      platform:
+        config: |-
+          region: "{{REGION}}"
+          instances:
+            type:  "t3.small"
+            ami: "{{AMI}}"
+            keypair: "e2e"
+            disks:
+              size: 10
+        type: aws
+---
+apiVersion: cluster.k8s.io/v1alpha1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
+    set: worker
+  name: talos-e2e-{{TAG}}-aws-workers
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
+      set: worker
+  template:
+    metadata:
+      labels:
+        cluster.k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
+        set: worker
+    spec:
+      providerSpec:
+        value:
+          apiVersion: talosproviderconfig/v1alpha1
+          kind: TalosMachineProviderSpec
+          platform:
+            config: |-
+              region: "{{REGION}}"
+              instances:
+                type:  "t3.small"
+                ami: "{{AMI}}"
+                keypair: "e2e"
+                disks:
+                  size: 10
+            type: aws
+
