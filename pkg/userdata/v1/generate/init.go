@@ -27,8 +27,9 @@ func initUd(in *Input) (string, error) {
 	cluster := &v1.ClusterConfig{
 		ClusterName: in.ClusterName,
 		ControlPlane: &v1.ControlPlaneConfig{
-			IPs:   in.MasterIPs,
-			Index: in.Index,
+			Endpoint: in.ControlPlaneEndpoint,
+			IPs:      in.MasterIPs,
+			Index:    in.Index,
 		},
 		APIServer: &v1.APIServerConfig{
 			CertSANs: certSANs,

@@ -95,47 +95,47 @@ func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 	suite.Require().NoError(err)
 }
 
-func (suite *GenerateSuite) TestGetControlPlaneEndpoint() {
-	ep := input.GetControlPlaneEndpoint("6443")
+func (suite *GenerateSuite) TestGetAPIServerEndpoint() {
+	ep := input.GetAPIServerEndpoint("6443")
 	suite.Require().Equal(input.MasterIPs[0]+":6443", ep)
 
-	ep = input.GetControlPlaneEndpoint("443")
+	ep = input.GetAPIServerEndpoint("443")
 	suite.Require().Equal(input.MasterIPs[0]+":443", ep)
 
-	ep = inputv6.GetControlPlaneEndpoint("6443")
+	ep = inputv6.GetAPIServerEndpoint("6443")
 	suite.Require().Equal(fmt.Sprintf("[%s]:6443", inputv6.MasterIPs[0]), ep)
 
-	ep = input.GetControlPlaneEndpoint("")
+	ep = input.GetAPIServerEndpoint("")
 	suite.Require().Equal(input.MasterIPs[0], ep)
 
-	ep = inputv6.GetControlPlaneEndpoint("")
+	ep = inputv6.GetAPIServerEndpoint("")
 	suite.Require().Equal(fmt.Sprintf("[%s]", inputv6.MasterIPs[0]), ep)
 
 	inputv6.IP = net.ParseIP("2001:db8::1")
 	inputv6.Index = 0
 	suite.Require().Equal(
 		fmt.Sprintf("[%s]", inputv6.MasterIPs[0]),
-		inputv6.GetControlPlaneEndpoint(""),
+		inputv6.GetAPIServerEndpoint(""),
 	)
 
 	inputv6.IP = net.ParseIP("2001:db8::2")
 	inputv6.Index = 1
 	suite.Require().Equal(
 		fmt.Sprintf("[%s]", inputv6.MasterIPs[0]),
-		inputv6.GetControlPlaneEndpoint(""),
+		inputv6.GetAPIServerEndpoint(""),
 	)
 
 	inputv6.IP = net.ParseIP("2001:db8::3")
 	inputv6.Index = 2
 	suite.Require().Equal(
 		fmt.Sprintf("[%s]", inputv6.MasterIPs[1]),
-		inputv6.GetControlPlaneEndpoint(""),
+		inputv6.GetAPIServerEndpoint(""),
 	)
 
 	inputv6.IP = net.ParseIP("2001:db8::d")
 	inputv6.Index = 0
 	suite.Require().Equal(
 		fmt.Sprintf("[%s]", inputv6.MasterIPs[0]),
-		inputv6.GetControlPlaneEndpoint(""),
+		inputv6.GetAPIServerEndpoint(""),
 	)
 }

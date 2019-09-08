@@ -19,6 +19,13 @@ type ClusterConfig struct {
 
 // ControlPlaneConfig represents control plane config vals
 type ControlPlaneConfig struct {
+
+	// Endpoint is the canonical controlplane endpoint, which can be an IP
+	// address or a DNS hostname, is single-valued, and may optionally include a
+	// port number.  It is optional and if not supplied, the IP address of the
+	// first master node will be used.
+	Endpoint string `yaml:"endpoint,omitempty"`
+
 	IPs   []string `yaml:"ips"`
 	Index int      `yaml:"index,omitempty"`
 }
