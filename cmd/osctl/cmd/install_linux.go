@@ -42,13 +42,14 @@ var installCmd = &cobra.Command{
 			},
 		}
 
-		cmdline := kernel.NewDefaultCmdline()
+		cmdline := kernel.NewCmdline("")
 		cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 		cmdline.Append(constants.KernelParamPlatform, platform)
 		cmdline.Append(constants.KernelParamUserData, endpoint)
 		if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {
 			log.Fatal(err)
 		}
+		cmdline.AppendDefaults()
 
 		i, err := installer.NewInstaller(cmdline, data)
 		if err != nil {
