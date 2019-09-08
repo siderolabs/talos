@@ -125,7 +125,7 @@ var configAddCmd = &cobra.Command{
 
 // configGenerateCmd represents the config generate command.
 var configGenerateCmd = &cobra.Command{
-	Use:   "generate",
+	Use:   "generate <clusterName> <master-1-IP,master-2-IP,master-3-IP>",
 	Short: "Generate a set of configuration files",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -211,6 +211,7 @@ func genV1Userdata(args []string) {
 		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
 	input.AdditionalSubjectAltNames = additionalSANs
+	input.ControlPlaneEndpoint = canonicalControlplaneEndpoint
 
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -281,7 +282,8 @@ func init() {
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
-	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additionalSANs", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
+	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
+	configGenerateCmd.Flags().StringVar(&canonicalControlplaneEndpoint, "controlplane-endpoint", "", "the canonical controlplane endpoint (IP or DNS name) and optional port (defaults to 6443)")
 	configGenerateCmd.Flags().StringVar(&genVersion, "version", "v0", "desired machine config version to generate")
 	helpers.Should(configGenerateCmd.Flags().MarkDeprecated("version", "the v0 version of machine config will be removed in the next version of Talos"))
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))

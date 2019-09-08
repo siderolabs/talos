@@ -19,21 +19,22 @@ import (
 )
 
 var (
-	ca             string
-	crt            string
-	additionalSANs []string
-	csr            string
-	hours          int
-	ip             string
-	key            string
-	kubernetes     bool
-	useCRI         bool
-	name           string
-	organization   string
-	rsa            bool
-	talosconfig    string
-	target         string
-	userdataFile   string
+	ca                            string
+	crt                           string
+	additionalSANs                []string
+	canonicalControlplaneEndpoint string
+	csr                           string
+	hours                         int
+	ip                            string
+	key                           string
+	kubernetes                    bool
+	useCRI                        bool
+	name                          string
+	organization                  string
+	rsa                           bool
+	talosconfig                   string
+	target                        string
+	userdataFile                  string
 )
 
 // rootCmd represents the base command when called without any subcommands

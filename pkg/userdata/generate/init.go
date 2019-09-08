@@ -35,7 +35,7 @@ services:
       kind: ClusterConfiguration
       clusterName: {{ .ClusterName }}
       kubernetesVersion: {{ .KubernetesVersion }}
-      controlPlaneEndpoint: "{{ .GetControlPlaneEndpoint "443" }}"
+      controlPlaneEndpoint: "{{ .GetControlPlaneEndpoint }}"
       apiServer:
         certSANs: [ {{ range $i,$addr := .GetAPIServerSANs }}{{if $i}},{{end}}"{{$addr}}"{{end}} ]
         extraArgs:

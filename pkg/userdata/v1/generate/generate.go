@@ -39,7 +39,14 @@ type CertStrings struct {
 
 // Input holds info about certs, ips, and node type.
 type Input struct {
-	Certs                     *Certs
+	Certs *Certs
+
+	// ControlplaneEndpoint is the canonical address of the kubernetes control
+	// plane.  It can be a DNS name, the IP address of a load balancer, or
+	// (default) the IP address of the first master node.  It is NOT
+	// multi-valued.  It may optionally specify the port.
+	ControlPlaneEndpoint string
+
 	MasterIPs                 []string
 	AdditionalSubjectAltNames []string
 
@@ -76,8 +83,22 @@ func (i *Input) Endpoints() (out string) {
 	return
 }
 
-// GetControlPlaneEndpoint returns the formatted host:port of the first master node
-func (i *Input) GetControlPlaneEndpoint(port string) string {
+// GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP
+func (i *Input) GetControlPlaneEndpoint() string {
+
+	if i == nil || (len(i.MasterIPs) < 1 && i.ControlPlaneEndpoint == "") {
+		panic("cannot GetControlPlaneEndpoint without any Master IPs")
+	}
+
+	if i.ControlPlaneEndpoint != "" {
+		return i.ControlPlaneEndpoint
+	}
+
+	return tnet.FormatAddress(i.MasterIPs[0])
+}
+
+// GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
+func (i *Input) GetAPIServerEndpoint(port string) string {
 
 	if i == nil || len(i.MasterIPs) < 1 {
 		panic("cannot GetControlPlaneEndpoint without any Master IPs")

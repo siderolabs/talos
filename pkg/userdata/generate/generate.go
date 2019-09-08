@@ -78,8 +78,13 @@ func (i *Input) Endpoints() (out string) {
 	return
 }
 
-// GetControlPlaneEndpoint returns the formatted host:port of the first master node
-func (i *Input) GetControlPlaneEndpoint(port string) string {
+// GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP
+func (i *Input) GetControlPlaneEndpoint() string {
+	return tnet.FormatAddress(i.MasterIPs[0])
+}
+
+// GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
+func (i *Input) GetAPIServerEndpoint(port string) string {
 
 	if i == nil || len(i.MasterIPs) < 1 {
 		panic("cannot GetControlPlaneEndpoint without any Master IPs")
