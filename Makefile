@@ -154,11 +154,16 @@ installer: buildkitd
 
 .PHONY: image-aws
 image-aws:
-	@docker run --rm -it \
-		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
-		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
-		-e AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION) \
-		autonomy/installer:$(TAG) ami -var regions=${AWS_PUBLISH_REGIONS} -var visibility=all
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-n aws \
+		-r \
+		-p aws \
+		-u none
+	@tar -C $(PWD)/build -czf $(PWD)/build/aws.tar.gz aws.raw
+	@rm -rf $(PWD)/build/aws.raw
 
 .PHONY: image-azure
 image-azure:
@@ -181,10 +186,6 @@ image-azure:
 	@tar -C $(PWD)/build -czf $(PWD)/build/azure.tar.gz azure.vhd
 	@rm -rf $(PWD)/build/azure.raw $(PWD)/build/azure.vhd
 
-.PHONY: push-image-azure
-push-image-azure:
-	@TAG=$(TAG) ./hack/test/azure-setup.sh
-
 .PHONY: image-gcp
 image-gcp:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
@@ -198,26 +199,17 @@ image-gcp:
 	@tar -C $(PWD)/build -czf $(PWD)/build/gcp.tar.gz disk.raw
 	@rm -rf $(PWD)/build/disk.raw
 
+.PHONY: push-image-aws
+push-image-aws:
+	@TAG=$(TAG) ./hack/test/aws-setup.sh
+
+.PHONY: push-image-azure
+push-image-azure:
+	@TAG=$(TAG) ./hack/test/azure-setup.sh
+
 .PHONY: push-image-gcp
 push-image-gcp:
 	@TAG=$(TAG) ./hack/test/gcp-setup.sh
-
-.PHONY: image-snap-aws
-image-snap-aws:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
-		autonomy/installer:$(TAG) \
-		install \
-		-n aws \
-		-r \
-		-p aws \
-		-u none
-	@tar -C $(PWD)/build -czf $(PWD)/build/aws.tar.gz aws.raw
-	@rm -rf $(PWD)/build/aws.raw
-
-.PHONY: push-image-snap-aws
-push-image-snap-aws:
-	@TAG=$(TAG) ./hack/test/aws-setup.sh
 
 .PHONY: image-test
 image-test:
