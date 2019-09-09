@@ -163,6 +163,8 @@ func (m *Manifest) ExecuteManifest(data *userdata.UserData, manifest *Manifest) 
 
 		for _, target := range targets {
 			if err = target.Format(); err != nil {
+				// nolint: errcheck
+				bd.Device().Sync()
 				return errors.Wrap(err, "failed to format device")
 			}
 		}

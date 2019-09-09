@@ -37,7 +37,7 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 				log.Println("WARNING: no ESP partition was found")
 				continue
 			}
-			return nil, errors.Errorf("probe device for filesystem %s: %v", name, err)
+			return nil, errors.Errorf("probe %s for partition with label %s: %v", devpath, name, err)
 		}
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
 		mountpoints.Set(name, mountpoint)

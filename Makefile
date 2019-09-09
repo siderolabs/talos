@@ -164,7 +164,7 @@ image-aws:
 
 .PHONY: image-azure
 image-azure:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+	@docker run --rm --device=/dev/loop-control:/dev/loop-control -v /dev:/dev -v $(PWD)/build:/out \
 		--privileged $(DOCKER_ARGS) \
 		autonomy/installer:$(TAG) \
 		install \
@@ -189,7 +189,7 @@ push-image-azure:
 
 .PHONY: image-gcp
 image-gcp:
-	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+	@docker run --rm --device=/dev/loop-control:/dev/loop-control -v /dev:/dev -v $(PWD)/build:/out \
 		--privileged $(DOCKER_ARGS) \
 		autonomy/installer:$(TAG) \
 		install \
@@ -206,7 +206,7 @@ push-image-gcp:
 
 .PHONY: image-test
 image-test:
-	@docker run --rm -v /dev:/dev -v /tmp:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n test -r -p test -u none
+	@docker run --rm --device=/dev/loop-control:/dev/loop-control -v /dev:/dev -v /tmp:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n test -r -p test -u none
 
 .PHONY: iso
 iso:

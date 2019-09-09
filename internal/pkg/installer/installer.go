@@ -81,6 +81,9 @@ func (i *Installer) Install() (err error) {
 		for iter.Next() {
 			mountpoints.Set(iter.Key(), iter.Value())
 		}
+		if iter.Err() != nil {
+			return err
+		}
 	}
 
 	m := manager.NewManager(mountpoints)

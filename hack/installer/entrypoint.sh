@@ -23,7 +23,7 @@ function setup_raw_device(){
   # NB: Since we use BLKRRPART to tell the kernel to re-read the partition
   # table, it is required to create a partitioned loop device. The BLKRRPART
   # command is meaningful only for partitionable devices.
-  DEVICE=$(losetup --find --partscan --nooverlap --show ${TALOS_RAW})
+  DEVICE=$(losetup --find --partscan --show ${TALOS_RAW})
   printf "done\n"
 }
 

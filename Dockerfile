@@ -272,7 +272,7 @@ ENTRYPOINT ["/sbin/init"]
 # The installer target generates an image that can be used to install Talos to
 # various environments.
 
-FROM alpine:3.8 AS installer
+FROM alpine:3.10 AS installer
 RUN apk --update add \
     bash \
     cdrkit \
