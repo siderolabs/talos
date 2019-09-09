@@ -92,6 +92,7 @@ func (d *Sequencer) Boot() error {
 		phase.NewPhase(
 			"save userdata",
 			userdatatask.NewSaveUserDataTask(),
+			rootfs.NewHostnameTask(),
 		),
 		phase.NewPhase(
 			"start services",

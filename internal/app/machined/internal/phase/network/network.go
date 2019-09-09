@@ -8,13 +8,10 @@ import (
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs/etc"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -72,23 +69,21 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 		return err
 	}
 
-	// Create /etc/hosts.
-	// Priority is:
-	// 1. Userdata
-	// 2. Kernel Arg
-	// 3. DHCP response
-	// 4. failsafe - talos-<ip addr>
-	// default specified in etc.Hosts()
-	var hostname string
-	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
-	switch {
-	case data.Networking != nil && data.Networking.OS != nil && data.Networking.OS.Hostname != "":
-		hostname = data.Networking.OS.Hostname
-	case kernelHostname != nil:
-		hostname = *kernelHostname
-	case nwd.Hostname(netIfaces...) != "":
-		hostname = nwd.Hostname(netIfaces...)
+	// This next chunk is around saving off the hostname if necessary
+	hostname := nwd.Hostname(netIfaces...)
+	if hostname == "" {
+		return nil
 	}
 
-	return etc.Hosts(hostname)
+	// Ensure we have appropriate struct defined
+	if data.Networking == nil {
+		data.Networking = &userdata.Networking{}
+	}
+	if data.Networking.OS == nil {
+		data.Networking.OS = &userdata.OSNet{}
+	}
+
+	data.Networking.OS.Hostname = hostname
+
+	return nil
 }
