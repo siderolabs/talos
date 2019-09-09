@@ -50,6 +50,9 @@ func (tv1 *V1Translator) Translate() (*userdata.UserData, error) {
 		},
 	}
 
+	if nc.Machine.Network != nil {
+		translateV1Network(nc, ud)
+	}
 	if nc.Machine.Install != nil {
 		translateV1Install(nc, ud)
 	}
@@ -71,6 +74,45 @@ func (tv1 *V1Translator) Translate() (*userdata.UserData, error) {
 		translateV1Worker(nc, ud)
 	}
 	return ud, nil
+}
+
+func translateV1Network(nc *v1.NodeConfig, ud *userdata.UserData) {
+	if ud.Networking == nil {
+		ud.Networking = &userdata.Networking{}
+	}
+
+	ud.Networking.OS = &userdata.OSNet{
+		Hostname: nc.Machine.Network.Hostname,
+	}
+
+	for _, iface := range nc.Machine.Network.Interfaces {
+		d := userdata.Device{
+			Interface: iface.Interface,
+			CIDR:      iface.CIDR,
+			MTU:       iface.MTU,
+			DHCP:      iface.DHCP,
+			Ignore:    iface.Ignore,
+		}
+
+		for _, r := range iface.Routes {
+			d.Routes = append(d.Routes, userdata.Route{
+				Network: r.Network,
+				Gateway: r.Gateway,
+			})
+		}
+
+		if iface.Bond != nil {
+			d.Bond = &userdata.Bond{
+				Mode:       iface.Bond.Mode,
+				HashPolicy: iface.Bond.HashPolicy,
+				LACPRate:   iface.Bond.LACPRate,
+				Interfaces: iface.Bond.Interfaces,
+			}
+		}
+
+		ud.Networking.OS.Devices = append(ud.Networking.OS.Devices, d)
+	}
+
 }
 
 func translateV1Install(nc *v1.NodeConfig, ud *userdata.UserData) {
