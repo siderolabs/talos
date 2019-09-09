@@ -6,10 +6,13 @@ package userdata
 
 import (
 	"errors"
+	"log"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -39,6 +42,44 @@ func (task *UserData) standard(platform platform.Platform, data *userdata.UserDa
 	if err != nil {
 		return err
 	}
+
+	if d.Networking == nil {
+		d.Networking = &userdata.Networking{}
+	}
+	if d.Networking.OS == nil {
+		d.Networking.OS = &userdata.OSNet{}
+	}
+
+	// Create /etc/hosts and set hostname.
+	// Priority is:
+	// 1. Userdata (explicit by user)
+	// 2. Kernel Arg
+	// 3. Platform provided
+	// 4. DHCP response
+	// 5. failsafe - talos-<ip addr>
+	// failsafe/default specified in etc.Hosts()
+	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
+	var ph []byte
+	ph, err = platform.Hostname()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case d.Networking.OS.Hostname != "":
+		log.Printf("d.networking.os.hostname already exists: %s", d.Networking.OS.Hostname)
+		// Hostname already defined/set; nothing left to do
+	case kernelHostname != nil:
+		d.Networking.OS.Hostname = *kernelHostname
+		log.Printf("kernelHostname set: %s", *kernelHostname)
+	case ph != nil:
+		d.Networking.OS.Hostname = string(ph)
+		log.Printf("platform hostname %s:", string(ph))
+	case data.Networking.OS.Hostname != "":
+		d.Networking.OS.Hostname = data.Networking.OS.Hostname
+		log.Printf("dhcp hostname %s:", data.Networking.OS.Hostname)
+	}
+
 	*data = *d
 
 	return nil
