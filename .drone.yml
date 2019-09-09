@@ -2661,7 +2661,7 @@ steps:
 - name: slack
   image: plugins/slack
   settings:
-    channel: proj-talos-maint
+    channel: proj-talos-maintainers
     webhook:
       from_secret: slack_webhook
 
