@@ -240,28 +240,28 @@ local creds_env_vars = {
     AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
 };
 
+local image_aws = Step("image-aws", depends_on=[installer]);
 local image_azure = Step("image-azure", depends_on=[installer]);
 local image_gcp = Step("image-gcp", depends_on=[installer]);
-local image_snap_aws = Step("image-snap-aws", depends_on=[installer]);
 local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_vars);
+local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
 local push_image_gcp = Step("push-image-gcp", depends_on=[image_gcp], environment=creds_env_vars);
-local push_image_snap_aws = Step("push-image-snap-aws", depends_on=[image_snap_aws], environment=creds_env_vars);
+local e2e_integration_aws = Step("e2e-integration-aws", "e2e-integration", depends_on=[capi, push_image_aws], environment={PLATFORM: "aws"});
 local e2e_integration_azure = Step("e2e-integration-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure"});
 local e2e_integration_gcp = Step("e2e-integration-gcp", "e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp"});
-local e2e_integration_aws = Step("e2e-integration-aws", "e2e-integration", depends_on=[capi, push_image_snap_aws], environment={PLATFORM: "aws"});
 
 local e2e_steps = default_steps + [
   capi,
+  image_aws,
   image_azure,
   image_gcp,
-  image_snap_aws,
+  push_image_aws,
   push_image_azure,
   push_image_gcp,
-  push_image_snap_aws,
+  e2e_integration_aws,
   e2e_integration_azure,
   e2e_integration_gcp,
-  e2e_integration_aws,
 ];
 
 local e2e_trigger = {
@@ -276,21 +276,21 @@ local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
+local conformance_aws = Step("conformance-aws", "e2e-integration", depends_on=[capi, push_image_aws], environment={PLATFORM: "aws", CONFORMANCE: "run"});
 local conformance_azure = Step("conformance-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure", CONFORMANCE: "run"});
 local conformance_gcp = Step("conformance-gcp", "e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp", CONFORMANCE: "run"});
-local conformance_aws = Step("conformance-aws", "e2e-integration", depends_on=[capi, push_image_snap_aws], environment={PLATFORM: "aws", CONFORMANCE: "run"});
 
 local conformance_steps = default_steps + [
   capi,
+  image_aws,
   image_azure,
   image_gcp,
-  image_snap_aws,
+  push_image_aws,
   push_image_azure,
   push_image_gcp,
-  push_image_snap_aws,
+  conformance_aws,
   conformance_azure,
   conformance_gcp,
-  conformance_aws,
 ];
 
 local conformance_trigger = {

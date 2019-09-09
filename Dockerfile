@@ -282,8 +282,6 @@ RUN apk --update add \
     unzip \
     util-linux \
     xfsprogs
-COPY --from=hashicorp/packer:1.4.2 /bin/packer /bin/packer
-COPY hack/installer/packer.json /packer.json
 COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=rootfs /usr/lib/syslinux/ /usr/lib/syslinux
