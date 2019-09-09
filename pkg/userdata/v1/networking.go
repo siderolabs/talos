@@ -19,10 +19,13 @@ import (
 type Device struct {
 	Interface string  `yaml:"interface"`
 	CIDR      string  `yaml:"cidr"`
-	DHCP      bool    `yaml:"dhcp"`
 	Routes    []Route `yaml:"routes"`
 	Bond      *Bond   `yaml:"bond"`
 	MTU       int     `yaml:"mtu"`
+	DHCP      bool    `yaml:"dhcp"`
+
+	// Ignore indicates that the device should be ignored by any talos setup routines
+	Ignore bool `yaml:"ignore"`
 }
 
 // NetworkDeviceCheck defines the function type for checks
@@ -33,6 +36,10 @@ type NetworkDeviceCheck func(*Device) error
 // nolint: dupl
 func (d *Device) Validate(checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
+
+	if d.Ignore {
+		return result.ErrorOrNil()
+	}
 
 	for _, check := range checks {
 		result = multierror.Append(result, check(d))
