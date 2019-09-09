@@ -54,7 +54,12 @@ func main() {
 		server = data.Services.NTPd.Server
 	}
 
-	n := &ntp.NTP{Server: server}
+	n, err := ntp.NewNTPClient(
+		ntp.WithServer(server),
+	)
+	if err != nil {
+		log.Fatalf("failed to create ntp client: %v", err)
+	}
 
 	log.Println("Starting ntpd")
 	errch := make(chan error)
