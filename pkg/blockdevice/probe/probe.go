@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/pkg/blockdevice"
@@ -55,9 +56,20 @@ func All() (all []*ProbedBlockDevice, err error) {
 // FileSystem probes the provided path's file system.
 func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 	var f *os.File
-	if f, err = os.OpenFile(path, os.O_RDONLY|unix.O_CLOEXEC, os.ModeDevice); err != nil {
-		return nil, err
+	// Sleep for up to 5s to wait for kernel to create the necessary device files.
+	// If we dont sleep this becomes racy in that the device file does not exist
+	// and it will fail to open.
+	for i := 0; i <= 100; i++ {
+		if f, err = os.OpenFile(path, os.O_RDONLY|unix.O_CLOEXEC, os.ModeDevice); err != nil {
+			if os.IsNotExist(err) {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+			return nil, err
+		}
+		break
 	}
+
 	// nolint: errcheck
 	defer f.Close()
 
