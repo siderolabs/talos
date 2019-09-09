@@ -366,7 +366,7 @@ local notify = {
   settings:
     {
       webhook: { from_secret: 'slack_webhook' },
-      channel: 'proj-talos-maint',
+      channel: 'proj-talos-maintainers',
     },
 };
 
