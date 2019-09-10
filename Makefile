@@ -161,7 +161,9 @@ image-aws:
 		-n aws \
 		-r \
 		-p aws \
-		-u none
+		-u none \
+		-e console=tty1 \
+		-e console=ttyS0
 	@tar -C $(PWD)/build -czf $(PWD)/build/aws.tar.gz aws.raw
 	@rm -rf $(PWD)/build/aws.raw
 
@@ -175,6 +177,8 @@ image-azure:
 		-r \
 		-p azure \
 		-u none \
+		-e console=ttyS0,115200n8 \
+		-e earlyprintk=ttyS0,115200 \
 		-e rootdelay=300
 	@docker run --rm -v $(PWD)/build:/out $(DOCKER_ARGS) \
 		--entrypoint qemu-img \
@@ -195,7 +199,8 @@ image-gcp:
 		-n disk \
 		-r \
 		-p gcp \
-		-u none
+		-u none \
+		-e console=ttyS0
 	@tar -C $(PWD)/build -czf $(PWD)/build/gcp.tar.gz disk.raw
 	@rm -rf $(PWD)/build/disk.raw
 
