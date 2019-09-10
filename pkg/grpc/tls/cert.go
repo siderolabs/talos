@@ -113,7 +113,6 @@ func NewRenewingFileCertificateProvider(ctx context.Context, data *userdata.User
 }
 
 func (p *renewingFileCertificateProvider) loadInitialCert() error {
-
 	// TODO: eventually, we will reverse this priority, and have the override
 	// come from the userdata.  For now, however, we use the local file to
 	// override the userdata, because we _always_ have userdata certs, and the
@@ -134,7 +133,7 @@ func (p *renewingFileCertificateProvider) loadInitialCert() error {
 }
 
 func (p *renewingFileCertificateProvider) manageUpdates(ctx context.Context) {
-	var nextRenewal = constants.NodeCertRenewalInterval
+	nextRenewal := constants.NodeCertRenewalInterval
 
 	for ctx.Err() == nil {
 		if c, _ := p.GetCertificate(nil); c != nil { // nolint: errcheck

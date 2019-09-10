@@ -111,7 +111,7 @@ func main() {
 		}
 	}()
 
-	var rebootFlag = unix.LINUX_REBOOT_CMD_RESTART
+	rebootFlag := unix.LINUX_REBOOT_CMD_RESTART
 
 	// Wait for an event.
 

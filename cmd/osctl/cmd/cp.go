@@ -134,7 +134,6 @@ captures ownership and permission bits.`,
 					}
 				}
 			}
-
 		})
 	},
 }

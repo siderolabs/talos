@@ -34,6 +34,7 @@ func (m *MockService) ID(*userdata.UserData) string {
 	}
 	return "MockRunner"
 }
+
 func (m *MockService) PreFunc(context.Context, *userdata.UserData) error {
 	return m.preError
 }

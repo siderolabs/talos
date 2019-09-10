@@ -10,7 +10,6 @@ import (
 )
 
 func controlPlaneUd(in *Input) (string, error) {
-
 	machine := &v1alpha1.MachineConfig{
 		Type:  "controlplane",
 		Token: in.TrustdInfo.Token,

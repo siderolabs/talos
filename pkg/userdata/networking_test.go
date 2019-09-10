@@ -19,7 +19,6 @@ func (suite *validateSuite) TestValidateDevice() {
 	// Embedding the check in suite.Assert().Equal(true, xerrors.Is had issues )
 	if !xerrors.Is(err.(*multierror.Error).Errors[0], ErrRequiredSection) {
 		suite.T().Errorf("%+v", err)
-
 	}
 
 	dev.Interface = "eth0"

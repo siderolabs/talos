@@ -40,7 +40,6 @@ func NewNTPClient(opts ...Option) (*NTP, error) {
 // We dont ever want the daemon to stop, so we only log
 // errors
 func (n *NTP) Daemon() (err error) {
-
 	// Do an initial hard set of time to ensure clock skew isnt too far off
 	var resp *ntp.Response
 	if resp, err = n.Query(); err != nil {
@@ -76,7 +75,6 @@ func (n *NTP) Daemon() (err error) {
 
 // Query polls the ntp server and verifies a successful response.
 func (n *NTP) Query() (*ntp.Response, error) {
-
 	for i := 0; i < n.Retry; i++ {
 		resp, err := ntp.Query(n.Server)
 		if err != nil {

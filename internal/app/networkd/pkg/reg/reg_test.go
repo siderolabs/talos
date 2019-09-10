@@ -27,7 +27,7 @@ type NetworkdSuite struct {
 
 func TestNetworkdSuite(t *testing.T) {
 	// Hide all our state transition messages
-	//log.SetOutput(ioutil.Discard)
+	// log.SetOutput(ioutil.Discard)
 	suite.Run(t, new(NetworkdSuite))
 }
 

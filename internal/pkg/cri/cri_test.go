@@ -201,6 +201,7 @@ func (suite *CRISuite) TestList() {
 	_, err = suite.client.ListImages(suite.ctx, &runtimeapi.ImageFilter{})
 	suite.Require().NoError(err)
 }
+
 func TestCRISuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")

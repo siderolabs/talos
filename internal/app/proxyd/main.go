@@ -22,9 +22,7 @@ import (
 	pkgnet "github.com/talos-systems/talos/pkg/net"
 )
 
-var (
-	dataPath *string
-)
+var dataPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
@@ -67,7 +65,6 @@ func main() {
 			factory.Network("unix"),
 			factory.SocketPath(constants.ProxydSocketPath),
 		)
-
 	}()
 
 	log.Fatal(<-errch)
@@ -106,5 +103,4 @@ func waitForKube(r *frontend.ReverseProxy) {
 	if err = r.Watch(clientset); err != nil {
 		log.Fatalf("failed to watch kubernetes api server: %v", err)
 	}
-
 }

@@ -58,7 +58,8 @@ func (c *Containerd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID: c.ID(data),
-		ProcessArgs: []string{"/bin/containerd",
+		ProcessArgs: []string{
+			"/bin/containerd",
 			"--address",
 			constants.ContainerdAddress,
 			"--config",

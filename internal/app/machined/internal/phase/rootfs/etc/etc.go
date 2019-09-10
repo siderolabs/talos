@@ -39,7 +39,6 @@ BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 
 // Hosts renders a valid /etc/hosts file and writes it to disk.
 func Hosts(hostname string) (err error) {
-
 	ip := ip()
 
 	// If no hostname, set it to `talos-<ip>`, talos-1-2-3-4

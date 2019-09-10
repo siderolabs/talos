@@ -23,7 +23,6 @@ func NewNtpdClient() (*NtpdClient, error) {
 	conn, err := grpc.Dial("unix:"+constants.NtpdSocketPath,
 		grpc.WithInsecure(),
 	)
-
 	if err != nil {
 		return nil, err
 	}

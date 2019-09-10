@@ -13,9 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-var (
-	shortVersion bool
-)
+var shortVersion bool
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{

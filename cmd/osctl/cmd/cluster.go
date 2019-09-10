@@ -271,6 +271,7 @@ func ensureImageExists(ctx context.Context, cli *client.Client, image string) er
 
 	return nil
 }
+
 func createNetwork(cli *client.Client) (types.NetworkCreateResponse, error) {
 	options := types.NetworkCreate{
 		Labels: map[string]string{

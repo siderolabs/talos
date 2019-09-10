@@ -134,7 +134,6 @@ func NewListener(setters ...Option) (net.Listener, error) {
 func ListenAndServe(r Registrator, setters ...Option) (err error) {
 	server := NewServer(r, setters...)
 	listener, err := NewListener(setters...)
-
 	if err != nil {
 		return err
 	}

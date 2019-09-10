@@ -10,7 +10,6 @@ import (
 )
 
 func workerUd(in *Input) (string, error) {
-
 	machine := &v1alpha1.MachineConfig{
 		Type:    "worker",
 		Token:   in.TrustdInfo.Token,

@@ -99,14 +99,12 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 
 			return nil
 		})
-
 		if err != nil {
 			select {
 			case <-ctx.Done():
 			case ch <- FileItem{Error: err}:
 			}
 		}
-
 	}()
 
 	return ch, nil

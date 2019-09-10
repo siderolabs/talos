@@ -23,7 +23,6 @@ func NewNetworkdClient() (*NetworkdClient, error) {
 	conn, err := grpc.Dial("unix:"+constants.NetworkdSocketPath,
 		grpc.WithInsecure(),
 	)
-
 	if err != nil {
 		return nil, err
 	}

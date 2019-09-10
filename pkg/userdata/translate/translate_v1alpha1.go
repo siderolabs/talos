@@ -112,11 +112,9 @@ func translateV1Alpha1Network(nc *v1alpha1.NodeConfig, ud *userdata.UserData) {
 
 		ud.Networking.OS.Devices = append(ud.Networking.OS.Devices, d)
 	}
-
 }
 
 func translateV1Alpha1Install(nc *v1alpha1.NodeConfig, ud *userdata.UserData) {
-
 	ud.Install = &userdata.Install{
 		Disk:       nc.Machine.Install.Disk,
 		Image:      nc.Machine.Install.Image,
@@ -314,7 +312,7 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 }
 
 func translateV1Alpha1Worker(nc *v1alpha1.NodeConfig, ud *userdata.UserData) {
-	//Craft a worker kubeadm config
+	// Craft a worker kubeadm config
 	workerConfig := &kubeadm.JoinConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "JoinConfiguration",

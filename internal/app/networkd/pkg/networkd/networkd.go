@@ -209,7 +209,6 @@ func (n *Networkd) configureInterface(method address.Addressing) error {
 			default:
 				log.Printf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
 			}
-
 		}
 	}
 

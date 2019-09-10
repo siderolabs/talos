@@ -13,9 +13,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
-var (
-	upgradeImage string
-)
+var upgradeImage string
 
 // upgradeCmd represents the processes command
 var upgradeCmd = &cobra.Command{

@@ -85,7 +85,6 @@ func (i *Input) GetControlPlaneEndpoint() string {
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
 func (i *Input) GetAPIServerEndpoint(port string) string {
-
 	if i == nil || len(i.MasterIPs) < 1 {
 		panic("cannot GetControlPlaneEndpoint without any Master IPs")
 	}
@@ -105,8 +104,7 @@ func (i *Input) GetAPIServerEndpoint(port string) string {
 
 // GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server
 func (i *Input) GetAPIServerSANs() []string {
-
-	var list = []string{"127.0.0.1", "::1"}
+	list := []string{"127.0.0.1", "::1"}
 	list = append(list, i.MasterIPs...)
 	list = append(list, i.AdditionalSubjectAltNames...)
 
@@ -137,7 +135,6 @@ type TrustdInfo struct {
 // randBytes returns a random string consisting of the characters in
 // validBootstrapTokenChars, with the length customized by the parameter
 func randBytes(length int) (string, error) {
-
 	// validBootstrapTokenChars defines the characters a bootstrap token can consist of
 	const validBootstrapTokenChars = "0123456789abcdefghijklmnopqrstuvwxyz"
 
@@ -168,12 +165,11 @@ func randBytes(length int) (string, error) {
 	return string(token), err
 }
 
-//genToken will generate a token of the format abc.123 (like kubeadm/trustd), where the length of the first string (before the dot)
-//and length of the second string (after dot) are specified as inputs
+// genToken will generate a token of the format abc.123 (like kubeadm/trustd), where the length of the first string (before the dot)
+// and length of the second string (after dot) are specified as inputs
 func genToken(lenFirst int, lenSecond int) (string, error) {
-
 	var err error
-	var tokenTemp = make([]string, 2)
+	tokenTemp := make([]string, 2)
 
 	tokenTemp[0], err = randBytes(lenFirst)
 	if err != nil {
@@ -202,7 +198,6 @@ func isIPv6(addrs ...string) bool {
 // types.
 // nolint: dupl,gocyclo
 func NewInput(clustername string, masterIPs []string) (input *Input, err error) {
-
 	var loopbackIP, podNet, serviceNet string
 
 	if isIPv6(masterIPs...) {
@@ -215,20 +210,20 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		serviceNet = DefaultIPv4ServiceNet
 	}
 
-	//Gen trustd token strings
+	// Gen trustd token strings
 	kubeadmBootstrapToken, err := genToken(6, 16)
 	if err != nil {
 		return nil, err
 	}
 
-	//TODO: Can be dropped
-	//Gen kubeadm cert key
+	// TODO: Can be dropped
+	// Gen kubeadm cert key
 	kubeadmCertKey, err := randBytes(26)
 	if err != nil {
 		return nil, err
 	}
 
-	//Gen trustd token strings
+	// Gen trustd token strings
 	trustdToken, err := genToken(6, 16)
 	if err != nil {
 		return nil, err

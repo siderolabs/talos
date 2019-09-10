@@ -41,7 +41,7 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 		conn, err = basic.NewConnection(data.Services.Trustd.Endpoints[i], port, creds)
 		if err != nil {
 			multiError = multierror.Append(multiError, err)
-			//Unable to connect, bail and attempt to contact next endpoint
+			// Unable to connect, bail and attempt to contact next endpoint
 			continue
 		}
 		client := proto.NewTrustdClient(conn)
@@ -51,7 +51,6 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 	// We were unable to connect to any trustd endpoint
 	// Return error from last attempt.
 	return nil, multiError.ErrorOrNil()
-
 }
 
 // Certificate implements the proto.TrustdClient interface.

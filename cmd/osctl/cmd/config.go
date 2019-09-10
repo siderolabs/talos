@@ -197,7 +197,6 @@ func writeV0Userdata(input *udgenv0.Input, t udgenv0.Type, name string) (err err
 	}
 	if err = ud.Validate(); err != nil {
 		return err
-
 	}
 	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
 		return err
@@ -269,7 +268,6 @@ func writeV1Alpha1Userdata(input *udgenv1alpha1.Input, t udgenv1alpha1.Type, nam
 
 	if err = ud.Validate(); err != nil {
 		return err
-
 	}
 	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
 		return err

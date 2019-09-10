@@ -50,7 +50,6 @@ func PhaseCerts() error {
 }
 
 func editFullInitConfig(data *userdata.UserData) (err error) {
-
 	if data.Services.Kubeadm.InitConfiguration == nil {
 		return errors.New("expected InitConfiguration")
 	}
@@ -78,7 +77,6 @@ func editInitConfig(data *userdata.UserData) (err error) {
 	initConfiguration, ok := data.Services.Kubeadm.InitConfiguration.(*kubeadmv1beta2.InitConfiguration)
 	if !ok {
 		return errors.New("failed InitConfiguration assertion")
-
 	}
 
 	// Hardcodes specific kubeadm config parameters
@@ -94,7 +92,6 @@ func editJoinConfig(data *userdata.UserData) (err error) {
 	joinConfiguration, ok := data.Services.Kubeadm.JoinConfiguration.(*kubeadmv1beta2.JoinConfiguration)
 	if !ok {
 		return errors.New("failed JoinConfiguration assertion")
-
 	}
 
 	joinConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
@@ -112,7 +109,6 @@ func editClusterConfig(data *userdata.UserData) (err error) {
 	clusterConfiguration, ok := data.Services.Kubeadm.ClusterConfiguration.(*kubeadmv1beta2.ClusterConfiguration)
 	if !ok {
 		return errors.New("failed ClusterConfiguration assertion")
-
 	}
 
 	// Hardcodes specific kubeadm config parameters
@@ -243,7 +239,6 @@ func RequiredFiles() []string {
 // FileSet compares the list of required files to the ones
 // already present on the node and returns the delta
 func FileSet(files []string) []*proto.ReadFileRequest {
-
 	fileRequests := []*proto.ReadFileRequest{}
 	// Check to see if we already have the file locally
 	for _, file := range files {

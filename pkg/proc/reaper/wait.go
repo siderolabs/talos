@@ -36,7 +36,6 @@ func WaitWrapper(usingReaper bool, notifyCh <-chan ProcessInfo, cmd *exec.Cmd) e
 	}
 
 	return err
-
 }
 
 func convertWaitStatus(status syscall.WaitStatus) error {
