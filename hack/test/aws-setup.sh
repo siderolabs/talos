@@ -43,6 +43,12 @@ snapshot_id=$(aws ec2 describe-import-snapshot-tasks --region ${REGION} --import
 echo ${snapshot_id}
 
 # Create AMI
+image_id=$(aws ec2 describe-images --region ${REGION} --filters="Name=name,Values=talos-e2e-${TAG}" | jq -r '.Images[0].ImageId') || true
+
+if [[ ${image_id} != "null" ]]; then
+  aws ec2 deregister-image --region ${REGION} --image-id ${image_id}
+fi
+
 ami=$(aws ec2 register-image --region ${REGION} \
                        --block-device-mappings "DeviceName=/dev/xvda,VirtualName=talostest,Ebs={DeleteOnTermination=true,SnapshotId=${snapshot_id},VolumeSize=20,VolumeType=gp2}" \
                        --root-device-name /dev/xvda \
