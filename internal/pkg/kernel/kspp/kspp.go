@@ -14,10 +14,10 @@ import (
 var (
 	// RequiredKSPPKernelParameters is the set of kernel parameters required to
 	// satisfy the KSPP.
-	// # TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
 	RequiredKSPPKernelParameters = kernel.Parameters{
 		kernel.NewParameter("page_poison").Append("1"),
 		kernel.NewParameter("slab_nomerge").Append(""),
+		kernel.NewParameter("slub_debug").Append("P"),
 		kernel.NewParameter("pti").Append("on"),
 	}
 )

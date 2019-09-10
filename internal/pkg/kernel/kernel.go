@@ -146,9 +146,9 @@ func NewCmdline(parameters string) *Cmdline {
 // AppendDefaults add the Talos default kernel commandline options to the existing set
 func (c *Cmdline) AppendDefaults() {
 	c.Append("page_poison", "1")
+	c.Append("slub_debug", "P")
 	c.Append("slab_nomerge", "")
 	c.Append("pti", "on")
-	// TODO(andrewrynhard): Add slub_debug=P. See https://github.com/talos-systems/talos/pull/157.
 	c.Append("consoleblank", "0")
 	// AWS recommends setting the nvme_core.io_timeout to the highest value possible.
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
