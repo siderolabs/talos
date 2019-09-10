@@ -6,7 +6,6 @@ package userdata
 
 import (
 	"log"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -39,7 +38,7 @@ func (task *PKI) runtime(platform platform.Platform, data *userdata.UserData) (e
 			return err
 		}
 		var crt *x509.Certificate
-		crt, err = x509.NewCertificateFromCSRBytes(data.Security.OS.CA.Crt, data.Security.OS.CA.Key, csr.X509CertificateRequestPEM, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
+		crt, err = x509.NewCertificateFromCSRBytes(data.Security.OS.CA.Crt, data.Security.OS.CA.Key, csr.X509CertificateRequestPEM)
 		if err != nil {
 			return err
 		}
