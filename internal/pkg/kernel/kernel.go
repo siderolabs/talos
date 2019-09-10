@@ -156,17 +156,6 @@ func (c *Cmdline) AppendDefaults() {
 	c.Append("random.trust_cpu", "on")
 	// Disable rate limited printk
 	c.Append("printk.devkmsg", "on")
-	// Enable early kernel message logging
-	c.Append("earlyprintk", "ttyS0,115200")
-	// NB: We make console=tty0 the last device on the list since the last
-	// device will be used when you open /dev/console.
-	// AWS: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UserProvidedKernels.html
-	// VMWare: https://kb.vmware.com/s/article/2009269
-	// GCP: https://cloud.google.com/compute/docs/instances/interacting-with-serial-console
-	// Azure: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-upload-generic#general-linux-system-requirements
-	c.Append("console", "tty0")
-	c.Append("console", "tty1")
-	c.Append("console", "ttyS0,115200n8")
 }
 
 // Get gets a kernel parameter.
