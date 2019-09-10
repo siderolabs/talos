@@ -12,7 +12,6 @@ import (
 	stdlibnet "net"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -126,7 +125,6 @@ func (data *UserData) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err
 	names := []string{hostname}
 	opts = append(opts, x509.DNSNames(names))
 	opts = append(opts, x509.IPAddresses(ips))
-	opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(8760)*time.Hour)))
 	csr, err = x509.NewCertificateSigningRequest(keyEC, opts...)
 	if err != nil {
 		return nil, err

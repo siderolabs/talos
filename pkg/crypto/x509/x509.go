@@ -136,7 +136,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 		DNSNames:           []string{},
 		Bits:               4096,
 		RSA:                false,
-		NotAfter:           time.Now().Add(8760 * time.Hour),
+		NotAfter:           time.Now().Add(24 * time.Hour),
 	}
 
 	for _, setter := range setters {
