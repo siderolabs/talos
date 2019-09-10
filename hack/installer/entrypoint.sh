@@ -52,10 +52,6 @@ function create_vmdk() {
   qemu-img convert -f raw -O vmdk ${TALOS_RAW} ${TALOS_VMDK}
 }
 
-function create_ami() {
-  packer build -var "version=${VERSION}" "${@}" /packer.json
-}
-
 function cleanup {
   umount 2>/dev/null || true
   losetup -d ${DEVICE} 2>/dev/null || true

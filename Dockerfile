@@ -276,10 +276,8 @@ FROM alpine:3.8 AS installer
 RUN apk --update add \
     bash \
     cdrkit \
-    curl \
     qemu-img \
     syslinux \
-    unzip \
     util-linux \
     xfsprogs
 COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
