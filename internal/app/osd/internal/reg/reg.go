@@ -108,7 +108,6 @@ func (r *Registrator) Processes(ctx context.Context, in *proto.ProcessesRequest)
 	}
 
 	return &proto.ProcessesReply{Processes: processes}, nil
-
 }
 
 // Stats implements the proto.OSDServer interface.
@@ -150,7 +149,6 @@ func (r *Registrator) Stats(ctx context.Context, in *proto.StatsRequest) (reply 
 
 			stats = append(stats, stat)
 		}
-
 	}
 
 	reply = &proto.StatsReply{Stats: stats}

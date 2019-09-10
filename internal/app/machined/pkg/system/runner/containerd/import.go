@@ -80,7 +80,6 @@ func (i *Importer) Import(reqs ...*ImportRequest) error {
 	for _, req := range reqs {
 		go func(errCh chan<- error, r *ImportRequest) {
 			errCh <- func() error {
-
 				tarball, ierr := os.Open(r.Path)
 				if ierr != nil {
 					return errors.Wrapf(ierr, "error opening %v", r.Path)

@@ -24,7 +24,6 @@ func NewInitServiceClient() (*InitServiceClient, error) {
 	conn, err := grpc.Dial("unix:"+constants.InitSocketPath,
 		grpc.WithInsecure(),
 	)
-
 	if err != nil {
 		return nil, err
 	}

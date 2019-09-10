@@ -21,7 +21,7 @@ type CheckSuite struct {
 }
 
 func (suite *CheckSuite) TestHealthy() {
-	var settings = health.Settings{
+	settings := health.Settings{
 		InitialDelay: time.Millisecond,
 		Period:       10 * time.Millisecond,
 		Timeout:      time.Millisecond,
@@ -65,7 +65,7 @@ func (suite *CheckSuite) TestHealthy() {
 }
 
 func (suite *CheckSuite) TestHealthChange() {
-	var settings = health.Settings{
+	settings := health.Settings{
 		InitialDelay: time.Millisecond,
 		Period:       time.Millisecond,
 		Timeout:      time.Millisecond,
@@ -134,7 +134,7 @@ func (suite *CheckSuite) TestHealthChange() {
 }
 
 func (suite *CheckSuite) TestCheckAbort() {
-	var settings = health.Settings{
+	settings := health.Settings{
 		InitialDelay: time.Millisecond,
 		Period:       time.Millisecond,
 		Timeout:      time.Millisecond,
@@ -176,7 +176,7 @@ func (suite *CheckSuite) TestCheckAbort() {
 }
 
 func (suite *CheckSuite) TestInitialState() {
-	var settings = health.Settings{
+	settings := health.Settings{
 		InitialDelay: 5 * time.Minute,
 	}
 

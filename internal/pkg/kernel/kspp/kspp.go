@@ -11,16 +11,14 @@ import (
 	"github.com/talos-systems/talos/pkg/sysctl"
 )
 
-var (
-	// RequiredKSPPKernelParameters is the set of kernel parameters required to
-	// satisfy the KSPP.
-	RequiredKSPPKernelParameters = kernel.Parameters{
-		kernel.NewParameter("page_poison").Append("1"),
-		kernel.NewParameter("slab_nomerge").Append(""),
-		kernel.NewParameter("slub_debug").Append("P"),
-		kernel.NewParameter("pti").Append("on"),
-	}
-)
+// RequiredKSPPKernelParameters is the set of kernel parameters required to
+// satisfy the KSPP.
+var RequiredKSPPKernelParameters = kernel.Parameters{
+	kernel.NewParameter("page_poison").Append("1"),
+	kernel.NewParameter("slab_nomerge").Append(""),
+	kernel.NewParameter("slub_debug").Append("P"),
+	kernel.NewParameter("pti").Append("on"),
+}
 
 // EnforceKSPPKernelParameters verifies that all required KSPP kernel
 // parameters are present with the right value.

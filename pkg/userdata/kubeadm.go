@@ -37,7 +37,6 @@ type Kubeadm struct {
 
 // MarshalYAML implements the yaml.Marshaler interface.
 func (kdm *Kubeadm) MarshalYAML() (interface{}, error) {
-
 	// Encode init and cluster configs
 	encodedObjs := [][]byte{}
 	for _, obj := range []runtime.Object{kdm.InitConfiguration, kdm.ClusterConfiguration, kdm.JoinConfiguration} {

@@ -19,9 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var (
-	dataPath *string
-)
+var dataPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)

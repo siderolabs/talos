@@ -24,7 +24,6 @@ var timeCmd = &cobra.Command{
 	Short: "Gets current server time",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		setupClient(func(c *client.Client) {
 			server, err := cmd.Flags().GetString("check")
 			if err != nil {

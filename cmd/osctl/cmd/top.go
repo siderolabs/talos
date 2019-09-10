@@ -72,7 +72,6 @@ func init() {
 
 // nolint: gocyclo
 func topUI(ctx context.Context, c *client.Client) {
-
 	l := widgets.NewParagraph()
 	l.Border = false
 	l.WrapText = false
@@ -82,7 +81,6 @@ func topUI(ctx context.Context, c *client.Client) {
 	var processOutput string
 
 	draw := func() {
-
 		// Attempt to get terminal dimensions
 		// Since we're getting this data on each call
 		// we'll be able to handle terminal window resizing

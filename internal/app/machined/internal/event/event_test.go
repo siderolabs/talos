@@ -20,12 +20,12 @@ func (suite *EventSuite) TestBus() {
 	// publish event without subscribers
 	event.Bus().Notify(event.Event{Type: event.Shutdown})
 
-	var subscriber1 = struct {
+	subscriber1 := struct {
 		*event.Embeddable
 	}{
 		&event.Embeddable{},
 	}
-	var subscriber2 = struct {
+	subscriber2 := struct {
 		*event.Embeddable
 	}{
 		&event.Embeddable{},

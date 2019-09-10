@@ -62,7 +62,6 @@ func (suite *ProxydSuite) TestBackends() {
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(resp.Backends[0].Addr, testBackend)
 	log.Println(resp)
-
 }
 
 func fakeProxydRPC() (net.Listener, error) {

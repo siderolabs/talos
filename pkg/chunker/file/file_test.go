@@ -95,7 +95,6 @@ func (suite *FileChunkerSuite) TestStreaming() {
 	ctxCancel()
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
-
 }
 
 func (suite *FileChunkerSuite) TestStreamingWithSomeHead() {

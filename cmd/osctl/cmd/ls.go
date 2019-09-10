@@ -26,7 +26,6 @@ var lsCmd = &cobra.Command{
 	Short: "Retrieve a directory listing",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		setupClient(func(c *client.Client) {
 			rootDir := "/"
 			if len(args) > 0 {

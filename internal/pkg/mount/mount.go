@@ -135,7 +135,6 @@ func (p *Point) Mount() (err error) {
 	}
 
 	return nil
-
 }
 
 // Unmount attempts to retry an unmount on EBUSY. It will attempt a

@@ -43,7 +43,6 @@ var psCmd = &cobra.Command{
 				driver = proto.ContainerDriver_CRI
 			}
 			reply, err := c.Processes(globalCtx, namespace, driver)
-
 			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)
 			}

@@ -91,7 +91,6 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 	// ( filtered by ones we already have ) and
 	// Get assets from remote nodes
 	for _, fileRequest := range kubeadm.FileSet(kubeadm.RequiredFiles()) {
-
 		// Handle all file requests in parallel
 		go func(ctx context.Context, fileRequest *proto.ReadFileRequest) {
 			defer wg.Done()
@@ -119,7 +118,6 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 				// given file
 				kubeadm.WriteTrustdFiles(fileRequest.Path, filecontent)
 			}
-
 		}(ctx, fileRequest)
 	}
 	wg.Wait()

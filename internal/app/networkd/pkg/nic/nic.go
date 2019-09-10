@@ -48,7 +48,6 @@ func (n *NetworkInterface) IsIgnored() bool {
 // Create returns a NetworkInterface with all of the given setter options
 // applied
 func Create(link *net.Interface, setters ...Option) (*NetworkInterface, error) {
-
 	// Default interface setup
 	iface := defaultOptions()
 

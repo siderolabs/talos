@@ -26,9 +26,7 @@ const (
 	memoryUseHierarchyPermissions = os.FileMode(400)
 )
 
-var (
-	memoryUseHierarchyContents = []byte(strconv.Itoa(1))
-)
+var memoryUseHierarchyContents = []byte(strconv.Itoa(1))
 
 // MountCgroups represents the MountCgroups task.
 type MountCgroups struct{}

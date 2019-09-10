@@ -172,7 +172,6 @@ func (r *Registrator) CopyOut(req *proto.CopyOutRequest, s proto.Init_CopyOutSer
 
 // LS implements the proto.InitServer interface.
 func (r *Registrator) LS(req *proto.LSRequest, s proto.Init_LSServer) error {
-
 	if req == nil {
 		req = new(proto.LSRequest)
 	}

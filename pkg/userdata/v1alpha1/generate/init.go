@@ -10,7 +10,6 @@ import (
 )
 
 func initUd(in *Input) (string, error) {
-
 	machine := &v1alpha1.MachineConfig{
 		Type:    "init",
 		Kubelet: &v1alpha1.KubeletConfig{},

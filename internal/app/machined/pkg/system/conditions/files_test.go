@@ -27,7 +27,6 @@ func (suite *FilesSuite) SetupSuite() {
 	var err error
 	suite.tempDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
-
 }
 
 func (suite *FilesSuite) TearDownSuite() {

@@ -187,7 +187,6 @@ func (hdr *Header) Fields() []*serde.Field {
 				}
 				if o.Primary {
 					binary.LittleEndian.PutUint64(data, hdr.BackupLBA)
-
 				} else {
 					binary.LittleEndian.PutUint64(data, hdr.CurrentLBA)
 				}

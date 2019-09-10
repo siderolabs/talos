@@ -22,7 +22,6 @@ func IPAddrs() (ips []net.IP, err error) {
 		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
 				ips = append(ips, ipnet.IP)
-
 			}
 		}
 	}

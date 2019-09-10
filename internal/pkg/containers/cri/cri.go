@@ -146,7 +146,6 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 			"io.kubernetes.container.name": name,
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}

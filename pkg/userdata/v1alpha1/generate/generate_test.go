@@ -14,9 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var (
-	input *udgenv1alpha1.Input
-)
+var input *udgenv1alpha1.Input
 
 type GenerateSuite struct {
 	suite.Suite

@@ -113,8 +113,8 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 		return err
 	}
 	return err
-
 }
+
 func addHeaders(req *http.Request) {
 	req.Header.Add("x-ms-agent-name", "WALinuxAgent")
 	req.Header.Add("x-ms-version", "2015-04-05")

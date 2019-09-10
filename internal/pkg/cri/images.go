@@ -34,7 +34,6 @@ func (c *Client) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter)
 	}
 
 	return resp.Images, nil
-
 }
 
 // ImageStatus returns the status of the image.

@@ -120,7 +120,7 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *p
 }
 
 func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
-	var netLen = 32
+	netLen := 32
 	if family == unix.AF_INET6 {
 		netLen = 128
 	}

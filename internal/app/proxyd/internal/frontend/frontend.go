@@ -138,7 +138,6 @@ func (r *ReverseProxy) DecrementBackend(uid string) {
 
 // Watch uses the Kubernetes informer API to watch events for the API server.
 func (r *ReverseProxy) Watch(kubeClient kubernetes.Interface) (err error) {
-
 	// Filter for only apiservers
 	labelSelector := labels.FormatLabels(map[string]string{"component": "kube-apiserver"})
 	watchlist := &cache.ListWatch{

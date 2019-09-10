@@ -37,7 +37,8 @@ func (suite *WalkerSuite) TestIterationDir() {
 		"dev", "dev/random",
 		"etc", "etc/certs", "etc/certs/ca.crt", "etc/hostname",
 		"lib", "lib/dynalib.so",
-		"usr", "usr/bin", "usr/bin/cp", "usr/bin/mv"},
+		"usr", "usr/bin", "usr/bin/cp", "usr/bin/mv",
+	},
 		relPaths)
 }
 
@@ -53,7 +54,8 @@ func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 	}
 
 	suite.Assert().Equal([]string{
-		".", "dev", "etc", "lib", "usr"},
+		".", "dev", "etc", "lib", "usr",
+	},
 		relPaths)
 }
 

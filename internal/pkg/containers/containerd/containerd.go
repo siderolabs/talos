@@ -284,7 +284,6 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	}
 
 	return cntr, err
-
 }
 
 // Pods collects information about running pods & containers.
