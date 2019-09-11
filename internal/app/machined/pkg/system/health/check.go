@@ -27,19 +27,27 @@ func Run(ctx context.Context, settings *Settings, state *State, check Check) err
 	case <-time.After(settings.InitialDelay):
 	}
 
-	for {
-		ticker := time.NewTicker(settings.Period)
-		defer ticker.Stop()
+	ticker := time.NewTicker(settings.Period)
+	defer ticker.Stop()
 
-		err := func() error {
-			checkCtx, checkCtxCancel := context.WithTimeout(ctx, settings.Timeout)
+	var (
+		err            error
+		healthy        bool
+		message        string
+		checkCtx       context.Context
+		checkCtxCancel context.CancelFunc
+	)
+
+	for {
+		err = func() error {
+			checkCtx, checkCtxCancel = context.WithTimeout(ctx, settings.Timeout)
 			defer checkCtxCancel()
 
 			return check(checkCtx)
 		}()
 
-		healthy := err == nil
-		message := ""
+		healthy = err == nil
+		message = ""
 		if !healthy {
 			message = err.Error()
 		}
