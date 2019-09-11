@@ -330,9 +330,9 @@ func (c *Client) ServiceInfo(ctx context.Context, id string) (*initproto.Service
 	return nil, nil
 }
 
-// Start starts a service.
-func (c *Client) Start(ctx context.Context, id string) (string, error) {
-	r, err := c.initClient.Start(ctx, &initproto.StartRequest{Id: id})
+// ServiceStart starts a service.
+func (c *Client) ServiceStart(ctx context.Context, id string) (string, error) {
+	r, err := c.initClient.ServiceStart(ctx, &initproto.ServiceStartRequest{Id: id})
 	if err != nil {
 		return "", err
 	}
@@ -340,9 +340,19 @@ func (c *Client) Start(ctx context.Context, id string) (string, error) {
 	return r.Resp, nil
 }
 
-// Stop stops a service.
-func (c *Client) Stop(ctx context.Context, id string) (string, error) {
-	r, err := c.initClient.Stop(ctx, &initproto.StopRequest{Id: id})
+// ServiceStop stops a service.
+func (c *Client) ServiceStop(ctx context.Context, id string) (string, error) {
+	r, err := c.initClient.ServiceStop(ctx, &initproto.ServiceStopRequest{Id: id})
+	if err != nil {
+		return "", err
+	}
+
+	return r.Resp, nil
+}
+
+// ServiceRestart restarts a service.
+func (c *Client) ServiceRestart(ctx context.Context, id string) (string, error) {
+	r, err := c.initClient.ServiceRestart(ctx, &initproto.ServiceRestartRequest{Id: id})
 	if err != nil {
 		return "", err
 	}

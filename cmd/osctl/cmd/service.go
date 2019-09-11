@@ -54,8 +54,7 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 			case "stop":
 				serviceStop(c, serviceID)
 			case "restart":
-				serviceStop(c, serviceID)
-				serviceStart(c, serviceID)
+				serviceRestart(c, serviceID)
 			default:
 				helpers.Fatalf("unsupported service action: %q", action)
 			}
@@ -111,7 +110,7 @@ func serviceInfo(c *client.Client, id string) {
 }
 
 func serviceStart(c *client.Client, id string) {
-	resp, err := c.Start(globalCtx, id)
+	resp, err := c.ServiceStart(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
@@ -120,7 +119,16 @@ func serviceStart(c *client.Client, id string) {
 }
 
 func serviceStop(c *client.Client, id string) {
-	resp, err := c.Stop(globalCtx, id)
+	resp, err := c.ServiceStop(globalCtx, id)
+	if err != nil {
+		helpers.Fatalf("error starting service: %s", err)
+	}
+
+	fmt.Fprintln(os.Stderr, resp)
+}
+
+func serviceRestart(c *client.Client, id string) {
+	resp, err := c.ServiceRestart(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}

@@ -114,7 +114,19 @@ func (p *Proxyd) HealthSettings(*userdata.UserData) *health.Settings {
 	return &health.DefaultSettings
 }
 
-// Verify healthchecked interface
+// APIStartAllowed implements the APIStartableService interface.
+func (p *Proxyd) APIStartAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// APIRestartAllowed implements the APIRestartableService interface.
+func (p *Proxyd) APIRestartAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// Verify interfaces
 var (
-	_ system.HealthcheckedService = &Proxyd{}
+	_ system.APIStartableService   = &Proxyd{}
+	_ system.APIRestartableService = &Proxyd{}
+	_ system.HealthcheckedService  = &Proxyd{}
 )

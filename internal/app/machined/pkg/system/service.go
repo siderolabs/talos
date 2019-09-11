@@ -37,3 +37,18 @@ type HealthcheckedService interface {
 	// HealthSettings returns settings for the health check
 	HealthSettings(*userdata.UserData) *health.Settings
 }
+
+// APIStartableService is a service which allows to be started via API
+type APIStartableService interface {
+	APIStartAllowed(*userdata.UserData) bool
+}
+
+// APIStoppableService is a service which allows to be stopped via API
+type APIStoppableService interface {
+	APIStopAllowed(*userdata.UserData) bool
+}
+
+// APIRestartableService is a service which allows to be restarted via API
+type APIRestartableService interface {
+	APIRestartAllowed(*userdata.UserData) bool
+}

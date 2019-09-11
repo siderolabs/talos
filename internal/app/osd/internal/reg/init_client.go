@@ -54,12 +54,29 @@ func (c *InitServiceClient) Reset(ctx context.Context, in *empty.Empty) (data *p
 	return c.InitClient.Reset(ctx, in)
 }
 
-// Start executes the init Start() API.
+// ServiceStart executes the init ServiceStart() API.
+func (c *InitServiceClient) ServiceStart(ctx context.Context, in *proto.ServiceStartRequest) (data *proto.ServiceStartReply, err error) {
+	return c.InitClient.ServiceStart(ctx, in)
+}
+
+// ServiceStop executes the init ServiceStop() API.
+func (c *InitServiceClient) ServiceStop(ctx context.Context, in *proto.ServiceStopRequest) (data *proto.ServiceStopReply, err error) {
+	return c.InitClient.ServiceStop(ctx, in)
+}
+
+// ServiceRestart executes the init ServiceRestart() API.
+func (c *InitServiceClient) ServiceRestart(ctx context.Context, in *proto.ServiceRestartRequest) (data *proto.ServiceRestartReply, err error) {
+	return c.InitClient.ServiceRestart(ctx, in)
+}
+
+// Start executes the init Start() API (deprecated).
+//nolint: staticcheck
 func (c *InitServiceClient) Start(ctx context.Context, in *proto.StartRequest) (data *proto.StartReply, err error) {
 	return c.InitClient.Start(ctx, in)
 }
 
-// Stop executes the init Stop() API.
+// Stop executes the init Stop() API (deprecated).
+//nolint: staticcheck
 func (c *InitServiceClient) Stop(ctx context.Context, in *proto.StopRequest) (data *proto.StopReply, err error) {
 	return c.InitClient.Stop(ctx, in)
 }

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
@@ -69,3 +70,25 @@ func (c *UdevdTrigger) Runner(data *userdata.UserData) (runner.Runner, error) {
 		restart.WithType(restart.Once),
 	), nil
 }
+
+// APIStartAllowed implements the APIStartableService interface.
+func (c *UdevdTrigger) APIStartAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// APIStopAllowed implements the APIStoppableService interface.
+func (c *UdevdTrigger) APIStopAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// APIRestartAllowed implements the APIRestartableService interface.
+func (c *UdevdTrigger) APIRestartAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// Verify interfaces
+var (
+	_ system.APIStartableService   = &UdevdTrigger{}
+	_ system.APIRestartableService = &UdevdTrigger{}
+	_ system.APIStoppableService   = &UdevdTrigger{}
+)
