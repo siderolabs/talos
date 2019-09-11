@@ -69,7 +69,7 @@ const kubeadmConfig = `configuration: |
       dataDir: /var/lib/etcd
   imageRepository: k8s.gcr.io
   kind: ClusterConfiguration
-  kubernetesVersion: v1.16.0-alpha.3
+  kubernetesVersion: v1.16.0-rc.1
   networking:
     dnsDomain: cluster.local
     serviceSubnet: 10.96.0.0/12

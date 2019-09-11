@@ -1,4 +1,5 @@
-export KUBERNETES_VERSION=v1.14.5
+# NB: There is a known bug that causes CRD scaling issues in 1.15 kubectl or later.
+export KUBERNETES_VERSION=v1.14.6
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export TMPPLATFORM="${TMP}/${PLATFORM}"

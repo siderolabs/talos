@@ -3,7 +3,7 @@
 set -eou pipefail
 
 
-export KUBERNETES_VERSION=v1.15.2
+export KUBERNETES_VERSION=v1.16.0-rc.1
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export TALOSCONFIG="${TMP}/talosconfig"
@@ -58,8 +58,8 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
        sleep 5
      done"
 
-## Deploy needed manifests
-run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml -f /manifests/coredns.yaml"
+## Deploy required manifests
+run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
 
 ## Wait for all nodes to report in
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -72,10 +72,22 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 ## Wait for all nodes ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
 
-##  Verify that we have an HA controlplane
+## Update the Corefile to make CoreDNS work in docker.
+run "kubectl apply -f /manifests/coredns.yaml"
+
+# Restart CoreDNS.
+run "kubectl delete pods -l k8s-app=kube-dns -n kube-system"
+
+## Verify that we have an HA controlplane
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 >/dev/null; do
        [[ \$(date +%s) -gt \$timeout ]] && exit 1
        kubectl get nodes -o wide -l node-role.kubernetes.io/master=''
        sleep 5
      done"
+
+# Wait for kube-proxy to report ready
+run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-app=kube-proxy -n kube-system"
+
+# Wait for DNS addon to report ready
+run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-app=kube-dns -n kube-system"
