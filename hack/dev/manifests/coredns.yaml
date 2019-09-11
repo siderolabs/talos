@@ -4,10 +4,11 @@ data:
     .:53 {
         errors
         health
+        ready
         kubernetes cluster.local in-addr.arpa ip6.arpa {
            pods insecure
-           upstream
            fallthrough in-addr.arpa ip6.arpa
+           ttl 30
         }
         prometheus :9153
         forward . 1.1.1.1 8.8.8.8

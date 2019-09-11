@@ -172,7 +172,7 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta2
       kind: ClusterConfiguration
       clusterName: test
-      kubernetesVersion: v1.16.0-alpha.3
+      kubernetesVersion: v1.16.0-rc.1
       ---
       apiVersion: kubeproxy.config.k8s.io/v1alpha1
       kind: KubeProxyConfiguration
