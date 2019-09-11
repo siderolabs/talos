@@ -262,6 +262,10 @@ unit-tests-race: buildkitd
 		--opt build-arg:TESTPKGS=$(TESTPKGS) \
 		$(COMMON_ARGS)
 
+.PHONY: fmt
+fmt:
+	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt && cd - && gofumpt -s -w ."
+
 .PHONY: lint
 lint: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
