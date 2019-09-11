@@ -176,7 +176,7 @@ const (
 	RootfsAsset = "rootfs.sqsh"
 
 	// NodeCertFile is the filename where the current Talos Node Certificate may be found
-	NodeCertFile = "/var/talos-node.crt"
+	NodeCertFile = "/run/system/talos-node.crt"
 
 	// NodeCertRenewalInterval is the default interval at which Talos Node Certifications should be renewed
 	NodeCertRenewalInterval = 24 * time.Hour
