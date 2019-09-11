@@ -75,6 +75,7 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/run/system", Source: "/run/system", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"bind", "ro"}},
 	}
 
 	env := []string{}

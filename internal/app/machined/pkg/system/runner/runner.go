@@ -61,7 +61,7 @@ func DefaultOptions() *Options {
 	return &Options{
 		Env:                     []string{},
 		Namespace:               "system",
-		LogPath:                 "/run",
+		LogPath:                 "/var/log",
 		GracefulShutdownTimeout: 10 * time.Second,
 		ContainerdAddress:       constants.ContainerdAddress,
 	}
