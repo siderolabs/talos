@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -95,3 +96,19 @@ func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
 		restart.WithType(restart.Forever),
 	), nil
 }
+
+// APIStartAllowed implements the APIStartableService interface.
+func (n *NTPd) APIStartAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// APIRestartAllowed implements the APIRestartableService interface.
+func (n *NTPd) APIRestartAllowed(data *userdata.UserData) bool {
+	return true
+}
+
+// Verify interfaces
+var (
+	_ system.APIStartableService   = &NTPd{}
+	_ system.APIRestartableService = &NTPd{}
+)

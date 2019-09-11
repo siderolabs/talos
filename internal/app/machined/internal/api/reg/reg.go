@@ -81,7 +81,7 @@ func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (da
 // Reset initiates a Talos upgrade
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
 	// Stop the kubelet.
-	if _, err = r.Stop(ctx, &proto.StopRequest{Id: "kubelet"}); err != nil {
+	if err = system.Services(r.Data).Stop(ctx, "kubelet"); err != nil {
 		return data, err
 	}
 
@@ -108,25 +108,64 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 	return result, nil
 }
 
-// Start implements the proto.InitServer interface and starts a
+// ServiceStart implements the proto.InitServer interface and starts a
 // service running on Talos.
-func (r *Registrator) Start(ctx context.Context, in *proto.StartRequest) (reply *proto.StartReply, err error) {
-	if err = system.Services(r.Data).Start(in.Id); err != nil {
-		return &proto.StartReply{}, err
+func (r *Registrator) ServiceStart(ctx context.Context, in *proto.ServiceStartRequest) (reply *proto.ServiceStartReply, err error) {
+	if err = system.Services(r.Data).APIStart(ctx, in.Id); err != nil {
+		return &proto.ServiceStartReply{}, err
 	}
 
-	reply = &proto.StartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
+	reply = &proto.ServiceStartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
 	return reply, err
 }
 
-// Stop implements the proto.InitServer interface and stops a
-// service running on Talos.
-func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *proto.StopReply, err error) {
-	if err = system.Services(r.Data).Stop(ctx, in.Id); err != nil {
-		return &proto.StopReply{}, err
+// Start implements deprecated Start method which forwards to 'ServiceStart'.
+//nolint: staticcheck
+func (r *Registrator) Start(ctx context.Context, in *proto.StartRequest) (reply *proto.StartReply, err error) {
+	var rep *proto.ServiceStartReply
+	rep, err = r.ServiceStart(ctx, &proto.ServiceStartRequest{Id: in.Id})
+	if rep != nil {
+		reply = &proto.StartReply{
+			Resp: rep.Resp,
+		}
 	}
 
-	reply = &proto.StopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
+	return
+}
+
+// Stop implements deprecated Stop method which forwards to 'ServiceStop'.
+//nolint: staticcheck
+func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *proto.StopReply, err error) {
+	var rep *proto.ServiceStopReply
+	rep, err = r.ServiceStop(ctx, &proto.ServiceStopRequest{Id: in.Id})
+	if rep != nil {
+		reply = &proto.StopReply{
+			Resp: rep.Resp,
+		}
+	}
+
+	return
+}
+
+// ServiceStop implements the proto.InitServer interface and stops a
+// service running on Talos.
+func (r *Registrator) ServiceStop(ctx context.Context, in *proto.ServiceStopRequest) (reply *proto.ServiceStopReply, err error) {
+	if err = system.Services(r.Data).APIStop(ctx, in.Id); err != nil {
+		return &proto.ServiceStopReply{}, err
+	}
+
+	reply = &proto.ServiceStopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
+	return reply, err
+}
+
+// ServiceRestart implements the proto.InitServer interface and stops a
+// service running on Talos.
+func (r *Registrator) ServiceRestart(ctx context.Context, in *proto.ServiceRestartRequest) (reply *proto.ServiceRestartReply, err error) {
+	if err = system.Services(r.Data).APIRestart(ctx, in.Id); err != nil {
+		return &proto.ServiceRestartReply{}, err
+	}
+
+	reply = &proto.ServiceRestartReply{Resp: fmt.Sprintf("Service %q restarted", in.Id)}
 	return reply, err
 }
 

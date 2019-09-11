@@ -248,3 +248,83 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	// Wait for service to actually shut down
 	return conditions.WaitForAll(conds...).Wait(ctx)
 }
+
+// IsRunning checks service status (started/stopped).
+//
+// It doesn't check if service runner was started or not, just pure
+// check for service status in terms of start/stop.
+func (s *singleton) IsRunning(id string) (Service, bool, error) {
+	s.mu.Lock()
+	runner, exists := s.state[id]
+	s.mu.Unlock()
+
+	if !exists {
+		return nil, false, errors.Errorf("service %q not defined", id)
+	}
+
+	s.runningMu.Lock()
+	_, running := s.running[id]
+	s.runningMu.Unlock()
+
+	return runner.service, running, nil
+}
+
+// APIStart processes service start request from the API
+func (s *singleton) APIStart(ctx context.Context, id string) error {
+	service, running, err := s.IsRunning(id)
+	if err != nil {
+		return err
+	}
+
+	if running {
+		// already started, skip
+		return nil
+	}
+
+	if svc, ok := service.(APIStartableService); ok && svc.APIStartAllowed(s.UserData) {
+		return s.Start(id)
+	}
+
+	return errors.Errorf("service %q doesn't support start operation via API", id)
+}
+
+// APIStop processes services stop request from the API
+func (s *singleton) APIStop(ctx context.Context, id string) error {
+	service, running, err := s.IsRunning(id)
+	if err != nil {
+		return err
+	}
+
+	if !running {
+		// already stopped, skip
+		return nil
+	}
+
+	if svc, ok := service.(APIStoppableService); ok && svc.APIStopAllowed(s.UserData) {
+		return s.Stop(ctx, id)
+	}
+
+	return errors.Errorf("service %q doesn't support stop operation via API", id)
+}
+
+// APIRestart processes services restart request from the API
+func (s *singleton) APIRestart(ctx context.Context, id string) error {
+	service, running, err := s.IsRunning(id)
+	if err != nil {
+		return err
+	}
+
+	if !running {
+		// restart for not running service is equivalent to Start()
+		return s.APIStart(ctx, id)
+	}
+
+	if svc, ok := service.(APIRestartableService); ok && svc.APIRestartAllowed(s.UserData) {
+		if err := s.Stop(ctx, id); err != nil {
+			return err
+		}
+		return s.Start(id)
+	}
+
+	return errors.Errorf("service %q doesn't support restart operation via API", id)
+}

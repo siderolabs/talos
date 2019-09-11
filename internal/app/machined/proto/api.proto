@@ -18,10 +18,18 @@ service Init {
   rpc Reboot(google.protobuf.Empty) returns (RebootReply);
   rpc Reset(google.protobuf.Empty) returns (ResetReply);
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply);
-  rpc Start(StartRequest) returns (StartReply);
-  rpc Stop(StopRequest) returns (StopReply);
   rpc Upgrade(UpgradeRequest) returns (UpgradeReply);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply);
+  rpc ServiceStart(ServiceStartRequest) returns (ServiceStartReply);
+  rpc ServiceStop(ServiceStopRequest) returns (ServiceStopReply);
+  rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartReply);
+
+  rpc Start(StartRequest) returns (StartReply) {
+    option deprecated = true;
+  };
+  rpc Stop(StopRequest) returns (StopReply) {
+    option deprecated = true;
+  };
 }
 
 // The response message containing the reboot status.
@@ -69,19 +77,47 @@ message ServiceHealth {
   google.protobuf.Timestamp last_change = 4;
 }
 
+message ServiceStartRequest {
+  string id = 1;
+}
+
+message ServiceStartReply {
+  string resp = 1;
+}
+
+message ServiceStopRequest {
+  string id = 1;
+}
+
+message ServiceStopReply {
+  string resp = 1;
+}
+
+message ServiceRestartRequest {
+  string id = 1;
+}
+
+message ServiceRestartReply {
+  string resp = 1;
+}
+
 message StartRequest {
+  option deprecated = true;
   string id = 1;
 }
 
 message StartReply {
+  option deprecated = true;
   string resp = 1;
 }
 
 message StopRequest {
+  option deprecated = true;
   string id = 1;
 }
 
 message StopReply {
+  option deprecated = true;
   string resp = 1;
 }
 
