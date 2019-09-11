@@ -75,6 +75,7 @@ func (c *SystemContainerd) Runner(data *userdata.UserData) (runner.Runner, error
 		data,
 		args,
 		runner.WithEnv(env),
+		runner.WithLogPath("/run"),
 	),
 		restart.WithType(restart.Forever),
 	), nil

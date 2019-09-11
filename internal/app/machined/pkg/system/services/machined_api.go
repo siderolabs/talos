@@ -45,5 +45,5 @@ func (c *MachinedAPI) DependsOn(data *userdata.UserData) []string {
 
 // Runner implements the Service interface.
 func (c *MachinedAPI) Runner(data *userdata.UserData) (runner.Runner, error) {
-	return goroutine.NewRunner(data, "machined-api", api.NewService().Main), nil
+	return goroutine.NewRunner(data, "machined-api", api.NewService().Main, runner.WithLogPath("/run")), nil
 }
