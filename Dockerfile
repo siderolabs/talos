@@ -12,7 +12,7 @@ ENV PATH /toolchain/bin:/toolchain/go/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.16.0
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.18.0
 RUN cd $(mktemp -d) \
     && go mod init tmp \
     && go get mvdan.cc/gofumpt \
@@ -318,6 +318,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build go test -v -count 1 -race ${
 
 FROM base AS lint
 COPY hack/golang/golangci-lint.yaml .
+ENV GOGC=50
 RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumpt -l .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumpt -s -w':\n${FILES}"; exit 1)

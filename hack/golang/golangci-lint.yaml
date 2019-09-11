@@ -101,6 +101,7 @@ linters:
     - typecheck
     - gochecknoglobals
     - gochecknoinits
+    - funlen
   disable-all: false
   fast: false
 
