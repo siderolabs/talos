@@ -9,9 +9,10 @@ import (
 	"syscall"
 	"unsafe"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
-	"golang.org/x/sys/unix"
 )
 
 // InformKernelOfAdd invokes the BLKPG_ADD_PARTITION ioctl.

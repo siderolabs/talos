@@ -7,8 +7,9 @@ package userdata
 
 import (
 	"github.com/hashicorp/go-multierror"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"golang.org/x/xerrors"
+
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 func (suite *validateSuite) TestValidateOSSecurity() {

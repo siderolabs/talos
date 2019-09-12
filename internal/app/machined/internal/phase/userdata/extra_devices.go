@@ -7,13 +7,14 @@ package userdata
 import (
 	"fmt"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"golang.org/x/sys/unix"
 )
 
 // ExtraDevices represents the ExtraDevices task.

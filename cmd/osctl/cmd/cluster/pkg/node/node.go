@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+
 	"github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
 )
 

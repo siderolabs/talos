@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/pkg/blockdevice/blkpg"
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"

@@ -5,10 +5,11 @@
 package squashfs
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/constants"
 	"golang.org/x/sys/unix"
 	"gopkg.in/freddierice/go-losetup.v1"
+
+	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // MountPoints returns the mountpoints required to boot the system.

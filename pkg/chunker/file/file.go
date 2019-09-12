@@ -11,8 +11,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/pkg/chunker"
 	"gopkg.in/fsnotify.v1"
+
+	"github.com/talos-systems/talos/pkg/chunker"
 )
 
 // Options is the functional options struct.

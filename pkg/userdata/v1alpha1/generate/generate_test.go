@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"gopkg.in/yaml.v2"
+
 	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	udgenv1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
-	"gopkg.in/yaml.v2"
 )
 
 var input *udgenv1alpha1.Input

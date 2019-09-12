@@ -9,8 +9,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"golang.org/x/sys/unix"
+
+	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 )
 
 // Switch moves the rootfs to a specified directory. See

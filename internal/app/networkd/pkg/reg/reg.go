@@ -11,10 +11,11 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/app/networkd/proto"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
+	"github.com/talos-systems/talos/internal/app/networkd/proto"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and

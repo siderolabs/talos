@@ -6,6 +6,7 @@ package cni
 
 import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

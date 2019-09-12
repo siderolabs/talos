@@ -6,6 +6,7 @@ package userdata
 
 import (
 	"github.com/hashicorp/go-multierror"
+
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 

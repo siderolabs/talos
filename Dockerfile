@@ -15,8 +15,8 @@ RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.18.0
 RUN cd $(mktemp -d) \
     && go mod init tmp \
-    && go get mvdan.cc/gofumpt \
-    && mv /go/bin/gofumpt /toolchain/go/bin/gofumpt
+    && go get mvdan.cc/gofumpt/gofumports \
+    && mv /go/bin/gofumports /toolchain/go/bin/gofumports
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 
 # The build target creates a container that will be used to build Talos source
@@ -321,7 +321,7 @@ COPY hack/golang/golangci-lint.yaml .
 ENV GOGC=50
 RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
 RUN find . -name '*.pb.go' | xargs rm
-RUN FILES="$(gofumpt -l .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumpt -s -w':\n${FILES}"; exit 1)
+RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
 # The protolint target performs linting on Markdown files.
 

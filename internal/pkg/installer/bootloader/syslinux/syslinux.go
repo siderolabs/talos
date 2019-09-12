@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/pkg/cmd"
 
 	"golang.org/x/sys/unix"

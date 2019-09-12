@@ -13,9 +13,10 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
-	"golang.org/x/sys/unix"
 )
 
 // DHCP implements the Addressing interface

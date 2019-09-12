@@ -9,8 +9,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/userdata"
 	"golang.org/x/sys/unix"
+
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Static implements the Addressing interface

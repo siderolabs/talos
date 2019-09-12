@@ -15,10 +15,11 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
 	"github.com/talos-systems/talos/internal/app/proxyd/proto"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"google.golang.org/grpc"
 )
 
 type ProxydSuite struct {

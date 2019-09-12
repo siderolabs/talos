@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+
 	localud "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"

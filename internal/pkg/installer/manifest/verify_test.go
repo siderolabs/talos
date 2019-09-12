@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/talos/pkg/userdata"
 	"gopkg.in/yaml.v2"
+
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 type validateSuite struct {

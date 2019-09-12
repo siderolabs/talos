@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/containerd/containerd/namespaces"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"

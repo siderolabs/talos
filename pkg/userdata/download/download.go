@@ -14,9 +14,10 @@ import (
 	"net/url"
 	"time"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/userdata/translate"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const b64 = "base64"

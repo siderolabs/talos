@@ -12,6 +12,8 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
@@ -20,7 +22,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"golang.org/x/sys/unix"
 )
 
 // Installer represents the installer logic. It serves as the entrypoint to all
