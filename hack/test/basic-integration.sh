@@ -40,7 +40,7 @@ run() {
          k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
 }
 
-${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0
+${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0 --masters 1
 ${LOCALOSCTL} config target 10.5.0.2
 
 ## Fetch kubeconfig
@@ -63,7 +63,7 @@ run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
 
 ## Wait for all nodes to report in
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until kubectl get nodes -o go-template='{{ len .items }}' | grep 4 >/dev/null; do
+     until kubectl get nodes -o go-template='{{ len .items }}' | grep 2 >/dev/null; do
        [[ \$(date +%s) -gt \$timeout ]] && exit 1
        kubectl get nodes -o wide
        sleep 5
@@ -80,7 +80,7 @@ run "kubectl delete pods -l k8s-app=kube-dns -n kube-system"
 
 ## Verify that we have an HA controlplane
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 >/dev/null; do
+     until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 1 >/dev/null; do
        [[ \$(date +%s) -gt \$timeout ]] && exit 1
        kubectl get nodes -o wide -l node-role.kubernetes.io/master=''
        sleep 5

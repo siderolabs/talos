@@ -1344,52 +1344,52 @@ steps:
   depends_on:
   - installer
 
-- name: unit-tests
-  image: autonomy/build-container:latest
-  commands:
-  - make unit-tests
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - rootfs
-
-- name: unit-tests-race
-  image: autonomy/build-container:latest
-  commands:
-  - make unit-tests-race
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - lint
-
-- name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
-      from_secret: codecov_token
-  when:
-    event:
-    - pull_request
-  depends_on:
-  - unit-tests
+#- name: unit-tests
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make unit-tests
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - rootfs
+#
+#- name: unit-tests-race
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make unit-tests-race
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - lint
+#
+#- name: coverage
+#  image: plugins/codecov
+#  settings:
+#    files:
+#    - coverage.txt
+#    token:
+#      from_secret: codecov_token
+#  when:
+#    event:
+#    - pull_request
+#  depends_on:
+#  - unit-tests
 
 - name: basic-integration
   image: autonomy/build-container:latest
@@ -1587,25 +1587,25 @@ steps:
   depends_on:
   - image-gcp
 
-- name: conformance-aws
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    CONFORMANCE: run
-    PLATFORM: aws
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-aws
+#- name: conformance-aws
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make e2e-integration
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#    CONFORMANCE: run
+#    PLATFORM: aws
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - capi
+#  - push-image-aws
 
 - name: conformance-azure
   image: autonomy/build-container:latest
@@ -1627,25 +1627,25 @@ steps:
   - capi
   - push-image-azure
 
-- name: conformance-gcp
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    CONFORMANCE: run
-    PLATFORM: gcp
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-gcp
+#- name: conformance-gcp
+#  image: autonomy/build-container:latest
+#  commands:
+#  - make e2e-integration
+#  environment:
+#    BINDIR: /usr/local/bin
+#    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+#    CONFORMANCE: run
+#    PLATFORM: gcp
+#  volumes:
+#  - name: dockersock
+#    path: /var/run
+#  - name: dev
+#    path: /dev
+#  - name: tmp
+#    path: /tmp
+#  depends_on:
+#  - capi
+#  - push-image-gcp
 
 services:
 - name: docker
