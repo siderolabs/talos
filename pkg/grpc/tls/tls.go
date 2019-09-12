@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

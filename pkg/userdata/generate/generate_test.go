@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"gopkg.in/yaml.v2"
+
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/userdata/generate"
-	"gopkg.in/yaml.v2"
 )
 
 var (

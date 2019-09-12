@@ -14,11 +14,12 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/proto"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"golang.org/x/sys/unix"
-	"google.golang.org/grpc"
 )
 
 type NetworkdSuite struct {

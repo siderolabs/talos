@@ -9,6 +9,7 @@ import (
 	"net"
 
 	"github.com/hashicorp/go-multierror"
+
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"

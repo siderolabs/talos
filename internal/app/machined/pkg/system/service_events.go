@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 )
 

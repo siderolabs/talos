@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+
 	"github.com/talos-systems/talos/cmd/osctl/internal/userdata"
 )
 

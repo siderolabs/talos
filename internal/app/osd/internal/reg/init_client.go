@@ -9,9 +9,10 @@ import (
 	"io"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/constants"
-	"google.golang.org/grpc"
 )
 
 // InitServiceClient is a gRPC client for init service API

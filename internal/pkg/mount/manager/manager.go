@@ -6,6 +6,7 @@ package manager
 
 import (
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/pkg/mount"
 )
 

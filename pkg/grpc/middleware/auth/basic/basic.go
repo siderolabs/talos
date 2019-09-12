@@ -9,10 +9,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/net"
-	"github.com/talos-systems/talos/pkg/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Credentials describes an authorization method.

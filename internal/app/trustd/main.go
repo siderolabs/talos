@@ -8,6 +8,9 @@ import (
 	"flag"
 	"log"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
@@ -15,8 +18,6 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var dataPath *string

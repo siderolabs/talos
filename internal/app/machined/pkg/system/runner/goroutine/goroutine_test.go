@@ -17,6 +17,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"

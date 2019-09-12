@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/aws"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/azure"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform/container"

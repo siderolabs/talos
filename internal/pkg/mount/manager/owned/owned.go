@@ -8,10 +8,11 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
-	"golang.org/x/sys/unix"
 )
 
 // MountPointsForDevice returns the mountpoints required to boot the system.

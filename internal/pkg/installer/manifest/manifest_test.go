@@ -13,8 +13,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/talos/pkg/userdata"
 	"gopkg.in/yaml.v2"
+
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 type manifestSuite struct {

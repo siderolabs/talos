@@ -17,9 +17,10 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/mdlayher/netlink"
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"golang.org/x/sys/unix"
 )
 
 // Set up default nameservers

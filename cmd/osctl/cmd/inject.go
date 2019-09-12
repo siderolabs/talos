@@ -9,10 +9,11 @@ import (
 	"io/ioutil"
 
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // injectCmd represents the inject command

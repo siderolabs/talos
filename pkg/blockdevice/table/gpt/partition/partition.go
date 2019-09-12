@@ -11,8 +11,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/talos-systems/talos/pkg/serde"
 	"golang.org/x/text/encoding/unicode"
+
+	"github.com/talos-systems/talos/pkg/serde"
 )
 
 // Partition represents a partition entry in a GUID partition table.

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"

@@ -8,14 +8,15 @@ import (
 	"errors"
 	"log"
 
+	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
-	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
-	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 )
 
 // UserData represents the UserData task.

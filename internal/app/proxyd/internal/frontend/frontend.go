@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
-	tnet "github.com/talos-systems/talos/pkg/net"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -24,6 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/talos-systems/talos/internal/app/proxyd/internal/backend"
+	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 // ReverseProxy represents a reverse proxy server.

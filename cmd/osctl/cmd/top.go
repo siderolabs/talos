@@ -19,10 +19,11 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
+
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/proc"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 // versionCmd represents the version command

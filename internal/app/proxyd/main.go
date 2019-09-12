@@ -9,6 +9,9 @@ import (
 	"flag"
 	"log"
 
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/reg"
@@ -16,8 +19,6 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 
 	pkgnet "github.com/talos-systems/talos/pkg/net"
 )

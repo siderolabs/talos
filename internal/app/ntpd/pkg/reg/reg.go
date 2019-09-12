@@ -10,9 +10,10 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/ntpd/proto"
-	"google.golang.org/grpc"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and

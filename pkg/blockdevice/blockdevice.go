@@ -13,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
 

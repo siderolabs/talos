@@ -9,15 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/userdata"
-	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeproxyconfig "k8s.io/kube-proxy/config/v1alpha1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 	kubeadm "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
+
+	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/userdata"
+	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 )
 
 // V1Alpha1Translator holds info about a v1alpha1 machine config translation layer

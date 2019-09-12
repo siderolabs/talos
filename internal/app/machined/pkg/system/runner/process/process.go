@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	processlogger "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"

@@ -8,9 +8,10 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/networkd/proto"
 	"github.com/talos-systems/talos/pkg/constants"
-	"google.golang.org/grpc"
 )
 
 // NetworkdClient is a gRPC client for init service API

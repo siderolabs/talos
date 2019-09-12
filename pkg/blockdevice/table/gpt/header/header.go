@@ -12,6 +12,7 @@ import (
 	"hash/crc32"
 
 	"github.com/google/uuid"
+
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
 	"github.com/talos-systems/talos/pkg/serde"
 )

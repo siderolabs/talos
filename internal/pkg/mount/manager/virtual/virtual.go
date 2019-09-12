@@ -5,8 +5,9 @@
 package virtual
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/mount"
 	"golang.org/x/sys/unix"
+
+	"github.com/talos-systems/talos/internal/pkg/mount"
 )
 
 // MountPoints returns the mountpoints required to boot the system.

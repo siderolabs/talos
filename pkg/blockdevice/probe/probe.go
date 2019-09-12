@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"

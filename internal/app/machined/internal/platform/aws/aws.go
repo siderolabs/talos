@@ -13,6 +13,7 @@ import (
 	"net/http"
 
 	"github.com/fullsailor/pkcs7"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/userdata/download"

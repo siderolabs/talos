@@ -11,10 +11,11 @@ import (
 	"os"
 	"path"
 
+	"google.golang.org/grpc"
+
 	"github.com/talos-systems/talos/internal/app/trustd/proto"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
-	"google.golang.org/grpc"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and

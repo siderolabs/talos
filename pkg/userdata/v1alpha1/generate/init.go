@@ -5,8 +5,9 @@
 package generate
 
 import (
-	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	yaml "gopkg.in/yaml.v2"
+
+	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 )
 
 func initUd(in *Input) (string, error) {
