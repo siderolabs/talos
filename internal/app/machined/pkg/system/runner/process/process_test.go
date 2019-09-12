@@ -113,7 +113,23 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		suite.Assert().NoError(r.Run(MockEventSink))
 	}()
 
-	time.Sleep(200 * time.Millisecond)
+	fetchLog := func() []byte {
+		logFile, err := os.Open(filepath.Join(suite.tmpDir, "restarter.log"))
+		suite.Assert().NoError(err)
+		// nolint: errcheck
+		defer logFile.Close()
+
+		logContents, err := ioutil.ReadAll(logFile)
+		suite.Assert().NoError(err)
+		return logContents
+	}
+
+	for i := 0; i < 20; i++ {
+		time.Sleep(100 * time.Millisecond)
+		if len(fetchLog()) > 20 {
+			break
+		}
+	}
 
 	f, err := os.Create(testFile)
 	suite.Assert().NoError(err)
@@ -121,15 +137,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 	wg.Wait()
 
-	logFile, err := os.Open(filepath.Join(suite.tmpDir, "restarter.log"))
-	suite.Assert().NoError(err)
-	// nolint: errcheck
-	defer logFile.Close()
-
-	logContents, err := ioutil.ReadAll(logFile)
-	suite.Assert().NoError(err)
-
-	suite.Assert().True(len(logContents) > 20)
+	suite.Assert().True(len(fetchLog()) > 20)
 }
 
 func (suite *ProcessSuite) TestStopFailingAndRestarting() {
