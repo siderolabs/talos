@@ -6,11 +6,14 @@ package containerd_test
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/containerd/containerd"
 	containerdcntrs "github.com/containerd/containerd/containers"
@@ -28,9 +31,8 @@ import (
 )
 
 const (
-	containerdNamespace = "inspecttest"
-	busyboxImage        = "docker.io/library/busybox:1.30.1"
-	busyboxImageDigest  = "sha256:4b6ad3a68d34da29bf7c8ccb5d355ba8b4babcad1f99798204e7abb43e54ee3d"
+	busyboxImage       = "docker.io/library/busybox:1.30.1"
+	busyboxImageDigest = "sha256:4b6ad3a68d34da29bf7c8ccb5d355ba8b4babcad1f99798204e7abb43e54ee3d"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -42,9 +44,10 @@ type ContainerdSuite struct {
 
 	tmpDir string
 
-	containerdRunner  runner.Runner
-	containerdWg      sync.WaitGroup
-	containerdAddress string
+	containerdNamespace string
+	containerdRunner    runner.Runner
+	containerdWg        sync.WaitGroup
+	containerdAddress   string
 
 	client *containerd.Client
 	image  containerd.Image
@@ -109,7 +112,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
 
-	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
+	suite.containerdNamespace = fmt.Sprintf("talostest%d%d", rand.Int63(), time.Now().Unix())
+	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
 	suite.image, err = suite.client.Pull(ctx, busyboxImage, containerd.WithPullUnpack)
 	suite.Require().NoError(err)
@@ -171,7 +175,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerOpts(containerd.WithContainerLabels(map[string]string{
 			"io.kubernetes.pod.name":      "fun",
@@ -187,7 +191,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerOpts(containerd.WithContainerLabels(map[string]string{
 			"io.kubernetes.pod.name":       "fun",
@@ -207,12 +211,12 @@ func (suite *ContainerdSuite) TestPodsNonK8s() {
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	))
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
+	i, err := ctrd.NewInspector(context.Background(), suite.containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	pods, err := i.Pods()
@@ -234,7 +238,7 @@ func (suite *ContainerdSuite) TestPodsNonK8s() {
 func (suite *ContainerdSuite) TestPodsK8s() {
 	suite.runK8sContainers()
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
+	i, err := ctrd.NewInspector(context.Background(), suite.containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	pods, err := i.Pods()
@@ -272,12 +276,12 @@ func (suite *ContainerdSuite) TestContainerNonK8s() {
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	))
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
+	i, err := ctrd.NewInspector(context.Background(), suite.containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	cntr, err := i.Container("shelltest")
@@ -299,7 +303,7 @@ func (suite *ContainerdSuite) TestContainerNonK8s() {
 func (suite *ContainerdSuite) TestContainerK8s() {
 	suite.runK8sContainers()
 
-	i, err := ctrd.NewInspector(context.Background(), containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
+	i, err := ctrd.NewInspector(context.Background(), suite.containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
 	cntr, err := i.Container("ns1/fun")
