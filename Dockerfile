@@ -283,6 +283,7 @@ RUN apk --update add \
     util-linux \
     xfsprogs
 COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
+COPY hack/installer/template.ovf /template.ovf
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=rootfs /usr/lib/syslinux/ /usr/lib/syslinux
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz

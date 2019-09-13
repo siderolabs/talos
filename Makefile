@@ -217,6 +217,22 @@ image-gcp:
 	@tar -C $(PWD)/build -czf $(PWD)/build/gcp.tar.gz disk.raw
 	@rm -rf $(PWD)/build/disk.raw
 
+.PHONY: image-vmware
+image-vmware:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-r \
+		-p vmware \
+		-u guestinfo \
+		-e console=tty0 \
+		-e earlyprintk=ttyS0,115200
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		ova
+
 .PHONY: push-image-aws
 push-image-aws:
 	@TAG=$(TAG) ./hack/test/aws-setup.sh

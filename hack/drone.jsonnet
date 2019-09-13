@@ -241,6 +241,7 @@ local image_aws = Step("image-aws", depends_on=[installer]);
 local image_azure = Step("image-azure", depends_on=[installer]);
 local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
 local image_gcp = Step("image-gcp", depends_on=[installer]);
+local image_vmware = Step("image-vmware", depends_on=[installer]);
 local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_vars);
 local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
@@ -353,6 +354,7 @@ local release_steps = default_steps + [
   image_azure,
   image_digital_ocean,
   image_gcp,
+  image_vmware,
   iso,
   release,
 ];
