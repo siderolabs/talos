@@ -19,7 +19,7 @@ function setup_raw_disk(){
   if [[ -f ${TALOS_RAW} ]]; then
     rm ${TALOS_RAW}
   fi
-  dd if=/dev/zero of="${TALOS_RAW}" bs=1M count=0 seek=544
+  dd if=/dev/zero of="${TALOS_RAW}" bs=1M count=0 seek=${TALOS_RAW_SIZE}
   # NB: Since we use BLKRRPART to tell the kernel to re-read the partition
   # table, it is required to create a partitioned loop device. The BLKRRPART
   # command is meaningful only for partitionable devices.
@@ -48,8 +48,16 @@ function create_iso() {
   isohybrid ${TALOS_ISO}
 }
 
-function create_vmdk() {
-  qemu-img convert -f raw -O vmdk ${TALOS_RAW} ${TALOS_VMDK}
+function create_ova() {
+  qemu-img convert -f raw -O vmdk -o compat6,subformat=streamOptimized,adapter_type=lsilogic ${TALOS_RAW} ${TALOS_VMDK}
+  # ovf creation
+  # reference format: https://www.dmtf.org/standards/ovf
+  img_size=$(stat -c %s ${TALOS_VMDK})
+  sed -e 's/{{FILESIZE}}/'${img_size}'/' \
+      -e 's/{{RAWSIZE}}/'${TALOS_RAW_SIZE}'/' /template.ovf > ${TALOS_OVF}
+  sha256sum ${TALOS_VMDK} ${TALOS_OVF} | awk '{ split($NF, filename, "/"); print "SHA256("filename[length(filename)]")= "$1 }' > ${TALOS_MF}
+  tar -cf ${TALOS_OVA} -C /out $(basename ${TALOS_OVF}) $(basename ${TALOS_MF}) $(basename ${TALOS_VMDK})
+  rm ${TALOS_VMDK} ${TALOS_OVF} ${TALOS_MF}
 }
 
 function cleanup {
@@ -61,9 +69,13 @@ function usage() {
   printf "entrypoint.sh -p <platform> -u <userdata> [b|d|l|n]"
 }
 
+TALOS_RAW_SIZE=544
 TALOS_RAW="/out/talos.raw"
 TALOS_ISO="/out/talos.iso"
 TALOS_VMDK="/out/talos.vmdk"
+TALOS_OVF="/out/talos.ovf"
+TALOS_MF="/out/talos.mf"
+TALOS_OVA="/out/talos.ova"
 TALOS_PLATFORM="metal"
 TALOS_CONFIG="none"
 WITH_BOOTLOADER="true"
@@ -123,8 +135,8 @@ case "$1" in
   iso)
     create_iso
     ;;
-  vmdk)
-    create_vmdk
+  ova)
+    create_ova
     ;;
   ami)
     shift
