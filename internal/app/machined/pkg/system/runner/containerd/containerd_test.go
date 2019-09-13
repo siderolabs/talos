@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -32,8 +33,7 @@ import (
 )
 
 const (
-	containerdNamespace = "talostest"
-	busyboxImage        = "docker.io/library/busybox:latest"
+	busyboxImage = "docker.io/library/busybox:latest"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -45,9 +45,10 @@ type ContainerdSuite struct {
 
 	tmpDir string
 
-	containerdRunner  runner.Runner
-	containerdWg      sync.WaitGroup
-	containerdAddress string
+	containerdNamespace string
+	containerdRunner    runner.Runner
+	containerdWg        sync.WaitGroup
+	containerdAddress   string
 
 	client *containerd.Client
 	image  containerd.Image
@@ -93,7 +94,9 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
 
-	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
+	suite.containerdNamespace = fmt.Sprintf("talostest%d%d", rand.Int63(), time.Now().Unix())
+
+	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
 	suite.image, err = suite.client.Pull(ctx, busyboxImage, containerd.WithPullUnpack)
 	suite.Require().NoError(err)
@@ -127,7 +130,7 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
@@ -148,7 +151,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
@@ -166,7 +169,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		// TODO: workaround containerd (?) bug: https://github.com/docker/for-linux/issues/643
 		for i := 0; i < 100; i++ {
 			time.Sleep(100 * time.Millisecond)
-			if _, err := os.Stat("/containerd-shim/" + containerdNamespace + "/" + ID + "/shim.sock"); err != nil && os.IsNotExist(err) {
+			if _, err := os.Stat("/containerd-shim/" + suite.containerdNamespace + "/" + ID + "/shim.sock"); err != nil && os.IsNotExist(err) {
 				break
 			}
 		}
@@ -184,7 +187,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 1"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
@@ -196,7 +199,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
@@ -214,7 +217,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
@@ -249,7 +252,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile + " && echo ok || (echo fail; false)"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithOCISpecOpts(
 			oci.WithMounts([]specs.Mount{
@@ -318,7 +321,7 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithNamespace(containerdNamespace),
+		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -362,9 +365,9 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 		},
 	}
 	suite.Assert().NoError(containerdrunner.NewImporter(
-		containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
+		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
 
-	ctx := namespaces.WithNamespace(context.Background(), containerdNamespace)
+	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 	for _, imageName := range []string{"testtalos/osd", "testtalos/proxyd"} {
 		image, err := suite.client.ImageService().Get(ctx, imageName)
 		suite.Require().NoError(err)
@@ -388,7 +391,7 @@ func (suite *ContainerdSuite) TestImportFail() {
 		},
 	}
 	suite.Assert().Error(containerdrunner.NewImporter(
-		containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
+		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
 }
 
 func TestContainerdSuite(t *testing.T) {
