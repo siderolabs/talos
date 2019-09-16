@@ -14,7 +14,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -123,10 +122,3 @@ func (p *Proxyd) APIStartAllowed(data *userdata.UserData) bool {
 func (p *Proxyd) APIRestartAllowed(data *userdata.UserData) bool {
 	return true
 }
-
-// Verify interfaces
-var (
-	_ system.APIStartableService   = &Proxyd{}
-	_ system.APIRestartableService = &Proxyd{}
-	_ system.HealthcheckedService  = &Proxyd{}
-)

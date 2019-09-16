@@ -14,7 +14,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -112,8 +111,3 @@ func (t *Trustd) HealthFunc(*userdata.UserData) health.Check {
 func (t *Trustd) HealthSettings(*userdata.UserData) *health.Settings {
 	return &health.DefaultSettings
 }
-
-// Verify healthchecked interface
-var (
-	_ system.HealthcheckedService = &Trustd{}
-)
