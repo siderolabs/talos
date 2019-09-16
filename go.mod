@@ -80,34 +80,34 @@ require (
 	k8s.io/cri-api v0.0.0
 	k8s.io/kube-proxy v0.0.0
 	k8s.io/kubelet v0.0.0
-	k8s.io/kubernetes v1.16.0-rc.1
+	k8s.io/kubernetes v1.16.0-rc.2
 	k8s.io/utils v0.0.0 // indirect
 )
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
-	k8s.io/api => k8s.io/api v0.0.0-20190910195226-a8e1c319044f
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190910201147-544ed3d3e3b5
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190831152136-93cd198ca677
-	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190910200225-8f903fbea63c
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190910201459-4249bfc2f698
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20190910195619-5d531c047890
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20190910202451-1d6ee6e2a9dc
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20190910202324-c232d5ffa385
-	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190831154557-969864c73cc1
-	k8s.io/component-base => k8s.io/component-base v0.0.0-20190910195749-253a220cb3e3
+	k8s.io/api => k8s.io/api v0.0.0-20190913200010-d2ab659560cb
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190913202221-52e3edd98126
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190913201147-5669a5603d96
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190913202555-48793e229f24
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190913200447-5ff489491ea7
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20190913203700-32e6ab0de2a2
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20190913203524-c351f77e9a62
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190912054826-cd179ad6a269
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20190913200627-c1db07a83ddd
 	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190910202618-47349a895ca8
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190913203836-0443d78e4a59
 	k8s.io/klog => k8s.io/klog v0.3.1
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190910200450-b40b33cf07dd
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190910202202-54f4c097b235
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190910201751-95b3c5d237da
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190910202037-31ab3979cff8
-	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20190910203235-dbcdc2ab1d97
-	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190910201911-fc8ced91f1ce
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190910202754-6c8cee913699
-	k8s.io/metrics => k8s.io/metrics v0.0.0-20190910201330-9bc3dbd70636
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190910200701-ea1d77e7fcbf
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190913201430-06145edbcf86
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190913203351-7116f89e0eb2
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190913202909-61cd20ae3d92
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190913203215-88ce8cca4f54
+	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20190913204531-26d9723e03ae
+	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190913203039-8a485d6b870b
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190913204022-a09231045882
+	k8s.io/metrics => k8s.io/metrics v0.0.0-20190913202417-f6bee5ba35c7
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190913201707-470afe49ddf4
 	k8s.io/utils => k8s.io/utils v0.0.0-20190801114015-581e00157fb1
 )
