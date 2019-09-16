@@ -15,7 +15,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -106,9 +105,3 @@ func (n *NTPd) APIStartAllowed(data *userdata.UserData) bool {
 func (n *NTPd) APIRestartAllowed(data *userdata.UserData) bool {
 	return true
 }
-
-// Verify interfaces
-var (
-	_ system.APIStartableService   = &NTPd{}
-	_ system.APIRestartableService = &NTPd{}
-)
