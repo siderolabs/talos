@@ -161,7 +161,7 @@ services:
       apiVersion: kubeadm.k8s.io/v1beta2
       kind: ClusterConfiguration
       clusterName: cluster.local
-      kubernetesVersion: v1.16.0-rc.1
+      kubernetesVersion: v1.16.0-rc.2
       controlPlaneEndpoint: 1.2.3.4:443
       apiServer:
         certSANs: [ "1.2.3.4", "127.0.0.1" ]
