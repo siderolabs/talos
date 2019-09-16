@@ -55,7 +55,7 @@ func (n *NTPd) Condition(data *userdata.UserData) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *NTPd) DependsOn(data *userdata.UserData) []string {
-	return []string{"system-containerd"}
+	return []string{"system-containerd", "networkd"}
 }
 
 func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
