@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/internal/app/trustd/proto"
+	proto "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"

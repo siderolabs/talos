@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	proto "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/acpi"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/disk"
@@ -18,7 +19,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/upgrade"
 	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
-	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"

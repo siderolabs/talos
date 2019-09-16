@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	"github.com/talos-systems/talos/internal/app/machined/proto"
+	proto "github.com/talos-systems/talos/api/machine"
 )
 
 // Status of the healthcheck

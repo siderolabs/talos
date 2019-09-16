@@ -36,9 +36,7 @@ message ProcessesRequest {
 }
 
 // The response message containing the requested processes.
-message ProcessesReply {
-  repeated Process processes = 1;
-}
+message ProcessesReply { repeated Process processes = 1; }
 
 // The response message containing the requested processes.
 message Process {
@@ -59,9 +57,7 @@ message StatsRequest {
 }
 
 // The response message containing the requested stats.
-message StatsReply {
-  repeated Stat stats = 1;
-}
+message StatsReply { repeated Stat stats = 1; }
 
 // The response message containing the requested stat.
 message Stat {
@@ -93,16 +89,10 @@ message LogsRequest {
 }
 
 // The response message containing the requested logs.
-message Data {
-  bytes bytes = 1;
-}
+message Data { bytes bytes = 1; }
 
 message TopRequest {}
 
-message TopReply {
-  ProcessList process_list = 1;
-}
+message TopReply { ProcessList process_list = 1; }
 
-message ProcessList {
-  bytes bytes = 1;
-}
+message ProcessList { bytes bytes = 1; }

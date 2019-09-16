@@ -17,8 +17,8 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	proto "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/app/networkd/proto"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
 

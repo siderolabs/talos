@@ -13,11 +13,11 @@ import (
 
 	"github.com/pkg/errors"
 
+	proto "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

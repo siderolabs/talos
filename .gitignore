@@ -16,9 +16,6 @@ kubeconfig
 [._]ss[a-gi-z]
 [._]sw[a-p]
 
-# protoc-generated files
-*.pb.go
-
 # Go
 coverage.txt
 .artifacts/
