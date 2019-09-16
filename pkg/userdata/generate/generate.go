@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"net"
 	"text/template"
+	"time"
 
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -266,7 +267,10 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		return nil, err
 	}
 	ips := []net.IP{net.ParseIP(loopbackIP)}
-	opts = []x509.Option{x509.IPAddresses(ips)}
+	opts = []x509.Option{
+		x509.IPAddresses(ips),
+		x509.NotAfter(time.Now().Add(8760 * time.Hour)),
+	}
 	csr, err := x509.NewCertificateSigningRequest(adminKeyEC, opts...)
 	if err != nil {
 		return nil, err
@@ -295,7 +299,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	if err != nil {
 		return nil, err
 	}
-	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr)
+	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, opts...)
 	if err != nil {
 		return nil, err
 	}
