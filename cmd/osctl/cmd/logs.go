@@ -13,9 +13,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	proto "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 

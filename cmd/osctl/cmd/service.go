@@ -13,9 +13,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
 
+	initproto "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 )
 
 // serviceCmd represents the service command

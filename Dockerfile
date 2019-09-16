@@ -35,32 +35,32 @@ WORKDIR /src
 
 FROM build AS generate-build
 WORKDIR /osd
-COPY ./internal/app/osd/proto ./proto
+COPY ./api/os ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /trustd
-COPY ./internal/app/trustd/proto ./proto
+COPY ./api/security ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /machined
-COPY ./internal/app/machined/proto ./proto
+COPY ./api/machine ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /proxyd
 COPY ./internal/app/proxyd/proto ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /ntpd
-COPY ./internal/app/ntpd/proto ./proto
+COPY ./api/time ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /networkd
-COPY ./internal/app/networkd/proto ./proto
+COPY ./api/network ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 
 
 FROM scratch AS generate
-COPY --from=generate-build /osd/proto/api.pb.go /internal/app/osd/proto/
-COPY --from=generate-build /trustd/proto/api.pb.go /internal/app/trustd/proto/
-COPY --from=generate-build /machined/proto/api.pb.go /internal/app/machined/proto/
+COPY --from=generate-build /osd/proto/api.pb.go /api/os/
+COPY --from=generate-build /trustd/proto/api.pb.go /api/security/
+COPY --from=generate-build /machined/proto/api.pb.go /api/machine/
 COPY --from=generate-build /proxyd/proto/api.pb.go /internal/app/proxyd/proto/
-COPY --from=generate-build /ntpd/proto/api.pb.go /internal/app/ntpd/proto/
-COPY --from=generate-build /networkd/proto/api.pb.go /internal/app/networkd/proto/
+COPY --from=generate-build /ntpd/proto/api.pb.go /api/time/
+COPY --from=generate-build /networkd/proto/api.pb.go /api/network/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -73,6 +73,7 @@ RUN go mod verify
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
+COPY --from=generate /api ./api
 COPY --from=generate /internal/app ./internal/app
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .

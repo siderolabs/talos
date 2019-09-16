@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/internal/app/trustd/proto"
+	proto "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"

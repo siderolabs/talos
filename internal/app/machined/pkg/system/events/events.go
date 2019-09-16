@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	"github.com/talos-systems/talos/internal/app/machined/proto"
+	proto "github.com/talos-systems/talos/api/machine"
 )
 
 // MaxEventsToKeep is maximum number of events to keep per service before dropping old entries

@@ -12,9 +12,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	proto "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/app/networkd/proto"
 )
 
 // interfacesCmd represents the net interfaces command

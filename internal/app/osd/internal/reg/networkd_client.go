@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/internal/app/networkd/proto"
+	proto "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 

@@ -15,9 +15,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	initproto "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
 )
 
 // lsCmd represents the ls command

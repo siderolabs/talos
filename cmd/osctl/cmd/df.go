@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	proto "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
-	"github.com/talos-systems/talos/internal/app/machined/proto"
 )
 
 // dfCmd represents the df command.

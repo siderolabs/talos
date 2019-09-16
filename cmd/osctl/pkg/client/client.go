@@ -21,11 +21,11 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	initproto "github.com/talos-systems/talos/api/machine"
+	networkdproto "github.com/talos-systems/talos/api/network"
+	proto "github.com/talos-systems/talos/api/os"
+	ntpdproto "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
-	initproto "github.com/talos-systems/talos/internal/app/machined/proto"
-	networkdproto "github.com/talos-systems/talos/internal/app/networkd/proto"
-	ntpdproto "github.com/talos-systems/talos/internal/app/ntpd/proto"
-	"github.com/talos-systems/talos/internal/app/osd/proto"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/proc"
 )

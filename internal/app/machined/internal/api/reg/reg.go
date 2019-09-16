@@ -20,9 +20,9 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	proto "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/app/machined/proto"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"

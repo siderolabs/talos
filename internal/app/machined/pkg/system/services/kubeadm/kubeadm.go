@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 
-	"github.com/talos-systems/talos/internal/app/trustd/proto"
+	proto "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/internal/pkg/cis"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/constants"

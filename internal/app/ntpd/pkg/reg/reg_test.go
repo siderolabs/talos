@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
+	proto "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
-	"github.com/talos-systems/talos/internal/app/ntpd/proto"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
 
