@@ -6,15 +6,11 @@ package metal
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
@@ -29,20 +25,6 @@ type Metal struct{}
 
 // Initialize implements the Initializer interface.
 func (b *Metal) Initialize(platform platform.Platform, data *userdata.UserData) (err error) {
-	var endpoint *string
-	if endpoint = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); endpoint == nil {
-		return errors.Errorf("failed to find %s in kernel parameters", constants.KernelParamUserData)
-	}
-
-	cmdline := kernel.NewDefaultCmdline()
-	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
-	cmdline.Append(constants.KernelParamPlatform, strings.ToLower(platform.Name()))
-	cmdline.Append(constants.KernelParamUserData, *endpoint)
-
-	if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {
-		return err
-	}
-
 	// Attempt to discover a previous installation
 	// An err case should only happen if no partitions
 	// with matching labels were found
