@@ -212,7 +212,13 @@ func (r *Registrator) Logs(req *proto.LogsRequest, l proto.OSD_LogsServer) (err 
 
 	switch {
 	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
-		filename := filepath.Join("/var/log", filepath.Base(req.Id)+".log")
+		// TODO(andrewrynhard): This is a dirty hack. We should expose this at
+		// the service level.
+		base := "/var/log"
+		if req.Id == "machined-api" || req.Id == "system-containerd" {
+			base = "/run"
+		}
+		filename := filepath.Join(base, filepath.Base(req.Id)+".log")
 		var file *os.File
 		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
 		if err != nil {
