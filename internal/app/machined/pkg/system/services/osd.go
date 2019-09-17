@@ -55,7 +55,7 @@ func (o *OSD) Condition(data *userdata.UserData) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *OSD) DependsOn(data *userdata.UserData) []string {
-	return []string{"system-containerd"}
+	return []string{"system-containerd", "containerd"}
 }
 
 func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
@@ -74,8 +74,8 @@ func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/run/system", Source: "/run/system", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/var/log", Source: "/var/log", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: constants.SystemRunPath, Source: constants.SystemRunPath, Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"bind", "ro"}},
 	}
 
 	env := []string{}

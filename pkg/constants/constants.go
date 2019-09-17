@@ -143,22 +143,22 @@ const (
 	SystemContainerdNamespace = "system"
 
 	// SystemContainerdAddress is the path to the system containerd socket.
-	SystemContainerdAddress = "/run/system/containerd/containerd.sock"
+	SystemContainerdAddress = SystemRunPath + "/containerd/containerd.sock"
 
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 
 	// InitSocketPath is the path to file socket of init API
-	InitSocketPath = "/run/system/init/init.sock"
+	InitSocketPath = SystemRunPath + "/init/init.sock"
 
 	// ProxydSocketPath is the path to file socket of proxyd API
-	ProxydSocketPath = "/run/system/proxyd/proxyd.sock"
+	ProxydSocketPath = SystemRunPath + "/proxyd/proxyd.sock"
 
 	// NtpdSocketPath is the path to file socket of proxyd API
-	NtpdSocketPath = "/run/system/ntpd/ntpd.sock"
+	NtpdSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
 
 	// NetworkdSocketPath is the path to file socket of proxyd API
-	NetworkdSocketPath = "/run/system/networkd/networkd.sock"
+	NetworkdSocketPath = SystemRunPath + "/networkd/networkd.sock"
 
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
@@ -176,7 +176,7 @@ const (
 	RootfsAsset = "rootfs.sqsh"
 
 	// NodeCertFile is the filename where the current Talos Node Certificate may be found
-	NodeCertFile = "/run/system/talos-node.crt"
+	NodeCertFile = SystemRunPath + "/talos-node.crt"
 
 	// NodeCertRenewalInterval is the default interval at which Talos Node Certifications should be renewed
 	NodeCertRenewalInterval = 24 * time.Hour
@@ -185,9 +185,16 @@ const (
 	// directories.
 	SystemVarPath = "/var/system"
 
+	// SystemRunPath is the path to write temporary runtime system related files
+	// and directories.
+	SystemRunPath = "/run/system"
+
 	// DefaultInstallerImageRepository is the default container repository for
 	// the installer.
 	DefaultInstallerImageRepository = "docker.io/autonomy/installer"
+
+	// DefaultLogPath is the default path to the log storage directory.
+	DefaultLogPath = SystemRunPath + "/log"
 )
 
 // See https://linux.die.net/man/3/klogctl
