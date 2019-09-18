@@ -2754,12 +2754,6 @@ steps:
   commands:
   - make image-aws
   environment:
-    AWS_ACCESS_KEY_ID:
-      from_secret: aws_access_key_id
-    AWS_DEFAULT_REGION: us-west-2
-    AWS_PUBLISH_REGIONS: us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1
-    AWS_SECRET_ACCESS_KEY:
-      from_secret: aws_secret_access_key
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
@@ -2769,11 +2763,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  when:
-    event:
-    - tag
   depends_on:
-  - push
+  - installer
 
 - name: iso
   image: autonomy/build-container:latest
