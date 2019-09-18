@@ -332,7 +332,6 @@ local ami_trigger = {
 
 local kernel = Step('kernel');
 local iso = Step('iso', depends_on=[installer]);
-local image_aws = Step('image-aws', depends_on=[push], environment=aws_env_vars) + ami_trigger;
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
