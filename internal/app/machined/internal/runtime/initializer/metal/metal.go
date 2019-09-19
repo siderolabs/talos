@@ -5,6 +5,7 @@
 package metal
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -25,6 +26,12 @@ type Metal struct{}
 
 // Initialize implements the Initializer interface.
 func (b *Metal) Initialize(platform platform.Platform, data *userdata.UserData) (err error) {
+	if data == nil {
+		return errors.New("no userdata")
+	}
+	if data.Install == nil {
+		return errors.New("userdata has no install section")
+	}
 	// Attempt to discover a previous installation
 	// An err case should only happen if no partitions
 	// with matching labels were found
