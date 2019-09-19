@@ -30,6 +30,8 @@ service Init {
   rpc Stop(StopRequest) returns (StopReply) {
     option deprecated = true;
   };
+
+  rpc Version(google.protobuf.Empty) returns (VersionReply);
 }
 
 // The response message containing the reboot status.
@@ -179,4 +181,13 @@ message DFStat {
   uint64 size = 2;
   uint64 available = 3;
   string mounted_on = 4;
+}
+
+message VersionReply {
+  string tag = 1;
+  string sha = 2;
+  string built = 3;
+  string go_version = 4;
+  string os = 5;
+  string arch = 6;
 }

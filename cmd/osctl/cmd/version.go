@@ -30,17 +30,14 @@ var versionCmd = &cobra.Command{
 		if shortVersion {
 			version.PrintShortVersion()
 		} else {
-			if err := version.PrintLongVersion(); err != nil {
-				helpers.Fatalf("error printing long version: %s", err)
-			}
+			version.PrintLongVersion()
 		}
 		setupClient(func(c *client.Client) {
-			version, err := c.Version(globalCtx)
+			v, err := c.Version(globalCtx)
 			if err != nil {
 				helpers.Fatalf("error getting version: %s", err)
 			}
-			_, err = os.Stdout.Write(version)
-			helpers.Should(err)
+			version.PrintLongVersionFromExisting(v)
 		})
 	},
 }

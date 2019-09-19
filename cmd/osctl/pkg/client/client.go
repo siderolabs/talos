@@ -206,12 +206,8 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver proto.Contai
 }
 
 // Version implements the proto.OSDClient interface.
-func (c *Client) Version(ctx context.Context) ([]byte, error) {
-	data, err := c.client.Version(ctx, &empty.Empty{})
-	if err != nil {
-		return nil, err
-	}
-	return data.Bytes, nil
+func (c *Client) Version(ctx context.Context) (*initproto.VersionReply, error) {
+	return c.initClient.Version(ctx, &empty.Empty{})
 }
 
 // Routes implements the networkdproto.NetworkdClient interface.

@@ -20,7 +20,6 @@ service OSD {
   rpc Restart(RestartRequest) returns (RestartReply);
   rpc Stats(StatsRequest) returns (StatsReply);
   rpc Top(google.protobuf.Empty) returns (TopReply);
-  rpc Version(google.protobuf.Empty) returns (Data);
 }
 
 enum ContainerDriver {
