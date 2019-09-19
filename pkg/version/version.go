@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"runtime"
 	"text/template"
+
+	machineapi "github.com/talos-systems/talos/api/machine"
 )
 
 var (
@@ -22,66 +24,37 @@ var (
 	Built string
 )
 
-const versionTemplate = `{{ .Name }}:
-	Tag:         {{ .Tag }}
-	SHA:         {{ .SHA }}
+const versionTemplate = `	Tag:         {{ .Tag }}
+	SHA:         {{ .Sha }}
 	Built:       {{ .Built }}
 	Go version:  {{ .GoVersion }}
 	OS/Arch:     {{ .Os }}/{{ .Arch }}
 `
 
-// Version contains verbose version information.
-type Version struct {
-	Name      string
-	Tag       string
-	SHA       string
-	ID        string
-	Built     string
-	GoVersion string
-	Os        string
-	Arch      string
-}
-
 // NewVersion prints verbose version information.
-func NewVersion() (version string, err error) {
-	v := Version{
-		Name:      Name,
+func NewVersion() *machineapi.VersionReply {
+	return &machineapi.VersionReply{
 		Tag:       Tag,
-		SHA:       SHA,
+		Sha:       SHA,
+		Built:     Built,
 		GoVersion: runtime.Version(),
 		Os:        runtime.GOOS,
 		Arch:      runtime.GOARCH,
-		Built:     Built,
 	}
-
-	var wr bytes.Buffer
-	tmpl, err := template.New("version").Parse(versionTemplate)
-	if err != nil {
-		return
-	}
-
-	err = tmpl.Execute(&wr, v)
-	if err != nil {
-		return
-	}
-
-	version = wr.String()
-
-	return version, err
 }
 
 // PrintLongVersion prints verbose version information.
-func PrintLongVersion() (err error) {
-	v := Version{
-		Name:      Name,
-		Tag:       Tag,
-		SHA:       SHA,
-		GoVersion: runtime.Version(),
-		Os:        runtime.GOOS,
-		Arch:      runtime.GOARCH,
-		Built:     Built,
-	}
+func PrintLongVersion() {
+	v := NewVersion()
+	printLong(v)
+}
 
+// PrintLongVersionFromExisting prints verbose version information.
+func PrintLongVersionFromExisting(v *machineapi.VersionReply) {
+	printLong(v)
+}
+
+func printLong(v *machineapi.VersionReply) {
 	var wr bytes.Buffer
 	tmpl, err := template.New("version").Parse(versionTemplate)
 	if err != nil {
@@ -94,8 +67,6 @@ func PrintLongVersion() (err error) {
 	}
 
 	fmt.Println(wr.String())
-
-	return nil
 }
 
 // PrintShortVersion prints the tag and SHA.

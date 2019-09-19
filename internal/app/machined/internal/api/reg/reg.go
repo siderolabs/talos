@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // OSPathSeparator is the string version of the os.PathSeparator
@@ -326,4 +327,9 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 	}
 
 	return reply, multiErr.ErrorOrNil()
+}
+
+// Version implements the proto.InitServer interface.
+func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *proto.VersionReply, err error) {
+	return version.NewVersion(), nil
 }
