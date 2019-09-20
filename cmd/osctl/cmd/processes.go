@@ -26,11 +26,12 @@ import (
 	"github.com/talos-systems/talos/pkg/proc"
 )
 
-// versionCmd represents the version command
-var topCmd = &cobra.Command{
-	Use:   "top",
-	Short: "Streams top output",
-	Long:  ``,
+// processesCmd represents the processes command
+var processesCmd = &cobra.Command{
+	Use:     "processes",
+	Aliases: []string{"p"},
+	Short:   "Streams processes",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
@@ -42,7 +43,7 @@ var topCmd = &cobra.Command{
 
 			if oneTime {
 				var output string
-				output, err = topOutput(globalCtx, c)
+				output, err = processesOutput(globalCtx, c)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -57,7 +58,7 @@ var topCmd = &cobra.Command{
 			}
 			defer ui.Close()
 
-			topUI(globalCtx, c)
+			processesUI(globalCtx, c)
 		})
 	},
 }
@@ -66,13 +67,13 @@ var sortMethod string
 var oneTime bool
 
 func init() {
-	topCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
-	topCmd.Flags().BoolVarP(&oneTime, "once", "1", false, "Print the current top output ( no gui/auto refresh )")
-	rootCmd.AddCommand(topCmd)
+	processesCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
+	processesCmd.Flags().BoolVarP(&oneTime, "once", "1", false, "Print the current processes output ( no gui/auto refresh )")
+	rootCmd.AddCommand(processesCmd)
 }
 
 // nolint: gocyclo
-func topUI(ctx context.Context, c *client.Client) {
+func processesUI(ctx context.Context, c *client.Client) {
 	l := widgets.NewParagraph()
 	l.Border = false
 	l.WrapText = false
@@ -92,7 +93,7 @@ func topUI(ctx context.Context, c *client.Client) {
 		// x, y, w, h
 		l.SetRect(0, 0, w, h)
 
-		processOutput, err = topOutput(ctx, c)
+		processOutput, err = processesOutput(ctx, c)
 		if err != nil {
 			log.Println(err)
 			return
@@ -173,8 +174,8 @@ var cpu = func(p1, p2 *proc.ProcessList) bool {
 	return p1.CPUTime > p2.CPUTime
 }
 
-func topOutput(ctx context.Context, c *client.Client) (output string, err error) {
-	procs, err := c.Top(ctx)
+func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
+	procs, err := c.Processes(ctx)
 	if err != nil {
 		// TODO: Figure out how to expose errors to client without messing
 		// up display

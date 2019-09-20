@@ -2,18 +2,18 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "proto";
+option go_package = "machineapi";
 option java_multiple_files = true;
-option java_outer_classname = "ApiProto";
-option java_package = "com.proto";
+option java_outer_classname = "MachineApi";
+option java_package = "com.machine.api";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
-// The Init service definition.
-service Init {
+// The machine service definition.
+service Machine {
   rpc CopyOut(CopyOutRequest) returns (stream StreamingData);
-  rpc DF(google.protobuf.Empty) returns (DFReply);
+  rpc Mounts(google.protobuf.Empty) returns (MountsReply);
   rpc LS(LSRequest) returns (stream FileInfo);
   rpc Reboot(google.protobuf.Empty) returns (RebootReply);
   rpc Reset(google.protobuf.Empty) returns (ResetReply);
@@ -171,12 +171,12 @@ message FileInfo {
 }
 
 // The response message containing the requested df stats.
-message DFReply {
-  repeated DFStat stats = 1;
+message MountsReply {
+  repeated MountStat stats = 1;
 }
 
 // The response message containing the requested processes.
-message DFStat {
+message MountStat {
   string filesystem = 1;
   uint64 size = 2;
   uint64 available = 3;

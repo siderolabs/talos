@@ -12,7 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	proto "github.com/talos-systems/talos/api/network"
+	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
@@ -39,7 +39,7 @@ var interfacesCmd = &cobra.Command{
 	},
 }
 
-func intersRender(reply *proto.InterfacesReply) {
+func intersRender(reply *networkapi.InterfacesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "INDEX\tNAME\tMAC\tMTU\tADDRESS")
 	for _, r := range reply.Interfaces {

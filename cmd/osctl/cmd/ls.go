@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	initproto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
@@ -44,7 +44,7 @@ var lsCmd = &cobra.Command{
 				helpers.Fatalf("failed to parse depth flag: %v", err)
 			}
 
-			stream, err := c.LS(globalCtx, initproto.LSRequest{
+			stream, err := c.LS(globalCtx, machineapi.LSRequest{
 				Root:           rootDir,
 				Recurse:        recurse,
 				RecursionDepth: recursionDepth,

@@ -15,7 +15,7 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
-	proto "github.com/talos-systems/talos/api/os"
+	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -39,9 +39,9 @@ var statsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			driver := proto.ContainerDriver_CONTAINERD
+			driver := osapi.ContainerDriver_CONTAINERD
 			if useCRI {
-				driver = proto.ContainerDriver_CRI
+				driver = osapi.ContainerDriver_CRI
 			}
 			reply, err := c.Stats(globalCtx, namespace, driver)
 			if err != nil {
@@ -53,7 +53,7 @@ var statsCmd = &cobra.Command{
 	},
 }
 
-func statsRender(reply *proto.StatsReply) {
+func statsRender(reply *osapi.StatsReply) {
 	sort.Slice(reply.Stats,
 		func(i, j int) bool {
 			return strings.Compare(reply.Stats[i].Id, reply.Stats[j].Id) < 0

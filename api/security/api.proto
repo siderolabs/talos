@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "proto";
+option go_package = "securityapi";
 option java_multiple_files = true;
-option java_outer_classname = "ApiProto";
-option java_package = "com.proto";
+option java_outer_classname = "SecurityApi";
+option java_package = "com.security.api";
 
-// The Trustd service definition.
-service Trustd {
+// The security service definition.
+service Security {
   rpc Certificate(CertificateRequest) returns (CertificateResponse);
   rpc ReadFile(ReadFileRequest) returns (ReadFileResponse);
   rpc WriteFile(WriteFileRequest) returns (WriteFileResponse);

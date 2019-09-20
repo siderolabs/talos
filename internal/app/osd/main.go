@@ -50,17 +50,17 @@ func main() {
 		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
 	}
 
-	initClient, err := reg.NewInitServiceClient()
+	MachineClient, err := reg.NewMachineClient()
 	if err != nil {
 		log.Fatalf("init client: %v", err)
 	}
 
-	ntpdClient, err := reg.NewNtpdClient()
+	TimeClient, err := reg.NewTimeClient()
 	if err != nil {
 		log.Fatalf("ntp client: %v", err)
 	}
 
-	networkdClient, err := reg.NewNetworkdClient()
+	NetworkClient, err := reg.NewNetworkClient()
 	if err != nil {
 		log.Fatalf("networkd client: %v", err)
 	}
@@ -68,10 +68,10 @@ func main() {
 	log.Println("Starting osd")
 	err = factory.ListenAndServe(
 		&reg.Registrator{
-			Data:              data,
-			InitServiceClient: initClient,
-			NtpdClient:        ntpdClient,
-			NetworkdClient:    networkdClient,
+			Data:          data,
+			MachineClient: MachineClient,
+			TimeClient:    TimeClient,
+			NetworkClient: NetworkClient,
 		},
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(

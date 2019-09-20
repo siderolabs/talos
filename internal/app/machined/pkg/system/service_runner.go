@@ -13,7 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -307,11 +307,11 @@ func (svcrunner *ServiceRunner) Shutdown() {
 }
 
 // AsProto returns protobuf struct with the state of the service runner
-func (svcrunner *ServiceRunner) AsProto() *proto.ServiceInfo {
+func (svcrunner *ServiceRunner) AsProto() *machineapi.ServiceInfo {
 	svcrunner.mu.Lock()
 	defer svcrunner.mu.Unlock()
 
-	return &proto.ServiceInfo{
+	return &machineapi.ServiceInfo{
 		Id:     svcrunner.id,
 		State:  svcrunner.state.String(),
 		Events: svcrunner.events.AsProto(events.MaxEventsToKeep),

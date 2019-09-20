@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
@@ -27,7 +27,7 @@ type Upgrade struct {
 }
 
 // NewUpgradeTask initializes and returns an Services task.
-func NewUpgradeTask(devname string, req *proto.UpgradeRequest) phase.Task {
+func NewUpgradeTask(devname string, req *machineapi.UpgradeRequest) phase.Task {
 	return &Upgrade{
 		devname: devname,
 		ref:     req.Image,

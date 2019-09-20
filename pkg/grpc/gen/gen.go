@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/grpc"
 
-	proto "github.com/talos-systems/talos/api/security"
+	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -21,7 +21,7 @@ import (
 
 // Generator represents the OS identity generator.
 type Generator struct {
-	client proto.TrustdClient
+	client securityapi.SecurityClient
 }
 
 // NewGenerator initializes a Generator with a preconfigured grpc.ClientConn.
@@ -45,7 +45,7 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 			// Unable to connect, bail and attempt to contact next endpoint
 			continue
 		}
-		client := proto.NewTrustdClient(conn)
+		client := securityapi.NewSecurityClient(conn)
 		return &Generator{client: client}, nil
 	}
 
@@ -54,8 +54,8 @@ func NewGenerator(data *userdata.UserData, port int) (g *Generator, err error) {
 	return nil, multiError.ErrorOrNil()
 }
 
-// Certificate implements the proto.TrustdClient interface.
-func (g *Generator) Certificate(in *proto.CertificateRequest) (resp *proto.CertificateResponse, err error) {
+// Certificate implements the securityapi.SecurityClient interface.
+func (g *Generator) Certificate(in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
 	ctx := context.Background()
 	resp, err = g.client.Certificate(ctx, in)
 	if err != nil {
@@ -76,14 +76,14 @@ func (g *Generator) Identity(data *userdata.UserData) (err error) {
 	if csr, err = data.NewIdentityCSR(); err != nil {
 		return err
 	}
-	req := &proto.CertificateRequest{
+	req := &securityapi.CertificateRequest{
 		Csr: csr.X509CertificateRequestPEM,
 	}
 
 	return poll(g, req, data.Security.OS)
 }
 
-func poll(g *Generator, in *proto.CertificateRequest, data *userdata.OSSecurity) (err error) {
+func poll(g *Generator, in *securityapi.CertificateRequest, data *userdata.OSSecurity) (err error) {
 	timeout := time.NewTimer(time.Minute * 5)
 	defer timeout.Stop()
 	tick := time.NewTicker(time.Second * 5)

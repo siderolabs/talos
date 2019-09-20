@@ -21,10 +21,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	initproto "github.com/talos-systems/talos/api/machine"
-	networkdproto "github.com/talos-systems/talos/api/network"
-	proto "github.com/talos-systems/talos/api/os"
-	ntpdproto "github.com/talos-systems/talos/api/time"
+	machineapi "github.com/talos-systems/talos/api/machine"
+	networkapi "github.com/talos-systems/talos/api/network"
+	osapi "github.com/talos-systems/talos/api/os"
+	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/proc"
@@ -39,14 +39,14 @@ type Credentials struct {
 	key    []byte
 }
 
-// Client implements the proto.OSDClient interface. It serves as the
+// Client implements the proto.OSClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
-	conn           *grpc.ClientConn
-	client         proto.OSDClient
-	initClient     initproto.InitClient
-	ntpdClient     ntpdproto.NtpdClient
-	networkdClient networkdproto.NetworkdClient
+	conn          *grpc.ClientConn
+	client        osapi.OSClient
+	MachineClient machineapi.MachineClient
+	TimeClient    timeapi.TimeClient
+	NetworkClient networkapi.NetworkClient
 }
 
 // NewDefaultClientCredentials initializes ClientCredentials using default paths
@@ -117,10 +117,10 @@ func NewClient(port int, clientcreds *Credentials) (c *Client, err error) {
 		return
 	}
 
-	c.client = proto.NewOSDClient(c.conn)
-	c.initClient = initproto.NewInitClient(c.conn)
-	c.ntpdClient = ntpdproto.NewNtpdClient(c.conn)
-	c.networkdClient = networkdproto.NewNetworkdClient(c.conn)
+	c.client = osapi.NewOSClient(c.conn)
+	c.MachineClient = machineapi.NewMachineClient(c.conn)
+	c.TimeClient = timeapi.NewTimeClient(c.conn)
+	c.NetworkClient = networkapi.NewNetworkClient(c.conn)
 
 	return c, nil
 }
@@ -130,7 +130,7 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// Kubeconfig implements the proto.OSDClient interface.
+// Kubeconfig implements the proto.OSClient interface.
 func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 	r, err := c.client.Kubeconfig(ctx, &empty.Empty{})
 	if err != nil {
@@ -139,27 +139,27 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 	return r.Bytes, nil
 }
 
-// Stats implements the proto.OSDClient interface.
-func (c *Client) Stats(ctx context.Context, namespace string, driver proto.ContainerDriver) (reply *proto.StatsReply, err error) {
-	reply, err = c.client.Stats(ctx, &proto.StatsRequest{
+// Stats implements the proto.OSClient interface.
+func (c *Client) Stats(ctx context.Context, namespace string, driver osapi.ContainerDriver) (reply *osapi.StatsReply, err error) {
+	reply, err = c.client.Stats(ctx, &osapi.StatsRequest{
 		Namespace: namespace,
 		Driver:    driver,
 	})
 	return
 }
 
-// Processes implements the proto.OSDClient interface.
-func (c *Client) Processes(ctx context.Context, namespace string, driver proto.ContainerDriver) (reply *proto.ProcessesReply, err error) {
-	reply, err = c.client.Processes(ctx, &proto.ProcessesRequest{
+// Containers implements the proto.OSClient interface.
+func (c *Client) Containers(ctx context.Context, namespace string, driver osapi.ContainerDriver) (reply *osapi.ContainersReply, err error) {
+	reply, err = c.client.Containers(ctx, &osapi.ContainersRequest{
 		Namespace: namespace,
 		Driver:    driver,
 	})
 	return
 }
 
-// Restart implements the proto.OSDClient interface.
-func (c *Client) Restart(ctx context.Context, namespace string, driver proto.ContainerDriver, id string) (err error) {
-	_, err = c.client.Restart(ctx, &proto.RestartRequest{
+// Restart implements the proto.OSClient interface.
+func (c *Client) Restart(ctx context.Context, namespace string, driver osapi.ContainerDriver, id string) (err error) {
+	_, err = c.client.Restart(ctx, &osapi.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
 		Driver:    driver,
@@ -167,25 +167,25 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver proto.Con
 	return
 }
 
-// Reset implements the proto.OSDClient interface.
+// Reset implements the proto.OSClient interface.
 func (c *Client) Reset(ctx context.Context) (err error) {
-	_, err = c.initClient.Reset(ctx, &empty.Empty{})
+	_, err = c.MachineClient.Reset(ctx, &empty.Empty{})
 	return
 }
 
-// Reboot implements the proto.OSDClient interface.
+// Reboot implements the proto.OSClient interface.
 func (c *Client) Reboot(ctx context.Context) (err error) {
-	_, err = c.initClient.Reboot(ctx, &empty.Empty{})
+	_, err = c.MachineClient.Reboot(ctx, &empty.Empty{})
 	return
 }
 
-// Shutdown implements the proto.OSDClient interface.
+// Shutdown implements the proto.OSClient interface.
 func (c *Client) Shutdown(ctx context.Context) (err error) {
-	_, err = c.initClient.Shutdown(ctx, &empty.Empty{})
+	_, err = c.MachineClient.Shutdown(ctx, &empty.Empty{})
 	return
 }
 
-// Dmesg implements the proto.OSDClient interface.
+// Dmesg implements the proto.OSClient interface.
 func (c *Client) Dmesg(ctx context.Context) ([]byte, error) {
 	data, err := c.client.Dmesg(ctx, &empty.Empty{})
 	if err != nil {
@@ -195,9 +195,9 @@ func (c *Client) Dmesg(ctx context.Context) ([]byte, error) {
 	return data.Bytes, nil
 }
 
-// Logs implements the proto.OSDClient interface.
-func (c *Client) Logs(ctx context.Context, namespace string, driver proto.ContainerDriver, id string) (stream proto.OSD_LogsClient, err error) {
-	stream, err = c.client.Logs(ctx, &proto.LogsRequest{
+// Logs implements the proto.OSClient interface.
+func (c *Client) Logs(ctx context.Context, namespace string, driver osapi.ContainerDriver, id string) (stream osapi.OS_LogsClient, err error) {
+	stream, err = c.client.Logs(ctx, &osapi.LogsRequest{
 		Namespace: namespace,
 		Driver:    driver,
 		Id:        id,
@@ -205,27 +205,27 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver proto.Contai
 	return
 }
 
-// Version implements the proto.OSDClient interface.
-func (c *Client) Version(ctx context.Context) (*initproto.VersionReply, error) {
-	return c.initClient.Version(ctx, &empty.Empty{})
+// Version implements the proto.OSClient interface.
+func (c *Client) Version(ctx context.Context) (*machineapi.VersionReply, error) {
+	return c.MachineClient.Version(ctx, &empty.Empty{})
 }
 
-// Routes implements the networkdproto.NetworkdClient interface.
-func (c *Client) Routes(ctx context.Context) (reply *networkdproto.RoutesReply, err error) {
-	reply, err = c.networkdClient.Routes(ctx, &empty.Empty{})
+// Routes implements the networkdproto.NetworkClient interface.
+func (c *Client) Routes(ctx context.Context) (reply *networkapi.RoutesReply, err error) {
+	reply, err = c.NetworkClient.Routes(ctx, &empty.Empty{})
 	return
 }
 
-// Interfaces implements the proto.OSDClient interface.
-func (c *Client) Interfaces(ctx context.Context) (reply *networkdproto.InterfacesReply, err error) {
-	reply, err = c.networkdClient.Interfaces(ctx, &empty.Empty{})
+// Interfaces implements the proto.OSClient interface.
+func (c *Client) Interfaces(ctx context.Context) (reply *networkapi.InterfacesReply, err error) {
+	reply, err = c.NetworkClient.Interfaces(ctx, &empty.Empty{})
 	return
 }
 
-// Top implements the proto.OSDClient interface.
-func (c *Client) Top(ctx context.Context) (pl []proc.ProcessList, err error) {
-	var reply *proto.TopReply
-	reply, err = c.client.Top(ctx, &empty.Empty{})
+// Processes implements the proto.OSClient interface.
+func (c *Client) Processes(ctx context.Context) (pl []proc.ProcessList, err error) {
+	var reply *osapi.ProcessesReply
+	reply, err = c.client.Processes(ctx, &empty.Empty{})
 	if err != nil {
 		return
 	}
@@ -236,19 +236,19 @@ func (c *Client) Top(ctx context.Context) (pl []proc.ProcessList, err error) {
 	return
 }
 
-// DF implements the proto.OSDClient interface.
-func (c *Client) DF(ctx context.Context) (*initproto.DFReply, error) {
-	return c.initClient.DF(ctx, &empty.Empty{})
+// Mounts implements the proto.OSClient interface.
+func (c *Client) Mounts(ctx context.Context) (*machineapi.MountsReply, error) {
+	return c.MachineClient.Mounts(ctx, &empty.Empty{})
 }
 
-// LS implements the proto.OSDClient interface.
-func (c *Client) LS(ctx context.Context, req initproto.LSRequest) (stream initproto.Init_LSClient, err error) {
-	return c.initClient.LS(ctx, &req)
+// LS implements the proto.OSClient interface.
+func (c *Client) LS(ctx context.Context, req machineapi.LSRequest) (stream machineapi.Machine_LSClient, err error) {
+	return c.MachineClient.LS(ctx, &req)
 }
 
-// CopyOut implements the proto.OSDClient interface
+// CopyOut implements the proto.OSClient interface
 func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-chan error, error) {
-	stream, err := c.initClient.CopyOut(ctx, &initproto.CopyOutRequest{
+	stream, err := c.MachineClient.CopyOut(ctx, &machineapi.CopyOutRequest{
 		RootPath: rootPath,
 	})
 	if err != nil {
@@ -292,10 +292,10 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-cha
 	return pr, errCh, nil
 }
 
-// Upgrade initiates a Talos upgrade ... and implements the proto.OSDClient
+// Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
 // interface
 func (c *Client) Upgrade(ctx context.Context, image string) (string, error) {
-	reply, err := c.initClient.Upgrade(ctx, &initproto.UpgradeRequest{Image: image})
+	reply, err := c.MachineClient.Upgrade(ctx, &machineapi.UpgradeRequest{Image: image})
 	if err != nil {
 		return "", err
 	}
@@ -303,16 +303,16 @@ func (c *Client) Upgrade(ctx context.Context, image string) (string, error) {
 }
 
 // ServiceList returns list of services with their state
-func (c *Client) ServiceList(ctx context.Context) (*initproto.ServiceListReply, error) {
-	return c.initClient.ServiceList(ctx, &empty.Empty{})
+func (c *Client) ServiceList(ctx context.Context) (*machineapi.ServiceListReply, error) {
+	return c.MachineClient.ServiceList(ctx, &empty.Empty{})
 }
 
 // ServiceInfo returns info about a single service
 //
 // This is implemented via service list API, as we don't have many services
 // If service with given id is not registered, function returns nil
-func (c *Client) ServiceInfo(ctx context.Context, id string) (*initproto.ServiceInfo, error) {
-	reply, err := c.initClient.ServiceList(ctx, &empty.Empty{})
+func (c *Client) ServiceInfo(ctx context.Context, id string) (*machineapi.ServiceInfo, error) {
+	reply, err := c.MachineClient.ServiceList(ctx, &empty.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +328,7 @@ func (c *Client) ServiceInfo(ctx context.Context, id string) (*initproto.Service
 
 // ServiceStart starts a service.
 func (c *Client) ServiceStart(ctx context.Context, id string) (string, error) {
-	r, err := c.initClient.ServiceStart(ctx, &initproto.ServiceStartRequest{Id: id})
+	r, err := c.MachineClient.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: id})
 	if err != nil {
 		return "", err
 	}
@@ -338,7 +338,7 @@ func (c *Client) ServiceStart(ctx context.Context, id string) (string, error) {
 
 // ServiceStop stops a service.
 func (c *Client) ServiceStop(ctx context.Context, id string) (string, error) {
-	r, err := c.initClient.ServiceStop(ctx, &initproto.ServiceStopRequest{Id: id})
+	r, err := c.MachineClient.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: id})
 	if err != nil {
 		return "", err
 	}
@@ -348,7 +348,7 @@ func (c *Client) ServiceStop(ctx context.Context, id string) (string, error) {
 
 // ServiceRestart restarts a service.
 func (c *Client) ServiceRestart(ctx context.Context, id string) (string, error) {
-	r, err := c.initClient.ServiceRestart(ctx, &initproto.ServiceRestartRequest{Id: id})
+	r, err := c.MachineClient.ServiceRestart(ctx, &machineapi.ServiceRestartRequest{Id: id})
 	if err != nil {
 		return "", err
 	}
@@ -357,8 +357,8 @@ func (c *Client) ServiceRestart(ctx context.Context, id string) (string, error) 
 }
 
 // Time returns the time
-func (c *Client) Time(ctx context.Context) (*ntpdproto.TimeReply, error) {
-	r, err := c.ntpdClient.Time(ctx, &empty.Empty{})
+func (c *Client) Time(ctx context.Context) (*timeapi.TimeReply, error) {
+	r, err := c.TimeClient.Time(ctx, &empty.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -367,8 +367,8 @@ func (c *Client) Time(ctx context.Context) (*ntpdproto.TimeReply, error) {
 }
 
 // TimeCheck returns the time compared to the specified ntp server
-func (c *Client) TimeCheck(ctx context.Context, server string) (*ntpdproto.TimeReply, error) {
-	r, err := c.ntpdClient.TimeCheck(ctx, &ntpdproto.TimeRequest{Server: server})
+func (c *Client) TimeCheck(ctx context.Context, server string) (*timeapi.TimeReply, error) {
+	r, err := c.TimeClient.TimeCheck(ctx, &timeapi.TimeRequest{Server: server})
 	if err != nil {
 		return nil, err
 	}

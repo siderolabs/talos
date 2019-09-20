@@ -15,17 +15,18 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
-	proto "github.com/talos-systems/talos/api/os"
+	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// psCmd represents the processes command
-var psCmd = &cobra.Command{
-	Use:   "ps",
-	Short: "List processes",
-	Long:  ``,
+// containersCmd represents the processes command
+var containersCmd = &cobra.Command{
+	Use:     "containers",
+	Aliases: []string{"c"},
+	Short:   "List containers",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
@@ -39,29 +40,29 @@ var psCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			driver := proto.ContainerDriver_CONTAINERD
+			driver := osapi.ContainerDriver_CONTAINERD
 			if useCRI {
-				driver = proto.ContainerDriver_CRI
+				driver = osapi.ContainerDriver_CRI
 			}
-			reply, err := c.Processes(globalCtx, namespace, driver)
+			reply, err := c.Containers(globalCtx, namespace, driver)
 			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)
 			}
 
-			processesRender(reply)
+			containerRender(reply)
 		})
 	},
 }
 
-func processesRender(reply *proto.ProcessesReply) {
-	sort.Slice(reply.Processes,
+func containerRender(reply *osapi.ContainersReply) {
+	sort.Slice(reply.Containers,
 		func(i, j int) bool {
-			return strings.Compare(reply.Processes[i].Id, reply.Processes[j].Id) < 0
+			return strings.Compare(reply.Containers[i].Id, reply.Containers[j].Id) < 0
 		})
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
-	for _, p := range reply.Processes {
+	for _, p := range reply.Containers {
 		display := p.Id
 		if p.Id != p.PodId {
 			// container in a sandbox
@@ -73,7 +74,7 @@ func processesRender(reply *proto.ProcessesReply) {
 }
 
 func init() {
-	psCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	psCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
-	rootCmd.AddCommand(psCmd)
+	containersCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	containersCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
+	rootCmd.AddCommand(containersCmd)
 }

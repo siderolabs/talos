@@ -12,12 +12,12 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 
-	proto "github.com/talos-systems/talos/api/time"
+	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// proto.Init interfaces.
+// timeapi.Init interfaces.
 type Registrator struct {
 	Ntpd *ntp.NTP
 }
@@ -31,12 +31,12 @@ func NewRegistrator(n *ntp.NTP) *Registrator {
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	proto.RegisterNtpdServer(s, r)
+	timeapi.RegisterTimeServer(s, r)
 }
 
 // Time issues a query to the configured ntp server and displays the results
-func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *proto.TimeReply, err error) {
-	reply = &proto.TimeReply{}
+func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeReply, err error) {
+	reply = &timeapi.TimeReply{}
 	rt, err := r.Ntpd.Query()
 	if err != nil {
 		return reply, err
@@ -46,8 +46,8 @@ func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *proto.T
 }
 
 // TimeCheck issues a query to the specified ntp server and displays the results
-func (r *Registrator) TimeCheck(ctx context.Context, in *proto.TimeRequest) (reply *proto.TimeReply, err error) {
-	reply = &proto.TimeReply{}
+func (r *Registrator) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (reply *timeapi.TimeReply, err error) {
+	reply = &timeapi.TimeReply{}
 	tc, err := ntp.NewNTPClient(ntp.WithServer(in.Server))
 	if err != nil {
 		return reply, err
@@ -61,8 +61,8 @@ func (r *Registrator) TimeCheck(ctx context.Context, in *proto.TimeRequest) (rep
 	return genProtobufTimeReply(tc.GetTime(), rt.Time, in.Server)
 }
 
-func genProtobufTimeReply(local, remote time.Time, server string) (*proto.TimeReply, error) {
-	reply := &proto.TimeReply{}
+func genProtobufTimeReply(local, remote time.Time, server string) (*timeapi.TimeReply, error) {
+	reply := &timeapi.TimeReply{}
 
 	localpbts, err := ptypes.TimestampProto(local)
 	if err != nil {
@@ -74,7 +74,7 @@ func genProtobufTimeReply(local, remote time.Time, server string) (*proto.TimeRe
 		return reply, err
 	}
 
-	reply = &proto.TimeReply{
+	reply = &timeapi.TimeReply{
 		Server:     server,
 		Localtime:  localpbts,
 		Remotetime: remotepbts,
