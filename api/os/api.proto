@@ -92,6 +92,17 @@ message Data { bytes bytes = 1; }
 
 message ProcessesRequest {}
 
-message ProcessesReply { ProcessList process_list = 1; }
+message ProcessesReply { repeated Process processes = 1; }
 
-message ProcessList { bytes bytes = 1; }
+message Process {
+  int32 pid = 1;
+  int32 ppid = 2;
+  string state = 3;
+  int32 threads = 4;
+  double cpu_time = 5;
+  uint64 virtual_memory = 6;
+  uint64 resident_memory = 7;
+  string command = 8;
+  string executable = 9;
+  string args = 10;
+}

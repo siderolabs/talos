@@ -5,12 +5,10 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"io"
@@ -27,7 +25,6 @@ import (
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/net"
-	"github.com/talos-systems/talos/pkg/proc"
 )
 
 // Credentials represents the set of values required to initialize a vaild
@@ -223,17 +220,8 @@ func (c *Client) Interfaces(ctx context.Context) (reply *networkapi.InterfacesRe
 }
 
 // Processes implements the proto.OSClient interface.
-func (c *Client) Processes(ctx context.Context) (pl []proc.ProcessList, err error) {
-	var reply *osapi.ProcessesReply
-	reply, err = c.client.Processes(ctx, &empty.Empty{})
-	if err != nil {
-		return
-	}
-
-	buf := bytes.NewBuffer(reply.ProcessList.Bytes)
-	dec := gob.NewDecoder(buf)
-	err = dec.Decode(&pl)
-	return
+func (c *Client) Processes(ctx context.Context) (reply *osapi.ProcessesReply, err error) {
+	return c.client.Processes(ctx, &empty.Empty{})
 }
 
 // Mounts implements the proto.OSClient interface.

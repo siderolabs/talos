@@ -5,20 +5,20 @@
 package reg
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
+	"github.com/prometheus/procfs"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -32,7 +32,6 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/proc"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -246,22 +245,57 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *mach
 
 // Processes implements the osapi.OSDServer interface
 func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *osapi.ProcessesReply, err error) {
-	var procs []proc.ProcessList
-	procs, err = proc.List()
+	procs, err := procfs.AllProcs()
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	var plist bytes.Buffer
-	enc := gob.NewEncoder(&plist)
-	err = enc.Encode(procs)
-	if err != nil {
-		return
+	processes := make([]*osapi.Process, 0, len(procs))
+
+	var (
+		command    string
+		executable string
+		args       []string
+		stats      procfs.ProcStat
+	)
+
+	for _, proc := range procs {
+		command, err = proc.Comm()
+		if err != nil {
+			return nil, err
+		}
+		executable, err = proc.Executable()
+		if err != nil {
+			return nil, err
+		}
+		args, err = proc.CmdLine()
+		if err != nil {
+			return nil, err
+		}
+		stats, err = proc.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		p := &osapi.Process{
+			Pid:            int32(proc.PID),
+			Ppid:           int32(stats.PPID),
+			State:          stats.State,
+			Threads:        int32(stats.NumThreads),
+			CpuTime:        stats.CPUTime(),
+			VirtualMemory:  uint64(stats.VirtualMemory()),
+			ResidentMemory: uint64(stats.ResidentMemory()),
+			Command:        command,
+			Executable:     executable,
+			Args:           strings.Join(args, " "),
+		}
+
+		processes = append(processes, p)
 	}
 
-	p := &osapi.ProcessList{Bytes: plist.Bytes()}
-	reply = &osapi.ProcessesReply{ProcessList: p}
-	return
+	reply = &osapi.ProcessesReply{Processes: processes}
+
+	return reply, nil
 }
 
 func getContainerInspector(ctx context.Context, namespace string, driver osapi.ContainerDriver) (containers.Inspector, error) {
