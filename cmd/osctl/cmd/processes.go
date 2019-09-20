@@ -26,11 +26,14 @@ import (
 	"github.com/talos-systems/talos/pkg/proc"
 )
 
+var sortMethod string
+var watchProcesses bool
+
 // processesCmd represents the processes command
 var processesCmd = &cobra.Command{
 	Use:     "processes",
 	Aliases: []string{"p"},
-	Short:   "Streams processes",
+	Short:   "List running processes",
 	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {
@@ -41,7 +44,17 @@ var processesCmd = &cobra.Command{
 		setupClient(func(c *client.Client) {
 			var err error
 
-			if oneTime {
+			switch {
+			case watchProcesses:
+				if err = ui.Init(); err != nil {
+					log.Fatalf("failed to initialize termui: %v", err)
+				}
+				defer ui.Close()
+
+				processesUI(globalCtx, c)
+			default:
+			}
+			if watchProcesses {
 				var output string
 				output, err = processesOutput(globalCtx, c)
 				if err != nil {
@@ -50,25 +63,14 @@ var processesCmd = &cobra.Command{
 				// Note this is unlimited output of process lines
 				// we arent artificially limited by the box we would otherwise draw
 				fmt.Println(output)
-				return
 			}
-
-			if err = ui.Init(); err != nil {
-				log.Fatalf("failed to initialize termui: %v", err)
-			}
-			defer ui.Close()
-
-			processesUI(globalCtx, c)
 		})
 	},
 }
 
-var sortMethod string
-var oneTime bool
-
 func init() {
 	processesCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
-	processesCmd.Flags().BoolVarP(&oneTime, "once", "1", false, "Print the current processes output ( no gui/auto refresh )")
+	processesCmd.Flags().BoolVar(&watchProcesses, "watch", false, "Stream running processes")
 	rootCmd.AddCommand(processesCmd)
 }
 
