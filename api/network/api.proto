@@ -2,15 +2,15 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "proto";
+option go_package = "networkapi";
 option java_multiple_files = true;
-option java_outer_classname = "ApiProto";
-option java_package = "com.proto";
+option java_outer_classname = "NetworkApi";
+option java_package = "com.network.api";
 
 import "google/protobuf/empty.proto";
 
-// The Init service definition.
-service Networkd {
+// The network service definition.
+service Network {
   rpc Routes(google.protobuf.Empty) returns (RoutesReply);
   rpc Interfaces(google.protobuf.Empty) returns (InterfacesReply);
 }

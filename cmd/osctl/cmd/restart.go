@@ -11,7 +11,7 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
-	proto "github.com/talos-systems/talos/api/os"
+	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -37,9 +37,9 @@ var restartCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			driver := proto.ContainerDriver_CONTAINERD
+			driver := osapi.ContainerDriver_CONTAINERD
 			if useCRI {
-				driver = proto.ContainerDriver_CRI
+				driver = osapi.ContainerDriver_CRI
 			}
 			if err := c.Restart(globalCtx, namespace, driver, args[0]); err != nil {
 				helpers.Fatalf("error restarting process: %s", err)

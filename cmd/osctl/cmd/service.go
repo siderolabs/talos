@@ -13,7 +13,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
 
-	initproto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
@@ -137,7 +137,7 @@ func serviceRestart(c *client.Client, id string) {
 }
 
 type serviceInfoWrapper struct {
-	*initproto.ServiceInfo
+	*machineapi.ServiceInfo
 }
 
 func (svc serviceInfoWrapper) LastUpdated() string {

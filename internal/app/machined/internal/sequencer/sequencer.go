@@ -5,7 +5,7 @@
 package sequencer
 
 import (
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer/v1alpha1"
 )
 
@@ -13,7 +13,7 @@ import (
 type Sequencer interface {
 	Boot() error
 	Shutdown() error
-	Upgrade(*proto.UpgradeRequest) error
+	Upgrade(*machineapi.UpgradeRequest) error
 }
 
 // Version represents the sequencer version.

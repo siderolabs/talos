@@ -14,12 +14,12 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	proto "github.com/talos-systems/talos/api/network"
+	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// proto.Init interfaces.
+// networkapi.NetworkServer interfaces.
 type Registrator struct {
 	Networkd *networkd.Networkd
 }
@@ -33,17 +33,17 @@ func NewRegistrator(n *networkd.Networkd) *Registrator {
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	proto.RegisterNetworkdServer(s, r)
+	networkapi.RegisterNetworkServer(s, r)
 }
 
 // Routes returns the hosts routing table.
-func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *proto.RoutesReply, err error) {
+func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *networkapi.RoutesReply, err error) {
 	list, err := r.Networkd.NlConn.Route.List()
 	if err != nil {
 		return nil, errors.Errorf("failed to get route list: %v", err)
 	}
 
-	routes := []*proto.Route{}
+	routes := []*networkapi.Route{}
 
 	for _, rMesg := range list {
 
@@ -56,26 +56,26 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *proto
 			continue
 		}
 
-		routes = append(routes, &proto.Route{
+		routes = append(routes, &networkapi.Route{
 			Interface:   ifaceData.Name,
 			Destination: toCIDR(rMesg.Family, rMesg.Attributes.Dst, int(rMesg.DstLength)),
 			Gateway:     rMesg.Attributes.Gateway.String(),
 			Metric:      rMesg.Attributes.Priority,
 			Scope:       uint32(rMesg.Scope),
 			Source:      toCIDR(rMesg.Family, rMesg.Attributes.Src, int(rMesg.SrcLength)),
-			Family:      proto.AddressFamily(rMesg.Family),
-			Protocol:    proto.RouteProtocol(rMesg.Protocol),
+			Family:      networkapi.AddressFamily(rMesg.Family),
+			Protocol:    networkapi.RouteProtocol(rMesg.Protocol),
 			Flags:       rMesg.Flags,
 		})
 
 	}
-	return &proto.RoutesReply{
+	return &networkapi.RoutesReply{
 		Routes: routes,
 	}, nil
 }
 
 // Interfaces returns the hosts network interfaces and addresses.
-func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *proto.InterfacesReply, err error) {
+func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesReply, err error) {
 	var (
 		ifaces  []*net.Interface
 		addrs   []string
@@ -88,7 +88,7 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *p
 		return reply, err
 	}
 
-	reply = &proto.InterfacesReply{}
+	reply = &networkapi.InterfacesReply{}
 
 	for _, iface := range ifaces {
 		addrs = []string{}
@@ -105,12 +105,12 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *p
 			}
 		}
 
-		ifmsg := &proto.Interface{
+		ifmsg := &networkapi.Interface{
 			Index:        uint32(iface.Index),
 			Mtu:          uint32(iface.MTU),
 			Name:         iface.Name,
 			Hardwareaddr: iface.HardwareAddr.String(),
-			Flags:        proto.InterfaceFlags(iface.Flags),
+			Flags:        networkapi.InterfaceFlags(iface.Flags),
 			Ipaddress:    addrs,
 		}
 

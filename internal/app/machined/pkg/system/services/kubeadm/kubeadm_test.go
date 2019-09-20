@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 
-	proto "github.com/talos-systems/talos/api/security"
+	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -100,17 +100,17 @@ func (suite *KubeadmSuite) TestDownload() {
 	cancel()
 	conn, err := basic.NewConnection("localhost", constants.TrustdPort, nil)
 	suite.Assert().NoError(err)
-	data := download(ctx, proto.NewTrustdClient(conn), &proto.ReadFileRequest{Path: ""})
+	data := download(ctx, securityapi.NewSecurityClient(conn), &securityapi.ReadFileRequest{Path: ""})
 	suite.Assert().Equal(len(data), 0)
 
 	// suite.Assert().NoError(err)
 }
 
-func (suite *KubeadmSuite) TestCreateTrustdClients() {
+func (suite *KubeadmSuite) TestCreateSecurityClients() {
 	data, err := genUD()
 	suite.Assert().NoError(err)
-	var clients []proto.TrustdClient
-	clients, err = CreateTrustdClients(data)
+	var clients []securityapi.SecurityClient
+	clients, err = CreateSecurityClients(data)
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(len(clients), 2)
 }

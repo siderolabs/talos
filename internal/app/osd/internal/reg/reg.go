@@ -40,19 +40,19 @@ import (
 // osapi.OSDServer interfaces.
 type Registrator struct {
 	// every Init service API is proxied via OSD
-	*InitServiceClient
-	*NtpdClient
-	*NetworkdClient
+	*MachineClient
+	*TimeClient
+	*NetworkClient
 
 	Data *userdata.UserData
 }
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	osapi.RegisterOSDServer(s, r)
-	machineapi.RegisterInitServer(s, r)
-	timeapi.RegisterNtpdServer(s, r)
-	networkapi.RegisterNetworkdServer(s, r)
+	osapi.RegisterOSServer(s, r)
+	machineapi.RegisterMachineServer(s, r)
+	timeapi.RegisterTimeServer(s, r)
+	networkapi.RegisterNetworkServer(s, r)
 }
 
 // Kubeconfig implements the osapi.OSDServer interface. The admin kubeconfig is
@@ -70,8 +70,8 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *os
 	return data, err
 }
 
-// Processes implements the osapi.OSDServer interface.
-func (r *Registrator) Processes(ctx context.Context, in *osapi.ProcessesRequest) (reply *osapi.ProcessesReply, err error) {
+// Containers implements the osapi.OSDServer interface.
+func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersRequest) (reply *osapi.ContainersReply, err error) {
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
@@ -89,11 +89,11 @@ func (r *Registrator) Processes(ctx context.Context, in *osapi.ProcessesRequest)
 		log.Println(err.Error())
 	}
 
-	processes := []*osapi.Process{}
+	containers := []*osapi.Container{}
 
 	for _, pod := range pods {
 		for _, container := range pod.Containers {
-			process := &osapi.Process{
+			container := &osapi.Container{
 				Namespace: in.Namespace,
 				Id:        container.Display,
 				PodId:     pod.Name,
@@ -102,11 +102,11 @@ func (r *Registrator) Processes(ctx context.Context, in *osapi.ProcessesRequest)
 				Pid:       container.Pid,
 				Status:    container.Status,
 			}
-			processes = append(processes, process)
+			containers = append(containers, container)
 		}
 	}
 
-	return &osapi.ProcessesReply{Processes: processes}, nil
+	return &osapi.ContainersReply{Containers: containers}, nil
 }
 
 // Stats implements the osapi.OSDServer interface.
@@ -206,7 +206,7 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.D
 // Logs implements the osapi.OSDServer interface. Service or container logs can
 // be requested and the contents of the log file are streamed in chunks.
 // nolint: gocyclo
-func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OSD_LogsServer) (err error) {
+func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err error) {
 	var chunk chunker.Chunker
 
 	switch {
@@ -241,11 +241,11 @@ func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OSD_LogsServer) (err 
 
 // Version implements the osapi.OSDServer interface.
 func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionReply, err error) {
-	return r.InitClient.Version(ctx, in)
+	return r.MachineClient.Version(ctx, in)
 }
 
-// Top implements the osapi.OSDServer interface
-func (r *Registrator) Top(ctx context.Context, in *empty.Empty) (reply *osapi.TopReply, err error) {
+// Processes implements the osapi.OSDServer interface
+func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *osapi.ProcessesReply, err error) {
 	var procs []proc.ProcessList
 	procs, err = proc.List()
 	if err != nil {
@@ -260,7 +260,7 @@ func (r *Registrator) Top(ctx context.Context, in *empty.Empty) (reply *osapi.To
 	}
 
 	p := &osapi.ProcessList{Bytes: plist.Bytes()}
-	reply = &osapi.TopReply{ProcessList: p}
+	reply = &osapi.ProcessesReply{ProcessList: p}
 	return
 }
 

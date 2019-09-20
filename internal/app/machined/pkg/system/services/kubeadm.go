@@ -19,7 +19,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 
-	proto "github.com/talos-systems/talos/api/security"
+	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -78,8 +78,8 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 	}
 
 	// Initialize trustd peer client connection
-	var trustds []proto.TrustdClient
-	if trustds, err = kubeadm.CreateTrustdClients(data); err != nil {
+	var trustds []securityapi.SecurityClient
+	if trustds, err = kubeadm.CreateSecurityClients(data); err != nil {
 		return err
 	}
 
@@ -93,7 +93,7 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 	// Get assets from remote nodes
 	for _, fileRequest := range kubeadm.FileSet(kubeadm.RequiredFiles()) {
 		// Handle all file requests in parallel
-		go func(ctx context.Context, fileRequest *proto.ReadFileRequest) {
+		go func(ctx context.Context, fileRequest *securityapi.ReadFileRequest) {
 			defer wg.Done()
 
 			trustctx, ctxCancel := context.WithCancel(ctx)
@@ -105,8 +105,8 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 
 			// kick off a goroutine for each trustd client
 			// to fetch the given file
-			for _, trustdClient := range trustds {
-				go kubeadm.Download(trustctx, trustdClient, fileRequest, content)
+			for _, SecurityClient := range trustds {
+				go kubeadm.Download(trustctx, SecurityClient, fileRequest, content)
 			}
 
 			select {

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	proto "github.com/talos-systems/talos/api/time"
+	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
@@ -53,7 +53,7 @@ func (suite *NtpdSuite) TestTime() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := proto.NewNtpdClient(conn)
+	nClient := timeapi.NewTimeClient(conn)
 
 	resp, err := nClient.Time(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
@@ -84,9 +84,9 @@ func (suite *NtpdSuite) TestTimeCheck() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := proto.NewNtpdClient(conn)
+	nClient := timeapi.NewTimeClient(conn)
 
-	resp, err := nClient.TimeCheck(context.Background(), &proto.TimeRequest{Server: testServer})
+	resp, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(resp.Server, testServer)
 }

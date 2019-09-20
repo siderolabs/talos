@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -132,10 +132,10 @@ func main() {
 			}
 		case event.Upgrade:
 			var (
-				req *proto.UpgradeRequest
+				req *machineapi.UpgradeRequest
 				ok  bool
 			)
-			if req, ok = e.Data.(*proto.UpgradeRequest); !ok {
+			if req, ok = e.Data.(*machineapi.UpgradeRequest); !ok {
 				log.Println("cannot perform upgrade, unexpected data type")
 				continue
 			}

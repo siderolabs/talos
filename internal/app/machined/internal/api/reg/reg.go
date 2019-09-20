@@ -20,7 +20,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/pkg/archiver"
@@ -34,7 +34,7 @@ import (
 const OSPathSeparator = string(os.PathSeparator)
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// proto.Init interfaces.
+// machineapi.Machine interfaces.
 type Registrator struct {
 	Data *userdata.UserData
 }
@@ -48,12 +48,12 @@ func NewRegistrator(data *userdata.UserData) *Registrator {
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	proto.RegisterInitServer(s, r)
+	machineapi.RegisterMachineServer(s, r)
 }
 
-// Reboot implements the proto.InitServer interface.
-func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto.RebootReply, err error) {
-	reply = &proto.RebootReply{}
+// Reboot implements the machineapi.MachineServer interface.
+func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machineapi.RebootReply, err error) {
+	reply = &machineapi.RebootReply{}
 
 	log.Printf("reboot via API received")
 	event.Bus().Notify(event.Event{Type: event.Reboot})
@@ -61,9 +61,9 @@ func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *proto
 	return
 }
 
-// Shutdown implements the proto.InitServer interface.
-func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *proto.ShutdownReply, err error) {
-	reply = &proto.ShutdownReply{}
+// Shutdown implements the machineapi.MachineServer interface.
+func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *machineapi.ShutdownReply, err error) {
+	reply = &machineapi.ShutdownReply{}
 
 	log.Printf("shutdown via API received")
 	event.Bus().Notify(event.Event{Type: event.Shutdown})
@@ -72,15 +72,15 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *pro
 }
 
 // Upgrade initiates a Talos upgrade
-func (r *Registrator) Upgrade(ctx context.Context, in *proto.UpgradeRequest) (data *proto.UpgradeReply, err error) {
+func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeReply, err error) {
 	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: in})
-	data = &proto.UpgradeReply{Ack: "Upgrade request received"}
+	data = &machineapi.UpgradeReply{Ack: "Upgrade request received"}
 
 	return data, err
 }
 
 // Reset initiates a Talos upgrade
-func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.ResetReply, err error) {
+func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machineapi.ResetReply, err error) {
 	// Stop the kubelet.
 	if err = system.Services(r.Data).Stop(ctx, "kubelet"); err != nil {
 		return data, err
@@ -91,15 +91,15 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *proto.R
 		return nil, err
 	}
 
-	return &proto.ResetReply{}, err
+	return &machineapi.ResetReply{}, err
 }
 
 // ServiceList returns list of the registered services and their status
-func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *proto.ServiceListReply, err error) {
+func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *machineapi.ServiceListReply, err error) {
 	services := system.Services(r.Data).List()
 
-	result = &proto.ServiceListReply{
-		Services: make([]*proto.ServiceInfo, len(services)),
+	result = &machineapi.ServiceListReply{
+		Services: make([]*machineapi.ServiceInfo, len(services)),
 	}
 
 	for i := range services {
@@ -109,24 +109,24 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 	return result, nil
 }
 
-// ServiceStart implements the proto.InitServer interface and starts a
+// ServiceStart implements the machineapi.MachineServer interface and starts a
 // service running on Talos.
-func (r *Registrator) ServiceStart(ctx context.Context, in *proto.ServiceStartRequest) (reply *proto.ServiceStartReply, err error) {
+func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceStartRequest) (reply *machineapi.ServiceStartReply, err error) {
 	if err = system.Services(r.Data).APIStart(ctx, in.Id); err != nil {
-		return &proto.ServiceStartReply{}, err
+		return &machineapi.ServiceStartReply{}, err
 	}
 
-	reply = &proto.ServiceStartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
+	reply = &machineapi.ServiceStartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
 	return reply, err
 }
 
 // Start implements deprecated Start method which forwards to 'ServiceStart'.
 //nolint: staticcheck
-func (r *Registrator) Start(ctx context.Context, in *proto.StartRequest) (reply *proto.StartReply, err error) {
-	var rep *proto.ServiceStartReply
-	rep, err = r.ServiceStart(ctx, &proto.ServiceStartRequest{Id: in.Id})
+func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (reply *machineapi.StartReply, err error) {
+	var rep *machineapi.ServiceStartReply
+	rep, err = r.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: in.Id})
 	if rep != nil {
-		reply = &proto.StartReply{
+		reply = &machineapi.StartReply{
 			Resp: rep.Resp,
 		}
 	}
@@ -136,11 +136,11 @@ func (r *Registrator) Start(ctx context.Context, in *proto.StartRequest) (reply 
 
 // Stop implements deprecated Stop method which forwards to 'ServiceStop'.
 //nolint: staticcheck
-func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *proto.StopReply, err error) {
-	var rep *proto.ServiceStopReply
-	rep, err = r.ServiceStop(ctx, &proto.ServiceStopRequest{Id: in.Id})
+func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (reply *machineapi.StopReply, err error) {
+	var rep *machineapi.ServiceStopReply
+	rep, err = r.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: in.Id})
 	if rep != nil {
-		reply = &proto.StopReply{
+		reply = &machineapi.StopReply{
 			Resp: rep.Resp,
 		}
 	}
@@ -148,30 +148,30 @@ func (r *Registrator) Stop(ctx context.Context, in *proto.StopRequest) (reply *p
 	return
 }
 
-// ServiceStop implements the proto.InitServer interface and stops a
+// ServiceStop implements the machineapi.MachineServer interface and stops a
 // service running on Talos.
-func (r *Registrator) ServiceStop(ctx context.Context, in *proto.ServiceStopRequest) (reply *proto.ServiceStopReply, err error) {
+func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceStopRequest) (reply *machineapi.ServiceStopReply, err error) {
 	if err = system.Services(r.Data).APIStop(ctx, in.Id); err != nil {
-		return &proto.ServiceStopReply{}, err
+		return &machineapi.ServiceStopReply{}, err
 	}
 
-	reply = &proto.ServiceStopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
+	reply = &machineapi.ServiceStopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
 	return reply, err
 }
 
-// ServiceRestart implements the proto.InitServer interface and stops a
+// ServiceRestart implements the machineapi.MachineServer interface and stops a
 // service running on Talos.
-func (r *Registrator) ServiceRestart(ctx context.Context, in *proto.ServiceRestartRequest) (reply *proto.ServiceRestartReply, err error) {
+func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.ServiceRestartRequest) (reply *machineapi.ServiceRestartReply, err error) {
 	if err = system.Services(r.Data).APIRestart(ctx, in.Id); err != nil {
-		return &proto.ServiceRestartReply{}, err
+		return &machineapi.ServiceRestartReply{}, err
 	}
 
-	reply = &proto.ServiceRestartReply{Resp: fmt.Sprintf("Service %q restarted", in.Id)}
+	reply = &machineapi.ServiceRestartReply{Resp: fmt.Sprintf("Service %q restarted", in.Id)}
 	return reply, err
 }
 
-// CopyOut implements the proto.InitServer interface and copies data out of Talos node
-func (r *Registrator) CopyOut(req *proto.CopyOutRequest, s proto.Init_CopyOutServer) error {
+// CopyOut implements the machineapi.MachineServer interface and copies data out of Talos node
+func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machine_CopyOutServer) error {
 	path := req.RootPath
 	path = filepath.Clean(path)
 
@@ -196,7 +196,7 @@ func (r *Registrator) CopyOut(req *proto.CopyOutRequest, s proto.Init_CopyOutSer
 	chunkCh := chunker.Read(ctx)
 
 	for data := range chunkCh {
-		err := s.SendMsg(&proto.StreamingData{Bytes: data})
+		err := s.SendMsg(&machineapi.StreamingData{Bytes: data})
 		if err != nil {
 			ctxCancel()
 		}
@@ -204,16 +204,16 @@ func (r *Registrator) CopyOut(req *proto.CopyOutRequest, s proto.Init_CopyOutSer
 
 	archiveErr := <-errCh
 	if archiveErr != nil {
-		return s.SendMsg(&proto.StreamingData{Errors: archiveErr.Error()})
+		return s.SendMsg(&machineapi.StreamingData{Errors: archiveErr.Error()})
 	}
 
 	return nil
 }
 
-// LS implements the proto.InitServer interface.
-func (r *Registrator) LS(req *proto.LSRequest, s proto.Init_LSServer) error {
+// LS implements the machineapi.MachineServer interface.
+func (r *Registrator) LS(req *machineapi.LSRequest, s machineapi.Machine_LSServer) error {
 	if req == nil {
-		req = new(proto.LSRequest)
+		req = new(machineapi.LSRequest)
 	}
 	if !strings.HasPrefix(req.Root, OSPathSeparator) {
 		// Make sure we use complete paths
@@ -240,13 +240,13 @@ func (r *Registrator) LS(req *proto.LSRequest, s proto.Init_LSServer) error {
 
 	for fi := range files {
 		if fi.Error != nil {
-			err = s.Send(&proto.FileInfo{
+			err = s.Send(&machineapi.FileInfo{
 				Name:         fi.FullPath,
 				RelativeName: fi.RelPath,
 				Error:        fi.Error.Error(),
 			})
 		} else {
-			err = s.Send(&proto.FileInfo{
+			err = s.Send(&machineapi.FileInfo{
 				Name:         fi.FullPath,
 				RelativeName: fi.RelPath,
 				Size:         fi.FileInfo.Size(),
@@ -264,8 +264,8 @@ func (r *Registrator) LS(req *proto.LSRequest, s proto.Init_LSServer) error {
 	return nil
 }
 
-// DF implements the proto.OSDServer interface.
-func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFReply, err error) {
+// Mounts implements the machineapi.OSDServer interface.
+func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machineapi.MountsReply, err error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
 		return nil, err
@@ -278,7 +278,7 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 		multiErr *multierror.Error
 	)
 
-	stats := []*proto.DFStat{}
+	stats := []*machineapi.MountStat{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
@@ -308,7 +308,7 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 		totalSize := uint64(stat.Bsize) * stat.Blocks
 		totalAvail := uint64(stat.Bsize) * stat.Bavail
 
-		stat := &proto.DFStat{
+		stat := &machineapi.MountStat{
 			Filesystem: filesystem,
 			Size:       totalSize,
 			Available:  totalAvail,
@@ -322,14 +322,14 @@ func (r *Registrator) DF(ctx context.Context, in *empty.Empty) (reply *proto.DFR
 		multiErr = multierror.Append(multiErr, err)
 	}
 
-	reply = &proto.DFReply{
+	reply = &machineapi.MountsReply{
 		Stats: stats,
 	}
 
 	return reply, multiErr.ErrorOrNil()
 }
 
-// Version implements the proto.InitServer interface.
-func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *proto.VersionReply, err error) {
+// Version implements the machineapi.MachineServer interface.
+func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionReply, err error) {
 	return version.NewVersion(), nil
 }

@@ -17,7 +17,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	proto "github.com/talos-systems/talos/api/network"
+	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
@@ -46,7 +46,7 @@ func (suite *NetworkdSuite) TestRoutes() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := proto.NewNetworkdClient(conn)
+	nClient := networkapi.NewNetworkClient(conn)
 
 	resp, err := nClient.Routes(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
@@ -67,7 +67,7 @@ func (suite *NetworkdSuite) TestInterfaces() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := proto.NewNetworkdClient(conn)
+	nClient := networkapi.NewNetworkClient(conn)
 
 	resp, err := nClient.Interfaces(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)

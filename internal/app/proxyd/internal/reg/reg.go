@@ -15,7 +15,7 @@ import (
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// proto.Init interfaces.
+// proto.ProxydServer interfaces.
 type Registrator struct {
 	Proxyd *frontend.ReverseProxy
 }

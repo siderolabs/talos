@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 
-	proto "github.com/talos-systems/talos/api/security"
+	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/internal/pkg/cis"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -239,25 +239,25 @@ func RequiredFiles() []string {
 
 // FileSet compares the list of required files to the ones
 // already present on the node and returns the delta
-func FileSet(files []string) []*proto.ReadFileRequest {
-	fileRequests := []*proto.ReadFileRequest{}
+func FileSet(files []string) []*securityapi.ReadFileRequest {
+	fileRequests := []*securityapi.ReadFileRequest{}
 	// Check to see if we already have the file locally
 	for _, file := range files {
 		if _, err := os.Stat(file); os.IsNotExist(err) {
-			fileRequests = append(fileRequests, &proto.ReadFileRequest{Path: file})
+			fileRequests = append(fileRequests, &securityapi.ReadFileRequest{Path: file})
 		}
 	}
 
 	return fileRequests
 }
 
-// CreateTrustdClients handles instantiating a trustd client connection
+// CreateSecurityClients handles instantiating a trustd client connection
 // to each trustd endpoint defined in userdata
-func CreateTrustdClients(data *userdata.UserData) ([]proto.TrustdClient, error) {
+func CreateSecurityClients(data *userdata.UserData) ([]securityapi.SecurityClient, error) {
 	var creds basic.Credentials
 	var err error
 
-	trustds := []proto.TrustdClient{}
+	trustds := []securityapi.SecurityClient{}
 
 	creds, err = basic.NewCredentials(data.Services.Trustd)
 	if err != nil {
@@ -272,22 +272,22 @@ func CreateTrustdClients(data *userdata.UserData) ([]proto.TrustdClient, error) 
 		if err != nil {
 			return trustds, err
 		}
-		trustds = append(trustds, proto.NewTrustdClient(conn))
+		trustds = append(trustds, securityapi.NewSecurityClient(conn))
 	}
 	return trustds, nil
 }
 
 // Download handles the retrieval of files from a trustd endpoint
-func Download(ctx context.Context, client proto.TrustdClient, file *proto.ReadFileRequest, content chan<- []byte) {
+func Download(ctx context.Context, client securityapi.SecurityClient, file *securityapi.ReadFileRequest, content chan<- []byte) {
 	select {
 	case <-ctx.Done():
 	case content <- download(ctx, client, file):
 	}
 }
 
-func download(ctx context.Context, client proto.TrustdClient, file *proto.ReadFileRequest) []byte {
+func download(ctx context.Context, client securityapi.SecurityClient, file *securityapi.ReadFileRequest) []byte {
 	var (
-		resp            *proto.ReadFileResponse
+		resp            *securityapi.ReadFileResponse
 		err             error
 		attempt, snooze float64
 	)

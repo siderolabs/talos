@@ -13,16 +13,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
-// dfCmd represents the df command.
-var dfCmd = &cobra.Command{
-	Use:   "df",
-	Short: "List disk usage",
-	Long:  ``,
+// mountsCmd represents the mounts command.
+var mountsCmd = &cobra.Command{
+	Use:     "mounts",
+	Aliases: []string{"m"},
+	Short:   "List mounts",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
@@ -30,15 +31,15 @@ var dfCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			dfRender(c.DF(globalCtx))
+			mountsRender(c.Mounts(globalCtx))
 		})
 	},
 }
 
-func dfRender(reply *proto.DFReply, err error) {
+func mountsRender(reply *machineapi.MountsReply, err error) {
 	if reply == nil {
 		if err != nil {
-			helpers.Fatalf("error getting df: %s", err)
+			helpers.Fatalf("error getting mounts: %s", err)
 		}
 		return
 	}
@@ -58,5 +59,5 @@ func dfRender(reply *proto.DFReply, err error) {
 }
 
 func init() {
-	rootCmd.AddCommand(dfCmd)
+	rootCmd.AddCommand(mountsCmd)
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 )
 
 // MaxEventsToKeep is maximum number of events to keep per service before dropping old entries
@@ -104,18 +104,18 @@ func (events *ServiceEvents) Get(count int) (result []ServiceEvent) {
 }
 
 // AsProto returns protobuf-ready serialized snapshot
-func (events *ServiceEvents) AsProto(count int) *proto.ServiceEvents {
+func (events *ServiceEvents) AsProto(count int) *machineapi.ServiceEvents {
 	eventList := events.Get(count)
 
-	result := &proto.ServiceEvents{
-		Events: make([]*proto.ServiceEvent, len(eventList)),
+	result := &machineapi.ServiceEvents{
+		Events: make([]*machineapi.ServiceEvent, len(eventList)),
 	}
 
 	for i := range eventList {
 		// nolint: errcheck
 		tspb, _ := ptypes.TimestampProto(eventList[i].Timestamp)
 
-		result.Events[i] = &proto.ServiceEvent{
+		result.Events[i] = &machineapi.ServiceEvent{
 			Msg:   eventList[i].Message,
 			State: eventList[i].State.String(),
 			Ts:    tspb,

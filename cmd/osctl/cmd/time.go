@@ -13,7 +13,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
 
-	proto "github.com/talos-systems/talos/api/time"
+	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
@@ -30,7 +30,7 @@ var timeCmd = &cobra.Command{
 				helpers.Fatalf("failed to parse check flag: %v", err)
 			}
 
-			var output *proto.TimeReply
+			var output *timeapi.TimeReply
 			if server == "" {
 				output, err = c.Time(globalCtx)
 				if err != nil {

@@ -2,24 +2,24 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "proto";
+option go_package = "osapi";
 option java_multiple_files = true;
-option java_outer_classname = "ApiProto";
-option java_package = "com.proto";
+option java_outer_classname = "OsApi";
+option java_package = "com.os.api";
 
 import "google/protobuf/empty.proto";
 
-// The OSD service definition.
+// The OS service definition.
 //
-// OSD Service also implements all the API of Init Service
-service OSD {
+// OS Service also implements all the API of Init Service
+service OS {
   rpc Dmesg(google.protobuf.Empty) returns (Data);
   rpc Kubeconfig(google.protobuf.Empty) returns (Data);
   rpc Logs(LogsRequest) returns (stream Data);
-  rpc Processes(ProcessesRequest) returns (ProcessesReply);
+  rpc Containers(ContainersRequest) returns (ContainersReply);
   rpc Restart(RestartRequest) returns (RestartReply);
   rpc Stats(StatsRequest) returns (StatsReply);
-  rpc Top(google.protobuf.Empty) returns (TopReply);
+  rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
 }
 
 enum ContainerDriver {
@@ -28,17 +28,17 @@ enum ContainerDriver {
 }
 
 // The request message containing the containerd namespace.
-message ProcessesRequest {
+message ContainersRequest {
   string namespace = 1;
   // driver might be default "containerd" or "cri"
   ContainerDriver driver = 2;
 }
 
-// The response message containing the requested processes.
-message ProcessesReply { repeated Process processes = 1; }
+// The response message containing the requested containers.
+message ContainersReply { repeated Container containers = 1; }
 
-// The response message containing the requested processes.
-message Process {
+// The response message containing the requested containers.
+message Container {
   string namespace = 1;
   string id = 2;
   string image = 3;
@@ -90,8 +90,8 @@ message LogsRequest {
 // The response message containing the requested logs.
 message Data { bytes bytes = 1; }
 
-message TopRequest {}
+message ProcessesRequest {}
 
-message TopReply { ProcessList process_list = 1; }
+message ProcessesReply { ProcessList process_list = 1; }
 
 message ProcessList { bytes bytes = 1; }

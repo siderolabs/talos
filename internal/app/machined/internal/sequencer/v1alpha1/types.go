@@ -5,7 +5,7 @@
 package v1alpha1
 
 import (
-	proto "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/acpi"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/disk"
@@ -124,7 +124,7 @@ func (d *Sequencer) Shutdown() error {
 }
 
 // Upgrade implements the Sequencer interface.
-func (d *Sequencer) Upgrade(req *proto.UpgradeRequest) error {
+func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 	data, err := userdata.Open(constants.UserDataPath)
 	if err != nil {
 		return err
