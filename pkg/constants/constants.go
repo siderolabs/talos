@@ -106,7 +106,7 @@ const (
 	KubeadmEtcdPeerKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
 
 	// KubernetesVersion is the enforced target version of the control plane.
-	KubernetesVersion = "v1.16.0-rc.2"
+	KubernetesVersion = "v1.16.0"
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
 	KubernetesImage = "k8s.gcr.io/hyperkube:" + KubernetesVersion

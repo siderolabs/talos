@@ -1,5 +1,7 @@
 #!/bin/bash
-KUBE_TAG="kubernetes-1.16.0-rc.2"
+
+# Example: kubernetes-1.16.0
+KUBE_TAG="${1}"
 
 export GOPROXY=https://proxy.golang.org
 
