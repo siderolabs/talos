@@ -243,7 +243,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	opts := []x509.Option{
 		x509.RSA(true),
 		x509.Organization("talos-k8s"),
-		x509.NotAfter(time.Now().Add(8760 * time.Hour)),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
 	k8sCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	if err != nil {
@@ -254,7 +254,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	opts = []x509.Option{
 		x509.RSA(false),
 		x509.Organization("talos-os"),
-		x509.NotAfter(time.Now().Add(8760 * time.Hour)),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
 	osCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	if err != nil {
@@ -277,7 +277,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	ips := []net.IP{net.ParseIP(loopbackIP)}
 	opts = []x509.Option{
 		x509.IPAddresses(ips),
-		x509.NotAfter(time.Now().Add(8760 * time.Hour)),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
 	csr, err := x509.NewCertificateSigningRequest(adminKeyEC, opts...)
 	if err != nil {
