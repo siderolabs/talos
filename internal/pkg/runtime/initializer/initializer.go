@@ -5,12 +5,12 @@
 package initializer
 
 import (
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime/initializer/cloud"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime/initializer/container"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime/initializer/interactive"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime/initializer/metal"
+	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/cloud"
+	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/container"
+	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/interactive"
+	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/metal"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

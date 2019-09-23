@@ -13,8 +13,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/internal/app/machined/internal/event"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
+	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/startup"

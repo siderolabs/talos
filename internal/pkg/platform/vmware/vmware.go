@@ -11,8 +11,8 @@ import (
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 

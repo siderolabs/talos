@@ -5,7 +5,7 @@
 package iso
 
 import (
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 )

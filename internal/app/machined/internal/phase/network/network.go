@@ -8,10 +8,10 @@ import (
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/app/machined/internal/platform"
-	"github.com/talos-systems/talos/internal/app/machined/internal/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 

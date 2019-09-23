@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/internal/event"
+	"github.com/talos-systems/talos/internal/pkg/event"
 )
 
 type EventSuite struct {
