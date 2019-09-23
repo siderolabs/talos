@@ -11,9 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	localud "github.com/talos-systems/talos/cmd/osctl/internal/userdata"
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/version"
@@ -23,7 +23,7 @@ var (
 	bootloader      bool
 	device          string
 	endpoint        string
-	platform        string
+	platformArg     string
 	extraKernelArgs []string
 )
 
@@ -33,40 +33,48 @@ var installCmd = &cobra.Command{
 	Short: "Install Talos to a specified disk",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
+		var (
+			data *userdata.UserData
+			err  error
+		)
 
-		ud, err := localud.UserData(endpoint)
-		if err != nil {
-			// Ignore userdata load errors, since it need not necessarily exist yet
-			log.Println("failed to source provided userdata; falling back to defaults")
-			ud = &userdata.UserData{
+		platform, err := platform.NewPlatform()
+		if err == nil {
+			data, err = platform.UserData()
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			// Ignore userdata load errors, since it need not necessarily exist yet.
+			log.Printf("failed to source userdata from platform; falling back to defaults: %v", err)
+			data = &userdata.UserData{
 				Install: &userdata.Install{},
 			}
 		}
 
 		// If this command is being called, it _is_ a force-install.
-		ud.Install.Force = true
+		data.Install.Force = true
 
 		// Since the default for bootloader is "true," if the flag is ever false, it should override the userdata.  Thus we should always override userdata value of bootloader.
-		ud.Install.Bootloader = bootloader
+		data.Install.Bootloader = bootloader
 
 		if len(extraKernelArgs) > 0 {
-			ud.Install.ExtraKernelArgs = append(ud.Install.ExtraKernelArgs, extraKernelArgs...)
+			data.Install.ExtraKernelArgs = append(data.Install.ExtraKernelArgs, extraKernelArgs...)
 		}
 		if device != "" {
-			ud.Install.Disk = device
+			data.Install.Disk = device
 		}
 
 		cmdline := kernel.NewCmdline("")
 		cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
-		cmdline.Append(constants.KernelParamPlatform, platform)
+		cmdline.Append(constants.KernelParamPlatform, platformArg)
 		cmdline.Append(constants.KernelParamUserData, endpoint)
-		if err = cmdline.AppendAll(ud.Install.ExtraKernelArgs); err != nil {
+		if err = cmdline.AppendAll(data.Install.ExtraKernelArgs); err != nil {
 			log.Fatal(err)
 		}
 		cmdline.AppendDefaults()
 
-		i, err := installer.NewInstaller(cmdline, ud)
+		i, err := installer.NewInstaller(cmdline, data)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -82,7 +90,7 @@ func init() {
 	installCmd.Flags().BoolVar(&bootloader, "bootloader", true, "Install a booloader to the specified device")
 	installCmd.Flags().StringVar(&device, "device", "", "The path to the device to install to")
 	installCmd.Flags().StringVar(&endpoint, "userdata", "", "The value of "+constants.KernelParamUserData)
-	installCmd.Flags().StringVar(&platform, "platform", "", "The value of "+constants.KernelParamPlatform)
+	installCmd.Flags().StringVar(&platformArg, "platform", "", "The value of "+constants.KernelParamPlatform)
 	installCmd.Flags().StringArrayVar(&extraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.AddCommand(installCmd)
 }

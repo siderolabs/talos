@@ -280,6 +280,7 @@ ENTRYPOINT ["/sbin/init"]
 FROM alpine:3.8 AS installer
 RUN apk --update add \
     bash \
+    ca-certificates \
     cdrkit \
     qemu-img \
     syslinux \
