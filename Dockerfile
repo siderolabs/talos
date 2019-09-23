@@ -292,6 +292,7 @@ COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=osctl-linux-build /osctl-linux-amd64 /bin/osctl
 ARG TAG
 ENV VERSION ${TAG}
+LABEL "alpha.talos.io/version"="${VERSION}"
 ENTRYPOINT ["entrypoint.sh"]
 
 # The test target performs tests on the source code.
