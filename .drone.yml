@@ -6,15 +6,9 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 steps:
-- name: clone
-  pull: always
-  image: autonomy/drone-git:latest
-
 - name: machined
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make machined
@@ -28,10 +22,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osd
@@ -45,10 +38,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: trustd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make trustd
@@ -62,10 +54,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: proxyd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make proxyd
@@ -79,10 +70,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: ntpd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make ntpd
@@ -96,10 +86,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: networkd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make networkd
@@ -113,10 +102,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-linux
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-linux
@@ -130,10 +118,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-darwin
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-darwin
@@ -147,10 +134,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: rootfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make rootfs
@@ -173,6 +159,7 @@ steps:
   - networkd
 
 - name: initramfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make initramfs
@@ -190,6 +177,7 @@ steps:
   - rootfs
 
 - name: installer
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make installer
@@ -207,6 +195,7 @@ steps:
   - rootfs
 
 - name: container
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make container
@@ -224,6 +213,7 @@ steps:
   - rootfs
 
 - name: lint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make lint
@@ -237,10 +227,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: protolint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make protolint
@@ -254,10 +243,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: markdownlint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make markdownlint
@@ -271,10 +259,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: image-test
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-test
@@ -292,6 +279,7 @@ steps:
   - installer
 
 - name: unit-tests
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
@@ -309,6 +297,7 @@ steps:
   - rootfs
 
 - name: unit-tests-race
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
@@ -339,6 +328,7 @@ steps:
   - unit-tests
 
 - name: basic-integration
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make basic-integration
@@ -431,15 +421,9 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 steps:
-- name: clone
-  pull: always
-  image: autonomy/drone-git:latest
-
 - name: machined
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make machined
@@ -453,10 +437,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osd
@@ -470,10 +453,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: trustd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make trustd
@@ -487,10 +469,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: proxyd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make proxyd
@@ -504,10 +485,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: ntpd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make ntpd
@@ -521,10 +501,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: networkd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make networkd
@@ -538,10 +517,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-linux
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-linux
@@ -555,10 +533,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-darwin
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-darwin
@@ -572,10 +549,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: rootfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make rootfs
@@ -598,6 +574,7 @@ steps:
   - networkd
 
 - name: initramfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make initramfs
@@ -615,6 +592,7 @@ steps:
   - rootfs
 
 - name: installer
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make installer
@@ -632,6 +610,7 @@ steps:
   - rootfs
 
 - name: container
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make container
@@ -649,6 +628,7 @@ steps:
   - rootfs
 
 - name: lint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make lint
@@ -662,10 +642,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: protolint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make protolint
@@ -679,10 +658,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: markdownlint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make markdownlint
@@ -696,10 +674,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: image-test
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-test
@@ -717,6 +694,7 @@ steps:
   - installer
 
 - name: unit-tests
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
@@ -734,6 +712,7 @@ steps:
   - rootfs
 
 - name: unit-tests-race
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
@@ -764,6 +743,7 @@ steps:
   - unit-tests
 
 - name: basic-integration
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make basic-integration
@@ -809,6 +789,7 @@ steps:
   - basic-integration
 
 - name: capi
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make capi
@@ -834,6 +815,7 @@ steps:
   - basic-integration
 
 - name: image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-aws
@@ -851,6 +833,7 @@ steps:
   - installer
 
 - name: image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-azure
@@ -868,6 +851,7 @@ steps:
   - installer
 
 - name: image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
@@ -885,6 +869,7 @@ steps:
   - installer
 
 - name: push-image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-aws
@@ -910,6 +895,7 @@ steps:
   - image-aws
 
 - name: push-image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-azure
@@ -935,6 +921,7 @@ steps:
   - image-azure
 
 - name: push-image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-gcp
@@ -960,6 +947,7 @@ steps:
   - image-gcp
 
 - name: e2e-integration-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -979,6 +967,7 @@ steps:
   - push-image-aws
 
 - name: e2e-integration-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -998,6 +987,7 @@ steps:
   - push-image-azure
 
 - name: e2e-integration-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -1059,15 +1049,9 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 steps:
-- name: clone
-  pull: always
-  image: autonomy/drone-git:latest
-
 - name: machined
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make machined
@@ -1081,10 +1065,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osd
@@ -1098,10 +1081,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: trustd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make trustd
@@ -1115,10 +1097,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: proxyd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make proxyd
@@ -1132,10 +1113,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: ntpd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make ntpd
@@ -1149,10 +1129,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: networkd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make networkd
@@ -1166,10 +1145,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-linux
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-linux
@@ -1183,10 +1161,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-darwin
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-darwin
@@ -1200,10 +1177,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: rootfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make rootfs
@@ -1226,6 +1202,7 @@ steps:
   - networkd
 
 - name: initramfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make initramfs
@@ -1243,6 +1220,7 @@ steps:
   - rootfs
 
 - name: installer
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make installer
@@ -1260,6 +1238,7 @@ steps:
   - rootfs
 
 - name: container
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make container
@@ -1277,6 +1256,7 @@ steps:
   - rootfs
 
 - name: lint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make lint
@@ -1290,10 +1270,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: protolint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make protolint
@@ -1307,10 +1286,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: markdownlint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make markdownlint
@@ -1324,10 +1302,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: image-test
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-test
@@ -1345,6 +1322,7 @@ steps:
   - installer
 
 - name: unit-tests
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
@@ -1362,6 +1340,7 @@ steps:
   - rootfs
 
 - name: unit-tests-race
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
@@ -1392,6 +1371,7 @@ steps:
   - unit-tests
 
 - name: basic-integration
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make basic-integration
@@ -1437,6 +1417,7 @@ steps:
   - basic-integration
 
 - name: capi
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make capi
@@ -1462,6 +1443,7 @@ steps:
   - basic-integration
 
 - name: image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-aws
@@ -1479,6 +1461,7 @@ steps:
   - installer
 
 - name: image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-azure
@@ -1496,6 +1479,7 @@ steps:
   - installer
 
 - name: image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
@@ -1513,6 +1497,7 @@ steps:
   - installer
 
 - name: push-image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-aws
@@ -1538,6 +1523,7 @@ steps:
   - image-aws
 
 - name: push-image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-azure
@@ -1563,6 +1549,7 @@ steps:
   - image-azure
 
 - name: push-image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-gcp
@@ -1588,6 +1575,7 @@ steps:
   - image-gcp
 
 - name: conformance-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -1608,6 +1596,7 @@ steps:
   - push-image-aws
 
 - name: conformance-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -1628,6 +1617,7 @@ steps:
   - push-image-azure
 
 - name: conformance-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -1690,15 +1680,9 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 steps:
-- name: clone
-  pull: always
-  image: autonomy/drone-git:latest
-
 - name: machined
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make machined
@@ -1712,10 +1696,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osd
@@ -1729,10 +1712,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: trustd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make trustd
@@ -1746,10 +1728,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: proxyd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make proxyd
@@ -1763,10 +1744,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: ntpd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make ntpd
@@ -1780,10 +1760,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: networkd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make networkd
@@ -1797,10 +1776,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-linux
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-linux
@@ -1814,10 +1792,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-darwin
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-darwin
@@ -1831,10 +1808,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: rootfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make rootfs
@@ -1857,6 +1833,7 @@ steps:
   - networkd
 
 - name: initramfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make initramfs
@@ -1874,6 +1851,7 @@ steps:
   - rootfs
 
 - name: installer
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make installer
@@ -1891,6 +1869,7 @@ steps:
   - rootfs
 
 - name: container
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make container
@@ -1908,6 +1887,7 @@ steps:
   - rootfs
 
 - name: lint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make lint
@@ -1921,10 +1901,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: protolint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make protolint
@@ -1938,10 +1917,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: markdownlint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make markdownlint
@@ -1955,10 +1933,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: image-test
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-test
@@ -1976,6 +1953,7 @@ steps:
   - installer
 
 - name: unit-tests
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
@@ -1993,6 +1971,7 @@ steps:
   - rootfs
 
 - name: unit-tests-race
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
@@ -2023,6 +2002,7 @@ steps:
   - unit-tests
 
 - name: basic-integration
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make basic-integration
@@ -2068,6 +2048,7 @@ steps:
   - basic-integration
 
 - name: capi
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make capi
@@ -2093,6 +2074,7 @@ steps:
   - basic-integration
 
 - name: image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-aws
@@ -2110,6 +2092,7 @@ steps:
   - installer
 
 - name: image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-azure
@@ -2127,6 +2110,7 @@ steps:
   - installer
 
 - name: image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
@@ -2144,6 +2128,7 @@ steps:
   - installer
 
 - name: push-image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-aws
@@ -2169,6 +2154,7 @@ steps:
   - image-aws
 
 - name: push-image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-azure
@@ -2194,6 +2180,7 @@ steps:
   - image-azure
 
 - name: push-image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make push-image-gcp
@@ -2219,6 +2206,7 @@ steps:
   - image-gcp
 
 - name: conformance-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -2239,6 +2227,7 @@ steps:
   - push-image-aws
 
 - name: conformance-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -2259,6 +2248,7 @@ steps:
   - push-image-azure
 
 - name: conformance-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-integration
@@ -2321,15 +2311,9 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 steps:
-- name: clone
-  pull: always
-  image: autonomy/drone-git:latest
-
 - name: machined
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make machined
@@ -2343,10 +2327,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osd
@@ -2360,10 +2343,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: trustd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make trustd
@@ -2377,10 +2359,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: proxyd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make proxyd
@@ -2394,10 +2375,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: ntpd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make ntpd
@@ -2411,10 +2391,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: networkd
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make networkd
@@ -2428,10 +2407,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-linux
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-linux
@@ -2445,10 +2423,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: osctl-darwin
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make osctl-darwin
@@ -2462,10 +2439,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: rootfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make rootfs
@@ -2488,6 +2464,7 @@ steps:
   - networkd
 
 - name: initramfs
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make initramfs
@@ -2505,6 +2482,7 @@ steps:
   - rootfs
 
 - name: installer
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make installer
@@ -2522,6 +2500,7 @@ steps:
   - rootfs
 
 - name: container
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make container
@@ -2539,6 +2518,7 @@ steps:
   - rootfs
 
 - name: lint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make lint
@@ -2552,10 +2532,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: protolint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make protolint
@@ -2569,10 +2548,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: markdownlint
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make markdownlint
@@ -2586,10 +2564,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: image-test
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-test
@@ -2607,6 +2584,7 @@ steps:
   - installer
 
 - name: unit-tests
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
@@ -2624,6 +2602,7 @@ steps:
   - rootfs
 
 - name: unit-tests-race
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
@@ -2654,6 +2633,7 @@ steps:
   - unit-tests
 
 - name: basic-integration
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make basic-integration
@@ -2699,6 +2679,7 @@ steps:
   - basic-integration
 
 - name: kernel
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make kernel
@@ -2712,10 +2693,9 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-  depends_on:
-  - clone
 
 - name: image-azure
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-azure
@@ -2733,6 +2713,7 @@ steps:
   - installer
 
 - name: image-gcp
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
@@ -2750,6 +2731,7 @@ steps:
   - installer
 
 - name: image-aws
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make image-aws
@@ -2767,6 +2749,7 @@ steps:
   - installer
 
 - name: iso
+  pull: always
   image: autonomy/build-container:latest
   commands:
   - make iso
@@ -2847,9 +2830,6 @@ name: notify
 platform:
   os: linux
   arch: amd64
-
-clone:
-  disable: true
 
 steps:
 - name: slack
