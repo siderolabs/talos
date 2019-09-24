@@ -1,3 +1,20 @@
+# [v0.2.0-rc.0](https://github.com/talos-systems/talos/compare/v0.2.0-beta.0...v0.2.0-rc.0) (2019-09-24)
+
+
+### Bug Fixes
+
+* **machined:** add nil checks to metal initializer ([e70b3ae](https://github.com/talos-systems/talos/commit/e70b3ae)), closes [#1186](https://github.com/talos-systems/talos/issues/1186)
+* add kerenel config required by Cilium ([6009d0e](https://github.com/talos-systems/talos/commit/6009d0e))
+* generate CA certificates with 1 year expiration ([f924794](https://github.com/talos-systems/talos/commit/f924794))
+* generate CA certificates with 10 year expiration ([d01a55c](https://github.com/talos-systems/talos/commit/d01a55c))
+
+
+### Features
+
+* upgrade Kubernetes to v1.16.0 ([f9f2280](https://github.com/talos-systems/talos/commit/f9f2280))
+
+
+
 # [v0.2.0-beta.0](https://github.com/talos-systems/talos/compare/v0.2.0-alpha.7...v0.2.0-beta.0) (2019-09-18)
 
 
