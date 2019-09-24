@@ -36,19 +36,6 @@ var injectOSCmd = &cobra.Command{
 	},
 }
 
-// injectIdentityCmd represents the inject command
-// nolint: dupl
-var injectIdentityCmd = &cobra.Command{
-	Use:   "identity",
-	Short: "inject identity data.",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := inject(args, crt, key, injectIdentityData); err != nil {
-			helpers.Fatalf("%s", err)
-		}
-	},
-}
-
 // injectKubernetesCmd represents the inject command
 // nolint: dupl
 var injectKubernetesCmd = &cobra.Command{
@@ -72,20 +59,6 @@ func injectOSData(u *userdata.UserData, crt, key string) (err error) {
 		return
 	}
 	u.Security.OS.CA = crtAndKey
-
-	return nil
-}
-
-// nolint: dupl
-func injectIdentityData(u *userdata.UserData, crt, key string) (err error) {
-	if u.Security == nil {
-		u.Security = newSecurity()
-	}
-	crtAndKey, err := x509.NewCertificateAndKeyFromFiles(crt, key)
-	if err != nil {
-		return
-	}
-	u.Security.OS.Identity = crtAndKey
 
 	return nil
 }
@@ -144,19 +117,14 @@ func newSecurity() *userdata.Security {
 
 func init() {
 	injectOSCmd.Flags().StringVar(&crt, "crt", "", "the path to the PKI certificate")
-	injectIdentityCmd.Flags().StringVar(&crt, "crt", "", "the path to the PKI certificate")
 	injectKubernetesCmd.Flags().StringVar(&crt, "crt", "", "the path to the PKI certificate")
 	helpers.Should(injectOSCmd.MarkFlagRequired("crt"))
-	helpers.Should(injectIdentityCmd.MarkFlagRequired("crt"))
 	helpers.Should(injectKubernetesCmd.MarkFlagRequired("crt"))
 
 	injectOSCmd.Flags().StringVar(&key, "key", "", "the path to the PKI key")
-	injectIdentityCmd.Flags().StringVar(&key, "key", "", "the path to the PKI key")
 	injectKubernetesCmd.Flags().StringVar(&key, "key", "", "the path to the PKI key")
 	helpers.Should(injectOSCmd.MarkFlagRequired("key"))
-	helpers.Should(injectIdentityCmd.MarkFlagRequired("key"))
 	helpers.Should(injectKubernetesCmd.MarkFlagRequired("key"))
 
-	injectCmd.AddCommand(injectOSCmd, injectIdentityCmd, injectKubernetesCmd)
 	rootCmd.AddCommand(injectCmd)
 }

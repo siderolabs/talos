@@ -5,11 +5,9 @@
 package userdata
 
 import (
-	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	stdlibnet "net"
 	"os"
 	"strings"
 
@@ -17,7 +15,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/net"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -88,50 +85,6 @@ type File struct {
 	Contents    string      `yaml:"contents"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
-}
-
-// NewIdentityCSR creates a new CSR for the node's identity certificate.
-func (data *UserData) NewIdentityCSR() (csr *x509.CertificateSigningRequest, err error) {
-	var key *x509.Key
-	key, err = x509.NewKey()
-	if err != nil {
-		return nil, err
-	}
-
-	data.Security.OS.Identity = &x509.PEMEncodedCertificateAndKey{}
-	data.Security.OS.Identity.Key = key.KeyPEM
-
-	pemBlock, _ := pem.Decode(key.KeyPEM)
-	if pemBlock == nil {
-		return nil, fmt.Errorf("failed to decode key")
-	}
-	keyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	ips, err := net.IPAddrs()
-	if err != nil {
-		return nil, err
-	}
-	for _, san := range data.Services.Trustd.CertSANs {
-		if ip := stdlibnet.ParseIP(san); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		return
-	}
-	opts := []x509.Option{}
-	names := []string{hostname}
-	opts = append(opts, x509.DNSNames(names))
-	opts = append(opts, x509.IPAddresses(ips))
-	csr, err = x509.NewCertificateSigningRequest(keyEC, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return csr, nil
 }
 
 // Open is a convenience function that reads the user data from disk, and

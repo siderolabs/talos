@@ -191,7 +191,7 @@ func init() {
 	// Certificate Authorities
 	caCmd.Flags().StringVar(&organization, "organization", "", "X.509 distinguished name for the Organization")
 	helpers.Should(cobra.MarkFlagRequired(caCmd.Flags(), "organization"))
-	caCmd.Flags().IntVar(&hours, "hours", 24, "the hours from now on which the certificate validity period ends")
+	caCmd.Flags().IntVar(&hours, "hours", 87600, "the hours from now on which the certificate validity period ends")
 	caCmd.Flags().BoolVar(&rsa, "rsa", false, "generate in RSA format")
 	// Keys
 	keyCmd.Flags().StringVar(&name, "name", "", "the basename of the generated file")

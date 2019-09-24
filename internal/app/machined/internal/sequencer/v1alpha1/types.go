@@ -64,7 +64,6 @@ func (d *Sequencer) Boot() error {
 		),
 		phase.NewPhase(
 			"user requests",
-			userdatatask.NewPKITask(),
 			userdatatask.NewExtraEnvVarsTask(),
 			userdatatask.NewExtraFilesTask(),
 		),

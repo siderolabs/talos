@@ -175,11 +175,8 @@ const (
 	// RootfsAsset defines a well known name for our rootfs filename
 	RootfsAsset = "rootfs.sqsh"
 
-	// NodeCertFile is the filename where the current Talos Node Certificate may be found
-	NodeCertFile = SystemRunPath + "/talos-node.crt"
-
-	// NodeCertRenewalInterval is the default interval at which Talos Node Certifications should be renewed
-	NodeCertRenewalInterval = 24 * time.Hour
+	// DefaultCertificateValidityDuration is the default duration for a certificate.
+	DefaultCertificateValidityDuration = 24 * time.Hour
 
 	// SystemVarPath is the path to write runtime system related files and
 	// directories.

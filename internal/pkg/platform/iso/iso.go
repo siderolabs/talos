@@ -23,8 +23,7 @@ func (i *ISO) UserData() (data *userdata.UserData, err error) {
 	data = &userdata.UserData{
 		Security: &userdata.Security{
 			OS: &userdata.OSSecurity{
-				CA:       &x509.PEMEncodedCertificateAndKey{},
-				Identity: &x509.PEMEncodedCertificateAndKey{},
+				CA: &x509.PEMEncodedCertificateAndKey{},
 			},
 			Kubernetes: &userdata.KubernetesSecurity{
 				CA: &x509.PEMEncodedCertificateAndKey{},
