@@ -55,15 +55,6 @@ local volumes = {
   ],
 };
 
-// This step provides our cloning logic. It is a workaround for a limitation in
-// the way promotions work in drone. Promotions are assumed to be against
-// the master branch, causing improper clones when promoting a pull request.
-local clone = {
-  name: 'clone',
-  image: 'autonomy/drone-git:latest',
-  pull: 'always',
-};
-
 // This provides the docker service.
 local docker = {
   name: 'docker',
@@ -99,7 +90,7 @@ local buildkit = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, target='', depends_on=[clone], environment={}) = {
+local Step(name, target='', depends_on=[], environment={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
   local common_env_vars = {
     BUILDKIT_HOST: '${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}',
@@ -108,6 +99,7 @@ local Step(name, target='', depends_on=[clone], environment={}) = {
 
   name: name,
   image: build_container,
+  pull: "always",
   commands: [make],
   environment: common_env_vars + environment,
   volumes: volumes.ForStep(),
@@ -116,20 +108,17 @@ local Step(name, target='', depends_on=[clone], environment={}) = {
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
-local Pipeline(name, steps=[], depends_on=[], with_clone=true, with_buildkit=false, with_docker=true) = {
+local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=true) = {
   local node = { 'node-role.kubernetes.io/ci': '' },
 
   kind: 'pipeline',
   name: name,
-  clone: {
-    disable: true,
-  },
   node: node,
   services: [
     if with_docker then docker,
     if with_buildkit then buildkit,
   ],
-  steps: [if with_clone then clone] + steps,
+  steps: steps,
   volumes: volumes.ForPipeline(),
   depends_on: [x.name for x in depends_on],
 };
@@ -398,7 +387,7 @@ local notify_depends_on = {
   ],
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false, false) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false) + notify_trigger;
 
 // Final configuration file definition.
 
