@@ -221,18 +221,12 @@ func FileSet(files []string) []*securityapi.ReadFileRequest {
 	return fileRequests
 }
 
-// CreateSecurityClients handles instantiating a trustd client connection
+// CreateSecurityClients handles instantiating a security API client connection
 // to each trustd endpoint defined in userdata
-func CreateSecurityClients(data *userdata.UserData) ([]securityapi.SecurityClient, error) {
-	var creds basic.Credentials
-	var err error
+func CreateSecurityClients(data *userdata.UserData) (clients []securityapi.SecurityClient, err error) {
+	clients = []securityapi.SecurityClient{}
 
-	trustds := []securityapi.SecurityClient{}
-
-	creds, err = basic.NewCredentials(data.Services.Trustd)
-	if err != nil {
-		return trustds, err
-	}
+	creds := basic.NewTokenCredentials(data.Services.Trustd.Token)
 
 	// Create a trustd client for each endpoint to set up
 	// a fan out approach to gathering the files
@@ -240,14 +234,14 @@ func CreateSecurityClients(data *userdata.UserData) ([]securityapi.SecurityClien
 	for _, endpoint := range data.Services.Trustd.Endpoints {
 		conn, err = basic.NewConnection(endpoint, constants.TrustdPort, creds)
 		if err != nil {
-			return trustds, err
+			return clients, err
 		}
-		trustds = append(trustds, securityapi.NewSecurityClient(conn))
+		clients = append(clients, securityapi.NewSecurityClient(conn))
 	}
-	return trustds, nil
+	return clients, nil
 }
 
-// Download handles the retrieval of files from a trustd endpoint
+// Download handles the retrieval of files from a security API endpoint.
 func Download(ctx context.Context, client securityapi.SecurityClient, file *securityapi.ReadFileRequest, content chan<- []byte) {
 	select {
 	case <-ctx.Done():

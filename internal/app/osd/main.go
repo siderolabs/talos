@@ -5,9 +5,10 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
+	stdlibnet "net"
+	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -16,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/startup"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
@@ -28,9 +30,10 @@ func init() {
 	flag.Parse()
 }
 
+// nolint: gocyclo
 func main() {
 	if err := startup.RandSeed(); err != nil {
-		log.Fatalf("startup: %s", err)
+		log.Fatalf("failed to seed RNG: %s", err)
 	}
 
 	data, err := userdata.Open(*dataPath)
@@ -38,40 +41,63 @@ func main() {
 		log.Fatalf("open user data: %v", err)
 	}
 
-	tlsCertProvider, err := tls.NewRenewingFileCertificateProvider(context.TODO(), data)
+	ips, err := net.IPAddrs()
 	if err != nil {
-		log.Fatalln("failed to create new dynamic certificate provider:", err)
+		log.Fatalf("failed to discover IP addresses: %+v", err)
 	}
-	config, err := tls.NewConfigWithOpts(
+	// TODO(andrewrynhard): Allow for DNS names.
+	for _, san := range data.Services.Trustd.CertSANs {
+		if ip := stdlibnet.ParseIP(san); ip != nil {
+			ips = append(ips, ip)
+		}
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("failed to discover hostname: %+v", err)
+	}
+
+	var provider tls.CertificateProvider
+	provider, err = tls.NewRemoteRenewingFileCertificateProvider(data.Services.Trustd.Token, data.Services.Trustd.Endpoints, constants.TrustdPort, hostname, ips)
+	if err != nil {
+		log.Fatalf("failed to create remote certificate provider: %+v", err)
+	}
+
+	ca, err := provider.GetCA()
+	if err != nil {
+		log.Fatalf("failed to get root CA: %+v", err)
+	}
+
+	config, err := tls.New(
 		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(data.Security.OS.CA.Crt),
-		tls.WithCertificateProvider(tlsCertProvider))
+		tls.WithCACertPEM(ca),
+		tls.WithCertificateProvider(provider),
+	)
 	if err != nil {
 		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
 	}
 
-	MachineClient, err := reg.NewMachineClient()
+	machineClient, err := reg.NewMachineClient()
 	if err != nil {
 		log.Fatalf("init client: %v", err)
 	}
 
-	TimeClient, err := reg.NewTimeClient()
+	timeClient, err := reg.NewTimeClient()
 	if err != nil {
 		log.Fatalf("ntp client: %v", err)
 	}
 
-	NetworkClient, err := reg.NewNetworkClient()
+	networkClient, err := reg.NewNetworkClient()
 	if err != nil {
 		log.Fatalf("networkd client: %v", err)
 	}
 
-	log.Println("Starting osd")
 	err = factory.ListenAndServe(
 		&reg.Registrator{
 			Data:          data,
-			MachineClient: MachineClient,
-			TimeClient:    TimeClient,
-			NetworkClient: NetworkClient,
+			MachineClient: machineClient,
+			TimeClient:    timeClient,
+			NetworkClient: networkClient,
 		},
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(

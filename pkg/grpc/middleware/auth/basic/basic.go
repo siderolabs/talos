@@ -6,14 +6,12 @@ package basic
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/talos-systems/talos/pkg/net"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Credentials describes an authorization method.
@@ -42,20 +40,4 @@ func NewConnection(address string, port int, creds credentials.PerRPCCredentials
 	}
 
 	return conn, nil
-}
-
-// NewCredentials returns credentials.PerRPCCredentials based on username and
-// password, or a token. The token method takes precedence over the username
-// and password.
-func NewCredentials(data *userdata.Trustd) (creds Credentials, err error) {
-	switch {
-	case data.Username != "" && data.Password != "":
-		creds = NewUsernameAndPasswordCredentials(data.Username, data.Password)
-	case data.Token != "":
-		creds = NewTokenCredentials(data.Token)
-	default:
-		return nil, errors.New("failed to find valid credentials")
-	}
-
-	return creds, nil
 }

@@ -12,8 +12,7 @@ import (
 
 // OSSecurity represents the set of security options specific to the OS.
 type OSSecurity struct {
-	CA       *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
-	Identity *x509.PEMEncodedCertificateAndKey `yaml:"identity"`
+	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 }
 
 // OSSecurityCheck defines the function type for checks

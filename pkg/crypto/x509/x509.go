@@ -22,6 +22,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // CertificateAuthority represents a CA.
@@ -136,7 +138,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 		DNSNames:           []string{},
 		Bits:               4096,
 		RSA:                false,
-		NotAfter:           time.Now().Add(24 * time.Hour),
+		NotAfter:           time.Now().Add(constants.DefaultCertificateValidityDuration),
 	}
 
 	for _, setter := range setters {
@@ -383,6 +385,41 @@ func NewCertificateAndKeyFromFiles(crt, key string) (p *PEMEncodedCertificateAnd
 	p.Key = keyBytes
 
 	return p, nil
+}
+
+// NewCSRAndIdentity generates and PEM encoded certificate and key, along with a
+// CSR for the generated key.
+func NewCSRAndIdentity(hostname string, ips []net.IP) (csr *CertificateSigningRequest, identity *PEMEncodedCertificateAndKey, err error) {
+	var key *Key
+	key, err = NewKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	identity = &PEMEncodedCertificateAndKey{
+		Key: key.KeyPEM,
+	}
+
+	pemBlock, _ := pem.Decode(key.KeyPEM)
+	if pemBlock == nil {
+		return nil, nil, fmt.Errorf("failed to decode key")
+	}
+
+	keyEC, err := x509.ParseECPrivateKey(pemBlock.Bytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	opts := []Option{}
+	opts = append(opts, DNSNames([]string{hostname}))
+	opts = append(opts, IPAddresses(ips))
+
+	csr, err = NewCertificateSigningRequest(keyEC, opts...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return csr, identity, nil
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for

@@ -101,14 +101,11 @@ func Execute() {
 
 // setupClient wraps common code to initialize osd client
 func setupClient(action func(*client.Client)) {
-	creds, err := client.NewDefaultClientCredentials(talosconfig)
+	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig)
 	if err != nil {
 		helpers.Fatalf("error getting client credentials: %s", err)
 	}
-	if target != "" {
-		creds.Target = target
-	}
-	c, err := client.NewClient(constants.OsdPort, creds)
+	c, err := client.NewClient(creds, t, constants.OsdPort)
 	if err != nil {
 		helpers.Fatalf("error constructing client: %s", err)
 	}

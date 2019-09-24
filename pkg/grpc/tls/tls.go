@@ -9,8 +9,6 @@ import (
 	"crypto/x509"
 
 	"github.com/pkg/errors"
-
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Type represents the TLS authentication type.
@@ -47,8 +45,7 @@ func WithClientAuthType(t Type) func(*tls.Config) error {
 // certificate.
 //
 // NOTE: specifying this option will CLEAR any configured Certificates, since
-// they would otherwise override this option
-//
+// they would otherwise override this option.
 func WithCertificateProvider(p CertificateProvider) func(*tls.Config) error {
 	return func(cfg *tls.Config) error {
 		if p == nil {
@@ -101,8 +98,8 @@ func defaultConfig() *tls.Config {
 	}
 }
 
-// NewConfigWithOpts returns a new TLS Configuration modified by any provided configuration options
-func NewConfigWithOpts(opts ...ConfigOptionFunc) (cfg *tls.Config, err error) {
+// New returns a new TLS Configuration modified by any provided configuration options
+func New(opts ...ConfigOptionFunc) (cfg *tls.Config, err error) {
 	cfg = defaultConfig()
 
 	for _, f := range opts {
@@ -110,22 +107,5 @@ func NewConfigWithOpts(opts ...ConfigOptionFunc) (cfg *tls.Config, err error) {
 			return
 		}
 	}
-	return
-}
-
-// NewConfig initializes a TLS config for the specified type.
-func NewConfig(t Type, data *userdata.OSSecurity) (config *tls.Config, err error) {
-	config = defaultConfig()
-
-	if err = WithClientAuthType(t)(config); err != nil {
-		return nil, errors.Wrap(err, "failed to apply ClientAuthType preference")
-	}
-	if err = WithCACertPEM(data.CA.Crt)(config); err != nil {
-		return nil, errors.Wrap(err, "failed to apply CA Certificate from UserData")
-	}
-	if err = WithCertificateProvider(&userDataCertificateProvider{data: data})(config); err != nil {
-		return nil, errors.Wrap(err, "failed to apply userdata-sourced CertificateProvider")
-	}
-
 	return
 }
