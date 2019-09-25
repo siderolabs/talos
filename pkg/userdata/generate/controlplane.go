@@ -29,6 +29,7 @@ services:
           token: '{{ .KubeadmTokens.BootstrapToken }}'
           unsafeSkipCAVerification: true
           apiServerEndpoint: "{{ .GetAPIServerEndpoint "6443" }}"
+      certificateKey: {{ .KubeadmTokens.CertificateKey }}
       nodeRegistration:
         taints: []
         kubeletExtraArgs:

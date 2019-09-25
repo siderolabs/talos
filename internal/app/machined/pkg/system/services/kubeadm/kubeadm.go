@@ -13,8 +13,6 @@ import (
 	"math"
 	"os"
 	"path"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -24,7 +22,6 @@ import (
 
 	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/internal/pkg/cis"
-	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
@@ -34,21 +31,6 @@ import (
 const dirPerm os.FileMode = 0700
 const certPerm os.FileMode = 0600
 const keyPerm os.FileMode = 0400
-
-// PhaseCerts shells out to kubeadm to generate the necessary PKI.
-func PhaseCerts() error {
-	// Run kubeadm init phase certs all. This should fill in whatever gaps
-	// we have in the provided certs.
-	return cmd.Run(
-		"kubeadm",
-		"init",
-		"phase",
-		"certs",
-		"all",
-		"--config",
-		constants.KubeadmConfig,
-	)
-}
 
 func editFullInitConfig(data *userdata.UserData) (err error) {
 	if data.Services.Kubeadm.InitConfiguration == nil {
@@ -217,29 +199,12 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 			if err = os.MkdirAll(path.Dir(cert.KeyPath), dirPerm); err != nil {
 				return err
 			}
-			if err = ioutil.WriteFile(cert.KeyPath, cert.Cert.Key, certPerm); err != nil {
+			if err = ioutil.WriteFile(cert.KeyPath, cert.Cert.Key, keyPerm); err != nil {
 				return fmt.Errorf("write %s: %v", cert.KeyPath, err)
 			}
 		}
 	}
 	return err
-}
-
-// RequiredFiles returns a slice of the required CA and
-// security policies necessary for kubeadm init to function.
-// This serves as a base for the list of files that need to
-// be synced via trustd from other nodes
-func RequiredFiles() []string {
-	return []string{
-		constants.KubeadmCACert,
-		constants.KubeadmCAKey,
-		constants.KubeadmSACert,
-		constants.KubeadmSAKey,
-		constants.KubeadmFrontProxyCACert,
-		constants.KubeadmFrontProxyCAKey,
-		constants.KubeadmEtcdCACert,
-		constants.KubeadmEtcdCAKey,
-	}
 }
 
 // FileSet compares the list of required files to the ones
@@ -337,39 +302,4 @@ func download(ctx context.Context, client securityapi.SecurityClient, file *secu
 	}
 
 	return resp.Data
-}
-
-// WriteTrustdFiles handles reading the replies from trustd and writing them
-// out to a file on disk
-func WriteTrustdFiles(requestedFile string, content []byte) (err error) {
-	// If the file already exists, no need to write it again
-	// TODO: perhaps look at some sort of checksum verification?
-	if _, err = os.Stat(requestedFile); err == nil {
-		return err
-	}
-
-	if err = os.MkdirAll(filepath.Dir(requestedFile), dirPerm); err != nil {
-		log.Printf("failed to create directory for %s: %v", requestedFile, err)
-		return err
-	}
-
-	// Write out content
-	var perms os.FileMode
-	switch {
-	case strings.HasSuffix(requestedFile, "key"):
-		perms = keyPerm
-	case strings.HasSuffix(requestedFile, "crt"):
-		perms = certPerm
-	case strings.HasSuffix(requestedFile, "pub"):
-		perms = certPerm
-	default:
-		perms = keyPerm
-	}
-
-	if err = ioutil.WriteFile(requestedFile, content, perms); err != nil {
-		log.Printf("failed to write file %s: %v", requestedFile, err)
-		return err
-	}
-
-	return err
 }

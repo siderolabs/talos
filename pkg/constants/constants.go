@@ -127,8 +127,8 @@ const (
 	// AuditPolicyPath is the path to the audit-policy.yaml relative to initramfs.
 	AuditPolicyPath = "/etc/kubernetes/audit-policy.yaml"
 
-	// EncryptionConfigInitramfsPath is the path to the EncryptionConfig relative to initramfs.
-	EncryptionConfigInitramfsPath = "/etc/kubernetes/encryptionconfig.yaml"
+	// EncryptionConfigPath is the path to the EncryptionConfig relative to initramfs.
+	EncryptionConfigPath = "/etc/kubernetes/encryptionconfig.yaml"
 
 	// EncryptionConfigRootfsPath is the path to the EncryptionConfig relative to rootfs.
 	EncryptionConfigRootfsPath = "/etc/kubernetes/encryptionconfig.yaml"

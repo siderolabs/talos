@@ -8,8 +8,10 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/rand"
+	"crypto/sha256"
 	stdlibx509 "crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -127,11 +129,24 @@ type Certs struct {
 type KubeadmTokens struct {
 	BootstrapToken         string
 	AESCBCEncryptionSecret string
+	CertificateKey         string
 }
 
 // TrustdInfo holds the trustd credentials.
 type TrustdInfo struct {
 	Token string
+}
+
+func generateCertificateKey() (string, error) {
+	key, err := randBytes(32)
+	if err != nil {
+		return "", err
+	}
+
+	hashedKey := sha256.Sum256([]byte(key))
+	encoded := hex.EncodeToString(hashedKey[:])
+
+	return encoded, nil
 }
 
 // randBytes returns a random string consisting of the characters in
@@ -218,6 +233,11 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		return nil, err
 	}
 
+	kubeadmCertificateKey, err := generateCertificateKey()
+	if err != nil {
+		return nil, err
+	}
+
 	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
 	if err != nil {
 		return nil, err
@@ -232,6 +252,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	kubeadmTokens := &KubeadmTokens{
 		BootstrapToken:         kubeadmBootstrapToken,
 		AESCBCEncryptionSecret: aescbcEncryptionSecret,
+		CertificateKey:         kubeadmCertificateKey,
 	}
 
 	trustdInfo := &TrustdInfo{

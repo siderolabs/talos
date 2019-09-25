@@ -80,9 +80,6 @@ func (suite *KubeadmSuite) TestEditInitConfig() {
 }
 
 func (suite *KubeadmSuite) TestFileSet() {
-	// Ensure by default we get the expected number of requests
-	suite.Assert().Equal(len(FileSet(RequiredFiles())), len(RequiredFiles()))
-
 	// Make sure if local file exists we dont copy it
 	tmpfile, err := ioutil.TempFile("", "testfileset")
 	suite.Assert().NoError(err)

@@ -206,6 +206,7 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 				},
 			},
 		},
+		CertificateKey: nc.Cluster.CertificateKey,
 		NodeRegistration: kubeadm.NodeRegistrationOptions{
 			KubeletExtraArgs: nc.Machine.Kubelet.ExtraArgs,
 		},
@@ -299,7 +300,9 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 			Kind:       "JoinConfiguration",
 			APIVersion: "kubeadm.k8s.io/v1beta2",
 		},
-		ControlPlane: &kubeadm.JoinControlPlane{},
+		ControlPlane: &kubeadm.JoinControlPlane{
+			CertificateKey: nc.Cluster.CertificateKey,
+		},
 		Discovery: kubeadm.Discovery{
 			BootstrapToken: &kubeadm.BootstrapTokenDiscovery{
 				Token:                    nc.Cluster.Token,
