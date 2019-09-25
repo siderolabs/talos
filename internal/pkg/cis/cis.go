@@ -55,35 +55,39 @@ func EnforceAuditingRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	return nil
 }
 
-// CreateEncryptionToken generates an encryption token to be used for secrets
-func CreateEncryptionToken() error {
-	if _, err := os.Stat(constants.EncryptionConfigInitramfsPath); !os.IsNotExist(err) {
-		return nil
-	}
-
+// CreateEncryptionToken generates an encryption token to be used for secrets.
+func CreateEncryptionToken() (string, error) {
 	encryptionKey := make([]byte, 32)
 	if _, err := rand.Read(encryptionKey); err != nil {
-		return err
+		return "", err
 	}
 
 	str := base64.StdEncoding.EncodeToString(encryptionKey)
-	aux := struct {
-		AESCBCEncryptionSecret string
-	}{
-		AESCBCEncryptionSecret: str,
-	}
-	t, err := template.New("encryptionconfig").Parse(encryptionConfig)
-	if err != nil {
-		return err
-	}
 
-	encBytes := []byte{}
-	buf := bytes.NewBuffer(encBytes)
-	if err := t.Execute(buf, aux); err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile(constants.EncryptionConfigInitramfsPath, buf.Bytes(), 0400); err != nil {
-		return err
+	return str, nil
+}
+
+// WriteEncryptionConfigToDisk writes an EncryptionConfig to disk.
+func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
+	if _, err := os.Stat(constants.EncryptionConfigInitramfsPath); os.IsNotExist(err) {
+		aux := struct {
+			AESCBCEncryptionSecret string
+		}{
+			AESCBCEncryptionSecret: aescbcEncryptionSecret,
+		}
+		t, err := template.New("encryptionconfig").Parse(encryptionConfig)
+		if err != nil {
+			return err
+		}
+
+		encBytes := []byte{}
+		buf := bytes.NewBuffer(encBytes)
+		if err := t.Execute(buf, aux); err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(constants.EncryptionConfigInitramfsPath, buf.Bytes(), 0400); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -136,32 +140,36 @@ func EnforceExtraRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	return nil
 }
 
-// EnforceMasterRequirements enforces the CIS requirements for master nodes.
-func EnforceMasterRequirements(cfg *kubeadmapi.ClusterConfiguration, generateSecret bool) error {
+// EnforceBootstrapMasterRequirements enforces the CIS requirements for master nodes.
+func EnforceBootstrapMasterRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	ensureFieldsAreNotNil(cfg)
 
 	if err := EnforceAuditingRequirements(cfg); err != nil {
 		return err
 	}
-	if generateSecret {
-		if err := CreateEncryptionToken(); err != nil {
-			return err
-		}
-	}
+
 	if err := EnforceSecretRequirements(cfg); err != nil {
 		return err
 	}
+
 	if err := EnforceTLSRequirements(cfg); err != nil {
 		return err
 	}
+
 	if err := EnforceAdmissionPluginsRequirements(cfg); err != nil {
 		return err
 	}
+
 	if err := EnforceExtraRequirements(cfg); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// EnforceCommonMasterRequirements enforces the CIS requirements for master nodes.
+func EnforceCommonMasterRequirements(aescbcEncryptionSecret string) error {
+	return WriteEncryptionConfigToDisk(aescbcEncryptionSecret)
 }
 
 // EnforceWorkerRequirements enforces the CIS requirements for master nodes.

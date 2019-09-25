@@ -180,6 +180,7 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 			Crt: kubeCert,
 			Key: kubeKey,
 		},
+		AESCBCEncryptionSecret: nc.Cluster.AESCBCEncryptionSecret,
 	}
 
 	ud.Services.Trustd.CertSANs = []string{nc.Cluster.ControlPlane.IPs[nc.Cluster.ControlPlane.Index], "127.0.0.1", "::1"}
@@ -287,6 +288,10 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 	}
 	ud.Services.Trustd.CertSANs = []string{nc.Cluster.ControlPlane.IPs[nc.Cluster.ControlPlane.Index], "127.0.0.1", "::1"}
 	ud.Services.Kubeadm.ControlPlane = true
+
+	ud.Security.Kubernetes = &userdata.KubernetesSecurity{
+		AESCBCEncryptionSecret: nc.Cluster.AESCBCEncryptionSecret,
+	}
 
 	// Craft a control plane kubeadm config
 	controlPlaneConfig := &kubeadm.JoinConfiguration{

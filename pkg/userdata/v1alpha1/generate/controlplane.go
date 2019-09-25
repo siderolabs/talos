@@ -28,6 +28,7 @@ func controlPlaneUd(in *Input) (string, error) {
 			IPs:   in.MasterIPs,
 			Index: in.Index,
 		},
+		AESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
 	}
 
 	ud := v1alpha1.NodeConfig{
