@@ -124,8 +124,8 @@ const (
 	// VMwareGuestInfoUserDataKey is the guestinfo key used to provide a user data file.
 	VMwareGuestInfoUserDataKey = "talos.userdata"
 
-	// AuditPolicyPathInitramfs is the path to the audit-policy.yaml relative to initramfs.
-	AuditPolicyPathInitramfs = "/etc/kubernetes/audit-policy.yaml"
+	// AuditPolicyPath is the path to the audit-policy.yaml relative to initramfs.
+	AuditPolicyPath = "/etc/kubernetes/audit-policy.yaml"
 
 	// EncryptionConfigInitramfsPath is the path to the EncryptionConfig relative to initramfs.
 	EncryptionConfigInitramfsPath = "/etc/kubernetes/encryptionconfig.yaml"

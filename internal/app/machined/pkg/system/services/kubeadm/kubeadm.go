@@ -231,7 +231,6 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 // be synced via trustd from other nodes
 func RequiredFiles() []string {
 	return []string{
-		constants.AuditPolicyPathInitramfs,
 		constants.KubeadmCACert,
 		constants.KubeadmCAKey,
 		constants.KubeadmSACert,
