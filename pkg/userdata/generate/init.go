@@ -26,6 +26,7 @@ services:
       bootstrapTokens:
       - token: '{{ .KubeadmTokens.BootstrapToken }}'
         ttl: 0s
+      certificateKey: {{ .KubeadmTokens.CertificateKey }}
       nodeRegistration:
         taints: []
         kubeletExtraArgs:

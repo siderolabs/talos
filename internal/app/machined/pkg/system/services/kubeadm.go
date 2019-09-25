@@ -7,10 +7,8 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
-	"sync"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
@@ -19,7 +17,6 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 
-	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -50,7 +47,6 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 		return err
 	}
 
-	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
 	client, err := containerdapi.New(constants.ContainerdAddress)
 	if err != nil {
 		return err
@@ -59,69 +55,10 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 	defer client.Close()
 
 	// Pull the image and unpack it.
-
+	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
 	if _, err = client.Pull(containerdctx, constants.KubernetesImage, containerdapi.WithPullUnpack); err != nil {
 		return fmt.Errorf("failed to pull image %q: %v", constants.KubernetesImage, err)
 	}
-
-	// Run kubeadm init phase certs all. This should fill in whatever gaps
-	// we have in the provided certs.
-	if data.Services.Kubeadm.IsBootstrap() {
-		if err = kubeadm.PhaseCerts(); err != nil {
-			return err
-		}
-	}
-
-	if data.Services.Kubeadm.IsWorker() || data.Services.Kubeadm.IsBootstrap() || data.Services.Trustd == nil {
-		log.Println("skipping retrieval of files from peers via trustd")
-		return nil
-	}
-
-	// Initialize trustd peer client connection
-	var trustds []securityapi.SecurityClient
-	if trustds, err = kubeadm.CreateSecurityClients(data); err != nil {
-		return err
-	}
-
-	// Wait for all files to get synced
-	var wg sync.WaitGroup
-	wg.Add(len(kubeadm.FileSet(kubeadm.RequiredFiles())))
-
-	log.Println("retrieving needed files via trustd")
-	// Generate a list of files we need to request
-	// ( filtered by ones we already have ) and
-	// Get assets from remote nodes
-	for _, fileRequest := range kubeadm.FileSet(kubeadm.RequiredFiles()) {
-		// Handle all file requests in parallel
-		go func(ctx context.Context, fileRequest *securityapi.ReadFileRequest) {
-			defer wg.Done()
-
-			trustctx, ctxCancel := context.WithCancel(ctx)
-			defer ctxCancel()
-
-			// Have a single chan shared across all clients
-			// for a given file
-			content := make(chan []byte)
-
-			// kick off a goroutine for each trustd client
-			// to fetch the given file
-			for _, SecurityClient := range trustds {
-				go kubeadm.Download(trustctx, SecurityClient, fileRequest, content)
-			}
-
-			select {
-			case <-trustctx.Done():
-				return
-			case filecontent := <-content:
-				// TODO replace this with proper error handling
-				// nolint: errcheck
-				// read from the content chan to write out the
-				// given file
-				kubeadm.WriteTrustdFiles(fileRequest.Path, filecontent)
-			}
-		}(ctx, fileRequest)
-	}
-	wg.Wait()
 
 	return nil
 }
@@ -134,10 +71,6 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 // DependsOn implements the Service interface.
 func (k *Kubeadm) DependsOn(data *userdata.UserData) []string {
 	deps := []string{"containerd", "networkd"}
-
-	if data.Services.Kubeadm.IsControlPlane() {
-		deps = append(deps, "trustd")
-	}
 
 	return deps
 }
@@ -174,6 +107,7 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 			ignore,
 			"--skip-token-print",
 			"--skip-certificate-key-print",
+			"--upload-certs",
 		}
 	case data.Services.Kubeadm.JoinConfiguration != nil:
 		// Worker

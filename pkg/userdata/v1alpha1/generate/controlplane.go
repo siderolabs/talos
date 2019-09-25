@@ -28,6 +28,7 @@ func controlPlaneUd(in *Input) (string, error) {
 			IPs:   in.MasterIPs,
 			Index: in.Index,
 		},
+		CertificateKey:         in.KubeadmTokens.CertificateKey,
 		AESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
 	}
 

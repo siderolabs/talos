@@ -10,6 +10,7 @@ type ClusterConfig struct {
 	ClusterName            string                   `yaml:"clusterName,omitempty"`
 	Network                *ClusterNetworkConfig    `yaml:"network,omitempty"`
 	Token                  string                   `yaml:"token,omitempty"`
+	CertificateKey         string                   `yaml:"certificateKey"`
 	AESCBCEncryptionSecret string                   `yaml:"aescbcEncryptionSecret"`
 	CA                     *ClusterCAConfig         `yaml:"ca,omitempty"`
 	APIServer              *APIServerConfig         `yaml:"apiServer,omitempty"`

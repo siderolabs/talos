@@ -47,6 +47,7 @@ func initUd(in *Input) (string, error) {
 			Key: in.Certs.K8sKey,
 		},
 		Token:                  in.KubeadmTokens.BootstrapToken,
+		CertificateKey:         in.KubeadmTokens.CertificateKey,
 		AESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
 	}
 

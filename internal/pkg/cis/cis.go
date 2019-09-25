@@ -70,7 +70,7 @@ func CreateEncryptionToken() (string, error) {
 
 // WriteEncryptionConfigToDisk writes an EncryptionConfig to disk.
 func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
-	if _, err := os.Stat(constants.EncryptionConfigInitramfsPath); os.IsNotExist(err) {
+	if _, err := os.Stat(constants.EncryptionConfigPath); os.IsNotExist(err) {
 		aux := struct {
 			AESCBCEncryptionSecret string
 		}{
@@ -86,7 +86,7 @@ func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
 		if err := t.Execute(buf, aux); err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(constants.EncryptionConfigInitramfsPath, buf.Bytes(), 0400); err != nil {
+		if err := ioutil.WriteFile(constants.EncryptionConfigPath, buf.Bytes(), 0400); err != nil {
 			return err
 		}
 	}
