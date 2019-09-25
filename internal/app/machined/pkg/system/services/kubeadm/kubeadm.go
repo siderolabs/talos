@@ -117,9 +117,10 @@ func editClusterConfig(data *userdata.UserData) (err error) {
 	clusterConfiguration.UseHyperKubeImage = true
 
 	// Apply CIS hardening recommendations; only generate encryption token only if we're the bootstrap node
-	if err = cis.EnforceMasterRequirements(clusterConfiguration, data.Services.Kubeadm.IsBootstrap()); err != nil {
+	if err = cis.EnforceBootstrapMasterRequirements(clusterConfiguration); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -139,6 +140,12 @@ func WriteConfig(data *userdata.UserData) (err error) {
 
 	if err != nil {
 		return err
+	}
+
+	if data.Services.Kubeadm.IsControlPlane() {
+		if err = cis.EnforceCommonMasterRequirements(data.Security.Kubernetes.AESCBCEncryptionSecret); err != nil {
+			return err
+		}
 	}
 
 	// Marshal up config string
@@ -225,7 +232,6 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 func RequiredFiles() []string {
 	return []string{
 		constants.AuditPolicyPathInitramfs,
-		constants.EncryptionConfigInitramfsPath,
 		constants.KubeadmCACert,
 		constants.KubeadmCAKey,
 		constants.KubeadmSACert,

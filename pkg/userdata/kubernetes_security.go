@@ -13,10 +13,11 @@ import (
 // KubernetesSecurity represents the set of security options specific to
 // Kubernetes.
 type KubernetesSecurity struct {
-	CA         *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
-	SA         *x509.PEMEncodedCertificateAndKey `yaml:"sa"`
-	FrontProxy *x509.PEMEncodedCertificateAndKey `yaml:"frontproxy"`
-	Etcd       *x509.PEMEncodedCertificateAndKey `yaml:"etcd"`
+	CA                     *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	SA                     *x509.PEMEncodedCertificateAndKey `yaml:"sa"`
+	FrontProxy             *x509.PEMEncodedCertificateAndKey `yaml:"frontproxy"`
+	Etcd                   *x509.PEMEncodedCertificateAndKey `yaml:"etcd"`
+	AESCBCEncryptionSecret string                            `yaml:"aescbcEncryptionSecret"`
 }
 
 // KubernetesSecurityCheck defines the function type for checks

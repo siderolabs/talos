@@ -6,15 +6,16 @@ package v1alpha1
 
 // ClusterConfig reperesents the cluster-wide config values
 type ClusterConfig struct {
-	ControlPlane      *ControlPlaneConfig      `yaml:"controlPlane"`
-	ClusterName       string                   `yaml:"clusterName,omitempty"`
-	Network           *ClusterNetworkConfig    `yaml:"network,omitempty"`
-	Token             string                   `yaml:"token,omitempty"`
-	CA                *ClusterCAConfig         `yaml:"ca,omitempty"`
-	APIServer         *APIServerConfig         `yaml:"apiServer,omitempty"`
-	ControllerManager *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
-	Scheduler         *SchedulerConfig         `yaml:"scheduler,omitempty"`
-	Etcd              *EtcdConfig              `yaml:"etcd,omitempty"`
+	ControlPlane           *ControlPlaneConfig      `yaml:"controlPlane"`
+	ClusterName            string                   `yaml:"clusterName,omitempty"`
+	Network                *ClusterNetworkConfig    `yaml:"network,omitempty"`
+	Token                  string                   `yaml:"token,omitempty"`
+	AESCBCEncryptionSecret string                   `yaml:"aescbcEncryptionSecret"`
+	CA                     *ClusterCAConfig         `yaml:"ca,omitempty"`
+	APIServer              *APIServerConfig         `yaml:"apiServer,omitempty"`
+	ControllerManager      *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
+	Scheduler              *SchedulerConfig         `yaml:"scheduler,omitempty"`
+	Etcd                   *EtcdConfig              `yaml:"etcd,omitempty"`
 }
 
 // ControlPlaneConfig represents control plane config vals

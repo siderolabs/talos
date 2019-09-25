@@ -15,11 +15,11 @@ security:
     ca:
       crt: "{{ .Certs.K8sCert }}"
       key: "{{ .Certs.K8sKey }}"
+    aescbcEncryptionSecret: "{{ .KubeadmTokens.AESCBCEncryptionSecret }}"
 services:
   init:
     cni: flannel
   kubeadm:
-    certificateKey: '{{ .KubeadmTokens.CertKey }}'
     configuration: |
       apiVersion: kubeadm.k8s.io/v1beta2
       kind: JoinConfiguration

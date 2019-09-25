@@ -17,6 +17,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/talos-systems/talos/internal/pkg/cis"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
@@ -124,8 +125,8 @@ type Certs struct {
 
 // KubeadmTokens holds the senesitve kubeadm data.
 type KubeadmTokens struct {
-	BootstrapToken string
-	CertKey        string
+	BootstrapToken         string
+	AESCBCEncryptionSecret string
 }
 
 // TrustdInfo holds the trustd credentials.
@@ -217,9 +218,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		return nil, err
 	}
 
-	// TODO: Can be dropped
-	// Gen kubeadm cert key
-	kubeadmCertKey, err := randBytes(26)
+	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
 	if err != nil {
 		return nil, err
 	}
@@ -231,8 +230,8 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 	}
 
 	kubeadmTokens := &KubeadmTokens{
-		BootstrapToken: kubeadmBootstrapToken,
-		CertKey:        kubeadmCertKey,
+		BootstrapToken:         kubeadmBootstrapToken,
+		AESCBCEncryptionSecret: aescbcEncryptionSecret,
 	}
 
 	trustdInfo := &TrustdInfo{
