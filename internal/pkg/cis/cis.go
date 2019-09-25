@@ -41,10 +41,6 @@ resources:
 
 // EnforceAuditingRequirements enforces CIS requirements for auditing.
 func EnforceAuditingRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	if err := ioutil.WriteFile("/etc/kubernetes/audit-policy.yaml", []byte(auditPolicy), 0400); err != nil {
-		return err
-	}
-
 	// TODO(andrewrynhard): We should log to a file, and the option to retrieve
 	// the log files.
 	cfg.APIServer.ExtraArgs["audit-log-path"] = "-"
@@ -53,6 +49,11 @@ func EnforceAuditingRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 	cfg.APIServer.ExtraArgs["audit-log-maxsize"] = "50"
 
 	return nil
+}
+
+// WriteAuditPolicyToDisk writes the audit policy to disk.
+func WriteAuditPolicyToDisk() (err error) {
+	return ioutil.WriteFile(constants.AuditPolicyPath, []byte(auditPolicy), 0400)
 }
 
 // CreateEncryptionToken generates an encryption token to be used for secrets.
@@ -168,8 +169,16 @@ func EnforceBootstrapMasterRequirements(cfg *kubeadmapi.ClusterConfiguration) er
 }
 
 // EnforceCommonMasterRequirements enforces the CIS requirements for master nodes.
-func EnforceCommonMasterRequirements(aescbcEncryptionSecret string) error {
-	return WriteEncryptionConfigToDisk(aescbcEncryptionSecret)
+func EnforceCommonMasterRequirements(aescbcEncryptionSecret string) (err error) {
+	if err = WriteAuditPolicyToDisk(); err != nil {
+		return err
+	}
+
+	if err = WriteEncryptionConfigToDisk(aescbcEncryptionSecret); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // EnforceWorkerRequirements enforces the CIS requirements for master nodes.
