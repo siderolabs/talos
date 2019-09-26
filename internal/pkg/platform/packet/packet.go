@@ -5,6 +5,8 @@
 package packet
 
 import (
+	"net"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/userdata/download"
@@ -36,4 +38,9 @@ func (p *Packet) Mode() runtime.Mode {
 // Hostname implements the platform.Platform interface.
 func (p *Packet) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (p *Packet) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
 }

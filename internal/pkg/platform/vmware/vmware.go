@@ -7,6 +7,7 @@ package vmware
 import (
 	"encoding/base64"
 	"fmt"
+	"net"
 
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
@@ -75,4 +76,9 @@ func (vmw *VMware) Mode() runtime.Mode {
 // Hostname implements the platform.Platform interface.
 func (vmw *VMware) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (vmw *VMware) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
 }

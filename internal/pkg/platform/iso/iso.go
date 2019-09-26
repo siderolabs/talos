@@ -5,6 +5,8 @@
 package iso
 
 import (
+	"net"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
@@ -47,4 +49,9 @@ func (i *ISO) Mode() runtime.Mode {
 // Hostname implements the platform.Platform interface.
 func (i *ISO) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (i *ISO) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
 }

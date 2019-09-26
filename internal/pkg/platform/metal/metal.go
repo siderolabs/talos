@@ -6,6 +6,7 @@ package metal
 
 import (
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 
@@ -80,4 +81,9 @@ func (b *Metal) Mode() runtime.Mode {
 // Hostname implements the platform.Platform interface.
 func (b *Metal) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (b *Metal) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
 }

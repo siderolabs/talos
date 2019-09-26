@@ -34,6 +34,7 @@ func (task *Platform) runtime(platform platform.Platform, data *userdata.UserDat
 		return err
 	}
 
+	// Attempt to retrieve hostname via platform metadata
 	if data.Networking == nil {
 		data.Networking = &userdata.Networking{}
 	}
@@ -41,13 +42,25 @@ func (task *Platform) runtime(platform platform.Platform, data *userdata.UserDat
 		data.Networking.OS = &userdata.OSNet{}
 	}
 
-	b, err := platform.Hostname()
+	hostname, err := platform.Hostname()
 	if err != nil {
 		return err
 	}
 
-	if b != nil {
-		data.Networking.OS.Hostname = string(b)
+	if hostname != nil {
+		data.Networking.OS.Hostname = string(hostname)
+	}
+
+	// Attempt to identify external addresses assigned to the instance via platform
+	// metadata
+	addrs, err := platform.ExternalIPs()
+	if err != nil {
+		return err
+	}
+
+	// And add them to our cert SANs for trustd
+	for _, addr := range addrs {
+		data.Services.Trustd.CertSANs = append(data.Services.Trustd.CertSANs, addr.String())
 	}
 
 	return nil

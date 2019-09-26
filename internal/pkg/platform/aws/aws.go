@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/fullsailor/pkcs7"
@@ -20,12 +21,12 @@ import (
 )
 
 const (
-	// AWSUserDataEndpoint is the local EC2 endpoint for the user data.
-	AWSUserDataEndpoint = "http://169.254.169.254/latest/user-data"
-	// AWSPKCS7Endpoint is the local EC2 endpoint for the PKCS7 signature.
-	AWSPKCS7Endpoint = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
+	// AWSExternalIPEndpoint displays all external addresses associated with the instance
+	AWSExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
 	// AWSHostnameEndpoint is the local EC2 endpoint for the hostname.
 	AWSHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"
+	// AWSPKCS7Endpoint is the local EC2 endpoint for the PKCS7 signature.
+	AWSPKCS7Endpoint = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
 	// AWSPublicCertificate is the AWS public certificate for the regions
 	// provided by an AWS account.
 	AWSPublicCertificate = `-----BEGIN CERTIFICATE-----
@@ -46,6 +47,8 @@ MXrs3IgIb6+hUIB+S8dz8/mmO0bpr76RoZVCXYab2CZedFut7qc3WUH9+EUAH5mw
 vSeDCOUMYQR7R9LINYwouHIziqQYMAkGByqGSM44BAMDLwAwLAIUWXBlk40xTwSw
 7HX32MxXYruse9ACFBNGmdX2ZBrVNGrN9N2f6ROk0k9K
 -----END CERTIFICATE-----`
+	// AWSUserDataEndpoint is the local EC2 endpoint for the user data.
+	AWSUserDataEndpoint = "http://169.254.169.254/latest/user-data"
 )
 
 // AWS is the concrete type that implements the platform.Platform interface.
@@ -142,4 +145,37 @@ func (a *AWS) Hostname() (hostname []byte, err error) {
 	}
 
 	return ioutil.ReadAll(resp.Body)
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
+	var (
+		body []byte
+		req  *http.Request
+		resp *http.Response
+	)
+
+	if req, err = http.NewRequest("GET", AWSExternalIPEndpoint, nil); err != nil {
+		return
+	}
+
+	client := &http.Client{}
+	if resp, err = client.Do(req); err != nil {
+		return
+	}
+
+	// nolint: errcheck
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return addrs, fmt.Errorf("failed to retrieve external addresses for instance")
+	}
+
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		return
+	}
+
+	addrs = append(addrs, net.ParseIP(string(body)))
+
+	return addrs, err
 }
