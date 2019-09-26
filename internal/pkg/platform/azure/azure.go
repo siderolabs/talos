@@ -7,6 +7,7 @@ package azure
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -74,4 +75,9 @@ func (a *Azure) Hostname() (hostname []byte, err error) {
 	}
 
 	return ioutil.ReadAll(resp.Body)
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
 }

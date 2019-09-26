@@ -5,6 +5,7 @@
 package platform
 
 import (
+	"net"
 	"os"
 
 	"github.com/pkg/errors"
@@ -29,6 +30,7 @@ type Platform interface {
 	UserData() (*userdata.UserData, error)
 	Mode() runtime.Mode
 	Hostname() ([]byte, error)
+	ExternalIPs() ([]net.IP, error)
 }
 
 // NewPlatform is a helper func for discovering the current platform.

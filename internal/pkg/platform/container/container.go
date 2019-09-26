@@ -6,6 +6,7 @@ package container
 
 import (
 	"encoding/base64"
+	"net"
 	"os"
 
 	"github.com/pkg/errors"
@@ -52,4 +53,9 @@ func (c *Container) Mode() runtime.Mode {
 // Hostname implements the platform.Platform interface.
 func (c *Container) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// ExternalIPs provides any external addresses assigned to the instance
+func (c *Container) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
 }
