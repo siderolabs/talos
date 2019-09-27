@@ -18,9 +18,9 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/cis"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/userdata/translate"
 )
 
 // DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes
@@ -227,7 +227,7 @@ func isIPv6(addrs ...string) bool {
 // NewInput generates the sensitive data required to generate all userdata
 // types.
 // nolint: dupl,gocyclo
-func NewInput(clustername string, masterIPs []string) (input *Input, err error) {
+func NewInput(clustername string, masterIPs []string, kubernetesVersion string) (input *Input, err error) {
 	var loopbackIP, podNet, serviceNet string
 
 	if isIPv6(masterIPs...) {
@@ -358,7 +358,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		ServiceNet:        []string{serviceNet},
 		ServiceDomain:     "cluster.local",
 		ClusterName:       clustername,
-		KubernetesVersion: constants.KubernetesVersion,
+		KubernetesVersion: kubernetesVersion,
 		KubeadmTokens:     kubeadmTokens,
 		TrustdInfo:        trustdInfo,
 	}
@@ -388,15 +388,38 @@ func (t Type) String() string {
 }
 
 // Userdata returns the talos userdata for a given node type.
-func Userdata(t Type, in *Input) (string, error) {
+// nolint: gocyclo
+func Userdata(t Type, in *Input) (s string, err error) {
 	switch t {
 	case TypeInit:
-		return initUd(in)
+		if s, err = initUd(in); err != nil {
+			return "", err
+		}
 	case TypeControlPlane:
-		return controlPlaneUd(in)
+		if s, err = controlPlaneUd(in); err != nil {
+			return "", err
+		}
 	case TypeJoin:
-		return workerUd(in)
+		if s, err = workerUd(in); err != nil {
+			return "", err
+		}
 	default:
+		return "", errors.New("failed to determine userdata type to generate")
 	}
-	return "", errors.New("failed to determine userdata type to generate")
+
+	trans, err := translate.NewTranslator("v1alpha1", s)
+	if err != nil {
+		return "", err
+	}
+
+	ud, err := trans.Translate()
+	if err != nil {
+		return "", err
+	}
+
+	if err = ud.Validate(); err != nil {
+		return "", err
+	}
+
+	return s, nil
 }

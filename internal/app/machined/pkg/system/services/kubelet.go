@@ -58,7 +58,7 @@ func (k *Kubelet) DependsOn(data *userdata.UserData) []string {
 
 // Runner implements the Service interface.
 func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
-	image := constants.KubernetesImage
+	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, data.KubernetesVersion)
 
 	// Set the process arguments.
 	args := runner.Args{

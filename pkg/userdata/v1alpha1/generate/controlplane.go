@@ -25,8 +25,9 @@ func controlPlaneUd(in *Input) (string, error) {
 	cluster := &v1alpha1.ClusterConfig{
 		Token: in.KubeadmTokens.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			IPs:   in.MasterIPs,
-			Index: in.Index,
+			Version: in.KubernetesVersion,
+			IPs:     in.MasterIPs,
+			Index:   in.Index,
 		},
 		CertificateKey:         in.KubeadmTokens.CertificateKey,
 		AESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,

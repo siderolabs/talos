@@ -11,14 +11,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 
+	"github.com/talos-systems/talos/pkg/constants"
 	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
 	udgenv1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
 )
 
-var input *udgenv1alpha1.Input
-
 type GenerateSuite struct {
 	suite.Suite
+
+	input *udgenv1alpha1.Input
 }
 
 func TestGenerateSuite(t *testing.T) {
@@ -27,13 +28,13 @@ func TestGenerateSuite(t *testing.T) {
 
 func (suite *GenerateSuite) SetupSuite() {
 	var err error
-	input, err = udgenv1alpha1.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"})
+	suite.input, err = udgenv1alpha1.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"}, constants.DefaultKubernetesVersion)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
-	input.IP = net.ParseIP("10.0.1.5")
-	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeInit, input)
+	suite.input.IP = net.ParseIP("10.0.1.5")
+	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeInit, suite.input)
 	suite.Require().NoError(err)
 	data := &v1alpha1.NodeConfig{}
 	err = yaml.Unmarshal([]byte(dataString), data)
@@ -41,8 +42,9 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
-	input.IP = net.ParseIP("10.0.1.6")
-	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeControlPlane, input)
+	suite.input.IP = net.ParseIP("10.0.1.6")
+	suite.input.Index = 1
+	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeControlPlane, suite.input)
 	suite.Require().NoError(err)
 	data := &v1alpha1.NodeConfig{}
 	err = yaml.Unmarshal([]byte(dataString), data)
@@ -50,7 +52,7 @@ func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
-	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeJoin, input)
+	dataString, err := udgenv1alpha1.Userdata(udgenv1alpha1.TypeJoin, suite.input)
 	suite.Require().NoError(err)
 	data := &v1alpha1.NodeConfig{}
 	err = yaml.Unmarshal([]byte(dataString), data)
@@ -58,6 +60,6 @@ func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
-	_, err := udgenv1alpha1.Talosconfig(input)
+	_, err := udgenv1alpha1.Talosconfig(suite.input)
 	suite.Require().NoError(err)
 }

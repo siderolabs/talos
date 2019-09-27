@@ -15,7 +15,6 @@ import (
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 	kubeadm "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/userdata"
 	v1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1"
@@ -37,8 +36,9 @@ func (tv1a1 *V1Alpha1Translator) Translate() (*userdata.UserData, error) {
 
 	// Lay down the absolute minimum for all node types
 	ud := &userdata.UserData{
-		Version:  "v1alpha1",
-		Security: &userdata.Security{},
+		Version:           "v1alpha1",
+		KubernetesVersion: nc.Cluster.ControlPlane.Version,
+		Security:          &userdata.Security{},
 		Services: &userdata.Services{
 			Init: &userdata.Init{
 				CNI: "flannel",
@@ -74,6 +74,11 @@ func (tv1a1 *V1Alpha1Translator) Translate() (*userdata.UserData, error) {
 	case "worker":
 		translateV1Alpha1Worker(nc, ud)
 	}
+
+	if err = ud.Validate(); err != nil {
+		return nil, err
+	}
+
 	return ud, nil
 }
 
@@ -218,7 +223,7 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 			APIVersion: "kubeadm.k8s.io/v1beta2",
 		},
 		ClusterName:          nc.Cluster.ClusterName,
-		KubernetesVersion:    constants.KubernetesVersion,
+		KubernetesVersion:    ud.KubernetesVersion,
 		ControlPlaneEndpoint: nc.Cluster.ControlPlane.IPs[0] + ":443",
 		Networking: kubeadm.Networking{
 			DNSDomain:     nc.Cluster.Network.DNSDomain,

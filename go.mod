@@ -8,6 +8,7 @@ require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/beevik/ntp v0.2.0
+	github.com/blang/semver v3.5.0+incompatible
 	github.com/containerd/cgroups v0.0.0-20190328223300-4994991857f9
 	github.com/containerd/containerd v1.2.7
 	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect

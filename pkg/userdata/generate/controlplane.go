@@ -6,6 +6,7 @@ package generate
 
 const controlPlaneTempl = `#!talos
 version: ""
+kubernetesVersion: {{ .KubernetesVersion }}
 security:
   os:
     ca:

@@ -21,6 +21,7 @@ type ClusterConfig struct {
 
 // ControlPlaneConfig represents control plane config vals
 type ControlPlaneConfig struct {
+	Version string `yaml:"version"`
 
 	// Endpoint is the canonical controlplane endpoint, which can be an IP
 	// address or a DNS hostname, is single-valued, and may optionally include a

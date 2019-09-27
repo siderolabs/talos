@@ -6,6 +6,7 @@ package generate
 
 const workerTempl = `#!talos
 version: ""
+kubernetesVersion: {{ .KubernetesVersion }}
 security: null
 services:
   init:

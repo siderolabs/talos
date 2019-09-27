@@ -110,6 +110,7 @@ machine:
   install: {}
 cluster:
   controlPlane:
+    version: 1.16.0
     ips:
     - 10.254.0.10
   clusterName: spencer-test
@@ -131,6 +132,7 @@ cluster:
 
 // nolint: lll
 const testV0Config = `version: ""
+kubernetesVersion: 1.16.0
 security:
   os:
     ca:

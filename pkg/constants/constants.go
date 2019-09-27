@@ -105,11 +105,11 @@ const (
 	// KubeadmEtcdPeerKey is the path to the etcd CA private key.
 	KubeadmEtcdPeerKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
 
-	// KubernetesVersion is the enforced target version of the control plane.
-	KubernetesVersion = "v1.16.0"
+	// DefaultKubernetesVersion is the default target version of the control plane.
+	DefaultKubernetesVersion = "1.16.0"
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
-	KubernetesImage = "k8s.gcr.io/hyperkube:" + KubernetesVersion
+	KubernetesImage = "k8s.gcr.io/hyperkube"
 
 	// UserDataPath is the path to the downloaded user data.
 	UserDataPath = "/run/userdata.yaml"

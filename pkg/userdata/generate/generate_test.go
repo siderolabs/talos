@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/userdata/generate"
 )
@@ -31,10 +32,10 @@ func TestGenerateSuite(t *testing.T) {
 
 func (suite *GenerateSuite) SetupSuite() {
 	var err error
-	input, err = generate.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"})
+	input, err = generate.NewInput("test", []string{"10.0.1.5", "10.0.1.6", "10.0.1.7"}, constants.DefaultKubernetesVersion)
 	suite.Require().NoError(err)
 
-	inputv6, err = generate.NewInput("test", []string{"2001:db8::1", "2001:db8::2", "2001:db8::3"})
+	inputv6, err = generate.NewInput("test", []string{"2001:db8::1", "2001:db8::2", "2001:db8::3"}, constants.DefaultKubernetesVersion)
 	suite.Require().NoError(err)
 }
 

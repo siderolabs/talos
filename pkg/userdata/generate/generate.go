@@ -19,10 +19,12 @@ import (
 	"text/template"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/talos-systems/talos/internal/pkg/cis"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes
@@ -214,7 +216,7 @@ func isIPv6(addrs ...string) bool {
 // NewInput generates the sensitive data required to generate all userdata
 // types.
 // nolint: dupl,gocyclo
-func NewInput(clustername string, masterIPs []string) (input *Input, err error) {
+func NewInput(clustername string, masterIPs []string, kubernetesVersion string) (input *Input, err error) {
 	var loopbackIP, podNet, serviceNet string
 
 	if isIPv6(masterIPs...) {
@@ -348,7 +350,7 @@ func NewInput(clustername string, masterIPs []string) (input *Input, err error) 
 		ServiceNet:        []string{serviceNet},
 		ServiceDomain:     "cluster.local",
 		ClusterName:       clustername,
-		KubernetesVersion: constants.KubernetesVersion,
+		KubernetesVersion: kubernetesVersion,
 		KubeadmTokens:     kubeadmTokens,
 		TrustdInfo:        trustdInfo,
 	}
@@ -399,24 +401,14 @@ func Userdata(t Type, in *Input) (string, error) {
 		return "", err
 	}
 
-	// TODO: We cant implement this currently because of
-	// issues with kubeadm dependency mismatch between
-	// talos and clusterapi//kubebuilder.
-	// We should figure out way we can work around/through
-	// this
-	/*
-		// Create an actual userdata struct from the
-		// generated data so we can call validate
-		// and ensure we are providing proper data
-		data := &userdata.UserData{}
-		if err = yaml.Unmarshal([]byte(ud), data); err != nil {
-			return "", err
-		}
+	data := &userdata.UserData{}
+	if err = yaml.Unmarshal([]byte(ud), data); err != nil {
+		return "", err
+	}
 
-		if err = data.Validate(); err != nil {
-			return "", err
-		}
-	*/
+	if err = data.Validate(); err != nil {
+		return "", err
+	}
 
 	return ud, nil
 }

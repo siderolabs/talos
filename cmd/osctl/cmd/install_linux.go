@@ -40,15 +40,22 @@ var installCmd = &cobra.Command{
 
 		platform, err := platform.NewPlatform()
 		if err == nil {
-			data, err = platform.UserData()
-			if err != nil {
-				log.Fatal(err)
+			if platform.Name() != platformArg {
+				log.Println("platform mismatch")
+			} else {
+				data, err = platform.UserData()
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
-		} else {
+		}
+
+		if data == nil {
 			// Ignore userdata load errors, since it need not necessarily exist yet.
 			log.Printf("failed to source userdata from platform; falling back to defaults: %v", err)
 			data = &userdata.UserData{
-				Install: &userdata.Install{},
+				KubernetesVersion: constants.DefaultKubernetesVersion,
+				Install:           &userdata.Install{},
 			}
 		}
 
