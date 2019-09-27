@@ -24,7 +24,6 @@ func (n *NetConf) OverlayUserData(data *userdata.UserData) error {
 
 	for link, opts := range *n {
 		for _, device := range data.Networking.OS.Devices {
-
 			device := device
 			if link.Name != device.Interface {
 				continue
@@ -50,7 +49,6 @@ func (n *NetConf) OverlayUserData(data *userdata.UserData) error {
 			if device.MTU != 0 {
 				(*n)[link] = append(opts, nic.WithMTU(uint32(device.MTU)))
 			}
-
 		}
 	}
 

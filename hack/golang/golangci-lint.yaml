@@ -109,6 +109,7 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - funlen
+    - godox
   disable-all: false
   fast: false
 

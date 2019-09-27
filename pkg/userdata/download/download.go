@@ -105,7 +105,6 @@ func Download(udURL string, opts ...Option) (data *userdata.UserData, err error)
 
 	var dataBytes []byte
 	for attempt := 0; attempt < dlOpts.Retries; attempt++ {
-
 		dataBytes, err = download(req)
 		if err != nil {
 			log.Printf("download failed: %+v", err)
@@ -148,7 +147,6 @@ func Download(udURL string, opts ...Option) (data *userdata.UserData, err error)
 			return data, fmt.Errorf("unmarshal v0 user data: %s", err.Error())
 		}
 		return data, data.Validate()
-
 	}
 
 	return data, fmt.Errorf("failed to download userdata from: %s", u.String())

@@ -274,7 +274,6 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 				}
 			}
 		}()
-
 	}
 
 	// when service run finishes, cancel context, this is important if service
