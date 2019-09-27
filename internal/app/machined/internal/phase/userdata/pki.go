@@ -6,6 +6,7 @@ package userdata
 
 import (
 	"log"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -38,8 +39,11 @@ func (task *PKI) runtime(platform platform.Platform, data *userdata.UserData) (e
 		if csr, err = data.NewIdentityCSR(); err != nil {
 			return err
 		}
+		opts := []x509.Option{
+			x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+		}
 		var crt *x509.Certificate
-		crt, err = x509.NewCertificateFromCSRBytes(data.Security.OS.CA.Crt, data.Security.OS.CA.Key, csr.X509CertificateRequestPEM)
+		crt, err = x509.NewCertificateFromCSRBytes(data.Security.OS.CA.Crt, data.Security.OS.CA.Key, csr.X509CertificateRequestPEM, opts...)
 		if err != nil {
 			return err
 		}
