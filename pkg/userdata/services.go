@@ -57,6 +57,10 @@ func CheckServices() ServiceCheck {
 	return func(s *Services) error {
 		var result *multierror.Error
 
+		if s == nil {
+			return nil
+		}
+
 		if s.Kubeadm == nil {
 			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "services.kubeadm", "", ErrRequiredSection))
 		}

@@ -11,24 +11,26 @@ import (
 	"os"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 // UserData represents the user data.
 type UserData struct {
-	Version    Version     `yaml:"version"`
-	Security   *Security   `yaml:"security"`
-	Networking *Networking `yaml:"networking"`
-	Services   *Services   `yaml:"services"`
-	Files      []*File     `yaml:"files"`
-	Debug      bool        `yaml:"debug"`
-	Env        Env         `yaml:"env,omitempty"`
-	Install    *Install    `yaml:"install,omitempty"`
+	Version           Version     `yaml:"version"`
+	Security          *Security   `yaml:"security"`
+	Networking        *Networking `yaml:"networking"`
+	Services          *Services   `yaml:"services"`
+	Files             []*File     `yaml:"files"`
+	Debug             bool        `yaml:"debug"`
+	Env               Env         `yaml:"env,omitempty"`
+	Install           *Install    `yaml:"install,omitempty"`
+	KubernetesVersion string      `yaml:"kubernetesVersion,omitempty"`
 }
 
 // Validate ensures the required fields are present in the userdata
@@ -36,26 +38,37 @@ type UserData struct {
 func (data *UserData) Validate() error {
 	var result *multierror.Error
 
+	if _, err := semver.Parse(data.KubernetesVersion); err != nil {
+		result = multierror.Append(result, errors.Wrap(err, "version must be semantic"))
+	}
+
 	// All nodeType checks
-	result = multierror.Append(result, data.Services.Validate(CheckServices()))
-	result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsAreValidIPsOrHostnames()))
-	result = multierror.Append(result, data.Services.Init.Validate(CheckInitCNI()))
+	if data.Services != nil {
+		result = multierror.Append(result, data.Services.Validate(CheckServices()))
+		if data.Services.Trustd != nil {
+			result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdAuth(), CheckTrustdEndpointsAreValidIPsOrHostnames()))
+		}
+		if data.Services.Init != nil {
+			result = multierror.Append(result, data.Services.Init.Validate(CheckInitCNI()))
+		}
+		if data.Services.Kubeadm != nil {
+			switch {
+			case data.Services.Kubeadm.IsBootstrap():
+				result = multierror.Append(result, data.Security.OS.Validate(CheckOSCA()))
+				result = multierror.Append(result, data.Security.Kubernetes.Validate(CheckKubernetesCA()))
+			case data.Services.Kubeadm.IsControlPlane():
+				result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
+			case data.Services.Kubeadm.IsWorker():
+				result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
+			}
+		}
+	}
 
 	// Surely there's a better way to do this
 	if data.Networking != nil && data.Networking.OS != nil {
 		for _, dev := range data.Networking.OS.Devices {
 			result = multierror.Append(result, dev.Validate(CheckDeviceInterface(), CheckDeviceAddressing(), CheckDeviceRoutes()))
 		}
-	}
-
-	switch {
-	case data.Services.Kubeadm.IsBootstrap():
-		result = multierror.Append(result, data.Security.OS.Validate(CheckOSCA()))
-		result = multierror.Append(result, data.Security.Kubernetes.Validate(CheckKubernetesCA()))
-	case data.Services.Kubeadm.IsControlPlane():
-		result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
-	case data.Services.Kubeadm.IsWorker():
-		result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
 	}
 
 	return result.ErrorOrNil()

@@ -25,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/cmd/cluster/pkg/node"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -105,7 +106,7 @@ func create() (err error) {
 		ips[i] = fmt.Sprintf(baseNetwork, i+2)
 	}
 
-	input, err := generate.NewInput(clusterName, ips)
+	input, err := generate.NewInput(clusterName, ips, kubernetesVersion)
 	if err != nil {
 		return err
 	}
@@ -363,6 +364,7 @@ func init() {
 	clusterUpCmd.Flags().IntVar(&masters, "masters", 3, "the number of masters to create")
 	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
 	clusterUpCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
+	clusterUpCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)

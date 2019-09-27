@@ -6,6 +6,7 @@ package generate
 
 const initTempl = `#!talos
 version: ""
+kubernetesVersion: {{ .KubernetesVersion }}
 security:
   os:
     ca:

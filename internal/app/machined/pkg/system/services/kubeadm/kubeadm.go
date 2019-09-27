@@ -95,7 +95,7 @@ func editClusterConfig(data *userdata.UserData) (err error) {
 	}
 
 	// Hardcodes specific kubeadm config parameters
-	clusterConfiguration.KubernetesVersion = constants.KubernetesVersion
+	clusterConfiguration.KubernetesVersion = data.KubernetesVersion
 	clusterConfiguration.UseHyperKubeImage = true
 
 	// Apply CIS hardening recommendations; only generate encryption token only if we're the bootstrap node

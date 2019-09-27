@@ -56,8 +56,9 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
-	if _, err = client.Pull(containerdctx, constants.KubernetesImage, containerdapi.WithPullUnpack); err != nil {
-		return fmt.Errorf("failed to pull image %q: %v", constants.KubernetesImage, err)
+	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, data.KubernetesVersion)
+	if _, err = client.Pull(containerdctx, image, containerdapi.WithPullUnpack); err != nil {
+		return fmt.Errorf("failed to pull image %q: %v", image, err)
 	}
 
 	return nil
@@ -82,7 +83,7 @@ func (k *Kubeadm) Condition(data *userdata.UserData) conditions.Condition {
 
 // Runner implements the Service interface.
 func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
-	image := constants.KubernetesImage
+	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, data.KubernetesVersion)
 
 	// We only wan't to run kubeadm if it hasn't been ran already.
 	if _, err := os.Stat("/etc/kubernetes/kubelet.conf"); !os.IsNotExist(err) {

@@ -43,6 +43,7 @@ machine:
   install: {}
 cluster:
   controlPlane:
+    version: 1.16.0
     ips:
     - 10.254.0.10
   clusterName: spencer-test
