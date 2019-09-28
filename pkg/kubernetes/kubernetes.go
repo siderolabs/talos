@@ -13,7 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -46,6 +46,23 @@ func NewHelper() (helper *Helper, err error) {
 	return &Helper{clientset}, nil
 }
 
+// MasterIPs cordons and drains a node in one call.
+func (h *Helper) MasterIPs() (addrs []string, err error) {
+	endpoints, err := h.client.CoreV1().Endpoints("default").Get("kubernetes", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	addrs = []string{}
+	for _, endpoint := range endpoints.Subsets {
+		for _, addr := range endpoint.Addresses {
+			addrs = append(addrs, addr.IP)
+		}
+	}
+
+	return addrs, nil
+}
+
 // CordonAndDrain cordons and drains a node in one call.
 func (h *Helper) CordonAndDrain(node string) (err error) {
 	if err = h.Cordon(node); err != nil {
@@ -56,7 +73,7 @@ func (h *Helper) CordonAndDrain(node string) (err error) {
 
 // Cordon marks a node as unschedulable.
 func (h *Helper) Cordon(name string) error {
-	node, err := h.client.CoreV1().Nodes().Get(name, meta.GetOptions{})
+	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node %s", name)
 	}
@@ -72,7 +89,7 @@ func (h *Helper) Cordon(name string) error {
 
 // Uncordon marks a node as schedulable.
 func (h *Helper) Uncordon(name string) error {
-	node, err := h.client.CoreV1().Nodes().Get(name, meta.GetOptions{})
+	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node %s", name)
 	}
@@ -88,10 +105,10 @@ func (h *Helper) Uncordon(name string) error {
 
 // Drain evicts all pods on a given node.
 func (h *Helper) Drain(node string) error {
-	opts := meta.ListOptions{
+	opts := metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": node}).String(),
 	}
-	pods, err := h.client.CoreV1().Pods(meta.NamespaceAll).List(opts)
+	pods, err := h.client.CoreV1().Pods(metav1.NamespaceAll).List(opts)
 	if err != nil {
 		return errors.Wrapf(err, "cannot get pods for node %s", node)
 	}
@@ -124,8 +141,8 @@ func (h *Helper) Drain(node string) error {
 func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
 	for {
 		pol := &policy.Eviction{
-			ObjectMeta:    meta.ObjectMeta{Namespace: p.GetNamespace(), Name: p.GetName()},
-			DeleteOptions: &meta.DeleteOptions{GracePeriodSeconds: &gracePeriod},
+			ObjectMeta:    metav1.ObjectMeta{Namespace: p.GetNamespace(), Name: p.GetName()},
+			DeleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod},
 		}
 		err := h.client.CoreV1().Pods(p.GetNamespace()).Evict(pol)
 		switch {
@@ -145,7 +162,7 @@ func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
 
 func (h *Helper) waitForPodDeleted(p *corev1.Pod) error {
 	return wait.PollImmediate(1*time.Second, 60*time.Second, func() (bool, error) {
-		pod, err := h.client.CoreV1().Pods(p.GetNamespace()).Get(p.GetName(), meta.GetOptions{})
+		pod, err := h.client.CoreV1().Pods(p.GetNamespace()).Get(p.GetName(), metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			return true, nil
 		}

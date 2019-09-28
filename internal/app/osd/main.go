@@ -9,6 +9,7 @@ import (
 	"log"
 	stdlibnet "net"
 	"os"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -22,11 +23,15 @@ import (
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-var dataPath *string
+var (
+	dataPath  *string
+	endpoints *string
+)
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 	dataPath = flag.String("userdata", "", "the path to the user data")
+	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
 	flag.Parse()
 }
 
@@ -58,7 +63,7 @@ func main() {
 	}
 
 	var provider tls.CertificateProvider
-	provider, err = tls.NewRemoteRenewingFileCertificateProvider(data.Services.Trustd.Token, data.Services.Trustd.Endpoints, constants.TrustdPort, hostname, ips)
+	provider, err = tls.NewRemoteRenewingFileCertificateProvider(data.Services.Trustd.Token, strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
