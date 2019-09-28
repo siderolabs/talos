@@ -9,10 +9,12 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -20,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -50,6 +53,10 @@ func (o *OSD) PostFunc(data *userdata.UserData) (err error) {
 
 // Condition implements the Service interface.
 func (o *OSD) Condition(data *userdata.UserData) conditions.Condition {
+	if data.Services.Kubeadm.IsWorker() {
+		return conditions.WaitForFileToExist("/etc/kubernetes/kubelet.conf")
+	}
+
 	return nil
 }
 
@@ -61,10 +68,27 @@ func (o *OSD) DependsOn(data *userdata.UserData) []string {
 func (o *OSD) Runner(data *userdata.UserData) (runner.Runner, error) {
 	image := "talos/osd"
 
+	endpoints := data.Services.Trustd.Endpoints
+	if data.Services.Kubeadm.IsWorker() {
+		h, err := kubernetes.NewHelper()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create client")
+		}
+
+		endpoints, err = h.MasterIPs()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Set the process arguments.
 	args := runner.Args{
-		ID:          o.ID(data),
-		ProcessArgs: []string{"/osd", "--userdata=" + constants.UserDataPath},
+		ID: o.ID(data),
+		ProcessArgs: []string{
+			"/osd",
+			"--userdata=" + constants.UserDataPath,
+			"--endpoints=" + strings.Join(endpoints, ","),
+		},
 	}
 
 	// Set the mounts.
