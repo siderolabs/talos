@@ -2,6 +2,8 @@
 
 set -e
 
+: ${TALOS_QEMU_ROOT:="/tmp"}
+
 if [[ $# -ne 1 ]]; then
   echo 1>&2 "Usage: $0 <machine config URL>"
   exit 3
@@ -22,7 +24,7 @@ esac
 
 KERNEL="build/vmlinuz"
 INITRD="build/initramfs.xz"
-IMAGE="/tmp/rootfs.qcow2"
+IMAGE="$TALOS_QEMU_ROOT/rootfs.qcow2"
 MACHINE_CONFIG="${1}"
 
 qemu-img create -f qcow2 ${IMAGE} 8G
