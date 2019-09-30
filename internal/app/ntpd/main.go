@@ -10,10 +10,10 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/reg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // https://access.redhat.com/solutions/39194
@@ -25,11 +25,11 @@ const (
 	DefaultServer = "pool.ntp.org"
 )
 
-var dataPath *string
+var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	dataPath = flag.String("userdata", "", "the path to the user data")
+	configPath = flag.String("config", "", "the path to the config")
 	flag.Parse()
 }
 
@@ -42,14 +42,18 @@ func main() {
 
 	server := DefaultServer
 
-	data, err := userdata.Open(*dataPath)
+	content, err := config.FromFile(*configPath)
 	if err != nil {
-		log.Fatalf("open user data: %v", err)
+		log.Fatalf("open config: %v", err)
+	}
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
 	}
 
 	// Check if ntp servers are defined
-	if data.Services.NTPd != nil && data.Services.NTPd.Server != "" {
-		server = data.Services.NTPd.Server
+	if config.Machine().Time().Server() != "" {
+		server = config.Machine().Time().Server()
 	}
 
 	n, err := ntp.NewNTPClient(

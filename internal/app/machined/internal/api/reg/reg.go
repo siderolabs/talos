@@ -25,8 +25,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -36,13 +36,13 @@ const OSPathSeparator = string(os.PathSeparator)
 // Registrator is the concrete type that implements the factory.Registrator and
 // machineapi.Machine interfaces.
 type Registrator struct {
-	Data *userdata.UserData
+	config config.Configurator
 }
 
 // NewRegistrator builds new Registrator instance
-func NewRegistrator(data *userdata.UserData) *Registrator {
+func NewRegistrator(config config.Configurator) *Registrator {
 	return &Registrator{
-		Data: data,
+		config: config,
 	}
 }
 
@@ -82,12 +82,12 @@ func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest
 // Reset initiates a Talos upgrade
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machineapi.ResetReply, err error) {
 	// Stop the kubelet.
-	if err = system.Services(r.Data).Stop(ctx, "kubelet"); err != nil {
+	if err = system.Services(r.config).Stop(ctx, "kubelet"); err != nil {
 		return data, err
 	}
 
 	// Remove the machine config.
-	if err = os.Remove(constants.UserDataPath); err != nil {
+	if err = os.Remove(constants.ConfigPath); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +96,7 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machine
 
 // ServiceList returns list of the registered services and their status
 func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *machineapi.ServiceListReply, err error) {
-	services := system.Services(r.Data).List()
+	services := system.Services(r.config).List()
 
 	result = &machineapi.ServiceListReply{
 		Services: make([]*machineapi.ServiceInfo, len(services)),
@@ -112,7 +112,7 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 // ServiceStart implements the machineapi.MachineServer interface and starts a
 // service running on Talos.
 func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceStartRequest) (reply *machineapi.ServiceStartReply, err error) {
-	if err = system.Services(r.Data).APIStart(ctx, in.Id); err != nil {
+	if err = system.Services(r.config).APIStart(ctx, in.Id); err != nil {
 		return &machineapi.ServiceStartReply{}, err
 	}
 
@@ -151,7 +151,7 @@ func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (rep
 // ServiceStop implements the machineapi.MachineServer interface and stops a
 // service running on Talos.
 func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceStopRequest) (reply *machineapi.ServiceStopReply, err error) {
-	if err = system.Services(r.Data).APIStop(ctx, in.Id); err != nil {
+	if err = system.Services(r.config).APIStop(ctx, in.Id); err != nil {
 		return &machineapi.ServiceStopReply{}, err
 	}
 
@@ -162,7 +162,7 @@ func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceSto
 // ServiceRestart implements the machineapi.MachineServer interface and stops a
 // service running on Talos.
 func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.ServiceRestartRequest) (reply *machineapi.ServiceRestartReply, err error) {
-	if err = system.Services(r.Data).APIRestart(ctx, in.Id); err != nil {
+	if err = system.Services(r.config).APIRestart(ctx, in.Id); err != nil {
 		return &machineapi.ServiceRestartReply{}, err
 	}
 

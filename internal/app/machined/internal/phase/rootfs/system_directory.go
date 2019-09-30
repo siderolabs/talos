@@ -8,9 +8,7 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // SystemDirectory represents the SystemDirectory task.
@@ -26,6 +24,6 @@ func (task *SystemDirectory) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	return task.runtime
 }
 
-func (task *SystemDirectory) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *SystemDirectory) runtime(args *phase.RuntimeArgs) (err error) {
 	return os.MkdirAll("/run/system/etc", os.ModeDir)
 }

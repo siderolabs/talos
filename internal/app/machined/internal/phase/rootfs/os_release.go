@@ -7,9 +7,7 @@ package rootfs
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs/etc"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // OSRelease represents the OSRelease task.
@@ -25,7 +23,7 @@ func (task *OSRelease) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	return task.runtime
 }
 
-func (task *OSRelease) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *OSRelease) runtime(args *phase.RuntimeArgs) (err error) {
 	// Create /etc/os-release.
 	return etc.OSRelease()
 }

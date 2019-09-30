@@ -9,9 +9,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // UnmountSystemDisks represents the UnmountSystemDisks task.
@@ -36,7 +34,7 @@ func (task *UnmountSystemDisks) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc
 	}
 }
 
-func (task *UnmountSystemDisks) standard(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *UnmountSystemDisks) standard(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = owned.MountPointsForDevice(task.devname)
 	if err != nil {

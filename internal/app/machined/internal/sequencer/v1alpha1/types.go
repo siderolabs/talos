@@ -8,6 +8,7 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/acpi"
+	configtask "github.com/talos-systems/talos/internal/app/machined/internal/phase/config"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/disk"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/kubernetes"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/network"
@@ -18,10 +19,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/upgrade"
-	userdatatask "github.com/talos-systems/talos/internal/app/machined/internal/phase/userdata"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Sequencer represents the v1alpha1 sequencer.
@@ -29,8 +29,7 @@ type Sequencer struct{}
 
 // Boot implements the Sequencer interface.
 func (d *Sequencer) Boot() error {
-	data := &userdata.UserData{}
-	phaserunner, err := phase.NewRunner(data)
+	phaserunner, err := phase.NewRunner(nil)
 	if err != nil {
 		return err
 	}
@@ -55,17 +54,38 @@ func (d *Sequencer) Boot() error {
 			network.NewUserDefinedNetworkTask(),
 		),
 		phase.NewPhase(
-			"userdata",
-			userdatatask.NewUserDataTask(),
+			"config",
+			configtask.NewConfigTask(),
 		),
+	)
+
+	if err = phaserunner.Run(); err != nil {
+		return err
+	}
+
+	content, err := config.FromFile(constants.ConfigPath)
+	if err != nil {
+		return err
+	}
+	config, err := config.New(content)
+	if err != nil {
+		return err
+	}
+
+	phaserunner, err = phase.NewRunner(config)
+	if err != nil {
+		return err
+	}
+
+	phaserunner.Add(
 		phase.NewPhase(
 			"mount extra devices",
-			userdatatask.NewExtraDevicesTask(),
+			configtask.NewExtraDevicesTask(),
 		),
 		phase.NewPhase(
 			"user requests",
-			userdatatask.NewExtraEnvVarsTask(),
-			userdatatask.NewExtraFilesTask(),
+			configtask.NewExtraEnvVarsTask(),
+			configtask.NewExtraFilesTask(),
 		),
 		phase.NewPhase(
 			"start system-containerd",
@@ -89,8 +109,8 @@ func (d *Sequencer) Boot() error {
 			rootfs.NewVarDirectoriesTask(),
 		),
 		phase.NewPhase(
-			"save userdata",
-			userdatatask.NewSaveUserDataTask(),
+			"save config",
+			configtask.NewSaveConfigTask(),
 			rootfs.NewHostnameTask(),
 		),
 		phase.NewPhase(
@@ -106,8 +126,17 @@ func (d *Sequencer) Boot() error {
 
 // Shutdown implements the Sequencer interface.
 func (d *Sequencer) Shutdown() error {
-	data := &userdata.UserData{}
-	phaserunner, err := phase.NewRunner(data)
+	content, err := config.FromFile(constants.ConfigPath)
+	if err != nil {
+		return err
+	}
+
+	config, err := config.New(content)
+	if err != nil {
+		return err
+	}
+
+	phaserunner, err := phase.NewRunner(config)
 	if err != nil {
 		return err
 	}
@@ -124,11 +153,17 @@ func (d *Sequencer) Shutdown() error {
 
 // Upgrade implements the Sequencer interface.
 func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
-	data, err := userdata.Open(constants.UserDataPath)
+	content, err := config.FromFile(constants.ConfigPath)
 	if err != nil {
 		return err
 	}
-	phaserunner, err := phase.NewRunner(data)
+
+	config, err := config.New(content)
+	if err != nil {
+		return err
+	}
+
+	phaserunner, err := phase.NewRunner(config)
 	if err != nil {
 		return err
 	}

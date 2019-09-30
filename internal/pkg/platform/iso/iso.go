@@ -7,9 +7,10 @@ package iso
 import (
 	"net"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 // ISO is a platform for installing Talos via an ISO image.
@@ -20,25 +21,24 @@ func (i *ISO) Name() string {
 	return "ISO"
 }
 
-// UserData implements the platform.Platform interface.
-func (i *ISO) UserData() (data *userdata.UserData, err error) {
-	data = &userdata.UserData{
-		Security: &userdata.Security{
-			OS: &userdata.OSSecurity{
-				CA: &x509.PEMEncodedCertificateAndKey{},
+// Configuration implements the platform.Platform interface.
+func (i *ISO) Configuration() ([]byte, error) {
+	config := v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineInstall: &v1alpha1.InstallConfig{
+				InstallForce:      true,
+				InstallDisk:       "/dev/sda",
+				InstallBootloader: true,
 			},
-			Kubernetes: &userdata.KubernetesSecurity{
-				CA: &x509.PEMEncodedCertificateAndKey{},
-			},
-		},
-		Install: &userdata.Install{
-			Force:      true,
-			Disk:       "/dev/sda",
-			Bootloader: true,
 		},
 	}
 
-	return data, nil
+	b, err := yaml.Marshal(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 // Mode implements the platform.Platform interface.

@@ -6,13 +6,13 @@ package container
 
 import (
 	"github.com/talos-systems/talos/internal/pkg/platform"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Container is an initializer that is a noop.
 type Container struct{}
 
 // Initialize implements the Initializer interface.
-func (c *Container) Initialize(platform platform.Platform, data *userdata.UserData) (err error) {
+func (c *Container) Initialize(platform platform.Platform, install machine.Install) (err error) {
 	return nil
 }

@@ -14,20 +14,20 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/startup"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-var dataPath *string
+var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	dataPath = flag.String("userdata", "", "the path to the user data")
+	configPath = flag.String("config", "", "the path to the config")
 	flag.Parse()
 }
 
@@ -39,16 +39,20 @@ func main() {
 		log.Fatalf("startup: %s", err)
 	}
 
-	data, err := userdata.Open(*dataPath)
+	content, err := config.FromFile(*configPath)
 	if err != nil {
-		log.Fatalf("failed to open machine config: %v", err)
+		log.Fatalf("open config: %v", err)
+	}
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
 	}
 
 	ips, err := net.IPAddrs()
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, san := range data.Services.Trustd.CertSANs {
+	for _, san := range config.Machine().Security().CertSANs() {
 		if ip := stdlibnet.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		}
@@ -60,7 +64,7 @@ func main() {
 	}
 
 	var provider tls.CertificateProvider
-	provider, err = tls.NewLocalRenewingFileCertificateProvider(data.Security.OS.CA.Key, data.Security.OS.CA.Crt, hostname, ips)
+	provider, err = tls.NewLocalRenewingFileCertificateProvider(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt, hostname, ips)
 	if err != nil {
 		log.Fatalln("failed to create local certificate provider:", err)
 	}
@@ -70,7 +74,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	config, err := tls.New(
+	tlsConfig, err := tls.New(
 		tls.WithClientAuthType(tls.ServerOnly),
 		tls.WithCACertPEM(ca),
 		tls.WithCertificateProvider(provider),
@@ -79,14 +83,14 @@ func main() {
 		log.Fatalf("failed to create TLS config: %v", err)
 	}
 
-	creds := basic.NewTokenCredentials(data.Services.Trustd.Token)
+	creds := basic.NewTokenCredentials(config.Machine().Security().Token())
 
 	err = factory.ListenAndServe(
-		&reg.Registrator{Data: data.Security.OS},
+		&reg.Registrator{Config: config},
 		factory.Port(constants.TrustdPort),
 		factory.ServerOptions(
 			grpc.Creds(
-				credentials.NewTLS(config),
+				credentials.NewTLS(tlsConfig),
 			),
 			grpc.UnaryInterceptor(creds.UnaryInterceptor()),
 		),

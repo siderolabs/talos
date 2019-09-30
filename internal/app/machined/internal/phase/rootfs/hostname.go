@@ -5,11 +5,13 @@
 package rootfs
 
 import (
+	"log"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs/etc"
-	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Hostname represents the Hostname task.
@@ -30,7 +32,36 @@ func (task *Hostname) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Hostname) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
-	// Sets the hostname
-	return etc.Hosts(data.Networking.OS.Hostname)
+func (task *Hostname) runtime(args *phase.RuntimeArgs) (err error) {
+	// Create /etc/hosts and set hostname.
+	// Priority is:
+	// 1. Config (explicitly defined by the user)
+	// 2. Kernel arg
+	// 3. Platform
+	// 4. DHCP
+	// 5. Default with the format: talos-<ip addr>
+	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
+
+	var platformHostname []byte
+	platformHostname, err = args.Platform().Hostname()
+	if err != nil {
+		return err
+	}
+
+	configHostname := args.Config().Machine().Network().Hostname()
+	switch {
+	case configHostname != "":
+		log.Printf("using hostname from config: %s\n", configHostname)
+	case kernelHostname != nil:
+		args.Config().Machine().Network().SetHostname(*kernelHostname)
+		log.Printf("using hostname provide via kernel arg: %s\n", *kernelHostname)
+	case platformHostname != nil:
+		args.Config().Machine().Network().SetHostname(string(platformHostname))
+		log.Printf("using hostname provided via platform: %s\n", string(platformHostname))
+		// case data.Networking.OS.Hostname != "":
+		// 	d.Networking.OS.Hostname = data.Networking.OS.Hostname
+		// 	log.Printf("dhcp hostname %s:", data.Networking.OS.Hostname)
+	}
+
+	return etc.Hosts(args.Config().Machine().Network().Hostname())
 }

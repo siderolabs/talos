@@ -8,60 +8,49 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // VerifyDataDevice verifies the supplied data device options.
-func VerifyDataDevice(data *userdata.UserData) (err error) {
-	// Ensure that an installation is specified
-	if data.Install == nil {
-		return errors.New("missing installation definition")
-	}
-	// Set data device to root device if not specified
-	if data.Install.Disk == "" {
+func VerifyDataDevice(install machine.Install) (err error) {
+	if install.Disk() == "" {
 		return errors.New("missing disk")
 	}
 
-	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.EphemeralPartitionLabel); err != nil {
-			return errors.Wrap(err, "failed to verify disk availability")
-		}
+	if install.Force() {
+		return nil
+	}
+
+	if err = VerifyDiskAvailability(install.Disk(), constants.EphemeralPartitionLabel); err != nil {
+		return errors.Wrap(err, "failed to verify disk availability")
 	}
 
 	return nil
 }
 
 // VerifyBootDevice verifies the supplied boot device options.
-func VerifyBootDevice(data *userdata.UserData) (err error) {
-	if data.Install == nil {
+func VerifyBootDevice(install machine.Install) (err error) {
+	if !install.WithBootloader() {
 		return nil
 	}
 
-	if !data.Install.Bootloader {
+	if install.Force() {
 		return nil
 	}
 
-	if data.Install.Disk == "" {
-		// We can safely assume data device is defined at this point
-		// because VerifyDataDevice should have been called first in
-		// in the chain, but we verify again just in case.
-		return errors.New("missing disk")
+	if err = VerifyDiskAvailability(install.Disk(), constants.BootPartitionLabel); err != nil {
+		return errors.Wrap(err, "failed to verify disk availability")
 	}
 
-	if !data.Install.Force {
-		if err = VerifyDiskAvailability(constants.BootPartitionLabel); err != nil {
-			return errors.Wrap(err, "failed to verify disk availability")
-		}
-	}
 	return nil
 }
 
 // VerifyDiskAvailability verifies that no filesystems currently exist with
 // the labels used by the OS.
-func VerifyDiskAvailability(label string) (err error) {
+func VerifyDiskAvailability(devpath, label string) (err error) {
 	var dev *probe.ProbedBlockDevice
-	if dev, err = probe.GetDevWithFileSystemLabel(label); err != nil {
+	if dev, err = probe.DevForFileSystemLabel(devpath, label); err != nil {
 		// We return here because we only care if we can discover the
 		// device successfully and confirm that the disk is not in use.
 		// TODO(andrewrynhard): We should return a custom error type here

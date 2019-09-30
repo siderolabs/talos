@@ -8,8 +8,7 @@ import (
 	"net"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/userdata/download"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 const (
@@ -25,9 +24,9 @@ func (p *Packet) Name() string {
 	return "Packet"
 }
 
-// UserData implements the platform.Platform interface.
-func (p *Packet) UserData() (data *userdata.UserData, err error) {
-	return download.Download(PacketUserDataEndpoint)
+// Configuration implements the platform.Platform interface.
+func (p *Packet) Configuration() ([]byte, error) {
+	return config.Download(PacketUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.

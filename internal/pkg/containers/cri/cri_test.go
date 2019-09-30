@@ -24,7 +24,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (
@@ -80,7 +79,7 @@ func (suite *CRISuite) SetupSuite() {
 	}
 
 	suite.containerdRunner = process.NewRunner(
-		&userdata.UserData{},
+		false,
 		args,
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),

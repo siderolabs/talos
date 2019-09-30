@@ -15,22 +15,22 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/talos-systems/talos/internal/app/osd/internal/reg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/startup"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 var (
-	dataPath  *string
-	endpoints *string
+	configPath *string
+	endpoints  *string
 )
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	dataPath = flag.String("userdata", "", "the path to the user data")
+	configPath = flag.String("config", "", "the path to the config")
 	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
 	flag.Parse()
 }
@@ -41,9 +41,13 @@ func main() {
 		log.Fatalf("failed to seed RNG: %s", err)
 	}
 
-	data, err := userdata.Open(*dataPath)
+	content, err := config.FromFile(*configPath)
 	if err != nil {
-		log.Fatalf("open user data: %v", err)
+		log.Fatalf("open config: %v", err)
+	}
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
 	}
 
 	ips, err := net.IPAddrs()
@@ -51,7 +55,7 @@ func main() {
 		log.Fatalf("failed to discover IP addresses: %+v", err)
 	}
 	// TODO(andrewrynhard): Allow for DNS names.
-	for _, san := range data.Services.Trustd.CertSANs {
+	for _, san := range config.Machine().Security().CertSANs() {
 		if ip := stdlibnet.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
 		}
@@ -63,7 +67,7 @@ func main() {
 	}
 
 	var provider tls.CertificateProvider
-	provider, err = tls.NewRemoteRenewingFileCertificateProvider(data.Services.Trustd.Token, strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
+	provider, err = tls.NewRemoteRenewingFileCertificateProvider(config.Machine().Security().Token(), strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
@@ -73,7 +77,7 @@ func main() {
 		log.Fatalf("failed to get root CA: %+v", err)
 	}
 
-	config, err := tls.New(
+	tlsConfig, err := tls.New(
 		tls.WithClientAuthType(tls.Mutual),
 		tls.WithCACertPEM(ca),
 		tls.WithCertificateProvider(provider),
@@ -99,7 +103,6 @@ func main() {
 
 	err = factory.ListenAndServe(
 		&reg.Registrator{
-			Data:          data,
 			MachineClient: machineClient,
 			TimeClient:    timeClient,
 			NetworkClient: networkClient,
@@ -107,7 +110,7 @@ func main() {
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(
 			grpc.Creds(
-				credentials.NewTLS(config),
+				credentials.NewTLS(tlsConfig),
 			),
 		),
 	)

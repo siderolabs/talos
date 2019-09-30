@@ -14,14 +14,14 @@ import (
 	"google.golang.org/grpc"
 
 	securityapi "github.com/talos-systems/talos/api/security"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
 // securityapi.SecurityServer interfaces.
 type Registrator struct {
-	Data *userdata.OSSecurity
+	Config config.Configurator
 }
 
 // Register implements the factory.Registrator interface.
@@ -33,13 +33,13 @@ func (r *Registrator) Register(s *grpc.Server) {
 func (r *Registrator) Certificate(ctx context.Context, in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
 	// TODO: Verify that the request is coming from the IP addresss declared in
 	// the CSR.
-	signed, err := x509.NewCertificateFromCSRBytes(r.Data.CA.Crt, r.Data.CA.Key, in.Csr)
+	signed, err := x509.NewCertificateFromCSRBytes(r.Config.Machine().Security().CA().Crt, r.Config.Machine().Security().CA().Key, in.Csr)
 	if err != nil {
 		return
 	}
 
 	resp = &securityapi.CertificateResponse{
-		Ca:  r.Data.CA.Crt,
+		Ca:  r.Config.Machine().Security().CA().Crt,
 		Crt: signed.X509CertificatePEM,
 	}
 

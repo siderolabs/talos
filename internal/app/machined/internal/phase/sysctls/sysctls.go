@@ -9,26 +9,24 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/sysctl"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
-// Sysctls represents the Sysctls task.
-type Sysctls struct{}
+// Task represents the Task task.
+type Task struct{}
 
-// NewSysctlsTask initializes and returns an UserData task.
+// NewSysctlsTask initializes and returns a Task task.
 func NewSysctlsTask() phase.Task {
-	return &Sysctls{}
+	return &Task{}
 }
 
 // RuntimeFunc returns the runtime function.
-func (task *Sysctls) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+func (task *Task) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	return task.runtime
 }
 
-func (task *Sysctls) runtime(platform platform.Platform, data *userdata.UserData) error {
+func (task *Task) runtime(args *phase.RuntimeArgs) error {
 	var multiErr *multierror.Error
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {

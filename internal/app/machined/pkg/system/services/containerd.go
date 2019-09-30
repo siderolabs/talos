@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Containerd implements the Service interface. It serves as the concrete type with
@@ -28,35 +28,35 @@ import (
 type Containerd struct{}
 
 // ID implements the Service interface.
-func (c *Containerd) ID(data *userdata.UserData) string {
+func (c *Containerd) ID(config config.Configurator) string {
 	return "containerd"
 }
 
 // PreFunc implements the Service interface.
-func (c *Containerd) PreFunc(ctx context.Context, data *userdata.UserData) error {
+func (c *Containerd) PreFunc(ctx context.Context, config config.Configurator) error {
 	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
-func (c *Containerd) PostFunc(data *userdata.UserData) (err error) {
+func (c *Containerd) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Containerd) Condition(data *userdata.UserData) conditions.Condition {
+func (c *Containerd) Condition(config config.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Containerd) DependsOn(data *userdata.UserData) []string {
+func (c *Containerd) DependsOn(config config.Configurator) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *Containerd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (c *Containerd) Runner(config config.Configurator) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
-		ID: c.ID(data),
+		ID: c.ID(config),
 		ProcessArgs: []string{
 			"/bin/containerd",
 			"--address",
@@ -67,12 +67,12 @@ func (c *Containerd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(process.NewRunner(
-		data,
+		config.Debug(),
 		args,
 		runner.WithEnv(env),
 	),
@@ -81,7 +81,7 @@ func (c *Containerd) Runner(data *userdata.UserData) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (c *Containerd) HealthFunc(*userdata.UserData) health.Check {
+func (c *Containerd) HealthFunc(config.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		client, err := containerd.New(constants.ContainerdAddress)
 		if err != nil {
@@ -104,6 +104,6 @@ func (c *Containerd) HealthFunc(*userdata.UserData) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (c *Containerd) HealthSettings(*userdata.UserData) *health.Settings {
+func (c *Containerd) HealthSettings(config.Configurator) *health.Settings {
 	return &health.DefaultSettings
 }

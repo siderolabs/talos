@@ -6,14 +6,11 @@ package container
 
 import (
 	"encoding/base64"
+	"errors"
 	"net"
 	"os"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/userdata/translate"
 )
 
 // Container is a platform for installing Talos via an Container image.
@@ -24,25 +21,19 @@ func (c *Container) Name() string {
 	return "Container"
 }
 
-// UserData implements the platform.Platform interface.
-func (c *Container) UserData() (data *userdata.UserData, err error) {
+// Configuration implements the platform.Platform interface.
+func (c *Container) Configuration() ([]byte, error) {
 	s, ok := os.LookupEnv("USERDATA")
 	if !ok {
 		return nil, errors.New("missing USERDATA environment variable")
 	}
-	var decoded []byte
-	if decoded, err = base64.StdEncoding.DecodeString(s); err != nil {
-		return nil, err
-	}
-	trans, err := translate.NewTranslator("v1alpha1", string(decoded))
+
+	decoded, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
 	}
-	data, err = trans.Translate()
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+
+	return decoded, nil
 }
 
 // Mode implements the platform.Platform interface.

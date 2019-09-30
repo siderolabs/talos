@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // NTPd implements the Service interface. It serves as the concrete type with
@@ -28,12 +28,12 @@ import (
 type NTPd struct{}
 
 // ID implements the Service interface.
-func (n *NTPd) ID(data *userdata.UserData) string {
+func (n *NTPd) ID(config config.Configurator) string {
 	return "ntpd"
 }
 
 // PreFunc implements the Service interface.
-func (n *NTPd) PreFunc(ctx context.Context, data *userdata.UserData) error {
+func (n *NTPd) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/ntpd.tar",
@@ -44,26 +44,26 @@ func (n *NTPd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 }
 
 // PostFunc implements the Service interface.
-func (n *NTPd) PostFunc(data *userdata.UserData) (err error) {
+func (n *NTPd) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (n *NTPd) Condition(data *userdata.UserData) conditions.Condition {
+func (n *NTPd) Condition(config config.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (n *NTPd) DependsOn(data *userdata.UserData) []string {
+func (n *NTPd) DependsOn(config config.Configurator) []string {
 	return []string{"system-containerd", "networkd"}
 }
 
-func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (n *NTPd) Runner(config config.Configurator) (runner.Runner, error) {
 	image := "talos/ntpd"
 
 	args := runner.Args{
-		ID:          n.ID(data),
-		ProcessArgs: []string{"/ntpd", "--userdata=" + constants.UserDataPath},
+		ID:          n.ID(config),
+		ProcessArgs: []string{"/ntpd", "--config=" + constants.ConfigPath},
 	}
 
 	// Ensure socket dir exists
@@ -72,17 +72,17 @@ func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.NtpdSocketPath), Source: filepath.Dir(constants.NtpdSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		data,
+		config.Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -97,11 +97,11 @@ func (n *NTPd) Runner(data *userdata.UserData) (runner.Runner, error) {
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (n *NTPd) APIStartAllowed(data *userdata.UserData) bool {
+func (n *NTPd) APIStartAllowed(config config.Configurator) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (n *NTPd) APIRestartAllowed(data *userdata.UserData) bool {
+func (n *NTPd) APIRestartAllowed(config config.Configurator) bool {
 	return true
 }

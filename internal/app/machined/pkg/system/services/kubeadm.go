@@ -7,22 +7,23 @@ package services
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
-	"strings"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services/kubeadm"
+	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Kubeadm implements the Service interface. It serves as the concrete type with
@@ -30,21 +31,32 @@ import (
 type Kubeadm struct{}
 
 // ID implements the Service interface.
-func (k *Kubeadm) ID(data *userdata.UserData) string {
+func (k *Kubeadm) ID(config config.Configurator) string {
 	return "kubeadm"
 }
 
 // PreFunc implements the Service interface.
 // nolint: gocyclo
-func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.IsControlPlane() {
-		if err = kubeadm.WritePKIFiles(data); err != nil {
+func (k *Kubeadm) PreFunc(ctx context.Context, config config.Configurator) (err error) {
+	switch config.Machine().Type() {
+	case machine.Bootstrap:
+		fallthrough
+	case machine.ControlPlane:
+		if err = kubeadm.WritePKIFiles(config); err != nil {
+			return err
+		}
+		if err = cis.EnforceCommonMasterRequirements(config.Cluster().AESCBCEncryptionSecret()); err != nil {
 			return err
 		}
 	}
 
-	if err = kubeadm.WriteConfig(data); err != nil {
+	s, err := config.Cluster().Config(config.Machine().Type())
+	if err != nil {
 		return err
+	}
+
+	if err = ioutil.WriteFile(constants.KubeadmConfig, []byte(s), 0400); err != nil {
+		return fmt.Errorf("write %s: %v", constants.KubeadmConfig, err)
 	}
 
 	client, err := containerdapi.New(constants.ContainerdAddress)
@@ -56,7 +68,7 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
-	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, data.KubernetesVersion)
+	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 	if _, err = client.Pull(containerdctx, image, containerdapi.WithPullUnpack); err != nil {
 		return fmt.Errorf("failed to pull image %q: %v", image, err)
 	}
@@ -65,31 +77,34 @@ func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err err
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
+func (k *Kubeadm) PostFunc(config config.Configurator) error {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (k *Kubeadm) DependsOn(data *userdata.UserData) []string {
-	if data.Services.Kubeadm.IsControlPlane() {
-		deps := []string{"containerd", "networkd", "etcd"}
+func (k *Kubeadm) DependsOn(config config.Configurator) []string {
+	var deps []string
 
-		return deps
+	switch config.Machine().Type() {
+	case machine.Bootstrap:
+		fallthrough
+	case machine.ControlPlane:
+		deps = []string{"containerd", "networkd", "etcd"}
+	default:
+		deps = []string{"containerd", "networkd"}
 	}
-
-	deps := []string{"containerd", "networkd"}
 
 	return deps
 }
 
 // Condition implements the Service interface.
-func (k *Kubeadm) Condition(data *userdata.UserData) conditions.Condition {
+func (k *Kubeadm) Condition(config config.Configurator) conditions.Condition {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
-	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, data.KubernetesVersion)
+func (k *Kubeadm) Runner(config config.Configurator) (runner.Runner, error) {
+	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 
 	// We only wan't to run kubeadm if it hasn't been ran already.
 	if _, err := os.Stat("/etc/kubernetes/kubelet.conf"); !os.IsNotExist(err) {
@@ -98,37 +113,29 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: k.ID(data),
+		ID: k.ID(config),
 	}
 
-	ignorePreflightErrors := []string{"cri", "kubeletversion", "numcpu", "ipvsproxiercheck"}
-	ignorePreflightErrors = append(ignorePreflightErrors, data.Services.Kubeadm.IgnorePreflightErrors...)
-	ignore := "--ignore-preflight-errors=" + strings.Join(ignorePreflightErrors, ",")
-
 	switch {
-	case data.Services.Kubeadm.InitConfiguration != nil:
+	case config.Machine().Type() == machine.Bootstrap:
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"init",
 			"--config=/etc/kubernetes/kubeadm-config.yaml",
-			ignore,
+			"--ignore-preflight-errors=all",
 			"--skip-token-print",
 			"--skip-certificate-key-print",
 			"--upload-certs",
 		}
-	case data.Services.Kubeadm.JoinConfiguration != nil:
+	default:
 		// Worker
 		args.ProcessArgs = []string{
 			"kubeadm",
 			"join",
 			"--config=/etc/kubernetes/kubeadm-config.yaml",
-			ignore,
+			"--ignore-preflight-errors=all",
 		}
-	default:
-		return nil, errors.New("invalid kubeadm configuration type")
 	}
-
-	args.ProcessArgs = append(args.ProcessArgs, data.Services.Kubeadm.ExtraArgs...)
 
 	// Set the mounts.
 	// nolint: dupl
@@ -144,12 +151,12 @@ func (k *Kubeadm) Runner(data *userdata.UserData) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return containerd.NewRunner(
-		data,
+		config.Debug(),
 		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
 		runner.WithContainerImage(image),

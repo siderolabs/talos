@@ -8,9 +8,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // StartSystemContainerd represents the task to start system containerd.
@@ -23,13 +21,12 @@ func NewStartSystemContainerdTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *StartSystemContainerd) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
-		return task.standard(data)
-	}
+	return task.standard
 }
 
-func (task *StartSystemContainerd) standard(data *userdata.UserData) (err error) {
-	system.Services(data).LoadAndStart(&services.SystemContainerd{})
+func (task *StartSystemContainerd) standard(args *phase.RuntimeArgs) (err error) {
+	system.Services(args.Config()).LoadAndStart(&services.SystemContainerd{})
+	system.Services(args.Config()).LoadAndStart(&services.SystemContainerd{})
 
 	return nil
 }

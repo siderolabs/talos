@@ -11,17 +11,17 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Static implements the Addressing interface
 type Static struct {
-	Device *userdata.Device
+	Device *machine.Device
 	NetIf  *net.Interface
 }
 
 // Discover doesnt do anything in the static configuration since all
-// the necessary configuration data is supplied via userdata.
+// the necessary configuration data is supplied via config.
 func (s *Static) Discover(ctx context.Context) error {
 	return nil
 }
@@ -86,9 +86,9 @@ func (s *Static) Routes() (routes []*Route) {
 }
 
 // Resolvers returns the DNS resolvers
-// TODO: Currently we dont support specifying resolvers via userdata
+// TODO: Currently we dont support specifying resolvers via config
 func (s *Static) Resolvers() []net.IP {
-	// TODO: Think about how we want to expose this via userdata
+	// TODO: Think about how we want to expose this via config
 	return []net.IP{}
 }
 

@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Trustd implements the Service interface. It serves as the concrete type with
@@ -28,12 +28,12 @@ import (
 type Trustd struct{}
 
 // ID implements the Service interface.
-func (t *Trustd) ID(data *userdata.UserData) string {
+func (t *Trustd) ID(config config.Configurator) string {
 	return "trustd"
 }
 
 // PreFunc implements the Service interface.
-func (t *Trustd) PreFunc(ctx context.Context, data *userdata.UserData) error {
+func (t *Trustd) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/trustd.tar",
@@ -44,43 +44,46 @@ func (t *Trustd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 }
 
 // PostFunc implements the Service interface.
-func (t *Trustd) PostFunc(data *userdata.UserData) (err error) {
+func (t *Trustd) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (t *Trustd) Condition(data *userdata.UserData) conditions.Condition {
+func (t *Trustd) Condition(config config.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (t *Trustd) DependsOn(data *userdata.UserData) []string {
+func (t *Trustd) DependsOn(config config.Configurator) []string {
 	return []string{"containerd"}
 }
 
-func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (t *Trustd) Runner(config config.Configurator) (runner.Runner, error) {
 	image := "talos/trustd"
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID:          t.ID(data),
-		ProcessArgs: []string{"/trustd", "--userdata=" + constants.UserDataPath},
+		ID: t.ID(config),
+		ProcessArgs: []string{
+			"/trustd",
+			"--config=" + constants.ConfigPath,
+		},
 	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		data,
+		config.Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -95,7 +98,7 @@ func (t *Trustd) Runner(data *userdata.UserData) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (t *Trustd) HealthFunc(*userdata.UserData) health.Check {
+func (t *Trustd) HealthFunc(config.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
 		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.TrustdPort))
@@ -108,6 +111,6 @@ func (t *Trustd) HealthFunc(*userdata.UserData) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (t *Trustd) HealthSettings(*userdata.UserData) *health.Settings {
+func (t *Trustd) HealthSettings(config.Configurator) *health.Settings {
 	return &health.DefaultSettings
 }

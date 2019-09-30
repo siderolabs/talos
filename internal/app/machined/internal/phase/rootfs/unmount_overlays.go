@@ -9,9 +9,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/overlay"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // UnmountOverlay represents the UnmountOverlay task.
@@ -32,7 +30,7 @@ func (task *UnmountOverlay) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *UnmountOverlay) standard(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *UnmountOverlay) standard(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = overlay.MountPoints()
 	if err != nil {

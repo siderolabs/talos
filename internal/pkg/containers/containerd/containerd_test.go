@@ -27,7 +27,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	ctrd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (
@@ -96,7 +95,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	}
 
 	suite.containerdRunner = process.NewRunner(
-		&userdata.UserData{},
+		false,
 		args,
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
@@ -170,7 +169,7 @@ func (suite *ContainerdSuite) TearDownTest() {
 }
 
 func (suite *ContainerdSuite) runK8sContainers() {
-	suite.run(containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	suite.run(containerdrunner.NewRunner(false, &runner.Args{
 		ID:          "test1",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
@@ -186,7 +185,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 			"io.kubernetes.cri.sandbox-id":            "c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f",
 		})),
 		runner.WithContainerdAddress(suite.containerdAddress),
-	), containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	), containerdrunner.NewRunner(false, &runner.Args{
 		ID:          "test2",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
@@ -206,7 +205,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 }
 
 func (suite *ContainerdSuite) TestPodsNonK8s() {
-	suite.run(containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	suite.run(containerdrunner.NewRunner(false, &runner.Args{
 		ID:          "test",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
@@ -271,7 +270,7 @@ func (suite *ContainerdSuite) TestPodsK8s() {
 }
 
 func (suite *ContainerdSuite) TestContainerNonK8s() {
-	suite.run(containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	suite.run(containerdrunner.NewRunner(false, &runner.Args{
 		ID:          "shelltest",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},

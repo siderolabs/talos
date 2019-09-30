@@ -9,22 +9,17 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 // NetConf provides a mapping between an interface link and the functional
 // options needed to configure the interface
 type NetConf map[*net.Interface][]nic.Option
 
-// OverlayUserData translates the supplied userdata to functional options
-func (n *NetConf) OverlayUserData(data *userdata.UserData) error {
-	if !validateNetworkUserData(data) {
-		return nil
-	}
-
+// BuildOptions translates the supplied config to functional options.
+func (n *NetConf) BuildOptions(config config.Configurator) error {
 	for link, opts := range *n {
-		for _, device := range data.Networking.OS.Devices {
-
+		for _, device := range config.Machine().Network().Devices() {
 			device := device
 			if link.Name != device.Interface {
 				continue
@@ -50,30 +45,8 @@ func (n *NetConf) OverlayUserData(data *userdata.UserData) error {
 			if device.MTU != 0 {
 				(*n)[link] = append(opts, nic.WithMTU(uint32(device.MTU)))
 			}
-
 		}
 	}
 
 	return nil
-}
-
-// validateNetworkUserData ensures that we have actual data to do our lookups
-func validateNetworkUserData(data *userdata.UserData) bool {
-	if data == nil {
-		return false
-	}
-
-	if data.Networking == nil {
-		return false
-	}
-
-	if data.Networking.OS == nil {
-		return false
-	}
-
-	if data.Networking.OS.Devices == nil {
-		return false
-	}
-
-	return true
 }

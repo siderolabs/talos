@@ -20,26 +20,26 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Installer represents the installer logic. It serves as the entrypoint to all
 // installation methods.
 type Installer struct {
 	cmdline  *kernel.Cmdline
-	data     *userdata.UserData
+	install  machine.Install
 	manifest *manifest.Manifest
 }
 
 // NewInstaller initializes and returns an Installer.
-func NewInstaller(cmdline *kernel.Cmdline, data *userdata.UserData) (i *Installer, err error) {
+func NewInstaller(cmdline *kernel.Cmdline, install machine.Install) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
-		data:    data,
+		install: install,
 	}
 
-	i.manifest, err = manifest.NewManifest(data)
+	i.manifest, err = manifest.NewManifest(install)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create installation manifest")
 	}
@@ -51,19 +51,15 @@ func NewInstaller(cmdline *kernel.Cmdline, data *userdata.UserData) (i *Installe
 // to the target locations.
 // nolint: gocyclo
 func (i *Installer) Install() (err error) {
-	if i.data.Install == nil {
-		return nil
-	}
-
-	if i.data.Install.Wipe {
-		if err = wipe(i.manifest); err != nil {
+	if i.install.Zero() {
+		if err = zero(i.manifest); err != nil {
 			return errors.Wrap(err, "failed to wipe device(s)")
 		}
 	}
 
 	// Partition and format the block device(s).
 
-	if err = i.manifest.ExecuteManifest(i.data, i.manifest); err != nil {
+	if err = i.manifest.ExecuteManifest(i.manifest); err != nil {
 		return err
 	}
 
@@ -114,7 +110,7 @@ func (i *Installer) Install() (err error) {
 
 	// Install the bootloader.
 
-	if !i.data.Install.Bootloader {
+	if !i.install.WithBootloader() {
 		return nil
 	}
 
@@ -141,7 +137,7 @@ func (i *Installer) Install() (err error) {
 	return nil
 }
 
-func wipe(manifest *manifest.Manifest) (err error) {
+func zero(manifest *manifest.Manifest) (err error) {
 	var zero *os.File
 	if zero, err = os.Open("/dev/zero"); err != nil {
 		return err

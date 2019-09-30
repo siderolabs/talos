@@ -17,10 +17,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // KillKubernetesTasks represents the task for stop all containerd tasks in the
@@ -34,7 +32,7 @@ func NewKillKubernetesTasksTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *KillKubernetesTasks) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
+	return func(args *phase.RuntimeArgs) error {
 		return task.standard()
 	}
 }

@@ -5,19 +5,15 @@
 package metal
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/talos-systems/talos/internal/pkg/event"
-	"github.com/talos-systems/talos/internal/pkg/install"
+	installer "github.com/talos-systems/talos/internal/pkg/install"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/internal/pkg/platform"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Metal represents an initializer that performs a full installation to a
@@ -25,23 +21,17 @@ import (
 type Metal struct{}
 
 // Initialize implements the Initializer interface.
-func (b *Metal) Initialize(platform platform.Platform, data *userdata.UserData) (err error) {
-	if data == nil {
-		return errors.New("no userdata")
-	}
-	if data.Install == nil {
-		return errors.New("userdata has no install section")
-	}
+func (b *Metal) Initialize(platform platform.Platform, install machine.Install) (err error) {
 	// Attempt to discover a previous installation
 	// An err case should only happen if no partitions
 	// with matching labels were found
 	var mountpoints *mount.Points
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
-		if data.Install.Image == "" {
-			data.Install.Image = fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
-		}
-		if err = install.Install(data.Install.Image, data.Install.Disk, strings.ToLower(platform.Name())); err != nil {
+		// if install.Image() == "" {
+		// 	install.Image() = fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
+		// }
+		if err = installer.Install(install.Image(), install.Disk(), strings.ToLower(platform.Name())); err != nil {
 			return err
 		}
 		event.Bus().Notify(event.Event{Type: event.Reboot})

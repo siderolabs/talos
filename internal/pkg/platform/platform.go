@@ -12,6 +12,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/platform/aws"
+
 	"github.com/talos-systems/talos/internal/pkg/platform/azure"
 	"github.com/talos-systems/talos/internal/pkg/platform/container"
 	"github.com/talos-systems/talos/internal/pkg/platform/gcp"
@@ -21,13 +22,12 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/platform/vmware"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Platform is an interface describing a platform.
 type Platform interface {
 	Name() string
-	UserData() (*userdata.UserData, error)
+	Configuration() ([]byte, error)
 	Mode() runtime.Mode
 	Hostname() ([]byte, error)
 	ExternalIPs() ([]net.IP, error)

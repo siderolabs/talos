@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (
@@ -54,35 +54,35 @@ type Asset struct {
 }
 
 // NewManifest initializes and returns a Manifest.
-func NewManifest(data *userdata.UserData) (manifest *Manifest, err error) {
+func NewManifest(install machine.Install) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Targets: map[string][]*Target{},
 	}
 
 	// Verify that the target device(s) can satisify the requested options.
 
-	if err = VerifyDataDevice(data); err != nil {
+	if err = VerifyDataDevice(install); err != nil {
 		return nil, errors.Wrap(err, "failed to prepare ephemeral partition")
 	}
 
-	if err = VerifyBootDevice(data); err != nil {
+	if err = VerifyBootDevice(install); err != nil {
 		return nil, errors.Wrap(err, "failed to prepare boot partition")
 	}
 
 	// Initialize any slices we need. Note that a boot paritition is not
 	// required.
 
-	if manifest.Targets[data.Install.Disk] == nil {
-		manifest.Targets[data.Install.Disk] = []*Target{}
+	if manifest.Targets[install.Disk()] == nil {
+		manifest.Targets[install.Disk()] = []*Target{}
 	}
 
 	var bootTarget *Target
-	if data.Install.Bootloader {
+	if install.WithBootloader() {
 		bootTarget = &Target{
-			Device: data.Install.Disk,
+			Device: install.Disk(),
 			Label:  constants.BootPartitionLabel,
 			Size:   512 * 1024 * 1024,
-			Force:  data.Install.Force,
+			Force:  true,
 			Test:   false,
 			Assets: []*Asset{
 				{
@@ -97,22 +97,22 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest, err error) {
 		}
 	}
 
-	dataTarget := &Target{
-		Device: data.Install.Disk,
+	ephemeralTarget := &Target{
+		Device: install.Disk(),
 		Label:  constants.EphemeralPartitionLabel,
 		Size:   16 * 1024 * 1024,
-		Force:  data.Install.Force,
+		Force:  true,
 		Test:   false,
 	}
 
-	for _, target := range []*Target{bootTarget, dataTarget} {
+	for _, target := range []*Target{bootTarget, ephemeralTarget} {
 		if target == nil {
 			continue
 		}
 		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
 	}
 
-	for _, extra := range data.Install.ExtraDevices {
+	for _, extra := range install.ExtraDisks() {
 		if manifest.Targets[extra.Device] == nil {
 			manifest.Targets[extra.Device] = []*Target{}
 		}
@@ -121,7 +121,7 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest, err error) {
 			extraTarget := &Target{
 				Device: extra.Device,
 				Size:   part.Size,
-				Force:  data.Install.Force,
+				Force:  true,
 				Test:   false,
 			}
 
@@ -133,10 +133,10 @@ func NewManifest(data *userdata.UserData) (manifest *Manifest, err error) {
 }
 
 // ExecuteManifest partitions and formats all disks in a manifest.
-func (m *Manifest) ExecuteManifest(data *userdata.UserData, manifest *Manifest) (err error) {
+func (m *Manifest) ExecuteManifest(manifest *Manifest) (err error) {
 	for dev, targets := range manifest.Targets {
 		var bd *blockdevice.BlockDevice
-		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(data.Install.Force)); err != nil {
+		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(true)); err != nil {
 			return err
 		}
 		// nolint: errcheck

@@ -32,7 +32,6 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -42,8 +41,6 @@ type Registrator struct {
 	*MachineClient
 	*TimeClient
 	*NetworkClient
-
-	Data *userdata.UserData
 }
 
 // Register implements the factory.Registrator interface.

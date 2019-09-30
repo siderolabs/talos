@@ -9,9 +9,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/bpffs"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // MountBPFFS represents the MountBPFFS task.
@@ -32,7 +30,7 @@ func (task *MountBPFFS) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountBPFFS) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *MountBPFFS) runtime(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = bpffs.MountPoints()
 	if err != nil {

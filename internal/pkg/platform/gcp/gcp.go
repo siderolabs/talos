@@ -12,8 +12,7 @@ import (
 	"net/http"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/userdata/download"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 // Ref: https://cloud.google.com/compute/docs/storing-retrieving-metadata
@@ -29,28 +28,27 @@ const (
 type GCP struct{}
 
 // Name implements the platform.Platform interface.
-func (gc *GCP) Name() string {
+func (g *GCP) Name() string {
 	return "GCP"
 }
 
-// UserData implements the platform.Platform interface.
-func (gc *GCP) UserData() (data *userdata.UserData, err error) {
-	return download.Download(GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
+// Configuration implements the platform.Platform interface.
+func (g *GCP) Configuration() ([]byte, error) {
+	return config.Download(GCUserDataEndpoint, config.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 
 // Mode implements the platform.Platform interface.
-func (gc *GCP) Mode() runtime.Mode {
+func (g *GCP) Mode() runtime.Mode {
 	return runtime.Cloud
 }
 
 // Hostname implements the platform.Platform interface.
-func (gc *GCP) Hostname() (hostname []byte, err error) {
-	// curl -Lv -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/instance/name
+func (g *GCP) Hostname() (hostname []byte, err error) {
 	return nil, nil
 }
 
 // ExternalIPs provides any external addresses assigned to the instance
-func (gc *GCP) ExternalIPs() (addrs []net.IP, err error) {
+func (g *GCP) ExternalIPs() (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request

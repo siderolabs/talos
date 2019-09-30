@@ -16,9 +16,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/cgroups"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (
@@ -47,7 +45,7 @@ func (task *MountCgroups) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountCgroups) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *MountCgroups) runtime(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = cgroups.MountPoints()
 	if err != nil {
