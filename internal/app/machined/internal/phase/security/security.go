@@ -7,9 +7,7 @@ package security
 import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/kernel/kspp"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Security represents the Security task.
@@ -30,7 +28,7 @@ func (task *Security) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Security) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *Security) runtime(args *phase.RuntimeArgs) (err error) {
 	if err = kspp.EnforceKSPPKernelParameters(); err != nil {
 		return err
 	}

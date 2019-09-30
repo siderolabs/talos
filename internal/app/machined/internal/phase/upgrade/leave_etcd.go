@@ -13,10 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
@@ -32,13 +31,11 @@ func NewLeaveEtcdTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *LeaveEtcd) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
-		return task.standard(data)
-	}
+	return task.standard
 }
 
-func (task *LeaveEtcd) standard(data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.IsWorker() {
+func (task *LeaveEtcd) standard(args *phase.RuntimeArgs) (err error) {
+	if args.Config().Machine().Type() == machine.Worker {
 		return nil
 	}
 	hostname, err := os.Hostname()

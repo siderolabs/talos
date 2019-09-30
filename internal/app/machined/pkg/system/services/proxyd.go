@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Proxyd implements the Service interface. It serves as the concrete type with
@@ -28,12 +28,12 @@ import (
 type Proxyd struct{}
 
 // ID implements the Service interface.
-func (p *Proxyd) ID(data *userdata.UserData) string {
+func (p *Proxyd) ID(config config.Configurator) string {
 	return "proxyd"
 }
 
 // PreFunc implements the Service interface.
-func (p *Proxyd) PreFunc(ctx context.Context, data *userdata.UserData) error {
+func (p *Proxyd) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/proxyd.tar",
@@ -44,43 +44,43 @@ func (p *Proxyd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 }
 
 // PostFunc implements the Service interface.
-func (p *Proxyd) PostFunc(data *userdata.UserData) (err error) {
+func (p *Proxyd) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (p *Proxyd) Condition(data *userdata.UserData) conditions.Condition {
+func (p *Proxyd) Condition(config config.Configurator) conditions.Condition {
 	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt")
 }
 
 // DependsOn implements the Service interface.
-func (p *Proxyd) DependsOn(data *userdata.UserData) []string {
+func (p *Proxyd) DependsOn(config config.Configurator) []string {
 	return []string{"system-containerd"}
 }
 
-func (p *Proxyd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (p *Proxyd) Runner(config config.Configurator) (runner.Runner, error) {
 	image := "talos/proxyd"
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID:          p.ID(data),
-		ProcessArgs: []string{"/proxyd", "--userdata=" + constants.UserDataPath},
+		ID:          p.ID(config),
+		ProcessArgs: []string{"/proxyd", "--config=" + constants.ConfigPath},
 	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: constants.UserDataPath, Source: constants.UserDataPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		data,
+		config.Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -96,7 +96,7 @@ func (p *Proxyd) Runner(data *userdata.UserData) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (p *Proxyd) HealthFunc(*userdata.UserData) health.Check {
+func (p *Proxyd) HealthFunc(config.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
 		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 443))
@@ -109,16 +109,16 @@ func (p *Proxyd) HealthFunc(*userdata.UserData) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (p *Proxyd) HealthSettings(*userdata.UserData) *health.Settings {
+func (p *Proxyd) HealthSettings(config.Configurator) *health.Settings {
 	return &health.DefaultSettings
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (p *Proxyd) APIStartAllowed(data *userdata.UserData) bool {
+func (p *Proxyd) APIStartAllowed(config config.Configurator) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (p *Proxyd) APIRestartAllowed(data *userdata.UserData) bool {
+func (p *Proxyd) APIRestartAllowed(config config.Configurator) bool {
 	return true
 }

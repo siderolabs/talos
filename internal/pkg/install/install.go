@@ -37,14 +37,14 @@ func Install(ref string, disk string, platform string) error {
 
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
-	var userdata *string
-	if userdata = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); userdata == nil {
-		return errors.Errorf("no user data option was found")
+	var config *string
+	if config = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
+		return errors.Errorf("no config option was found")
 	}
 
 	specOpts := []oci.SpecOpts{
 		oci.WithImageConfig(image),
-		oci.WithProcessArgs([]string{"/bin/entrypoint.sh", "install", "-d", disk, "-p", platform, "-u", *userdata}...),
+		oci.WithProcessArgs([]string{"/bin/entrypoint.sh", "install", "-d", disk, "-p", platform, "-u", *config}...),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithMounts(mounts),

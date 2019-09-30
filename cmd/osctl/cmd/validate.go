@@ -10,24 +10,32 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/osctl/internal/userdata"
+	"github.com/talos-systems/talos/pkg/config"
 )
+
+var configFile string
 
 // validateCmd reads in a userData file and attempts to parse it
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validate userdata",
+	Short: "Validate config",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		ud, err := userdata.UserData(userdataFile)
+		content, err := config.FromFile(configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(ud)
+		config, err := config.New(content)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := config.Validate(); err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
 func init() {
-	validateCmd.Flags().StringVarP(&userdataFile, "userdata", "u", "", "path or url of userdata file")
+	validateCmd.Flags().StringVarP(&configFile, "config", "u", "", "the path of the config file")
 	rootCmd.AddCommand(validateCmd)
 }

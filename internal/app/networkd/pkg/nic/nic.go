@@ -65,7 +65,7 @@ func Create(link *net.Interface, setters ...Option) (*NetworkInterface, error) {
 	}
 
 	// If no addressing methods have been configured, default to DHCP
-	// TODO: do we want this behavior or to be explicit with userdata
+	// TODO: do we want this behavior or to be explicit with config
 	// so we dont configure every interface be default?
 	if len(iface.AddressMethod) == 0 {
 		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{NetIf: link})

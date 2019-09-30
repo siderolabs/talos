@@ -8,9 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // MountShared represents the MountShared task.
@@ -31,7 +29,7 @@ func (task *MountShared) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountShared) container(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *MountShared) container(args *phase.RuntimeArgs) (err error) {
 	targets := []string{"/", "/var/lib/kubelet", "/etc/cni"}
 	for _, t := range targets {
 		if err = unix.Mount("", t, "", unix.MS_SHARED, ""); err != nil {

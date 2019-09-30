@@ -9,76 +9,72 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/pkg/errors"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 // VMware is the concrete type that implements the platform.Platform interface.
 type VMware struct{}
 
 // Name implements the platform.Platform interface.
-func (vmw *VMware) Name() string {
+func (v *VMware) Name() string {
 	return "VMware"
 }
 
-// UserData implements the platform.Platform interface.
-func (vmw *VMware) UserData() (data *userdata.UserData, err error) {
+// Configuration implements the platform.Platform interface.
+func (v *VMware) Configuration() ([]byte, error) {
 	var option *string
-	if option = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); option == nil {
-		return data, fmt.Errorf("no user data option was found")
+	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
+		return nil, fmt.Errorf("no config option was found")
 	}
 
-	if *option == constants.UserDataGuestInfo {
+	if *option == constants.ConfigGuestInfo {
 		ok, err := vmcheck.IsVirtualWorld()
 		if err != nil {
-			return data, err
+			return nil, err
 		}
 
 		if !ok {
-			return data, fmt.Errorf("not a virtual world")
+			return nil, errors.New("not a virtual world")
 		}
 
 		config := rpcvmx.NewConfig()
-		val, err := config.String(constants.VMwareGuestInfoUserDataKey, "")
+		val, err := config.String(constants.VMwareGuestInfoConfigKey, "")
 		if err != nil {
-			return data, fmt.Errorf("failed to get guestinfo.%s: %v", constants.VMwareGuestInfoUserDataKey, err)
+			return nil, errors.Errorf("failed to get guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)
 		}
 
 		if val == "" {
-			return data, fmt.Errorf("userdata is required, no value found for guestinfo.%s: %v", constants.VMwareGuestInfoUserDataKey, err)
+			return nil, errors.Errorf("config is required, no value found for guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)
 		}
 
 		b, err := base64.StdEncoding.DecodeString(val)
 		if err != nil {
-			return data, fmt.Errorf("failed to decode guestinfo.%s: %v", constants.VMwareGuestInfoUserDataKey, err)
+			return nil, errors.Errorf("failed to decode guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)
 		}
 
-		if err = yaml.Unmarshal(b, &data); err != nil {
-			return data, fmt.Errorf("unmarshal user data: %s", err.Error())
-		}
+		return b, nil
 	}
 
-	return data, nil
+	return nil, nil
 }
 
 // Mode implements the platform.Platform interface.
-func (vmw *VMware) Mode() runtime.Mode {
+func (v *VMware) Mode() runtime.Mode {
 	return runtime.Cloud
 }
 
 // Hostname implements the platform.Platform interface.
-func (vmw *VMware) Hostname() (hostname []byte, err error) {
+func (v *VMware) Hostname() (hostname []byte, err error) {
 	return nil, nil
 }
 
 // ExternalIPs provides any external addresses assigned to the instance
-func (vmw *VMware) ExternalIPs() (addrs []net.IP, err error) {
+func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
 }

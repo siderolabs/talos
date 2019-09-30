@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/cmd"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 // Udevd implements the Service interface. It serves as the concrete type with
@@ -21,12 +21,12 @@ import (
 type Udevd struct{}
 
 // ID implements the Service interface.
-func (c *Udevd) ID(data *userdata.UserData) string {
+func (c *Udevd) ID(config config.Configurator) string {
 	return "udevd"
 }
 
 // PreFunc implements the Service interface.
-func (c *Udevd) PreFunc(ctx context.Context, data *userdata.UserData) error {
+func (c *Udevd) PreFunc(ctx context.Context, config config.Configurator) error {
 	return cmd.Run(
 		"/sbin/udevadm",
 		"hwdb",
@@ -35,25 +35,25 @@ func (c *Udevd) PreFunc(ctx context.Context, data *userdata.UserData) error {
 }
 
 // PostFunc implements the Service interface.
-func (c *Udevd) PostFunc(data *userdata.UserData) (err error) {
+func (c *Udevd) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Udevd) Condition(data *userdata.UserData) conditions.Condition {
+func (c *Udevd) Condition(config config.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Udevd) DependsOn(data *userdata.UserData) []string {
+func (c *Udevd) DependsOn(config config.Configurator) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (c *Udevd) Runner(config config.Configurator) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
-		ID: c.ID(data),
+		ID: c.ID(config),
 		ProcessArgs: []string{
 			"/sbin/udevd",
 			"--resolve-names=never",
@@ -62,12 +62,12 @@ func (c *Udevd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(process.NewRunner(
-		data,
+		config.Debug(),
 		args,
 		runner.WithEnv(env),
 	),

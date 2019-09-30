@@ -13,7 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // filterInterfaceByName filters network links by name so we only mange links
@@ -47,7 +47,7 @@ func parseLinkMessage(link *net.Interface) []nic.Option {
 	if strings.HasPrefix(link.Name, "lo") {
 		opts = append(opts, nic.WithAddressing(
 			&address.Static{
-				Device: &userdata.Device{
+				Device: &machine.Device{
 					CIDR: "127.0.0.1/8",
 					MTU:  65536,
 				},

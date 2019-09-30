@@ -15,10 +15,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // UnmountPodMounts represents the UnmountPodMounts task.
@@ -39,7 +37,7 @@ func (task *UnmountPodMounts) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *UnmountPodMounts) standard(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *UnmountPodMounts) standard(args *phase.RuntimeArgs) (err error) {
 	var b []byte
 	if b, err = ioutil.ReadFile("/proc/self/mounts"); err != nil {
 		return err

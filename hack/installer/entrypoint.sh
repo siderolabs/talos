@@ -14,8 +14,8 @@ LABEL ISO
 EOF
 }
 
-function setup_raw_device(){
-  printf "Creating RAW device, this may take a moment..."
+function setup_raw_disk(){
+  printf "Creating RAW disk, this may take a moment..."
   if [[ -f ${TALOS_RAW} ]]; then
     rm ${TALOS_RAW}
   fi
@@ -23,12 +23,12 @@ function setup_raw_device(){
   # NB: Since we use BLKRRPART to tell the kernel to re-read the partition
   # table, it is required to create a partitioned loop device. The BLKRRPART
   # command is meaningful only for partitionable devices.
-  DEVICE=$(losetup --find --partscan --nooverlap --show ${TALOS_RAW})
+  DISK=$(losetup --find --partscan --nooverlap --show ${TALOS_RAW})
   printf "done\n"
 }
 
 function install_talos() {
-  osctl install --bootloader="${WITH_BOOTLOADER}" --device="${DEVICE}" --platform="${TALOS_PLATFORM}" --userdata="${TALOS_USERDATA}" ${EXTRA_ARGS}
+  osctl install --bootloader="${WITH_BOOTLOADER}" --disk="${DISK}" --platform="${TALOS_PLATFORM}" --config="${TALOS_CONFIG}" ${EXTRA_ARGS}
 }
 
 function create_iso() {
@@ -54,7 +54,7 @@ function create_vmdk() {
 
 function cleanup {
   umount 2>/dev/null || true
-  losetup -d ${DEVICE} 2>/dev/null || true
+  losetup -d ${DISK} 2>/dev/null || true
 }
 
 function usage() {
@@ -65,7 +65,7 @@ TALOS_RAW="/out/talos.raw"
 TALOS_ISO="/out/talos.iso"
 TALOS_VMDK="/out/talos.vmdk"
 TALOS_PLATFORM="metal"
-TALOS_USERDATA="none"
+TALOS_CONFIG="none"
 WITH_BOOTLOADER="true"
 EXTRA_ARGS=""
 
@@ -79,7 +79,7 @@ case "$1" in
           WITH_BOOTLOADER="false"
           ;;
         d )
-          DEVICE=${OPTARG}
+          DISK=${OPTARG}
           ;;
         e )
           EXTRA_ARGS="${EXTRA_ARGS} --extra-kernel-arg=${OPTARG}"
@@ -93,11 +93,11 @@ case "$1" in
           ;;
         r )
           trap cleanup EXIT
-          setup_raw_device
+          setup_raw_disk
           ;;
         u )
-          TALOS_USERDATA=${OPTARG}
-          echo "Using kernel parameter talos.userdata=${TALOS_USERDATA}"
+          TALOS_CONFIG=${OPTARG}
+          echo "Using kernel parameter talos.userdata=${TALOS_CONFIG}"
           ;;
         \? )
           echo "Invalid Option: -${OPTARG}" 1>&2
@@ -111,13 +111,13 @@ case "$1" in
     done
     shift $((OPTIND-1))
 
-    if [ ! "${TALOS_PLATFORM}" ] || [ ! "${TALOS_USERDATA}" ]; then
+    if [ ! "${TALOS_PLATFORM}" ] || [ ! "${TALOS_CONFIG}" ]; then
       usage
       exit 1
     fi
 
     trap cleanup EXIT
-    echo "Using device ${DEVICE} as installation media"
+    echo "Using disk ${DISK} as installation media"
     install_talos
     ;;
   iso)

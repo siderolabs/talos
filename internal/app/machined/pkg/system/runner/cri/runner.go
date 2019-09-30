@@ -15,13 +15,12 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 type criRunner struct {
-	data *userdata.UserData
-	args *runner.Args
-	opts *runner.Options
+	args  *runner.Args
+	opts  *runner.Options
+	debug bool
 
 	stop    chan struct{}
 	stopped chan struct{}
@@ -34,11 +33,11 @@ type criRunner struct {
 }
 
 // NewRunner creates runner.Runner that runs a container in a sandbox
-func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Option) runner.Runner {
+func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &criRunner{
-		data:    data,
 		args:    args,
 		opts:    runner.DefaultOptions(),
+		debug:   debug,
 		stop:    make(chan struct{}),
 		stopped: make(chan struct{}),
 	}

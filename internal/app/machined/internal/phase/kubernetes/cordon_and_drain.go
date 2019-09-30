@@ -8,10 +8,8 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/kubernetes"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // CordonAndDrain represents the task for stop all containerd tasks in the
@@ -25,7 +23,7 @@ func NewCordonAndDrainTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *CordonAndDrain) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
+	return func(args *phase.RuntimeArgs) error {
 		return task.standard()
 	}
 }

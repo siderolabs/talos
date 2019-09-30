@@ -63,7 +63,7 @@ type KeyPair struct {
 	*tls.Certificate
 }
 
-// PEMEncodedCertificateAndKey represents the PEM encoded certificate and
+// PEMEncodedCertificateAndKey represents a PEM encoded certificate and
 // private key pair.
 type PEMEncodedCertificateAndKey struct {
 	Crt []byte

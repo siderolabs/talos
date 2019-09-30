@@ -23,8 +23,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Kubelet implements the Service interface. It serves as the concrete type with
@@ -32,37 +32,37 @@ import (
 type Kubelet struct{}
 
 // ID implements the Service interface.
-func (k *Kubelet) ID(data *userdata.UserData) string {
+func (k *Kubelet) ID(config config.Configurator) string {
 	return "kubelet"
 }
 
 // PreFunc implements the Service interface.
-func (k *Kubelet) PreFunc(ctx context.Context, data *userdata.UserData) error {
+func (k *Kubelet) PreFunc(ctx context.Context, config config.Configurator) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubelet) PostFunc(data *userdata.UserData) (err error) {
+func (k *Kubelet) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (k *Kubelet) Condition(data *userdata.UserData) conditions.Condition {
+func (k *Kubelet) Condition(config config.Configurator) conditions.Condition {
 	return conditions.WaitForFilesToExist("/var/lib/kubelet/kubeadm-flags.env")
 }
 
 // DependsOn implements the Service interface.
-func (k *Kubelet) DependsOn(data *userdata.UserData) []string {
+func (k *Kubelet) DependsOn(config config.Configurator) []string {
 	return []string{"containerd", "kubeadm"}
 }
 
 // Runner implements the Service interface.
-func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
-	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, data.KubernetesVersion)
+func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
+	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: k.ID(data),
+		ID: k.ID(config),
 		ProcessArgs: []string{
 			"/hyperkube",
 			"kubelet",
@@ -98,7 +98,7 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 	}
 
 	// Add in the additional CNI mounts.
-	cniMounts, err := cni.Mounts(data)
+	cniMounts, err := cni.Mounts(config)
 	if err != nil {
 		return nil, err
 	}
@@ -108,17 +108,15 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 	// TODO(andrewrynhard): We should verify that the mount source is
 	// whitelisted. There is the potential that a user can expose
 	// sensitive information.
-	if data.Services != nil && data.Services.Kubelet != nil && data.Services.Kubelet.ExtraMounts != nil {
-		mounts = append(mounts, data.Services.Kubelet.ExtraMounts...)
-	}
+	mounts = append(mounts, config.Machine().Kubelet().ExtraMounts()...)
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		data,
+		config.Debug(),
 		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
 		runner.WithContainerImage(image),
@@ -136,7 +134,7 @@ func (k *Kubelet) Runner(data *userdata.UserData) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (k *Kubelet) HealthFunc(*userdata.UserData) health.Check {
+func (k *Kubelet) HealthFunc(config.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		req, err := http.NewRequest("GET", "http://127.0.0.1:10248/healthz", nil)
 		if err != nil {
@@ -160,7 +158,7 @@ func (k *Kubelet) HealthFunc(*userdata.UserData) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (k *Kubelet) HealthSettings(*userdata.UserData) *health.Settings {
+func (k *Kubelet) HealthSettings(config.Configurator) *health.Settings {
 	settings := health.DefaultSettings
 	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup
 

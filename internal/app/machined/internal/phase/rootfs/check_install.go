@@ -9,10 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // CheckInstall represents the CheckInstall task.
@@ -33,7 +31,7 @@ func (task *CheckInstall) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *CheckInstall) standard(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *CheckInstall) standard(args *phase.RuntimeArgs) (err error) {
 	_, err = os.Stat(filepath.Join(constants.BootMountPoint, "installed"))
 	return err
 }

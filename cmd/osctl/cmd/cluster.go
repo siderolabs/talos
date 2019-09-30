@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,8 +26,8 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/cmd/cluster/pkg/node"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -172,24 +173,16 @@ func createNodes(requests []*node.Request) (err error) {
 	var wg sync.WaitGroup
 	wg.Add(len(requests))
 
-	for idx, req := range requests {
-		go func(idx int, req *node.Request) {
+	for _, req := range requests {
+		go func(req *node.Request) {
 			fmt.Println("creating node", req.Name)
-			// We'll use this to denote the previous node
-			// IP so we can coordinate how each control plane
-			// node comes up
-			// 1 <- 2 <- 3 <- 4 <- 5 ...
-			req.Input.Index = idx
-			if req.IP != nil {
-				req.Input.IP = req.IP
-			}
 
 			if err = node.NewNode(clusterName, req); err != nil {
 				helpers.Fatalf("failed to create node: %v", err)
 			}
 
 			wg.Done()
-		}(idx, req)
+		}(req)
 	}
 
 	wg.Wait()
@@ -320,16 +313,17 @@ func destroyNetwork(cli *client.Client) error {
 }
 
 func saveConfig(input *generate.Input) (err error) {
-	var talosconfigString string
-	if talosconfigString, err = generate.Talosconfig(input); err != nil {
-		return err
+	newConfig := &config.Config{
+		Context: input.ClusterName,
+		Contexts: map[string]*config.Context{
+			input.ClusterName: {
+				Target: "127.0.0.1",
+				CA:     base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
+				Crt:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
+				Key:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
+			},
+		},
 	}
-	newConfig, err := config.FromString(talosconfigString)
-	if err != nil {
-		return err
-	}
-
-	newConfig.Contexts[clusterName].Target = "127.0.0.1"
 
 	c, err := config.Open(talosconfig)
 	if err != nil {
@@ -338,9 +332,9 @@ func saveConfig(input *generate.Input) (err error) {
 	if c.Contexts == nil {
 		c.Contexts = map[string]*config.Context{}
 	}
-	c.Contexts[clusterName] = newConfig.Contexts[clusterName]
+	c.Contexts[input.ClusterName] = newConfig.Contexts[input.ClusterName]
 
-	c.Context = clusterName
+	c.Context = input.ClusterName
 
 	return c.Save(talosconfig)
 }

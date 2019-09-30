@@ -17,14 +17,14 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 // goroutineRunner is a runner.Runner that runs a service in a goroutine
 type goroutineRunner struct {
-	data *userdata.UserData
-	main FuncMain
-	id   string
+	main   FuncMain
+	id     string
+	config config.Configurator
 
 	opts *runner.Options
 
@@ -37,15 +37,15 @@ type goroutineRunner struct {
 // FuncMain is a entrypoint into the service.
 //
 // Service should abort and return when ctx is canceled
-type FuncMain func(ctx context.Context, data *userdata.UserData, logOutput io.Writer) error
+type FuncMain func(ctx context.Context, config config.Configurator, logOutput io.Writer) error
 
 // NewRunner creates runner.Runner that runs a service as goroutine
-func NewRunner(data *userdata.UserData, id string, main FuncMain, setters ...runner.Option) runner.Runner {
+func NewRunner(config config.Configurator, id string, main FuncMain, setters ...runner.Option) runner.Runner {
 	r := &goroutineRunner{
-		data: data,
-		id:   id,
-		main: main,
-		opts: runner.DefaultOptions(),
+		id:     id,
+		config: config,
+		main:   main,
+		opts:   runner.DefaultOptions(),
 	}
 
 	r.ctx, r.ctxCancel = context.WithCancel(context.Background())
@@ -91,13 +91,13 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	defer w.Close()
 
 	var writer io.Writer
-	if r.data.Debug {
+	if r.config.Debug() {
 		writer = io.MultiWriter(w, os.Stdout)
 	} else {
 		writer = w
 	}
 
-	err = r.main(r.ctx, r.data, writer)
+	err = r.main(r.ctx, r.config, writer)
 	if err == context.Canceled {
 		// clear error if service was aborted
 		err = nil

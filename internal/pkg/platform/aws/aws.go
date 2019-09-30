@@ -16,8 +16,7 @@ import (
 	"github.com/fullsailor/pkcs7"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/userdata/download"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 const (
@@ -47,7 +46,7 @@ MXrs3IgIb6+hUIB+S8dz8/mmO0bpr76RoZVCXYab2CZedFut7qc3WUH9+EUAH5mw
 vSeDCOUMYQR7R9LINYwouHIziqQYMAkGByqGSM44BAMDLwAwLAIUWXBlk40xTwSw
 7HX32MxXYruse9ACFBNGmdX2ZBrVNGrN9N2f6ROk0k9K
 -----END CERTIFICATE-----`
-	// AWSUserDataEndpoint is the local EC2 endpoint for the user data.
+	// AWSUserDataEndpoint is the local EC2 endpoint for the config.
 	AWSUserDataEndpoint = "http://169.254.169.254/latest/user-data"
 )
 
@@ -121,9 +120,9 @@ func (a *AWS) Name() string {
 	return "AWS"
 }
 
-// UserData implements the platform.Platform interface.
-func (a *AWS) UserData() (*userdata.UserData, error) {
-	return download.Download(AWSUserDataEndpoint)
+// Configuration implements the platform.Platform interface.
+func (a *AWS) Configuration() ([]byte, error) {
+	return config.Download(AWSUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.

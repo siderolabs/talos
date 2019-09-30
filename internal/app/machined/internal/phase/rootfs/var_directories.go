@@ -8,9 +8,7 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // VarDirectories represents the VarDirectories task.
@@ -26,7 +24,7 @@ func (task *VarDirectories) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	return task.runtime
 }
 
-func (task *VarDirectories) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *VarDirectories) runtime(args *phase.RuntimeArgs) (err error) {
 	for _, p := range []string{"/var/log/pods", "/var/lib/kubelet"} {
 		if err = os.MkdirAll(p, 0700); err != nil {
 			return err

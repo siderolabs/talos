@@ -6,193 +6,40 @@ package kubeadm
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
 	"os"
 	"path"
-	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 
 	securityapi "github.com/talos-systems/talos/api/security"
-	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const dirPerm os.FileMode = 0700
 const certPerm os.FileMode = 0600
 const keyPerm os.FileMode = 0400
 
-func editFullInitConfig(data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.InitConfiguration == nil {
-		return errors.New("expected InitConfiguration")
-	}
-	err = editInitConfig(data)
-	if err != nil {
-		return err
-	}
-
-	if data.Services.Kubeadm.ClusterConfiguration == nil {
-		return errors.New("expected ClusterConfiguration")
-	}
-	err = editClusterConfig(data)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func editInitConfig(data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.InitConfiguration == nil {
-		return errors.New("expected InitConfiguration")
-	}
-
-	initConfiguration, ok := data.Services.Kubeadm.InitConfiguration.(*kubeadmv1beta2.InitConfiguration)
-	if !ok {
-		return errors.New("failed InitConfiguration assertion")
-	}
-
-	// Hardcodes specific kubeadm config parameters
-	initConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
-
-	return nil
-}
-
-func editJoinConfig(data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.JoinConfiguration == nil {
-		return errors.New("expected JoinConfiguration")
-	}
-	joinConfiguration, ok := data.Services.Kubeadm.JoinConfiguration.(*kubeadmv1beta2.JoinConfiguration)
-	if !ok {
-		return errors.New("failed JoinConfiguration assertion")
-	}
-
-	joinConfiguration.NodeRegistration.CRISocket = constants.ContainerdAddress
-	if err = cis.EnforceWorkerRequirements(joinConfiguration); err != nil {
-		return err
-	}
-	return nil
-}
-
-func editClusterConfig(data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.ClusterConfiguration == nil {
-		return errors.New("expected ClusterConfiguration")
-	}
-
-	clusterConfiguration, ok := data.Services.Kubeadm.ClusterConfiguration.(*kubeadmv1beta2.ClusterConfiguration)
-	if !ok {
-		return errors.New("failed ClusterConfiguration assertion")
-	}
-
-	// Hardcodes specific kubeadm config parameters
-	clusterConfiguration.KubernetesVersion = data.KubernetesVersion
-	clusterConfiguration.UseHyperKubeImage = true
-
-	// Apply CIS hardening recommendations; only generate encryption token only if we're the bootstrap node
-	if err = cis.EnforceBootstrapMasterRequirements(clusterConfiguration); err != nil {
-		return err
-	}
-
-	// Flex on running etcd directly on Talos or via Kubeadm
-	if data.Services.Etcd != nil && data.Services.Etcd.Enabled {
-		clusterConfiguration.Etcd = kubeadmv1beta2.Etcd{
-			External: &kubeadmv1beta2.ExternalEtcd{
-				// TODO probably need to find a better way to handle obtaining etcd addrs
-				// since this becomes an ordering issue. We rely on k8s to discover etcd
-				// endpoints, but need etcd endpoints to bring up k8s.
-				// We'll set this to 127.0.0.1 for now since mvp will be stacked control
-				// plane ( etcd living on the same hosts as masters )
-				Endpoints: []string{"https://127.0.0.1:" + strconv.Itoa(constants.KubeadmEtcdListenClientPort)},
-				CAFile:    constants.KubeadmEtcdCACert,
-				// These are for apiserver -> etcd communication
-				CertFile: constants.KubeadmAPIServerEtcdClientCert,
-				KeyFile:  constants.KubeadmAPIServerEtcdClientKey,
-			},
-		}
-	}
-
-	return nil
-}
-
-// WriteConfig writes out the kubeadm config
-func WriteConfig(data *userdata.UserData) (err error) {
-	var b []byte
-
-	// Enforce configuration edits
-	switch {
-	case data.Services.Kubeadm.JoinConfiguration != nil:
-		err = editJoinConfig(data)
-	case data.Services.Kubeadm.InitConfiguration != nil:
-		err = editFullInitConfig(data)
-	default:
-		return errors.New("unsupported kubeadm configuration")
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if data.Services.Kubeadm.IsControlPlane() {
-		if err = cis.EnforceCommonMasterRequirements(data.Security.Kubernetes.AESCBCEncryptionSecret); err != nil {
-			return err
-		}
-	}
-
-	// Marshal up config string
-	if _, err = data.Services.Kubeadm.MarshalYAML(); err != nil {
-		return err
-	}
-	b = []byte(data.Services.Kubeadm.ConfigurationStr)
-
-	// Write out marshaled config
-	p := path.Dir(constants.KubeadmConfig)
-	if err = os.MkdirAll(p, os.ModeDir); err != nil {
-		return fmt.Errorf("create %s: %v", p, err)
-	}
-
-	if err = ioutil.WriteFile(constants.KubeadmConfig, b, 0400); err != nil {
-		return fmt.Errorf("write %s: %v", constants.KubeadmConfig, err)
-	}
-
-	return nil
-}
-
 // WritePKIFiles handles writing any user specified certs to disk
-func WritePKIFiles(data *userdata.UserData) (err error) {
-	if data.Security.Kubernetes == nil {
-		return fmt.Errorf("[%s] is required", "security.kubernetes")
-	}
-
+func WritePKIFiles(config config.Configurator) (err error) {
 	certs := []struct {
 		Cert     *x509.PEMEncodedCertificateAndKey
 		CertPath string
 		KeyPath  string
 	}{
 		{
-			Cert:     data.Security.Kubernetes.CA,
+			Cert:     config.Cluster().CA(),
 			CertPath: constants.KubeadmCACert,
 			KeyPath:  constants.KubeadmCAKey,
-		},
-		{
-			Cert:     data.Security.Kubernetes.SA,
-			CertPath: constants.KubeadmSACert,
-			KeyPath:  constants.KubeadmSAKey,
-		},
-		{
-			Cert:     data.Security.Kubernetes.FrontProxy,
-			CertPath: constants.KubeadmFrontProxyCACert,
-			KeyPath:  constants.KubeadmFrontProxyCAKey,
 		},
 	}
 
@@ -221,31 +68,17 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 	return err
 }
 
-// FileSet compares the list of required files to the ones
-// already present on the node and returns the delta
-func FileSet(files []string) []*securityapi.ReadFileRequest {
-	fileRequests := []*securityapi.ReadFileRequest{}
-	// Check to see if we already have the file locally
-	for _, file := range files {
-		if _, err := os.Stat(file); os.IsNotExist(err) {
-			fileRequests = append(fileRequests, &securityapi.ReadFileRequest{Path: file})
-		}
-	}
-
-	return fileRequests
-}
-
 // CreateSecurityClients handles instantiating a security API client connection
-// to each trustd endpoint defined in userdata
-func CreateSecurityClients(data *userdata.UserData) (clients []securityapi.SecurityClient, err error) {
+// to each trustd endpoint defined in the config.
+func CreateSecurityClients(config config.Configurator) (clients []securityapi.SecurityClient, err error) {
 	clients = []securityapi.SecurityClient{}
 
-	creds := basic.NewTokenCredentials(data.Services.Trustd.Token)
+	creds := basic.NewTokenCredentials(config.Machine().Security().Token())
 
 	// Create a trustd client for each endpoint to set up
 	// a fan out approach to gathering the files
 	var conn *grpc.ClientConn
-	for _, endpoint := range data.Services.Trustd.Endpoints {
+	for _, endpoint := range config.Cluster().IPs() {
 		conn, err = basic.NewConnection(endpoint, constants.TrustdPort, creds)
 		if err != nil {
 			return clients, err

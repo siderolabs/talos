@@ -15,11 +15,11 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 type singleton struct {
-	UserData *userdata.UserData
+	Config config.Configurator
 
 	// State of running services by ID
 	state map[string]*ServiceRunner
@@ -41,12 +41,12 @@ var once sync.Once
 
 // Services returns the instance of the system services API.
 // nolint: golint
-func Services(data *userdata.UserData) *singleton {
+func Services(config config.Configurator) *singleton {
 	once.Do(func() {
 		instance = &singleton{
-			UserData: data,
-			state:    make(map[string]*ServiceRunner),
-			running:  make(map[string]struct{}),
+			Config:  config,
+			state:   make(map[string]*ServiceRunner),
+			running: make(map[string]struct{}),
 		}
 	})
 	return instance
@@ -65,7 +65,7 @@ func (s *singleton) Load(services ...Service) []string {
 	ids := make([]string, 0, len(services))
 
 	for _, service := range services {
-		id := service.ID(s.UserData)
+		id := service.ID(s.Config)
 		ids = append(ids, id)
 
 		if _, exists := s.state[id]; exists {
@@ -73,7 +73,7 @@ func (s *singleton) Load(services ...Service) []string {
 			continue
 		}
 
-		svcrunner := NewServiceRunner(service, s.UserData)
+		svcrunner := NewServiceRunner(service, s.Config)
 		s.state[id] = svcrunner
 	}
 
@@ -166,7 +166,7 @@ func (s *singleton) Shutdown() {
 	reverseDependencies := make(map[string][]string)
 
 	for name, svcrunner := range stateCopy {
-		for _, dependency := range svcrunner.service.DependsOn(s.UserData) {
+		for _, dependency := range svcrunner.service.DependsOn(s.Config) {
 			reverseDependencies[dependency] = append(reverseDependencies[dependency], name)
 		}
 	}
@@ -281,7 +281,7 @@ func (s *singleton) APIStart(ctx context.Context, id string) error {
 		return nil
 	}
 
-	if svc, ok := service.(APIStartableService); ok && svc.APIStartAllowed(s.UserData) {
+	if svc, ok := service.(APIStartableService); ok && svc.APIStartAllowed(s.Config) {
 		return s.Start(id)
 	}
 
@@ -300,7 +300,7 @@ func (s *singleton) APIStop(ctx context.Context, id string) error {
 		return nil
 	}
 
-	if svc, ok := service.(APIStoppableService); ok && svc.APIStopAllowed(s.UserData) {
+	if svc, ok := service.(APIStoppableService); ok && svc.APIStopAllowed(s.Config) {
 		return s.Stop(ctx, id)
 	}
 
@@ -319,7 +319,7 @@ func (s *singleton) APIRestart(ctx context.Context, id string) error {
 		return s.APIStart(ctx, id)
 	}
 
-	if svc, ok := service.(APIRestartableService); ok && svc.APIRestartAllowed(s.UserData) {
+	if svc, ok := service.(APIRestartableService); ok && svc.APIRestartAllowed(s.Config) {
 		if err := s.Stop(ctx, id); err != nil {
 			return err
 		}

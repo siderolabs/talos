@@ -9,9 +9,9 @@ import (
 	"io"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/api/reg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Service wraps machined API server
@@ -23,8 +23,8 @@ func NewService() *Service {
 }
 
 // Main is an entrypoint the the API service
-func (s *Service) Main(ctx context.Context, data *userdata.UserData, logWriter io.Writer) error {
-	api := reg.NewRegistrator(data)
+func (s *Service) Main(ctx context.Context, config config.Configurator, logWriter io.Writer) error {
+	api := reg.NewRegistrator(config)
 	server := factory.NewServer(api)
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.InitSocketPath))
 	if err != nil {

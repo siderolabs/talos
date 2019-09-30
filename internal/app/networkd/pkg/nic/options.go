@@ -63,7 +63,7 @@ func WithType(o int) Option {
 
 // WithMTU defines the MTU for the interface
 // TODO: I think we should drop this since MTU is getting set
-// by address configuration method ( either via dhcp or userdata )
+// by address configuration method ( either via dhcp or config )
 func WithMTU(mtu uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		if (mtu < MinimumMTU) || (mtu > MaximumMTU) {

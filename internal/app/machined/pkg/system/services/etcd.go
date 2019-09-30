@@ -28,11 +28,12 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/net"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 var etcdImage = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
@@ -42,13 +43,13 @@ var etcdImage = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdV
 type Etcd struct{}
 
 // ID implements the Service interface.
-func (e *Etcd) ID(data *userdata.UserData) string {
+func (e *Etcd) ID(config config.Configurator) string {
 	return "etcd"
 }
 
 // PreFunc implements the Service interface.
-func (e *Etcd) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
-	if err = generatePKI(data); err != nil {
+func (e *Etcd) PreFunc(ctx context.Context, config config.Configurator) (err error) {
+	if err = generatePKI(config); err != nil {
 		return errors.Wrap(err, "failed to generate etcd PKI")
 	}
 
@@ -69,22 +70,22 @@ func (e *Etcd) PreFunc(ctx context.Context, data *userdata.UserData) (err error)
 }
 
 // PostFunc implements the Service interface.
-func (e *Etcd) PostFunc(data *userdata.UserData) (err error) {
+func (e *Etcd) PostFunc(config config.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (e *Etcd) Condition(data *userdata.UserData) conditions.Condition {
+func (e *Etcd) Condition(config config.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (e *Etcd) DependsOn(data *userdata.UserData) []string {
+func (e *Etcd) DependsOn(config config.Configurator) []string {
 	return []string{"containerd"}
 }
 
 // Runner implements the Service interface.
-func (e *Etcd) Runner(data *userdata.UserData) (runner.Runner, error) {
+func (e *Etcd) Runner(config config.Configurator) (runner.Runner, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to discover IP addresses")
@@ -101,9 +102,9 @@ func (e *Etcd) Runner(data *userdata.UserData) (runner.Runner, error) {
 
 	initialClusterState := "new"
 	initialCluster := hostname + "=https://" + ips[0].String() + ":2380"
-	if data.Services.Kubeadm.IsControlPlane() && data.Services.Kubeadm.JoinConfiguration != nil {
+	if config.Machine().Type() == machine.ControlPlane {
 		initialClusterState = "existing"
-		initialCluster, err = buildInitialCluster(data, hostname, ips[0].String())
+		initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +112,7 @@ func (e *Etcd) Runner(data *userdata.UserData) (runner.Runner, error) {
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: e.ID(data),
+		ID: e.ID(config),
 		ProcessArgs: []string{
 			"/usr/local/bin/etcd",
 			"--name=" + hostname,
@@ -137,12 +138,12 @@ func (e *Etcd) Runner(data *userdata.UserData) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range data.Env {
+	for key, val := range config.Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		data,
+		config.Debug(),
 		&args,
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(etcdImage),
@@ -159,16 +160,16 @@ func (e *Etcd) Runner(data *userdata.UserData) (runner.Runner, error) {
 }
 
 // nolint: gocyclo
-func generatePKI(data *userdata.UserData) (err error) {
+func generatePKI(config config.Configurator) (err error) {
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0644); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubeadmEtcdCACert, data.Security.Etcd.CA.Crt, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubeadmEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
 		return errors.Wrap(err, "failed to write CA certificate")
 	}
 
-	if err = ioutil.WriteFile(constants.KubeadmEtcdCAKey, data.Security.Etcd.CA.Key, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubeadmEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
 		return errors.Wrap(err, "failed to write CA key")
 	}
 
@@ -214,7 +215,7 @@ func generatePKI(data *userdata.UserData) (err error) {
 		return errors.Wrap(err, "failled to parse certificate request")
 	}
 
-	caPemBlock, _ := pem.Decode(data.Security.Etcd.CA.Crt)
+	caPemBlock, _ := pem.Decode(config.Cluster().Etcd().CA().Crt)
 	if caPemBlock == nil {
 		return errors.New("failed to decode ca cert pem")
 	}
@@ -224,7 +225,7 @@ func generatePKI(data *userdata.UserData) (err error) {
 		return errors.Wrap(err, "failed to parse CA")
 	}
 
-	caKeyPemBlock, _ := pem.Decode(data.Security.Etcd.CA.Key)
+	caKeyPemBlock, _ := pem.Decode(config.Cluster().Etcd().CA().Key)
 	if caKeyPemBlock == nil {
 		return errors.New("failed to decode ca key pem")
 	}
@@ -281,9 +282,9 @@ func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
 	return resp, nil
 }
 
-func buildInitialCluster(data *userdata.UserData, name, ip string) (initial string, err error) {
-	endpoint := stdlibnet.ParseIP(data.Services.Trustd.Endpoints[0]).String()
-	h, err := kubernetes.NewTemporaryClientFromPKI(data.Security.Kubernetes.CA.Crt, data.Security.Kubernetes.CA.Key, endpoint, "6443")
+func buildInitialCluster(config config.Configurator, name, ip string) (initial string, err error) {
+	endpoint := stdlibnet.ParseIP(config.Cluster().IPs()[0])
+	h, err := kubernetes.NewTemporaryClientFromPKI(config.Cluster().CA().Crt, config.Cluster().CA().Key, endpoint.String(), "6443")
 	if err != nil {
 		return "", err
 	}

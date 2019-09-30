@@ -7,12 +7,12 @@ package network
 import (
 	"log"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // UserDefinedNetwork represents the UserDefinedNetwork task.
@@ -34,7 +34,7 @@ func (task *UserDefinedNetwork) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc
 }
 
 // nolint: gocyclo
-func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *UserDefinedNetwork) runtime(args *phase.RuntimeArgs) (err error) {
 	nwd, err := networkd.New()
 	if err != nil {
 		return err
@@ -75,15 +75,5 @@ func (task *UserDefinedNetwork) runtime(platform platform.Platform, data *userda
 		return nil
 	}
 
-	// Ensure we have appropriate struct defined
-	if data.Networking == nil {
-		data.Networking = &userdata.Networking{}
-	}
-	if data.Networking.OS == nil {
-		data.Networking.OS = &userdata.OSNet{}
-	}
-
-	data.Networking.OS.Hostname = hostname
-
-	return nil
+	return unix.Sethostname([]byte(hostname))
 }

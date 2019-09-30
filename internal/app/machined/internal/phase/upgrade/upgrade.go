@@ -13,10 +13,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/install"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Upgrade represents the task for stop all containerd tasks in the
@@ -36,19 +34,17 @@ func NewUpgradeTask(devname string, req *machineapi.UpgradeRequest) phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *Upgrade) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
-		return task.standard(platform)
-	}
+	return task.standard
 }
 
-func (task *Upgrade) standard(platform platform.Platform) (err error) {
+func (task *Upgrade) standard(args *phase.RuntimeArgs) (err error) {
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
-	var userdata *string
-	if userdata = kernel.ProcCmdline().Get(constants.KernelParamUserData).First(); userdata == nil {
-		return errors.Errorf("no user data option was found")
+	var config *string
+	if config = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
+		return errors.Errorf("no config option was found")
 	}
-	if err = install.Install(task.ref, task.devname, strings.ToLower(platform.Name())); err != nil {
+	if err = install.Install(task.ref, task.devname, strings.ToLower(args.Platform().Name())); err != nil {
 		return err
 	}
 

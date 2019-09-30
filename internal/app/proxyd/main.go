@@ -15,19 +15,19 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/frontend"
 	"github.com/talos-systems/talos/internal/app/proxyd/internal/reg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
-	"github.com/talos-systems/talos/pkg/userdata"
 
 	pkgnet "github.com/talos-systems/talos/pkg/net"
 )
 
-var dataPath *string
+var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-	dataPath = flag.String("userdata", "", "the path to the user data")
+	configPath = flag.String("config", "", "the path to the config")
 	flag.Parse()
 }
 
@@ -36,13 +36,17 @@ func main() {
 		log.Fatalf("startup: %s", err)
 	}
 
-	data, err := userdata.Open(*dataPath)
+	content, err := config.FromFile(*configPath)
 	if err != nil {
-		log.Fatalf("open user data: %v", err)
+		log.Fatalf("open config: %v", err)
+	}
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
 	}
 
 	bootstrapCtx, bootstrapCancel := context.WithCancel(context.Background())
-	r, err := frontend.NewReverseProxy(data.Services.Trustd.Endpoints, bootstrapCancel)
+	r, err := frontend.NewReverseProxy(config.Cluster().IPs(), bootstrapCancel)
 	if err != nil {
 		log.Fatalf("failed to initialize the reverse proxy: %v", err)
 	}

@@ -24,7 +24,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 const (
@@ -72,7 +71,7 @@ func (suite *CRISuite) SetupSuite() {
 	}
 
 	suite.containerdRunner = process.NewRunner(
-		&userdata.UserData{},
+		false,
 		args,
 		runner.WithLogPath(suite.tmpDir),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
@@ -120,7 +119,7 @@ func (suite *CRISuite) getLogContents(filename string) []byte {
 }
 
 func (suite *CRISuite) TestRunSuccess() {
-	r := crirunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := crirunner.NewRunner(false, &runner.Args{
 		ID:          "test",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
@@ -138,7 +137,7 @@ func (suite *CRISuite) TestRunSuccess() {
 }
 
 func (suite *CRISuite) TestRunTwice() {
-	r := crirunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := crirunner.NewRunner(false, &runner.Args{
 		ID:          "runtwice",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
@@ -168,7 +167,7 @@ func (suite *CRISuite) TestPodCleanup() {
 	// open first runner, but don't close it; second runner should be
 	// able to start the pod by cleaning up pod created by the first
 	// runner
-	r1 := crirunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r1 := crirunner.NewRunner(false, &runner.Args{
 		ID:          "cleanup1",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 1"},
 	},
@@ -179,7 +178,7 @@ func (suite *CRISuite) TestPodCleanup() {
 
 	suite.Require().NoError(r1.Open(context.Background()))
 
-	r2 := crirunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r2 := crirunner.NewRunner(false, &runner.Args{
 		ID:          "cleanup1",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
@@ -196,7 +195,7 @@ func (suite *CRISuite) TestPodCleanup() {
 }
 
 func (suite *CRISuite) TestRunLogs() {
-	r := crirunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := crirunner.NewRunner(false, &runner.Args{
 		ID:          "logtest",
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	},
@@ -224,7 +223,7 @@ func (suite *CRISuite) TestRunLogs() {
 // 	// nolint: errcheck
 // 	_ = os.Remove(testFile)
 
-// 	r := restart.New(containerdrunner.NewRunner(&userdata.UserData{}, &runner.Args{
+// 	r := restart.New(containerdrunner.NewRunner(false, &runner.Args{
 // 		ID:          "endless",
 // 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile + " && echo ok || (echo fail; false)"},
 // 	},
@@ -293,7 +292,7 @@ func (suite *CRISuite) TestRunLogs() {
 // }
 
 func (suite *CRISuite) TestStopSigKill() {
-	r := crirunner.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := crirunner.NewRunner(false, &runner.Args{
 		ID:          "nokill",
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},

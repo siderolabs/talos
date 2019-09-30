@@ -5,26 +5,26 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
+
+var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+	configPath = flag.String("config", "", "the path to the config")
+	flag.Parse()
 }
 
 func main() {
-	var (
-		netconf networkd.NetConf
-		ud      *userdata.UserData
-	)
-
 	nwd, err := networkd.New()
 	if err != nil {
 		log.Fatal(err)
@@ -32,20 +32,22 @@ func main() {
 
 	// Convert links to nic
 	log.Println("discovering local network interfaces")
-	netconf, err = nwd.Discover()
-	if err != nil {
+	var netconf networkd.NetConf
+	if netconf, err = nwd.Discover(); err != nil {
 		log.Fatal(err)
 	}
 
-	// Load up userdata
-	ud, err = userdata.Open(constants.UserDataPath)
+	content, err := config.FromFile(*configPath)
 	if err != nil {
-		log.Printf("failed to read userdata %s, using defaults: %+v", constants.UserDataPath, err)
+		log.Fatalf("open config: %v", err)
+	}
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
 	}
 
-	log.Println("overlaying userdata network configuration")
-	// Update nic with userdata specified options
-	if err = netconf.OverlayUserData(ud); err != nil {
+	log.Println("overlaying config network configuration")
+	if err = netconf.BuildOptions(config); err != nil {
 		log.Fatal(err)
 	}
 

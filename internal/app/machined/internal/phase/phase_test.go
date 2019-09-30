@@ -12,9 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 type PhaseSuite struct {
@@ -29,7 +27,7 @@ type regularTask struct {
 }
 
 func (t *regularTask) RuntimeFunc(runtime.Mode) phase.RuntimeFunc {
-	return func(platform.Platform, *userdata.UserData) error {
+	return func(*phase.RuntimeArgs) error {
 		return <-t.errCh
 	}
 }
@@ -43,7 +41,7 @@ func (t *nilTask) RuntimeFunc(runtime.Mode) phase.RuntimeFunc {
 type panicTask struct{}
 
 func (t *panicTask) RuntimeFunc(runtime.Mode) phase.RuntimeFunc {
-	return func(platform.Platform, *userdata.UserData) error {
+	return func(*phase.RuntimeArgs) error {
 		panic("in task")
 	}
 }

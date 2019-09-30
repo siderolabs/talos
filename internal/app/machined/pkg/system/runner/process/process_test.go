@@ -22,7 +22,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -56,7 +55,7 @@ func (suite *ProcessSuite) TearDownSuite() {
 }
 
 func (suite *ProcessSuite) TestRunSuccess() {
-	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := process.NewRunner(false, &runner.Args{
 		ID:          "test",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	}, runner.WithLogPath(suite.tmpDir))
@@ -70,7 +69,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 }
 
 func (suite *ProcessSuite) TestRunLogs() {
-	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := process.NewRunner(false, &runner.Args{
 		ID:          "logtest",
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	}, runner.WithLogPath(suite.tmpDir))
@@ -97,7 +96,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	// nolint: errcheck
 	_ = os.Remove(testFile)
 
-	r := restart.New(process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := restart.New(process.NewRunner(false, &runner.Args{
 		ID:          "restarter",
 		ProcessArgs: []string{"/bin/sh", "-c", "echo \"ran\"; test -f " + testFile},
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
@@ -145,7 +144,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	// nolint: errcheck
 	_ = os.Remove(testFile)
 
-	r := restart.New(process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := restart.New(process.NewRunner(false, &runner.Args{
 		ID:          "endless",
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile},
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
@@ -186,7 +185,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 }
 
 func (suite *ProcessSuite) TestStopSigKill() {
-	r := process.NewRunner(&userdata.UserData{}, &runner.Args{
+	r := process.NewRunner(false, &runner.Args{
 		ID:          "nokill",
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},

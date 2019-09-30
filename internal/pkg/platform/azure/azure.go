@@ -11,14 +11,13 @@ import (
 	"net/http"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
-	"github.com/talos-systems/talos/pkg/userdata/download"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 const (
-	// AzureUserDataEndpoint is the local endpoint for the user data.
+	// AzureUserDataEndpoint is the local endpoint for the config.
 	// By specifying format=text and drilling down to the actual key we care about
-	// we get a base64 encoded userdata response
+	// we get a base64 encoded config response
 	AzureUserDataEndpoint = "http://169.254.169.254/metadata/instance/compute/customData?api-version=2019-06-01&format=text"
 	// AzureHostnameEndpoint is the local endpoint for the hostname.
 	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/name?api-version=2019-06-01&format=text"
@@ -35,13 +34,13 @@ func (a *Azure) Name() string {
 	return "Azure"
 }
 
-// UserData implements the platform.Platform interface.
-func (a *Azure) UserData() (*userdata.UserData, error) {
+// Configuration implements the platform.Platform interface.
+func (a *Azure) Configuration() ([]byte, error) {
 	if err := linuxAgent(); err != nil {
 		return nil, err
 	}
 
-	return download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
+	return config.Download(AzureUserDataEndpoint, config.WithHeaders(map[string]string{"Metadata": "true"}), config.WithFormat("base64"))
 }
 
 // Mode implements the platform.Platform interface.

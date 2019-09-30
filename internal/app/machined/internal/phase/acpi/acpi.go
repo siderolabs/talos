@@ -13,9 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/event"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Handler represents the ACPI handler task.
@@ -36,7 +34,7 @@ func (task *Handler) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Handler) standard(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *Handler) standard(args *phase.RuntimeArgs) (err error) {
 	if err := listenForPowerButton(); err != nil {
 		log.Printf("WARNING: power off events will be ignored: %+v", err)
 	}

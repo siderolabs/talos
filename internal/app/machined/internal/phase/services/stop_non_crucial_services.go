@@ -11,9 +11,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // StopNonCrucialServices represents the task for stop all services to perform
@@ -27,16 +26,14 @@ func NewStopNonCrucialServicesTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *StopNonCrucialServices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
-		return task.standard(data)
-	}
+	return task.standard
 }
 
-func (task *StopNonCrucialServices) standard(data *userdata.UserData) (err error) {
+func (task *StopNonCrucialServices) standard(args *phase.RuntimeArgs) (err error) {
 	ctx := namespaces.WithNamespace(context.Background(), "k8s.io")
 
 	services := []string{"osd", "udevd", "networkd", "ntpd"}
-	if data.Services.Kubeadm.IsControlPlane() {
+	if args.Config().Machine().Type() == machine.Bootstrap || args.Config().Machine().Type() == machine.ControlPlane {
 		services = append(services, "trustd", "proxyd")
 	}
 	for _, service := range services {

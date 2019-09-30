@@ -20,25 +20,24 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // processRunner is a runner.Runner that runs a process on the host.
 type processRunner struct {
-	data *userdata.UserData
-	args *runner.Args
-	opts *runner.Options
+	args  *runner.Args
+	opts  *runner.Options
+	debug bool
 
 	stop    chan struct{}
 	stopped chan struct{}
 }
 
 // NewRunner creates runner.Runner that runs a process on the host
-func NewRunner(data *userdata.UserData, args *runner.Args, setters ...runner.Option) runner.Runner {
+func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &processRunner{
-		data:    data,
 		args:    args,
 		opts:    runner.DefaultOptions(),
+		debug:   debug,
 		stop:    make(chan struct{}),
 		stopped: make(chan struct{}),
 	}
@@ -93,7 +92,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 	}
 
 	var writer io.Writer
-	if p.data.Debug {
+	if p.debug {
 		writer = io.MultiWriter(w, os.Stdout)
 	} else {
 		writer = w

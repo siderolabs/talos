@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // Interactive is an initializer that performs an installation by prompting the
@@ -28,7 +28,7 @@ import (
 type Interactive struct{}
 
 // Initialize implements the Initializer interface.
-func (i *Interactive) Initialize(platform platform.Platform, data *userdata.UserData) (err error) {
+func (i *Interactive) Initialize(platform platform.Platform, install machine.Install) (err error) {
 	var dev *probe.ProbedBlockDevice
 	dev, err = probe.GetDevWithFileSystemLabel(constants.ISOFilesystemLabel)
 	if err != nil {
@@ -60,10 +60,10 @@ func (i *Interactive) Initialize(platform platform.Platform, data *userdata.User
 	cmdline := kernel.NewDefaultCmdline()
 	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 	cmdline.Append(constants.KernelParamPlatform, strings.ToLower(platform.Name()))
-	cmdline.Append(constants.KernelParamUserData, endpoint)
+	cmdline.Append(constants.KernelParamConfig, endpoint)
 
 	var inst *installer.Installer
-	inst, err = installer.NewInstaller(cmdline, data)
+	inst, err = installer.NewInstaller(cmdline, install)
 	if err != nil {
 		return err
 	}

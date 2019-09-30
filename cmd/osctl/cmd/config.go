@@ -9,22 +9,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
-	udv0 "github.com/talos-systems/talos/pkg/userdata"
-	udgenv0 "github.com/talos-systems/talos/pkg/userdata/generate"
-	"github.com/talos-systems/talos/pkg/userdata/translate"
-	udgenv1alpha1 "github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
-
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -138,79 +133,14 @@ var configGenerateCmd = &cobra.Command{
 			log.Fatal("expected a cluster name and comma delimited list of IP addresses")
 		}
 		switch configVersion {
-		case "v0":
-			genV0Userdata(args)
 		case "v1alpha1":
-			genV1Alpha1Userdata(args)
+			genV1Alpha1Config(args)
 		}
 	},
 }
 
-func genV0Userdata(args []string) {
-	input, err := udgenv0.NewInput(args[0], strings.Split(args[1], ","), kubernetesVersion)
-	if err != nil {
-		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
-	}
-	input.AdditionalSubjectAltNames = additionalSANs
-
-	workingDir, err := os.Getwd()
-	if err != nil {
-		helpers.Fatalf("failed to fetch current working dir: %v", err)
-	}
-
-	var udType udgenv0.Type
-	for idx, master := range strings.Split(args[1], ",") {
-		input.Index = idx
-		input.IP = net.ParseIP(master)
-		if input.Index == 0 {
-			udType = udgenv0.TypeInit
-		} else {
-			udType = udgenv0.TypeControlPlane
-		}
-
-		if err = writeV0Userdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
-			helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
-		}
-		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
-	}
-	input.IP = nil
-
-	if err = writeV0Userdata(input, udgenv0.TypeJoin, "worker"); err != nil {
-		helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
-	}
-	fmt.Println("created file", workingDir+"/worker.yaml")
-
-	data, err := udgenv0.Talosconfig(input)
-	if err != nil {
-		helpers.Fatalf("failed to generate talosconfig: %v", err)
-	}
-	if err = ioutil.WriteFile("talosconfig", []byte(data), 0644); err != nil {
-		helpers.Fatalf("%v", err)
-	}
-	fmt.Println("created file", workingDir+"/talosconfig")
-}
-
-func writeV0Userdata(input *udgenv0.Input, t udgenv0.Type, name string) (err error) {
-	var data string
-	data, err = udgenv0.Userdata(t, input)
-	if err != nil {
-		return err
-	}
-	ud := &udv0.UserData{}
-	if err = yaml.Unmarshal([]byte(data), ud); err != nil {
-		return err
-	}
-	if err = ud.Validate(); err != nil {
-		return err
-	}
-	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
-		return err
-	}
-	return nil
-}
-
-func genV1Alpha1Userdata(args []string) {
-	input, err := udgenv1alpha1.NewInput(args[0], strings.Split(args[1], ","), kubernetesVersion)
+func genV1Alpha1Config(args []string) {
+	input, err := genv1alpha1.NewInput(args[0], strings.Split(args[1], ","), kubernetesVersion)
 	if err != nil {
 		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
@@ -222,56 +152,52 @@ func genV1Alpha1Userdata(args []string) {
 		helpers.Fatalf("failed to fetch current working dir: %v", err)
 	}
 
-	var udType udgenv1alpha1.Type
-	for idx, master := range strings.Split(args[1], ",") {
-		input.Index = idx
-		input.IP = net.ParseIP(master)
-		if input.Index == 0 {
-			udType = udgenv1alpha1.TypeInit
+	var udType genv1alpha1.Type
+	for idx := range strings.Split(args[1], ",") {
+		if idx == 0 {
+			udType = genv1alpha1.TypeInit
 		} else {
-			udType = udgenv1alpha1.TypeControlPlane
+			udType = genv1alpha1.TypeControlPlane
 		}
 
-		if err = writeV1Alpha1Userdata(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
-			helpers.Fatalf("failed to generate userdata for %s: %v", "master-"+strconv.Itoa(idx+1), err)
+		if err = writeV1Alpha1Config(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
+			helpers.Fatalf("failed to generate config for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 		}
 		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 	}
-	input.IP = nil
 
-	if err = writeV1Alpha1Userdata(input, udgenv1alpha1.TypeJoin, "worker"); err != nil {
-		helpers.Fatalf("failed to generate userdata for %s: %v", "worker", err)
+	if err = writeV1Alpha1Config(input, genv1alpha1.TypeJoin, "worker"); err != nil {
+		helpers.Fatalf("failed to generate config for %s: %v", "worker", err)
 	}
 	fmt.Println("created file", workingDir+"/worker.yaml")
 
-	data, err := udgenv1alpha1.Talosconfig(input)
-	if err != nil {
-		helpers.Fatalf("failed to generate talosconfig: %v", err)
+	newConfig := &config.Config{
+		Context: input.ClusterName,
+		Contexts: map[string]*config.Context{
+			input.ClusterName: {
+				Target: "127.0.0.1",
+				CA:     base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
+				Crt:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
+				Key:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
+			},
+		},
 	}
-	if err = ioutil.WriteFile("talosconfig", []byte(data), 0644); err != nil {
+
+	data, err := yaml.Marshal(newConfig)
+	if err != nil {
+		helpers.Fatalf("failed to marshal config: %+v", err)
+	}
+	if err = ioutil.WriteFile("talosconfig", data, 0644); err != nil {
 		helpers.Fatalf("%v", err)
 	}
+
 	fmt.Println("created file", workingDir+"/talosconfig")
 }
 
-func writeV1Alpha1Userdata(input *udgenv1alpha1.Input, t udgenv1alpha1.Type, name string) (err error) {
+func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {
 	var data string
-	data, err = udgenv1alpha1.Userdata(t, input)
+	data, err = genv1alpha1.Config(t, input)
 	if err != nil {
-		return err
-	}
-
-	trans, err := translate.NewTranslator("v1alpha1", data)
-	if err != nil {
-		return err
-	}
-
-	ud, err := trans.Translate()
-	if err != nil {
-		return err
-	}
-
-	if err = ud.Validate(); err != nil {
 		return err
 	}
 
@@ -289,9 +215,8 @@ func init() {
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	configGenerateCmd.Flags().StringVar(&canonicalControlplaneEndpoint, "controlplane-endpoint", "", "the canonical controlplane endpoint (IP or DNS name) and optional port (defaults to 6443)")
-	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v0", "desired machine config version to generate")
+	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	configGenerateCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
-	helpers.Should(configGenerateCmd.Flags().MarkDeprecated("version", "the v0 version of machine config will be removed in the next version of Talos"))
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
 	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
 	helpers.Should(configAddCmd.MarkFlagRequired("key"))

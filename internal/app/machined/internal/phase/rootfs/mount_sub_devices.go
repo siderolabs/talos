@@ -11,9 +11,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/virtual"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
 )
 
 // MountSubDevices represents the MountSubDevices task.
@@ -34,7 +32,7 @@ func (task *MountSubDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountSubDevices) runtime(platform platform.Platform, data *userdata.UserData) (err error) {
+func (task *MountSubDevices) runtime(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
 	mountpoints, err = virtual.SubMountPoints()
 	if err != nil {

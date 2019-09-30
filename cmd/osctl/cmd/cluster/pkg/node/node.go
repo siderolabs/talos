@@ -16,7 +16,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
-	"github.com/talos-systems/talos/pkg/userdata/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
 // Request represents the set of options available for configuring a node.
@@ -35,9 +35,7 @@ type Request struct {
 
 // NewNode creates a node as a container.
 func NewNode(clusterName string, req *Request) (err error) {
-	// Generate the userdata for the node.
-
-	data, err := generate.Userdata(req.Type, &req.Input)
+	data, err := generate.Config(req.Type, &req.Input)
 	if err != nil {
 		return err
 	}

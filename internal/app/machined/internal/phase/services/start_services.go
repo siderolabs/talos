@@ -8,9 +8,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // StartServices represents the StartServices task.
@@ -23,22 +22,20 @@ func NewStartServicesTask() phase.Task {
 
 // RuntimeFunc returns the runtime function.
 func (task *StartServices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(platform platform.Platform, data *userdata.UserData) error {
-		return task.runtime(data, mode)
-	}
+	return task.standard
 }
 
-func (task *StartServices) runtime(data *userdata.UserData, mode runtime.Mode) (err error) {
-	task.loadSystemServices(data, mode)
-	task.loadKubernetesServices(data)
+func (task *StartServices) standard(args *phase.RuntimeArgs) (err error) {
+	task.loadSystemServices(args)
+	task.loadKubernetesServices(args)
 
-	system.Services(nil).StartAll()
+	system.Services(args.Config()).StartAll()
 
 	return nil
 }
 
-func (task *StartServices) loadSystemServices(data *userdata.UserData, mode runtime.Mode) {
-	svcs := system.Services(data)
+func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
+	svcs := system.Services(args.Config())
 	// Start the services common to all nodes.
 	svcs.Load(
 		&services.MachinedAPI{},
@@ -49,7 +46,7 @@ func (task *StartServices) loadSystemServices(data *userdata.UserData, mode runt
 		&services.NTPd{},
 	)
 
-	if mode != runtime.Container {
+	if args.Platform().Mode() != runtime.Container {
 		// udevd-trigger is causing stalls/unresponsive stuff when running in local mode
 		// TODO: investigate root cause, but workaround for now is to skip it in container mode
 		svcs.Load(
@@ -58,21 +55,21 @@ func (task *StartServices) loadSystemServices(data *userdata.UserData, mode runt
 	}
 
 	// Start the services common to all master nodes.
-	if data.Services.Kubeadm.IsControlPlane() {
+
+	switch args.Config().Machine().Type() {
+	case machine.Bootstrap:
+		fallthrough
+	case machine.ControlPlane:
 		svcs.Load(
+			&services.Etcd{},
 			&services.Trustd{},
 			&services.Proxyd{},
 		)
-		if data.Services.Etcd != nil && data.Services.Etcd.Enabled {
-			svcs.Load(
-				&services.Etcd{},
-			)
-		}
 	}
 }
 
-func (task *StartServices) loadKubernetesServices(data *userdata.UserData) {
-	svcs := system.Services(data)
+func (task *StartServices) loadKubernetesServices(args *phase.RuntimeArgs) {
+	svcs := system.Services(args.Config())
 	svcs.Load(
 		&services.Kubelet{},
 		&services.Kubeadm{},

@@ -15,19 +15,38 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/userdata"
+	"github.com/talos-systems/talos/pkg/config"
 )
+
+// RuntimeArgs represents the set of arguments passed into a RuntimeFunc.
+type RuntimeArgs struct {
+	platform platform.Platform
+	config   config.Configurator
+}
+
+// RuntimeFunc defines the function that a task must return. The function
+// envelopes the task logic for a given runtime mode.
+type RuntimeFunc func(*RuntimeArgs) error
+
+// Task represents a task within a Phase.
+type Task interface {
+	RuntimeFunc(runtime.Mode) RuntimeFunc
+}
+
+// Phase represents a phase in the boot process.
+type Phase struct {
+	description string
+	tasks       []Task
+}
 
 // Runner represents a management layer for phases.
 type Runner struct {
-	platform platform.Platform
-	phases   []*Phase
-	mode     runtime.Mode
-	data     *userdata.UserData
+	phases []*Phase
+	args   *RuntimeArgs
 }
 
 // NewRunner initializes and returns a Runner.
-func NewRunner(data *userdata.UserData) (*Runner, error) {
+func NewRunner(config config.Configurator) (*Runner, error) {
 	platform, err := platform.NewPlatform()
 	if err != nil {
 		return nil, err
@@ -44,11 +63,24 @@ func NewRunner(data *userdata.UserData) (*Runner, error) {
 		}
 	}
 
-	return &Runner{
-		platform: platform,
-		mode:     mode,
-		data:     data,
-	}, nil
+	runner := &Runner{
+		args: &RuntimeArgs{
+			platform: platform,
+			config:   config,
+		},
+	}
+
+	return runner, nil
+}
+
+// Platform returns the platform.
+func (r *RuntimeArgs) Platform() platform.Platform {
+	return r.platform
+}
+
+// Config returns the config.
+func (r *RuntimeArgs) Config() config.Configurator {
+	return r.config
 }
 
 // Run executes sequentially all phases known to a Runner.
@@ -106,23 +138,17 @@ func (r *Runner) runTask(task Task, errCh chan<- error) {
 	}()
 
 	var f RuntimeFunc
-	if f = task.RuntimeFunc(r.mode); f == nil {
+	if f = task.RuntimeFunc(r.args.Platform().Mode()); f == nil {
 		// A task is not defined for this runtime mode.
 		return
 	}
 
-	err = f(r.platform, r.data)
+	err = f(r.args)
 }
 
 // Add adds a phase to a Runner.
 func (r *Runner) Add(phase ...*Phase) {
 	r.phases = append(r.phases, phase...)
-}
-
-// Phase represents a phase in the boot process.
-type Phase struct {
-	description string
-	tasks       []Task
 }
 
 // NewPhase initializes and returns a Phase.
@@ -132,13 +158,4 @@ func NewPhase(description string, tasks ...Task) *Phase {
 		description: description,
 		tasks:       tasks,
 	}
-}
-
-// RuntimeFunc defines the function that a task must return. The function
-// envelopes the task logic for a given runtim mode.
-type RuntimeFunc func(platform.Platform, *userdata.UserData) error
-
-// Task represents a task within a Phase.
-type Task interface {
-	RuntimeFunc(runtime.Mode) RuntimeFunc
 }

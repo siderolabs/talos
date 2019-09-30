@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// KernelParamUserData is the kernel parameter name for specifying the URL
-	// to the user data.
-	KernelParamUserData = "talos.userdata"
+	// KernelParamConfig is the kernel parameter name for specifying the URL
+	// to the config.
+	KernelParamConfig = "talos.config"
 
 	// KernelParamPlatform is the kernel parameter name for specifying the
 	// platform.
@@ -138,18 +138,18 @@ const (
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
 
-	// UserDataPath is the path to the downloaded user data.
-	UserDataPath = "/run/userdata.yaml"
+	// ConfigPath is the path to the downloaded config.
+	ConfigPath = "/run/config.yaml"
 
 	// UserDataCIData is the volume label for NoCloud cloud-init.
 	// See https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html#datasource-nocloud.
 	UserDataCIData = "cidata"
 
-	// UserDataGuestInfo is the name of the VMware guestinfo user data strategy.
-	UserDataGuestInfo = "guestinfo"
+	// ConfigGuestInfo is the name of the VMware guestinfo config strategy.
+	ConfigGuestInfo = "guestinfo"
 
-	// VMwareGuestInfoUserDataKey is the guestinfo key used to provide a user data file.
-	VMwareGuestInfoUserDataKey = "talos.userdata"
+	// VMwareGuestInfoConfigKey is the guestinfo key used to provide a config file.
+	VMwareGuestInfoConfigKey = "talos.config"
 
 	// AuditPolicyPath is the path to the audit-policy.yaml relative to initramfs.
 	AuditPolicyPath = "/etc/kubernetes/audit-policy.yaml"

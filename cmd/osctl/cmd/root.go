@@ -35,7 +35,6 @@ var (
 	rsa                           bool
 	talosconfig                   string
 	target                        string
-	userdataFile                  string
 )
 
 // rootCmd represents the base command when called without any subcommands
