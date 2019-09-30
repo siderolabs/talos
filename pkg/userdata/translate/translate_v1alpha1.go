@@ -181,6 +181,12 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 		return err
 	}
 
+	if ud.Services.Etcd == nil {
+		ud.Services.Etcd = &userdata.Etcd{}
+	}
+
+	ud.Services.Etcd.Enabled = nc.Cluster.Etcd.Enabled
+
 	// Inject certs and SANs
 	ud.Security.OS = &userdata.OSSecurity{
 		CA: &x509.PEMEncodedCertificateAndKey{
@@ -290,6 +296,14 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 
 func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error {
 	// Convert and decode certs back to byte slices
+	kubeCert, err := base64.StdEncoding.DecodeString(nc.Cluster.CA.Crt)
+	if err != nil {
+		return err
+	}
+	kubeKey, err := base64.StdEncoding.DecodeString(nc.Cluster.CA.Key)
+	if err != nil {
+		return err
+	}
 	osCert, err := base64.StdEncoding.DecodeString(nc.Machine.CA.Crt)
 	if err != nil {
 		return err
@@ -307,6 +321,12 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 		return err
 	}
 
+	if ud.Services.Etcd == nil {
+		ud.Services.Etcd = &userdata.Etcd{}
+	}
+
+	ud.Services.Etcd.Enabled = nc.Cluster.Etcd.Enabled
+
 	// Inject certs and SANs
 	ud.Security.OS = &userdata.OSSecurity{
 		CA: &x509.PEMEncodedCertificateAndKey{
@@ -318,6 +338,10 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 	ud.Services.Kubeadm.ControlPlane = true
 
 	ud.Security.Kubernetes = &userdata.KubernetesSecurity{
+		CA: &x509.PEMEncodedCertificateAndKey{
+			Crt: kubeCert,
+			Key: kubeKey,
+		},
 		AESCBCEncryptionSecret: nc.Cluster.AESCBCEncryptionSecret,
 	}
 

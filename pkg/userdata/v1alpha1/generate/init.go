@@ -38,6 +38,7 @@ func initUd(in *Input) (string, error) {
 		ControllerManager: &v1alpha1.ControllerManagerConfig{},
 		Scheduler:         &v1alpha1.SchedulerConfig{},
 		Etcd: &v1alpha1.EtcdConfig{
+			Enabled: true,
 			CA: &v1alpha1.EtcdCAConfig{
 				Crt: in.Certs.EtcdCert,
 				Key: in.Certs.EtcdKey,

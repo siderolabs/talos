@@ -338,7 +338,7 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 
 	// Generate Etcd CA.
 	opts = []x509.Option{
-		x509.RSA(false),
+		x509.RSA(true),
 		x509.Organization("talos-etcd"),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
