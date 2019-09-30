@@ -121,10 +121,12 @@ func (i *Input) GetAPIServerSANs() []string {
 type Certs struct {
 	AdminCert string
 	AdminKey  string
-	OsCert    string
-	OsKey     string
+	EtcdCert  string
+	EtcdKey   string
 	K8sCert   string
 	K8sKey    string
+	OsCert    string
+	OsKey     string
 }
 
 // KubeadmTokens holds the senesitve kubeadm data.
@@ -282,6 +284,22 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 	if err != nil {
 		return nil, err
 	}
+	caPemBlock, _ := pem.Decode(osCert.CrtPEM)
+	if caPemBlock == nil {
+		return nil, errors.New("failed to decode ca cert pem")
+	}
+	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	caKeyPemBlock, _ := pem.Decode(osCert.KeyPEM)
+	if caKeyPemBlock == nil {
+		return nil, errors.New("failed to decode ca key pem")
+	}
+	caKey, err := stdlibx509.ParseECPrivateKey(caKeyPemBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
 
 	// Generate the admin talosconfig.
 	adminKey, err := x509.NewKey()
@@ -313,23 +331,18 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 	if err != nil {
 		return nil, err
 	}
-	caPemBlock, _ := pem.Decode(osCert.CrtPEM)
-	if caPemBlock == nil {
-		return nil, errors.New("failed to decode ca cert pem")
-	}
-	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	caKeyPemBlock, _ := pem.Decode(osCert.KeyPEM)
-	if caKeyPemBlock == nil {
-		return nil, errors.New("failed to decode ca key pem")
-	}
-	caKey, err := stdlibx509.ParseECPrivateKey(caKeyPemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
 	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate Etcd CA.
+	opts = []x509.Option{
+		x509.RSA(false),
+		x509.Organization("talos-etcd"),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
+	etcdCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -337,10 +350,12 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 	certs := &Certs{
 		AdminCert: base64.StdEncoding.EncodeToString(adminCrt.X509CertificatePEM),
 		AdminKey:  base64.StdEncoding.EncodeToString(adminKey.KeyPEM),
-		OsCert:    base64.StdEncoding.EncodeToString(osCert.CrtPEM),
-		OsKey:     base64.StdEncoding.EncodeToString(osCert.KeyPEM),
+		EtcdCert:  base64.StdEncoding.EncodeToString(etcdCert.CrtPEM),
+		EtcdKey:   base64.StdEncoding.EncodeToString(etcdCert.KeyPEM),
 		K8sCert:   base64.StdEncoding.EncodeToString(k8sCert.CrtPEM),
 		K8sKey:    base64.StdEncoding.EncodeToString(k8sCert.KeyPEM),
+		OsCert:    base64.StdEncoding.EncodeToString(osCert.CrtPEM),
+		OsKey:     base64.StdEncoding.EncodeToString(osCert.KeyPEM),
 	}
 
 	input = &Input{

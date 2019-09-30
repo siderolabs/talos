@@ -17,7 +17,7 @@ func (suite *validateSuite) TestValidateOSSecurity() {
 
 	// Test for missing required sections
 	os := &OSSecurity{}
-	err = os.Validate(CheckOSCA())
+	err = os.Validate(CheckCA("security.os.ca"))
 	suite.Require().Error(err)
 	// Embedding the check in suite.Assert().Equal(true, xerrors.Is had issues )
 	if !xerrors.Is(err.(*multierror.Error).Errors[0], ErrRequiredSection) {
@@ -25,19 +25,19 @@ func (suite *validateSuite) TestValidateOSSecurity() {
 	}
 
 	os.CA = &x509.PEMEncodedCertificateAndKey{}
-	err = os.Validate(CheckOSCA())
+	err = os.Validate(CheckCA("security.os.ca"))
 	suite.Require().Error(err)
 	suite.Assert().Equal(4, len(err.(*multierror.Error).Errors))
 
 	// Test for invalid certs
 	os.CA.Crt = []byte("-----BEGIN Rubbish-----\n-----END Rubbish-----")
 	os.CA.Key = []byte("-----BEGIN EC Fluffy KEY-----\n-----END EC Fluffy KEY-----")
-	err = os.Validate(CheckOSCA())
+	err = os.Validate(CheckCA("security.os.ca"))
 	suite.Require().Error(err)
 
 	// Successful test
 	os.CA.Crt = []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----")
 	os.CA.Key = []byte("-----BEGIN EC PRIVATE KEY-----\n-----END EC PRIVATE KEY-----")
-	err = os.Validate(CheckOSCA())
+	err = os.Validate(CheckCA("security.os.ca"))
 	suite.Require().NoError(err)
 }

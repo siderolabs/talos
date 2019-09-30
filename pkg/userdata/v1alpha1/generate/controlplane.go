@@ -29,6 +29,12 @@ func controlPlaneUd(in *Input) (string, error) {
 			IPs:     in.MasterIPs,
 			Index:   in.Index,
 		},
+		Etcd: &v1alpha1.EtcdConfig{
+			CA: &v1alpha1.EtcdCAConfig{
+				Crt: in.Certs.EtcdCert,
+				Key: in.Certs.EtcdKey,
+			},
+		},
 		CertificateKey:         in.KubeadmTokens.CertificateKey,
 		AESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
 	}

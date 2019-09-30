@@ -54,7 +54,8 @@ type SchedulerConfig struct {
 
 // EtcdConfig represents etcd config vals
 type EtcdConfig struct {
-	Image string `yaml:"image,omitempty"`
+	Image string        `yaml:"image,omitempty"`
+	CA    *EtcdCAConfig `yaml:"ca"`
 }
 
 // ClusterNetworkConfig represents kube networking config vals
@@ -66,6 +67,12 @@ type ClusterNetworkConfig struct {
 
 // ClusterCAConfig represents kube cert config vals
 type ClusterCAConfig struct {
+	Crt string `yaml:"crt"`
+	Key string `yaml:"key"`
+}
+
+// EtcdCAConfig represents kube cert config vals
+type EtcdCAConfig struct {
 	Crt string `yaml:"crt"`
 	Key string `yaml:"key"`
 }

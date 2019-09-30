@@ -172,6 +172,14 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 	if err != nil {
 		return err
 	}
+	etcdCert, err := base64.StdEncoding.DecodeString(nc.Cluster.Etcd.CA.Crt)
+	if err != nil {
+		return err
+	}
+	etcdKey, err := base64.StdEncoding.DecodeString(nc.Cluster.Etcd.CA.Key)
+	if err != nil {
+		return err
+	}
 
 	// Inject certs and SANs
 	ud.Security.OS = &userdata.OSSecurity{
@@ -186,6 +194,12 @@ func translateV1Alpha1Init(nc *v1alpha1.NodeConfig, ud *userdata.UserData) error
 			Key: kubeKey,
 		},
 		AESCBCEncryptionSecret: nc.Cluster.AESCBCEncryptionSecret,
+	}
+	ud.Security.Etcd = &userdata.EtcdSecurity{
+		CA: &x509.PEMEncodedCertificateAndKey{
+			Crt: etcdCert,
+			Key: etcdKey,
+		},
 	}
 
 	ud.Services.Trustd.CertSANs = []string{nc.Cluster.ControlPlane.IPs[nc.Cluster.ControlPlane.Index], "127.0.0.1", "::1"}
@@ -284,6 +298,14 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 	if err != nil {
 		return err
 	}
+	etcdCert, err := base64.StdEncoding.DecodeString(nc.Cluster.Etcd.CA.Crt)
+	if err != nil {
+		return err
+	}
+	etcdKey, err := base64.StdEncoding.DecodeString(nc.Cluster.Etcd.CA.Key)
+	if err != nil {
+		return err
+	}
 
 	// Inject certs and SANs
 	ud.Security.OS = &userdata.OSSecurity{
@@ -297,6 +319,13 @@ func translateV1Alpha1ControlPlane(nc *v1alpha1.NodeConfig, ud *userdata.UserDat
 
 	ud.Security.Kubernetes = &userdata.KubernetesSecurity{
 		AESCBCEncryptionSecret: nc.Cluster.AESCBCEncryptionSecret,
+	}
+
+	ud.Security.Etcd = &userdata.EtcdSecurity{
+		CA: &x509.PEMEncodedCertificateAndKey{
+			Crt: etcdCert,
+			Key: etcdKey,
+		},
 	}
 
 	// Craft a control plane kubeadm config

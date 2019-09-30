@@ -54,9 +54,12 @@ func (data *UserData) Validate() error {
 		if data.Services.Kubeadm != nil {
 			switch {
 			case data.Services.Kubeadm.IsBootstrap():
-				result = multierror.Append(result, data.Security.OS.Validate(CheckOSCA()))
+				result = multierror.Append(result, data.Security.OS.Validate(CheckCA("security.os.ca")))
+				result = multierror.Append(result, data.Security.Etcd.Validate(CheckCA("security.etcd.ca")))
 				result = multierror.Append(result, data.Security.Kubernetes.Validate(CheckKubernetesCA()))
 			case data.Services.Kubeadm.IsControlPlane():
+				result = multierror.Append(result, data.Security.OS.Validate(CheckCA("security.os.ca")))
+				result = multierror.Append(result, data.Security.Etcd.Validate(CheckCA("security.etcd.ca")))
 				result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
 			case data.Services.Kubeadm.IsWorker():
 				result = multierror.Append(result, data.Services.Trustd.Validate(CheckTrustdEndpointsArePresent()))
@@ -78,6 +81,7 @@ func (data *UserData) Validate() error {
 type Security struct {
 	OS         *OSSecurity         `yaml:"os"`
 	Kubernetes *KubernetesSecurity `yaml:"kubernetes"`
+	Etcd       *EtcdSecurity       `yaml:"etcd"`
 }
 
 // Networking represents the set of options available to configure networking.

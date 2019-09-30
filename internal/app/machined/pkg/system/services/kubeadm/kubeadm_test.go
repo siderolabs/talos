@@ -36,6 +36,7 @@ func (suite *KubeadmSuite) TestWritePKIFiles() {
 	err := WritePKIFiles(data)
 	suite.Assert().Error(err)
 	data.Security.Kubernetes = &userdata.KubernetesSecurity{}
+	data.Security.Etcd = &userdata.EtcdSecurity{}
 	err = WritePKIFiles(data)
 	suite.Assert().NoError(err)
 }
@@ -133,7 +134,8 @@ security:
     frontproxy:
       crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIEVDIFBSSVZBVEUgS0VZLS0tLS0=
-    etcd:
+  etcd:
+    ca:
       crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIEVDIFBSSVZBVEUgS0VZLS0tLS0=
 networking:
