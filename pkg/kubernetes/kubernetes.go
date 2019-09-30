@@ -5,7 +5,10 @@
 package kubernetes
 
 import (
+	stdlibx509 "crypto/x509"
+	"encoding/pem"
 	"log"
+	"net"
 	"sync"
 	"time"
 
@@ -19,6 +22,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 // Helper represents a set of helper methods for interacting with the
@@ -44,6 +49,71 @@ func NewHelper() (helper *Helper, err error) {
 	}
 
 	return &Helper{clientset}, nil
+}
+
+// NewClientFromPKI initializes and returns a Helper.
+func NewClientFromPKI(ca, crt, key []byte, host, port string) (helper *Helper, err error) {
+	tlsClientConfig := restclient.TLSClientConfig{
+		CAData:   ca,
+		CertData: crt,
+		KeyData:  key,
+	}
+
+	config := &restclient.Config{
+		Host:            "https://" + net.JoinHostPort(host, port),
+		TLSClientConfig: tlsClientConfig,
+	}
+
+	var clientset *kubernetes.Clientset
+	clientset, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Helper{clientset}, nil
+}
+
+// NewTemporaryClientFromPKI initializes a Kubernetes client using a certificate
+// with a TTL of 10 minutes.
+func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (helper *Helper, err error) {
+	opts := []x509.Option{
+		x509.RSA(true),
+		x509.CommonName("admin"),
+		x509.Organization("system:masters"),
+		x509.NotAfter(time.Now().Add(10 * time.Minute)),
+	}
+
+	key, err := x509.NewRSAKey()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create RSA key")
+	}
+
+	keyBlock, _ := pem.Decode(key.KeyPEM)
+	if keyBlock == nil {
+		return nil, errors.New("failed to decode key")
+	}
+
+	keyRSA, err := stdlibx509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "failled to parse private key")
+	}
+
+	csr, err := x509.NewCertificateSigningRequest(keyRSA, opts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create CSR")
+	}
+
+	crt, err := x509.NewCertificateFromCSRBytes(caCrt, caKey, csr.X509CertificateRequestPEM, opts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create certificate from CSR")
+	}
+
+	h, err := NewClientFromPKI(caCrt, crt.X509CertificatePEM, key.KeyPEM, endpoint, "6443")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create client")
+	}
+
+	return h, nil
 }
 
 // MasterIPs cordons and drains a node in one call.

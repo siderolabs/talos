@@ -37,7 +37,7 @@ func (k *Kubeadm) ID(data *userdata.UserData) string {
 // PreFunc implements the Service interface.
 // nolint: gocyclo
 func (k *Kubeadm) PreFunc(ctx context.Context, data *userdata.UserData) (err error) {
-	if data.Services.Kubeadm.IsBootstrap() {
+	if data.Services.Kubeadm.IsControlPlane() {
 		if err = kubeadm.WritePKIFiles(data); err != nil {
 			return err
 		}
@@ -71,6 +71,12 @@ func (k *Kubeadm) PostFunc(data *userdata.UserData) error {
 
 // DependsOn implements the Service interface.
 func (k *Kubeadm) DependsOn(data *userdata.UserData) []string {
+	if data.Services.Kubeadm.IsControlPlane() {
+		deps := []string{"containerd", "networkd", "etcd"}
+
+		return deps
+	}
+
 	deps := []string{"containerd", "networkd"}
 
 	return deps

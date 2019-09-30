@@ -30,10 +30,15 @@ func controlPlaneUd(in *Input) (string, error) {
 			Index:   in.Index,
 		},
 		Etcd: &v1alpha1.EtcdConfig{
+			Enabled: true,
 			CA: &v1alpha1.EtcdCAConfig{
 				Crt: in.Certs.EtcdCert,
 				Key: in.Certs.EtcdKey,
 			},
+		},
+		CA: &v1alpha1.ClusterCAConfig{
+			Crt: in.Certs.K8sCert,
+			Key: in.Certs.K8sKey,
 		},
 		CertificateKey:         in.KubeadmTokens.CertificateKey,
 		AESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,

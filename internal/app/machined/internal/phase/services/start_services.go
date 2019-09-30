@@ -63,6 +63,11 @@ func (task *StartServices) loadSystemServices(data *userdata.UserData, mode runt
 			&services.Trustd{},
 			&services.Proxyd{},
 		)
+		if data.Services.Etcd != nil && data.Services.Etcd.Enabled {
+			svcs.Load(
+				&services.Etcd{},
+			)
+		}
 	}
 }
 

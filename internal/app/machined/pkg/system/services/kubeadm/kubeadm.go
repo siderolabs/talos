@@ -194,11 +194,6 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 			CertPath: constants.KubeadmFrontProxyCACert,
 			KeyPath:  constants.KubeadmFrontProxyCAKey,
 		},
-		{
-			Cert:     data.Security.Etcd.CA,
-			CertPath: constants.KubeadmEtcdCACert,
-			KeyPath:  constants.KubeadmEtcdCAKey,
-		},
 	}
 
 	for _, cert := range certs {

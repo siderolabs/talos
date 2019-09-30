@@ -34,6 +34,12 @@ type CertificateAuthority struct {
 	KeyPEM []byte
 }
 
+// RSAKey represents an RSA private key.
+type RSAKey struct {
+	keyRSA *rsa.PrivateKey
+	KeyPEM []byte
+}
+
 // Key represents an ECDSA private key.
 type Key struct {
 	keyEC  *ecdsa.PrivateKey
@@ -66,6 +72,7 @@ type PEMEncodedCertificateAndKey struct {
 
 // Options is the functional options struct.
 type Options struct {
+	CommonName         string
 	Organization       string
 	SignatureAlgorithm x509.SignatureAlgorithm
 	IPAddresses        []net.IP
@@ -77,6 +84,13 @@ type Options struct {
 
 // Option is the functional option func.
 type Option func(*Options)
+
+// CommonName sets the common name of the certificate.
+func CommonName(o string) Option {
+	return func(opts *Options) {
+		opts.CommonName = o
+	}
+}
 
 // Organization sets the subject organization of the certificate.
 func Organization(o string) Option {
@@ -199,13 +213,21 @@ func NewSelfSignedCertificateAuthority(setters ...Option) (ca *CertificateAuthor
 // NewCertificateSigningRequest creates a CSR. If the IPAddresses or DNSNames options are not
 // specified, the CSR will be generated with the default values set in
 // NewDefaultOptions.
-func NewCertificateSigningRequest(key *ecdsa.PrivateKey, setters ...Option) (csr *CertificateSigningRequest, err error) {
+func NewCertificateSigningRequest(key interface{}, setters ...Option) (csr *CertificateSigningRequest, err error) {
 	opts := NewDefaultOptions(setters...)
 
 	template := &x509.CertificateRequest{
 		SignatureAlgorithm: opts.SignatureAlgorithm,
 		IPAddresses:        opts.IPAddresses,
 		DNSNames:           opts.DNSNames,
+		Subject: pkix.Name{
+			CommonName:   opts.CommonName,
+			Organization: []string{opts.Organization},
+		},
+	}
+
+	if opts.RSA {
+		template.SignatureAlgorithm = x509.SHA512WithRSA
 	}
 
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
@@ -250,9 +272,31 @@ func NewKey() (key *Key, err error) {
 	return key, nil
 }
 
+// NewRSAKey generates an RSA private key.
+func NewRSAKey() (key *RSAKey, err error) {
+	keyRSA, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return
+	}
+
+	keyBytes := x509.MarshalPKCS1PrivateKey(keyRSA)
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: keyBytes,
+	})
+
+	key = &RSAKey{
+		keyRSA: keyRSA,
+		KeyPEM: keyPEM,
+	}
+
+	return key, nil
+}
+
 // NewCertificateFromCSR creates and signs X.509 certificate using the provided
 // CSR.
-func NewCertificateFromCSR(ca *x509.Certificate, key *ecdsa.PrivateKey, csr *x509.CertificateRequest, setters ...Option) (crt *Certificate, err error) {
+func NewCertificateFromCSR(ca *x509.Certificate, key interface{}, csr *x509.CertificateRequest, setters ...Option) (crt *Certificate, err error) {
 	opts := NewDefaultOptions(setters...)
 	serialNumber, err := NewSerialNumber()
 	if err != nil {
@@ -266,12 +310,14 @@ func NewCertificateFromCSR(ca *x509.Certificate, key *ecdsa.PrivateKey, csr *x50
 		PublicKeyAlgorithm: csr.PublicKeyAlgorithm,
 		PublicKey:          csr.PublicKey,
 
-		SerialNumber: serialNumber,
-		Issuer:       ca.Subject,
-		Subject:      csr.Subject,
-		NotBefore:    time.Now(),
-		NotAfter:     opts.NotAfter,
-		KeyUsage:     x509.KeyUsageDigitalSignature,
+		SerialNumber:          serialNumber,
+		Issuer:                ca.Subject,
+		Subject:               csr.Subject,
+		NotBefore:             time.Now(),
+		NotAfter:              opts.NotAfter,
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: false,
+		IsCA:                  false,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageServerAuth,
 			x509.ExtKeyUsageClientAuth,
@@ -306,30 +352,46 @@ func NewCertificateFromCSR(ca *x509.Certificate, key *ecdsa.PrivateKey, csr *x50
 // NewCertificateFromCSRBytes creates a signed certificate using the provided
 // certificate, key, and CSR.
 func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Certificate, err error) {
+	opts := NewDefaultOptions(setters...)
+
 	caPemBlock, _ := pem.Decode(ca)
 	if caPemBlock == nil {
 		return nil, fmt.Errorf("decode PEM: %v", err)
 	}
+
 	caCrt, err := x509.ParseCertificate(caPemBlock.Bytes)
 	if err != nil {
 		return
 	}
+
 	keyPemBlock, _ := pem.Decode(key)
 	if keyPemBlock == nil {
 		return nil, fmt.Errorf("decode PEM: %v", err)
 	}
-	caKey, err := x509.ParseECPrivateKey(keyPemBlock.Bytes)
-	if err != nil {
-		return
+
+	var caKey interface{}
+	if opts.RSA {
+		caKey, err = x509.ParsePKCS1PrivateKey(keyPemBlock.Bytes)
+		if err != nil {
+			return
+		}
+	} else {
+		caKey, err = x509.ParseECPrivateKey(keyPemBlock.Bytes)
+		if err != nil {
+			return
+		}
 	}
+
 	csrPemBlock, _ := pem.Decode(csr)
 	if csrPemBlock == nil {
 		return
 	}
+
 	request, err := x509.ParseCertificateRequest(csrPemBlock.Bytes)
 	if err != nil {
 		return
 	}
+
 	crt, err = NewCertificateFromCSR(caCrt, caKey, request, setters...)
 	if err != nil {
 		return
@@ -341,7 +403,7 @@ func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Ce
 // NewKeyPair generates a certificate signed by the provided CA, and an ECDSA
 // private key. The certifcate and private key are then used to create an
 // tls.X509KeyPair.
-func NewKeyPair(ca *x509.Certificate, key *ecdsa.PrivateKey, setters ...Option) (keypair *KeyPair, err error) {
+func NewKeyPair(ca *x509.Certificate, key interface{}, setters ...Option) (keypair *KeyPair, err error) {
 	csr, err := NewCertificateSigningRequest(key, setters...)
 	if err != nil {
 		return

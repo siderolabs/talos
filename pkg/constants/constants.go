@@ -115,16 +115,28 @@ const (
 	KubeadmEtcdListenClientPort = constants.EtcdListenClientPort
 
 	// KubeadmAPIServerEtcdClientCert defines apiserver's etcd client certificate name
-	KubeadmAPIServerEtcdClientCert = v1beta2.DefaultCertificatesDir + "/" + constants.APIServerEtcdClientCertName
+	KubeadmAPIServerEtcdClientCert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerCertName
 
 	// KubeadmAPIServerEtcdClientKey defines apiserver's etcd client key name
-	KubeadmAPIServerEtcdClientKey = v1beta2.DefaultCertificatesDir + "/" + constants.APIServerEtcdClientKeyName
+	KubeadmAPIServerEtcdClientKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.16.0"
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
 	KubernetesImage = "k8s.gcr.io/hyperkube"
+
+	// DefaultEtcdVersion is the default target version of etcd.
+	DefaultEtcdVersion = "3.3.15-0"
+
+	// EtcdImage is the reposistory for the etcd image.
+	EtcdImage = "k8s.gcr.io/etcd"
+
+	// EtcdPKIPath is the path to the etcd PKI directory.
+	EtcdPKIPath = "/etc/kubernetes/pki/etcd"
+
+	// EtcdDataPath is the path where etcd stores its' data.
+	EtcdDataPath = "/var/lib/etcd"
 
 	// UserDataPath is the path to the downloaded user data.
 	UserDataPath = "/run/userdata.yaml"
