@@ -176,7 +176,7 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 			KeyPath:  constants.KubeadmFrontProxyCAKey,
 		},
 		{
-			Cert:     data.Security.Kubernetes.Etcd,
+			Cert:     data.Security.Etcd.CA,
 			CertPath: constants.KubeadmEtcdCACert,
 			KeyPath:  constants.KubeadmEtcdCAKey,
 		},

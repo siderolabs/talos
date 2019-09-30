@@ -4,5 +4,5 @@
 
 package userdata
 
-// OSSecurity represents the set of security options specific to the OS.
-type OSSecurity = Certificate
+// EtcdSecurity represents the set of security options specific to the Etcd.
+type EtcdSecurity = Certificate

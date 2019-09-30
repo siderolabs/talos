@@ -17,6 +17,10 @@ security:
       crt: "{{ .Certs.K8sCert }}"
       key: "{{ .Certs.K8sKey }}"
     aescbcEncryptionSecret: {{ .KubeadmTokens.AESCBCEncryptionSecret }}
+  etcd:
+    ca:
+      crt: "{{ .Certs.EtcdCert }}"
+      key: "{{ .Certs.EtcdKey }}"
 services:
   init:
     cni: flannel

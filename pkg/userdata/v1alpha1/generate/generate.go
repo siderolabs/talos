@@ -132,10 +132,12 @@ func (i *Input) GetAPIServerSANs() []string {
 type Certs struct {
 	AdminCert string
 	AdminKey  string
-	OsCert    string
-	OsKey     string
+	EtcdCert  string
+	EtcdKey   string
 	K8sCert   string
 	K8sKey    string
+	OsCert    string
+	OsKey     string
 }
 
 // KubeadmTokens holds the senesitve kubeadm data.
@@ -272,8 +274,19 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 		Token: trustdToken,
 	}
 
-	// Generate Kubernetes CA.
+	// Generate Etcd CA.
 	opts := []x509.Option{
+		x509.RSA(false),
+		x509.Organization("talos-etcd"),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
+	etcdCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate Kubernetes CA.
+	opts = []x509.Option{
 		x509.RSA(true),
 		x509.Organization("talos-k8s"),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
@@ -345,10 +358,12 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 	certs := &Certs{
 		AdminCert: base64.StdEncoding.EncodeToString(adminCrt.X509CertificatePEM),
 		AdminKey:  base64.StdEncoding.EncodeToString(adminKey.KeyPEM),
-		OsCert:    base64.StdEncoding.EncodeToString(osCert.CrtPEM),
-		OsKey:     base64.StdEncoding.EncodeToString(osCert.KeyPEM),
+		EtcdCert:  base64.StdEncoding.EncodeToString(etcdCert.CrtPEM),
+		EtcdKey:   base64.StdEncoding.EncodeToString(etcdCert.KeyPEM),
 		K8sCert:   base64.StdEncoding.EncodeToString(k8sCert.CrtPEM),
 		K8sKey:    base64.StdEncoding.EncodeToString(k8sCert.KeyPEM),
+		OsCert:    base64.StdEncoding.EncodeToString(osCert.CrtPEM),
+		OsKey:     base64.StdEncoding.EncodeToString(osCert.KeyPEM),
 	}
 
 	input = &Input{
