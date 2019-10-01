@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -101,6 +102,24 @@ func editClusterConfig(data *userdata.UserData) (err error) {
 	// Apply CIS hardening recommendations; only generate encryption token only if we're the bootstrap node
 	if err = cis.EnforceBootstrapMasterRequirements(clusterConfiguration); err != nil {
 		return err
+	}
+
+	// Flex on running etcd directly on Talos or via Kubeadm
+	if data.Services.Etcd != nil && data.Services.Etcd.Enabled {
+		clusterConfiguration.Etcd = kubeadmv1beta2.Etcd{
+			External: &kubeadmv1beta2.ExternalEtcd{
+				// TODO probably need to find a better way to handle obtaining etcd addrs
+				// since this becomes an ordering issue. We rely on k8s to discover etcd
+				// endpoints, but need etcd endpoints to bring up k8s.
+				// We'll set this to 127.0.0.1 for now since mvp will be stacked control
+				// plane ( etcd living on the same hosts as masters )
+				Endpoints: []string{"https://127.0.0.1:" + strconv.Itoa(constants.KubeadmEtcdListenClientPort)},
+				CAFile:    constants.KubeadmEtcdCACert,
+				// These are for apiserver -> etcd communication
+				CertFile: constants.KubeadmAPIServerEtcdClientCert,
+				KeyFile:  constants.KubeadmAPIServerEtcdClientKey,
+			},
+		}
 	}
 
 	return nil
