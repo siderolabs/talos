@@ -29,6 +29,7 @@ type Env = map[string]string
 // Services represents the set of services available to configure.
 type Services struct {
 	Init    *Init    `yaml:"init"`
+	Etcd    *Etcd    `yaml:"etcd"`
 	Kubelet *Kubelet `yaml:"kubelet"`
 	Kubeadm *Kubeadm `yaml:"kubeadm"`
 	Trustd  *Trustd  `yaml:"trustd"`
@@ -71,6 +72,12 @@ func CheckServices() ServiceCheck {
 
 		return result.ErrorOrNil()
 	}
+}
+
+// Etcd describes the configuration of the osd service.
+type Etcd struct {
+	CommonServiceOptions `yaml:",inline"`
+	Enabled              bool `yaml:"enabled"`
 }
 
 // OSD describes the configuration of the osd service.
