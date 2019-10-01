@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/defaults"
-	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1"
+	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
 
@@ -76,34 +76,49 @@ const (
 	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
 
 	// KubeadmCACert is the path to the root CA certificate.
-	KubeadmCACert = v1beta1.DefaultCertificatesDir + "/" + constants.CACertName
+	KubeadmCACert = v1beta2.DefaultCertificatesDir + "/" + constants.CACertName
 
 	// KubeadmCAKey is the path to the root CA private key.
-	KubeadmCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.CAKeyName
+	KubeadmCAKey = v1beta2.DefaultCertificatesDir + "/" + constants.CAKeyName
 
 	// KubeadmSACert is the path to the SA certificate.
-	KubeadmSACert = v1beta1.DefaultCertificatesDir + "/" + constants.ServiceAccountPublicKeyName
+	KubeadmSACert = v1beta2.DefaultCertificatesDir + "/" + constants.ServiceAccountPublicKeyName
 
 	// KubeadmSAKey is the path to the SA private key.
-	KubeadmSAKey = v1beta1.DefaultCertificatesDir + "/" + constants.ServiceAccountPrivateKeyName
+	KubeadmSAKey = v1beta2.DefaultCertificatesDir + "/" + constants.ServiceAccountPrivateKeyName
 
 	// KubeadmFrontProxyCACert is the path to the front proxy CA certificate.
-	KubeadmFrontProxyCACert = v1beta1.DefaultCertificatesDir + "/" + constants.FrontProxyCACertName
+	KubeadmFrontProxyCACert = v1beta2.DefaultCertificatesDir + "/" + constants.FrontProxyCACertName
 
 	// KubeadmFrontProxyCAKey is the path to the front proxy CA private key.
-	KubeadmFrontProxyCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.FrontProxyCAKeyName
+	KubeadmFrontProxyCAKey = v1beta2.DefaultCertificatesDir + "/" + constants.FrontProxyCAKeyName
 
 	// KubeadmEtcdCACert is the path to the etcd CA certificate.
-	KubeadmEtcdCACert = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdCACertName
+	KubeadmEtcdCACert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdCACertName
 
 	// KubeadmEtcdCAKey is the path to the etcd CA private key.
-	KubeadmEtcdCAKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdCAKeyName
+	KubeadmEtcdCAKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdCAKeyName
 
 	// KubeadmEtcdPeerCert is the path to the etcd CA certificate.
-	KubeadmEtcdPeerCert = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdPeerCertName
+	KubeadmEtcdPeerCert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerCertName
 
 	// KubeadmEtcdPeerKey is the path to the etcd CA private key.
-	KubeadmEtcdPeerKey = v1beta1.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
+	KubeadmEtcdPeerKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
+
+	// KubeadmEtcdServerCert defines etcd's server certificate name
+	KubeadmEtcdServerCert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdServerCertName
+
+	// KubeadmEtcdServerKey defines etcd's server key name
+	KubeadmEtcdServerKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdServerKeyName
+
+	// KubeadmEtcdListenClientPort defines the port etcd listen on for client traffic
+	KubeadmEtcdListenClientPort = constants.EtcdListenClientPort
+
+	// KubeadmAPIServerEtcdClientCert defines apiserver's etcd client certificate name
+	KubeadmAPIServerEtcdClientCert = v1beta2.DefaultCertificatesDir + "/" + constants.APIServerEtcdClientCertName
+
+	// KubeadmAPIServerEtcdClientKey defines apiserver's etcd client key name
+	KubeadmAPIServerEtcdClientKey = v1beta2.DefaultCertificatesDir + "/" + constants.APIServerEtcdClientKeyName
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.16.0"
