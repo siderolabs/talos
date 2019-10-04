@@ -13,12 +13,9 @@ import (
 	"text/template"
 
 	"github.com/talos-systems/talos/pkg/constants"
-
-	v1 "k8s.io/api/core/v1"
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 )
 
-const disabled = "false"
+// const disabled = "false"
 
 const auditPolicy string = `apiVersion: audit.k8s.io/v1beta1
 kind: Policy
@@ -40,13 +37,13 @@ resources:
 `
 
 // EnforceAuditingRequirements enforces CIS requirements for auditing.
-func EnforceAuditingRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	// TODO(andrewrynhard): We should log to a file, and the option to retrieve
-	// the log files.
-	cfg.APIServer.ExtraArgs["audit-log-path"] = "-"
-	cfg.APIServer.ExtraArgs["audit-log-maxage"] = "30"
-	cfg.APIServer.ExtraArgs["audit-log-maxbackup"] = "3"
-	cfg.APIServer.ExtraArgs["audit-log-maxsize"] = "50"
+func EnforceAuditingRequirements() error {
+	// // TODO(andrewrynhard): We should log to a file, and the option to retrieve
+	// // the log files.
+	// cfg.APIServer.ExtraArgs["audit-log-path"] = "-"
+	// cfg.APIServer.ExtraArgs["audit-log-maxage"] = "30"
+	// cfg.APIServer.ExtraArgs["audit-log-maxbackup"] = "3"
+	// cfg.APIServer.ExtraArgs["audit-log-maxsize"] = "50"
 
 	return nil
 }
@@ -95,24 +92,24 @@ func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
 }
 
 // EnforceSecretRequirements enforces CIS requirements for secrets.
-func EnforceSecretRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	cfg.APIServer.ExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
-	vol := kubeadmapi.HostPathMount{
-		Name:      "encryptionconfig",
-		HostPath:  constants.EncryptionConfigRootfsPath,
-		MountPath: constants.EncryptionConfigRootfsPath,
-		ReadOnly:  true,
-		PathType:  v1.HostPathFile,
-	}
-	cfg.APIServer.ExtraVolumes = append(cfg.APIServer.ExtraVolumes, vol)
+func EnforceSecretRequirements() error {
+	// cfg.APIServer.ExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
+	// vol := kubeadmapi.HostPathMount{
+	// 	Name:      "encryptionconfig",
+	// 	HostPath:  constants.EncryptionConfigRootfsPath,
+	// 	MountPath: constants.EncryptionConfigRootfsPath,
+	// 	ReadOnly:  true,
+	// 	PathType:  v1.HostPathFile,
+	// }
+	// cfg.APIServer.ExtraVolumes = append(cfg.APIServer.ExtraVolumes, vol)
 
 	return nil
 }
 
 // EnforceTLSRequirements enforces CIS requirements for TLS.
-func EnforceTLSRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	// nolint: lll
-	cfg.APIServer.ExtraArgs["tls-cipher-suites"] = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+func EnforceTLSRequirements() error {
+	// // nolint: lll
+	// cfg.APIServer.ExtraArgs["tls-cipher-suites"] = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
 
 	return nil
 }
@@ -121,9 +118,9 @@ func EnforceTLSRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
 // TODO(andrewrynhard): Include any extra user specified plugins.
 // TODO(andrewrynhard): Enable EventRateLimit.
 // TODO(andrewrynhard): Enable AlwaysPullImages (See https://github.com/kubernetes/kubernetes/issues/64333).
-func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	// nolint: lll
-	cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
+func EnforceAdmissionPluginsRequirements() error {
+	// // nolint: lll
+	// cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
 
 	return nil
 }
@@ -131,39 +128,39 @@ func EnforceAdmissionPluginsRequirements(cfg *kubeadmapi.ClusterConfiguration) e
 // EnforceExtraRequirements enforces miscellaneous CIS requirements.
 // TODO(andrewrynhard): Enable anonymous-auth, see https://github.com/kubernetes/kubeadm/issues/798.
 // TODO(andrewrynhard): Enable kubelet-certificate-authority, see https://github.com/kubernetes/kubeadm/issues/118#issuecomment-407202481.
-func EnforceExtraRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	cfg.APIServer.ExtraArgs["profiling"] = disabled
-	cfg.ControllerManager.ExtraArgs["profiling"] = disabled
-	cfg.Scheduler.ExtraArgs["profiling"] = disabled
+func EnforceExtraRequirements() error {
+	// cfg.APIServer.ExtraArgs["profiling"] = disabled
+	// cfg.ControllerManager.ExtraArgs["profiling"] = disabled
+	// cfg.Scheduler.ExtraArgs["profiling"] = disabled
 
-	cfg.APIServer.ExtraArgs["service-account-lookup"] = "true"
+	// cfg.APIServer.ExtraArgs["service-account-lookup"] = "true"
 
 	return nil
 }
 
 // EnforceBootstrapMasterRequirements enforces the CIS requirements for master nodes.
-func EnforceBootstrapMasterRequirements(cfg *kubeadmapi.ClusterConfiguration) error {
-	ensureFieldsAreNotNil(cfg)
+func EnforceBootstrapMasterRequirements() error {
+	// ensureFieldsAreNotNil(cfg)
 
-	if err := EnforceAuditingRequirements(cfg); err != nil {
-		return err
-	}
+	// if err := EnforceAuditingRequirements(cfg); err != nil {
+	// 	return err
+	// }
 
-	if err := EnforceSecretRequirements(cfg); err != nil {
-		return err
-	}
+	// if err := EnforceSecretRequirements(cfg); err != nil {
+	// 	return err
+	// }
 
-	if err := EnforceTLSRequirements(cfg); err != nil {
-		return err
-	}
+	// if err := EnforceTLSRequirements(cfg); err != nil {
+	// 	return err
+	// }
 
-	if err := EnforceAdmissionPluginsRequirements(cfg); err != nil {
-		return err
-	}
+	// if err := EnforceAdmissionPluginsRequirements(cfg); err != nil {
+	// 	return err
+	// }
 
-	if err := EnforceExtraRequirements(cfg); err != nil {
-		return err
-	}
+	// if err := EnforceExtraRequirements(cfg); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -182,26 +179,6 @@ func EnforceCommonMasterRequirements(aescbcEncryptionSecret string) (err error) 
 }
 
 // EnforceWorkerRequirements enforces the CIS requirements for master nodes.
-func EnforceWorkerRequirements(cfg *kubeadmapi.JoinConfiguration) error {
+func EnforceWorkerRequirements() error {
 	return nil
-}
-
-func ensureFieldsAreNotNil(cfg *kubeadmapi.ClusterConfiguration) {
-	if cfg.APIServer.ExtraArgs == nil {
-		cfg.APIServer.ExtraArgs = make(map[string]string)
-	}
-	if cfg.ControllerManager.ExtraArgs == nil {
-		cfg.ControllerManager.ExtraArgs = make(map[string]string)
-	}
-	if cfg.Scheduler.ExtraArgs == nil {
-		cfg.Scheduler.ExtraArgs = make(map[string]string)
-	}
-
-	if cfg.APIServer.ExtraVolumes == nil {
-		cfg.APIServer.ExtraVolumes = make([]kubeadmapi.HostPathMount, 0)
-	}
-
-	if cfg.FeatureGates == nil {
-		cfg.FeatureGates = make(map[string]bool)
-	}
 }

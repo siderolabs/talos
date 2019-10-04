@@ -14,6 +14,7 @@ import (
 type Cluster interface {
 	Version() string
 	IPs() []string
+	Token() Token
 	CertSANs() []string
 	CA() *x509.PEMEncodedCertificateAndKey
 	AESCBCEncryptionSecret() string
@@ -26,4 +27,11 @@ type Cluster interface {
 type Etcd interface {
 	Image() string
 	CA() *x509.PEMEncodedCertificateAndKey
+}
+
+// Token defines the requirements for a config that pertains to Kubernetes
+// bootstrap token.
+type Token interface {
+	ID() string
+	Secret() string
 }

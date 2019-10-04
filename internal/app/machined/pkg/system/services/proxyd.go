@@ -50,7 +50,7 @@ func (p *Proxyd) PostFunc(config config.Configurator) (err error) {
 
 // Condition implements the Service interface.
 func (p *Proxyd) Condition(config config.Configurator) conditions.Condition {
-	return conditions.WaitForFilesToExist("/etc/kubernetes/pki/ca.crt")
+	return conditions.WaitForFilesToExist(constants.AdminKubeconfig)
 }
 
 // DependsOn implements the Service interface.

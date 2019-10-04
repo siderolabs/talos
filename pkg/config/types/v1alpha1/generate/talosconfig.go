@@ -6,7 +6,7 @@ package generate
 
 import (
 	"bytes"
-	"html/template"
+	"text/template"
 )
 
 // Talosconfig returns the talos admin Talos config.

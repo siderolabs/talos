@@ -76,7 +76,7 @@ func main() {
 }
 
 func waitForKube(r *frontend.ReverseProxy) {
-	kubeconfig := "/etc/kubernetes/admin.conf"
+	kubeconfig := constants.AdminKubeconfig
 	if err := conditions.WaitForFilesToExist(kubeconfig).Wait(context.Background()); err != nil {
 		log.Fatalf("failed to find %s: %v", kubeconfig, err)
 	}
@@ -96,8 +96,6 @@ func waitForKube(r *frontend.ReverseProxy) {
 	}
 	ip := ips[0]
 
-	// Overwrite defined host so we can target local apiserver
-	// and bypass the admin.conf host which is configured for proxyd
 	config.Host = ip.String() + ":6443"
 
 	clientset, err := kubernetes.NewForConfig(config)

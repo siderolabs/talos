@@ -119,6 +119,10 @@ func (d *Sequencer) Boot() error {
 			services.NewStartServicesTask(),
 			signal.NewHandlerTask(),
 		),
+		phase.NewPhase(
+			"post startup tasks",
+			services.NewLabelNodeAsMasterTask(),
+		),
 	)
 
 	return phaserunner.Run()
