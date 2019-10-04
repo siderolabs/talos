@@ -5,27 +5,18 @@
 package kubeadm
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"math"
 	"os"
 	"path"
 	"strconv"
-	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	kubeadmv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 
-	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/internal/pkg/cis"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/userdata"
 )
 
@@ -219,95 +210,4 @@ func WritePKIFiles(data *userdata.UserData) (err error) {
 		}
 	}
 	return err
-}
-
-// FileSet compares the list of required files to the ones
-// already present on the node and returns the delta
-func FileSet(files []string) []*securityapi.ReadFileRequest {
-	fileRequests := []*securityapi.ReadFileRequest{}
-	// Check to see if we already have the file locally
-	for _, file := range files {
-		if _, err := os.Stat(file); os.IsNotExist(err) {
-			fileRequests = append(fileRequests, &securityapi.ReadFileRequest{Path: file})
-		}
-	}
-
-	return fileRequests
-}
-
-// CreateSecurityClients handles instantiating a security API client connection
-// to each trustd endpoint defined in userdata
-func CreateSecurityClients(data *userdata.UserData) (clients []securityapi.SecurityClient, err error) {
-	clients = []securityapi.SecurityClient{}
-
-	creds := basic.NewTokenCredentials(data.Services.Trustd.Token)
-
-	// Create a trustd client for each endpoint to set up
-	// a fan out approach to gathering the files
-	var conn *grpc.ClientConn
-	for _, endpoint := range data.Services.Trustd.Endpoints {
-		conn, err = basic.NewConnection(endpoint, constants.TrustdPort, creds)
-		if err != nil {
-			return clients, err
-		}
-		clients = append(clients, securityapi.NewSecurityClient(conn))
-	}
-	return clients, nil
-}
-
-// Download handles the retrieval of files from a security API endpoint.
-func Download(ctx context.Context, client securityapi.SecurityClient, file *securityapi.ReadFileRequest, content chan<- []byte) {
-	select {
-	case <-ctx.Done():
-	case content <- download(ctx, client, file):
-	}
-}
-
-func download(ctx context.Context, client securityapi.SecurityClient, file *securityapi.ReadFileRequest) []byte {
-	var (
-		resp            *securityapi.ReadFileResponse
-		err             error
-		attempt, snooze float64
-	)
-	maxWait := float64(64)
-
-	for {
-		ctxTimeout, ctxTimeoutCancel := context.WithTimeout(ctx, 2*time.Second)
-		defer ctxTimeoutCancel()
-
-		resp, err = client.ReadFile(ctxTimeout, file)
-		if err == nil {
-			// TODO add in checksum verification for resp.Data
-			// when trustd supports providing a checksum
-			break
-		}
-
-		// Context canceled, no need to do anything
-		if status.Code(err) == codes.Canceled {
-			break
-		}
-
-		// Error case
-		log.Printf("failed to read file %s: %+v", file, err)
-
-		// backoff
-		snooze = math.Pow(2, attempt)
-		if snooze > maxWait {
-			snooze = maxWait
-		}
-
-		select {
-		case <-ctx.Done():
-			return []byte{}
-		case <-time.After(time.Duration(snooze) * time.Second):
-		}
-	}
-
-	// Handle case where context was canceled or request otherwise failed
-	// and we dont have an actual response
-	if resp == nil {
-		return []byte{}
-	}
-
-	return resp.Data
 }
