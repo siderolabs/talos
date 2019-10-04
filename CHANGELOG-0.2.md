@@ -1,3 +1,12 @@
+# [v0.2.0](https://github.com/talos-systems/talos/compare/v0.2.0-rc.0...v0.2.0) (2019-10-04)
+
+
+### Bug Fixes
+
+* set default node identity cert to expire in 10 years ([42bfd60](https://github.com/talos-systems/talos/commit/42bfd60))
+
+
+
 # [v0.2.0-rc.0](https://github.com/talos-systems/talos/compare/v0.2.0-beta.0...v0.2.0-rc.0) (2019-09-24)
 
 
