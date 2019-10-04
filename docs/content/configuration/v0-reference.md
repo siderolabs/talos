@@ -1,12 +1,11 @@
 ---
-title: User ephemeral
+title: v0 Reference
 date: 2019-06-21T19:40:55-07:00
 draft: false
 weight: 20
 menu:
   docs:
     parent: 'configuration'
-    weight: 20
 ---
 
 Talos User Data is responsible for the host and Kubernetes configuration, and it is independent of other cloud config / cloud init data.
@@ -14,11 +13,11 @@ Talos User Data is responsible for the host and Kubernetes configuration, and it
 ## Version
 
 ``Version`` represents the Talos userdata configuration version.
-This denotes
-what the schema of the configuration file.
+
+This denotes what the schema of the configuration file is.
 
 ```yaml
-version: "1"
+version: "0"
 ```
 
 ## Security
@@ -120,6 +119,7 @@ os:
   - interface: eth0
     cidr: <ip/mask>
     dhcp: bool
+    ignore: bool
     routes:
       - network: <ip/mask>
         gateway: <ip>
@@ -147,6 +147,11 @@ The following DHCP options are supported:
 - `OptionNTPServers`
 
 > Note: This option is mutually exclusive with CIDR.
+
+##### Ignore
+
+``Ignore`` is used to exclude a specific interface from configuration.
+This parameter is optional.
 
 ##### Routes
 
