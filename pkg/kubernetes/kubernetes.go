@@ -6,6 +6,7 @@ package kubernetes
 
 import (
 	stdlibx509 "crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"log"
 	"net"
@@ -18,11 +19,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
@@ -131,6 +135,46 @@ func (h *Helper) MasterIPs() (addrs []string, err error) {
 	}
 
 	return addrs, nil
+}
+
+// LabelNodeAsMaster labels a node with the required master label.
+func (h *Helper) LabelNodeAsMaster(name string) (err error) {
+	n, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// The node may appear to have no labels at first, so we check for the
+	// existence of a well known label to ensure the patch will be successful.
+	if _, found := n.ObjectMeta.Labels[corev1.LabelHostname]; !found {
+		return errors.New("could not find hostname label")
+	}
+
+	oldData, err := json.Marshal(n)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal unmodified node %q into JSON", n.Name)
+	}
+
+	n.Labels[constants.LabelNodeRoleMaster] = ""
+
+	newData, err := json.Marshal(n)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal modified node %q into JSON", n.Name)
+	}
+
+	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
+	if err != nil {
+		return errors.Wrap(err, "failed to create two way merge patch")
+	}
+
+	if _, err := h.client.CoreV1().Nodes().Patch(n.Name, types.StrategicMergePatchType, patchBytes); err != nil {
+		if apierrors.IsConflict(err) {
+			return errors.Wrap(err, "unable to update node metadata due to conflict")
+		}
+		return errors.Wrapf(err, "error patching node %q", n.Name)
+	}
+
+	return nil
 }
 
 // CordonAndDrain cordons and drains a node in one call.

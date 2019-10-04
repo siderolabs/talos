@@ -43,7 +43,7 @@ func initUd(in *Input) (string, error) {
 			ServiceSubnet: in.ServiceNet,
 		},
 		ClusterCA:                     in.Certs.K8s,
-		Token:                         in.KubeadmTokens.BootstrapToken,
+		BootstrapToken:                in.KubeadmTokens.BootstrapToken,
 		CertificateKey:                in.KubeadmTokens.CertificateKey,
 		ClusterAESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
 	}

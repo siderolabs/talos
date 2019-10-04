@@ -17,7 +17,7 @@ import (
 // kubeconfigCmd represents the kubeconfig command
 var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
-	Short: "Download the admin.conf from the node",
+	Short: "Download the admin kubeconfig from the node",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 0 {

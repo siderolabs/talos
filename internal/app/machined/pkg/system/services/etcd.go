@@ -120,13 +120,13 @@ func (e *Etcd) Runner(config config.Configurator) (runner.Runner, error) {
 			"--listen-client-urls=https://0.0.0.0:2379",
 			"--initial-advertise-peer-urls=https://" + ips[0].String() + ":2380",
 			"--advertise-client-urls=https://" + ips[0].String() + ":2379",
-			"--cert-file=" + constants.KubeadmEtcdPeerCert,
-			"--key-file=" + constants.KubeadmEtcdPeerKey,
-			"--trusted-ca-file=" + constants.KubeadmEtcdCACert,
+			"--cert-file=" + constants.KubernetesEtcdPeerCert,
+			"--key-file=" + constants.KubernetesEtcdPeerKey,
+			"--trusted-ca-file=" + constants.KubernetesEtcdCACert,
 			"--peer-client-cert-auth=true",
-			"--peer-cert-file=" + constants.KubeadmEtcdPeerCert,
-			"--peer-trusted-ca-file=" + constants.KubeadmEtcdCACert,
-			"--peer-key-file=" + constants.KubeadmEtcdPeerKey,
+			"--peer-cert-file=" + constants.KubernetesEtcdPeerCert,
+			"--peer-trusted-ca-file=" + constants.KubernetesEtcdCACert,
+			"--peer-key-file=" + constants.KubernetesEtcdPeerKey,
 			"--initial-cluster=" + initialCluster,
 			"--initial-cluster-state=" + initialClusterState,
 		},
@@ -165,11 +165,11 @@ func generatePKI(config config.Configurator) (err error) {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubeadmEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
 		return errors.Wrap(err, "failed to write CA certificate")
 	}
 
-	if err = ioutil.WriteFile(constants.KubeadmEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
 		return errors.Wrap(err, "failed to write CA key")
 	}
 
@@ -247,11 +247,11 @@ func generatePKI(config config.Configurator) (err error) {
 		return errors.Wrap(err, "failled to create peer certificate")
 	}
 
-	if err := ioutil.WriteFile(constants.KubeadmEtcdPeerKey, peerKey.KeyPEM, 0500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0500); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubeadmEtcdPeerCert, peer.X509CertificatePEM, 0500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peer.X509CertificatePEM, 0500); err != nil {
 		return err
 	}
 
@@ -260,9 +260,9 @@ func generatePKI(config config.Configurator) (err error) {
 
 func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
 	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubeadmEtcdPeerCert,
-		KeyFile:       constants.KubeadmEtcdPeerKey,
-		TrustedCAFile: constants.KubeadmEtcdCACert,
+		CertFile:      constants.KubernetesEtcdPeerCert,
+		KeyFile:       constants.KubernetesEtcdPeerKey,
+		TrustedCAFile: constants.KubernetesEtcdCACert,
 	}
 
 	tlsConfig, err := tlsInfo.ClientConfig()

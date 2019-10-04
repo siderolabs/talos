@@ -72,6 +72,10 @@ func (task *StartServices) loadKubernetesServices(args *phase.RuntimeArgs) {
 	svcs := system.Services(args.Config())
 	svcs.Load(
 		&services.Kubelet{},
-		&services.Kubeadm{},
 	)
+	if args.Config().Machine().Type() == machine.Bootstrap {
+		svcs.Load(
+			&services.Bootkube{},
+		)
+	}
 }

@@ -43,9 +43,9 @@ func (task *LeaveEtcd) standard(args *phase.RuntimeArgs) (err error) {
 		return err
 	}
 	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubeadmEtcdPeerCert,
-		KeyFile:       constants.KubeadmEtcdPeerKey,
-		TrustedCAFile: constants.KubeadmEtcdCACert,
+		CertFile:      constants.KubernetesEtcdPeerCert,
+		KeyFile:       constants.KubernetesEtcdPeerKey,
+		TrustedCAFile: constants.KubernetesEtcdCACert,
 	}
 	tlsConfig, err := tlsInfo.ClientConfig()
 	if err != nil {

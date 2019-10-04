@@ -43,6 +43,22 @@ run() {
 ${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0
 ${LOCALOSCTL} config target 10.5.0.2
 
+# ## Wait for the init node to report in
+# run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+#      until kubectl get node master-1 >/dev/null; do
+#        [[ \$(date +%s) -gt \$timeout ]] && exit 1
+#        kubectl get nodes -o wide
+#        sleep 5
+#      done"
+
+## Wait for bootkube to finish successfully.
+run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+     until osctl service bootkube | grep Finished >/dev/null; do
+       [[ \$(date +%s) -gt \$timeout ]] && exit 1
+       osctl service bootkube
+       sleep 5
+     done"
+
 ## Fetch kubeconfig
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until osctl kubeconfig > ${KUBECONFIG}; do
@@ -50,16 +66,7 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
        sleep 2
      done"
 
-## Wait for the init node to report in
-run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until kubectl get node master-1 >/dev/null; do
-       [[ \$(date +%s) -gt \$timeout ]] && exit 1
-       kubectl get nodes -o wide
-       sleep 5
-     done"
-
-## Deploy required manifests
-run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
+run "kubectl --kubeconfig ${KUBECONFIG} config set-cluster local --server https://10.5.0.2:6443"
 
 ## Wait for all nodes to report in
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -72,11 +79,11 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 ## Wait for all nodes ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
 
-## Update the Corefile to make CoreDNS work in docker.
-run "kubectl apply -f /manifests/coredns.yaml"
+# ## Update the Corefile to make CoreDNS work in docker.
+# run "kubectl apply -f /manifests/coredns.yaml"
 
-# Restart CoreDNS.
-run "kubectl delete pods -l k8s-app=kube-dns -n kube-system"
+# # Restart CoreDNS.
+# run "kubectl delete pods -l k8s-app=kube-dns -n kube-system"
 
 ## Verify that we have an HA controlplane
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -91,3 +98,7 @@ run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-ap
 
 # Wait for DNS addon to report ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-app=kube-dns -n kube-system"
+
+run "osctl -t 10.5.0.2 service etcd | grep Running"
+run "osctl -t 10.5.0.3 service etcd | grep Running"
+run "osctl -t 10.5.0.4 service etcd | grep Running"

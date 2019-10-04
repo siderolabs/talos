@@ -25,7 +25,7 @@ func (task *VarDirectories) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *VarDirectories) runtime(args *phase.RuntimeArgs) (err error) {
-	for _, p := range []string{"/var/log/pods", "/var/lib/kubelet"} {
+	for _, p := range []string{"/var/log/pods", "/var/lib/kubelet", "/var/run/lock"} {
 		if err = os.MkdirAll(p, 0700); err != nil {
 			return err
 		}

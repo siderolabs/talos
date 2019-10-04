@@ -8,6 +8,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 func workerUd(in *Input) (string, error) {
@@ -20,7 +21,8 @@ func workerUd(in *Input) (string, error) {
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		Token: in.KubeadmTokens.BootstrapToken,
+		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
+		BootstrapToken: in.KubeadmTokens.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Version: in.KubernetesVersion,
 			IPs:     in.MasterIPs,

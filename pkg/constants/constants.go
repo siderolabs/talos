@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/defaults"
-	"k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
-	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
 
 const (
@@ -72,59 +70,75 @@ const (
 	// CNIFlannel is used to specify Flannel CNI.
 	CNIFlannel = "flannel"
 
-	// KubeadmConfig is the path to the kubeadm manifest file.
-	KubeadmConfig = "/etc/kubernetes/kubeadm-config.yaml"
+	// DefaultCertificatesDir is the path the the Kubernetes PKI directory.
+	DefaultCertificatesDir = "/etc/kubernetes/pki"
 
-	// KubeadmCACert is the path to the root CA certificate.
-	KubeadmCACert = v1beta2.DefaultCertificatesDir + "/" + constants.CACertName
+	// KubernetesCACert is the path to the root CA certificate.
+	KubernetesCACert = DefaultCertificatesDir + "/" + "ca.crt"
 
-	// KubeadmCAKey is the path to the root CA private key.
-	KubeadmCAKey = v1beta2.DefaultCertificatesDir + "/" + constants.CAKeyName
+	// KubernetesCAKey is the path to the root CA private key.
+	KubernetesCAKey = DefaultCertificatesDir + "/" + "ca.key"
 
-	// KubeadmSACert is the path to the SA certificate.
-	KubeadmSACert = v1beta2.DefaultCertificatesDir + "/" + constants.ServiceAccountPublicKeyName
+	// KubernetesSACert is the path to the SA certificate.
+	KubernetesSACert = DefaultCertificatesDir + "/" + "sa.crt"
 
-	// KubeadmSAKey is the path to the SA private key.
-	KubeadmSAKey = v1beta2.DefaultCertificatesDir + "/" + constants.ServiceAccountPrivateKeyName
+	// KubernetesSAKey is the path to the SA private key.
+	KubernetesSAKey = DefaultCertificatesDir + "/" + "sa.key"
 
-	// KubeadmFrontProxyCACert is the path to the front proxy CA certificate.
-	KubeadmFrontProxyCACert = v1beta2.DefaultCertificatesDir + "/" + constants.FrontProxyCACertName
+	// KubernetesFrontProxyCACert is the path to the front proxy CA certificate.
+	KubernetesFrontProxyCACert = DefaultCertificatesDir + "/" + "fp.crt"
 
-	// KubeadmFrontProxyCAKey is the path to the front proxy CA private key.
-	KubeadmFrontProxyCAKey = v1beta2.DefaultCertificatesDir + "/" + constants.FrontProxyCAKeyName
+	// KubernetesFrontProxyCAKey is the path to the front proxy CA private key.
+	KubernetesFrontProxyCAKey = DefaultCertificatesDir + "/" + "fp.key"
 
-	// KubeadmEtcdCACert is the path to the etcd CA certificate.
-	KubeadmEtcdCACert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdCACertName
+	// KubernetesEtcdCACert is the path to the etcd CA certificate.
+	KubernetesEtcdCACert = EtcdPKIPath + "/" + "ca.crt"
 
-	// KubeadmEtcdCAKey is the path to the etcd CA private key.
-	KubeadmEtcdCAKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdCAKeyName
+	// KubernetesEtcdCAKey is the path to the etcd CA private key.
+	KubernetesEtcdCAKey = EtcdPKIPath + "/" + "ca.key"
 
-	// KubeadmEtcdPeerCert is the path to the etcd CA certificate.
-	KubeadmEtcdPeerCert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerCertName
+	// KubernetesEtcdPeerCert is the path to the etcd CA certificate.
+	KubernetesEtcdPeerCert = EtcdPKIPath + "/" + "peer.crt"
 
-	// KubeadmEtcdPeerKey is the path to the etcd CA private key.
-	KubeadmEtcdPeerKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
+	// KubernetesEtcdPeerKey is the path to the etcd CA private key.
+	KubernetesEtcdPeerKey = EtcdPKIPath + "/" + "peer.key"
 
-	// KubeadmEtcdServerCert defines etcd's server certificate name
-	KubeadmEtcdServerCert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdServerCertName
+	// KubernetesEtcdServerCert defines etcd's server certificate name
+	KubernetesEtcdServerCert = EtcdPKIPath + "/" + "client.crt"
 
-	// KubeadmEtcdServerKey defines etcd's server key name
-	KubeadmEtcdServerKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdServerKeyName
+	// KubernetesEtcdServerKey defines etcd's server key name
+	KubernetesEtcdServerKey = EtcdPKIPath + "/" + "client.key"
 
-	// KubeadmEtcdListenClientPort defines the port etcd listen on for client traffic
-	KubeadmEtcdListenClientPort = constants.EtcdListenClientPort
+	// KubernetesEtcdListenClientPort defines the port etcd listen on for client traffic
+	KubernetesEtcdListenClientPort = "2379"
 
-	// KubeadmAPIServerEtcdClientCert defines apiserver's etcd client certificate name
-	KubeadmAPIServerEtcdClientCert = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerCertName
+	// KubernetesAPIServerEtcdClientCert defines apiserver's etcd client certificate name
+	KubernetesAPIServerEtcdClientCert = DefaultCertificatesDir + "/" + "apiserver-etcd-client.crt"
 
-	// KubeadmAPIServerEtcdClientKey defines apiserver's etcd client key name
-	KubeadmAPIServerEtcdClientKey = v1beta2.DefaultCertificatesDir + "/" + constants.EtcdPeerKeyName
+	// KubernetesAPIServerEtcdClientKey defines apiserver's etcd client key name
+	KubernetesAPIServerEtcdClientKey = DefaultCertificatesDir + "/" + "apiserver-etcd-client.key"
+
+	// KubeletBootstrapKubeconfig is the path to the kubeconfig required to
+	// bootstrap the kubelet.
+	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.16.0"
 
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
 	KubernetesImage = "k8s.gcr.io/hyperkube"
+
+	// LabelNodeRoleMaster is the node label required by a control plane node.
+	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
+
+	// AssetsDirectory is the directory that contains all bootstrap assets.
+	AssetsDirectory = "/etc/kubernetes/assets"
+
+	// GeneratedKubeconfigAsset is the directory that contains bootstrap TLS assets.
+	GeneratedKubeconfigAsset = AssetsDirectory + "/auth/kubeconfig"
+
+	// AdminKubeconfig is the generated admin kubeconfig.
+	AdminKubeconfig = "/etc/kubernetes/kubeconfig"
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	DefaultEtcdVersion = "3.3.15-0"
@@ -133,7 +147,7 @@ const (
 	EtcdImage = "k8s.gcr.io/etcd"
 
 	// EtcdPKIPath is the path to the etcd PKI directory.
-	EtcdPKIPath = "/etc/kubernetes/pki/etcd"
+	EtcdPKIPath = DefaultCertificatesDir + "/etcd"
 
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
