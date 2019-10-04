@@ -179,7 +179,14 @@ func generatePKI(config config.Configurator) (err error) {
 	}
 	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		return errors.Wrap(err, "failed to get hostname")
+	}
+
 	opts := []x509.Option{
+		x509.CommonName(hostname),
+		x509.DNSNames([]string{"localhost", hostname}),
 		x509.RSA(true),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
