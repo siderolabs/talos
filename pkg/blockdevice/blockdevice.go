@@ -16,6 +16,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
+	"github.com/talos-systems/talos/pkg/retry"
 
 	"golang.org/x/sys/unix"
 )
@@ -129,20 +130,19 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 	)
 
 	// Reread the partition table.
-	for i := 0; i < 50; i++ {
+	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
 		if _, _, ret = unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret == 0 {
 			return nil
 		}
-
-		err = errors.Errorf("re-read partition table: %v", ret)
-
 		switch ret {
 		case syscall.EBUSY:
-			time.Sleep(100 * time.Millisecond)
-			continue
+			return retry.ExpectedError(err)
 		default:
-			return err
+			return retry.UnexpectedError(err)
 		}
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to re-read partition table")
 	}
 
 	return err

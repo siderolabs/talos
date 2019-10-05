@@ -8,11 +8,13 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"math"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 const b64 = "base64"
@@ -20,8 +22,6 @@ const b64 = "base64"
 type downloadOptions struct {
 	Headers map[string]string
 	Format  string
-	Retries int
-	Wait    float64
 }
 
 // Option configures the download options
@@ -30,8 +30,6 @@ type Option func(*downloadOptions)
 func downloadDefaults() *downloadOptions {
 	return &downloadOptions{
 		Headers: make(map[string]string),
-		Retries: 10,
-		Wait:    float64(64),
 	}
 }
 
@@ -54,21 +52,6 @@ func WithFormat(format string) Option {
 func WithHeaders(headers map[string]string) Option {
 	return func(d *downloadOptions) {
 		d.Headers = headers
-	}
-}
-
-// WithRetries specifies how many times download is retried before failing
-func WithRetries(retries int) Option {
-	return func(d *downloadOptions) {
-		d.Retries = retries
-	}
-}
-
-// WithMaxWait specifies the maximum amount of time to wait between download
-// attempts
-func WithMaxWait(wait float64) Option {
-	return func(d *downloadOptions) {
-		d.Wait = wait
 	}
 }
 
@@ -95,33 +78,30 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		req.Header.Set(k, v)
 	}
 
-	for attempt := 0; attempt < dlOpts.Retries; attempt++ {
+	err = retry.Exponential(60*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second)).Retry(func() error {
 		b, err = download(req)
 		if err != nil {
-			log.Printf("download failed: %+v", err)
-			backoff(float64(attempt), dlOpts.Wait)
-
-			continue
+			return retry.ExpectedError(err)
 		}
 
-		// Only need to do something 'extra' if base64
-		// nolint: gocritic
-		switch dlOpts.Format {
-		case b64:
+		if dlOpts.Format == b64 {
 			var b64 []byte
 
 			b64, err = base64.StdEncoding.DecodeString(string(b))
 			if err != nil {
-				return b, err
+				return err
 			}
 
 			b = b64
 		}
 
-		return b, nil
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to download config from: %s", u.String())
 	}
 
-	return nil, fmt.Errorf("failed to download config from: %s", u.String())
+	return b, nil
 }
 
 // download handles the actual http request
@@ -145,15 +125,4 @@ func download(req *http.Request) (data []byte, err error) {
 	}
 
 	return data, err
-}
-
-// backoff is a simple exponential sleep/backoff
-func backoff(attempt float64, wait float64) {
-	snooze := math.Pow(2, attempt)
-	if snooze > wait {
-		snooze = wait
-	}
-
-	log.Printf("download attempt %g failed, retrying in %g seconds", attempt, snooze)
-	time.Sleep(time.Duration(snooze) * time.Second)
 }

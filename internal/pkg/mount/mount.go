@@ -20,27 +20,27 @@ import (
 	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // RetryFunc defines the requirements for retrying a mount point operation.
 type RetryFunc func(*Point) error
 
-func retry(f RetryFunc, p *Point) (err error) {
-	for i := 0; i < 50; i++ {
+func mountRetry(f RetryFunc, p *Point) (err error) {
+	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
 		if err = f(p); err != nil {
 			switch err {
 			case unix.EBUSY:
-				time.Sleep(100 * time.Millisecond)
-				continue
+				return retry.ExpectedError(err)
 			default:
-				return err
+				return retry.UnexpectedError(err)
 			}
 		}
 
 		return nil
-	}
+	})
 
-	return errors.Errorf("timeout: %+v", err)
+	return err
 }
 
 // Point represents a Linux mount point.
@@ -123,9 +123,9 @@ func (p *Point) Mount() (err error) {
 
 	switch {
 	case p.Overlay:
-		err = retry(overlay, p)
+		err = mountRetry(overlay, p)
 	default:
-		err = retry(mount, p)
+		err = mountRetry(mount, p)
 	}
 
 	if err != nil {
@@ -133,7 +133,7 @@ func (p *Point) Mount() (err error) {
 	}
 
 	if p.Shared {
-		if err = retry(share, p); err != nil {
+		if err = mountRetry(share, p); err != nil {
 			return errors.Errorf("error sharing mount point %s: %+v", p.target, err)
 		}
 	}
@@ -145,7 +145,7 @@ func (p *Point) Mount() (err error) {
 // retry every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Unmount() (err error) {
 	p.target = path.Join(p.Prefix, p.target)
-	if err := retry(unmount, p); err != nil {
+	if err := mountRetry(unmount, p); err != nil {
 		return err
 	}
 
