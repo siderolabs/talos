@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
+	"github.com/talos-systems/talos/pkg/retry"
 
 	"golang.org/x/sys/unix"
 )
@@ -64,17 +65,18 @@ func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 	// Sleep for up to 5s to wait for kernel to create the necessary device files.
 	// If we dont sleep this becomes racy in that the device file does not exist
 	// and it will fail to open.
-	for i := 0; i <= 100; i++ {
+	err = retry.Constant(5*time.Second, retry.WithUnits((50 * time.Millisecond))).Retry(func() error {
 		if f, err = os.OpenFile(path, os.O_RDONLY|unix.O_CLOEXEC, os.ModeDevice); err != nil {
 			if os.IsNotExist(err) {
-				time.Sleep(50 * time.Millisecond)
-				continue
+				return retry.ExpectedError(err)
 			}
-
-			return nil, err
+			return retry.UnexpectedError(err)
 		}
 
-		break
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// nolint: errcheck

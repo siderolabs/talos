@@ -10,7 +10,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"log"
 	stdlibnet "net"
 	"os"
 	"strings"
@@ -34,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 var etcdImage = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
@@ -304,13 +304,12 @@ func buildInitialCluster(config config.Configurator, name, ip string) (initial s
 		return "", err
 	}
 
-	for i := 0; i < 200; i++ {
-		endpoints, err := h.MasterIPs()
+	opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
+	err = retry.Constant(10*time.Minute, opts...).Retry(func() error {
+		var endpoints []string
+		endpoints, err = h.MasterIPs()
 		if err != nil {
-			log.Printf("failed to get client endpoints: %+v\n", err)
-			time.Sleep(3 * time.Second)
-
-			continue
+			return retry.ExpectedError(err)
 		}
 
 		// Etcd expects host:port format.
@@ -320,12 +319,10 @@ func buildInitialCluster(config config.Configurator, name, ip string) (initial s
 
 		peerAddrs := []string{"https://" + ip + ":2380"}
 
-		resp, err := addMember(endpoints, peerAddrs)
+		var resp *clientv3.MemberAddResponse
+		resp, err = addMember(endpoints, peerAddrs)
 		if err != nil {
-			log.Printf("failed to add etcd member: %+v\n", err)
-			time.Sleep(3 * time.Second)
-
-			continue
+			return retry.ExpectedError(err)
 		}
 
 		newID := resp.Member.ID
@@ -344,8 +341,12 @@ func buildInitialCluster(config config.Configurator, name, ip string) (initial s
 
 		initial = strings.Join(conf, ",")
 
-		return initial, nil
+		return nil
+	})
+
+	if err != nil {
+		return "", errors.New("failed to discover etcd cluster")
 	}
 
-	return "", errors.New("failed to discover etcd cluster")
+	return initial, nil
 }
