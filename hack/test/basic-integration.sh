@@ -10,6 +10,11 @@ export TALOSCONFIG="${TMP}/talosconfig"
 export KUBECONFIG="${TMP}/kubeconfig"
 export TIMEOUT=300
 export OSCTL="${PWD}/build/osctl-linux-amd64"
+export KUBECTL="${PWD}/bin/kubectl"
+
+mkdir $(dirname ${KUBECTL})
+curl -L -o ${KUBECTL} https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_VERSION}/bin/linux/amd64/kubectl
+chmod +x ${KUBECTL}
 
 case $(uname -s) in
   Linux*)
@@ -31,13 +36,14 @@ run() {
          --rm \
          --interactive \
          --net=integration \
-         --entrypoint=bash \
+         --entrypoint=sh \
          --mount type=bind,source=${TMP},target=${TMP} \
          --mount type=bind,source=${PWD}/hack/dev/manifests,target=/manifests \
          -v ${OSCTL}:/bin/osctl:ro \
+         -v ${KUBECTL}:/bin/kubectl:ro \
          -e KUBECONFIG=${KUBECONFIG} \
          -e TALOSCONFIG=${TALOSCONFIG} \
-         k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
+         alpine:3.10 -c "${1}"
 }
 
 ${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0
