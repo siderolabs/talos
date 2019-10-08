@@ -49,6 +49,10 @@ func (e *Etcd) ID(config config.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (e *Etcd) PreFunc(ctx context.Context, config config.Configurator) (err error) {
+	if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
+		return err
+	}
+
 	if err = generatePKI(config); err != nil {
 		return errors.Wrap(err, "failed to generate etcd PKI")
 	}
