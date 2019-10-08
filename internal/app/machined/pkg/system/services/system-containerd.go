@@ -74,7 +74,6 @@ func (c *SystemContainerd) Runner(config config.Configurator) (runner.Runner, er
 		config.Debug(),
 		args,
 		runner.WithEnv(env),
-		runner.WithLogPath("/run"),
 	),
 		restart.WithType(restart.Forever),
 	), nil

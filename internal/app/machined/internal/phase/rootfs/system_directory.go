@@ -6,9 +6,11 @@ package rootfs
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // SystemDirectory represents the SystemDirectory task.
@@ -25,5 +27,11 @@ func (task *SystemDirectory) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *SystemDirectory) runtime(args *phase.RuntimeArgs) (err error) {
-	return os.MkdirAll("/run/system/etc", os.ModeDir)
+	for _, p := range []string{"etc", "log"} {
+		if err = os.MkdirAll(filepath.Join(constants.SystemRunPath, p), 0700); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
