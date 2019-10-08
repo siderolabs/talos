@@ -8,6 +8,14 @@ menu:
     weight: 1
 ---
 
+<!-- markdownlint-disable no-inline-html -->
+<a href="https://www.cncf.io/certification/software-conformance/">
+  <img class="object-contain h-32 float-right"
+       src="/images/certified-kubernetes-color.svg"
+       alt="Certified Kubernetes" />
+</a>
+<!-- markdownlint-enable no-inline-html -->
+
 **Talos** is a modern OS designed to be secure, immutable, and minimal.
 Its purpose is to host Kubernetes clusters, so it is tightly integrated with Kubernetes.
 Talos is based on the Linux kernel, and supports most cloud platforms, bare metal, and most virtualization platforms.
