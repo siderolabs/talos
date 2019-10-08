@@ -43,14 +43,6 @@ run() {
 ${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --masters=3 --mtu 1440 --cpus 4.0
 ${LOCALOSCTL} config target 10.5.0.2
 
-# ## Wait for the init node to report in
-# run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-#      until kubectl get node master-1 >/dev/null; do
-#        [[ \$(date +%s) -gt \$timeout ]] && exit 1
-#        kubectl get nodes -o wide
-#        sleep 5
-#      done"
-
 ## Wait for bootkube to finish successfully.
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until osctl service bootkube | grep Finished >/dev/null; do
