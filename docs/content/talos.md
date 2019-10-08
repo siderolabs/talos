@@ -8,9 +8,13 @@ menu:
     weight: 1
 ---
 
+<!-- markdownlint-disable no-inline-html -->
 <a href="https://www.cncf.io/certification/software-conformance/">
-  <img class="object-contain h-32 float-right" src="/images/certified-kubernetes-color.svg" alt="Certified Kubernetes" />
+  <img class="object-contain h-32 float-right"
+       src="/images/certified-kubernetes-color.svg"
+       alt="Certified Kubernetes" />
 </a>
+<!-- markdownlint-enable no-inline-html -->
 
 **Talos** is a modern OS designed to be secure, immutable, and minimal.
 All system management is done via an API, and there is no shell or interactive console.
