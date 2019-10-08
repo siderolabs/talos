@@ -233,6 +233,15 @@ const (
 
 	// DefaultLogPath is the default path to the log storage directory.
 	DefaultLogPath = SystemRunPath + "/log"
+
+	// DefaultCNI is the default CNI.
+	DefaultCNI = "flannel"
+
+	// DefaultPodCIDR is the default pod CIDR block.
+	DefaultPodCIDR = "10.244.0.0/16"
+
+	// DefaultServiceCIDR is the default service CIDR block.
+	DefaultServiceCIDR = "10.96.0.0/12"
 )
 
 // See https://linux.die.net/man/3/klogctl

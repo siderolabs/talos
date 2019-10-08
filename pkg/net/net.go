@@ -6,6 +6,8 @@ package net
 
 import (
 	"net"
+
+	"github.com/pkg/errors"
 )
 
 // IPAddrs finds and returns a list of non-loopback IPv4 addresses of the
@@ -39,4 +41,25 @@ func FormatAddress(addr string) string {
 		return ip.String()
 	}
 	return addr
+}
+
+// NthIPInNetwork takes an IPNet and returns the nth IP in it.
+func NthIPInNetwork(network *net.IPNet, n int) (net.IP, error) {
+	ip := network.IP
+	dst := make([]byte, len(ip))
+	copy(dst, ip)
+	for i := 0; i < n; i++ {
+		for j := len(dst) - 1; j >= 0; j-- {
+			dst[j]++
+			if dst[j] > 0 {
+				break
+			}
+		}
+	}
+
+	if network.Contains(dst) {
+		return dst, nil
+	}
+
+	return nil, errors.New("network does not contain enough IPs")
 }

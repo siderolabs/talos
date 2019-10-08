@@ -37,7 +37,7 @@ func initUd(in *Input) (string, error) {
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,
 		},
-		Network: &v1alpha1.ClusterNetworkConfig{
+		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 			DNSDomain:     in.ServiceDomain,
 			PodSubnet:     in.PodNet,
 			ServiceSubnet: in.ServiceNet,

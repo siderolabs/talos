@@ -20,6 +20,15 @@ type Cluster interface {
 	AESCBCEncryptionSecret() string
 	Config(machine.Type) (string, error)
 	Etcd() Etcd
+	Network() Network
+}
+
+// Network defines the requirements for a config that pertains to cluster
+// network options.
+type Network interface {
+	CNI() string
+	PodCIDR() string
+	ServiceCIDR() string
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related
