@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // UdevdTrigger implements the Service interface. It serves as the concrete type with
@@ -21,32 +21,32 @@ import (
 type UdevdTrigger struct{}
 
 // ID implements the Service interface.
-func (c *UdevdTrigger) ID(config config.Configurator) string {
+func (c *UdevdTrigger) ID(config runtime.Configurator) string {
 	return "udevd-trigger"
 }
 
 // PreFunc implements the Service interface.
-func (c *UdevdTrigger) PreFunc(ctx context.Context, config config.Configurator) error {
+func (c *UdevdTrigger) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (c *UdevdTrigger) PostFunc(config config.Configurator) (err error) {
+func (c *UdevdTrigger) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *UdevdTrigger) Condition(config config.Configurator) conditions.Condition {
+func (c *UdevdTrigger) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *UdevdTrigger) DependsOn(config config.Configurator) []string {
+func (c *UdevdTrigger) DependsOn(config runtime.Configurator) []string {
 	return []string{"udevd"}
 }
 
 // Runner implements the Service interface.
-func (c *UdevdTrigger) Runner(config config.Configurator) (runner.Runner, error) {
+func (c *UdevdTrigger) Runner(config runtime.Configurator) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID: c.ID(config),
@@ -71,16 +71,16 @@ func (c *UdevdTrigger) Runner(config config.Configurator) (runner.Runner, error)
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (c *UdevdTrigger) APIStartAllowed(config config.Configurator) bool {
+func (c *UdevdTrigger) APIStartAllowed(config runtime.Configurator) bool {
 	return true
 }
 
 // APIStopAllowed implements the APIStoppableService interface.
-func (c *UdevdTrigger) APIStopAllowed(config config.Configurator) bool {
+func (c *UdevdTrigger) APIStopAllowed(config runtime.Configurator) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (c *UdevdTrigger) APIRestartAllowed(config config.Configurator) bool {
+func (c *UdevdTrigger) APIRestartAllowed(config runtime.Configurator) bool {
 	return true
 }

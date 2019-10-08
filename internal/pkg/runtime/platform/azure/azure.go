@@ -12,7 +12,7 @@ import (
 	"net/http"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/download"
 )
 
 const (
@@ -43,7 +43,7 @@ func (a *Azure) Configuration() ([]byte, error) {
 		return nil, err
 	}
 
-	return config.Download(AzureUserDataEndpoint, config.WithHeaders(map[string]string{"Metadata": "true"}), config.WithFormat("base64"))
+	return download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
 }
 
 // Hostname gets the hostname from the Azure metadata endpoint.

@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -28,12 +28,12 @@ import (
 type NTPd struct{}
 
 // ID implements the Service interface.
-func (n *NTPd) ID(config config.Configurator) string {
+func (n *NTPd) ID(config runtime.Configurator) string {
 	return "ntpd"
 }
 
 // PreFunc implements the Service interface.
-func (n *NTPd) PreFunc(ctx context.Context, config config.Configurator) error {
+func (n *NTPd) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -45,21 +45,21 @@ func (n *NTPd) PreFunc(ctx context.Context, config config.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (n *NTPd) PostFunc(config config.Configurator) (err error) {
+func (n *NTPd) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (n *NTPd) Condition(config config.Configurator) conditions.Condition {
+func (n *NTPd) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (n *NTPd) DependsOn(config config.Configurator) []string {
+func (n *NTPd) DependsOn(config runtime.Configurator) []string {
 	return []string{"system-containerd", "networkd"}
 }
 
-func (n *NTPd) Runner(config config.Configurator) (runner.Runner, error) {
+func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	image := "talos/ntpd"
 
 	args := runner.Args{
@@ -98,11 +98,11 @@ func (n *NTPd) Runner(config config.Configurator) (runner.Runner, error) {
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (n *NTPd) APIStartAllowed(config config.Configurator) bool {
+func (n *NTPd) APIStartAllowed(config runtime.Configurator) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (n *NTPd) APIRestartAllowed(config config.Configurator) bool {
+func (n *NTPd) APIRestartAllowed(config runtime.Configurator) bool {
 	return true
 }

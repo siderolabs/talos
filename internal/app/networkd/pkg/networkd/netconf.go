@@ -9,7 +9,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // NetConf provides a mapping between an interface link and the functional
@@ -17,7 +17,7 @@ import (
 type NetConf map[*net.Interface][]nic.Option
 
 // BuildOptions translates the supplied config to functional options.
-func (n *NetConf) BuildOptions(config config.Configurator) error {
+func (n *NetConf) BuildOptions(config runtime.Configurator) error {
 	for link, opts := range *n {
 		for _, device := range config.Machine().Network().Devices() {
 			device := device

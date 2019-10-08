@@ -112,8 +112,8 @@ func main() {
 	// Start the boot sequence in a go routine so that we can list for events.
 	go func() {
 		defer recovery()
-		log.Println(err)
 		if err := seq.Boot(); err != nil {
+			log.Println(err)
 			panic(errors.Wrap(err, "boot failed"))
 		}
 	}()

@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -28,12 +28,12 @@ import (
 type Networkd struct{}
 
 // ID implements the Service interface.
-func (n *Networkd) ID(config config.Configurator) string {
+func (n *Networkd) ID(config runtime.Configurator) string {
 	return "networkd"
 }
 
 // PreFunc implements the Service interface.
-func (n *Networkd) PreFunc(ctx context.Context, config config.Configurator) error {
+func (n *Networkd) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -45,21 +45,21 @@ func (n *Networkd) PreFunc(ctx context.Context, config config.Configurator) erro
 }
 
 // PostFunc implements the Service interface.
-func (n *Networkd) PostFunc(config config.Configurator) (err error) {
+func (n *Networkd) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (n *Networkd) Condition(config config.Configurator) conditions.Condition {
+func (n *Networkd) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (n *Networkd) DependsOn(config config.Configurator) []string {
+func (n *Networkd) DependsOn(config runtime.Configurator) []string {
 	return []string{"system-containerd"}
 }
 
-func (n *Networkd) Runner(config config.Configurator) (runner.Runner, error) {
+func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	image := "talos/networkd"
 
 	args := runner.Args{

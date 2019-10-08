@@ -27,7 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -43,12 +43,12 @@ var etcdImage = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdV
 type Etcd struct{}
 
 // ID implements the Service interface.
-func (e *Etcd) ID(config config.Configurator) string {
+func (e *Etcd) ID(config runtime.Configurator) string {
 	return "etcd"
 }
 
 // PreFunc implements the Service interface.
-func (e *Etcd) PreFunc(ctx context.Context, config config.Configurator) (err error) {
+func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
 	if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
 		return err
 	}
@@ -74,22 +74,22 @@ func (e *Etcd) PreFunc(ctx context.Context, config config.Configurator) (err err
 }
 
 // PostFunc implements the Service interface.
-func (e *Etcd) PostFunc(config config.Configurator) (err error) {
+func (e *Etcd) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (e *Etcd) Condition(config config.Configurator) conditions.Condition {
+func (e *Etcd) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (e *Etcd) DependsOn(config config.Configurator) []string {
+func (e *Etcd) DependsOn(config runtime.Configurator) []string {
 	return []string{"containerd"}
 }
 
 // Runner implements the Service interface.
-func (e *Etcd) Runner(config config.Configurator) (runner.Runner, error) {
+func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to discover IP addresses")
@@ -166,7 +166,7 @@ func (e *Etcd) Runner(config config.Configurator) (runner.Runner, error) {
 }
 
 // nolint: gocyclo
-func generatePKI(config config.Configurator) (err error) {
+func generatePKI(config runtime.Configurator) (err error) {
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0644); err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
 	return resp, nil
 }
 
-func buildInitialCluster(config config.Configurator, name, ip string) (initial string, err error) {
+func buildInitialCluster(config runtime.Configurator, name, ip string) (initial string, err error) {
 	endpoint := stdlibnet.ParseIP(config.Cluster().Endpoint())
 
 	h, err := kubernetes.NewTemporaryClientFromPKI(config.Cluster().CA().Crt, config.Cluster().CA().Key, endpoint.String(), "6443")

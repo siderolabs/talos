@@ -10,10 +10,14 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
 )
 
-var configFile string
+var (
+	configFile       string
+	validatePlatform string
+)
 
 // validateCmd reads in a userData file and attempts to parse it
 var validateCmd = &cobra.Command{
@@ -29,7 +33,12 @@ var validateCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := config.Validate(); err != nil {
+
+		mode, err := runtime.ModeFromString(validatePlatform)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := config.Validate(mode); err != nil {
 			log.Fatal(err)
 		}
 	},
@@ -37,5 +46,6 @@ var validateCmd = &cobra.Command{
 
 func init() {
 	validateCmd.Flags().StringVarP(&configFile, "config", "u", "", "the path of the config file")
+	validateCmd.Flags().StringVarP(&validatePlatform, "platform", "p", "", "the platform to validate the config for")
 	rootCmd.AddCommand(validateCmd)
 }

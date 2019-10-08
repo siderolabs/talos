@@ -12,8 +12,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cmd"
-	"github.com/talos-systems/talos/pkg/config"
 )
 
 // Udevd implements the Service interface. It serves as the concrete type with
@@ -21,12 +21,12 @@ import (
 type Udevd struct{}
 
 // ID implements the Service interface.
-func (c *Udevd) ID(config config.Configurator) string {
+func (c *Udevd) ID(config runtime.Configurator) string {
 	return "udevd"
 }
 
 // PreFunc implements the Service interface.
-func (c *Udevd) PreFunc(ctx context.Context, config config.Configurator) error {
+func (c *Udevd) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	return cmd.Run(
 		"/sbin/udevadm",
 		"hwdb",
@@ -35,22 +35,22 @@ func (c *Udevd) PreFunc(ctx context.Context, config config.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (c *Udevd) PostFunc(config config.Configurator) (err error) {
+func (c *Udevd) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Udevd) Condition(config config.Configurator) conditions.Condition {
+func (c *Udevd) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Udevd) DependsOn(config config.Configurator) []string {
+func (c *Udevd) DependsOn(config runtime.Configurator) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *Udevd) Runner(config config.Configurator) (runner.Runner, error) {
+func (c *Udevd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID: c.ID(config),

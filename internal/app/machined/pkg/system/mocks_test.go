@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 type MockService struct {
@@ -29,7 +29,7 @@ type MockService struct {
 	dependencies []string
 }
 
-func (m *MockService) ID(config.Configurator) string {
+func (m *MockService) ID(runtime.Configurator) string {
 	if m.name != "" {
 		return m.name
 	}
@@ -37,11 +37,11 @@ func (m *MockService) ID(config.Configurator) string {
 	return "MockRunner"
 }
 
-func (m *MockService) PreFunc(context.Context, config.Configurator) error {
+func (m *MockService) PreFunc(context.Context, runtime.Configurator) error {
 	return m.preError
 }
 
-func (m *MockService) Runner(config.Configurator) (runner.Runner, error) {
+func (m *MockService) Runner(runtime.Configurator) (runner.Runner, error) {
 	if m.runner != nil {
 		return m.runner, m.runnerError
 	}
@@ -53,15 +53,15 @@ func (m *MockService) Runner(config.Configurator) (runner.Runner, error) {
 	return &MockRunner{exitCh: make(chan error)}, m.runnerError
 }
 
-func (m *MockService) PostFunc(config.Configurator) error {
+func (m *MockService) PostFunc(runtime.Configurator) error {
 	return m.postError
 }
 
-func (m *MockService) Condition(config.Configurator) conditions.Condition {
+func (m *MockService) Condition(runtime.Configurator) conditions.Condition {
 	return m.condition
 }
 
-func (m *MockService) DependsOn(config.Configurator) []string {
+func (m *MockService) DependsOn(runtime.Configurator) []string {
 	return m.dependencies
 }
 
@@ -79,7 +79,7 @@ func (m *MockHealthcheckedService) SetHealthy(healthy bool) {
 	}
 }
 
-func (m *MockHealthcheckedService) HealthFunc(config.Configurator) health.Check {
+func (m *MockHealthcheckedService) HealthFunc(runtime.Configurator) health.Check {
 	return func(context.Context) error {
 		if atomic.LoadUint32(&m.notHealthy) == 0 {
 			return nil
@@ -89,7 +89,7 @@ func (m *MockHealthcheckedService) HealthFunc(config.Configurator) health.Check 
 	}
 }
 
-func (m *MockHealthcheckedService) HealthSettings(config.Configurator) *health.Settings {
+func (m *MockHealthcheckedService) HealthSettings(runtime.Configurator) *health.Settings {
 	return &health.Settings{
 		InitialDelay: time.Millisecond,
 		Timeout:      time.Second,

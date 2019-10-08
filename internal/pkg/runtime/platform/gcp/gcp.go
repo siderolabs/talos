@@ -12,7 +12,7 @@ import (
 	"net/http"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/download"
 )
 
 // Ref: https://cloud.google.com/compute/docs/storing-retrieving-metadata
@@ -34,7 +34,7 @@ func (g *GCP) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (g *GCP) Configuration() ([]byte, error) {
-	return config.Download(GCUserDataEndpoint, config.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
+	return download.Download(GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 
 // Hostname implements the platform.Platform interface.

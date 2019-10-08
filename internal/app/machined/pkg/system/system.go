@@ -15,11 +15,11 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 type singleton struct {
-	Config config.Configurator
+	Config runtime.Configurator
 
 	// State of running services by ID
 	state map[string]*ServiceRunner
@@ -41,7 +41,7 @@ var once sync.Once
 
 // Services returns the instance of the system services API.
 // nolint: golint
-func Services(config config.Configurator) *singleton {
+func Services(config runtime.Configurator) *singleton {
 	once.Do(func() {
 		instance = &singleton{
 			Config:  config,

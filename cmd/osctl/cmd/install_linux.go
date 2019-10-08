@@ -14,6 +14,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	machineconfig "github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
@@ -29,14 +30,13 @@ var (
 	extraKernelArgs []string
 )
 
-// installCmd reads in a userData file and attempts to parse it
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install Talos to a specified disk",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
-			config machineconfig.Configurator
+			config runtime.Configurator
 			err    error
 		)
 
