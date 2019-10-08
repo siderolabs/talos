@@ -8,6 +8,7 @@ package cmd
 import (
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -41,8 +42,8 @@ var installCmd = &cobra.Command{
 
 		platform, err := platform.NewPlatform()
 		if err == nil {
-			if platform.Name() != platformArg {
-				log.Println("platform mismatch")
+			if strings.ToLower(platform.Name()) != strings.ToLower(platformArg) {
+				log.Printf("platform mismatch (%s != %s)", platform.Name(), platformArg)
 			} else {
 				var b []byte
 				b, err = platform.Configuration()
