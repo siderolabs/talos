@@ -117,7 +117,7 @@ func create() (err error) {
 	fmt.Println("creating network", clusterName)
 
 	if _, err = createNetwork(cli); err != nil {
-		return err
+		return errors.Wrap(err, " A cluster might already exist, run \"osctl cluster destroy\" to permanently delete the existing cluster, and try again.")
 	}
 
 	// Create the master nodes.
