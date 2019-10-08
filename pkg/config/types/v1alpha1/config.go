@@ -5,8 +5,10 @@
 package v1alpha1
 
 import (
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -24,33 +26,47 @@ const (
 )
 
 // Version implements the Configurator interface.
-func (n *Config) Version() string {
+func (c *Config) Version() string {
 	return Version
 }
 
 // Debug implements the Configurator interface.
-func (n *Config) Debug() bool {
+func (c *Config) Debug() bool {
 	return false
 }
 
 // Machine implements the Configurator interface.
-func (n *Config) Machine() machine.Machine {
-	return n.MachineConfig
+func (c *Config) Machine() machine.Machine {
+	return c.MachineConfig
 }
 
 // Cluster implements the Configurator interface.
-func (n *Config) Cluster() cluster.Cluster {
-	return n.ClusterConfig
+func (c *Config) Cluster() cluster.Cluster {
+	return c.ClusterConfig
 }
 
 // Validate implements the Configurator interface.
-func (n *Config) Validate() error {
+func (c *Config) Validate(mode runtime.Mode) error {
+	if c.MachineConfig == nil {
+		return errors.New("machine instructions are required")
+	}
+
+	if c.ClusterConfig == nil {
+		return errors.New("cluster instructions are required")
+	}
+
+	if mode == runtime.Metal {
+		if c.MachineConfig.MachineInstall == nil {
+			return errors.Errorf("install instructions are required by the %q mode", runtime.Metal.String())
+		}
+	}
+
 	return nil
 }
 
 // String implements the Configurator interface.
-func (n *Config) String() (string, error) {
-	b, err := yaml.Marshal(n)
+func (c *Config) String() (string, error) {
+	b, err := yaml.Marshal(c)
 	if err != nil {
 		return "", err
 	}

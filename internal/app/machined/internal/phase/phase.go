@@ -15,13 +15,12 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
-	"github.com/talos-systems/talos/pkg/config"
 )
 
 // RuntimeArgs represents the set of arguments passed into a TaskFunc.
 type RuntimeArgs struct {
 	platform runtime.Platform
-	config   config.Configurator
+	config   runtime.Configurator
 }
 
 // TaskFunc defines the function that a task must return. The function
@@ -46,7 +45,7 @@ type Runner struct {
 }
 
 // NewRunner initializes and returns a Runner.
-func NewRunner(config config.Configurator) (*Runner, error) {
+func NewRunner(config runtime.Configurator) (*Runner, error) {
 	platform, err := platform.NewPlatform()
 	if err != nil {
 		return nil, err
@@ -75,7 +74,7 @@ func (r *RuntimeArgs) Platform() runtime.Platform {
 }
 
 // Config returns the config.
-func (r *RuntimeArgs) Config() config.Configurator {
+func (r *RuntimeArgs) Config() runtime.Configurator {
 	return r.config
 }
 

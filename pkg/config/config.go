@@ -11,20 +11,9 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/pkg/config/cluster"
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
-
-// Configurator defines the configuration interface.
-type Configurator interface {
-	Version() string
-	Debug() bool
-	Machine() machine.Machine
-	Cluster() cluster.Cluster
-	Validate() error
-	String() (string, error)
-}
 
 // Content represents the raw config data.
 type Content struct {
@@ -34,7 +23,7 @@ type Content struct {
 }
 
 // New initializes and returns a Configurator.
-func New(c Content) (config Configurator, err error) {
+func New(c Content) (config runtime.Configurator, err error) {
 	switch c.Version {
 	case v1alpha1.Version:
 		config = &v1alpha1.Config{}

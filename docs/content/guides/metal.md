@@ -21,8 +21,8 @@ osctl config generate <cluster name> <master-1 ip,master-2 ip, master-3 ip>
 This will generate 5 files - `master-{1,2,3}.yaml`, `worker.yaml`, and `talosconfig`.
 The master and worker config files contain just enough config to bootstrap your cluster, and can be further customized as necessary.
 
-These config files should be supplied as machine userdata or some internally accessible url so they can be downloaded during machine bootup.
-When specifying a remote location to download userdata from, the kernel parameter `talos.config=http://myurl.com`.
+These config files should be supplied as machine config or some internally accessible url so they can be downloaded during machine bootup.
+When specifying a remote location to download the config from, the kernel parameter `talos.config=http://myurl.com`.
 
 An iPXE server such as [coreos/Matchbox](https://github.com/poseidon/matchbox) is recommended.
 

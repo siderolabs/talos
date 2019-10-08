@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/api/reg"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
@@ -23,7 +23,7 @@ func NewService() *Service {
 }
 
 // Main is an entrypoint the the API service
-func (s *Service) Main(ctx context.Context, config config.Configurator, logWriter io.Writer) error {
+func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWriter io.Writer) error {
 	api := reg.NewRegistrator(config)
 	server := factory.NewServer(api)
 

@@ -22,7 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -34,12 +34,12 @@ import (
 type OSD struct{}
 
 // ID implements the Service interface.
-func (o *OSD) ID(config config.Configurator) string {
+func (o *OSD) ID(config runtime.Configurator) string {
 	return "osd"
 }
 
 // PreFunc implements the Service interface.
-func (o *OSD) PreFunc(ctx context.Context, config config.Configurator) error {
+func (o *OSD) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -51,12 +51,12 @@ func (o *OSD) PreFunc(ctx context.Context, config config.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (o *OSD) PostFunc(config config.Configurator) (err error) {
+func (o *OSD) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (o *OSD) Condition(config config.Configurator) conditions.Condition {
+func (o *OSD) Condition(config runtime.Configurator) conditions.Condition {
 	if config.Machine().Type() == machine.Worker {
 		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
@@ -65,7 +65,7 @@ func (o *OSD) Condition(config config.Configurator) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (o *OSD) DependsOn(config config.Configurator) []string {
+func (o *OSD) DependsOn(config runtime.Configurator) []string {
 	if config.Machine().Type() == machine.Worker {
 		return []string{"system-containerd", "containerd", "kubelet"}
 	}
@@ -73,7 +73,7 @@ func (o *OSD) DependsOn(config config.Configurator) []string {
 	return []string{"system-containerd", "containerd"}
 }
 
-func (o *OSD) Runner(config config.Configurator) (runner.Runner, error) {
+func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 	image := "talos/osd"
 
 	endpoints := []string{"127.0.0.1"}
@@ -140,7 +140,7 @@ func (o *OSD) Runner(config config.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (o *OSD) HealthFunc(config.Configurator) health.Check {
+func (o *OSD) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
 		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.OsdPort))
@@ -153,6 +153,6 @@ func (o *OSD) HealthFunc(config.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (o *OSD) HealthSettings(config.Configurator) *health.Settings {
+func (o *OSD) HealthSettings(runtime.Configurator) *health.Settings {
 	return &health.DefaultSettings
 }

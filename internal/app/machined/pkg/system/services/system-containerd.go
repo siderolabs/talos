@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -26,32 +26,32 @@ import (
 type SystemContainerd struct{}
 
 // ID implements the Service interface.
-func (c *SystemContainerd) ID(config config.Configurator) string {
+func (c *SystemContainerd) ID(config runtime.Configurator) string {
 	return "system-containerd"
 }
 
 // PreFunc implements the Service interface.
-func (c *SystemContainerd) PreFunc(ctx context.Context, config config.Configurator) error {
+func (c *SystemContainerd) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (c *SystemContainerd) PostFunc(config config.Configurator) (err error) {
+func (c *SystemContainerd) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *SystemContainerd) Condition(config config.Configurator) conditions.Condition {
+func (c *SystemContainerd) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *SystemContainerd) DependsOn(config config.Configurator) []string {
+func (c *SystemContainerd) DependsOn(config runtime.Configurator) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *SystemContainerd) Runner(config config.Configurator) (runner.Runner, error) {
+func (c *SystemContainerd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID: c.ID(config),
@@ -80,7 +80,7 @@ func (c *SystemContainerd) Runner(config config.Configurator) (runner.Runner, er
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (c *SystemContainerd) HealthFunc(config.Configurator) health.Check {
+func (c *SystemContainerd) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		client, err := containerd.New(constants.SystemContainerdAddress)
 		if err != nil {
@@ -103,6 +103,6 @@ func (c *SystemContainerd) HealthFunc(config.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (c *SystemContainerd) HealthSettings(config.Configurator) *health.Settings {
+func (c *SystemContainerd) HealthSettings(runtime.Configurator) *health.Settings {
 	return &health.DefaultSettings
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/fullsailor/pkcs7"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/download"
 )
 
 const (
@@ -122,7 +122,7 @@ func (a *AWS) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (a *AWS) Configuration() ([]byte, error) {
-	return config.Download(AWSUserDataEndpoint)
+	return download.Download(AWSUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.

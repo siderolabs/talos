@@ -30,7 +30,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
@@ -57,12 +57,12 @@ contexts:
 type Kubelet struct{}
 
 // ID implements the Service interface.
-func (k *Kubelet) ID(config config.Configurator) string {
+func (k *Kubelet) ID(config runtime.Configurator) string {
 	return "kubelet"
 }
 
 // PreFunc implements the Service interface.
-func (k *Kubelet) PreFunc(ctx context.Context, config config.Configurator) error {
+func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	cfg := struct {
 		Server               string
 		CACert               string
@@ -114,22 +114,22 @@ func (k *Kubelet) PreFunc(ctx context.Context, config config.Configurator) error
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubelet) PostFunc(config config.Configurator) (err error) {
+func (k *Kubelet) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (k *Kubelet) Condition(config config.Configurator) conditions.Condition {
+func (k *Kubelet) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (k *Kubelet) DependsOn(config config.Configurator) []string {
+func (k *Kubelet) DependsOn(config runtime.Configurator) []string {
 	return []string{"containerd"}
 }
 
 // Runner implements the Service interface.
-func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
+func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 
 	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
@@ -217,7 +217,7 @@ func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (k *Kubelet) HealthFunc(config.Configurator) health.Check {
+func (k *Kubelet) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		req, err := http.NewRequest("GET", "http://127.0.0.1:10248/healthz", nil)
 		if err != nil {
@@ -241,7 +241,7 @@ func (k *Kubelet) HealthFunc(config.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (k *Kubelet) HealthSettings(config.Configurator) *health.Settings {
+func (k *Kubelet) HealthSettings(runtime.Configurator) *health.Settings {
 	settings := health.DefaultSettings
 	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup
 

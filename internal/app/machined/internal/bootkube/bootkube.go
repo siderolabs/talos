@@ -10,7 +10,7 @@ import (
 
 	"github.com/kubernetes-incubator/bootkube/pkg/bootkube"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -23,7 +23,7 @@ func NewService() *Service {
 }
 
 // Main is the entrypoint for bootkube.
-func (s *Service) Main(ctx context.Context, config config.Configurator, logWriter io.Writer) error {
+func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWriter io.Writer) error {
 	defaultRequiredPods := []string{
 		"kube-system/pod-checkpointer",
 		"kube-system/kube-apiserver",

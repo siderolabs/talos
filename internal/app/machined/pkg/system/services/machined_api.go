@@ -11,7 +11,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // MachinedAPI implements the Service interface. It serves as the concrete type with
@@ -19,31 +19,31 @@ import (
 type MachinedAPI struct{}
 
 // ID implements the Service interface.
-func (c *MachinedAPI) ID(config config.Configurator) string {
+func (c *MachinedAPI) ID(config runtime.Configurator) string {
 	return "machined-api"
 }
 
 // PreFunc implements the Service interface.
-func (c *MachinedAPI) PreFunc(ctx context.Context, config config.Configurator) error {
+func (c *MachinedAPI) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (c *MachinedAPI) PostFunc(config config.Configurator) (err error) {
+func (c *MachinedAPI) PostFunc(config runtime.Configurator) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *MachinedAPI) Condition(config config.Configurator) conditions.Condition {
+func (c *MachinedAPI) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *MachinedAPI) DependsOn(config config.Configurator) []string {
+func (c *MachinedAPI) DependsOn(config runtime.Configurator) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *MachinedAPI) Runner(config config.Configurator) (runner.Runner, error) {
+func (c *MachinedAPI) Runner(config runtime.Configurator) (runner.Runner, error) {
 	return goroutine.NewRunner(config, "machined-api", api.NewService().Main), nil
 }

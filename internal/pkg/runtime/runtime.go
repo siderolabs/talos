@@ -5,7 +5,9 @@
 package runtime
 
 import (
-	"github.com/talos-systems/talos/pkg/config"
+	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Mode is a runtime mode.
@@ -27,14 +29,30 @@ func (m Mode) String() string {
 	return [...]string{"Cloud", "Container", "Interactive", "Metal"}[m]
 }
 
+// ModeFromString returns a runtime mode that matches the given string.
+func ModeFromString(s string) (m Mode, err error) {
+	switch strings.Title(s) {
+	case "Cloud":
+		return Cloud, nil
+	case "Container":
+		return Container, nil
+	case "Interactive":
+		return Interactive, nil
+	case "Metal":
+		return Metal, nil
+	default:
+		return m, errors.Errorf("%q is not a valid mode", s)
+	}
+}
+
 // Runtime defines the runtime parameters.
 type Runtime interface {
 	Platform() Platform
-	Config() config.Configurator
+	Config() Configurator
 }
 
 // NewRuntime initializes and returns the runtime interface.
-func NewRuntime(p Platform, c config.Configurator) Runtime {
+func NewRuntime(p Platform, c Configurator) Runtime {
 	return &DefaultRuntime{
 		p: p,
 		c: c,
@@ -44,7 +62,7 @@ func NewRuntime(p Platform, c config.Configurator) Runtime {
 // DefaultRuntime implements the Runtime interface.
 type DefaultRuntime struct {
 	p Platform
-	c config.Configurator
+	c Configurator
 }
 
 // Platform implements the Runtime interface.
@@ -53,6 +71,6 @@ func (d *DefaultRuntime) Platform() Platform {
 }
 
 // Config implements the Runtime interface.
-func (d *DefaultRuntime) Config() config.Configurator {
+func (d *DefaultRuntime) Config() Configurator {
 	return d.c
 }

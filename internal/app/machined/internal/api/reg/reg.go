@@ -23,9 +23,9 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/event"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
-	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -36,11 +36,11 @@ const OSPathSeparator = string(os.PathSeparator)
 // Registrator is the concrete type that implements the factory.Registrator and
 // machineapi.Machine interfaces.
 type Registrator struct {
-	config config.Configurator
+	config runtime.Configurator
 }
 
 // NewRegistrator builds new Registrator instance
-func NewRegistrator(config config.Configurator) *Registrator {
+func NewRegistrator(config runtime.Configurator) *Registrator {
 	return &Registrator{
 		config: config,
 	}

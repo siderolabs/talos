@@ -15,8 +15,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/download"
 )
 
 const (
@@ -42,7 +42,7 @@ func (b *Metal) Configuration() ([]byte, error) {
 	case constants.MetalConfigISOLabel:
 		return readConfigFromISO()
 	default:
-		return config.Download(*option)
+		return download.Download(*option)
 	}
 }
 

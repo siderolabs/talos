@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
@@ -31,39 +31,39 @@ import (
 type Bootkube struct{}
 
 // ID implements the Service interface.
-func (b *Bootkube) ID(config config.Configurator) string {
+func (b *Bootkube) ID(config runtime.Configurator) string {
 	return "bootkube"
 }
 
 // PreFunc implements the Service interface.
-func (b *Bootkube) PreFunc(ctx context.Context, config config.Configurator) (err error) {
+func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
 	return generateAssets(config)
 }
 
 // PostFunc implements the Service interface.
-func (b *Bootkube) PostFunc(config config.Configurator) error {
+func (b *Bootkube) PostFunc(config runtime.Configurator) error {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (b *Bootkube) DependsOn(config config.Configurator) []string {
+func (b *Bootkube) DependsOn(config runtime.Configurator) []string {
 	deps := []string{"etcd"}
 
 	return deps
 }
 
 // Condition implements the Service interface.
-func (b *Bootkube) Condition(config config.Configurator) conditions.Condition {
+func (b *Bootkube) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (b *Bootkube) Runner(config config.Configurator) (runner.Runner, error) {
+func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 	return goroutine.NewRunner(config, "bootkube", bootkube.NewService().Main), nil
 }
 
 // nolint: gocyclo
-func generateAssets(config config.Configurator) (err error) {
+func generateAssets(config runtime.Configurator) (err error) {
 	if err = os.MkdirAll("/etc/kubernetes/manifests", 0644); err != nil {
 		return err
 	}

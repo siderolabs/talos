@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	"github.com/pkg/errors"
+
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/acpi"
@@ -65,12 +67,12 @@ func (d *Sequencer) Boot() error {
 
 	content, err := config.FromFile(constants.ConfigPath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to read config")
 	}
 
 	config, err := config.New(content)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to parse config")
 	}
 
 	phaserunner, err = phase.NewRunner(config)
@@ -79,6 +81,10 @@ func (d *Sequencer) Boot() error {
 	}
 
 	phaserunner.Add(
+		phase.NewPhase(
+			"config validation",
+			rootfs.NewValidateConfigTask(),
+		),
 		phase.NewPhase(
 			"mount extra devices",
 			configtask.NewExtraDevicesTask(),

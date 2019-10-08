@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime"
+	stdlibruntime "runtime"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -17,14 +17,14 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // goroutineRunner is a runner.Runner that runs a service in a goroutine
 type goroutineRunner struct {
 	main   FuncMain
 	id     string
-	config config.Configurator
+	config runtime.Configurator
 
 	opts *runner.Options
 
@@ -37,10 +37,10 @@ type goroutineRunner struct {
 // FuncMain is a entrypoint into the service.
 //
 // Service should abort and return when ctx is canceled
-type FuncMain func(ctx context.Context, config config.Configurator, logOutput io.Writer) error
+type FuncMain func(ctx context.Context, config runtime.Configurator, logOutput io.Writer) error
 
 // NewRunner creates runner.Runner that runs a service as goroutine
-func NewRunner(config config.Configurator, id string, main FuncMain, setters ...runner.Option) runner.Runner {
+func NewRunner(config runtime.Configurator, id string, main FuncMain, setters ...runner.Option) runner.Runner {
 	r := &goroutineRunner{
 		id:     id,
 		config: config,
@@ -76,7 +76,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 8192)
-			n := runtime.Stack(buf, false)
+			n := stdlibruntime.Stack(buf, false)
 			err = errors.Errorf("panic in service: %v\n%s", r, string(buf[:n]))
 		}
 	}()

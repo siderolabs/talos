@@ -7,12 +7,12 @@ package cni
 import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // Mounts returns the set of mounts required by the requested CNI plugin. All
 // paths are relative to the root file system after switching the root.
-func Mounts(config config.Configurator) ([]specs.Mount, error) {
+func Mounts(config runtime.Configurator) ([]specs.Mount, error) {
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/opt/cni", Source: "/opt/cni", Options: []string{"rbind", "rshared", "rw"}},
