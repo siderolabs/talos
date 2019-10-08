@@ -9,6 +9,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
@@ -16,7 +17,7 @@ import (
 type ClusterConfig struct {
 	ControlPlane                  *ControlPlaneConfig               `yaml:"controlPlane"`
 	ClusterName                   string                            `yaml:"clusterName,omitempty"`
-	Network                       *ClusterNetworkConfig             `yaml:"network,omitempty"`
+	ClusterNetwork                *ClusterNetworkConfig             `yaml:"network,omitempty"`
 	BootstrapToken                string                            `yaml:"token,omitempty"`
 	CertificateKey                string                            `yaml:"certificateKey"`
 	ClusterAESCBCEncryptionSecret string                            `yaml:"aescbcEncryptionSecret"`
@@ -67,6 +68,7 @@ type EtcdConfig struct {
 
 // ClusterNetworkConfig represents kube networking config vals
 type ClusterNetworkConfig struct {
+	CNI           string   `yaml:"cni"`
 	DNSDomain     string   `yaml:"dnsDomain"`
 	PodSubnet     []string `yaml:"podSubnets"`
 	ServiceSubnet []string `yaml:"serviceSubnets"`
@@ -138,4 +140,36 @@ func (c *ClusterConfig) Secret() string {
 		return ""
 	}
 	return parts[1]
+}
+
+// Network implements the Configurator interface.
+func (c *ClusterConfig) Network() cluster.Network {
+	return c
+}
+
+// CNI implements the Configurator interface.
+func (c *ClusterConfig) CNI() string {
+	if c.ClusterNetwork.CNI == "" {
+		return constants.DefaultCNI
+	}
+
+	return c.ClusterNetwork.CNI
+}
+
+// PodCIDR implements the Configurator interface.
+func (c *ClusterConfig) PodCIDR() string {
+	if len(c.ClusterNetwork.PodSubnet) == 0 {
+		return constants.DefaultPodCIDR
+	}
+
+	return c.ClusterNetwork.PodSubnet[0]
+}
+
+// ServiceCIDR implements the Configurator interface.
+func (c *ClusterConfig) ServiceCIDR() string {
+	if len(c.ClusterNetwork.ServiceSubnet) == 0 {
+		return constants.DefaultServiceCIDR
+	}
+
+	return c.ClusterNetwork.ServiceSubnet[0]
 }

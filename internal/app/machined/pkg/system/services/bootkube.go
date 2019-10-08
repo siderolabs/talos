@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
+	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 // Bootkube implements the Service interface. It serves as the concrete type with
@@ -125,11 +126,11 @@ func generateAssets(config config.Configurator) (err error) {
 	}
 	apiServers = append(apiServers, u)
 
-	_, podCIDR, err := net.ParseCIDR("10.2.0.0/16")
+	_, podCIDR, err := net.ParseCIDR(config.Cluster().Network().PodCIDR())
 	if err != nil {
 		return err
 	}
-	_, serviceCIDR, err := net.ParseCIDR("10.3.0.0/24")
+	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
 	if err != nil {
 		return err
 	}
@@ -154,6 +155,16 @@ func generateAssets(config config.Configurator) (err error) {
 		return errors.Wrap(err, "failed to parse Kubernetes key")
 	}
 
+	apiServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 1)
+	if err != nil {
+		return err
+	}
+
+	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
+	if err != nil {
+		return err
+	}
+
 	conf := asset.Config{
 		CACert:                 k8sCA,
 		CAPrivKey:              k8sKey,
@@ -163,11 +174,11 @@ func generateAssets(config config.Configurator) (err error) {
 		EtcdServers:            []*url.URL{etcdServer},
 		EtcdUseTLS:             true,
 		APIServers:             apiServers,
-		APIServiceIP:           net.ParseIP("10.3.0.1"),
-		DNSServiceIP:           net.ParseIP("10.3.0.10"),
+		APIServiceIP:           apiServiceIP,
+		DNSServiceIP:           dnsServiceIP,
 		PodCIDR:                podCIDR,
 		ServiceCIDR:            serviceCIDR,
-		NetworkProvider:        "flannel",
+		NetworkProvider:        config.Cluster().Network().CNI(),
 		AltNames:               altNames,
 		Images:                 asset.DefaultImages,
 		BootstrapSecretsSubdir: "/assets/tls",
