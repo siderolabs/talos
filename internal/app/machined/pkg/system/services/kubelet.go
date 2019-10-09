@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -31,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
+	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
@@ -127,6 +129,16 @@ func (k *Kubelet) DependsOn(config config.Configurator) []string {
 func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
 	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 
+	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
+	if err != nil {
+		return nil, err
+	}
+
+	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
+	if err != nil {
+		return nil, err
+	}
+
 	// Set the process arguments.
 	args := runner.Args{
 		ID: k.ID(config),
@@ -144,7 +156,7 @@ func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
 			"--cluster-domain=cluster.local",
 			"--pod-manifest-path=/etc/kubernetes/manifests",
 			"--rotate-certificates",
-			"--cluster-dns=10.3.0.10",
+			"--cluster-dns=" + dnsServiceIP.String(),
 			// TODO(andrewrynhard): Only set this in the case of container run mode.
 			"--fail-swap-on=false",
 		},
