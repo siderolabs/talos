@@ -13,29 +13,33 @@ import "google/protobuf/empty.proto";
 //
 // OS Service also implements all the API of Init Service
 service OS {
-  rpc Dmesg(google.protobuf.Empty) returns (Data);
-  rpc Kubeconfig(google.protobuf.Empty) returns (Data);
-  rpc Logs(LogsRequest) returns (stream Data);
   rpc Containers(ContainersRequest) returns (ContainersReply);
+  rpc Dmesg(google.protobuf.Empty) returns (DataReply);
+  rpc Kubeconfig(google.protobuf.Empty) returns (DataReply);
+  rpc Logs(LogsRequest) returns (stream Data);
+  rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
   rpc Restart(RestartRequest) returns (RestartReply);
   rpc Stats(StatsRequest) returns (StatsReply);
-  rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
 }
 
+// Common metadata message nested in all reply message types
+message NodeMetadata {
+  string hostname = 1;
+}
+
+// rpc Containers
+
+// The request message containing the containerd namespace.
 enum ContainerDriver {
   CONTAINERD = 0;
   CRI = 1;
 }
 
-// The request message containing the containerd namespace.
 message ContainersRequest {
   string namespace = 1;
   // driver might be default "containerd" or "cri"
   ContainerDriver driver = 2;
 }
-
-// The response message containing the requested containers.
-message ContainersReply { repeated Container containers = 1; }
 
 // The response message containing the requested containers.
 message Container {
@@ -48,36 +52,34 @@ message Container {
   string name = 7;
 }
 
-// The request message containing the containerd namespace.
-message StatsRequest {
-  string namespace = 1;
-  // driver might be default "containerd" or "cri"
-  ContainerDriver driver = 2;
+// The response message containing the requested containers.
+message ContainerResponse {
+  NodeMetadata metadata = 1;
+  repeated Container containers = 2;
 }
 
-// The response message containing the requested stats.
-message StatsReply { repeated Stat stats = 1; }
-
-// The response message containing the requested stat.
-message Stat {
-  string namespace = 1;
-  string id = 2;
-  uint64 memory_usage = 4;
-  uint64 cpu_usage = 5;
-  string pod_id = 6;
-  string name = 7;
+message ContainersReply {
+  repeated ContainerResponse response = 1;
 }
 
-// The request message containing the process to restart.
-message RestartRequest {
-  string namespace = 1;
-  string id = 2;
-  // driver might be default "containerd" or "cri"
-  ContainerDriver driver = 3;
+// rpc dmesg
+// rpc kubeconfig
+
+// The response message containing the requested logs.
+message Data {
+  bytes bytes = 1;
 }
 
-// The response message containing the restart status.
-message RestartReply {}
+message DataResponse {
+  NodeMetadata metadata = 1;
+  Data bytes = 2;
+}
+
+message DataReply {
+  repeated DataResponse response = 1;
+}
+
+// rpc logs
 
 // The request message containing the process name.
 message LogsRequest {
@@ -87,12 +89,17 @@ message LogsRequest {
   ContainerDriver driver = 3;
 }
 
-// The response message containing the requested logs.
-message Data { bytes bytes = 1; }
-
+// rpc processes
 message ProcessesRequest {}
 
-message ProcessesReply { repeated Process processes = 1; }
+message ProcessesReply {
+  repeated ProcessResponse response = 1;
+}
+
+message ProcessResponse {
+  NodeMetadata metadata = 1;
+  repeated Process processes = 2;
+}
 
 message Process {
   int32 pid = 1;
@@ -106,3 +113,51 @@ message Process {
   string executable = 9;
   string args = 10;
 }
+
+// rpc restart
+// The request message containing the process to restart.
+message RestartRequest {
+  string namespace = 1;
+  string id = 2;
+  // driver might be default "containerd" or "cri"
+  ContainerDriver driver = 3;
+}
+
+message RestartResponse {
+  NodeMetadata metadata = 1;
+}
+
+// The response message containing the restart status.
+message RestartReply {
+  repeated RestartResponse response = 1;
+}
+
+// rpc stats
+
+// The request message containing the containerd namespace.
+message StatsRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  ContainerDriver driver = 2;
+}
+
+// The response message containing the requested stats.
+message StatsResponse {
+  NodeMetadata metadata = 1;
+  repeated Stat stats = 2;
+}
+
+message StatsReply {
+  repeated StatsResponse response = 1;
+}
+
+// The response message containing the requested stat.
+message Stat {
+  string namespace = 1;
+  string id = 2;
+  uint64 memory_usage = 4;
+  uint64 cpu_usage = 5;
+  string pod_id = 6;
+  string name = 7;
+}
+

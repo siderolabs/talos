@@ -7,10 +7,19 @@ import (
 	context "context"
 	fmt "fmt"
 	math "math"
+	strings "strings"
+	sync "sync"
 
 	proto "github.com/golang/protobuf/proto"
 	empty "github.com/golang/protobuf/ptypes/empty"
+	go_multierror "github.com/hashicorp/go-multierror"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	credentials "google.golang.org/grpc/credentials"
+	metadata "google.golang.org/grpc/metadata"
+	status "google.golang.org/grpc/status"
+
+	tls "github.com/talos-systems/talos/pkg/grpc/tls"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -24,6 +33,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// The request message containing the containerd namespace.
 type ContainerDriver int32
 
 const (
@@ -49,7 +59,50 @@ func (ContainerDriver) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
 }
 
-// The request message containing the containerd namespace.
+// Common metadata message nested in all reply message types
+type NodeMetadata struct {
+	Hostname             string   `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *NodeMetadata) Reset()         { *m = NodeMetadata{} }
+func (m *NodeMetadata) String() string { return proto.CompactTextString(m) }
+func (*NodeMetadata) ProtoMessage()    {}
+func (*NodeMetadata) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
+}
+
+func (m *NodeMetadata) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NodeMetadata.Unmarshal(m, b)
+}
+
+func (m *NodeMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NodeMetadata.Marshal(b, m, deterministic)
+}
+
+func (m *NodeMetadata) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeMetadata.Merge(m, src)
+}
+
+func (m *NodeMetadata) XXX_Size() int {
+	return xxx_messageInfo_NodeMetadata.Size(m)
+}
+
+func (m *NodeMetadata) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeMetadata.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_NodeMetadata proto.InternalMessageInfo
+
+func (m *NodeMetadata) GetHostname() string {
+	if m != nil {
+		return m.Hostname
+	}
+	return ""
+}
+
 type ContainersRequest struct {
 	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// driver might be default "containerd" or "cri"
@@ -63,7 +116,7 @@ func (m *ContainersRequest) Reset()         { *m = ContainersRequest{} }
 func (m *ContainersRequest) String() string { return proto.CompactTextString(m) }
 func (*ContainersRequest) ProtoMessage()    {}
 func (*ContainersRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
 }
 
 func (m *ContainersRequest) XXX_Unmarshal(b []byte) error {
@@ -100,50 +153,6 @@ func (m *ContainersRequest) GetDriver() ContainerDriver {
 		return m.Driver
 	}
 	return ContainerDriver_CONTAINERD
-}
-
-// The response message containing the requested containers.
-type ContainersReply struct {
-	Containers           []*Container `protobuf:"bytes,1,rep,name=containers,proto3" json:"containers,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
-}
-
-func (m *ContainersReply) Reset()         { *m = ContainersReply{} }
-func (m *ContainersReply) String() string { return proto.CompactTextString(m) }
-func (*ContainersReply) ProtoMessage()    {}
-func (*ContainersReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
-}
-
-func (m *ContainersReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ContainersReply.Unmarshal(m, b)
-}
-
-func (m *ContainersReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ContainersReply.Marshal(b, m, deterministic)
-}
-
-func (m *ContainersReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContainersReply.Merge(m, src)
-}
-
-func (m *ContainersReply) XXX_Size() int {
-	return xxx_messageInfo_ContainersReply.Size(m)
-}
-
-func (m *ContainersReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContainersReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ContainersReply proto.InternalMessageInfo
-
-func (m *ContainersReply) GetContainers() []*Container {
-	if m != nil {
-		return m.Containers
-	}
-	return nil
 }
 
 // The response message containing the requested containers.
@@ -238,283 +247,238 @@ func (m *Container) GetName() string {
 	return ""
 }
 
-// The request message containing the containerd namespace.
-type StatsRequest struct {
-	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	// driver might be default "containerd" or "cri"
-	Driver               ContainerDriver `protobuf:"varint,2,opt,name=driver,proto3,enum=proto.ContainerDriver" json:"driver,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
-	XXX_unrecognized     []byte          `json:"-"`
-	XXX_sizecache        int32           `json:"-"`
+// The response message containing the requested containers.
+type ContainerResponse struct {
+	Metadata             *NodeMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Containers           []*Container  `protobuf:"bytes,2,rep,name=containers,proto3" json:"containers,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
-func (m *StatsRequest) Reset()         { *m = StatsRequest{} }
-func (m *StatsRequest) String() string { return proto.CompactTextString(m) }
-func (*StatsRequest) ProtoMessage()    {}
-func (*StatsRequest) Descriptor() ([]byte, []int) {
+func (m *ContainerResponse) Reset()         { *m = ContainerResponse{} }
+func (m *ContainerResponse) String() string { return proto.CompactTextString(m) }
+func (*ContainerResponse) ProtoMessage()    {}
+func (*ContainerResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00212fb1f9d3bf1c, []int{3}
 }
 
-func (m *StatsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StatsRequest.Unmarshal(m, b)
+func (m *ContainerResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContainerResponse.Unmarshal(m, b)
 }
 
-func (m *StatsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StatsRequest.Marshal(b, m, deterministic)
+func (m *ContainerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContainerResponse.Marshal(b, m, deterministic)
 }
 
-func (m *StatsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatsRequest.Merge(m, src)
+func (m *ContainerResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContainerResponse.Merge(m, src)
 }
 
-func (m *StatsRequest) XXX_Size() int {
-	return xxx_messageInfo_StatsRequest.Size(m)
+func (m *ContainerResponse) XXX_Size() int {
+	return xxx_messageInfo_ContainerResponse.Size(m)
 }
 
-func (m *StatsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_StatsRequest.DiscardUnknown(m)
+func (m *ContainerResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContainerResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_StatsRequest proto.InternalMessageInfo
+var xxx_messageInfo_ContainerResponse proto.InternalMessageInfo
 
-func (m *StatsRequest) GetNamespace() string {
+func (m *ContainerResponse) GetMetadata() *NodeMetadata {
 	if m != nil {
-		return m.Namespace
-	}
-	return ""
-}
-
-func (m *StatsRequest) GetDriver() ContainerDriver {
-	if m != nil {
-		return m.Driver
-	}
-	return ContainerDriver_CONTAINERD
-}
-
-// The response message containing the requested stats.
-type StatsReply struct {
-	Stats                []*Stat  `protobuf:"bytes,1,rep,name=stats,proto3" json:"stats,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *StatsReply) Reset()         { *m = StatsReply{} }
-func (m *StatsReply) String() string { return proto.CompactTextString(m) }
-func (*StatsReply) ProtoMessage()    {}
-func (*StatsReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{4}
-}
-
-func (m *StatsReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StatsReply.Unmarshal(m, b)
-}
-
-func (m *StatsReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StatsReply.Marshal(b, m, deterministic)
-}
-
-func (m *StatsReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatsReply.Merge(m, src)
-}
-
-func (m *StatsReply) XXX_Size() int {
-	return xxx_messageInfo_StatsReply.Size(m)
-}
-
-func (m *StatsReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_StatsReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StatsReply proto.InternalMessageInfo
-
-func (m *StatsReply) GetStats() []*Stat {
-	if m != nil {
-		return m.Stats
+		return m.Metadata
 	}
 	return nil
 }
 
-// The response message containing the requested stat.
-type Stat struct {
-	Namespace            string   `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Id                   string   `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	MemoryUsage          uint64   `protobuf:"varint,4,opt,name=memory_usage,json=memoryUsage,proto3" json:"memory_usage,omitempty"`
-	CpuUsage             uint64   `protobuf:"varint,5,opt,name=cpu_usage,json=cpuUsage,proto3" json:"cpu_usage,omitempty"`
-	PodId                string   `protobuf:"bytes,6,opt,name=pod_id,json=podId,proto3" json:"pod_id,omitempty"`
-	Name                 string   `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
+func (m *ContainerResponse) GetContainers() []*Container {
+	if m != nil {
+		return m.Containers
+	}
+	return nil
+}
+
+type ContainersReply struct {
+	Response             []*ContainerResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *ContainersReply) Reset()         { *m = ContainersReply{} }
+func (m *ContainersReply) String() string { return proto.CompactTextString(m) }
+func (*ContainersReply) ProtoMessage()    {}
+func (*ContainersReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{4}
+}
+
+func (m *ContainersReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContainersReply.Unmarshal(m, b)
+}
+
+func (m *ContainersReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContainersReply.Marshal(b, m, deterministic)
+}
+
+func (m *ContainersReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContainersReply.Merge(m, src)
+}
+
+func (m *ContainersReply) XXX_Size() int {
+	return xxx_messageInfo_ContainersReply.Size(m)
+}
+
+func (m *ContainersReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContainersReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContainersReply proto.InternalMessageInfo
+
+func (m *ContainersReply) GetResponse() []*ContainerResponse {
+	if m != nil {
+		return m.Response
+	}
+	return nil
+}
+
+// The response message containing the requested logs.
+type Data struct {
+	Bytes                []byte   `protobuf:"bytes,1,opt,name=bytes,proto3" json:"bytes,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Stat) Reset()         { *m = Stat{} }
-func (m *Stat) String() string { return proto.CompactTextString(m) }
-func (*Stat) ProtoMessage()    {}
-func (*Stat) Descriptor() ([]byte, []int) {
+func (m *Data) Reset()         { *m = Data{} }
+func (m *Data) String() string { return proto.CompactTextString(m) }
+func (*Data) ProtoMessage()    {}
+func (*Data) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00212fb1f9d3bf1c, []int{5}
 }
 
-func (m *Stat) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Stat.Unmarshal(m, b)
+func (m *Data) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Data.Unmarshal(m, b)
 }
 
-func (m *Stat) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Stat.Marshal(b, m, deterministic)
+func (m *Data) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Data.Marshal(b, m, deterministic)
 }
 
-func (m *Stat) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Stat.Merge(m, src)
+func (m *Data) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Data.Merge(m, src)
 }
 
-func (m *Stat) XXX_Size() int {
-	return xxx_messageInfo_Stat.Size(m)
+func (m *Data) XXX_Size() int {
+	return xxx_messageInfo_Data.Size(m)
 }
 
-func (m *Stat) XXX_DiscardUnknown() {
-	xxx_messageInfo_Stat.DiscardUnknown(m)
+func (m *Data) XXX_DiscardUnknown() {
+	xxx_messageInfo_Data.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Stat proto.InternalMessageInfo
+var xxx_messageInfo_Data proto.InternalMessageInfo
 
-func (m *Stat) GetNamespace() string {
+func (m *Data) GetBytes() []byte {
 	if m != nil {
-		return m.Namespace
+		return m.Bytes
 	}
-	return ""
+	return nil
 }
 
-func (m *Stat) GetId() string {
+type DataResponse struct {
+	Metadata             *NodeMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Bytes                *Data         `protobuf:"bytes,2,opt,name=bytes,proto3" json:"bytes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *DataResponse) Reset()         { *m = DataResponse{} }
+func (m *DataResponse) String() string { return proto.CompactTextString(m) }
+func (*DataResponse) ProtoMessage()    {}
+func (*DataResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{6}
+}
+
+func (m *DataResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DataResponse.Unmarshal(m, b)
+}
+
+func (m *DataResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DataResponse.Marshal(b, m, deterministic)
+}
+
+func (m *DataResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DataResponse.Merge(m, src)
+}
+
+func (m *DataResponse) XXX_Size() int {
+	return xxx_messageInfo_DataResponse.Size(m)
+}
+
+func (m *DataResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_DataResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DataResponse proto.InternalMessageInfo
+
+func (m *DataResponse) GetMetadata() *NodeMetadata {
 	if m != nil {
-		return m.Id
+		return m.Metadata
 	}
-	return ""
+	return nil
 }
 
-func (m *Stat) GetMemoryUsage() uint64 {
+func (m *DataResponse) GetBytes() *Data {
 	if m != nil {
-		return m.MemoryUsage
+		return m.Bytes
 	}
-	return 0
+	return nil
 }
 
-func (m *Stat) GetCpuUsage() uint64 {
-	if m != nil {
-		return m.CpuUsage
-	}
-	return 0
-}
-
-func (m *Stat) GetPodId() string {
-	if m != nil {
-		return m.PodId
-	}
-	return ""
-}
-
-func (m *Stat) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-// The request message containing the process to restart.
-type RestartRequest struct {
-	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	// driver might be default "containerd" or "cri"
-	Driver               ContainerDriver `protobuf:"varint,3,opt,name=driver,proto3,enum=proto.ContainerDriver" json:"driver,omitempty"`
+type DataReply struct {
+	Response             []*DataResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
 	XXX_unrecognized     []byte          `json:"-"`
 	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *RestartRequest) Reset()         { *m = RestartRequest{} }
-func (m *RestartRequest) String() string { return proto.CompactTextString(m) }
-func (*RestartRequest) ProtoMessage()    {}
-func (*RestartRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{6}
-}
-
-func (m *RestartRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RestartRequest.Unmarshal(m, b)
-}
-
-func (m *RestartRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RestartRequest.Marshal(b, m, deterministic)
-}
-
-func (m *RestartRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RestartRequest.Merge(m, src)
-}
-
-func (m *RestartRequest) XXX_Size() int {
-	return xxx_messageInfo_RestartRequest.Size(m)
-}
-
-func (m *RestartRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RestartRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RestartRequest proto.InternalMessageInfo
-
-func (m *RestartRequest) GetNamespace() string {
-	if m != nil {
-		return m.Namespace
-	}
-	return ""
-}
-
-func (m *RestartRequest) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *RestartRequest) GetDriver() ContainerDriver {
-	if m != nil {
-		return m.Driver
-	}
-	return ContainerDriver_CONTAINERD
-}
-
-// The response message containing the restart status.
-type RestartReply struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RestartReply) Reset()         { *m = RestartReply{} }
-func (m *RestartReply) String() string { return proto.CompactTextString(m) }
-func (*RestartReply) ProtoMessage()    {}
-func (*RestartReply) Descriptor() ([]byte, []int) {
+func (m *DataReply) Reset()         { *m = DataReply{} }
+func (m *DataReply) String() string { return proto.CompactTextString(m) }
+func (*DataReply) ProtoMessage()    {}
+func (*DataReply) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00212fb1f9d3bf1c, []int{7}
 }
 
-func (m *RestartReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RestartReply.Unmarshal(m, b)
+func (m *DataReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DataReply.Unmarshal(m, b)
 }
 
-func (m *RestartReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RestartReply.Marshal(b, m, deterministic)
+func (m *DataReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DataReply.Marshal(b, m, deterministic)
 }
 
-func (m *RestartReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RestartReply.Merge(m, src)
+func (m *DataReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DataReply.Merge(m, src)
 }
 
-func (m *RestartReply) XXX_Size() int {
-	return xxx_messageInfo_RestartReply.Size(m)
+func (m *DataReply) XXX_Size() int {
+	return xxx_messageInfo_DataReply.Size(m)
 }
 
-func (m *RestartReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_RestartReply.DiscardUnknown(m)
+func (m *DataReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_DataReply.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RestartReply proto.InternalMessageInfo
+var xxx_messageInfo_DataReply proto.InternalMessageInfo
+
+func (m *DataReply) GetResponse() []*DataResponse {
+	if m != nil {
+		return m.Response
+	}
+	return nil
+}
 
 // The request message containing the process name.
 type LogsRequest struct {
@@ -577,50 +541,7 @@ func (m *LogsRequest) GetDriver() ContainerDriver {
 	return ContainerDriver_CONTAINERD
 }
 
-// The response message containing the requested logs.
-type Data struct {
-	Bytes                []byte   `protobuf:"bytes,1,opt,name=bytes,proto3" json:"bytes,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Data) Reset()         { *m = Data{} }
-func (m *Data) String() string { return proto.CompactTextString(m) }
-func (*Data) ProtoMessage()    {}
-func (*Data) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{9}
-}
-
-func (m *Data) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Data.Unmarshal(m, b)
-}
-
-func (m *Data) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Data.Marshal(b, m, deterministic)
-}
-
-func (m *Data) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Data.Merge(m, src)
-}
-
-func (m *Data) XXX_Size() int {
-	return xxx_messageInfo_Data.Size(m)
-}
-
-func (m *Data) XXX_DiscardUnknown() {
-	xxx_messageInfo_Data.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Data proto.InternalMessageInfo
-
-func (m *Data) GetBytes() []byte {
-	if m != nil {
-		return m.Bytes
-	}
-	return nil
-}
-
+// rpc processes
 type ProcessesRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -631,7 +552,7 @@ func (m *ProcessesRequest) Reset()         { *m = ProcessesRequest{} }
 func (m *ProcessesRequest) String() string { return proto.CompactTextString(m) }
 func (*ProcessesRequest) ProtoMessage()    {}
 func (*ProcessesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{10}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{9}
 }
 
 func (m *ProcessesRequest) XXX_Unmarshal(b []byte) error {
@@ -657,17 +578,17 @@ func (m *ProcessesRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_ProcessesRequest proto.InternalMessageInfo
 
 type ProcessesReply struct {
-	Processes            []*Process `protobuf:"bytes,1,rep,name=processes,proto3" json:"processes,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Response             []*ProcessResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
 func (m *ProcessesReply) Reset()         { *m = ProcessesReply{} }
 func (m *ProcessesReply) String() string { return proto.CompactTextString(m) }
 func (*ProcessesReply) ProtoMessage()    {}
 func (*ProcessesReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{11}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{10}
 }
 
 func (m *ProcessesReply) XXX_Unmarshal(b []byte) error {
@@ -692,7 +613,58 @@ func (m *ProcessesReply) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ProcessesReply proto.InternalMessageInfo
 
-func (m *ProcessesReply) GetProcesses() []*Process {
+func (m *ProcessesReply) GetResponse() []*ProcessResponse {
+	if m != nil {
+		return m.Response
+	}
+	return nil
+}
+
+type ProcessResponse struct {
+	Metadata             *NodeMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Processes            []*Process    `protobuf:"bytes,2,rep,name=processes,proto3" json:"processes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *ProcessResponse) Reset()         { *m = ProcessResponse{} }
+func (m *ProcessResponse) String() string { return proto.CompactTextString(m) }
+func (*ProcessResponse) ProtoMessage()    {}
+func (*ProcessResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{11}
+}
+
+func (m *ProcessResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProcessResponse.Unmarshal(m, b)
+}
+
+func (m *ProcessResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProcessResponse.Marshal(b, m, deterministic)
+}
+
+func (m *ProcessResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProcessResponse.Merge(m, src)
+}
+
+func (m *ProcessResponse) XXX_Size() int {
+	return xxx_messageInfo_ProcessResponse.Size(m)
+}
+
+func (m *ProcessResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProcessResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProcessResponse proto.InternalMessageInfo
+
+func (m *ProcessResponse) GetMetadata() *NodeMetadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+func (m *ProcessResponse) GetProcesses() []*Process {
 	if m != nil {
 		return m.Processes
 	}
@@ -814,73 +786,471 @@ func (m *Process) GetArgs() string {
 	return ""
 }
 
+// rpc restart
+// The request message containing the process to restart.
+type RestartRequest struct {
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// driver might be default "containerd" or "cri"
+	Driver               ContainerDriver `protobuf:"varint,3,opt,name=driver,proto3,enum=proto.ContainerDriver" json:"driver,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *RestartRequest) Reset()         { *m = RestartRequest{} }
+func (m *RestartRequest) String() string { return proto.CompactTextString(m) }
+func (*RestartRequest) ProtoMessage()    {}
+func (*RestartRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{13}
+}
+
+func (m *RestartRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RestartRequest.Unmarshal(m, b)
+}
+
+func (m *RestartRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RestartRequest.Marshal(b, m, deterministic)
+}
+
+func (m *RestartRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RestartRequest.Merge(m, src)
+}
+
+func (m *RestartRequest) XXX_Size() int {
+	return xxx_messageInfo_RestartRequest.Size(m)
+}
+
+func (m *RestartRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_RestartRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RestartRequest proto.InternalMessageInfo
+
+func (m *RestartRequest) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *RestartRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *RestartRequest) GetDriver() ContainerDriver {
+	if m != nil {
+		return m.Driver
+	}
+	return ContainerDriver_CONTAINERD
+}
+
+type RestartResponse struct {
+	Metadata             *NodeMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *RestartResponse) Reset()         { *m = RestartResponse{} }
+func (m *RestartResponse) String() string { return proto.CompactTextString(m) }
+func (*RestartResponse) ProtoMessage()    {}
+func (*RestartResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{14}
+}
+
+func (m *RestartResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RestartResponse.Unmarshal(m, b)
+}
+
+func (m *RestartResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RestartResponse.Marshal(b, m, deterministic)
+}
+
+func (m *RestartResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RestartResponse.Merge(m, src)
+}
+
+func (m *RestartResponse) XXX_Size() int {
+	return xxx_messageInfo_RestartResponse.Size(m)
+}
+
+func (m *RestartResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_RestartResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RestartResponse proto.InternalMessageInfo
+
+func (m *RestartResponse) GetMetadata() *NodeMetadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+// The response message containing the restart status.
+type RestartReply struct {
+	Response             []*RestartResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
+}
+
+func (m *RestartReply) Reset()         { *m = RestartReply{} }
+func (m *RestartReply) String() string { return proto.CompactTextString(m) }
+func (*RestartReply) ProtoMessage()    {}
+func (*RestartReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{15}
+}
+
+func (m *RestartReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RestartReply.Unmarshal(m, b)
+}
+
+func (m *RestartReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RestartReply.Marshal(b, m, deterministic)
+}
+
+func (m *RestartReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RestartReply.Merge(m, src)
+}
+
+func (m *RestartReply) XXX_Size() int {
+	return xxx_messageInfo_RestartReply.Size(m)
+}
+
+func (m *RestartReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_RestartReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RestartReply proto.InternalMessageInfo
+
+func (m *RestartReply) GetResponse() []*RestartResponse {
+	if m != nil {
+		return m.Response
+	}
+	return nil
+}
+
+// The request message containing the containerd namespace.
+type StatsRequest struct {
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// driver might be default "containerd" or "cri"
+	Driver               ContainerDriver `protobuf:"varint,2,opt,name=driver,proto3,enum=proto.ContainerDriver" json:"driver,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *StatsRequest) Reset()         { *m = StatsRequest{} }
+func (m *StatsRequest) String() string { return proto.CompactTextString(m) }
+func (*StatsRequest) ProtoMessage()    {}
+func (*StatsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{16}
+}
+
+func (m *StatsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StatsRequest.Unmarshal(m, b)
+}
+
+func (m *StatsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StatsRequest.Marshal(b, m, deterministic)
+}
+
+func (m *StatsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatsRequest.Merge(m, src)
+}
+
+func (m *StatsRequest) XXX_Size() int {
+	return xxx_messageInfo_StatsRequest.Size(m)
+}
+
+func (m *StatsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StatsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StatsRequest proto.InternalMessageInfo
+
+func (m *StatsRequest) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetDriver() ContainerDriver {
+	if m != nil {
+		return m.Driver
+	}
+	return ContainerDriver_CONTAINERD
+}
+
+// The response message containing the requested stats.
+type StatsResponse struct {
+	Metadata             *NodeMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Stats                []*Stat       `protobuf:"bytes,2,rep,name=stats,proto3" json:"stats,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *StatsResponse) Reset()         { *m = StatsResponse{} }
+func (m *StatsResponse) String() string { return proto.CompactTextString(m) }
+func (*StatsResponse) ProtoMessage()    {}
+func (*StatsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{17}
+}
+
+func (m *StatsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StatsResponse.Unmarshal(m, b)
+}
+
+func (m *StatsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StatsResponse.Marshal(b, m, deterministic)
+}
+
+func (m *StatsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatsResponse.Merge(m, src)
+}
+
+func (m *StatsResponse) XXX_Size() int {
+	return xxx_messageInfo_StatsResponse.Size(m)
+}
+
+func (m *StatsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_StatsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StatsResponse proto.InternalMessageInfo
+
+func (m *StatsResponse) GetMetadata() *NodeMetadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+func (m *StatsResponse) GetStats() []*Stat {
+	if m != nil {
+		return m.Stats
+	}
+	return nil
+}
+
+type StatsReply struct {
+	Response             []*StatsResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *StatsReply) Reset()         { *m = StatsReply{} }
+func (m *StatsReply) String() string { return proto.CompactTextString(m) }
+func (*StatsReply) ProtoMessage()    {}
+func (*StatsReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{18}
+}
+
+func (m *StatsReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StatsReply.Unmarshal(m, b)
+}
+
+func (m *StatsReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StatsReply.Marshal(b, m, deterministic)
+}
+
+func (m *StatsReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatsReply.Merge(m, src)
+}
+
+func (m *StatsReply) XXX_Size() int {
+	return xxx_messageInfo_StatsReply.Size(m)
+}
+
+func (m *StatsReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_StatsReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StatsReply proto.InternalMessageInfo
+
+func (m *StatsReply) GetResponse() []*StatsResponse {
+	if m != nil {
+		return m.Response
+	}
+	return nil
+}
+
+// The response message containing the requested stat.
+type Stat struct {
+	Namespace            string   `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Id                   string   `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	MemoryUsage          uint64   `protobuf:"varint,4,opt,name=memory_usage,json=memoryUsage,proto3" json:"memory_usage,omitempty"`
+	CpuUsage             uint64   `protobuf:"varint,5,opt,name=cpu_usage,json=cpuUsage,proto3" json:"cpu_usage,omitempty"`
+	PodId                string   `protobuf:"bytes,6,opt,name=pod_id,json=podId,proto3" json:"pod_id,omitempty"`
+	Name                 string   `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Stat) Reset()         { *m = Stat{} }
+func (m *Stat) String() string { return proto.CompactTextString(m) }
+func (*Stat) ProtoMessage()    {}
+func (*Stat) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{19}
+}
+
+func (m *Stat) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Stat.Unmarshal(m, b)
+}
+
+func (m *Stat) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Stat.Marshal(b, m, deterministic)
+}
+
+func (m *Stat) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Stat.Merge(m, src)
+}
+
+func (m *Stat) XXX_Size() int {
+	return xxx_messageInfo_Stat.Size(m)
+}
+
+func (m *Stat) XXX_DiscardUnknown() {
+	xxx_messageInfo_Stat.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Stat proto.InternalMessageInfo
+
+func (m *Stat) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *Stat) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Stat) GetMemoryUsage() uint64 {
+	if m != nil {
+		return m.MemoryUsage
+	}
+	return 0
+}
+
+func (m *Stat) GetCpuUsage() uint64 {
+	if m != nil {
+		return m.CpuUsage
+	}
+	return 0
+}
+
+func (m *Stat) GetPodId() string {
+	if m != nil {
+		return m.PodId
+	}
+	return ""
+}
+
+func (m *Stat) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterEnum("proto.ContainerDriver", ContainerDriver_name, ContainerDriver_value)
+	proto.RegisterType((*NodeMetadata)(nil), "proto.NodeMetadata")
 	proto.RegisterType((*ContainersRequest)(nil), "proto.ContainersRequest")
-	proto.RegisterType((*ContainersReply)(nil), "proto.ContainersReply")
 	proto.RegisterType((*Container)(nil), "proto.Container")
-	proto.RegisterType((*StatsRequest)(nil), "proto.StatsRequest")
-	proto.RegisterType((*StatsReply)(nil), "proto.StatsReply")
-	proto.RegisterType((*Stat)(nil), "proto.Stat")
-	proto.RegisterType((*RestartRequest)(nil), "proto.RestartRequest")
-	proto.RegisterType((*RestartReply)(nil), "proto.RestartReply")
-	proto.RegisterType((*LogsRequest)(nil), "proto.LogsRequest")
+	proto.RegisterType((*ContainerResponse)(nil), "proto.ContainerResponse")
+	proto.RegisterType((*ContainersReply)(nil), "proto.ContainersReply")
 	proto.RegisterType((*Data)(nil), "proto.Data")
+	proto.RegisterType((*DataResponse)(nil), "proto.DataResponse")
+	proto.RegisterType((*DataReply)(nil), "proto.DataReply")
+	proto.RegisterType((*LogsRequest)(nil), "proto.LogsRequest")
 	proto.RegisterType((*ProcessesRequest)(nil), "proto.ProcessesRequest")
 	proto.RegisterType((*ProcessesReply)(nil), "proto.ProcessesReply")
+	proto.RegisterType((*ProcessResponse)(nil), "proto.ProcessResponse")
 	proto.RegisterType((*Process)(nil), "proto.Process")
+	proto.RegisterType((*RestartRequest)(nil), "proto.RestartRequest")
+	proto.RegisterType((*RestartResponse)(nil), "proto.RestartResponse")
+	proto.RegisterType((*RestartReply)(nil), "proto.RestartReply")
+	proto.RegisterType((*StatsRequest)(nil), "proto.StatsRequest")
+	proto.RegisterType((*StatsResponse)(nil), "proto.StatsResponse")
+	proto.RegisterType((*StatsReply)(nil), "proto.StatsReply")
+	proto.RegisterType((*Stat)(nil), "proto.Stat")
 }
 
 func init() { proto.RegisterFile("api.proto", fileDescriptor_00212fb1f9d3bf1c) }
 
 var fileDescriptor_00212fb1f9d3bf1c = []byte{
-	// 733 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0x5f, 0x6f, 0xfb, 0x34,
-	0x14, 0x25, 0x6d, 0xd2, 0x2c, 0xb7, 0x5d, 0xd6, 0x79, 0xac, 0x0a, 0xdb, 0x84, 0xba, 0x48, 0x88,
-	0x32, 0x4d, 0xe9, 0x18, 0xe2, 0x85, 0x87, 0x49, 0x5b, 0xbb, 0x87, 0x09, 0xd8, 0x26, 0x6f, 0xbc,
-	0x20, 0xa4, 0xca, 0x4d, 0xbc, 0x62, 0xd1, 0x34, 0x26, 0x76, 0x26, 0xfa, 0x4d, 0x78, 0xe3, 0x85,
-	0x8f, 0xc8, 0x07, 0x40, 0x76, 0x9c, 0xf4, 0x8f, 0x40, 0x6c, 0x0f, 0xfc, 0x9e, 0xea, 0x7b, 0xee,
-	0xb1, 0xef, 0xcd, 0xf1, 0xf1, 0x2d, 0x78, 0x84, 0xb3, 0x88, 0xe7, 0x99, 0xcc, 0x90, 0xa3, 0x7f,
-	0x8e, 0x8e, 0x67, 0x59, 0x36, 0x9b, 0xd3, 0xa1, 0x8e, 0xa6, 0xc5, 0xcb, 0x90, 0xa6, 0x5c, 0x2e,
-	0x4b, 0x4e, 0x48, 0x60, 0x7f, 0x94, 0x2d, 0x24, 0x61, 0x0b, 0x9a, 0x0b, 0x4c, 0x7f, 0x2d, 0xa8,
-	0x90, 0xe8, 0x04, 0xbc, 0x05, 0x49, 0xa9, 0xe0, 0x24, 0xa6, 0x81, 0xd5, 0xb7, 0x06, 0x1e, 0x5e,
-	0x01, 0x28, 0x82, 0x56, 0x92, 0xb3, 0x57, 0x9a, 0x07, 0x8d, 0xbe, 0x35, 0xf0, 0x2f, 0x7b, 0xe5,
-	0x51, 0x51, 0x7d, 0xce, 0x58, 0x67, 0xb1, 0x61, 0x85, 0x23, 0xd8, 0x5b, 0x2f, 0xc1, 0xe7, 0x4b,
-	0x74, 0x01, 0x10, 0xd7, 0x50, 0x60, 0xf5, 0x9b, 0x83, 0xf6, 0x65, 0x77, 0xfb, 0x18, 0xbc, 0xc6,
-	0x09, 0xff, 0xb4, 0xc0, 0xab, 0x33, 0xff, 0xd1, 0xa0, 0x0f, 0x0d, 0x96, 0xe8, 0xe6, 0x3c, 0xdc,
-	0x60, 0x09, 0xfa, 0x18, 0x1c, 0x96, 0x92, 0x19, 0x0d, 0x9a, 0x1a, 0x2a, 0x03, 0xd4, 0x85, 0x26,
-	0x67, 0x49, 0x60, 0xf7, 0xad, 0xc1, 0x2e, 0x56, 0x4b, 0xd4, 0x83, 0x96, 0x90, 0x44, 0x16, 0x22,
-	0x70, 0x34, 0xd1, 0x44, 0xe8, 0x10, 0x5a, 0x3c, 0x4b, 0x26, 0x2c, 0x09, 0x5a, 0xe5, 0x01, 0x3c,
-	0x4b, 0xee, 0x12, 0x84, 0xc0, 0x56, 0x35, 0x03, 0x57, 0x83, 0x7a, 0x1d, 0xfe, 0x04, 0x9d, 0x27,
-	0x49, 0xe4, 0xff, 0xa4, 0xe4, 0x10, 0xc0, 0x9c, 0xae, 0x44, 0x3c, 0x05, 0x47, 0x35, 0x58, 0xe9,
-	0xd7, 0x36, 0x9b, 0x15, 0x03, 0x97, 0x99, 0xf0, 0x0f, 0x0b, 0x6c, 0x15, 0xbf, 0x53, 0xb0, 0x53,
-	0xe8, 0xa4, 0x34, 0xcd, 0xf2, 0xe5, 0xa4, 0x10, 0x4a, 0x37, 0xa5, 0x91, 0x8d, 0xdb, 0x25, 0xf6,
-	0x83, 0x82, 0xd0, 0x31, 0x78, 0x31, 0x2f, 0x4c, 0xde, 0xd1, 0xf9, 0x9d, 0x98, 0x17, 0x65, 0xf2,
-	0x1d, 0x82, 0x2d, 0xc0, 0xc7, 0x54, 0x48, 0x92, 0xcb, 0xb7, 0x49, 0xb6, 0xdd, 0xea, 0x4a, 0xc2,
-	0xe6, 0x9b, 0x24, 0xf4, 0xa1, 0x53, 0xd7, 0xe3, 0xf3, 0x65, 0xf8, 0x0b, 0xb4, 0xbf, 0xcb, 0x66,
-	0xe2, 0xc3, 0x14, 0x3f, 0x01, 0x7b, 0x4c, 0x24, 0x51, 0x86, 0x9c, 0x2e, 0x25, 0x15, 0xba, 0x42,
-	0x07, 0x97, 0x41, 0x88, 0xa0, 0xfb, 0x98, 0x67, 0x31, 0x15, 0x82, 0x56, 0xfd, 0x84, 0x57, 0xe0,
-	0xaf, 0x61, 0xea, 0xd6, 0xcf, 0xc1, 0xe3, 0x15, 0x62, 0x6e, 0xde, 0x37, 0x65, 0x0d, 0x13, 0xaf,
-	0x08, 0xe1, 0xef, 0x0d, 0x70, 0x0d, 0x5c, 0x19, 0x5e, 0xd5, 0x74, 0x4a, 0xc3, 0x23, 0xb0, 0x39,
-	0x37, 0x5f, 0xe4, 0x60, 0xbd, 0x56, 0xbd, 0x29, 0xef, 0xd4, 0x8f, 0x45, 0x07, 0x28, 0x00, 0x57,
-	0xfe, 0x9c, 0x53, 0x92, 0x08, 0x6d, 0x06, 0x07, 0x57, 0x21, 0xfa, 0x04, 0xd4, 0xbd, 0x4f, 0x24,
-	0x4b, 0x4b, 0x1f, 0x58, 0xd8, 0x8d, 0x79, 0xf1, 0xcc, 0x52, 0x8a, 0x3e, 0x03, 0xff, 0x95, 0xe5,
-	0xb2, 0x20, 0xf3, 0x49, 0x69, 0x1d, 0x6d, 0x07, 0x1b, 0xef, 0x1a, 0xf4, 0x7b, 0x0d, 0xa2, 0xcf,
-	0x61, 0x2f, 0xa7, 0x82, 0x25, 0x74, 0x21, 0x2b, 0x9e, 0xab, 0x79, 0x7e, 0x05, 0x1b, 0x62, 0x00,
-	0x6e, 0x9c, 0xa5, 0x29, 0x59, 0x24, 0xc1, 0x8e, 0x6e, 0xae, 0x0a, 0xd1, 0xa7, 0x00, 0xf4, 0x37,
-	0x1a, 0x17, 0x92, 0x4c, 0xe7, 0x34, 0xf0, 0x74, 0x72, 0x0d, 0x51, 0x1f, 0x4a, 0xf2, 0x99, 0x08,
-	0xa0, 0x74, 0x9e, 0x5a, 0x9f, 0x9d, 0xad, 0x8d, 0xa5, 0xf2, 0x9e, 0x90, 0x0f, 0x30, 0x7a, 0xb8,
-	0x7f, 0xbe, 0xbe, 0xbb, 0xbf, 0xc5, 0xe3, 0xee, 0x47, 0xc8, 0x85, 0xe6, 0x08, 0xdf, 0x75, 0xad,
-	0xcb, 0xbf, 0x1a, 0xd0, 0x78, 0x78, 0x42, 0xe7, 0xe0, 0x8c, 0x53, 0x2a, 0x66, 0xa8, 0x17, 0x95,
-	0x33, 0x35, 0xaa, 0x66, 0x6a, 0x74, 0xab, 0x66, 0xea, 0x51, 0xf5, 0x06, 0xf5, 0x2d, 0x7f, 0x09,
-	0xf0, 0x6d, 0x31, 0xa5, 0x71, 0xb6, 0x78, 0x61, 0x6f, 0xdc, 0xf2, 0x05, 0xd8, 0xca, 0x8d, 0x08,
-	0x19, 0x70, 0xcd, 0x9a, 0x1b, 0xc4, 0x0b, 0x0b, 0x5d, 0x01, 0xac, 0xa6, 0x2a, 0x0a, 0xb6, 0x9d,
-	0x57, 0x6f, 0xeb, 0xfd, 0x43, 0x46, 0xf9, 0xe8, 0x6b, 0x70, 0xcd, 0x43, 0x40, 0x87, 0x86, 0xb2,
-	0xf9, 0x10, 0x8f, 0x0e, 0xb6, 0x61, 0xb5, 0x6d, 0x08, 0x8e, 0x1e, 0x41, 0xe8, 0x60, 0x6d, 0xdc,
-	0xd4, 0xc5, 0xf6, 0x37, 0x41, 0xb5, 0xe1, 0x1b, 0xf0, 0x6a, 0x07, 0xff, 0xab, 0x08, 0x87, 0x9b,
-	0x0e, 0x36, 0x5e, 0xbf, 0x39, 0x51, 0x7f, 0x13, 0x69, 0x94, 0x89, 0x88, 0x70, 0x76, 0xe3, 0x3c,
-	0x88, 0x6b, 0xce, 0x1e, 0xad, 0x1f, 0x9d, 0x4c, 0x10, 0xce, 0xa6, 0x2d, 0xbd, 0xe7, 0xab, 0xbf,
-	0x03, 0x00, 0x00, 0xff, 0xff, 0x38, 0xf1, 0xb7, 0x21, 0xf2, 0x06, 0x00, 0x00,
+	// 886 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0xdd, 0x6f, 0xe3, 0x44,
+	0x10, 0xc7, 0x49, 0x9c, 0xc4, 0x93, 0x34, 0xcd, 0x6d, 0x3f, 0x64, 0x72, 0x15, 0xea, 0x59, 0x42,
+	0x94, 0x0a, 0xa5, 0x25, 0x7c, 0x3c, 0x20, 0x74, 0xd2, 0xb5, 0x39, 0xa1, 0x0a, 0xae, 0x3d, 0xed,
+	0x1d, 0x2f, 0x08, 0xa9, 0xda, 0xd8, 0x7b, 0xb9, 0x15, 0xb1, 0x77, 0xf1, 0xae, 0x2b, 0xf2, 0x9f,
+	0xf0, 0xc6, 0x0b, 0x7f, 0x27, 0x42, 0xfb, 0x61, 0xd7, 0x49, 0x0a, 0xb4, 0x87, 0xe0, 0xc9, 0x3b,
+	0x33, 0xbf, 0x9d, 0xd9, 0x99, 0xfd, 0xcd, 0xac, 0x21, 0x20, 0x82, 0x8d, 0x45, 0xce, 0x15, 0x47,
+	0xbe, 0xf9, 0x8c, 0x1e, 0xcf, 0x39, 0x9f, 0x2f, 0xe8, 0x89, 0x91, 0x66, 0xc5, 0x9b, 0x13, 0x9a,
+	0x0a, 0xb5, 0xb4, 0x98, 0xe8, 0x18, 0xfa, 0x97, 0x3c, 0xa1, 0x2f, 0xa8, 0x22, 0x09, 0x51, 0x04,
+	0x8d, 0xa0, 0xfb, 0x96, 0x4b, 0x95, 0x91, 0x94, 0x86, 0xde, 0xa1, 0x77, 0x14, 0xe0, 0x4a, 0x8e,
+	0x08, 0x3c, 0x3a, 0xe7, 0x99, 0x22, 0x2c, 0xa3, 0xb9, 0xc4, 0xf4, 0xe7, 0x82, 0x4a, 0x85, 0x0e,
+	0x20, 0xd0, 0x46, 0x29, 0x48, 0x5c, 0xee, 0xb8, 0x55, 0xa0, 0x31, 0xb4, 0x93, 0x9c, 0xdd, 0xd0,
+	0x3c, 0x6c, 0x1c, 0x7a, 0x47, 0x83, 0xc9, 0xbe, 0x0d, 0x3b, 0xae, 0xfc, 0x4c, 0x8d, 0x15, 0x3b,
+	0x54, 0xf4, 0xbb, 0x07, 0x41, 0x65, 0xfb, 0x07, 0xdf, 0x03, 0x68, 0xb0, 0xc4, 0xf8, 0x0d, 0x70,
+	0x83, 0x25, 0x68, 0x17, 0x7c, 0x96, 0x92, 0x39, 0x0d, 0x9b, 0x46, 0x65, 0x05, 0x34, 0x84, 0xa6,
+	0x60, 0x49, 0xd8, 0x3a, 0xf4, 0x8e, 0xb6, 0xb0, 0x5e, 0xa2, 0x7d, 0x68, 0x4b, 0x45, 0x54, 0x21,
+	0x43, 0xdf, 0x00, 0x9d, 0x84, 0xf6, 0xa0, 0x2d, 0x78, 0x72, 0xcd, 0x92, 0xb0, 0x6d, 0x1d, 0x08,
+	0x9e, 0x5c, 0x24, 0x08, 0x41, 0xcb, 0x54, 0xa3, 0x63, 0x94, 0x66, 0x1d, 0xdd, 0xd4, 0x2a, 0x81,
+	0xa9, 0x14, 0x3c, 0x93, 0x14, 0x9d, 0x40, 0x37, 0x75, 0x65, 0x34, 0x87, 0xed, 0x4d, 0x76, 0x5c,
+	0xb6, 0xf5, 0x0a, 0xe3, 0x0a, 0x84, 0x4e, 0x01, 0xe2, 0xaa, 0x9e, 0x61, 0xe3, 0xb0, 0x79, 0xd4,
+	0x9b, 0x0c, 0xd7, 0x0b, 0x84, 0x6b, 0x98, 0xe8, 0x1b, 0xd8, 0xae, 0xdf, 0x80, 0x58, 0x2c, 0xd1,
+	0xe7, 0xd0, 0xcd, 0xdd, 0x09, 0x42, 0xcf, 0xb8, 0x08, 0x37, 0x5c, 0x38, 0x3b, 0xae, 0x90, 0xd1,
+	0x01, 0xb4, 0xa6, 0xfa, 0x08, 0xbb, 0xe0, 0xcf, 0x96, 0x8a, 0x4a, 0x73, 0xe0, 0x3e, 0xb6, 0x42,
+	0x34, 0x83, 0xbe, 0xb6, 0xbe, 0x7b, 0x66, 0x4f, 0x4a, 0xb7, 0x0d, 0x83, 0xee, 0x39, 0xb4, 0x71,
+	0xea, 0x62, 0x7c, 0x0d, 0x81, 0x8d, 0xa1, 0x93, 0x38, 0xd9, 0x48, 0x62, 0xa7, 0xbe, 0x65, 0xf3,
+	0xfc, 0x3f, 0x41, 0xef, 0x3b, 0x3e, 0xbf, 0x27, 0x09, 0xd7, 0x89, 0x72, 0x4b, 0xca, 0xe6, 0xbd,
+	0x48, 0x89, 0x60, 0xf8, 0x32, 0xe7, 0x31, 0x95, 0x92, 0x96, 0x11, 0xa3, 0x29, 0x0c, 0x6a, 0x3a,
+	0x9d, 0xc3, 0x64, 0x23, 0x87, 0xd2, 0xaf, 0x03, 0xde, 0x91, 0x86, 0x80, 0xed, 0x35, 0xe3, 0xc3,
+	0x6b, 0xfd, 0x09, 0x04, 0xa2, 0x3c, 0x89, 0x23, 0xd1, 0x60, 0x2d, 0xf0, 0x2d, 0x20, 0xfa, 0xb5,
+	0x01, 0x1d, 0xa7, 0x2e, 0x5b, 0x43, 0x47, 0xf1, 0x6d, 0x6b, 0x20, 0x68, 0x09, 0xe1, 0x6a, 0xe5,
+	0x63, 0xb3, 0xd6, 0x14, 0xd1, 0x0d, 0x52, 0xb5, 0x95, 0x11, 0x50, 0x08, 0x1d, 0xf5, 0x36, 0xa7,
+	0x24, 0x91, 0xa6, 0xb5, 0x7c, 0x5c, 0x8a, 0xe8, 0x7d, 0xe8, 0xc6, 0xa2, 0xb8, 0x56, 0x2c, 0xa5,
+	0xa6, 0xc1, 0x3c, 0xdc, 0x89, 0x45, 0xf1, 0x9a, 0xa5, 0x14, 0x7d, 0x08, 0x83, 0x1b, 0x96, 0xab,
+	0x82, 0x2c, 0xae, 0x53, 0x9a, 0xf2, 0x7c, 0x69, 0x3a, 0xad, 0x85, 0xb7, 0x9c, 0xf6, 0x85, 0x51,
+	0xa2, 0x8f, 0x60, 0x3b, 0xa7, 0x92, 0x25, 0x34, 0x53, 0x25, 0xae, 0x63, 0x70, 0x83, 0x52, 0xed,
+	0x80, 0x21, 0x74, 0x62, 0x9e, 0xa6, 0x24, 0x4b, 0xc2, 0xae, 0x39, 0x5c, 0x29, 0xa2, 0x0f, 0x00,
+	0xe8, 0x2f, 0x34, 0x2e, 0x14, 0x99, 0x2d, 0x68, 0x18, 0x18, 0x63, 0x4d, 0xa3, 0x13, 0x25, 0xf9,
+	0x5c, 0x86, 0x60, 0x9b, 0x5a, 0xaf, 0xa3, 0x0c, 0x06, 0x98, 0x4a, 0x45, 0x72, 0xf5, 0xff, 0xd0,
+	0xea, 0x0c, 0xb6, 0xab, 0x78, 0xef, 0x78, 0xf9, 0xd1, 0x19, 0xf4, 0x2b, 0x1f, 0x7f, 0x4f, 0xc2,
+	0xb5, 0x50, 0x35, 0x12, 0xfe, 0x08, 0xfd, 0x57, 0x8a, 0xa8, 0xff, 0x68, 0xa2, 0xc7, 0xb0, 0xe5,
+	0xbc, 0xff, 0x8b, 0x61, 0xa2, 0x39, 0x57, 0x92, 0xbb, 0x1c, 0x26, 0xda, 0xab, 0x65, 0xa3, 0x8c,
+	0x9e, 0x02, 0xb8, 0x20, 0xba, 0x08, 0xa7, 0x1b, 0x45, 0xd8, 0xad, 0xed, 0xb9, 0xab, 0x0f, 0x7f,
+	0xf3, 0xa0, 0xa5, 0x6d, 0x0f, 0xbc, 0xf1, 0x27, 0xd0, 0xb7, 0xfc, 0xbc, 0x2e, 0xa4, 0x7e, 0x78,
+	0x5a, 0x86, 0xa5, 0x3d, 0xab, 0xfb, 0x5e, 0xab, 0xd0, 0x63, 0x08, 0x74, 0x37, 0x58, 0xbb, 0x6f,
+	0xec, 0xba, 0x3d, 0xac, 0xf1, 0xfe, 0x2f, 0xce, 0xf1, 0x71, 0x6d, 0xf2, 0xdb, 0x0a, 0xa3, 0x01,
+	0xc0, 0xf9, 0xd5, 0xe5, 0xeb, 0x67, 0x17, 0x97, 0xcf, 0xf1, 0x74, 0xf8, 0x1e, 0xea, 0x40, 0xf3,
+	0x1c, 0x5f, 0x0c, 0xbd, 0xc9, 0x1f, 0x0d, 0x68, 0x5c, 0xbd, 0x42, 0x4f, 0x01, 0x6e, 0x1f, 0x0b,
+	0xb4, 0xf1, 0x2a, 0x94, 0xf7, 0x3d, 0xda, 0xbf, 0xc3, 0xa2, 0xcb, 0xf8, 0x29, 0xf8, 0xd3, 0x94,
+	0xca, 0x39, 0xda, 0x1f, 0xdb, 0x3f, 0x88, 0x71, 0xf9, 0x07, 0x31, 0x7e, 0xae, 0xff, 0x20, 0x46,
+	0xc3, 0x95, 0x19, 0xad, 0xb7, 0x7c, 0x09, 0xf0, 0x6d, 0x31, 0xa3, 0x31, 0xcf, 0xde, 0xb0, 0x87,
+	0xec, 0xfb, 0x18, 0x5a, 0x7a, 0x9c, 0x23, 0xe4, 0x2c, 0xb5, 0xd9, 0x3e, 0xaa, 0x3f, 0x1e, 0xa7,
+	0x1e, 0xfa, 0x0a, 0x82, 0x6a, 0xf0, 0xfe, 0x65, 0x84, 0xbd, 0xd5, 0x01, 0x58, 0x8e, 0xe8, 0x2f,
+	0xa0, 0xe3, 0xda, 0x00, 0xed, 0xad, 0xb7, 0x85, 0x0d, 0xb6, 0xb3, 0xae, 0xb6, 0xaf, 0x93, 0x6f,
+	0x88, 0x83, 0x76, 0x56, 0x69, 0x64, 0xb7, 0x3c, 0x5a, 0x55, 0x8a, 0xc5, 0xf2, 0xec, 0x40, 0x3f,
+	0xec, 0xe9, 0x98, 0xcb, 0x31, 0x11, 0xec, 0xcc, 0xbf, 0x92, 0xcf, 0x04, 0x7b, 0xe9, 0xfd, 0xe0,
+	0x73, 0x49, 0x04, 0x9b, 0xb5, 0x0d, 0xfe, 0xb3, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x04, 0x9c,
+	0xcc, 0xe8, 0xaa, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -895,13 +1265,13 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type OSClient interface {
-	Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error)
-	Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error)
-	Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (OS_LogsClient, error)
 	Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersReply, error)
+	Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*DataReply, error)
+	Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*DataReply, error)
+	Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (OS_LogsClient, error)
+	Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesReply, error)
 	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartReply, error)
 	Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsReply, error)
-	Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesReply, error)
 }
 
 type oSClient struct {
@@ -912,8 +1282,17 @@ func NewOSClient(cc *grpc.ClientConn) OSClient {
 	return &oSClient{cc}
 }
 
-func (c *oSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error) {
-	out := new(Data)
+func (c *oSClient) Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersReply, error) {
+	out := new(ContainersReply)
+	err := c.cc.Invoke(ctx, "/proto.OS/Containers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *oSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*DataReply, error) {
+	out := new(DataReply)
 	err := c.cc.Invoke(ctx, "/proto.OS/Dmesg", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -921,8 +1300,8 @@ func (c *oSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *oSClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Data, error) {
-	out := new(Data)
+func (c *oSClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*DataReply, error) {
+	out := new(DataReply)
 	err := c.cc.Invoke(ctx, "/proto.OS/Kubeconfig", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -962,9 +1341,9 @@ func (x *oSLogsClient) Recv() (*Data, error) {
 	return m, nil
 }
 
-func (c *oSClient) Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersReply, error) {
-	out := new(ContainersReply)
-	err := c.cc.Invoke(ctx, "/proto.OS/Containers", in, out, opts...)
+func (c *oSClient) Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesReply, error) {
+	out := new(ProcessesReply)
+	err := c.cc.Invoke(ctx, "/proto.OS/Processes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -989,28 +1368,69 @@ func (c *oSClient) Stats(ctx context.Context, in *StatsRequest, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *oSClient) Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesReply, error) {
-	out := new(ProcessesReply)
-	err := c.cc.Invoke(ctx, "/proto.OS/Processes", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // OSServer is the server API for OS service.
 type OSServer interface {
-	Dmesg(context.Context, *empty.Empty) (*Data, error)
-	Kubeconfig(context.Context, *empty.Empty) (*Data, error)
-	Logs(*LogsRequest, OS_LogsServer) error
 	Containers(context.Context, *ContainersRequest) (*ContainersReply, error)
+	Dmesg(context.Context, *empty.Empty) (*DataReply, error)
+	Kubeconfig(context.Context, *empty.Empty) (*DataReply, error)
+	Logs(*LogsRequest, OS_LogsServer) error
+	Processes(context.Context, *empty.Empty) (*ProcessesReply, error)
 	Restart(context.Context, *RestartRequest) (*RestartReply, error)
 	Stats(context.Context, *StatsRequest) (*StatsReply, error)
-	Processes(context.Context, *empty.Empty) (*ProcessesReply, error)
+}
+
+// UnimplementedOSServer can be embedded to have forward compatible implementations.
+type UnimplementedOSServer struct {
+}
+
+func (*UnimplementedOSServer) Containers(ctx context.Context, req *ContainersRequest) (*ContainersReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Containers not implemented")
+}
+
+func (*UnimplementedOSServer) Dmesg(ctx context.Context, req *empty.Empty) (*DataReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Dmesg not implemented")
+}
+
+func (*UnimplementedOSServer) Kubeconfig(ctx context.Context, req *empty.Empty) (*DataReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Kubeconfig not implemented")
+}
+
+func (*UnimplementedOSServer) Logs(req *LogsRequest, srv OS_LogsServer) error {
+	return status.Errorf(codes.Unimplemented, "method Logs not implemented")
+}
+
+func (*UnimplementedOSServer) Processes(ctx context.Context, req *empty.Empty) (*ProcessesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Processes not implemented")
+}
+
+func (*UnimplementedOSServer) Restart(ctx context.Context, req *RestartRequest) (*RestartReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Restart not implemented")
+}
+
+func (*UnimplementedOSServer) Stats(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stats not implemented")
 }
 
 func RegisterOSServer(s *grpc.Server, srv OSServer) {
 	s.RegisterService(&_OS_serviceDesc, srv)
+}
+
+func _OS_Containers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OSServer).Containers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.OS/Containers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OSServer).Containers(ctx, req.(*ContainersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _OS_Dmesg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1070,20 +1490,20 @@ func (x *oSLogsServer) Send(m *Data) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _OS_Containers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContainersRequest)
+func _OS_Processes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OSServer).Containers(ctx, in)
+		return srv.(OSServer).Processes(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.OS/Containers",
+		FullMethod: "/proto.OS/Processes",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Containers(ctx, req.(*ContainersRequest))
+		return srv.(OSServer).Processes(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1124,28 +1544,14 @@ func _OS_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OS_Processes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OSServer).Processes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.OS/Processes",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Processes(ctx, req.(*empty.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _OS_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.OS",
 	HandlerType: (*OSServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Containers",
+			Handler:    _OS_Containers_Handler,
+		},
 		{
 			MethodName: "Dmesg",
 			Handler:    _OS_Dmesg_Handler,
@@ -1155,8 +1561,8 @@ var _OS_serviceDesc = grpc.ServiceDesc{
 			Handler:    _OS_Kubeconfig_Handler,
 		},
 		{
-			MethodName: "Containers",
-			Handler:    _OS_Containers_Handler,
+			MethodName: "Processes",
+			Handler:    _OS_Processes_Handler,
 		},
 		{
 			MethodName: "Restart",
@@ -1165,10 +1571,6 @@ var _OS_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Stats",
 			Handler:    _OS_Stats_Handler,
-		},
-		{
-			MethodName: "Processes",
-			Handler:    _OS_Processes_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -1179,4 +1581,222 @@ var _OS_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Metadata: "api.proto",
+}
+
+type runnerfn func(*proxyOSClient, interface{}, *sync.WaitGroup, chan proto.Message, chan error)
+
+type proxyOSClient struct {
+	Conn     OSClient
+	Context  context.Context
+	Target   string
+	DialOpts []grpc.DialOption
+}
+
+func proxyOSRunner(clients []*proxyOSClient, in interface{}, runner runnerfn) ([]proto.Message, error) {
+	var (
+		errors *go_multierror.Error
+		wg     sync.WaitGroup
+	)
+	respCh := make(chan proto.Message, len(clients))
+	errCh := make(chan error, len(clients))
+	wg.Add(len(clients))
+	for _, client := range clients {
+		go runner(client, in, &wg, respCh, errCh)
+	}
+	wg.Wait()
+	close(respCh)
+	close(errCh)
+
+	var response []proto.Message
+	for resp := range respCh {
+		response = append(response, resp)
+	}
+	for err := range errCh {
+		errors = go_multierror.Append(errors, err)
+	}
+	return response, errors.ErrorOrNil()
+}
+
+type OSProxy struct {
+	Provider tls.CertificateProvider
+}
+
+func NewOSProxy(provider tls.CertificateProvider) *OSProxy {
+	return &OSProxy{Provider: provider}
+}
+
+func (p *OSProxy) UnaryInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		pkg := strings.Split(info.FullMethod, "/")[1]
+		if pkg != "proto.OS" {
+			return handler(ctx, req)
+		}
+		md, _ := metadata.FromIncomingContext(ctx)
+		if _, ok := md["proxyfrom"]; ok {
+			return handler(ctx, req)
+		}
+		ca, err := p.Provider.GetCA()
+		if err != nil {
+			return nil, err
+		}
+		certs, err := p.Provider.GetCertificate(nil)
+		if err != nil {
+			return nil, err
+		}
+		tlsConfig, err := tls.New(
+			tls.WithClientAuthType(tls.Mutual),
+			tls.WithCACertPEM(ca),
+			tls.WithKeypair(*certs),
+		)
+		return p.Proxy(ctx, info.FullMethod, credentials.NewTLS(tlsConfig), req)
+	}
+}
+
+func (p *OSProxy) Proxy(ctx context.Context, method string, creds credentials.TransportCredentials, in interface{}, opts ...grpc.CallOption) (proto.Message, error) {
+	var (
+		err      error
+		errors   *go_multierror.Error
+		msgs     []proto.Message
+		ok       bool
+		response proto.Message
+		targets  []string
+	)
+	md, _ := metadata.FromIncomingContext(ctx)
+	// default to target node specified in config or on cli
+	if targets, ok = md["targets"]; !ok {
+		targets = md[":authority"]
+	}
+	proxyMd := metadata.New(make(map[string]string))
+	proxyMd.Set("proxyfrom", md[":authority"]...)
+
+	clients := []*proxyOSClient{}
+	for _, target := range targets {
+		c := &proxyOSClient{
+			Context: metadata.NewOutgoingContext(context.Background(), proxyMd),
+			Target:  target,
+		}
+		overrideCreds := creds
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", c.Target, 50000), grpc.WithTransportCredentials(overrideCreds))
+		if err != nil {
+			errors = go_multierror.Append(errors, err)
+			continue
+		}
+		c.Conn = NewOSClient(conn)
+		clients = append(clients, c)
+	}
+	switch method {
+	case "/proto.OS/Containers":
+		resp := &ContainersReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyContainers)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*ContainersReply).Response[0])
+		}
+		response = resp
+	case "/proto.OS/Dmesg":
+		resp := &DataReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyDmesg)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*DataReply).Response[0])
+		}
+		response = resp
+	case "/proto.OS/Kubeconfig":
+		resp := &DataReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyKubeconfig)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*DataReply).Response[0])
+		}
+		response = resp
+	case "/proto.OS/Processes":
+		resp := &ProcessesReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyProcesses)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*ProcessesReply).Response[0])
+		}
+		response = resp
+	case "/proto.OS/Restart":
+		resp := &RestartReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyRestart)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*RestartReply).Response[0])
+		}
+		response = resp
+	case "/proto.OS/Stats":
+		resp := &StatsReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyStats)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*StatsReply).Response[0])
+		}
+		response = resp
+	}
+
+	if err != nil {
+		errors = go_multierror.Append(errors, err)
+	}
+	return response, errors.ErrorOrNil()
+}
+
+func proxyContainers(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Containers(client.Context, in.(*ContainersRequest))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyDmesg(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Dmesg(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyKubeconfig(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Kubeconfig(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyProcesses(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Processes(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyRestart(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Restart(client.Context, in.(*RestartRequest))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyStats(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Stats(client.Context, in.(*StatsRequest))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
 }

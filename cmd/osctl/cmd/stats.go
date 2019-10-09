@@ -14,6 +14,7 @@ import (
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -43,7 +44,9 @@ var statsCmd = &cobra.Command{
 			if useCRI {
 				driver = osapi.ContainerDriver_CRI
 			}
-			reply, err := c.Stats(globalCtx, namespace, driver)
+			md := metadata.New(make(map[string]string))
+			md.Set("targets", target...)
+			reply, err := c.Stats(metadata.NewOutgoingContext(globalCtx, md), namespace, driver)
 			if err != nil {
 				helpers.Fatalf("error getting stats: %s", err)
 			}
@@ -54,22 +57,26 @@ var statsCmd = &cobra.Command{
 }
 
 func statsRender(reply *osapi.StatsReply) {
-	sort.Slice(reply.Stats,
-		func(i, j int) bool {
-			return strings.Compare(reply.Stats[i].Id, reply.Stats[j].Id) < 0
-		})
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAMESPACE\tID\tMEMORY(MB)\tCPU")
 
-	for _, s := range reply.Stats {
-		display := s.Id
-		if s.Id != s.PodId {
-			// container in a sandbox
-			display = "└─ " + display
+	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
+
+	for _, rep := range reply.Response {
+		resp := rep
+		sort.Slice(resp.Stats,
+			func(i, j int) bool {
+				return strings.Compare(resp.Stats[i].Id, resp.Stats[j].Id) < 0
+			})
+
+		for _, s := range resp.Stats {
+			display := s.Id
+			if s.Id != s.PodId {
+				// container in a sandbox
+				display = "└─ " + display
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Metadata.Hostname, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 		}
-
-		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 	}
 
 	helpers.Should(w.Flush())

@@ -145,13 +145,8 @@ func (c *Client) Close() error {
 }
 
 // Kubeconfig implements the proto.OSClient interface.
-func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
-	r, err := c.client.Kubeconfig(ctx, &empty.Empty{})
-	if err != nil {
-		return nil, err
-	}
-
-	return r.Bytes, nil
+func (c *Client) Kubeconfig(ctx context.Context) (*osapi.DataReply, error) {
+	return c.client.Kubeconfig(ctx, &empty.Empty{})
 }
 
 // Stats implements the proto.OSClient interface.
@@ -204,13 +199,8 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 }
 
 // Dmesg implements the proto.OSClient interface.
-func (c *Client) Dmesg(ctx context.Context) ([]byte, error) {
-	data, err := c.client.Dmesg(ctx, &empty.Empty{})
-	if err != nil {
-		return nil, err
-	}
-
-	return data.Bytes, nil
+func (c *Client) Dmesg(ctx context.Context) (*osapi.DataReply, error) {
+	return c.client.Dmesg(ctx, &empty.Empty{})
 }
 
 // Logs implements the proto.OSClient interface.

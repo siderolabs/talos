@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/internal/app/osd/internal/reg"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -43,35 +44,7 @@ func main() {
 		log.Fatalf("failed to seed RNG: %v", err)
 	}
 
-	content, err := config.FromFile(*configPath)
-	if err != nil {
-		log.Fatalf("open config: %v", err)
-	}
-
-	config, err := config.New(content)
-	if err != nil {
-		log.Fatalf("open config: %v", err)
-	}
-
-	ips, err := net.IPAddrs()
-	if err != nil {
-		log.Fatalf("failed to discover IP addresses: %+v", err)
-	}
-	// TODO(andrewrynhard): Allow for DNS names.
-	for _, san := range config.Machine().Security().CertSANs() {
-		if ip := stdlibnet.ParseIP(san); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Fatalf("failed to discover hostname: %+v", err)
-	}
-
-	var provider tls.CertificateProvider
-
-	provider, err = tls.NewRemoteRenewingFileCertificateProvider(config.Machine().Security().Token(), strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
+	provider, err := createProvider()
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
@@ -105,6 +78,13 @@ func main() {
 		log.Fatalf("networkd client: %v", err)
 	}
 
+	interceptorProvider, err := createProvider()
+	if err != nil {
+		log.Fatalf("failed to create remote certificate provider for interceptor: %+v", err)
+	}
+
+	protoProxy := osapi.NewOSProxy(interceptorProvider)
+
 	err = factory.ListenAndServe(
 		&reg.Registrator{
 			MachineClient: machineClient,
@@ -116,9 +96,40 @@ func main() {
 			grpc.Creds(
 				credentials.NewTLS(tlsConfig),
 			),
+			grpc.UnaryInterceptor(protoProxy.UnaryInterceptor()),
 		),
 	)
 	if err != nil {
 		log.Fatalf("listen: %v", err)
 	}
+}
+
+func createProvider() (tls.CertificateProvider, error) {
+	content, err := config.FromFile(*configPath)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
+	}
+
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("open config: %v", err)
+	}
+
+	ips, err := net.IPAddrs()
+	if err != nil {
+		log.Fatalf("failed to discover IP addresses: %+v", err)
+	}
+	// TODO(andrewrynhard): Allow for DNS names.
+	for _, san := range config.Machine().Security().CertSANs() {
+		if ip := stdlibnet.ParseIP(san); ip != nil {
+			ips = append(ips, ip)
+		}
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("failed to discover hostname: %+v", err)
+	}
+
+	return tls.NewRemoteRenewingFileCertificateProvider(config.Machine().Security().Token(), strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
 }

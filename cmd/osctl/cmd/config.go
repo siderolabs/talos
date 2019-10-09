@@ -42,11 +42,6 @@ var configTargetCmd = &cobra.Command{
 	Short: "Set the target for the current context",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-		target = args[0]
 		c, err := config.Open(talosconfig)
 		if err != nil {
 			helpers.Fatalf("error reading config: %s", err)
@@ -54,7 +49,8 @@ var configTargetCmd = &cobra.Command{
 		if c.Context == "" {
 			helpers.Fatalf("no context is set")
 		}
-		c.Contexts[c.Context].Target = target
+
+		c.Contexts[c.Context].Target = args[0]
 		if err := c.Save(talosconfig); err != nil {
 			helpers.Fatalf("error writing config: %s", err)
 		}

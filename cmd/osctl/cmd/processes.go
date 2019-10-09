@@ -20,6 +20,7 @@ import (
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+	"google.golang.org/grpc/metadata"
 
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -44,17 +45,26 @@ var processesCmd = &cobra.Command{
 		setupClient(func(c *client.Client) {
 			var err error
 
+			md := metadata.New(make(map[string]string))
+			md.Set("targets", target...)
+
 			switch {
 			case watchProcesses:
+				// Only allow single node view refresh..
+				// No hard limitiation that I can think of to prevent aggregating all nodes
+				if len(target) > 1 {
+					md.Set("targets", target[0])
+				}
+
 				if err = ui.Init(); err != nil {
 					log.Fatalf("failed to initialize termui: %v", err)
 				}
 				defer ui.Close()
 
-				processesUI(globalCtx, c)
+				processesUI(metadata.NewOutgoingContext(globalCtx, md), c)
 			default:
 				var output string
-				output, err = processesOutput(globalCtx, c)
+				output, err = processesOutput(metadata.NewOutgoingContext(globalCtx, md), c)
 				helpers.Should(err)
 				// Note this is unlimited output of process lines
 				// we arent artificially limited by the box we would otherwise draw
@@ -178,33 +188,36 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 		return output, nil
 	}
 
-	procs := reply.Processes
+	s := []string{}
 
-	switch sortMethod {
-	case "cpu":
-		by(cpu).sort(procs)
-	default:
-		by(rss).sort(procs)
-	}
+	s = append(s, "NODE | PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | COMMAND")
 
-	s := make([]string, 0, len(procs))
-	s = append(s, "PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | COMMAND")
+	for _, resp := range reply.Response {
+		procs := resp.Processes
 
-	var args string
-
-	for _, p := range procs {
-		switch {
-		case p.Executable == "":
-			args = p.Command
-		case p.Args != "" && strings.Fields(p.Args)[0] == filepath.Base(strings.Fields(p.Executable)[0]):
-			args = strings.Replace(p.Args, strings.Fields(p.Args)[0], p.Executable, 1)
+		switch sortMethod {
+		case "cpu":
+			by(cpu).sort(procs)
 		default:
-			args = p.Args
+			by(rss).sort(procs)
 		}
 
-		s = append(s,
-			fmt.Sprintf("%6d | %1s | %4d | %8.2f | %7s | %7s | %s",
-				p.Pid, p.State, p.Threads, p.CpuTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), args))
+		var args string
+
+		for _, p := range procs {
+			switch {
+			case p.Executable == "":
+				args = p.Command
+			case p.Args != "" && strings.Fields(p.Args)[0] == filepath.Base(strings.Fields(p.Executable)[0]):
+				args = strings.Replace(p.Args, strings.Fields(p.Args)[0], p.Executable, 1)
+			default:
+				args = p.Args
+			}
+
+			s = append(s,
+				fmt.Sprintf("%12s | %6d | %1s | %4d | %8.2f | %7s | %7s | %s",
+					resp.Metadata.Hostname, p.Pid, p.State, p.Threads, p.CpuTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), args))
+		}
 	}
 
 	return columnize.SimpleFormat(s), err
