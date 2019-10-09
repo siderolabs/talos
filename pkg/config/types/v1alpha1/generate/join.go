@@ -27,6 +27,11 @@ func workerUd(in *Input) (string, error) {
 			Version: in.KubernetesVersion,
 			IPs:     in.MasterIPs,
 		},
+		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+			DNSDomain:     in.ServiceDomain,
+			PodSubnet:     in.PodNet,
+			ServiceSubnet: in.ServiceNet,
+		},
 	}
 
 	ud := v1alpha1.Config{
