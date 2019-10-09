@@ -355,7 +355,7 @@ func init() {
 	clusterUpCmd.Flags().StringVar(&nodeImage, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
-	clusterUpCmd.Flags().IntVar(&masters, "masters", 3, "the number of masters to create")
+	clusterUpCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
 	clusterUpCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
 	clusterUpCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")

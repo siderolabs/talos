@@ -40,7 +40,7 @@ run() {
          k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
 }
 
-${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --mtu 1440 --cpus 4.0
+${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --masters=3 --mtu 1440 --cpus 4.0
 ${LOCALOSCTL} config target 10.5.0.2
 
 # ## Wait for the init node to report in
