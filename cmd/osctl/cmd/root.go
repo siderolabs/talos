@@ -104,6 +104,9 @@ func setupClient(action func(*client.Client)) {
 	if err != nil {
 		helpers.Fatalf("error getting client credentials: %s", err)
 	}
+	if target != "" {
+		t = target
+	}
 	c, err := client.NewClient(creds, t, constants.OsdPort)
 	if err != nil {
 		helpers.Fatalf("error constructing client: %s", err)
