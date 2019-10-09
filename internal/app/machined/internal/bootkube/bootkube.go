@@ -25,7 +25,7 @@ func NewService() *Service {
 // Main is the entrypoint for bootkube.
 func (s *Service) Main(ctx context.Context, config config.Configurator, logWriter io.Writer) error {
 	defaultRequiredPods := []string{
-		// "kube-system/pod-checkpointer",
+		"kube-system/pod-checkpointer",
 		"kube-system/kube-apiserver",
 		"kube-system/kube-scheduler",
 		"kube-system/kube-controller-manager",
