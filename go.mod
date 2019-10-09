@@ -4,7 +4,7 @@ go 1.13
 
 replace github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20190820045831-7b9ca088b93d
 
-replace github.com/kubernetes-incubator/bootkube => github.com/andrewrynhard/bootkube v0.14.1-0.20191007145809-5429871965af
+replace github.com/kubernetes-incubator/bootkube => github.com/andrewrynhard/bootkube v0.14.1-0.20191008231328-95aa44e9be5c
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
