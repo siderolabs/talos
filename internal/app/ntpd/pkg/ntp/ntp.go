@@ -42,6 +42,7 @@ func NewNTPClient(opts ...Option) (*NTP, error) {
 func (n *NTP) Daemon() (err error) {
 	// Do an initial hard set of time to ensure clock skew isnt too far off
 	var resp *ntp.Response
+
 	if resp, err = n.Query(); err != nil {
 		log.Printf("error querying %s for time, %s", n.Server, err)
 		return err
@@ -52,6 +53,7 @@ func (n *NTP) Daemon() (err error) {
 	}
 
 	var randSleep time.Duration
+
 	for {
 		// Set some variance with how frequently we poll ntp servers.
 		// This is based on rand(MaxPoll) + MinPoll so we wait at least
@@ -103,6 +105,7 @@ func setTime(adjustedTime time.Time) error {
 	log.Printf("setting time to %s", adjustedTime)
 
 	timeval := syscall.NsecToTimeval(adjustedTime.UnixNano())
+
 	return syscall.Settimeofday(&timeval)
 }
 

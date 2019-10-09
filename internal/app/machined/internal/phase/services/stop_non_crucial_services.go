@@ -36,6 +36,7 @@ func (task *StopNonCrucialServices) standard(args *phase.RuntimeArgs) (err error
 	if args.Config().Machine().Type() == machine.Bootstrap || args.Config().Machine().Type() == machine.ControlPlane {
 		services = append(services, "trustd", "proxyd")
 	}
+
 	for _, service := range services {
 		if err = system.Services(nil).Stop(ctx, service); err != nil {
 			return err

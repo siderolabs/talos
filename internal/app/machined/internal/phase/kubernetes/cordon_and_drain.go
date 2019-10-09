@@ -30,11 +30,13 @@ func (task *CordonAndDrain) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *CordonAndDrain) standard() (err error) {
 	var hostname string
+
 	if hostname, err = os.Hostname(); err != nil {
 		return err
 	}
 
 	var kubeHelper *kubernetes.Helper
+
 	if kubeHelper, err = kubernetes.NewHelper(); err != nil {
 		return err
 	}

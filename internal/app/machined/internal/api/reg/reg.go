@@ -74,6 +74,7 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 // Upgrade initiates a Talos upgrade
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeReply, err error) {
 	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: in})
+
 	data = &machineapi.UpgradeReply{Ack: "Upgrade request received"}
 
 	return data, err
@@ -117,6 +118,7 @@ func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceSt
 	}
 
 	reply = &machineapi.ServiceStartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
+
 	return reply, err
 }
 
@@ -124,6 +126,7 @@ func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceSt
 //nolint: staticcheck
 func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (reply *machineapi.StartReply, err error) {
 	var rep *machineapi.ServiceStartReply
+
 	rep, err = r.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: in.Id})
 	if rep != nil {
 		reply = &machineapi.StartReply{
@@ -138,6 +141,7 @@ func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (r
 //nolint: staticcheck
 func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (reply *machineapi.StopReply, err error) {
 	var rep *machineapi.ServiceStopReply
+
 	rep, err = r.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: in.Id})
 	if rep != nil {
 		reply = &machineapi.StopReply{
@@ -156,6 +160,7 @@ func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceSto
 	}
 
 	reply = &machineapi.ServiceStopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
+
 	return reply, err
 }
 
@@ -167,6 +172,7 @@ func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.Service
 	}
 
 	reply = &machineapi.ServiceRestartReply{Resp: fmt.Sprintf("Service %q restarted", in.Id)}
+
 	return reply, err
 }
 
@@ -215,16 +221,19 @@ func (r *Registrator) LS(req *machineapi.LSRequest, s machineapi.Machine_LSServe
 	if req == nil {
 		req = new(machineapi.LSRequest)
 	}
+
 	if !strings.HasPrefix(req.Root, OSPathSeparator) {
 		// Make sure we use complete paths
 		req.Root = OSPathSeparator + req.Root
 	}
+
 	req.Root = strings.TrimSuffix(req.Root, OSPathSeparator)
 	if req.Root == "" {
 		req.Root = "/"
 	}
 
 	var maxDepth int
+
 	if req.Recurse {
 		if req.RecursionDepth == 0 {
 			maxDepth = -1
@@ -256,6 +265,7 @@ func (r *Registrator) LS(req *machineapi.LSRequest, s machineapi.Machine_LSServe
 				Link:         fi.Link,
 			})
 		}
+
 		if err != nil {
 			return err
 		}
@@ -280,6 +290,7 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machi
 
 	stats := []*machineapi.MountStat{}
 	scanner := bufio.NewScanner(file)
+
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 

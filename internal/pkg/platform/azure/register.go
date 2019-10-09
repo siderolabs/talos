@@ -16,6 +16,7 @@ import (
 // azure to be happy with the node and let it on it's lawn.
 func linuxAgent() (err error) {
 	var gs *GoalState
+
 	gs, err = goalState()
 	if err != nil {
 		return err
@@ -29,6 +30,7 @@ func goalState() (gs *GoalState, err error) {
 	if err != nil {
 		return gs, nil
 	}
+
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return gs, err
@@ -37,6 +39,7 @@ func goalState() (gs *GoalState, err error) {
 	addHeaders(req)
 
 	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return gs, err
@@ -52,6 +55,7 @@ func goalState() (gs *GoalState, err error) {
 
 	gs = &GoalState{}
 	err = xml.Unmarshal(body, gs)
+
 	return gs, err
 }
 
@@ -79,19 +83,24 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 	// Encode health response as xml
 	b := new(bytes.Buffer)
 	b.WriteString(xml.Header)
+
 	err = xml.NewEncoder(b).Encode(h)
 	if err != nil {
 		return err
 	}
 
 	var u *url.URL
+
 	u, err = url.Parse(AzureInternalEndpoint + "/machine/?comp=health")
 	if err != nil {
 		return nil
 	}
 
-	var req *http.Request
-	var resp *http.Response
+	var (
+		req  *http.Request
+		resp *http.Response
+	)
+
 	req, err = http.NewRequest("POST", u.String(), b)
 	if err != nil {
 		return err
@@ -100,6 +109,7 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 	addHeaders(req)
 
 	client := &http.Client{}
+
 	resp, err = client.Do(req)
 	if err != nil {
 		return err
@@ -108,10 +118,12 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 	// TODO probably should do some better check here ( verify status code )
 	// nolint: errcheck
 	defer resp.Body.Close()
+
 	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
+
 	return err
 }
 

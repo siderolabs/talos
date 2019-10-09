@@ -72,7 +72,9 @@ func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 		if err != nil {
 			//nolint: errcheck
 			fp.Close()
+
 			multiErr = multierror.Append(multiErr, err)
+
 			return multiErr
 		}
 
@@ -120,6 +122,7 @@ func archiveFile(ctx context.Context, tw io.Writer, fi FileItem, fp *os.File) er
 				log.Printf("ignoring long write for %q", fi.FullPath)
 				return nil
 			}
+
 			return err
 		}
 	}

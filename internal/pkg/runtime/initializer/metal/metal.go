@@ -26,6 +26,7 @@ func (b *Metal) Initialize(platform platform.Platform, install machine.Install) 
 	// An err case should only happen if no partitions
 	// with matching labels were found
 	var mountpoints *mount.Points
+
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
 		// if install.Image() == "" {
@@ -34,6 +35,7 @@ func (b *Metal) Initialize(platform platform.Platform, install machine.Install) 
 		if err = installer.Install(install.Image(), install.Disk(), strings.ToLower(platform.Name())); err != nil {
 			return err
 		}
+
 		event.Bus().Notify(event.Event{Type: event.Reboot})
 		// Prevent the task from returning to prevent the next phase from
 		// running.

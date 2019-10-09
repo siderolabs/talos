@@ -22,8 +22,10 @@ import (
 // filesystems.
 func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
+
 	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
 		var target string
+
 		switch name {
 		case constants.EphemeralPartitionLabel:
 			target = constants.EphemeralMountPoint
@@ -32,14 +34,17 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 		}
 
 		var dev *probe.ProbedBlockDevice
+
 		if dev, err = probe.DevForFileSystemLabel(devpath, name); err != nil {
 			if name == constants.BootPartitionLabel {
 				// A bootloader is not always required.
 				log.Println("WARNING: no ESP partition was found")
 				continue
 			}
+
 			return nil, errors.Errorf("probe device for filesystem %s: %v", name, err)
 		}
+
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
 		mountpoints.Set(name, mountpoint)
 	}
@@ -52,29 +57,36 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 // we want to grow the data filesystem.
 func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
+
 	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
 		opts := []mount.Option{}
+
 		var target string
+
 		switch name {
 		case constants.EphemeralPartitionLabel:
 			target = constants.EphemeralMountPoint
+
 			opts = append(opts, mount.WithResize(true))
 		case constants.BootPartitionLabel:
 			target = constants.BootMountPoint
 		}
 
 		var dev *probe.ProbedBlockDevice
+
 		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
 			// A bootloader is not always required.
 			if name == constants.BootPartitionLabel {
 				log.Println("WARNING: no ESP partition was found")
 				continue
 			}
+
 			return nil, errors.Errorf("find device with label %s: %v", name, err)
 		}
 
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
 		mountpoints.Set(name, mountpoint)
 	}
+
 	return mountpoints, nil
 }

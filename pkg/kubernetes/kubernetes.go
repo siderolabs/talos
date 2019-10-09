@@ -41,12 +41,14 @@ func NewHelper() (helper *Helper, err error) {
 	kubeconfig := "/etc/kubernetes/kubelet.conf"
 
 	var config *restclient.Config
+
 	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		return nil, err
 	}
 
 	var clientset *kubernetes.Clientset
+
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -69,6 +71,7 @@ func NewClientFromPKI(ca, crt, key []byte, host, port string) (helper *Helper, e
 	}
 
 	var clientset *kubernetes.Clientset
+
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -128,6 +131,7 @@ func (h *Helper) MasterIPs() (addrs []string, err error) {
 	}
 
 	addrs = []string{}
+
 	for _, endpoint := range endpoints.Subsets {
 		for _, addr := range endpoint.Addresses {
 			addrs = append(addrs, addr.IP)
@@ -171,6 +175,7 @@ func (h *Helper) LabelNodeAsMaster(name string) (err error) {
 		if apierrors.IsConflict(err) {
 			return errors.Wrap(err, "unable to update node metadata due to conflict")
 		}
+
 		return errors.Wrapf(err, "error patching node %q", n.Name)
 	}
 
@@ -182,6 +187,7 @@ func (h *Helper) CordonAndDrain(node string) (err error) {
 	if err = h.Cordon(node); err != nil {
 		return err
 	}
+
 	return h.Drain(node)
 }
 
@@ -191,13 +197,17 @@ func (h *Helper) Cordon(name string) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node %s", name)
 	}
+
 	if node.Spec.Unschedulable {
 		return nil
 	}
+
 	node.Spec.Unschedulable = true
+
 	if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
 		return errors.Wrapf(err, "failed to cordon node %s", node.GetName())
 	}
+
 	return nil
 }
 
@@ -207,6 +217,7 @@ func (h *Helper) Uncordon(name string) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node %s", name)
 	}
+
 	if node.Spec.Unschedulable {
 		node.Spec.Unschedulable = false
 		if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
@@ -222,12 +233,14 @@ func (h *Helper) Drain(node string) error {
 	opts := metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": node}).String(),
 	}
+
 	pods, err := h.client.CoreV1().Pods(metav1.NamespaceAll).List(opts)
 	if err != nil {
 		return errors.Wrapf(err, "cannot get pods for node %s", node)
 	}
 
 	var wg sync.WaitGroup
+
 	wg.Add(len(pods.Items))
 
 	// Evict each pod.
@@ -259,6 +272,7 @@ func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
 			DeleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod},
 		}
 		err := h.client.CoreV1().Pods(p.GetNamespace()).Evict(pol)
+
 		switch {
 		case apierrors.IsTooManyRequests(err):
 			time.Sleep(5 * time.Second)

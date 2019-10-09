@@ -32,6 +32,7 @@ func TestNthIPInNetwork(t *testing.T) {
 		network *net.IPNet
 		n       int
 	}
+
 	tests := []struct {
 		name string
 		args args

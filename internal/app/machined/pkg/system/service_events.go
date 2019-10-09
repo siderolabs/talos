@@ -37,6 +37,7 @@ func (sc *serviceCondition) Wait(ctx context.Context) error {
 	}
 
 	notifyCh := make(chan struct{}, 1)
+
 	svcrunner.Subscribe(sc.event, notifyCh)
 	defer svcrunner.Unsubscribe(sc.event, notifyCh)
 

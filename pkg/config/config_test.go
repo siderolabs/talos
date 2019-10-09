@@ -31,6 +31,7 @@ func (suite *Suite) TestNew() {
 		{Content{Version: ""}, true},
 	} {
 		_, err := New(t.content)
+
 		if t.errExpected {
 			suite.Require().Error(err)
 		} else {

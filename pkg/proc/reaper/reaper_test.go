@@ -79,6 +79,7 @@ func (suite *ReaperSuite) TestNotifyStop() {
 			suite.Assert().True(info.Status.Exited())
 			suite.Assert().Equal(0, info.Status.ExitStatus())
 		}
+
 		sort.Ints(gotPids)
 
 		suite.Assert().Equal(expectedPids, gotPids)
@@ -118,6 +119,7 @@ func (suite *ReaperSuite) TestNotifyStop() {
 
 func (suite *ReaperSuite) TestFailedProcess() {
 	notifyCh := make(chan reaper.ProcessInfo, 1)
+
 	reaper.Notify(notifyCh)
 	defer reaper.Stop(notifyCh)
 
@@ -137,6 +139,7 @@ func (suite *ReaperSuite) TestWait() {
 		name string
 		args []string
 	}
+
 	tests := []struct {
 		args      args
 		errString string
@@ -168,6 +171,7 @@ func (suite *ReaperSuite) TestWait() {
 	}
 
 	notifyCh := make(chan reaper.ProcessInfo, 1)
+
 	suite.Require().True(reaper.Notify(notifyCh))
 	defer reaper.Stop(notifyCh)
 
@@ -176,6 +180,7 @@ func (suite *ReaperSuite) TestWait() {
 		suite.Require().NoError(cmd.Start())
 
 		err := reaper.WaitWrapper(true, notifyCh, cmd)
+
 		if t.errString == "" {
 			suite.Assert().NoError(err)
 		} else {

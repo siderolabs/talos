@@ -32,6 +32,7 @@ func (task *MountOverlay) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *MountOverlay) standard(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
+
 	mountpoints, err = overlay.MountPoints()
 	if err != nil {
 		return err

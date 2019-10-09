@@ -26,7 +26,9 @@ contexts:
 // renderTemplate will output a templated string.
 func renderTemplate(in *Input, tmpl string) (string, error) {
 	templ := template.Must(template.New("tmpl").Parse(tmpl))
+
 	var buf bytes.Buffer
+
 	if err := templ.Execute(&buf, in); err != nil {
 		return "", err
 	}

@@ -53,6 +53,7 @@ func NewInspector(ctx context.Context, options ...Option) (ctrs.Inspector, error
 	i := inspector{
 		ctx: ctx,
 	}
+
 	i.client, err = criclient.NewClient(opt.criEndpoint, 10*time.Second)
 	if err != nil {
 		return nil, err
@@ -89,6 +90,7 @@ func parseContainerDisplay(id string) (namespace string, pod string, name string
 	if slashIdx > 0 {
 		namespace, pod = id[:slashIdx], id[slashIdx+1:]
 		semicolonIdx := strings.LastIndex(pod, ":")
+
 		if semicolonIdx > 0 {
 			name = pod[semicolonIdx+1:]
 			pod = pod[:semicolonIdx]
@@ -265,7 +267,9 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	metricsPerContainer := map[string]*runtimeapi.ContainerStats{}
+
 	for _, metric := range metrics {
 		metricsPerContainer[metric.Attributes.Id] = metric
 	}

@@ -38,8 +38,10 @@ func FormatAddress(addr string) string {
 		if ip.To4() == nil {
 			return "[" + ip.String() + "]"
 		}
+
 		return ip.String()
 	}
+
 	return addr
 }
 
@@ -48,9 +50,11 @@ func NthIPInNetwork(network *net.IPNet, n int) (net.IP, error) {
 	ip := network.IP
 	dst := make([]byte, len(ip))
 	copy(dst, ip)
+
 	for i := 0; i < n; i++ {
 		for j := len(dst) - 1; j >= 0; j-- {
 			dst[j]++
+
 			if dst[j] > 0 {
 				break
 			}

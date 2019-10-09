@@ -42,11 +42,13 @@ var interfacesCmd = &cobra.Command{
 func intersRender(reply *networkapi.InterfacesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "INDEX\tNAME\tMAC\tMTU\tADDRESS")
+
 	for _, r := range reply.Interfaces {
 		for _, addr := range r.Ipaddress {
 			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", r.Index, r.Name, r.Hardwareaddr, r.Mtu, addr)
 		}
 	}
+
 	helpers.Should(w.Flush())
 }
 

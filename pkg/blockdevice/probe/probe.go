@@ -37,17 +37,21 @@ type ProbedBlockDevice struct {
 // All probes a block device's file system for the given label.
 func All() (all []*ProbedBlockDevice, err error) {
 	var infos []os.FileInfo
+
 	if infos, err = ioutil.ReadDir("/sys/block"); err != nil {
 		return nil, err
 	}
 
 	for _, info := range infos {
 		devpath := "/dev/" + info.Name()
+
 		var probed []*ProbedBlockDevice
+
 		probed, err = probeFilesystem(devpath)
 		if err != nil {
 			return nil, err
 		}
+
 		all = append(all, probed...)
 	}
 
@@ -66,8 +70,10 @@ func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 				time.Sleep(50 * time.Millisecond)
 				continue
 			}
+
 			return nil, err
 		}
+
 		break
 	}
 
@@ -89,6 +95,7 @@ func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if sb.Is() {
 			return sb, nil
 		}
@@ -101,6 +108,7 @@ func FileSystem(path string) (sb filesystem.SuperBlocker, err error) {
 // the given label.
 func GetDevWithFileSystemLabel(value string) (probe *ProbedBlockDevice, err error) {
 	var probed []*ProbedBlockDevice
+
 	if probed, err = All(); err != nil {
 		return nil, err
 	}
@@ -112,6 +120,7 @@ func GetDevWithFileSystemLabel(value string) (probe *ProbedBlockDevice, err erro
 // given label.
 func DevForFileSystemLabel(devpath, value string) (probe *ProbedBlockDevice, err error) {
 	var probed []*ProbedBlockDevice
+
 	probed, err = probeFilesystem(devpath)
 	if err != nil {
 		return nil, err
@@ -153,8 +162,10 @@ func probe(devpath string) (devpaths []string) {
 
 	// A partition table was found, now probe each partition's file system.
 	name := filepath.Base(devpath)
+
 	for _, p := range pt.Partitions() {
 		var partpath string
+
 		switch {
 		case strings.HasPrefix(name, "nvme"):
 			fallthrough
@@ -187,6 +198,7 @@ func probeFilesystem(devpath string) (probed []*ProbedBlockDevice, err error) {
 		// better and update the code here.
 		// nolint: errcheck
 		bd, _ = blockdevice.Open(devpath)
+
 		if sb, err = FileSystem(path); err != nil {
 			return nil, errors.Wrap(err, "unexpected error when reading super block")
 		}

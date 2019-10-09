@@ -70,10 +70,12 @@ func serviceList(c *client.Client) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "SERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
+
 	for _, s := range reply.Services {
 		svc := serviceInfoWrapper{s}
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s ago\t%s\n", svc.Id, svc.State, svc.HealthStatus(), svc.LastUpdated(), svc.LastEvent())
 	}
+
 	if err := w.Flush(); err != nil {
 		helpers.Fatalf("error writing response: %s", err)
 	}
@@ -84,6 +86,7 @@ func serviceInfo(c *client.Client, id string) {
 	if err != nil {
 		helpers.Fatalf("error listing services: %s", err)
 	}
+
 	if s == nil {
 		helpers.Fatalf("service %q is not registered", id)
 	}
@@ -93,10 +96,13 @@ func serviceInfo(c *client.Client, id string) {
 	fmt.Fprintf(w, "ID\t%s\n", svc.Id)
 	fmt.Fprintf(w, "STATE\t%s\n", svc.State)
 	fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
+
 	if svc.Health.LastMessage != "" {
 		fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
 	}
+
 	label := "EVENTS"
+
 	for _, event := range svc.Events.Events {
 		// nolint: errcheck
 		ts, _ := ptypes.Timestamp(event.Ts)

@@ -13,6 +13,7 @@ func Test_PartNo(t *testing.T) {
 	type args struct {
 		devname string
 	}
+
 	tests := []struct {
 		name string
 		args args
@@ -110,6 +111,7 @@ func Test_PartNo(t *testing.T) {
 			want: "4",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// nolint: errcheck
@@ -125,6 +127,7 @@ func Test_DevnameFromPartname(t *testing.T) {
 		devname string
 		partno  string
 	}
+
 	tests := []struct {
 		name string
 		args args
@@ -187,6 +190,7 @@ func Test_DevnameFromPartname(t *testing.T) {
 			want: "loop4",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// nolint: errcheck

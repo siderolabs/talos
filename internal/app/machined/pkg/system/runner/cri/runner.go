@@ -134,6 +134,7 @@ func (c *criRunner) Open(upstreamCtx context.Context) error {
 
 	// Create the CRI client.
 	var err error
+
 	c.client, err = cri.NewClient("unix:"+c.opts.ContainerdAddress, 10*time.Second)
 	if err != nil {
 		return err
@@ -262,6 +263,7 @@ WAIT:
 	}
 
 	eventSink(events.StateStopping, "Stopping container %q in sandbox %q", containerID, c.podSandboxID)
+
 	err = c.client.StopContainer(ctx, containerID, int64(c.opts.GracefulShutdownTimeout/time.Second))
 	if err != nil {
 		return err

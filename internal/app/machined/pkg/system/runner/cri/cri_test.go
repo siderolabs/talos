@@ -78,6 +78,7 @@ func (suite *CRISuite) SetupSuite() {
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
+
 	go func() {
 		defer suite.containerdWg.Done()
 		defer func() { suite.Require().NoError(suite.containerdRunner.Close()) }()
@@ -129,6 +130,7 @@ func (suite *CRISuite) TestRunSuccess() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -147,6 +149,7 @@ func (suite *CRISuite) TestRunTwice() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	// running same container twice should be fine
@@ -187,6 +190,7 @@ func (suite *CRISuite) TestPodCleanup() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 	suite.Require().NoError(r2.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r2.Close()) }()
 
 	suite.Assert().NoError(r2.Run(MockEventSink))
@@ -205,6 +209,7 @@ func (suite *CRISuite) TestRunLogs() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -303,6 +308,7 @@ func (suite *CRISuite) TestStopSigKill() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
@@ -328,6 +334,7 @@ func TestCRISuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")
 	}
+
 	_, err := os.Stat("/bin/containerd")
 	if err != nil {
 		t.Skip("containerd binary is not available, skipping the test")

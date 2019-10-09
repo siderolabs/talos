@@ -70,6 +70,7 @@ func (i *Installer) Install() (err error) {
 	for dev := range i.manifest.Targets {
 		var mp *mount.Points
 		mp, err = owned.MountPointsForDevice(dev)
+
 		if err != nil {
 			return err
 		}
@@ -139,19 +140,24 @@ func (i *Installer) Install() (err error) {
 
 func zero(manifest *manifest.Manifest) (err error) {
 	var zero *os.File
+
 	if zero, err = os.Open("/dev/zero"); err != nil {
 		return err
 	}
 
 	for dev := range manifest.Targets {
 		var f *os.File
+
 		if f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice); err != nil {
 			return err
 		}
+
 		var size uint64
+
 		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
 			return errors.Errorf("failed to got block device size: %v", ret)
 		}
+
 		if _, err = io.CopyN(f, zero, int64(size)); err != nil {
 			return err
 		}

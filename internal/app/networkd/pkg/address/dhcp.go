@@ -41,6 +41,7 @@ func (d *DHCP) Discover(ctx context.Context) error {
 	// TODO do something with context
 	ack, err := d.discover()
 	d.Ack = ack
+
 	return err
 }
 
@@ -64,6 +65,7 @@ func (d *DHCP) MTU() uint32 {
 	if err != nil {
 		return uint32(d.NetIf.MTU)
 	}
+
 	return uint32(mtu)
 }
 
@@ -72,6 +74,7 @@ func (d *DHCP) TTL() time.Duration {
 	if d.Ack == nil {
 		return 0
 	}
+
 	return d.Ack.IPAddressLeaseTime(time.Minute * 30)
 }
 
@@ -80,6 +83,7 @@ func (d *DHCP) Family() int {
 	if d.Ack.YourIPAddr.To4() != nil {
 		return unix.AF_INET
 	}
+
 	return unix.AF_INET6
 }
 

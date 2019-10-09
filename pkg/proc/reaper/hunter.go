@@ -27,6 +27,7 @@ func (zh *zombieHunter) Run() {
 	if zh.running {
 		panic("zombie hunter is already running")
 	}
+
 	zh.running = true
 
 	zh.shutdown = make(chan struct{})
@@ -57,6 +58,7 @@ func (zh *zombieHunter) Notify(ch chan<- ProcessInfo) bool {
 	}
 
 	zh.listeners[ch] = struct{}{}
+
 	return true
 }
 
@@ -83,6 +85,7 @@ func (zh *zombieHunter) run() {
 			zh.mu.Unlock()
 
 			zh.shutdown <- struct{}{}
+
 			return
 		}
 
@@ -125,10 +128,12 @@ func (zh *zombieHunter) reapLoop() {
 // send notification about reaped zombie to all listeners
 func (zh *zombieHunter) send(pid int, wstatus syscall.WaitStatus) {
 	zh.mu.Lock()
+
 	listeners := make([]chan<- ProcessInfo, 0, len(zh.listeners))
 	for ch := range zh.listeners {
 		listeners = append(listeners, ch)
 	}
+
 	zh.mu.Unlock()
 
 	notification := ProcessInfo{
@@ -139,8 +144,7 @@ func (zh *zombieHunter) send(pid int, wstatus syscall.WaitStatus) {
 	for _, listener := range listeners {
 		select {
 		case listener <- notification:
-		default:
-			// drop notifications if listener is not keeping up
+		default: // drop notifications if listener is not keeping up
 		}
 	}
 }

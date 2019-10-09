@@ -81,6 +81,7 @@ func (c *Container) GetLogChunker() (chunker.Chunker, io.Closer, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if filename == "" {
 		return nil, nil, fmt.Errorf("no log available")
 	}

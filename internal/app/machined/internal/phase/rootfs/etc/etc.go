@@ -63,8 +63,11 @@ func Hosts(hostname string) (err error) {
 	if err != nil {
 		return
 	}
+
 	var buf []byte
+
 	writer := bytes.NewBuffer(buf)
+
 	err = tmpl.Execute(writer, data)
 	if err != nil {
 		return
@@ -85,10 +88,13 @@ func Hosts(hostname string) (err error) {
 // root.
 func ResolvConf() (err error) {
 	target := "/run/system/etc/resolv.conf"
+
 	var f *os.File
+
 	if f, err = os.OpenFile(target, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
 		return err
 	}
+
 	// nolint: errcheck
 	defer f.Close()
 
@@ -103,12 +109,14 @@ func ResolvConf() (err error) {
 // node's OS Image field is reported by the node from /etc/os-release.
 func OSRelease() (err error) {
 	var v string
+
 	switch version.Tag {
 	case "none":
 		v = version.SHA
 	default:
 		v = version.Tag
 	}
+
 	data := struct {
 		Name    string
 		ID      string
@@ -123,8 +131,11 @@ func OSRelease() (err error) {
 	if err != nil {
 		return
 	}
+
 	var buf []byte
+
 	writer := bytes.NewBuffer(buf)
+
 	err = tmpl.Execute(writer, data)
 	if err != nil {
 		return
@@ -146,6 +157,7 @@ func ip() string {
 	if err != nil {
 		return ""
 	}
+
 	for _, address := range addrs {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {

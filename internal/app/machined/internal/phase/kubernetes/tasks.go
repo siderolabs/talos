@@ -50,6 +50,7 @@ func (task *KillKubernetesTasks) standard() (err error) {
 	s := client.TaskService()
 
 	ctx := namespaces.WithNamespace(context.Background(), "k8s.io")
+
 	response, err := s.List(ctx, &tasks.ListTasksRequest{})
 	if err != nil {
 		return err

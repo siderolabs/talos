@@ -109,6 +109,7 @@ func NewManifest(install machine.Install) (manifest *Manifest, err error) {
 		if target == nil {
 			continue
 		}
+
 		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
 	}
 
@@ -136,9 +137,11 @@ func NewManifest(install machine.Install) (manifest *Manifest, err error) {
 func (m *Manifest) ExecuteManifest(manifest *Manifest) (err error) {
 	for dev, targets := range manifest.Targets {
 		var bd *blockdevice.BlockDevice
+
 		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(true)); err != nil {
 			return err
 		}
+
 		// nolint: errcheck
 		defer bd.Close()
 
@@ -164,6 +167,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
 
 	var pt table.PartitionTable
+
 	if pt, err = bd.PartitionTable(true); err != nil {
 		return err
 	}
@@ -214,11 +218,14 @@ func (t *Target) Format() error {
 		log.Printf("formatting partition %s - %s as %s\n", t.PartitionName, t.Label, "fat")
 		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
 	}
+
 	log.Printf("formatting partition %s - %s as %s\n", t.PartitionName, t.Label, "xfs")
 	opts := []xfs.Option{xfs.WithForce(t.Force)}
+
 	if t.Label != "" {
 		opts = append(opts, xfs.WithLabel(t.Label))
 	}
+
 	return xfs.MakeFS(t.PartitionName, opts...)
 }
 
@@ -239,9 +246,11 @@ func (t *Target) Save() (err error) {
 		if err = os.MkdirAll(filepath.Dir(asset.Destination), os.ModeDir); err != nil {
 			return err
 		}
+
 		if destFile, err = os.Create(asset.Destination); err != nil {
 			return err
 		}
+
 		// nolint: errcheck
 		defer destFile.Close()
 
@@ -262,5 +271,6 @@ func (t *Target) Save() (err error) {
 			return err
 		}
 	}
+
 	return nil
 }

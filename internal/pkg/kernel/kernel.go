@@ -98,6 +98,7 @@ type Parameters []*Parameter
 // String returns a string representation of all parameters.
 func (p Parameters) String() string {
 	s := ""
+
 	for _, v := range p {
 		for _, val := range v.values {
 			if val == "" {
@@ -162,6 +163,7 @@ func (c *Cmdline) AppendDefaults() {
 func (c *Cmdline) Get(k string) (value *Parameter) {
 	c.Lock()
 	defer c.Unlock()
+
 	for _, value := range c.Parameters {
 		if value.key == k {
 			return value
@@ -175,6 +177,7 @@ func (c *Cmdline) Get(k string) (value *Parameter) {
 func (c *Cmdline) Set(k string, v *Parameter) {
 	c.Lock()
 	defer c.Unlock()
+
 	for i, value := range c.Parameters {
 		if value.key == k {
 			c.Parameters = append(c.Parameters[:i], append([]*Parameter{v}, c.Parameters[i:]...)...)
@@ -187,12 +190,14 @@ func (c *Cmdline) Set(k string, v *Parameter) {
 func (c *Cmdline) Append(k string, v string) {
 	c.Lock()
 	defer c.Unlock()
+
 	for _, value := range c.Parameters {
 		if value.key == k {
 			value.Append(v)
 			return
 		}
 	}
+
 	insert(&c.Parameters, k, v)
 }
 
@@ -216,6 +221,7 @@ func insert(values *Parameters, key, value string) {
 			return
 		}
 	}
+
 	*values = append(*values, &Parameter{key: key, values: []string{value}})
 }
 
@@ -223,6 +229,7 @@ func parse(parameters string) (parsed Parameters) {
 	line := strings.TrimSuffix(parameters, "\n")
 	fields := strings.Fields(line)
 	parsed = make(Parameters, 0)
+
 	for _, arg := range fields {
 		kv := strings.SplitN(arg, "=", 2)
 		switch len(kv) {
@@ -238,6 +245,7 @@ func parse(parameters string) (parsed Parameters) {
 
 func read() (c *Cmdline, err error) {
 	var parameters []byte
+
 	parameters, err = ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return nil, err

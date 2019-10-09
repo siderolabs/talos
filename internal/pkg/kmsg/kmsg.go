@@ -19,6 +19,7 @@ func Setup(prefix string) (*os.File, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open /dev/kmsg")
 	}
+
 	log.SetOutput(out)
 	log.SetPrefix(prefix + " ")
 	log.SetFlags(0)

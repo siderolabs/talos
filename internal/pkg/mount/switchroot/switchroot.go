@@ -19,33 +19,40 @@ import (
 // nolint: gocyclo
 func Switch(prefix string, virtual *manager.Manager) (err error) {
 	log.Println("moving virtual devices to the new rootfs")
+
 	if err = virtual.MoveAll(prefix); err != nil {
 		return err
 	}
 
 	log.Printf("changing working directory into %s", prefix)
+
 	if err = unix.Chdir(prefix); err != nil {
 		return errors.Wrapf(err, "error changing working directory to %s", prefix)
 	}
 
 	var old *os.File
+
 	if old, err = os.Open("/"); err != nil {
 		return errors.Wrap(err, "error opening /")
 	}
+
 	// nolint: errcheck
 	defer old.Close()
 
 	log.Printf("moving %s to /", prefix)
+
 	if err = unix.Mount(prefix, "/", "", unix.MS_MOVE, ""); err != nil {
 		return errors.Wrap(err, "error moving /")
 	}
 
 	log.Println("changing root directory")
+
 	if err = unix.Chroot("."); err != nil {
 		return errors.Wrap(err, "error chroot")
 	}
 
 	log.Println("cleaning up initramfs")
+
 	if err = recursiveDelete(int(old.Fd())); err != nil {
 		return errors.Wrap(err, "error deleting initramfs")
 	}
@@ -53,6 +60,7 @@ func Switch(prefix string, virtual *manager.Manager) (err error) {
 	// Note that /sbin/init is machined. We call it init since this is the
 	// convention.
 	log.Println("executing /sbin/init")
+
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, []string{}); err != nil {
 		return errors.Wrap(err, "error executing /sbin/init")
 	}
@@ -69,6 +77,7 @@ func recursiveDelete(fd int) error {
 	dir := os.NewFile(uintptr(fd), "__ignored__")
 	// nolint: errcheck
 	defer dir.Close()
+
 	names, err := dir.Readdirnames(-1)
 	if err != nil {
 		return err
@@ -79,6 +88,7 @@ func recursiveDelete(fd int) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -105,6 +115,7 @@ func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error
 			return err
 		}
 	}
+
 	return nil
 }
 

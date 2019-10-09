@@ -48,5 +48,6 @@ func WaitForFilesToExist(filenames ...string) Condition {
 	for i := range filenames {
 		conditions[i] = WaitForFileToExist(filenames[i])
 	}
+
 	return WaitForAll(conditions...)
 }

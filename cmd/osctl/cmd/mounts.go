@@ -41,11 +41,13 @@ func mountsRender(reply *machineapi.MountsReply, err error) {
 		if err != nil {
 			helpers.Fatalf("error getting mounts: %s", err)
 		}
+
 		return
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "FILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
+
 	for _, r := range reply.Stats {
 		percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
 
@@ -55,6 +57,7 @@ func mountsRender(reply *machineapi.MountsReply, err error) {
 
 		fmt.Fprintf(w, "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n", r.Filesystem, float64(r.Size)*1e-9, float64(r.Size-r.Available)*1e-9, float64(r.Available)*1e-9, percentAvailable, r.MountedOn)
 	}
+
 	helpers.Should(w.Flush())
 }
 

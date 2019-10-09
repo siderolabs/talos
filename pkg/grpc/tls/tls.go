@@ -107,5 +107,6 @@ func New(opts ...ConfigOptionFunc) (cfg *tls.Config, err error) {
 			return
 		}
 	}
+
 	return
 }

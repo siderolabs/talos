@@ -48,6 +48,7 @@ func (b *TokenCredentials) authorize(ctx context.Context) error {
 		if len(md["token"]) > 0 && md["token"][0] == b.Token {
 			return nil
 		}
+
 		return fmt.Errorf("%s", codes.Unauthenticated.String())
 	}
 

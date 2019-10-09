@@ -36,7 +36,9 @@ func PartNo(partname string) (partno string, err error) {
 // DevnameFromPartname returns the device name from a partition name.
 func DevnameFromPartname(partname string) (devname string, err error) {
 	partname = strings.TrimPrefix(partname, "/dev/")
+
 	var partno string
+
 	if partno, err = PartNo(partname); err != nil {
 		return "", err
 	}

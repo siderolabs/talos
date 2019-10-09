@@ -57,6 +57,7 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *os
 	if err != nil {
 		return
 	}
+
 	data = &osapi.Data{
 		Bytes: fileBytes,
 	}
@@ -187,6 +188,7 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.D
 	}
 	// Read all messages from the log (non-destructively)
 	buf := make([]byte, size)
+
 	n, err := unix.Klogctl(constants.SYSLOG_ACTION_READ_ALL, buf)
 	if err != nil {
 		return
@@ -206,7 +208,9 @@ func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err e
 	switch {
 	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
 		filename := filepath.Join(constants.DefaultLogPath, filepath.Base(req.Id)+".log")
+
 		var file *os.File
+
 		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
 		if err != nil {
 			return
@@ -217,6 +221,7 @@ func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err e
 		chunk = filechunker.NewChunker(file)
 	default:
 		var file io.Closer
+
 		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
 			return err
 		}
@@ -259,14 +264,17 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *os
 		if err != nil {
 			return nil, err
 		}
+
 		executable, err = proc.Executable()
 		if err != nil {
 			return nil, err
 		}
+
 		args, err = proc.CmdLine()
 		if err != nil {
 			return nil, err
 		}
+
 		stats, err = proc.Stat()
 		if err != nil {
 			return nil, err
@@ -299,12 +307,14 @@ func getContainerInspector(ctx context.Context, namespace string, driver osapi.C
 		if namespace != criconstants.K8sContainerdNamespace {
 			return nil, errors.New("CRI inspector is supported only for K8s namespace")
 		}
+
 		return cri.NewInspector(ctx)
 	case osapi.ContainerDriver_CONTAINERD:
 		addr := constants.ContainerdAddress
 		if namespace == constants.SystemContainerdNamespace {
 			addr = constants.SystemContainerdAddress
 		}
+
 		return containerd.NewInspector(ctx, namespace, containerd.WithContainerdAddress(addr))
 	default:
 		return nil, errors.Errorf("unsupported driver %q", driver)
@@ -323,6 +333,7 @@ func k8slogs(ctx context.Context, req *osapi.LogsRequest) (chunker.Chunker, io.C
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if container == nil {
 		return nil, nil, fmt.Errorf("container %q not found", req.Id)
 	}

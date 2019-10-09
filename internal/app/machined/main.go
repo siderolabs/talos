@@ -28,10 +28,12 @@ type EventBusObserver struct {
 func recovery() {
 	if r := recover(); r != nil {
 		log.Printf("%+v\n", r)
+
 		for i := 10; i >= 0; i-- {
 			log.Printf("rebooting in %d seconds\n", i)
 			time.Sleep(1 * time.Second)
 		}
+
 		if unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART) == nil {
 			select {}
 		}
@@ -56,6 +58,7 @@ func sync() {
 			return
 		case <-time.After(time.Second):
 		}
+
 		if i != 0 {
 			log.Printf("waiting %d more seconds for sync to finish", i)
 		}
@@ -84,7 +87,9 @@ func main() {
 	// Subscribe to events.
 	init := EventBusObserver{&event.Embeddable{}}
 	defer close(init.Channel())
+
 	event.Bus().Register(init)
+
 	defer event.Bus().Unregister(init)
 
 	// Initialize process reaper.
@@ -137,13 +142,16 @@ func main() {
 				req *machineapi.UpgradeRequest
 				ok  bool
 			)
+
 			if req, ok = e.Data.(*machineapi.UpgradeRequest); !ok {
 				log.Println("cannot perform upgrade, unexpected data type")
 				continue
 			}
+
 			if err := seq.Upgrade(req); err != nil {
 				panic(errors.Wrap(err, "upgrade failed"))
 			}
+
 			event.Bus().Notify(event.Event{Type: event.Reboot})
 		}
 	}

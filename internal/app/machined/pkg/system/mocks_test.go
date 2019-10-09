@@ -33,6 +33,7 @@ func (m *MockService) ID(config.Configurator) string {
 	if m.name != "" {
 		return m.name
 	}
+
 	return "MockRunner"
 }
 

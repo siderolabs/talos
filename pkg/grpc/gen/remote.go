@@ -32,8 +32,11 @@ func NewRemoteGenerator(token string, endpoints []string, port int) (g *RemoteGe
 	creds := basic.NewTokenCredentials(token)
 
 	// Loop through trustd endpoints and attempt to download PKI
-	var conn *grpc.ClientConn
-	var multiError *multierror.Error
+	var (
+		conn       *grpc.ClientConn
+		multiError *multierror.Error
+	)
+
 	for i := 0; i < len(endpoints); i++ {
 		conn, err = basic.NewConnection(endpoints[i], port, creds)
 		if err != nil {
@@ -41,7 +44,9 @@ func NewRemoteGenerator(token string, endpoints []string, port int) (g *RemoteGe
 			// Unable to connect, bail and attempt to contact next endpoint
 			continue
 		}
+
 		client := securityapi.NewSecurityClient(conn)
+
 		return &RemoteGenerator{client: client}, nil
 	}
 
@@ -53,6 +58,7 @@ func NewRemoteGenerator(token string, endpoints []string, port int) (g *RemoteGe
 // Certificate implements the securityapi.SecurityClient interface.
 func (g *RemoteGenerator) Certificate(in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
 	ctx := context.Background()
+
 	resp, err = g.client.Certificate(ctx, in)
 	if err != nil {
 		return nil, err
@@ -78,6 +84,7 @@ func (g *RemoteGenerator) Identity(csr *x509.CertificateSigningRequest) (ca, crt
 func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca []byte, crt []byte, err error) {
 	timeout := time.NewTimer(time.Minute * 5)
 	defer timeout.Stop()
+
 	tick := time.NewTicker(time.Second * 5)
 	defer tick.Stop()
 
@@ -87,6 +94,7 @@ func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca []byte, c
 			return nil, nil, fmt.Errorf("timeout waiting for certificate")
 		case <-tick.C:
 			var resp *securityapi.CertificateResponse
+
 			resp, err = g.Certificate(in)
 			if err != nil {
 				log.Println(err)

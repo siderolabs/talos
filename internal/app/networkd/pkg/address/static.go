@@ -36,6 +36,7 @@ func (s *Static) Address() *net.IPNet {
 	// nolint: errcheck
 	ip, ipn, _ := net.ParseCIDR(s.Device.CIDR)
 	ipn.IP = ip
+
 	return ipn
 }
 
@@ -52,6 +53,7 @@ func (s *Static) MTU() uint32 {
 	if mtu == 0 {
 		mtu = uint32(s.NetIf.MTU)
 	}
+
 	return mtu
 }
 
@@ -66,6 +68,7 @@ func (s *Static) Family() int {
 	if s.Address().IP.To4() != nil {
 		return unix.AF_INET
 	}
+
 	return unix.AF_INET6
 }
 
@@ -80,8 +83,10 @@ func (s *Static) Routes() (routes []*Route) {
 	for _, route := range s.Device.Routes {
 		// nolint: errcheck
 		_, ipnet, _ := net.ParseCIDR(route.Network)
+
 		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway)})
 	}
+
 	return routes
 }
 

@@ -70,6 +70,7 @@ func (i *PointsIterator) Value() *Point {
 	if i.err != nil || i.index > len(i.p.points) {
 		panic("invoked Value on expired iterator")
 	}
+
 	return i.value
 }
 
@@ -86,11 +87,13 @@ func (i *PointsIterator) Next() bool {
 
 	if i.reverse {
 		i.index--
+
 		if i.index < i.end {
 			return false
 		}
 	} else {
 		i.index++
+
 		if i.index > i.end {
 			return false
 		}

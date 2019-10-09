@@ -36,6 +36,7 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 	}, nil)
 
 	finished := make(chan struct{})
+
 	go func() {
 		defer close(finished)
 		sr.Start()
@@ -72,6 +73,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 	sr := system.NewServiceRunner(&MockHealthcheckedService{}, nil)
 
 	finished := make(chan struct{})
+
 	go func() {
 		defer close(finished)
 		sr.Start()
@@ -107,6 +109,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	sr := system.NewServiceRunner(&m, nil)
 
 	finished := make(chan struct{})
+
 	go func() {
 		defer close(finished)
 		sr.Start()
@@ -141,6 +144,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	oldWaitConditionCheckInterval := system.WaitConditionCheckInterval
 	system.WaitConditionCheckInterval = 10 * time.Millisecond
+
 	defer func() {
 		system.WaitConditionCheckInterval = oldWaitConditionCheckInterval
 	}()
@@ -152,6 +156,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	}, nil)
 
 	finished := make(chan struct{})
+
 	go func() {
 		defer close(finished)
 		sr.Start()
@@ -327,6 +332,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 	}, nil)
 
 	finished := make(chan struct{})
+
 	go func() {
 		defer close(finished)
 		sr.Start()

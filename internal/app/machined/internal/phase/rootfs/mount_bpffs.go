@@ -32,6 +32,7 @@ func (task *MountBPFFS) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *MountBPFFS) runtime(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
+
 	mountpoints, err = bpffs.MountPoints()
 	if err != nil {
 		return err

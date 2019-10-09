@@ -72,10 +72,12 @@ func generateAssets(config config.Configurator) (err error) {
 	if err != nil {
 		return err
 	}
+
 	block, _ := pem.Decode(peerCrt)
 	if block == nil {
 		return errors.New("failed to decode peer certificate")
 	}
+
 	peer, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse client certificate")
@@ -85,10 +87,12 @@ func generateAssets(config config.Configurator) (err error) {
 	if err != nil {
 		return err
 	}
+
 	block, _ = pem.Decode(caCrt)
 	if block == nil {
 		return errors.New("failed to decode CA certificate")
 	}
+
 	ca, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse etcd CA certificate")
@@ -98,10 +102,12 @@ func generateAssets(config config.Configurator) (err error) {
 	if err != nil {
 		return err
 	}
+
 	block, _ = pem.Decode(peerKey)
 	if block == nil {
 		return errors.New("failed to peer key")
 	}
+
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse client key")
@@ -113,23 +119,29 @@ func generateAssets(config config.Configurator) (err error) {
 	}
 
 	apiServers := []*url.URL{}
+
 	for _, ip := range config.Cluster().IPs() {
 		var u *url.URL
+
 		if u, err = url.Parse("https://" + ip + ":6443"); err != nil {
 			return err
 		}
+
 		apiServers = append(apiServers, u)
 	}
+
 	u, err := url.Parse("https://127.0.0.1:6443")
 	if err != nil {
 		return err
 	}
+
 	apiServers = append(apiServers, u)
 
 	_, podCIDR, err := net.ParseCIDR(config.Cluster().Network().PodCIDR())
 	if err != nil {
 		return err
 	}
+
 	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
 	if err != nil {
 		return err
@@ -141,6 +153,7 @@ func generateAssets(config config.Configurator) (err error) {
 	if block == nil {
 		return errors.New("failed to Kubernetes CA certificate")
 	}
+
 	k8sCA, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse Kubernetes CA certificate")
@@ -150,6 +163,7 @@ func generateAssets(config config.Configurator) (err error) {
 	if block == nil {
 		return errors.New("failed to Kubernetes CA key")
 	}
+
 	k8sKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse Kubernetes key")
@@ -205,11 +219,13 @@ func generateAssets(config config.Configurator) (err error) {
 
 func altNamesFromURLs(urls []*url.URL) *tlsutil.AltNames {
 	var an tlsutil.AltNames
+
 	for _, u := range urls {
 		host, _, err := net.SplitHostPort(u.Host)
 		if err != nil {
 			host = u.Host
 		}
+
 		ip := net.ParseIP(host)
 		if ip == nil {
 			an.DNSNames = append(an.DNSNames, host)
@@ -217,5 +233,6 @@ func altNamesFromURLs(urls []*url.URL) *tlsutil.AltNames {
 			an.IPs = append(an.IPs, ip)
 		}
 	}
+
 	return &an
 }

@@ -34,6 +34,7 @@ func NewConnection(address string, port int, creds credentials.PerRPCCredentials
 			})),
 		grpc.WithPerRPCCredentials(creds),
 	)
+
 	conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(address), port), grpcOpts...)
 	if err != nil {
 		return

@@ -79,6 +79,7 @@ func ensure(filename string) (err error) {
 			Context:  "",
 			Contexts: map[string]*Context{},
 		}
+
 		return config.Save(filename)
 	}
 

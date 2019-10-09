@@ -27,7 +27,9 @@ var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+
 	configPath = flag.String("config", "", "the path to the config")
+
 	flag.Parse()
 }
 
@@ -43,6 +45,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
+
 	config, err := config.New(content)
 	if err != nil {
 		log.Fatalf("open config: %v", err)
@@ -52,6 +55,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	for _, san := range config.Machine().Security().CertSANs() {
 		if ip := stdlibnet.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
@@ -64,6 +68,7 @@ func main() {
 	}
 
 	var provider tls.CertificateProvider
+
 	provider, err = tls.NewLocalRenewingFileCertificateProvider(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt, hostname, ips)
 	if err != nil {
 		log.Fatalln("failed to create local certificate provider:", err)

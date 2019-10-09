@@ -144,6 +144,7 @@ func genV1Alpha1Config(args []string) {
 	if err != nil {
 		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
+
 	input.AdditionalSubjectAltNames = additionalSANs
 	input.ControlPlaneEndpoint = canonicalControlplaneEndpoint
 
@@ -153,6 +154,7 @@ func genV1Alpha1Config(args []string) {
 	}
 
 	var udType genv1alpha1.Type
+
 	for idx := range strings.Split(args[1], ",") {
 		if idx == 0 {
 			udType = genv1alpha1.TypeInit
@@ -163,12 +165,14 @@ func genV1Alpha1Config(args []string) {
 		if err = writeV1Alpha1Config(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
 			helpers.Fatalf("failed to generate config for %s: %v", "master-"+strconv.Itoa(idx+1), err)
 		}
+
 		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 	}
 
 	if err = writeV1Alpha1Config(input, genv1alpha1.TypeJoin, "worker"); err != nil {
 		helpers.Fatalf("failed to generate config for %s: %v", "worker", err)
 	}
+
 	fmt.Println("created file", workingDir+"/worker.yaml")
 
 	newConfig := &config.Config{
@@ -187,6 +191,7 @@ func genV1Alpha1Config(args []string) {
 	if err != nil {
 		helpers.Fatalf("failed to marshal config: %+v", err)
 	}
+
 	if err = ioutil.WriteFile("talosconfig", data, 0644); err != nil {
 		helpers.Fatalf("%v", err)
 	}
@@ -196,6 +201,7 @@ func genV1Alpha1Config(args []string) {
 
 func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {
 	var data string
+
 	data, err = genv1alpha1.Config(t, input)
 	if err != nil {
 		return err

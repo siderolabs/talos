@@ -50,6 +50,7 @@ func VerifyBootDevice(install machine.Install) (err error) {
 // the labels used by the OS.
 func VerifyDiskAvailability(devpath, label string) (err error) {
 	var dev *probe.ProbedBlockDevice
+
 	if dev, err = probe.DevForFileSystemLabel(devpath, label); err != nil {
 		// We return here because we only care if we can discover the
 		// device successfully and confirm that the disk is not in use.
@@ -57,6 +58,7 @@ func VerifyDiskAvailability(devpath, label string) (err error) {
 		// that we can use to confirm the device was not found.
 		return nil
 	}
+
 	if dev.SuperBlock != nil {
 		return errors.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
 	}

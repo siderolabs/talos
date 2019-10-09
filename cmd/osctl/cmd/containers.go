@@ -62,14 +62,17 @@ func containerRender(reply *osapi.ContainersReply) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
+
 	for _, p := range reply.Containers {
 		display := p.Id
 		if p.Id != p.PodId {
 			// container in a sandbox
 			display = "└─ " + display
 		}
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, display, p.Image, p.Pid, p.Status)
 	}
+
 	helpers.Should(w.Flush())
 }
 

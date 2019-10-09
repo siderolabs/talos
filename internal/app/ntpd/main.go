@@ -29,7 +29,9 @@ var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+
 	configPath = flag.String("config", "", "the path to the config")
+
 	flag.Parse()
 }
 
@@ -46,6 +48,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
+
 	config, err := config.New(content)
 	if err != nil {
 		log.Fatalf("open config: %v", err)
@@ -64,7 +67,9 @@ func main() {
 	}
 
 	log.Println("Starting ntpd")
+
 	errch := make(chan error)
+
 	go func() {
 		errch <- n.Daemon()
 	}()

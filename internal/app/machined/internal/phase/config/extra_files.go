@@ -36,6 +36,7 @@ func (task *ExtraFiles) runtime(args *phase.RuntimeArgs) (err error) {
 		if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
 			result = multierror.Append(result, err)
 		}
+
 		if err = ioutil.WriteFile(p, []byte(f.Contents), f.Permissions); err != nil {
 			result = multierror.Append(result, err)
 		}

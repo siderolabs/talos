@@ -22,15 +22,19 @@ import (
 // Install performs an installation via the installer container.
 func Install(ref string, disk string, platform string) error {
 	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
+
 	client, err := containerd.New(constants.SystemContainerdAddress)
 	if err != nil {
 		return err
 	}
+
 	log.Printf("running install via %q", ref)
+
 	image, err := client.Pull(ctx, ref, []containerd.RemoteOpt{containerd.WithPullUnpack}...)
 	if err != nil {
 		return err
 	}
+
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 	}
@@ -68,15 +72,18 @@ func Install(ref string, disk string, platform string) error {
 	if err != nil {
 		return err
 	}
+
 	if err = t.Start(ctx); err != nil {
 		return errors.Wrapf(err, "failed to start task: %q", "upgrade")
 	}
+
 	statusC, err := t.Wait(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "failed waiting for task: %q", "upgrade")
 	}
 
 	status := <-statusC
+
 	code := status.ExitCode()
 	if code != 0 {
 		return errors.Errorf("task %q failed: exit code %d", "upgrade", code)

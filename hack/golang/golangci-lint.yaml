@@ -109,7 +109,6 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - funlen
-    - wsl
     - godox
     - gocognit
   disable-all: false

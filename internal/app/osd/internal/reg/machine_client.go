@@ -92,9 +92,11 @@ func copyClientServer(msg interface{}, client grpc.ClientStream, srv grpc.Server
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return err
 		}
+
 		err = srv.SendMsg(msg)
 		if err != nil {
 			return err

@@ -38,19 +38,23 @@ func (task *LeaveEtcd) standard(args *phase.RuntimeArgs) (err error) {
 	if args.Config().Machine().Type() == machine.Worker {
 		return nil
 	}
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		return err
 	}
+
 	tlsInfo := transport.TLSInfo{
 		CertFile:      constants.KubernetesEtcdPeerCert,
 		KeyFile:       constants.KubernetesEtcdPeerKey,
 		TrustedCAFile: constants.KubernetesEtcdCACert,
 	}
+
 	tlsConfig, err := tlsInfo.ClientConfig()
 	if err != nil {
 		return err
 	}
+
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 5 * time.Second,
@@ -59,6 +63,7 @@ func (task *LeaveEtcd) standard(args *phase.RuntimeArgs) (err error) {
 	if err != nil {
 		return err
 	}
+
 	// nolint: errcheck
 	defer cli.Close()
 
@@ -68,19 +73,23 @@ func (task *LeaveEtcd) standard(args *phase.RuntimeArgs) (err error) {
 	}
 
 	var id *uint64
+
 	for _, member := range resp.Members {
 		if member.Name == hostname {
 			id = &member.ID
 		}
 	}
+
 	if id == nil {
 		return errors.Errorf("failed to find %q in list of etcd members", hostname)
 	}
 
 	log.Println("leaving etcd cluster")
+
 	_, err = cli.MemberRemove(context.Background(), *id)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

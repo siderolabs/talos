@@ -39,6 +39,7 @@ func (task *UnmountPodMounts) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *UnmountPodMounts) standard(args *phase.RuntimeArgs) (err error) {
 	var b []byte
+
 	if b, err = ioutil.ReadFile("/proc/self/mounts"); err != nil {
 		return err
 	}
@@ -56,11 +57,13 @@ func (task *UnmountPodMounts) standard(args *phase.RuntimeArgs) (err error) {
 		mountpoint := fields[1]
 		if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
 			log.Printf("unmounting %s\n", mountpoint)
+
 			if err = unix.Unmount(mountpoint, 0); err != nil {
 				return errors.Errorf("error unmounting %s: %v", mountpoint, err)
 			}
 		}
 	}
+
 	if err = scanner.Err(); err != nil {
 		return err
 	}

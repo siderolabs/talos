@@ -68,6 +68,7 @@ func (i *Importer) Import(reqs ...*ImportRequest) error {
 	}
 
 	ctx := namespaces.WithNamespace(context.Background(), i.namespace)
+
 	client, err := containerd.New(i.options.containerdAddress)
 	if err != nil {
 		return err
@@ -76,6 +77,7 @@ func (i *Importer) Import(reqs ...*ImportRequest) error {
 	defer client.Close()
 
 	errCh := make(chan error)
+
 	var result *multierror.Error
 
 	for _, req := range reqs {

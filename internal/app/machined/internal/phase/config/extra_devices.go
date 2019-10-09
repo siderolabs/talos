@@ -30,6 +30,7 @@ func (task *ExtraDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *ExtraDevices) runtime(args *phase.RuntimeArgs) (err error) {
 	mountpoints := mount.NewMountPoints()
+
 	for _, extra := range args.Config().Machine().Install().ExtraDisks() {
 		for i, part := range extra.Partitions {
 			devname := fmt.Sprintf("%s%d", extra.Device, i+1)

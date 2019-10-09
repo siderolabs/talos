@@ -84,6 +84,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
+
 	go func() {
 		defer suite.containerdWg.Done()
 		defer func() { suite.Require().NoError(suite.containerdRunner.Close()) }()
@@ -135,6 +136,7 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -156,6 +158,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	// running same container twice should be fine
@@ -168,6 +171,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		// TODO: workaround containerd (?) bug: https://github.com/docker/for-linux/issues/643
 		for i := 0; i < 100; i++ {
 			time.Sleep(100 * time.Millisecond)
+
 			if _, err := os.Stat("/containerd-shim/" + suite.containerdNamespace + "/" + ID + "/shim.sock"); err != nil && os.IsNotExist(err) {
 				break
 			}
@@ -203,6 +207,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 	suite.Require().NoError(r2.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r2.Close()) }()
 
 	suite.Assert().NoError(r2.Run(MockEventSink))
@@ -222,6 +227,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -265,6 +271,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
@@ -275,6 +282,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 
 	for i := 0; i < 10; i++ {
 		time.Sleep(500 * time.Millisecond)
+
 		if bytes.Contains(suite.getLogContents("endless.log"), []byte("fail\n")) {
 			break
 		}
@@ -293,6 +301,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 
 	for i := 0; i < 10; i++ {
 		time.Sleep(500 * time.Millisecond)
+
 		if bytes.Contains(suite.getLogContents("endless.log"), []byte("ok\n")) {
 			break
 		}
@@ -327,6 +336,7 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 	)
 
 	suite.Require().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
@@ -367,6 +377,7 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
 
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
+
 	for _, imageName := range []string{"testtalos/osd", "testtalos/proxyd"} {
 		image, err := suite.client.ImageService().Get(ctx, imageName)
 		suite.Require().NoError(err)
@@ -397,6 +408,7 @@ func TestContainerdSuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")
 	}
+
 	_, err := os.Stat("/bin/containerd")
 	if err != nil {
 		t.Skip("containerd binary is not available, skipping the test")

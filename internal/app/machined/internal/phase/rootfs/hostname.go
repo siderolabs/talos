@@ -43,12 +43,14 @@ func (task *Hostname) runtime(args *phase.RuntimeArgs) (err error) {
 	kernelHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First()
 
 	var platformHostname []byte
+
 	platformHostname, err = args.Platform().Hostname()
 	if err != nil {
 		return err
 	}
 
 	configHostname := args.Config().Machine().Network().Hostname()
+
 	switch {
 	case configHostname != "":
 		log.Printf("using hostname from config: %s\n", configHostname)
@@ -58,10 +60,11 @@ func (task *Hostname) runtime(args *phase.RuntimeArgs) (err error) {
 	case platformHostname != nil:
 		args.Config().Machine().Network().SetHostname(string(platformHostname))
 		log.Printf("using hostname provided via platform: %s\n", string(platformHostname))
+
 		// case data.Networking.OS.Hostname != "":
 		// 	d.Networking.OS.Hostname = data.Networking.OS.Hostname
 		// 	log.Printf("dhcp hostname %s:", data.Networking.OS.Hostname)
-	}
+	} //nolint: wsl
 
 	return etc.Hosts(args.Config().Machine().Network().Hostname())
 }

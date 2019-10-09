@@ -165,6 +165,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 // NewSerialNumber generates a random serial number for an X.509 certificate.
 func NewSerialNumber() (sn *big.Int, err error) {
 	snLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+
 	sn, err = rand.Int(rand.Reader, snLimit)
 	if err != nil {
 		return
@@ -234,6 +235,7 @@ func NewCertificateSigningRequest(key interface{}, setters ...Option) (csr *Cert
 	if err != nil {
 		return
 	}
+
 	csrPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE REQUEST",
 		Bytes: csrBytes,
@@ -298,6 +300,7 @@ func NewRSAKey() (key *RSAKey, err error) {
 // CSR.
 func NewCertificateFromCSR(ca *x509.Certificate, key interface{}, csr *x509.CertificateRequest, setters ...Option) (crt *Certificate, err error) {
 	opts := NewDefaultOptions(setters...)
+
 	serialNumber, err := NewSerialNumber()
 	if err != nil {
 		return nil, err
@@ -408,10 +411,12 @@ func NewKeyPair(ca *x509.Certificate, key interface{}, setters ...Option) (keypa
 	if err != nil {
 		return
 	}
+
 	k, err := NewKey()
 	if err != nil {
 		return
 	}
+
 	crt, err := NewCertificateFromCSR(ca, key, csr.X509CertificateRequest, setters...)
 	if err != nil {
 		return
@@ -438,12 +443,14 @@ func NewCertificateAndKeyFromFiles(crt, key string) (p *PEMEncodedCertificateAnd
 	if err != nil {
 		return
 	}
+
 	p.Crt = crtBytes
 
 	keyBytes, err := ioutil.ReadFile(key)
 	if err != nil {
 		return
 	}
+
 	p.Key = keyBytes
 
 	return p, nil
@@ -453,6 +460,7 @@ func NewCertificateAndKeyFromFiles(crt, key string) (p *PEMEncodedCertificateAnd
 // CSR for the generated key.
 func NewCSRAndIdentity(hostname string, ips []net.IP) (csr *CertificateSigningRequest, identity *PEMEncodedCertificateAndKey, err error) {
 	var key *Key
+
 	key, err = NewKey()
 	if err != nil {
 		return nil, nil, err
@@ -493,6 +501,7 @@ func (p *PEMEncodedCertificateAndKey) UnmarshalYAML(unmarshal func(interface{}) 
 		Crt string `yaml:"crt"`
 		Key string `yaml:"key"`
 	}
+
 	if err := unmarshal(&aux); err != nil {
 		return err
 	}
@@ -543,19 +552,23 @@ func rsaCertificateAuthority(template *x509.Certificate, opts *Options) (ca *Cer
 	if e != nil {
 		return
 	}
+
 	keyBytes := x509.MarshalPKCS1PrivateKey(key)
 	keyPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: keyBytes,
 	})
+
 	crtDER, e := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
 	if e != nil {
 		return
 	}
+
 	crt, err := x509.ParseCertificate(crtDER)
 	if err != nil {
 		return
 	}
+
 	crtPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: crtDER,
@@ -576,22 +589,27 @@ func ecdsaCertificateAuthority(template *x509.Certificate) (ca *CertificateAutho
 	if e != nil {
 		return
 	}
+
 	keyBytes, e := x509.MarshalECPrivateKey(key)
 	if e != nil {
 		return
 	}
+
 	keyPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "EC PRIVATE KEY",
 		Bytes: keyBytes,
 	})
+
 	crtDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
 	if err != nil {
 		return
 	}
+
 	crt, err := x509.ParseCertificate(crtDER)
 	if err != nil {
 		return
 	}
+
 	crtPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: crtDER,

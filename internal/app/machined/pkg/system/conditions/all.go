@@ -78,6 +78,7 @@ func (a *all) String() string {
 // WaitForAll creates a condition which waits for all the conditions to be successful
 func WaitForAll(conditions ...Condition) Condition {
 	res := &all{}
+
 	for _, c := range conditions {
 		if multi, ok := c.(*all); ok {
 			// flatten lists

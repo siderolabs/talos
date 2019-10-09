@@ -57,7 +57,9 @@ func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.R
 func (c *containerdRunner) Open(ctx context.Context) error {
 	// Create the containerd client.
 	var err error
+
 	c.ctx = namespaces.WithNamespace(context.Background(), c.opts.Namespace)
+
 	c.client, err = containerd.New(c.opts.ContainerdAddress)
 	if err != nil {
 		return err
@@ -70,6 +72,7 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 
 	// See if there's previous container/snapshot to clean up
 	var oldcontainer containerd.Container
+
 	if oldcontainer, err = c.client.LoadContainer(c.ctx, c.args.ID); err == nil {
 		if err = oldcontainer.Delete(c.ctx, containerd.WithSnapshotCleanup); err != nil {
 			return errors.Wrap(err, "error deleting old container instance")
@@ -79,6 +82,7 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 	// Create the container.
 	specOpts := c.newOCISpecOpts(image)
 	containerOpts := c.newContainerOpts(image, specOpts)
+
 	c.container, err = c.client.NewContainer(
 		c.ctx,
 		c.args.ID,
@@ -118,6 +122,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to create task: %q", c.args.ID)
 	}
+
 	defer task.Delete(c.ctx) // nolint: errcheck
 
 	if err = task.Start(c.ctx); err != nil {
@@ -137,6 +142,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		if code != 0 {
 			return errors.Errorf("task %q failed: exit code %d", c.args.ID, code)
 		}
+
 		return nil
 	case <-c.stop:
 		// graceful stop the task

@@ -130,6 +130,7 @@ func (c *ClusterConfig) ID() string {
 	if len(parts) != 2 {
 		return ""
 	}
+
 	return parts[0]
 }
 
@@ -139,6 +140,7 @@ func (c *ClusterConfig) Secret() string {
 	if len(parts) != 2 {
 		return ""
 	}
+
 	return parts[1]
 }
 
