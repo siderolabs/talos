@@ -266,7 +266,6 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-cha
 		defer close(errCh)
 
 		for {
-
 			data, err := stream.Recv()
 			if err != nil {
 				if err == io.EOF || status.Code(err) == codes.Canceled {

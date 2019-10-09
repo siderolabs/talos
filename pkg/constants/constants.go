@@ -245,6 +245,7 @@ const (
 )
 
 // See https://linux.die.net/man/3/klogctl
+//nolint: stylecheck
 const (
 	// SYSLOG_ACTION_SIZE_BUFFER is a named type argument to klogctl.
 	// nolint: golint

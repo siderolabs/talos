@@ -66,7 +66,6 @@ func (c *criRunner) Close() error {
 		}
 
 		c.podSandboxID = ""
-
 	}
 
 	if c.client == nil {
