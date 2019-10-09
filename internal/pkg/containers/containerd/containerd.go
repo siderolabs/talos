@@ -213,7 +213,6 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 				}
 			}
 		}
-
 	}
 
 	// Typically on actual application containers inside the pod/sandbox

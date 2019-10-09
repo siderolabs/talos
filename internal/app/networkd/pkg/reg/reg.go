@@ -46,7 +46,6 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 	routes := []*networkapi.Route{}
 
 	for _, rMesg := range list {
-
 		ifaceData, err := r.Networkd.Conn.LinkByIndex(int(rMesg.Attributes.OutIface))
 		if err != nil {
 			log.Printf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
@@ -67,8 +66,8 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 			Protocol:    networkapi.RouteProtocol(rMesg.Protocol),
 			Flags:       rMesg.Flags,
 		})
-
 	}
+
 	return &networkapi.RoutesReply{
 		Routes: routes,
 	}, nil

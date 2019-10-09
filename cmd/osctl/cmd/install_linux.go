@@ -42,7 +42,7 @@ var installCmd = &cobra.Command{
 
 		platform, err := platform.NewPlatform()
 		if err == nil {
-			if strings.ToLower(platform.Name()) != strings.ToLower(platformArg) {
+			if !strings.EqualFold(platform.Name(), platformArg) {
 				log.Printf("platform mismatch (%s != %s)", platform.Name(), platformArg)
 			} else {
 				var b []byte
