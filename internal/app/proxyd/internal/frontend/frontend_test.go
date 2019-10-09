@@ -38,6 +38,7 @@ func (suite *ProxydSuite) TestWatch() {
 	_, cancel := context.WithCancel(context.Background())
 	r, err := NewReverseProxy([]string{"127.0.0.1"}, cancel)
 	suite.Assert().NoError(err)
+
 	defer r.Shutdown()
 
 	// Generate a simple pod
@@ -49,6 +50,7 @@ func (suite *ProxydSuite) TestWatch() {
 	go r.Watch(client)
 
 	output := make(chan string)
+
 	go func() {
 		var be map[string]*backend.Backend
 		for {
@@ -76,6 +78,7 @@ func (suite *ProxydSuite) TestAddFunc() {
 	_, cancel := context.WithCancel(context.Background())
 	r, err := NewReverseProxy([]string{"127.0.0.1"}, cancel)
 	suite.Assert().NoError(err)
+
 	defer r.Shutdown()
 
 	for i := 0; i < 5; i++ {
@@ -96,16 +99,20 @@ func (suite *ProxydSuite) TestDeleteFunc() {
 	_, cancel := context.WithCancel(context.Background())
 	r, err := NewReverseProxy([]string{"127.0.0.1"}, cancel)
 	suite.Assert().NoError(err)
+
 	defer r.Shutdown()
 
 	// Add some sample backends
 	pods := make([]*v1.Pod, 5)
+
 	for i := 0; i < 5; i++ {
 		pods[i] = genPod()
 	}
+
 	for _, pod := range pods {
 		r.AddFunc()(pod)
 	}
+
 	// Delete all sample backends
 	for _, pod := range pods {
 		r.DeleteFunc()(pod)
@@ -119,6 +126,7 @@ func (suite *ProxydSuite) TestUpdateFunc() {
 	_, cancel := context.WithCancel(context.Background())
 	r, err := NewReverseProxy([]string{"127.0.0.1"}, cancel)
 	suite.Assert().NoError(err)
+
 	defer r.Shutdown()
 
 	// Add some sample backend

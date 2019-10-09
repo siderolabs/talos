@@ -36,6 +36,7 @@ func retry(f RetryFunc, p *Point) (err error) {
 				return err
 			}
 		}
+
 		return nil
 	}
 
@@ -64,6 +65,7 @@ type Points struct {
 // NewMountPoint initializes and returns a Point struct.
 func NewMountPoint(source string, target string, fstype string, flags uintptr, data string, setters ...Option) *Point {
 	opts := NewDefaultOptions(setters...)
+
 	return &Point{
 		source:  source,
 		target:  target,
@@ -125,6 +127,7 @@ func (p *Point) Mount() (err error) {
 	default:
 		err = retry(mount, p)
 	}
+
 	if err != nil {
 		return err
 	}
@@ -153,6 +156,7 @@ func (p *Point) Unmount() (err error) {
 func (p *Point) Move(prefix string) (err error) {
 	target := p.Target()
 	mountpoint := NewMountPoint(target, target, "", unix.MS_MOVE, "", WithPrefix(prefix))
+
 	if err = mountpoint.Mount(); err != nil {
 		return errors.Errorf("error moving mount point %s: %v", target, err)
 	}
@@ -163,13 +167,16 @@ func (p *Point) Move(prefix string) (err error) {
 // ResizePartition resizes a partition to the maximum size allowed.
 func (p *Point) ResizePartition() (err error) {
 	var devname string
+
 	if devname, err = util.DevnameFromPartname(p.Source()); err != nil {
 		return err
 	}
+
 	bd, err := blockdevice.Open("/dev/" + devname)
 	if err != nil {
 		return errors.Errorf("error opening block device %q: %v", devname, err)
 	}
+
 	// nolint: errcheck
 	defer bd.Close()
 

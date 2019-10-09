@@ -26,6 +26,7 @@ func NewService() *Service {
 func (s *Service) Main(ctx context.Context, config config.Configurator, logWriter io.Writer) error {
 	api := reg.NewRegistrator(config)
 	server := factory.NewServer(api)
+
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.InitSocketPath))
 	if err != nil {
 		return err

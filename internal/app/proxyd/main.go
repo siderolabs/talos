@@ -27,7 +27,9 @@ var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+
 	configPath = flag.String("config", "", "the path to the config")
+
 	flag.Parse()
 }
 
@@ -40,12 +42,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
+
 	config, err := config.New(content)
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
 
 	bootstrapCtx, bootstrapCancel := context.WithCancel(context.Background())
+
 	r, err := frontend.NewReverseProxy(config.Cluster().IPs(), bootstrapCancel)
 	if err != nil {
 		log.Fatalf("failed to initialize the reverse proxy: %v", err)
@@ -91,11 +95,12 @@ func waitForKube(r *frontend.ReverseProxy) {
 	if err != nil {
 		log.Fatalf("failed to get local address: %v", err)
 	}
+
 	if len(ips) == 0 {
 		log.Fatalf("no IP address found for local api server")
 	}
-	ip := ips[0]
 
+	ip := ips[0]
 	config.Host = ip.String() + ":6443"
 
 	clientset, err := kubernetes.NewForConfig(config)

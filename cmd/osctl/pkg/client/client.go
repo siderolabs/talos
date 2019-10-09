@@ -103,14 +103,17 @@ func NewClient(creds *Credentials, target string, port int) (c *Client, err erro
 	grpcOpts := []grpc.DialOption{}
 
 	c = &Client{}
+
 	crt, err := tls.X509KeyPair(creds.crt, creds.key)
 	if err != nil {
 		return nil, fmt.Errorf("could not load client key pair: %s", err)
 	}
+
 	certPool := x509.NewCertPool()
 	if ok := certPool.AppendCertsFromPEM(creds.ca); !ok {
 		return nil, fmt.Errorf("failed to append client certs")
 	}
+
 	// TODO(andrewrynhard): Do not parse the address. Pass the IP and port in as separate
 	// parameters.
 	transportCreds := credentials.NewTLS(&tls.Config{
@@ -122,6 +125,7 @@ func NewClient(creds *Credentials, target string, port int) (c *Client, err erro
 	})
 
 	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(transportCreds))
+
 	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(target), port), grpcOpts...)
 	if err != nil {
 		return
@@ -146,6 +150,7 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return r.Bytes, nil
 }
 
@@ -155,6 +160,7 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver osapi.Conta
 		Namespace: namespace,
 		Driver:    driver,
 	})
+
 	return
 }
 
@@ -164,6 +170,7 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver osapi.
 		Namespace: namespace,
 		Driver:    driver,
 	})
+
 	return
 }
 
@@ -174,6 +181,7 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver osapi.Con
 		Namespace: namespace,
 		Driver:    driver,
 	})
+
 	return
 }
 
@@ -212,6 +220,7 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver osapi.Contai
 		Driver:    driver,
 		Id:        id,
 	})
+
 	return
 }
 
@@ -299,6 +308,7 @@ func (c *Client) Upgrade(ctx context.Context, image string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return reply.Ack, nil
 }
 

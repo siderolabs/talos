@@ -40,6 +40,7 @@ func (suite *manifestSuite) TestTargetInstall() {
 		// nolint: errcheck
 		w.Write([]byte("null"))
 	}))
+
 	ts := httptest.NewServer(mux)
 
 	defer ts.Close()

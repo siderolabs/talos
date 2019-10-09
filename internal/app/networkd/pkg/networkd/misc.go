@@ -66,13 +66,17 @@ func writeResolvConf(resolvers []net.IP) error {
 		resolvers = []net.IP{net.ParseIP(DefaultPrimaryResolver), net.ParseIP(DefaultSecondaryResolver)}
 	}
 
-	var resolvconf strings.Builder
-	var err error
+	var (
+		resolvconf strings.Builder
+		err        error
+	)
+
 	for idx, resolver := range resolvers {
 		// Only allow the first 3 nameservers since that is all that will be used
 		if idx >= 3 {
 			break
 		}
+
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
 			log.Println("failed to add some resolver to resolvconf")
 			return err
@@ -80,5 +84,6 @@ func writeResolvConf(resolvers []net.IP) error {
 	}
 
 	log.Println("writing resolvconf")
+
 	return ioutil.WriteFile("/etc/resolv.conf", []byte(resolvconf.String()), 0644)
 }

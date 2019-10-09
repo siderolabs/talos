@@ -48,6 +48,7 @@ func NewLocalRenewingFileCertificateProvider(caKey, caCrt []byte, hostname strin
 		ca   []byte
 		cert tls.Certificate
 	)
+
 	if ca, cert, err = provider.updateFunc(); err != nil {
 		return nil, errors.Wrap(err, "failed to create initial certificate")
 	}

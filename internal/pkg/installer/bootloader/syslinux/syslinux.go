@@ -61,12 +61,15 @@ func Prepare(dev string) (err error) {
 	if err != nil {
 		return err
 	}
+
 	f, err := os.OpenFile(dev, os.O_WRONLY|unix.O_CLOEXEC, os.ModeDevice)
 	if err != nil {
 		return err
 	}
+
 	// nolint: errcheck
 	defer f.Close()
+
 	if _, err := f.Write(b); err != nil {
 		return err
 	}
@@ -126,6 +129,7 @@ func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 	b := []byte{}
 	wr := bytes.NewBuffer(b)
 	t := template.Must(template.New("syslinux").Parse(syslinuxCfgTpl))
+
 	if err = t.Execute(wr, syslinuxcfg); err != nil {
 		return err
 	}
@@ -136,6 +140,7 @@ func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 	}
 
 	log.Printf("writing %s to disk", path)
+
 	if err = ioutil.WriteFile(path, wr.Bytes(), 0600); err != nil {
 		return err
 	}
@@ -144,16 +149,19 @@ func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 		b = []byte{}
 		wr = bytes.NewBuffer(b)
 		t = template.Must(template.New("syslinux").Parse(syslinuxLabelTpl))
+
 		if err = t.Execute(wr, label); err != nil {
 			return err
 		}
 
 		dir = filepath.Join(base, label.Root)
+
 		if err = os.MkdirAll(dir, os.ModeDir); err != nil {
 			return err
 		}
 
 		log.Printf("writing syslinux label %s to disk", label.Root)
+
 		if err = ioutil.WriteFile(filepath.Join(dir, "include.cfg"), wr.Bytes(), 0600); err != nil {
 			return err
 		}

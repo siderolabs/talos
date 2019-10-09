@@ -35,6 +35,7 @@ func (n *NTPd) ID(config config.Configurator) string {
 // PreFunc implements the Service interface.
 func (n *NTPd) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/ntpd.tar",
 		Options: []containerdapi.ImportOpt{

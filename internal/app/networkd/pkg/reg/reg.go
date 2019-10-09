@@ -52,6 +52,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 			// TODO: Remove once we get this sorted on why there's a
 			// failure here
 			log.Printf("%+v", rMesg)
+
 			continue
 		}
 
@@ -121,12 +122,15 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *n
 
 func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
 	netLen := 32
+
 	if family == unix.AF_INET6 {
 		netLen = 128
 	}
+
 	ipNet := &net.IPNet{
 		IP:   prefix,
 		Mask: net.CIDRMask(prefixLen, netLen),
 	}
+
 	return ipNet.String()
 }

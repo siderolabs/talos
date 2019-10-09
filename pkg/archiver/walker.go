@@ -50,6 +50,7 @@ func WithMaxRecurseDepth(maxDepth int) WalkerOption {
 func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-chan FileItem, error) {
 	var opts walkerOptions
 	opts.maxRecurseDepth = -1
+
 	for _, o := range options {
 		o(&opts)
 	}
@@ -117,9 +118,11 @@ func atMaxDepth(max int, root, cur string) bool {
 	if max < 0 {
 		return false
 	}
+
 	if root == cur {
 		// always recurse the root directory
 		return false
 	}
+
 	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= max
 }

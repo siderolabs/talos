@@ -106,8 +106,10 @@ func (e *Etcd) Runner(config config.Configurator) (runner.Runner, error) {
 
 	initialClusterState := "new"
 	initialCluster := hostname + "=https://" + ips[0].String() + ":2380"
+
 	if config.Machine().Type() == machine.ControlPlane {
 		initialClusterState = "existing"
+
 		initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
 		if err != nil {
 			return nil, err
@@ -181,6 +183,7 @@ func generatePKI(config config.Configurator) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to discover IP addresses")
 	}
+
 	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
 
 	hostname, err := os.Hostname()
@@ -295,6 +298,7 @@ func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
 
 func buildInitialCluster(config config.Configurator, name, ip string) (initial string, err error) {
 	endpoint := stdlibnet.ParseIP(config.Cluster().IPs()[0])
+
 	h, err := kubernetes.NewTemporaryClientFromPKI(config.Cluster().CA().Crt, config.Cluster().CA().Key, endpoint.String(), "6443")
 	if err != nil {
 		return "", err
@@ -305,6 +309,7 @@ func buildInitialCluster(config config.Configurator, name, ip string) (initial s
 		if err != nil {
 			log.Printf("failed to get client endpoints: %+v\n", err)
 			time.Sleep(3 * time.Second)
+
 			continue
 		}
 
@@ -319,17 +324,20 @@ func buildInitialCluster(config config.Configurator, name, ip string) (initial s
 		if err != nil {
 			log.Printf("failed to add etcd member: %+v\n", err)
 			time.Sleep(3 * time.Second)
+
 			continue
 		}
 
 		newID := resp.Member.ID
 		conf := []string{}
+
 		for _, memb := range resp.Members {
 			for _, u := range memb.PeerURLs {
 				n := memb.Name
 				if memb.ID == newID {
 					n = name
 				}
+
 				conf = append(conf, fmt.Sprintf("%s=%s", n, u))
 			}
 		}

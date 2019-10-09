@@ -44,6 +44,7 @@ func (v *VMware) Configuration() ([]byte, error) {
 		}
 
 		config := rpcvmx.NewConfig()
+
 		val, err := config.String(constants.VMwareGuestInfoConfigKey, "")
 		if err != nil {
 			return nil, errors.Errorf("failed to get guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)

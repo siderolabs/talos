@@ -27,6 +27,7 @@ func (task *Task) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *Task) standard(args *phase.RuntimeArgs) (err error) {
 	var b []byte
+
 	if b, err = args.Platform().Configuration(); err != nil {
 		return err
 	}

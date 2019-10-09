@@ -37,7 +37,7 @@ resources:
 `
 
 // EnforceAuditingRequirements enforces CIS requirements for auditing.
-func EnforceAuditingRequirements() error {
+func EnforceAuditingRequirements() error { //nolint: wsl
 	// // TODO(andrewrynhard): We should log to a file, and the option to retrieve
 	// // the log files.
 	// cfg.APIServer.ExtraArgs["audit-log-path"] = "-"
@@ -73,6 +73,7 @@ func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
 		}{
 			AESCBCEncryptionSecret: aescbcEncryptionSecret,
 		}
+
 		t, err := template.New("encryptionconfig").Parse(encryptionConfig)
 		if err != nil {
 			return err
@@ -80,9 +81,11 @@ func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
 
 		encBytes := []byte{}
 		buf := bytes.NewBuffer(encBytes)
+
 		if err := t.Execute(buf, aux); err != nil {
 			return err
 		}
+
 		if err := ioutil.WriteFile(constants.EncryptionConfigPath, buf.Bytes(), 0400); err != nil {
 			return err
 		}
@@ -92,7 +95,7 @@ func WriteEncryptionConfigToDisk(aescbcEncryptionSecret string) error {
 }
 
 // EnforceSecretRequirements enforces CIS requirements for secrets.
-func EnforceSecretRequirements() error {
+func EnforceSecretRequirements() error { //nolint: wsl
 	// cfg.APIServer.ExtraArgs["experimental-encryption-provider-config"] = constants.EncryptionConfigRootfsPath
 	// vol := kubeadmapi.HostPathMount{
 	// 	Name:      "encryptionconfig",
@@ -107,7 +110,7 @@ func EnforceSecretRequirements() error {
 }
 
 // EnforceTLSRequirements enforces CIS requirements for TLS.
-func EnforceTLSRequirements() error {
+func EnforceTLSRequirements() error { //nolint: wsl
 	// // nolint: lll
 	// cfg.APIServer.ExtraArgs["tls-cipher-suites"] = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
 
@@ -118,7 +121,7 @@ func EnforceTLSRequirements() error {
 // TODO(andrewrynhard): Include any extra user specified plugins.
 // TODO(andrewrynhard): Enable EventRateLimit.
 // TODO(andrewrynhard): Enable AlwaysPullImages (See https://github.com/kubernetes/kubernetes/issues/64333).
-func EnforceAdmissionPluginsRequirements() error {
+func EnforceAdmissionPluginsRequirements() error { //nolint: wsl
 	// // nolint: lll
 	// cfg.APIServer.ExtraArgs["enable-admission-plugins"] = "PodSecurityPolicy,NamespaceLifecycle,ServiceAccount,NodeRestriction,LimitRanger,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
 
@@ -128,7 +131,7 @@ func EnforceAdmissionPluginsRequirements() error {
 // EnforceExtraRequirements enforces miscellaneous CIS requirements.
 // TODO(andrewrynhard): Enable anonymous-auth, see https://github.com/kubernetes/kubeadm/issues/798.
 // TODO(andrewrynhard): Enable kubelet-certificate-authority, see https://github.com/kubernetes/kubeadm/issues/118#issuecomment-407202481.
-func EnforceExtraRequirements() error {
+func EnforceExtraRequirements() error { //nolint: wsl
 	// cfg.APIServer.ExtraArgs["profiling"] = disabled
 	// cfg.ControllerManager.ExtraArgs["profiling"] = disabled
 	// cfg.Scheduler.ExtraArgs["profiling"] = disabled
@@ -139,7 +142,7 @@ func EnforceExtraRequirements() error {
 }
 
 // EnforceBootstrapMasterRequirements enforces the CIS requirements for master nodes.
-func EnforceBootstrapMasterRequirements() error {
+func EnforceBootstrapMasterRequirements() error { //nolint: wsl
 	// ensureFieldsAreNotNil(cfg)
 
 	// if err := EnforceAuditingRequirements(cfg); err != nil {

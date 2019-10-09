@@ -50,8 +50,10 @@ func (a *Azure) Mode() runtime.Mode {
 
 // Hostname gets the hostname from the Azure metadata endpoint.
 func (a *Azure) Hostname() (hostname []byte, err error) {
-	var req *http.Request
-	var resp *http.Response
+	var (
+		req  *http.Request
+		resp *http.Response
+	)
 
 	req, err = http.NewRequest("GET", AzureHostnameEndpoint, nil)
 	if err != nil {
@@ -61,6 +63,7 @@ func (a *Azure) Hostname() (hostname []byte, err error) {
 	req.Header.Add("Metadata", "true")
 
 	client := &http.Client{}
+
 	resp, err = client.Do(req)
 	if err != nil {
 		return

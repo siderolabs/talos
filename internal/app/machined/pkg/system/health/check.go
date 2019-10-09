@@ -48,6 +48,7 @@ func Run(ctx context.Context, settings *Settings, state *State, check Check) err
 
 		healthy = err == nil
 		message = ""
+
 		if !healthy {
 			message = err.Error()
 		}

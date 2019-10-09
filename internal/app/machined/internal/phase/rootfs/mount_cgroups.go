@@ -47,6 +47,7 @@ func (task *MountCgroups) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *MountCgroups) runtime(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
+
 	mountpoints, err = cgroups.MountPoints()
 	if err != nil {
 		return err

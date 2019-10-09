@@ -41,6 +41,7 @@ func New(c Content) (config Configurator, err error) {
 		if err = yaml.Unmarshal(c.data, config); err != nil {
 			return config, errors.Wrap(err, "failed to parse version")
 		}
+
 		return config, nil
 	default:
 		return nil, errors.Errorf("unknown version: %q", c.Version)

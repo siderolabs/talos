@@ -30,8 +30,10 @@ var (
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+
 	configPath = flag.String("config", "", "the path to the config")
 	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
+
 	flag.Parse()
 }
 
@@ -45,6 +47,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
+
 	config, err := config.New(content)
 	if err != nil {
 		log.Fatalf("open config: %v", err)
@@ -67,6 +70,7 @@ func main() {
 	}
 
 	var provider tls.CertificateProvider
+
 	provider, err = tls.NewRemoteRenewingFileCertificateProvider(config.Machine().Security().Token(), strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)

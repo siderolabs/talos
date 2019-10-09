@@ -18,6 +18,7 @@ type Cloud struct{}
 // Initialize implements the Initializer interface.
 func (c *Cloud) Initialize(platform platform.Platform, install machine.Install) (err error) {
 	var mountpoints *mount.Points
+
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
 		return err

@@ -53,6 +53,7 @@ func (suite *GoroutineSuite) TestRunSuccess() {
 		}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -67,6 +68,7 @@ func (suite *GoroutineSuite) TestRunFail() {
 		}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().EqualError(r.Run(MockEventSink), "service failed")
@@ -81,6 +83,7 @@ func (suite *GoroutineSuite) TestRunPanic() {
 		}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	err := r.Run(MockEventSink)
@@ -99,9 +102,11 @@ func (suite *GoroutineSuite) TestStop() {
 		}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	errCh := make(chan error)
+
 	go func() {
 		errCh <- r.Run(MockEventSink)
 	}()
@@ -127,6 +132,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 		}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))

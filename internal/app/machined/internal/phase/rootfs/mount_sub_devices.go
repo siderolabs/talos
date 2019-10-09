@@ -34,6 +34,7 @@ func (task *MountSubDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *MountSubDevices) runtime(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
+
 	mountpoints, err = virtual.SubMountPoints()
 	if err != nil {
 		return err

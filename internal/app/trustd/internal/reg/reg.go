@@ -49,11 +49,13 @@ func (r *Registrator) Certificate(ctx context.Context, in *securityapi.Certifica
 // ReadFile implements the securityapi.SecurityServer interface.
 func (r *Registrator) ReadFile(ctx context.Context, in *securityapi.ReadFileRequest) (resp *securityapi.ReadFileResponse, err error) {
 	var b []byte
+
 	if b, err = ioutil.ReadFile(in.Path); err != nil {
 		return nil, err
 	}
 
 	log.Printf("read file on disk: %s", in.Path)
+
 	resp = &securityapi.ReadFileResponse{Data: b}
 
 	return resp, nil
@@ -64,11 +66,13 @@ func (r *Registrator) WriteFile(ctx context.Context, in *securityapi.WriteFileRe
 	if err = os.MkdirAll(path.Dir(in.Path), os.ModeDir); err != nil {
 		return
 	}
+
 	if err = ioutil.WriteFile(in.Path, in.Data, os.FileMode(in.Perm)); err != nil {
 		return
 	}
 
 	log.Printf("wrote file to disk: %s", in.Path)
+
 	resp = &securityapi.WriteFileResponse{}
 
 	return resp, nil

@@ -54,6 +54,7 @@ var globalCtx = context.Background()
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	var globalCtxCancel context.CancelFunc
+
 	globalCtx, globalCtxCancel = context.WithCancel(context.Background())
 	defer globalCtxCancel()
 
@@ -84,15 +85,19 @@ func Execute() {
 		defaultTalosConfig string
 		ok                 bool
 	)
+
 	if defaultTalosConfig, ok = os.LookupEnv(constants.TalosConfigEnvVar); !ok {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return
 		}
+
 		defaultTalosConfig = path.Join(home, ".talos", "config")
 	}
+
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	rootCmd.PersistentFlags().StringVarP(&target, "target", "t", "", "target the specificed node")
+
 	if err := rootCmd.Execute(); err != nil {
 		helpers.Fatalf("%s", err)
 	}
@@ -104,9 +109,11 @@ func setupClient(action func(*client.Client)) {
 	if err != nil {
 		helpers.Fatalf("error getting client credentials: %s", err)
 	}
+
 	if target != "" {
 		t = target
 	}
+
 	c, err := client.NewClient(creds, t, constants.OsdPort)
 	if err != nil {
 		helpers.Fatalf("error constructing client: %s", err)

@@ -77,6 +77,7 @@ func (events *ServiceEvents) Push(event ServiceEvent) {
 		// overwriting some entry
 		events.discarded++
 	}
+
 	events.events[events.pos] = event
 	events.pos = (events.pos + 1) % len(events.events)
 }

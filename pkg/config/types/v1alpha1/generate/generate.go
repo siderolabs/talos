@@ -85,6 +85,7 @@ func (i *Input) GetAPIServerEndpoint(port string) string {
 	if port == "" {
 		return tnet.FormatAddress(i.MasterIPs[refMaster])
 	}
+
 	return net.JoinHostPort(i.MasterIPs[refMaster], port)
 }
 
@@ -160,15 +161,18 @@ func randBytes(length int) (string, error) {
 	)
 
 	reader := bufio.NewReaderSize(rand.Reader, length*2)
+
 	for i := range token {
 		for {
 			if b, err = reader.ReadByte(); err != nil {
 				return "", err
 			}
+
 			if b < maxByteValue {
 				break
 			}
 		}
+
 		token[i] = validBootstrapTokenChars[int(b)%len(validBootstrapTokenChars)]
 	}
 
@@ -179,12 +183,14 @@ func randBytes(length int) (string, error) {
 // and length of the second string (after dot) are specified as inputs
 func genToken(lenFirst int, lenSecond int) (string, error) {
 	var err error
+
 	tokenTemp := make([]string, 2)
 
 	tokenTemp[0], err = randBytes(lenFirst)
 	if err != nil {
 		return "", err
 	}
+
 	tokenTemp[1], err = randBytes(lenSecond)
 	if err != nil {
 		return "", err
@@ -201,6 +207,7 @@ func isIPv6(addrs ...string) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -258,6 +265,7 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 		x509.Organization("talos-etcd"),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
+
 	etcdCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	if err != nil {
 		return nil, err
@@ -269,6 +277,7 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 		x509.Organization("talos-k8s"),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
+
 	k8sCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	if err != nil {
 		return nil, err
@@ -280,6 +289,7 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 		x509.Organization("talos-os"),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
+
 	osCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	if err != nil {
 		return nil, err
@@ -290,44 +300,55 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 	if err != nil {
 		return nil, err
 	}
+
 	pemBlock, _ := pem.Decode(adminKey.KeyPEM)
 	if pemBlock == nil {
 		return nil, errors.New("failed to decode admin key pem")
 	}
+
 	adminKeyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
+
 	ips := []net.IP{net.ParseIP(loopbackIP)}
 	opts = []x509.Option{x509.IPAddresses(ips)}
+
 	csr, err := x509.NewCertificateSigningRequest(adminKeyEC, opts...)
 	if err != nil {
 		return nil, err
 	}
+
 	csrPemBlock, _ := pem.Decode(csr.X509CertificateRequestPEM)
 	if csrPemBlock == nil {
 		return nil, errors.New("failed to decode csr pem")
 	}
+
 	ccsr, err := stdlibx509.ParseCertificateRequest(csrPemBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
+
 	caPemBlock, _ := pem.Decode(osCert.CrtPEM)
 	if caPemBlock == nil {
 		return nil, errors.New("failed to decode ca cert pem")
 	}
+
 	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
+
 	caKeyPemBlock, _ := pem.Decode(osCert.KeyPEM)
 	if caKeyPemBlock == nil {
 		return nil, errors.New("failed to decode ca key pem")
 	}
+
 	caKey, err := stdlibx509.ParseECPrivateKey(caKeyPemBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
+
 	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr)
 	if err != nil {
 		return nil, err

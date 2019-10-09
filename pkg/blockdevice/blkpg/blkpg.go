@@ -42,6 +42,7 @@ func inform(f *os.File, partition table.Partition, op int32) (err error) {
 		length = 0
 	default:
 		var l *lba.LogicalBlockAddresser
+
 		if l, err = lba.New(f); err != nil {
 			return err
 		}

@@ -101,6 +101,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 	}
 
 	var address string
+
 	switch opts.Network {
 	case "unix":
 		address = opts.SocketPath
@@ -133,6 +134,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 // Finally the gRPC server is started.
 func ListenAndServe(r Registrator, setters ...Option) (err error) {
 	server := NewServer(r, setters...)
+
 	listener, err := NewListener(setters...)
 	if err != nil {
 		return err

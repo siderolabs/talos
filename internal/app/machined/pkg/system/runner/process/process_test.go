@@ -61,6 +61,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 	}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -75,6 +76,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 	}, runner.WithLogPath(suite.tmpDir))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	suite.Assert().NoError(r.Run(MockEventSink))
@@ -102,11 +104,13 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 		suite.Assert().NoError(r.Run(MockEventSink))
@@ -115,16 +119,19 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	fetchLog := func() []byte {
 		logFile, err := os.Open(filepath.Join(suite.tmpDir, "restarter.log"))
 		suite.Assert().NoError(err)
+
 		// nolint: errcheck
 		defer logFile.Close()
 
 		logContents, err := ioutil.ReadAll(logFile)
 		suite.Assert().NoError(err)
+
 		return logContents
 	}
 
 	for i := 0; i < 20; i++ {
 		time.Sleep(100 * time.Millisecond)
+
 		if len(fetchLog()) > 20 {
 			break
 		}
@@ -150,6 +157,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)
@@ -194,6 +202,7 @@ func (suite *ProcessSuite) TestStopSigKill() {
 	)
 
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	done := make(chan error, 1)

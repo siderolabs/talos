@@ -24,10 +24,12 @@ func Run(name string, args ...string) error {
 	if err != nil {
 		return err
 	}
+
 	cmd.Stderr = stderr
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
 	usingReaper := reaper.Notify(notifyCh)
+
 	if usingReaper {
 		defer reaper.Stop(notifyCh)
 	}

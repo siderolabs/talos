@@ -77,6 +77,7 @@ var clusterDownCmd = &cobra.Command{
 // nolint: gocyclo
 func create() (err error) {
 	ctx := context.Background()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		return err
@@ -90,6 +91,7 @@ func create() (err error) {
 	if err != nil {
 		helpers.Fatalf("error parsing --cpus: %s", err)
 	}
+
 	memory := int64(clusterMemory) * 1024 * 1024
 
 	// Ensure the image is present.
@@ -147,6 +149,7 @@ func create() (err error) {
 	// Create the worker nodes.
 
 	requests = []*node.Request{}
+
 	for i := 1; i <= workers; i++ {
 		r := &node.Request{
 			Type:     generate.TypeJoin,
@@ -171,6 +174,7 @@ func create() (err error) {
 // nolint: gocyclo
 func createNodes(requests []*node.Request) (err error) {
 	var wg sync.WaitGroup
+
 	wg.Add(len(requests))
 
 	for _, req := range requests {
@@ -199,12 +203,14 @@ func destroy() error {
 	filters := filters.NewArgs()
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+clusterName)
+
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Filters: filters})
 	if err != nil {
 		return err
 	}
 
 	var wg sync.WaitGroup
+
 	wg.Add(len(containers))
 
 	for _, container := range containers {
@@ -241,6 +247,7 @@ func ensureImageExists(ctx context.Context, cli *client.Client, image string) er
 	// (e.g. domain/repo/image:tag => repo/image:tag).
 	familiarName := reference.FamiliarName(ref)
 	tag := ""
+
 	if tagged, isTagged := ref.(reference.Tagged); isTagged {
 		tag = tagged.Tag()
 	}
@@ -255,10 +262,13 @@ func ensureImageExists(ctx context.Context, cli *client.Client, image string) er
 
 	if len(images) == 0 {
 		fmt.Println("downloading", image)
+
 		var reader io.ReadCloser
+
 		if reader, err = cli.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
 			return err
 		}
+
 		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
 			return err
 		}
@@ -303,6 +313,7 @@ func destroyNetwork(cli *client.Client) error {
 	}
 
 	var result *multierror.Error
+
 	for _, network := range networks {
 		if err := cli.NetworkRemove(context.Background(), network.ID); err != nil {
 			result = multierror.Append(result, err)
@@ -329,9 +340,11 @@ func saveConfig(input *generate.Input) (err error) {
 	if err != nil {
 		return err
 	}
+
 	if c.Contexts == nil {
 		c.Contexts = map[string]*config.Context{}
 	}
+
 	c.Contexts[input.ClusterName] = newConfig.Contexts[input.ClusterName]
 
 	c.Context = input.ClusterName
@@ -344,10 +357,12 @@ func parseCPUShare() (int64, error) {
 	if !ok {
 		return 0, errors.Errorf("failed to parsing as a rational number: %s", clusterCpus)
 	}
+
 	nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
 	if !nano.IsInt() {
 		return 0, errors.New("value is too precise")
 	}
+
 	return nano.Num().Int64(), nil
 }
 

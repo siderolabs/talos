@@ -82,6 +82,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	}()
 
 	var w *log.Log
+
 	w, err = log.New(r.id, r.opts.LogPath)
 	if err != nil {
 		err = errors.Wrap(err, "service log handler")

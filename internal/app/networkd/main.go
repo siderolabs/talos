@@ -20,7 +20,9 @@ var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+
 	configPath = flag.String("config", "", "the path to the config")
+
 	flag.Parse()
 }
 
@@ -32,7 +34,9 @@ func main() {
 
 	// Convert links to nic
 	log.Println("discovering local network interfaces")
+
 	var netconf networkd.NetConf
+
 	if netconf, err = nwd.Discover(); err != nil {
 		log.Fatal(err)
 	}
@@ -41,21 +45,26 @@ func main() {
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
+
 	config, err := config.New(content)
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
 
 	log.Println("overlaying config network configuration")
+
 	if err = netconf.BuildOptions(config); err != nil {
 		log.Fatal(err)
 	}
 
 	// Configure specified interface
 	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
+
 	for link, opts := range netconf {
 		var iface *nic.NetworkInterface
+
 		log.Printf("creating interface %s", link.Name)
+
 		iface, err = nic.Create(link, opts...)
 		if err != nil {
 			log.Fatal(err)
@@ -71,6 +80,7 @@ func main() {
 	// kick off the addressing mechanism
 	// Add any necessary routes
 	log.Println("configuring interface addressing")
+
 	if err = nwd.Configure(netIfaces...); err != nil {
 		log.Fatal(err)
 	}

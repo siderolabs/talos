@@ -84,6 +84,7 @@ func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, messag
 	if isUp {
 		svcrunner.notifyEvent(StateEventUp)
 	}
+
 	if isDown {
 		svcrunner.notifyEvent(StateEventDown)
 	}
@@ -135,6 +136,7 @@ func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition condition
 	svcrunner.UpdateState(events.StateWaiting, "Waiting for %s", description)
 
 	errCh := make(chan error)
+
 	go func() {
 		errCh <- condition.Wait(ctx)
 	}()
@@ -174,13 +176,16 @@ func (svcrunner *ServiceRunner) Start() {
 	svcrunner.ctxMu.Unlock()
 
 	condition := svcrunner.service.Condition(svcrunner.config)
+
 	dependencies := svcrunner.service.DependsOn(svcrunner.config)
 	if len(dependencies) > 0 {
 		serviceConditions := make([]conditions.Condition, len(dependencies))
 		for i := range dependencies {
 			serviceConditions[i] = WaitForService(StateEventUp, dependencies[i])
 		}
+
 		serviceDependencies := conditions.WaitForAll(serviceConditions...)
+
 		if condition != nil {
 			condition = conditions.WaitForAll(serviceDependencies, condition)
 		} else {
@@ -196,12 +201,14 @@ func (svcrunner *ServiceRunner) Start() {
 	}
 
 	svcrunner.UpdateState(events.StatePreparing, "Running pre state")
+
 	if err := svcrunner.service.PreFunc(ctx, svcrunner.config); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
 		return
 	}
 
 	svcrunner.UpdateState(events.StatePreparing, "Creating service runner")
+
 	runnr, err := svcrunner.service.Runner(svcrunner.config)
 	if err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to create runner: %v", err)
@@ -250,6 +257,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		defer healthWg.Wait()
 
 		healthWg.Add(1)
+
 		go func() {
 			defer healthWg.Done()
 
@@ -258,10 +266,12 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		}()
 
 		notifyCh := make(chan health.StateChange, 2)
+
 		svcrunner.healthState.Subscribe(notifyCh)
 		defer svcrunner.healthState.Unsubscribe(notifyCh)
 
 		healthWg.Add(1)
+
 		go func() {
 			defer healthWg.Done()
 
@@ -283,7 +293,9 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 	select {
 	case <-ctx.Done():
 		err := runnr.Stop()
+
 		<-errCh
+
 		if err != nil {
 			return errors.Wrap(err, "error stopping service")
 		}

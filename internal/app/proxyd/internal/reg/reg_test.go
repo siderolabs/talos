@@ -57,8 +57,8 @@ func (suite *ProxydSuite) TestBackends() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	pClient := proto.NewProxydClient(conn)
 
+	pClient := proto.NewProxydClient(conn)
 	resp, err := pClient.Backends(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(resp.Backends[0].Addr, testBackend)

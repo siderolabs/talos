@@ -87,6 +87,7 @@ func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err 
 			if len(c.Certificate) > 0 {
 				var crt *x509.Certificate
 				crt, err = x509.ParseCertificate(c.Certificate[0])
+
 				if err == nil {
 					nextRenewal = time.Until(crt.NotAfter) / 2
 				} else {
@@ -100,6 +101,7 @@ func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err 
 		}
 
 		log.Println("next renewal in", nextRenewal)
+
 		if nextRenewal > constants.DefaultCertificateValidityDuration {
 			nextRenewal = constants.DefaultCertificateValidityDuration
 		}
@@ -114,6 +116,7 @@ func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err 
 			ca   []byte
 			cert tls.Certificate
 		)
+
 		if ca, cert, err = p.updateFunc(); err != nil {
 			log.Println("failed to renew certificate:", err)
 			continue

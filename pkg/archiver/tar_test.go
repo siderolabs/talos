@@ -37,11 +37,13 @@ func (suite *TarSuite) TestArchiveDir() {
 	pathsSeen := map[string]struct{}{}
 
 	tr := tar.NewReader(&buf)
+
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
 			break
 		}
+
 		suite.Require().NoError(err)
 
 		if hdr.Typeflag == tar.TypeDir {
@@ -52,6 +54,7 @@ func (suite *TarSuite) TestArchiveDir() {
 		suite.Require().NoError(err)
 
 		found := false
+
 		for _, fi := range filesFixture {
 			if fi.Path[1:] == hdr.Name {
 				found = true
@@ -89,11 +92,13 @@ func (suite *TarSuite) TestArchiveFile() {
 	suite.Require().NoError(err)
 
 	tr := tar.NewReader(&buf)
+
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
 			break
 		}
+
 		suite.Require().NoError(err)
 
 		expectedContents := []byte("ELF EXECUTABLE IIRC")

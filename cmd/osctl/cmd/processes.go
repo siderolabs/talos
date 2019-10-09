@@ -107,6 +107,7 @@ func processesUI(ctx context.Context, c *client.Client) {
 
 	uiEvents := ui.PollEvents()
 	ticker := time.NewTicker(time.Second).C
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -188,7 +189,9 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 	s := make([]string, 0, len(procs))
 	s = append(s, "PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | COMMAND")
+
 	var args string
+
 	for _, p := range procs {
 		switch {
 		case p.Executable == "":

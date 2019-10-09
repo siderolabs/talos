@@ -54,6 +54,7 @@ func (suite *AllSuite) TestString() {
 	waiter := conditions.WaitForAll(conds...)
 
 	done := make(chan error)
+
 	go func() {
 		done <- waiter.Wait(context.Background())
 	}()
@@ -86,6 +87,7 @@ func (suite *AllSuite) TestFlatten() {
 	defer ctxCancel()
 
 	done := make(chan error)
+
 	go func() {
 		done <- waiter.Wait(ctx)
 	}()

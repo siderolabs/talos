@@ -56,6 +56,7 @@ func PrintLongVersionFromExisting(v *machineapi.VersionReply) {
 
 func printLong(v *machineapi.VersionReply) {
 	var wr bytes.Buffer
+
 	tmpl, err := template.New("version").Parse(versionTemplate)
 	if err != nil {
 		return

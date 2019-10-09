@@ -32,6 +32,7 @@ type MockRunner struct {
 func (m *MockRunner) Open(ctx context.Context) error {
 	m.stop = make(chan struct{})
 	m.stopped = make(chan struct{})
+
 	return nil
 }
 
@@ -82,6 +83,7 @@ func (suite *RestartSuite) TestRunOnce() {
 
 	r := restart.New(&mock, restart.WithType(restart.Once))
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	failed := errors.New("failed")
@@ -101,6 +103,7 @@ func (suite *RestartSuite) TestRunOnceStop() {
 
 	r := restart.New(&mock, restart.WithType(restart.Once))
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	errCh := make(chan error)
@@ -120,6 +123,7 @@ func (suite *RestartSuite) TestRunUntilSuccess() {
 
 	r := restart.New(&mock, restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	failed := errors.New("failed")
@@ -146,6 +150,7 @@ func (suite *RestartSuite) TestRunForever() {
 
 	r := restart.New(&mock, restart.WithType(restart.Forever), restart.WithRestartInterval(time.Millisecond))
 	suite.Assert().NoError(r.Open(context.Background()))
+
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
 	failed := errors.New("failed")

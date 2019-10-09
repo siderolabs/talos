@@ -35,6 +35,7 @@ func (t *Trustd) ID(config config.Configurator) string {
 // PreFunc implements the Service interface.
 func (t *Trustd) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/trustd.tar",
 		Options: []containerdapi.ImportOpt{

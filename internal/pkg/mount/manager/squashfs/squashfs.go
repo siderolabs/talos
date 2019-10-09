@@ -15,10 +15,12 @@ import (
 // MountPoints returns the mountpoints required to boot the system.
 func MountPoints(prefix string) (mountpoints *mount.Points, err error) {
 	var dev losetup.Device
+
 	dev, err = losetup.Attach("/"+constants.RootfsAsset, 0, true)
 	if err != nil {
 		return nil, err
 	}
+
 	squashfs := mount.NewMountPoints()
 	squashfs.Set("squashfs", mount.NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY, "", mount.WithPrefix(prefix), mount.WithReadOnly(true), mount.WithShared(true)))
 

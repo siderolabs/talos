@@ -35,6 +35,7 @@ func (task *ResetDisk) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 
 func (task *ResetDisk) standard() (err error) {
 	var bd *blockdevice.BlockDevice
+
 	if bd, err = blockdevice.Open(task.devname); err != nil {
 		return err
 	}
@@ -42,9 +43,11 @@ func (task *ResetDisk) standard() (err error) {
 	defer bd.Close()
 
 	var pt table.PartitionTable
+
 	if pt, err = bd.PartitionTable(true); err != nil {
 		return err
 	}
+
 	for _, p := range pt.Partitions() {
 		if err = pt.Delete(p); err != nil {
 			return errors.Wrap(err, "failed to delete partition")

@@ -36,6 +36,7 @@ func (task *UnmountSystemDisks) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc
 
 func (task *UnmountSystemDisks) standard(args *phase.RuntimeArgs) (err error) {
 	var mountpoints *mount.Points
+
 	mountpoints, err = owned.MountPointsForDevice(task.devname)
 	if err != nil {
 		return err

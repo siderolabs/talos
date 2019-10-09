@@ -36,6 +36,7 @@ func (suite *CmdSuite) TestRun() {
 		name string
 		args []string
 	}
+
 	tests := []struct {
 		name      string
 		args      args
@@ -94,9 +95,12 @@ func (suite *CmdSuite) TestRun() {
 			"exec: \"badcommand\": executable file not found in $PATH: ",
 		},
 	}
+
 	for _, t := range tests {
 		println(t.name)
+
 		err := Run(t.args.name, t.args.args...)
+
 		if t.wantErr {
 			suite.Assert().Error(err)
 			suite.Assert().Equal(t.errString, err.Error())

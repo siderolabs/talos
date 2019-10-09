@@ -135,6 +135,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 			if err == nil {
 				return nil
 			}
+
 			eventSink(events.StateWaiting, "Error running %s, going to restart until it succeeds: %s", r.wrappedRunner, err)
 		case Forever:
 			if err == nil {

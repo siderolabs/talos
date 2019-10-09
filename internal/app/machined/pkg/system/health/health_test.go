@@ -98,6 +98,7 @@ func (suite *CheckSuite) TestHealthChange() {
 		if state.Get().Healthy != nil {
 			break
 		}
+
 		time.Sleep(50 * time.Millisecond)
 	}
 
@@ -108,6 +109,7 @@ func (suite *CheckSuite) TestHealthChange() {
 
 	for i := 0; i < 10; i++ {
 		time.Sleep(20 * time.Millisecond)
+
 		if *state.Get().Healthy {
 			break
 		}
@@ -164,6 +166,7 @@ func (suite *CheckSuite) TestCheckAbort() {
 		if state.Get().Healthy != nil {
 			break
 		}
+
 		time.Sleep(50 * time.Millisecond)
 	}
 

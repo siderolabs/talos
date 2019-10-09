@@ -37,7 +37,9 @@ func (suite *SystemServicesSuite) TestStartStop() {
 	system.Services(nil).LoadAndStart(
 		&MockService{name: "yolo"},
 	)
+
 	time.Sleep(10 * time.Millisecond)
+
 	err := system.Services(nil).Stop(
 		context.TODO(), "yolo",
 	)

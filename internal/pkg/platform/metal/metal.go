@@ -41,6 +41,7 @@ func (b *Metal) Configuration() ([]byte, error) {
 
 	if *option == constants.UserDataCIData {
 		var dev *probe.ProbedBlockDevice
+
 		dev, err := probe.GetDevWithFileSystemLabel(constants.UserDataCIData)
 		if err != nil {
 			return nil, errors.Errorf("failed to find %s iso: %v", constants.UserDataCIData, err)
@@ -55,6 +56,7 @@ func (b *Metal) Configuration() ([]byte, error) {
 		}
 
 		var b []byte
+
 		b, err = ioutil.ReadFile(path.Join(mnt, "user-data"))
 		if err != nil {
 			return nil, errors.Errorf("read config: %s", err.Error())

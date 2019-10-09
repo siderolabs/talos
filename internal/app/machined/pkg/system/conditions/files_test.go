@@ -74,6 +74,7 @@ func (suite *FilesSuite) TestWaitForFileToExist() {
 	suite.Require().NoError(<-errCh)
 
 	suite.Require().NoError(os.Remove(path))
+
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -122,6 +123,7 @@ func (suite *FilesSuite) TestWaitForAllFilesToExist() {
 
 	suite.Require().NoError(os.Remove(pathA))
 	suite.Require().NoError(os.Remove(pathB))
+
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	go func() {

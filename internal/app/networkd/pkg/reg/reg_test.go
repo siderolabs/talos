@@ -46,8 +46,8 @@ func (suite *NetworkdSuite) TestRoutes() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := networkapi.NewNetworkClient(conn)
 
+	nClient := networkapi.NewNetworkClient(conn)
 	resp, err := nClient.Routes(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Routes), 0)
@@ -67,8 +67,8 @@ func (suite *NetworkdSuite) TestInterfaces() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := networkapi.NewNetworkClient(conn)
 
+	nClient := networkapi.NewNetworkClient(conn)
 	resp, err := nClient.Interfaces(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Interfaces), 0)

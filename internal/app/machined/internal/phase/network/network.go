@@ -42,6 +42,7 @@ func (task *UserDefinedNetwork) runtime(args *phase.RuntimeArgs) (err error) {
 
 	// Convert links to nic
 	log.Println("discovering local network interfaces")
+
 	netconf, err := nwd.Discover()
 	if err != nil {
 		return err
@@ -49,7 +50,9 @@ func (task *UserDefinedNetwork) runtime(args *phase.RuntimeArgs) (err error) {
 
 	// Configure specified interface
 	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
+
 	var iface *nic.NetworkInterface
+
 	for link, opts := range netconf {
 		iface, err = nic.Create(link, opts...)
 		if err != nil {

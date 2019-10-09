@@ -49,6 +49,7 @@ func Services(config config.Configurator) *singleton {
 			running: make(map[string]struct{}),
 		}
 	})
+
 	return instance
 }
 
@@ -58,6 +59,7 @@ func Services(config config.Configurator) *singleton {
 func (s *singleton) Load(services ...Service) []string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if s.terminating {
 		return nil
 	}
@@ -86,6 +88,7 @@ func (s *singleton) Load(services ...Service) []string {
 func (s *singleton) Start(serviceIDs ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if s.terminating {
 		return nil
 	}
@@ -99,10 +102,12 @@ func (s *singleton) Start(serviceIDs ...string) error {
 		}
 
 		s.runningMu.Lock()
+
 		_, running := s.running[id]
 		if !running {
 			s.running[id] = struct{}{}
 		}
+
 		s.runningMu.Unlock()
 
 		if running {
@@ -111,6 +116,7 @@ func (s *singleton) Start(serviceIDs ...string) error {
 		}
 
 		s.wg.Add(1)
+
 		go func(id string, svcrunner *ServiceRunner) {
 			defer func() {
 				s.runningMu.Lock()
@@ -130,9 +136,11 @@ func (s *singleton) Start(serviceIDs ...string) error {
 func (s *singleton) StartAll() {
 	s.mu.Lock()
 	serviceIDs := make([]string, 0, len(s.state))
+
 	for id := range s.state {
 		serviceIDs = append(serviceIDs, id)
 	}
+
 	s.mu.Unlock()
 
 	// nolint: errcheck
@@ -155,8 +163,10 @@ func (s *singleton) Shutdown() {
 		s.mu.Unlock()
 		return
 	}
+
 	stateCopy := make(map[string]*ServiceRunner)
 	s.terminating = true
+
 	for name, svcrunner := range s.state {
 		stateCopy[name] = svcrunner
 	}
@@ -180,6 +190,7 @@ func (s *singleton) Shutdown() {
 
 	for name, svcrunner := range stateCopy {
 		shutdownWg.Add(1)
+
 		go func(svcrunner *ServiceRunner, reverseDeps []string) {
 			defer shutdownWg.Done()
 			conds := make([]conditions.Condition, len(reverseDeps))
@@ -193,6 +204,7 @@ func (s *singleton) Shutdown() {
 			svcrunner.Shutdown()
 		}(svcrunner, reverseDependencies[name])
 	}
+
 	shutdownWg.Wait()
 
 	s.wg.Wait()
@@ -229,12 +241,15 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 
 	// Copy current service state
 	stateCopy := make(map[string]*ServiceRunner)
+
 	for _, id := range serviceIDs {
 		if _, ok := s.state[id]; !ok {
 			return fmt.Errorf("service not found: %s", id)
 		}
+
 		stateCopy[id] = s.state[id]
 	}
+
 	s.mu.Unlock()
 
 	conds := make([]conditions.Condition, 0, len(stateCopy))
@@ -242,6 +257,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	// Initiate a shutdown on the specific service
 	for id, svcrunner := range stateCopy {
 		svcrunner.Shutdown()
+
 		conds = append(conds, WaitForService(StateEventDown, id))
 	}
 
@@ -323,6 +339,7 @@ func (s *singleton) APIRestart(ctx context.Context, id string) error {
 		if err := s.Stop(ctx, id); err != nil {
 			return err
 		}
+
 		return s.Start(id)
 	}
 

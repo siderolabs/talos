@@ -56,6 +56,7 @@ func (r *ReverseProxy) Listen(address string) (err error) {
 	if err != nil {
 		return err
 	}
+
 	log.Printf("listening on %v", l.Addr())
 
 	for {
@@ -97,10 +98,13 @@ func (r *ReverseProxy) AddBackend(uid, addr string) (added bool) {
 func (r *ReverseProxy) DeleteBackend(uid string) (deleted bool) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
+
 	if _, ok := r.backends[uid]; ok {
 		delete(r.backends, uid)
+
 		deleted = true
 	}
+
 	r.setCurrent()
 
 	return deleted
@@ -115,9 +119,11 @@ func (r *ReverseProxy) GetBackend() (backend *backend.Backend) {
 func (r *ReverseProxy) IncrementBackend(uid string) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
+
 	if _, ok := r.backends[uid]; !ok {
 		return
 	}
+
 	r.backends[uid].Connections++
 	r.setCurrent()
 }
@@ -126,9 +132,11 @@ func (r *ReverseProxy) IncrementBackend(uid string) {
 func (r *ReverseProxy) DecrementBackend(uid string) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
+
 	if _, ok := r.backends[uid]; !ok {
 		return
 	}
+
 	// Avoid setting the connections to the max uint32 value.
 	if r.backends[uid].Connections == 0 {
 		return
@@ -239,6 +247,7 @@ func (r *ReverseProxy) DeleteFunc() func(obj interface{}) {
 
 func (r *ReverseProxy) setCurrent() {
 	least := uint32(math.MaxUint32)
+
 	for _, b := range r.backends {
 		switch {
 		case b.Connections == 0:
@@ -259,6 +268,7 @@ func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
 		log.Printf("no available backend, closing remote connection: %s", c1.RemoteAddr().String())
 		// nolint: errcheck
 		c1.Close()
+
 		return
 	}
 
@@ -267,6 +277,7 @@ func (r *ReverseProxy) proxyConnection(c1 net.Conn) {
 		log.Printf("dial %v failed, deleting backend: %v", backend.Addr, err)
 		r.DeleteBackend(backend.UID)
 		r.proxyConnection(c1)
+
 		return
 	}
 
@@ -287,6 +298,7 @@ func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
 	if !ok {
 		return
 	}
+
 	tcp2, ok := c2.(*net.TCPConn)
 	if !ok {
 		return
@@ -295,11 +307,13 @@ func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
 	log.Printf("%s -> %s", c1.RemoteAddr(), c2.RemoteAddr())
 
 	var wg sync.WaitGroup
+
 	join := func(dst *net.TCPConn, src *net.TCPConn) {
 		// Close after the copy to avoid a deadlock.
 		// nolint: errcheck
 		defer dst.CloseRead()
 		defer wg.Done()
+
 		_, err := io.Copy(dst, src)
 		if err != nil {
 			log.Printf("%v", err)
@@ -307,8 +321,11 @@ func (r *ReverseProxy) joinConnections(uid string, c1 net.Conn, c2 net.Conn) {
 	}
 
 	wg.Add(2)
+
 	go join(tcp1, tcp2)
+
 	go join(tcp2, tcp1)
+
 	wg.Wait()
 }
 
@@ -370,10 +387,13 @@ func (r *ReverseProxy) Bootstrap(ctx context.Context) {
 func (r *ReverseProxy) Backends() map[string]*backend.Backend {
 	r.mux.Lock()
 	defer r.mux.Unlock()
+
 	backends := make(map[string]*backend.Backend)
+
 	for uid, addr := range r.backends {
 		backends[uid] = addr
 	}
+
 	return backends
 }
 

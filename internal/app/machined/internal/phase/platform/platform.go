@@ -28,6 +28,7 @@ func (task *Platform) runtime(args *phase.RuntimeArgs) (err error) {
 	if err != nil {
 		return err
 	}
+
 	if err = i.Initialize(args.Platform(), args.Config().Machine().Install()); err != nil {
 		return err
 	}

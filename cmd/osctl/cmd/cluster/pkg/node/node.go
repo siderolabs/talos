@@ -87,12 +87,14 @@ func NewNode(clusterName string, req *Request) (err error) {
 	case generate.TypeInit:
 		var osdPort nat.Port
 		osdPort, err = nat.NewPort("tcp", "50000")
+
 		if err != nil {
 			return err
 		}
 
 		var apiServerPort nat.Port
 		apiServerPort, err = nat.NewPort("tcp", "443")
+
 		if err != nil {
 			return err
 		}
@@ -116,9 +118,11 @@ func NewNode(clusterName string, req *Request) (err error) {
 				},
 			},
 		}
+
 		fallthrough
 	case generate.TypeControlPlane:
 		containerConfig.Volumes["/var/lib/etcd"] = struct{}{}
+
 		if req.IP == nil {
 			return errors.New("an IP address must be provided when creating a master node")
 		}
@@ -131,6 +135,7 @@ func NewNode(clusterName string, req *Request) (err error) {
 	// Create the container.
 
 	ctx := context.Background()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		return err

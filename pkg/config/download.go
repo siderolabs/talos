@@ -81,6 +81,7 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 	}
 
 	dlOpts := downloadDefaults()
+
 	for _, opt := range opts {
 		opt(dlOpts)
 	}
@@ -99,6 +100,7 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		if err != nil {
 			log.Printf("download failed: %+v", err)
 			backoff(float64(attempt), dlOpts.Wait)
+
 			continue
 		}
 
@@ -107,10 +109,12 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		switch dlOpts.Format {
 		case b64:
 			var b64 []byte
+
 			b64, err = base64.StdEncoding.DecodeString(string(b))
 			if err != nil {
 				return b, err
 			}
+
 			b = b64
 		}
 
@@ -123,6 +127,7 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 // download handles the actual http request
 func download(req *http.Request) (data []byte, err error) {
 	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return data, err
@@ -148,6 +153,7 @@ func backoff(attempt float64, wait float64) {
 	if snooze > wait {
 		snooze = wait
 	}
+
 	log.Printf("download attempt %g failed, retrying in %g seconds", attempt, snooze)
 	time.Sleep(time.Duration(snooze) * time.Second)
 }

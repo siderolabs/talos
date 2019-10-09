@@ -132,6 +132,7 @@ func (gpt *GPT) New() (table.PartitionTable, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	pmbr := gpt.newPMBR(h)
 
 	gpt.header = h
@@ -141,6 +142,7 @@ func (gpt *GPT) New() (table.PartitionTable, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write the protective MBR")
 	}
+
 	if written != len(pmbr[446:]) {
 		return nil, errors.Errorf("expected a write %d bytes, got %d", written, len(pmbr[446:]))
 	}
@@ -164,10 +166,12 @@ func (gpt *GPT) newHeader(size int64) (*header.Header, error) {
 	h.BackupLBA = uint64(size/int64(gpt.lba.LogicalBlockSize) - 1)
 	h.FirstUsableLBA = 34
 	h.LastUsableLBA = h.BackupLBA - 33
+
 	guuid, err := uuid.NewUUID()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate UUID for new partition table")
 	}
+
 	h.GUUID = guuid
 	h.PartitionEntriesStartLBA = 2
 	h.NumberOfPartitionEntries = 128
@@ -235,6 +239,7 @@ func (gpt *GPT) writeSecondary(partitions []byte) error {
 	}
 
 	offset := int64((gpt.header.LastUsableLBA + 1))
+
 	written, err := gpt.f.WriteAt(table, offset*int64(gpt.lba.LogicalBlockSize))
 	if err != nil {
 		return err
@@ -277,6 +282,7 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 		previous := gpt.partitions[len(gpt.partitions)-1]
 		start = previous.(*partition.Partition).LastLBA + 1
 	}
+
 	end = start + size/gpt.lba.LogicalBlockSize
 
 	if end > gpt.header.LastUsableLBA {
@@ -334,12 +340,14 @@ func (gpt *GPT) Resize(p table.Partition) error {
 func (gpt *GPT) Delete(partition table.Partition) error {
 	i := partition.No() - 1
 	gpt.partitions[i] = nil
+
 	return blkpg.InformKernelOfDelete(gpt.f, partition)
 }
 
 func (gpt *GPT) readPrimary() ([]byte, error) {
 	// LBA 34 is the first usable sector on the disk.
 	table := gpt.lba.Make(34)
+
 	read, err := gpt.f.ReadAt(table, 0)
 	if err != nil {
 		return nil, err
@@ -368,8 +376,11 @@ func (gpt *GPT) newTable(header, partitions []byte, headerRange, paritionsRange 
 
 func (gpt *GPT) serializeHeader(partitions []byte, setters ...interface{}) ([]byte, error) {
 	data := gpt.lba.Make(1)
+
 	setters = append(setters, header.WithHeaderArrayBytes(partitions))
+
 	opts := header.NewDefaultOptions(setters...)
+
 	if err := serde.Ser(gpt.header, data, 0, opts); err != nil {
 		return nil, errors.Errorf("failed to serialize the header: %v", err)
 	}
@@ -402,11 +413,14 @@ func (gpt *GPT) serializePartitions() ([]byte, error) {
 		if p == nil {
 			continue
 		}
+
 		i := uint32(j)
+
 		partition, ok := p.(*partition.Partition)
 		if !ok {
 			return nil, errors.Errorf("partition is not a GUID partition table partition")
 		}
+
 		if err := serde.Ser(partition, data, i*gpt.header.PartitionEntrySize, nil); err != nil {
 			return nil, errors.Errorf("failed to serialize the partitions: %v", err)
 		}

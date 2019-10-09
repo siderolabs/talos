@@ -61,14 +61,17 @@ func statsRender(reply *osapi.StatsReply) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NAMESPACE\tID\tMEMORY(MB)\tCPU")
+
 	for _, s := range reply.Stats {
 		display := s.Id
 		if s.Id != s.PodId {
 			// container in a sandbox
 			display = "└─ " + display
 		}
+
 		fmt.Fprintf(w, "%s\t%s\t%.2f\t%d\n", s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 	}
+
 	helpers.Should(w.Flush())
 }
 

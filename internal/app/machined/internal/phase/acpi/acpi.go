@@ -50,7 +50,6 @@ const (
 
 func listenForPowerButton() (err error) {
 	// Get the acpi_event family.
-
 	conn, err := genetlink.Dial(nil)
 	if err != nil {
 		return err
@@ -64,11 +63,13 @@ func listenForPowerButton() (err error) {
 	}
 
 	var id uint32
+
 	for _, group := range f.Groups {
 		if group.Name == acpiGenlMcastGroupName {
 			id = group.ID
 		}
 	}
+
 	if err = conn.JoinGroup(id); err != nil {
 		// nolint: errcheck
 		conn.Close()

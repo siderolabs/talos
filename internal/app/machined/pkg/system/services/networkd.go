@@ -35,6 +35,7 @@ func (n *Networkd) ID(config config.Configurator) string {
 // PreFunc implements the Service interface.
 func (n *Networkd) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/networkd.tar",
 		Options: []containerdapi.ImportOpt{

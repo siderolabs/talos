@@ -43,6 +43,7 @@ func (n *NetworkInterface) IsIgnored() bool {
 	if n.Ignore || kernel.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(n.Name) {
 		return true
 	}
+
 	return false
 }
 

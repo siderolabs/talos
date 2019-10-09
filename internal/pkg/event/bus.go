@@ -44,9 +44,11 @@ func (s *singleton) Notify(e Event) {
 func (s *singleton) Register(o Observer, types ...Type) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if s.listeners == nil {
 		s.listeners = make(map[Type]Listeners)
 	}
+
 	for _, t := range o.Types() {
 		s.listeners[t] = append(s.listeners[t], o.Channel())
 	}
@@ -56,6 +58,7 @@ func (s *singleton) Register(o Observer, types ...Type) {
 func (s *singleton) Unregister(o Observer, types ...Type) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	for _, t := range o.Types() {
 		for i := 0; i < len(s.listeners[t]); {
 			if s.listeners[t][i] == o.Channel() {

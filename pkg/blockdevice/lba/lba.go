@@ -70,5 +70,6 @@ func (lba *LogicalBlockAddresser) From(src []byte, rng Range) ([]byte, error) {
 	if uint64(len(src)) < size+size*rng.End {
 		return nil, fmt.Errorf("cannot read LBA range (start: %d, end %d), source too small", rng.Start, rng.End)
 	}
+
 	return src[size*rng.Start : size+size*rng.End], nil
 }

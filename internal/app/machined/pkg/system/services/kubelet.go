@@ -76,7 +76,9 @@ func (k *Kubelet) PreFunc(ctx context.Context, config config.Configurator) error
 	}
 
 	templ := template.Must(template.New("tmpl").Parse(string(kubeletKubeConfigTemplate)))
+
 	var buf bytes.Buffer
+
 	if err := templ.Execute(&buf, cfg); err != nil {
 		return err
 	}
@@ -102,6 +104,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config config.Configurator) error
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
+
 	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 	if _, err = client.Pull(containerdctx, image, containerdapi.WithPullUnpack); err != nil {
 		return fmt.Errorf("failed to pull image %q: %v", image, err)
@@ -181,6 +184,7 @@ func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	mounts = append(mounts, cniMounts...)
 
 	// Add extra mounts.

@@ -53,8 +53,8 @@ func (suite *NtpdSuite) TestTime() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := timeapi.NewTimeClient(conn)
 
+	nClient := timeapi.NewTimeClient(conn)
 	resp, err := nClient.Time(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(resp.Server, testServer)
@@ -84,8 +84,8 @@ func (suite *NtpdSuite) TestTimeCheck() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
-	nClient := timeapi.NewTimeClient(conn)
 
+	nClient := timeapi.NewTimeClient(conn)
 	resp, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(resp.Server, testServer)

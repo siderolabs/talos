@@ -57,10 +57,12 @@ func NewInspector(ctx context.Context, namespace string, options ...Option) (ctr
 	}
 
 	i := inspector{}
+
 	i.client, err = containerd.New(opt.containerdAddress)
 	if err != nil {
 		return nil, err
 	}
+
 	i.nsctx = namespaces.WithNamespace(ctx, namespace)
 
 	return &i, nil
@@ -80,12 +82,15 @@ func (i *inspector) Images() (map[string]string, error) {
 
 	// create a map[sha]name for easier lookups later
 	imageList := make(map[string]string, len(images))
+
 	for _, image := range images {
 		if strings.HasPrefix(image.Name(), "sha256:") {
 			continue
 		}
+
 		imageList[image.Target().Digest.String()] = image.Name()
 	}
+
 	return imageList, nil
 }
 
@@ -114,6 +119,7 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 			// running task not found, skip container
 			return nil, nil
 		}
+
 		return nil, errors.Wrapf(err, "error getting container task for %q", cntr.ID())
 	}
 
@@ -129,11 +135,13 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 	cp.RestartCount = "0"
 	cp.Digest = img.Target().Digest.String()
 	cp.Image = cp.Digest
+
 	if imageList != nil {
 		if resolved, ok := imageList[cp.Image]; ok {
 			cp.Image = resolved
 		}
 	}
+
 	cp.Pid = task.Pid()
 	cp.Status = strings.ToUpper(string(status.Status))
 
@@ -240,12 +248,15 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	if slashIdx > 0 {
 		name := ""
 		namespace, pod := id[:slashIdx], id[slashIdx+1:]
+
 		semicolonIdx := strings.LastIndex(pod, ":")
 		if semicolonIdx > 0 {
 			name = pod[semicolonIdx+1:]
 			pod = pod[:semicolonIdx]
 		}
+
 		query = fmt.Sprintf("labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q", namespace, pod)
+
 		if name != "" {
 			query += fmt.Sprintf(",labels.\"io.kubernetes.container.name\"==%q", name)
 		} else {
@@ -269,6 +280,7 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	for j := range containers {
 		if skipWithK8sName {
 			var labels map[string]string
+
 			if labels, err = containers[j].Labels(i.nsctx); err == nil {
 				if _, found := labels["io.kubernetes.container.name"]; found {
 					continue
@@ -310,6 +322,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 			multiErr = multierror.Append(multiErr, err)
 			continue
 		}
+
 		if cp == nil {
 			// not running container
 			continue
@@ -319,15 +332,19 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 		// to an existing pod
 		// Also set pod sandbox ID if defined
 		found := false
+
 		for _, pod := range pods {
 			if pod.Name != cp.PodName {
 				continue
 			}
+
 			if cp.Sandbox != "" {
 				pod.Sandbox = cp.Sandbox
 			}
+
 			pod.Containers = append(pod.Containers, cp)
 			found = true
+
 			break
 		}
 

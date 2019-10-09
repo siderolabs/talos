@@ -25,6 +25,7 @@ var RequiredKSPPKernelParameters = kernel.Parameters{
 // parameters are present with the right value.
 func EnforceKSPPKernelParameters() error {
 	var result *multierror.Error
+
 	for _, values := range RequiredKSPPKernelParameters {
 		var val *string
 		if val = kernel.ProcCmdline().Get(values.Key()).First(); val == nil {

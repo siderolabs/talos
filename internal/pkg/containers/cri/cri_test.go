@@ -86,6 +86,7 @@ func (suite *CRISuite) SetupSuite() {
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
+
 	go func() {
 		defer suite.containerdWg.Done()
 		defer func() { suite.Require().NoError(suite.containerdRunner.Close()) }()
@@ -256,6 +257,7 @@ func TestCRISuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")
 	}
+
 	_, err := os.Stat("/bin/containerd")
 	if err != nil {
 		t.Skip("containerd binary is not available, skipping the test")

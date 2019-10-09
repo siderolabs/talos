@@ -101,6 +101,7 @@ func (r *Runner) runPhase(phase *Phase) error {
 	errCh := make(chan error)
 
 	start := time.Now()
+
 	log.Printf("[phase]: %s", phase.description)
 
 	for _, task := range phase.tasks {
@@ -114,6 +115,7 @@ func (r *Runner) runPhase(phase *Phase) error {
 		if err != nil {
 			log.Printf("[phase]: %s error running task: %s", phase.description, err)
 		}
+
 		result = multierror.Append(result, err)
 	}
 
@@ -154,6 +156,7 @@ func (r *Runner) Add(phase ...*Phase) {
 // NewPhase initializes and returns a Phase.
 func NewPhase(description string, tasks ...Task) *Phase {
 	tasks = append([]Task{}, tasks...)
+
 	return &Phase{
 		description: description,
 		tasks:       tasks,

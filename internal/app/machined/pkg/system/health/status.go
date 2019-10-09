@@ -46,6 +46,7 @@ func (state *State) Update(healthy bool, message string) {
 		state.status.Healthy = &healthy
 		state.status.LastChange = time.Now()
 	}
+
 	state.status.LastMessage = message
 
 	newStatus := state.status
@@ -61,8 +62,7 @@ func (state *State) Update(healthy bool, message string) {
 		for _, ch := range subscribers {
 			select {
 			case ch <- StateChange{oldStatus, newStatus}:
-			default:
-				// drop messages to clients which don't consume them
+			default: // drop messages to clients which don't consume them
 			}
 		}
 	}

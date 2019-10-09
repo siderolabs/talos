@@ -24,6 +24,7 @@ func NewLocalGenerator(caKey, caCrt []byte) (g *LocalGenerator, err error) {
 // Identity creates an identity certificate using a local root CA.
 func (g *LocalGenerator) Identity(csr *x509.CertificateSigningRequest) (ca, crt []byte, err error) {
 	var c *x509.Certificate
+
 	c, err = x509.NewCertificateFromCSRBytes(g.caCrt, g.caKey, csr.X509CertificateRequestPEM)
 	if err != nil {
 		return ca, crt, err

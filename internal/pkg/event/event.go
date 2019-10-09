@@ -61,6 +61,7 @@ func (e *Embeddable) Channel() Channel {
 	if cap(e.channel) == 0 {
 		e.channel = make(Channel, 20)
 	}
+
 	return e.channel
 }
 
@@ -69,5 +70,6 @@ func (e *Embeddable) Types() []Type {
 	if e.types == nil {
 		e.types = []Type{Shutdown, Reboot, Upgrade}
 	}
+
 	return e.types
 }

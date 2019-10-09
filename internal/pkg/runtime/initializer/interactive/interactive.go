@@ -30,6 +30,7 @@ type Interactive struct{}
 // Initialize implements the Initializer interface.
 func (i *Interactive) Initialize(platform platform.Platform, install machine.Install) (err error) {
 	var dev *probe.ProbedBlockDevice
+
 	dev, err = probe.GetDevWithFileSystemLabel(constants.ISOFilesystemLabel)
 	if err != nil {
 		return errors.Errorf("failed to find %s iso: %v", constants.ISOFilesystemLabel, err)
@@ -41,17 +42,21 @@ func (i *Interactive) Initialize(platform platform.Platform, install machine.Ins
 
 	for _, f := range []string{"/tmp/usr/install/vmlinuz", "/tmp/usr/install/initramfs.xz"} {
 		var source []byte
+
 		source, err = ioutil.ReadFile(f)
 		if err != nil {
 			return err
 		}
+
 		if err = ioutil.WriteFile("/"+filepath.Base(f), source, 0644); err != nil {
 			return err
 		}
 	}
 
 	reader := bufio.NewReader(os.Stdin)
+
 	fmt.Print("Talos configuration URL: ")
+
 	endpoint, err := reader.ReadString('\n')
 	if err != nil {
 		return err
@@ -63,10 +68,12 @@ func (i *Interactive) Initialize(platform platform.Platform, install machine.Ins
 	cmdline.Append(constants.KernelParamConfig, endpoint)
 
 	var inst *installer.Installer
+
 	inst, err = installer.NewInstaller(cmdline, install)
 	if err != nil {
 		return err
 	}
+
 	if err = inst.Install(); err != nil {
 		return errors.Wrap(err, "failed to install")
 	}

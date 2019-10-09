@@ -32,6 +32,7 @@ func (task *Security) runtime(args *phase.RuntimeArgs) (err error) {
 	if err = kspp.EnforceKSPPKernelParameters(); err != nil {
 		return err
 	}
+
 	if err = kspp.EnforceKSPPSysctls(); err != nil {
 		return err
 	}

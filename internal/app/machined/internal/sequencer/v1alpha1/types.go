@@ -67,6 +67,7 @@ func (d *Sequencer) Boot() error {
 	if err != nil {
 		return err
 	}
+
 	config, err := config.New(content)
 	if err != nil {
 		return err
@@ -173,12 +174,14 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 	}
 
 	var dev *probe.ProbedBlockDevice
+
 	dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
 	if err != nil {
 		return err
 	}
 
 	devname := dev.BlockDevice.Device().Name()
+
 	if err := dev.Close(); err != nil {
 		return err
 	}

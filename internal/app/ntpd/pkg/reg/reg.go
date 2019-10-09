@@ -37,6 +37,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 // Time issues a query to the configured ntp server and displays the results
 func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeReply, err error) {
 	reply = &timeapi.TimeReply{}
+
 	rt, err := r.Ntpd.Query()
 	if err != nil {
 		return reply, err
@@ -48,6 +49,7 @@ func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi
 // TimeCheck issues a query to the specified ntp server and displays the results
 func (r *Registrator) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (reply *timeapi.TimeReply, err error) {
 	reply = &timeapi.TimeReply{}
+
 	tc, err := ntp.NewNTPClient(ntp.WithServer(in.Server))
 	if err != nil {
 		return reply, err

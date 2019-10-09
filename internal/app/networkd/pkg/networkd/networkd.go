@@ -153,11 +153,13 @@ func (n *Networkd) Renew(ifaces ...*nic.NetworkInterface) {
 // halflife.
 func (n *Networkd) renew(method address.Addressing) {
 	renewDuration := method.TTL() / 2
+
 	for {
 		<-time.After(renewDuration)
 
 		if err := n.configureInterface(method); err != nil {
 			log.Printf("failed to renew interface address for %s: %v\n", method.Link().Name, err)
+
 			renewDuration = (renewDuration / 2)
 		} else {
 			renewDuration = method.TTL() / 2
@@ -191,6 +193,7 @@ func (n *Networkd) configureInterface(method address.Addressing) error {
 	}
 
 	addressExists := false
+
 	for _, addr := range addrs {
 		if method.Address().String() == addr.String() {
 			addressExists = true
@@ -239,6 +242,7 @@ func (n *Networkd) Hostname(ifaces ...*nic.NetworkInterface) string {
 			if !method.Valid() {
 				continue
 			}
+
 			if method.Hostname() != "" {
 				return method.Hostname()
 			}
@@ -256,6 +260,7 @@ func (n *Networkd) PrintState() {
 		log.Println(err)
 		return
 	}
+
 	for _, r := range rl {
 		log.Printf("%+v", r)
 	}
@@ -265,14 +270,18 @@ func (n *Networkd) PrintState() {
 		log.Println(err)
 		return
 	}
+
 	for _, link := range links {
 		log.Printf("%+v", link)
+
 		for _, fam := range []int{unix.AF_INET, unix.AF_INET6} {
 			var addrs []*net.IPNet
+
 			addrs, err = n.Conn.Addrs(link, fam)
 			if err != nil {
 				log.Println(err)
 			}
+
 			for _, addr := range addrs {
 				log.Printf("%+v", addr)
 			}
@@ -280,10 +289,12 @@ func (n *Networkd) PrintState() {
 	}
 
 	var b []byte
+
 	b, err = ioutil.ReadFile("/etc/resolv.conf")
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
 	log.Printf("resolv.conf: %s", string(b))
 }

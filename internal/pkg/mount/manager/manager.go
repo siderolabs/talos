@@ -50,6 +50,7 @@ func (m *Manager) MountAll() (err error) {
 			}
 		}
 	}
+
 	if iter.Err() != nil {
 		return iter.Err()
 	}
@@ -66,6 +67,7 @@ func (m *Manager) UnmountAll() (err error) {
 			return errors.Wrap(err, "unmount")
 		}
 	}
+
 	if iter.Err() != nil {
 		return iter.Err()
 	}
@@ -85,6 +87,7 @@ func (m *Manager) MoveAll(prefix string) (err error) {
 			return errors.Wrapf(err, "move")
 		}
 	}
+
 	if iter.Err() != nil {
 		return iter.Err()
 	}

@@ -34,6 +34,7 @@ func (suite *GenerateSuite) SetupSuite() {
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	dataString, err := genv1alpha1.Config(genv1alpha1.TypeInit, suite.input)
 	suite.Require().NoError(err)
+
 	data := &v1alpha1.Config{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
@@ -42,6 +43,7 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	dataString, err := genv1alpha1.Config(genv1alpha1.TypeControlPlane, suite.input)
 	suite.Require().NoError(err)
+
 	data := &v1alpha1.Config{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)
@@ -50,6 +52,7 @@ func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 	dataString, err := genv1alpha1.Config(genv1alpha1.TypeJoin, suite.input)
 	suite.Require().NoError(err)
+
 	data := &v1alpha1.Config{}
 	err = yaml.Unmarshal([]byte(dataString), data)
 	suite.Require().NoError(err)

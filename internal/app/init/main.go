@@ -26,6 +26,7 @@ func run() (err error) {
 	if err != nil {
 		return err
 	}
+
 	virtual := manager.NewManager(mountpoints)
 	if err = virtual.MountAll(); err != nil {
 		return err
@@ -39,10 +40,12 @@ func run() (err error) {
 
 	// Mount the rootfs.
 	log.Println("mounting the rootfs")
+
 	mountpoints, err = squashfs.MountPoints(constants.NewRoot)
 	if err != nil {
 		return err
 	}
+
 	squashfs := manager.NewManager(mountpoints)
 	if err = squashfs.MountAll(); err != nil {
 		return err
@@ -50,6 +53,7 @@ func run() (err error) {
 
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
+
 	if err = switchroot.Switch(constants.NewRoot, virtual); err != nil {
 		return err
 	}
@@ -60,6 +64,7 @@ func run() (err error) {
 func recovery() {
 	if r := recover(); r != nil {
 		log.Printf("recovered from: %+v\n", r)
+
 		for i := 10; i >= 0; i-- {
 			log.Printf("rebooting in %d seconds\n", i)
 			time.Sleep(1 * time.Second)

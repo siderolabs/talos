@@ -44,6 +44,7 @@ func (task *Upgrade) standard(args *phase.RuntimeArgs) (err error) {
 	if config = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
 		return errors.Errorf("no config option was found")
 	}
+
 	if err = install.Install(task.ref, task.devname, strings.ToLower(args.Platform().Name())); err != nil {
 		return err
 	}

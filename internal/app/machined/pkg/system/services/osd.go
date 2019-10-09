@@ -39,6 +39,7 @@ func (o *OSD) ID(config config.Configurator) string {
 // PreFunc implements the Service interface.
 func (o *OSD) PreFunc(ctx context.Context, config config.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/osd.tar",
 		Options: []containerdapi.ImportOpt{
@@ -70,6 +71,7 @@ func (o *OSD) Runner(config config.Configurator) (runner.Runner, error) {
 	image := "talos/osd"
 
 	endpoints := config.Cluster().IPs()
+
 	if config.Machine().Type() == machine.Worker {
 		h, err := kubernetes.NewHelper()
 		if err != nil {

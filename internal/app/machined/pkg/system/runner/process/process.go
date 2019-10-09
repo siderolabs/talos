@@ -97,6 +97,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 	} else {
 		writer = w
 	}
+
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 
@@ -110,6 +111,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	}
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
+
 	usingReaper := reaper.Notify(notifyCh)
 	if usingReaper {
 		defer reaper.Stop(notifyCh)
@@ -153,6 +155,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 
 	// wait for process to terminate
 	<-waitCh
+
 	return nil
 }
 

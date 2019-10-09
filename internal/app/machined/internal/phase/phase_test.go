@@ -70,6 +70,7 @@ func (suite *PhaseSuite) TestRunSuccess() {
 	r.Add(phase.NewPhase("phase2", &regularTask{errCh: taskErr}, &nilTask{}))
 
 	errCh := make(chan error)
+
 	go func() {
 		errCh <- r.Run()
 	}()

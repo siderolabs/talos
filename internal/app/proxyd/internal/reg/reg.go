@@ -35,6 +35,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 // Backends exposes the internal state of backends in proxyd
 func (r *Registrator) Backends(ctx context.Context, in *empty.Empty) (reply *proto.BackendsReply, err error) {
 	reply = &proto.BackendsReply{}
+
 	for _, be := range r.Proxyd.Backends() {
 		protobe := &proto.Backend{
 			Id:          be.UID,

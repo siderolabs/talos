@@ -35,6 +35,7 @@ func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 	bd = &BlockDevice{}
 
 	var f *os.File
+
 	if f, err = os.OpenFile(devname, os.O_RDWR|unix.O_CLOEXEC, os.ModeDevice); err != nil {
 		return nil, err
 	}
@@ -50,16 +51,21 @@ func Open(devname string, setters ...Option) (bd *BlockDevice, err error) {
 
 	if opts.CreateGPT {
 		var g *gpt.GPT
+
 		if g, err = gpt.NewGPT(devname, f); err != nil {
 			return nil, err
 		}
+
 		var pt table.PartitionTable
+
 		if pt, err = g.New(); err != nil {
 			return nil, err
 		}
+
 		if err = pt.Write(); err != nil {
 			return nil, err
 		}
+
 		bd.table = pt
 	} else {
 		buf := make([]byte, 1)
@@ -129,6 +135,7 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 		}
 
 		err = errors.Errorf("re-read partition table: %v", ret)
+
 		switch ret {
 		case syscall.EBUSY:
 			time.Sleep(100 * time.Millisecond)
@@ -152,5 +159,6 @@ func (bd *BlockDevice) Size() (uint64, error) {
 	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&devsize))); errno != 0 {
 		return 0, errno
 	}
+
 	return devsize, nil
 }
