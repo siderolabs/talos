@@ -29,6 +29,11 @@ func controlPlaneUd(in *Input) (string, error) {
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,
 		},
+		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+			DNSDomain:     in.ServiceDomain,
+			PodSubnet:     in.PodNet,
+			ServiceSubnet: in.ServiceNet,
+		},
 		ClusterCA:                     in.Certs.K8s,
 		CertificateKey:                in.KubeadmTokens.CertificateKey,
 		ClusterAESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
