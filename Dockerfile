@@ -24,6 +24,7 @@ RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototo
 
 FROM scratch AS build
 COPY --from=tools / /
+COPY --from=autonomy/protoc-gen-proxy:a87401e /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
 SHELL ["/toolchain/bin/bash", "-c"]
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV GO111MODULE on
@@ -36,7 +37,8 @@ WORKDIR /src
 FROM build AS generate-build
 WORKDIR /osd
 COPY ./api/os ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
+# Generate additional grpc functionality only for OSD
+RUN protoc -I./proto --plugin=proxy --proxy_out=plugins=grpc+proxy:proto proto/api.proto
 WORKDIR /trustd
 COPY ./api/security ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto

@@ -52,14 +52,18 @@ func (r *Registrator) Register(s *grpc.Server) {
 }
 
 // Kubeconfig implements the osapi.OSDServer interface.
-func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *osapi.Data, err error) {
+func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *osapi.DataReply, err error) {
 	fileBytes, err := ioutil.ReadFile(constants.AdminKubeconfig)
 	if err != nil {
 		return
 	}
 
-	data = &osapi.Data{
-		Bytes: fileBytes,
+	data = &osapi.DataReply{
+		Response: []*osapi.DataResponse{
+			{
+				Bytes: &osapi.Data{Bytes: fileBytes},
+			},
+		},
 	}
 
 	return data, err
@@ -101,7 +105,15 @@ func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersReques
 		}
 	}
 
-	return &osapi.ContainersReply{Containers: containers}, nil
+	reply = &osapi.ContainersReply{
+		Response: []*osapi.ContainerResponse{
+			{
+				Containers: containers,
+			},
+		},
+	}
+
+	return reply, nil
 }
 
 // Stats implements the osapi.OSDServer interface.
@@ -145,7 +157,13 @@ func (r *Registrator) Stats(ctx context.Context, in *osapi.StatsRequest) (reply 
 		}
 	}
 
-	reply = &osapi.StatsReply{Stats: stats}
+	reply = &osapi.StatsReply{
+		Response: []*osapi.StatsResponse{
+			{
+				Stats: stats,
+			},
+		},
+	}
 
 	return reply, nil
 }
@@ -180,7 +198,7 @@ func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*o
 // to read from the ring buffer at /proc/kmsg by taking the
 // SYSLOG_ACTION_READ_ALL action. This action reads all messages remaining in
 // the ring buffer non-destructively.
-func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.Data, err error) {
+func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.DataReply, err error) {
 	// Return the size of the kernel ring buffer
 	size, err := unix.Klogctl(constants.SYSLOG_ACTION_SIZE_BUFFER, nil)
 	if err != nil {
@@ -194,7 +212,13 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.D
 		return
 	}
 
-	data = &osapi.Data{Bytes: buf[:n]}
+	data = &osapi.DataReply{
+		Response: []*osapi.DataResponse{
+			{
+				Bytes: &osapi.Data{Bytes: buf[:n]},
+			},
+		},
+	}
 
 	return data, err
 }
@@ -296,7 +320,13 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *os
 		processes = append(processes, p)
 	}
 
-	reply = &osapi.ProcessesReply{Processes: processes}
+	reply = &osapi.ProcessesReply{
+		Response: []*osapi.ProcessResponse{
+			{
+				Processes: processes,
+			},
+		},
+	}
 
 	return reply, nil
 }

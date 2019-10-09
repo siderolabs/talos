@@ -14,6 +14,7 @@ import (
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -44,7 +45,11 @@ var containersCmd = &cobra.Command{
 			if useCRI {
 				driver = osapi.ContainerDriver_CRI
 			}
-			reply, err := c.Containers(globalCtx, namespace, driver)
+
+			md := metadata.New(make(map[string]string))
+			md.Set("targets", target...)
+
+			reply, err := c.Containers(metadata.NewOutgoingContext(globalCtx, md), namespace, driver)
 			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)
 			}
@@ -55,22 +60,25 @@ var containersCmd = &cobra.Command{
 }
 
 func containerRender(reply *osapi.ContainersReply) {
-	sort.Slice(reply.Containers,
-		func(i, j int) bool {
-			return strings.Compare(reply.Containers[i].Id, reply.Containers[j].Id) < 0
-		})
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAMESPACE\tID\tIMAGE\tPID\tSTATUS")
+	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 
-	for _, p := range reply.Containers {
-		display := p.Id
-		if p.Id != p.PodId {
-			// container in a sandbox
-			display = "└─ " + display
+	for _, rep := range reply.Response {
+		resp := rep
+		sort.Slice(resp.Containers,
+			func(i, j int) bool {
+				return strings.Compare(resp.Containers[i].Id, resp.Containers[j].Id) < 0
+			})
+
+		for _, p := range resp.Containers {
+			display := p.Id
+			if p.Id != p.PodId {
+				// container in a sandbox
+				display = "└─ " + display
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", resp.Metadata.Hostname, p.Namespace, display, p.Image, p.Pid, p.Status)
 		}
-
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", p.Namespace, display, p.Image, p.Pid, p.Status)
 	}
 
 	helpers.Should(w.Flush())

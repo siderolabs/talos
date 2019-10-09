@@ -34,7 +34,7 @@ var (
 	organization                  string
 	rsa                           bool
 	talosconfig                   string
-	target                        string
+	target                        []string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -96,7 +96,7 @@ func Execute() {
 	}
 
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
-	rootCmd.PersistentFlags().StringVarP(&target, "target", "t", "", "target the specificed node")
+	rootCmd.PersistentFlags().StringSliceVarP(&target, "target", "t", []string{}, "target the specificed node")
 
 	if err := rootCmd.Execute(); err != nil {
 		helpers.Fatalf("%s", err)
@@ -108,10 +108,6 @@ func setupClient(action func(*client.Client)) {
 	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig)
 	if err != nil {
 		helpers.Fatalf("error getting client credentials: %s", err)
-	}
-
-	if target != "" {
-		t = target
 	}
 
 	c, err := client.NewClient(creds, t, constants.OsdPort)
