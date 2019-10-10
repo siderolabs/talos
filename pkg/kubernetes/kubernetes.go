@@ -21,13 +21,13 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // Helper represents a set of helper methods for interacting with the
@@ -289,17 +289,19 @@ func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
 }
 
 func (h *Helper) waitForPodDeleted(p *corev1.Pod) error {
-	return wait.PollImmediate(1*time.Second, 60*time.Second, func() (bool, error) {
+	return retry.Constant(time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
 		pod, err := h.client.CoreV1().Pods(p.GetNamespace()).Get(p.GetName(), metav1.GetOptions{})
-		if apierrors.IsNotFound(err) {
-			return true, nil
+		switch {
+		case apierrors.IsNotFound(err):
+			return nil
+		case err != nil:
+			return retry.UnexpectedError(errors.Wrapf(err, "failed to get pod %s/%s", p.GetNamespace(), p.GetName()))
 		}
-		if err != nil {
-			return false, errors.Wrapf(err, "failed to get pod %s/%s", p.GetNamespace(), p.GetName())
-		}
+
 		if pod.GetUID() != p.GetUID() {
-			return true, nil
+			return nil
 		}
-		return false, nil
+
+		return retry.ExpectedError(errors.New("pod is still running on the node"))
 	})
 }

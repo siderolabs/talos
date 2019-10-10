@@ -36,17 +36,6 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
            sleep 10
          done"
 
-## Wait for the init node to report in
-e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-         until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 1 >/dev/null; do
-           [[ \$(date +%s) -gt \$timeout ]] && exit 1
-           kubectl get nodes -o wide
-           sleep 5
-         done"
-
-##  Apply psp and flannel
-e2e_run "kubectl apply -f /manifests/psp.yaml -f /manifests/flannel.yaml"
-
 ##  Wait for nodes to check in
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
          until kubectl get nodes -o go-template='{{ len .items }}' | grep ${NUM_NODES} >/dev/null; do
@@ -64,7 +53,12 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
          done"
 
 ##  Wait for nodes ready
-e2e_run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
+e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
+         until kubectl wait --timeout=1s --for=condition=ready=true --all nodes > /dev/null; do
+           [[ \$(date +%s) -gt \$timeout ]] && exit 1
+           kubectl get nodes -o wide
+           sleep 10
+         done"
 
 ## Verify that we have an HA controlplane
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -73,6 +67,10 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
            kubectl get nodes -l node-role.kubernetes.io/master=''
            sleep 10
          done"
+
+## Print nodes so we know everything is healthy
+echo "E2E setup complete. List of nodes: "
+e2e_run "kubectl get nodes -o wide"
 
 ## Run conformance tests if var is not null
 if [ ${CONFORMANCE:-"dontrun"} == "run" ]; then

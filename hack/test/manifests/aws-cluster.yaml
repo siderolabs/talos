@@ -22,6 +22,7 @@ spec:
         type: aws
       controlplane:
         count: 3
+        k8sversion: "1.16.1"
 ---
 apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
