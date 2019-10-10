@@ -107,7 +107,7 @@ func (m *MachineConfig) CertSANs() []string {
 
 // SetCertSANs implements the Configurator interface.
 func (m *MachineConfig) SetCertSANs(sans []string) {
-	m.MachineCertSANs = sans
+	m.MachineCertSANs = append(m.MachineCertSANs, sans...)
 }
 
 // ExtraMounts implements the Configurator interface.

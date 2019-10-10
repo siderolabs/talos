@@ -95,7 +95,7 @@ func (c *ClusterConfig) SetCertSANs(sans []string) {
 		c.APIServer = &APIServerConfig{}
 	}
 
-	c.APIServer.CertSANs = sans
+	c.APIServer.CertSANs = append(c.APIServer.CertSANs, sans...)
 }
 
 // CA implements the Configurator interface.
