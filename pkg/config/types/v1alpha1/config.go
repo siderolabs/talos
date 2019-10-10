@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	"gopkg.in/yaml.v2"
+
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -48,5 +50,10 @@ func (n *Config) Validate() error {
 
 // String implements the Configurator interface.
 func (n *Config) String() (string, error) {
-	return "", nil
+	b, err := yaml.Marshal(n)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
 }
