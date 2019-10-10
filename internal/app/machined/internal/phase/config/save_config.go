@@ -7,7 +7,6 @@ package config
 import (
 	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -28,22 +27,16 @@ func (task *SaveConfig) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 }
 
 func (task *SaveConfig) runtime(args *phase.RuntimeArgs) (err error) {
-	if _, err = os.Stat(constants.ConfigPath); os.IsNotExist(err) {
-		log.Printf("saving config %s to disk\n", args.Config().Version())
+	log.Printf("saving config %s to disk\n", args.Config().Version())
 
-		s, err := args.Config().String()
-		if err != nil {
-			return err
-		}
-
-		if err = ioutil.WriteFile(constants.ConfigPath, []byte(s), 0400); err != nil {
-			return err
-		}
-
-		return nil
+	s, err := args.Config().String()
+	if err != nil {
+		return err
 	}
 
-	log.Println("refusing to overwrite config on disk")
+	if err = ioutil.WriteFile(constants.ConfigPath, []byte(s), 0644); err != nil {
+		return err
+	}
 
 	return nil
 }
