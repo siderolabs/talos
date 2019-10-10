@@ -9,7 +9,12 @@ menu:
 ---
 
 **Talos** is a modern OS designed to be secure, immutable, and minimal.
+Its purpose is to host Kubernetes clusters, so it is tightly integrated with Kubernetes.
+Talos is based on the Linux kernel, and supports most cloud platforms, bare metal, and most virtualization platforms.
 All system management is done via an API, and there is no shell or interactive console.
+
+See the [FAQ]({{<ref "/docs/faqs" >}}) for more details and an architecture diagram.
+
 Some of the capabilities and benefits provided by Talos include:
 
 - **Security**: Talos reduces your attack surface by practicing the Principle of Least Privilege (PoLP) and by securing the API with mutual TLS (mTLS) authentication.
