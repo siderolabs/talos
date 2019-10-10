@@ -349,7 +349,11 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 		return nil, err
 	}
 
-	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr)
+	opts = []x509.Option{
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
+
+	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, opts...)
 	if err != nil {
 		return nil, err
 	}
