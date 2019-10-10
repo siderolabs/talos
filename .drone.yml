@@ -12,14 +12,11 @@ steps:
   commands:
   - git fetch --tags
 
-- name: machined
-  pull: always
+- name: builder
   image: autonomy/build-container:latest
   commands:
-  - make machined
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  - make builder
+  privileged: true
   volumes:
   - name: dockersock
     path: /var/run
@@ -27,8 +24,29 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - fetch-tags
+
+- name: machined
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make machined
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: osd
   pull: always
@@ -37,7 +55,6 @@ steps:
   - make osd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -45,8 +62,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: apid
   pull: always
@@ -55,7 +74,6 @@ steps:
   - make apid
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -63,8 +81,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: trustd
   pull: always
@@ -73,7 +93,6 @@ steps:
   - make trustd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -81,8 +100,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: ntpd
   pull: always
@@ -91,7 +112,6 @@ steps:
   - make ntpd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -99,8 +119,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: networkd
   pull: always
@@ -109,7 +131,6 @@ steps:
   - make networkd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -117,8 +138,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-linux
   pull: always
@@ -127,7 +150,6 @@ steps:
   - make osctl-linux
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -135,8 +157,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-darwin
   pull: always
@@ -145,7 +169,6 @@ steps:
   - make osctl-darwin
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -153,8 +176,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: rootfs
   pull: always
@@ -163,7 +188,6 @@ steps:
   - make rootfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -171,6 +195,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - machined
   - osd
@@ -186,7 +212,6 @@ steps:
   - make initramfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -194,6 +219,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -204,7 +231,6 @@ steps:
   - make installer
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -212,6 +238,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -222,7 +250,6 @@ steps:
   - make container
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -230,6 +257,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -240,7 +269,6 @@ steps:
   - make lint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -248,6 +276,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: protolint
   pull: always
@@ -256,7 +288,6 @@ steps:
   - make protolint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -264,6 +295,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: markdownlint
   pull: always
@@ -272,7 +307,6 @@ steps:
   - make markdownlint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -280,6 +314,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: image-test
   pull: always
@@ -288,7 +326,6 @@ steps:
   - make image-test
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -296,6 +333,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -306,7 +345,6 @@ steps:
   - make unit-tests
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -314,6 +352,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -324,7 +364,6 @@ steps:
   - make unit-tests-race
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -332,6 +371,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - lint
 
@@ -355,7 +396,6 @@ steps:
   - make basic-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -363,6 +403,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - container
   - osctl-linux
@@ -386,6 +428,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   when:
     event:
       exclude:
@@ -412,6 +456,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
 
 volumes:
 - name: dockersock
@@ -420,6 +466,8 @@ volumes:
   host:
     path: /dev
 - name: tmp
+  temp: {}
+- name: buildx
   temp: {}
 
 node:
@@ -448,14 +496,11 @@ steps:
   commands:
   - git fetch --tags
 
-- name: machined
-  pull: always
+- name: builder
   image: autonomy/build-container:latest
   commands:
-  - make machined
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  - make builder
+  privileged: true
   volumes:
   - name: dockersock
     path: /var/run
@@ -463,8 +508,29 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - fetch-tags
+
+- name: machined
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make machined
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: osd
   pull: always
@@ -473,7 +539,6 @@ steps:
   - make osd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -481,8 +546,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: apid
   pull: always
@@ -491,7 +558,6 @@ steps:
   - make apid
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -499,8 +565,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: trustd
   pull: always
@@ -509,7 +577,6 @@ steps:
   - make trustd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -517,8 +584,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: ntpd
   pull: always
@@ -527,7 +596,6 @@ steps:
   - make ntpd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -535,8 +603,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: networkd
   pull: always
@@ -545,7 +615,6 @@ steps:
   - make networkd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -553,8 +622,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-linux
   pull: always
@@ -563,7 +634,6 @@ steps:
   - make osctl-linux
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -571,8 +641,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-darwin
   pull: always
@@ -581,7 +653,6 @@ steps:
   - make osctl-darwin
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -589,8 +660,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: rootfs
   pull: always
@@ -599,7 +672,6 @@ steps:
   - make rootfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -607,6 +679,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - machined
   - osd
@@ -622,7 +696,6 @@ steps:
   - make initramfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -630,6 +703,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -640,7 +715,6 @@ steps:
   - make installer
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -648,6 +722,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -658,7 +734,6 @@ steps:
   - make container
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -666,6 +741,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -676,7 +753,6 @@ steps:
   - make lint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -684,6 +760,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: protolint
   pull: always
@@ -692,7 +772,6 @@ steps:
   - make protolint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -700,6 +779,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: markdownlint
   pull: always
@@ -708,7 +791,6 @@ steps:
   - make markdownlint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -716,6 +798,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: image-test
   pull: always
@@ -724,7 +810,6 @@ steps:
   - make image-test
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -732,6 +817,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -742,7 +829,6 @@ steps:
   - make unit-tests
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -750,6 +836,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -760,7 +848,6 @@ steps:
   - make unit-tests-race
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -768,6 +855,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - lint
 
@@ -791,7 +880,6 @@ steps:
   - make basic-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -799,6 +887,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - container
   - osctl-linux
@@ -822,6 +912,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   when:
     event:
       exclude:
@@ -841,7 +933,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -853,6 +944,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - basic-integration
 
@@ -863,7 +956,6 @@ steps:
   - make image-aws
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -871,6 +963,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -881,7 +975,6 @@ steps:
   - make image-azure
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -889,6 +982,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -899,7 +994,6 @@ steps:
   - make image-gcp
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -907,6 +1001,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -921,7 +1017,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -933,6 +1028,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-aws
 
@@ -947,7 +1044,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -959,6 +1055,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-azure
 
@@ -973,7 +1071,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -985,6 +1082,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-gcp
 
@@ -995,7 +1094,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     PLATFORM: aws
   volumes:
   - name: dockersock
@@ -1004,6 +1102,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-aws
@@ -1015,7 +1115,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     PLATFORM: azure
   volumes:
   - name: dockersock
@@ -1024,6 +1123,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-azure
@@ -1035,7 +1136,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     PLATFORM: gcp
   volumes:
   - name: dockersock
@@ -1044,6 +1144,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-gcp
@@ -1066,6 +1168,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
 
 volumes:
 - name: dockersock
@@ -1074,6 +1178,8 @@ volumes:
   host:
     path: /dev
 - name: tmp
+  temp: {}
+- name: buildx
   temp: {}
 
 node:
@@ -1097,14 +1203,11 @@ steps:
   commands:
   - git fetch --tags
 
-- name: machined
-  pull: always
+- name: builder
   image: autonomy/build-container:latest
   commands:
-  - make machined
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  - make builder
+  privileged: true
   volumes:
   - name: dockersock
     path: /var/run
@@ -1112,8 +1215,29 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - fetch-tags
+
+- name: machined
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make machined
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: osd
   pull: always
@@ -1122,7 +1246,6 @@ steps:
   - make osd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1130,8 +1253,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: apid
   pull: always
@@ -1140,7 +1265,6 @@ steps:
   - make apid
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1148,8 +1272,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: trustd
   pull: always
@@ -1158,7 +1284,6 @@ steps:
   - make trustd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1166,8 +1291,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: ntpd
   pull: always
@@ -1176,7 +1303,6 @@ steps:
   - make ntpd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1184,8 +1310,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: networkd
   pull: always
@@ -1194,7 +1322,6 @@ steps:
   - make networkd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1202,8 +1329,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-linux
   pull: always
@@ -1212,7 +1341,6 @@ steps:
   - make osctl-linux
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1220,8 +1348,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-darwin
   pull: always
@@ -1230,7 +1360,6 @@ steps:
   - make osctl-darwin
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1238,8 +1367,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: rootfs
   pull: always
@@ -1248,7 +1379,6 @@ steps:
   - make rootfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1256,6 +1386,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - machined
   - osd
@@ -1271,7 +1403,6 @@ steps:
   - make initramfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1279,6 +1410,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1289,7 +1422,6 @@ steps:
   - make installer
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1297,6 +1429,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1307,7 +1441,6 @@ steps:
   - make container
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1315,6 +1448,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1325,7 +1460,6 @@ steps:
   - make lint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1333,6 +1467,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: protolint
   pull: always
@@ -1341,7 +1479,6 @@ steps:
   - make protolint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1349,6 +1486,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: markdownlint
   pull: always
@@ -1357,7 +1498,6 @@ steps:
   - make markdownlint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1365,6 +1505,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: image-test
   pull: always
@@ -1373,7 +1517,6 @@ steps:
   - make image-test
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1381,6 +1524,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -1391,7 +1536,6 @@ steps:
   - make unit-tests
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1399,6 +1543,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1409,7 +1555,6 @@ steps:
   - make unit-tests-race
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1417,6 +1562,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - lint
 
@@ -1440,7 +1587,6 @@ steps:
   - make basic-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1448,6 +1594,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - container
   - osctl-linux
@@ -1471,6 +1619,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   when:
     event:
       exclude:
@@ -1490,7 +1640,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -1502,6 +1651,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - basic-integration
 
@@ -1512,7 +1663,6 @@ steps:
   - make image-aws
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1520,6 +1670,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -1530,7 +1682,6 @@ steps:
   - make image-azure
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1538,6 +1689,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -1548,7 +1701,6 @@ steps:
   - make image-gcp
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1556,6 +1708,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -1570,7 +1724,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -1582,6 +1735,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-aws
 
@@ -1596,7 +1751,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -1608,6 +1762,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-azure
 
@@ -1622,7 +1778,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -1634,6 +1789,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-gcp
 
@@ -1644,7 +1801,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
     PLATFORM: aws
   volumes:
@@ -1654,6 +1810,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-aws
@@ -1665,7 +1823,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
     PLATFORM: azure
   volumes:
@@ -1675,6 +1832,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-azure
@@ -1686,7 +1845,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
     PLATFORM: gcp
   volumes:
@@ -1696,6 +1854,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-gcp
@@ -1718,6 +1878,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
 
 volumes:
 - name: dockersock
@@ -1726,6 +1888,8 @@ volumes:
   host:
     path: /dev
 - name: tmp
+  temp: {}
+- name: buildx
   temp: {}
 
 node:
@@ -1749,14 +1913,11 @@ steps:
   commands:
   - git fetch --tags
 
-- name: machined
-  pull: always
+- name: builder
   image: autonomy/build-container:latest
   commands:
-  - make machined
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  - make builder
+  privileged: true
   volumes:
   - name: dockersock
     path: /var/run
@@ -1764,8 +1925,29 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - fetch-tags
+
+- name: machined
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make machined
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: osd
   pull: always
@@ -1774,7 +1956,6 @@ steps:
   - make osd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1782,8 +1963,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: apid
   pull: always
@@ -1792,7 +1975,6 @@ steps:
   - make apid
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1800,8 +1982,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: trustd
   pull: always
@@ -1810,7 +1994,6 @@ steps:
   - make trustd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1818,8 +2001,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: ntpd
   pull: always
@@ -1828,7 +2013,6 @@ steps:
   - make ntpd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1836,8 +2020,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: networkd
   pull: always
@@ -1846,7 +2032,6 @@ steps:
   - make networkd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1854,8 +2039,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-linux
   pull: always
@@ -1864,7 +2051,6 @@ steps:
   - make osctl-linux
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1872,8 +2058,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-darwin
   pull: always
@@ -1882,7 +2070,6 @@ steps:
   - make osctl-darwin
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1890,8 +2077,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: rootfs
   pull: always
@@ -1900,7 +2089,6 @@ steps:
   - make rootfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1908,6 +2096,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - machined
   - osd
@@ -1923,7 +2113,6 @@ steps:
   - make initramfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1931,6 +2120,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1941,7 +2132,6 @@ steps:
   - make installer
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1949,6 +2139,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1959,7 +2151,6 @@ steps:
   - make container
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1967,6 +2158,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -1977,7 +2170,6 @@ steps:
   - make lint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -1985,6 +2177,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: protolint
   pull: always
@@ -1993,7 +2189,6 @@ steps:
   - make protolint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2001,6 +2196,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: markdownlint
   pull: always
@@ -2009,7 +2208,6 @@ steps:
   - make markdownlint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2017,6 +2215,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: image-test
   pull: always
@@ -2025,7 +2227,6 @@ steps:
   - make image-test
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2033,6 +2234,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2043,7 +2246,6 @@ steps:
   - make unit-tests
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2051,6 +2253,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -2061,7 +2265,6 @@ steps:
   - make unit-tests-race
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2069,6 +2272,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - lint
 
@@ -2092,7 +2297,6 @@ steps:
   - make basic-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2100,6 +2304,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - container
   - osctl-linux
@@ -2123,6 +2329,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   when:
     event:
       exclude:
@@ -2142,7 +2350,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -2154,6 +2361,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - basic-integration
 
@@ -2164,7 +2373,6 @@ steps:
   - make image-aws
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2172,6 +2380,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2182,7 +2392,6 @@ steps:
   - make image-azure
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2190,6 +2399,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2200,7 +2411,6 @@ steps:
   - make image-gcp
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2208,6 +2418,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2222,7 +2434,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -2234,6 +2445,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-aws
 
@@ -2248,7 +2461,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -2260,6 +2472,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-azure
 
@@ -2274,7 +2488,6 @@ steps:
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -2286,6 +2499,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - image-gcp
 
@@ -2296,7 +2511,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
     PLATFORM: aws
   volumes:
@@ -2306,6 +2520,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-aws
@@ -2317,7 +2533,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
     PLATFORM: azure
   volumes:
@@ -2327,6 +2542,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-azure
@@ -2338,7 +2555,6 @@ steps:
   - make e2e-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
     CONFORMANCE: run
     PLATFORM: gcp
   volumes:
@@ -2348,6 +2564,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - capi
   - push-image-gcp
@@ -2370,6 +2588,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
 
 volumes:
 - name: dockersock
@@ -2378,6 +2598,8 @@ volumes:
   host:
     path: /dev
 - name: tmp
+  temp: {}
+- name: buildx
   temp: {}
 
 node:
@@ -2401,14 +2623,11 @@ steps:
   commands:
   - git fetch --tags
 
-- name: machined
-  pull: always
+- name: builder
   image: autonomy/build-container:latest
   commands:
-  - make machined
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  - make builder
+  privileged: true
   volumes:
   - name: dockersock
     path: /var/run
@@ -2416,8 +2635,29 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - fetch-tags
+
+- name: machined
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make machined
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: osd
   pull: always
@@ -2426,7 +2666,6 @@ steps:
   - make osd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2434,8 +2673,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: apid
   pull: always
@@ -2444,7 +2685,6 @@ steps:
   - make apid
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2452,8 +2692,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: trustd
   pull: always
@@ -2462,7 +2704,6 @@ steps:
   - make trustd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2470,8 +2711,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: ntpd
   pull: always
@@ -2480,7 +2723,6 @@ steps:
   - make ntpd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2488,8 +2730,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: networkd
   pull: always
@@ -2498,7 +2742,6 @@ steps:
   - make networkd
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2506,8 +2749,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-linux
   pull: always
@@ -2516,7 +2761,6 @@ steps:
   - make osctl-linux
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2524,8 +2768,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: osctl-darwin
   pull: always
@@ -2534,7 +2780,6 @@ steps:
   - make osctl-darwin
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2542,8 +2787,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
-  - fetch-tags
+  - builder
 
 - name: rootfs
   pull: always
@@ -2552,7 +2799,6 @@ steps:
   - make rootfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2560,6 +2806,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - machined
   - osd
@@ -2575,7 +2823,6 @@ steps:
   - make initramfs
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2583,6 +2830,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -2593,7 +2842,6 @@ steps:
   - make installer
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2601,6 +2849,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -2611,7 +2861,6 @@ steps:
   - make container
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2619,6 +2868,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -2629,7 +2880,6 @@ steps:
   - make lint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2637,6 +2887,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: protolint
   pull: always
@@ -2645,7 +2899,6 @@ steps:
   - make protolint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2653,6 +2906,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: markdownlint
   pull: always
@@ -2661,7 +2918,6 @@ steps:
   - make markdownlint
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2669,6 +2925,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: image-test
   pull: always
@@ -2677,7 +2937,6 @@ steps:
   - make image-test
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2685,6 +2944,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2695,7 +2956,6 @@ steps:
   - make unit-tests
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2703,6 +2963,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - rootfs
 
@@ -2713,7 +2975,6 @@ steps:
   - make unit-tests-race
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2721,6 +2982,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - lint
 
@@ -2744,7 +3007,6 @@ steps:
   - make basic-integration
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2752,6 +3014,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - container
   - osctl-linux
@@ -2775,6 +3039,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   when:
     event:
       exclude:
@@ -2790,7 +3056,6 @@ steps:
   - make kernel
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2798,6 +3063,10 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
+  depends_on:
+  - builder
 
 - name: image-aws
   pull: always
@@ -2806,7 +3075,6 @@ steps:
   - make image-aws
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2814,6 +3082,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2824,7 +3094,6 @@ steps:
   - make image-azure
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2832,6 +3101,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2842,7 +3113,6 @@ steps:
   - make image-digital-ocean
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2850,6 +3120,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2860,7 +3132,6 @@ steps:
   - make image-gcp
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2868,6 +3139,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2878,7 +3151,6 @@ steps:
   - make iso
   environment:
     BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
   volumes:
   - name: dockersock
     path: /var/run
@@ -2886,6 +3158,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
   depends_on:
   - installer
 
@@ -2929,6 +3203,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: buildx
+    path: /root/.docker/buildx
 
 volumes:
 - name: dockersock
@@ -2937,6 +3213,8 @@ volumes:
   host:
     path: /dev
 - name: tmp
+  temp: {}
+- name: buildx
   temp: {}
 
 node:
@@ -2972,6 +3250,8 @@ volumes:
   host:
     path: /dev
 - name: tmp
+  temp: {}
+- name: buildx
   temp: {}
 
 node:

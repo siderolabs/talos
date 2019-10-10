@@ -1,22 +1,6 @@
 TOOLS ?= autonomy/tools:8fdb32d
 
-# TODO(andrewrynhard): Move this logic to a shell script.
-BUILDKIT_VERSION ?= v0.6.0
 KUBECTL_VERSION ?= v1.16.0
-GO_VERSION ?= 1.13
-BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
-BUILDKIT_HOST ?= tcp://0.0.0.0:1234
-BUILDKIT_CONTAINER_NAME ?= talos-buildkit
-BUILDKIT_CONTAINER_STOPPED := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=exited --format='{{.Names}}' 2>/dev/null)
-BUILDKIT_CONTAINER_RUNNING := $(shell docker ps --filter name=$(BUILDKIT_CONTAINER_NAME) --filter status=running --format='{{.Names}}' 2>/dev/null)
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).linux-amd64.tar.gz
-endif
-ifeq ($(UNAME_S),Darwin)
-BUILDCTL_ARCHIVE := https://github.com/moby/buildkit/releases/download/$(BUILDKIT_VERSION)/buildkit-$(BUILDKIT_VERSION).darwin-amd64.tar.gz
-endif
 
 ifeq ($(UNAME_S),Linux)
 KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
@@ -33,33 +17,32 @@ GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alp
 endif
 
 BINDIR ?= ./bin
-CONFORM_VERSION ?= 57c9dbd
 
 SHA ?= $(shell $(BINDIR)/gitmeta git sha)
 TAG ?= $(shell $(BINDIR)/gitmeta image tag)
 BRANCH ?= $(shell $(BINDIR)/gitmeta git branch)
 
+BUILD = docker buildx build
+
 COMMON_ARGS = --progress=plain
-COMMON_ARGS += --frontend=dockerfile.v0
-COMMON_ARGS += --allow security.insecure
-COMMON_ARGS += --local context=.
-COMMON_ARGS += --local dockerfile=.
-COMMON_ARGS += --opt build-arg:TOOLS=$(TOOLS)
-COMMON_ARGS += --opt build-arg:SHA=$(SHA)
-COMMON_ARGS += --opt build-arg:TAG=$(TAG)
-COMMON_ARGS += --opt build-arg:GO_VERSION=$(GO_VERSION)
+COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
+COMMON_ARGS += --build-arg=SHA=$(SHA)
+COMMON_ARGS += --build-arg=TAG=$(TAG)
+COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
 
-DOCKER_ARGS ?=
+CONTEXT ?= tcp://docker-amd64.ci.svc:2376
 
+GO_VERSION ?= 1.13
 TESTPKGS ?= ./...
 
-all: ci rootfs initramfs kernel osctl-linux osctl-darwin installer container
+all: deps rootfs initramfs kernel osctl-linux osctl-darwin installer container
 
-.PHONY: ci
-ci: builddeps buildkitd
+.PHONY: deps
+deps: gitmeta
 
-.PHONY: builddeps
-builddeps: gitmeta buildctl
+.PHONY: builder
+builder:
+	docker buildx create --name talos-builder --buildkitd-flags '--allow-insecure-entitlement security.insecure' --driver docker-container --use $(CONTEXT)
 
 gitmeta: $(BINDIR)/gitmeta
 
@@ -68,12 +51,6 @@ $(BINDIR)/gitmeta:
 	@curl -L $(GITMETA) -o $(BINDIR)/gitmeta
 	@chmod +x $(BINDIR)/gitmeta
 
-buildctl: $(BINDIR)/buildctl
-
-$(BINDIR)/buildctl:
-	@mkdir -p $(BINDIR)
-	@curl -L $(BUILDCTL_ARCHIVE) | tar -zxf - -C $(BINDIR) --strip-components 1 bin/buildctl
-
 kubectl: $(BINDIR)/kubectl
 
 $(BINDIR)/kubectl:
@@ -81,81 +58,51 @@ $(BINDIR)/kubectl:
 	@curl -L -o $(BINDIR)/kubectl $(KUBECTL_ARCHIVE)
 	@chmod +x $(BINDIR)/kubectl
 
-.PHONY: buildkitd
-buildkitd:
-ifeq (tcp://0.0.0.0:1234,$(findstring tcp://0.0.0.0:1234,$(BUILDKIT_HOST)))
-ifeq ($(BUILDKIT_CONTAINER_STOPPED),$(BUILDKIT_CONTAINER_NAME))
-	@echo "Removing exited talos-buildkit container"
-	@docker rm $(BUILDKIT_CONTAINER_NAME)
-endif
-ifneq ($(BUILDKIT_CONTAINER_RUNNING),$(BUILDKIT_CONTAINER_NAME))
-	@echo "Starting talos-buildkit container"
-	@docker run \
-		--name $(BUILDKIT_CONTAINER_NAME) \
-		-d \
-		--privileged \
-		-p 1234:1234 \
-		$(BUILDKIT_IMAGE) \
-		--addr $(BUILDKIT_HOST) \
-		--allow-insecure-entitlement security.insecure
-	@echo "Wait for buildkitd to become available"
-	@sleep 5
-endif
-endif
-
-base: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
-
 .PHONY: generate
-generate: buildkitd
-	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+generate:
+	@$(BUILD) \
 		--output type=local,dest=./ \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: kernel
-kernel: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+kernel:
+	@$(BUILD) \
 		--output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 	@-rm -rf ./build/modules
 
 .PHONY: initramfs
-initramfs: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+initramfs:
+	@$(BUILD) \
 		--output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: rootfs
-rootfs: buildkitd osd trustd ntpd networkd apid
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+rootfs: osd trustd ntpd networkd apid
+	@$(BUILD) \
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
 .PHONY: installer
-installer: buildkitd
+installer:
 	@mkdir -p build
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+	@$(BUILD) \
 		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 	@docker load < build/$@.tar
 
 .PHONY: image-aws
 image-aws:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n aws \
@@ -170,7 +117,7 @@ image-aws:
 .PHONY: image-azure
 image-azure:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n azure \
@@ -180,7 +127,7 @@ image-azure:
 		-e console=ttyS0,115200n8 \
 		-e earlyprintk=ttyS0,115200 \
 		-e rootdelay=300
-	@docker run --rm -v $(PWD)/build:/out $(DOCKER_ARGS) \
+	@docker run --rm -v $(PWD)/build:/out \
 		--entrypoint qemu-img \
 		autonomy/installer:$(TAG) \
 		convert \
@@ -193,7 +140,7 @@ image-azure:
 .PHONY: image-digital-ocean
 image-digital-ocean:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n digital-ocean \
@@ -206,7 +153,7 @@ image-digital-ocean:
 .PHONY: image-gcp
 image-gcp:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n disk \
@@ -231,19 +178,19 @@ push-image-gcp:
 
 .PHONY: image-test
 image-test:
-	@docker run --rm -v /dev:/dev -v /tmp:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n test -r -p test -u none
+	@docker run --rm -v /dev:/dev -v /tmp:/out --privileged autonomy/installer:$(TAG) install -n test -r -p test -u none
 
 .PHONY: iso
 iso:
 	@docker run --rm -i -v $(PWD)/build:/out autonomy/installer:$(TAG) iso
 
 .PHONY: container
-container: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+container:
+	@$(BUILD) \
 		--output type=docker,dest=build/$@.tar,name=docker.io/autonomy/talos:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 	@docker load < build/$@.tar
 
 .PHONY: basic-integration
@@ -259,18 +206,16 @@ e2e-integration:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: unit-tests
-unit-tests: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+unit-tests:
+	@$(BUILD) \
 		--opt target=$@ \
 		--output type=local,dest=./ \
 		--opt build-arg:TESTPKGS=$(TESTPKGS) \
 		$(COMMON_ARGS)
 
 .PHONY: unit-tests-race
-unit-tests-race: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+unit-tests-race:
+	@$(BUILD) \
 		--opt target=$@ \
 		--opt build-arg:TESTPKGS=$(TESTPKGS) \
 		$(COMMON_ARGS)
@@ -280,88 +225,88 @@ fmt:
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports && cd - && gofumports -w -local github.com/talos-systems/talos ."
 
 .PHONY: lint
-lint: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+lint:
+	@$(BUILD) \
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: protolint
-protolint: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+protolint:
+	@$(BUILD) \
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: markdownlint
-markdownlint: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+markdownlint:
+	@$(BUILD) \
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: osctl-linux
-osctl-linux: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+osctl-linux:
+	@$(BUILD) \
 		--output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: osctl-darwin
-osctl-darwin: buildkitd
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+osctl-darwin:
+	@$(BUILD) \
 		--output type=local,dest=build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: machined
-machined: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+machined: images
+	@$(BUILD) \
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: osd
-osd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+osd: images
+	@$(BUILD) \
 		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: apid
-apid: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+apid: images
+	@$(BUILD) \
 		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: trustd
-trustd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+trustd: images
+	@$(BUILD) \
 		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: ntpd
-ntpd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+ntpd: images
+	@$(BUILD) \
 		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 .PHONY: networkd
-networkd: buildkitd images
-	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
-		build \
+networkd: images
+	@$(BUILD) \
 		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
-		--opt target=$@ \
-		$(COMMON_ARGS)
+		--target=$@ \
+		$(COMMON_ARGS) \
+		.
 
 images:
 	@mkdir -p images

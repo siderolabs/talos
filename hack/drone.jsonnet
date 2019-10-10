@@ -42,16 +42,29 @@ local volumes = {
     },
   },
 
+  buildx: {
+    pipeline: {
+      name: 'buildx',
+      temp: {},
+    },
+    step: {
+      name: $.buildx.pipeline.name,
+      path: '/root/.docker/buildx',
+    },
+  },
+
   ForStep(): [
     self.dockersock.step,
     self.dev.step,
     self.tmp.step,
+    self.buildx.step,
   ],
 
   ForPipeline(): [
     self.dockersock.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,
+    self.buildx.pipeline,
   ],
 };
 
@@ -70,18 +83,23 @@ local docker = {
   volumes: volumes.ForStep(),
 };
 
-// This step is used only when `drone exec` is executed.
-local buildkit = {
-  name: 'buildkit',
-  image: 'moby/buildkit:v0.6.0',
+local fetchtags = {
+  name: 'fetch-tags',
+  image: 'docker:git',
+  commands: [
+    'git fetch --tags',
+  ],
+};
+
+local builder = {
+  name: 'builder',
+  image: build_container,
   privileged: true,
-  detach: true,
-  commands: ['buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure'],
-  when: {
-    event: {
-      include: [''],
-    },
-  },
+  commands: [
+    'make builder',
+  ],
+  volumes: volumes.ForStep(),
+  depends_on: [fetchtags.name],
 };
 
 // Step standardizes the creation of build steps. The name of the step is used
@@ -90,10 +108,9 @@ local buildkit = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, target='', depends_on=[], environment={}) = {
+local Step(name, target='', depends_on=[builder], environment={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
   local common_env_vars = {
-    BUILDKIT_HOST: '${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}',
     BINDIR: '/usr/local/bin',
   },
 
@@ -108,7 +125,7 @@ local Step(name, target='', depends_on=[], environment={}) = {
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
-local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=true) = {
+local Pipeline(name, steps=[], depends_on=[], with_docker=true) = {
   local node = { 'node-role.kubernetes.io/ci': '' },
 
   kind: 'pipeline',
@@ -116,7 +133,6 @@ local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=t
   node: node,
   services: [
     if with_docker then docker,
-    if with_buildkit then buildkit,
   ],
   steps: steps,
   volumes: volumes.ForPipeline(),
@@ -124,22 +140,15 @@ local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=t
 };
 
 // Default pipeline.
-local fetchtags = {
-  name: 'fetch-tags',
-  image: 'docker:git',
-  commands: [
-    'git fetch --tags',
-  ],
-};
 
-local machined = Step("machined", depends_on=[fetchtags]);
-local osd = Step("osd", depends_on=[fetchtags]);
-local trustd = Step("trustd", depends_on=[fetchtags]);
-local ntpd = Step("ntpd", depends_on=[fetchtags]);
-local networkd = Step("networkd", depends_on=[fetchtags]);
-local osctl_linux = Step("osctl-linux", depends_on=[fetchtags]);
-local osctl_darwin = Step("osctl-darwin", depends_on=[fetchtags]);
-local apid = Step("apid", depends_on=[fetchtags]);
+local machined = Step("machined");
+local osd = Step("osd");
+local trustd = Step("trustd");
+local ntpd = Step("ntpd");
+local networkd = Step("networkd");
+local osctl_linux = Step("osctl-linux");
+local osctl_darwin = Step("osctl-darwin");
+local apid = Step("apid");
 local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
@@ -188,6 +197,7 @@ local push = {
 
 local default_steps = [
   fetchtags,
+  builder,
   machined,
   osd,
   apid,
@@ -407,7 +417,7 @@ local notify_depends_on = {
   ],
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false) + notify_trigger;
 
 // Final configuration file definition.
 
