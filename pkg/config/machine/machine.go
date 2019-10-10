@@ -53,6 +53,7 @@ type Security interface {
 	CA() *x509.PEMEncodedCertificateAndKey
 	Token() string
 	CertSANs() []string
+	SetCertSANs([]string)
 }
 
 // Network defines the requirements for a config that pertains to network

@@ -33,26 +33,27 @@ func (task *Platform) runtime(args *phase.RuntimeArgs) (err error) {
 		return err
 	}
 
-	_, err = args.Platform().Hostname()
+	hostname, err := args.Platform().Hostname()
 	if err != nil {
 		return err
 	}
 
-	// if hostname != nil {
-	// 	data.Networking.OS.Hostname = string(hostname)
-	// }
+	if hostname != nil {
+		args.Config().Machine().Network().SetHostname(string(hostname))
+	}
 
-	// // Attempt to identify external addresses assigned to the instance via platform
-	// // metadata
-	// addrs, err := platform.ExternalIPs()
-	// if err != nil {
-	// 	return err
-	// }
+	addrs, err := args.Platform().ExternalIPs()
+	if err != nil {
+		return err
+	}
 
-	// // And add them to our cert SANs for trustd
-	// for _, addr := range addrs {
-	// 	data.Services.Trustd.CertSANs = append(data.Services.Trustd.CertSANs, addr.String())
-	// }
+	sans := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		sans = append(sans, addr.String())
+	}
+
+	args.Config().Machine().Security().SetCertSANs(sans)
+	args.Config().Cluster().SetCertSANs(sans)
 
 	return nil
 }

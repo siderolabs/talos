@@ -89,6 +89,15 @@ func (c *ClusterConfig) CertSANs() []string {
 	return c.APIServer.CertSANs
 }
 
+// SetCertSANs implements the Configurator interface.
+func (c *ClusterConfig) SetCertSANs(sans []string) {
+	if c.APIServer == nil {
+		c.APIServer = &APIServerConfig{}
+	}
+
+	c.APIServer.CertSANs = sans
+}
+
 // CA implements the Configurator interface.
 func (c *ClusterConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return c.ClusterCA
