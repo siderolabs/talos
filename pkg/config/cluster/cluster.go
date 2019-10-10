@@ -16,6 +16,7 @@ type Cluster interface {
 	IPs() []string
 	Token() Token
 	CertSANs() []string
+	SetCertSANs([]string)
 	CA() *x509.PEMEncodedCertificateAndKey
 	AESCBCEncryptionSecret() string
 	Config(machine.Type) (string, error)
