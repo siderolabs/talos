@@ -21,15 +21,15 @@ func NewSaveConfigTask() phase.Task {
 	return &SaveConfig{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *SaveConfig) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *SaveConfig) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
-func (task *SaveConfig) runtime(args *phase.RuntimeArgs) (err error) {
-	log.Printf("saving config %s to disk\n", args.Config().Version())
+func (task *SaveConfig) runtime(r runtime.Runtime) (err error) {
+	log.Printf("saving config %s to disk\n", r.Config().Version())
 
-	s, err := args.Config().String()
+	s, err := r.Config().String()
 	if err != nil {
 		return err
 	}

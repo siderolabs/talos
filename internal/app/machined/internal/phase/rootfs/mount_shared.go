@@ -19,8 +19,8 @@ func NewMountSharedTask() phase.Task {
 	return &MountShared{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *MountShared) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *MountShared) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return task.container
@@ -29,7 +29,7 @@ func (task *MountShared) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountShared) container(args *phase.RuntimeArgs) (err error) {
+func (task *MountShared) container(r runtime.Runtime) (err error) {
 	targets := []string{"/", "/var/lib/kubelet", "/etc/cni"}
 	for _, t := range targets {
 		if err = unix.Mount("", t, "", unix.MS_SHARED, ""); err != nil {

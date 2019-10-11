@@ -24,8 +24,8 @@ func NewUnmountSystemDisksTask(devname string) phase.Task {
 	}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *UnmountSystemDisks) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *UnmountSystemDisks) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -34,7 +34,7 @@ func (task *UnmountSystemDisks) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc
 	}
 }
 
-func (task *UnmountSystemDisks) standard(args *phase.RuntimeArgs) (err error) {
+func (task *UnmountSystemDisks) standard(r runtime.Runtime) (err error) {
 	var mountpoints *mount.Points
 
 	mountpoints, err = owned.MountPointsForDevice(task.devname)

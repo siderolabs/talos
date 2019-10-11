@@ -23,15 +23,15 @@ func NewExtraDevicesTask() phase.Task {
 	return &ExtraDevices{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *ExtraDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *ExtraDevices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
-func (task *ExtraDevices) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *ExtraDevices) runtime(r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
-	for _, extra := range args.Config().Machine().Install().ExtraDisks() {
+	for _, extra := range r.Config().Machine().Install().ExtraDisks() {
 		for i, part := range extra.Partitions {
 			devname := fmt.Sprintf("%s%d", extra.Device, i+1)
 			mountpoints.Set(devname, mount.NewMountPoint(devname, part.MountPoint, "xfs", unix.MS_NOATIME, ""))

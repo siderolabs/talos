@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/kubernetes"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // LabelNodeAsMaster represents the LabelNodeAsMaster task.
@@ -25,19 +26,19 @@ func NewLabelNodeAsMasterTask() phase.Task {
 	return &LabelNodeAsMaster{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *LabelNodeAsMaster) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *LabelNodeAsMaster) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *LabelNodeAsMaster) standard(args *phase.RuntimeArgs) (err error) {
-	if args.Config().Machine().Type() == machine.Worker {
+func (task *LabelNodeAsMaster) standard(r runtime.Runtime) (err error) {
+	if r.Config().Machine().Type() == machine.Worker {
 		return nil
 	}
 
-	endpoint := net.ParseIP(args.Config().Cluster().Endpoint())
+	endpoint := net.ParseIP(r.Config().Cluster().Endpoint())
 
-	h, err := kubernetes.NewTemporaryClientFromPKI(args.Config().Cluster().CA().Crt, args.Config().Cluster().CA().Key, endpoint.String(), "6443")
+	h, err := kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA().Crt, r.Config().Cluster().CA().Key, endpoint.String(), "6443")
 	if err != nil {
 		return err
 	}
@@ -47,13 +48,17 @@ func (task *LabelNodeAsMaster) standard(args *phase.RuntimeArgs) (err error) {
 		return err
 	}
 
-	for i := 0; i < 200; i++ {
-		if err = h.LabelNodeAsMaster(hostname); err == nil {
-			return nil
+	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
+		if err = h.LabelNodeAsMaster(hostname); err != nil {
+			return retry.ExpectedError(err)
 		}
 
-		time.Sleep(3 * time.Second)
+		return nil
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "failed to label node as master")
 	}
 
-	return errors.New("failed to label node as master")
+	return nil
 }

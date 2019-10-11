@@ -27,8 +27,8 @@ func NewUnmountPodMountsTask() phase.Task {
 	return &UnmountPodMounts{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *UnmountPodMounts) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *UnmountPodMounts) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -37,16 +37,16 @@ func (task *UnmountPodMounts) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *UnmountPodMounts) standard(args *phase.RuntimeArgs) (err error) {
+func (task *UnmountPodMounts) standard(r runtime.Runtime) (err error) {
 	var b []byte
 
 	if b, err = ioutil.ReadFile("/proc/self/mounts"); err != nil {
 		return err
 	}
 
-	r := bytes.NewReader(b)
+	rdr := bytes.NewReader(b)
 
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(rdr)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 

@@ -21,9 +21,9 @@ func NewCordonAndDrainTask() phase.Task {
 	return &CordonAndDrain{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *CordonAndDrain) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(args *phase.RuntimeArgs) error {
+// TaskFunc returns the runtime function.
+func (task *CordonAndDrain) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+	return func(r runtime.Runtime) error {
 		return task.standard()
 	}
 }

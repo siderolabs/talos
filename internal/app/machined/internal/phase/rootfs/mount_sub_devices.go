@@ -22,8 +22,8 @@ func NewMountSubDevicesTask() phase.Task {
 	return &MountSubDevices{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *MountSubDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *MountSubDevices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -32,7 +32,7 @@ func (task *MountSubDevices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountSubDevices) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *MountSubDevices) runtime(r runtime.Runtime) (err error) {
 	var mountpoints *mount.Points
 
 	mountpoints, err = virtual.SubMountPoints()

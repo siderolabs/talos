@@ -5,38 +5,27 @@
 package platform
 
 import (
-	"net"
 	"os"
 
 	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/platform/aws"
-
-	"github.com/talos-systems/talos/internal/pkg/platform/azure"
-	"github.com/talos-systems/talos/internal/pkg/platform/container"
-	"github.com/talos-systems/talos/internal/pkg/platform/gcp"
-	"github.com/talos-systems/talos/internal/pkg/platform/iso"
-	"github.com/talos-systems/talos/internal/pkg/platform/metal"
-	"github.com/talos-systems/talos/internal/pkg/platform/packet"
-	"github.com/talos-systems/talos/internal/pkg/platform/vmware"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/aws"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/azure"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/container"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/gcp"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/iso"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/metal"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/packet"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/vmware"
 	"github.com/talos-systems/talos/pkg/constants"
 )
-
-// Platform is an interface describing a platform.
-type Platform interface {
-	Name() string
-	Configuration() ([]byte, error)
-	Mode() runtime.Mode
-	Hostname() ([]byte, error)
-	ExternalIPs() ([]net.IP, error)
-}
 
 // NewPlatform is a helper func for discovering the current platform.
 //
 // nolint: gocyclo
-func NewPlatform() (p Platform, err error) {
+func NewPlatform() (p runtime.Platform, err error) {
 	var platform string
 	if p := kernel.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
 		platform = *p

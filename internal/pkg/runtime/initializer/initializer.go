@@ -5,7 +5,6 @@
 package initializer
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/platform"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/cloud"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/container"
@@ -17,7 +16,7 @@ import (
 // Initializer defines a process for initializing the system based on the
 // environment it is in.
 type Initializer interface {
-	Initialize(platform.Platform, machine.Install) error
+	Initialize(runtime.Platform, machine.Install) error
 }
 
 // New initializes and returns and Initializer based on the runtime mode.

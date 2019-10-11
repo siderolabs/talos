@@ -20,8 +20,8 @@ func NewUnmountOverlayTask() phase.Task {
 	return &UnmountOverlay{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *UnmountOverlay) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *UnmountOverlay) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -30,7 +30,7 @@ func (task *UnmountOverlay) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *UnmountOverlay) standard(args *phase.RuntimeArgs) (err error) {
+func (task *UnmountOverlay) standard(r runtime.Runtime) (err error) {
 	var mountpoints *mount.Points
 
 	mountpoints, err = overlay.MountPoints()

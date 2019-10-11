@@ -24,17 +24,17 @@ func NewStopNonCrucialServicesTask() phase.Task {
 	return &StopNonCrucialServices{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *StopNonCrucialServices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *StopNonCrucialServices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *StopNonCrucialServices) standard(args *phase.RuntimeArgs) (err error) {
+func (task *StopNonCrucialServices) standard(r runtime.Runtime) (err error) {
 	ctx := namespaces.WithNamespace(context.Background(), "k8s.io")
 
 	services := []string{"osd", "udevd", "networkd", "ntpd"}
-	if args.Config().Machine().Type() == machine.Bootstrap || args.Config().Machine().Type() == machine.ControlPlane {
-		services = append(services, "trustd")
+	if r.Config().Machine().Type() == machine.Bootstrap || r.Config().Machine().Type() == machine.ControlPlane {
+		services = append(services, "trustd", "proxyd")
 	}
 
 	for _, service := range services {

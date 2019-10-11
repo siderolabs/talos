@@ -36,14 +36,14 @@ func (c *Container) Configuration() ([]byte, error) {
 	return decoded, nil
 }
 
-// Mode implements the platform.Platform interface.
-func (c *Container) Mode() runtime.Mode {
-	return runtime.Container
-}
-
 // Hostname implements the platform.Platform interface.
 func (c *Container) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// Mode implements the platform.Platform interface.
+func (c *Container) Mode() runtime.Mode {
+	return runtime.Container
 }
 
 // ExternalIPs provides any external addresses assigned to the instance

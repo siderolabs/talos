@@ -22,8 +22,8 @@ func NewHostnameTask() phase.Task {
 	return &Hostname{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Hostname) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Hostname) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -32,7 +32,7 @@ func (task *Hostname) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Hostname) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *Hostname) runtime(r runtime.Runtime) (err error) {
 	// Create /etc/hosts and set hostname.
 	// Priority is:
 	// 1. Config (explicitly defined by the user)
@@ -44,21 +44,21 @@ func (task *Hostname) runtime(args *phase.RuntimeArgs) (err error) {
 
 	var platformHostname []byte
 
-	platformHostname, err = args.Platform().Hostname()
+	platformHostname, err = r.Platform().Hostname()
 	if err != nil {
 		return err
 	}
 
-	configHostname := args.Config().Machine().Network().Hostname()
+	configHostname := r.Config().Machine().Network().Hostname()
 
 	switch {
 	case configHostname != "":
 		log.Printf("using hostname from config: %s\n", configHostname)
 	case kernelHostname != nil:
-		args.Config().Machine().Network().SetHostname(*kernelHostname)
+		r.Config().Machine().Network().SetHostname(*kernelHostname)
 		log.Printf("using hostname provide via kernel arg: %s\n", *kernelHostname)
 	case platformHostname != nil:
-		args.Config().Machine().Network().SetHostname(string(platformHostname))
+		r.Config().Machine().Network().SetHostname(string(platformHostname))
 		log.Printf("using hostname provided via platform: %s\n", string(platformHostname))
 
 		// case data.Networking.OS.Hostname != "":
@@ -66,5 +66,5 @@ func (task *Hostname) runtime(args *phase.RuntimeArgs) (err error) {
 		// 	log.Printf("dhcp hostname %s:", data.Networking.OS.Hostname)
 	} //nolint: wsl
 
-	return etc.Hosts(args.Config().Machine().Network().Hostname())
+	return etc.Hosts(r.Config().Machine().Network().Hostname())
 }

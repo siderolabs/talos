@@ -18,12 +18,12 @@ func NewOSReleaseTask() phase.Task {
 	return &OSRelease{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *OSRelease) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *OSRelease) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
-func (task *OSRelease) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *OSRelease) runtime(r runtime.Runtime) (err error) {
 	// Create /etc/os-release.
 	return etc.OSRelease()
 }

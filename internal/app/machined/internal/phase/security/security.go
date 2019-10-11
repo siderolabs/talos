@@ -18,8 +18,8 @@ func NewSecurityTask() phase.Task {
 	return &Security{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Security) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Security) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -28,7 +28,7 @@ func (task *Security) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Security) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *Security) runtime(r runtime.Runtime) (err error) {
 	if err = kspp.EnforceKSPPKernelParameters(); err != nil {
 		return err
 	}

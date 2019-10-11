@@ -18,9 +18,9 @@ func NewStopServicesTask() phase.Task {
 	return &StopServices{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *StopServices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(args *phase.RuntimeArgs) error {
+// TaskFunc returns the runtime function.
+func (task *StopServices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+	return func(r runtime.Runtime) error {
 		return task.standard()
 	}
 }

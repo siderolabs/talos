@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
@@ -22,7 +22,7 @@ import (
 type Metal struct{}
 
 // Initialize implements the Initializer interface.
-func (b *Metal) Initialize(platform platform.Platform, install machine.Install) (err error) {
+func (b *Metal) Initialize(platform runtime.Platform, install machine.Install) (err error) {
 	// Attempt to discover a previous installation
 	// An err case should only happen if no partitions
 	// with matching labels were found

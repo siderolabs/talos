@@ -21,9 +21,9 @@ func NewStopContainerdTask() phase.Task {
 	return &StopContainerd{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *StopContainerd) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(args *phase.RuntimeArgs) error {
+// TaskFunc returns the runtime function.
+func (task *StopContainerd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+	return func(r runtime.Runtime) error {
 		return task.standard()
 	}
 }

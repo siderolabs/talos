@@ -23,8 +23,8 @@ func NewUserDefinedNetworkTask() phase.Task {
 	return &UserDefinedNetwork{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *UserDefinedNetwork) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *UserDefinedNetwork) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -34,7 +34,7 @@ func (task *UserDefinedNetwork) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc
 }
 
 // nolint: gocyclo
-func (task *UserDefinedNetwork) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *UserDefinedNetwork) runtime(r runtime.Runtime) (err error) {
 	nwd, err := networkd.New()
 	if err != nil {
 		return err

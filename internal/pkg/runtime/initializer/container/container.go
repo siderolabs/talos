@@ -5,7 +5,7 @@
 package container
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
@@ -13,6 +13,6 @@ import (
 type Container struct{}
 
 // Initialize implements the Initializer interface.
-func (c *Container) Initialize(platform platform.Platform, install machine.Install) (err error) {
+func (c *Container) Initialize(platform runtime.Platform, install machine.Install) (err error) {
 	return nil
 }

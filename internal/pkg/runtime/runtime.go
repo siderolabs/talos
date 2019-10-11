@@ -4,6 +4,10 @@
 
 package runtime
 
+import (
+	"github.com/talos-systems/talos/pkg/config"
+)
+
 // Mode is a runtime mode.
 type Mode int
 
@@ -21,4 +25,34 @@ const (
 // String returns the string representation of a Mode.
 func (m Mode) String() string {
 	return [...]string{"Cloud", "Container", "Interactive", "Metal"}[m]
+}
+
+// Runtime defines the runtime parameters.
+type Runtime interface {
+	Platform() Platform
+	Config() config.Configurator
+}
+
+// NewRuntime initializes and returns the runtime interface.
+func NewRuntime(p Platform, c config.Configurator) Runtime {
+	return &DefaultRuntime{
+		p: p,
+		c: c,
+	}
+}
+
+// DefaultRuntime implements the Runtime interface.
+type DefaultRuntime struct {
+	p Platform
+	c config.Configurator
+}
+
+// Platform implements the Runtime interface.
+func (d *DefaultRuntime) Platform() Platform {
+	return d.p
+}
+
+// Config implements the Runtime interface.
+func (d *DefaultRuntime) Config() config.Configurator {
+	return d.c
 }
