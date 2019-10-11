@@ -56,7 +56,7 @@ func (o *OSD) PostFunc(config config.Configurator) (err error) {
 // Condition implements the Service interface.
 func (o *OSD) Condition(config config.Configurator) conditions.Condition {
 	if config.Machine().Type() == machine.Worker {
-		return conditions.WaitForFileToExist("/etc/kubernetes/kubelet.conf")
+		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
 
 	return nil
