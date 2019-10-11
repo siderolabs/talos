@@ -38,11 +38,9 @@ type Helper struct {
 
 // NewHelper initializes and returns a Helper.
 func NewHelper() (helper *Helper, err error) {
-	kubeconfig := "/etc/kubernetes/kubelet.conf"
-
 	var config *restclient.Config
 
-	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err = clientcmd.BuildConfigFromFlags("", constants.KubeletKubeconfig)
 	if err != nil {
 		return nil, err
 	}

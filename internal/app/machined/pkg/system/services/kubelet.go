@@ -149,7 +149,7 @@ func (k *Kubelet) Runner(config config.Configurator) (runner.Runner, error) {
 			"/hyperkube",
 			"kubelet",
 			"--bootstrap-kubeconfig=" + constants.KubeletBootstrapKubeconfig,
-			"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
+			"--kubeconfig=" + constants.KubeletKubeconfig,
 			"--container-runtime=remote",
 			"--container-runtime-endpoint=unix://" + constants.ContainerdAddress,
 			"--anonymous-auth=false",

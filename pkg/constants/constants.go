@@ -140,6 +140,9 @@ const (
 	// AdminKubeconfig is the generated admin kubeconfig.
 	AdminKubeconfig = "/etc/kubernetes/kubeconfig"
 
+	// KubeletKubeconfig is the generated kubeconfig for kubelet.
+	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
+
 	// DefaultEtcdVersion is the default target version of etcd.
 	DefaultEtcdVersion = "3.3.15-0"
 
