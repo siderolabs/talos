@@ -26,22 +26,22 @@ type regularTask struct {
 	errCh <-chan error
 }
 
-func (t *regularTask) RuntimeFunc(runtime.Mode) phase.RuntimeFunc {
-	return func(*phase.RuntimeArgs) error {
+func (t *regularTask) TaskFunc(runtime.Mode) phase.TaskFunc {
+	return func(runtime.Runtime) error {
 		return <-t.errCh
 	}
 }
 
 type nilTask struct{}
 
-func (t *nilTask) RuntimeFunc(runtime.Mode) phase.RuntimeFunc {
+func (t *nilTask) TaskFunc(runtime.Mode) phase.TaskFunc {
 	return nil
 }
 
 type panicTask struct{}
 
-func (t *panicTask) RuntimeFunc(runtime.Mode) phase.RuntimeFunc {
-	return func(*phase.RuntimeArgs) error {
+func (t *panicTask) TaskFunc(runtime.Mode) phase.TaskFunc {
+	return func(runtime.Runtime) error {
 		panic("in task")
 	}
 }

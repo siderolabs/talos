@@ -21,12 +21,12 @@ func NewSysctlsTask() phase.Task {
 	return &Task{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Task) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Task) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
-func (task *Task) runtime(args *phase.RuntimeArgs) error {
+func (task *Task) runtime(r runtime.Runtime) error {
 	var multiErr *multierror.Error
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {

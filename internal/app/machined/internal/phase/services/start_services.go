@@ -20,22 +20,22 @@ func NewStartServicesTask() phase.Task {
 	return &StartServices{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *StartServices) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *StartServices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *StartServices) standard(args *phase.RuntimeArgs) (err error) {
-	task.loadSystemServices(args)
-	task.loadKubernetesServices(args)
+func (task *StartServices) standard(r runtime.Runtime) (err error) {
+	task.loadSystemServices(r)
+	task.loadKubernetesServices(r)
 
-	system.Services(args.Config()).StartAll()
+	system.Services(r.Config()).StartAll()
 
 	return nil
 }
 
-func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
-	svcs := system.Services(args.Config())
+func (task *StartServices) loadSystemServices(r runtime.Runtime) {
+	svcs := system.Services(r.Config())
 	// Start the services common to all nodes.
 	svcs.Load(
 		&services.MachinedAPI{},
@@ -44,7 +44,9 @@ func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
 		&services.Networkd{},
 	)
 
-	if args.Platform().Mode() != runtime.Container {
+	if r.Platform().Mode() != runtime.Container {
+		// udevd-trigger is causing stalls/unresponsive stuff when running in local mode
+		// TODO: investigate root cause, but workaround for now is to skip it in container mode
 		svcs.Load(
 			&services.NTPd{},
 			&services.Udevd{},
@@ -54,7 +56,7 @@ func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
 
 	// Start the services common to all control plane nodes.
 
-	switch args.Config().Machine().Type() {
+	switch r.Config().Machine().Type() {
 	case machine.Bootstrap:
 		fallthrough
 	case machine.ControlPlane:
@@ -65,13 +67,13 @@ func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
 	}
 }
 
-func (task *StartServices) loadKubernetesServices(args *phase.RuntimeArgs) {
-	svcs := system.Services(args.Config())
+func (task *StartServices) loadKubernetesServices(r runtime.Runtime) {
+	svcs := system.Services(r.Config())
 	svcs.Load(
 		&services.Kubelet{},
 	)
 
-	if args.Config().Machine().Type() == machine.Bootstrap {
+	if r.Config().Machine().Type() == machine.Bootstrap {
 		svcs.Load(
 			&services.Bootkube{},
 		)

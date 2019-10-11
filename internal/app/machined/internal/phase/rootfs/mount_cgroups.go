@@ -35,8 +35,8 @@ func NewMountCgroupsTask() phase.Task {
 	return &MountCgroups{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *MountCgroups) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *MountCgroups) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -45,7 +45,7 @@ func (task *MountCgroups) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountCgroups) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *MountCgroups) runtime(r runtime.Runtime) (err error) {
 	var mountpoints *mount.Points
 
 	mountpoints, err = cgroups.MountPoints()

@@ -29,13 +29,13 @@ func NewLeaveEtcdTask() phase.Task {
 	return &LeaveEtcd{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *LeaveEtcd) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *LeaveEtcd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *LeaveEtcd) standard(args *phase.RuntimeArgs) (err error) {
-	if args.Config().Machine().Type() == machine.Worker {
+func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
+	if r.Config().Machine().Type() == machine.Worker {
 		return nil
 	}
 

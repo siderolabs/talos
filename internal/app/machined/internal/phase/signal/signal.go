@@ -23,8 +23,8 @@ func NewHandlerTask() phase.Task {
 	return &Handler{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Handler) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Handler) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return task.container
@@ -33,7 +33,7 @@ func (task *Handler) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Handler) container(args *phase.RuntimeArgs) (err error) {
+func (task *Handler) container(r runtime.Runtime) (err error) {
 	termCh := make(chan os.Signal, 1)
 	signal.Notify(termCh, syscall.SIGTERM)
 

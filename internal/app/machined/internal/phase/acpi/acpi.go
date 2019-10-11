@@ -24,8 +24,8 @@ func NewHandlerTask() phase.Task {
 	return &Handler{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Handler) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Handler) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -34,7 +34,7 @@ func (task *Handler) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *Handler) standard(args *phase.RuntimeArgs) (err error) {
+func (task *Handler) standard(r runtime.Runtime) (err error) {
 	if err := listenForPowerButton(); err != nil {
 		log.Printf("WARNING: power off events will be ignored: %+v", err)
 	}

@@ -19,14 +19,14 @@ func NewStartSystemContainerdTask() phase.Task {
 	return &StartSystemContainerd{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *StartSystemContainerd) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *StartSystemContainerd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *StartSystemContainerd) standard(args *phase.RuntimeArgs) (err error) {
-	system.Services(args.Config()).LoadAndStart(&services.SystemContainerd{})
-	system.Services(args.Config()).LoadAndStart(&services.SystemContainerd{})
+func (task *StartSystemContainerd) standard(r runtime.Runtime) (err error) {
+	system.Services(r.Config()).LoadAndStart(&services.SystemContainerd{})
+	system.Services(r.Config()).LoadAndStart(&services.SystemContainerd{})
 
 	return nil
 }

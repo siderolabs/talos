@@ -23,15 +23,15 @@ func NewExtraFilesTask() phase.Task {
 	return &ExtraFiles{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *ExtraFiles) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *ExtraFiles) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
-func (task *ExtraFiles) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *ExtraFiles) runtime(r runtime.Runtime) (err error) {
 	var result *multierror.Error
 
-	for _, f := range args.Config().Machine().Files() {
+	for _, f := range r.Config().Machine().Files() {
 		p := filepath.Join("/var", f.Path)
 		if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
 			result = multierror.Append(result, err)

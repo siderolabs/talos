@@ -31,7 +31,7 @@ func (p *Packet) Configuration() ([]byte, error) {
 
 // Mode implements the platform.Platform interface.
 func (p *Packet) Mode() runtime.Mode {
-	return runtime.Metal
+	return runtime.Cloud
 }
 
 // Hostname implements the platform.Platform interface.

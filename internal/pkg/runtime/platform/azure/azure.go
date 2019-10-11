@@ -46,11 +46,6 @@ func (a *Azure) Configuration() ([]byte, error) {
 	return config.Download(AzureUserDataEndpoint, config.WithHeaders(map[string]string{"Metadata": "true"}), config.WithFormat("base64"))
 }
 
-// Mode implements the platform.Platform interface.
-func (a *Azure) Mode() runtime.Mode {
-	return runtime.Cloud
-}
-
 // Hostname gets the hostname from the Azure metadata endpoint.
 func (a *Azure) Hostname() (hostname []byte, err error) {
 	var (
@@ -80,6 +75,11 @@ func (a *Azure) Hostname() (hostname []byte, err error) {
 	}
 
 	return ioutil.ReadAll(resp.Body)
+}
+
+// Mode implements the platform.Platform interface.
+func (a *Azure) Mode() runtime.Mode {
+	return runtime.Cloud
 }
 
 // ExternalIPs provides any external addresses assigned to the instance

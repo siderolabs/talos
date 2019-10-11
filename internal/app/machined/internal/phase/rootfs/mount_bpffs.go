@@ -20,8 +20,8 @@ func NewMountBPFFSTask() phase.Task {
 	return &MountBPFFS{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *MountBPFFS) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *MountBPFFS) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -30,7 +30,7 @@ func (task *MountBPFFS) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *MountBPFFS) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *MountBPFFS) runtime(r runtime.Runtime) (err error) {
 	var mountpoints *mount.Points
 
 	mountpoints, err = bpffs.MountPoints()

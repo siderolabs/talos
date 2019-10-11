@@ -18,31 +18,31 @@ func NewPlatformTask() phase.Task {
 	return &Platform{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Platform) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Platform) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
-func (task *Platform) runtime(args *phase.RuntimeArgs) (err error) {
-	i, err := initializer.New(args.Platform().Mode())
+func (task *Platform) runtime(r runtime.Runtime) (err error) {
+	i, err := initializer.New(r.Platform().Mode())
 	if err != nil {
 		return err
 	}
 
-	if err = i.Initialize(args.Platform(), args.Config().Machine().Install()); err != nil {
+	if err = i.Initialize(r.Platform(), r.Config().Machine().Install()); err != nil {
 		return err
 	}
 
-	hostname, err := args.Platform().Hostname()
+	hostname, err := r.Platform().Hostname()
 	if err != nil {
 		return err
 	}
 
 	if hostname != nil {
-		args.Config().Machine().Network().SetHostname(string(hostname))
+		r.Config().Machine().Network().SetHostname(string(hostname))
 	}
 
-	addrs, err := args.Platform().ExternalIPs()
+	addrs, err := r.Platform().ExternalIPs()
 	if err != nil {
 		return err
 	}
@@ -52,8 +52,8 @@ func (task *Platform) runtime(args *phase.RuntimeArgs) (err error) {
 		sans = append(sans, addr.String())
 	}
 
-	args.Config().Machine().Security().SetCertSANs(sans)
-	args.Config().Cluster().SetCertSANs(sans)
+	r.Config().Machine().Security().SetCertSANs(sans)
+	r.Config().Cluster().SetCertSANs(sans)
 
 	return nil
 }

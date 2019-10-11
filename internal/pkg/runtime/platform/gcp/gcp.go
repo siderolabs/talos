@@ -37,14 +37,14 @@ func (g *GCP) Configuration() ([]byte, error) {
 	return config.Download(GCUserDataEndpoint, config.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 
-// Mode implements the platform.Platform interface.
-func (g *GCP) Mode() runtime.Mode {
-	return runtime.Cloud
-}
-
 // Hostname implements the platform.Platform interface.
 func (g *GCP) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// Mode implements the platform.Platform interface.
+func (g *GCP) Mode() runtime.Mode {
+	return runtime.Cloud
 }
 
 // ExternalIPs provides any external addresses assigned to the instance

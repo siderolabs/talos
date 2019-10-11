@@ -30,9 +30,9 @@ func NewKillKubernetesTasksTask() phase.Task {
 	return &KillKubernetesTasks{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *KillKubernetesTasks) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
-	return func(args *phase.RuntimeArgs) error {
+// TaskFunc returns the runtime function.
+func (task *KillKubernetesTasks) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+	return func(r runtime.Runtime) error {
 		return task.standard()
 	}
 }

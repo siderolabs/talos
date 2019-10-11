@@ -41,14 +41,14 @@ func (i *ISO) Configuration() ([]byte, error) {
 	return b, nil
 }
 
-// Mode implements the platform.Platform interface.
-func (i *ISO) Mode() runtime.Mode {
-	return runtime.Interactive
-}
-
 // Hostname implements the platform.Platform interface.
 func (i *ISO) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// Mode implements the platform.Platform interface.
+func (i *ISO) Mode() runtime.Mode {
+	return runtime.Interactive
 }
 
 // ExternalIPs provides any external addresses assigned to the instance

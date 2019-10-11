@@ -8,7 +8,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
@@ -16,7 +16,7 @@ import (
 type Cloud struct{}
 
 // Initialize implements the Initializer interface.
-func (c *Cloud) Initialize(platform platform.Platform, install machine.Install) (err error) {
+func (c *Cloud) Initialize(platform runtime.Platform, install machine.Install) (err error) {
 	var mountpoints *mount.Points
 
 	mountpoints, err = owned.MountPointsFromLabels()

@@ -17,7 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
-	"github.com/talos-systems/talos/internal/pkg/platform"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -28,7 +28,7 @@ import (
 type Interactive struct{}
 
 // Initialize implements the Initializer interface.
-func (i *Interactive) Initialize(platform platform.Platform, install machine.Install) (err error) {
+func (i *Interactive) Initialize(platform runtime.Platform, install machine.Install) (err error) {
 	var dev *probe.ProbedBlockDevice
 
 	dev, err = probe.GetDevWithFileSystemLabel(constants.ISOFilesystemLabel)

@@ -32,12 +32,12 @@ func NewUpgradeTask(devname string, req *machineapi.UpgradeRequest) phase.Task {
 	}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Upgrade) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Upgrade) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *Upgrade) standard(args *phase.RuntimeArgs) (err error) {
+func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
 	var config *string
@@ -45,7 +45,7 @@ func (task *Upgrade) standard(args *phase.RuntimeArgs) (err error) {
 		return errors.Errorf("no config option was found")
 	}
 
-	if err = install.Install(task.ref, task.devname, strings.ToLower(args.Platform().Name())); err != nil {
+	if err = install.Install(task.ref, task.devname, strings.ToLower(r.Platform().Name())); err != nil {
 		return err
 	}
 

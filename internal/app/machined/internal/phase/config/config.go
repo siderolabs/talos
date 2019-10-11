@@ -20,15 +20,15 @@ func NewConfigTask() phase.Task {
 	return &Task{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *Task) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *Task) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *Task) standard(args *phase.RuntimeArgs) (err error) {
+func (task *Task) standard(r runtime.Runtime) (err error) {
 	var b []byte
 
-	if b, err = args.Platform().Configuration(); err != nil {
+	if b, err = r.Platform().Configuration(); err != nil {
 		return err
 	}
 

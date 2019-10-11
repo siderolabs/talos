@@ -65,14 +65,14 @@ func (v *VMware) Configuration() ([]byte, error) {
 	return nil, nil
 }
 
-// Mode implements the platform.Platform interface.
-func (v *VMware) Mode() runtime.Mode {
-	return runtime.Cloud
-}
-
 // Hostname implements the platform.Platform interface.
 func (v *VMware) Hostname() (hostname []byte, err error) {
 	return nil, nil
+}
+
+// Mode implements the platform.Platform interface.
+func (v *VMware) Mode() runtime.Mode {
+	return runtime.Cloud
 }
 
 // ExternalIPs provides any external addresses assigned to the instance

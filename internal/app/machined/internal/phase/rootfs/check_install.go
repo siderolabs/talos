@@ -21,8 +21,8 @@ func NewCheckInstallTask() phase.Task {
 	return &CheckInstall{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *CheckInstall) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *CheckInstall) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -31,7 +31,7 @@ func (task *CheckInstall) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
 	}
 }
 
-func (task *CheckInstall) standard(args *phase.RuntimeArgs) (err error) {
+func (task *CheckInstall) standard(r runtime.Runtime) (err error) {
 	_, err = os.Stat(filepath.Join(constants.BootMountPoint, "installed"))
 	return err
 }

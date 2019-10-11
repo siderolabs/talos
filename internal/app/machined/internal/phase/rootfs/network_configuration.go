@@ -18,8 +18,8 @@ func NewNetworkConfigurationTask() phase.Task {
 	return &NetworkConfiguration{}
 }
 
-// RuntimeFunc returns the runtime function.
-func (task *NetworkConfiguration) RuntimeFunc(mode runtime.Mode) phase.RuntimeFunc {
+// TaskFunc returns the runtime function.
+func (task *NetworkConfiguration) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -28,7 +28,7 @@ func (task *NetworkConfiguration) RuntimeFunc(mode runtime.Mode) phase.RuntimeFu
 	}
 }
 
-func (task *NetworkConfiguration) runtime(args *phase.RuntimeArgs) (err error) {
+func (task *NetworkConfiguration) runtime(r runtime.Runtime) (err error) {
 	// Create /etc/resolv.conf.
 	if err = etc.ResolvConf(); err != nil {
 		return err
