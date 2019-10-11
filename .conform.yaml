@@ -28,7 +28,6 @@ policies:
           - machined
           - networkd
           - ntpd
-          - proxyd
           - osctl
           - osd
           - rootfs

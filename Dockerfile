@@ -43,9 +43,6 @@ RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /machined
 COPY ./api/machine ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
-WORKDIR /proxyd
-COPY ./internal/app/proxyd/proto ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
 WORKDIR /ntpd
 COPY ./api/time ./proto
 RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
@@ -58,7 +55,6 @@ FROM scratch AS generate
 COPY --from=generate-build /osd/proto/api.pb.go /api/os/
 COPY --from=generate-build /trustd/proto/api.pb.go /api/security/
 COPY --from=generate-build /machined/proto/api.pb.go /api/machine/
-COPY --from=generate-build /proxyd/proto/api.pb.go /internal/app/proxyd/proto/
 COPY --from=generate-build /ntpd/proto/api.pb.go /api/time/
 COPY --from=generate-build /networkd/proto/api.pb.go /api/network/
 
@@ -74,7 +70,6 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=generate /api ./api
-COPY --from=generate /internal/app ./internal/app
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 
@@ -131,20 +126,6 @@ RUN chmod +x /osd
 FROM scratch AS osd
 COPY --from=osd-build /osd /osd
 ENTRYPOINT ["/osd"]
-
-# The proxyd target builds the proxyd image.
-
-FROM base AS proxyd-build
-ARG SHA
-ARG TAG
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-WORKDIR /src/internal/app/proxyd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /proxyd
-RUN chmod +x /proxyd
-
-FROM scratch AS proxyd
-COPY --from=proxyd-build /proxyd /proxyd
-ENTRYPOINT ["/proxyd"]
 
 # The trustd target builds the trustd image.
 
@@ -228,7 +209,6 @@ COPY --from=docker.io/autonomy/kernel:1a7a75c /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY images/ntpd.tar /rootfs/usr/images/
 COPY images/osd.tar /rootfs/usr/images/
-COPY images/proxyd.tar /rootfs/usr/images/
 COPY images/trustd.tar /rootfs/usr/images/
 COPY images/networkd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and

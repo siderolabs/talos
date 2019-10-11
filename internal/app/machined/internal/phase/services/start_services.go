@@ -63,7 +63,6 @@ func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
 		svcs.Load(
 			&services.Etcd{},
 			&services.Trustd{},
-			&services.Proxyd{},
 		)
 	}
 }

@@ -76,9 +76,6 @@ through the network security rules.
 # Create network security group
 az network nsg create -g $GROUP -n talos
 
-# Client -> Proxyd
-az network nsg rule create -g $GROUP --nsg-name talos -n proxyd --priority 1000 --destination-port-ranges 443  --direction inbound
-
 # Client -> OSD
 az network nsg rule create -g $GROUP --nsg-name talos -n osd --priority 1001 --destination-port-ranges 50000 --direction inbound
 
@@ -88,7 +85,7 @@ az network nsg rule create -g $GROUP --nsg-name talos -n trustd --priority 1002 
 # etcd
 az network nsg rule create -g $GROUP --nsg-name talos -n etcd --priority 1003 --destination-port-ranges 2379-2380 --direction inbound
 
-# Proxyd -> Kubernetes API Server
+# Kubernetes API Server
 az network nsg rule create -g $GROUP --nsg-name talos -n kube --priority 1004 --destination-port-ranges 6443 --direction inbound
 ```
 

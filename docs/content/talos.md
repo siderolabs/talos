@@ -92,7 +92,6 @@ $ osctl ps
 NAMESPACE   ID       IMAGE          PID   STATUS
 system      ntpd     talos/ntpd     101   RUNNING
 system      osd      talos/osd      107   RUNNING
-system      proxyd   talos/proxyd   393   RUNNING
 system      trustd   talos/trustd   115   RUNNING
 ```
 

@@ -21,9 +21,8 @@ type SystemServicesSuite struct {
 func (suite *SystemServicesSuite) TestStartShutdown() {
 	system.Services(nil).LoadAndStart(
 		&MockService{name: "containerd"},
-		&MockService{name: "proxyd", dependencies: []string{"containerd"}},
-		&MockService{name: "trustd", dependencies: []string{"containerd", "proxyd"}},
-		&MockService{name: "osd", dependencies: []string{"containerd"}},
+		&MockService{name: "trustd", dependencies: []string{"containerd"}},
+		&MockService{name: "osd", dependencies: []string{"containerd", "osd"}},
 	)
 	time.Sleep(10 * time.Millisecond)
 	system.Services(nil).Shutdown()

@@ -24,6 +24,5 @@ This includes:
 - [networkd](/docs/components/networkd)
 - [ntpd](/docs/components/ntpd)
 - [osd](/docs/components/osd)
-- [proxyd](/docs/components/proxyd)
 - [trustd](/docs/components/trustd)
 - [udevd](/docs/components/udevd)

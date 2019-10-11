@@ -34,7 +34,7 @@ func (task *StopNonCrucialServices) standard(args *phase.RuntimeArgs) (err error
 
 	services := []string{"osd", "udevd", "networkd", "ntpd"}
 	if args.Config().Machine().Type() == machine.Bootstrap || args.Config().Machine().Type() == machine.ControlPlane {
-		services = append(services, "trustd", "proxyd")
+		services = append(services, "trustd")
 	}
 
 	for _, service := range services {

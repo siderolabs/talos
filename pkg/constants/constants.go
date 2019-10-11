@@ -192,16 +192,13 @@ const (
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 
-	// InitSocketPath is the path to file socket of init API
+	// InitSocketPath is the path to file socket of machine API.
 	InitSocketPath = SystemRunPath + "/init/init.sock"
 
-	// ProxydSocketPath is the path to file socket of proxyd API
-	ProxydSocketPath = SystemRunPath + "/proxyd/proxyd.sock"
-
-	// NtpdSocketPath is the path to file socket of proxyd API
+	// NtpdSocketPath is the path to file socket of time API.
 	NtpdSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
 
-	// NetworkdSocketPath is the path to file socket of proxyd API
+	// NetworkdSocketPath is the path to file socket of network API.
 	NetworkdSocketPath = SystemRunPath + "/networkd/networkd.sock"
 
 	// KernelAsset defines a well known name for our kernel filename

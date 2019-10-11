@@ -93,7 +93,7 @@ func NewNode(clusterName string, req *Request) (err error) {
 		}
 
 		var apiServerPort nat.Port
-		apiServerPort, err = nat.NewPort("tcp", "443")
+		apiServerPort, err = nat.NewPort("tcp", "6443")
 
 		if err != nil {
 			return err

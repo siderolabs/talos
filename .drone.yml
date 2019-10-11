@@ -55,22 +55,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: proxyd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make proxyd
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-
 - name: ntpd
   pull: always
   image: autonomy/build-container:latest
@@ -154,7 +138,6 @@ steps:
   - machined
   - osd
   - trustd
-  - proxyd
   - ntpd
   - networkd
 
@@ -470,22 +453,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: proxyd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make proxyd
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-
 - name: ntpd
   pull: always
   image: autonomy/build-container:latest
@@ -569,7 +536,6 @@ steps:
   - machined
   - osd
   - trustd
-  - proxyd
   - ntpd
   - networkd
 
@@ -1098,22 +1064,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: proxyd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make proxyd
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-
 - name: ntpd
   pull: always
   image: autonomy/build-container:latest
@@ -1197,7 +1147,6 @@ steps:
   - machined
   - osd
   - trustd
-  - proxyd
   - ntpd
   - networkd
 
@@ -1729,22 +1678,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: proxyd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make proxyd
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-
 - name: ntpd
   pull: always
   image: autonomy/build-container:latest
@@ -1828,7 +1761,6 @@ steps:
   - machined
   - osd
   - trustd
-  - proxyd
   - ntpd
   - networkd
 
@@ -2360,22 +2292,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: proxyd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make proxyd
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-
 - name: ntpd
   pull: always
   image: autonomy/build-container:latest
@@ -2459,7 +2375,6 @@ steps:
   - machined
   - osd
   - trustd
-  - proxyd
   - ntpd
   - networkd
 
