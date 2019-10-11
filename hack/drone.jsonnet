@@ -128,12 +128,11 @@ local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=t
 local machined = Step("machined");
 local osd = Step("osd");
 local trustd = Step("trustd");
-local proxyd = Step("proxyd");
 local ntpd = Step("ntpd");
 local networkd = Step("networkd");
 local osctl_linux = Step("osctl-linux");
 local osctl_darwin = Step("osctl-darwin");
-local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, proxyd, ntpd, networkd]);
+local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
@@ -183,7 +182,6 @@ local default_steps = [
   machined,
   osd,
   trustd,
-  proxyd,
   ntpd,
   networkd,
   osctl_linux,

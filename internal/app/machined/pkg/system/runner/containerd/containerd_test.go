@@ -367,9 +367,9 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 			},
 		},
 		{
-			Path: "/usr/images/proxyd.tar",
+			Path: "/usr/images/trustd.tar",
 			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/proxyd"),
+				containerd.WithIndexName("testtalos/trustd"),
 			},
 		},
 	}
@@ -378,7 +378,7 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
-	for _, imageName := range []string{"testtalos/osd", "testtalos/proxyd"} {
+	for _, imageName := range []string{"testtalos/osd", "testtalos/trustd"} {
 		image, err := suite.client.ImageService().Get(ctx, imageName)
 		suite.Require().NoError(err)
 		suite.Require().Equal(imageName, image.Name)
