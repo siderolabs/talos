@@ -32,10 +32,48 @@ const DefaultIPv6PodNet = "fc00:db8:10::/56"
 // DefaultIPv6ServiceNet is the network to be used for kubernetes Services when using IPv6-based master nodes
 const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
-// CertStrings holds the string representation of a certificate and key.
-type CertStrings struct {
-	Crt string
-	Key string
+// Type represents a config type.
+type Type int
+
+const (
+	// TypeInit indicates a config type should correspond to the kubeadm
+	// InitConfiguration type.
+	TypeInit Type = iota
+	// TypeControlPlane indicates a config type should correspond to the
+	// kubeadm JoinConfiguration type that has the ControlPlane field
+	// defined.
+	TypeControlPlane
+	// TypeJoin indicates a config type should correspond to the kubeadm
+	// JoinConfiguration type.
+	TypeJoin
+)
+
+// Sring returns the string representation of Type.
+func (t Type) String() string {
+	return [...]string{"Init", "ControlPlane", "Join"}[t]
+}
+
+// Config returns the talos config for a given node type.
+// nolint: gocyclo
+func Config(t Type, in *Input) (s string, err error) {
+	switch t {
+	case TypeInit:
+		if s, err = initUd(in); err != nil {
+			return "", err
+		}
+	case TypeControlPlane:
+		if s, err = controlPlaneUd(in); err != nil {
+			return "", err
+		}
+	case TypeJoin:
+		if s, err = workerUd(in); err != nil {
+			return "", err
+		}
+	default:
+		return "", errors.New("failed to determine config type to generate")
+	}
+
+	return s, nil
 }
 
 // Input holds info about certs, ips, and node type.
@@ -109,6 +147,167 @@ type KubeadmTokens struct {
 // TrustdInfo holds the trustd credentials.
 type TrustdInfo struct {
 	Token string
+}
+
+// NewEtcdCA generates a CA for the Etcd PKI.
+func NewEtcdCA() (ca *x509.CertificateAuthority, err error) {
+	opts := []x509.Option{
+		x509.RSA(true),
+		x509.Organization("etcd"),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
+
+	return x509.NewSelfSignedCertificateAuthority(opts...)
+}
+
+// NewKubernetesCA generates a CA for the Kubernetes PKI.
+func NewKubernetesCA() (ca *x509.CertificateAuthority, err error) {
+	opts := []x509.Option{
+		x509.RSA(true),
+		x509.Organization("kubernetes"),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
+
+	return x509.NewSelfSignedCertificateAuthority(opts...)
+}
+
+// NewTalosCA generates a CA for the Talos PKI.
+func NewTalosCA() (ca *x509.CertificateAuthority, err error) {
+	opts := []x509.Option{
+		x509.RSA(false),
+		x509.Organization("talos"),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
+
+	return x509.NewSelfSignedCertificateAuthority(opts...)
+}
+
+// NewAdminCertificateAndKey generates the admin Talos certifiate and key.
+func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEncodedCertificateAndKey, err error) {
+	ips := []net.IP{net.ParseIP(loopback)}
+
+	opts := []x509.Option{x509.IPAddresses(ips)}
+
+	caPemBlock, _ := pem.Decode(crt)
+	if caPemBlock == nil {
+		return nil, errors.New("failed to decode ca cert pem")
+	}
+
+	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	caKeyPemBlock, _ := pem.Decode(key)
+	if caKeyPemBlock == nil {
+		return nil, errors.New("failed to decode ca key pem")
+	}
+
+	caKey, err := stdlibx509.ParseECPrivateKey(caKeyPemBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509.NewCertficateAndKey(caCrt, caKey, opts...)
+}
+
+// NewInput generates the sensitive data required to generate all config
+// types.
+// nolint: dupl,gocyclo
+func NewInput(clustername string, endpoint string, kubernetesVersion string) (input *Input, err error) {
+	var loopback, podNet, serviceNet string
+
+	if isIPv6(endpoint) {
+		loopback = "::1"
+		podNet = DefaultIPv6PodNet
+		serviceNet = DefaultIPv6ServiceNet
+	} else {
+		loopback = "127.0.0.1"
+		podNet = DefaultIPv4PodNet
+		serviceNet = DefaultIPv4ServiceNet
+	}
+
+	// Gen trustd token strings
+	kubeadmBootstrapToken, err := genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeadmCertificateKey, err := generateCertificateKey()
+	if err != nil {
+		return nil, err
+	}
+
+	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
+	if err != nil {
+		return nil, err
+	}
+
+	// Gen trustd token strings
+	trustdToken, err := genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeadmTokens := &KubeadmTokens{
+		BootstrapToken:         kubeadmBootstrapToken,
+		AESCBCEncryptionSecret: aescbcEncryptionSecret,
+		CertificateKey:         kubeadmCertificateKey,
+	}
+
+	trustdInfo := &TrustdInfo{
+		Token: trustdToken,
+	}
+
+	etcdCA, err := NewEtcdCA()
+	if err != nil {
+		return nil, err
+	}
+
+	kubernetesCA, err := NewKubernetesCA()
+	if err != nil {
+		return nil, err
+	}
+
+	talosCA, err := NewTalosCA()
+	if err != nil {
+		return nil, err
+	}
+
+	admin, err := NewAdminCertificateAndKey(talosCA.CrtPEM, talosCA.KeyPEM, loopback)
+	if err != nil {
+		return nil, err
+	}
+
+	certs := &Certs{
+		Admin: admin,
+		Etcd: &x509.PEMEncodedCertificateAndKey{
+			Crt: etcdCA.CrtPEM,
+			Key: etcdCA.KeyPEM,
+		},
+		K8s: &x509.PEMEncodedCertificateAndKey{
+			Crt: kubernetesCA.CrtPEM,
+			Key: kubernetesCA.KeyPEM,
+		},
+		OS: &x509.PEMEncodedCertificateAndKey{
+			Crt: talosCA.CrtPEM,
+			Key: talosCA.KeyPEM,
+		},
+	}
+
+	input = &Input{
+		Certs:                certs,
+		ControlPlaneEndpoint: endpoint,
+		PodNet:               []string{podNet},
+		ServiceNet:           []string{serviceNet},
+		ServiceDomain:        "cluster.local",
+		ClusterName:          clustername,
+		KubernetesVersion:    kubernetesVersion,
+		KubeadmTokens:        kubeadmTokens,
+		TrustdInfo:           trustdInfo,
+	}
+
+	return input, nil
 }
 
 func generateCertificateKey() (string, error) {
@@ -189,229 +388,4 @@ func isIPv6(addrs ...string) bool {
 	}
 
 	return false
-}
-
-// NewInput generates the sensitive data required to generate all config
-// types.
-// nolint: dupl,gocyclo
-func NewInput(clustername string, endpoint string, kubernetesVersion string) (input *Input, err error) {
-	var loopbackIP, podNet, serviceNet string
-
-	if isIPv6(endpoint) {
-		loopbackIP = "::1"
-		podNet = DefaultIPv6PodNet
-		serviceNet = DefaultIPv6ServiceNet
-	} else {
-		loopbackIP = "127.0.0.1"
-		podNet = DefaultIPv4PodNet
-		serviceNet = DefaultIPv4ServiceNet
-	}
-
-	// Gen trustd token strings
-	kubeadmBootstrapToken, err := genToken(6, 16)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeadmCertificateKey, err := generateCertificateKey()
-	if err != nil {
-		return nil, err
-	}
-
-	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
-	if err != nil {
-		return nil, err
-	}
-
-	// Gen trustd token strings
-	trustdToken, err := genToken(6, 16)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeadmTokens := &KubeadmTokens{
-		BootstrapToken:         kubeadmBootstrapToken,
-		AESCBCEncryptionSecret: aescbcEncryptionSecret,
-		CertificateKey:         kubeadmCertificateKey,
-	}
-
-	trustdInfo := &TrustdInfo{
-		Token: trustdToken,
-	}
-
-	// Generate Etcd CA.
-	opts := []x509.Option{
-		x509.RSA(true),
-		x509.Organization("talos-etcd"),
-		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
-	}
-
-	etcdCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate Kubernetes CA.
-	opts = []x509.Option{
-		x509.RSA(true),
-		x509.Organization("talos-k8s"),
-		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
-	}
-
-	k8sCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate Talos CA.
-	opts = []x509.Option{
-		x509.RSA(false),
-		x509.Organization("talos-os"),
-		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
-	}
-
-	osCert, err := x509.NewSelfSignedCertificateAuthority(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate the admin talosconfig.
-	adminKey, err := x509.NewKey()
-	if err != nil {
-		return nil, err
-	}
-
-	pemBlock, _ := pem.Decode(adminKey.KeyPEM)
-	if pemBlock == nil {
-		return nil, errors.New("failed to decode admin key pem")
-	}
-
-	adminKeyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	ips := []net.IP{net.ParseIP(loopbackIP)}
-	opts = []x509.Option{x509.IPAddresses(ips)}
-
-	csr, err := x509.NewCertificateSigningRequest(adminKeyEC, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	csrPemBlock, _ := pem.Decode(csr.X509CertificateRequestPEM)
-	if csrPemBlock == nil {
-		return nil, errors.New("failed to decode csr pem")
-	}
-
-	ccsr, err := stdlibx509.ParseCertificateRequest(csrPemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	caPemBlock, _ := pem.Decode(osCert.CrtPEM)
-	if caPemBlock == nil {
-		return nil, errors.New("failed to decode ca cert pem")
-	}
-
-	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	caKeyPemBlock, _ := pem.Decode(osCert.KeyPEM)
-	if caKeyPemBlock == nil {
-		return nil, errors.New("failed to decode ca key pem")
-	}
-
-	caKey, err := stdlibx509.ParseECPrivateKey(caKeyPemBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	opts = []x509.Option{
-		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
-	}
-
-	adminCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	certs := &Certs{
-		Admin: &x509.PEMEncodedCertificateAndKey{
-			Crt: adminCrt.X509CertificatePEM,
-			Key: adminKey.KeyPEM,
-		},
-		Etcd: &x509.PEMEncodedCertificateAndKey{
-			Crt: etcdCert.CrtPEM,
-			Key: etcdCert.KeyPEM,
-		},
-		K8s: &x509.PEMEncodedCertificateAndKey{
-			Crt: k8sCert.CrtPEM,
-			Key: k8sCert.KeyPEM,
-		},
-		OS: &x509.PEMEncodedCertificateAndKey{
-			Crt: osCert.CrtPEM,
-			Key: osCert.KeyPEM,
-		},
-	}
-
-	input = &Input{
-		Certs:                certs,
-		ControlPlaneEndpoint: endpoint,
-		PodNet:               []string{podNet},
-		ServiceNet:           []string{serviceNet},
-		ServiceDomain:        "cluster.local",
-		ClusterName:          clustername,
-		KubernetesVersion:    kubernetesVersion,
-		KubeadmTokens:        kubeadmTokens,
-		TrustdInfo:           trustdInfo,
-	}
-
-	return input, nil
-}
-
-// Type represents a config type.
-type Type int
-
-const (
-	// TypeInit indicates a config type should correspond to the kubeadm
-	// InitConfiguration type.
-	TypeInit Type = iota
-	// TypeControlPlane indicates a config type should correspond to the
-	// kubeadm JoinConfiguration type that has the ControlPlane field
-	// defined.
-	TypeControlPlane
-	// TypeJoin indicates a config type should correspond to the kubeadm
-	// JoinConfiguration type.
-	TypeJoin
-)
-
-// Sring returns the string representation of Type.
-func (t Type) String() string {
-	return [...]string{"Init", "ControlPlane", "Join"}[t]
-}
-
-// Config returns the talos config for a given node type.
-// nolint: gocyclo
-func Config(t Type, in *Input) (s string, err error) {
-	switch t {
-	case TypeInit:
-		if s, err = initUd(in); err != nil {
-			return "", err
-		}
-	case TypeControlPlane:
-		if s, err = controlPlaneUd(in); err != nil {
-			return "", err
-		}
-	case TypeJoin:
-		if s, err = workerUd(in); err != nil {
-			return "", err
-		}
-	default:
-		return "", errors.New("failed to determine config type to generate")
-	}
-
-	return s, nil
 }
