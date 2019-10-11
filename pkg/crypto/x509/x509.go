@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -536,6 +538,80 @@ func (p *PEMEncodedCertificateAndKey) MarshalYAML() (interface{}, error) {
 	aux.Key = base64.StdEncoding.EncodeToString(p.Key)
 
 	return aux, nil
+}
+
+// NewCertficateAndKey generates a new key and certificate signed by a CA.
+//
+//nolint: gocyclo
+func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Option) (p *PEMEncodedCertificateAndKey, err error) {
+	opts := NewDefaultOptions(setters...)
+
+	var (
+		c        *Certificate
+		k        interface{}
+		pemBytes []byte
+	)
+
+	if opts.RSA {
+		k, err = NewRSAKey()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create new RSA key")
+		}
+
+		pemBytes = k.(*RSAKey).KeyPEM
+	} else {
+		k, err = NewKey()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create new ECDSA key")
+		}
+
+		pemBytes = k.(*Key).KeyPEM
+	}
+
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM encoded key")
+	}
+
+	var priv interface{}
+	if opts.RSA {
+		priv, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse RSA private key")
+		}
+	} else {
+		priv, err = x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse ECDSA private key")
+		}
+	}
+
+	csr, err := NewCertificateSigningRequest(priv, setters...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create CSR")
+	}
+
+	block, _ = pem.Decode(csr.X509CertificateRequestPEM)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM encoded CSR")
+	}
+
+	cr, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse CSR")
+	}
+
+	c, err = NewCertificateFromCSR(crt, key, cr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create certificate from CSR")
+	}
+
+	p = &PEMEncodedCertificateAndKey{
+		Crt: c.X509CertificatePEM,
+		Key: pemBytes,
+	}
+
+	return p, nil
 }
 
 // Hash calculates the SHA-256 hash of the Subject Public Key Information (SPKI)
