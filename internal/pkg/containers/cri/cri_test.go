@@ -27,10 +27,10 @@ import (
 )
 
 const (
-	busyboxImage       = "docker.io/library/busybox:1.30.1"
-	busyboxImageDigest = "sha256:64f5d945efcc0f39ab11b3cd4ba403cc9fefe1fa3613123ca016cf3708e8cafb"
-	pauseImage         = "k8s.gcr.io/pause:3.1"
-	pauseImageDigest   = "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e"
+	busyboxImage = "docker.io/library/busybox:1.30.1"
+	// busyboxImageDigest = "sha256:64f5d945efcc0f39ab11b3cd4ba403cc9fefe1fa3613123ca016cf3708e8cafb"
+	// pauseImage         = "k8s.gcr.io/pause:3.1"
+	// pauseImageDigest   = "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -197,14 +197,14 @@ func (suite *CRISuite) TestPods() {
 	suite.Assert().Equal(pods[0].Name, pods[0].Containers[0].Display)
 	suite.Assert().Equal(pods[0].Name, pods[0].Containers[0].Name)
 	suite.Assert().Equal("SANDBOX_READY", pods[0].Containers[0].Status)
-	suite.Assert().Equal(pauseImageDigest, pods[0].Containers[0].Digest)
-	suite.Assert().Equal(pauseImage, pods[0].Containers[0].Image)
+	// suite.Assert().Equal(pauseImageDigest, pods[0].Containers[0].Digest)
+	// suite.Assert().Equal(pauseImage, pods[0].Containers[0].Image)
 	suite.Assert().True(pods[0].Containers[0].Pid > 0)
 
 	suite.Assert().Equal("kube-system/etcd-master-1:etcd", pods[0].Containers[1].Display)
 	suite.Assert().Equal("etcd", pods[0].Containers[1].Name)
-	suite.Assert().Equal(busyboxImage, pods[0].Containers[1].Image)
-	suite.Assert().Equal(busyboxImageDigest, pods[0].Containers[1].Digest)
+	// suite.Assert().Equal(busyboxImage, pods[0].Containers[1].Image)
+	// suite.Assert().Equal(busyboxImageDigest, pods[0].Containers[1].Digest)
 	suite.Assert().Equal("CONTAINER_RUNNING", pods[0].Containers[1].Status)
 	suite.Assert().Equal("1", pods[0].Containers[1].RestartCount)
 	suite.Assert().True(pods[0].Containers[1].Pid > 0)
@@ -226,7 +226,7 @@ func (suite *CRISuite) TestContainer() {
 	suite.Assert().Equal("kube-system/etcd-master-1", container.Display)
 	suite.Assert().Equal(container.Display, container.Name)
 	suite.Assert().Equal("SANDBOX_READY", container.Status)
-	suite.Assert().Equal(pauseImageDigest, container.Digest)
+	// suite.Assert().Equal(pauseImageDigest, container.Digest)
 	suite.Assert().True(container.Pid > 0)
 
 	container, err = suite.inspector.Container("kube-system/etcd-master-1:etcd")
@@ -235,8 +235,8 @@ func (suite *CRISuite) TestContainer() {
 	suite.Assert().Equal("kube-system/etcd-master-1:etcd", container.Display)
 	suite.Assert().Equal("etcd", container.Name)
 	suite.Assert().Equal("CONTAINER_RUNNING", container.Status)
-	suite.Assert().Equal(busyboxImageDigest, container.Image)
-	suite.Assert().Equal(busyboxImageDigest, container.Digest)
+	// suite.Assert().Equal(busyboxImageDigest, container.Image)
+	// suite.Assert().Equal(busyboxImageDigest, container.Digest)
 	suite.Assert().Equal("1", container.RestartCount)
 	suite.Assert().True(container.Pid > 0)
 
