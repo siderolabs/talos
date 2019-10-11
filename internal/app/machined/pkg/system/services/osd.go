@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
@@ -25,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // OSD implements the Service interface. It serves as the concrete type with
@@ -64,6 +66,10 @@ func (o *OSD) Condition(config config.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *OSD) DependsOn(config config.Configurator) []string {
+	if config.Machine().Type() == machine.Worker {
+		return []string{"system-containerd", "containerd", "kubelet"}
+	}
+
 	return []string{"system-containerd", "containerd"}
 }
 
@@ -73,12 +79,21 @@ func (o *OSD) Runner(config config.Configurator) (runner.Runner, error) {
 	endpoints := config.Cluster().IPs()
 
 	if config.Machine().Type() == machine.Worker {
-		h, err := kubernetes.NewHelper()
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create client")
-		}
+		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
-		endpoints, err = h.MasterIPs()
+		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {
+			h, err := kubernetes.NewHelper()
+			if err != nil {
+				return retry.ExpectedError(errors.Wrap(err, "failed to create client"))
+			}
+
+			endpoints, err = h.MasterIPs()
+			if err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			return nil
+		})
 		if err != nil {
 			return nil, err
 		}
