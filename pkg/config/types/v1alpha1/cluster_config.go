@@ -160,7 +160,10 @@ func (c *ClusterConfig) Network() cluster.Network {
 
 // CNI implements the Configurator interface.
 func (c *ClusterConfig) CNI() string {
-	if c.ClusterNetwork.CNI == "" {
+	switch {
+	case c.ClusterNetwork == nil:
+		fallthrough
+	case c.ClusterNetwork.CNI == "":
 		return constants.DefaultCNI
 	}
 
@@ -169,7 +172,10 @@ func (c *ClusterConfig) CNI() string {
 
 // PodCIDR implements the Configurator interface.
 func (c *ClusterConfig) PodCIDR() string {
-	if len(c.ClusterNetwork.PodSubnet) == 0 {
+	switch {
+	case c.ClusterNetwork == nil:
+		fallthrough
+	case len(c.ClusterNetwork.PodSubnet) == 0:
 		return constants.DefaultPodCIDR
 	}
 
@@ -178,7 +184,10 @@ func (c *ClusterConfig) PodCIDR() string {
 
 // ServiceCIDR implements the Configurator interface.
 func (c *ClusterConfig) ServiceCIDR() string {
-	if len(c.ClusterNetwork.ServiceSubnet) == 0 {
+	switch {
+	case c.ClusterNetwork == nil:
+		fallthrough
+	case len(c.ClusterNetwork.ServiceSubnet) == 0:
 		return constants.DefaultServiceCIDR
 	}
 
