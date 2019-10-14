@@ -76,7 +76,7 @@ func (o *OSD) DependsOn(config config.Configurator) []string {
 func (o *OSD) Runner(config config.Configurator) (runner.Runner, error) {
 	image := "talos/osd"
 
-	endpoints := config.Cluster().IPs()
+	endpoints := []string{"127.0.0.1"}
 
 	if config.Machine().Type() == machine.Worker {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
