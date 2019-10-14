@@ -22,7 +22,7 @@ This will generate 5 files - `master-{1,2,3}.yaml`, `worker.yaml`, and `taloscon
 The master and worker config files contain just enough config to bootstrap your cluster, and can be further customized as necessary.
 
 These config files should be supplied as machine userdata or some internally accessible url so they can be downloaded during machine bootup.
-When specifying a remote location to download userdata from, the kernel parameter `talos.userdata=http://myurl.com`.
+When specifying a remote location to download userdata from, the kernel parameter `talos.config=http://myurl.com`.
 
 An iPXE server such as [coreos/Matchbox](https://github.com/poseidon/matchbox) is recommended.
 
@@ -30,7 +30,7 @@ An iPXE server such as [coreos/Matchbox](https://github.com/poseidon/matchbox) i
 
 The following is the list of related kernel commandline parameters:
 
-- `talos.userdata` (required) the HTTP(S) URL at which the machine data can be found
+- `talos.config` (required) the HTTP(S) URL at which the machine data can be found
 - `talos.platform` (required) should be 'metal' for bare-metal installs
 
 Talos also enforces some minimum requirements from the KSPP (kernel self-protection project):

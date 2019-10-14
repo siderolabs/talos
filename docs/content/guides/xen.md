@@ -36,7 +36,7 @@ kernel = "/var/lib/xen/talos/vmlinuz"
 ramdisk = "/var/lib/xen/talos/initramfs.xz"
 disk = [ 'phy:/dev/sdb,xvda,w', ]
 vif = [ 'mac=52:54:00:A8:4C:E1,bridge=xenbr0,model=e1000', ]
-extra = "consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.platform=metal talos.userdata=http://${IP}:8080/master.yaml"
+extra = "consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.platform=metal talos.config=http://${IP}:8080/master.yaml"
 ```
 
 {{% note %}}`http://${IP}:8080/master.yaml` should be reachable by the VM and contain a valid master configuration file.{{% /note %}}
@@ -76,7 +76,7 @@ kernel = "/var/lib/xen/talos/vmlinuz"
 ramdisk = "/var/lib/xen/talos/initramfs.xz"
 disk = [ 'phy:/dev/sdc,xvda,w', ]
 vif = [ 'mac=52:54:00:B9:5D:F2,bridge=xenbr0,model=e1000', ]
-extra = "consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.platform=metal talos.userdata=http://${IP}:8080/worker.yaml"
+extra = "consoleblank=0 console=hvc0 console=tty0 console=ttyS0,9600 talos.platform=metal talos.config=http://${IP}:8080/worker.yaml"
 ```
 
 {{% note %}}`http://${IP}:8080/worker.yaml` should be reachable by the VM and contain a valid worker configuration file.{{% /note %}}

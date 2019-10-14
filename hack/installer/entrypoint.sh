@@ -97,7 +97,7 @@ case "$1" in
           ;;
         u )
           TALOS_CONFIG=${OPTARG}
-          echo "Using kernel parameter talos.userdata=${TALOS_CONFIG}"
+          echo "Using kernel parameter talos.config=${TALOS_CONFIG}"
           ;;
         \? )
           echo "Invalid Option: -${OPTARG}" 1>&2
