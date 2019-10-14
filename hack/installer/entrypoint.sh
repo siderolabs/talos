@@ -10,7 +10,7 @@ DEFAULT ISO
 LABEL ISO
   KERNEL /vmlinuz
   INITRD /initramfs.xz
-  APPEND page_poison=1 slab_nomerge pti=on random.trust_cpu=on consoleblank=0 console=tty0 talos.platform=iso
+  APPEND page_poison=1 slab_nomerge slub_debug=P pti=on random.trust_cpu=on consoleblank=0 console=tty0 talos.platform=iso
 EOF
 }
 
