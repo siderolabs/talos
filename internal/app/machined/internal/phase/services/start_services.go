@@ -41,11 +41,11 @@ func (task *StartServices) loadSystemServices(args *phase.RuntimeArgs) {
 		&services.MachinedAPI{},
 		&services.Containerd{},
 		&services.OSD{},
+		&services.Networkd{},
 	)
 
 	if args.Platform().Mode() != runtime.Container {
 		svcs.Load(
-			&services.Networkd{},
 			&services.NTPd{},
 			&services.Udevd{},
 			&services.UdevdTrigger{},
