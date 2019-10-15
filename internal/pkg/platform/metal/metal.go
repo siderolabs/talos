@@ -7,8 +7,7 @@ package metal
 import (
 	"io/ioutil"
 	"net"
-	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
@@ -39,37 +38,12 @@ func (b *Metal) Configuration() ([]byte, error) {
 		return nil, errors.Errorf("no config option was found")
 	}
 
-	if *option == constants.UserDataCIData {
-		var dev *probe.ProbedBlockDevice
-
-		dev, err := probe.GetDevWithFileSystemLabel(constants.UserDataCIData)
-		if err != nil {
-			return nil, errors.Errorf("failed to find %s iso: %v", constants.UserDataCIData, err)
-		}
-
-		if err = os.Mkdir(mnt, 0700); err != nil {
-			return nil, errors.Errorf("failed to mkdir: %v", err)
-		}
-
-		if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
-			return nil, errors.Errorf("failed to mount iso: %v", err)
-		}
-
-		var b []byte
-
-		b, err = ioutil.ReadFile(path.Join(mnt, "user-data"))
-		if err != nil {
-			return nil, errors.Errorf("read config: %s", err.Error())
-		}
-
-		if err = unix.Unmount(mnt, 0); err != nil {
-			return nil, errors.Errorf("failed to unmount: %v", err)
-		}
-
-		return b, nil
+	switch *option {
+	case constants.MetalConfigISOLabel:
+		return readConfigFromISO()
+	default:
+		return config.Download(*option)
 	}
-
-	return config.Download(*option)
 }
 
 // Mode implements the platform.Platform interface.
@@ -85,4 +59,28 @@ func (b *Metal) Hostname() (hostname []byte, err error) {
 // ExternalIPs provides any external addresses assigned to the instance
 func (b *Metal) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
+}
+
+func readConfigFromISO() (b []byte, err error) {
+	var dev *probe.ProbedBlockDevice
+
+	dev, err = probe.GetDevWithFileSystemLabel(constants.MetalConfigISOLabel)
+	if err != nil {
+		return nil, errors.Errorf("failed to find %s iso: %v", constants.MetalConfigISOLabel, err)
+	}
+
+	if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
+		return nil, errors.Errorf("failed to mount iso: %v", err)
+	}
+
+	b, err = ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
+	if err != nil {
+		return nil, errors.Errorf("read config: %s", err.Error())
+	}
+
+	if err = unix.Unmount(mnt, 0); err != nil {
+		return nil, errors.Errorf("failed to unmount: %v", err)
+	}
+
+	return b, nil
 }

@@ -5,6 +5,7 @@
 package metal
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/talos-systems/talos/internal/pkg/event"
@@ -29,14 +30,16 @@ func (b *Metal) Initialize(platform platform.Platform, install machine.Install) 
 
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
-		// if install.Image() == "" {
-		// 	install.Image() = fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag)
-		// }
+		if install.Image() == "" {
+			return errors.New("an install image is required")
+		}
+
 		if err = installer.Install(install.Image(), install.Disk(), strings.ToLower(platform.Name())); err != nil {
 			return err
 		}
 
 		event.Bus().Notify(event.Event{Type: event.Reboot})
+
 		// Prevent the task from returning to prevent the next phase from
 		// running.
 		select {}

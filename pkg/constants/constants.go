@@ -158,9 +158,8 @@ const (
 	// ConfigPath is the path to the downloaded config.
 	ConfigPath = "/run/config.yaml"
 
-	// UserDataCIData is the volume label for NoCloud cloud-init.
-	// See https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html#datasource-nocloud.
-	UserDataCIData = "cidata"
+	// MetalConfigISOLabel is the volume label for ISO based configuration.
+	MetalConfigISOLabel = "metal-iso"
 
 	// ConfigGuestInfo is the name of the VMware guestinfo config strategy.
 	ConfigGuestInfo = "guestinfo"
