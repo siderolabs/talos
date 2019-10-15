@@ -7,6 +7,19 @@ menu:
     parent: 'guides'
 ---
 
+## Generating the Configuration ISO
+
+```bash
+genisoimage  -output config.iso -volid cidata -joliet -rock <config>
+```
+
+## Create the Root Filesystem
+
+```bash
+qemu-img create -f qcow2 rootfs.qcow2 8G
+losetup --find --partscan --nooverlap --show rootfs.qcow2
+```
+
 ## Creating a Master Node
 
 On the KVM host, install a master node to an available block device:
