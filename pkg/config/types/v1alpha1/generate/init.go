@@ -18,6 +18,11 @@ func initUd(in *Input) (string, error) {
 		MachineCA:       in.Certs.OS,
 		MachineCertSANs: []string{"127.0.0.1", "::1"},
 		MachineToken:    in.TrustdInfo.Token,
+		MachineInstall: &v1alpha1.InstallConfig{
+			InstallDisk:       in.InstallDisk,
+			InstallImage:      in.InstallImage,
+			InstallBootloader: true,
+		},
 	}
 
 	certSANs := in.GetAPIServerSANs()
@@ -27,7 +32,6 @@ func initUd(in *Input) (string, error) {
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Version:  in.KubernetesVersion,
 			Endpoint: in.ControlPlaneEndpoint,
-			IPs:      in.MasterIPs,
 		},
 		APIServer: &v1alpha1.APIServerConfig{
 			CertSANs: certSANs,

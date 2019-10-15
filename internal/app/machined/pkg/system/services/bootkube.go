@@ -120,22 +120,15 @@ func generateAssets(config config.Configurator) (err error) {
 
 	apiServers := []*url.URL{}
 
-	for _, ip := range config.Cluster().IPs() {
+	for _, endpoint := range []string{"https://" + config.Cluster().Endpoint() + ":6443", "https://127.0.0.1:6443"} {
 		var u *url.URL
 
-		if u, err = url.Parse("https://" + ip + ":6443"); err != nil {
+		if u, err = url.Parse(endpoint); err != nil {
 			return err
 		}
 
 		apiServers = append(apiServers, u)
 	}
-
-	u, err := url.Parse("https://127.0.0.1:6443")
-	if err != nil {
-		return err
-	}
-
-	apiServers = append(apiServers, u)
 
 	_, podCIDR, err := net.ParseCIDR(config.Cluster().Network().PodCIDR())
 	if err != nil {

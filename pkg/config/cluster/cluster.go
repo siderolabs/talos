@@ -13,7 +13,7 @@ import (
 // related options.
 type Cluster interface {
 	Version() string
-	IPs() []string
+	Endpoint() string
 	Token() Token
 	CertSANs() []string
 	SetCertSANs([]string)

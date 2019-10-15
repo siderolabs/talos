@@ -18,13 +18,18 @@ func controlPlaneUd(in *Input) (string, error) {
 		MachineCertSANs: []string{"127.0.0.1", "::1"},
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  &v1alpha1.NetworkConfig{},
+		MachineInstall: &v1alpha1.InstallConfig{
+			InstallDisk:       in.InstallDisk,
+			InstallImage:      in.InstallImage,
+			InstallBootloader: true,
+		},
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
 		BootstrapToken: in.KubeadmTokens.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			Version: in.KubernetesVersion,
-			IPs:     in.MasterIPs,
+			Version:  in.KubernetesVersion,
+			Endpoint: in.ControlPlaneEndpoint,
 		},
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,

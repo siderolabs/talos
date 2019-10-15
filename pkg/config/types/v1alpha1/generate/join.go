@@ -18,14 +18,19 @@ func workerUd(in *Input) (string, error) {
 		MachineCertSANs: []string{"127.0.0.1", "::1"},
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  &v1alpha1.NetworkConfig{},
+		MachineInstall: &v1alpha1.InstallConfig{
+			InstallDisk:       in.InstallDisk,
+			InstallImage:      in.InstallImage,
+			InstallBootloader: true,
+		},
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
 		BootstrapToken: in.KubeadmTokens.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			Version: in.KubernetesVersion,
-			IPs:     in.MasterIPs,
+			Version:  in.KubernetesVersion,
+			Endpoint: in.ControlPlaneEndpoint,
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 			DNSDomain:     in.ServiceDomain,

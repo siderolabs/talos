@@ -69,7 +69,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config config.Configurator) error
 		BootstrapTokenID     string
 		BootstrapTokenSecret string
 	}{
-		Server:               "https://" + config.Cluster().IPs()[0] + ":6443",
+		Server:               "https://" + config.Cluster().Endpoint() + ":6443",
 		CACert:               base64.StdEncoding.EncodeToString(config.Cluster().CA().Crt),
 		BootstrapTokenID:     config.Cluster().Token().ID(),
 		BootstrapTokenSecret: config.Cluster().Token().Secret(),
