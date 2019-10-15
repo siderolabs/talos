@@ -297,7 +297,7 @@ func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
 }
 
 func buildInitialCluster(config config.Configurator, name, ip string) (initial string, err error) {
-	endpoint := stdlibnet.ParseIP(config.Cluster().IPs()[0])
+	endpoint := stdlibnet.ParseIP(config.Cluster().Endpoint())
 
 	h, err := kubernetes.NewTemporaryClientFromPKI(config.Cluster().CA().Crt, config.Cluster().CA().Key, endpoint.String(), "6443")
 	if err != nil {

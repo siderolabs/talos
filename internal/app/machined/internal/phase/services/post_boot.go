@@ -35,7 +35,7 @@ func (task *LabelNodeAsMaster) standard(args *phase.RuntimeArgs) (err error) {
 		return nil
 	}
 
-	endpoint := net.ParseIP(args.Config().Cluster().IPs()[0])
+	endpoint := net.ParseIP(args.Config().Cluster().Endpoint())
 
 	h, err := kubernetes.NewTemporaryClientFromPKI(args.Config().Cluster().CA().Crt, args.Config().Cluster().CA().Key, endpoint.String(), "6443")
 	if err != nil {

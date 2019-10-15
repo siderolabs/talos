@@ -13,7 +13,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/cis"
@@ -49,7 +48,6 @@ type Input struct {
 	// multi-valued.  It may optionally specify the port.
 	ControlPlaneEndpoint string
 
-	MasterIPs                 []string
 	AdditionalSubjectAltNames []string
 
 	ClusterName       string
@@ -61,51 +59,33 @@ type Input struct {
 	TrustdInfo        *TrustdInfo
 
 	ExternalEtcd bool
-}
 
-// Endpoints returns the formatted set of Master IP addresses
-func (i *Input) Endpoints() (out string) {
-	if i == nil || len(i.MasterIPs) < 1 {
-		panic("cannot Endpoints without any Master IPs")
-	}
-
-	return strings.Join(i.MasterIPs, ",")
+	InstallDisk  string
+	InstallImage string
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
 func (i *Input) GetAPIServerEndpoint(port string) string {
-	if i == nil || len(i.MasterIPs) < 1 {
-		panic("cannot GetControlPlaneEndpoint without any Master IPs")
-	}
-
-	// Each master after the first should reference the next-lower master index.
-	// Thus, master-2 references master-1 and master-3 references master-2.
-	refMaster := 0
-
 	if port == "" {
-		return tnet.FormatAddress(i.MasterIPs[refMaster])
+		return tnet.FormatAddress(i.ControlPlaneEndpoint)
 	}
 
-	return net.JoinHostPort(i.MasterIPs[refMaster], port)
+	return net.JoinHostPort(i.ControlPlaneEndpoint, port)
 }
 
 // GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP
 func (i *Input) GetControlPlaneEndpoint() string {
-	if i == nil || (len(i.MasterIPs) < 1 && i.ControlPlaneEndpoint == "") {
+	if i == nil || i.ControlPlaneEndpoint == "" {
 		panic("cannot GetControlPlaneEndpoint without any Master IPs")
 	}
 
-	if i.ControlPlaneEndpoint != "" {
-		return i.ControlPlaneEndpoint
-	}
-
-	return tnet.FormatAddress(i.MasterIPs[0])
+	return i.ControlPlaneEndpoint
 }
 
 // GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server
 func (i *Input) GetAPIServerSANs() []string {
 	list := []string{"127.0.0.1", "::1"}
-	list = append(list, i.MasterIPs...)
+	list = append(list, i.ControlPlaneEndpoint)
 	list = append(list, i.AdditionalSubjectAltNames...)
 
 	return list
@@ -214,10 +194,10 @@ func isIPv6(addrs ...string) bool {
 // NewInput generates the sensitive data required to generate all config
 // types.
 // nolint: dupl,gocyclo
-func NewInput(clustername string, masterIPs []string, kubernetesVersion string) (input *Input, err error) {
+func NewInput(clustername string, endpoint string, kubernetesVersion string) (input *Input, err error) {
 	var loopbackIP, podNet, serviceNet string
 
-	if isIPv6(masterIPs...) {
+	if isIPv6(endpoint) {
 		loopbackIP = "::1"
 		podNet = DefaultIPv6PodNet
 		serviceNet = DefaultIPv6ServiceNet
@@ -378,15 +358,15 @@ func NewInput(clustername string, masterIPs []string, kubernetesVersion string) 
 	}
 
 	input = &Input{
-		Certs:             certs,
-		MasterIPs:         masterIPs,
-		PodNet:            []string{podNet},
-		ServiceNet:        []string{serviceNet},
-		ServiceDomain:     "cluster.local",
-		ClusterName:       clustername,
-		KubernetesVersion: kubernetesVersion,
-		KubeadmTokens:     kubeadmTokens,
-		TrustdInfo:        trustdInfo,
+		Certs:                certs,
+		ControlPlaneEndpoint: endpoint,
+		PodNet:               []string{podNet},
+		ServiceNet:           []string{serviceNet},
+		ServiceDomain:        "cluster.local",
+		ClusterName:          clustername,
+		KubernetesVersion:    kubernetesVersion,
+		KubeadmTokens:        kubeadmTokens,
+		TrustdInfo:           trustdInfo,
 	}
 
 	return input, nil

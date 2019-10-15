@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -20,11 +19,14 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
 	configVersion     string
 	kubernetesVersion string
+	installDisk       string
+	installImage      string
 )
 
 // configCmd represents the config command.
@@ -125,12 +127,12 @@ var configAddCmd = &cobra.Command{
 
 // configGenerateCmd represents the config generate command.
 var configGenerateCmd = &cobra.Command{
-	Use:   "generate <clusterName> <master-1-IP,master-2-IP,master-3-IP>",
+	Use:   "generate <cluster name> <load balancer IP or DNS name>",
 	Short: "Generate a set of configuration files",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
-			log.Fatal("expected a cluster name and comma delimited list of IP addresses")
+			log.Fatal("expected a cluster name and load balancer IP or DNS name")
 		}
 		switch configVersion {
 		case "v1alpha1":
@@ -140,7 +142,7 @@ var configGenerateCmd = &cobra.Command{
 }
 
 func genV1Alpha1Config(args []string) {
-	input, err := genv1alpha1.NewInput(args[0], strings.Split(args[1], ","), kubernetesVersion)
+	input, err := genv1alpha1.NewInput(args[0], args[1], kubernetesVersion)
 	if err != nil {
 		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
 	}
@@ -148,32 +150,14 @@ func genV1Alpha1Config(args []string) {
 	input.AdditionalSubjectAltNames = additionalSANs
 	input.ControlPlaneEndpoint = canonicalControlplaneEndpoint
 
-	workingDir, err := os.Getwd()
-	if err != nil {
-		helpers.Fatalf("failed to fetch current working dir: %v", err)
-	}
+	input.InstallDisk = installDisk
+	input.InstallImage = installImage
 
-	var udType genv1alpha1.Type
-
-	for idx := range strings.Split(args[1], ",") {
-		if idx == 0 {
-			udType = genv1alpha1.TypeInit
-		} else {
-			udType = genv1alpha1.TypeControlPlane
+	for _, t := range []genv1alpha1.Type{genv1alpha1.TypeInit, genv1alpha1.TypeControlPlane, genv1alpha1.TypeJoin} {
+		if err = writeV1Alpha1Config(input, t, t.String()); err != nil {
+			helpers.Fatalf("failed to generate config for %s: %v", t.String(), err)
 		}
-
-		if err = writeV1Alpha1Config(input, udType, "master-"+strconv.Itoa(idx+1)); err != nil {
-			helpers.Fatalf("failed to generate config for %s: %v", "master-"+strconv.Itoa(idx+1), err)
-		}
-
-		fmt.Println("created file", workingDir+"/master-"+strconv.Itoa(idx+1)+".yaml")
 	}
-
-	if err = writeV1Alpha1Config(input, genv1alpha1.TypeJoin, "worker"); err != nil {
-		helpers.Fatalf("failed to generate config for %s: %v", "worker", err)
-	}
-
-	fmt.Println("created file", workingDir+"/worker.yaml")
 
 	newConfig := &config.Config{
 		Context: input.ClusterName,
@@ -196,7 +180,7 @@ func genV1Alpha1Config(args []string) {
 		helpers.Fatalf("%v", err)
 	}
 
-	fmt.Println("created file", workingDir+"/talosconfig")
+	fmt.Println("created talosconfig")
 }
 
 func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {
@@ -207,9 +191,12 @@ func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name stri
 		return err
 	}
 
-	if err = ioutil.WriteFile(strings.ToLower(name)+".yaml", []byte(data), 0644); err != nil {
+	name = strings.ToLower(name) + ".yaml"
+	if err = ioutil.WriteFile(name, []byte(data), 0644); err != nil {
 		return err
 	}
+
+	fmt.Printf("created %s\n", name)
 
 	return nil
 }
@@ -219,6 +206,8 @@ func init() {
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
+	configGenerateCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
+	configGenerateCmd.Flags().StringVar(&installImage, "install-image", fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag), "the image used to perform an installation")
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	configGenerateCmd.Flags().StringVar(&canonicalControlplaneEndpoint, "controlplane-endpoint", "", "the canonical controlplane endpoint (IP or DNS name) and optional port (defaults to 6443)")
 	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")

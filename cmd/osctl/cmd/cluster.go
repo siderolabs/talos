@@ -109,7 +109,7 @@ func create() (err error) {
 		ips[i] = fmt.Sprintf(baseNetwork, i+2)
 	}
 
-	input, err := generate.NewInput(clusterName, ips, kubernetesVersion)
+	input, err := generate.NewInput(clusterName, ips[0], kubernetesVersion)
 	if err != nil {
 		return err
 	}

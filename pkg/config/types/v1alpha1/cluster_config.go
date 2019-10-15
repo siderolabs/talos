@@ -37,8 +37,6 @@ type ControlPlaneConfig struct {
 	// port number.  It is optional and if not supplied, the IP address of the
 	// first master node will be used.
 	Endpoint string `yaml:"endpoint,omitempty"`
-
-	IPs []string `yaml:"ips"`
 }
 
 // APIServerConfig represents kube apiserver config vals
@@ -79,9 +77,9 @@ func (c *ClusterConfig) Version() string {
 	return c.ControlPlane.Version
 }
 
-// IPs implements the Configurator interface.
-func (c *ClusterConfig) IPs() []string {
-	return c.ControlPlane.IPs
+// Endpoint implements the Configurator interface.
+func (c *ClusterConfig) Endpoint() string {
+	return c.ControlPlane.Endpoint
 }
 
 // CertSANs implements the Configurator interface.
