@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -15,8 +16,8 @@ import (
 )
 
 var (
-	configFile       string
-	validatePlatform string
+	validateConfigArg string
+	validateModeArg   string
 )
 
 // validateCmd reads in a userData file and attempts to parse it
@@ -25,7 +26,7 @@ var validateCmd = &cobra.Command{
 	Short: "Validate config",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		content, err := config.FromFile(configFile)
+		content, err := config.FromFile(validateConfigArg)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -34,18 +35,20 @@ var validateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		mode, err := runtime.ModeFromString(validatePlatform)
+		mode, err := runtime.ModeFromString(validateModeArg)
 		if err != nil {
 			log.Fatal(err)
 		}
 		if err := config.Validate(mode); err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Printf("%s is valid for %s mode", validateConfigArg, validateModeArg)
 	},
 }
 
 func init() {
-	validateCmd.Flags().StringVarP(&configFile, "config", "u", "", "the path of the config file")
-	validateCmd.Flags().StringVarP(&validatePlatform, "platform", "p", "", "the platform to validate the config for")
+	validateCmd.Flags().StringVarP(&validateConfigArg, "config", "c", "", "the path of the config file")
+	validateCmd.Flags().StringVarP(&validateModeArg, "mode", "m", "", "the mode to validate the config for")
 	rootCmd.AddCommand(validateCmd)
 }
