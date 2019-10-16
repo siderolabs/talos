@@ -119,18 +119,6 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
-	apiServers := []*url.URL{}
-
-	for _, endpoint := range []string{"https://" + config.Cluster().Endpoint() + ":6443", "https://127.0.0.1:6443"} {
-		var u *url.URL
-
-		if u, err = url.Parse(endpoint); err != nil {
-			return err
-		}
-
-		apiServers = append(apiServers, u)
-	}
-
 	_, podCIDR, err := net.ParseCIDR(config.Cluster().Network().PodCIDR())
 	if err != nil {
 		return err
@@ -141,7 +129,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
-	altNames := altNamesFromURLs(apiServers)
+	altNames := altNamesFromURLs([]*url.URL{config.Cluster().Endpoint()})
 
 	block, _ = pem.Decode(config.Cluster().CA().Crt)
 	if block == nil {
@@ -181,7 +169,8 @@ func generateAssets(config runtime.Configurator) (err error) {
 		EtcdClientKey:          key,
 		EtcdServers:            []*url.URL{etcdServer},
 		EtcdUseTLS:             true,
-		APIServers:             apiServers,
+		ControlPlaneEndpoint:   config.Cluster().Endpoint(),
+		LocalAPIServerPort:     config.Cluster().LocalAPIServerPort(),
 		APIServiceIP:           apiServiceIP,
 		DNSServiceIP:           dnsServiceIP,
 		PodCIDR:                podCIDR,

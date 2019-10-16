@@ -5,6 +5,8 @@
 package cluster
 
 import (
+	"net/url"
+
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
@@ -13,7 +15,7 @@ import (
 // related options.
 type Cluster interface {
 	Version() string
-	Endpoint() string
+	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
 	SetCertSANs([]string)
@@ -22,6 +24,7 @@ type Cluster interface {
 	Config(machine.Type) (string, error)
 	Etcd() Etcd
 	Network() Network
+	LocalAPIServerPort() int
 }
 
 // Network defines the requirements for a config that pertains to cluster

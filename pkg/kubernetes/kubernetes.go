@@ -114,7 +114,7 @@ func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (help
 		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
 	}
 
-	h, err := NewClientFromPKI(caCrt, crt.X509CertificatePEM, key.KeyPEM, endpoint, "6443")
+	h, err := NewClientFromPKI(caCrt, crt.X509CertificatePEM, key.KeyPEM, endpoint, port)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}

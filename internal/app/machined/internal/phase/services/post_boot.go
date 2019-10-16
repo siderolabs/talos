@@ -6,7 +6,6 @@ package services
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"time"
 
@@ -35,9 +34,12 @@ func (task *LabelNodeAsMaster) standard(r runtime.Runtime) (err error) {
 		return nil
 	}
 
-	endpoint := net.ParseIP(r.Config().Cluster().Endpoint())
-
-	h, err := kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA().Crt, r.Config().Cluster().CA().Key, endpoint.String(), "6443")
+	h, err := kubernetes.NewTemporaryClientFromPKI(
+		r.Config().Cluster().CA().Crt,
+		r.Config().Cluster().CA().Key,
+		r.Config().Cluster().Endpoint().Hostname(),
+		r.Config().Cluster().Endpoint().Port(),
+	)
 	if err != nil {
 		return err
 	}

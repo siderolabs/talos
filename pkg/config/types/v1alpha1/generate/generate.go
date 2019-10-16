@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"net"
+	"net/url"
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/cis"
@@ -123,7 +124,15 @@ func (i *Input) GetControlPlaneEndpoint() string {
 // GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server
 func (i *Input) GetAPIServerSANs() []string {
 	list := []string{"127.0.0.1", "::1"}
-	list = append(list, i.ControlPlaneEndpoint)
+
+	endpointURL, err := url.Parse(i.ControlPlaneEndpoint)
+	if err == nil {
+		host, _, err := net.SplitHostPort(endpointURL.Host)
+		if err == nil {
+			list = append(list, host)
+		}
+	}
+
 	list = append(list, i.AdditionalSubjectAltNames...)
 
 	return list
