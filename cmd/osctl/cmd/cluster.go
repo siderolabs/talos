@@ -109,7 +109,7 @@ func create() (err error) {
 		ips[i] = fmt.Sprintf(baseNetwork, i+2)
 	}
 
-	input, err := generate.NewInput(clusterName, ips[0], kubernetesVersion)
+	input, err := generate.NewInput(clusterName, "https://"+ips[0]+":6443", kubernetesVersion)
 	if err != nil {
 		return err
 	}

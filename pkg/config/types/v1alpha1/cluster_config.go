@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/talos-systems/talos/pkg/config/cluster"
@@ -28,15 +29,46 @@ type ClusterConfig struct {
 	EtcdConfig                    *EtcdConfig                       `yaml:"etcd,omitempty"`
 }
 
+// Endpoint struct holds the endpoint url parsed out of machine config
+type Endpoint struct {
+	*url.URL
+}
+
+// UnmarshalYAML is a custom unmarshaller for the endpoint struct
+func (e *Endpoint) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var endpoint string
+
+	if err := unmarshal(&endpoint); err != nil {
+		return err
+	}
+
+	url, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+
+	*e = Endpoint{url}
+
+	return nil
+}
+
+// MarshalYAML is a custom unmarshaller for the endpoint struct
+func (e *Endpoint) MarshalYAML() (interface{}, error) {
+	return e.URL.String(), nil
+}
+
 // ControlPlaneConfig represents control plane config vals
 type ControlPlaneConfig struct {
 	Version string `yaml:"version"`
 
 	// Endpoint is the canonical controlplane endpoint, which can be an IP
 	// address or a DNS hostname, is single-valued, and may optionally include a
-	// port number.  It is optional and if not supplied, the IP address of the
-	// first master node will be used.
-	Endpoint string `yaml:"endpoint,omitempty"`
+	// port number.
+	Endpoint *Endpoint `yaml:"endpoint"`
+
+	// LocalAPIServerPort is the port that the api server listens to internally.
+	// This may be different than the port portion listed in the endpoint field above.
+	LocalAPIServerPort int `yaml:"localAPIServerPort,omitempty"`
 }
 
 // APIServerConfig represents kube apiserver config vals
@@ -78,8 +110,17 @@ func (c *ClusterConfig) Version() string {
 }
 
 // Endpoint implements the Configurator interface.
-func (c *ClusterConfig) Endpoint() string {
-	return c.ControlPlane.Endpoint
+func (c *ClusterConfig) Endpoint() *url.URL {
+	return c.ControlPlane.Endpoint.URL
+}
+
+// LocalAPIServerPort implements the Configurator interface.
+func (c *ClusterConfig) LocalAPIServerPort() int {
+	if c.ControlPlane.LocalAPIServerPort == 0 {
+		return 6443
+	}
+
+	return c.ControlPlane.LocalAPIServerPort
 }
 
 // CertSANs implements the Configurator interface.

@@ -5,6 +5,8 @@
 package generate
 
 import (
+	"net/url"
+
 	yaml "gopkg.in/yaml.v2"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
@@ -25,12 +27,17 @@ func workerUd(in *Input) (string, error) {
 		},
 	}
 
+	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
+	if err != nil {
+		return "", err
+	}
+
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
 		BootstrapToken: in.KubeadmTokens.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Version:  in.KubernetesVersion,
-			Endpoint: in.ControlPlaneEndpoint,
+			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 			DNSDomain:     in.ServiceDomain,
