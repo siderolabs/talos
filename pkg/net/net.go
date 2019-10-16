@@ -5,9 +5,8 @@
 package net
 
 import (
+	"errors"
 	"net"
-
-	"github.com/pkg/errors"
 )
 
 // IPAddrs finds and returns a list of non-loopback IPv4 addresses of the

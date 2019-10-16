@@ -5,12 +5,12 @@
 package phase
 
 import (
+	"fmt"
 	"log"
 	goruntime "runtime"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -57,7 +57,7 @@ func NewRunner(config runtime.Configurator) (*Runner, error) {
 	case runtime.Cloud:
 		// Setup logging to /dev/kmsg.
 		if _, err = kmsg.Setup("[talos]"); err != nil {
-			return nil, errors.Errorf("failed to setup logging to /dev/kmsg: %v", err)
+			return nil, fmt.Errorf("failed to setup logging to /dev/kmsg: %w", err)
 		}
 	}
 
@@ -84,7 +84,7 @@ func (r *RuntimeArgs) Config() runtime.Configurator {
 func (r *Runner) Run() error {
 	for _, phase := range r.phases {
 		if err := r.runPhase(phase); err != nil {
-			return errors.Wrapf(err, "error running phase %q", phase.description)
+			return fmt.Errorf("error running phase %q: %w", phase.description, err)
 		}
 	}
 
@@ -130,7 +130,7 @@ func (r *Runner) runTask(task Task, errCh chan<- error) {
 		if r := recover(); r != nil {
 			buf := make([]byte, 8192)
 			n := goruntime.Stack(buf, false)
-			err = errors.Errorf("panic recovered: %v\n%s", r, string(buf[:n]))
+			err = fmt.Errorf("panic recovered: %v\n%s", r, string(buf[:n]))
 		}
 	}()
 

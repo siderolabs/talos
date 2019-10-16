@@ -6,9 +6,9 @@ package cri
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
@@ -36,7 +36,7 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 		grpc.WithBackoffMaxDelay(3*time.Second),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)))
 	if err != nil {
-		return nil, errors.Wrapf(err, "error connecting to CRI")
+		return nil, fmt.Errorf("error connecting to CRI: %w", err)
 	}
 
 	return &Client{

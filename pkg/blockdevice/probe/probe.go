@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"
@@ -202,7 +200,7 @@ func probeFilesystem(devpath string) (probed []*ProbedBlockDevice, err error) {
 		bd, _ = blockdevice.Open(devpath)
 
 		if sb, err = FileSystem(path); err != nil {
-			return nil, errors.Wrap(err, "unexpected error when reading super block")
+			return nil, fmt.Errorf("unexpected error when reading super block: %w", err)
 		}
 
 		probed = append(probed, &ProbedBlockDevice{BlockDevice: bd, SuperBlock: sb, Path: path})
@@ -232,5 +230,5 @@ func filterByLabel(probed []*ProbedBlockDevice, value string) (probe *ProbedBloc
 		}
 	}
 
-	return nil, errors.Errorf("no device found with label %s", value)
+	return nil, fmt.Errorf("no device found with label %s", value)
 }

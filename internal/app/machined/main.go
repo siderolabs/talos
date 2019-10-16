@@ -5,11 +5,12 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
@@ -114,7 +115,7 @@ func main() {
 		defer recovery()
 		if err := seq.Boot(); err != nil {
 			log.Println(err)
-			panic(errors.Wrap(err, "boot failed"))
+			panic(fmt.Errorf("boot failed: %w", err))
 		}
 	}()
 
@@ -129,7 +130,7 @@ func main() {
 			fallthrough
 		case event.Reboot:
 			if err := seq.Shutdown(); err != nil {
-				panic(errors.Wrap(err, "shutdown failed"))
+				panic(fmt.Errorf("shutdown failed: %w", err))
 			}
 
 			sync()
@@ -149,7 +150,7 @@ func main() {
 			}
 
 			if err := seq.Upgrade(req); err != nil {
-				panic(errors.Wrap(err, "upgrade failed"))
+				panic(fmt.Errorf("upgrade failed: %w", err))
 			}
 
 			event.Bus().Notify(event.Event{Type: event.Reboot})

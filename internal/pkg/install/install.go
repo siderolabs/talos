@@ -6,6 +6,7 @@ package install
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/containerd/containerd"
@@ -13,7 +14,6 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -43,7 +43,7 @@ func Install(ref string, disk string, platform string) error {
 	// platform name, this should be determined in the installer container.
 	var config *string
 	if config = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
-		return errors.Errorf("no config option was found")
+		return fmt.Errorf("no config option was found")
 	}
 
 	specOpts := []oci.SpecOpts{
@@ -74,19 +74,19 @@ func Install(ref string, disk string, platform string) error {
 	}
 
 	if err = t.Start(ctx); err != nil {
-		return errors.Wrapf(err, "failed to start task: %q", "upgrade")
+		return fmt.Errorf("failed to start %q task: %w", "upgrade", err)
 	}
 
 	statusC, err := t.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "failed waiting for task: %q", "upgrade")
+		return fmt.Errorf("failed waiting for %q task: %w", "upgrade", err)
 	}
 
 	status := <-statusC
 
 	code := status.ExitCode()
 	if code != 0 {
-		return errors.Errorf("task %q failed: exit code %d", "upgrade", code)
+		return fmt.Errorf("task %q failed: exit code %d", "upgrade", code)
 	}
 
 	return nil

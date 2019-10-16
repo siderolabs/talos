@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -28,12 +27,12 @@ func New(c Content) (config runtime.Configurator, err error) {
 	case v1alpha1.Version:
 		config = &v1alpha1.Config{}
 		if err = yaml.Unmarshal(c.data, config); err != nil {
-			return config, errors.Wrap(err, "failed to parse version")
+			return config, fmt.Errorf("failed to parse version: %w", err)
 		}
 
 		return config, nil
 	default:
-		return nil, errors.Errorf("unknown version: %q", c.Version)
+		return nil, fmt.Errorf("unknown version: %q", c.Version)
 	}
 }
 
@@ -42,7 +41,7 @@ func New(c Content) (config runtime.Configurator, err error) {
 func FromFile(p string) (c Content, err error) {
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
-		return c, fmt.Errorf("read config: %v", err)
+		return c, fmt.Errorf("read config: %w", err)
 	}
 
 	return unmarshal(b)

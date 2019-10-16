@@ -6,12 +6,13 @@ package factory
 
 import (
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -116,12 +117,12 @@ func NewListener(setters ...Option) (net.Listener, error) {
 
 		// Make any dirs on the path to the listening socket.
 		if err := os.MkdirAll(filepath.Dir(address), 0700); err != nil {
-			return nil, errors.Wrap(err, "error creating containing directory for the file socket")
+			return nil, fmt.Errorf("error creating containing directory for the file socket; %w", err)
 		}
 	case "tcp":
 		address = ":" + strconv.Itoa(opts.Port)
 	default:
-		return nil, errors.Errorf("unknown network: %s", opts.Network)
+		return nil, fmt.Errorf("unknown network: %s", opts.Network)
 	}
 
 	return net.Listen(opts.Network, address)

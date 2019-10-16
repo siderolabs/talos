@@ -6,8 +6,8 @@ package cri
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -23,7 +23,7 @@ func (c *Client) RunPodSandbox(ctx context.Context, config *runtimeapi.PodSandbo
 	}
 
 	if resp.PodSandboxId == "" {
-		return "", errors.Errorf("PodSandboxId is not set for sandbox %q", config.GetMetadata())
+		return "", fmt.Errorf("PodSandboxId is not set for sandbox %q", config.GetMetadata())
 	}
 
 	return resp.PodSandboxId, nil
@@ -36,7 +36,7 @@ func (c *Client) StopPodSandbox(ctx context.Context, podSandBoxID string) error 
 		PodSandboxId: podSandBoxID,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "StopPodSandbox %q from runtime service failed", podSandBoxID)
+		return fmt.Errorf("StopPodSandbox %q from runtime service failed: %w", podSandBoxID, err)
 	}
 
 	return nil
@@ -49,7 +49,7 @@ func (c *Client) RemovePodSandbox(ctx context.Context, podSandBoxID string) erro
 		PodSandboxId: podSandBoxID,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "RemovePodSandbox %q from runtime service failed", podSandBoxID)
+		return fmt.Errorf("RemovePodSandbox %q from runtime service failed: %w", podSandBoxID, err)
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (c *Client) ListPodSandbox(ctx context.Context, filter *runtimeapi.PodSandb
 		Filter: filter,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ListPodSandbox with filter %+v from runtime service failed", filter)
+		return nil, fmt.Errorf("ListPodSandbox with filter %+v from runtime service failed: %w", filter, err)
 	}
 
 	return resp.Items, nil

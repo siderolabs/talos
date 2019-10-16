@@ -7,6 +7,7 @@ package containerd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -19,7 +20,6 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/typeurl"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -100,17 +100,17 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 
 	info, err := cntr.Info(i.nsctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting container info for %q", cntr.ID())
+		return nil, fmt.Errorf("error getting container info for %q: %w", cntr.ID(), err)
 	}
 
 	spec, err := cntr.Spec(i.nsctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting container spec for %q", cntr.ID())
+		return nil, fmt.Errorf("error getting container spec for %q: %w", cntr.ID(), err)
 	}
 
 	img, err := cntr.Image(i.nsctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting container image for %q", cntr.ID())
+		return nil, fmt.Errorf("error getting container image for %q: %w", cntr.ID(), err)
 	}
 
 	task, err := cntr.Task(i.nsctx, nil)
@@ -120,12 +120,12 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 			return nil, nil
 		}
 
-		return nil, errors.Wrapf(err, "error getting container task for %q", cntr.ID())
+		return nil, fmt.Errorf("error getting container task for %q: %w", cntr.ID(), err)
 	}
 
 	status, err := task.Status(i.nsctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting task status for %q", cntr.ID())
+		return nil, fmt.Errorf("error getting task status for %q: %w", cntr.ID(), err)
 	}
 
 	cp.Inspector = i
@@ -159,12 +159,12 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 	if status.Status == containerd.Running {
 		metrics, err := task.Metrics(i.nsctx)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error pulling metrics for %q", cntr.ID())
+			return nil, fmt.Errorf("error pulling metrics for %q: %w", cntr.ID(), err)
 		}
 
 		anydata, err := typeurl.UnmarshalAny(metrics.Data)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error unmarshalling metrics for %q", cntr.ID())
+			return nil, fmt.Errorf("error unmarshalling metrics for %q: %w", cntr.ID(), err)
 		}
 
 		data, ok := anydata.(*cgroups.Metrics)

@@ -5,7 +5,7 @@
 package disk
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -50,7 +50,7 @@ func (task *ResetDisk) standard() (err error) {
 
 	for _, p := range pt.Partitions() {
 		if err = pt.Delete(p); err != nil {
-			return errors.Wrap(err, "failed to delete partition")
+			return fmt.Errorf("failed to delete partition: %w", err)
 		}
 	}
 

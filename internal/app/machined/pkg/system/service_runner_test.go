@@ -5,10 +5,10 @@
 package system_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"

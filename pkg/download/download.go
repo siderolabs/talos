@@ -12,8 +12,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -98,7 +96,7 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		return nil
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to download config from: %s", u.String())
+		return nil, fmt.Errorf("failed to download config from %q: %w", u.String(), err)
 	}
 
 	return b, nil

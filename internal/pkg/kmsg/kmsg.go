@@ -5,10 +5,10 @@
 package kmsg
 
 import (
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -17,7 +17,7 @@ import (
 func Setup(prefix string) (*os.File, error) {
 	out, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open /dev/kmsg")
+		return nil, fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}
 
 	log.SetOutput(out)

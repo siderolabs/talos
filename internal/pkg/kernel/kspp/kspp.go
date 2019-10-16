@@ -5,8 +5,9 @@
 package kspp
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/sysctl"
@@ -29,13 +30,13 @@ func EnforceKSPPKernelParameters() error {
 	for _, values := range RequiredKSPPKernelParameters {
 		var val *string
 		if val = kernel.ProcCmdline().Get(values.Key()).First(); val == nil {
-			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s is required", values.Key()))
+			result = multierror.Append(result, fmt.Errorf("KSPP kernel parameter %s is required", values.Key()))
 			continue
 		}
 
 		expected := values.First()
 		if *val != *expected {
-			result = multierror.Append(result, errors.Errorf("KSPP kernel parameter %s was found with value %s, expected %s", values.Key(), *val, *expected))
+			result = multierror.Append(result, fmt.Errorf("KSPP kernel parameter %s was found with value %s, expected %s", values.Key(), *val, *expected))
 		}
 	}
 

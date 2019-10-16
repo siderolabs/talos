@@ -8,12 +8,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"log"
 	"net"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/constants"
 )

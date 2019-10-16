@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/blockdevice"
@@ -134,7 +133,7 @@ func (p *Point) Mount() (err error) {
 
 	if p.Shared {
 		if err = mountRetry(share, p); err != nil {
-			return errors.Errorf("error sharing mount point %s: %+v", p.target, err)
+			return fmt.Errorf("error sharing mount point %s: %+v", p.target, err)
 		}
 	}
 
@@ -158,7 +157,7 @@ func (p *Point) Move(prefix string) (err error) {
 	mountpoint := NewMountPoint(target, target, "", unix.MS_MOVE, "", WithPrefix(prefix))
 
 	if err = mountpoint.Mount(); err != nil {
-		return errors.Errorf("error moving mount point %s: %v", target, err)
+		return fmt.Errorf("error moving mount point %s: %w", target, err)
 	}
 
 	return nil
@@ -174,7 +173,7 @@ func (p *Point) ResizePartition() (err error) {
 
 	bd, err := blockdevice.Open("/dev/" + devname)
 	if err != nil {
-		return errors.Errorf("error opening block device %q: %v", devname, err)
+		return fmt.Errorf("error opening block device %q: %w", devname, err)
 	}
 
 	// nolint: errcheck
@@ -208,7 +207,7 @@ func (p *Point) ResizePartition() (err error) {
 // NB: An XFS partition MUST be mounted, or this will fail.
 func (p *Point) GrowFilesystem() (err error) {
 	if err = xfs.GrowFS(p.Target()); err != nil {
-		return errors.Wrap(err, "xfs_growfs")
+		return fmt.Errorf("xfs_growfs: %w", err)
 	}
 
 	return nil
@@ -240,7 +239,7 @@ func overlay(p *Point) error {
 
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", p.target, diff, workdir)
 	if err := unix.Mount("overlay", p.target, "overlay", 0, opts); err != nil {
-		return errors.Errorf("error creating overlay mount to %s: %v", p.target, err)
+		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
 	}
 
 	return nil
@@ -249,7 +248,7 @@ func overlay(p *Point) error {
 func ensureDirectory(target string) (err error) {
 	if _, err := os.Stat(target); os.IsNotExist(err) {
 		if err = os.MkdirAll(target, os.ModeDir); err != nil {
-			return errors.Errorf("error creating mount point directory %s: %v", target, err)
+			return fmt.Errorf("error creating mount point directory %s: %w", target, err)
 		}
 	}
 

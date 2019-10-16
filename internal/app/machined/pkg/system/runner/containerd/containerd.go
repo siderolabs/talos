@@ -16,7 +16,6 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -75,7 +74,7 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 
 	if oldcontainer, err = c.client.LoadContainer(c.ctx, c.args.ID); err == nil {
 		if err = oldcontainer.Delete(c.ctx, containerd.WithSnapshotCleanup); err != nil {
-			return errors.Wrap(err, "error deleting old container instance")
+			return fmt.Errorf("error deleting old container instance: %w", err)
 		}
 	}
 
@@ -89,7 +88,7 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 		containerOpts...,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create container %q", c.args.ID)
+		return fmt.Errorf("failed to create container %q: %w", c.args.ID, err)
 	}
 
 	return nil
@@ -120,27 +119,27 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	// Create the task and start it.
 	task, err := c.container.NewTask(c.ctx, cio.LogFile(c.logPath()))
 	if err != nil {
-		return errors.Wrapf(err, "failed to create task: %q", c.args.ID)
+		return fmt.Errorf("failed to create task: %q: %w", c.args.ID, err)
 	}
 
 	defer task.Delete(c.ctx) // nolint: errcheck
 
 	if err = task.Start(c.ctx); err != nil {
-		return errors.Wrapf(err, "failed to start task: %q", c.args.ID)
+		return fmt.Errorf("failed to start task: %q: %w", c.args.ID, err)
 	}
 
 	eventSink(events.StateRunning, "Started task %s (PID %d) for container %s", task.ID(), task.Pid(), c.container.ID())
 
 	statusC, err := task.Wait(c.ctx)
 	if err != nil {
-		return errors.Wrapf(err, "failed waiting for task: %q", c.args.ID)
+		return fmt.Errorf("failed waiting for task: %q: %w", c.args.ID, err)
 	}
 
 	select {
 	case status := <-statusC:
 		code := status.ExitCode()
 		if code != 0 {
-			return errors.Errorf("task %q failed: exit code %d", c.args.ID, code)
+			return fmt.Errorf("task %q failed: exit code %d", c.args.ID, code)
 		}
 
 		return nil
@@ -149,7 +148,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		eventSink(events.StateStopping, "Sending SIGTERM to task %s (PID %d, container %s)", task.ID(), task.Pid(), c.container.ID())
 
 		if err = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll); err != nil {
-			return errors.Wrap(err, "error sending SIGTERM")
+			return fmt.Errorf("error sending SIGTERM: %w", err)
 		}
 	}
 
@@ -162,7 +161,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		eventSink(events.StateStopping, "Sending SIGKILL to task %s (PID %d, container %s)", task.ID(), task.Pid(), c.container.ID())
 
 		if err = task.Kill(c.ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
-			return errors.Wrap(err, "error sending SIGKILL")
+			return fmt.Errorf("error sending SIGKILL: %w", err)
 		}
 	}
 

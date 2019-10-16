@@ -8,6 +8,8 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -15,7 +17,6 @@ import (
 
 	"github.com/kubernetes-incubator/bootkube/pkg/asset"
 	"github.com/kubernetes-incubator/bootkube/pkg/tlsutil"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/bootkube"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
@@ -80,7 +81,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	peer, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse client certificate")
+		return fmt.Errorf("failed to parse client certificate: %w", err)
 	}
 
 	caCrt, err := ioutil.ReadFile(constants.KubernetesEtcdCACert)
@@ -95,7 +96,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	ca, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse etcd CA certificate")
+		return fmt.Errorf("failed to parse etcd CA certificate: %w", err)
 	}
 
 	peerKey, err := ioutil.ReadFile(constants.KubernetesEtcdPeerKey)
@@ -110,7 +111,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse client key")
+		return fmt.Errorf("failed to parse client key: %w", err)
 	}
 
 	etcdServer, err := url.Parse("https://127.0.0.1:2379")
@@ -149,7 +150,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	k8sCA, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse Kubernetes CA certificate")
+		return fmt.Errorf("failed to parse Kubernetes CA certificate: %w", err)
 	}
 
 	block, _ = pem.Decode(config.Cluster().CA().Key)
@@ -159,7 +160,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	k8sKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse Kubernetes key")
+		return fmt.Errorf("failed to parse Kubernetes key: %w", err)
 	}
 
 	apiServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 1)
@@ -195,7 +196,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	as, err := asset.NewDefaultAssets(conf)
 	if err != nil {
-		return errors.Wrap(err, "failed to create list of assets")
+		return fmt.Errorf("failed to create list of assets: %w", err)
 	}
 
 	if err = as.WriteFiles(constants.AssetsDirectory); err != nil {

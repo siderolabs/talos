@@ -6,11 +6,10 @@
 package lba
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"unsafe"
-
-	"github.com/pkg/errors"
 
 	"golang.org/x/sys/unix"
 )

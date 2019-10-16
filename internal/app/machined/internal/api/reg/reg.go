@@ -16,7 +16,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -182,7 +181,7 @@ func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machi
 	path = filepath.Clean(path)
 
 	if !filepath.IsAbs(path) {
-		return errors.Errorf("path is not absolute %v", path)
+		return fmt.Errorf("path is not absolute %v", path)
 	}
 
 	pr, pw := io.Pipe()

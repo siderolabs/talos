@@ -6,13 +6,13 @@ package syslinux
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"text/template"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/cmd"
 
@@ -118,7 +118,7 @@ func Install(base string, config interface{}) (err error) {
 	}
 
 	if err = cmd.Run("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
-		return errors.Wrap(err, "failed to install extlinux")
+		return fmt.Errorf("failed to install extlinux: %w", err)
 	}
 
 	return nil

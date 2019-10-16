@@ -7,9 +7,8 @@ package tls
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/grpc/gen"
@@ -29,7 +28,7 @@ type renewingLocalCertificateProvider struct {
 func NewLocalRenewingFileCertificateProvider(caKey, caCrt []byte, hostname string, ips []net.IP) (CertificateProvider, error) {
 	g, err := gen.NewLocalGenerator(caKey, caCrt)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create TLS generator")
+		return nil, fmt.Errorf("failed to create TLS generator: %w", err)
 	}
 
 	provider := &renewingLocalCertificateProvider{
@@ -50,7 +49,7 @@ func NewLocalRenewingFileCertificateProvider(caKey, caCrt []byte, hostname strin
 	)
 
 	if ca, cert, err = provider.updateFunc(); err != nil {
-		return nil, errors.Wrap(err, "failed to create initial certificate")
+		return nil, fmt.Errorf("failed to create initial certificate: %w", err)
 	}
 
 	if err = provider.UpdateCertificates(ca, &cert); err != nil {
@@ -77,14 +76,14 @@ func (p *renewingLocalCertificateProvider) update() (ca []byte, cert tls.Certifi
 	}
 
 	if ca, crt, err = p.generator.Identity(csr); err != nil {
-		return nil, cert, errors.Wrap(err, "failed to generate identity")
+		return nil, cert, fmt.Errorf("failed to generate identity: %w", err)
 	}
 
 	identity.Crt = crt
 
 	cert, err = tls.X509KeyPair(identity.Crt, identity.Key)
 	if err != nil {
-		return nil, cert, errors.Wrap(err, "failed to parse cert and key into a TLS Certificate")
+		return nil, cert, fmt.Errorf("failed to parse cert and key into a TLS Certificate: %w", err)
 	}
 
 	return ca, cert, nil

@@ -7,12 +7,12 @@ package blockdevice
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"os"
 	"syscall"
 	"time"
 	"unsafe"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
@@ -121,7 +121,7 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 	}
 	// Flush the block device buffers.
 	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKFLSBUF, 0); ret != 0 {
-		return errors.Errorf("flush block device buffers: %v", ret)
+		return fmt.Errorf("flush block device buffers: %v", ret)
 	}
 
 	var (
@@ -142,7 +142,7 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 		}
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to re-read partition table")
+		return fmt.Errorf("failed to re-read partition table: %w", err)
 	}
 
 	return err

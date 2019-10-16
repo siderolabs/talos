@@ -5,10 +5,11 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
@@ -79,7 +80,7 @@ func main() {
 	defer recovery()
 
 	if err := run(); err != nil {
-		panic(errors.Wrap(err, "early boot failed"))
+		panic(fmt.Errorf("early boot failed: %w", err))
 	}
 
 	// We should never reach this point if things are working as intended.

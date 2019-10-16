@@ -7,11 +7,11 @@ package rootfs
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -59,7 +59,7 @@ func (task *UnmountPodMounts) standard(r runtime.Runtime) (err error) {
 			log.Printf("unmounting %s\n", mountpoint)
 
 			if err = unix.Unmount(mountpoint, 0); err != nil {
-				return errors.Errorf("error unmounting %s: %v", mountpoint, err)
+				return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
 			}
 		}
 	}

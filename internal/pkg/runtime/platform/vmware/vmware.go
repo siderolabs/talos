@@ -6,10 +6,10 @@ package vmware
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 
-	"github.com/pkg/errors"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
@@ -47,16 +47,16 @@ func (v *VMware) Configuration() ([]byte, error) {
 
 		val, err := config.String(constants.VMwareGuestInfoConfigKey, "")
 		if err != nil {
-			return nil, errors.Errorf("failed to get guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)
+			return nil, fmt.Errorf("failed to get guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
 		}
 
 		if val == "" {
-			return nil, errors.Errorf("config is required, no value found for guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)
+			return nil, fmt.Errorf("config is required, no value found for guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
 		}
 
 		b, err := base64.StdEncoding.DecodeString(val)
 		if err != nil {
-			return nil, errors.Errorf("failed to decode guestinfo.%s: %v", constants.VMwareGuestInfoConfigKey, err)
+			return nil, fmt.Errorf("failed to decode guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
 		}
 
 		return b, nil

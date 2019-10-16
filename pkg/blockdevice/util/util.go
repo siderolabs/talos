@@ -5,9 +5,8 @@
 package util
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // PartNo returns the partition number.
@@ -29,7 +28,7 @@ func PartNo(partname string) (partno string, err error) {
 	case strings.HasPrefix(p, "xvd"):
 		return strings.TrimLeft(partname, "/abcdefghijklmnopqrstuvwxyz"), nil
 	default:
-		return "", errors.Errorf("could not determine partition number from partition name: %s", partname)
+		return "", fmt.Errorf("could not determine partition number from partition name: %s", partname)
 	}
 }
 
@@ -57,6 +56,6 @@ func DevnameFromPartname(partname string) (devname string, err error) {
 	case strings.HasPrefix(p, "xvd"):
 		return strings.TrimRight(partname, partno), nil
 	default:
-		return "", errors.Errorf("could not determine dev name from partition name: %s", partname)
+		return "", fmt.Errorf("could not determine dev name from partition name: %s", partname)
 	}
 }

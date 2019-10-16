@@ -5,7 +5,8 @@
 package manifest
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/config/machine"
@@ -23,7 +24,7 @@ func VerifyDataDevice(install machine.Install) (err error) {
 	}
 
 	if err = VerifyDiskAvailability(install.Disk(), constants.EphemeralPartitionLabel); err != nil {
-		return errors.Wrap(err, "failed to verify disk availability")
+		return fmt.Errorf("failed to verify disk availability: %w", err)
 	}
 
 	return nil
@@ -40,7 +41,7 @@ func VerifyBootDevice(install machine.Install) (err error) {
 	}
 
 	if err = VerifyDiskAvailability(install.Disk(), constants.BootPartitionLabel); err != nil {
-		return errors.Wrap(err, "failed to verify disk availability")
+		return fmt.Errorf("failed to verify disk availability: %w", err)
 	}
 
 	return nil
@@ -60,7 +61,7 @@ func VerifyDiskAvailability(devpath, label string) (err error) {
 	}
 
 	if dev.SuperBlock != nil {
-		return errors.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
+		return fmt.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
 	}
 
 	return nil

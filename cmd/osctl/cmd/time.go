@@ -27,7 +27,7 @@ var timeCmd = &cobra.Command{
 		setupClient(func(c *client.Client) {
 			server, err := cmd.Flags().GetString("check")
 			if err != nil {
-				helpers.Fatalf("failed to parse check flag: %v", err)
+				helpers.Fatalf("failed to parse check flag: %w", err)
 			}
 
 			var output *timeapi.TimeReply

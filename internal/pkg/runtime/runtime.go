@@ -5,9 +5,8 @@
 package runtime
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // Mode is a runtime mode.
@@ -41,7 +40,7 @@ func ModeFromString(s string) (m Mode, err error) {
 	case "Metal":
 		return Metal, nil
 	default:
-		return m, errors.Errorf("%q is not a valid mode", s)
+		return m, fmt.Errorf("%q is not a valid mode", s)
 	}
 }
 

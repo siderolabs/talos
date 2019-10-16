@@ -6,11 +6,10 @@ package upgrade
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -81,7 +80,7 @@ func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 	}
 
 	if id == nil {
-		return errors.Errorf("failed to find %q in list of etcd members", hostname)
+		return fmt.Errorf("failed to find %q in list of etcd members", hostname)
 	}
 
 	log.Println("leaving etcd cluster")

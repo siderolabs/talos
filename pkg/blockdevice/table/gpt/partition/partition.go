@@ -74,7 +74,7 @@ func (prt *Partition) Fields() []*serde.Field {
 			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				guid, err := uuid.FromBytes(contents)
 				if err != nil {
-					return fmt.Errorf("invalid GUUID: %v", err)
+					return fmt.Errorf("invalid GUUID: %w", err)
 				}
 
 				// TODO: Provide a method for getting the human readable name of the type.
@@ -94,7 +94,7 @@ func (prt *Partition) Fields() []*serde.Field {
 			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				guid, err := uuid.FromBytes(contents)
 				if err != nil {
-					return fmt.Errorf("invalid GUUID: %v", err)
+					return fmt.Errorf("invalid GUUID: %w", err)
 				}
 
 				prt.ID = guid

@@ -7,11 +7,11 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 
 	"github.com/hashicorp/go-multierror"
-	"golang.org/x/xerrors"
 
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -64,7 +64,7 @@ func CheckDeviceInterface() NetworkDeviceCheck {
 		var result *multierror.Error
 
 		if d.Interface == "" {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.interface", "", ErrRequiredSection))
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.interface", "", ErrRequiredSection))
 		}
 
 		return result.ErrorOrNil()
@@ -80,18 +80,18 @@ func CheckDeviceAddressing() NetworkDeviceCheck {
 
 		// Test for both dhcp and cidr specified
 		if d.DHCP && d.CIDR != "" {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
 		}
 
 		// test for neither dhcp nor cidr specified
 		if !d.DHCP && d.CIDR == "" {
-			result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
 		}
 
 		// ensure cidr is a valid address
 		if d.CIDR != "" {
 			if _, _, err := net.ParseCIDR(d.CIDR); err != nil {
-				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.CIDR", "", err))
+				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", "", err))
 			}
 		}
 
@@ -111,11 +111,11 @@ func CheckDeviceRoutes() NetworkDeviceCheck {
 
 		for idx, route := range d.Routes {
 			if _, _, err := net.ParseCIDR(route.Network); err != nil {
-				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network, ErrInvalidAddress))
+				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network, ErrInvalidAddress))
 			}
 
 			if ip := net.ParseIP(route.Gateway); ip == nil {
-				result = multierror.Append(result, xerrors.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway, ErrInvalidAddress))
+				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway, ErrInvalidAddress))
 			}
 		}
 		return result.ErrorOrNil()

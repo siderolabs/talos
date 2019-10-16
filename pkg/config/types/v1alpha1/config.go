@@ -5,7 +5,9 @@
 package v1alpha1
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -57,7 +59,7 @@ func (c *Config) Validate(mode runtime.Mode) error {
 
 	if mode == runtime.Metal {
 		if c.MachineConfig.MachineInstall == nil {
-			return errors.Errorf("install instructions are required by the %q mode", runtime.Metal.String())
+			return fmt.Errorf("install instructions are required by the %q mode", runtime.Metal.String())
 		}
 	}
 

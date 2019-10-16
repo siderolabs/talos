@@ -5,10 +5,10 @@
 package switchroot
 
 import (
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
@@ -27,13 +27,13 @@ func Switch(prefix string, virtual *manager.Manager) (err error) {
 	log.Printf("changing working directory into %s", prefix)
 
 	if err = unix.Chdir(prefix); err != nil {
-		return errors.Wrapf(err, "error changing working directory to %s", prefix)
+		return fmt.Errorf("error changing working directory to %s: %w", prefix, err)
 	}
 
 	var old *os.File
 
 	if old, err = os.Open("/"); err != nil {
-		return errors.Wrap(err, "error opening /")
+		return fmt.Errorf("error opening /: %w", err)
 	}
 
 	// nolint: errcheck
@@ -42,19 +42,19 @@ func Switch(prefix string, virtual *manager.Manager) (err error) {
 	log.Printf("moving %s to /", prefix)
 
 	if err = unix.Mount(prefix, "/", "", unix.MS_MOVE, ""); err != nil {
-		return errors.Wrap(err, "error moving /")
+		return fmt.Errorf("error moving /: %w", err)
 	}
 
 	log.Println("changing root directory")
 
 	if err = unix.Chroot("."); err != nil {
-		return errors.Wrap(err, "error chroot")
+		return fmt.Errorf("error chroot: %w", err)
 	}
 
 	log.Println("cleaning up initramfs")
 
 	if err = recursiveDelete(int(old.Fd())); err != nil {
-		return errors.Wrap(err, "error deleting initramfs")
+		return fmt.Errorf("error deleting initramfs: %w", err)
 	}
 
 	// Note that /sbin/init is machined. We call it init since this is the
@@ -62,7 +62,7 @@ func Switch(prefix string, virtual *manager.Manager) (err error) {
 	log.Println("executing /sbin/init")
 
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, []string{}); err != nil {
-		return errors.Wrap(err, "error executing /sbin/init")
+		return fmt.Errorf("error executing /sbin/init: %w", err)
 	}
 
 	return nil

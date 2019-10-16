@@ -39,7 +39,7 @@ func init() {
 // If no servers are specified, the default will be used
 func main() {
 	if err := startup.RandSeed(); err != nil {
-		log.Fatalf("startup: %s", err)
+		log.Fatalf("startup: %v", err)
 	}
 
 	server := DefaultServer

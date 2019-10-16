@@ -5,11 +5,11 @@
 package metal
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
@@ -35,7 +35,7 @@ func (b *Metal) Name() string {
 func (b *Metal) Configuration() ([]byte, error) {
 	var option *string
 	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
-		return nil, errors.Errorf("no config option was found")
+		return nil, fmt.Errorf("no config option was found")
 	}
 
 	switch *option {
@@ -66,20 +66,20 @@ func readConfigFromISO() (b []byte, err error) {
 
 	dev, err = probe.GetDevWithFileSystemLabel(constants.MetalConfigISOLabel)
 	if err != nil {
-		return nil, errors.Errorf("failed to find %s iso: %v", constants.MetalConfigISOLabel, err)
+		return nil, fmt.Errorf("failed to find %s iso: %w", constants.MetalConfigISOLabel, err)
 	}
 
 	if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
-		return nil, errors.Errorf("failed to mount iso: %v", err)
+		return nil, fmt.Errorf("failed to mount iso: %w", err)
 	}
 
 	b, err = ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
 	if err != nil {
-		return nil, errors.Errorf("read config: %s", err.Error())
+		return nil, fmt.Errorf("read config: %s", err.Error())
 	}
 
 	if err = unix.Unmount(mnt, 0); err != nil {
-		return nil, errors.Errorf("failed to unmount: %v", err)
+		return nil, fmt.Errorf("failed to unmount: %w", err)
 	}
 
 	return b, nil

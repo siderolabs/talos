@@ -5,9 +5,9 @@
 package owned
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -42,7 +42,7 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 				continue
 			}
 
-			return nil, errors.Errorf("probe device for filesystem %s: %v", name, err)
+			return nil, fmt.Errorf("probe device for filesystem %s: %w", name, err)
 		}
 
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
@@ -81,7 +81,7 @@ func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 				continue
 			}
 
-			return nil, errors.Errorf("find device with label %s: %v", name, err)
+			return nil, fmt.Errorf("find device with label %s: %w", name, err)
 		}
 
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)

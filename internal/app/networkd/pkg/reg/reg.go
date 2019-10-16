@@ -6,11 +6,11 @@ package reg
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -40,7 +40,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *networkapi.RoutesReply, err error) {
 	list, err := r.Networkd.NlConn.Route.List()
 	if err != nil {
-		return nil, errors.Errorf("failed to get route list: %v", err)
+		return nil, fmt.Errorf("failed to get route list: %w", err)
 	}
 
 	routes := []*networkapi.Route{}

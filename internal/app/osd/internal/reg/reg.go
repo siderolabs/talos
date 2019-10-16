@@ -6,6 +6,7 @@ package reg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,7 +18,6 @@ import (
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/pkg/errors"
 	"github.com/prometheus/procfs"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -317,7 +317,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver osapi.C
 
 		return containerd.NewInspector(ctx, namespace, containerd.WithContainerdAddress(addr))
 	default:
-		return nil, errors.Errorf("unsupported driver %q", driver)
+		return nil, fmt.Errorf("unsupported driver %q", driver)
 	}
 }
 

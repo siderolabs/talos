@@ -8,6 +8,7 @@ import (
 	"context"
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	stdlibnet "net"
@@ -19,7 +20,6 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
@@ -54,7 +54,7 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 	}
 
 	if err = generatePKI(config); err != nil {
-		return errors.Wrap(err, "failed to generate etcd PKI")
+		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
 	client, err := containerdapi.New(constants.ContainerdAddress)
@@ -67,7 +67,7 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 	if _, err = client.Pull(containerdctx, etcdImage, containerdapi.WithPullUnpack); err != nil {
-		return fmt.Errorf("failed to pull image %q: %v", etcdImage, err)
+		return fmt.Errorf("failed to pull image %q: %w", etcdImage, err)
 	}
 
 	return nil
@@ -92,7 +92,7 @@ func (e *Etcd) DependsOn(config runtime.Configurator) []string {
 func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to discover IP addresses")
+		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
 	}
 
 	if len(ips) == 0 {
@@ -172,23 +172,23 @@ func generatePKI(config runtime.Configurator) (err error) {
 	}
 
 	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
-		return errors.Wrap(err, "failed to write CA certificate")
+		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
 	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
-		return errors.Wrap(err, "failed to write CA key")
+		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
 	ips, err := net.IPAddrs()
 	if err != nil {
-		return errors.Wrap(err, "failed to discover IP addresses")
+		return fmt.Errorf("failed to discover IP addresses: %w", err)
 	}
 
 	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		return errors.Wrap(err, "failed to get hostname")
+		return fmt.Errorf("failed to get hostname: %w", err)
 	}
 
 	opts := []x509.Option{
@@ -201,7 +201,7 @@ func generatePKI(config runtime.Configurator) (err error) {
 
 	peerKey, err := x509.NewRSAKey()
 	if err != nil {
-		return errors.Wrap(err, "failled to create RSA key")
+		return fmt.Errorf("failled to create RSA key: %w", err)
 	}
 
 	pemBlock, _ := pem.Decode(peerKey.KeyPEM)
@@ -211,12 +211,12 @@ func generatePKI(config runtime.Configurator) (err error) {
 
 	peerKeyRSA, err := stdlibx509.ParsePKCS1PrivateKey(pemBlock.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failled to parse private key")
+		return fmt.Errorf("failled to parse private key: %w", err)
 	}
 
 	csr, err := x509.NewCertificateSigningRequest(peerKeyRSA, opts...)
 	if err != nil {
-		return errors.Wrap(err, "failed to create CSR")
+		return fmt.Errorf("failed to create CSR: %w", err)
 	}
 
 	csrPemBlock, _ := pem.Decode(csr.X509CertificateRequestPEM)
@@ -226,7 +226,7 @@ func generatePKI(config runtime.Configurator) (err error) {
 
 	ccsr, err := stdlibx509.ParseCertificateRequest(csrPemBlock.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failled to parse certificate request")
+		return fmt.Errorf("failled to parse certificate request: %w", err)
 	}
 
 	caPemBlock, _ := pem.Decode(config.Cluster().Etcd().CA().Crt)
@@ -236,7 +236,7 @@ func generatePKI(config runtime.Configurator) (err error) {
 
 	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse CA")
+		return fmt.Errorf("failed to parse CA: %w", err)
 	}
 
 	caKeyPemBlock, _ := pem.Decode(config.Cluster().Etcd().CA().Key)
@@ -246,12 +246,12 @@ func generatePKI(config runtime.Configurator) (err error) {
 
 	caKey, err := stdlibx509.ParsePKCS1PrivateKey(caKeyPemBlock.Bytes)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse CA private key")
+		return fmt.Errorf("failed to parse CA private key: %w", err)
 	}
 
 	peer, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, opts...)
 	if err != nil {
-		return errors.Wrap(err, "failled to create peer certificate")
+		return fmt.Errorf("failled to create peer certificate: %w", err)
 	}
 
 	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0500); err != nil {

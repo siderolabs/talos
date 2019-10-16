@@ -6,13 +6,13 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"syscall"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -63,14 +63,14 @@ func (task *KillKubernetesTasks) standard() (err error) {
 		log.Printf("killing task %s", task.ID)
 		g.Go(func() error {
 			if _, err = s.Kill(ctx, &tasks.KillRequest{ContainerID: task.ID, Signal: uint32(syscall.SIGTERM), All: true}); err != nil {
-				return errors.Wrap(err, "error killing task")
+				return fmt.Errorf("error killing task: %w", err)
 			}
 			// TODO(andrewrynhard): Send SIGKILL on a timeout threshold.
 			if _, err = s.Wait(ctx, &tasks.WaitRequest{ContainerID: task.ID}); err != nil {
-				return errors.Wrap(err, "error waiting on task")
+				return fmt.Errorf("error waiting on task: %w", err)
 			}
 			if _, err = s.Delete(ctx, &tasks.DeleteTaskRequest{ContainerID: task.ID}); err != nil {
-				return errors.Wrap(err, "error deleting task")
+				return fmt.Errorf("error deleting task: %w", err)
 			}
 
 			return nil

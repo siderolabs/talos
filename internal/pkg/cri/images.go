@@ -6,8 +6,8 @@ package cri
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -18,7 +18,7 @@ func (c *Client) PullImage(ctx context.Context, image *runtimeapi.ImageSpec, san
 		SandboxConfig: sandboxConfig,
 	})
 	if err != nil {
-		return "", errors.Wrapf(err, "error pulling image %+v", image)
+		return "", fmt.Errorf("error pulling image %s: %w", image, err)
 	}
 
 	return resp.ImageRef, nil
@@ -30,7 +30,7 @@ func (c *Client) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter)
 		Filter: filter,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "error listing imags")
+		return nil, fmt.Errorf("error listing images: %w", err)
 	}
 
 	return resp.Images, nil
@@ -42,12 +42,12 @@ func (c *Client) ImageStatus(ctx context.Context, image *runtimeapi.ImageSpec) (
 		Image: image,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ImageStatus %q from image service failed", image.Image)
+		return nil, fmt.Errorf("ImageStatus %q from image service failed: %w", image.Image, err)
 	}
 
 	if resp.Image != nil {
 		if resp.Image.Id == "" || resp.Image.Size_ == 0 {
-			return nil, errors.Errorf("Id or size of image %q is not set", image.Image)
+			return nil, fmt.Errorf("id or size of image %q is not set", image.Image)
 		}
 	}
 

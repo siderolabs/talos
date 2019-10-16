@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -240,7 +238,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 	}
 
 	if err := runnr.Open(ctx); err != nil {
-		return errors.Wrap(err, "error opening runner")
+		return fmt.Errorf("error opening runner: %w", err)
 	}
 
 	// nolint: errcheck
@@ -297,11 +295,11 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		<-errCh
 
 		if err != nil {
-			return errors.Wrap(err, "error stopping service")
+			return fmt.Errorf("error stopping service: %w", err)
 		}
 	case err := <-errCh:
 		if err != nil {
-			return errors.Wrap(err, "error running service")
+			return fmt.Errorf("error running service: %w", err)
 		}
 	}
 

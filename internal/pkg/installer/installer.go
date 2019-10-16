@@ -5,13 +5,13 @@
 package installer
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
@@ -41,7 +41,7 @@ func NewInstaller(cmdline *kernel.Cmdline, install machine.Install) (i *Installe
 
 	i.manifest, err = manifest.NewManifest(install)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create installation manifest")
+		return nil, fmt.Errorf("failed to create installation manifest: %w", err)
 	}
 
 	return i, nil
@@ -53,7 +53,7 @@ func NewInstaller(cmdline *kernel.Cmdline, install machine.Install) (i *Installe
 func (i *Installer) Install() (err error) {
 	if i.install.Zero() {
 		if err = zero(i.manifest); err != nil {
-			return errors.Wrap(err, "failed to wipe device(s)")
+			return fmt.Errorf("failed to wipe device(s): %w", err)
 		}
 	}
 
@@ -155,7 +155,7 @@ func zero(manifest *manifest.Manifest) (err error) {
 		var size uint64
 
 		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
-			return errors.Errorf("failed to got block device size: %v", ret)
+			return fmt.Errorf("failed to got block device size: %v", ret)
 		}
 
 		if _, err = io.CopyN(f, zero, int64(size)); err != nil {
