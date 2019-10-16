@@ -53,7 +53,7 @@ func (b *Metal) Hostname() (hostname []byte, err error) {
 
 // Mode implements the platform.Platform interface.
 func (b *Metal) Mode() runtime.Mode {
-	return runtime.Cloud
+	return runtime.Metal
 }
 
 // ExternalIPs provides any external addresses assigned to the instance
