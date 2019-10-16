@@ -87,7 +87,7 @@ func TestNthIPInNetwork(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NthIPInNetwork(tt.args.network, tt.args.n)
 			if err != nil {
-				t.Errorf("%v", err)
+				t.Errorf("%w", err)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {

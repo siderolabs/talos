@@ -5,12 +5,11 @@
 package rootfs
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -61,7 +60,7 @@ func (task *MountCgroups) runtime(r runtime.Runtime) (err error) {
 	// See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
 	target := path.Join("/sys/fs/cgroup", memoryCgroup, memoryUseHierarchy)
 	if err = ioutil.WriteFile(target, memoryUseHierarchyContents, memoryUseHierarchyPermissions); err != nil {
-		return errors.Wrap(err, "failed to enable memory hierarchy support")
+		return fmt.Errorf("failed to enable memory hierarchy support: %w", err)
 	}
 
 	return nil

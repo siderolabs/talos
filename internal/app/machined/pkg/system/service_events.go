@@ -8,8 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 )
 
@@ -33,7 +31,7 @@ func (sc *serviceCondition) Wait(ctx context.Context) error {
 	instance.mu.Unlock()
 
 	if svcrunner == nil {
-		return errors.Errorf("service %q is not registered", sc.service)
+		return fmt.Errorf("service %q is not registered", sc.service)
 	}
 
 	notifyCh := make(chan struct{}, 1)

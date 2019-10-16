@@ -5,10 +5,10 @@
 package cmd
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/armon/circbuf"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
@@ -35,11 +35,11 @@ func Run(name string, args ...string) error {
 	}
 
 	if err = cmd.Start(); err != nil {
-		return errors.Errorf("%s: %s", err, stderr.String())
+		return fmt.Errorf("%s: %s", err, stderr.String())
 	}
 
 	if err = reaper.WaitWrapper(usingReaper, notifyCh, cmd); err != nil {
-		return errors.Errorf("%s: %s", err, stderr.String())
+		return fmt.Errorf("%s: %s", err, stderr.String())
 	}
 
 	return nil

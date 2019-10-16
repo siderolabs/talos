@@ -5,10 +5,9 @@
 package reaper
 
 import (
+	"fmt"
 	"os/exec"
 	"syscall"
-
-	"github.com/pkg/errors"
 )
 
 // WaitWrapper emulates os/exec.Command.Wait() when reaper is running.
@@ -40,11 +39,11 @@ func WaitWrapper(usingReaper bool, notifyCh <-chan ProcessInfo, cmd *exec.Cmd) e
 
 func convertWaitStatus(status syscall.WaitStatus) error {
 	if status.Signaled() {
-		return errors.Errorf("signal: %s", status.Signal())
+		return fmt.Errorf("signal: %s", status.Signal())
 	}
 
 	if status.Exited() && status.ExitStatus() != 0 {
-		return errors.Errorf("exit status %d", status.ExitStatus())
+		return fmt.Errorf("exit status %d", status.ExitStatus())
 	}
 
 	return nil

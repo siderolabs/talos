@@ -5,18 +5,18 @@
 package startup
 
 import (
+	"fmt"
+
 	cryptorand "crypto/rand"
 	"encoding/binary"
 	"math/rand"
-
-	"github.com/pkg/errors"
 )
 
 // RandSeed default math/rand PRNG.
 func RandSeed() error {
 	seed := make([]byte, 8)
 	if _, err := cryptorand.Read(seed); err != nil {
-		return errors.Wrap(err, "error seeding rand")
+		return fmt.Errorf("error seeding rand: %w", err)
 	}
 
 	rand.Seed(int64(binary.LittleEndian.Uint64(seed)))

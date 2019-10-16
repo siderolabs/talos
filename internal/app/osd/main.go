@@ -40,7 +40,7 @@ func init() {
 // nolint: gocyclo
 func main() {
 	if err := startup.RandSeed(); err != nil {
-		log.Fatalf("failed to seed RNG: %s", err)
+		log.Fatalf("failed to seed RNG: %v", err)
 	}
 
 	content, err := config.FromFile(*configPath)

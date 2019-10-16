@@ -13,8 +13,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/pkg/version"
 
 	"golang.org/x/sys/unix"
@@ -74,11 +72,11 @@ func Hosts(hostname string) (err error) {
 	}
 
 	if err = ioutil.WriteFile("/run/system/etc/hosts", writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /run/hosts: %v", err)
+		return fmt.Errorf("write /run/hosts: %w", err)
 	}
 
 	if err = unix.Mount("/run/system/etc/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
-		return errors.Wrap(err, "failed to create bind mount for /etc/hosts")
+		return fmt.Errorf("failed to create bind mount for /etc/hosts: %w", err)
 	}
 
 	return nil
@@ -99,7 +97,7 @@ func ResolvConf() (err error) {
 	defer f.Close()
 
 	if err = unix.Mount("/run/system/etc/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
-		return errors.Wrap(err, "failed to create bind mount for /etc/resolv.conf")
+		return fmt.Errorf("failed to create bind mount for /etc/resolv.conf: %w", err)
 	}
 
 	return nil
@@ -142,11 +140,11 @@ func OSRelease() (err error) {
 	}
 
 	if err = ioutil.WriteFile("/run/system/etc/os-release", writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /run/system/etc/os-release: %v", err)
+		return fmt.Errorf("write /run/system/etc/os-release: %w", err)
 	}
 
 	if err = unix.Mount("/run/system/etc/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
-		return errors.Wrap(err, "failed to create bind mount for /etc/os-release")
+		return fmt.Errorf("failed to create bind mount for /etc/os-release: %w", err)
 	}
 
 	return nil

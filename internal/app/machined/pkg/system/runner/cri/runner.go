@@ -6,10 +6,10 @@ package cri
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -109,7 +109,7 @@ func (c *criRunner) findImage(ctx context.Context) error {
 		}
 	}
 
-	return errors.Errorf("container image %q hasn't been found", c.opts.ContainerImage)
+	return fmt.Errorf("container image %q hasn't been found", c.opts.ContainerImage)
 }
 
 // Open prepares the runner.
@@ -256,9 +256,9 @@ WAIT:
 				return nil
 			}
 
-			return errors.Errorf("container exited with code %d (%s)", status.ExitCode, status.Reason)
+			return fmt.Errorf("container exited with code %d (%s)", status.ExitCode, status.Reason)
 		default:
-			return errors.Errorf("container in unexpected state (%d)", status.State)
+			return fmt.Errorf("container in unexpected state (%d)", status.State)
 		}
 	}
 

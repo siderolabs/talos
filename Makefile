@@ -3,7 +3,7 @@ TOOLS ?= autonomy/tools:96cb1b9
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.6.0
 KUBECTL_VERSION ?= v1.16.0
-GO_VERSION ?= 1.12
+GO_VERSION ?= 1.13
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
 BUILDKIT_CONTAINER_NAME ?= talos-buildkit

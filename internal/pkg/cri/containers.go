@@ -6,8 +6,8 @@ package cri
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -19,11 +19,11 @@ func (c *Client) CreateContainer(ctx context.Context, podSandBoxID string, confi
 		SandboxConfig: sandboxConfig,
 	})
 	if err != nil {
-		return "", errors.Wrapf(err, "CreateContainer in sandbox %q from runtime service failed", podSandBoxID)
+		return "", fmt.Errorf("CreateContainer in sandbox %q from runtime service failed: %w", podSandBoxID, err)
 	}
 
 	if resp.ContainerId == "" {
-		return "", errors.Errorf("ContainerId is not set for container %q", config.GetMetadata())
+		return "", fmt.Errorf("ContainerId is not set for container %q", config.GetMetadata())
 	}
 
 	return resp.ContainerId, nil
@@ -35,7 +35,7 @@ func (c *Client) StartContainer(ctx context.Context, containerID string) error {
 		ContainerId: containerID,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "StartContainer %q from runtime service failed", containerID)
+		return fmt.Errorf("StartContainer %q from runtime service failed: %w", containerID, err)
 	}
 
 	return nil
@@ -48,7 +48,7 @@ func (c *Client) StopContainer(ctx context.Context, containerID string, timeout 
 		Timeout:     timeout,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "StopContainer %q from runtime service failed", containerID)
+		return fmt.Errorf("StopContainer %q from runtime service failed: %w", containerID, err)
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (c *Client) RemoveContainer(ctx context.Context, containerID string) error 
 		ContainerId: containerID,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "RemoveContainer %q from runtime service failed", containerID)
+		return fmt.Errorf("RemoveContainer %q from runtime service failed: %w", containerID, err)
 	}
 
 	return nil
@@ -73,7 +73,7 @@ func (c *Client) ListContainers(ctx context.Context, filter *runtimeapi.Containe
 		Filter: filter,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ListContainers with filter %+v from runtime service failed", filter)
+		return nil, fmt.Errorf("ListContainers with filter %+v from runtime service failed: %w", filter, err)
 	}
 
 	return resp.Containers, nil
@@ -86,7 +86,7 @@ func (c *Client) ContainerStatus(ctx context.Context, containerID string, verbos
 		Verbose:     verbose,
 	})
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "ContainerStatus %q from runtime service failed", containerID)
+		return nil, nil, fmt.Errorf("ContainerStatus %q from runtime service failed: %w", containerID, err)
 	}
 
 	return resp.Status, resp.Info, nil
@@ -98,7 +98,7 @@ func (c *Client) ContainerStats(ctx context.Context, containerID string) (*runti
 		ContainerId: containerID,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ContainerStatus %q from runtime service failed", containerID)
+		return nil, fmt.Errorf("ContainerStatus %q from runtime service failed: %w", containerID, err)
 	}
 
 	return resp.GetStats(), nil
@@ -110,7 +110,7 @@ func (c *Client) ListContainerStats(ctx context.Context, filter *runtimeapi.Cont
 		Filter: filter,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ListContainerStats with filter %+v from runtime service failed", filter)
+		return nil, fmt.Errorf("ListContainerStats with filter %+v from runtime service failed: %w", filter, err)
 	}
 
 	return resp.GetStats(), nil

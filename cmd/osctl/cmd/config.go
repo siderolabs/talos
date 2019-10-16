@@ -144,7 +144,7 @@ var configGenerateCmd = &cobra.Command{
 func genV1Alpha1Config(args []string) {
 	input, err := genv1alpha1.NewInput(args[0], args[1], kubernetesVersion)
 	if err != nil {
-		helpers.Fatalf("failed to generate PKI and tokens: %v", err)
+		helpers.Fatalf("failed to generate PKI and tokens: %w", err)
 	}
 
 	input.AdditionalSubjectAltNames = additionalSANs
@@ -155,7 +155,7 @@ func genV1Alpha1Config(args []string) {
 
 	for _, t := range []genv1alpha1.Type{genv1alpha1.TypeInit, genv1alpha1.TypeControlPlane, genv1alpha1.TypeJoin} {
 		if err = writeV1Alpha1Config(input, t, t.String()); err != nil {
-			helpers.Fatalf("failed to generate config for %s: %v", t.String(), err)
+			helpers.Fatalf("failed to generate config for %s: %w", t.String(), err)
 		}
 	}
 
@@ -177,7 +177,7 @@ func genV1Alpha1Config(args []string) {
 	}
 
 	if err = ioutil.WriteFile("talosconfig", data, 0644); err != nil {
-		helpers.Fatalf("%v", err)
+		helpers.Fatalf("%w", err)
 	}
 
 	fmt.Println("created talosconfig")

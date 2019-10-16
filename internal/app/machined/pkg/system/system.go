@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -98,7 +97,7 @@ func (s *singleton) Start(serviceIDs ...string) error {
 	for _, id := range serviceIDs {
 		svcrunner := s.state[id]
 		if svcrunner == nil {
-			multiErr = multierror.Append(multiErr, errors.Errorf("service %q not defined", id))
+			multiErr = multierror.Append(multiErr, fmt.Errorf("service %q not defined", id))
 		}
 
 		s.runningMu.Lock()
@@ -275,7 +274,7 @@ func (s *singleton) IsRunning(id string) (Service, bool, error) {
 	s.mu.Unlock()
 
 	if !exists {
-		return nil, false, errors.Errorf("service %q not defined", id)
+		return nil, false, fmt.Errorf("service %q not defined", id)
 	}
 
 	s.runningMu.Lock()
@@ -301,7 +300,7 @@ func (s *singleton) APIStart(ctx context.Context, id string) error {
 		return s.Start(id)
 	}
 
-	return errors.Errorf("service %q doesn't support start operation via API", id)
+	return fmt.Errorf("service %q doesn't support start operation via API", id)
 }
 
 // APIStop processes services stop request from the API
@@ -320,7 +319,7 @@ func (s *singleton) APIStop(ctx context.Context, id string) error {
 		return s.Stop(ctx, id)
 	}
 
-	return errors.Errorf("service %q doesn't support stop operation via API", id)
+	return fmt.Errorf("service %q doesn't support stop operation via API", id)
 }
 
 // APIRestart processes services restart request from the API
@@ -343,5 +342,5 @@ func (s *singleton) APIRestart(ctx context.Context, id string) error {
 		return s.Start(id)
 	}
 
-	return errors.Errorf("service %q doesn't support restart operation via API", id)
+	return fmt.Errorf("service %q doesn't support restart operation via API", id)
 }

@@ -5,7 +5,7 @@
 package manager
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/talos-systems/talos/internal/pkg/mount"
 )
@@ -35,18 +35,18 @@ func (m *Manager) MountAll() (err error) {
 		// Repair the disk's partition table.
 		if mountpoint.Resize {
 			if err = mountpoint.ResizePartition(); err != nil {
-				return errors.Wrap(err, "resize")
+				return fmt.Errorf("resize: %w", err)
 			}
 		}
 
 		if err = mountpoint.Mount(); err != nil {
-			return errors.Wrap(err, "mount")
+			return fmt.Errorf("mount: %w", err)
 		}
 
 		// Grow the filesystem to the maximum allowed size.
 		if mountpoint.Resize {
 			if err = mountpoint.GrowFilesystem(); err != nil {
-				return errors.Wrap(err, "grow")
+				return fmt.Errorf("grow: %w", err)
 			}
 		}
 	}
@@ -64,7 +64,7 @@ func (m *Manager) UnmountAll() (err error) {
 	for iter.Next() {
 		mountpoint := iter.Value()
 		if err = mountpoint.Unmount(); err != nil {
-			return errors.Wrap(err, "unmount")
+			return fmt.Errorf("unmount: %w", err)
 		}
 	}
 
@@ -84,7 +84,7 @@ func (m *Manager) MoveAll(prefix string) (err error) {
 	for iter.Next() {
 		mountpoint := iter.Value()
 		if err = mountpoint.Move(prefix); err != nil {
-			return errors.Wrapf(err, "move")
+			return fmt.Errorf("move: %w", err)
 		}
 	}
 

@@ -33,15 +33,15 @@ var lsCmd = &cobra.Command{
 			}
 			long, err := cmd.Flags().GetBool("long")
 			if err != nil {
-				helpers.Fatalf("failed to parse long flag: %v", err)
+				helpers.Fatalf("failed to parse long flag: %w", err)
 			}
 			recurse, err := cmd.Flags().GetBool("recurse")
 			if err != nil {
-				helpers.Fatalf("failed to parse recurse flag: %v", err)
+				helpers.Fatalf("failed to parse recurse flag: %w", err)
 			}
 			recursionDepth, err := cmd.Flags().GetInt32("depth")
 			if err != nil {
-				helpers.Fatalf("failed to parse depth flag: %v", err)
+				helpers.Fatalf("failed to parse depth flag: %w", err)
 			}
 
 			stream, err := c.LS(globalCtx, machineapi.LSRequest{

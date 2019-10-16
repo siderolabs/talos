@@ -6,13 +6,13 @@ package containerd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -61,8 +61,8 @@ func NewImporter(namespace string, options ...ImporterOption) *Importer {
 }
 
 // Import imports the images specified by the import requests.
-func (i *Importer) Import(reqs ...*ImportRequest) error {
-	err := conditions.WaitForFileToExist(i.options.containerdAddress).Wait(context.Background())
+func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
+	err = conditions.WaitForFileToExist(i.options.containerdAddress).Wait(context.Background())
 	if err != nil {
 		return err
 	}
@@ -83,25 +83,25 @@ func (i *Importer) Import(reqs ...*ImportRequest) error {
 	for _, req := range reqs {
 		go func(errCh chan<- error, r *ImportRequest) {
 			errCh <- func() error {
-				tarball, ierr := os.Open(r.Path)
-				if ierr != nil {
-					return errors.Wrapf(ierr, "error opening %v", r.Path)
+				tarball, err := os.Open(r.Path)
+				if err != nil {
+					return fmt.Errorf("error opening %s: %w", r.Path, err)
 				}
 
-				imgs, ierr := client.Import(ctx, tarball, r.Options...)
-				if ierr != nil {
-					return errors.Wrapf(ierr, "error importing %v", r.Path)
+				imgs, err := client.Import(ctx, tarball, r.Options...)
+				if err != nil {
+					return fmt.Errorf("error importing %s: %w", r.Path, err)
 				}
-				if ierr = tarball.Close(); ierr != nil {
-					return errors.Wrapf(ierr, "error closing %v", r.Path)
+				if err = tarball.Close(); err != nil {
+					return fmt.Errorf("error closing %s: %w", r.Path, err)
 				}
 
 				for _, img := range imgs {
 					image := containerd.NewImage(client, img)
 					log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
-					ierr = image.Unpack(ctx, containerd.DefaultSnapshotter)
-					if ierr != nil {
-						return errors.Wrapf(ierr, "error unpacking %v", img.Name)
+					err = image.Unpack(ctx, containerd.DefaultSnapshotter)
+					if err != nil {
+						return fmt.Errorf("error unpacking %s: %w", img.Name, err)
 					}
 				}
 

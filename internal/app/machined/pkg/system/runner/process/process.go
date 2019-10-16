@@ -13,8 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	processlogger "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -87,7 +85,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 	// Setup logging.
 	w, err := processlogger.New(p.args.ID, p.opts.LogPath)
 	if err != nil {
-		err = fmt.Errorf("service log handler: %v", err)
+		err = fmt.Errorf("service log handler: %w", err)
 		return
 	}
 
@@ -107,7 +105,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 func (p *processRunner) run(eventSink events.Recorder) error {
 	cmd, err := p.build()
 	if err != nil {
-		return errors.Wrap(err, "error building command")
+		return fmt.Errorf("error building command: %w", err)
 	}
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
@@ -118,7 +116,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	}
 
 	if err = cmd.Start(); err != nil {
-		return errors.Wrap(err, "error starting process")
+		return fmt.Errorf("error starting process: %w", err)
 	}
 
 	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmd.Process.Pid)

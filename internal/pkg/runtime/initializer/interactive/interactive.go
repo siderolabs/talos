@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/installer"
@@ -33,7 +32,7 @@ func (i *Interactive) Initialize(platform runtime.Platform, install machine.Inst
 
 	dev, err = probe.GetDevWithFileSystemLabel(constants.ISOFilesystemLabel)
 	if err != nil {
-		return errors.Errorf("failed to find %s iso: %v", constants.ISOFilesystemLabel, err)
+		return fmt.Errorf("failed to find %s iso: %w", constants.ISOFilesystemLabel, err)
 	}
 
 	if err = unix.Mount(dev.Path, "/tmp", dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
@@ -75,7 +74,7 @@ func (i *Interactive) Initialize(platform runtime.Platform, install machine.Inst
 	}
 
 	if err = inst.Install(); err != nil {
-		return errors.Wrap(err, "failed to install")
+		return fmt.Errorf("failed to install: %w", err)
 	}
 
 	return unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART))

@@ -12,8 +12,6 @@ import (
 	stdlibruntime "runtime"
 	"sync"
 
-	"github.com/pkg/errors"
-
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -77,7 +75,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 		if r := recover(); r != nil {
 			buf := make([]byte, 8192)
 			n := stdlibruntime.Stack(buf, false)
-			err = errors.Errorf("panic in service: %v\n%s", r, string(buf[:n]))
+			err = fmt.Errorf("panic in service: %v\n%s", r, string(buf[:n]))
 		}
 	}()
 
@@ -85,7 +83,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 
 	w, err = log.New(r.id, r.opts.LogPath)
 	if err != nil {
-		err = errors.Wrap(err, "service log handler")
+		err = fmt.Errorf("service log handler: %w", err)
 		return
 	}
 	// nolint: errcheck

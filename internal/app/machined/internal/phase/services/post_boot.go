@@ -5,11 +5,10 @@
 package services
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -57,7 +56,7 @@ func (task *LabelNodeAsMaster) standard(r runtime.Runtime) (err error) {
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "failed to label node as master")
+		return fmt.Errorf("failed to label node as master: %w", err)
 	}
 
 	return nil

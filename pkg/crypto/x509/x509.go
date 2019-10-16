@@ -16,14 +16,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -361,7 +360,7 @@ func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Ce
 
 	caPemBlock, _ := pem.Decode(ca)
 	if caPemBlock == nil {
-		return nil, fmt.Errorf("decode PEM: %v", err)
+		return nil, fmt.Errorf("decode PEM: %w", err)
 	}
 
 	caCrt, err := x509.ParseCertificate(caPemBlock.Bytes)
@@ -371,7 +370,7 @@ func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Ce
 
 	keyPemBlock, _ := pem.Decode(key)
 	if keyPemBlock == nil {
-		return nil, fmt.Errorf("decode PEM: %v", err)
+		return nil, fmt.Errorf("decode PEM: %w", err)
 	}
 
 	var caKey interface{}
@@ -555,14 +554,14 @@ func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Opti
 	if opts.RSA {
 		k, err = NewRSAKey()
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create new RSA key")
+			return nil, fmt.Errorf("failed to create new RSA key: %w", err)
 		}
 
 		pemBytes = k.(*RSAKey).KeyPEM
 	} else {
 		k, err = NewKey()
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create new ECDSA key")
+			return nil, fmt.Errorf("failed to create new ECDSA key: %w", err)
 		}
 
 		pemBytes = k.(*Key).KeyPEM
@@ -577,18 +576,18 @@ func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Opti
 	if opts.RSA {
 		priv, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse RSA private key")
+			return nil, fmt.Errorf("failed to parse RSA private key: %w", err)
 		}
 	} else {
 		priv, err = x509.ParseECPrivateKey(block.Bytes)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse ECDSA private key")
+			return nil, fmt.Errorf("failed to parse ECDSA private key: %w", err)
 		}
 	}
 
 	csr, err := NewCertificateSigningRequest(priv, setters...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create CSR")
+		return nil, fmt.Errorf("failed to create CSR: %w", err)
 	}
 
 	block, _ = pem.Decode(csr.X509CertificateRequestPEM)
@@ -598,12 +597,12 @@ func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Opti
 
 	cr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse CSR")
+		return nil, fmt.Errorf("failed to parse CSR: %w", err)
 	}
 
 	c, err = NewCertificateFromCSR(crt, key, cr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create certificate from CSR")
+		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
 	}
 
 	p = &PEMEncodedCertificateAndKey{

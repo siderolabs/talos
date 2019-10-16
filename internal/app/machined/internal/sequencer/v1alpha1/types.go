@@ -5,7 +5,7 @@
 package v1alpha1
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -67,12 +67,12 @@ func (d *Sequencer) Boot() error {
 
 	content, err := config.FromFile(constants.ConfigPath)
 	if err != nil {
-		return errors.Wrap(err, "failed to read config")
+		return fmt.Errorf("failed to read config: %w", err)
 	}
 
 	config, err := config.New(content)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse config")
+		return fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	phaserunner, err = phase.NewRunner(config)

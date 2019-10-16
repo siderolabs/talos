@@ -8,12 +8,13 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -90,7 +91,7 @@ func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (help
 
 	key, err := x509.NewRSAKey()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create RSA key")
+		return nil, fmt.Errorf("failed to create RSA key: %w", err)
 	}
 
 	keyBlock, _ := pem.Decode(key.KeyPEM)
@@ -100,22 +101,22 @@ func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (help
 
 	keyRSA, err := stdlibx509.ParsePKCS1PrivateKey(keyBlock.Bytes)
 	if err != nil {
-		return nil, errors.Wrap(err, "failled to parse private key")
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
 	csr, err := x509.NewCertificateSigningRequest(keyRSA, opts...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create CSR")
+		return nil, fmt.Errorf("failed to create CSR: %w", err)
 	}
 
 	crt, err := x509.NewCertificateFromCSRBytes(caCrt, caKey, csr.X509CertificateRequestPEM, opts...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create certificate from CSR")
+		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
 	}
 
 	h, err := NewClientFromPKI(caCrt, crt.X509CertificatePEM, key.KeyPEM, endpoint, "6443")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create client")
+		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
 	return h, nil
@@ -154,27 +155,27 @@ func (h *Helper) LabelNodeAsMaster(name string) (err error) {
 
 	oldData, err := json.Marshal(n)
 	if err != nil {
-		return errors.Wrapf(err, "failed to marshal unmodified node %q into JSON", n.Name)
+		return fmt.Errorf("failed to marshal unmodified node %q into JSON: %w", n.Name, err)
 	}
 
 	n.Labels[constants.LabelNodeRoleMaster] = ""
 
 	newData, err := json.Marshal(n)
 	if err != nil {
-		return errors.Wrapf(err, "failed to marshal modified node %q into JSON", n.Name)
+		return fmt.Errorf("failed to marshal modified node %q into JSON: %w", n.Name, err)
 	}
 
 	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
 	if err != nil {
-		return errors.Wrap(err, "failed to create two way merge patch")
+		return fmt.Errorf("failed to create two way merge patch: %w", err)
 	}
 
 	if _, err := h.client.CoreV1().Nodes().Patch(n.Name, types.StrategicMergePatchType, patchBytes); err != nil {
 		if apierrors.IsConflict(err) {
-			return errors.Wrap(err, "unable to update node metadata due to conflict")
+			return fmt.Errorf("unable to update node metadata due to conflict: %w", err)
 		}
 
-		return errors.Wrapf(err, "error patching node %q", n.Name)
+		return fmt.Errorf("error patching node %q: %w", n.Name, err)
 	}
 
 	return nil
@@ -193,7 +194,7 @@ func (h *Helper) CordonAndDrain(node string) (err error) {
 func (h *Helper) Cordon(name string) error {
 	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
-		return errors.Wrapf(err, "failed to get node %s", name)
+		return fmt.Errorf("failed to get node %s: %w", name, err)
 	}
 
 	if node.Spec.Unschedulable {
@@ -203,7 +204,7 @@ func (h *Helper) Cordon(name string) error {
 	node.Spec.Unschedulable = true
 
 	if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
-		return errors.Wrapf(err, "failed to cordon node %s", node.GetName())
+		return fmt.Errorf("failed to cordon node %s: %w", node.GetName(), err)
 	}
 
 	return nil
@@ -213,13 +214,13 @@ func (h *Helper) Cordon(name string) error {
 func (h *Helper) Uncordon(name string) error {
 	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
-		return errors.Wrapf(err, "failed to get node %s", name)
+		return fmt.Errorf("failed to get node %s: %w", name, err)
 	}
 
 	if node.Spec.Unschedulable {
 		node.Spec.Unschedulable = false
 		if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
-			return errors.Wrapf(err, "failed to uncordon node %s", node.GetName())
+			return fmt.Errorf("failed to uncordon node %s: %w", node.GetName(), err)
 		}
 	}
 
@@ -234,7 +235,7 @@ func (h *Helper) Drain(node string) error {
 
 	pods, err := h.client.CoreV1().Pods(metav1.NamespaceAll).List(opts)
 	if err != nil {
-		return errors.Wrapf(err, "cannot get pods for node %s", node)
+		return fmt.Errorf("cannot get pods for node %s: %w", node, err)
 	}
 
 	var wg sync.WaitGroup
@@ -277,10 +278,10 @@ func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
 		case apierrors.IsNotFound(err):
 			return nil
 		case err != nil:
-			return errors.Wrapf(err, "failed to evict pod %s/%s", p.GetNamespace(), p.GetName())
+			return fmt.Errorf("failed to evict pod %s/%s: %w", p.GetNamespace(), p.GetName(), err)
 		default:
 			if err = h.waitForPodDeleted(&p); err != nil {
-				return errors.Wrapf(err, "failed waiting on pod %s/%s to be deleted", p.GetNamespace(), p.GetName())
+				return fmt.Errorf("failed waiting on pod %s/%s to be deleted: %w", p.GetNamespace(), p.GetName(), err)
 			}
 		}
 	}
@@ -293,7 +294,7 @@ func (h *Helper) waitForPodDeleted(p *corev1.Pod) error {
 		case apierrors.IsNotFound(err):
 			return nil
 		case err != nil:
-			return retry.UnexpectedError(errors.Wrapf(err, "failed to get pod %s/%s", p.GetNamespace(), p.GetName()))
+			return retry.UnexpectedError(fmt.Errorf("failed to get pod %s/%s: %w", p.GetNamespace(), p.GetName(), err))
 		}
 
 		if pod.GetUID() != p.GetUID() {

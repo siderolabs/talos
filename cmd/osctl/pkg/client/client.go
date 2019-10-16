@@ -64,17 +64,17 @@ func NewClientTargetAndCredentialsFromConfig(p string) (target string, creds *Cr
 
 	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
 	if err != nil {
-		return "", nil, fmt.Errorf("error decoding CA: %v", err)
+		return "", nil, fmt.Errorf("error decoding CA: %w", err)
 	}
 
 	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
 	if err != nil {
-		return "", nil, fmt.Errorf("error decoding certificate: %v", err)
+		return "", nil, fmt.Errorf("error decoding certificate: %w", err)
 	}
 
 	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
 	if err != nil {
-		return "", nil, fmt.Errorf("error decoding key: %v", err)
+		return "", nil, fmt.Errorf("error decoding key: %w", err)
 	}
 
 	creds = &Credentials{

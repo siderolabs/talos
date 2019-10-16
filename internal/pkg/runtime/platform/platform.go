@@ -5,9 +5,9 @@
 package platform
 
 import (
+	"errors"
+	"fmt"
 	"os"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -57,7 +57,7 @@ func NewPlatform() (p runtime.Platform, err error) {
 	case "vmware":
 		p = &vmware.VMware{}
 	default:
-		return nil, errors.Errorf("platform not supported: %s", platform)
+		return nil, fmt.Errorf("platform not supported: %s", platform)
 	}
 
 	return p, nil

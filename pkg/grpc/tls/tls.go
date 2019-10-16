@@ -7,8 +7,8 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 )
 
 // Type represents the TLS authentication type.
@@ -35,7 +35,7 @@ func WithClientAuthType(t Type) func(*tls.Config) error {
 		case ServerOnly:
 			cfg.ClientAuth = tls.NoClientCert
 		default:
-			return errors.Errorf("unhandled client auth type %+v", t)
+			return fmt.Errorf("unhandled client auth type %+v", t)
 		}
 		return nil
 	}

@@ -5,9 +5,8 @@
 package upgrade
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -42,7 +41,7 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 	// platform name, this should be determined in the installer container.
 	var config *string
 	if config = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
-		return errors.Errorf("no config option was found")
+		return fmt.Errorf("no config option was found")
 	}
 
 	if err = install.Install(task.ref, task.devname, strings.ToLower(r.Platform().Name())); err != nil {

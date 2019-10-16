@@ -7,10 +7,10 @@ package gpt
 
 import (
 	"encoding/binary"
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/blkpg"
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
@@ -101,11 +101,11 @@ func (gpt *GPT) Write() error {
 	}
 
 	if err := gpt.writePrimary(partitions); err != nil {
-		return errors.Errorf("failed to write primary table: %v", err)
+		return fmt.Errorf("failed to write primary table: %w", err)
 	}
 
 	if err := gpt.writeSecondary(partitions); err != nil {
-		return errors.Errorf("failed to write secondary table: %v", err)
+		return fmt.Errorf("failed to write secondary table: %w", err)
 	}
 
 	if err := gpt.f.Sync(); err != nil {
@@ -140,11 +140,11 @@ func (gpt *GPT) New() (table.PartitionTable, error) {
 
 	written, err := gpt.f.WriteAt(pmbr[446:], 446)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to write the protective MBR")
+		return nil, fmt.Errorf("failed to write the protective MBR: %w", err)
 	}
 
 	if written != len(pmbr[446:]) {
-		return nil, errors.Errorf("expected a write %d bytes, got %d", written, len(pmbr[446:]))
+		return nil, fmt.Errorf("expected a write %d bytes, got %d", written, len(pmbr[446:]))
 	}
 
 	// Reset and seek to the beginning.
@@ -169,7 +169,7 @@ func (gpt *GPT) newHeader(size int64) (*header.Header, error) {
 
 	guuid, err := uuid.NewUUID()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate UUID for new partition table")
+		return nil, fmt.Errorf("failed to generate UUID for new partition table: %w", err)
 	}
 
 	h.GUUID = guuid
@@ -220,7 +220,7 @@ func (gpt *GPT) writePrimary(partitions []byte) error {
 	}
 
 	if written != len(table) {
-		return errors.Errorf("expected a primary table write of %d bytes, got %d", len(table), written)
+		return fmt.Errorf("expected a primary table write of %d bytes, got %d", len(table), written)
 	}
 
 	return nil
@@ -246,7 +246,7 @@ func (gpt *GPT) writeSecondary(partitions []byte) error {
 	}
 
 	if written != len(table) {
-		return errors.Errorf("expected a secondary table write of %d bytes, got %d", len(table), written)
+		return fmt.Errorf("expected a secondary table write of %d bytes, got %d", len(table), written)
 	}
 
 	return nil
@@ -288,7 +288,7 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 	if end > gpt.header.LastUsableLBA {
 		// TODO(andrewrynhard): This calculation is wrong, fix it.
 		available := (gpt.header.LastUsableLBA - start) * gpt.lba.LogicalBlockSize
-		return nil, errors.Errorf("requested partition size %d is too big, largest available is %d", size, available)
+		return nil, fmt.Errorf("requested partition size %d is too big, largest available is %d", size, available)
 	}
 
 	uuid, err := uuid.NewUUID()
@@ -320,7 +320,7 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 func (gpt *GPT) Resize(p table.Partition) error {
 	partition, ok := p.(*partition.Partition)
 	if !ok {
-		return errors.Errorf("partition is not a GUID partition table partition")
+		return fmt.Errorf("partition is not a GUID partition table partition")
 	}
 
 	// TODO(andrewrynhard): This should be a parameter.
@@ -328,7 +328,7 @@ func (gpt *GPT) Resize(p table.Partition) error {
 
 	index := partition.Number - 1
 	if len(gpt.partitions) < int(index) {
-		return errors.Errorf("unknown partition %d, only %d available", partition.Number, len(gpt.partitions))
+		return fmt.Errorf("unknown partition %d, only %d available", partition.Number, len(gpt.partitions))
 	}
 
 	gpt.partitions[index] = partition
@@ -354,7 +354,7 @@ func (gpt *GPT) readPrimary() ([]byte, error) {
 	}
 
 	if read != len(table) {
-		return nil, errors.Errorf("expected a read of %d bytes, got %d", len(table), read)
+		return nil, fmt.Errorf("expected a read of %d bytes, got %d", len(table), read)
 	}
 
 	return table, nil
@@ -364,11 +364,11 @@ func (gpt *GPT) newTable(header, partitions []byte, headerRange, paritionsRange 
 	table := gpt.lba.Make(33)
 
 	if _, err := gpt.lba.Copy(table, header, headerRange); err != nil {
-		return nil, errors.Errorf("failed to copy header data: %v", err)
+		return nil, fmt.Errorf("failed to copy header data: %w", err)
 	}
 
 	if _, err := gpt.lba.Copy(table, partitions, paritionsRange); err != nil {
-		return nil, errors.Errorf("failed to copy partition data: %v", err)
+		return nil, fmt.Errorf("failed to copy partition data: %w", err)
 	}
 
 	return table, nil
@@ -382,7 +382,7 @@ func (gpt *GPT) serializeHeader(partitions []byte, setters ...interface{}) ([]by
 	opts := header.NewDefaultOptions(setters...)
 
 	if err := serde.Ser(gpt.header, data, 0, opts); err != nil {
-		return nil, errors.Errorf("failed to serialize the header: %v", err)
+		return nil, fmt.Errorf("failed to serialize the header: %w", err)
 	}
 
 	return data, nil
@@ -399,7 +399,7 @@ func (gpt *GPT) deserializeHeader(table []byte) (*header.Header, error) {
 
 	opts := header.NewDefaultOptions(header.WithHeaderTable(table))
 	if err := serde.De(hdr, hdr.Bytes(), 0, opts); err != nil {
-		return nil, errors.Errorf("failed to deserialize the header: %v", err)
+		return nil, fmt.Errorf("failed to deserialize the header: %w", err)
 	}
 
 	return hdr, nil
@@ -418,11 +418,11 @@ func (gpt *GPT) serializePartitions() ([]byte, error) {
 
 		partition, ok := p.(*partition.Partition)
 		if !ok {
-			return nil, errors.Errorf("partition is not a GUID partition table partition")
+			return nil, fmt.Errorf("partition is not a GUID partition table partition")
 		}
 
 		if err := serde.Ser(partition, data, i*gpt.header.PartitionEntrySize, nil); err != nil {
-			return nil, errors.Errorf("failed to serialize the partitions: %v", err)
+			return nil, fmt.Errorf("failed to serialize the partitions: %w", err)
 		}
 	}
 
@@ -438,7 +438,7 @@ func (gpt *GPT) deserializePartitions(header *header.Header) ([]table.Partition,
 		prt := partition.NewPartition(data)
 
 		if err := serde.De(prt, header.ArrayBytes(), offset, nil); err != nil {
-			return nil, errors.Errorf("failed to deserialize the partitions: %v", err)
+			return nil, fmt.Errorf("failed to deserialize the partitions: %w", err)
 		}
 
 		// The first LBA of the partition cannot start before the first usable

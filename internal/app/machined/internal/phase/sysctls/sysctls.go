@@ -5,8 +5,9 @@
 package sysctls
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -30,15 +31,15 @@ func (task *Task) runtime(r runtime.Runtime) error {
 	var multiErr *multierror.Error
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
-		multiErr = multierror.Append(multiErr, errors.Wrapf(err, "failed to set IPv4 forwarding"))
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set IPv4 forwarding: %w", err))
 	}
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
-		multiErr = multierror.Append(multiErr, errors.Wrap(err, "failed to set IPv6 forwarding"))
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set IPv6 forwarding: %w", err))
 	}
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
-		multiErr = multierror.Append(multiErr, errors.Wrap(err, "failed to set pid_max"))
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set pid_max: %w", err))
 	}
 
 	return multiErr.ErrorOrNil()

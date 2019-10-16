@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,7 +21,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/osctl/cmd/cluster/pkg/node"
@@ -119,7 +119,7 @@ func create() (err error) {
 	fmt.Println("creating network", clusterName)
 
 	if _, err = createNetwork(cli); err != nil {
-		return errors.Wrap(err, " A cluster might already exist, run \"osctl cluster destroy\" to permanently delete the existing cluster, and try again.")
+		return fmt.Errorf("a cluster might already exist, run \"osctl cluster destroy\" to permanently delete the existing cluster, and try again: %w", err)
 	}
 
 	// Create the master nodes.
@@ -182,7 +182,7 @@ func createNodes(requests []*node.Request) (err error) {
 			fmt.Println("creating node", req.Name)
 
 			if err = node.NewNode(clusterName, req); err != nil {
-				helpers.Fatalf("failed to create node: %v", err)
+				helpers.Fatalf("failed to create node: %w", err)
 			}
 
 			wg.Done()
@@ -355,7 +355,7 @@ func saveConfig(input *generate.Input) (err error) {
 func parseCPUShare() (int64, error) {
 	cpu, ok := new(big.Rat).SetString(clusterCpus)
 	if !ok {
-		return 0, errors.Errorf("failed to parsing as a rational number: %s", clusterCpus)
+		return 0, fmt.Errorf("failed to parsing as a rational number: %s", clusterCpus)
 	}
 
 	nano := cpu.Mul(cpu, big.NewRat(1e9, 1))

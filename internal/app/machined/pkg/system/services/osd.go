@@ -15,7 +15,6 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -84,7 +83,7 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {
 			h, err := kubernetes.NewHelper()
 			if err != nil {
-				return retry.ExpectedError(errors.Wrap(err, "failed to create client"))
+				return retry.ExpectedError(fmt.Errorf("failed to create client: %w", err))
 			}
 
 			endpoints, err = h.MasterIPs()

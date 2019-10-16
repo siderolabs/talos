@@ -245,7 +245,7 @@ func (hdr *Header) Fields() []*serde.Field {
 			DeserializerFunc: func(contents []byte, opts interface{}) error {
 				guid, err := uuid.FromBytes(contents)
 				if err != nil {
-					return fmt.Errorf("invalid GUUID: %v", err)
+					return fmt.Errorf("invalid GUUID: %w", err)
 				}
 
 				hdr.GUUID = guid
@@ -273,7 +273,7 @@ func (hdr *Header) Fields() []*serde.Field {
 				hdr.PartitionEntriesStartLBA = binary.LittleEndian.Uint64(contents)
 				array, err := hdr.From(o.Table, lba.Range{Start: hdr.PartitionEntriesStartLBA, End: uint64(33)})
 				if err != nil {
-					return fmt.Errorf("failed to read starting LBA from header: %v", err)
+					return fmt.Errorf("failed to read starting LBA from header: %w", err)
 				}
 
 				hdr.array = array

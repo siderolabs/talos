@@ -5,14 +5,13 @@
 package manifest
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
@@ -62,11 +61,11 @@ func NewManifest(install machine.Install) (manifest *Manifest, err error) {
 	// Verify that the target device(s) can satisify the requested options.
 
 	if err = VerifyDataDevice(install); err != nil {
-		return nil, errors.Wrap(err, "failed to prepare ephemeral partition")
+		return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
 	}
 
 	if err = VerifyBootDevice(install); err != nil {
-		return nil, errors.Wrap(err, "failed to prepare boot partition")
+		return nil, fmt.Errorf("failed to prepare boot partition: %w", err)
 	}
 
 	// Initialize any slices we need. Note that a boot paritition is not
@@ -147,13 +146,13 @@ func (m *Manifest) ExecuteManifest(manifest *Manifest) (err error) {
 
 		for _, target := range targets {
 			if err = target.Partition(bd); err != nil {
-				return errors.Wrap(err, "failed to partition device")
+				return fmt.Errorf("failed to partition device: %w", err)
 			}
 		}
 
 		for _, target := range targets {
 			if err = target.Format(); err != nil {
-				return errors.Wrap(err, "failed to format device")
+				return fmt.Errorf("failed to format device: %w", err)
 			}
 		}
 	}

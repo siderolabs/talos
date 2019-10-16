@@ -11,7 +11,6 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/defaults"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
@@ -96,7 +95,7 @@ func (c *Containerd) HealthFunc(runtime.Configurator) health.Check {
 		}
 
 		if resp.Status != grpc_health_v1.HealthCheckResponse_SERVING {
-			return errors.Errorf("unexpected serving status: %d", resp.Status)
+			return fmt.Errorf("unexpected serving status: %d", resp.Status)
 		}
 
 		return nil

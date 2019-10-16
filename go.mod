@@ -47,7 +47,6 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc8 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1
 	github.com/pborman/uuid v1.2.0 // indirect
-	github.com/pkg/errors v0.8.1
 	github.com/prometheus/procfs v0.0.3
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/spf13/cobra v0.0.5
@@ -62,7 +61,6 @@ require (
 	golang.org/x/sys v0.0.0-20190825160603-fb81701db80f
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	google.golang.org/grpc v1.23.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124

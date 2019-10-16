@@ -22,7 +22,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/cni"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
@@ -107,7 +106,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 
 	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 	if _, err = client.Pull(containerdctx, image, containerdapi.WithPullUnpack); err != nil {
-		return fmt.Errorf("failed to pull image %q: %v", image, err)
+		return fmt.Errorf("failed to pull image %q: %w", image, err)
 	}
 
 	return nil
@@ -233,7 +232,7 @@ func (k *Kubelet) HealthFunc(runtime.Configurator) health.Check {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return errors.Errorf("expected HTTP status OK, got %s", resp.Status)
+			return fmt.Errorf("expected HTTP status OK, got %s", resp.Status)
 		}
 
 		return nil
