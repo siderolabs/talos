@@ -1,0 +1,139 @@
+[
+  {
+    "title": "Guides",
+    "path": "v0.2/en/guides",
+    "items": [
+      {
+        "title": "Getting Started",
+        "path": "v0.2/en/guides/getting-started"
+      },
+      {
+        "title": "Cloud",
+        "path": "v0.2/en/guides/cloud",
+        "children": [
+          {
+            "title": "AWS",
+            "path": "v0.2/en/guides/cloud/aws"
+          },
+          {
+            "title": "Azure",
+            "path": "v0.2/en/guides/cloud/azure"
+          },
+          {
+            "title": "GCP",
+            "path": "v0.2/en/guides/cloud/gcp"
+          }
+        ]
+      },
+      {
+        "title": "Hypervisors",
+        "path": "v0.2/en/guides/hypervisors",
+        "children": [
+          {
+            "title": "KVM",
+            "path": "v0.2/en/guides/hypervisors/kvm"
+          },
+          {
+            "title": "Xen",
+            "path": "v0.2/en/guides/hypervisors/xen"
+          }
+        ]
+      },
+      {
+        "title": "Metal",
+        "path": "v0.2/en/guides/metal",
+        "children": [
+          {
+            "title": "Matchbox",
+            "path": "v0.2/en/guides/metal/matchbox"
+          },
+          {
+            "title": "Digital Rebar",
+            "path": "v0.2/en/guides/metal/digital-rebar"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Configuration",
+    "path": "v0.2/en/configuration",
+    "items": [
+      {
+        "title": "v1alpha1",
+        "path": "v0.2/en/configuration/v1alpha1",
+        "children": [
+          {
+            "title": "Reference",
+            "path": "v0.2/en/configuration/v1alpha1/reference"
+          },
+          {
+            "title": "Usage",
+            "path": "v0.2/en/configuration/v1alpha1/usage"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Components",
+    "path": "v0.2/en/components",
+    "items": [
+      {
+        "title": "init",
+        "path": "v0.2/en/components/init"
+      },
+      {
+        "title": "machined",
+        "path": "v0.2/en/components/machined"
+      },
+      {
+        "title": "networkd",
+        "path": "v0.2/en/components/networkd"
+      },
+      {
+        "title": "osd",
+        "path": "v0.2/en/components/osd"
+      },
+      {
+        "title": "trustd",
+        "path": "v0.2/en/components/trustd"
+      },
+      {
+        "title": "udevd",
+        "path": "v0.2/en/components/udevd"
+      },
+      {
+        "title": "init",
+        "path": "v0.2/en/components/init"
+      },
+      {
+        "title": "kernel",
+        "path": "v0.2/en/components/kernel"
+      }
+    ]
+  },
+  {
+    "title": "Use Cases",
+    "path": "v0.2/en/use-cases",
+    "items": [
+      {
+        "title": "Serverless",
+        "path": "v0.2/en/use-cases/serverless"
+      },
+      {
+        "title": "Edge",
+        "path": "v0.2/en/use-cases/edge"
+      },
+      {
+        "title": "Multi-Cloud",
+        "path": "v0.2/en/use-cases/multi-cloud"
+      }
+    ]
+  },
+  {
+    "title": "FAQs",
+    "path": "v0.2/en/faqs",
+    "items": []
+  }
+]

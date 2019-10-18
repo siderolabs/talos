@@ -1,0 +1,84 @@
+/* purgecss start ignore */
+
+@import url('@/assets/css/navigation.css');
+@import url('@/assets/css/prism-ghcolors.css');
+
+body {
+  @apply font-sans text-gray-800;
+}
+
+main {
+  @apply font-sans;
+}
+
+.page-heading {
+  @apply font-headings text-5xl mb-8 leading-tight;
+}
+
+body {
+  @apply flex flex-col min-h-screen;
+}
+
+.content {
+  flex: 1;
+}
+
+.c-rich-text a {
+  @apply text-gray-600;
+  font-weight: 400;
+}
+
+.c-rich-text a:hover {
+  @apply text-gray-900 no-underline;
+}
+
+pre {
+  background: #f4f5f6;
+  border-style: solid;
+  border-width: 0.5px;
+  border-radius: 5px;
+  padding: 0.5em;
+  overflow-x: auto;
+}
+
+code[class*='language-'],
+pre[class*='language-'] {
+  @apply font-mono;
+}
+
+article {
+  background: white;
+  border-radius: 5px;
+}
+
+.article-content {
+  @apply max-w-3xl pt-4 pb-4 pl-6 pr-6 mx-auto shadow-md;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  @apply .my-4;
+}
+
+p {
+  @apply .mb-4;
+}
+p a:link,
+p a:active,
+p a:visited {
+  /* This blue has a 4.77 contrast ratio on white 4.56 on near-white */
+  color: #1a76c1;
+}
+p a:hover {
+  color: #12283a;
+}
+
+li {
+  list-style-position: outside;
+  margin-left: 1.25rem;
+}
+
+/* purgecss end ignore */
