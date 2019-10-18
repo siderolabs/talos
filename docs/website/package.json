@@ -1,0 +1,37 @@
+{
+  "name": "Talos",
+  "version": "0.1.0",
+  "description": "A static site for Talos documentation",
+  "author": "Talos Systems, Inc.",
+  "private": true,
+  "scripts": {
+    "dev": "node docgen.js watch=true & nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "node docgen.js && nuxt generate",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
+    "clean": "rm -rf node_modules .nuxt dist"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "front-matter": "^3.0.2",
+    "marked": "^0.7.0",
+    "nuxt": "^2.10.1",
+    "nuxt-webfontloader": "^1.1.0",
+    "prismjs": "^1.17.1"
+  },
+  "devDependencies": {
+    "@nuxtjs/eslint-config": "^1.0.1",
+    "@nuxtjs/eslint-module": "^1.0.0",
+    "@nuxtjs/tailwindcss": "^1.0.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^6.1.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-plugin-nuxt": ">=0.4.2",
+    "eslint-plugin-prettier": "^3.1.1",
+    "node-watch": "^0.6.3",
+    "prettier": "^1.18.2",
+    "tailwindcss-grid": "^1.2.1",
+    "tailwindcss-typography": "^2.2.0"
+  }
+}

@@ -1,0 +1,12 @@
+[build]
+  base = "docs/website/"
+  publish = "dist"
+  command = "npm run generate --fail-on-page-error"
+
+[context.deploy-preview]
+  publish = "dist"
+  command = "npm run generate"
+
+[context.branch-deploy]
+  publish = "dist"
+  command = "npm run generate"
