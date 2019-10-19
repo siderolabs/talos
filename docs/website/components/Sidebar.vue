@@ -53,8 +53,7 @@ export default {
 
   methods: {
     handleClick(item) {
-      console.log('setting')
-      this.$store.commit('sidebar/setActiveDoc', item.path)
+      this.$store.commit('sidebar/setActiveDocPath', item.path)
     }
   }
 }

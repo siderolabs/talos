@@ -5,7 +5,7 @@
       <a
         :href="
           'https://github.com/talos-systems/talos/edit/master/docs/website/content/' +
-            $store.state.sidebar.activeMenuPath +
+            $store.getters['sidebar/getActiveDocPath'] +
             '.md'
         "
         class="no-underline font-normal text-sm"
@@ -16,7 +16,7 @@
           class="inline-block mr-1"
           alt=""
         />
-        Edit this Page
+        Edit this page
       </a>
     </div>
     <div class="border-t pt-4" v-html="doc.content"></div>
@@ -29,9 +29,10 @@ export default {
 
   computed: {
     doc() {
-      return this.$store.state.sidebar.sections[
-        this.$store.state.sidebar.activeMenuPath
-      ]
+      const activeDocPath = this.$store.getters['sidebar/getActiveDocPath']
+      const sections = this.$store.getters['sidebar/getSections']
+
+      return sections[activeDocPath]
     }
   }
 }
