@@ -1,10 +1,32 @@
 export const state = () => ({
-  activeMenuPath: 'v0.2/en/guides',
-  lang: 'en',
-  version: 'v0.2',
+  activeDocPath: '',
+  lang: '',
+  version: '',
   sections: {},
   menu: []
 })
+
+export const getters = {
+  getMenu(state) {
+    return state.menu
+  },
+
+  getSections(state) {
+    return state.sections
+  },
+
+  getLang(state, lang) {
+    return state.lang
+  },
+
+  getVersion(state) {
+    return state.version
+  },
+
+  getActiveDocPath(state) {
+    return state.activeDocPath
+  }
+}
 
 export const mutations = {
   setMenu(state, menu) {
@@ -23,7 +45,7 @@ export const mutations = {
     state.version = version
   },
 
-  setActiveDoc(state, activeMenuPath) {
-    state.activeMenuPath = activeMenuPath.replace('docs/', '')
+  setActiveDocPath(state, activeDocPath) {
+    state.activeDocPath = activeDocPath.replace('docs/', '')
   }
 }
