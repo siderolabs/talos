@@ -10,7 +10,7 @@
     "start": "nuxt start",
     "generate": "node docgen.js && nuxt generate",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
-    "clean": "rm -rf node_modules .nuxt dist routes.json ./static/index.json ./static/*.menu.*.json ./static/*.sections.*.json"
+    "clean": "rm -rf node_modules .nuxt dist routes.json ./static/*.menu.*.json ./static/*.sections.*.json"
   },
   "dependencies": {
     "axios": "^0.19.0",

@@ -92,7 +92,6 @@ sw.*
 # Docgen
 
 routes.json
-/static/index.json
 /static/*.menu.*
 /static/*.sections.*
 

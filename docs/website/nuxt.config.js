@@ -87,11 +87,6 @@ export default {
         generatedRoutes.push(r)
       })
 
-      generatedRoutes.push({
-        route: '/',
-        payload: require(`${__dirname}/static/index.json`)
-      })
-
       callback(null, generatedRoutes)
     }
   },

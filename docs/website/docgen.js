@@ -70,6 +70,9 @@ const Docgen = {
         break
       default:
         const section = Docgen.load(contentFilePath)
+        if (section.version == null || section.lang == null) {
+          break
+        }
         Docgen.generate(section.version, section.lang)
         break
     }
@@ -134,18 +137,6 @@ const Docgen = {
         }
       )
     })
-
-    const content = fs.readFileSync(config.contentInputFolder + '/index.md', {
-      encoding: 'utf8'
-    })
-
-    const frontmatterContent = frontmatter(content)
-    const markedContent = marked(frontmatterContent.body)
-    index = {
-      attributes: frontmatterContent.attributes,
-      content: markedContent
-    }
-    return fs.writeFileSync(config.indexOutputFile, JSON.stringify(index))
   },
 
   /**
