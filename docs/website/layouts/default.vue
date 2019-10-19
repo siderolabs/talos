@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="flex flex-col min-h-screen">
     <Header></Header>
     <main role="main" class="content">
       <nuxt />
@@ -21,12 +21,6 @@ export default {
 </script>
 
 <style>
-.app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
 html {
   background: url(~assets/images/chips_bg_v1.svg) no-repeat center center fixed;
   -webkit-background-size: contain;
@@ -34,5 +28,9 @@ html {
   -o-background-size: contain;
   background-size: contain;
   background-position: center bottom;
+}
+
+body {
+  overflow-x: hidden;
 }
 </style>
