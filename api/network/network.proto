@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package proto;
+package networkapi;
 
 option go_package = "networkapi";
 option java_multiple_files = true;
