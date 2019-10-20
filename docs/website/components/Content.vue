@@ -1,5 +1,5 @@
 <template>
-  <article class="article-content c-rich-text">
+  <article class="max-w-3xl pt-1 pb-4 pl-6 pr-6 mx-auto c-rich-text">
     <h1 class="page-heading">{{ doc.title }}</h1>
     <div class="my-0">
       <a

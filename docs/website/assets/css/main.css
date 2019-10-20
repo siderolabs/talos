@@ -50,10 +50,6 @@ pre[class*='language-'] {
   @apply font-mono;
 }
 
-.article-content {
-  @apply max-w-3xl pt-1 pb-4 pl-6 pr-6 mx-auto;
-}
-
 h1,
 h2,
 h3,
