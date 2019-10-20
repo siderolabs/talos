@@ -1,5 +1,5 @@
 <template>
-  <div class="sidenav pt-4 pb-4">
+  <div class="sidenav sticky pt-4 pb-4">
     <ul class="mt-8">
       <li
         v-for="entry in $store.state.sidebar.menu"
@@ -61,9 +61,7 @@ export default {
 
 <style>
 .sidenav {
-  height: 100%;
-  position: fixed;
-  z-index: 1;
+  top: 7%;
   overflow-x: hidden;
 }
 
