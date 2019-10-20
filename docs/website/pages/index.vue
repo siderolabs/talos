@@ -1,5 +1,5 @@
 <template>
-  <div class="c-rich-text">
+  <div id="landing-page" class="c-rich-text">
     <div class="flex flex-col justify-around">
       <div class="flex justify-center">
         <div class="text-center w-3/4 mx-20 py-10 px-20">
@@ -155,7 +155,16 @@
   </div>
 </template>
 
-<style scoped>
+<style>
+#landing-page {
+  background: url(~assets/images/chips_bg_v1.svg) no-repeat center center fixed;
+  -webkit-background-size: contain;
+  -moz-background-size: contain;
+  -o-background-size: contain;
+  background-size: contain;
+  background-position: center bottom;
+}
+
 .logo {
   display: block;
   width: 189px;
