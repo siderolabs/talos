@@ -4,6 +4,10 @@
 @import url('@/assets/css/prism-ghcolors.css');
 
 body {
+  overflow-x: hidden;
+}
+
+body {
   @apply font-sans text-gray-800;
 }
 
@@ -46,13 +50,8 @@ pre[class*='language-'] {
   @apply font-mono;
 }
 
-article {
-  background: white;
-  border-radius: 5px;
-}
-
 .article-content {
-  @apply max-w-3xl pt-4 pb-4 pl-6 pr-6 mx-auto shadow-md;
+  @apply max-w-3xl pt-4 pb-4 pl-6 pr-6 mx-auto;
 }
 
 h1,

@@ -19,18 +19,3 @@ export default {
   }
 }
 </script>
-
-<style>
-html {
-  background: url(~assets/images/chips_bg_v1.svg) no-repeat center center fixed;
-  -webkit-background-size: contain;
-  -moz-background-size: contain;
-  -o-background-size: contain;
-  background-size: contain;
-  background-position: center bottom;
-}
-
-body {
-  overflow-x: hidden;
-}
-</style>
