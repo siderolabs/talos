@@ -1,6 +1,7 @@
 <template>
   <div class="dropdown inline-block">
     <button class="font-semibold py-2 px-4 rounded inline-flex items-center">
+      <span class="mr-1">{{ dropdownTitle() }}</span>
       <svg
         id="dropdown-caret"
         class="h-6 w-6 fill-current mr-2"
@@ -11,7 +12,6 @@
           d="M16.003 18.626l7.081-7.081L25 13.46l-8.997 8.998-9.003-9 1.917-1.916z"
         />
       </svg>
-      <span class="mr-1">{{ dropdownTitle() }}</span>
     </button>
     <ul class="dropdown-menu absolute pt-1 w-full shadow-md">
       <li class="" v-for="option in options" :key="option.version">
@@ -63,38 +63,3 @@ export default {
   }
 }
 </script>
-
-<style>
-.dropdown {
-  @apply font-headings;
-  font-size: 20px;
-}
-
-.dropdown-menu {
-  width: auto;
-  display: none;
-  height: 0px;
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-  -webkit-transition: all 0.3s ease-in-out;
-  -moz-transition: all 0.3s ease-in-out;
-  -o-transition: all 0.3s ease-in-out;
-  transition: all 0.3s ease-in-out;
-}
-
-#dropdown-caret {
-  -webkit-transition: all 0.3s ease-in-out;
-  -moz-transition: all 0.3s ease-in-out;
-  -o-transition: all 0.3s ease-in-out;
-  transition: all 0.3s ease-in-out;
-}
-.dropdown:hover #dropdown-caret {
-  transform: rotateX(180deg);
-}
-
-.dropdown:hover .dropdown-menu {
-  display: block;
-  height: 100px;
-}
-</style>
