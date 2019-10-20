@@ -64,7 +64,7 @@ header#header.scrolled img#header-logo {
   width: 150px;
 }
 
-.dropdown {
+header {
   @apply font-headings;
   font-size: 20px;
 }

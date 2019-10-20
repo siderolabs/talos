@@ -1,7 +1,7 @@
 <template>
   <div class="dropdown inline-block">
     <button class="font-semibold py-2 px-4 rounded inline-flex items-center">
-      <span class="mr-1">{{ dropdownTitle() }}</span>
+      <span class="mr-1">{{ $store.state.sidebar.version }}</span>
       <svg
         id="dropdown-caret"
         class="h-6 w-6 fill-current mr-2"
@@ -42,15 +42,6 @@ export default {
   methods: {
     handleClick(option) {
       this.$store.commit('sidebar/setVersion', option.version)
-    },
-
-    dropdownTitle() {
-      const version = this.$store.state.sidebar.version
-      if (version === '') {
-        return 'Documentation'
-      }
-
-      return `Documentation (${version})`
     },
 
     version(option) {
