@@ -38,19 +38,19 @@ FROM build AS generate-build
 WORKDIR /osd
 COPY ./api/os ./proto
 # Generate additional grpc functionality only for OSD
-RUN protoc -I./proto --plugin=proxy --proxy_out=plugins=grpc+proxy:proto proto/api.proto
+RUN protoc -I./proto --plugin=proxy --proxy_out=plugins=grpc+proxy:proto proto/os.proto
 WORKDIR /trustd
 COPY ./api/security ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
+RUN protoc -I./proto --go_out=plugins=grpc:proto proto/security.proto
 WORKDIR /machined
 COPY ./api/machine ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
+RUN protoc -I./proto --go_out=plugins=grpc:proto proto/machine.proto
 WORKDIR /ntpd
 COPY ./api/time ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
+RUN protoc -I./proto --go_out=plugins=grpc:proto proto/time.proto
 WORKDIR /networkd
 COPY ./api/network ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/api.proto
+RUN protoc -I./proto --go_out=plugins=grpc:proto proto/network.proto
 
 
 FROM scratch AS generate

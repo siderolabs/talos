@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package proto;
+package timeapi;
 
 option go_package = "timeapi";
 option java_multiple_files = true;
