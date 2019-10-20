@@ -13,7 +13,7 @@
       </svg>
       <span class="mr-1">{{ dropdownTitle() }}</span>
     </button>
-    <ul class="dropdown-menu absolute pt-1 w-full">
+    <ul class="dropdown-menu absolute pt-1 w-full shadow-md">
       <li class="" v-for="option in options" :key="option.version">
         <a
           @click="handleClick(option)"
@@ -71,8 +71,11 @@ export default {
 }
 
 .dropdown-menu {
+  width: auto;
+  display: none;
   height: 0px;
   background: white;
+  border-radius: 10px;
   overflow: hidden;
   -webkit-transition: all 0.3s ease-in-out;
   -moz-transition: all 0.3s ease-in-out;
@@ -91,6 +94,7 @@ export default {
 }
 
 .dropdown:hover .dropdown-menu {
+  display: block;
   height: 100px;
 }
 </style>
