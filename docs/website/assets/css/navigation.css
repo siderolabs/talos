@@ -63,3 +63,36 @@ header#header img#header-logo {
 header#header.scrolled img#header-logo {
   width: 150px;
 }
+
+.dropdown {
+  @apply font-headings;
+  font-size: 20px;
+}
+
+.dropdown-menu {
+  width: auto;
+  display: none;
+  height: 0px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  -webkit-transition: all 0.3s ease-in-out;
+  -moz-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+#dropdown-caret {
+  -webkit-transition: all 0.3s ease-in-out;
+  -moz-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+.dropdown:hover #dropdown-caret {
+  transform: rotateX(180deg);
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+  height: auto;
+}

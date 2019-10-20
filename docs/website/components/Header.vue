@@ -1,23 +1,28 @@
 <template>
-  <header id="header">
+  <header id="header" class="flex">
     <div
-      class="max-w-6xl mx-auto py-6 flex flex-wrap items-center justify-between"
+      class="flex flex-wrap items-center justify-start max-w-6xl mx-auto py-6"
     >
       <Logo></Logo>
-      <Dropdown></Dropdown>
+    </div>
+    <div class="flex flex-wrap items-center justify-end max-w-6xl mx-auto py-6">
+      <DocumentationDropdown></DocumentationDropdown>
+      <CommunityDropdown></CommunityDropdown>
     </div>
   </header>
 </template>
 
 <script>
 import Logo from '~/components/Logo.vue'
-import Dropdown from '~/components/Dropdown.vue'
+import DocumentationDropdown from '~/components/DocumentationDropdown.vue'
+import CommunityDropdown from '~/components/CommunityDropdown.vue'
 
 export default {
   name: 'Header',
   components: {
     Logo,
-    Dropdown
+    DocumentationDropdown,
+    CommunityDropdown
   },
 
   mounted() {
