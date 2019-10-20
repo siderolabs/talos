@@ -8,10 +8,10 @@
         <DocumentationDropdown></DocumentationDropdown>
       </div>
       <div class="md:flex flex-wrap">
-        <div class="md:w-1/4 mt-6">
+        <div class="md:w-1/4 mt-1">
           <Sidebar></Sidebar>
         </div>
-        <div class="md:w-3/4 mt-6">
+        <div class="md:w-3/4 mt-1">
           <Content></Content>
         </div>
       </div>
