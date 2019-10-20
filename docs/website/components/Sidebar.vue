@@ -1,6 +1,6 @@
 <template>
   <div class="sidenav pt-4 pb-4">
-    <ul>
+    <ul class="mt-8">
       <li
         v-for="entry in $store.state.sidebar.menu"
         :key="entry.title"

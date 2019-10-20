@@ -51,7 +51,7 @@ pre[class*='language-'] {
 }
 
 .article-content {
-  @apply max-w-3xl pt-4 pb-4 pl-6 pr-6 mx-auto;
+  @apply max-w-3xl pt-1 pb-4 pl-6 pr-6 mx-auto;
 }
 
 h1,
