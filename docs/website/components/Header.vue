@@ -8,6 +8,9 @@
     <div class="flex flex-wrap items-center justify-end max-w-6xl mx-auto py-6">
       <DocumentationDropdown></DocumentationDropdown>
       <CommunityDropdown></CommunityDropdown>
+      <a href="/faqs">
+        <span class="font-semibold mr-1">FAQs</span>
+      </a>
     </div>
   </header>
 </template>
