@@ -1,11 +1,19 @@
 <template>
-  <div id="content" class="content mb-4 section-docs">
-    <div class="md:flex flex-wrap">
-      <div class="md:w-1/4 mt-6">
-        <Sidebar></Sidebar>
+  <div>
+    <div id="content" class="content mb-4 section-docs">
+      <div class="flex justify-between">
+        <div class="c-rich-text">
+          <h3>Documentation</h3>
+        </div>
+        <DocumentationDropdown></DocumentationDropdown>
       </div>
-      <div class="md:w-3/4 mt-6">
-        <Content></Content>
+      <div class="md:flex flex-wrap">
+        <div class="md:w-1/4 mt-6">
+          <Sidebar></Sidebar>
+        </div>
+        <div class="md:w-3/4 mt-6">
+          <Content></Content>
+        </div>
       </div>
     </div>
   </div>
@@ -13,12 +21,14 @@
 
 <script>
 import axios from 'axios'
+import DocumentationDropdown from '~/components/DocumentationDropdown.vue'
 import Sidebar from '~/components/Sidebar.vue'
 import Content from '~/components/Content.vue'
 
 export default {
   name: 'Doc',
   components: {
+    DocumentationDropdown,
     Sidebar,
     Content
   },
