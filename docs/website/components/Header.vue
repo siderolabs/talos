@@ -58,3 +58,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+li {
+  margin-left: 1.25rem;
+}
+</style>

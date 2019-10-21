@@ -71,9 +71,4 @@ p a:hover {
   color: #12283a;
 }
 
-li {
-  list-style-position: outside;
-  margin-left: 1.25rem;
-}
-
 /* purgecss end ignore */
