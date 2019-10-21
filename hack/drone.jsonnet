@@ -124,14 +124,21 @@ local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=t
 };
 
 // Default pipeline.
+local fetchtags = {
+  name: 'fetch-tags',
+  image: 'docker:git',
+  commands: [
+    'git fetch --tags',
+  ],
+};
 
-local machined = Step("machined");
-local osd = Step("osd");
-local trustd = Step("trustd");
-local ntpd = Step("ntpd");
-local networkd = Step("networkd");
-local osctl_linux = Step("osctl-linux");
-local osctl_darwin = Step("osctl-darwin");
+local machined = Step("machined", depends_on=[fetchtags]);
+local osd = Step("osd", depends_on=[fetchtags]);
+local trustd = Step("trustd", depends_on=[fetchtags]);
+local ntpd = Step("ntpd", depends_on=[fetchtags]);
+local networkd = Step("networkd", depends_on=[fetchtags]);
+local osctl_linux = Step("osctl-linux", depends_on=[fetchtags]);
+local osctl_darwin = Step("osctl-darwin", depends_on=[fetchtags]);
 local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
@@ -179,6 +186,7 @@ local push = {
 };
 
 local default_steps = [
+  fetchtags,
   machined,
   osd,
   trustd,
