@@ -2,17 +2,28 @@
   <div id="landing-page" class="c-rich-text">
     <div class="w-1/2 h-auto mx-auto mt-10 mb-20">
       <div class="flex flex-col justify-center">
-        <div class="text-center">
+        <div class="text-center p-0 m-0">
           <h1>What is Talos?</h1>
         </div>
-        <div class="text-center">
-          <div>
+        <div class="flex justify-center items-center">
+          <div class="text-center">
             Talos is a modern OS designed to be secure, immutable, and minimal.
             Its purpose is to host Kubernetes clusters, so it is tightly
             integrated with Kubernetes. Talos is based on the Linux kernel, and
             supports most cloud platforms, bare metal, and most virtualization
             platforms. All system management is done via an API, and there is no
             shell or interactive console.
+          </div>
+          <div>
+            <a
+              href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
+              target="_blank"
+            >
+              <img
+                class="certified"
+                src="/images/certified-kubernetes-color.png"
+                alt=""
+            /></a>
           </div>
         </div>
       </div>
@@ -167,29 +178,6 @@
         </div>
       </div>
     </div>
-
-    <div class="flex flex-col items-center my-12">
-      <a
-        href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
-        target="_blank"
-      >
-        <img
-          class="certified"
-          src="/images/certified-kubernetes-color.png"
-          alt=""
-      /></a>
-    </div>
-
-    <div class="flex flex-col items-center my-12">
-      <img class="cncf" src="/images/cncf-color.png" alt="" />
-      <p>
-        We are a
-        <a href="https://cncf.io" target="_blank"
-          >Cloud Native Computing Foundation</a
-        >
-        member.
-      </p>
-    </div>
   </div>
 </template>
 
@@ -226,13 +214,9 @@ export default {
   width: 107px;
 }
 
-.cncf {
-  width: 250px;
-  height: 39px;
-}
-
 .certified {
-  height: 200px;
-  width: auto;
+  @apply m-5;
+  height: auto;
+  width: 400px;
 }
 </style>
