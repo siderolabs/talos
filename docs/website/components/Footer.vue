@@ -1,5 +1,15 @@
 <template>
   <footer>
+    <div class="flex flex-col items-center my-3">
+      <img class="cncf" src="/images/cncf-color.png" alt="" />
+      <p>
+        We are a
+        <a href="https://cncf.io" target="_blank"
+          >Cloud Native Computing Foundation</a
+        >
+        member.
+      </p>
+    </div>
     <div>
       <a class="inline-block no-underline color-inherit" href="/">
         © 2019 Talos Systems, Inc.
@@ -10,7 +20,7 @@
 
 <style>
 footer {
-  @apply bg-gray-200 flex flex-wrap items-center font-sans justify-between py-4 px-4;
+  @apply bg-white flex flex-col items-center font-sans justify-between py-5;
   z-index: 99;
 }
 
@@ -24,5 +34,10 @@ footer a:hover {
 
 .color-inherit {
   color: inherit;
+}
+
+.cncf {
+  width: 250px;
+  height: 39px;
 }
 </style>
