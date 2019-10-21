@@ -7,6 +7,11 @@ platform:
   arch: amd64
 
 steps:
+- name: fetch-tags
+  image: docker:git
+  commands:
+  - git fetch --tags
+
 - name: machined
   pull: always
   image: autonomy/build-container:latest
@@ -22,6 +27,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osd
   pull: always
@@ -38,6 +45,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: trustd
   pull: always
@@ -54,6 +63,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: ntpd
   pull: always
@@ -70,6 +81,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: networkd
   pull: always
@@ -86,6 +99,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-linux
   pull: always
@@ -102,6 +117,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-darwin
   pull: always
@@ -118,6 +135,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: rootfs
   pull: always
@@ -405,6 +424,11 @@ platform:
   arch: amd64
 
 steps:
+- name: fetch-tags
+  image: docker:git
+  commands:
+  - git fetch --tags
+
 - name: machined
   pull: always
   image: autonomy/build-container:latest
@@ -420,6 +444,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osd
   pull: always
@@ -436,6 +462,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: trustd
   pull: always
@@ -452,6 +480,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: ntpd
   pull: always
@@ -468,6 +498,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: networkd
   pull: always
@@ -484,6 +516,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-linux
   pull: always
@@ -500,6 +534,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-darwin
   pull: always
@@ -516,6 +552,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: rootfs
   pull: always
@@ -1016,6 +1054,11 @@ platform:
   arch: amd64
 
 steps:
+- name: fetch-tags
+  image: docker:git
+  commands:
+  - git fetch --tags
+
 - name: machined
   pull: always
   image: autonomy/build-container:latest
@@ -1031,6 +1074,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osd
   pull: always
@@ -1047,6 +1092,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: trustd
   pull: always
@@ -1063,6 +1110,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: ntpd
   pull: always
@@ -1079,6 +1128,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: networkd
   pull: always
@@ -1095,6 +1146,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-linux
   pull: always
@@ -1111,6 +1164,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-darwin
   pull: always
@@ -1127,6 +1182,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: rootfs
   pull: always
@@ -1630,6 +1687,11 @@ platform:
   arch: amd64
 
 steps:
+- name: fetch-tags
+  image: docker:git
+  commands:
+  - git fetch --tags
+
 - name: machined
   pull: always
   image: autonomy/build-container:latest
@@ -1645,6 +1707,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osd
   pull: always
@@ -1661,6 +1725,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: trustd
   pull: always
@@ -1677,6 +1743,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: ntpd
   pull: always
@@ -1693,6 +1761,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: networkd
   pull: always
@@ -1709,6 +1779,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-linux
   pull: always
@@ -1725,6 +1797,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-darwin
   pull: always
@@ -1741,6 +1815,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: rootfs
   pull: always
@@ -2244,6 +2320,11 @@ platform:
   arch: amd64
 
 steps:
+- name: fetch-tags
+  image: docker:git
+  commands:
+  - git fetch --tags
+
 - name: machined
   pull: always
   image: autonomy/build-container:latest
@@ -2259,6 +2340,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osd
   pull: always
@@ -2275,6 +2358,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: trustd
   pull: always
@@ -2291,6 +2376,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: ntpd
   pull: always
@@ -2307,6 +2394,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: networkd
   pull: always
@@ -2323,6 +2412,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-linux
   pull: always
@@ -2339,6 +2430,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: osctl-darwin
   pull: always
@@ -2355,6 +2448,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - fetch-tags
 
 - name: rootfs
   pull: always
