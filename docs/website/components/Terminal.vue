@@ -1,25 +1,14 @@
 <template>
   <div class="terminal w-1/2 mx-auto">
     <div id="terminal-body">
-      <div id="terminal-player-wrapper">
-        <asciinema-player
-          id="terminal-player"
-          cols="100"
-          rows="25"
-          preload=""
-          autoplay=""
-          loop=""
-          speed="1.25"
-          src="/cluster-create.cast"
-        ></asciinema-player>
-      </div>
+      <div id="terminal-player-wrapper"></div>
     </div>
     <div id="terminal-buttons">
       <div class="flex flex-wrap justify-center">
         <button
           v-for="cast in casts"
           :key="cast.src"
-          class="bg-primary-color-500 hover:bg-blue-700 text-white font-semibold m-1 p-1 rounded"
+          class="bg-primary-color-500 text-white font-semibold m-1 p-1 rounded"
           style="width: 100px"
           @click="handleClick(cast.src)"
         >
@@ -48,6 +37,10 @@ export default {
     }
   },
 
+  mounted() {
+    this.handleClick('/cluster-create.cast')
+  },
+
   methods: {
     handleClick(src) {
       const terminalPlayerWrapper = document.getElementById(
@@ -57,7 +50,7 @@ export default {
       terminalPlayerWrapper.innerHTML =
         '<asciinema-player id="terminal-player" cols="100" rows="' +
         terminalRows +
-        '" preload autoplay loop speed="1.25" src="' +
+        '" preload autoplay loop speed="1.0" src="' +
         src +
         '"></asciinema-player>'
       console.log(src)
