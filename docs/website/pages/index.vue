@@ -149,6 +149,13 @@
             </div>
           </div>
           <div class="text-center w-full px-2 py-2 m-2">
+            <h2>Ephemeral</h2>
+            <div>
+              Talos runs in memory from a Squashfs, and persists nothing,
+              leaving the primary disk entirely to Kubernetes.
+            </div>
+          </div>
+          <div class="text-center w-full px-2 py-2 m-2">
             <h2>Current</h2>
             <div>
               Stay current with our commitment to an
