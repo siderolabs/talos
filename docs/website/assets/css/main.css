@@ -2,6 +2,7 @@
 
 @import url('@/assets/css/navigation.css');
 @import url('@/assets/css/prism-ghcolors.css');
+@import url('@/assets/css/asciinema-player.css');
 
 body {
   overflow-x: hidden;
