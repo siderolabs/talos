@@ -50,6 +50,15 @@
       </div>
     </div>
 
+    <div class="w-3/4 mx-auto mb-20">
+      <div class="flex flex-col justify-center">
+        <div class="text-center">
+          <h2>API Driven</h2>
+          <Terminal></Terminal>
+        </div>
+      </div>
+    </div>
+
     <div class="w-1/2 h-auto mx-auto mb-20">
       <div class="flex flex-col justify-center">
         <div class="text-center">
@@ -82,6 +91,9 @@
 
     <div class="w-3/4 h-auto mx-auto mb-20">
       <div class="flex flex-col justify-center">
+        <div class="text-center">
+          <h1>Features</h1>
+        </div>
         <div class="flex justify-center">
           <div class="text-center w-full px-2 py-2 m-2">
             <h2>Minimal</h2>
@@ -173,6 +185,17 @@
     </div>
   </div>
 </template>
+
+<script>
+import Terminal from '~/components/Terminal.vue'
+
+export default {
+  name: 'Index',
+  components: {
+    Terminal
+  }
+}
+</script>
 
 <style>
 #landing-page {
