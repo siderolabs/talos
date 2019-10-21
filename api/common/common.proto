@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/talos-systems/talos/api/common";
+
+// Common metadata message nested in all reply message types
+message NodeMetadata {
+  string hostname = 1;
+}

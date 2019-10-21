@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -55,7 +56,13 @@ func Execute() {
 	var globalCtxCancel context.CancelFunc
 
 	globalCtx, globalCtxCancel = context.WithCancel(context.Background())
+
 	defer globalCtxCancel()
+
+	// Update context with grpc metadata for proxy/relay requests
+	md := metadata.New(make(map[string]string))
+	md.Set("targets", target...)
+	globalCtx = metadata.NewOutgoingContext(globalCtx, md)
 
 	// listen for ^C and SIGTERM and abort context
 	sigCh := make(chan os.Signal, 1)

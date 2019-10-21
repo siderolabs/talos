@@ -35,30 +35,29 @@ WORKDIR /src
 # The generate target generates code from protobuf service definitions.
 
 FROM build AS generate-build
-WORKDIR /osd
-COPY ./api/os ./proto
-# Generate additional grpc functionality only for OSD
-RUN protoc -I./proto --plugin=proxy --proxy_out=plugins=grpc+proxy:proto proto/os.proto
-WORKDIR /trustd
-COPY ./api/security ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/security.proto
-WORKDIR /machined
-COPY ./api/machine ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/machine.proto
-WORKDIR /ntpd
-COPY ./api/time ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/time.proto
-WORKDIR /networkd
-COPY ./api/network ./proto
-RUN protoc -I./proto --go_out=plugins=grpc:proto proto/network.proto
-
+COPY ./api/common/common.proto /api/common/common.proto
+RUN protoc -I/api --go_out=plugins=grpc:/api/common /api/common/common.proto
+#RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:proto api/api.proto
+COPY ./api/os/os.proto /api/os/os.proto
+# TODO: switch up os proxy generation with apid
+#RUN protoc -I/api --go_out=plugins=grpc:/api/os /api/os/os.proto
+RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:/api/os /api/os/os.proto
+COPY ./api/security/security.proto /api/security/security.proto
+RUN protoc -I/api --go_out=plugins=grpc:/api/security /api/security/security.proto
+COPY ./api/machine/machine.proto /api/machine/machine.proto
+RUN protoc -I/api --go_out=plugins=grpc:/api/machine /api/machine/machine.proto
+COPY ./api/time/time.proto /api/time/time.proto
+RUN protoc -I/api --go_out=plugins=grpc:/api/time /api/time/time.proto
+COPY ./api/network/network.proto /api/network/network.proto
+RUN protoc -I/api --go_out=plugins=grpc:/api/network /api/network/network.proto
 
 FROM scratch AS generate
-COPY --from=generate-build /osd/proto/api.pb.go /api/os/
-COPY --from=generate-build /trustd/proto/api.pb.go /api/security/
-COPY --from=generate-build /machined/proto/api.pb.go /api/machine/
-COPY --from=generate-build /ntpd/proto/api.pb.go /api/time/
-COPY --from=generate-build /networkd/proto/api.pb.go /api/network/
+COPY --from=generate-build /api/common/github.com/talos-systems/talos/api/common/common.pb.go /api/common/
+COPY --from=generate-build /api/os/github.com/talos-systems/talos/api/os/os.pb.go /api/os/
+COPY --from=generate-build /api/security/github.com/talos-systems/talos/api/security/security.pb.go /api/security/
+COPY --from=generate-build /api/machine/github.com/talos-systems/talos/api/machine/machine.pb.go /api/machine/
+COPY --from=generate-build /api/time/github.com/talos-systems/talos/api/time/time.pb.go /api/time/
+COPY --from=generate-build /api/network/github.com/talos-systems/talos/api/network/network.pb.go /api/network/
 
 # The base target provides a container that can be used to build all Talos
 # assets.

@@ -293,13 +293,8 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-cha
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
 // interface
-func (c *Client) Upgrade(ctx context.Context, image string) (string, error) {
-	reply, err := c.MachineClient.Upgrade(ctx, &machineapi.UpgradeRequest{Image: image})
-	if err != nil {
-		return "", err
-	}
-
-	return reply.Ack, nil
+func (c *Client) Upgrade(ctx context.Context, image string) (*machineapi.UpgradeReply, error) {
+	return c.MachineClient.Upgrade(ctx, &machineapi.UpgradeRequest{Image: image})
 }
 
 // ServiceList returns list of services with their state
@@ -311,49 +306,23 @@ func (c *Client) ServiceList(ctx context.Context) (*machineapi.ServiceListReply,
 //
 // This is implemented via service list API, as we don't have many services
 // If service with given id is not registered, function returns nil
-func (c *Client) ServiceInfo(ctx context.Context, id string) (*machineapi.ServiceInfo, error) {
-	reply, err := c.MachineClient.ServiceList(ctx, &empty.Empty{})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, svc := range reply.Services {
-		if svc.Id == id {
-			return svc, nil
-		}
-	}
-
-	return nil, nil
+func (c *Client) ServiceInfo(ctx context.Context, id string) (*machineapi.ServiceListReply, error) {
+	return c.MachineClient.ServiceList(ctx, &empty.Empty{})
 }
 
 // ServiceStart starts a service.
-func (c *Client) ServiceStart(ctx context.Context, id string) (string, error) {
-	r, err := c.MachineClient.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: id})
-	if err != nil {
-		return "", err
-	}
-
-	return r.Resp, nil
+func (c *Client) ServiceStart(ctx context.Context, id string) (*machineapi.ServiceStartReply, error) {
+	return c.MachineClient.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: id})
 }
 
 // ServiceStop stops a service.
-func (c *Client) ServiceStop(ctx context.Context, id string) (string, error) {
-	r, err := c.MachineClient.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: id})
-	if err != nil {
-		return "", err
-	}
-
-	return r.Resp, nil
+func (c *Client) ServiceStop(ctx context.Context, id string) (*machineapi.ServiceStopReply, error) {
+	return c.MachineClient.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: id})
 }
 
 // ServiceRestart restarts a service.
-func (c *Client) ServiceRestart(ctx context.Context, id string) (string, error) {
-	r, err := c.MachineClient.ServiceRestart(ctx, &machineapi.ServiceRestartRequest{Id: id})
-	if err != nil {
-		return "", err
-	}
-
-	return r.Resp, nil
+func (c *Client) ServiceRestart(ctx context.Context, id string) (*machineapi.ServiceRestartReply, error) {
+	return c.MachineClient.ServiceRestart(ctx, &machineapi.ServiceRestartRequest{Id: id})
 }
 
 // Time returns the time

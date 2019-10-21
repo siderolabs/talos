@@ -7,9 +7,13 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
@@ -22,10 +26,7 @@ var upgradeCmd = &cobra.Command{
 	Short: "Upgrade Talos on the target node",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		if err = upgrade(); err != nil {
-			helpers.Fatalf("error upgrading host: %s", err)
-		}
+		upgrade()
 	},
 }
 
@@ -34,21 +35,34 @@ func init() {
 	rootCmd.AddCommand(upgradeCmd)
 }
 
-func upgrade() error {
+func upgrade() {
 	var (
-		err error
-		ack string
+		err   error
+		reply *machineapi.UpgradeReply
 	)
 
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent starting upgrades to
 		// an unknown version
-		ack, err = c.Upgrade(globalCtx, upgradeImage)
+		reply, err = c.Upgrade(globalCtx, upgradeImage)
 	})
 
-	if err == nil {
-		fmt.Println(ack)
+	if err != nil {
+		helpers.Fatalf("error performing upgrade: %s", err)
 	}
 
-	return err
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NODE\tACK\tSTARTED")
+
+	for _, resp := range reply.Response {
+		node := ""
+
+		if resp.Metadata != nil {
+			node = resp.Metadata.Hostname
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\t", node, resp.Ack, time.Now())
+	}
+
+	helpers.Should(w.Flush())
 }
