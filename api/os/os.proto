@@ -2,12 +2,13 @@ syntax = "proto3";
 
 package osapi;
 
-option go_package = "osapi";
+option go_package = "github.com/talos-systems/talos/api/os";
 option java_multiple_files = true;
 option java_outer_classname = "OsApi";
 option java_package = "com.os.api";
 
 import "google/protobuf/empty.proto";
+import public "common/common.proto";
 
 // The OS service definition.
 //
@@ -20,11 +21,6 @@ service OS {
   rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
   rpc Restart(RestartRequest) returns (RestartReply);
   rpc Stats(StatsRequest) returns (StatsReply);
-}
-
-// Common metadata message nested in all reply message types
-message NodeMetadata {
-  string hostname = 1;
 }
 
 // rpc Containers
@@ -54,7 +50,7 @@ message Container {
 
 // The response message containing the requested containers.
 message ContainerResponse {
-  NodeMetadata metadata = 1;
+  common.NodeMetadata metadata = 1;
   repeated Container containers = 2;
 }
 
@@ -71,7 +67,7 @@ message Data {
 }
 
 message DataResponse {
-  NodeMetadata metadata = 1;
+  common.NodeMetadata metadata = 1;
   Data bytes = 2;
 }
 
@@ -97,7 +93,7 @@ message ProcessesReply {
 }
 
 message ProcessResponse {
-  NodeMetadata metadata = 1;
+  common.NodeMetadata metadata = 1;
   repeated Process processes = 2;
 }
 
@@ -124,7 +120,7 @@ message RestartRequest {
 }
 
 message RestartResponse {
-  NodeMetadata metadata = 1;
+  common.NodeMetadata metadata = 1;
 }
 
 // The response message containing the restart status.
@@ -143,7 +139,7 @@ message StatsRequest {
 
 // The response message containing the requested stats.
 message StatsResponse {
-  NodeMetadata metadata = 1;
+  common.NodeMetadata metadata = 1;
   repeated Stat stats = 2;
 }
 

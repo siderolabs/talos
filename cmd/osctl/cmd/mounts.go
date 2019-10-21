@@ -37,25 +37,26 @@ var mountsCmd = &cobra.Command{
 }
 
 func mountsRender(reply *machineapi.MountsReply, err error) {
-	if reply == nil {
-		if err != nil {
-			helpers.Fatalf("error getting mounts: %s", err)
-		}
-
-		return
-	}
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "FILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
+	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
 
-	for _, r := range reply.Stats {
-		percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
+	for _, resp := range reply.Response {
+		for _, r := range resp.Stats {
+			percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
 
-		if math.IsNaN(percentAvailable) {
-			continue
+			if math.IsNaN(percentAvailable) {
+				continue
+			}
+
+			node := ""
+
+			if resp.Metadata != nil {
+				node = resp.Metadata.Hostname
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n",
+				node, r.Filesystem, float64(r.Size)*1e-9, float64(r.Size-r.Available)*1e-9, float64(r.Available)*1e-9, percentAvailable, r.MountedOn)
 		}
-
-		fmt.Fprintf(w, "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n", r.Filesystem, float64(r.Size)*1e-9, float64(r.Size-r.Available)*1e-9, float64(r.Available)*1e-9, percentAvailable, r.MountedOn)
 	}
 
 	helpers.Should(w.Flush())

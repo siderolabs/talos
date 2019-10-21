@@ -2,13 +2,14 @@ syntax = "proto3";
 
 package machineapi;
 
-option go_package = "machineapi";
+option go_package = "github.com/talos-systems/talos/api/machine";
 option java_multiple_files = true;
 option java_outer_classname = "MachineApi";
 option java_package = "com.machine.api";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "common/common.proto";
 
 // The machine service definition.
 service Machine {
@@ -34,25 +35,52 @@ service Machine {
   rpc Version(google.protobuf.Empty) returns (VersionReply);
 }
 
+// rpc reboot
 // The response message containing the reboot status.
-message RebootReply {}
+message RebootResponse {
+  common.NodeMetadata metadata = 1;
+}
+message RebootReply {
+  repeated RebootResponse response = 1;
+}
 
+// rpc reset
 // The response message containing the restart status.
-message ResetReply {}
+message ResetResponse {
+  common.NodeMetadata metadata = 1;
+}
+message ResetReply {
+  repeated ResetResponse response = 1;
+}
 
+// rpc shutdown
 // The response message containing the shutdown status.
-message ShutdownReply {}
+message ShutdownResponse {
+  common.NodeMetadata metadata = 1;
+}
+message ShutdownReply {
+  repeated ShutdownResponse response = 1;
+}
 
+// rpc upgrade
 message UpgradeRequest {
   string image = 1;
 }
-
+message UpgradeResponse {
+  common.NodeMetadata metadata = 1;
+  string ack = 2;
+}
 message UpgradeReply {
-  string ack = 1;
+  repeated UpgradeResponse response = 1;
 }
 
+// rpc servicelist
+message ServiceListResponse {
+  common.NodeMetadata metadata = 1;
+  repeated ServiceInfo services = 2;
+}
 message ServiceListReply {
-  repeated ServiceInfo services = 1;
+  repeated ServiceListResponse response = 1;
 }
 
 message ServiceInfo {
@@ -79,28 +107,41 @@ message ServiceHealth {
   google.protobuf.Timestamp last_change = 4;
 }
 
+// rpc servicestart
 message ServiceStartRequest {
   string id = 1;
 }
 
+message ServiceStartResponse {
+  common.NodeMetadata metadata = 1;
+  string resp = 2;
+}
 message ServiceStartReply {
-  string resp = 1;
+  repeated ServiceStartResponse response = 1;
 }
 
 message ServiceStopRequest {
   string id = 1;
 }
 
+message ServiceStopResponse {
+  common.NodeMetadata metadata = 1;
+  string resp = 2;
+}
 message ServiceStopReply {
-  string resp = 1;
+  repeated ServiceStopResponse response = 1;
 }
 
 message ServiceRestartRequest {
   string id = 1;
 }
 
+message ServiceRestartResponse {
+  common.NodeMetadata metadata = 1;
+  string resp = 2;
+}
 message ServiceRestartReply {
-  string resp = 1;
+  repeated ServiceRestartResponse response = 1;
 }
 
 message StartRequest {
@@ -171,8 +212,12 @@ message FileInfo {
 }
 
 // The response message containing the requested df stats.
+message MountsResponse {
+  common.NodeMetadata metadata = 1;
+  repeated MountStat stats = 2;
+}
 message MountsReply {
-  repeated MountStat stats = 1;
+  repeated MountsResponse response = 1;
 }
 
 // The response message containing the requested processes.
@@ -183,7 +228,16 @@ message MountStat {
   string mounted_on = 4;
 }
 
+message VersionResponse {
+  common.NodeMetadata metadata = 1;
+  repeated VersionInfo version = 2;
+}
+
 message VersionReply {
+  repeated VersionResponse response = 1;
+}
+
+message VersionInfo {
   string tag = 1;
   string sha = 2;
   string built = 3;

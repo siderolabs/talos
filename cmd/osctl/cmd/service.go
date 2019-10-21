@@ -69,77 +69,141 @@ func serviceList(c *client.Client) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "SERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
+	fmt.Fprintln(w, "NODE\tSERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
 
-	for _, s := range reply.Services {
-		svc := serviceInfoWrapper{s}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s ago\t%s\n", svc.Id, svc.State, svc.HealthStatus(), svc.LastUpdated(), svc.LastEvent())
+	for _, resp := range reply.Response {
+		for _, s := range resp.Services {
+			svc := serviceInfoWrapper{s}
+
+			node := ""
+
+			if resp.Metadata != nil {
+				node = resp.Metadata.Hostname
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", node, svc.Id, svc.State, svc.HealthStatus(), svc.LastUpdated(), svc.LastEvent())
+		}
 	}
 
-	if err := w.Flush(); err != nil {
-		helpers.Fatalf("error writing response: %s", err)
-	}
+	helpers.Should(w.Flush())
 }
 
 func serviceInfo(c *client.Client, id string) {
-	s, err := c.ServiceInfo(globalCtx, id)
+	reply, err := c.ServiceInfo(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error listing services: %s", err)
 	}
 
-	if s == nil {
-		helpers.Fatalf("service %q is not registered", id)
-	}
-
-	svc := serviceInfoWrapper{s}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintf(w, "ID\t%s\n", svc.Id)
-	fmt.Fprintf(w, "STATE\t%s\n", svc.State)
-	fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
 
-	if svc.Health.LastMessage != "" {
-		fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
+	services := make([]*machineapi.ServiceInfo, 0, len(reply.Response))
+
+	for _, resp := range reply.Response {
+		for _, svc := range resp.Services {
+			if svc.Id == id {
+				services = append(services, svc)
+				for _, s := range services {
+					node := ""
+
+					if resp.Metadata != nil {
+						node = resp.Metadata.Hostname
+					}
+
+					fmt.Fprintf(w, "NODE\t%s\n", node)
+
+					svc := serviceInfoWrapper{s}
+					fmt.Fprintf(w, "ID\t%s\n", svc.Id)
+					fmt.Fprintf(w, "STATE\t%s\n", svc.State)
+					fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
+
+					if svc.Health.LastMessage != "" {
+						fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
+					}
+
+					label := "EVENTS"
+
+					for _, event := range svc.Events.Events {
+						// nolint: errcheck
+						ts, _ := ptypes.Timestamp(event.Ts)
+						fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
+						label = ""
+					}
+				}
+			}
+		}
 	}
 
-	label := "EVENTS"
-
-	for _, event := range svc.Events.Events {
-		// nolint: errcheck
-		ts, _ := ptypes.Timestamp(event.Ts)
-		fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
-		label = ""
+	if len(services) == 0 {
+		helpers.Fatalf("service %q is not registered on any nodes", id)
 	}
 
-	if err := w.Flush(); err != nil {
-		helpers.Fatalf("error writing response: %s", err)
-	}
+	helpers.Should(w.Flush())
 }
 
 func serviceStart(c *client.Client, id string) {
-	resp, err := c.ServiceStart(globalCtx, id)
+	reply, err := c.ServiceStart(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
 
-	fmt.Fprintln(os.Stderr, resp)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NODE\tRESPONSE")
+
+	for _, resp := range reply.Response {
+		node := ""
+
+		if resp.Metadata != nil {
+			node = resp.Metadata.Hostname
+		}
+
+		fmt.Fprintf(w, "%s\t%s\n", node, resp.Resp)
+	}
+
+	helpers.Should(w.Flush())
 }
 
 func serviceStop(c *client.Client, id string) {
-	resp, err := c.ServiceStop(globalCtx, id)
+	reply, err := c.ServiceStop(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
 
-	fmt.Fprintln(os.Stderr, resp)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NODE\tRESPONSE")
+
+	for _, resp := range reply.Response {
+		node := ""
+
+		if resp.Metadata != nil {
+			node = resp.Metadata.Hostname
+		}
+
+		fmt.Fprintf(w, "%s\t%s\n", node, resp.Resp)
+	}
+
+	helpers.Should(w.Flush())
 }
 
 func serviceRestart(c *client.Client, id string) {
-	resp, err := c.ServiceRestart(globalCtx, id)
+	reply, err := c.ServiceRestart(globalCtx, id)
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
 
-	fmt.Fprintln(os.Stderr, resp)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NODE\tRESPONSE")
+
+	for _, resp := range reply.Response {
+		node := ""
+
+		if resp.Metadata != nil {
+			node = resp.Metadata.Hostname
+		}
+
+		fmt.Fprintf(w, "%s\t%s\n", node, resp.Resp)
+	}
+
+	helpers.Should(w.Flush())
 }
 
 type serviceInfoWrapper struct {

@@ -34,12 +34,20 @@ const versionTemplate = `	Tag:         {{ .Tag }}
 // NewVersion prints verbose version information.
 func NewVersion() *machineapi.VersionReply {
 	return &machineapi.VersionReply{
-		Tag:       Tag,
-		Sha:       SHA,
-		Built:     Built,
-		GoVersion: runtime.Version(),
-		Os:        runtime.GOOS,
-		Arch:      runtime.GOARCH,
+		Response: []*machineapi.VersionResponse{
+			{
+				Version: []*machineapi.VersionInfo{
+					{
+						Tag:       Tag,
+						Sha:       SHA,
+						Built:     Built,
+						GoVersion: runtime.Version(),
+						Os:        runtime.GOOS,
+						Arch:      runtime.GOARCH,
+					},
+				},
+			},
+		},
 	}
 }
 

@@ -52,7 +52,9 @@ func (r *Registrator) Register(s *grpc.Server) {
 
 // Reboot implements the machineapi.MachineServer interface.
 func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machineapi.RebootReply, err error) {
-	reply = &machineapi.RebootReply{}
+	reply = &machineapi.RebootReply{
+		Response: []*machineapi.RebootResponse{},
+	}
 
 	log.Printf("reboot via API received")
 	event.Bus().Notify(event.Event{Type: event.Reboot})
@@ -62,7 +64,9 @@ func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machi
 
 // Shutdown implements the machineapi.MachineServer interface.
 func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *machineapi.ShutdownReply, err error) {
-	reply = &machineapi.ShutdownReply{}
+	reply = &machineapi.ShutdownReply{
+		Response: []*machineapi.ShutdownResponse{},
+	}
 
 	log.Printf("shutdown via API received")
 	event.Bus().Notify(event.Event{Type: event.Shutdown})
@@ -74,7 +78,13 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeReply, err error) {
 	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: in})
 
-	data = &machineapi.UpgradeReply{Ack: "Upgrade request received"}
+	data = &machineapi.UpgradeReply{
+		Response: []*machineapi.UpgradeResponse{
+			{
+				Ack: "Upgrade request received",
+			},
+		},
+	}
 
 	return data, err
 }
@@ -91,7 +101,9 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machine
 		return nil, err
 	}
 
-	return &machineapi.ResetReply{}, err
+	return &machineapi.ResetReply{
+		Response: []*machineapi.ResetResponse{},
+	}, err
 }
 
 // ServiceList returns list of the registered services and their status
@@ -99,11 +111,15 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 	services := system.Services(r.config).List()
 
 	result = &machineapi.ServiceListReply{
-		Services: make([]*machineapi.ServiceInfo, len(services)),
+		Response: []*machineapi.ServiceListResponse{
+			{
+				Services: make([]*machineapi.ServiceInfo, len(services)),
+			},
+		},
 	}
 
 	for i := range services {
-		result.Services[i] = services[i].AsProto()
+		result.Response[0].Services[i] = services[i].AsProto()
 	}
 
 	return result, nil
@@ -116,7 +132,13 @@ func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceSt
 		return &machineapi.ServiceStartReply{}, err
 	}
 
-	reply = &machineapi.ServiceStartReply{Resp: fmt.Sprintf("Service %q started", in.Id)}
+	reply = &machineapi.ServiceStartReply{
+		Response: []*machineapi.ServiceStartResponse{
+			{
+				Resp: fmt.Sprintf("Service %q started", in.Id),
+			},
+		},
+	}
 
 	return reply, err
 }
@@ -129,7 +151,7 @@ func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (r
 	rep, err = r.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: in.Id})
 	if rep != nil {
 		reply = &machineapi.StartReply{
-			Resp: rep.Resp,
+			Resp: rep.Response[0].Resp,
 		}
 	}
 
@@ -144,7 +166,7 @@ func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (rep
 	rep, err = r.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: in.Id})
 	if rep != nil {
 		reply = &machineapi.StopReply{
-			Resp: rep.Resp,
+			Resp: rep.Response[0].Resp,
 		}
 	}
 
@@ -158,7 +180,13 @@ func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceSto
 		return &machineapi.ServiceStopReply{}, err
 	}
 
-	reply = &machineapi.ServiceStopReply{Resp: fmt.Sprintf("Service %q stopped", in.Id)}
+	reply = &machineapi.ServiceStopReply{
+		Response: []*machineapi.ServiceStopResponse{
+			{
+				Resp: fmt.Sprintf("Service %q stopped", in.Id),
+			},
+		},
+	}
 
 	return reply, err
 }
@@ -170,7 +198,13 @@ func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.Service
 		return &machineapi.ServiceRestartReply{}, err
 	}
 
-	reply = &machineapi.ServiceRestartReply{Resp: fmt.Sprintf("Service %q restarted", in.Id)}
+	reply = &machineapi.ServiceRestartReply{
+		Response: []*machineapi.ServiceRestartResponse{
+			{
+				Resp: fmt.Sprintf("Service %q restarted", in.Id),
+			},
+		},
+	}
 
 	return reply, err
 }
@@ -333,7 +367,11 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machi
 	}
 
 	reply = &machineapi.MountsReply{
-		Stats: stats,
+		Response: []*machineapi.MountsResponse{
+			{
+				Stats: stats,
+			},
+		},
 	}
 
 	return reply, multiErr.ErrorOrNil()
