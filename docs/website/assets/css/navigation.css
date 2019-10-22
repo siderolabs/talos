@@ -48,7 +48,6 @@ nav[aria-label='main'] {
   }
   header {
     @apply sticky top-0;
-    transition: height 0.3s;
   }
 
   nav[aria-label='main'] .tnd-Nav__item a {
@@ -56,17 +55,13 @@ nav[aria-label='main'] {
   }
 }
 
-header#header img#header-logo {
-  transition: all 0.3s;
-}
-
-header#header.scrolled img#header-logo {
-  width: 150px;
+#header-logo {
+  height: 70px;
 }
 
 header {
   @apply font-headings;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .dropdown-menu {
