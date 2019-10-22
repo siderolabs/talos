@@ -133,7 +133,7 @@ func (suite *ContainerdSuite) SetupTest() {
 }
 
 func (suite *ContainerdSuite) run(runners ...runner.Runner) {
-	runningCh := make(chan struct{}, len(runners))
+	runningCh := make(chan bool, 2*len(runners))
 
 	for _, r := range runners {
 		suite.Require().NoError(r.Open(context.Background()))
@@ -145,18 +145,20 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 		go func(r runner.Runner) {
 			runningSink := func(state events.ServiceState, message string, args ...interface{}) {
 				if state == events.StateRunning {
-					runningCh <- struct{}{}
+					runningCh <- true
 				}
 			}
 
+			defer func() { runningCh <- false }()
 			defer suite.containersWg.Done()
-			suite.Assert().NoError(r.Run(runningSink))
+			suite.Require().NoError(r.Run(runningSink))
 		}(r)
 	}
 
 	// wait for the containers to be started actually
 	for range runners {
-		<-runningCh
+		result := <-runningCh
+		suite.Require().True(result, "some containers failed to start")
 	}
 }
 
