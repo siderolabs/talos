@@ -34,7 +34,7 @@ func Test_constantRetryer_Retry(t *testing.T) {
 			name: "test expected number of retries",
 			fields: fields{
 				retryer: retryer{
-					duration: 2 * time.Second,
+					duration: 2500 * time.Millisecond,
 					options:  NewDefaultOptions(),
 				},
 			},
@@ -44,14 +44,14 @@ func Test_constantRetryer_Retry(t *testing.T) {
 					return ExpectedError(fmt.Errorf("expected"))
 				},
 			},
-			expectedCount: 2,
+			expectedCount: 3,
 			wantErr:       true,
 		},
 		{
 			name: "test expected number of retries with units",
 			fields: fields{
 				retryer: retryer{
-					duration: 2 * time.Second,
+					duration: 2250 * time.Millisecond,
 					options:  NewDefaultOptions(WithUnits(500 * time.Millisecond)),
 				},
 			},
@@ -61,7 +61,7 @@ func Test_constantRetryer_Retry(t *testing.T) {
 					return ExpectedError(fmt.Errorf("expected"))
 				},
 			},
-			expectedCount: 4,
+			expectedCount: 5,
 			wantErr:       true,
 		},
 		{
