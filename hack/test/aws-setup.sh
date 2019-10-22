@@ -14,9 +14,6 @@ echo ${AWS_SVC_ACCT} | base64 -d > ${TMP}/svc-acct.ini
 export AWS_ACCESS_KEY_ID=$(awk '/aws_access_key_id/ { print $NF }' ${TMP}/svc-acct.ini)
 export AWS_SECRET_ACCESS_KEY=$(awk '/aws_secret_access_key/ { print $NF }' ${TMP}/svc-acct.ini)
 
-# Ensure bucket exists ( already done )
-#aws s3api create-bucket --region ${REGION} --bucket ${BUCKET} --acl private
-
 ## Untar image
 tar -C ${TMP} -xf ./build/aws.tar.gz
 
