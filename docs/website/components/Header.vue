@@ -1,6 +1,6 @@
 <template>
   <header id="header" class="flex">
-    <div class="flex items-center justify-start max-w-6xl mx-auto py-6">
+    <div class="flex items-center justify-start max-w-6xl mx-auto py-2">
       <Logo></Logo>
     </div>
     <div class="flex items-center justify-end max-w-6xl mx-auto py-6">
@@ -32,29 +32,6 @@ export default {
   components: {
     Logo,
     CommunityDropdown
-  },
-
-  mounted() {
-    window.addEventListener('scroll', this.handleScroll)
-  },
-
-  destroyed() {
-    window.removeEventListener('scroll', this.handleScroll)
-  },
-
-  methods: {
-    handleScroll() {
-      const distanceY = window.pageYOffset || document.documentElement.scrollTop
-      const shrinkOn = 240
-      const shrinkOff = 140
-      const headerEl = document.getElementById('header')
-
-      if (distanceY > shrinkOn) {
-        headerEl.classList.add('scrolled')
-      } else if (distanceY < shrinkOff) {
-        headerEl.classList.remove('scrolled')
-      }
-    }
   }
 }
 </script>

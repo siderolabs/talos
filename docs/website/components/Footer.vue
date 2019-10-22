@@ -21,7 +21,6 @@
 <style>
 footer {
   @apply bg-white flex flex-col items-center font-sans justify-between py-5;
-  z-index: 99;
 }
 
 footer a {
