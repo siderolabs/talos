@@ -144,8 +144,6 @@ func genV1Alpha1Config(args []string) {
 	}
 
 	input.AdditionalSubjectAltNames = additionalSANs
-	input.ControlPlaneEndpoint = canonicalControlplaneEndpoint
-
 	input.InstallDisk = installDisk
 	input.InstallImage = installImage
 
@@ -205,7 +203,6 @@ func init() {
 	configGenerateCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
 	configGenerateCmd.Flags().StringVar(&installImage, "install-image", fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag), "the image used to perform an installation")
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
-	configGenerateCmd.Flags().StringVar(&canonicalControlplaneEndpoint, "controlplane-endpoint", "", "the canonical controlplane endpoint (IP or DNS name) and optional port (defaults to 6443)")
 	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	configGenerateCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))

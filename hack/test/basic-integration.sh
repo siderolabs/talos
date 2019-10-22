@@ -71,12 +71,6 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 ## Wait for all nodes ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
 
-# ## Update the Corefile to make CoreDNS work in docker.
-# run "kubectl apply -f /manifests/coredns.yaml"
-
-# # Restart CoreDNS.
-# run "kubectl delete pods -l k8s-app=kube-dns -n kube-system"
-
 ## Verify that we have an HA controlplane
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
      until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 >/dev/null; do
