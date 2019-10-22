@@ -17,6 +17,7 @@ type zombieHunter struct {
 
 	running   bool
 	listeners map[chan<- ProcessInfo]struct{}
+	ready     chan struct{}
 	shutdown  chan struct{}
 }
 
@@ -30,10 +31,13 @@ func (zh *zombieHunter) Run() {
 
 	zh.running = true
 
+	zh.ready = make(chan struct{})
 	zh.shutdown = make(chan struct{})
 	zh.listeners = make(map[chan<- ProcessInfo]struct{})
 
 	go zh.run()
+
+	<-zh.ready
 }
 
 func (zh *zombieHunter) Shutdown() {
@@ -74,6 +78,8 @@ func (zh *zombieHunter) run() {
 
 	signal.Notify(sigCh, syscall.SIGCHLD)
 	defer signal.Stop(sigCh)
+
+	zh.ready <- struct{}{}
 
 	for {
 		// wait for SIGCHLD
