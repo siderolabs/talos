@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 type ServiceRunnerSuite struct {
@@ -42,7 +43,14 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		state := sr.AsProto().State
+		if state != events.StateRunning.String() {
+			return retry.ExpectedError(errors.New("service should be running"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
@@ -79,7 +87,14 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		health := sr.AsProto().Health
+		if health.Unknown || !health.Healthy {
+			return retry.ExpectedError(errors.New("service should be healthy"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
@@ -115,15 +130,36 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		health := sr.AsProto().Health
+		if health.Unknown || !health.Healthy {
+			return retry.ExpectedError(errors.New("service should be healthy"))
+		}
+
+		return nil
+	}))
 
 	m.SetHealthy(false)
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		health := sr.AsProto().Health
+		if health.Unknown || health.Healthy {
+			return retry.ExpectedError(errors.New("service should be not healthy"))
+		}
+
+		return nil
+	}))
 
 	m.SetHealthy(true)
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		health := sr.AsProto().Health
+		if health.Unknown || !health.Healthy {
+			return retry.ExpectedError(errors.New("service should be healthy"))
+		}
+
+		return nil
+	}))
 
 	sr.Shutdown()
 
@@ -162,7 +198,14 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		state := sr.AsProto().State
+		if state != events.StateWaiting.String() {
+			return retry.ExpectedError(errors.New("service should be waiting"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
@@ -172,7 +215,15 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 	close(cond1.done)
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		events := sr.AsProto().Events.Events
+		lastMsg := events[len(events)-1].Msg
+		if lastMsg != "Waiting for cond2" {
+			return retry.ExpectedError(errors.New("service should be waiting on 2nd condition"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
@@ -182,7 +233,14 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 	close(cond2.done)
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		state := sr.AsProto().State
+		if state != events.StateRunning.String() {
+			return retry.ExpectedError(errors.New("service should be running"))
+		}
+
+		return nil
+	}))
 
 	sr.Shutdown()
 
@@ -256,7 +314,14 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		state := sr.AsProto().State
+		if state != events.StateWaiting.String() {
+			return retry.ExpectedError(errors.New("service should be waiting"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
@@ -338,7 +403,14 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		state := sr.AsProto().State
+		if state != events.StateRunning.String() {
+			return retry.ExpectedError(errors.New("service should be running"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
@@ -357,7 +429,14 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 		sr.Start()
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		state := sr.AsProto().State
+		if state != events.StateRunning.String() {
+			return retry.ExpectedError(errors.New("service should be running"))
+		}
+
+		return nil
+	}))
 
 	select {
 	case <-finished:
