@@ -5,6 +5,8 @@
 package platform
 
 import (
+	"log"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer"
@@ -44,7 +46,7 @@ func (task *Platform) runtime(r runtime.Runtime) (err error) {
 
 	addrs, err := r.Platform().ExternalIPs()
 	if err != nil {
-		return err
+		log.Printf("certificates will be created without external IPs: %v\n", err)
 	}
 
 	sans := make([]string, 0, len(addrs))
