@@ -5,7 +5,11 @@
 package config
 
 import (
+	"bytes"
+	"compress/gzip"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -30,6 +34,25 @@ func (task *Task) standard(r runtime.Runtime) (err error) {
 
 	if b, err = r.Platform().Configuration(); err != nil {
 		return err
+	}
+
+	// Detect if config is a gzip archive and unzip it if so
+	contentType := http.DetectContentType(b)
+	if contentType == "application/x-gzip" {
+		gzipReader, err := gzip.NewReader(bytes.NewReader(b))
+		if err != nil {
+			return fmt.Errorf("error creating gzip reader: %w", err)
+		}
+
+		// nolint: errcheck
+		defer gzipReader.Close()
+
+		unzippedData, err := ioutil.ReadAll(gzipReader)
+		if err != nil {
+			return fmt.Errorf("error unzipping machine config: %w", err)
+		}
+
+		b = unzippedData
 	}
 
 	return ioutil.WriteFile(constants.ConfigPath, b, 0600)
