@@ -6,19 +6,18 @@ package containerd_test
 
 import (
 	"context"
-	"fmt"
+	"encoding/hex"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/containerd/containerd"
 	containerdcntrs "github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -47,6 +46,8 @@ type ContainerdSuite struct {
 	containerdRunner    runner.Runner
 	containerdWg        sync.WaitGroup
 	containerdAddress   string
+
+	containerID string
 
 	client *containerd.Client
 	image  containerd.Image
@@ -112,7 +113,9 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
 
-	suite.containerdNamespace = fmt.Sprintf("talostest%d%d", rand.Int63(), time.Now().Unix())
+	namespace := ([16]byte)(uuid.New())
+	suite.containerdNamespace = "talos" + hex.EncodeToString(namespace[:])
+
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
 	suite.image, err = suite.client.Pull(ctx, busyboxImage, containerd.WithPullUnpack)
@@ -130,6 +133,7 @@ func (suite *ContainerdSuite) TearDownSuite() {
 
 func (suite *ContainerdSuite) SetupTest() {
 	suite.containerRunners = nil
+	suite.containerID = uuid.New().String()
 }
 
 func (suite *ContainerdSuite) run(runners ...runner.Runner) {
@@ -176,7 +180,7 @@ func (suite *ContainerdSuite) TearDownTest() {
 
 func (suite *ContainerdSuite) runK8sContainers() {
 	suite.run(containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "test1",
+		ID:          suite.containerID + "1",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -192,7 +196,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 		})),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	), containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "test2",
+		ID:          suite.containerID + "2",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -212,7 +216,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 
 func (suite *ContainerdSuite) TestPodsNonK8s() {
 	suite.run(containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "test",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -227,12 +231,12 @@ func (suite *ContainerdSuite) TestPodsNonK8s() {
 	pods, err := i.Pods()
 	suite.Require().NoError(err)
 	suite.Require().Len(pods, 1)
-	suite.Assert().Equal("test", pods[0].Name)
+	suite.Assert().Equal(suite.containerID, pods[0].Name)
 	suite.Assert().Equal("", pods[0].Sandbox)
 	suite.Require().Len(pods[0].Containers, 1)
-	suite.Assert().Equal("test", pods[0].Containers[0].Display)
-	suite.Assert().Equal("test", pods[0].Containers[0].Name)
-	suite.Assert().Equal("test", pods[0].Containers[0].ID)
+	suite.Assert().Equal(suite.containerID, pods[0].Containers[0].Display)
+	suite.Assert().Equal(suite.containerID, pods[0].Containers[0].Name)
+	suite.Assert().Equal(suite.containerID, pods[0].Containers[0].ID)
 	suite.Assert().Equal(busyboxImage, pods[0].Containers[0].Image)
 	suite.Assert().Equal("RUNNING", pods[0].Containers[0].Status)
 	suite.Assert().NotNil(pods[0].Containers[0].Metrics)
@@ -254,8 +258,8 @@ func (suite *ContainerdSuite) TestPodsK8s() {
 	suite.Require().Len(pods[0].Containers, 2)
 
 	suite.Assert().Equal("ns1/fun", pods[0].Containers[0].Display)
-	suite.Assert().Equal("test1", pods[0].Containers[0].Name)
-	suite.Assert().Equal("test1", pods[0].Containers[0].ID)
+	suite.Assert().Equal(suite.containerID+"1", pods[0].Containers[0].Name)
+	suite.Assert().Equal(suite.containerID+"1", pods[0].Containers[0].ID)
 	suite.Assert().Equal("sandbox", pods[0].Containers[0].Sandbox)
 	suite.Assert().Equal("0", pods[0].Containers[0].RestartCount)
 	suite.Assert().Equal("", pods[0].Containers[0].GetLogFile())
@@ -265,7 +269,7 @@ func (suite *ContainerdSuite) TestPodsK8s() {
 
 	suite.Assert().Equal("ns1/fun:run", pods[0].Containers[1].Display)
 	suite.Assert().Equal("run", pods[0].Containers[1].Name)
-	suite.Assert().Equal("test2", pods[0].Containers[1].ID)
+	suite.Assert().Equal(suite.containerID+"2", pods[0].Containers[1].ID)
 	suite.Assert().Equal("sandbox", pods[0].Containers[1].Sandbox)
 	suite.Assert().Equal("sandbox/run/0.log", pods[0].Containers[1].GetLogFile())
 	suite.Assert().Equal(busyboxImage, pods[0].Containers[1].Image)
@@ -277,7 +281,7 @@ func (suite *ContainerdSuite) TestPodsK8s() {
 
 func (suite *ContainerdSuite) TestContainerNonK8s() {
 	suite.run(containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "shelltest",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -289,12 +293,12 @@ func (suite *ContainerdSuite) TestContainerNonK8s() {
 	i, err := ctrd.NewInspector(context.Background(), suite.containerdNamespace, ctrd.WithContainerdAddress(suite.containerdAddress))
 	suite.Assert().NoError(err)
 
-	cntr, err := i.Container("shelltest")
+	cntr, err := i.Container(suite.containerID)
 	suite.Require().NoError(err)
 	suite.Require().NotNil(cntr)
-	suite.Assert().Equal("shelltest", cntr.Name)
-	suite.Assert().Equal("shelltest", cntr.Display)
-	suite.Assert().Equal("shelltest", cntr.ID)
+	suite.Assert().Equal(suite.containerID, cntr.Name)
+	suite.Assert().Equal(suite.containerID, cntr.Display)
+	suite.Assert().Equal(suite.containerID, cntr.ID)
 	suite.Assert().Equal(busyboxImageDigest, cntr.Image) // image is not resolved
 	suite.Assert().Equal("RUNNING", cntr.Status)
 
@@ -314,9 +318,9 @@ func (suite *ContainerdSuite) TestContainerK8s() {
 	cntr, err := i.Container("ns1/fun")
 	suite.Require().NoError(err)
 	suite.Require().NotNil(cntr)
-	suite.Assert().Equal("test1", cntr.Name)
+	suite.Assert().Equal(suite.containerID+"1", cntr.Name)
 	suite.Assert().Equal("ns1/fun", cntr.Display)
-	suite.Assert().Equal("test1", cntr.ID)
+	suite.Assert().Equal(suite.containerID+"1", cntr.ID)
 	suite.Assert().Equal("sandbox", cntr.Sandbox)
 	suite.Assert().Equal("", cntr.GetLogFile())
 	suite.Assert().Equal(busyboxImageDigest, cntr.Image) // image is not resolved
@@ -327,7 +331,7 @@ func (suite *ContainerdSuite) TestContainerK8s() {
 	suite.Require().NotNil(cntr)
 	suite.Assert().Equal("run", cntr.Name)
 	suite.Assert().Equal("ns1/fun:run", cntr.Display)
-	suite.Assert().Equal("test2", cntr.ID)
+	suite.Assert().Equal(suite.containerID+"2", cntr.ID)
 	suite.Assert().Equal("sandbox", cntr.Sandbox)
 	suite.Assert().Equal("sandbox/run/0.log", cntr.GetLogFile())
 	suite.Assert().Equal(busyboxImageDigest, cntr.Image) // image is not resolved
