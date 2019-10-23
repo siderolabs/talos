@@ -7,10 +7,10 @@ package containerd_test
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -20,6 +20,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/google/uuid"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 
@@ -48,6 +49,8 @@ type ContainerdSuite struct {
 	containerdRunner    runner.Runner
 	containerdWg        sync.WaitGroup
 	containerdAddress   string
+
+	containerID string
 
 	client *containerd.Client
 	image  containerd.Image
@@ -94,12 +97,17 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
 
-	suite.containerdNamespace = fmt.Sprintf("talostest%d%d", rand.Int63(), time.Now().Unix())
+	namespace := ([16]byte)(uuid.New())
+	suite.containerdNamespace = "talos" + hex.EncodeToString(namespace[:])
 
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
 	suite.image, err = suite.client.Pull(ctx, busyboxImage, containerd.WithPullUnpack)
 	suite.Require().NoError(err)
+}
+
+func (suite *ContainerdSuite) SetupTest() {
+	suite.containerID = uuid.New().String()
 }
 
 func (suite *ContainerdSuite) TearDownSuite() {
@@ -126,7 +134,7 @@ func (suite *ContainerdSuite) getLogContents(filename string) []byte {
 
 func (suite *ContainerdSuite) TestRunSuccess() {
 	r := containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "test",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -145,10 +153,8 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 }
 
 func (suite *ContainerdSuite) TestRunTwice() {
-	const ID = "runtwice"
-
 	r := containerdrunner.NewRunner(false, &runner.Args{
-		ID:          ID,
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -167,15 +173,6 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		suite.Assert().NoError(r.Run(MockEventSink))
 		// calling stop when Run has finished is no-op
 		suite.Assert().NoError(r.Stop())
-
-		// TODO: workaround containerd (?) bug: https://github.com/docker/for-linux/issues/643
-		for i := 0; i < 100; i++ {
-			time.Sleep(100 * time.Millisecond)
-
-			if _, err := os.Stat("/containerd-shim/" + suite.containerdNamespace + "/" + ID + "/shim.sock"); err != nil && os.IsNotExist(err) {
-				break
-			}
-		}
 	}
 }
 
@@ -186,7 +183,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 	// able to start the container by cleaning up container created by the first
 	// runner
 	r1 := containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "cleanup1",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 1"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -198,7 +195,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 	suite.Require().NoError(r1.Open(context.Background()))
 
 	r2 := containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "cleanup1",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -217,7 +214,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 
 func (suite *ContainerdSuite) TestRunLogs() {
 	r := containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "logtest",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -232,7 +229,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 
 	suite.Assert().NoError(r.Run(MockEventSink))
 
-	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
+	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
 	suite.Assert().NoError(err)
 
 	// nolint: errcheck
@@ -253,7 +250,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	_ = os.Remove(testFile)
 
 	r := restart.New(containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "endless",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile + " && echo ok || (echo fail; false)"},
 	},
 		runner.WithLogPath(suite.tmpDir),
@@ -283,7 +280,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	for i := 0; i < 10; i++ {
 		time.Sleep(500 * time.Millisecond)
 
-		if bytes.Contains(suite.getLogContents("endless.log"), []byte("fail\n")) {
+		if bytes.Contains(suite.getLogContents(suite.containerID+".log"), []byte("fail\n")) {
 			break
 		}
 	}
@@ -302,7 +299,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	for i := 0; i < 10; i++ {
 		time.Sleep(500 * time.Millisecond)
 
-		if bytes.Contains(suite.getLogContents("endless.log"), []byte("ok\n")) {
+		if bytes.Contains(suite.getLogContents(suite.containerID+".log"), []byte("ok\n")) {
 			break
 		}
 	}
@@ -317,7 +314,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	suite.Assert().NoError(r.Stop())
 	<-done
 
-	logContents := suite.getLogContents("endless.log")
+	logContents := suite.getLogContents(suite.containerID + ".log")
 
 	suite.Assert().Truef(bytes.Contains(logContents, []byte("ok\n")), "logContents doesn't contain success entry: %v", logContents)
 	suite.Assert().Truef(bytes.Contains(logContents, []byte("fail\n")), "logContents doesn't contain fail entry: %v", logContents)
@@ -325,7 +322,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 
 func (suite *ContainerdSuite) TestStopSigKill() {
 	r := containerdrunner.NewRunner(false, &runner.Args{
-		ID:          "nokill",
+		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
 		runner.WithLogPath(suite.tmpDir),
