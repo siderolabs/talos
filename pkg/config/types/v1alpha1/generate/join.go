@@ -17,7 +17,7 @@ func workerUd(in *Input) (string, error) {
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "worker",
 		MachineToken:    in.TrustdInfo.Token,
-		MachineCertSANs: []string{"127.0.0.1", "::1"},
+		MachineCertSANs: []string{},
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  &v1alpha1.NetworkConfig{},
 		MachineInstall: &v1alpha1.InstallConfig{
