@@ -59,11 +59,6 @@ func Execute() {
 
 	defer globalCtxCancel()
 
-	// Update context with grpc metadata for proxy/relay requests
-	md := metadata.New(make(map[string]string))
-	md.Set("targets", target...)
-	globalCtx = metadata.NewOutgoingContext(globalCtx, md)
-
 	// listen for ^C and SIGTERM and abort context
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
@@ -111,6 +106,11 @@ func Execute() {
 
 // setupClient wraps common code to initialize osd client
 func setupClient(action func(*client.Client)) {
+	// Update context with grpc metadata for proxy/relay requests
+	md := metadata.New(make(map[string]string))
+	md.Set("targets", target...)
+	globalCtx = metadata.NewOutgoingContext(globalCtx, md)
+
 	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig)
 	if err != nil {
 		helpers.Fatalf("error getting client credentials: %s", err)

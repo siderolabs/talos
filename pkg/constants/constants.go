@@ -191,14 +191,17 @@ const (
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 
-	// InitSocketPath is the path to file socket of machine API.
-	InitSocketPath = SystemRunPath + "/init/init.sock"
+	// MachineSocketPath is the path to file socket of machine API.
+	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 
 	// NtpdSocketPath is the path to file socket of time API.
 	NtpdSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
 
 	// NetworkdSocketPath is the path to file socket of network API.
 	NetworkdSocketPath = SystemRunPath + "/networkd/networkd.sock"
+
+	// OSSocketPath is the path to file socket of os API.
+	OSSocketPath = SystemRunPath + "/osd/osd.sock"
 
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/talos-systems/talos/api";
+
+import public "os/os.proto";
+import public "machine/machine.proto";
+import public "common/common.proto";
+import public "google/protobuf/empty.proto";
