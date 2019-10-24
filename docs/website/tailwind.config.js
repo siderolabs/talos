@@ -172,7 +172,7 @@ module.exports = {
         },
         ul: {
           listStyleType: 'disc',
-          listStylePosition: 'inside',
+          listStylePosition: 'outside',
           marginBottom: '16px'
         },
         ol: {
@@ -204,6 +204,7 @@ module.exports = {
         0: '0',
         4: '1rem',
         8: '2rem',
+        12: '3rem',
         '4-x': '1rem',
         '4-y': '1rem'
       },
