@@ -54,6 +54,11 @@ func (task *Platform) runtime(r runtime.Runtime) (err error) {
 		sans = append(sans, addr.String())
 	}
 
+	if r.Platform().Mode() == runtime.Container {
+		// TODO: add ::1 back once I figure out why bootkube barfs
+		sans = append(sans, "127.0.0.1")
+	}
+
 	r.Config().Machine().Security().SetCertSANs(sans)
 	r.Config().Cluster().SetCertSANs(sans)
 

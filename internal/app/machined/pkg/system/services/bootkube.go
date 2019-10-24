@@ -129,7 +129,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
-	altNames := altNamesFromURLs([]*url.URL{config.Cluster().Endpoint()})
+	altNames := altNamesFromURLs(config.Cluster().CertSANs())
 
 	block, _ = pem.Decode(config.Cluster().CA().Crt)
 	if block == nil {
@@ -200,21 +200,17 @@ func generateAssets(config runtime.Configurator) (err error) {
 	return ioutil.WriteFile(constants.AdminKubeconfig, input, 0600)
 }
 
-func altNamesFromURLs(urls []*url.URL) *tlsutil.AltNames {
+func altNamesFromURLs(urls []string) *tlsutil.AltNames {
 	var an tlsutil.AltNames
 
 	for _, u := range urls {
-		host, _, err := net.SplitHostPort(u.Host)
-		if err != nil {
-			host = u.Host
+		ip := net.ParseIP(u)
+		if ip != nil {
+			an.IPs = append(an.IPs, ip)
+			continue
 		}
 
-		ip := net.ParseIP(host)
-		if ip == nil {
-			an.DNSNames = append(an.DNSNames, host)
-		} else {
-			an.IPs = append(an.IPs, ip)
-		}
+		an.DNSNames = append(an.DNSNames, u)
 	}
 
 	return &an

@@ -123,7 +123,7 @@ func (i *Input) GetControlPlaneEndpoint() string {
 
 // GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server
 func (i *Input) GetAPIServerSANs() []string {
-	list := []string{"127.0.0.1", "::1"}
+	list := []string{}
 
 	endpointURL, err := url.Parse(i.ControlPlaneEndpoint)
 	if err == nil {
