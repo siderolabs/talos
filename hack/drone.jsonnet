@@ -139,7 +139,8 @@ local ntpd = Step("ntpd", depends_on=[fetchtags]);
 local networkd = Step("networkd", depends_on=[fetchtags]);
 local osctl_linux = Step("osctl-linux", depends_on=[fetchtags]);
 local osctl_darwin = Step("osctl-darwin", depends_on=[fetchtags]);
-local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd]);
+local apid = Step("apid", depends_on=[fetchtags]);
+local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
@@ -189,6 +190,7 @@ local default_steps = [
   fetchtags,
   machined,
   osd,
+  apid,
   trustd,
   ntpd,
   networkd,

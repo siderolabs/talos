@@ -136,7 +136,7 @@ initramfs: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: buildkitd osd trustd ntpd networkd
+rootfs: buildkitd osd trustd ntpd networkd apid
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--opt target=$@ \
@@ -312,6 +312,14 @@ machined: buildkitd images
 
 .PHONY: osd
 osd: buildkitd images
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \
+		--opt target=$@ \
+		$(COMMON_ARGS)
+
+.PHONY: apid
+apid: buildkitd images
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--output type=docker,dest=images/$@.tar,name=docker.io/autonomy/$@:$(TAG) \

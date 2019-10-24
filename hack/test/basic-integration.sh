@@ -88,4 +88,5 @@ run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-ap
 run "osctl config target 10.5.0.2 && osctl -t 10.5.0.2 service etcd | grep Running"
 run "osctl config target 10.5.0.3 && osctl -t 10.5.0.3 service etcd | grep Running"
 run "osctl config target 10.5.0.4 && osctl -t 10.5.0.4 service etcd | grep Running"
-run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers | grep osd"
+run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers"
+run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 services"

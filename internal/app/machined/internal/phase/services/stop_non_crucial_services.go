@@ -32,7 +32,7 @@ func (task *StopNonCrucialServices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 func (task *StopNonCrucialServices) standard(r runtime.Runtime) (err error) {
 	ctx := namespaces.WithNamespace(context.Background(), "k8s.io")
 
-	services := []string{"osd", "udevd", "networkd", "ntpd"}
+	services := []string{"osd", "udevd", "networkd", "ntpd", "apid"}
 	if r.Config().Machine().Type() == machine.Bootstrap || r.Config().Machine().Type() == machine.ControlPlane {
 		services = append(services, "trustd", "proxyd")
 	}

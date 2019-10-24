@@ -40,6 +40,7 @@ func (task *StartServices) loadSystemServices(r runtime.Runtime) {
 	svcs.Load(
 		&services.MachinedAPI{},
 		&services.Containerd{},
+		&services.APID{},
 		&services.OSD{},
 		&services.Networkd{},
 	)

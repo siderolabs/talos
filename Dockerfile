@@ -18,13 +18,13 @@ RUN cd $(mktemp -d) \
     && go get mvdan.cc/gofumpt/gofumports \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
+COPY --from=autonomy/protoc-gen-proxy:ec650af /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
 
 # The build target creates a container that will be used to build Talos source
 # code.
 
 FROM scratch AS build
 COPY --from=tools / /
-COPY --from=autonomy/protoc-gen-proxy:a87401e /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
 SHELL ["/toolchain/bin/bash", "-c"]
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV GO111MODULE on
@@ -35,13 +35,11 @@ WORKDIR /src
 # The generate target generates code from protobuf service definitions.
 
 FROM build AS generate-build
+# Common needs to be at or near the top to satisfy the subsequent imports
 COPY ./api/common/common.proto /api/common/common.proto
 RUN protoc -I/api --go_out=plugins=grpc:/api/common /api/common/common.proto
-#RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:proto api/api.proto
 COPY ./api/os/os.proto /api/os/os.proto
-# TODO: switch up os proxy generation with apid
-#RUN protoc -I/api --go_out=plugins=grpc:/api/os /api/os/os.proto
-RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:/api/os /api/os/os.proto
+RUN protoc -I/api --go_out=plugins=grpc:/api/os /api/os/os.proto
 COPY ./api/security/security.proto /api/security/security.proto
 RUN protoc -I/api --go_out=plugins=grpc:/api/security /api/security/security.proto
 COPY ./api/machine/machine.proto /api/machine/machine.proto
@@ -50,9 +48,13 @@ COPY ./api/time/time.proto /api/time/time.proto
 RUN protoc -I/api --go_out=plugins=grpc:/api/time /api/time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
 RUN protoc -I/api --go_out=plugins=grpc:/api/network /api/network/network.proto
+# Genenrate api bits last so we have other proto files in place to satisfy the import
+COPY ./api/api.proto /api/api.proto
+RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:/api /api/api.proto
 
 FROM scratch AS generate
 COPY --from=generate-build /api/common/github.com/talos-systems/talos/api/common/common.pb.go /api/common/
+COPY --from=generate-build /api/github.com/talos-systems/talos/api/api.pb.go /api/
 COPY --from=generate-build /api/os/github.com/talos-systems/talos/api/os/os.pb.go /api/os/
 COPY --from=generate-build /api/security/github.com/talos-systems/talos/api/security/security.pb.go /api/security/
 COPY --from=generate-build /api/machine/github.com/talos-systems/talos/api/machine/machine.pb.go /api/machine/
@@ -113,6 +115,20 @@ RUN chmod +x /ntpd
 FROM scratch AS ntpd
 COPY --from=ntpd-build /ntpd /ntpd
 ENTRYPOINT ["/ntpd"]
+
+# The apid target builds the api image.
+
+FROM base AS apid-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+WORKDIR /src/internal/app/apid
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /apid
+RUN chmod +x /apid
+
+FROM scratch AS apid
+COPY --from=apid-build /apid /apid
+ENTRYPOINT ["/apid"]
 
 # The osd target builds the osd image.
 
@@ -208,6 +224,7 @@ COPY --from=docker.io/autonomy/util-linux:dad1273 /lib/libuuid.* /rootfs/lib
 COPY --from=docker.io/autonomy/kmod:dad1273 /lib/libkmod.* /rootfs/lib
 COPY --from=docker.io/autonomy/kernel:dad1273 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
+COPY images/apid.tar /rootfs/usr/images/
 COPY images/ntpd.tar /rootfs/usr/images/
 COPY images/osd.tar /rootfs/usr/images/
 COPY images/trustd.tar /rootfs/usr/images/

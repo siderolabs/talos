@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package osapi;
+package os;
 
 option go_package = "github.com/talos-systems/talos/api/os";
 option java_multiple_files = true;
@@ -8,7 +8,7 @@ option java_outer_classname = "OsApi";
 option java_package = "com.os.api";
 
 import "google/protobuf/empty.proto";
-import public "common/common.proto";
+import "common/common.proto";
 
 // The OS service definition.
 //

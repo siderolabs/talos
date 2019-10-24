@@ -48,6 +48,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: apid
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make apid
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: trustd
   pull: always
   image: autonomy/build-container:latest
@@ -159,6 +177,7 @@ steps:
   - trustd
   - ntpd
   - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -465,6 +484,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: apid
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make apid
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: trustd
   pull: always
   image: autonomy/build-container:latest
@@ -576,6 +613,7 @@ steps:
   - trustd
   - ntpd
   - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -1095,6 +1133,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: apid
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make apid
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: trustd
   pull: always
   image: autonomy/build-container:latest
@@ -1206,6 +1262,7 @@ steps:
   - trustd
   - ntpd
   - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -1728,6 +1785,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: apid
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make apid
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: trustd
   pull: always
   image: autonomy/build-container:latest
@@ -1839,6 +1914,7 @@ steps:
   - trustd
   - ntpd
   - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -2361,6 +2437,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: apid
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make apid
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: trustd
   pull: always
   image: autonomy/build-container:latest
@@ -2472,6 +2566,7 @@ steps:
   - trustd
   - ntpd
   - networkd
+  - apid
 
 - name: initramfs
   pull: always

@@ -22,10 +22,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
-	networkapi "github.com/talos-systems/talos/api/network"
 	osapi "github.com/talos-systems/talos/api/os"
-	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
@@ -36,19 +33,11 @@ import (
 
 // Registrator is the concrete type that implements the factory.Registrator and
 // osapi.OSDServer interfaces.
-type Registrator struct {
-	// every Init service API is proxied via OSD
-	*MachineClient
-	*TimeClient
-	*NetworkClient
-}
+type Registrator struct{}
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
 	osapi.RegisterOSServer(s, r)
-	machineapi.RegisterMachineServer(s, r)
-	timeapi.RegisterTimeServer(s, r)
-	networkapi.RegisterNetworkServer(s, r)
 }
 
 // Kubeconfig implements the osapi.OSDServer interface.
@@ -260,11 +249,6 @@ func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err e
 	}
 
 	return nil
-}
-
-// Version implements the osapi.OSDServer interface.
-func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionReply, err error) {
-	return r.MachineClient.Version(ctx, in)
 }
 
 // Processes implements the osapi.OSDServer interface

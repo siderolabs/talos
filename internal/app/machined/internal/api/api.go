@@ -27,7 +27,7 @@ func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWrit
 	api := reg.NewRegistrator(config)
 	server := factory.NewServer(api)
 
-	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.InitSocketPath))
+	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))
 	if err != nil {
 		return err
 	}
