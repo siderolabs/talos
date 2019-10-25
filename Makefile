@@ -272,7 +272,7 @@ container: buildkitd
 	@docker load < build/$@.tar
 
 .PHONY: basic-integration
-basic-integration:
+basic-integration: integration-test
 	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: capi
@@ -298,6 +298,14 @@ unit-tests-race: buildkitd
 		build \
 		--opt target=$@ \
 		--opt build-arg:TESTPKGS=$(TESTPKGS) \
+		$(COMMON_ARGS)
+
+.PHONY: integration-test
+integration-test: buildkitd
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--output type=local,dest=bin \
+		--opt target=$@ \
 		$(COMMON_ARGS)
 
 .PHONY: fmt
