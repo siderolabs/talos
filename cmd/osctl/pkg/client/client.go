@@ -327,20 +327,10 @@ func (c *Client) ServiceRestart(ctx context.Context, id string) (*machineapi.Ser
 
 // Time returns the time
 func (c *Client) Time(ctx context.Context) (*timeapi.TimeReply, error) {
-	r, err := c.TimeClient.Time(ctx, &empty.Empty{})
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
+	return c.TimeClient.Time(ctx, &empty.Empty{})
 }
 
 // TimeCheck returns the time compared to the specified ntp server
 func (c *Client) TimeCheck(ctx context.Context, server string) (*timeapi.TimeReply, error) {
-	r, err := c.TimeClient.TimeCheck(ctx, &timeapi.TimeRequest{Server: server})
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
+	return c.TimeClient.TimeCheck(ctx, &timeapi.TimeRequest{Server: server})
 }

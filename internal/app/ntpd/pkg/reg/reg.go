@@ -77,9 +77,13 @@ func genProtobufTimeReply(local, remote time.Time, server string) (*timeapi.Time
 	}
 
 	reply = &timeapi.TimeReply{
-		Server:     server,
-		Localtime:  localpbts,
-		Remotetime: remotepbts,
+		Response: []*timeapi.TimeResponse{
+			{
+				Server:     server,
+				Localtime:  localpbts,
+				Remotetime: remotepbts,
+			},
+		},
 	}
 
 	return reply, nil

@@ -68,13 +68,13 @@ func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.NtpdSocketPath), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.TimeSocketPath), os.ModeDir); err != nil {
 		return nil, err
 	}
 
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: filepath.Dir(constants.NtpdSocketPath), Source: filepath.Dir(constants.NtpdSocketPath), Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(constants.TimeSocketPath), Source: filepath.Dir(constants.TimeSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}

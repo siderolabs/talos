@@ -194,8 +194,8 @@ const (
 	// MachineSocketPath is the path to file socket of machine API.
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 
-	// NtpdSocketPath is the path to file socket of time API.
-	NtpdSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
+	// TimeSocketPath is the path to file socket of time API.
+	TimeSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
 
 	// NetworkdSocketPath is the path to file socket of network API.
 	NetworkdSocketPath = SystemRunPath + "/networkd/networkd.sock"
