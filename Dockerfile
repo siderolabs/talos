@@ -199,30 +199,30 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:dad1273 /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:dad1273 /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:13f49f2 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:13f49f2 /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/containerd:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/cni:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/eudev:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/iptables:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/libressl:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/musl:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/runc:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/socat:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/syslinux:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:dad1273 / /rootfs
-COPY --from=docker.io/autonomy/util-linux:dad1273 /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:dad1273 /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:dad1273 /lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:dad1273 /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/containerd:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/cni:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/eudev:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/iptables:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/libressl:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/musl:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/runc:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/socat:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/syslinux:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:13f49f2 / /rootfs
+COPY --from=docker.io/autonomy/util-linux:13f49f2 /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:13f49f2 /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:13f49f2 /lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:13f49f2 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY images/apid.tar /rootfs/usr/images/
 COPY images/ntpd.tar /rootfs/usr/images/
