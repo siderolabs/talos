@@ -1,3 +1,16 @@
+# [v0.3.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.2...v0.3.0-alpha.3) (2019-10-25)
+
+### Bug Fixes
+
+- append localhost to cert sans if docker platform ([b615418](https://github.com/talos-systems/talos/commit/b615418e110411c6d82b4cfde3da5601bcd3ab0e))
+- create external IP failures as non-fatal ([bccaa36](https://github.com/talos-systems/talos/commit/bccaa36b4419cf4f02bfff9db14c73d28da2264e))
+- ensure control plane endpoint is set ([638d36b](https://github.com/talos-systems/talos/commit/638d36bce7abbf23a873ac80322ef11ec7f61930))
+
+### Features
+
+- Add node metadata wrapper to machine api ([251ab16](https://github.com/talos-systems/talos/commit/251ab16e075050d6d42253963f27a787eaed4c3e))
+- detect gzipped machine configs ([d8db2bc](https://github.com/talos-systems/talos/commit/d8db2bc65bab8705889d88b7fbc8fb729d5ffb75))
+
 # [v0.3.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.1...v0.3.0-alpha.2) (2019-10-21)
 
 ### Bug Fixes
