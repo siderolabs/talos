@@ -36,15 +36,13 @@ func NewVersion() *machineapi.VersionReply {
 	return &machineapi.VersionReply{
 		Response: []*machineapi.VersionResponse{
 			{
-				Version: []*machineapi.VersionInfo{
-					{
-						Tag:       Tag,
-						Sha:       SHA,
-						Built:     Built,
-						GoVersion: runtime.Version(),
-						Os:        runtime.GOOS,
-						Arch:      runtime.GOARCH,
-					},
+				Version: &machineapi.VersionInfo{
+					Tag:       Tag,
+					Sha:       SHA,
+					Built:     Built,
+					GoVersion: runtime.Version(),
+					Os:        runtime.GOOS,
+					Arch:      runtime.GOARCH,
 				},
 			},
 		},
@@ -54,15 +52,15 @@ func NewVersion() *machineapi.VersionReply {
 // PrintLongVersion prints verbose version information.
 func PrintLongVersion() {
 	v := NewVersion()
-	printLong(v)
+	printLong(v.Response[0].Version)
 }
 
 // PrintLongVersionFromExisting prints verbose version information.
-func PrintLongVersionFromExisting(v *machineapi.VersionReply) {
+func PrintLongVersionFromExisting(v *machineapi.VersionInfo) {
 	printLong(v)
 }
 
-func printLong(v *machineapi.VersionReply) {
+func printLong(v *machineapi.VersionInfo) {
 	var wr bytes.Buffer
 
 	tmpl, err := template.New("version").Parse(versionTemplate)
