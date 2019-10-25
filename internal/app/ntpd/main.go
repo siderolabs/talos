@@ -78,7 +78,7 @@ func main() {
 		errch <- factory.ListenAndServe(
 			reg.NewRegistrator(n),
 			factory.Network("unix"),
-			factory.SocketPath(constants.NtpdSocketPath),
+			factory.SocketPath(constants.TimeSocketPath),
 		)
 	}()
 

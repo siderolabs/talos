@@ -55,9 +55,9 @@ func (suite *NtpdSuite) TestTime() {
 	suite.Assert().NoError(err)
 
 	nClient := timeapi.NewTimeClient(conn)
-	resp, err := nClient.Time(context.Background(), &empty.Empty{})
+	reply, err := nClient.Time(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
-	suite.Assert().Equal(resp.Server, testServer)
+	suite.Assert().Equal(reply.Response[0].Server, testServer)
 }
 
 func (suite *NtpdSuite) TestTimeCheck() {
@@ -86,9 +86,9 @@ func (suite *NtpdSuite) TestTimeCheck() {
 	suite.Assert().NoError(err)
 
 	nClient := timeapi.NewTimeClient(conn)
-	resp, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
+	reply, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
 	suite.Assert().NoError(err)
-	suite.Assert().Equal(resp.Server, testServer)
+	suite.Assert().Equal(reply.Response[0].Server, testServer)
 }
 
 func fakeNtpdRPC() (net.Listener, error) {

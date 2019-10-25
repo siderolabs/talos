@@ -30,32 +30,41 @@ var timeCmd = &cobra.Command{
 				helpers.Fatalf("failed to parse check flag: %w", err)
 			}
 
-			var output *timeapi.TimeReply
+			var reply *timeapi.TimeReply
 			if server == "" {
-				output, err = c.Time(globalCtx)
+				reply, err = c.Time(globalCtx)
 				if err != nil {
 					helpers.Fatalf("error fetching time: %s", err)
 				}
 			} else {
-				output, err = c.TimeCheck(globalCtx, server)
+				reply, err = c.TimeCheck(globalCtx, server)
 				if err != nil {
 					helpers.Fatalf("error fetching time: %s", err)
 				}
 			}
 
-			var localtime, remotetime time.Time
-			localtime, err = ptypes.Timestamp(output.Localtime)
-			if err != nil {
-				helpers.Fatalf("error parsing local time: %s", err)
-			}
-			remotetime, err = ptypes.Timestamp(output.Remotetime)
-			if err != nil {
-				helpers.Fatalf("error parsing remote time: %s", err)
-			}
-
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NTP-SERVER\tLOCAL-TIME\tREMOTE-TIME")
-			fmt.Fprintf(w, "%s\t%s\t%s\n", output.Server, localtime.String(), remotetime.String())
+			fmt.Fprintln(w, "NODE\tNTP-SERVER\tLOCAL-TIME\tREMOTE-TIME")
+
+			var localtime, remotetime time.Time
+			for _, resp := range reply.Response {
+				node := ""
+
+				if resp.Metadata != nil {
+					node = resp.Metadata.Hostname
+				}
+
+				localtime, err = ptypes.Timestamp(resp.Localtime)
+				if err != nil {
+					helpers.Fatalf("error parsing local time: %s", err)
+				}
+				remotetime, err = ptypes.Timestamp(resp.Remotetime)
+				if err != nil {
+					helpers.Fatalf("error parsing remote time: %s", err)
+				}
+
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", node, resp.Server, localtime.String(), remotetime.String())
+			}
 			helpers.Should(w.Flush())
 		})
 	},
