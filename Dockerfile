@@ -336,6 +336,20 @@ ENV GO111MODULE on
 ARG TESTPKGS
 RUN --mount=type=cache,target=/root/.cache/go-build go test -v -count 1 -race ${TESTPKGS}
 
+# The integration-test target builds integration test binary.
+
+FROM base AS integration-test-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" \
+    -tags integration,integration_api \
+    ./internal/integration
+
+FROM scratch AS integration-test
+COPY --from=integration-test-build /src/integration.test /integration-test
+
 # The lint target performs linting on the source code.
 
 FROM base AS lint

@@ -10,6 +10,7 @@ export TALOSCONFIG="${TMP}/talosconfig"
 export KUBECONFIG="${TMP}/kubeconfig"
 export TIMEOUT=300
 export OSCTL="${PWD}/build/osctl-linux-amd64"
+export INTEGRATIONTEST="${PWD}/bin/integration-test"
 
 case $(uname -s) in
   Linux*)
@@ -34,6 +35,7 @@ run() {
          --entrypoint=bash \
          --mount type=bind,source=${TMP},target=${TMP} \
          -v ${OSCTL}:/bin/osctl:ro \
+         -v ${INTEGRATIONTEST}:/bin/integration-test:ro \
          -e KUBECONFIG=${KUBECONFIG} \
          -e TALOSCONFIG=${TALOSCONFIG} \
          k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
@@ -89,3 +91,5 @@ run "osctl config target 10.5.0.3 && osctl -t 10.5.0.3 service etcd | grep Runni
 run "osctl config target 10.5.0.4 && osctl -t 10.5.0.4 service etcd | grep Running"
 run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers"
 run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 services"
+
+run "integration-test -test.v -talos.target 10.5.0.2"
