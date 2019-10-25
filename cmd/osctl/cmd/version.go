@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -27,17 +28,29 @@ var versionCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		fmt.Println("Client:")
 		if shortVersion {
 			version.PrintShortVersion()
 		} else {
 			version.PrintLongVersion()
 		}
+
+		fmt.Println("Server:")
 		setupClient(func(c *client.Client) {
-			v, err := c.Version(globalCtx)
+			reply, err := c.Version(globalCtx)
 			if err != nil {
 				helpers.Fatalf("error getting version: %s", err)
 			}
-			version.PrintLongVersionFromExisting(v)
+			for _, resp := range reply.Response {
+				node := ""
+
+				if resp.Metadata != nil {
+					node = resp.Metadata.Hostname
+				}
+
+				fmt.Printf("\t%s:        %s\n", "NODE", node)
+				version.PrintLongVersionFromExisting(resp.Version)
+			}
 		})
 	},
 }

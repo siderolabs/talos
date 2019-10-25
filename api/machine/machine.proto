@@ -230,7 +230,7 @@ message MountStat {
 
 message VersionResponse {
   common.NodeMetadata metadata = 1;
-  repeated VersionInfo version = 2;
+  VersionInfo version = 2;
 }
 
 message VersionReply {
