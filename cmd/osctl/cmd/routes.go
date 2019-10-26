@@ -41,10 +41,18 @@ var routesCmd = &cobra.Command{
 
 func routesRender(reply *networkapi.RoutesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "INTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
+	fmt.Fprintln(w, "NODE\tINTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
 
-	for _, r := range reply.Routes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\n", r.Interface, r.Destination, r.Gateway, r.Metric)
+	for _, resp := range reply.Response {
+		var node string
+
+		if resp.Metadata != nil {
+			node = resp.Metadata.Hostname
+		}
+
+		for _, route := range resp.Routes {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", node, route.Interface, route.Destination, route.Gateway, route.Metric)
+		}
 	}
 
 	helpers.Should(w.Flush())

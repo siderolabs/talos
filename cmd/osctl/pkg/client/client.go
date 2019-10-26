@@ -220,15 +220,13 @@ func (c *Client) Version(ctx context.Context) (*machineapi.VersionReply, error) 
 }
 
 // Routes implements the networkdproto.NetworkClient interface.
-func (c *Client) Routes(ctx context.Context) (reply *networkapi.RoutesReply, err error) {
-	reply, err = c.NetworkClient.Routes(ctx, &empty.Empty{})
-	return
+func (c *Client) Routes(ctx context.Context) (*networkapi.RoutesReply, error) {
+	return c.NetworkClient.Routes(ctx, &empty.Empty{})
 }
 
 // Interfaces implements the proto.OSClient interface.
-func (c *Client) Interfaces(ctx context.Context) (reply *networkapi.InterfacesReply, err error) {
-	reply, err = c.NetworkClient.Interfaces(ctx, &empty.Empty{})
-	return
+func (c *Client) Interfaces(ctx context.Context) (*networkapi.InterfacesReply, error) {
+	return c.NetworkClient.Interfaces(ctx, &empty.Empty{})
 }
 
 // Processes implements the proto.OSClient interface.

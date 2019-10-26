@@ -76,6 +76,11 @@ func main() {
 		log.Fatalf("time client: %v", err)
 	}
 
+	networkClient, err := api.NewLocalNetworkClient()
+	if err != nil {
+		log.Fatalf("time client: %v", err)
+	}
+
 	protoProxy := api.NewApiProxy(provider)
 
 	err = factory.ListenAndServe(
@@ -83,6 +88,7 @@ func main() {
 			MachineClient: machineClient,
 			OSClient:      osClient,
 			TimeClient:    timeClient,
+			NetworkClient: networkClient,
 		},
 		factory.Port(constants.OsdPort),
 		factory.ServerOptions(

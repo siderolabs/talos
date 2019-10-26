@@ -19,6 +19,7 @@ import (
 
 	common "github.com/talos-systems/talos/api/common"
 	machine "github.com/talos-systems/talos/api/machine"
+	network "github.com/talos-systems/talos/api/network"
 	os "github.com/talos-systems/talos/api/os"
 	time "github.com/talos-systems/talos/api/time"
 	constants "github.com/talos-systems/talos/pkg/constants"
@@ -225,6 +226,72 @@ type TimeReply = time.TimeReply
 // TimeResponse from public import time/time.proto
 type TimeResponse = time.TimeResponse
 
+// RoutesReply from public import network/network.proto
+type RoutesReply = network.RoutesReply
+
+// RoutesResponse from public import network/network.proto
+type RoutesResponse = network.RoutesResponse
+
+// Route from public import network/network.proto
+type Route = network.Route
+
+// InterfacesReply from public import network/network.proto
+type InterfacesReply = network.InterfacesReply
+
+// InterfacesResponse from public import network/network.proto
+type InterfacesResponse = network.InterfacesResponse
+
+// Interface from public import network/network.proto
+type Interface = network.Interface
+
+// AddressFamily from public import network/network.proto
+type AddressFamily = network.AddressFamily
+
+var AddressFamily_name = network.AddressFamily_name
+var AddressFamily_value = network.AddressFamily_value
+
+const AddressFamily_AF_UNSPEC = AddressFamily(network.AddressFamily_AF_UNSPEC)
+const AddressFamily_AF_INET = AddressFamily(network.AddressFamily_AF_INET)
+const AddressFamily_IPV4 = AddressFamily(network.AddressFamily_IPV4)
+const AddressFamily_AF_INET6 = AddressFamily(network.AddressFamily_AF_INET6)
+const AddressFamily_IPV6 = AddressFamily(network.AddressFamily_IPV6)
+
+// RouteProtocol from public import network/network.proto
+type RouteProtocol = network.RouteProtocol
+
+var RouteProtocol_name = network.RouteProtocol_name
+var RouteProtocol_value = network.RouteProtocol_value
+
+const RouteProtocol_RTPROT_UNSPEC = RouteProtocol(network.RouteProtocol_RTPROT_UNSPEC)
+const RouteProtocol_RTPROT_REDIRECT = RouteProtocol(network.RouteProtocol_RTPROT_REDIRECT)
+const RouteProtocol_RTPROT_KERNEL = RouteProtocol(network.RouteProtocol_RTPROT_KERNEL)
+const RouteProtocol_RTPROT_BOOT = RouteProtocol(network.RouteProtocol_RTPROT_BOOT)
+const RouteProtocol_RTPROT_STATIC = RouteProtocol(network.RouteProtocol_RTPROT_STATIC)
+const RouteProtocol_RTPROT_GATED = RouteProtocol(network.RouteProtocol_RTPROT_GATED)
+const RouteProtocol_RTPROT_RA = RouteProtocol(network.RouteProtocol_RTPROT_RA)
+const RouteProtocol_RTPROT_MRT = RouteProtocol(network.RouteProtocol_RTPROT_MRT)
+const RouteProtocol_RTPROT_ZEBRA = RouteProtocol(network.RouteProtocol_RTPROT_ZEBRA)
+const RouteProtocol_RTPROT_BIRD = RouteProtocol(network.RouteProtocol_RTPROT_BIRD)
+const RouteProtocol_RTPROT_DNROUTED = RouteProtocol(network.RouteProtocol_RTPROT_DNROUTED)
+const RouteProtocol_RTPROT_XORP = RouteProtocol(network.RouteProtocol_RTPROT_XORP)
+const RouteProtocol_RTPROT_NTK = RouteProtocol(network.RouteProtocol_RTPROT_NTK)
+const RouteProtocol_RTPROT_DHCP = RouteProtocol(network.RouteProtocol_RTPROT_DHCP)
+const RouteProtocol_RTPROT_MROUTED = RouteProtocol(network.RouteProtocol_RTPROT_MROUTED)
+const RouteProtocol_RTPROT_BABEL = RouteProtocol(network.RouteProtocol_RTPROT_BABEL)
+
+// InterfaceFlags from public import network/network.proto
+type InterfaceFlags = network.InterfaceFlags
+
+var InterfaceFlags_name = network.InterfaceFlags_name
+var InterfaceFlags_value = network.InterfaceFlags_value
+
+const InterfaceFlags_FLAG_UNKNOWN = InterfaceFlags(network.InterfaceFlags_FLAG_UNKNOWN)
+const InterfaceFlags_FLAG_UP = InterfaceFlags(network.InterfaceFlags_FLAG_UP)
+const InterfaceFlags_FLAG_BROADCAST = InterfaceFlags(network.InterfaceFlags_FLAG_BROADCAST)
+const InterfaceFlags_FLAG_LOOPBACK = InterfaceFlags(network.InterfaceFlags_FLAG_LOOPBACK)
+const InterfaceFlags_FLAG_POINT_TO_POINT = InterfaceFlags(network.InterfaceFlags_FLAG_POINT_TO_POINT)
+const InterfaceFlags_FLAG_MULTICAST = InterfaceFlags(network.InterfaceFlags_FLAG_MULTICAST)
+
 // NodeMetadata from public import common/common.proto
 type NodeMetadata = common.NodeMetadata
 
@@ -234,17 +301,17 @@ type Empty = empty.Empty
 func init() { proto.RegisterFile("api.proto", fileDescriptor_00212fb1f9d3bf1c) }
 
 var fileDescriptor_00212fb1f9d3bf1c = []byte{
-	// 151 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x2c, 0xcb, 0x31, 0xce, 0xc2, 0x30,
-	0x0c, 0x05, 0xe0, 0xff, 0xa7, 0x08, 0x09, 0x18, 0x90, 0x40, 0x2c, 0x65, 0x43, 0xac, 0xd4, 0x03,
-	0x37, 0xe0, 0x04, 0x99, 0xd9, 0x92, 0x28, 0xa4, 0x96, 0xea, 0xda, 0xc2, 0xee, 0xd0, 0xdb, 0x23,
-	0x9a, 0x2c, 0x7e, 0x7a, 0x9f, 0xf5, 0x76, 0x5b, 0x2f, 0xd8, 0xc9, 0x87, 0x8d, 0x8f, 0x8d, 0x17,
-	0x6c, 0xf7, 0xac, 0xc0, 0x5a, 0xa4, 0x3d, 0x93, 0x8f, 0x3d, 0x8e, 0x09, 0x6a, 0x56, 0x3e, 0x18,
-	0x52, 0x82, 0xdf, 0xa9, 0x70, 0x8a, 0x4c, 0xc4, 0x23, 0x94, 0xa8, 0x78, 0xc9, 0xcc, 0x79, 0x48,
-	0xb0, 0xb4, 0x30, 0xbd, 0x21, 0x91, 0xd8, 0x5c, 0x9e, 0xcf, 0xdb, 0xeb, 0x9a, 0xd1, 0xfa, 0x29,
-	0x74, 0x91, 0x09, 0xcc, 0x0f, 0xac, 0x77, 0x9d, 0xd5, 0x12, 0x69, 0x69, 0xe0, 0x05, 0xdd, 0x9f,
-	0xfb, 0x77, 0x2b, 0xd7, 0xb8, 0x75, 0xd8, 0x2c, 0xb3, 0xc7, 0x37, 0x00, 0x00, 0xff, 0xff, 0xf0,
-	0x38, 0xc4, 0xa9, 0xaf, 0x00, 0x00, 0x00,
+	// 160 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x34, 0x8b, 0xb1, 0x0e, 0x82, 0x40,
+	0x0c, 0x40, 0x55, 0xd4, 0x44, 0x1d, 0x4c, 0x34, 0x2e, 0xb8, 0x19, 0x57, 0xe9, 0xe0, 0x1f, 0xf8,
+	0x05, 0x37, 0xbb, 0x1d, 0xa4, 0x42, 0x23, 0xa5, 0x17, 0x5a, 0x62, 0xf8, 0x7b, 0x23, 0x77, 0x2e,
+	0x7d, 0x79, 0xaf, 0xed, 0x76, 0xe3, 0x03, 0x15, 0xa1, 0x17, 0x93, 0x43, 0xe6, 0x03, 0xe5, 0x3b,
+	0x51, 0x10, 0x8d, 0x25, 0x3f, 0xb1, 0xaf, 0x1a, 0xea, 0x10, 0x12, 0x53, 0xde, 0x1b, 0x31, 0xc2,
+	0x6f, 0xfc, 0xef, 0x3a, 0xb4, 0x8f, 0xf4, 0x6f, 0x48, 0x4c, 0xf9, 0x58, 0x09, 0xb3, 0x74, 0x10,
+	0x91, 0xe2, 0xb9, 0x16, 0xa9, 0x5b, 0x84, 0xc9, 0xca, 0xe1, 0x05, 0xc8, 0xc1, 0xc6, 0xb8, 0x7c,
+	0x5c, 0x9f, 0x97, 0x9a, 0xac, 0x19, 0xca, 0xa2, 0x12, 0x06, 0xf3, 0xad, 0xe8, 0x4d, 0x47, 0x35,
+	0x64, 0x8d, 0x06, 0x3e, 0x90, 0x9b, 0xb9, 0xb9, 0x5b, 0xb8, 0xcc, 0x2d, 0xdd, 0xaa, 0x5c, 0x4f,
+	0x8f, 0xf7, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x05, 0x8c, 0xe2, 0xe0, 0xc8, 0x00, 0x00, 0x00,
 }
 
 type ApiProxy struct {
@@ -512,6 +579,30 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 		msgs, err = proxyTimeRunner(clients, in, proxyTimeCheck)
 		for _, msg := range msgs {
 			resp.Response = append(resp.Response, msg.(*time.TimeReply).Response[0])
+		}
+		response = resp
+	case "/network.Network/Routes":
+		// Initialize target clients
+		clients, err := createNetworkClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		resp := &network.RoutesReply{}
+		msgs, err = proxyNetworkRunner(clients, in, proxyRoutes)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*network.RoutesReply).Response[0])
+		}
+		response = resp
+	case "/network.Network/Interfaces":
+		// Initialize target clients
+		clients, err := createNetworkClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		resp := &network.InterfacesReply{}
+		msgs, err = proxyNetworkRunner(clients, in, proxyInterfaces)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*network.InterfacesReply).Response[0])
 		}
 		response = resp
 
@@ -843,6 +934,62 @@ func proxyTimeCheck(client *proxyTimeClient, in interface{}, wg *sync.WaitGroup,
 	respCh <- resp
 }
 
+type runnerNetworkFn func(*proxyNetworkClient, interface{}, *sync.WaitGroup, chan proto.Message, chan error)
+
+func proxyNetworkRunner(clients []*proxyNetworkClient, in interface{}, runner runnerNetworkFn) ([]proto.Message, error) {
+	var (
+		errors *go_multierror.Error
+		wg     sync.WaitGroup
+	)
+	respCh := make(chan proto.Message, len(clients))
+	errCh := make(chan error, len(clients))
+	wg.Add(len(clients))
+	for _, client := range clients {
+		go runner(client, in, &wg, respCh, errCh)
+	}
+	wg.Wait()
+	close(respCh)
+	close(errCh)
+
+	var response []proto.Message
+	for resp := range respCh {
+		response = append(response, resp)
+	}
+	for err := range errCh {
+		errors = go_multierror.Append(errors, err)
+	}
+	return response, errors.ErrorOrNil()
+}
+
+type proxyNetworkClient struct {
+	Conn     network.NetworkClient
+	Context  context.Context
+	Target   string
+	DialOpts []grpc.DialOption
+}
+
+func proxyRoutes(client *proxyNetworkClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Routes(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyInterfaces(client *proxyNetworkClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Interfaces(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
 func createOSClient(targets []string, creds credentials.TransportCredentials, proxyMd metadata.MD) ([]*proxyOSClient, error) {
 	var errors *go_multierror.Error
 	clients := make([]*proxyOSClient, 0, len(targets))
@@ -915,16 +1062,42 @@ func createTimeClient(targets []string, creds credentials.TransportCredentials, 
 	return clients, errors.ErrorOrNil()
 }
 
+func createNetworkClient(targets []string, creds credentials.TransportCredentials, proxyMd metadata.MD) ([]*proxyNetworkClient, error) {
+	var errors *go_multierror.Error
+	clients := make([]*proxyNetworkClient, 0, len(targets))
+	for _, target := range targets {
+		c := &proxyNetworkClient{
+			// TODO change the context to be more useful ( ex cancelable )
+			Context: metadata.NewOutgoingContext(context.Background(), proxyMd),
+			Target:  target,
+		}
+		// TODO: i think we potentially leak a client here,
+		// we should close the request // cancel the context if it errors
+		// Explicitly set OSD port
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", target, 50000), grpc.WithTransportCredentials(creds))
+		if err != nil {
+			// TODO: probably worth wrapping err to add some context about the target
+			errors = go_multierror.Append(errors, err)
+			continue
+		}
+		c.Conn = network.NewNetworkClient(conn)
+		clients = append(clients, c)
+	}
+	return clients, errors.ErrorOrNil()
+}
+
 type Registrator struct {
 	os.OSClient
 	machine.MachineClient
 	time.TimeClient
+	network.NetworkClient
 }
 
 func (r *Registrator) Register(s *grpc.Server) {
 	os.RegisterOSServer(s, r)
 	machine.RegisterMachineServer(s, r)
 	time.RegisterTimeServer(s, r)
+	network.RegisterNetworkServer(s, r)
 }
 
 func (r *Registrator) Containers(ctx context.Context, in *os.ContainersRequest) (*os.ContainersReply, error) {
@@ -1032,6 +1205,14 @@ func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (*time.TimeRepl
 
 func (r *Registrator) TimeCheck(ctx context.Context, in *time.TimeRequest) (*time.TimeReply, error) {
 	return r.TimeClient.TimeCheck(ctx, in)
+}
+
+func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (*network.RoutesReply, error) {
+	return r.NetworkClient.Routes(ctx, in)
+}
+
+func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (*network.InterfacesReply, error) {
+	return r.NetworkClient.Interfaces(ctx, in)
 }
 
 type LocalOSClient struct {
@@ -1172,4 +1353,28 @@ func (c *LocalTimeClient) Time(ctx context.Context, in *empty.Empty, opts ...grp
 
 func (c *LocalTimeClient) TimeCheck(ctx context.Context, in *time.TimeRequest, opts ...grpc.CallOption) (*time.TimeReply, error) {
 	return c.TimeClient.TimeCheck(ctx, in, opts...)
+}
+
+type LocalNetworkClient struct {
+	network.NetworkClient
+}
+
+func NewLocalNetworkClient() (network.NetworkClient, error) {
+	conn, err := grpc.Dial("unix:"+constants.NetworkSocketPath,
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &LocalNetworkClient{
+		NetworkClient: network.NewNetworkClient(conn),
+	}, nil
+}
+
+func (c *LocalNetworkClient) Routes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*network.RoutesReply, error) {
+	return c.NetworkClient.Routes(ctx, in, opts...)
+}
+
+func (c *LocalNetworkClient) Interfaces(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*network.InterfacesReply, error) {
+	return c.NetworkClient.Interfaces(ctx, in, opts...)
 }
