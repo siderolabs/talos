@@ -95,7 +95,7 @@ func main() {
 	log.Fatalf("%+v", factory.ListenAndServe(
 		reg.NewRegistrator(nwd),
 		factory.Network("unix"),
-		factory.SocketPath(constants.NetworkdSocketPath),
+		factory.SocketPath(constants.NetworkSocketPath),
 	),
 	)
 }

@@ -59,7 +59,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 		routes = append(routes, &networkapi.Route{
 			Interface:   ifaceData.Name,
 			Destination: toCIDR(rMesg.Family, rMesg.Attributes.Dst, int(rMesg.DstLength)),
-			Gateway:     rMesg.Attributes.Gateway.String(),
+			Gateway:     toCIDR(rMesg.Family, rMesg.Attributes.Gateway, 32),
 			Metric:      rMesg.Attributes.Priority,
 			Scope:       uint32(rMesg.Scope),
 			Source:      toCIDR(rMesg.Family, rMesg.Attributes.Src, int(rMesg.SrcLength)),
@@ -70,7 +70,11 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 	}
 
 	return &networkapi.RoutesReply{
-		Routes: routes,
+		Response: []*networkapi.RoutesResponse{
+			{
+				Routes: routes,
+			},
+		},
 	}, nil
 }
 
@@ -88,7 +92,7 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *n
 		return reply, err
 	}
 
-	reply = &networkapi.InterfacesReply{}
+	resp := &networkapi.InterfacesResponse{}
 
 	for _, iface := range ifaces {
 		addrs = []string{}
@@ -114,10 +118,14 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *n
 			Ipaddress:    addrs,
 		}
 
-		reply.Interfaces = append(reply.Interfaces, ifmsg)
+		resp.Interfaces = append(resp.Interfaces, ifmsg)
 	}
 
-	return reply, nil
+	return &networkapi.InterfacesReply{
+		Response: []*networkapi.InterfacesResponse{
+			resp,
+		},
+	}, nil
 }
 
 func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
@@ -125,6 +133,16 @@ func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
 
 	if family == unix.AF_INET6 {
 		netLen = 128
+	}
+
+	// Set a friendly readable value instead of "<nil>"
+	if prefix == nil {
+		switch family {
+		case unix.AF_INET6:
+			prefix = net.ParseIP("::")
+		case unix.AF_INET:
+			prefix = net.ParseIP("0.0.0.0")
+		}
 	}
 
 	ipNet := &net.IPNet{

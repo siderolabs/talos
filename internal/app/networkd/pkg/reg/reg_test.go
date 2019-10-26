@@ -50,7 +50,7 @@ func (suite *NetworkdSuite) TestRoutes() {
 	nClient := networkapi.NewNetworkClient(conn)
 	resp, err := nClient.Routes(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
-	suite.Assert().Greater(len(resp.Routes), 0)
+	suite.Assert().Greater(len(resp.Response[0].Routes), 0)
 }
 
 // nolint: dupl
@@ -71,7 +71,7 @@ func (suite *NetworkdSuite) TestInterfaces() {
 	nClient := networkapi.NewNetworkClient(conn)
 	resp, err := nClient.Interfaces(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
-	suite.Assert().Greater(len(resp.Interfaces), 0)
+	suite.Assert().Greater(len(resp.Response[0].Interfaces), 0)
 }
 
 func (suite *NetworkdSuite) fakeNetworkdRPC() (*grpc.Server, net.Listener) {
@@ -97,4 +97,6 @@ func (suite *NetworkdSuite) fakeNetworkdRPC() (*grpc.Server, net.Listener) {
 func (suite *NetworkdSuite) TestToCIDR() {
 	suite.Assert().Equal(toCIDR(unix.AF_INET, net.ParseIP("192.168.254.0"), 24), "192.168.254.0/24")
 	suite.Assert().Equal(toCIDR(unix.AF_INET6, net.ParseIP("2001:db8::"), 16), "2001:db8::/16")
+	suite.Assert().Equal(toCIDR(unix.AF_INET, nil, 0), "0.0.0.0/0")
+	suite.Assert().Equal(toCIDR(unix.AF_INET6, nil, 0), "::/0")
 }

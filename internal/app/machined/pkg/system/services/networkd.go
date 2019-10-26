@@ -14,8 +14,10 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
@@ -71,7 +73,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.NetworkdSocketPath), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.NetworkSocketPath), os.ModeDir); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +81,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: filepath.Dir(constants.NetworkdSocketPath), Source: filepath.Dir(constants.NetworkdSocketPath), Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(constants.NetworkSocketPath), Source: filepath.Dir(constants.NetworkSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
@@ -100,4 +102,20 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	),
 		restart.WithType(restart.Forever),
 	), nil
+}
+
+// HealthFunc implements the HealthcheckedService interface
+func (n *Networkd) HealthFunc(runtime.Configurator) health.Check {
+	return func(ctx context.Context) error {
+		conn, err := grpc.Dial("unix:"+constants.NetworkSocketPath, grpc.WithInsecure())
+		if err != nil {
+			return err
+		}
+		return conn.Close()
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface
+func (n *Networkd) HealthSettings(runtime.Configurator) *health.Settings {
+	return &health.DefaultSettings
 }

@@ -197,8 +197,8 @@ const (
 	// TimeSocketPath is the path to file socket of time API.
 	TimeSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
 
-	// NetworkdSocketPath is the path to file socket of network API.
-	NetworkdSocketPath = SystemRunPath + "/networkd/networkd.sock"
+	// NetworkSocketPath is the path to file socket of network API.
+	NetworkSocketPath = SystemRunPath + "/networkd/networkd.sock"
 
 	// OSSocketPath is the path to file socket of os API.
 	OSSocketPath = SystemRunPath + "/osd/osd.sock"
