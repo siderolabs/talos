@@ -2799,6 +2799,24 @@ steps:
   - name: tmp
     path: /tmp
 
+- name: image-aws
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make image-aws
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: image-azure
   pull: always
   image: autonomy/build-container:latest
@@ -2817,11 +2835,11 @@ steps:
   depends_on:
   - installer
 
-- name: image-gcp
+- name: image-digital-ocean
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make image-gcp
+  - make image-digital-ocean
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
@@ -2835,11 +2853,11 @@ steps:
   depends_on:
   - installer
 
-- name: image-aws
+- name: image-gcp
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make image-aws
+  - make image-gcp
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
