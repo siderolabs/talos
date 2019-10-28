@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/aws"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/azure"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/container"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform/digitalocean"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/gcp"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/iso"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/metal"
@@ -44,6 +45,8 @@ func NewPlatform() (p runtime.Platform, err error) {
 		p = &aws.AWS{}
 	case "azure":
 		p = &azure.Azure{}
+	case "digital-ocean":
+		p = &digitalocean.DigitalOcean{}
 	case "metal":
 		p = &metal.Metal{}
 	case "container":
