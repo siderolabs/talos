@@ -129,7 +129,9 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
-	altNames := altNamesFromURLs(config.Cluster().CertSANs())
+	urls := []string{config.Cluster().Endpoint().Hostname()}
+	urls = append(urls, config.Cluster().CertSANs()...)
+	altNames := altNamesFromURLs(urls)
 
 	block, _ = pem.Decode(config.Cluster().CA().Crt)
 	if block == nil {
