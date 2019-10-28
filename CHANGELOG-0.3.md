@@ -1,3 +1,18 @@
+# [v0.3.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.3...v0.3.0-alpha.4) (2019-10-28)
+
+### Bug Fixes
+
+- add cluster endpoint to certificate SANs ([2459ca1](https://github.com/talos-systems/talos/commit/2459ca14da55ad9b28a0053c296906ccd61c3d71))
+- Fix osctl version output ([6de32dd](https://github.com/talos-systems/talos/commit/6de32dd30b4465b7c3235d529c92af7868c028d1))
+
+### Features
+
+- Add APId ([573cce8](https://github.com/talos-systems/talos/commit/573cce8d185db981805f08ff481d3d1d93d04a56))
+- Add network api to apid ([457c641](https://github.com/talos-systems/talos/commit/457c6416a61c563fd14dab6cdb2f2268a3d98c51))
+- Add retry on get kubeconfig ([c6e1e6f](https://github.com/talos-systems/talos/commit/c6e1e6f28f6878150fcf558b32b195ee1dd3158c))
+- add support for Digital Ocean ([0d1c5ac](https://github.com/talos-systems/talos/commit/0d1c5ac30575f7157cd16d88305a31b76c97e680))
+- Add time api to apid ([ee24e42](https://github.com/talos-systems/talos/commit/ee24e423196e8a87e036aa78c8baf74180bbdd1c))
+
 # [v0.3.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.2...v0.3.0-alpha.3) (2019-10-25)
 
 ### Bug Fixes
