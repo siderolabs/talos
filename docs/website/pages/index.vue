@@ -1,11 +1,11 @@
 <template>
   <div id="landing-page" class="c-rich-text">
-    <div class="w-auto md:w-1/2 h-auto mx-auto mt-10 mb-20 px-4">
-      <div class="text-center p-0 m-0">
+    <div class="w-auto lg:w-1/2 h-auto mx-auto md:mt-10 mb-16 px-4">
+      <div class="text-center py-8 m-0">
         <h1>What is Talos?</h1>
       </div>
       <div class="flex flex-wrap justify-center items-center">
-        <div class="px-4 md:px-2 md:w-3/4">
+        <div class="px-4 md:px-2 md:w-3/4 text-xl text-gray-700">
           <p>
             Talos is a modern OS designed to be secure, immutable, and minimal.
             Its purpose is to host Kubernetes clusters, so it is tightly
@@ -18,23 +18,22 @@
             console.
           </p>
         </div>
-        <div class="w-1/6">
+        <div class="w-1/3 md:w-1/6 md:ml-8 pt-4 md:pt-0">
           <a
             href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
             target="_blank"
           >
             <img
-              class="certified"
               src="/images/certified-kubernetes-color.png"
-              alt=""
+              alt="Certified Kubernetes Logo"
           /></a>
         </div>
       </div>
     </div>
 
-    <div class="w-3/4 h-64 mx-auto pb-20">
+    <div class="w-3/4 mx-auto">
       <div class="justify-center">
-        <div class="text-center">
+        <div class="text-center md:py-8">
           <h1>Why Talos?</h1>
         </div>
         <div class="md:grid grid-columns-3 grid-gap-12 justify-center">
@@ -64,7 +63,7 @@
       </div>
     </div>
 
-    <div class="w-3/4 mx-auto mb-20">
+    <div class="w-3/4 mx-auto mb-20 pt-4">
       <div class="flex flex-col justify-center">
         <div class="text-center">
           <h2>API Driven</h2>
@@ -74,7 +73,7 @@
     </div>
 
     <div class="w-1/2 h-auto mx-auto mb-20">
-      <div class="text-center">
+      <div class="text-center pt-6">
         <h1>Built with Modern Technology</h1>
       </div>
       <div class="flex flex-wrap md:flex-no-wrap justify-center">
@@ -101,7 +100,7 @@
       </div>
     </div>
 
-    <div class="w-3/4 h-auto mx-auto pb-8 mb-20">
+    <div class="w-3/4 h-auto mx-auto pb-12 mb-20">
       <div class="text-center">
         <h1>Features</h1>
       </div>
@@ -129,7 +128,7 @@
             <p>Talos is hardened by design and configuration:</p>
             <ul class="ml-8">
               <li>
-                We follow the
+                Built with the
                 <a
                   href="https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project"
                   target="_blank"
@@ -138,16 +137,16 @@
                 configuration recommendations.
               </li>
               <li>
-                We enable mutual TLS for the API.
+                All access to the API is secured with Mutual TLS.
               </li>
               <li>
-                We enforce the settings and configurations described in the
+                Settings and configuration described in the
                 <a
                   href="https://www.cisecurity.org/benchmark/kubernetes/"
                   target="_blank"
                   >CIS</a
                 >
-                guidelines.
+                guidelines are applied by default.
               </li>
             </ul>
           </div>
@@ -160,6 +159,10 @@
             traditional means such as a shell and SSH.
           </div>
         </div>
+      </div>
+      <div
+        class="md:grid grid-columns-2 grid-gap-12 justify-center md:w-2/3 md:mx-auto"
+      >
         <div>
           <h2 class="text-center">Ephemeral</h2>
           <div>
@@ -176,6 +179,7 @@
         </div>
         <div>
           <img
+            class="hidden"
             src="https://placeholder.pics/svg/300/DEDEDE/555555/some%20nifty%20image%20here"
           />
         </div>
