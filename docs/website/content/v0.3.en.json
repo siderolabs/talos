@@ -20,6 +20,10 @@
             "path": "v0.3/en/guides/cloud/azure"
           },
           {
+            "title": "Digital Ocean",
+            "path": "v0.3/en/guides/cloud/digitalocean"
+          },
+          {
             "title": "GCP",
             "path": "v0.3/en/guides/cloud/gcp"
           }

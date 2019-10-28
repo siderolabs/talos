@@ -190,6 +190,19 @@ image-azure:
 	@tar -C $(PWD)/build -czf $(PWD)/build/azure.tar.gz azure.vhd
 	@rm -rf $(PWD)/build/azure.raw $(PWD)/build/azure.vhd
 
+.PHONY: image-digital-ocean
+image-digital-ocean:
+	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
+		--privileged $(DOCKER_ARGS) \
+		autonomy/installer:$(TAG) \
+		install \
+		-n digital-ocean \
+		-r \
+		-p digital-ocean \
+		-u none \
+		-e console=ttyS0
+	@gzip $(PWD)/build/digital-ocean.raw
+
 .PHONY: image-gcp
 image-gcp:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
