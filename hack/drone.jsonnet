@@ -258,8 +258,8 @@ local e2e_steps = default_steps + [
   push_image_aws,
   push_image_azure,
   push_image_gcp,
-  e2e_integration_aws,
-  e2e_integration_azure,
+  //e2e_integration_aws,
+  // e2e_integration_azure,
   e2e_integration_gcp,
 ];
 

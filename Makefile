@@ -252,7 +252,7 @@ push-image-azure:
 
 .PHONY: push-image-gcp
 push-image-gcp:
-	@TAG=$(TAG) ./hack/test/gcp-setup.sh
+	@TAG=$(TAG) SHA=$(SHA) ./hack/test/gcp-setup.sh
 
 .PHONY: image-test
 image-test:
@@ -281,7 +281,7 @@ capi:
 
 .PHONY: e2e-integration
 e2e-integration:
-	@TAG=$(TAG) ./hack/test/$@.sh
+	@TAG=$(TAG) SHA=$(SHA) ./hack/test/$@.sh
 
 .PHONY: unit-tests
 unit-tests: buildkitd
