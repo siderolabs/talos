@@ -988,46 +988,6 @@ steps:
   depends_on:
   - image-gcp
 
-- name: e2e-integration-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    PLATFORM: aws
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-aws
-
-- name: e2e-integration-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    PLATFORM: azure
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-azure
-
 - name: e2e-integration-gcp
   pull: always
   image: autonomy/build-container:latest
