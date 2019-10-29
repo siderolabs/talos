@@ -15,7 +15,6 @@ import (
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -198,11 +197,8 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		oci.WithImageConfig(image),
 		oci.WithProcessArgs(c.args.ProcessArgs...),
 		oci.WithEnv(c.opts.Env),
-		oci.WithHostNamespace(specs.NetworkNamespace),
-		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithHostHostsFile,
 		oci.WithHostResolvconf,
-		oci.WithPrivileged,
 	}
 	specOpts = append(specOpts, c.opts.OCISpecOpts...)
 

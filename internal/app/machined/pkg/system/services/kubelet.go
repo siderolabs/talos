@@ -206,6 +206,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
 			oci.WithMounts(mounts),
+			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,

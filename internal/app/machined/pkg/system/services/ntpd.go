@@ -10,10 +10,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/syndtr/gocapability/capability"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -68,7 +70,7 @@ func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.TimeSocketPath), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.TimeSocketPath), 0750); err != nil {
 		return nil, err
 	}
 
@@ -90,6 +92,9 @@ func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*32)),
+			oci.WithCapabilities([]string{
+				strings.ToUpper("CAP_" + capability.CAP_SYS_TIME.String()),
+			}),
 			oci.WithMounts(mounts),
 		),
 	),
