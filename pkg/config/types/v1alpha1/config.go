@@ -57,7 +57,7 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		return errors.New("cluster instructions are required")
 	}
 
-	if c.Cluster().Endpoint().String() == "" {
+	if c.Cluster().Endpoint() == nil || c.Cluster().Endpoint().String() == "" {
 		return errors.New("a cluster endpoint is required")
 	}
 
