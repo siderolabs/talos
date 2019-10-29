@@ -91,6 +91,7 @@ func (t *Trustd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
+			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 		),
 	),

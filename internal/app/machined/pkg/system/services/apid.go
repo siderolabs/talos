@@ -124,6 +124,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
+			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 		),
 	),

@@ -155,10 +155,8 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithContainerImage(etcdImage),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
+			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
-			oci.WithHostNamespace(specs.PIDNamespace),
-			oci.WithParentCgroupDevices,
-			oci.WithPrivileged,
 		),
 	),
 		restart.WithType(restart.Forever),

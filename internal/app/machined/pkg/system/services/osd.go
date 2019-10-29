@@ -10,10 +10,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
@@ -78,7 +80,7 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.OSSocketPath), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.OSSocketPath), 0750); err != nil {
 		return nil, err
 	}
 
@@ -107,6 +109,10 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
+			oci.WithCapabilities([]string{
+				strings.ToUpper("CAP_" + capability.CAP_SYS_PTRACE.String()),
+			}),
+			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithMounts(mounts),
 		),
 	),

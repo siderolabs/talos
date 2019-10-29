@@ -51,7 +51,7 @@ require (
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e // indirect
+	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
