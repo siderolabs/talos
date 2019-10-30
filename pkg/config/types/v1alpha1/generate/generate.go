@@ -212,7 +212,7 @@ func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEnc
 		return nil, errors.New("failed to decode ca key pem")
 	}
 
-	caKey, err := stdlibx509.ParseECPrivateKey(caKeyPemBlock.Bytes)
+	caKey, err := stdlibx509.ParsePKCS8PrivateKey(caKeyPemBlock.Bytes)
 	if err != nil {
 		return nil, err
 	}
