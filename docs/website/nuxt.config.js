@@ -49,6 +49,10 @@ export default {
   /*
    ** Nuxt.js dev-modules configuration
    */
+  eslint: {
+    fix: true
+  },
+
   // PurgeCSS is automatically installed by @nuxtjs/tailwindcss
   purgeCSS: {},
 
