@@ -14,7 +14,7 @@
       </svg>
     </button>
     <ul class="dropdown-menu absolute pt-1 w-full shadow-md">
-      <li class="text-center" v-for="link in links" :key="link.url">
+      <li v-for="link in links" :key="link.url" class="text-center">
         <a
           :href="link.url"
           class="text-center rounded-t py-2 px-4 block whitespace-no-wrap"

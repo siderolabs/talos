@@ -4,8 +4,8 @@
       <li
         v-for="entry in $store.state.sidebar.menu"
         :key="entry.title"
-        @click="selected = entry.title"
         class="py-2"
+        @click="selected = entry.title"
       >
         <a
           class="sidebar-category"

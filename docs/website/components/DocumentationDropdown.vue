@@ -14,11 +14,11 @@
       </svg>
     </button>
     <ul class="dropdown-menu absolute pt-1 w-full shadow-md">
-      <li class="" v-for="option in options" :key="option.version">
+      <li v-for="option in options" :key="option.version" class="">
         <a
-          @click="handleClick(option)"
           :href="option.url"
           class="rounded-t py-2 px-4 block whitespace-no-wrap"
+          @click="handleClick(option)"
           >{{ version(option) }}</a
         >
       </li>
