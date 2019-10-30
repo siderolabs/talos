@@ -80,6 +80,16 @@
     ]
   },
   {
+    "title": "Troubleshooting",
+    "path": "v0.3/en/troubleshooting",
+    "items": [
+      {
+        "title": "PKI",
+        "path": "v0.3/en/troubleshooting/pki"
+      }
+    ]
+  },
+  {
     "title": "Components",
     "path": "v0.3/en/components",
     "items": [
