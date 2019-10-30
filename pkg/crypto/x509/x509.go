@@ -6,6 +6,7 @@ package x509
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -35,14 +36,22 @@ type CertificateAuthority struct {
 	KeyPEM []byte
 }
 
-// RSAKey represents an RSA private key.
+// Ed25519Key represents an Ed25519 key.
+type Ed25519Key struct {
+	PublicKey     ed25519.PublicKey
+	PrivateKey    ed25519.PrivateKey
+	PublicKeyPEM  []byte
+	PrivateKeyPEM []byte
+}
+
+// RSAKey represents an RSA key.
 type RSAKey struct {
 	keyRSA *rsa.PrivateKey
 	KeyPEM []byte
 }
 
-// Key represents an ECDSA private key.
-type Key struct {
+// ECDSAKey represents an ECDSA key.
+type ECDSAKey struct {
 	keyEC  *ecdsa.PrivateKey
 	KeyPEM []byte
 }
@@ -148,7 +157,7 @@ func NotAfter(o time.Time) Option {
 // NewDefaultOptions initializes the Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
-		SignatureAlgorithm: x509.ECDSAWithSHA512,
+		SignatureAlgorithm: x509.PureEd25519,
 		IPAddresses:        []net.IP{},
 		DNSNames:           []string{},
 		Bits:               4096,
@@ -206,10 +215,10 @@ func NewSelfSignedCertificateAuthority(setters ...Option) (ca *CertificateAuthor
 
 	if opts.RSA {
 		crt.SignatureAlgorithm = x509.SHA512WithRSA
-		return rsaCertificateAuthority(crt, opts)
+		return RSACertificateAuthority(crt, opts)
 	}
 
-	return ecdsaCertificateAuthority(crt)
+	return Ed25519CertificateAuthority(crt)
 }
 
 // NewCertificateSigningRequest creates a CSR. If the IPAddresses or DNSNames options are not
@@ -250,8 +259,8 @@ func NewCertificateSigningRequest(key interface{}, setters ...Option) (csr *Cert
 	return csr, err
 }
 
-// NewKey generates an ECDSA private key.
-func NewKey() (key *Key, err error) {
+// NewECDSAKey generates an ECDSA key pair.
+func NewECDSAKey() (key *ECDSAKey, err error) {
 	keyEC, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	if err != nil {
 		return
@@ -267,7 +276,7 @@ func NewKey() (key *Key, err error) {
 		Bytes: keyBytes,
 	})
 
-	key = &Key{
+	key = &ECDSAKey{
 		keyEC:  keyEC,
 		KeyPEM: keyPEM,
 	}
@@ -275,7 +284,44 @@ func NewKey() (key *Key, err error) {
 	return key, nil
 }
 
-// NewRSAKey generates an RSA private key.
+// NewEd25519Key generates an Ed25519 key pair.
+func NewEd25519Key() (key *Ed25519Key, err error) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return
+	}
+
+	pubBytes, e := x509.MarshalPKIXPublicKey(pub)
+	if e != nil {
+		return
+	}
+
+	privBytes, e := x509.MarshalPKCS8PrivateKey(priv)
+	if e != nil {
+		return
+	}
+
+	pubPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "ED25519 PUBLIC KEY",
+		Bytes: pubBytes,
+	})
+
+	privPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "ED25519 PRIVATE KEY",
+		Bytes: privBytes,
+	})
+
+	key = &Ed25519Key{
+		PublicKey:     pub,
+		PrivateKey:    priv,
+		PublicKeyPEM:  pubPEM,
+		PrivateKeyPEM: privPEM,
+	}
+
+	return key, nil
+}
+
+// NewRSAKey generates an RSA key pair.
 func NewRSAKey() (key *RSAKey, err error) {
 	keyRSA, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -380,7 +426,7 @@ func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Ce
 			return
 		}
 	} else {
-		caKey, err = x509.ParseECPrivateKey(keyPemBlock.Bytes)
+		caKey, err = x509.ParsePKCS8PrivateKey(keyPemBlock.Bytes)
 		if err != nil {
 			return
 		}
@@ -404,8 +450,8 @@ func NewCertificateFromCSRBytes(ca, key, csr []byte, setters ...Option) (crt *Ce
 	return crt, nil
 }
 
-// NewKeyPair generates a certificate signed by the provided CA, and an ECDSA
-// private key. The certifcate and private key are then used to create an
+// NewKeyPair generates a certificate signed by the provided CA, and a private
+// key. The certifcate and private key are then used to create an
 // tls.X509KeyPair.
 func NewKeyPair(ca *x509.Certificate, key interface{}, setters ...Option) (keypair *KeyPair, err error) {
 	csr, err := NewCertificateSigningRequest(key, setters...)
@@ -413,7 +459,7 @@ func NewKeyPair(ca *x509.Certificate, key interface{}, setters ...Option) (keypa
 		return
 	}
 
-	k, err := NewKey()
+	k, err := NewEd25519Key()
 	if err != nil {
 		return
 	}
@@ -423,7 +469,7 @@ func NewKeyPair(ca *x509.Certificate, key interface{}, setters ...Option) (keypa
 		return
 	}
 
-	x509KeyPair, err := tls.X509KeyPair(crt.X509CertificatePEM, k.KeyPEM)
+	x509KeyPair, err := tls.X509KeyPair(crt.X509CertificatePEM, k.PublicKeyPEM)
 	if err != nil {
 		return
 	}
@@ -460,23 +506,23 @@ func NewCertificateAndKeyFromFiles(crt, key string) (p *PEMEncodedCertificateAnd
 // NewCSRAndIdentity generates and PEM encoded certificate and key, along with a
 // CSR for the generated key.
 func NewCSRAndIdentity(hostname string, ips []net.IP) (csr *CertificateSigningRequest, identity *PEMEncodedCertificateAndKey, err error) {
-	var key *Key
+	var key *Ed25519Key
 
-	key, err = NewKey()
+	key, err = NewEd25519Key()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	identity = &PEMEncodedCertificateAndKey{
-		Key: key.KeyPEM,
+		Key: key.PrivateKeyPEM,
 	}
 
-	pemBlock, _ := pem.Decode(key.KeyPEM)
+	pemBlock, _ := pem.Decode(key.PrivateKeyPEM)
 	if pemBlock == nil {
 		return nil, nil, fmt.Errorf("failed to decode key")
 	}
 
-	keyEC, err := x509.ParseECPrivateKey(pemBlock.Bytes)
+	priv, err := x509.ParsePKCS8PrivateKey(pemBlock.Bytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -485,7 +531,7 @@ func NewCSRAndIdentity(hostname string, ips []net.IP) (csr *CertificateSigningRe
 	opts = append(opts, DNSNames([]string{hostname}))
 	opts = append(opts, IPAddresses(ips))
 
-	csr, err = NewCertificateSigningRequest(keyEC, opts...)
+	csr, err = NewCertificateSigningRequest(priv, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -559,12 +605,12 @@ func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Opti
 
 		pemBytes = k.(*RSAKey).KeyPEM
 	} else {
-		k, err = NewKey()
+		k, err = NewEd25519Key()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create new ECDSA key: %w", err)
+			return nil, fmt.Errorf("failed to create new Ed25519 key: %w", err)
 		}
 
-		pemBytes = k.(*Key).KeyPEM
+		pemBytes = k.(*Ed25519Key).PrivateKeyPEM
 	}
 
 	block, _ := pem.Decode(pemBytes)
@@ -579,9 +625,9 @@ func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Opti
 			return nil, fmt.Errorf("failed to parse RSA private key: %w", err)
 		}
 	} else {
-		priv, err = x509.ParseECPrivateKey(block.Bytes)
+		priv, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse ECDSA private key: %w", err)
+			return nil, fmt.Errorf("failed to parse ED25519 private key: %w", err)
 		}
 	}
 
@@ -622,7 +668,8 @@ func Hash(crt *x509.Certificate) string {
 	return "sha256" + ":" + strings.ToLower(hex.EncodeToString(spkiHash[:]))
 }
 
-func rsaCertificateAuthority(template *x509.Certificate, opts *Options) (ca *CertificateAuthority, err error) {
+// RSACertificateAuthority creates an RSA CA.
+func RSACertificateAuthority(template *x509.Certificate, opts *Options) (ca *CertificateAuthority, err error) {
 	key, e := rsa.GenerateKey(rand.Reader, opts.Bits)
 	if e != nil {
 		return
@@ -659,7 +706,8 @@ func rsaCertificateAuthority(template *x509.Certificate, opts *Options) (ca *Cer
 	return ca, nil
 }
 
-func ecdsaCertificateAuthority(template *x509.Certificate) (ca *CertificateAuthority, err error) {
+// ECDSACertificateAuthority creates an ECDSA CA.
+func ECDSACertificateAuthority(template *x509.Certificate) (ca *CertificateAuthority, err error) {
 	key, e := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	if e != nil {
 		return
@@ -695,6 +743,38 @@ func ecdsaCertificateAuthority(template *x509.Certificate) (ca *CertificateAutho
 		CrtPEM: crtPEM,
 		Key:    key,
 		KeyPEM: keyPEM,
+	}
+
+	return ca, nil
+}
+
+// Ed25519CertificateAuthority creates an Ed25519 CA.
+func Ed25519CertificateAuthority(template *x509.Certificate) (ca *CertificateAuthority, err error) {
+	key, err := NewEd25519Key()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new Ed25519 key: %w", err)
+	}
+
+	crtDER, err := x509.CreateCertificate(rand.Reader, template, template, key.PublicKey, key.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Ed25519 CA certificate: %w", err)
+	}
+
+	crt, err := x509.ParseCertificate(crtDER)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse Ed25519 CA certificate: %w", err)
+	}
+
+	crtPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: crtDER,
+	})
+
+	ca = &CertificateAuthority{
+		Crt:    crt,
+		CrtPEM: crtPEM,
+		Key:    key,
+		KeyPEM: key.PrivateKeyPEM,
 	}
 
 	return ca, nil

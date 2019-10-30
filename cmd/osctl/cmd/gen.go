@@ -55,14 +55,14 @@ var caCmd = &cobra.Command{
 // keyCmd represents the gen key command
 var keyCmd = &cobra.Command{
 	Use:   "key",
-	Short: "Generates an ECSDA private key",
+	Short: "Generates an Ed25519 private key",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		key, err := x509.NewKey()
+		key, err := x509.NewEd25519Key()
 		if err != nil {
 			helpers.Fatalf("error generating key: %s", err)
 		}
-		if err := ioutil.WriteFile(name+".key", key.KeyPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(name+".key", key.PrivateKeyPEM, 0600); err != nil {
 			helpers.Fatalf("error writing key: %s", err)
 		}
 	},
@@ -71,7 +71,7 @@ var keyCmd = &cobra.Command{
 // csrCmd represents the gen csr command
 var csrCmd = &cobra.Command{
 	Use:   "csr",
-	Short: "Generates a CSR using an ECDSA private key",
+	Short: "Generates a CSR using an Ed25519 private key",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		keyBytes, err := ioutil.ReadFile(key)
@@ -82,7 +82,7 @@ var csrCmd = &cobra.Command{
 		if pemBlock == nil {
 			helpers.Fatalf("error decoding PEM: %s", err)
 		}
-		keyEC, err := stdlibx509.ParseECPrivateKey(pemBlock.Bytes)
+		keyEC, err := stdlibx509.ParsePKCS8PrivateKey(pemBlock.Bytes)
 		if err != nil {
 			helpers.Fatalf("error parsing ECDSA key: %s", err)
 		}
@@ -107,7 +107,7 @@ var csrCmd = &cobra.Command{
 // crtCmd represents the gen crt command
 var crtCmd = &cobra.Command{
 	Use:   "crt",
-	Short: "Generates an X.509 ECDSA certificate",
+	Short: "Generates an X.509 Ed25519 certificate",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		caBytes, err := ioutil.ReadFile(ca + ".crt")
@@ -130,7 +130,7 @@ var crtCmd = &cobra.Command{
 		if keyPemBlock == nil {
 			helpers.Fatalf("error decoding key PEM: %s", err)
 		}
-		caKey, err := stdlibx509.ParseECPrivateKey(keyPemBlock.Bytes)
+		caKey, err := stdlibx509.ParsePKCS8PrivateKey(keyPemBlock.Bytes)
 		if err != nil {
 			helpers.Fatalf("error parsing EC key: %s", err)
 		}
@@ -159,7 +159,7 @@ var crtCmd = &cobra.Command{
 // keypairCmd represents the gen keypair command
 var keypairCmd = &cobra.Command{
 	Use:   "keypair",
-	Short: "Generates an X.509 ECDSA key pair",
+	Short: "Generates an X.509 Ed25519 key pair",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		opts := []x509.Option{}
