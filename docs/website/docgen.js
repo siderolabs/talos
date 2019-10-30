@@ -90,18 +90,16 @@ const Docgen = {
         return
         break
       default:
-        // [ content-delivery, en, json ]
         const contentPathParts = contentFilePath
           .replace(config.contentInputFolder, '')
           .split('.')
 
-        // content-delivery
-        const version = contentPathParts.shift()
+        const version = contentPathParts.slice(0, -2).join('.')
 
-        // en
-        const lang = contentPathParts.shift()
+        const lang = contentPathParts.slice(-2)[0]
 
         Docgen.exportMenu(version, lang)
+
         break
     }
   },
