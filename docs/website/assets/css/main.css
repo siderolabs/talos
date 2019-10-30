@@ -47,6 +47,13 @@ pre {
   overflow-x: auto;
 }
 
+code {
+  background: #f4f5f6;
+  border-style: none;
+  border-width: 0.5px;
+  border-radius: 5px;
+}
+
 code[class*='language-'],
 pre[class*='language-'] {
   @apply font-mono;

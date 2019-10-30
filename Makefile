@@ -135,6 +135,14 @@ initramfs: buildkitd
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: squashfs
+squashfs: buildkitd osd trustd ntpd networkd apid
+	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--output type=local,dest=build \
+		--opt target=$@ \
+		$(COMMON_ARGS)
+
 .PHONY: rootfs
 rootfs: buildkitd osd trustd ntpd networkd apid
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \

@@ -249,6 +249,9 @@ FROM rootfs-base AS rootfs-squashfs
 COPY --from=rootfs / /rootfs
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
+FROM scratch AS squashfs
+COPY --from=rootfs-squashfs /rootfs.sqsh /
+
 FROM scratch AS rootfs
 COPY --from=rootfs-base /rootfs /
 
@@ -256,7 +259,7 @@ COPY --from=rootfs-base /rootfs /
 
 FROM build AS initramfs-archive
 WORKDIR /initramfs
-COPY --from=rootfs-squashfs /rootfs.sqsh .
+COPY --from=squashfs /rootfs.sqsh .
 COPY --from=init /init .
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
 
@@ -274,14 +277,17 @@ ENTRYPOINT ["/sbin/init"]
 # various environments.
 
 FROM alpine:3.8 AS installer
-RUN apk --update add \
+RUN apk add --no-cache --update \
     bash \
     ca-certificates \
     cdrkit \
+    cpio \
     qemu-img \
+    squashfs-tools \
     syslinux \
     util-linux \
-    xfsprogs
+    xfsprogs \
+    xz
 COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
 COPY hack/installer/template.ovf /template.ovf
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
@@ -292,6 +298,21 @@ ARG TAG
 ENV VERSION ${TAG}
 LABEL "alpha.talos.io/version"="${VERSION}"
 ENTRYPOINT ["entrypoint.sh"]
+ONBUILD WORKDIR /initramfs
+ONBUILD ARG RM
+ONBUILD RUN xz -d /usr/install/initramfs.xz \
+    && cpio -idvm < /usr/install/initramfs \
+    && unsquashfs -f -d /rootfs rootfs.sqsh \
+    && for f in ${RM}; do rm -rfv /rootfs$f; done \
+    && rm /usr/install/initramfs \
+    && rm rootfs.sqsh
+ONBUILD COPY --from=customization / /rootfs
+ONBUILD RUN find /rootfs \
+    && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
+    && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/initramfs.xz \
+    && rm -rf /rootfs \
+    && rm -rf /initramfs
+ONBUILD WORKDIR /
 
 # The test target performs tests on the source code.
 

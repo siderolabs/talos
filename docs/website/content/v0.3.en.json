@@ -94,6 +94,16 @@
     ]
   },
   {
+    "title": "Customization",
+    "path": "v0.3/en/customization",
+    "items": [
+      {
+        "title": "Kernel",
+        "path": "v0.3/en/customization/kernel"
+      }
+    ]
+  },
+  {
     "title": "Components",
     "path": "v0.3/en/components",
     "items": [
