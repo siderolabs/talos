@@ -27,6 +27,6 @@ e2e_run "set -eou pipefail
             --plugin e2e \
             --plugin-env e2e.E2E_USE_GO_RUNNER=true \
             --mode certified-conformance \
-            --kube-conformance-image-version v1.16.0
+            --kube-conformance-image-version v1.16.2
          results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG})
          sonobuoy e2e --kubeconfig ${KUBECONFIG} \$results"
