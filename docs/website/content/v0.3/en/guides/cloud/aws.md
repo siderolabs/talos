@@ -140,7 +140,7 @@ We will need these soon.
 Using the DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines:
 
 ```bash
-$ osctl config generate talos-k8s-aws-tutorial https://$LB_DNS_NAME
+$ osctl config generate talos-k8s-aws-tutorial https://<load balancer IP or DNS>
 created init.yaml
 created controlplane.yaml
 created join.yaml

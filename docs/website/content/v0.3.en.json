@@ -26,6 +26,10 @@
           {
             "title": "GCP",
             "path": "v0.3/en/guides/cloud/gcp"
+          },
+          {
+            "title": "VMware",
+            "path": "v0.3/en/guides/cloud/vmware"
           }
         ]
       },
