@@ -1,6 +1,6 @@
 <template>
   <div class="dropdown inline-block">
-    <button class="font-semibold py-2 px-4 rounded inline-flex items-center">
+    <button class="font-semibold py-2 pl-4 rounded inline-flex items-center">
       <span class="mr-1">{{ $store.state.sidebar.version }}</span>
       <svg
         id="dropdown-caret"
