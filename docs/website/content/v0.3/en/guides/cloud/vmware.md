@@ -2,12 +2,12 @@
 title: 'VMware'
 ---
 
-## Creating a Cluster via the govc CLI
+## Creating a Cluster via the `govc` CLI
 
 In this guide we will create an HA Kubernetes cluster with 3 worker nodes.
 We will use the `govc` cli which can be downloaded [here](https://github.com/vmware/govmomi/tree/master/govc#installation).
 
-### Prereqs
+### Prerequisites
 
 Prior to starting, it is important to have the following infrastructure in place and available:
 
@@ -23,17 +23,17 @@ Prior to starting, it is important to have the following infrastructure in place
 Using the DNS name or name of the loadbalancer used in the prereq steps, generate the base configuration files for the Talos machines:
 
 ```bash
-$ osctl config generate talos-k8s-vmware-tutorial https://$LB_DNS_NAME
+$ osctl config generate talos-k8s-vmware-tutorial https://<load balancer IP or DNS>
 created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
 ```
 
-**Note** If you are using a DNS record, you will want to specify the port for the API Server (`tcp/6443`)
+> Note: If you are using a DNS record, you will want to specify the port for the API Server (`tcp/6443`)
 
 ```bash
-$ osctl config generate talos-k8s-vmware-tutorial https://$DNS_NAME:6443
+$ osctl config generate talos-k8s-vmware-tutorial https://<DNS name>:6443
 created init.yaml
 created controlplane.yaml
 created join.yaml
@@ -58,29 +58,25 @@ join.yaml is valid for cloud mode
 `govc` makes use of the following environment variables
 
 ```bash
-export GOVC_URL=https://myvcenter
-export GOVC_USERNAME=root
-export GOVC_PASSWORD=Whywas6afraidof7,because789
+export GOVC_URL=<vCenter url>
+export GOVC_USERNAME=<vCenter username>
+export GOVC_PASSWORD=<vCenter password>
 ```
 
-If your vCenter installation makes use of self signed certificates, you'll want to have `GOVC_INSECURE=true` set.
+> Note: If your vCenter installation makes use of self signed certificates, you'll want to export `GOVC_INSECURE=true`.
+
+There are some additional variables that you may need to set:
 
 ```bash
- export GOVC_INSECURE=true
-```
-
-There are some additional variables that you may need to set
-
-```bash
-export GOVC_DATACENTER=datacenter1
-export GOVC_RESOURCE_POOL=cluster1/Resources
-export GOVC_DATASTORE=datastore1
-export GOVC_NETWORK="VM Network"
+export GOVC_DATACENTER=<vCenter datacenter>
+export GOVC_RESOURCE_POOL=<vCenter resource pool>
+export GOVC_DATASTORE=<vCenter datastore>
+export GOVC_NETWORK=<vCenter network>
 ```
 
 ### Download the OVA
 
-A talos.ova asset is published with each release:
+A `talos.ova` asset is published with each release:
 
 ```bash
 curl -LO https://github.com/talos-systems/talos/releases/download/v0.3.0-alpha.2/talos.ova
@@ -90,7 +86,7 @@ curl -LO https://github.com/talos-systems/talos/releases/download/v0.3.0-alpha.2
 
 We'll need to repeat this step for each Talos node we want to create.
 In a typical HA setup, we'll have 3 control plane nodes and N workers.
-In the following example, we'll set up a HA control plane with two worker nodes.
+In the following example, we'll setup a HA control plane with two worker nodes.
 
 ```bash
 govc import.ova -name talos-v0.3.0-alpha.2 $talos/build/talos.ova
