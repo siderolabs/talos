@@ -240,6 +240,7 @@ image-vmware:
 		--privileged $(DOCKER_ARGS) \
 		autonomy/installer:$(TAG) \
 		ova
+	@rm -rf $(PWD)/build/talos.raw
 
 .PHONY: push-image-aws
 push-image-aws:
