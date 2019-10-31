@@ -6,7 +6,7 @@
     <div class="flex items-center justify-end max-w-6xl mx-auto py-6">
       <ul class="flex flex-wrap items-center justify-end">
         <li class="link min-w-full md:min-w-0">
-          <a href="/docs/v0.2">
+          <a href="/docs/v0.3">
             <span class="font-semibold mr-1">Documentation</span>
           </a>
         </li>
