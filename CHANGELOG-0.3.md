@@ -1,3 +1,16 @@
+# [v0.3.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.4...v0.3.0-alpha.5) (2019-10-31)
+
+### Bug Fixes
+
+- check if endpoint is nil ([9933fc0](https://github.com/talos-systems/talos/commit/9933fc0fba17191a2eb57d2361450bd57810e585))
+
+### Features
+
+- Add support for creating VMware images ([ca76ccd](https://github.com/talos-systems/talos/commit/ca76ccd4afa865a9ce6d8b63bbd69dbd1fd3a6d1))
+- lock down container permissions ([41619f9](https://github.com/talos-systems/talos/commit/41619f90160eab5229d7e1bee5c6fbb63f403a1e))
+- upgrade Kubernetes to 1.16.2 ([3c6d013](https://github.com/talos-systems/talos/commit/3c6d0135d03c69b79a4bbc8887dcde04b83c1510))
+- use Ed25519 public-key signature system ([82e43e0](https://github.com/talos-systems/talos/commit/82e43e05707fb0484d4e74b6b3bc9fac4cdc11f0))
+
 # [v0.3.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.3...v0.3.0-alpha.4) (2019-10-28)
 
 ### Bug Fixes
