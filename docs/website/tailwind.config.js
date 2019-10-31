@@ -172,7 +172,7 @@ module.exports = {
         },
         ul: {
           listStyleType: 'disc',
-          listStylePosition: 'outside',
+          listStylePosition: 'inside',
           marginBottom: '16px'
         },
         ol: {

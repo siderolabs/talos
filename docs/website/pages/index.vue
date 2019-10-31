@@ -226,4 +226,8 @@ export default {
   height: auto;
   width: 400px;
 }
+
+.c-rich-text ul {
+  list-style-position: outside;
+}
 </style>
