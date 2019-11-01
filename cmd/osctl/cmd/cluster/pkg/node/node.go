@@ -17,6 +17,7 @@ import (
 	"github.com/docker/go-connections/nat"
 
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Request represents the set of options available for configuring a node.
@@ -121,7 +122,7 @@ func NewNode(clusterName string, req *Request) (err error) {
 
 		fallthrough
 	case generate.TypeControlPlane:
-		containerConfig.Volumes["/var/lib/etcd"] = struct{}{}
+		containerConfig.Volumes[constants.EtcdDataPath] = struct{}{}
 
 		if req.IP == nil {
 			return errors.New("an IP address must be provided when creating a master node")

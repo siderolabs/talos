@@ -122,6 +122,7 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/usr/local/bin/etcd",
 			"--name=" + hostname,
+			"--data-dir=" + constants.EtcdDataPath,
 			"--listen-peer-urls=https://0.0.0.0:2380",
 			"--listen-client-urls=https://0.0.0.0:2379",
 			"--initial-advertise-peer-urls=https://" + ips[0].String() + ":2380",

@@ -11,22 +11,29 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/kubernetes-incubator/bootkube/pkg/asset"
 	"github.com/kubernetes-incubator/bootkube/pkg/tlsutil"
+	"go.etcd.io/etcd/clientv3"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/bootkube"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
+	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/retry"
 )
+
+var ok bool
 
 // DefaultPodSecurityPolicy is the default PSP.
 var DefaultPodSecurityPolicy = []byte(`---
@@ -96,11 +103,68 @@ func (b *Bootkube) ID(config runtime.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return err
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	// nolint: errcheck
+	retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+		var resp *clientv3.GetResponse
+		var err error
+
+		ctx := clientv3.WithRequireLeader(context.Background())
+		if resp, err = client.Get(ctx, constants.InitializedKey); err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		if len(resp.Kvs) == 0 {
+			return retry.ExpectedError(errors.New("no value found"))
+		}
+
+		if len(resp.Kvs) > 0 {
+			if string(resp.Kvs[0].Value) == "true" {
+				ok = true
+			}
+		}
+
+		return nil
+	})
+
+	if ok {
+		return nil
+	}
+
 	return generateAssets(config)
 }
 
 // PostFunc implements the Service interface.
-func (b *Bootkube) PostFunc(config runtime.Configurator) error {
+func (b *Bootkube) PostFunc(config runtime.Configurator) (err error) {
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return err
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+		ctx := clientv3.WithRequireLeader(context.Background())
+		if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to put state into etcd: %w", err)
+	}
+
+	log.Println("updated initialization status in etcd")
+
 	return nil
 }
 
@@ -118,6 +182,10 @@ func (b *Bootkube) Condition(config runtime.Configurator) conditions.Condition {
 
 // Runner implements the Service interface.
 func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
+	if ok {
+		return nil, nil
+	}
+
 	return goroutine.NewRunner(config, "bootkube", bootkube.NewService().Main), nil
 }
 
