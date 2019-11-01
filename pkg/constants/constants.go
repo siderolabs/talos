@@ -244,6 +244,10 @@ const (
 
 	// DefaultServiceCIDR is the default service CIDR block.
 	DefaultServiceCIDR = "10.96.0.0/12"
+
+	// InitializedKey is the key used to indicate if the cluster has been
+	// initialized.
+	InitializedKey = "initialized"
 )
 
 // See https://linux.die.net/man/3/klogctl
