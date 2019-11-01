@@ -7,6 +7,7 @@ package containerd
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -115,8 +116,18 @@ func (c *containerdRunner) Close() error {
 func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	defer close(c.stopped)
 
+	var (
+		task containerd.Task
+		err  error
+	)
+
+	creator := cio.LogFile(c.logPath())
+	if c.debug {
+		creator = cio.NewCreator(cio.WithStreams(os.Stdin, os.Stdout, os.Stderr))
+	}
+
 	// Create the task and start it.
-	task, err := c.container.NewTask(c.ctx, cio.LogFile(c.logPath()))
+	task, err = c.container.NewTask(c.ctx, creator)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %q: %w", c.args.ID, err)
 	}
