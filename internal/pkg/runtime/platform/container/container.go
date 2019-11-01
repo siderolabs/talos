@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
@@ -46,7 +47,12 @@ func (c *Container) Mode() runtime.Mode {
 	return runtime.Container
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
+// ExternalIPs implements the runtime.Platform interface.
 func (c *Container) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (c *Container) KernelArgs() kernel.Parameters {
+	return nil
 }

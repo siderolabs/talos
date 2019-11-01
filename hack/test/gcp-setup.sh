@@ -12,7 +12,7 @@ echo $GCE_SVC_ACCT | base64 -d > ${TMP}/svc-acct.json
 gcloud auth activate-service-account --key-file ${TMP}/svc-acct.json
 
 ## Push talos-gcp to storage bucket
-gsutil cp ./build/gcp.tar.gz gs://talos-e2e/gcp-${SHA}.tar.gz
+gsutil cp ${ARTIFACTS}/gcp.tar.gz gs://talos-e2e/gcp-${SHA}.tar.gz
 
 ## Create image from talos-gcp
 gcloud --quiet --project talos-testbed compute images delete talos-e2e-${SHA} || true ##Ignore error if image doesn't exist

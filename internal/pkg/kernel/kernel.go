@@ -112,6 +112,11 @@ func (p Parameters) String() string {
 	return strings.TrimRight(s, " ")
 }
 
+// Strings returns a string representation of all parameters.
+func (p Parameters) Strings() []string {
+	return strings.Split(p.String(), " ")
+}
+
 // Cmdline represents a set of kernel parameters.
 type Cmdline struct {
 	sync.Mutex

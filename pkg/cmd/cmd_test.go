@@ -99,7 +99,7 @@ func (suite *CmdSuite) TestRun() {
 	for _, t := range tests {
 		println(t.name)
 
-		err := Run(t.args.name, t.args.args...)
+		_, err := Run(t.args.name, t.args.args...)
 
 		if t.wantErr {
 			suite.Assert().Error(err)

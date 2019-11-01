@@ -15,6 +15,7 @@ import (
 
 	"github.com/fullsailor/pkcs7"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -50,7 +51,7 @@ vSeDCOUMYQR7R9LINYwouHIziqQYMAkGByqGSM44BAMDLwAwLAIUWXBlk40xTwSw
 	AWSUserDataEndpoint = "http://169.254.169.254/latest/user-data"
 )
 
-// AWS is the concrete type that implements the platform.Platform interface.
+// AWS is the concrete type that implements the runtime.Platform interface.
 type AWS struct{}
 
 // IsEC2 uses the EC2 PKCS7 signature to verify the instance by validating it
@@ -115,22 +116,22 @@ func IsEC2() (b bool) {
 	return b
 }
 
-// Name implements the platform.Platform interface.
+// Name implements the runtime.Platform interface.
 func (a *AWS) Name() string {
 	return "aws"
 }
 
-// Configuration implements the platform.Platform interface.
+// Configuration implements the runtime.Platform interface.
 func (a *AWS) Configuration() ([]byte, error) {
 	return download.Download(AWSUserDataEndpoint)
 }
 
-// Mode implements the platform.Platform interface.
+// Mode implements the runtime.Platform interface.
 func (a *AWS) Mode() runtime.Mode {
 	return runtime.Cloud
 }
 
-// Hostname gets the hostname from the AWS metadata endpoint.
+// Hostname implements the runtime.Platform interface.
 func (a *AWS) Hostname() (hostname []byte, err error) {
 	resp, err := http.Get(AWSHostnameEndpoint)
 	if err != nil {
@@ -146,7 +147,7 @@ func (a *AWS) Hostname() (hostname []byte, err error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
+// ExternalIPs implements the runtime.Platform interface.
 func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
 	var (
 		body []byte
@@ -177,4 +178,11 @@ func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
 	addrs = append(addrs, net.ParseIP(string(body)))
 
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (a *AWS) KernelArgs() kernel.Parameters {
+	return []*kernel.Parameter{
+		kernel.NewParameter("console").Append("tty1").Append("ttyS0"),
+	}
 }

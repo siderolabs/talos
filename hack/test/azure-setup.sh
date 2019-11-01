@@ -15,7 +15,7 @@ CLIENT_SECRET="$( cat ${TMP}/svc-acct.json | jq -r '.clientSecret' )"
 TENANT_ID="$( cat ${TMP}/svc-acct.json | jq -r '.tenantId' )"
 
 ## Untar image
-tar -C ${TMP} -xf ./build/azure.tar.gz
+tar -C ${TMP} -xf ${ARTIFACTS}/azure.tar.gz
 
 ## Login to azure
 az login --service-principal --username ${CLIENT_ID} --password ${CLIENT_SECRET} --tenant ${TENANT_ID} > /dev/null
@@ -24,7 +24,7 @@ az login --service-principal --username ${CLIENT_ID} --password ${CLIENT_SECRET}
 AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n ${STORAGE_ACCOUNT} -g ${GROUP} -o tsv)
 
 ## Push blob
-AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}" az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure-${TAG}.vhd
+AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}" az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/disk.vhd -n azure-${TAG}.vhd
 
 ## Delete image
 az image delete --name talos-e2e-${TAG} -g ${GROUP}

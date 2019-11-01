@@ -9,15 +9,15 @@ export TMP="/tmp/e2e"
 export TALOSCONFIG="${TMP}/talosconfig"
 export KUBECONFIG="${TMP}/kubeconfig"
 export TIMEOUT=300
-export OSCTL="${PWD}/build/osctl-linux-amd64"
+export OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
 export INTEGRATIONTEST="${PWD}/bin/integration-test"
 
 case $(uname -s) in
   Linux*)
-    export LOCALOSCTL="${PWD}/build/osctl-linux-amd64"
+    export LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
     ;;
   Darwin*)
-    export LOCALOSCTL="${PWD}/build/osctl-darwin-amd64"
+    export LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-darwin-amd64"
     ;;
   *)
     exit 1

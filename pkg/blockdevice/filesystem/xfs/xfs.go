@@ -12,7 +12,9 @@ import (
 // GrowFS expands a XFS filesystem to the maximum possible. The partition
 // MUST be mounted, or this will fail.
 func GrowFS(partname string) error {
-	return cmd.Run("xfs_growfs", "-d", partname)
+	_, err := cmd.Run("xfs_growfs", "-d", partname)
+
+	return err
 }
 
 // MakeFS creates a XFS filesystem on the specified partition.
@@ -32,5 +34,7 @@ func MakeFS(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	return cmd.Run("mkfs.xfs", args...)
+	_, err := cmd.Run("mkfs.xfs", args...)
+
+	return err
 }

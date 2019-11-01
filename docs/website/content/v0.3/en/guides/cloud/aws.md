@@ -47,7 +47,7 @@ curl -LO https://github.com/talos-systems/talos/releases/download/v0.3.0-alpha.2
 Copy the RAW disk to S3 and import it as a snapshot:
 
 ```bash
-aws s3 cp aws.raw s3://$BUCKET/talos-aws-tutorial.raw
+aws s3 cp disk.raw s3://$BUCKET/talos-aws-tutorial.raw
 aws ec2 import-snapshot \
     --region $REGION \
     --description "Talos kubernetes tutorial" \

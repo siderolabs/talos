@@ -51,10 +51,10 @@ WORKER_1_MAC=52:54:00:d7:99:c7
 
 function up {
     echo ${INSTALLER}
-    cp $PWD/../../../build/initramfs.xz ./matchbox/assets/
-    cp $PWD/../../../build/vmlinuz ./matchbox/assets/
+    cp $PWD/../../../${ARTIFACTS}/initramfs.xz ./matchbox/assets/
+    cp $PWD/../../../${ARTIFACTS}/vmlinuz ./matchbox/assets/
     cd ./matchbox/assets
-    $PWD/../../../../../build/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
+    $PWD/../../../../../${ARTIFACTS}/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
     yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i init.yaml cluster.network.cni.name 'custom'
     yq w -i init.yaml cluster.network.cni.urls[+] "${CNI_URL}"
@@ -81,7 +81,7 @@ function down {
 }
 
 function workspace {
-  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../build/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.0
+  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../${ARTIFACTS}/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.0
 }
 
 main $@

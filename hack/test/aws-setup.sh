@@ -15,11 +15,11 @@ export AWS_ACCESS_KEY_ID=$(awk '/aws_access_key_id/ { print $NF }' ${TMP}/svc-ac
 export AWS_SECRET_ACCESS_KEY=$(awk '/aws_secret_access_key/ { print $NF }' ${TMP}/svc-acct.ini)
 
 ## Untar image
-tar -C ${TMP} -xf ./build/aws.tar.gz
+tar -C ${TMP} -xf ${ARTIFACTS}/aws.tar.gz
 
 # Upload Image
 echo "uploading image to s3"
-aws s3 cp --quiet ${TMP}/aws.raw s3://${BUCKET}/aws-${TAG}.raw
+aws s3 cp --quiet ${TMP}/disk.raw s3://${BUCKET}/aws-${TAG}.raw
 
 # Create snapshot from image
 echo "importing snapshot from s3"
