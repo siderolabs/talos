@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/kubernetes-incubator/bootkube/pkg/asset"
 	"github.com/kubernetes-incubator/bootkube/pkg/tlsutil"
@@ -26,6 +27,63 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
+
+// DefaultPodSecurityPolicy is the default PSP.
+var DefaultPodSecurityPolicy = []byte(`---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: psp:privileged
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - privileged
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: psp:privileged
+roleRef:
+  kind: ClusterRole
+  name: psp:privileged
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+# Authorize all service accounts in a namespace:
+- kind: Group
+  apiGroup: rbac.authorization.k8s.io
+  name: system:serviceaccounts
+# Authorize all authenticated users in a namespace:
+- kind: Group
+  apiGroup: rbac.authorization.k8s.io
+  name: system:authenticated
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: privileged
+spec:
+  fsGroup:
+    rule: RunAsAny
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+  allowedCapabilities:
+  - '*'
+  hostPID: true
+  hostIPC: true
+  hostNetwork: true
+  hostPorts:
+  - min: 1
+    max: 65536
+`)
 
 // Bootkube implements the Service interface. It serves as the concrete type with
 // the required methods.
@@ -191,6 +249,10 @@ func generateAssets(config runtime.Configurator) (err error) {
 	}
 
 	if err = as.WriteFiles(constants.AssetsDirectory); err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filepath.Join(constants.AssetsDirectory, "manifests", "psp.yaml"), DefaultPodSecurityPolicy, 0600); err != nil {
 		return err
 	}
 
