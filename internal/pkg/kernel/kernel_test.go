@@ -167,6 +167,21 @@ func (suite *KernelSuite) TestCmdlineString() {
 	}
 }
 
+func (suite *KernelSuite) TestCmdlineStrings() {
+	for _, t := range []struct {
+		params   string
+		expected []string
+	}{
+		{
+			"boot=xyz root=/dev/abc nogui console=tty0 console=ttyS0,9600",
+			[]string{"boot=xyz", "root=/dev/abc", "nogui", "console=tty0", "console=ttyS0,9600"},
+		},
+	} {
+		cmdline := NewCmdline(t.params)
+		suite.Assert().Equal(t.expected, cmdline.Strings())
+	}
+}
+
 func (suite *KernelSuite) TestParameterFirst() {
 	for _, t := range []struct {
 		value    *Parameter

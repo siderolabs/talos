@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
@@ -51,7 +52,12 @@ func (i *ISO) Mode() runtime.Mode {
 	return runtime.Interactive
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
+// ExternalIPs implements the runtime.Platform interface.
 func (i *ISO) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (i *ISO) KernelArgs() kernel.Parameters {
+	return nil
 }

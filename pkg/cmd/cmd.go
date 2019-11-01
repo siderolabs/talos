@@ -17,14 +17,20 @@ import (
 const MaxStderrLen = 4096
 
 // Run executes a command.
-func Run(name string, args ...string) error {
+func Run(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
+
+	stdout, err := circbuf.NewBuffer(MaxStderrLen)
+	if err != nil {
+		return stdout.String(), err
+	}
 
 	stderr, err := circbuf.NewBuffer(MaxStderrLen)
 	if err != nil {
-		return err
+		return stdout.String(), err
 	}
 
+	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
@@ -35,12 +41,12 @@ func Run(name string, args ...string) error {
 	}
 
 	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("%s: %s", err, stderr.String())
+		return stdout.String(), fmt.Errorf("%s: %s", err, stderr.String())
 	}
 
 	if err = reaper.WaitWrapper(usingReaper, notifyCh, cmd); err != nil {
-		return fmt.Errorf("%s: %s", err, stderr.String())
+		return stdout.String(), fmt.Errorf("%s: %s", err, stderr.String())
 	}
 
-	return nil
+	return stdout.String(), nil
 }

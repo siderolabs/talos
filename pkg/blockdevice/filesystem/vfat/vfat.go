@@ -20,5 +20,7 @@ func MakeFS(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	return cmd.Run("mkfs.vfat", args...)
+	_, err := cmd.Run("mkfs.vfat", args...)
+
+	return err
 }

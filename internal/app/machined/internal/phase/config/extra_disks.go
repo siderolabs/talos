@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/talos/cmd/installer/pkg/manifest"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/runtime"

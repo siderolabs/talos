@@ -6,6 +6,8 @@ package runtime
 
 import (
 	"net"
+
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 )
 
 // Platform is an interface describing a platform.
@@ -15,4 +17,5 @@ type Platform interface {
 	Hostname() ([]byte, error)
 	Mode() Mode
 	ExternalIPs() ([]net.IP, error)
+	KernelArgs() kernel.Parameters
 }

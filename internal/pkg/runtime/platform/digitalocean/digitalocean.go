@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -27,22 +28,22 @@ const (
 type DigitalOcean struct{}
 
 // Name implements the platform.Platform interface.
-func (a *DigitalOcean) Name() string {
+func (d *DigitalOcean) Name() string {
 	return "digital-ocean"
 }
 
 // Configuration implements the platform.Platform interface.
-func (a *DigitalOcean) Configuration() ([]byte, error) {
+func (d *DigitalOcean) Configuration() ([]byte, error) {
 	return download.Download(DigitalOceanUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.
-func (a *DigitalOcean) Mode() runtime.Mode {
+func (d *DigitalOcean) Mode() runtime.Mode {
 	return runtime.Cloud
 }
 
-// Hostname gets the hostname from the DigitalOcean metadata endpoint.
-func (a *DigitalOcean) Hostname() (hostname []byte, err error) {
+// Hostname implements the platform.Platform interface.
+func (d *DigitalOcean) Hostname() (hostname []byte, err error) {
 	resp, err := http.Get(DigitalOceanHostnameEndpoint)
 	if err != nil {
 		return
@@ -57,8 +58,8 @@ func (a *DigitalOcean) Hostname() (hostname []byte, err error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
-func (a *DigitalOcean) ExternalIPs() (addrs []net.IP, err error) {
+// ExternalIPs implements the runtime.Platform interface.
+func (d *DigitalOcean) ExternalIPs() (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request
@@ -88,4 +89,11 @@ func (a *DigitalOcean) ExternalIPs() (addrs []net.IP, err error) {
 	addrs = append(addrs, net.ParseIP(string(body)))
 
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (d *DigitalOcean) KernelArgs() kernel.Parameters {
+	return []*kernel.Parameter{
+		kernel.NewParameter("console").Append("ttyS0"),
+	}
 }

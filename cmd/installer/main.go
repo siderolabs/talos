@@ -2,13 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package installer_test
+package main
 
-import "testing"
+import "github.com/talos-systems/talos/cmd/installer/cmd"
 
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
+func main() {
+	cmd.Execute()
 }
