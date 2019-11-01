@@ -8,7 +8,7 @@ import (
 	"errors"
 
 	"github.com/talos-systems/talos/internal/pkg/event"
-	installer "github.com/talos-systems/talos/internal/pkg/install"
+	"github.com/talos-systems/talos/internal/pkg/install"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
@@ -32,7 +32,7 @@ func (b *Metal) Initialize(r runtime.Runtime) (err error) {
 			return errors.New("an install image is required")
 		}
 
-		if err = installer.Install(r); err != nil {
+		if err = install.RunInstallerContainer(r); err != nil {
 			return err
 		}
 

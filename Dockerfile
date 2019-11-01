@@ -276,6 +276,14 @@ ENTRYPOINT ["/sbin/init"]
 # The installer target generates an image that can be used to install Talos to
 # various environments.
 
+FROM base AS installer-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+WORKDIR /src/cmd/installer
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /installer
+RUN chmod +x /installer
+
 FROM alpine:3.8 AS installer
 RUN apk add --no-cache --update \
     bash \
@@ -285,16 +293,15 @@ RUN apk add --no-cache --update \
     syslinux \
     util-linux \
     xfsprogs
-COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
-COPY hack/installer/template.ovf /template.ovf
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=rootfs /usr/lib/syslinux/ /usr/lib/syslinux
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
-COPY --from=osctl-linux-build /osctl-linux-amd64 /bin/osctl
+COPY --from=installer-build /installer /bin/installer
+RUN ln -s /bin/installer /bin/osctl
 ARG TAG
 ENV VERSION ${TAG}
-LABEL "alpha.talos.dev/version"="${VERSION}"
-ENTRYPOINT ["entrypoint.sh"]
+LABEL "alpha.talos.io/version"="${VERSION}"
+ENTRYPOINT ["/bin/installer"]
 ONBUILD RUN apk add --no-cache --update \
     cpio \
     squashfs-tools \

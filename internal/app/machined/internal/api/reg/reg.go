@@ -54,7 +54,7 @@ type Registrator struct {
 
 // NewRegistrator builds new Registrator instance
 func NewRegistrator(config runtime.Configurator) *Registrator {
-	platform, err := platform.NewPlatform()
+	platform, err := platform.CurrentPlatform()
 	if err != nil {
 		// should never happen
 		log.Printf("failed discovering platform: %v", err)

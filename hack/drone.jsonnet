@@ -183,7 +183,11 @@ local talos = Step("talos", depends_on=[rootfs]);
 local golint = Step("lint-go", depends_on=[setup_ci]);
 local protobuflint = Step("lint-protobuf", depends_on=[setup_ci]);
 local markdownlint = Step("lint-markdown", depends_on=[setup_ci]);
-local image_test = Step("image-test", depends_on=[installer]);
+local image_aws = Step("image-aws", depends_on=[installer]);
+local image_azure = Step("image-azure", depends_on=[installer]);
+local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
+local image_gcp = Step("image-gcp", depends_on=[installer]);
+local image_vmware = Step("image-vmware", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs, talos]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
 local basic_integration = Step("basic-integration", image="golang:1.13", depends_on=[unit_tests, talos, osctl_linux, integration_test]);
@@ -241,7 +245,11 @@ local default_steps = [
   golint,
   protobuflint,
   markdownlint,
-  image_test,
+  image_aws,
+  image_azure,
+  image_digital_ocean,
+  image_gcp,
+  image_vmware,
   unit_tests,
   unit_tests_race,
   coverage,
@@ -275,11 +283,6 @@ local creds_env_vars = {
     AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
 };
 
-local image_aws = Step("image-aws", depends_on=[installer]);
-local image_azure = Step("image-azure", depends_on=[installer]);
-local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
-local image_gcp = Step("image-gcp", depends_on=[installer]);
-local image_vmware = Step("image-vmware", depends_on=[installer]);
 local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_vars);
 local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
@@ -290,9 +293,6 @@ local e2e_integration_gcp = Step("e2e-integration-gcp", target="e2e-integration"
 
 local e2e_steps = default_steps + [
   capi,
-  image_aws,
-  //image_azure,
-  image_gcp,
   push_image_aws,
   //push_image_azure,
   push_image_gcp,

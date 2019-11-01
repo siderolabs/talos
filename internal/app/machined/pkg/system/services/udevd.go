@@ -27,11 +27,13 @@ func (c *Udevd) ID(config runtime.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (c *Udevd) PreFunc(ctx context.Context, config runtime.Configurator) error {
-	return cmd.Run(
+	_, err := cmd.Run(
 		"/sbin/udevadm",
 		"hwdb",
 		"--update",
 	)
+
+	return err
 }
 
 // PostFunc implements the Service interface.

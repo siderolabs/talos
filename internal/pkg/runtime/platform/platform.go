@@ -23,10 +23,10 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// NewPlatform is a helper func for discovering the current platform.
+// CurrentPlatform is a helper func for discovering the current platform.
 //
 // nolint: gocyclo
-func NewPlatform() (p runtime.Platform, err error) {
+func CurrentPlatform() (p runtime.Platform, err error) {
 	var platform string
 	if p := kernel.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
 		platform = *p
@@ -40,6 +40,16 @@ func NewPlatform() (p runtime.Platform, err error) {
 		return nil, errors.New("failed to determine platform")
 	}
 
+	return newPlatform(platform)
+}
+
+// NewPlatform initializes and returns a runtime.Platform.
+func NewPlatform(platform string) (p runtime.Platform, err error) {
+	return newPlatform(platform)
+}
+
+// nolint: gocyclo
+func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "aws":
 		p = &aws.AWS{}
@@ -60,7 +70,7 @@ func NewPlatform() (p runtime.Platform, err error) {
 	case "vmware":
 		p = &vmware.VMware{}
 	default:
-		return nil, fmt.Errorf("platform not supported: %s", platform)
+		return nil, fmt.Errorf("unknown platform: %q", platform)
 	}
 
 	return p, nil
