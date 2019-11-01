@@ -19,10 +19,9 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// Install performs an installation via the installer container.
-//
-// nolint: gocyclo
-func Install(r runtime.Runtime) error {
+// RunInstallerContainer performs an installation via the installer container.
+//nolint: gocyclo
+func RunInstallerContainer(r runtime.Runtime) error {
 	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
@@ -52,7 +51,7 @@ func Install(r runtime.Runtime) error {
 	}
 
 	args := []string{
-		"/bin/osctl",
+		"/bin/installer",
 		"install",
 		"--disk=" + r.Config().Machine().Install().Disk(),
 		"--platform=" + r.Platform().Name(),

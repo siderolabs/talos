@@ -117,7 +117,7 @@ func Install(base string, config interface{}) (err error) {
 		}
 	}
 
-	if err = cmd.Run("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
+	if _, err = cmd.Run("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
 		return fmt.Errorf("failed to install extlinux: %w", err)
 	}
 

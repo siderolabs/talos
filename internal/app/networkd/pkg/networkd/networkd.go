@@ -330,7 +330,7 @@ func (n *Networkd) decideHostname() (hostname string, domainname string, address
 	// Platform
 	var p runtime.Platform
 
-	p, err = platform.NewPlatform()
+	p, err = platform.CurrentPlatform()
 	if err == nil {
 		var pHostname []byte
 

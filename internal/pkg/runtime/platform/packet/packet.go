@@ -7,6 +7,7 @@ package packet
 import (
 	"net"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -39,7 +40,14 @@ func (p *Packet) Hostname() (hostname []byte, err error) {
 	return nil, nil
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
+// ExternalIPs implements the runtime.Platform interface.
 func (p *Packet) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (p *Packet) KernelArgs() kernel.Parameters {
+	return []*kernel.Parameter{
+		kernel.NewParameter("console").Append("ttyS1,115200n8"),
+	}
 }

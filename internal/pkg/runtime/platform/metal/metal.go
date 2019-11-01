@@ -27,12 +27,12 @@ const (
 type Metal struct{}
 
 // Name implements the platform.Platform interface.
-func (b *Metal) Name() string {
+func (m *Metal) Name() string {
 	return "metal"
 }
 
 // Configuration implements the platform.Platform interface.
-func (b *Metal) Configuration() ([]byte, error) {
+func (m *Metal) Configuration() ([]byte, error) {
 	var option *string
 	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("no config option was found")
@@ -47,17 +47,17 @@ func (b *Metal) Configuration() ([]byte, error) {
 }
 
 // Hostname implements the platform.Platform interface.
-func (b *Metal) Hostname() (hostname []byte, err error) {
+func (m *Metal) Hostname() (hostname []byte, err error) {
 	return nil, nil
 }
 
 // Mode implements the platform.Platform interface.
-func (b *Metal) Mode() runtime.Mode {
+func (m *Metal) Mode() runtime.Mode {
 	return runtime.Metal
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
-func (b *Metal) ExternalIPs() (addrs []net.IP, err error) {
+// ExternalIPs implements the platform.Platform interface.
+func (m *Metal) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
 }
 
@@ -86,4 +86,9 @@ func readConfigFromISO() (b []byte, err error) {
 	}
 
 	return b, nil
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (m *Metal) KernelArgs() kernel.Parameters {
+	return nil
 }

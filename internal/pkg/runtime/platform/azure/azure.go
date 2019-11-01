@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -46,7 +47,7 @@ func (a *Azure) Configuration() ([]byte, error) {
 	return download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
 }
 
-// Hostname gets the hostname from the Azure metadata endpoint.
+// Hostname implements the platform.Platform interface.
 func (a *Azure) Hostname() (hostname []byte, err error) {
 	var (
 		req  *http.Request
@@ -82,7 +83,7 @@ func (a *Azure) Mode() runtime.Mode {
 	return runtime.Cloud
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
+// ExternalIPs implements the runtime.Platform interface.
 func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
 	var (
 		body []byte
@@ -143,4 +144,13 @@ func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
 	}
 
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (a *Azure) KernelArgs() kernel.Parameters {
+	return []*kernel.Parameter{
+		kernel.NewParameter("console").Append("ttyS0,115200n8"),
+		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
+		kernel.NewParameter("rootdelay").Append("300"),
+	}
 }

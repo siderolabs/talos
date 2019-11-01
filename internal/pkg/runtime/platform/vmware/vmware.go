@@ -75,7 +75,15 @@ func (v *VMware) Mode() runtime.Mode {
 	return runtime.Cloud
 }
 
-// ExternalIPs provides any external addresses assigned to the instance
+// ExternalIPs implements the runtime.Platform interface.
 func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
 	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (v *VMware) KernelArgs() kernel.Parameters {
+	return []*kernel.Parameter{
+		kernel.NewParameter("console").Append("ttyS0"),
+		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
+	}
 }

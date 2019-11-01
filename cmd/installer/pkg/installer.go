@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package installer
+package pkg
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
-	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
+	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
+	"github.com/talos-systems/talos/cmd/installer/pkg/manifest"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/mount"

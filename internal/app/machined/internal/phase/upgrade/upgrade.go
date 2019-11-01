@@ -45,7 +45,7 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 		r = runtime.NewRuntime(r.Platform(), runtime.Configurator(cfg), runtime.Upgrade)
 	}
 
-	if err = install.Install(r); err != nil {
+	if err = install.RunInstallerContainer(r); err != nil {
 		return err
 	}
 

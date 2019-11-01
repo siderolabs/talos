@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/installer"
+	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
@@ -67,14 +67,14 @@ func (i *Interactive) Initialize(r runtime.Runtime) (err error) {
 	cmdline.Append(constants.KernelParamPlatform, r.Platform().Name())
 	cmdline.Append(constants.KernelParamConfig, endpoint)
 
-	var inst *installer.Installer
+	var installer *pkg.Installer
 
-	inst, err = installer.NewInstaller(cmdline, r.Config().Machine().Install())
+	installer, err = pkg.NewInstaller(cmdline, r.Config().Machine().Install())
 	if err != nil {
 		return err
 	}
 
-	if err = inst.Install(r.Sequence()); err != nil {
+	if err = installer.Install(r.Sequence()); err != nil {
 		return fmt.Errorf("failed to install: %w", err)
 	}
 
