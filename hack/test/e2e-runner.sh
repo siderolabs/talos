@@ -29,7 +29,6 @@ e2e_run() {
          --net=integration \
          --entrypoint=bash \
          --mount type=bind,source=${TMP},target=${TMP} \
-         --mount type=bind,source=${PWD}/hack/dev/manifests,target=/manifests \
          --mount type=bind,source=${PWD}/hack/test/manifests,target=/e2emanifests \
          -v ${OSCTL}:/bin/osctl:ro \
          -e KUBECONFIG=${KUBECONFIG} \
