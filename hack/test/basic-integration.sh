@@ -33,7 +33,6 @@ run() {
          --net=integration \
          --entrypoint=bash \
          --mount type=bind,source=${TMP},target=${TMP} \
-         --mount type=bind,source=${PWD}/hack/dev/manifests,target=/manifests \
          -v ${OSCTL}:/bin/osctl:ro \
          -e KUBECONFIG=${KUBECONFIG} \
          -e TALOSCONFIG=${TALOSCONFIG} \
