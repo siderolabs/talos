@@ -86,9 +86,11 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	// Set the mounts.
 	mounts := []specs.Mount{
+		// TODO(andrewrynhard): Remove this once the kubeconfig API is owned by machined.
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
+		// TODO(andrewrynhard): Remove this once the logs API is owned by machined.
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},

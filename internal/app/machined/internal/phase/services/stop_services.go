@@ -5,27 +5,49 @@
 package services
 
 import (
+	"context"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // StopServices represents the StopServices task.
-type StopServices struct{}
+type StopServices struct {
+	upgrade bool
+}
 
 // NewStopServicesTask initializes and returns an Services task.
-func NewStopServicesTask() phase.Task {
-	return &StopServices{}
+func NewStopServicesTask(upgrade bool) phase.Task {
+	return &StopServices{
+		upgrade: upgrade,
+	}
 }
 
 // TaskFunc returns the runtime function.
 func (task *StopServices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
-	return func(r runtime.Runtime) error {
-		return task.standard()
-	}
+	return task.standard
 }
 
-func (task *StopServices) standard() (err error) {
+func (task *StopServices) standard(r runtime.Runtime) (err error) {
+	if task.upgrade {
+		services := []string{"containerd", "networkd", "ntpd", "udevd"}
+
+		if r.Config().Machine().Type() == machine.Bootstrap || r.Config().Machine().Type() == machine.ControlPlane {
+			services = append(services, "etcd", "trustd")
+		}
+
+		for _, service := range services {
+			if err = system.Services(nil).Stop(context.Background(), service); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	system.Services(nil).Shutdown()
+
 	return nil
 }

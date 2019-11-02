@@ -155,7 +155,7 @@ func (d *Sequencer) Shutdown() error {
 	phaserunner.Add(
 		phase.NewPhase(
 			"stop services",
-			services.NewStopServicesTask(),
+			services.NewStopServicesTask(false),
 		),
 	)
 
@@ -199,16 +199,12 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 			upgrade.NewLeaveEtcdTask(),
 		),
 		phase.NewPhase(
-			"stop services",
-			services.NewStopNonCrucialServicesTask(),
-		),
-		phase.NewPhase(
 			"kill all tasks",
 			kubernetes.NewKillKubernetesTasksTask(),
 		),
 		phase.NewPhase(
-			"stop containerd",
-			services.NewStopContainerdTask(),
+			"stop services",
+			services.NewStopServicesTask(true),
 		),
 		phase.NewPhase(
 			"remove submounts",
