@@ -111,6 +111,9 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 		runner.WithOCISpecOpts(
 			oci.WithCapabilities([]string{
 				strings.ToUpper("CAP_" + capability.CAP_SYS_PTRACE.String()),
+				strings.ToUpper("CAP_" + capability.CAP_DAC_READ_SEARCH.String()),
+				strings.ToUpper("CAP_" + capability.CAP_DAC_OVERRIDE.String()),
+				strings.ToUpper("CAP_" + capability.CAP_SYSLOG.String()),
 			}),
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithMounts(mounts),
