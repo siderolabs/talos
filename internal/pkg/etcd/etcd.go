@@ -13,9 +13,9 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// NewLocalClient initializes and returns an etcd client configured to talk to
+// NewClient initializes and returns an etcd client configured to talk to
 // a local endpoint.
-func NewLocalClient() (client *clientv3.Client, err error) {
+func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 	tlsInfo := transport.TLSInfo{
 		CertFile:      constants.KubernetesEtcdPeerCert,
 		KeyFile:       constants.KubernetesEtcdPeerKey,
@@ -28,7 +28,7 @@ func NewLocalClient() (client *clientv3.Client, err error) {
 	}
 
 	client, err = clientv3.New(clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
 		TLS:         tlsConfig,
 	})

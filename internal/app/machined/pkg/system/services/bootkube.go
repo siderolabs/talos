@@ -103,7 +103,7 @@ func (b *Bootkube) ID(config runtime.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
-	client, err := etcd.NewLocalClient()
+	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 
 // PostFunc implements the Service interface.
 func (b *Bootkube) PostFunc(config runtime.Configurator) (err error) {
-	client, err := etcd.NewLocalClient()
+	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
 	if err != nil {
 		return err
 	}

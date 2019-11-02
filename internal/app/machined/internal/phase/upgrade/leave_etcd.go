@@ -9,15 +9,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
+	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
-
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
 )
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
@@ -43,30 +39,15 @@ func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubernetesEtcdPeerCert,
-		KeyFile:       constants.KubernetesEtcdPeerKey,
-		TrustedCAFile: constants.KubernetesEtcdCACert,
-	}
-
-	tlsConfig, err := tlsInfo.ClientConfig()
-	if err != nil {
-		return err
-	}
-
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-		TLS:         tlsConfig,
-	})
+	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
 	if err != nil {
 		return err
 	}
 
 	// nolint: errcheck
-	defer cli.Close()
+	defer client.Close()
 
-	resp, err := cli.MemberList(context.Background())
+	resp, err := client.MemberList(context.Background())
 	if err != nil {
 		return err
 	}
@@ -85,7 +66,7 @@ func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 
 	log.Println("leaving etcd cluster")
 
-	_, err = cli.MemberRemove(context.Background(), *id)
+	_, err = client.MemberRemove(context.Background(), *id)
 	if err != nil {
 		return err
 	}
