@@ -21,12 +21,12 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -265,29 +265,15 @@ func generatePKI(config runtime.Configurator) (err error) {
 }
 
 func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
-	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubernetesEtcdPeerCert,
-		KeyFile:       constants.KubernetesEtcdPeerKey,
-		TrustedCAFile: constants.KubernetesEtcdCACert,
-	}
-
-	tlsConfig, err := tlsInfo.ClientConfig()
+	client, err := etcd.NewClient(endpoints)
 	if err != nil {
 		return nil, err
 	}
 
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   endpoints,
-		DialTimeout: 5 * time.Second,
-		TLS:         tlsConfig,
-	})
-	if err != nil {
-		return nil, err
-	}
 	// nolint: errcheck
-	defer cli.Close()
+	defer client.Close()
 
-	resp, err := cli.MemberAdd(context.Background(), addrs)
+	resp, err := client.MemberAdd(context.Background(), addrs)
 	if err != nil {
 		return nil, err
 	}
