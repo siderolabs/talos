@@ -5,14 +5,17 @@
 package blkpg
 
 import (
+	"fmt"
 	"os"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // InformKernelOfAdd invokes the BLKPG_ADD_PARTITION ioctl.
@@ -65,18 +68,32 @@ func inform(f *os.File, partition table.Partition, op int32) (err error) {
 		Data:    (*byte)(unsafe.Pointer(data)),
 	}
 
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		f.Fd(),
-		unix.BLKPG,
-		uintptr(unsafe.Pointer(arg)),
-	)
-	if errno != 0 {
-		return errno
-	}
+	err = retry.Constant(10*time.Second, retry.WithUnits(500*time.Millisecond)).Retry(func() error {
+		_, _, errno := syscall.Syscall(
+			syscall.SYS_IOCTL,
+			f.Fd(),
+			unix.BLKPG,
+			uintptr(unsafe.Pointer(arg)),
+		)
 
-	if err = f.Sync(); err != nil {
-		return err
+		if errno != 0 {
+			switch errno {
+			case unix.EBUSY:
+				return retry.ExpectedError(err)
+			default:
+				return retry.UnexpectedError(err)
+			}
+		}
+
+		if err = f.Sync(); err != nil {
+			return retry.UnexpectedError(err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to inform kernel: %w", err)
 	}
 
 	return nil
