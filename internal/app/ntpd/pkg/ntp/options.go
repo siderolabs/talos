@@ -13,10 +13,10 @@ import (
 type Option func(*NTP) error
 
 const (
-	// MaxPoll is the 'recommended' interval for querying a time server
-	MaxPoll = 1024
-	// MinPoll is the minimum time allowed for a client to query a time server
-	MinPoll = 4
+	// MaxAllowablePoll is the 'recommended' interval for querying a time server
+	MaxAllowablePoll = 1024
+	// MinAllowablePoll is the minimum time allowed for a client to query a time server
+	MinAllowablePoll = 4
 )
 
 func defaultOptions() *NTP {
@@ -24,9 +24,8 @@ func defaultOptions() *NTP {
 	// http://www.ntp.org/ntpfaq/NTP-s-algo.htm#AEN2082
 	return &NTP{
 		Server:  "pool.ntp.org",
-		MaxPoll: MaxPoll * time.Second,
+		MaxPoll: MaxAllowablePoll * time.Second,
 		MinPoll: 64 * time.Second,
-		Retry:   3,
 	}
 }
 
@@ -41,9 +40,9 @@ func WithServer(o string) Option {
 // WithMaxPoll configures the ntp client MaxPoll interval
 func WithMaxPoll(o int) Option {
 	return func(n *NTP) (err error) {
-		// TODO add in constraints around min/max values from ntp doc
-		if o > MaxPoll {
-			return fmt.Errorf("MaxPoll(%d) is larger than maximum allowed value(%d)", o, MaxPoll)
+		// TODO: Add in constraints around min/max values from NTP doc.
+		if o > MaxAllowablePoll {
+			return fmt.Errorf("MaxPoll(%d) is larger than maximum allowed value(%d)", o, MaxAllowablePoll)
 		}
 		n.MaxPoll = time.Duration(o) * time.Second
 		return err
@@ -53,18 +52,10 @@ func WithMaxPoll(o int) Option {
 // WithMinPoll configures the ntp client MinPoll interval
 func WithMinPoll(o int) Option {
 	return func(n *NTP) (err error) {
-		if o < MinPoll {
-			return fmt.Errorf("MinPoll(%d) is smaller than minimum allowed value(%d)", o, MinPoll)
+		if o < MinAllowablePoll {
+			return fmt.Errorf("MinPoll(%d) is smaller than minimum allowed value(%d)", o, MinAllowablePoll)
 		}
 		n.MinPoll = time.Duration(o) * time.Second
-		return err
-	}
-}
-
-// WithRetry configures the ntp client maximum number of retries
-func WithRetry(o int) Option {
-	return func(n *NTP) (err error) {
-		n.Retry = o
 		return err
 	}
 }
