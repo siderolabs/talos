@@ -31,7 +31,7 @@ func (task *Platform) runtime(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err = i.Initialize(r.Platform(), r.Config().Machine().Install()); err != nil {
+	if err = i.Initialize(r); err != nil {
 		return err
 	}
 

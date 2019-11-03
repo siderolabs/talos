@@ -7,7 +7,6 @@ package install
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -16,11 +15,12 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Install performs an installation via the installer container.
-func Install(ref string, disk string, platform string) error {
+func Install(r runtime.Runtime) error {
 	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
@@ -28,9 +28,7 @@ func Install(ref string, disk string, platform string) error {
 		return err
 	}
 
-	log.Printf("running install via %q", ref)
-
-	image, err := client.Pull(ctx, ref, []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+	image, err := client.Pull(ctx, r.Config().Machine().Install().Image(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
 	if err != nil {
 		return err
 	}
@@ -46,9 +44,15 @@ func Install(ref string, disk string, platform string) error {
 		return fmt.Errorf("no config option was found")
 	}
 
+	args := []string{"/bin/entrypoint.sh", "install", "-d", r.Config().Machine().Install().Disk(), "-p", r.Platform().Name(), "-u", *config}
+
+	for _, arg := range r.Config().Machine().Install().ExtraKernelArgs() {
+		args = append(args, []string{"-e", arg}...)
+	}
+
 	specOpts := []oci.SpecOpts{
 		oci.WithImageConfig(image),
-		oci.WithProcessArgs([]string{"/bin/entrypoint.sh", "install", "-d", disk, "-p", platform, "-u", *config}...),
+		oci.WithProcessArgs(args...),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithMounts(mounts),

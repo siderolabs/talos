@@ -10,13 +10,12 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/container"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/interactive"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer/metal"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Initializer defines a process for initializing the system based on the
 // environment it is in.
 type Initializer interface {
-	Initialize(runtime.Platform, machine.Install) error
+	Initialize(runtime.Runtime) error
 }
 
 // New initializes and returns and Initializer based on the runtime mode.
