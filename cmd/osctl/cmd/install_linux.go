@@ -8,15 +8,12 @@ package cmd
 import (
 	"log"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/internal/pkg/installer"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
-	machineconfig "github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
@@ -40,46 +37,20 @@ var installCmd = &cobra.Command{
 			err    error
 		)
 
-		platform, err := platform.NewPlatform()
-		if err == nil {
-			if !strings.EqualFold(platform.Name(), platformArg) {
-				log.Printf("platform mismatch (%s != %s)", platform.Name(), platformArg)
-			} else {
-				var b []byte
-				b, err = platform.Configuration()
-				if err != nil {
-					log.Fatal(err)
-				}
-				var content machineconfig.Content
-				content, err = machineconfig.FromBytes(b)
-				if err != nil {
-					log.Fatal(err)
-				}
-				config, err = machineconfig.New(content)
-				if err != nil {
-					log.Fatal(err)
-				}
-				extraKernelArgs = append(extraKernelArgs, config.Machine().Install().ExtraKernelArgs()...)
-			}
-		}
-
-		if config == nil {
-			log.Printf("failed to source config from platform; falling back to defaults")
-			config = &v1alpha1.Config{
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
-						Version: constants.DefaultKubernetesVersion,
-					},
+		config = &v1alpha1.Config{
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Version: constants.DefaultKubernetesVersion,
 				},
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineInstall: &v1alpha1.InstallConfig{
-						InstallForce:           true,
-						InstallBootloader:      bootloader,
-						InstallDisk:            disk,
-						InstallExtraKernelArgs: extraKernelArgs,
-					},
+			},
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineInstall: &v1alpha1.InstallConfig{
+					InstallForce:           true,
+					InstallBootloader:      bootloader,
+					InstallDisk:            disk,
+					InstallExtraKernelArgs: extraKernelArgs,
 				},
-			}
+			},
 		}
 
 		cmdline := kernel.NewCmdline("")
