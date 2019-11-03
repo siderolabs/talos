@@ -43,7 +43,7 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 		return fmt.Errorf("no config option was found")
 	}
 
-	if err = install.Install(task.ref, task.devname, r.Platform().Name()); err != nil {
+	if err = install.Install(r); err != nil {
 		return err
 	}
 

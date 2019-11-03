@@ -13,7 +13,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Metal represents an initializer that performs a full installation to a
@@ -21,7 +20,7 @@ import (
 type Metal struct{}
 
 // Initialize implements the Initializer interface.
-func (b *Metal) Initialize(platform runtime.Platform, install machine.Install) (err error) {
+func (b *Metal) Initialize(r runtime.Runtime) (err error) {
 	// Attempt to discover a previous installation
 	// An err case should only happen if no partitions
 	// with matching labels were found
@@ -29,11 +28,11 @@ func (b *Metal) Initialize(platform runtime.Platform, install machine.Install) (
 
 	mountpoints, err = owned.MountPointsFromLabels()
 	if err != nil {
-		if install.Image() == "" {
+		if r.Config().Machine().Install().Image() == "" {
 			return errors.New("an install image is required")
 		}
 
-		if err = installer.Install(install.Image(), install.Disk(), platform.Name()); err != nil {
+		if err = installer.Install(r); err != nil {
 			return err
 		}
 
