@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"log"
 	"syscall"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/services/tasks/v1"
+	"github.com/containerd/containerd/api/types/task"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"golang.org/x/sync/errgroup"
 
@@ -56,21 +59,41 @@ func (task *KillKubernetesTasks) standard() (err error) {
 		return err
 	}
 
+	sigtermCtx, sigtermCancel := context.WithCancel(ctx)
+
+	defer sigtermCancel()
+
 	var g errgroup.Group
 
 	for _, task := range response.Tasks {
 		task := task // https://golang.org/doc/faq#closures_and_goroutines
-		log.Printf("killing task %s", task.ID)
+
 		g.Go(func() error {
-			if _, err = s.Kill(ctx, &tasks.KillRequest{ContainerID: task.ID, Signal: uint32(syscall.SIGTERM), All: true}); err != nil {
-				return fmt.Errorf("error killing task: %w", err)
-			}
-			// TODO(andrewrynhard): Send SIGKILL on a timeout threshold.
-			if _, err = s.Wait(ctx, &tasks.WaitRequest{ContainerID: task.ID}); err != nil {
-				return fmt.Errorf("error waiting on task: %w", err)
-			}
-			if _, err = s.Delete(ctx, &tasks.DeleteTaskRequest{ContainerID: task.ID}); err != nil {
-				return fmt.Errorf("error deleting task: %w", err)
+			done := make(chan bool, 1)
+
+			defer close(done)
+
+			// Make a best effort attempt at killing the task gracefully.
+			go func() {
+				if err := stop(sigtermCtx, s, task, syscall.SIGTERM); err != nil {
+					return
+				}
+
+				done <- true
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(time.Minute):
+				// Cancel the SIGTERM attempt.
+				sigtermCancel()
+
+				// Delete the task forcefully after a timeout.
+				if err := stop(ctx, s, task, syscall.SIGKILL); err != nil {
+					if !errdefs.IsNotFound(err) {
+						return fmt.Errorf("error stopping task %s: %w", task.ID, err)
+					}
+				}
 			}
 
 			return nil
@@ -78,4 +101,24 @@ func (task *KillKubernetesTasks) standard() (err error) {
 	}
 
 	return g.Wait()
+}
+
+func stop(ctx context.Context, s tasks.TasksClient, task *task.Process, sig syscall.Signal) (err error) {
+	if _, err = s.Kill(ctx, &tasks.KillRequest{ContainerID: task.ID, Signal: uint32(sig), All: true}); err != nil {
+		return err
+	}
+
+	var r *tasks.WaitResponse
+
+	if r, err = s.Wait(ctx, &tasks.WaitRequest{ContainerID: task.ID}); err != nil {
+		return err
+	}
+
+	if _, err = s.Delete(ctx, &tasks.DeleteTaskRequest{ContainerID: task.ID}); err != nil {
+		return err
+	}
+
+	log.Printf("task %s %s with exit code: %d", task.ID, sig.String(), r.ExitStatus)
+
+	return nil
 }
