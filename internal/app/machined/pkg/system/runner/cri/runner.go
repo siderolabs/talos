@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/pkg/cri"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 type criRunner struct {
@@ -117,7 +118,7 @@ func (c *criRunner) findImage(ctx context.Context) error {
 //nolint: gocyclo
 func (c *criRunner) Open(upstreamCtx context.Context) error {
 	// validate the basic options
-	if c.opts.Namespace != "system" {
+	if c.opts.Namespace != constants.SystemContainerdNamespace {
 		return errors.New("namespaces not supported by CRI runner")
 	}
 
