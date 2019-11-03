@@ -56,8 +56,8 @@ func NewRunner(config runtime.Configurator) (*Runner, error) {
 		fallthrough
 	case runtime.Cloud:
 		// Setup logging to /dev/kmsg.
-		if _, err = kmsg.Setup("[talos]"); err != nil {
-			return nil, fmt.Errorf("failed to setup logging to /dev/kmsg: %w", err)
+		if err = kmsg.Setup("[talos]", true); err != nil {
+			return nil, fmt.Errorf("failed to setup logging: %w", err)
 		}
 	}
 
