@@ -6,7 +6,6 @@ package upgrade
 
 import (
 	"fmt"
-	"strings"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -44,7 +43,7 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 		return fmt.Errorf("no config option was found")
 	}
 
-	if err = install.Install(task.ref, task.devname, strings.ToLower(r.Platform().Name())); err != nil {
+	if err = install.Install(task.ref, task.devname, r.Platform().Name()); err != nil {
 		return err
 	}
 

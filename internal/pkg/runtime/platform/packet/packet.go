@@ -21,7 +21,7 @@ type Packet struct{}
 
 // Name implements the platform.Platform interface.
 func (p *Packet) Name() string {
-	return "Packet"
+	return "packet"
 }
 
 // Configuration implements the platform.Platform interface.

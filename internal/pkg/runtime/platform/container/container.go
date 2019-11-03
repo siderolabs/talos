@@ -18,7 +18,7 @@ type Container struct{}
 
 // Name implements the platform.Platform interface.
 func (c *Container) Name() string {
-	return "Container"
+	return "container"
 }
 
 // Configuration implements the platform.Platform interface.

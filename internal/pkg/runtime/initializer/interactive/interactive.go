@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"golang.org/x/sys/unix"
 
@@ -63,7 +62,7 @@ func (i *Interactive) Initialize(platform runtime.Platform, install machine.Inst
 
 	cmdline := kernel.NewDefaultCmdline()
 	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
-	cmdline.Append(constants.KernelParamPlatform, strings.ToLower(platform.Name()))
+	cmdline.Append(constants.KernelParamPlatform, platform.Name())
 	cmdline.Append(constants.KernelParamConfig, endpoint)
 
 	var inst *installer.Installer

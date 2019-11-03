@@ -34,7 +34,7 @@ type Azure struct{}
 
 // Name implements the platform.Platform interface.
 func (a *Azure) Name() string {
-	return "Azure"
+	return "azure"
 }
 
 // Configuration implements the platform.Platform interface.

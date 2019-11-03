@@ -117,7 +117,7 @@ func IsEC2() (b bool) {
 
 // Name implements the platform.Platform interface.
 func (a *AWS) Name() string {
-	return "AWS"
+	return "aws"
 }
 
 // Configuration implements the platform.Platform interface.
