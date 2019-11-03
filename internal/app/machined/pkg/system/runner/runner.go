@@ -60,7 +60,7 @@ type Option func(*Options)
 func DefaultOptions() *Options {
 	return &Options{
 		Env:                     []string{},
-		Namespace:               "system",
+		Namespace:               constants.SystemContainerdNamespace,
 		LogPath:                 constants.DefaultLogPath,
 		GracefulShutdownTimeout: 10 * time.Second,
 		ContainerdAddress:       constants.ContainerdAddress,

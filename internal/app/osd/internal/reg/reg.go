@@ -235,7 +235,7 @@ func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err e
 	var chunk chunker.Chunker
 
 	switch {
-	case req.Namespace == "system" || req.Id == "kubelet" || req.Id == "kubeadm":
+	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
 		filename := filepath.Join(constants.DefaultLogPath, filepath.Base(req.Id)+".log")
 
 		var file *os.File
