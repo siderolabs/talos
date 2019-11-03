@@ -28,7 +28,7 @@ type Metal struct{}
 
 // Name implements the platform.Platform interface.
 func (b *Metal) Name() string {
-	return "Metal"
+	return "metal"
 }
 
 // Configuration implements the platform.Platform interface.

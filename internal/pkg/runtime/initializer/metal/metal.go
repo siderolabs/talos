@@ -6,7 +6,6 @@ package metal
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/talos-systems/talos/internal/pkg/event"
 	installer "github.com/talos-systems/talos/internal/pkg/install"
@@ -34,7 +33,7 @@ func (b *Metal) Initialize(platform runtime.Platform, install machine.Install) (
 			return errors.New("an install image is required")
 		}
 
-		if err = installer.Install(install.Image(), install.Disk(), strings.ToLower(platform.Name())); err != nil {
+		if err = installer.Install(install.Image(), install.Disk(), platform.Name()); err != nil {
 			return err
 		}
 

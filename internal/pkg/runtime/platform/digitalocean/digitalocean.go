@@ -28,7 +28,7 @@ type DigitalOcean struct{}
 
 // Name implements the platform.Platform interface.
 func (a *DigitalOcean) Name() string {
-	return "Digital Ocean"
+	return "digital-ocean"
 }
 
 // Configuration implements the platform.Platform interface.

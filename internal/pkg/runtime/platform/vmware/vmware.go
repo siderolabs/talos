@@ -23,7 +23,7 @@ type VMware struct{}
 
 // Name implements the platform.Platform interface.
 func (v *VMware) Name() string {
-	return "VMware"
+	return "vmware"
 }
 
 // Configuration implements the platform.Platform interface.

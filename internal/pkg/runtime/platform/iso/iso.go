@@ -18,7 +18,7 @@ type ISO struct{}
 
 // Name implements the platform.Platform interface.
 func (i *ISO) Name() string {
-	return "ISO"
+	return "iso"
 }
 
 // Configuration implements the platform.Platform interface.

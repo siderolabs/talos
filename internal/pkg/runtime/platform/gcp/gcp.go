@@ -29,7 +29,7 @@ type GCP struct{}
 
 // Name implements the platform.Platform interface.
 func (g *GCP) Name() string {
-	return "GCP"
+	return "gcp"
 }
 
 // Configuration implements the platform.Platform interface.
