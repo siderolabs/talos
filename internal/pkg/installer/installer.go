@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -131,7 +132,7 @@ func (i *Installer) Install() (err error) {
 		return err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(constants.BootMountPoint, "installed"), []byte{}, 0400); err != nil {
+	if err = ioutil.WriteFile(filepath.Join(constants.BootMountPoint, "installed"), []byte(time.Now().String()), 0400); err != nil {
 		return err
 	}
 
