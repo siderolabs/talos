@@ -209,7 +209,7 @@ image-digital-ocean:
 		-p digital-ocean \
 		-u none \
 		-e console=ttyS0
-	@gzip $(PWD)/build/digital-ocean.raw
+	@gzip -f $(PWD)/build/digital-ocean.raw
 
 .PHONY: image-gcp
 image-gcp:
