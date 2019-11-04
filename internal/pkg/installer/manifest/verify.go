@@ -60,6 +60,9 @@ func VerifyDiskAvailability(devpath, label string) (err error) {
 		return nil
 	}
 
+	// nolint: errcheck
+	defer dev.Close()
+
 	if dev.SuperBlock != nil {
 		return fmt.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
 	}

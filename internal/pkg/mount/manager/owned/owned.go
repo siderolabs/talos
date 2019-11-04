@@ -45,6 +45,9 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 			return nil, fmt.Errorf("probe device for filesystem %s: %w", name, err)
 		}
 
+		// nolint: errcheck
+		defer dev.Close()
+
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
 		mountpoints.Set(name, mountpoint)
 	}
@@ -83,6 +86,9 @@ func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 
 			return nil, fmt.Errorf("find device with label %s: %w", name, err)
 		}
+
+		// nolint: errcheck
+		defer dev.Close()
 
 		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
 		mountpoints.Set(name, mountpoint)

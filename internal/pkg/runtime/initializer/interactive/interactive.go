@@ -33,6 +33,9 @@ func (i *Interactive) Initialize(r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to find %s iso: %w", constants.ISOFilesystemLabel, err)
 	}
 
+	// nolint: errcheck
+	defer dev.Close()
+
 	if err = unix.Mount(dev.Path, "/tmp", dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
 		return err
 	}

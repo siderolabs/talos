@@ -69,6 +69,9 @@ func readConfigFromISO() (b []byte, err error) {
 		return nil, fmt.Errorf("failed to find %s iso: %w", constants.MetalConfigISOLabel, err)
 	}
 
+	// nolint: errcheck
+	defer dev.Close()
+
 	if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
 		return nil, fmt.Errorf("failed to mount iso: %w", err)
 	}

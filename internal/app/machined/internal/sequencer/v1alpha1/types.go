@@ -186,7 +186,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		return err
 	}
 
-	devname := dev.BlockDevice.Device().Name()
+	devname := dev.Device().Name()
 
 	if err := dev.Close(); err != nil {
 		return err
