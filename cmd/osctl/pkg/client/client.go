@@ -156,7 +156,7 @@ func (c *Client) Kubeconfig(ctx context.Context) (io.Reader, <-chan error, error
 }
 
 // Stats implements the proto.OSClient interface.
-func (c *Client) Stats(ctx context.Context, namespace string, driver osapi.ContainerDriver) (reply *osapi.StatsReply, err error) {
+func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver) (reply *osapi.StatsReply, err error) {
 	reply, err = c.client.Stats(ctx, &osapi.StatsRequest{
 		Namespace: namespace,
 		Driver:    driver,
@@ -166,7 +166,7 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver osapi.Conta
 }
 
 // Containers implements the proto.OSClient interface.
-func (c *Client) Containers(ctx context.Context, namespace string, driver osapi.ContainerDriver) (reply *osapi.ContainersReply, err error) {
+func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver) (reply *osapi.ContainersReply, err error) {
 	reply, err = c.client.Containers(ctx, &osapi.ContainersRequest{
 		Namespace: namespace,
 		Driver:    driver,
@@ -176,7 +176,7 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver osapi.
 }
 
 // Restart implements the proto.OSClient interface.
-func (c *Client) Restart(ctx context.Context, namespace string, driver osapi.ContainerDriver, id string) (err error) {
+func (c *Client) Restart(ctx context.Context, namespace string, driver common.ContainerDriver, id string) (err error) {
 	_, err = c.client.Restart(ctx, &osapi.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
@@ -210,8 +210,8 @@ func (c *Client) Dmesg(ctx context.Context) (*common.DataReply, error) {
 }
 
 // Logs implements the proto.OSClient interface.
-func (c *Client) Logs(ctx context.Context, namespace string, driver osapi.ContainerDriver, id string) (stream osapi.OS_LogsClient, err error) {
-	stream, err = c.client.Logs(ctx, &osapi.LogsRequest{
+func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string) (stream machineapi.Machine_LogsClient, err error) {
+	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
 		Namespace: namespace,
 		Driver:    driver,
 		Id:        id,

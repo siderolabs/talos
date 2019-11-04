@@ -7,6 +7,7 @@ package reg
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -19,12 +20,20 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	criconstants "github.com/containerd/cri/pkg/constants"
+
+	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	"github.com/talos-systems/talos/internal/pkg/containers"
+	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
+	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/archiver"
+	"github.com/talos-systems/talos/pkg/chunker"
+	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
@@ -388,4 +397,83 @@ func (r *Registrator) Kubeconfig(empty *empty.Empty, s machineapi.Machine_Kubeco
 	in := &machine.CopyOutRequest{RootPath: constants.AdminKubeconfig}
 
 	return r.CopyOut(in, s)
+}
+
+// Logs provides a service or container logs can be requested and the contents of the
+// log file are streamed in chunks.
+// nolint: gocyclo
+func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.Machine_LogsServer) (err error) {
+	var chunk chunker.Chunker
+
+	switch {
+	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
+		filename := filepath.Join(constants.DefaultLogPath, filepath.Base(req.Id)+".log")
+
+		var file *os.File
+
+		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
+		if err != nil {
+			return
+		}
+		// nolint: errcheck
+		defer file.Close()
+
+		chunk = filechunker.NewChunker(file)
+	default:
+		var file io.Closer
+
+		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer file.Close()
+	}
+
+	for data := range chunk.Read(l.Context()) {
+		if err = l.Send(&common.Data{Bytes: data}); err != nil {
+			return
+		}
+	}
+
+	return nil
+}
+
+func k8slogs(ctx context.Context, req *machineapi.LogsRequest) (chunker.Chunker, io.Closer, error) {
+	inspector, err := getContainerInspector(ctx, req.Namespace, req.Driver)
+	if err != nil {
+		return nil, nil, err
+	}
+	// nolint: errcheck
+	defer inspector.Close()
+
+	container, err := inspector.Container(req.Id)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if container == nil {
+		return nil, nil, fmt.Errorf("container %q not found", req.Id)
+	}
+
+	return container.GetLogChunker()
+}
+
+func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {
+	switch driver {
+	case common.ContainerDriver_CRI:
+		if namespace != criconstants.K8sContainerdNamespace {
+			return nil, errors.New("CRI inspector is supported only for K8s namespace")
+		}
+
+		return cri.NewInspector(ctx)
+	case common.ContainerDriver_CONTAINERD:
+		addr := constants.ContainerdAddress
+		if namespace == constants.SystemContainerdNamespace {
+			addr = constants.SystemContainerdAddress
+		}
+
+		return containerd.NewInspector(ctx, namespace, containerd.WithContainerdAddress(addr))
+	default:
+		return nil, fmt.Errorf("unsupported driver %q", driver)
+	}
 }

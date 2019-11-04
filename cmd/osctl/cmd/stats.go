@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/talos-systems/talos/api/common"
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -40,9 +41,9 @@ var statsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			driver := osapi.ContainerDriver_CONTAINERD
+			driver := common.ContainerDriver_CONTAINERD
 			if useCRI {
-				driver = osapi.ContainerDriver_CRI
+				driver = common.ContainerDriver_CRI
 			}
 			md := metadata.New(make(map[string]string))
 			md.Set("targets", target...)

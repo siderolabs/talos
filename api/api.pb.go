@@ -49,9 +49,6 @@ type ContainerResponse = os.ContainerResponse
 // ContainersReply from public import os/os.proto
 type ContainersReply = os.ContainersReply
 
-// LogsRequest from public import os/os.proto
-type LogsRequest = os.LogsRequest
-
 // ProcessesRequest from public import os/os.proto
 type ProcessesRequest = os.ProcessesRequest
 
@@ -84,15 +81,6 @@ type StatsReply = os.StatsReply
 
 // Stat from public import os/os.proto
 type Stat = os.Stat
-
-// ContainerDriver from public import os/os.proto
-type ContainerDriver = os.ContainerDriver
-
-var ContainerDriver_name = os.ContainerDriver_name
-var ContainerDriver_value = os.ContainerDriver_value
-
-const ContainerDriver_CONTAINERD = ContainerDriver(os.ContainerDriver_CONTAINERD)
-const ContainerDriver_CRI = ContainerDriver(os.ContainerDriver_CRI)
 
 // RebootResponse from public import machine/machine.proto
 type RebootResponse = machine.RebootResponse
@@ -208,6 +196,9 @@ type VersionReply = machine.VersionReply
 // VersionInfo from public import machine/machine.proto
 type VersionInfo = machine.VersionInfo
 
+// LogsRequest from public import machine/machine.proto
+type LogsRequest = machine.LogsRequest
+
 // TimeRequest from public import time/time.proto
 type TimeRequest = time.TimeRequest
 
@@ -294,6 +285,15 @@ type DataResponse = common.DataResponse
 
 // DataReply from public import common/common.proto
 type DataReply = common.DataReply
+
+// ContainerDriver from public import common/common.proto
+type ContainerDriver = common.ContainerDriver
+
+var ContainerDriver_name = common.ContainerDriver_name
+var ContainerDriver_value = common.ContainerDriver_value
+
+const ContainerDriver_CONTAINERD = ContainerDriver(common.ContainerDriver_CONTAINERD)
+const ContainerDriver_CRI = ContainerDriver(common.ContainerDriver_CRI)
 
 // Empty from public import google/protobuf/empty.proto
 type Empty = empty.Empty
@@ -1085,15 +1085,6 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (*common.DataR
 	return r.OSClient.Dmesg(ctx, in)
 }
 
-func (r *Registrator) Logs(in *os.LogsRequest, srv os.OS_LogsServer) error {
-	client, err := r.OSClient.Logs(srv.Context(), in)
-	if err != nil {
-		return err
-	}
-	var msg common.Data
-	return copyClientServer(&msg, client, srv)
-}
-
 func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (*os.ProcessesReply, error) {
 	return r.OSClient.Processes(ctx, in)
 }
@@ -1130,6 +1121,15 @@ func (r *Registrator) LS(in *machine.LSRequest, srv machine.Machine_LSServer) er
 		return err
 	}
 	var msg machine.FileInfo
+	return copyClientServer(&msg, client, srv)
+}
+
+func (r *Registrator) Logs(in *machine.LogsRequest, srv machine.Machine_LogsServer) error {
+	client, err := r.MachineClient.Logs(srv.Context(), in)
+	if err != nil {
+		return err
+	}
+	var msg common.Data
 	return copyClientServer(&msg, client, srv)
 }
 
@@ -1221,10 +1221,6 @@ func (c *LocalOSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc
 	return c.OSClient.Dmesg(ctx, in, opts...)
 }
 
-func (c *LocalOSClient) Logs(ctx context.Context, in *os.LogsRequest, opts ...grpc.CallOption) (os.OS_LogsClient, error) {
-	return c.OSClient.Logs(ctx, in, opts...)
-}
-
 func (c *LocalOSClient) Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*os.ProcessesReply, error) {
 	return c.OSClient.Processes(ctx, in, opts...)
 }
@@ -1263,6 +1259,10 @@ func (c *LocalMachineClient) Kubeconfig(ctx context.Context, in *empty.Empty, op
 
 func (c *LocalMachineClient) LS(ctx context.Context, in *machine.LSRequest, opts ...grpc.CallOption) (machine.Machine_LSClient, error) {
 	return c.MachineClient.LS(ctx, in, opts...)
+}
+
+func (c *LocalMachineClient) Logs(ctx context.Context, in *machine.LogsRequest, opts ...grpc.CallOption) (machine.Machine_LogsClient, error) {
+	return c.MachineClient.Logs(ctx, in, opts...)
 }
 
 func (c *LocalMachineClient) Mounts(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.MountsReply, error) {

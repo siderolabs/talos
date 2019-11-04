@@ -22,3 +22,8 @@ message DataResponse {
 message DataReply {
   repeated DataResponse response = 1;
 }
+
+enum ContainerDriver {
+  CONTAINERD = 0;
+  CRI = 1;
+}

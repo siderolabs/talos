@@ -16,7 +16,6 @@ import "common/common.proto";
 service OS {
   rpc Containers(ContainersRequest) returns (ContainersReply);
   rpc Dmesg(google.protobuf.Empty) returns (common.DataReply);
-  rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
   rpc Restart(RestartRequest) returns (RestartReply);
   rpc Stats(StatsRequest) returns (StatsReply);
@@ -24,16 +23,11 @@ service OS {
 
 // rpc Containers
 
-// The request message containing the containerd namespace.
-enum ContainerDriver {
-  CONTAINERD = 0;
-  CRI = 1;
-}
 
 message ContainersRequest {
   string namespace = 1;
   // driver might be default "containerd" or "cri"
-  ContainerDriver driver = 2;
+  common.ContainerDriver driver = 2;
 }
 
 // The response message containing the requested containers.
@@ -55,20 +49,6 @@ message ContainerResponse {
 
 message ContainersReply {
   repeated ContainerResponse response = 1;
-}
-
-// rpc dmesg
-// rpc kubeconfig
-
-
-// rpc logs
-
-// The request message containing the process name.
-message LogsRequest {
-  string namespace = 1;
-  string id = 2;
-  // driver might be default "containerd" or "cri"
-  ContainerDriver driver = 3;
 }
 
 // rpc processes
@@ -102,7 +82,7 @@ message RestartRequest {
   string namespace = 1;
   string id = 2;
   // driver might be default "containerd" or "cri"
-  ContainerDriver driver = 3;
+  common.ContainerDriver driver = 3;
 }
 
 message RestartResponse {
@@ -120,7 +100,7 @@ message RestartReply {
 message StatsRequest {
   string namespace = 1;
   // driver might be default "containerd" or "cri"
-  ContainerDriver driver = 2;
+  common.ContainerDriver driver = 2;
 }
 
 // The response message containing the requested stats.

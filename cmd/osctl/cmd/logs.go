@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	osapi "github.com/talos-systems/talos/api/os"
+	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -37,9 +37,9 @@ var logsCmd = &cobra.Command{
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
-			driver := osapi.ContainerDriver_CONTAINERD
+			driver := common.ContainerDriver_CONTAINERD
 			if useCRI {
-				driver = osapi.ContainerDriver_CRI
+				driver = common.ContainerDriver_CRI
 			}
 
 			stream, err := c.Logs(globalCtx, namespace, driver, args[0])
