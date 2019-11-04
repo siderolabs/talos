@@ -389,18 +389,6 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 			resp.Response = append(resp.Response, msg.(*common.DataReply).Response[0])
 		}
 		response = resp
-	case "/os.OS/Kubeconfig":
-		// Initialize target clients
-		clients, err := createOSClient(targets, creds, proxyMd)
-		if err != nil {
-			break
-		}
-		resp := &common.DataReply{}
-		msgs, err = proxyOSRunner(clients, in, proxyKubeconfig)
-		for _, msg := range msgs {
-			resp.Response = append(resp.Response, msg.(*common.DataReply).Response[0])
-		}
-		response = resp
 	case "/os.OS/Processes":
 		// Initialize target clients
 		clients, err := createOSClient(targets, creds, proxyMd)
@@ -473,30 +461,6 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 			resp.Response = append(resp.Response, msg.(*machine.ResetReply).Response[0])
 		}
 		response = resp
-	case "/machine.Machine/Shutdown":
-		// Initialize target clients
-		clients, err := createMachineClient(targets, creds, proxyMd)
-		if err != nil {
-			break
-		}
-		resp := &machine.ShutdownReply{}
-		msgs, err = proxyMachineRunner(clients, in, proxyShutdown)
-		for _, msg := range msgs {
-			resp.Response = append(resp.Response, msg.(*machine.ShutdownReply).Response[0])
-		}
-		response = resp
-	case "/machine.Machine/Upgrade":
-		// Initialize target clients
-		clients, err := createMachineClient(targets, creds, proxyMd)
-		if err != nil {
-			break
-		}
-		resp := &machine.UpgradeReply{}
-		msgs, err = proxyMachineRunner(clients, in, proxyUpgrade)
-		for _, msg := range msgs {
-			resp.Response = append(resp.Response, msg.(*machine.UpgradeReply).Response[0])
-		}
-		response = resp
 	case "/machine.Machine/ServiceList":
 		// Initialize target clients
 		clients, err := createMachineClient(targets, creds, proxyMd)
@@ -507,6 +471,18 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 		msgs, err = proxyMachineRunner(clients, in, proxyServiceList)
 		for _, msg := range msgs {
 			resp.Response = append(resp.Response, msg.(*machine.ServiceListReply).Response[0])
+		}
+		response = resp
+	case "/machine.Machine/ServiceRestart":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		resp := &machine.ServiceRestartReply{}
+		msgs, err = proxyMachineRunner(clients, in, proxyServiceRestart)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*machine.ServiceRestartReply).Response[0])
 		}
 		response = resp
 	case "/machine.Machine/ServiceStart":
@@ -533,16 +509,28 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 			resp.Response = append(resp.Response, msg.(*machine.ServiceStopReply).Response[0])
 		}
 		response = resp
-	case "/machine.Machine/ServiceRestart":
+	case "/machine.Machine/Shutdown":
 		// Initialize target clients
 		clients, err := createMachineClient(targets, creds, proxyMd)
 		if err != nil {
 			break
 		}
-		resp := &machine.ServiceRestartReply{}
-		msgs, err = proxyMachineRunner(clients, in, proxyServiceRestart)
+		resp := &machine.ShutdownReply{}
+		msgs, err = proxyMachineRunner(clients, in, proxyShutdown)
 		for _, msg := range msgs {
-			resp.Response = append(resp.Response, msg.(*machine.ServiceRestartReply).Response[0])
+			resp.Response = append(resp.Response, msg.(*machine.ShutdownReply).Response[0])
+		}
+		response = resp
+	case "/machine.Machine/Upgrade":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		resp := &machine.UpgradeReply{}
+		msgs, err = proxyMachineRunner(clients, in, proxyUpgrade)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*machine.UpgradeReply).Response[0])
 		}
 		response = resp
 	case "/machine.Machine/Version":
@@ -690,17 +678,6 @@ func proxyDmesg(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respC
 	respCh <- resp
 }
 
-func proxyKubeconfig(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
-	defer wg.Done()
-	resp, err := client.Conn.Kubeconfig(client.Context, in.(*empty.Empty))
-	if err != nil {
-		errCh <- err
-		return
-	}
-	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
-	respCh <- resp
-}
-
 func proxyProcesses(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
 	defer wg.Done()
 	resp, err := client.Conn.Processes(client.Context, in.(*empty.Empty))
@@ -801,31 +778,20 @@ func proxyReset(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, 
 	respCh <- resp
 }
 
-func proxyShutdown(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
-	defer wg.Done()
-	resp, err := client.Conn.Shutdown(client.Context, in.(*empty.Empty))
-	if err != nil {
-		errCh <- err
-		return
-	}
-	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
-	respCh <- resp
-}
-
-func proxyUpgrade(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
-	defer wg.Done()
-	resp, err := client.Conn.Upgrade(client.Context, in.(*machine.UpgradeRequest))
-	if err != nil {
-		errCh <- err
-		return
-	}
-	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
-	respCh <- resp
-}
-
 func proxyServiceList(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
 	defer wg.Done()
 	resp, err := client.Conn.ServiceList(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyServiceRestart(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.ServiceRestart(client.Context, in.(*machine.ServiceRestartRequest))
 	if err != nil {
 		errCh <- err
 		return
@@ -856,9 +822,20 @@ func proxyServiceStop(client *proxyMachineClient, in interface{}, wg *sync.WaitG
 	respCh <- resp
 }
 
-func proxyServiceRestart(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+func proxyShutdown(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
 	defer wg.Done()
-	resp, err := client.Conn.ServiceRestart(client.Context, in.(*machine.ServiceRestartRequest))
+	resp, err := client.Conn.Shutdown(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
+func proxyUpgrade(client *proxyMachineClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Upgrade(client.Context, in.(*machine.UpgradeRequest))
 	if err != nil {
 		errCh <- err
 		return
@@ -1108,10 +1085,6 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (*common.DataR
 	return r.OSClient.Dmesg(ctx, in)
 }
 
-func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (*common.DataReply, error) {
-	return r.OSClient.Kubeconfig(ctx, in)
-}
-
 func (r *Registrator) Logs(in *os.LogsRequest, srv os.OS_LogsServer) error {
 	client, err := r.OSClient.Logs(srv.Context(), in)
 	if err != nil {
@@ -1142,8 +1115,13 @@ func (r *Registrator) CopyOut(in *machine.CopyOutRequest, srv machine.Machine_Co
 	return copyClientServer(&msg, client, srv)
 }
 
-func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (*machine.MountsReply, error) {
-	return r.MachineClient.Mounts(ctx, in)
+func (r *Registrator) Kubeconfig(in *empty.Empty, srv machine.Machine_KubeconfigServer) error {
+	client, err := r.MachineClient.Kubeconfig(srv.Context(), in)
+	if err != nil {
+		return err
+	}
+	var msg machine.StreamingData
+	return copyClientServer(&msg, client, srv)
 }
 
 func (r *Registrator) LS(in *machine.LSRequest, srv machine.Machine_LSServer) error {
@@ -1155,6 +1133,10 @@ func (r *Registrator) LS(in *machine.LSRequest, srv machine.Machine_LSServer) er
 	return copyClientServer(&msg, client, srv)
 }
 
+func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (*machine.MountsReply, error) {
+	return r.MachineClient.Mounts(ctx, in)
+}
+
 func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (*machine.RebootReply, error) {
 	return r.MachineClient.Reboot(ctx, in)
 }
@@ -1163,16 +1145,12 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (*machine.Rese
 	return r.MachineClient.Reset(ctx, in)
 }
 
-func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (*machine.ShutdownReply, error) {
-	return r.MachineClient.Shutdown(ctx, in)
-}
-
-func (r *Registrator) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*machine.UpgradeReply, error) {
-	return r.MachineClient.Upgrade(ctx, in)
-}
-
 func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (*machine.ServiceListReply, error) {
 	return r.MachineClient.ServiceList(ctx, in)
+}
+
+func (r *Registrator) ServiceRestart(ctx context.Context, in *machine.ServiceRestartRequest) (*machine.ServiceRestartReply, error) {
+	return r.MachineClient.ServiceRestart(ctx, in)
 }
 
 func (r *Registrator) ServiceStart(ctx context.Context, in *machine.ServiceStartRequest) (*machine.ServiceStartReply, error) {
@@ -1183,8 +1161,12 @@ func (r *Registrator) ServiceStop(ctx context.Context, in *machine.ServiceStopRe
 	return r.MachineClient.ServiceStop(ctx, in)
 }
 
-func (r *Registrator) ServiceRestart(ctx context.Context, in *machine.ServiceRestartRequest) (*machine.ServiceRestartReply, error) {
-	return r.MachineClient.ServiceRestart(ctx, in)
+func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (*machine.ShutdownReply, error) {
+	return r.MachineClient.Shutdown(ctx, in)
+}
+
+func (r *Registrator) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*machine.UpgradeReply, error) {
+	return r.MachineClient.Upgrade(ctx, in)
 }
 
 func (r *Registrator) Start(ctx context.Context, in *machine.StartRequest) (*machine.StartReply, error) {
@@ -1239,10 +1221,6 @@ func (c *LocalOSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc
 	return c.OSClient.Dmesg(ctx, in, opts...)
 }
 
-func (c *LocalOSClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*common.DataReply, error) {
-	return c.OSClient.Kubeconfig(ctx, in, opts...)
-}
-
 func (c *LocalOSClient) Logs(ctx context.Context, in *os.LogsRequest, opts ...grpc.CallOption) (os.OS_LogsClient, error) {
 	return c.OSClient.Logs(ctx, in, opts...)
 }
@@ -1279,12 +1257,16 @@ func (c *LocalMachineClient) CopyOut(ctx context.Context, in *machine.CopyOutReq
 	return c.MachineClient.CopyOut(ctx, in, opts...)
 }
 
-func (c *LocalMachineClient) Mounts(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.MountsReply, error) {
-	return c.MachineClient.Mounts(ctx, in, opts...)
+func (c *LocalMachineClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (machine.Machine_KubeconfigClient, error) {
+	return c.MachineClient.Kubeconfig(ctx, in, opts...)
 }
 
 func (c *LocalMachineClient) LS(ctx context.Context, in *machine.LSRequest, opts ...grpc.CallOption) (machine.Machine_LSClient, error) {
 	return c.MachineClient.LS(ctx, in, opts...)
+}
+
+func (c *LocalMachineClient) Mounts(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.MountsReply, error) {
+	return c.MachineClient.Mounts(ctx, in, opts...)
 }
 
 func (c *LocalMachineClient) Reboot(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.RebootReply, error) {
@@ -1295,16 +1277,12 @@ func (c *LocalMachineClient) Reset(ctx context.Context, in *empty.Empty, opts ..
 	return c.MachineClient.Reset(ctx, in, opts...)
 }
 
-func (c *LocalMachineClient) Shutdown(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.ShutdownReply, error) {
-	return c.MachineClient.Shutdown(ctx, in, opts...)
-}
-
-func (c *LocalMachineClient) Upgrade(ctx context.Context, in *machine.UpgradeRequest, opts ...grpc.CallOption) (*machine.UpgradeReply, error) {
-	return c.MachineClient.Upgrade(ctx, in, opts...)
-}
-
 func (c *LocalMachineClient) ServiceList(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.ServiceListReply, error) {
 	return c.MachineClient.ServiceList(ctx, in, opts...)
+}
+
+func (c *LocalMachineClient) ServiceRestart(ctx context.Context, in *machine.ServiceRestartRequest, opts ...grpc.CallOption) (*machine.ServiceRestartReply, error) {
+	return c.MachineClient.ServiceRestart(ctx, in, opts...)
 }
 
 func (c *LocalMachineClient) ServiceStart(ctx context.Context, in *machine.ServiceStartRequest, opts ...grpc.CallOption) (*machine.ServiceStartReply, error) {
@@ -1315,8 +1293,12 @@ func (c *LocalMachineClient) ServiceStop(ctx context.Context, in *machine.Servic
 	return c.MachineClient.ServiceStop(ctx, in, opts...)
 }
 
-func (c *LocalMachineClient) ServiceRestart(ctx context.Context, in *machine.ServiceRestartRequest, opts ...grpc.CallOption) (*machine.ServiceRestartReply, error) {
-	return c.MachineClient.ServiceRestart(ctx, in, opts...)
+func (c *LocalMachineClient) Shutdown(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.ShutdownReply, error) {
+	return c.MachineClient.Shutdown(ctx, in, opts...)
+}
+
+func (c *LocalMachineClient) Upgrade(ctx context.Context, in *machine.UpgradeRequest, opts ...grpc.CallOption) (*machine.UpgradeReply, error) {
+	return c.MachineClient.Upgrade(ctx, in, opts...)
 }
 
 func (c *LocalMachineClient) Start(ctx context.Context, in *machine.StartRequest, opts ...grpc.CallOption) (*machine.StartReply, error) {

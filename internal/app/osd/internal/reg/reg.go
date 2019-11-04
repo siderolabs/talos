@@ -9,13 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -31,7 +29,6 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -41,38 +38,6 @@ type Registrator struct{}
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
 	osapi.RegisterOSServer(s, r)
-}
-
-// Kubeconfig implements the osapi.OSDServer interface.
-func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *common.DataReply, err error) {
-	var fileBytes []byte
-
-	err = retry.Constant(5*time.Minute, retry.WithUnits(5*time.Second)).Retry(func() error {
-		fileBytes, err = ioutil.ReadFile(constants.AdminKubeconfig)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return retry.ExpectedError(err)
-			}
-
-			return retry.UnexpectedError(err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return
-	}
-
-	data = &common.DataReply{
-		Response: []*common.DataResponse{
-			{
-				Bytes: &common.Data{Bytes: fileBytes},
-			},
-		},
-	}
-
-	return data, err
 }
 
 // Containers implements the osapi.OSDServer interface.

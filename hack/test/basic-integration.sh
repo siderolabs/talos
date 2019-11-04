@@ -52,7 +52,7 @@ run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 
 ## Fetch kubeconfig
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until osctl kubeconfig > ${KUBECONFIG}; do
+     until osctl kubeconfig ${TMP}; do
        [[ \$(date +%s) -gt \$timeout ]] && exit 1
        sleep 2
      done"

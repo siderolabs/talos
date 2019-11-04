@@ -16,7 +16,6 @@ import "common/common.proto";
 service OS {
   rpc Containers(ContainersRequest) returns (ContainersReply);
   rpc Dmesg(google.protobuf.Empty) returns (common.DataReply);
-  rpc Kubeconfig(google.protobuf.Empty) returns (common.DataReply);
   rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
   rpc Restart(RestartRequest) returns (RestartReply);

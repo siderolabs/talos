@@ -5,11 +5,15 @@
 package cmd
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -124,4 +128,68 @@ func setupClient(action func(*client.Client)) {
 	defer c.Close()
 
 	action(c)
+}
+
+// nolint: gocyclo
+func extractTarGz(localPath string, r io.Reader) {
+	zr, err := gzip.NewReader(r)
+	if err != nil {
+		helpers.Fatalf("error initializing gzip: %s", err)
+	}
+
+	tr := tar.NewReader(zr)
+
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			helpers.Fatalf("error reading tar header: %s", err)
+		}
+
+		path := filepath.Clean(filepath.Join(localPath, hdr.Name))
+		// TODO: do we need to clean up any '..' references?
+
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			mode := hdr.FileInfo().Mode()
+			mode |= 0700 // make rwx for the owner
+
+			if err = os.Mkdir(path, mode); err != nil {
+				helpers.Fatalf("error creating directory %q mode %s: %s", path, mode, err)
+			}
+
+			if err = os.Chmod(path, mode); err != nil {
+				helpers.Fatalf("error updating mode %s for %q: %s", mode, path, err)
+			}
+
+		case tar.TypeSymlink:
+			if err = os.Symlink(hdr.Linkname, path); err != nil {
+				helpers.Fatalf("error creating symlink %q -> %q: %s", path, hdr.Linkname, err)
+			}
+
+		default:
+			mode := hdr.FileInfo().Mode()
+
+			fp, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
+			if err != nil {
+				helpers.Fatalf("error creating file %q mode %s: %s", path, mode, err)
+			}
+
+			_, err = io.Copy(fp, tr)
+			if err != nil {
+				helpers.Fatalf("error copying data to %q: %s", path, err)
+			}
+
+			if err = fp.Close(); err != nil {
+				helpers.Fatalf("error closing %q: %s", path, err)
+			}
+
+			if err = os.Chmod(path, mode); err != nil {
+				helpers.Fatalf("error updating mode %s for %q: %s", mode, path, err)
+			}
+		}
+	}
 }

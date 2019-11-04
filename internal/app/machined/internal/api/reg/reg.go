@@ -19,6 +19,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/api/machine"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/event"
@@ -380,4 +381,11 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machi
 // Version implements the machineapi.MachineServer interface.
 func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionReply, err error) {
 	return version.NewVersion(), nil
+}
+
+// Kubeconfig implements the osapi.OSDServer interface.
+func (r *Registrator) Kubeconfig(empty *empty.Empty, s machineapi.Machine_KubeconfigServer) error {
+	in := &machine.CopyOutRequest{RootPath: constants.AdminKubeconfig}
+
+	return r.CopyOut(in, s)
 }
