@@ -16,6 +16,7 @@ service Machine {
   rpc CopyOut(CopyOutRequest) returns (stream StreamingData);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream StreamingData);
   rpc LS(LSRequest) returns (stream FileInfo);
+  rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Mounts(google.protobuf.Empty) returns (MountsReply);
   rpc Reboot(google.protobuf.Empty) returns (RebootReply);
   rpc Reset(google.protobuf.Empty) returns (ResetReply);
@@ -245,4 +246,13 @@ message VersionInfo {
   string go_version = 4;
   string os = 5;
   string arch = 6;
+}
+
+// rpc logs
+// The request message containing the process name.
+message LogsRequest {
+  string namespace = 1;
+  string id = 2;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 3;
 }

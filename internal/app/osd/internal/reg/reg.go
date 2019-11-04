@@ -8,10 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -26,8 +23,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
-	"github.com/talos-systems/talos/pkg/chunker"
-	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -194,45 +189,6 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *common.
 	return data, err
 }
 
-// Logs implements the osapi.OSDServer interface. Service or container logs can
-// be requested and the contents of the log file are streamed in chunks.
-// nolint: gocyclo
-func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err error) {
-	var chunk chunker.Chunker
-
-	switch {
-	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
-		filename := filepath.Join(constants.DefaultLogPath, filepath.Base(req.Id)+".log")
-
-		var file *os.File
-
-		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
-		if err != nil {
-			return
-		}
-		// nolint: errcheck
-		defer file.Close()
-
-		chunk = filechunker.NewChunker(file)
-	default:
-		var file io.Closer
-
-		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
-			return err
-		}
-		// nolint: errcheck
-		defer file.Close()
-	}
-
-	for data := range chunk.Read(l.Context()) {
-		if err = l.Send(&common.Data{Bytes: data}); err != nil {
-			return
-		}
-	}
-
-	return nil
-}
-
 // Processes implements the osapi.OSDServer interface
 func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *osapi.ProcessesReply, err error) {
 	procs, err := procfs.AllProcs()
@@ -297,15 +253,15 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *os
 	return reply, nil
 }
 
-func getContainerInspector(ctx context.Context, namespace string, driver osapi.ContainerDriver) (containers.Inspector, error) {
+func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {
 	switch driver {
-	case osapi.ContainerDriver_CRI:
+	case common.ContainerDriver_CRI:
 		if namespace != criconstants.K8sContainerdNamespace {
 			return nil, errors.New("CRI inspector is supported only for K8s namespace")
 		}
 
 		return cri.NewInspector(ctx)
-	case osapi.ContainerDriver_CONTAINERD:
+	case common.ContainerDriver_CONTAINERD:
 		addr := constants.ContainerdAddress
 		if namespace == constants.SystemContainerdNamespace {
 			addr = constants.SystemContainerdAddress
@@ -315,24 +271,4 @@ func getContainerInspector(ctx context.Context, namespace string, driver osapi.C
 	default:
 		return nil, fmt.Errorf("unsupported driver %q", driver)
 	}
-}
-
-func k8slogs(ctx context.Context, req *osapi.LogsRequest) (chunker.Chunker, io.Closer, error) {
-	inspector, err := getContainerInspector(ctx, req.Namespace, req.Driver)
-	if err != nil {
-		return nil, nil, err
-	}
-	// nolint: errcheck
-	defer inspector.Close()
-
-	container, err := inspector.Container(req.Id)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if container == nil {
-		return nil, nil, fmt.Errorf("container %q not found", req.Id)
-	}
-
-	return container.GetLogChunker()
 }
