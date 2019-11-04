@@ -281,13 +281,10 @@ RUN apk add --no-cache --update \
     bash \
     ca-certificates \
     cdrkit \
-    cpio \
     qemu-img \
-    squashfs-tools \
     syslinux \
     util-linux \
-    xfsprogs \
-    xz
+    xfsprogs
 COPY hack/installer/entrypoint.sh /bin/entrypoint.sh
 COPY hack/installer/template.ovf /template.ovf
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
@@ -298,6 +295,10 @@ ARG TAG
 ENV VERSION ${TAG}
 LABEL "alpha.talos.io/version"="${VERSION}"
 ENTRYPOINT ["entrypoint.sh"]
+ONBUILD RUN apk add --no-cache --update \
+    cpio \
+    squashfs-tools \
+    xz
 ONBUILD WORKDIR /initramfs
 ONBUILD ARG RM
 ONBUILD RUN xz -d /usr/install/initramfs.xz \
