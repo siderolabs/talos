@@ -42,7 +42,7 @@ func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
+	client, err := etcd.NewClientFromControlPlaneIPs(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 	if err != nil {
 		return err
 	}

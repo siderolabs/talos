@@ -5,12 +5,15 @@
 package etcd
 
 import (
+	"net/url"
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/kubernetes"
 )
 
 // NewClient initializes and returns an etcd client configured to talk to
@@ -37,4 +40,31 @@ func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 	}
 
 	return client, nil
+}
+
+// NewClientFromControlPlaneIPs initializes and returns an etcd client
+// configured to talk to all members.
+func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *clientv3.Client, err error) {
+	h, err := kubernetes.NewTemporaryClientFromPKI(
+		creds.Crt,
+		creds.Key,
+		endpoint.Hostname(),
+		endpoint.Port(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var endpoints []string
+
+	if endpoints, err = h.MasterIPs(); err != nil {
+		return nil, err
+	}
+
+	// Etcd expects host:port format.
+	for i := 0; i < len(endpoints); i++ {
+		endpoints[i] += ":2379"
+	}
+
+	return NewClient(endpoints)
 }
