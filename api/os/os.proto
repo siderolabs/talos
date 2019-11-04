@@ -15,9 +15,9 @@ import "common/common.proto";
 // OS Service also implements all the API of Init Service
 service OS {
   rpc Containers(ContainersRequest) returns (ContainersReply);
-  rpc Dmesg(google.protobuf.Empty) returns (DataReply);
-  rpc Kubeconfig(google.protobuf.Empty) returns (DataReply);
-  rpc Logs(LogsRequest) returns (stream Data);
+  rpc Dmesg(google.protobuf.Empty) returns (common.DataReply);
+  rpc Kubeconfig(google.protobuf.Empty) returns (common.DataReply);
+  rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
   rpc Restart(RestartRequest) returns (RestartReply);
   rpc Stats(StatsRequest) returns (StatsReply);
@@ -61,19 +61,6 @@ message ContainersReply {
 // rpc dmesg
 // rpc kubeconfig
 
-// The response message containing the requested logs.
-message Data {
-  bytes bytes = 1;
-}
-
-message DataResponse {
-  common.NodeMetadata metadata = 1;
-  Data bytes = 2;
-}
-
-message DataReply {
-  repeated DataResponse response = 1;
-}
 
 // rpc logs
 

@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	networkapi "github.com/talos-systems/talos/api/network"
 	osapi "github.com/talos-systems/talos/api/os"
@@ -145,7 +146,7 @@ func (c *Client) Close() error {
 }
 
 // Kubeconfig implements the proto.OSClient interface.
-func (c *Client) Kubeconfig(ctx context.Context) (*osapi.DataReply, error) {
+func (c *Client) Kubeconfig(ctx context.Context) (*common.DataReply, error) {
 	return c.client.Kubeconfig(ctx, &empty.Empty{})
 }
 
@@ -199,7 +200,7 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 }
 
 // Dmesg implements the proto.OSClient interface.
-func (c *Client) Dmesg(ctx context.Context) (*osapi.DataReply, error) {
+func (c *Client) Dmesg(ctx context.Context) (*common.DataReply, error) {
 	return c.client.Dmesg(ctx, &empty.Empty{})
 }
 

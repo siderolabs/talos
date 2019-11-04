@@ -8,3 +8,17 @@ option go_package = "github.com/talos-systems/talos/api/common";
 message NodeMetadata {
   string hostname = 1;
 }
+
+// The response message containing the requested logs.
+message Data {
+  bytes bytes = 1;
+}
+
+message DataResponse {
+  NodeMetadata metadata = 1;
+  Data bytes = 2;
+}
+
+message DataReply {
+  repeated DataResponse response = 1;
+}
