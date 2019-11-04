@@ -146,8 +146,13 @@ func (c *Client) Close() error {
 }
 
 // Kubeconfig implements the proto.OSClient interface.
-func (c *Client) Kubeconfig(ctx context.Context) (*common.DataReply, error) {
-	return c.client.Kubeconfig(ctx, &empty.Empty{})
+func (c *Client) Kubeconfig(ctx context.Context) (io.Reader, <-chan error, error) {
+	stream, err := c.MachineClient.Kubeconfig(ctx, &empty.Empty{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return readStream(stream)
 }
 
 // Stats implements the proto.OSClient interface.
@@ -254,40 +259,7 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-cha
 		return nil, nil, err
 	}
 
-	errCh := make(chan error)
-
-	pr, pw := io.Pipe()
-
-	go func() {
-		//nolint: errcheck
-		defer pw.Close()
-		defer close(errCh)
-
-		for {
-			data, err := stream.Recv()
-			if err != nil {
-				if err == io.EOF || status.Code(err) == codes.Canceled {
-					return
-				}
-				//nolint: errcheck
-				pw.CloseWithError(err)
-				return
-			}
-
-			if data.Bytes != nil {
-				_, err = pw.Write(data.Bytes)
-				if err != nil {
-					return
-				}
-			}
-
-			if data.Errors != "" {
-				errCh <- errors.New(data.Errors)
-			}
-		}
-	}()
-
-	return pr, errCh, nil
+	return readStream(stream)
 }
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
@@ -332,4 +304,45 @@ func (c *Client) Time(ctx context.Context) (*timeapi.TimeReply, error) {
 // TimeCheck returns the time compared to the specified ntp server
 func (c *Client) TimeCheck(ctx context.Context, server string) (*timeapi.TimeReply, error) {
 	return c.TimeClient.TimeCheck(ctx, &timeapi.TimeRequest{Server: server})
+}
+
+type machineStream interface {
+	Recv() (*machineapi.StreamingData, error)
+	grpc.ClientStream
+}
+
+func readStream(stream machineStream) (io.Reader, <-chan error, error) {
+	errCh := make(chan error)
+	pr, pw := io.Pipe()
+
+	go func() {
+		//nolint: errcheck
+		defer pw.Close()
+		defer close(errCh)
+
+		for {
+			data, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF || status.Code(err) == codes.Canceled {
+					return
+				}
+				//nolint: errcheck
+				pw.CloseWithError(err)
+				return
+			}
+
+			if data.Bytes != nil {
+				_, err = pw.Write(data.Bytes)
+				if err != nil {
+					return
+				}
+			}
+
+			if data.Errors != "" {
+				errCh <- errors.New(data.Errors)
+			}
+		}
+	}()
+
+	return pr, errCh, nil
 }

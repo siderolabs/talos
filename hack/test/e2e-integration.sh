@@ -31,7 +31,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 
 ## Wait for kubeconfig from capi master-0
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-         until /bin/osctl kubeconfig > ${KUBECONFIG}; do
+         until /bin/osctl kubeconfig ${TMPPLATFORM}; do
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            sleep 10
          done"

@@ -14,16 +14,17 @@ import "common/common.proto";
 // The machine service definition.
 service Machine {
   rpc CopyOut(CopyOutRequest) returns (stream StreamingData);
-  rpc Mounts(google.protobuf.Empty) returns (MountsReply);
+  rpc Kubeconfig(google.protobuf.Empty) returns (stream StreamingData);
   rpc LS(LSRequest) returns (stream FileInfo);
+  rpc Mounts(google.protobuf.Empty) returns (MountsReply);
   rpc Reboot(google.protobuf.Empty) returns (RebootReply);
   rpc Reset(google.protobuf.Empty) returns (ResetReply);
-  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply);
-  rpc Upgrade(UpgradeRequest) returns (UpgradeReply);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply);
+  rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartReply);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartReply);
   rpc ServiceStop(ServiceStopRequest) returns (ServiceStopReply);
-  rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartReply);
+  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply);
+  rpc Upgrade(UpgradeRequest) returns (UpgradeReply);
 
   rpc Start(StartRequest) returns (StartReply) {
     option deprecated = true;

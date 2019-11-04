@@ -8,9 +8,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"sync"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -18,31 +19,44 @@ import (
 
 // kubeconfigCmd represents the kubeconfig command
 var kubeconfigCmd = &cobra.Command{
-	Use:   "kubeconfig",
+	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",
-	Long:  ``,
+	Long: `Download the admin kubeconfig from the node.
+Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 0 {
+		if len(args) > 1 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
 		setupClient(func(c *client.Client) {
-			md := metadata.New(make(map[string]string))
-			md.Set("targets", target...)
-			reply, err := c.Kubeconfig(metadata.NewOutgoingContext(globalCtx, md))
+			r, errCh, err := c.Kubeconfig(globalCtx)
 			if err != nil {
-				helpers.Fatalf("error fetching kubeconfig: %s", err)
+				helpers.Fatalf("error copying: %s", err)
 			}
 
-			for _, resp := range reply.Response {
-				if len(reply.Response) > 1 {
-					fmt.Println(resp.Metadata.Hostname)
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for err := range errCh {
+					fmt.Fprintln(os.Stderr, err.Error())
 				}
+			}()
 
-				_, err = os.Stdout.Write(resp.Bytes.Bytes)
-				helpers.Should(err)
+			defer wg.Wait()
+
+			localPath, err := os.Getwd()
+			if err != nil {
+				helpers.Fatalf("error getting current working directory: %s", err)
 			}
+
+			if len(args) == 1 {
+				localPath = args[0]
+			}
+
+			extractTarGz(filepath.Clean(localPath), r)
 		})
 	},
 }
