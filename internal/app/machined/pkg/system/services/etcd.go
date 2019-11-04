@@ -264,21 +264,37 @@ func generatePKI(config runtime.Configurator) (err error) {
 	return nil
 }
 
-func addMember(endpoints, addrs []string) (*clientv3.MemberAddResponse, error) {
+func addMember(endpoints, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
 	client, err := etcd.NewClient(endpoints)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	// nolint: errcheck
 	defer client.Close()
 
-	resp, err := client.MemberAdd(context.Background(), addrs)
+	list, err := client.MemberList(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return resp, nil
+	for _, member := range list.Members {
+		if member.Name == name {
+			return list, member.ID, nil
+		}
+	}
+
+	add, err := client.MemberAdd(context.Background(), addrs)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	list, err = client.MemberList(context.Background())
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return list, add.Member.ID, nil
 }
 
 func buildInitialCluster(config runtime.Configurator, name, ip string) (initial string, err error) {
@@ -307,19 +323,23 @@ func buildInitialCluster(config runtime.Configurator, name, ip string) (initial 
 
 		peerAddrs := []string{"https://" + ip + ":2380"}
 
-		var resp *clientv3.MemberAddResponse
-		resp, err = addMember(endpoints, peerAddrs)
+		var (
+			resp *clientv3.MemberListResponse
+			id   uint64
+		)
+		resp, id, err = addMember(endpoints, peerAddrs, name)
 		if err != nil {
+			// TODO(andrewrynhard): We should check the error type here and
+			// handle the specific error accordingly.
 			return retry.ExpectedError(err)
 		}
 
-		newID := resp.Member.ID
 		conf := []string{}
 
 		for _, memb := range resp.Members {
 			for _, u := range memb.PeerURLs {
 				n := memb.Name
-				if memb.ID == newID {
+				if memb.ID == id {
 					n = name
 				}
 
@@ -333,7 +353,7 @@ func buildInitialCluster(config runtime.Configurator, name, ip string) (initial 
 	})
 
 	if err != nil {
-		return "", errors.New("failed to discover etcd cluster")
+		return "", fmt.Errorf("failed to build cluster arguments: %w", err)
 	}
 
 	return initial, nil
