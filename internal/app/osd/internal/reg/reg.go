@@ -23,6 +23,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/api/common"
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
@@ -43,7 +44,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 }
 
 // Kubeconfig implements the osapi.OSDServer interface.
-func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *osapi.DataReply, err error) {
+func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *common.DataReply, err error) {
 	var fileBytes []byte
 
 	err = retry.Constant(5*time.Minute, retry.WithUnits(5*time.Second)).Retry(func() error {
@@ -63,10 +64,10 @@ func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (data *os
 		return
 	}
 
-	data = &osapi.DataReply{
-		Response: []*osapi.DataResponse{
+	data = &common.DataReply{
+		Response: []*common.DataResponse{
 			{
-				Bytes: &osapi.Data{Bytes: fileBytes},
+				Bytes: &common.Data{Bytes: fileBytes},
 			},
 		},
 	}
@@ -203,7 +204,7 @@ func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*o
 // to read from the ring buffer at /proc/kmsg by taking the
 // SYSLOG_ACTION_READ_ALL action. This action reads all messages remaining in
 // the ring buffer non-destructively.
-func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.DataReply, err error) {
+func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *common.DataReply, err error) {
 	// Return the size of the kernel ring buffer
 	size, err := unix.Klogctl(constants.SYSLOG_ACTION_SIZE_BUFFER, nil)
 	if err != nil {
@@ -217,10 +218,10 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *osapi.D
 		return
 	}
 
-	data = &osapi.DataReply{
-		Response: []*osapi.DataResponse{
+	data = &common.DataReply{
+		Response: []*common.DataResponse{
 			{
-				Bytes: &osapi.Data{Bytes: buf[:n]},
+				Bytes: &common.Data{Bytes: buf[:n]},
 			},
 		},
 	}
@@ -259,7 +260,7 @@ func (r *Registrator) Logs(req *osapi.LogsRequest, l osapi.OS_LogsServer) (err e
 	}
 
 	for data := range chunk.Read(l.Context()) {
-		if err = l.Send(&osapi.Data{Bytes: data}); err != nil {
+		if err = l.Send(&common.Data{Bytes: data}); err != nil {
 			return
 		}
 	}

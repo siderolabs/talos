@@ -49,15 +49,6 @@ type ContainerResponse = os.ContainerResponse
 // ContainersReply from public import os/os.proto
 type ContainersReply = os.ContainersReply
 
-// Data from public import os/os.proto
-type Data = os.Data
-
-// DataResponse from public import os/os.proto
-type DataResponse = os.DataResponse
-
-// DataReply from public import os/os.proto
-type DataReply = os.DataReply
-
 // LogsRequest from public import os/os.proto
 type LogsRequest = os.LogsRequest
 
@@ -295,6 +286,15 @@ const InterfaceFlags_FLAG_MULTICAST = InterfaceFlags(network.InterfaceFlags_FLAG
 // NodeMetadata from public import common/common.proto
 type NodeMetadata = common.NodeMetadata
 
+// Data from public import common/common.proto
+type Data = common.Data
+
+// DataResponse from public import common/common.proto
+type DataResponse = common.DataResponse
+
+// DataReply from public import common/common.proto
+type DataReply = common.DataReply
+
 // Empty from public import google/protobuf/empty.proto
 type Empty = empty.Empty
 
@@ -383,10 +383,10 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 		if err != nil {
 			break
 		}
-		resp := &os.DataReply{}
+		resp := &common.DataReply{}
 		msgs, err = proxyOSRunner(clients, in, proxyDmesg)
 		for _, msg := range msgs {
-			resp.Response = append(resp.Response, msg.(*os.DataReply).Response[0])
+			resp.Response = append(resp.Response, msg.(*common.DataReply).Response[0])
 		}
 		response = resp
 	case "/os.OS/Kubeconfig":
@@ -395,10 +395,10 @@ func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.T
 		if err != nil {
 			break
 		}
-		resp := &os.DataReply{}
+		resp := &common.DataReply{}
 		msgs, err = proxyOSRunner(clients, in, proxyKubeconfig)
 		for _, msg := range msgs {
-			resp.Response = append(resp.Response, msg.(*os.DataReply).Response[0])
+			resp.Response = append(resp.Response, msg.(*common.DataReply).Response[0])
 		}
 		response = resp
 	case "/os.OS/Processes":
@@ -1104,11 +1104,11 @@ func (r *Registrator) Containers(ctx context.Context, in *os.ContainersRequest) 
 	return r.OSClient.Containers(ctx, in)
 }
 
-func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (*os.DataReply, error) {
+func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (*common.DataReply, error) {
 	return r.OSClient.Dmesg(ctx, in)
 }
 
-func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (*os.DataReply, error) {
+func (r *Registrator) Kubeconfig(ctx context.Context, in *empty.Empty) (*common.DataReply, error) {
 	return r.OSClient.Kubeconfig(ctx, in)
 }
 
@@ -1117,7 +1117,7 @@ func (r *Registrator) Logs(in *os.LogsRequest, srv os.OS_LogsServer) error {
 	if err != nil {
 		return err
 	}
-	var msg os.Data
+	var msg common.Data
 	return copyClientServer(&msg, client, srv)
 }
 
@@ -1235,11 +1235,11 @@ func (c *LocalOSClient) Containers(ctx context.Context, in *os.ContainersRequest
 	return c.OSClient.Containers(ctx, in, opts...)
 }
 
-func (c *LocalOSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*os.DataReply, error) {
+func (c *LocalOSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*common.DataReply, error) {
 	return c.OSClient.Dmesg(ctx, in, opts...)
 }
 
-func (c *LocalOSClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*os.DataReply, error) {
+func (c *LocalOSClient) Kubeconfig(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*common.DataReply, error) {
 	return c.OSClient.Kubeconfig(ctx, in, opts...)
 }
 
