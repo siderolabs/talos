@@ -11,9 +11,11 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
@@ -29,6 +31,7 @@ func (task *LeaveEtcd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
+// nolint: gocyclo
 func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 	if r.Config().Machine().Type() == machine.Worker {
 		return nil
@@ -68,6 +71,15 @@ func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 
 	_, err = client.MemberRemove(context.Background(), *id)
 	if err != nil {
+		return err
+	}
+
+	if err = system.Services(nil).Stop(context.Background(), "etcd"); err != nil {
+		return err
+	}
+
+	// Once the member is removed, the data is no longer valid.
+	if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
 		return err
 	}
 

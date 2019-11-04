@@ -35,7 +35,7 @@ func (task *StopServices) standard(r runtime.Runtime) (err error) {
 		services := []string{"containerd", "networkd", "ntpd", "udevd"}
 
 		if r.Config().Machine().Type() == machine.Bootstrap || r.Config().Machine().Type() == machine.ControlPlane {
-			services = append(services, "etcd", "trustd")
+			services = append(services, "trustd")
 		}
 
 		for _, service := range services {
