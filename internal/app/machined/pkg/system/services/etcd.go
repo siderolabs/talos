@@ -31,7 +31,6 @@ import (
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/retry"
 )
@@ -264,8 +263,8 @@ func generatePKI(config runtime.Configurator) (err error) {
 	return nil
 }
 
-func addMember(endpoints, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
-	client, err := etcd.NewClient(endpoints)
+func addMember(config runtime.Configurator, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -298,36 +297,14 @@ func addMember(endpoints, addrs []string, name string) (*clientv3.MemberListResp
 }
 
 func buildInitialCluster(config runtime.Configurator, name, ip string) (initial string, err error) {
-	h, err := kubernetes.NewTemporaryClientFromPKI(
-		config.Cluster().CA().Crt,
-		config.Cluster().CA().Key,
-		config.Cluster().Endpoint().Hostname(),
-		config.Cluster().Endpoint().Port(),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
-	err = retry.Constant(10*time.Minute, opts...).Retry(func() error {
-		var endpoints []string
-		endpoints, err = h.MasterIPs()
-		if err != nil {
-			return retry.ExpectedError(err)
-		}
-
-		// Etcd expects host:port format.
-		for i := 0; i < len(endpoints); i++ {
-			endpoints[i] += ":2379"
-		}
-
-		peerAddrs := []string{"https://" + ip + ":2380"}
-
+	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
 		var (
-			resp *clientv3.MemberListResponse
-			id   uint64
+			peerAddrs = []string{"https://" + ip + ":2380"}
+			resp      *clientv3.MemberListResponse
+			id        uint64
 		)
-		resp, id, err = addMember(endpoints, peerAddrs, name)
+
+		resp, id, err = addMember(config, peerAddrs, name)
 		if err != nil {
 			// TODO(andrewrynhard): We should check the error type here and
 			// handle the specific error accordingly.
