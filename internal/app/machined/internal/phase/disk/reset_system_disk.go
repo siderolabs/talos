@@ -13,27 +13,27 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 )
 
-// ResetDisk represents the task for stop all containerd tasks in the
+// ResetSystemDisk represents the task for stop all containerd tasks in the
 // k8s.io namespace.
-type ResetDisk struct {
+type ResetSystemDisk struct {
 	devname string
 }
 
-// NewResetDiskTask initializes and returns an Services task.
-func NewResetDiskTask(devname string) phase.Task {
-	return &ResetDisk{
+// NewResetSystemDiskTask initializes and returns an Services task.
+func NewResetSystemDiskTask(devname string) phase.Task {
+	return &ResetSystemDisk{
 		devname: devname,
 	}
 }
 
 // TaskFunc returns the runtime function.
-func (task *ResetDisk) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+func (task *ResetSystemDisk) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return func(r runtime.Runtime) error {
 		return task.standard()
 	}
 }
 
-func (task *ResetDisk) standard() (err error) {
+func (task *ResetSystemDisk) standard() (err error) {
 	var bd *blockdevice.BlockDevice
 
 	if bd, err = blockdevice.Open(task.devname); err != nil {
