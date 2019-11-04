@@ -199,15 +199,15 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 			upgrade.NewLeaveEtcdTask(),
 		),
 		phase.NewPhase(
-			"kill all tasks",
-			kubernetes.NewKillKubernetesTasksTask(),
+			"remove all pods",
+			kubernetes.NewRemoveAllPodsTask(),
 		),
 		phase.NewPhase(
 			"stop services",
 			services.NewStopServicesTask(true),
 		),
 		phase.NewPhase(
-			"remove submounts",
+			"unmount system disk submounts",
 			rootfs.NewUnmountOverlayTask(),
 			rootfs.NewUnmountPodMountsTask(),
 		),
@@ -220,8 +220,8 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 			disk.NewVerifyDiskAvailabilityTask(devname),
 		),
 		phase.NewPhase(
-			"reset partition",
-			disk.NewResetDiskTask(devname),
+			"reset system disk",
+			disk.NewResetSystemDiskTask(devname),
 		),
 		phase.NewPhase(
 			"upgrade",
