@@ -27,6 +27,8 @@ version: v1alpha1
 machine:
   type: string
   token: string
+  env: (optional)
+    key: value
   ca:
     crt: string ( base64 encoded certificate )
     key: string ( base64 encoded key )
@@ -70,6 +72,18 @@ This means it will host etcd along with the Kubernetes master components such as
 
 Worker node type designates the node as a worker node.
 This means it will be an available compute node for scheduling workloads.
+
+### machine.env
+
+`env` is used to set any environment variables for the node.
+These variables get set at the node level and get passed in to each service as environment variables.
+The only supported environment variables are:
+
+- `GRPC_GO_LOG_VERBOSITY_LEVEL`
+- `GRPC_GO_LOG_SEVERITY_LEVEL`
+- `http_proxy`
+- `https_proxy`
+- `no_proxy`
 
 ### machine.token
 
