@@ -74,7 +74,7 @@ func (i *Interactive) Initialize(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err = inst.Install(); err != nil {
+	if err = inst.Install(r.Sequence()); err != nil {
 		return fmt.Errorf("failed to install: %w", err)
 	}
 

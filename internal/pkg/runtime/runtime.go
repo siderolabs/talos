@@ -9,6 +9,20 @@ import (
 	"strings"
 )
 
+// Sequence represents the sequence type.
+type Sequence int
+
+const (
+	// None is the none sequence.
+	None Sequence = iota
+	// Boot is the boot sequence.
+	Boot
+	// Shutdown is the shutdown sequence.
+	Shutdown
+	// Upgrade is the upgrade sequence.
+	Upgrade
+)
+
 // Mode is a runtime mode.
 type Mode int
 
@@ -48,13 +62,15 @@ func ModeFromString(s string) (m Mode, err error) {
 type Runtime interface {
 	Platform() Platform
 	Config() Configurator
+	Sequence() Sequence
 }
 
 // NewRuntime initializes and returns the runtime interface.
-func NewRuntime(p Platform, c Configurator) Runtime {
+func NewRuntime(p Platform, c Configurator, s Sequence) Runtime {
 	return &DefaultRuntime{
 		p: p,
 		c: c,
+		s: s,
 	}
 }
 
@@ -62,6 +78,7 @@ func NewRuntime(p Platform, c Configurator) Runtime {
 type DefaultRuntime struct {
 	p Platform
 	c Configurator
+	s Sequence
 }
 
 // Platform implements the Runtime interface.
@@ -72,4 +89,9 @@ func (d *DefaultRuntime) Platform() Platform {
 // Config implements the Runtime interface.
 func (d *DefaultRuntime) Config() Configurator {
 	return d.c
+}
+
+// Sequence implements the Runtime interface.
+func (d *DefaultRuntime) Sequence() Sequence {
+	return d.s
 }

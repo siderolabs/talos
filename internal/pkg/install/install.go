@@ -20,6 +20,8 @@ import (
 )
 
 // Install performs an installation via the installer container.
+//
+// nolint: gocyclo
 func Install(r runtime.Runtime) error {
 	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
 
@@ -44,10 +46,22 @@ func Install(r runtime.Runtime) error {
 		return fmt.Errorf("no config option was found")
 	}
 
-	args := []string{"/bin/entrypoint.sh", "install", "-d", r.Config().Machine().Install().Disk(), "-p", r.Platform().Name(), "-u", *config}
+	upgrade := "false"
+	if r.Sequence() == runtime.Upgrade {
+		upgrade = "true"
+	}
+
+	args := []string{
+		"/bin/osctl",
+		"install",
+		"--disk", r.Config().Machine().Install().Disk(),
+		"--platform", r.Platform().Name(),
+		"--config", *config,
+		"--upgrade", upgrade,
+	}
 
 	for _, arg := range r.Config().Machine().Install().ExtraKernelArgs() {
-		args = append(args, []string{"-e", arg}...)
+		args = append(args, []string{"--extra-kernel-arg", arg}...)
 	}
 
 	specOpts := []oci.SpecOpts{

@@ -45,7 +45,7 @@ type Runner struct {
 }
 
 // NewRunner initializes and returns a Runner.
-func NewRunner(config runtime.Configurator) (*Runner, error) {
+func NewRunner(config runtime.Configurator, sequence runtime.Sequence) (*Runner, error) {
 	platform, err := platform.NewPlatform()
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func NewRunner(config runtime.Configurator) (*Runner, error) {
 	}
 
 	runner := &Runner{
-		runtime: runtime.NewRuntime(platform, config),
+		runtime: runtime.NewRuntime(platform, config, sequence),
 	}
 
 	return runner, nil

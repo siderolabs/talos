@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -18,9 +17,11 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/installer/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/installer/manifest"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -51,7 +52,7 @@ func NewInstaller(cmdline *kernel.Cmdline, install machine.Install) (i *Installe
 // Install fetches the necessary data locations and copies or extracts
 // to the target locations.
 // nolint: gocyclo
-func (i *Installer) Install() (err error) {
+func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 	if i.install.Zero() {
 		if err = zero(i.manifest); err != nil {
 			return fmt.Errorf("failed to wipe device(s): %w", err)
@@ -132,7 +133,14 @@ func (i *Installer) Install() (err error) {
 		return err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(constants.BootMountPoint, "installed"), []byte(time.Now().String()), 0400); err != nil {
+	metadata := metadata.NewMetadata(sequence)
+
+	b, err := metadata.Bytes()
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filepath.Join(constants.BootMountPoint, constants.MetadataFile), b, 0400); err != nil {
 		return err
 	}
 
