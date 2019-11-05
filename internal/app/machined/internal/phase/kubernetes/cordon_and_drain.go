@@ -35,9 +35,9 @@ func (task *CordonAndDrain) standard() (err error) {
 		return err
 	}
 
-	var kubeHelper *kubernetes.Helper
+	var kubeHelper *kubernetes.Client
 
-	if kubeHelper, err = kubernetes.NewHelper(); err != nil {
+	if kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig(); err != nil {
 		return err
 	}
 

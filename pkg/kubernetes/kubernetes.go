@@ -31,14 +31,14 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-// Helper represents a set of helper methods for interacting with the
+// Client represents a set of helper methods for interacting with the
 // Kubernetes API.
-type Helper struct {
+type Client struct {
 	client *kubernetes.Clientset
 }
 
-// NewHelper initializes and returns a Helper.
-func NewHelper() (helper *Helper, err error) {
+// NewClientFromKubeletKubeconfig initializes and returns a Client.
+func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 	var config *restclient.Config
 
 	config, err = clientcmd.BuildConfigFromFlags("", constants.KubeletKubeconfig)
@@ -53,11 +53,23 @@ func NewHelper() (helper *Helper, err error) {
 		return nil, err
 	}
 
-	return &Helper{clientset}, nil
+	return &Client{clientset}, nil
 }
 
-// NewClientFromPKI initializes and returns a Helper.
-func NewClientFromPKI(ca, crt, key []byte, host, port string) (helper *Helper, err error) {
+// NewForConfig initializes and returns a client using the provided config.
+func NewForConfig(config *restclient.Config) (client *Client, err error) {
+	var clientset *kubernetes.Clientset
+
+	clientset, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{clientset}, nil
+}
+
+// NewClientFromPKI initializes and returns a Client.
+func NewClientFromPKI(ca, crt, key []byte, host, port string) (client *Client, err error) {
 	tlsClientConfig := restclient.TLSClientConfig{
 		CAData:   ca,
 		CertData: crt,
@@ -76,12 +88,12 @@ func NewClientFromPKI(ca, crt, key []byte, host, port string) (helper *Helper, e
 		return nil, err
 	}
 
-	return &Helper{clientset}, nil
+	return &Client{clientset}, nil
 }
 
 // NewTemporaryClientFromPKI initializes a Kubernetes client using a certificate
 // with a TTL of 10 minutes.
-func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (helper *Helper, err error) {
+func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (client *Client, err error) {
 	opts := []x509.Option{
 		x509.RSA(true),
 		x509.CommonName("admin"),
@@ -123,7 +135,7 @@ func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (help
 }
 
 // MasterIPs cordons and drains a node in one call.
-func (h *Helper) MasterIPs() (addrs []string, err error) {
+func (h *Client) MasterIPs() (addrs []string, err error) {
 	endpoints, err := h.client.CoreV1().Endpoints("default").Get("kubernetes", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -141,7 +153,7 @@ func (h *Helper) MasterIPs() (addrs []string, err error) {
 }
 
 // LabelNodeAsMaster labels a node with the required master label.
-func (h *Helper) LabelNodeAsMaster(name string) (err error) {
+func (h *Client) LabelNodeAsMaster(name string) (err error) {
 	n, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -182,7 +194,7 @@ func (h *Helper) LabelNodeAsMaster(name string) (err error) {
 }
 
 // CordonAndDrain cordons and drains a node in one call.
-func (h *Helper) CordonAndDrain(node string) (err error) {
+func (h *Client) CordonAndDrain(node string) (err error) {
 	if err = h.Cordon(node); err != nil {
 		return err
 	}
@@ -191,7 +203,7 @@ func (h *Helper) CordonAndDrain(node string) (err error) {
 }
 
 // Cordon marks a node as unschedulable.
-func (h *Helper) Cordon(name string) error {
+func (h *Client) Cordon(name string) error {
 	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get node %s: %w", name, err)
@@ -211,7 +223,7 @@ func (h *Helper) Cordon(name string) error {
 }
 
 // Uncordon marks a node as schedulable.
-func (h *Helper) Uncordon(name string) error {
+func (h *Client) Uncordon(name string) error {
 	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get node %s: %w", name, err)
@@ -228,7 +240,7 @@ func (h *Helper) Uncordon(name string) error {
 }
 
 // Drain evicts all pods on a given node.
-func (h *Helper) Drain(node string) error {
+func (h *Client) Drain(node string) error {
 	opts := metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": node}).String(),
 	}
@@ -264,7 +276,7 @@ func (h *Helper) Drain(node string) error {
 	return nil
 }
 
-func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
+func (h *Client) evict(p corev1.Pod, gracePeriod int64) error {
 	for {
 		pol := &policy.Eviction{
 			ObjectMeta:    metav1.ObjectMeta{Namespace: p.GetNamespace(), Name: p.GetName()},
@@ -287,7 +299,7 @@ func (h *Helper) evict(p corev1.Pod, gracePeriod int64) error {
 	}
 }
 
-func (h *Helper) waitForPodDeleted(p *corev1.Pod) error {
+func (h *Client) waitForPodDeleted(p *corev1.Pod) error {
 	return retry.Constant(time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
 		pod, err := h.client.CoreV1().Pods(p.GetNamespace()).Get(p.GetName(), metav1.GetOptions{})
 		switch {
