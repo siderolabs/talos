@@ -29,6 +29,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
+	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/archiver"
@@ -84,8 +85,12 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 	return
 }
 
-// Upgrade initiates a Talos upgrade
+// Upgrade initiates an upgrade.
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeReply, err error) {
+	if err = etcd.ValidateForUpgrade(); err != nil {
+		return nil, err
+	}
+
 	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: in})
 
 	data = &machineapi.UpgradeReply{
@@ -99,7 +104,7 @@ func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest
 	return data, err
 }
 
-// Reset initiates a Talos upgrade
+// Reset resets the node.
 func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machineapi.ResetReply, err error) {
 	// Stop the kubelet.
 	if err = system.Services(r.config).Stop(ctx, "kubelet"); err != nil {

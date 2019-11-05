@@ -5,12 +5,16 @@
 package etcd
 
 import (
+	"context"
+	"fmt"
 	"net/url"
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
+	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -67,4 +71,42 @@ func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpo
 	}
 
 	return NewClient(endpoints)
+}
+
+// ValidateForUpgrade validates the etcd cluster state to ensure that performing
+// an upgrade is safe.
+func ValidateForUpgrade() error {
+	content, err := config.FromFile(constants.ConfigPath)
+	if err != nil {
+		return err
+	}
+
+	config, err := config.New(content)
+	if err != nil {
+		return err
+	}
+
+	if config.Machine().Type() != machine.Worker {
+		client, err := NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer client.Close()
+
+		resp, err := client.MemberList(context.Background())
+		if err != nil {
+			return err
+		}
+
+		for _, member := range resp.Members {
+			// If the member is not started, the name will be an empty string.
+			if len(member.Name) == 0 {
+				return fmt.Errorf("etcd member %d is not started, all members must be running to perform an upgrade", member.ID)
+			}
+		}
+	}
+
+	return nil
 }
