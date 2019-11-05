@@ -112,8 +112,19 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
+
 	for key, val := range config.Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
+		switch strings.ToLower(key) {
+		// explicitly exclude proxy variables from apid since this will
+		// negatively impact grpc connections.
+		// ref: https://github.com/grpc/grpc-go/blob/0f32486dd3c9bc29705535bd7e2e43801824cbc4/clientconn.go#L199-L206
+		// ref: https://github.com/grpc/grpc-go/blob/63ae68c9686cc0dd26c4f7476d66bb2f5c31789f/proxy.go#L118-L144
+		case "no_proxy":
+		case "http_proxy":
+		case "https_proxy":
+		default:
+			env = append(env, fmt.Sprintf("%s=%s", key, val))
+		}
 	}
 
 	return restart.New(containerd.NewRunner(
