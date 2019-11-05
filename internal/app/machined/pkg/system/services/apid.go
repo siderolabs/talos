@@ -77,7 +77,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
 		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {
-			h, err := kubernetes.NewHelper()
+			h, err := kubernetes.NewClientFromKubeletKubeconfig()
 			if err != nil {
 				return retry.ExpectedError(fmt.Errorf("failed to create client: %w", err))
 			}
