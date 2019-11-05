@@ -344,7 +344,7 @@ ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
     -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" \
-    -tags integration,integration_api \
+    -tags integration,integration_api,integration_cli \
     ./internal/integration
 
 FROM scratch AS integration-test

@@ -17,6 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/integration/api"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -29,6 +30,7 @@ var (
 	talosConfig     string
 	target          string
 	expectedVersion string
+	osctlPath       string
 )
 
 func TestIntegration(t *testing.T) {
@@ -42,6 +44,7 @@ func TestIntegration(t *testing.T) {
 				Target:      target,
 				TalosConfig: talosConfig,
 				Version:     expectedVersion,
+				OsctlPath:   osctlPath,
 			})
 		}
 
@@ -72,6 +75,8 @@ func init() {
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
 	flag.StringVar(&target, "talos.target", "", "target the specificed node")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
+	flag.StringVar(&osctlPath, "talos.osctlpath", "osctl", "The path to 'osctl' binary")
 
 	allSuites = append(allSuites, api.GetAllSuites()...)
+	allSuites = append(allSuites, cli.GetAllSuites()...)
 }
