@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -106,7 +107,12 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	initialClusterState := "new"
 	initialCluster := hostname + "=https://" + ips[0].String() + ":2380"
 
-	if config.Machine().Type() == machine.ControlPlane {
+	metadata, err := metadata.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Machine().Type() == machine.ControlPlane || metadata.Upgraded {
 		initialClusterState = "existing"
 
 		initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())

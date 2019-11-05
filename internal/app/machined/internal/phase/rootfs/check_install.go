@@ -5,12 +5,9 @@
 package rootfs
 
 import (
-	"path/filepath"
-
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // CheckInstall represents the CheckInstall task.
@@ -32,7 +29,7 @@ func (task *CheckInstall) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *CheckInstall) standard(r runtime.Runtime) (err error) {
-	_, err = metadata.Open(filepath.Join(constants.BootMountPoint, constants.MetadataFile))
+	_, err = metadata.Open()
 	if err != nil {
 		return err
 	}

@@ -7,9 +7,11 @@ package metadata
 import (
 	"errors"
 	"io/ioutil"
+	"path/filepath"
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/constants"
 
 	"gopkg.in/yaml.v2"
 )
@@ -31,8 +33,10 @@ func NewMetadata(sequence runtime.Sequence) *Metadata {
 }
 
 // Open attempts to read the metadata.
-func Open(file string) (m *Metadata, err error) {
-	b, err := ioutil.ReadFile(file)
+func Open() (m *Metadata, err error) {
+	m = &Metadata{}
+
+	b, err := ioutil.ReadFile(m.Path())
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +45,6 @@ func Open(file string) (m *Metadata, err error) {
 		return nil, errors.New("metadata file is empty")
 	}
 
-	m = &Metadata{}
-
 	if err = yaml.Unmarshal(b, m); err != nil {
 		return nil, err
 	}
@@ -50,7 +52,23 @@ func Open(file string) (m *Metadata, err error) {
 	return m, nil
 }
 
+// Save attempts to save the metadata.
+func (m *Metadata) Save() (err error) {
+	var b []byte
+
+	if b, err = m.Bytes(); err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(m.Path(), b, 0400)
+}
+
 // Bytes returns to byte slice representation of the metadata.
 func (m *Metadata) Bytes() ([]byte, error) {
 	return yaml.Marshal(m)
+}
+
+// Path returns the path to the metadata.
+func (m *Metadata) Path() string {
+	return filepath.Join(constants.BootMountPoint, constants.MetadataFile)
 }
