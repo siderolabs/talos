@@ -95,6 +95,7 @@ func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
 			oci.WithCapabilities([]string{
 				strings.ToUpper("CAP_" + capability.CAP_SYS_TIME.String()),
 			}),
+			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 		),
 	),
