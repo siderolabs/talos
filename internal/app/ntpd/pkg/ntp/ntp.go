@@ -7,6 +7,7 @@ package ntp
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"syscall"
 	"time"
 
@@ -40,17 +41,19 @@ func NewNTPClient(opts ...Option) (*NTP, error) {
 // We dont ever want the daemon to stop, so we only log
 // errors.
 func (n *NTP) Daemon() (err error) {
+	if err = n.QueryAndSetTime(); err != nil {
+		log.Println(err)
+	}
+
 	for {
-		var resp *ntp.Response
+		// Set some variance with how frequently we poll ntp servers.
+		// This is based on rand(MaxPoll) + MinPoll so we wait at least
+		// MinPoll.
+		randSleep := time.Duration(rand.Intn(int(n.MaxPoll.Seconds()))) * time.Second
+		time.Sleep(randSleep + n.MinPoll)
 
-		if resp, err = n.Query(); err != nil {
-			log.Printf("error querying %s for time, %s", n.Server, err)
-			continue
-		}
-
-		if err = adjustTime(resp.ClockOffset); err != nil {
-			log.Printf("failed to set time, %s", err)
-			continue
+		if err = n.QueryAndSetTime(); err != nil {
+			log.Println(err)
 		}
 	}
 }
@@ -81,6 +84,21 @@ func (n *NTP) Query() (resp *ntp.Response, err error) {
 // GetTime returns the current system time.
 func (n *NTP) GetTime() time.Time {
 	return time.Now()
+}
+
+// QueryAndSetTime queries the NTP server and sets the time.
+func (n *NTP) QueryAndSetTime() (err error) {
+	var resp *ntp.Response
+
+	if resp, err = n.Query(); err != nil {
+		return fmt.Errorf("error querying %s for time, %s", n.Server, err)
+	}
+
+	if err = adjustTime(resp.ClockOffset); err != nil {
+		return fmt.Errorf("failed to set time, %s", err)
+	}
+
+	return
 }
 
 // SetTime sets the system time based on the query response.
