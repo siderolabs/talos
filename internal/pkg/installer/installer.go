@@ -7,7 +7,6 @@ package installer
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"unsafe"
@@ -135,16 +134,7 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 
 	metadata := metadata.NewMetadata(sequence)
 
-	b, err := metadata.Bytes()
-	if err != nil {
-		return err
-	}
-
-	if err = ioutil.WriteFile(filepath.Join(constants.BootMountPoint, constants.MetadataFile), b, 0400); err != nil {
-		return err
-	}
-
-	return nil
+	return metadata.Save()
 }
 
 func zero(manifest *manifest.Manifest) (err error) {

@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
+	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer"
 )
@@ -57,6 +58,11 @@ func (task *Platform) runtime(r runtime.Runtime) (err error) {
 	if r.Platform().Mode() == runtime.Container {
 		// TODO: add ::1 back once I figure out why bootkube barfs
 		sans = append(sans, "127.0.0.1")
+
+		m := metadata.NewMetadata(r.Sequence())
+		if err = m.Save(); err != nil {
+			return err
+		}
 	}
 
 	r.Config().Machine().Security().SetCertSANs(sans)
