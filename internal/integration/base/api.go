@@ -21,8 +21,8 @@ type APISuite struct {
 	Client *client.Client
 }
 
-// InitClient initializes Talos API client
-func (apiSuite *APISuite) InitClient() {
+// SetupSuite initializes Talos API client
+func (apiSuite *APISuite) SetupSuite() {
 	target, creds, err := client.NewClientTargetAndCredentialsFromConfig(apiSuite.TalosConfig)
 	apiSuite.Require().NoError(err)
 
@@ -32,4 +32,11 @@ func (apiSuite *APISuite) InitClient() {
 
 	apiSuite.Client, err = client.NewClient(creds, target, constants.OsdPort)
 	apiSuite.Require().NoError(err)
+}
+
+// TearDownSuite closes Talos API client
+func (apiSuite *APISuite) TearDownSuite() {
+	if apiSuite.Client != nil {
+		apiSuite.Assert().NoError(apiSuite.Client.Close())
+	}
 }

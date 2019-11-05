@@ -15,6 +15,8 @@ type TalosSuite struct {
 	TalosConfig string
 	// Version is the (expected) version of Talos tests are running against
 	Version string
+	// OsctlPath is path to osctl binary
+	OsctlPath string
 }
 
 // ConfiguredSuite expects config to be set before running
