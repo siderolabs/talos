@@ -248,6 +248,9 @@ const (
 	// InitializedKey is the key used to indicate if the cluster has been
 	// initialized.
 	InitializedKey = "initialized"
+
+	// MetadataFile is the name of the file that contains a node's metadata.
+	MetadataFile = "metadata.yaml"
 )
 
 // See https://linux.die.net/man/3/klogctl

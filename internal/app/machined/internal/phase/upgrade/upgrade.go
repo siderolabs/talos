@@ -42,7 +42,7 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 		cfg.MachineConfig.MachineInstall.InstallDisk = task.disk
 		cfg.MachineConfig.MachineInstall.InstallImage = task.image
 
-		r = runtime.NewRuntime(r.Platform(), runtime.Configurator(cfg))
+		r = runtime.NewRuntime(r.Platform(), runtime.Configurator(cfg), runtime.Upgrade)
 	}
 
 	if err = install.Install(r); err != nil {

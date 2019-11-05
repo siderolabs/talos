@@ -21,6 +21,7 @@ import (
 
 var (
 	bootloader      bool
+	upgradeArg      bool
 	disk            string
 	endpoint        string
 	platformArg     string
@@ -66,7 +67,13 @@ var installCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err = i.Install(); err != nil {
+
+		sequence := runtime.None
+		if upgradeArg {
+			sequence = runtime.Upgrade
+		}
+
+		if err = i.Install(sequence); err != nil {
 			log.Fatal(err)
 		}
 
@@ -79,6 +86,7 @@ func init() {
 	installCmd.Flags().StringVar(&disk, "disk", "", "The path to the disk to install to")
 	installCmd.Flags().StringVar(&endpoint, "config", "", "The value of "+constants.KernelParamConfig)
 	installCmd.Flags().StringVar(&platformArg, "platform", "", "The value of "+constants.KernelParamPlatform)
+	installCmd.Flags().BoolVar(&upgradeArg, "upgrade", false, "Indicates that the install is being performed by an upgrade")
 	installCmd.Flags().StringArrayVar(&extraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.AddCommand(installCmd)
 }

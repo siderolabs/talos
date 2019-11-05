@@ -60,7 +60,7 @@ func (suite *PhaseSuite) TearDownSuite() {
 }
 
 func (suite *PhaseSuite) TestRunSuccess() {
-	r, err := phase.NewRunner(nil)
+	r, err := phase.NewRunner(nil, runtime.None)
 	suite.Require().NoError(err)
 
 	taskErr := make(chan error)
@@ -90,7 +90,7 @@ func (suite *PhaseSuite) TestRunSuccess() {
 }
 
 func (suite *PhaseSuite) TestRunFailures() {
-	r, err := phase.NewRunner(nil)
+	r, err := phase.NewRunner(nil, runtime.None)
 	suite.Require().NoError(err)
 
 	taskErr := make(chan error, 1)

@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/upgrade"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -31,7 +32,7 @@ type Sequencer struct{}
 
 // Boot implements the Sequencer interface.
 func (d *Sequencer) Boot() error {
-	phaserunner, err := phase.NewRunner(nil)
+	phaserunner, err := phase.NewRunner(nil, runtime.Boot)
 	if err != nil {
 		return err
 	}
@@ -75,7 +76,7 @@ func (d *Sequencer) Boot() error {
 		return fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	phaserunner, err = phase.NewRunner(config)
+	phaserunner, err = phase.NewRunner(config, runtime.Boot)
 	if err != nil {
 		return err
 	}
@@ -147,7 +148,7 @@ func (d *Sequencer) Shutdown() error {
 		return err
 	}
 
-	phaserunner, err := phase.NewRunner(config)
+	phaserunner, err := phase.NewRunner(config, runtime.Shutdown)
 	if err != nil {
 		return err
 	}
@@ -174,7 +175,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		return err
 	}
 
-	phaserunner, err := phase.NewRunner(config)
+	phaserunner, err := phase.NewRunner(config, runtime.Upgrade)
 	if err != nil {
 		return err
 	}
