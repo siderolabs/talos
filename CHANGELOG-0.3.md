@@ -1,3 +1,29 @@
+# [v0.3.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.5...v0.3.0-alpha.6) (2019-11-05)
+
+### Bug Fixes
+
+- add etcd member conditionally ([a82ed0c](https://github.com/talos-systems/talos/commit/a82ed0c5b705231e4a779d505b2871f3df27eaf9))
+- Add host network namespace to networkd and ntpd ([db00c83](https://github.com/talos-systems/talos/commit/db00c83207f513760c3c8b149930f3c30c7054d0))
+- Avoid running bootkube on reboots ([5abbb9b](https://github.com/talos-systems/talos/commit/5abbb9b04154dfa44401bd6cb8a5eca1de485784))
+- be explicit about installs ([d15e226](https://github.com/talos-systems/talos/commit/d15e226998d6fe75a55a56481ce6360e655ca8c9))
+- Disable support for proxy variables for apid. ([4b3cc34](https://github.com/talos-systems/talos/commit/4b3cc34ab04408efd46b61346126b7795628aae1))
+- **osd:** Add additional capabilities for osd ([4653745](https://github.com/talos-systems/talos/commit/4653745acd844d6eaab02dd0c46c3e2d7eac7fb4))
+- don't use 127.0.0.1 for etcd client ([33468f4](https://github.com/talos-systems/talos/commit/33468f4d6a4bd1df9e49c73a42aa56f9e40bcde6))
+- retry BLKPG operations ([e9296be](https://github.com/talos-systems/talos/commit/e9296bed6e708abfcd0bf6c4a08dbd3f5d690119))
+- send SIGKILL to hanging containers ([45a3406](https://github.com/talos-systems/talos/commit/45a3406fba3dd6c5df0d658b41ce2d81ecee5b5d))
+- sleep in NTP query loop ([06009f6](https://github.com/talos-systems/talos/commit/06009f66c8ec9da1fb7dbeebb3a2de07f3613318))
+- stop etcd and remove data-dir ([18f5c50](https://github.com/talos-systems/talos/commit/18f5c50a322bc392c3d0890a53e316248472bc7f))
+- stop leaking file descriptors ([f411491](https://github.com/talos-systems/talos/commit/f4114914845a8daf5ba111c65c10dd61c4889ff8))
+- use CRI to stop containers ([8f10462](https://github.com/talos-systems/talos/commit/8f10462795ec4c2b2a5d857a980e106349361361))
+- verify system disk not in use ([7eb5b6b](https://github.com/talos-systems/talos/commit/7eb5b6b74832cc32b8775af8f7a4db47fafecfb9))
+- verify that all etcd members are running before upgrading ([c973245](https://github.com/talos-systems/talos/commit/c9732458c120224c36a3827adf0a54539bccab24))
+
+### Features
+
+- add timestamp to installed file ([3ce6f34](https://github.com/talos-systems/talos/commit/3ce6f34995672e0248408fb0844180c9d85cf815))
+- create cluster with default PSP ([dc38704](https://github.com/talos-systems/talos/commit/dc3870453bbe1c5d1f1327f408779b7d9b74ca2e))
+- output machined logs to /dev/kmsg and file ([e81b3d1](https://github.com/talos-systems/talos/commit/e81b3d11a88a3d10c79fe0d8e28cf820894ea05a))
+
 # [v0.3.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.4...v0.3.0-alpha.5) (2019-10-31)
 
 ### Bug Fixes
