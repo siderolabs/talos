@@ -137,9 +137,10 @@ local osd = Step("osd", depends_on=[fetchtags]);
 local trustd = Step("trustd", depends_on=[fetchtags]);
 local ntpd = Step("ntpd", depends_on=[fetchtags]);
 local networkd = Step("networkd", depends_on=[fetchtags]);
+local apid = Step("apid", depends_on=[fetchtags]);
 local osctl_linux = Step("osctl-linux", depends_on=[fetchtags]);
 local osctl_darwin = Step("osctl-darwin", depends_on=[fetchtags]);
-local apid = Step("apid", depends_on=[fetchtags]);
+local integration_test = Step("integration-test", depends_on=[fetchtags]);
 local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
@@ -150,7 +151,7 @@ local markdownlint = Step("markdownlint");
 local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[lint]);
-local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux]);
+local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux, integration_test]);
 
 local coverage = {
   name: 'coverage',
@@ -196,6 +197,7 @@ local default_steps = [
   networkd,
   osctl_linux,
   osctl_darwin,
+  integration_test,
   rootfs,
   initramfs,
   installer,

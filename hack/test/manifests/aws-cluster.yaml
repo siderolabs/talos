@@ -22,7 +22,7 @@ spec:
         type: aws
       controlplane:
         count: 3
-        k8sversion: "1.16.1"
+        k8sversion: "1.16.2"
 ---
 apiVersion: cluster.k8s.io/v1alpha1
 kind: Machine
@@ -126,4 +126,3 @@ spec:
                 disks:
                   size: 10
             type: aws
-

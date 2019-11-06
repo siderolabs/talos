@@ -23,7 +23,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
          until [ -n \"\${STATUS_TALOSCONFIG}\" ]; do
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            sleep 10
-           STATUS_TALOSCONFIG=\$( KUBECONFIG=${TMP}/kubeconfig kubectl get talosconfig ${NAME_PREFIX}-controlplane-0 -o jsonpath='{.status.talosConfig}' ) 
+           STATUS_TALOSCONFIG=\$( KUBECONFIG=${TMP}/kubeconfig kubectl get talosconfig ${NAME_PREFIX}-controlplane-0 -o jsonpath='{.status.talosConfig}' )
          done
          echo \"\${STATUS_TALOSCONFIG}\" > ${TALOSCONFIG}"
 
@@ -74,6 +74,9 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 ## Print nodes so we know everything is healthy
 echo "E2E setup complete. List of nodes: "
 e2e_run "kubectl get nodes -o wide"
+
+## Run integration tests
+e2e_run "integration-test -test.v"
 
 ## Run conformance tests if var is not null
 if [ ${CONFORMANCE:-"dontrun"} == "run" ]; then
