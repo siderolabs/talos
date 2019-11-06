@@ -272,7 +272,7 @@ container: buildkitd
 	@docker load < build/$@.tar
 
 .PHONY: basic-integration
-basic-integration: integration-test
+basic-integration:
 	@TAG=$(TAG) ./hack/test/$@.sh
 
 .PHONY: capi

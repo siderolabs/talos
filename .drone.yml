@@ -156,6 +156,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: integration-test
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make integration-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: rootfs
   pull: always
   image: autonomy/build-container:latest
@@ -366,6 +384,7 @@ steps:
   depends_on:
   - container
   - osctl-linux
+  - integration-test
 
 - name: push
   pull: always
@@ -592,6 +611,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: integration-test
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make integration-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: rootfs
   pull: always
   image: autonomy/build-container:latest
@@ -802,6 +839,7 @@ steps:
   depends_on:
   - container
   - osctl-linux
+  - integration-test
 
 - name: push
   pull: always
@@ -1201,6 +1239,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: integration-test
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make integration-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: rootfs
   pull: always
   image: autonomy/build-container:latest
@@ -1411,6 +1467,7 @@ steps:
   depends_on:
   - container
   - osctl-linux
+  - integration-test
 
 - name: push
   pull: always
@@ -1853,6 +1910,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: integration-test
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make integration-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: rootfs
   pull: always
   image: autonomy/build-container:latest
@@ -2063,6 +2138,7 @@ steps:
   depends_on:
   - container
   - osctl-linux
+  - integration-test
 
 - name: push
   pull: always
@@ -2505,6 +2581,24 @@ steps:
   depends_on:
   - fetch-tags
 
+- name: integration-test
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make integration-test
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - fetch-tags
+
 - name: rootfs
   pull: always
   image: autonomy/build-container:latest
@@ -2715,6 +2809,7 @@ steps:
   depends_on:
   - container
   - osctl-linux
+  - integration-test
 
 - name: push
   pull: always
