@@ -1,0 +1,38 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// +build integration_k8s
+
+package base
+
+import (
+	"context"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+)
+
+// K8sSuite is a base suite for K8s tests
+type K8sSuite struct {
+	APISuite
+
+	Clientset *kubernetes.Clientset
+}
+
+// SetupSuite initializes Kubernetes client
+func (k8sSuite *K8sSuite) SetupSuite() {
+	k8sSuite.APISuite.SetupSuite()
+
+	kubeconfig, err := k8sSuite.Client.Kubeconfig(context.Background())
+	k8sSuite.Require().NoError(err)
+
+	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
+		return clientcmd.Load(kubeconfig)
+	})
+	k8sSuite.Require().NoError(err)
+
+	k8sSuite.Clientset, err = kubernetes.NewForConfig(config)
+	k8sSuite.Require().NoError(err)
+}

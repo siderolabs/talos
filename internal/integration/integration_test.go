@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/api"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/integration/cli"
+	"github.com/talos-systems/talos/internal/integration/k8s"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -79,4 +80,5 @@ func init() {
 
 	allSuites = append(allSuites, api.GetAllSuites()...)
 	allSuites = append(allSuites, cli.GetAllSuites()...)
+	allSuites = append(allSuites, k8s.GetAllSuites()...)
 }

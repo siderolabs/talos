@@ -5,6 +5,9 @@
 package client
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -145,14 +148,58 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// Kubeconfig implements the proto.OSClient interface.
-func (c *Client) Kubeconfig(ctx context.Context) (io.Reader, <-chan error, error) {
+// KubeconfigRaw returns K8s client config (kubeconfig).
+func (c *Client) KubeconfigRaw(ctx context.Context) (io.Reader, <-chan error, error) {
 	stream, err := c.MachineClient.Kubeconfig(ctx, &empty.Empty{})
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return readStream(stream)
+}
+
+// Kubeconfig returns K8s client config (kubeconfig).
+func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
+	r, errCh, err := c.KubeconfigRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	gzR, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// returned .tar.gz should contain only single file (kubeconfig)
+	var kubeconfigBuf bytes.Buffer
+
+	tar := tar.NewReader(gzR)
+
+	for {
+		_, err = tar.Next()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = io.Copy(&kubeconfigBuf, tar)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err = gzR.Close(); err != nil {
+		return nil, err
+	}
+
+	if err = <-errCh; err != nil {
+		return nil, err
+	}
+
+	return kubeconfigBuf.Bytes(), nil
 }
 
 // Stats implements the proto.OSClient interface.
