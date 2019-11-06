@@ -33,8 +33,6 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-var ok bool
-
 // DefaultPodSecurityPolicy is the default PSP.
 var DefaultPodSecurityPolicy = []byte(`---
 kind: ClusterRole
@@ -94,7 +92,9 @@ spec:
 
 // Bootkube implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Bootkube struct{}
+type Bootkube struct {
+	provisioned bool
+}
 
 // ID implements the Service interface.
 func (b *Bootkube) ID(config runtime.Configurator) string {
@@ -127,14 +127,14 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 
 		if len(resp.Kvs) > 0 {
 			if string(resp.Kvs[0].Value) == "true" {
-				ok = true
+				b.provisioned = true
 			}
 		}
 
 		return nil
 	})
 
-	if ok {
+	if b.provisioned {
 		return nil
 	}
 
@@ -182,7 +182,7 @@ func (b *Bootkube) Condition(config runtime.Configurator) conditions.Condition {
 
 // Runner implements the Service interface.
 func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
-	if ok {
+	if b.provisioned {
 		return nil, nil
 	}
 
