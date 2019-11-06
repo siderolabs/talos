@@ -23,6 +23,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
@@ -167,6 +168,23 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	),
 		restart.WithType(restart.Forever),
 	), nil
+}
+
+// HealthFunc implements the HealthcheckedService interface
+func (e *Etcd) HealthFunc(runtime.Configurator) health.Check {
+	return func(ctx context.Context) error {
+		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
+		if err != nil {
+			return err
+		}
+
+		return client.Close()
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface
+func (e *Etcd) HealthSettings(runtime.Configurator) *health.Settings {
+	return &health.DefaultSettings
 }
 
 // nolint: gocyclo
