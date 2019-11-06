@@ -30,7 +30,7 @@ Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if speci
 		}
 
 		setupClient(func(c *client.Client) {
-			r, errCh, err := c.Kubeconfig(globalCtx)
+			r, errCh, err := c.KubeconfigRaw(globalCtx)
 			if err != nil {
 				helpers.Fatalf("error copying: %s", err)
 			}
