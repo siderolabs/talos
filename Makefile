@@ -244,7 +244,7 @@ image-vmware:
 
 .PHONY: push-image-aws
 push-image-aws:
-	@TAG=$(TAG) ./hack/test/aws-setup.sh
+	@TAG=$(TAG) SHA=$(SHA) ./hack/test/aws-setup.sh
 
 .PHONY: push-image-azure
 push-image-azure:

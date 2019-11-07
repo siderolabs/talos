@@ -57,5 +57,5 @@ ami=$(aws ec2 register-image --region ${REGION} \
 
 ## Setup the cluster YAML.
 sed -e "s#{{REGION}}#${REGION}#g" \
-    -e "s/{{TAG}}/${TAG}/" \
+    -e "s/{{TAG}}/${SHA}/" \
     -e "s#{{AMI}}#${ami}#g" ${PWD}/hack/test/manifests/aws-cluster.yaml > ${TMP}/cluster.yaml
