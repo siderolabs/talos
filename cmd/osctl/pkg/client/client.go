@@ -15,11 +15,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/api/common"
@@ -150,6 +152,8 @@ func (c *Client) Close() error {
 
 // KubeconfigRaw returns K8s client config (kubeconfig).
 func (c *Client) KubeconfigRaw(ctx context.Context) (io.Reader, <-chan error, error) {
+	warnStreamTargets(ctx)
+
 	stream, err := c.MachineClient.Kubeconfig(ctx, &empty.Empty{})
 	if err != nil {
 		return nil, nil, err
@@ -258,6 +262,8 @@ func (c *Client) Dmesg(ctx context.Context) (*common.DataReply, error) {
 
 // Logs implements the proto.OSClient interface.
 func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string) (stream machineapi.Machine_LogsClient, err error) {
+	warnStreamTargets(ctx)
+
 	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
 		Namespace: namespace,
 		Driver:    driver,
@@ -294,11 +300,15 @@ func (c *Client) Mounts(ctx context.Context) (*machineapi.MountsReply, error) {
 
 // LS implements the proto.OSClient interface.
 func (c *Client) LS(ctx context.Context, req machineapi.LSRequest) (stream machineapi.Machine_LSClient, err error) {
+	warnStreamTargets(ctx)
+
 	return c.MachineClient.LS(ctx, &req)
 }
 
 // CopyOut implements the proto.OSClient interface
 func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-chan error, error) {
+	warnStreamTargets(ctx)
+
 	stream, err := c.MachineClient.CopyOut(ctx, &machineapi.CopyOutRequest{
 		RootPath: rootPath,
 	})
@@ -392,4 +402,32 @@ func readStream(stream machineStream) (io.Reader, <-chan error, error) {
 	}()
 
 	return pr, errCh, nil
+}
+
+func warnStreamTargets(ctx context.Context) {
+	var (
+		endpoint []string
+		target   []string
+		ok       bool
+	)
+
+	md, _ := metadata.FromOutgoingContext(ctx)
+
+	// Don't think we'd ever get here because we explicitly set targets and endpoint
+	// in cmd/root.go
+	if target, ok = md["targets"]; !ok {
+		return
+	}
+
+	if endpoint, ok = md["endpoint"]; !ok {
+		return
+	}
+
+	// If md.targets is set to the endpoint ( which we do by default in the client )
+	// dont print a warning message
+	if len(target) == 1 && target[0] == endpoint[0] {
+		return
+	}
+
+	log.Printf("Warning: `--target` is not supported for streaming methods. %s will be used", endpoint[0])
 }

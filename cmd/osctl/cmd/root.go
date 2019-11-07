@@ -110,15 +110,22 @@ func Execute() {
 
 // setupClient wraps common code to initialize osd client
 func setupClient(action func(*client.Client)) {
-	// Update context with grpc metadata for proxy/relay requests
-	md := metadata.New(make(map[string]string))
-	md.Set("targets", target...)
-	globalCtx = metadata.NewOutgoingContext(globalCtx, md)
-
 	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig)
 	if err != nil {
 		helpers.Fatalf("error getting client credentials: %s", err)
 	}
+
+	// Update context with grpc metadata for proxy/relay requests
+	md := metadata.New(make(map[string]string))
+	md.Set("targets", target...)
+	md.Set("endpoint", t)
+
+	// If no targets specified, we'll use the endpoint/target defined in talosconfig
+	if len(target) == 0 {
+		md.Set("targets", t)
+	}
+
+	globalCtx = metadata.NewOutgoingContext(globalCtx, md)
 
 	c, err := client.NewClient(creds, t, constants.OsdPort)
 	if err != nil {
