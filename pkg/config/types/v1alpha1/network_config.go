@@ -20,6 +20,7 @@ import (
 type NetworkConfig struct {
 	NetworkHostname   string           `yaml:"hostname,omitempty"`
 	NetworkInterfaces []machine.Device `yaml:"interfaces,omitempty"`
+	NameServers       []string         `yaml:"nameservers,omitempty"`
 }
 
 // NetworkDeviceCheck defines the function type for checks.
@@ -39,6 +40,11 @@ func (n *NetworkConfig) SetHostname(hostname string) {
 // Devices implements the Configurator interface.
 func (n *NetworkConfig) Devices() []machine.Device {
 	return n.NetworkInterfaces
+}
+
+// Resolvers implements the Configurator interface.
+func (n *NetworkConfig) Resolvers() []string {
+	return n.NameServers
 }
 
 // Validate triggers the specified validation checks to run.

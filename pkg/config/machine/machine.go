@@ -61,6 +61,7 @@ type Security interface {
 type Network interface {
 	Hostname() string
 	SetHostname(string)
+	Resolvers() []string
 	Devices() []Device
 }
 

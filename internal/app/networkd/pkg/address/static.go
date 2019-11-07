@@ -16,8 +16,9 @@ import (
 
 // Static implements the Addressing interface
 type Static struct {
-	Device *machine.Device
-	NetIf  *net.Interface
+	Device      *machine.Device
+	NetIf       *net.Interface
+	NameServers []string
 }
 
 // Discover doesnt do anything in the static configuration since all
@@ -91,10 +92,17 @@ func (s *Static) Routes() (routes []*Route) {
 }
 
 // Resolvers returns the DNS resolvers
-// TODO: Currently we dont support specifying resolvers via config
 func (s *Static) Resolvers() []net.IP {
-	// TODO: Think about how we want to expose this via config
-	return []net.IP{}
+	if len(s.NameServers) == 0 {
+		return []net.IP{}
+	}
+
+	resolvers := make([]net.IP, 0, len(s.NameServers))
+	for _, resolver := range s.NameServers {
+		resolvers = append(resolvers, net.ParseIP(resolver))
+	}
+
+	return resolvers
 }
 
 // Hostname returns the hostname

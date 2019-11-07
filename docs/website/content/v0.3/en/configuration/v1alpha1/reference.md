@@ -37,6 +37,7 @@ machine:
     extraArgs: []string
   network: (optional)
     hostname: string
+    nameservers: []string
     interfaces:
       - interface: string
         cidr: string
@@ -120,6 +121,10 @@ The only supported environment variables are:
 #### machine.network.hostname
 
 `hostname` can be used to statically set the hostname for the host.
+
+#### machine.network.nameservers
+
+`nameservers` can be used to statically set the nameservers for the host.
 
 #### machine.network.interfaces
 
