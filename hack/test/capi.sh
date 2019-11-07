@@ -9,8 +9,15 @@ source ./hack/test/e2e-runner.sh
 mkdir -p ${TMP}
 cp ${PWD}/hack/test/manifests/provider-components.yaml ${TMP}/provider-components.yaml
 
-## Template out gcp components
+## Installs envsubst command
 apk add --no-cache gettext
+
+## Template out aws components
+## Using a local copy until v0.5.0 of the provider is cut.
+export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
+cat ${PWD}/hack/test/manifests/capa-components.yaml| envsubst > ${TMP}/capa-components.yaml
+
+## Template out gcp components
 export GCP_B64ENCODED_CREDENTIALS=${GCE_SVC_ACCT} 
 cat ${PWD}/hack/test/manifests/capg-components.yaml| envsubst > ${TMP}/capg-components.yaml
 ##Until next alpha release, keep a local copy of capg-components.yaml. 
@@ -20,6 +27,7 @@ cat ${PWD}/hack/test/manifests/capg-components.yaml| envsubst > ${TMP}/capg-comp
 ## Drop in capi stuff
 e2e_run "kubectl apply -f ${TMP}/provider-components.yaml"
 e2e_run "kubectl apply -f ${CAPI_COMPONENTS}"
+e2e_run "kubectl apply -f ${TMP}/capa-components.yaml"
 e2e_run "kubectl apply -f ${TMP}/capg-components.yaml"
 
 ## Wait for talosconfig in cm then dump it out
