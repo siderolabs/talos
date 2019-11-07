@@ -195,7 +195,10 @@ func NewTalosCA() (ca *x509.CertificateAuthority, err error) {
 func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	ips := []net.IP{net.ParseIP(loopback)}
 
-	opts := []x509.Option{x509.IPAddresses(ips)}
+	opts := []x509.Option{
+		x509.IPAddresses(ips),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+	}
 
 	caPemBlock, _ := pem.Decode(crt)
 	if caPemBlock == nil {
