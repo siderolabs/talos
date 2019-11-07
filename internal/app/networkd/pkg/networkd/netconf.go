@@ -37,13 +37,8 @@ func (n *NetConf) BuildOptions(config runtime.Configurator) error {
 			}
 
 			if device.CIDR != "" {
-				s := &address.Static{Device: &device, NetIf: link}
+				s := &address.Static{Device: &device, NetIf: link, NameServers: config.Machine().Network().Resolvers()}
 				(*n)[link] = append(opts, nic.WithAddressing(s))
-			}
-
-			// Configure MTU
-			if device.MTU != 0 {
-				(*n)[link] = append(opts, nic.WithMTU(uint32(device.MTU)))
 			}
 		}
 	}
