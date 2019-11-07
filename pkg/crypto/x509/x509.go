@@ -646,7 +646,7 @@ func NewCertficateAndKey(crt *x509.Certificate, key interface{}, setters ...Opti
 		return nil, fmt.Errorf("failed to parse CSR: %w", err)
 	}
 
-	c, err = NewCertificateFromCSR(crt, key, cr)
+	c, err = NewCertificateFromCSR(crt, key, cr, setters...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
 	}
