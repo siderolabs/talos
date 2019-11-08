@@ -51,6 +51,8 @@ RUN protoc -I/api --go_out=plugins=grpc:/api/network /api/network/network.proto
 # Genenrate api bits last so we have other proto files in place to satisfy the import
 COPY ./api/api.proto /api/api.proto
 RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:/api /api/api.proto
+# Gofumports generated files to adjust import order
+RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 FROM scratch AS generate
 COPY --from=generate-build /api/common/github.com/talos-systems/talos/api/common/common.pb.go /api/common/
