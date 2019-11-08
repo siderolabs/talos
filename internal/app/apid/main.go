@@ -91,12 +91,12 @@ func main() {
 			NetworkClient: networkClient,
 		},
 		factory.Port(constants.OsdPort),
+		factory.WithStreamInterceptor(protoProxy.StreamInterceptor()),
+		factory.WithUnaryInterceptor(protoProxy.UnaryInterceptor()),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(tlsConfig),
 			),
-			grpc.UnaryInterceptor(protoProxy.UnaryInterceptor()),
-			grpc.StreamInterceptor(protoProxy.StreamInterceptor()),
 		),
 	)
 	if err != nil {
