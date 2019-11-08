@@ -26,7 +26,6 @@ func (task *StartSystemContainerd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 
 func (task *StartSystemContainerd) standard(r runtime.Runtime) (err error) {
 	system.Services(r.Config()).LoadAndStart(&services.SystemContainerd{})
-	system.Services(r.Config()).LoadAndStart(&services.SystemContainerd{})
 
 	return nil
 }
