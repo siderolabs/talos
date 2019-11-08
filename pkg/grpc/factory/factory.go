@@ -14,6 +14,9 @@ import (
 	"strconv"
 
 	"google.golang.org/grpc"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 )
 
 // Registrator describes the set of methods required in order for a concrete
@@ -24,11 +27,13 @@ type Registrator interface {
 
 // Options is the functional options struct.
 type Options struct {
-	Port          int
-	SocketPath    string
-	Network       string
-	Config        *tls.Config
-	ServerOptions []grpc.ServerOption
+	Port               int
+	SocketPath         string
+	Network            string
+	Config             *tls.Config
+	ServerOptions      []grpc.ServerOption
+	StreamInterceptors []grpc.StreamServerInterceptor
+	UnaryInterceptors  []grpc.UnaryServerInterceptor
 }
 
 // Option is the functional option func.
@@ -62,10 +67,24 @@ func Config(o *tls.Config) Option {
 	}
 }
 
-// ServerOptions sets the gRPC server options of the server.
+// ServerOptions appends to the gRPC server options of the server.
 func ServerOptions(o ...grpc.ServerOption) Option {
 	return func(args *Options) {
-		args.ServerOptions = o
+		args.ServerOptions = append(args.ServerOptions, o...)
+	}
+}
+
+// WithStreamInterceptor appends to the list of gRPC server stream interceptors.
+func WithStreamInterceptor(i grpc.StreamServerInterceptor) Option {
+	return func(args *Options) {
+		args.StreamInterceptors = append(args.StreamInterceptors, i)
+	}
+}
+
+// WithUnaryInterceptor appends to the list of gRPC server unary interceptors.
+func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) Option {
+	return func(args *Options) {
+		args.UnaryInterceptors = append(args.UnaryInterceptors, i)
 	}
 }
 
@@ -79,6 +98,15 @@ func NewDefaultOptions(setters ...Option) *Options {
 	for _, setter := range setters {
 		setter(opts)
 	}
+
+	// install default recovery interceptors
+	opts.StreamInterceptors = append(opts.StreamInterceptors, grpc_recovery.StreamServerInterceptor())
+	opts.UnaryInterceptors = append(opts.UnaryInterceptors, grpc_recovery.UnaryServerInterceptor())
+
+	opts.ServerOptions = append(opts.ServerOptions,
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(opts.UnaryInterceptors...)),
+	)
 
 	return opts
 }

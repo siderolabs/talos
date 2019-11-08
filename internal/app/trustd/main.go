@@ -93,11 +93,11 @@ func main() {
 	err = factory.ListenAndServe(
 		&reg.Registrator{Config: config},
 		factory.Port(constants.TrustdPort),
+		factory.WithUnaryInterceptor(creds.UnaryInterceptor()),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(tlsConfig),
 			),
-			grpc.UnaryInterceptor(creds.UnaryInterceptor()),
 		),
 	)
 	if err != nil {
