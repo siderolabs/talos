@@ -96,6 +96,7 @@ func main() {
 				credentials.NewTLS(tlsConfig),
 			),
 			grpc.UnaryInterceptor(protoProxy.UnaryInterceptor()),
+			grpc.StreamInterceptor(protoProxy.StreamInterceptor()),
 		),
 	)
 	if err != nil {

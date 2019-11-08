@@ -343,11 +343,11 @@ func (p *ApiProxy) UnaryInterceptor() grpc.UnaryServerInterceptor {
 			tls.WithCACertPEM(ca),
 			tls.WithKeypair(*certs),
 		)
-		return p.Proxy(ctx, info.FullMethod, credentials.NewTLS(tlsConfig), req)
+		return p.UnaryProxy(ctx, info.FullMethod, credentials.NewTLS(tlsConfig), req)
 	}
 }
 
-func (p *ApiProxy) Proxy(ctx context.Context, method string, creds credentials.TransportCredentials, in interface{}, opts ...grpc.CallOption) (proto.Message, error) {
+func (p *ApiProxy) UnaryProxy(ctx context.Context, method string, creds credentials.TransportCredentials, in interface{}, opts ...grpc.CallOption) (proto.Message, error) {
 	var (
 		err      error
 		errors   *go_multierror.Error
@@ -620,6 +620,133 @@ func copyClientServer(msg interface{}, client grpc.ClientStream, srv grpc.Server
 	}
 
 	return nil
+}
+
+func (p *ApiProxy) StreamInterceptor() grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		md, _ := metadata.FromIncomingContext(ss.Context())
+		if _, ok := md["proxyfrom"]; ok {
+			return handler(srv, ss)
+		}
+		ca, err := p.Provider.GetCA()
+		if err != nil {
+			return err
+		}
+		certs, err := p.Provider.GetCertificate(nil)
+		if err != nil {
+			return err
+		}
+		tlsConfig, err := tls.New(
+			tls.WithClientAuthType(tls.Mutual),
+			tls.WithCACertPEM(ca),
+			tls.WithKeypair(*certs),
+		)
+		return p.StreamProxy(ss, info.FullMethod, credentials.NewTLS(tlsConfig), srv)
+	}
+}
+
+func (p *ApiProxy) StreamProxy(ss grpc.ServerStream, method string, creds credentials.TransportCredentials, srv interface{}, opts ...grpc.CallOption) error {
+	var (
+		err     error
+		errors  *go_multierror.Error
+		ok      bool
+		targets []string
+	)
+
+	md, _ := metadata.FromIncomingContext(ss.Context())
+	// default to target node specified in config or on cli
+	if targets, ok = md["targets"]; !ok {
+		targets = md[":authority"]
+	}
+	// Can discuss more on how to handle merging multiple streams later
+	// but for now, ensure we only deal with a single target
+	if len(targets) > 1 {
+		targets = targets[:1]
+	}
+
+	proxyMd := metadata.New(make(map[string]string))
+	proxyMd.Set("proxyfrom", md[":authority"]...)
+
+	switch method {
+	case "/machine.Machine/CopyOut":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		m := new(machine.CopyOutRequest)
+		if err := ss.RecvMsg(m); err != nil {
+			return err
+		}
+		// artificially limit this to only the first client/target until
+		// we get multi-stream stuff sorted
+		clientStream, err := clients[0].Conn.CopyOut(clients[0].Context, m)
+		if err != nil {
+			return err
+		}
+		var msg machine.StreamingData
+		return copyClientServer(&msg, clientStream, ss.(grpc.ServerStream))
+	case "/machine.Machine/Kubeconfig":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		m := new(empty.Empty)
+		if err := ss.RecvMsg(m); err != nil {
+			return err
+		}
+		// artificially limit this to only the first client/target until
+		// we get multi-stream stuff sorted
+		clientStream, err := clients[0].Conn.Kubeconfig(clients[0].Context, m)
+		if err != nil {
+			return err
+		}
+		var msg machine.StreamingData
+		return copyClientServer(&msg, clientStream, ss.(grpc.ServerStream))
+	case "/machine.Machine/LS":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		m := new(machine.LSRequest)
+		if err := ss.RecvMsg(m); err != nil {
+			return err
+		}
+		// artificially limit this to only the first client/target until
+		// we get multi-stream stuff sorted
+		clientStream, err := clients[0].Conn.LS(clients[0].Context, m)
+		if err != nil {
+			return err
+		}
+		var msg machine.FileInfo
+		return copyClientServer(&msg, clientStream, ss.(grpc.ServerStream))
+	case "/machine.Machine/Logs":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		m := new(machine.LogsRequest)
+		if err := ss.RecvMsg(m); err != nil {
+			return err
+		}
+		// artificially limit this to only the first client/target until
+		// we get multi-stream stuff sorted
+		clientStream, err := clients[0].Conn.Logs(clients[0].Context, m)
+		if err != nil {
+			return err
+		}
+		var msg common.Data
+		return copyClientServer(&msg, clientStream, ss.(grpc.ServerStream))
+
+	}
+
+	if err != nil {
+		errors = go_multierror.Append(errors, err)
+	}
+	return errors.ErrorOrNil()
 }
 
 type runnerOSFn func(*proxyOSClient, interface{}, *sync.WaitGroup, chan proto.Message, chan error)
