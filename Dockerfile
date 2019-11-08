@@ -18,7 +18,7 @@ RUN cd $(mktemp -d) \
     && go get mvdan.cc/gofumpt/gofumports \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
-COPY --from=autonomy/protoc-gen-proxy:ec650af /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
+COPY --from=autonomy/protoc-gen-proxy:4a9e5da /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
 
 # The build target creates a container that will be used to build Talos source
 # code.
