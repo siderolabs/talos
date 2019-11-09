@@ -172,13 +172,11 @@ module.exports = {
         },
         ul: {
           listStyleType: 'disc',
-          listStylePosition: 'inside',
-          marginBottom: '16px'
+          listStylePosition: 'inside'
         },
         ol: {
           listStyleType: 'decimal',
-          listStylePosition: 'inside',
-          marginBottom: '16px'
+          listStylePosition: 'inside'
         },
         a: {
           extends: 'link'
