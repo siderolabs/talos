@@ -118,6 +118,14 @@ generate: buildkitd
 		--opt target=$@ \
 		$(COMMON_ARGS)
 
+.PHONY: docs
+docs: buildkitd
+	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
+		build \
+		--output type=local,dest=./ \
+		--opt target=$@ \
+		$(COMMON_ARGS)
+
 .PHONY: kernel
 kernel: buildkitd
 	@$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \

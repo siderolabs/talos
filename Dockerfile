@@ -19,6 +19,10 @@ RUN cd $(mktemp -d) \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY --from=autonomy/protoc-gen-proxy:4a9e5da /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
+COPY ./hack/docgen /go/src/github.com/talos-systems/docgen
+RUN cd /go/src/github.com/talos-systems/docgen \
+    && go build . \
+    && mv docgen /toolchain/go/bin/
 
 # The build target creates a container that will be used to build Talos source
 # code.
@@ -77,6 +81,12 @@ COPY ./internal ./internal
 COPY --from=generate /api ./api
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
+
+FROM base AS docs-build
+RUN go generate ./pkg/config/types/v1alpha1
+
+FROM scratch AS docs
+COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.3/en/configuration/v1alpha1.md
 
 # The init target builds the init binary.
 

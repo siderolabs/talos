@@ -69,17 +69,7 @@
     "items": [
       {
         "title": "v1alpha1",
-        "path": "v0.3/en/configuration/v1alpha1",
-        "children": [
-          {
-            "title": "Reference",
-            "path": "v0.3/en/configuration/v1alpha1/reference"
-          },
-          {
-            "title": "Usage",
-            "path": "v0.3/en/configuration/v1alpha1/usage"
-          }
-        ]
+        "path": "v0.3/en/configuration/v1alpha1"
       }
     ]
   },

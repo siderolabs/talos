@@ -120,7 +120,7 @@ issues:
   # it can be disabled by `exclude-use-default: false`. To list all
   # excluded by default patterns execute `golangci-lint run --help`
   exclude:
-    - ^ST1000  # ST1000: package comment should be of the form "Package services ..." (stylecheck)
+    - ^ST1000 # ST1000: package comment should be of the form "Package services ..." (stylecheck)
 
   exclude-rules:
     - path: cmd/osctl/cmd
@@ -132,6 +132,9 @@ issues:
     - path: internal/app/machined/pkg/system/services
       linters:
         - dupl
+    - path: pkg/config/types/v1alpha1
+      linters:
+        - lll
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all
