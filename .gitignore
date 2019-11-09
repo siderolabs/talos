@@ -2,8 +2,10 @@ bin
 build
 images
 .vscode
-master*.yaml
-worker*.yaml
+init.yaml
+controlplane.yaml
+join.yaml
+docgen
 talosconfig
 kubeconfig
 

@@ -7,6 +7,7 @@
 package v1alpha1
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -16,36 +17,40 @@ import (
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
-// NetworkConfig reperesents the machine's networking config values.
-type NetworkConfig struct {
-	NetworkHostname   string           `yaml:"hostname,omitempty"`
-	NetworkInterfaces []machine.Device `yaml:"interfaces,omitempty"`
-	NameServers       []string         `yaml:"nameservers,omitempty"`
-}
+var (
+	// General
+
+	// ErrRequiredSection denotes a section is required
+	ErrRequiredSection = errors.New("required config section")
+	// ErrInvalidVersion denotes that the config file version is invalid
+	ErrInvalidVersion = errors.New("invalid config version")
+
+	// Security
+
+	// ErrInvalidCert denotes that the certificate specified is invalid
+	ErrInvalidCert = errors.New("certificate is invalid")
+	// ErrInvalidCertType denotes that the certificate type is invalid
+	ErrInvalidCertType = errors.New("certificate type is invalid")
+
+	// Services
+
+	// ErrUnsupportedCNI denotes that the specified CNI is invalid
+	ErrUnsupportedCNI = errors.New("unsupported CNI driver")
+	// ErrInvalidTrustdToken denotes that a trustd token has not been specified
+	ErrInvalidTrustdToken = errors.New("trustd token is invalid")
+
+	// Networking
+
+	// ErrBadAddressing denotes that an incorrect combination of network
+	// address methods have been specified
+	ErrBadAddressing = errors.New("invalid network device addressing method")
+	// ErrInvalidAddress denotes that a bad address was provided
+	ErrInvalidAddress = errors.New("invalid network address")
+)
 
 // NetworkDeviceCheck defines the function type for checks.
 // nolint: dupl
 type NetworkDeviceCheck func(*machine.Device) error
-
-// Hostname implements the Configurator interface.
-func (n *NetworkConfig) Hostname() string {
-	return n.NetworkHostname
-}
-
-// SetHostname implements the Configurator interface.
-func (n *NetworkConfig) SetHostname(hostname string) {
-	n.NetworkHostname = hostname
-}
-
-// Devices implements the Configurator interface.
-func (n *NetworkConfig) Devices() []machine.Device {
-	return n.NetworkInterfaces
-}
-
-// Resolvers implements the Configurator interface.
-func (n *NetworkConfig) Resolvers() []string {
-	return n.NameServers
-}
 
 // Validate triggers the specified validation checks to run.
 // nolint: dupl
@@ -126,20 +131,4 @@ func CheckDeviceRoutes() NetworkDeviceCheck {
 		}
 		return result.ErrorOrNil()
 	}
-}
-
-// Bond contains the various options for configuring a bonded interface.
-// nolint: dupl
-type Bond struct {
-	Mode       string   `yaml:"mode"`
-	HashPolicy string   `yaml:"hashpolicy"`
-	LACPRate   string   `yaml:"lacprate"`
-	Interfaces []string `yaml:"interfaces"`
-}
-
-// Route represents a network route.
-// nolint: dupl
-type Route struct {
-	Network string `yaml:"network"`
-	Gateway string `yaml:"gateway"`
 }
