@@ -93,8 +93,6 @@ type MachineConfig struct {
 	//     - |
 	//       network:
 	//         hostname: worker-1
-	//         timeservers:
-	//           - time.cloudflare.com
 	//         interfaces:
 	//         nameservers:
 	//           - 9.8.7.6
