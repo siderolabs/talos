@@ -90,6 +90,10 @@
       {
         "title": "Kernel",
         "path": "v0.3/en/customization/kernel"
+      },
+      {
+        "title": "Corporate Proxy",
+        "path": "v0.3/en/customization/proxy"
       }
     ]
   },
