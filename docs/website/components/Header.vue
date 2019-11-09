@@ -15,6 +15,11 @@
             <CommunityDropdown></CommunityDropdown>
           </li>
           <li class="link min-w-full md:min-w-0">
+            <a href="/roadmap">
+              <span class="font-semibold mr-1">Roadmap</span>
+            </a>
+          </li>
+          <li class="link min-w-full md:min-w-0">
             <a href="/faqs">
               <span class="font-semibold mr-1">FAQs</span>
             </a>
