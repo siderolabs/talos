@@ -173,8 +173,8 @@
         <div>
           <h2 class="text-center">Current</h2>
           <div>
-            We are committed to an <tt>n-1</tt> adoption rate of upstream
-            Kubernetes, and the latest LTS Linux kernel will always be used.
+            We are committed to staying current with the latest stable versions
+            of Kubernetes, and Linux.
           </div>
         </div>
         <div>
