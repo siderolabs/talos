@@ -80,4 +80,11 @@ p a:hover {
   color: #12283a;
 }
 
+.kind-section #content,
+.section-docs #content {
+  @apply max-w-6xl mx-auto px-6;
+}
+.section-docs .page-heading {
+  @apply mb-1;
+}
 /* purgecss end ignore */

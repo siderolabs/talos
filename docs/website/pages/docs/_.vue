@@ -75,21 +75,4 @@ export default {
 }
 </script>
 
-<style>
-body.kind-page #content {
-  @apply max-w-3xl mx-auto px-6;
-}
-
-body.kind-section #content,
-body.section-docs #content {
-  @apply max-w-6xl mx-auto px-6;
-}
-@screen lg {
-  body.kind-section #content body.kind-page #content {
-    @apply px-0;
-  }
-}
-body.section-docs .page-heading {
-  @apply mb-1;
-}
-</style>
+<style></style>
