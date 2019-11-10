@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
@@ -35,6 +36,13 @@ func (task *UserDefinedNetwork) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 
 // nolint: gocyclo
 func (task *UserDefinedNetwork) runtime(r runtime.Runtime) (err error) {
+	// Check to see if a static IP was set via kernel args;
+	// if so, we'll skip the initial dhcp discovery
+	if option := kernel.ProcCmdline().Get("ip").First(); option != nil {
+		log.Println("skipping initial network setup, found kernel arg 'ip'")
+		return nil
+	}
+
 	nwd, err := networkd.New()
 	if err != nil {
 		return err

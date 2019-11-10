@@ -95,6 +95,7 @@ case "$1" in
           ;;
         e )
           EXTRA_ARGS="${EXTRA_ARGS} --extra-kernel-arg=${OPTARG}"
+          echo "Using kernel parameter ${OPTARG}"
           ;;
         n )
           TALOS_RAW="/out/${OPTARG}.raw"
