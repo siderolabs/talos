@@ -287,6 +287,11 @@ func (c *Client) Processes(ctx context.Context) (reply *osapi.ProcessesReply, er
 	return c.client.Processes(ctx, &empty.Empty{})
 }
 
+// Memory implements the proto.OSClient interface.
+func (c *Client) Memory(ctx context.Context) (*osapi.MemInfoReply, error) {
+	return c.client.Memory(ctx, &empty.Empty{})
+}
+
 // Mounts implements the proto.OSClient interface.
 func (c *Client) Mounts(ctx context.Context) (*machineapi.MountsReply, error) {
 	return c.MachineClient.Mounts(ctx, &empty.Empty{})

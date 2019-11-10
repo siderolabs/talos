@@ -82,6 +82,15 @@ type StatsReply = os.StatsReply
 // Stat from public import os/os.proto
 type Stat = os.Stat
 
+// MemInfoResponse from public import os/os.proto
+type MemInfoResponse = os.MemInfoResponse
+
+// MemInfoReply from public import os/os.proto
+type MemInfoReply = os.MemInfoReply
+
+// MemInfo from public import os/os.proto
+type MemInfo = os.MemInfo
+
 // RebootResponse from public import machine/machine.proto
 type RebootResponse = machine.RebootResponse
 
@@ -387,6 +396,18 @@ func (p *ApiProxy) UnaryProxy(ctx context.Context, method string, creds credenti
 		msgs, err = proxyOSRunner(clients, in, proxyDmesg)
 		for _, msg := range msgs {
 			resp.Response = append(resp.Response, msg.(*common.DataReply).Response[0])
+		}
+		response = resp
+	case "/os.OS/Memory":
+		// Initialize target clients
+		clients, err := createOSClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		resp := &os.MemInfoReply{}
+		msgs, err = proxyOSRunner(clients, in, proxyMemory)
+		for _, msg := range msgs {
+			resp.Response = append(resp.Response, msg.(*os.MemInfoReply).Response[0])
 		}
 		response = resp
 	case "/os.OS/Processes":
@@ -805,6 +826,17 @@ func proxyDmesg(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respC
 	respCh <- resp
 }
 
+func proxyMemory(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
+	defer wg.Done()
+	resp, err := client.Conn.Memory(client.Context, in.(*empty.Empty))
+	if err != nil {
+		errCh <- err
+		return
+	}
+	resp.Response[0].Metadata = &NodeMetadata{Hostname: client.Target}
+	respCh <- resp
+}
+
 func proxyProcesses(client *proxyOSClient, in interface{}, wg *sync.WaitGroup, respCh chan proto.Message, errCh chan error) {
 	defer wg.Done()
 	resp, err := client.Conn.Processes(client.Context, in.(*empty.Empty))
@@ -1212,6 +1244,10 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (*common.DataR
 	return r.OSClient.Dmesg(ctx, in)
 }
 
+func (r *Registrator) Memory(ctx context.Context, in *empty.Empty) (*os.MemInfoReply, error) {
+	return r.OSClient.Memory(ctx, in)
+}
+
 func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (*os.ProcessesReply, error) {
 	return r.OSClient.Processes(ctx, in)
 }
@@ -1346,6 +1382,10 @@ func (c *LocalOSClient) Containers(ctx context.Context, in *os.ContainersRequest
 
 func (c *LocalOSClient) Dmesg(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*common.DataReply, error) {
 	return c.OSClient.Dmesg(ctx, in, opts...)
+}
+
+func (c *LocalOSClient) Memory(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*os.MemInfoReply, error) {
+	return c.OSClient.Memory(ctx, in, opts...)
 }
 
 func (c *LocalOSClient) Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*os.ProcessesReply, error) {
