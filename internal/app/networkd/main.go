@@ -11,6 +11,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
@@ -32,12 +33,30 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Check to see if a static IP was set via kernel args;
+	// if so, we'll skip the networking configuration via networkd
+	if option := kernel.ProcCmdline().Get("ip").First(); option == nil {
+		configureNetworking(nwd)
+	}
+
+	log.Fatalf("%+v", factory.ListenAndServe(
+		reg.NewRegistrator(nwd),
+		factory.Network("unix"),
+		factory.SocketPath(constants.NetworkSocketPath),
+	),
+	)
+}
+
+func configureNetworking(n *networkd.Networkd) {
 	// Convert links to nic
 	log.Println("discovering local network interfaces")
 
-	var netconf networkd.NetConf
+	var (
+		netconf networkd.NetConf
+		err     error
+	)
 
-	if netconf, err = nwd.Discover(); err != nil {
+	if netconf, err = n.Discover(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -81,21 +100,14 @@ func main() {
 	// Add any necessary routes
 	log.Println("configuring interface addressing")
 
-	if err = nwd.Configure(netIfaces...); err != nil {
+	if err = n.Configure(netIfaces...); err != nil {
 		log.Fatal(err)
 	}
 
 	log.Println("interface configuration")
-	nwd.PrintState()
+	n.PrintState()
 
 	log.Println("starting renewal watcher")
 	// handle dhcp renewal
-	go nwd.Renew(netIfaces...)
-
-	log.Fatalf("%+v", factory.ListenAndServe(
-		reg.NewRegistrator(nwd),
-		factory.Network("unix"),
-		factory.SocketPath(constants.NetworkSocketPath),
-	),
-	)
+	go n.Renew(netIfaces...)
 }
