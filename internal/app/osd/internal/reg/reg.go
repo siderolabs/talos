@@ -272,3 +272,77 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 		return nil, fmt.Errorf("unsupported driver %q", driver)
 	}
 }
+
+// Memory implements the osdapi.OSDServer interface.
+func (r *Registrator) Memory(ctx context.Context, in *empty.Empty) (reply *osapi.MemInfoReply, err error) {
+	proc, err := procfs.NewDefaultFS()
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := proc.Meminfo()
+	if err != nil {
+		return nil, err
+	}
+
+	meminfo := &osapi.MemInfo{
+		Memtotal:          info.MemTotal,
+		Memfree:           info.MemFree,
+		Memavailable:      info.MemAvailable,
+		Buffers:           info.Buffers,
+		Cached:            info.Cached,
+		Swapcached:        info.SwapCached,
+		Active:            info.Active,
+		Inactive:          info.Inactive,
+		Activeanon:        info.ActiveAnon,
+		Inactiveanon:      info.InactiveAnon,
+		Activefile:        info.ActiveFile,
+		Inactivefile:      info.InactiveFile,
+		Unevictable:       info.Unevictable,
+		Mlocked:           info.Mlocked,
+		Swaptotal:         info.SwapTotal,
+		Swapfree:          info.SwapFree,
+		Dirty:             info.Dirty,
+		Writeback:         info.Writeback,
+		Anonpages:         info.AnonPages,
+		Mapped:            info.Mapped,
+		Shmem:             info.Shmem,
+		Slab:              info.Slab,
+		Sreclaimable:      info.SReclaimable,
+		Sunreclaim:        info.SUnreclaim,
+		Kernelstack:       info.KernelStack,
+		Pagetables:        info.PageTables,
+		Nfsunstable:       info.NFSUnstable,
+		Bounce:            info.Bounce,
+		Writebacktmp:      info.WritebackTmp,
+		Commitlimit:       info.CommitLimit,
+		Committedas:       info.CommittedAS,
+		Vmalloctotal:      info.VmallocTotal,
+		Vmallocused:       info.VmallocUsed,
+		Vmallocchunk:      info.VmallocChunk,
+		Hardwarecorrupted: info.HardwareCorrupted,
+		Anonhugepages:     info.AnonHugePages,
+		Shmemhugepages:    info.ShmemHugePages,
+		Shmempmdmapped:    info.ShmemPmdMapped,
+		Cmatotal:          info.CmaTotal,
+		Cmafree:           info.CmaFree,
+		Hugepagestotal:    info.HugePagesTotal,
+		Hugepagesfree:     info.HugePagesFree,
+		Hugepagesrsvd:     info.HugePagesRsvd,
+		Hugepagessurp:     info.HugePagesSurp,
+		Hugepagesize:      info.Hugepagesize,
+		Directmap4K:       info.DirectMap4k,
+		Directmap2M:       info.DirectMap2M,
+		Directmap1G:       info.DirectMap1G,
+	}
+
+	reply = &osapi.MemInfoReply{
+		Response: []*osapi.MemInfoResponse{
+			{
+				Meminfo: meminfo,
+			},
+		},
+	}
+
+	return reply, err
+}

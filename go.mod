@@ -2,9 +2,12 @@ module github.com/talos-systems/talos
 
 go 1.13
 
-replace github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20190820045831-7b9ca088b93d
-
-replace github.com/kubernetes-incubator/bootkube => github.com/andrewrynhard/bootkube v0.14.1-0.20191015145817-ac01e28e2840
+replace (
+	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/kubernetes-incubator/bootkube => github.com/andrewrynhard/bootkube v0.14.1-0.20191015145817-ac01e28e2840
+	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
+	github.com/prometheus/procfs => github.com/bradbeam/procfs v0.0.6-0.20191106200502-fed2cfede51f
+)
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
@@ -58,7 +61,7 @@ require (
 	go.etcd.io/etcd v3.3.13+incompatible
 	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7 // indirect
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20190825160603-fb81701db80f
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
@@ -73,9 +76,4 @@ require (
 	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
 	k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
-)
-
-replace (
-	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
-	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
