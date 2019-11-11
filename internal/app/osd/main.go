@@ -26,6 +26,7 @@ func main() {
 		&reg.Registrator{},
 		factory.Network("unix"),
 		factory.SocketPath(constants.OSSocketPath),
+		factory.WithDefaultLog(),
 	),
 	)
 }

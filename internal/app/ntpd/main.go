@@ -80,6 +80,7 @@ func main() {
 			reg.NewRegistrator(n),
 			factory.Network("unix"),
 			factory.SocketPath(constants.TimeSocketPath),
+			factory.WithDefaultLog(),
 		)
 	}()
 

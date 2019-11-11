@@ -8,6 +8,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -17,6 +19,8 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+
+	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
 )
 
 // Registrator describes the set of methods required in order for a concrete
@@ -31,6 +35,8 @@ type Options struct {
 	SocketPath         string
 	Network            string
 	Config             *tls.Config
+	LogPrefix          string
+	LogDestination     io.Writer
 	ServerOptions      []grpc.ServerOption
 	StreamInterceptors []grpc.StreamServerInterceptor
 	UnaryInterceptors  []grpc.UnaryServerInterceptor
@@ -88,6 +94,21 @@ func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) Option {
 	}
 }
 
+// WithLog sets up request logging to specified destination
+func WithLog(prefix string, w io.Writer) Option {
+	return func(args *Options) {
+		args.LogPrefix = prefix
+		args.LogDestination = w
+	}
+}
+
+// WithDefaultLog sets up request logging to default destination
+func WithDefaultLog() Option {
+	return func(args *Options) {
+		args.LogDestination = log.Writer()
+	}
+}
+
 // NewDefaultOptions initializes the Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
@@ -97,6 +118,15 @@ func NewDefaultOptions(setters ...Option) *Options {
 
 	for _, setter := range setters {
 		setter(opts)
+	}
+
+	if opts.LogDestination != nil {
+		logger := log.New(opts.LogDestination, opts.LogPrefix, log.Flags())
+
+		logMiddleware := grpclog.NewMiddleware(logger)
+
+		opts.UnaryInterceptors = append(opts.UnaryInterceptors, logMiddleware.UnaryInterceptor())
+		opts.StreamInterceptors = append(opts.StreamInterceptors, logMiddleware.StreamInterceptor())
 	}
 
 	// install default recovery interceptors

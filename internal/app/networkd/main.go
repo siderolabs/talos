@@ -43,6 +43,7 @@ func main() {
 		reg.NewRegistrator(nwd),
 		factory.Network("unix"),
 		factory.SocketPath(constants.NetworkSocketPath),
+		factory.WithDefaultLog(),
 	),
 	)
 }
