@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/talos-systems/talos/pkg/blockdevice"
@@ -20,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
+	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/retry"
 
 	"golang.org/x/sys/unix"
@@ -164,16 +164,8 @@ func probe(devpath string) (devpaths []string) {
 	name := filepath.Base(devpath)
 
 	for _, p := range pt.Partitions() {
-		var partpath string
+		partpath := util.PartPath(name, int(p.No()))
 
-		switch {
-		case strings.HasPrefix(name, "nvme"):
-			fallthrough
-		case strings.HasPrefix(name, "loop"):
-			partpath = fmt.Sprintf("/dev/%sp%d", name, p.No())
-		default:
-			partpath = fmt.Sprintf("/dev/%s%d", name, p.No())
-		}
 		// nolint: errcheck
 		if sb, _ := FileSystem(partpath); sb != nil {
 			devpaths = append(devpaths, partpath)

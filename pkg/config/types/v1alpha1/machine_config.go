@@ -19,6 +19,7 @@ type MachineConfig struct {
 	MachineCertSANs []string                          `yaml:"certSANs"`
 	MachineKubelet  *KubeletConfig                    `yaml:"kubelet,omitempty"`
 	MachineNetwork  *NetworkConfig                    `yaml:"network,omitempty"`
+	MachineDisks    []machine.Disk                    `yaml:"disks,omitempty"`
 	MachineInstall  *InstallConfig                    `yaml:"install,omitempty"`
 	MachineFiles    []machine.File                    `yaml:"files,omitempty"`
 	MachineEnv      machine.Env                       `yaml:"env,omitempty"`
@@ -28,6 +29,11 @@ type MachineConfig struct {
 type KubeletConfig struct {
 	Image     string            `yaml:"image,omitempty"`
 	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+}
+
+// Disks implements the Configurator interface.
+func (m *MachineConfig) Disks() []machine.Disk {
+	return m.MachineDisks
 }
 
 // Install implements the Configurator interface.

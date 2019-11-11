@@ -87,15 +87,6 @@ func (d *Sequencer) Boot() error {
 			rootfs.NewValidateConfigTask(),
 		),
 		phase.NewPhase(
-			"mount extra devices",
-			configtask.NewExtraDevicesTask(),
-		),
-		phase.NewPhase(
-			"user requests",
-			configtask.NewExtraEnvVarsTask(),
-			configtask.NewExtraFilesTask(),
-		),
-		phase.NewPhase(
 			"start system-containerd",
 			services.NewStartSystemContainerdTask(),
 		),
@@ -120,6 +111,15 @@ func (d *Sequencer) Boot() error {
 			"save config",
 			configtask.NewSaveConfigTask(),
 			rootfs.NewHostnameTask(),
+		),
+		phase.NewPhase(
+			"mount extra disks",
+			configtask.NewExtraDisksTask(),
+		),
+		phase.NewPhase(
+			"user requests",
+			configtask.NewExtraEnvVarsTask(),
+			configtask.NewExtraFilesTask(),
 		),
 		phase.NewPhase(
 			"start services",

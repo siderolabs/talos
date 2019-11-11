@@ -6,17 +6,14 @@
 //nolint: dupl
 package v1alpha1
 
-import "github.com/talos-systems/talos/pkg/config/machine"
-
 // InstallConfig represents the installation options for preparing a node.
 type InstallConfig struct {
-	InstallDisk            string         `yaml:"disk,omitempty"`
-	InstallExtraDisks      []machine.Disk `yaml:"extraDisks,omitempty"`
-	InstallExtraKernelArgs []string       `yaml:"extraKernelArgs,omitempty"`
-	InstallImage           string         `yaml:"image,omitempty"`
-	InstallBootloader      bool           `yaml:"bootloader,omitempty"`
-	InstallWipe            bool           `yaml:"wipe"`
-	InstallForce           bool           `yaml:"force"`
+	InstallDisk            string   `yaml:"disk,omitempty"`
+	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
+	InstallImage           string   `yaml:"image,omitempty"`
+	InstallBootloader      bool     `yaml:"bootloader,omitempty"`
+	InstallWipe            bool     `yaml:"wipe"`
+	InstallForce           bool     `yaml:"force"`
 }
 
 // Image implements the Configurator interface.
@@ -27,11 +24,6 @@ func (i *InstallConfig) Image() string {
 // Disk implements the Configurator interface.
 func (i *InstallConfig) Disk() string {
 	return i.InstallDisk
-}
-
-// ExtraDisks implements the Configurator interface.
-func (i *InstallConfig) ExtraDisks() []machine.Disk {
-	return i.InstallExtraDisks
 }
 
 // ExtraKernelArgs implements the Configurator interface.

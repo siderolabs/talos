@@ -6,6 +6,7 @@ package util
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -54,8 +55,29 @@ func DevnameFromPartname(partname string) (devname string, err error) {
 	case strings.HasPrefix(p, "vd"):
 		fallthrough
 	case strings.HasPrefix(p, "xvd"):
-		return strings.TrimRight(partname, partno), nil
+		return strings.TrimRight(p, partno), nil
 	default:
-		return "", fmt.Errorf("could not determine dev name from partition name: %s", partname)
+		return "", fmt.Errorf("could not determine dev name from partition name: %s", p)
 	}
+}
+
+// PartName returns a valid partition name given a device and parition number.
+func PartName(d string, n int) string {
+	partname := strings.TrimPrefix(d, "/dev/")
+
+	switch p := partname; {
+	case strings.HasPrefix(p, "nvme"):
+		fallthrough
+	case strings.HasPrefix(p, "loop"):
+		partname = fmt.Sprintf("%sp%d", p, n)
+	default:
+		partname = fmt.Sprintf("%s%d", p, n)
+	}
+
+	return partname
+}
+
+// PartPath returns the full path to a parition name.
+func PartPath(d string, n int) string {
+	return filepath.Join("/dev", PartName(d, n))
 }
