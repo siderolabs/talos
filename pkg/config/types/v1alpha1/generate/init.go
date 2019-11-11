@@ -54,9 +54,8 @@ func initUd(in *Input) (string, error) {
 			ServiceSubnet: in.ServiceNet,
 		},
 		ClusterCA:                     in.Certs.K8s,
-		BootstrapToken:                in.KubeadmTokens.BootstrapToken,
-		CertificateKey:                in.KubeadmTokens.CertificateKey,
-		ClusterAESCBCEncryptionSecret: in.KubeadmTokens.AESCBCEncryptionSecret,
+		BootstrapToken:                in.Secrets.BootstrapToken,
+		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
 	}
 
 	ud := v1alpha1.Config{

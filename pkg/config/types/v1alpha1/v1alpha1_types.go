@@ -203,11 +203,6 @@ type ClusterConfig struct {
 	//     - wlzjyw.bei2zfylhs2by0wd
 	BootstrapToken string `yaml:"token,omitempty"`
 	//   description: |
-	//     TODO: Remove this.
-	//   examples:
-	//     - 20d9aafb46d6db4c0958db5b3fc481c8c14fc9b1abd8ac43194f4246b77131be
-	CertificateKey string `yaml:"certificateKey"`
-	//   description: |
 	//     The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
 	//   examples:
 	//     - z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
