@@ -201,10 +201,8 @@ network:
 #### disks
 
 Used to partition, format and mount additional disks.
-Since the rootfs is read only with the exception of `/var`, mounts
-are only valid if they are under `/var`.
-Note that the partitioning and formating is done only once, if and
-only if no existing  partitions are found.
+Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
+Note that the partitioning and formating is done only once, if and only if no existing  partitions are found.
 
 Type: `array`
 
