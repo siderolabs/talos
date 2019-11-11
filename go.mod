@@ -6,7 +6,6 @@ replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/kubernetes-incubator/bootkube => github.com/andrewrynhard/bootkube v0.14.1-0.20191015145817-ac01e28e2840
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
-	github.com/prometheus/procfs => github.com/bradbeam/procfs v0.0.6-0.20191106200502-fed2cfede51f
 )
 
 require (
@@ -51,7 +50,7 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc8 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1
 	github.com/pborman/uuid v1.2.0 // indirect
-	github.com/prometheus/procfs v0.0.3
+	github.com/prometheus/procfs v0.0.6
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
