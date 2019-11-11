@@ -233,6 +233,7 @@ message MountStat {
 message VersionResponse {
   common.NodeMetadata metadata = 1;
   VersionInfo version = 2;
+  PlatformInfo platform = 3;
 }
 
 message VersionReply {
@@ -246,6 +247,11 @@ message VersionInfo {
   string go_version = 4;
   string os = 5;
   string arch = 6;
+}
+
+message PlatformInfo {
+  string name = 1;
+  string mode = 2;
 }
 
 // rpc logs

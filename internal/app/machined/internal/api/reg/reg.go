@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
@@ -46,13 +47,21 @@ const OSPathSeparator = string(os.PathSeparator)
 // Registrator is the concrete type that implements the factory.Registrator and
 // machineapi.Machine interfaces.
 type Registrator struct {
-	config runtime.Configurator
+	config   runtime.Configurator
+	platform runtime.Platform
 }
 
 // NewRegistrator builds new Registrator instance
 func NewRegistrator(config runtime.Configurator) *Registrator {
+	platform, err := platform.NewPlatform()
+	if err != nil {
+		// should never happen
+		log.Printf("failed discovering platform: %v", err)
+	}
+
 	return &Registrator{
-		config: config,
+		config:   config,
+		platform: platform,
 	}
 }
 
@@ -394,7 +403,23 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machi
 
 // Version implements the machineapi.MachineServer interface.
 func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionReply, err error) {
-	return version.NewVersion(), nil
+	var platform *machineapi.PlatformInfo
+
+	if r.platform != nil {
+		platform = &machineapi.PlatformInfo{
+			Name: r.platform.Name(),
+			Mode: r.platform.Mode().String(),
+		}
+	}
+
+	return &machineapi.VersionReply{
+		Response: []*machineapi.VersionResponse{
+			{
+				Version:  version.NewVersion(),
+				Platform: platform,
+			},
+		},
+	}, nil
 }
 
 // Kubeconfig implements the osapi.OSDServer interface.

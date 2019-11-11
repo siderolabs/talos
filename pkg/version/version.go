@@ -32,27 +32,20 @@ const versionTemplate = `	Tag:         {{ .Tag }}
 `
 
 // NewVersion prints verbose version information.
-func NewVersion() *machineapi.VersionReply {
-	return &machineapi.VersionReply{
-		Response: []*machineapi.VersionResponse{
-			{
-				Version: &machineapi.VersionInfo{
-					Tag:       Tag,
-					Sha:       SHA,
-					Built:     Built,
-					GoVersion: runtime.Version(),
-					Os:        runtime.GOOS,
-					Arch:      runtime.GOARCH,
-				},
-			},
-		},
+func NewVersion() *machineapi.VersionInfo {
+	return &machineapi.VersionInfo{
+		Tag:       Tag,
+		Sha:       SHA,
+		Built:     Built,
+		GoVersion: runtime.Version(),
+		Os:        runtime.GOOS,
+		Arch:      runtime.GOARCH,
 	}
 }
 
 // PrintLongVersion prints verbose version information.
 func PrintLongVersion() {
-	v := NewVersion()
-	printLong(v.Response[0].Version)
+	printLong(NewVersion())
 }
 
 // PrintLongVersionFromExisting prints verbose version information.
