@@ -191,6 +191,8 @@ Examples:
 ```yaml
 network:
   hostname: worker-1
+  timeservers:
+    - time.cloudflare.com
   interfaces:
   nameservers:
     - 9.8.7.6
@@ -296,6 +298,21 @@ env:
 ```yaml
 env:
   https_proxy: http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/
+
+```
+
+#### time
+
+Used to configure the machine's time settings.
+
+Type: `TimeConfig`
+
+Examples:
+
+```yaml
+time:
+  servers:
+    - time.cloudflare.com
 
 ```
 
@@ -574,23 +591,6 @@ Examples:
 /dev/nvme0
 ```
 
-#### extraDisks
-
-Allows for extra mounts of extra disks.
-
-Type: `array`
-
-Examples:
-
-```yaml
-extraDisks:
-  device: /dev/sdb
-  partitions:
-    size:
-    mountpoint: /var/lib/etcd
-
-```
-
 #### extraKernelArgs
 
 Allows for supplying extra kernel args to the bootloader config.
@@ -657,6 +657,19 @@ Valid Values:
 - `yes`
 - `false`
 - `no`
+
+---
+
+### TimeConfig
+
+#### servers
+
+Specifies time (ntp) servers to use for setting system time.
+Defaults to `pool.ntp.org`
+
+> Note: This parameter only supports a single time server
+
+Type: `array`
 
 ---
 

@@ -109,7 +109,11 @@ func (m *MachineConfig) Network() machine.Network {
 
 // Time implements the Configurator interface.
 func (m *MachineConfig) Time() machine.Time {
-	return m
+	if m.MachineTime == nil {
+		return &TimeConfig{}
+	}
+
+	return m.MachineTime
 }
 
 // Kubelet implements the Configurator interface.
@@ -316,6 +320,11 @@ func (n *NetworkConfig) Devices() []machine.Device {
 // Resolvers implements the Configurator interface.
 func (n *NetworkConfig) Resolvers() []string {
 	return n.NameServers
+}
+
+// Servers implements the Configurator interface.
+func (t *TimeConfig) Servers() []string {
+	return t.TimeServers
 }
 
 // Image implements the Configurator interface.

@@ -93,6 +93,8 @@ type MachineConfig struct {
 	//     - |
 	//       network:
 	//         hostname: worker-1
+	//         timeservers:
+	//           - time.cloudflare.com
 	//         interfaces:
 	//         nameservers:
 	//           - 9.8.7.6
@@ -159,6 +161,14 @@ type MachineConfig struct {
 	//       env:
 	//         https_proxy: http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/
 	MachineEnv machine.Env `yaml:"env,omitempty"`
+	//   description: |
+	//     Used to configure the machine's time settings.
+	//   examples:
+	//     - |
+	//       time:
+	//         servers:
+	//           - time.cloudflare.com
+	MachineTime *TimeConfig `yaml:"time,omitempty"`
 }
 
 // ClusterConfig reperesents the cluster-wide config values
@@ -366,6 +376,16 @@ type InstallConfig struct {
 	//     - false
 	//     - no
 	InstallForce bool `yaml:"force"`
+}
+
+// TimeConfig represents the options for configuring time on a node.
+type TimeConfig struct {
+	//   description: |
+	//     Specifies time (ntp) servers to use for setting system time.
+	//     Defaults to `pool.ntp.org`
+	//
+	//     > Note: This parameter only supports a single time server
+	TimeServers []string `yaml:"servers,omitempty"`
 }
 
 // Endpoint struct holds the endpoint url parsed out of machine config.
