@@ -25,7 +25,7 @@ func NewService() *Service {
 // Main is an entrypoint the the API service
 func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWriter io.Writer) error {
 	api := reg.NewRegistrator(config)
-	server := factory.NewServer(api)
+	server := factory.NewServer(api, factory.WithLog("machined ", logWriter))
 
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))
 	if err != nil {

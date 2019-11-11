@@ -93,6 +93,7 @@ func main() {
 		factory.Port(constants.OsdPort),
 		factory.WithStreamInterceptor(protoProxy.StreamInterceptor()),
 		factory.WithUnaryInterceptor(protoProxy.UnaryInterceptor()),
+		factory.WithDefaultLog(),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(tlsConfig),

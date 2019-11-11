@@ -93,6 +93,7 @@ func main() {
 	err = factory.ListenAndServe(
 		&reg.Registrator{Config: config},
 		factory.Port(constants.TrustdPort),
+		factory.WithDefaultLog(),
 		factory.WithUnaryInterceptor(creds.UnaryInterceptor()),
 		factory.ServerOptions(
 			grpc.Creds(
