@@ -51,10 +51,14 @@ type Client struct {
 
 // NewClientTargetAndCredentialsFromConfig initializes ClientCredentials using default paths
 // to the required CA, certificate, and key.
-func NewClientTargetAndCredentialsFromConfig(p string) (target string, creds *Credentials, err error) {
+func NewClientTargetAndCredentialsFromConfig(p string, ctx string) (target string, creds *Credentials, err error) {
 	c, err := config.Open(p)
 	if err != nil {
 		return
+	}
+
+	if ctx != "" {
+		c.Context = ctx
 	}
 
 	if c.Context == "" {
