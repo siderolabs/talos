@@ -30,6 +30,7 @@ type Machine interface {
 	Install() Install
 	Security() Security
 	Network() Network
+	Disks() []Disk
 	Time() Time
 	Env() Env
 	Files() []File
@@ -96,7 +97,6 @@ type Route struct {
 type Install interface {
 	Image() string
 	Disk() string
-	ExtraDisks() []Disk
 	ExtraKernelArgs() []string
 	Zero() bool
 	Force() bool

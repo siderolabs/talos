@@ -60,7 +60,7 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 
 	// Partition and format the block device(s).
 
-	if err = i.manifest.ExecuteManifest(i.manifest); err != nil {
+	if err = i.manifest.ExecuteManifest(); err != nil {
 		return err
 	}
 

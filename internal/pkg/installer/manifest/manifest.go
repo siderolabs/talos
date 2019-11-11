@@ -10,14 +10,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -112,29 +111,12 @@ func NewManifest(install machine.Install) (manifest *Manifest, err error) {
 		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
 	}
 
-	for _, extra := range install.ExtraDisks() {
-		if manifest.Targets[extra.Device] == nil {
-			manifest.Targets[extra.Device] = []*Target{}
-		}
-
-		for _, part := range extra.Partitions {
-			extraTarget := &Target{
-				Device: extra.Device,
-				Size:   part.Size,
-				Force:  true,
-				Test:   false,
-			}
-
-			manifest.Targets[extra.Device] = append(manifest.Targets[extra.Device], extraTarget)
-		}
-	}
-
 	return manifest, nil
 }
 
 // ExecuteManifest partitions and formats all disks in a manifest.
-func (m *Manifest) ExecuteManifest(manifest *Manifest) (err error) {
-	for dev, targets := range manifest.Targets {
+func (m *Manifest) ExecuteManifest() (err error) {
+	for dev, targets := range m.Targets {
 		var bd *blockdevice.BlockDevice
 
 		if bd, err = blockdevice.Open(dev, blockdevice.WithNewGPT(true)); err != nil {
@@ -196,17 +178,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		return err
 	}
 
-	// TODO(andrewrynhard): We should really have a custom type that has all
-	// the methods we need. This switch statement shows up in some form in
-	// multiple places.
-	switch dev := t.Device; {
-	case strings.HasPrefix(dev, "/dev/nvme"):
-		fallthrough
-	case strings.HasPrefix(dev, "/dev/loop"):
-		t.PartitionName = t.Device + "p" + strconv.Itoa(int(part.No()))
-	default:
-		t.PartitionName = t.Device + strconv.Itoa(int(part.No()))
-	}
+	t.PartitionName = util.PartPath(t.Device, int(part.No()))
 
 	return nil
 }
