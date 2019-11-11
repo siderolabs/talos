@@ -7,9 +7,7 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
-	"crypto/sha256"
 	stdlibx509 "crypto/x509"
-	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"net"
@@ -94,7 +92,7 @@ type Input struct {
 	PodNet            []string
 	ServiceNet        []string
 	KubernetesVersion string
-	KubeadmTokens     *KubeadmTokens
+	Secrets           *Secrets
 	TrustdInfo        *TrustdInfo
 
 	ExternalEtcd bool
@@ -146,11 +144,10 @@ type Certs struct {
 	OS    *x509.PEMEncodedCertificateAndKey
 }
 
-// KubeadmTokens holds the senesitve kubeadm data.
-type KubeadmTokens struct {
+// Secrets holds the senesitve kubeadm data.
+type Secrets struct {
 	BootstrapToken         string
 	AESCBCEncryptionSecret string
-	CertificateKey         string
 }
 
 // TrustdInfo holds the trustd credentials.
@@ -245,11 +242,6 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string) (in
 		return nil, err
 	}
 
-	kubeadmCertificateKey, err := generateCertificateKey()
-	if err != nil {
-		return nil, err
-	}
-
 	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
 	if err != nil {
 		return nil, err
@@ -261,10 +253,9 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string) (in
 		return nil, err
 	}
 
-	kubeadmTokens := &KubeadmTokens{
+	kubeadmTokens := &Secrets{
 		BootstrapToken:         kubeadmBootstrapToken,
 		AESCBCEncryptionSecret: aescbcEncryptionSecret,
-		CertificateKey:         kubeadmCertificateKey,
 	}
 
 	trustdInfo := &TrustdInfo{
@@ -315,23 +306,11 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string) (in
 		ServiceDomain:        "cluster.local",
 		ClusterName:          clustername,
 		KubernetesVersion:    kubernetesVersion,
-		KubeadmTokens:        kubeadmTokens,
+		Secrets:              kubeadmTokens,
 		TrustdInfo:           trustdInfo,
 	}
 
 	return input, nil
-}
-
-func generateCertificateKey() (string, error) {
-	key, err := randBytes(32)
-	if err != nil {
-		return "", err
-	}
-
-	hashedKey := sha256.Sum256([]byte(key))
-	encoded := hex.EncodeToString(hashedKey[:])
-
-	return encoded, nil
 }
 
 // randBytes returns a random string consisting of the characters in
