@@ -23,7 +23,7 @@ type APISuite struct {
 
 // SetupSuite initializes Talos API client
 func (apiSuite *APISuite) SetupSuite() {
-	target, creds, err := client.NewClientTargetAndCredentialsFromConfig(apiSuite.TalosConfig)
+	target, creds, err := client.NewClientTargetAndCredentialsFromConfig(apiSuite.TalosConfig, "")
 	apiSuite.Require().NoError(err)
 
 	if apiSuite.Target != "" {
