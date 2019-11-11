@@ -205,6 +205,9 @@ type VersionReply = machine.VersionReply
 // VersionInfo from public import machine/machine.proto
 type VersionInfo = machine.VersionInfo
 
+// PlatformInfo from public import machine/machine.proto
+type PlatformInfo = machine.PlatformInfo
+
 // LogsRequest from public import machine/machine.proto
 type LogsRequest = machine.LogsRequest
 
