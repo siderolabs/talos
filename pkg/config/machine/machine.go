@@ -119,7 +119,7 @@ type Partition struct {
 // Time defines the requirements for a config that pertains to time related
 // options.
 type Time interface {
-	Server() string
+	Servers() []string
 }
 
 // Kubelet defines the requirements for a config that pertains to kubelet

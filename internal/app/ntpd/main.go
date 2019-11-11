@@ -55,8 +55,9 @@ func main() {
 	}
 
 	// Check if ntp servers are defined
-	if config.Machine().Time().Server() != "" {
-		server = config.Machine().Time().Server()
+	// Support for only a single time server currently
+	if len(config.Machine().Time().Servers()) >= 1 {
+		server = config.Machine().Time().Servers()[0]
 	}
 
 	n, err := ntp.NewNTPClient(
