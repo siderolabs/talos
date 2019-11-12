@@ -7,8 +7,6 @@ package network
 import (
 	"log"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
@@ -16,16 +14,16 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
-// InitialNetworkSetup represents the task for setting up the initial network.
-type InitialNetworkSetup struct{}
+// ResetNetworkNetwork represents the ResetNetworkNetwork task.
+type ResetNetworkNetwork struct{}
 
-// NewInitialNetworkSetupTask initializes and returns an InitialNetworkSetup task.
-func NewInitialNetworkSetupTask() phase.Task {
-	return &InitialNetworkSetup{}
+// NewResetNetworkTask initializes and returns an ResetNetworkNetwork task.
+func NewResetNetworkTask() phase.Task {
+	return &ResetNetworkNetwork{}
 }
 
 // TaskFunc returns the runtime function.
-func (task *InitialNetworkSetup) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+func (task *ResetNetworkNetwork) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -35,7 +33,7 @@ func (task *InitialNetworkSetup) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 // nolint: gocyclo
-func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
+func (task *ResetNetworkNetwork) runtime(r runtime.Runtime) (err error) {
 	// Check to see if a static IP was set via kernel args;
 	// if so, we'll skip the initial dhcp discovery
 	if option := kernel.ProcCmdline().Get("ip").First(); option != nil {
@@ -56,15 +54,6 @@ func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	// Handle initial discovery where runtime (config) is not defined
-	if r.Config() != nil {
-		log.Println("merging user defined network configuration")
-
-		if err = netconf.BuildOptions(r.Config()); err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	// Configure specified interface
 	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
 
@@ -83,17 +72,6 @@ func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 		netIfaces = append(netIfaces, iface)
 	}
 
-	// kick off the addressing mechanism
-	// Add any necessary routes
-	if err = nwd.Configure(netIfaces...); err != nil {
-		return err
-	}
-
-	// This next chunk is around saving off the hostname if necessary
-	hostname := nwd.Hostname(netIfaces...)
-	if hostname == "" {
-		return nil
-	}
-
-	return unix.Sethostname([]byte(hostname))
+	// Reset the network interfaces ( remove addresses )
+	return nwd.Reset(netIfaces...)
 }
