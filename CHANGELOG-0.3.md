@@ -1,3 +1,26 @@
+# [v0.3.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.6...v0.3.0-alpha.7) (2019-11-12)
+
+### Bug Fixes
+
+- conditionally create a new etcd cluster ([8ca4d49](https://github.com/talos-systems/talos/commit/8ca4d493479f9dae3d5790b0ad36cbc93aa0f2c2))
+- mount extra disks after system disk ([34eb691](https://github.com/talos-systems/talos/commit/34eb691f81604fcbbb0683a35f27aadd2bd4f372))
+- pass x509 options to NewCertificateFromCSR ([85638f5](https://github.com/talos-systems/talos/commit/85638f5d90985539b695a2a9588d6d60de425540))
+- recover from panics in grpc servers ([add4a8d](https://github.com/talos-systems/talos/commit/add4a8d5abeeb3eb1589f85731ca223a712dbff7))
+- remove duplicate line ([b3fd851](https://github.com/talos-systems/talos/commit/b3fd85174a14fcbe6aec7220ef5e47564f1f3b57))
+- remove global variable in bootkube ([e2d9cc5](https://github.com/talos-systems/talos/commit/e2d9cc5438cb63ac8dceeeb5a9fef9bfe61175de))
+- upgrade rtnetlink package ([9218fa8](https://github.com/talos-systems/talos/commit/9218fa8b2196491b8a584535e65b21005a088788))
+
+### Features
+
+- **networkd:** Add support for custom nameservers ([32fe629](https://github.com/talos-systems/talos/commit/32fe6297fe5b91e73a37d7460ddafacb92179251))
+- Add meminfo api ([531e7d8](https://github.com/talos-systems/talos/commit/531e7d8144dfb4a0a1fbe35b6b4b0c8e9faaab8d))
+- add metadata file to boot partition ([17cce54](https://github.com/talos-systems/talos/commit/17cce5468fa5fec32cd8dd5ba8c7e9434972f356))
+- Add support for defining ntp servers via config ([e667a08](https://github.com/talos-systems/talos/commit/e667a08bf0813eac0b41d4cf2a5ac97c6111019f))
+- Add support for setting container output to stdout ([6519c57](https://github.com/talos-systems/talos/commit/6519c575f85f2cb02316247774665c48db6100e0))
+- Add support for streaming apis in apid ([7897374](https://github.com/talos-systems/talos/commit/7897374ff1844e2c2dc0730d00963bf12689d7e7))
+- Disable networkd configuration if `ip` kernel parameter is specified ([8988c1c](https://github.com/talos-systems/talos/commit/8988c1c6a0b96a8cb59d540302a50d389e27b168))
+- implement grpc request loggging ([e658c44](https://github.com/talos-systems/talos/commit/e658c442a668ae144d1dc1a98368d60269d6b694))
+
 # [v0.3.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.5...v0.3.0-alpha.6) (2019-11-05)
 
 ### Bug Fixes
