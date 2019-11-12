@@ -54,7 +54,7 @@ func (d *Sequencer) Boot() error {
 		),
 		phase.NewPhase(
 			"initial network",
-			network.NewUserDefinedNetworkTask(),
+			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
 			"config",
