@@ -39,11 +39,11 @@ require (
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20190814082028-393ae75a101b
-	github.com/jsimonetti/rtnetlink v0.0.0-20190606172950-9527aa82566a
+	github.com/jsimonetti/rtnetlink v0.0.0-20191019172534-d21b2cb70d39
 	github.com/kubernetes-incubator/bootkube v0.14.1-0.20190731222813-f0fc1bdb404d
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
-	github.com/mdlayher/netlink v0.0.0-20190419142405-71c9566a34ae
+	github.com/mdlayher/netlink v0.0.0-20191009155606-de872b0d824b
 	github.com/mdlayher/raw v0.0.0-20190606144222-a54781e5f38f // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -59,9 +59,9 @@ require (
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
 	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
-	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7 // indirect
+	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20190825160603-fb81701db80f
+	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/grpc v1.23.0
