@@ -34,30 +34,12 @@
         ]
       },
       {
-        "title": "Hypervisors",
-        "path": "v0.3/en/guides/hypervisors",
-        "children": [
-          {
-            "title": "KVM",
-            "path": "v0.3/en/guides/hypervisors/kvm"
-          },
-          {
-            "title": "Xen",
-            "path": "v0.3/en/guides/hypervisors/xen"
-          }
-        ]
-      },
-      {
         "title": "Metal",
         "path": "v0.3/en/guides/metal",
         "children": [
           {
             "title": "Matchbox",
             "path": "v0.3/en/guides/metal/matchbox"
-          },
-          {
-            "title": "Digital Rebar",
-            "path": "v0.3/en/guides/metal/digital-rebar"
           }
         ]
       }
