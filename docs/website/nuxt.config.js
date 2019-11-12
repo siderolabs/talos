@@ -54,7 +54,9 @@ export default {
   },
 
   // PurgeCSS is automatically installed by @nuxtjs/tailwindcss
-  purgeCSS: {},
+  purgeCSS: {
+    enabled: false
+  },
 
   /*
    ** Nuxt.js modules
