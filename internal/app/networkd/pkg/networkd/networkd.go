@@ -79,11 +79,10 @@ func (n *Networkd) Discover() (NetConf, error) {
 func (n *Networkd) Configure(ifaces ...*nic.NetworkInterface) error {
 	var (
 		err       error
-		resolvers []net.IP
 		mu        sync.Mutex
+		resolvers []net.IP
+		wg        sync.WaitGroup
 	)
-
-	var wg sync.WaitGroup
 
 	wg.Add(len(ifaces))
 
@@ -297,4 +296,38 @@ func (n *Networkd) PrintState() {
 	}
 
 	log.Printf("resolv.conf: %s", string(b))
+}
+
+// Reset handles removing addresses from previously configured interfaces
+func (n *Networkd) Reset(ifaces ...*nic.NetworkInterface) error {
+	var (
+		err error
+		wg  sync.WaitGroup
+	)
+
+	wg.Add(len(ifaces))
+
+	for _, iface := range ifaces {
+		go func(i *nic.NetworkInterface) {
+			defer wg.Done()
+
+			var nets []*net.IPNet
+
+			if nets, err = n.Conn.Addrs(&net.Interface{Index: int(i.Index)}, 0); err != nil {
+				log.Printf("failed to retrieve addresses for %s: %v", i.Name, err)
+				return
+			}
+
+			for _, ipnet := range nets {
+				if err = n.Conn.AddrDel(&net.Interface{Index: int(i.Index)}, ipnet); err != nil {
+					log.Printf("failed to delete addresses %s for %s: %v", ipnet, i.Name, err)
+					continue
+				}
+			}
+		}(iface)
+	}
+
+	wg.Wait()
+
+	return err
 }

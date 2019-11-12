@@ -53,7 +53,7 @@ func (d *Sequencer) Boot() error {
 			rootfs.NewOSReleaseTask(),
 		),
 		phase.NewPhase(
-			"initial network",
+			"discover network",
 			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
@@ -85,6 +85,14 @@ func (d *Sequencer) Boot() error {
 		phase.NewPhase(
 			"config validation",
 			rootfs.NewValidateConfigTask(),
+		),
+		phase.NewPhase(
+			"network reset",
+			network.NewResetNetworkTask(),
+		),
+		phase.NewPhase(
+			"initial network",
+			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
 			"start system-containerd",

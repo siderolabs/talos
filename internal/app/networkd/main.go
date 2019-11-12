@@ -71,7 +71,7 @@ func configureNetworking(n *networkd.Networkd) {
 		log.Fatalf("open config: %v", err)
 	}
 
-	log.Println("overlaying config network configuration")
+	log.Println("merging user defined network configuration")
 
 	if err = netconf.BuildOptions(config); err != nil {
 		log.Fatal(err)
