@@ -6,6 +6,7 @@ package etc
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/version"
 
 	"golang.org/x/sys/unix"
@@ -85,19 +87,31 @@ func Hosts(hostname string) (err error) {
 // ResolvConf copies the resolv.conf generated in the early boot to the new
 // root.
 func ResolvConf() (err error) {
-	target := "/run/system/etc/resolv.conf"
+	option := kernel.ProcCmdline().Get("ip").First()
+	switch option {
+	case nil:
+		target := "/run/system/etc/resolv.conf"
 
-	var f *os.File
+		var f *os.File
 
-	if f, err = os.OpenFile(target, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
-		return err
-	}
+		if f, err = os.OpenFile(target, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
+			return err
+		}
 
-	// nolint: errcheck
-	defer f.Close()
+		// nolint: errcheck
+		defer f.Close()
 
-	if err = unix.Mount("/run/system/etc/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
-		return fmt.Errorf("failed to create bind mount for /etc/resolv.conf: %w", err)
+		if err = unix.Mount("/run/system/etc/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
+			return fmt.Errorf("failed to create bind mount for /etc/resolv.conf: %w", err)
+		}
+	default:
+		if _, err = os.Stat("/proc/net/pnp"); err != nil {
+			return errors.New("failed to symlink /etc/resolv.conf to /proc/net/pnp")
+		}
+
+		if err = os.Symlink("/etc/resolv.conf", "/proc/net/pnp"); err != nil {
+			return err
+		}
 	}
 
 	return nil
