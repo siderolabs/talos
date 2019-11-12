@@ -16,16 +16,16 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
-// UserDefinedNetwork represents the UserDefinedNetwork task.
-type UserDefinedNetwork struct{}
+// InitialNetworkSetup represents the task for setting up the initial network.
+type InitialNetworkSetup struct{}
 
-// NewUserDefinedNetworkTask initializes and returns an UserDefinedNetwork task.
-func NewUserDefinedNetworkTask() phase.Task {
-	return &UserDefinedNetwork{}
+// NewInitialNetworkSetupTask initializes and returns an InitialNetworkSetup task.
+func NewInitialNetworkSetupTask() phase.Task {
+	return &InitialNetworkSetup{}
 }
 
 // TaskFunc returns the runtime function.
-func (task *UserDefinedNetwork) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+func (task *InitialNetworkSetup) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
@@ -35,7 +35,7 @@ func (task *UserDefinedNetwork) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 // nolint: gocyclo
-func (task *UserDefinedNetwork) runtime(r runtime.Runtime) (err error) {
+func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 	// Check to see if a static IP was set via kernel args;
 	// if so, we'll skip the initial dhcp discovery
 	if option := kernel.ProcCmdline().Get("ip").First(); option != nil {
