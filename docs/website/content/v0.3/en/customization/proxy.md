@@ -13,10 +13,9 @@ COPY ca.crt /tmp/ca.crt
 RUN cat /tmp/ca.crt >> /rootfs/etc/ssl/certs/ca-certificates.crt
 
 FROM scratch AS customization
-COPY --from=ca /rootfs /
+COPY --from=ca /rootfs/ /
 
 FROM docker.io/autonomy/installer:latest
-COPY --from=customization / /
 ```
 
 Build the image:
