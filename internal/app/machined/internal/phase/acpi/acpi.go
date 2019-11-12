@@ -5,11 +5,12 @@
 package acpi
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/mdlayher/genetlink"
-	"github.com/mdlayher/netlink"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/event"
@@ -56,7 +57,7 @@ func listenForPowerButton() (err error) {
 	}
 
 	f, err := conn.GetFamily(acpiGenlFamilyName)
-	if netlink.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		// nolint: errcheck
 		conn.Close()
 		return fmt.Errorf(acpiGenlFamilyName+" not available: %w", err)
