@@ -12,17 +12,10 @@
             </a>
           </li>
           <li class="link min-w-full md:min-w-0">
-            <a href="/roadmap">
-              <span class="font-semibold mr-1">Roadmap</span>
-            </a>
+            <ProjectDropdown></ProjectDropdown>
           </li>
           <li class="link min-w-full md:min-w-0">
             <CommunityDropdown></CommunityDropdown>
-          </li>
-          <li class="link min-w-full md:min-w-0">
-            <a href="/faqs">
-              <span class="font-semibold mr-1">FAQs</span>
-            </a>
           </li>
         </ul>
       </div>
@@ -32,12 +25,14 @@
 
 <script>
 import Logo from '~/components/Logo.vue'
+import ProjectDropdown from '~/components/ProjectDropdown.vue'
 import CommunityDropdown from '~/components/CommunityDropdown.vue'
 
 export default {
   name: 'Header',
   components: {
     Logo,
+    ProjectDropdown,
     CommunityDropdown
   }
 }

@@ -116,23 +116,5 @@
         "path": "v0.3/en/components/kernel"
       }
     ]
-  },
-  {
-    "title": "Use Cases",
-    "path": "v0.3/en/use-cases",
-    "items": [
-      {
-        "title": "Serverless",
-        "path": "v0.3/en/use-cases/serverless"
-      },
-      {
-        "title": "Edge",
-        "path": "v0.3/en/use-cases/edge"
-      },
-      {
-        "title": "Multi-Cloud",
-        "path": "v0.3/en/use-cases/multi-cloud"
-      }
-    ]
   }
 ]
