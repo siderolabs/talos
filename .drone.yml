@@ -894,24 +894,6 @@ steps:
   depends_on:
   - basic-integration
 
-- name: image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-aws
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
 - name: image-azure
   pull: always
   image: autonomy/build-container:latest
@@ -929,50 +911,6 @@ steps:
     path: /tmp
   depends_on:
   - installer
-
-- name: image-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gcp
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: push-image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-aws
-  environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-aws
 
 - name: push-image-azure
   pull: always
@@ -1000,33 +938,7 @@ steps:
   depends_on:
   - image-azure
 
-- name: push-image-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-gcp
-  environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-gcp
-
-- name: e2e-integration-aws
+- name: e2e-integration-azure
   pull: always
   image: autonomy/build-container:latest
   commands:
@@ -1034,7 +946,7 @@ steps:
   environment:
     BINDIR: /usr/local/bin
     BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    PLATFORM: aws
+    PLATFORM: azure
   volumes:
   - name: dockersock
     path: /var/run
@@ -1044,27 +956,7 @@ steps:
     path: /tmp
   depends_on:
   - capi
-  - push-image-aws
-
-- name: e2e-integration-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    PLATFORM: gcp
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-gcp
+  - push-image-azure
 
 services:
 - name: docker

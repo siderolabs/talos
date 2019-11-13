@@ -17,6 +17,14 @@ apk add --no-cache gettext
 export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
 cat ${PWD}/hack/test/manifests/capa-components.yaml| envsubst > ${TMP}/capa-components.yaml
 
+## Template out aws components
+## Using a local copy until new release of the provider is cut.
+export AZURE_SUBSCRIPTION_ID_B64="$( cat ${TMP}/svc-acct.json | jq -r '.subscriptionId' | base64 -w0 )"
+export AZURE_TENANT_ID_B64="$( cat ${TMP}/svc-acct.json | jq -r '.tenantId' | base64 -w0 )"
+export AZURE_CLIENT_ID_B64="$( cat ${TMP}/svc-acct.json | jq -r '.clientId' | base64 -w0 )"
+export AZURE_CLIENT_SECRET_B64="$( cat ${TMP}/svc-acct.json | jq -r '.clientSecret' | base64 -w0 )"
+cat ${PWD}/hack/test/manifests/capz-components.yaml| envsubst > ${TMP}/capz-components.yaml
+
 ## Template out gcp components
 export GCP_B64ENCODED_CREDENTIALS=${GCE_SVC_ACCT} 
 cat ${PWD}/hack/test/manifests/capg-components.yaml| envsubst > ${TMP}/capg-components.yaml
@@ -28,6 +36,7 @@ cat ${PWD}/hack/test/manifests/capg-components.yaml| envsubst > ${TMP}/capg-comp
 e2e_run "kubectl apply -f ${TMP}/provider-components.yaml"
 e2e_run "kubectl apply -f ${CAPI_COMPONENTS}"
 e2e_run "kubectl apply -f ${TMP}/capa-components.yaml"
+e2e_run "kubectl apply -f ${TMP}/capz-components.yaml"
 e2e_run "kubectl apply -f ${TMP}/capg-components.yaml"
 
 ## Wait for talosconfig in cm then dump it out

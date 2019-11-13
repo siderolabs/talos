@@ -256,7 +256,7 @@ push-image-aws:
 
 .PHONY: push-image-azure
 push-image-azure:
-	@TAG=$(TAG) ./hack/test/azure-setup.sh
+	@TAG=$(TAG) SHA=$(SHA) ./hack/test/azure-setup.sh
 
 .PHONY: push-image-gcp
 push-image-gcp:

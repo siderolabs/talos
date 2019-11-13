@@ -254,15 +254,15 @@ local e2e_integration_gcp = Step("e2e-integration-gcp", "e2e-integration", depen
 
 local e2e_steps = default_steps + [
   capi,
-  image_aws,
+  //image_aws,
   image_azure,
-  image_gcp,
-  push_image_aws,
+  //image_gcp,
+  //push_image_aws,
   push_image_azure,
-  push_image_gcp,
-  e2e_integration_aws,
-  // e2e_integration_azure,
-  e2e_integration_gcp,
+  //push_image_gcp,
+  //e2e_integration_aws,
+  //e2e_integration_gcp,
+  e2e_integration_azure,
 ];
 
 local e2e_trigger = {

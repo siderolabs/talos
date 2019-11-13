@@ -24,13 +24,13 @@ az login --service-principal --username ${CLIENT_ID} --password ${CLIENT_SECRET}
 AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n ${STORAGE_ACCOUNT} -g ${GROUP} -o tsv)
 
 ## Push blob
-AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}" az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure-${TAG}.vhd
+AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}" az storage blob upload --container-name ${STORAGE_CONTAINER} -f ${TMP}/azure.vhd -n azure-${SHA}.vhd
 
 ## Delete image
-az image delete --name talos-e2e-${TAG} -g ${GROUP}
+az image delete --name talos-e2e-${SHA} -g ${GROUP}
 
 ## Create image
-az image create --name talos-e2e-${TAG} --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${GROUP}
+az image create --name talos-e2e-${SHA} --source https://${STORAGE_ACCOUNT}.blob.core.windows.net/${STORAGE_CONTAINER}/azure-${SHA}.vhd --os-type linux -g ${GROUP}
 
 ## Setup the cluster YAML.
-sed "s/{{TAG}}/${TAG}/" ${PWD}/hack/test/manifests/azure-cluster.yaml > ${TMP}/cluster.yaml
+sed "s/{{TAG}}/${SHA}/" ${PWD}/hack/test/manifests/azure-cluster.yaml > ${TMP}/cluster.yaml
