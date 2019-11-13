@@ -11,7 +11,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
@@ -33,11 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Check to see if a static IP was set via kernel args;
-	// if so, we'll skip the networking configuration via networkd
-	if option := kernel.ProcCmdline().Get("ip").First(); option == nil {
-		configureNetworking(nwd)
-	}
+	configureNetworking(nwd)
 
 	log.Fatalf("%+v", factory.ListenAndServe(
 		reg.NewRegistrator(nwd),
@@ -73,7 +68,11 @@ func configureNetworking(n *networkd.Networkd) {
 
 	log.Println("merging user defined network configuration")
 
-	if err = netconf.BuildOptions(config); err != nil {
+	if err = netconf.BuildOptionsFromConfig(config); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = netconf.BuildOptionsFromKernel(); err != nil {
 		log.Fatal(err)
 	}
 

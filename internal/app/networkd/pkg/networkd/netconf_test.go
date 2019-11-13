@@ -30,7 +30,7 @@ func (suite *NetconfSuite) TestNetconf() {
 	conf := sampleConfig()
 	eth0 := &net.Interface{Index: 1, MTU: 1500, Name: "eth0"}
 	nc := NetConf{eth0: []nic.Option{nic.WithName(eth0.Name)}}
-	err := nc.BuildOptions(conf)
+	err := nc.BuildOptionsFromConfig(conf)
 	suite.Assert().NoError(err)
 
 	iface, err := nic.Create(eth0, nc[eth0]...)

@@ -5,6 +5,7 @@
 package networkd
 
 import (
+	"context"
 	"net"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
@@ -16,8 +17,8 @@ import (
 // options needed to configure the interface
 type NetConf map[*net.Interface][]nic.Option
 
-// BuildOptions translates the supplied config to functional options.
-func (n *NetConf) BuildOptions(config runtime.Configurator) error {
+// BuildOptionsFromConfig translates the supplied config to functional options.
+func (n *NetConf) BuildOptionsFromConfig(config runtime.Configurator) error {
 	for link, opts := range *n {
 		for _, device := range config.Machine().Network().Devices() {
 			device := device
@@ -41,6 +42,25 @@ func (n *NetConf) BuildOptions(config runtime.Configurator) error {
 				(*n)[link] = append(opts, nic.WithAddressing(s))
 			}
 		}
+	}
+
+	return nil
+}
+
+// BuildOptionsFromKernel translates the supplied config to functional options.
+func (n *NetConf) BuildOptionsFromKernel() error {
+	// Check to see if a kernel supplied configuration option was specified
+	kern := &address.Kernel{}
+	if err := kern.Discover(context.Background()); err != nil {
+		return nil
+	}
+
+	for link, opts := range *n {
+		if link.Name != kern.Device {
+			continue
+		}
+
+		(*n)[link] = append(opts, nic.WithAddressing(kern))
 	}
 
 	return nil

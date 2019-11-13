@@ -243,10 +243,13 @@ func parse(parameters string) (parsed Parameters) {
 	return parsed
 }
 
+// CmdLine exposed for testing purposes
+var CmdLine = "/proc/cmdline"
+
 func read() (c *Cmdline, err error) {
 	var parameters []byte
 
-	parameters, err = ioutil.ReadFile("/proc/cmdline")
+	parameters, err = ioutil.ReadFile(CmdLine)
 	if err != nil {
 		return nil, err
 	}
