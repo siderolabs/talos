@@ -778,6 +778,35 @@ ca:
 
 ```
 
+#### extraArgs
+
+Extra arguments to supply to etcd.
+Note that the following args are blacklisted:
+
+- `name`
+- `data-dir`
+- `initial-cluster-state`
+- `listen-peer-urls`
+- `listen-client-urls`
+- `cert-file`
+- `key-file`
+- `trusted-ca-file`
+- `peer-client-cert-auth`
+- `peer-cert-file`
+- `peer-trusted-ca-file`
+- `peer-key-file`
+
+Type: `map`
+
+Examples:
+
+```yaml
+extraArgs:
+  initial-cluster: https://1.2.3.4:2380
+  advertise-client-urls: https://1.2.3.4:2379
+
+```
+
 ---
 
 ### ClusterNetworkConfig

@@ -474,6 +474,28 @@ type EtcdConfig struct {
 	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
 	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
 	RootCA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	//   description: |
+	//     Extra arguments to supply to etcd.
+	//     Note that the following args are blacklisted:
+	//
+	//     - `name`
+	//     - `data-dir`
+	//     - `initial-cluster-state`
+	//     - `listen-peer-urls`
+	//     - `listen-client-urls`
+	//     - `cert-file`
+	//     - `key-file`
+	//     - `trusted-ca-file`
+	//     - `peer-client-cert-auth`
+	//     - `peer-cert-file`
+	//     - `peer-trusted-ca-file`
+	//     - `peer-key-file`
+	//   examples:
+	//     - |
+	//       extraArgs:
+	//         initial-cluster: https://1.2.3.4:2380
+	//         advertise-client-urls: https://1.2.3.4:2379
+	EtcdExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // ClusterNetworkConfig represents kube networking config vals.

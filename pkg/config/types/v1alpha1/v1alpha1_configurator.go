@@ -236,6 +236,15 @@ func (e *EtcdConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return e.RootCA
 }
 
+// ExtraArgs implements the Configurator interface.
+func (e *EtcdConfig) ExtraArgs() map[string]string {
+	if e.EtcdExtraArgs == nil {
+		return make(map[string]string)
+	}
+
+	return e.EtcdExtraArgs
+}
+
 // Token implements the Configurator interface.
 func (c *ClusterConfig) Token() cluster.Token {
 	return c
