@@ -40,6 +40,7 @@ type Network interface {
 type Etcd interface {
 	Image() string
 	CA() *x509.PEMEncodedCertificateAndKey
+	ExtraArgs() map[string]string
 }
 
 // Token defines the requirements for a config that pertains to Kubernetes

@@ -30,6 +30,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -91,58 +92,15 @@ func (e *Etcd) DependsOn(config runtime.Configurator) []string {
 
 // Runner implements the Service interface.
 func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
-	ips, err := net.IPAddrs()
-	if err != nil {
-		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
-	}
-
-	if len(ips) == 0 {
-		return nil, errors.New("failed to discover local IP")
-	}
-
-	hostname, err := os.Hostname()
+	a, err := args(config)
 	if err != nil {
 		return nil, err
-	}
-
-	initialClusterState := "new"
-	initialCluster := hostname + "=https://" + ips[0].String() + ":2380"
-
-	metadata, err := metadata.Open()
-	if err != nil {
-		return nil, err
-	}
-
-	if config.Machine().Type() == machine.ControlPlane || metadata.Upgraded {
-		initialClusterState = "existing"
-
-		initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: e.ID(config),
-		ProcessArgs: []string{
-			"/usr/local/bin/etcd",
-			"--name=" + hostname,
-			"--data-dir=" + constants.EtcdDataPath,
-			"--listen-peer-urls=https://0.0.0.0:2380",
-			"--listen-client-urls=https://0.0.0.0:2379",
-			"--initial-advertise-peer-urls=https://" + ips[0].String() + ":2380",
-			"--advertise-client-urls=https://" + ips[0].String() + ":2379",
-			"--cert-file=" + constants.KubernetesEtcdPeerCert,
-			"--key-file=" + constants.KubernetesEtcdPeerKey,
-			"--trusted-ca-file=" + constants.KubernetesEtcdCACert,
-			"--peer-client-cert-auth=true",
-			"--peer-cert-file=" + constants.KubernetesEtcdPeerCert,
-			"--peer-trusted-ca-file=" + constants.KubernetesEtcdCACert,
-			"--peer-key-file=" + constants.KubernetesEtcdPeerKey,
-			"--initial-cluster=" + initialCluster,
-			"--initial-cluster-state=" + initialClusterState,
-		},
+		ID:          e.ID(config),
+		ProcessArgs: append([]string{"/usr/local/bin/etcd"}, a...),
 	}
 
 	mounts := []specs.Mount{
@@ -358,4 +316,84 @@ func buildInitialCluster(config runtime.Configurator, name, ip string) (initial 
 	}
 
 	return initial, nil
+}
+
+func blacklistError(s string) error {
+	return fmt.Errorf("extra etcd arg %q is not allowed", s)
+}
+
+// nolint: gocyclo
+func args(config runtime.Configurator) ([]string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
+	metadata, err := metadata.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	ips, err := net.IPAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
+	}
+
+	if len(ips) == 0 {
+		return nil, errors.New("failed to discover local IP")
+	}
+
+	blackListArgs := argsbuilder.Args{
+		"name":                  hostname,
+		"data-dir":              constants.EtcdDataPath,
+		"initial-cluster-state": "new",
+		"listen-peer-urls":      "https://0.0.0.0:2380",
+		"listen-client-urls":    "https://0.0.0.0:2379",
+		"cert-file":             constants.KubernetesEtcdPeerCert,
+		"key-file":              constants.KubernetesEtcdPeerKey,
+		"trusted-ca-file":       constants.KubernetesEtcdCACert,
+		"peer-client-cert-auth": "true",
+		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
+		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
+		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+	}
+
+	extraArgs := argsbuilder.Args(config.Cluster().Etcd().ExtraArgs())
+
+	for k := range blackListArgs {
+		if extraArgs.Contains(k) {
+			return nil, blacklistError(k)
+		}
+	}
+
+	// If the initial cluster isn't explicitly defined, we need to discover any
+	// existing members.
+	if !extraArgs.Contains("initial-cluster") {
+		var (
+			initialCluster string = fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
+			err            error
+		)
+
+		existing := config.Machine().Type() == machine.ControlPlane || metadata.Upgraded
+		if existing {
+			blackListArgs.Set("initial-cluster-state", "existing")
+
+			initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		blackListArgs.Set("initial-cluster", initialCluster)
+	}
+
+	if !extraArgs.Contains("initial-advertise-peer-urls") {
+		blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", ips[0].String()))
+	}
+
+	if !extraArgs.Contains("advertise-client-urls") {
+		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", ips[0].String()))
+	}
+
+	return blackListArgs.Merge(extraArgs).Args(), nil
 }
