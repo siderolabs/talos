@@ -289,6 +289,10 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
+	images := asset.DefaultImages
+
+	images.Hyperkube = fmt.Sprintf("k8s.gcr.io/hyperkube:v%s", config.Cluster().Version())
+
 	conf := asset.Config{
 		CACert:                 k8sCA,
 		CAPrivKey:              k8sKey,
@@ -305,7 +309,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		ServiceCIDR:            serviceCIDR,
 		NetworkProvider:        config.Cluster().Network().CNI(),
 		AltNames:               altNames,
-		Images:                 asset.DefaultImages,
+		Images:                 images,
 		BootstrapSecretsSubdir: "/assets/tls",
 		BootstrapTokenID:       config.Cluster().Token().ID(),
 		BootstrapTokenSecret:   config.Cluster().Token().Secret(),
