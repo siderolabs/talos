@@ -122,7 +122,9 @@ func serviceInfo(c *client.Client, id string) {
 
 					label := "EVENTS"
 
-					for _, event := range svc.Events.Events {
+					for i := range svc.Events.Events {
+						event := svc.Events.Events[len(svc.Events.Events)-1-i]
+
 						// nolint: errcheck
 						ts, _ := ptypes.Timestamp(event.Ts)
 						fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
