@@ -54,10 +54,10 @@ func Install(r runtime.Runtime) error {
 	args := []string{
 		"/bin/osctl",
 		"install",
-		"--disk", r.Config().Machine().Install().Disk(),
-		"--platform", r.Platform().Name(),
-		"--config", *config,
-		"--upgrade", upgrade,
+		"--disk=" + r.Config().Machine().Install().Disk(),
+		"--platform=" + r.Platform().Name(),
+		"--config=" + *config,
+		"--upgrade=" + upgrade,
 	}
 
 	for _, arg := range r.Config().Machine().Install().ExtraKernelArgs() {
