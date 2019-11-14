@@ -92,7 +92,7 @@ func (e *Etcd) DependsOn(config runtime.Configurator) []string {
 
 // Runner implements the Service interface.
 func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
-	a, err := args(config)
+	a, err := e.args(config)
 	if err != nil {
 		return nil, err
 	}
@@ -318,12 +318,8 @@ func buildInitialCluster(config runtime.Configurator, name, ip string) (initial 
 	return initial, nil
 }
 
-func blacklistError(s string) error {
-	return fmt.Errorf("extra etcd arg %q is not allowed", s)
-}
-
 // nolint: gocyclo
-func args(config runtime.Configurator) ([]string, error) {
+func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -362,7 +358,7 @@ func args(config runtime.Configurator) ([]string, error) {
 
 	for k := range blackListArgs {
 		if extraArgs.Contains(k) {
-			return nil, blacklistError(k)
+			return nil, argsbuilder.NewBlacklistError(k)
 		}
 	}
 

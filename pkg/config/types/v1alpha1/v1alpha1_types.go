@@ -266,7 +266,7 @@ type KubeletConfig struct {
 	//     - |
 	//       extraArgs:
 	//         key: value
-	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	KubeletExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // NetworkConfig reperesents the machine's networking config values.
