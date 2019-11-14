@@ -1,0 +1,21 @@
+{
+  "id": "default",
+  "name": "default",
+  "boot": {
+    "kernel": "/assets/vmlinuz",
+    "initrd": ["/assets/initramfs.xz"],
+    "args": [
+      "initrd=initramfs.xz",
+      "page_poison=1",
+      "slab_nomerge",
+      "slub_debug=P",
+      "pti=on",
+      "random.trust_cpu=on",
+      "console=tty0",
+      "console=ttyS0",
+      "printk.devkmsg=on",
+      "talos.platform=metal",
+      "talos.config=http://matchbox.talos.dev:8080/assets/controlplane.yaml"
+    ]
+  }
+}

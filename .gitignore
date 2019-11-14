@@ -8,6 +8,8 @@ join.yaml
 docgen
 talosconfig
 kubeconfig
+hack/test/integration/matchbox/assets/*
+!hack/test/integration/matchbox/assets/.gitkeep
 
 # vim Swap
 [._]*.s[a-v][a-z]
