@@ -9,6 +9,7 @@ package base
 import (
 	"context"
 
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -18,7 +19,8 @@ import (
 type K8sSuite struct {
 	APISuite
 
-	Clientset *kubernetes.Clientset
+	Clientset       *kubernetes.Clientset
+	DiscoveryClient *discovery.DiscoveryClient
 }
 
 // SetupSuite initializes Kubernetes client
@@ -34,5 +36,8 @@ func (k8sSuite *K8sSuite) SetupSuite() {
 	k8sSuite.Require().NoError(err)
 
 	k8sSuite.Clientset, err = kubernetes.NewForConfig(config)
+	k8sSuite.Require().NoError(err)
+
+	k8sSuite.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(config)
 	k8sSuite.Require().NoError(err)
 }

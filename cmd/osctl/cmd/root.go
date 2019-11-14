@@ -17,7 +17,6 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -113,9 +112,7 @@ func Execute() {
 // setupClient wraps common code to initialize osd client
 func setupClient(action func(*client.Client)) {
 	// Update context with grpc metadata for proxy/relay requests
-	md := metadata.New(make(map[string]string))
-	md.Set("targets", target...)
-	globalCtx = metadata.NewOutgoingContext(globalCtx, md)
+	globalCtx = client.WithTargets(globalCtx, target...)
 
 	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig, cmdcontext)
 	if err != nil {

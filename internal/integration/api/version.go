@@ -9,6 +9,7 @@ package api
 import (
 	"context"
 
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
@@ -28,6 +29,24 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(suite.Version, v.Response[0].Version.Tag)
+}
+
+// TestSameVersionCluster verifies that all the nodes are on the same version
+func (suite *VersionSuite) TestSameVersionCluster() {
+	nodes := suite.DiscoverNodes()
+	suite.Require().NotEmpty(nodes)
+
+	ctx := client.WithTargets(context.Background(), nodes...)
+
+	v, err := suite.Client.Version(ctx)
+	suite.Require().NoError(err)
+
+	suite.Require().Len(v.Response, len(nodes))
+
+	expectedVersion := v.Response[0].Version.Tag
+	for _, version := range v.Response {
+		suite.Assert().Equal(expectedVersion, version.Version.Tag)
+	}
 }
 
 func init() {

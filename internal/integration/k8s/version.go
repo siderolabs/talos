@@ -29,11 +29,19 @@ func (suite *VersionSuite) SuiteName() string {
 
 // TestExpectedVersion verifies that node versions matches expected
 func (suite *VersionSuite) TestExpectedVersion() {
+	// verify k8s version (api server)
+	apiServerVersion, err := suite.DiscoveryClient.ServerVersion()
+	suite.Require().NoError(err)
+
+	expectedApiServerVersion := fmt.Sprintf("v%s", constants.DefaultKubernetesVersion)
+	suite.Assert().Equal(expectedApiServerVersion, apiServerVersion.GitVersion)
+
 	v, err := suite.Client.Version(context.Background())
 	suite.Require().NoError(err)
 
 	checkKernelVersion := v.Response[0].Platform != nil && v.Response[0].Platform.Mode != runtime.Container.String()
 
+	// verify each node (kubelet version, Talos version, etc.)
 	nodes, err := suite.Clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	suite.Require().NoError(err)
 
