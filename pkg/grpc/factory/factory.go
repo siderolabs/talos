@@ -125,11 +125,16 @@ func NewDefaultOptions(setters ...Option) *Options {
 
 		logMiddleware := grpclog.NewMiddleware(logger)
 
-		opts.UnaryInterceptors = append(opts.UnaryInterceptors, logMiddleware.UnaryInterceptor())
-		opts.StreamInterceptors = append(opts.StreamInterceptors, logMiddleware.StreamInterceptor())
+		// Logging is installed as the first middleware so that request in the form it was received,
+		// and status sent on the wire is logged (error/success). It also tracks whole duration of the
+		// request, including other middleware overhead.
+		opts.UnaryInterceptors = append([]grpc.UnaryServerInterceptor{logMiddleware.UnaryInterceptor()}, opts.UnaryInterceptors...)
+		opts.StreamInterceptors = append([]grpc.StreamServerInterceptor{logMiddleware.StreamInterceptor()}, opts.StreamInterceptors...)
 	}
 
-	// install default recovery interceptors
+	// Install default recovery interceptors.
+	// Recovery is installed as the last middleware in the chain so that earlier middlewares in the chain
+	// have a chance to process the error (e.g. logging middleware).
 	opts.StreamInterceptors = append(opts.StreamInterceptors, grpc_recovery.StreamServerInterceptor())
 	opts.UnaryInterceptors = append(opts.UnaryInterceptors, grpc_recovery.UnaryServerInterceptor())
 

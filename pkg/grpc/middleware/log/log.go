@@ -63,7 +63,7 @@ func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 			msg = err.Error()
 		}
 
-		m.logger.Printf("%s [%s] %.3fms unary %s (%s)", code, info.FullMethod, duration.Seconds()/1000.0, msg, extractMetadata(ctx))
+		m.logger.Printf("%s [%s] %s unary %s (%s)", code, info.FullMethod, duration, msg, extractMetadata(ctx))
 
 		return resp, err
 	}
@@ -84,7 +84,7 @@ func (m *Middleware) StreamInterceptor() grpc.StreamServerInterceptor {
 			msg = err.Error()
 		}
 
-		m.logger.Printf("%s [%s] %.3fms stream %s (%s)", code, info.FullMethod, duration.Seconds()/1000.0, msg, extractMetadata(stream.Context()))
+		m.logger.Printf("%s [%s] %s stream %s (%s)", code, info.FullMethod, duration, msg, extractMetadata(stream.Context()))
 
 		return err
 	}
