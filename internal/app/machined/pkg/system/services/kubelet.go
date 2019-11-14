@@ -30,6 +30,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
@@ -131,37 +132,15 @@ func (k *Kubelet) DependsOn(config runtime.Configurator) []string {
 func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
 
-	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
-	if err != nil {
-		return nil, err
-	}
-
-	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
+	a, err := k.args(config)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: k.ID(config),
-		ProcessArgs: []string{
-			"/hyperkube",
-			"kubelet",
-			"--bootstrap-kubeconfig=" + constants.KubeletBootstrapKubeconfig,
-			"--kubeconfig=" + constants.KubeletKubeconfig,
-			"--container-runtime=remote",
-			"--container-runtime-endpoint=unix://" + constants.ContainerdAddress,
-			"--anonymous-auth=false",
-			"--cert-dir=/var/lib/kubelet/pki",
-			"--client-ca-file=" + constants.KubernetesCACert,
-			"--cni-conf-dir=/etc/cni/net.d",
-			"--cluster-domain=cluster.local",
-			"--pod-manifest-path=/etc/kubernetes/manifests",
-			"--rotate-certificates",
-			"--cluster-dns=" + dnsServiceIP.String(),
-			// TODO(andrewrynhard): Only set this in the case of container run mode.
-			"--fail-swap-on=false",
-		},
+		ID:          k.ID(config),
+		ProcessArgs: append([]string{"/hyperkube", "kubelet"}, a...),
 	}
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
@@ -246,4 +225,47 @@ func (k *Kubelet) HealthSettings(runtime.Configurator) *health.Settings {
 	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup
 
 	return &settings
+}
+
+// nolint: gocyclo
+func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
+	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
+	if err != nil {
+		return nil, err
+	}
+
+	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
+	if err != nil {
+		return nil, err
+	}
+
+	blackListArgs := argsbuilder.Args{
+		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
+		"kubeconfig":                 constants.KubeletKubeconfig,
+		"container-runtime":          "remote",
+		"container-runtime-endpoint": "unix://" + constants.ContainerdAddress,
+		"anonymous-auth":             "false",
+		"cert-dir":                   "/var/lib/kubelet/pki",
+		"client-ca-file":             constants.KubernetesCACert,
+		"cni-conf-dir":               "/etc/cni/net.d",
+		"pod-manifest-path":          "/etc/kubernetes/manifests",
+		"rotate-certificates":        "true",
+		"cluster-dns":                dnsServiceIP.String(),
+		// TODO(andrewrynhard): Only set this in the case of container run mode.
+		"fail-swap-on": "false",
+	}
+
+	extraArgs := argsbuilder.Args(config.Machine().Kubelet().ExtraArgs())
+
+	for k := range blackListArgs {
+		if extraArgs.Contains(k) {
+			return nil, argsbuilder.NewBlacklistError(k)
+		}
+	}
+
+	if !extraArgs.Contains("cluster-domain") {
+		extraArgs.Set("cluster-domain", "cluster.local")
+	}
+
+	return blackListArgs.Merge(extraArgs).Args(), nil
 }

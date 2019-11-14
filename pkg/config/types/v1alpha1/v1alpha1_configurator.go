@@ -118,7 +118,7 @@ func (m *MachineConfig) Time() machine.Time {
 
 // Kubelet implements the Configurator interface.
 func (m *MachineConfig) Kubelet() machine.Kubelet {
-	return m
+	return m.MachineKubelet
 }
 
 // Env implements the Configurator interface.
@@ -168,8 +168,17 @@ func (m *MachineConfig) SetCertSANs(sans []string) {
 	m.MachineCertSANs = append(m.MachineCertSANs, sans...)
 }
 
+// ExtraArgs implements the Configurator interface.
+func (k *KubeletConfig) ExtraArgs() map[string]string {
+	if k.KubeletExtraArgs == nil {
+		k.KubeletExtraArgs = make(map[string]string)
+	}
+
+	return k.KubeletExtraArgs
+}
+
 // ExtraMounts implements the Configurator interface.
-func (m *MachineConfig) ExtraMounts() []specs.Mount {
+func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 	return nil
 }
 
@@ -239,7 +248,7 @@ func (e *EtcdConfig) CA() *x509.PEMEncodedCertificateAndKey {
 // ExtraArgs implements the Configurator interface.
 func (e *EtcdConfig) ExtraArgs() map[string]string {
 	if e.EtcdExtraArgs == nil {
-		return make(map[string]string)
+		e.EtcdExtraArgs = make(map[string]string)
 	}
 
 	return e.EtcdExtraArgs
