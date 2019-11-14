@@ -1,0 +1,8 @@
+{
+  "id": "control-plane-3",
+  "name": "control-plane-3",
+  "profile": "controlplane",
+  "selector": {
+    "mac": "52:54:00:c3:61:77"
+  }
+}
