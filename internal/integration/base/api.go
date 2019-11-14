@@ -34,6 +34,32 @@ func (apiSuite *APISuite) SetupSuite() {
 	apiSuite.Require().NoError(err)
 }
 
+// DiscoverNodes provides list of Talos nodes in the cluster.
+//
+// As there's no way to provide this functionality via Talos API, it works the following way:
+// 1. If there's a provided list of nodes, it's used.
+// 2. If integration test was compiled with k8s support, k8s is used.
+func (apiSuite *APISuite) DiscoverNodes() []string {
+	discoveredNodes := apiSuite.TalosSuite.DiscoverNodes()
+	if discoveredNodes != nil {
+		return discoveredNodes
+	}
+
+	var err error
+
+	apiSuite.discoveredNodes, err = discoverNodesK8s(apiSuite.Client)
+	if err != nil {
+		apiSuite.Require().Error(err)
+	}
+
+	if apiSuite.discoveredNodes == nil {
+		// still no nodes, skip the test
+		apiSuite.T().Skip("no nodes were discovered")
+	}
+
+	return apiSuite.discoveredNodes
+}
+
 // TearDownSuite closes Talos API client
 func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {
