@@ -1,3 +1,18 @@
+# [v0.3.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.7...v0.3.0-alpha.8) (2019-11-15)
+
+### Bug Fixes
+
+- honor the extraArgs option for the kubelet ([82c5936](https://github.com/talos-systems/talos/commit/82c59368af6eb4754d0836a376c4015c224648dd))
+- make logging middleware first in the list, fix duration ([bb89d90](https://github.com/talos-systems/talos/commit/bb89d908b349312e21a370387ad6ec68abc3f7c7))
+- set --upgrade flag properly on installs ([cbca760](https://github.com/talos-systems/talos/commit/cbca760562a92f4006ac11fd23c344e4c354cd78))
+- use the config's cluster version for control plane image ([d2787db](https://github.com/talos-systems/talos/commit/d2787db99319fe3fd22dfb065bdd94dd4810adaa))
+
+### Features
+
+- Add context key to osctl ([83d5f4c](https://github.com/talos-systems/talos/commit/83d5f4c7210fb8cb553acbdbf63ba4c5cdbed28d))
+- Add support for resetting the network during bootup ([d67fbf2](https://github.com/talos-systems/talos/commit/d67fbf269b58346ab49214e0bf0f9f04b422e2ce))
+- allow extra arguments to be passed to etcd ([e1fc901](https://github.com/talos-systems/talos/commit/e1fc9017d2abbd44cfea0d8963b1e63792510634))
+
 # [v0.3.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.6...v0.3.0-alpha.7) (2019-11-12)
 
 ### Bug Fixes
