@@ -305,7 +305,7 @@ COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=osctl-linux-build /osctl-linux-amd64 /bin/osctl
 ARG TAG
 ENV VERSION ${TAG}
-LABEL "alpha.talos.io/version"="${VERSION}"
+LABEL "alpha.talos.dev/version"="${VERSION}"
 ENTRYPOINT ["entrypoint.sh"]
 ONBUILD RUN apk add --no-cache --update \
     cpio \
