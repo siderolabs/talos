@@ -24,7 +24,7 @@ var kubeconfigCmd = &cobra.Command{
 	Long: `Download the admin kubeconfig from the node.
 Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 1 {
+		if len(args) != 1 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
