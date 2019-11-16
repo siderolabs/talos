@@ -204,19 +204,26 @@ func (h *Client) CordonAndDrain(node string) (err error) {
 
 // Cordon marks a node as unschedulable.
 func (h *Client) Cordon(name string) error {
-	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get node %s: %w", name, err)
-	}
+	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
+		node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		if err != nil {
+			return retry.UnexpectedError(err)
+		}
 
-	if node.Spec.Unschedulable {
+		if node.Spec.Unschedulable {
+			return nil
+		}
+
+		node.Spec.Unschedulable = true
+
+		if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
+			return retry.ExpectedError(err)
+		}
+
 		return nil
-	}
-
-	node.Spec.Unschedulable = true
-
-	if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
-		return fmt.Errorf("failed to cordon node %s: %w", node.GetName(), err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to cordon node %s: %w", name, err)
 	}
 
 	return nil
@@ -224,16 +231,23 @@ func (h *Client) Cordon(name string) error {
 
 // Uncordon marks a node as schedulable.
 func (h *Client) Uncordon(name string) error {
-	node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get node %s: %w", name, err)
-	}
-
-	if node.Spec.Unschedulable {
-		node.Spec.Unschedulable = false
-		if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
-			return fmt.Errorf("failed to uncordon node %s: %w", node.GetName(), err)
+	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
+		node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		if err != nil {
+			return retry.UnexpectedError(err)
 		}
+
+		if node.Spec.Unschedulable {
+			node.Spec.Unschedulable = false
+			if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
+				return retry.ExpectedError(err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to uncordon node %s: %w", name, err)
 	}
 
 	return nil
