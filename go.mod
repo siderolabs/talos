@@ -21,7 +21,6 @@ require (
 	github.com/containerd/cri v1.11.1
 	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
 	github.com/containerd/typeurl v0.0.0-20190228175220-2a93cfde8c20
-	github.com/coreos/etcd v3.3.15+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
@@ -48,7 +47,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc8 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1
-	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/prometheus/procfs v0.0.6
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/spf13/cobra v0.0.5

@@ -240,17 +240,19 @@ func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 	}
 
 	blackListArgs := argsbuilder.Args{
-		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
-		"kubeconfig":                 constants.KubeletKubeconfig,
-		"container-runtime":          "remote",
-		"container-runtime-endpoint": "unix://" + constants.ContainerdAddress,
-		"anonymous-auth":             "false",
-		"cert-dir":                   "/var/lib/kubelet/pki",
-		"client-ca-file":             constants.KubernetesCACert,
-		"cni-conf-dir":               "/etc/cni/net.d",
-		"pod-manifest-path":          "/etc/kubernetes/manifests",
-		"rotate-certificates":        "true",
-		"cluster-dns":                dnsServiceIP.String(),
+		"bootstrap-kubeconfig":         constants.KubeletBootstrapKubeconfig,
+		"kubeconfig":                   constants.KubeletKubeconfig,
+		"container-runtime":            "remote",
+		"container-runtime-endpoint":   "unix://" + constants.ContainerdAddress,
+		"anonymous-auth":               "false",
+		"cert-dir":                     "/var/lib/kubelet/pki",
+		"client-ca-file":               constants.KubernetesCACert,
+		"cni-conf-dir":                 "/etc/cni/net.d",
+		"pod-manifest-path":            "/etc/kubernetes/manifests",
+		"rotate-certificates":          "true",
+		"cluster-dns":                  dnsServiceIP.String(),
+		"authentication-token-webhook": "true",
+		"authorization-mode":           "Webhook",
 		// TODO(andrewrynhard): Only set this in the case of container run mode.
 		"fail-swap-on": "false",
 	}
