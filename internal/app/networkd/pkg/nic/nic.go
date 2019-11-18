@@ -9,18 +9,14 @@ import (
 	"net"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/mdlayher/netlink"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// TODO: Probably should put together some map here
-// to map number with string()
 const (
-	Bond = iota
-	Single
-
 	// https://tools.ietf.org/html/rfc791
 	MinimumMTU = 68
 	MaximumMTU = 65536
@@ -31,11 +27,12 @@ const (
 type NetworkInterface struct {
 	Ignore        bool
 	Name          string
-	Type          int
+	Bonded        bool
 	MTU           uint32
 	Index         uint32
 	SubInterfaces []string
 	AddressMethod []address.Addressing
+	BondSettings  []netlink.Attribute
 }
 
 // IsIgnored checks the network interface to see if it should be ignored and not configured

@@ -84,6 +84,16 @@ type Bond struct {
 	HashPolicy string   `yaml:"hashpolicy"`
 	LACPRate   string   `yaml:"lacprate"`
 	Interfaces []string `yaml:"interfaces"`
+	MIIMon     uint32   `yaml:"miimon"`
+	UpDelay    uint32   `yaml:"updelay"`
+	DownDelay  uint32   `yaml:"downdelay"`
+	// UseCarrier   bool     `yaml:"usecarrier"`
+	// ARPInterval  int      `yaml:"arpinterval"`
+	// ARPIPTarget  string   `yaml:"arpiptarget"`
+	// ARPValidate  bool     `yaml:"arpvalidate"`
+	// FailOverMac  bool     `yaml:"failovermac"`
+	// ResendIGMP   bool     `yaml:"resendigmp"`
+	// TLBDynamicLB bool     `yaml:"tlbdynamiclb"`
 }
 
 // Route represents a network route.

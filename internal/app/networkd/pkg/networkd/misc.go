@@ -38,7 +38,6 @@ func parseLinkMessage(link *net.Interface) []nic.Option {
 	opts := []nic.Option{}
 
 	opts = append(opts, nic.WithName(link.Name))
-	opts = append(opts, nic.WithMTU(uint32(link.MTU)))
 	opts = append(opts, nic.WithIndex(uint32(link.Index)))
 
 	// Ensure lo has proper loopback address
