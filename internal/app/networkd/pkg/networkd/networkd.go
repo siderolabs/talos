@@ -46,8 +46,6 @@ func New() (*Networkd, error) {
 		return nil, err
 	}
 
-	// Need rtnetlink for MTU setting
-	// TODO: possible rtnl enhancement
 	nlConn, err := rtnetlink.Dial(nil)
 	if err != nil {
 		return nil, err
@@ -67,7 +65,7 @@ func (n *Networkd) Discover() (NetConf, error) {
 	linkmap := NetConf{}
 
 	for _, link := range filterInterfaceByName(links) {
-		linkmap[link] = parseLinkMessage(link)
+		linkmap[link.Name] = parseLinkMessage(link)
 	}
 
 	return linkmap, nil
@@ -89,6 +87,37 @@ func (n *Networkd) Configure(ifaces ...*nic.NetworkInterface) error {
 	for _, iface := range ifaces {
 		go func(i *nic.NetworkInterface) {
 			defer wg.Done()
+			if iface.Bonded {
+				var bondif *net.Interface
+				// Test if bond already exists
+				if bondif, err = net.InterfaceByName(i.Name); err != nil {
+					// If bond  doesn't exist, create it
+					if bondif, err = n.createBond(i.Name); err != nil {
+						log.Printf("failed to create bond %s: %v", i.Name, err)
+						return
+					}
+				}
+
+				iface.Index = uint32(bondif.Index)
+
+				// Configure bond settings ( mode, lacp rate, etc )
+				if err = n.configureBond(bondif.Index, i.BondSettings); err != nil {
+					log.Printf("failed to configure bond %s: %v", i.Name, err)
+					return
+				}
+
+				// Surely there's a better way to do a *uint32
+				var bondIndex *uint32
+				bondIndex = new(uint32)
+				*bondIndex = uint32(bondif.Index)
+
+				// Assign master to sub/slave interfaces
+				if err = n.enslaveLink(bondIndex, i.SubInterfaces...); err != nil {
+					log.Printf("failed to enslave interfaces for %s: %v", i.Name, err)
+					return
+				}
+			}
+
 			// Bring up the interface
 			if err = n.Conn.LinkUp(&net.Interface{Index: int(i.Index)}); err != nil {
 				log.Printf("failed to bring up %s: %v", i.Name, err)

@@ -83,7 +83,7 @@ func configureNetworking(n *networkd.Networkd) {
 	for link, opts := range netconf {
 		var iface *nic.NetworkInterface
 
-		log.Printf("creating interface %s", link.Name)
+		log.Printf("creating interface %s", link)
 
 		iface, err = nic.Create(link, opts...)
 		if err != nil {

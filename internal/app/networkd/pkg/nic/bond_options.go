@@ -6,6 +6,7 @@ package nic
 
 import (
 	"errors"
+	"net"
 
 	"github.com/mdlayher/netlink"
 )
@@ -21,7 +22,13 @@ func WithBond(o bool) Option {
 // WithSubInterface defines which interfaces make up the bond
 func WithSubInterface(o ...string) Option {
 	return func(n *NetworkInterface) (err error) {
-		n.SubInterfaces = append(n.SubInterfaces, o...)
+		for _, ifname := range o {
+			iface, err := net.InterfaceByName(ifname)
+			if err != nil {
+				return err
+			}
+			n.SubInterfaces = append(n.SubInterfaces, iface)
+		}
 		return err
 	}
 }
@@ -102,7 +109,8 @@ func WithMIIMon(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings = append(n.BondSettings, netlink.Attribute{
 			// TODO check iproute for guidance here
-			// ? need a bettwe way to identify length
+			// ? need a better way to identify length
+			// ohhh maybe map[string]len ?
 			Length: 8,
 			Type:   uint16(IFLA_BOND_MIIMON),
 			Data:   []byte{byte(o)},
@@ -111,3 +119,14 @@ func WithMIIMon(o uint32) Option {
 		return err
 	}
 }
+
+/*
+	Ref: length
+	__u8 mode, use_carrier, primary_reselect, fail_over_mac;
+	__u8 xmit_hash_policy, num_peer_notif, all_slaves_active;
+	__u8 lacp_rate, ad_select, tlb_dynamic_lb;
+	__u16 ad_user_port_key, ad_actor_sys_prio;
+	__u32 miimon, updelay, downdelay, peer_notify_delay, arp_interval, arp_validate;
+	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
+	__u32 packets_per_slave;
+*/

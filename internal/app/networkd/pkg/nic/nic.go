@@ -30,7 +30,7 @@ type NetworkInterface struct {
 	Bonded        bool
 	MTU           uint32
 	Index         uint32
-	SubInterfaces []string
+	SubInterfaces []*net.Interface
 	AddressMethod []address.Addressing
 	BondSettings  []netlink.Attribute
 }
