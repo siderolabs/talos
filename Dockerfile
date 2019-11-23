@@ -220,7 +220,6 @@ FROM build AS rootfs-base
 COPY --from=docker.io/autonomy/fhs:febbf49 / /rootfs
 COPY --from=docker.io/autonomy/ca-certificates:febbf49 / /rootfs
 COPY --from=docker.io/autonomy/containerd:febbf49 / /rootfs
-COPY --from=docker.io/autonomy/cni:febbf49 / /rootfs
 COPY --from=docker.io/autonomy/dosfstools:febbf49 / /rootfs
 COPY --from=docker.io/autonomy/eudev:febbf49 / /rootfs
 COPY --from=docker.io/autonomy/iptables:febbf49 / /rootfs
