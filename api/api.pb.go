@@ -27,9 +27,11 @@ import (
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -241,50 +243,62 @@ type Interface = network.Interface
 // AddressFamily from public import network/network.proto
 type AddressFamily = network.AddressFamily
 
-var AddressFamily_name = network.AddressFamily_name
-var AddressFamily_value = network.AddressFamily_value
+var (
+	AddressFamily_name  = network.AddressFamily_name
+	AddressFamily_value = network.AddressFamily_value
+)
 
-const AddressFamily_AF_UNSPEC = AddressFamily(network.AddressFamily_AF_UNSPEC)
-const AddressFamily_AF_INET = AddressFamily(network.AddressFamily_AF_INET)
-const AddressFamily_IPV4 = AddressFamily(network.AddressFamily_IPV4)
-const AddressFamily_AF_INET6 = AddressFamily(network.AddressFamily_AF_INET6)
-const AddressFamily_IPV6 = AddressFamily(network.AddressFamily_IPV6)
+const (
+	AddressFamily_AF_UNSPEC = AddressFamily(network.AddressFamily_AF_UNSPEC)
+	AddressFamily_AF_INET   = AddressFamily(network.AddressFamily_AF_INET)
+	AddressFamily_IPV4      = AddressFamily(network.AddressFamily_IPV4)
+	AddressFamily_AF_INET6  = AddressFamily(network.AddressFamily_AF_INET6)
+	AddressFamily_IPV6      = AddressFamily(network.AddressFamily_IPV6)
+)
 
 // RouteProtocol from public import network/network.proto
 type RouteProtocol = network.RouteProtocol
 
-var RouteProtocol_name = network.RouteProtocol_name
-var RouteProtocol_value = network.RouteProtocol_value
+var (
+	RouteProtocol_name  = network.RouteProtocol_name
+	RouteProtocol_value = network.RouteProtocol_value
+)
 
-const RouteProtocol_RTPROT_UNSPEC = RouteProtocol(network.RouteProtocol_RTPROT_UNSPEC)
-const RouteProtocol_RTPROT_REDIRECT = RouteProtocol(network.RouteProtocol_RTPROT_REDIRECT)
-const RouteProtocol_RTPROT_KERNEL = RouteProtocol(network.RouteProtocol_RTPROT_KERNEL)
-const RouteProtocol_RTPROT_BOOT = RouteProtocol(network.RouteProtocol_RTPROT_BOOT)
-const RouteProtocol_RTPROT_STATIC = RouteProtocol(network.RouteProtocol_RTPROT_STATIC)
-const RouteProtocol_RTPROT_GATED = RouteProtocol(network.RouteProtocol_RTPROT_GATED)
-const RouteProtocol_RTPROT_RA = RouteProtocol(network.RouteProtocol_RTPROT_RA)
-const RouteProtocol_RTPROT_MRT = RouteProtocol(network.RouteProtocol_RTPROT_MRT)
-const RouteProtocol_RTPROT_ZEBRA = RouteProtocol(network.RouteProtocol_RTPROT_ZEBRA)
-const RouteProtocol_RTPROT_BIRD = RouteProtocol(network.RouteProtocol_RTPROT_BIRD)
-const RouteProtocol_RTPROT_DNROUTED = RouteProtocol(network.RouteProtocol_RTPROT_DNROUTED)
-const RouteProtocol_RTPROT_XORP = RouteProtocol(network.RouteProtocol_RTPROT_XORP)
-const RouteProtocol_RTPROT_NTK = RouteProtocol(network.RouteProtocol_RTPROT_NTK)
-const RouteProtocol_RTPROT_DHCP = RouteProtocol(network.RouteProtocol_RTPROT_DHCP)
-const RouteProtocol_RTPROT_MROUTED = RouteProtocol(network.RouteProtocol_RTPROT_MROUTED)
-const RouteProtocol_RTPROT_BABEL = RouteProtocol(network.RouteProtocol_RTPROT_BABEL)
+const (
+	RouteProtocol_RTPROT_UNSPEC   = RouteProtocol(network.RouteProtocol_RTPROT_UNSPEC)
+	RouteProtocol_RTPROT_REDIRECT = RouteProtocol(network.RouteProtocol_RTPROT_REDIRECT)
+	RouteProtocol_RTPROT_KERNEL   = RouteProtocol(network.RouteProtocol_RTPROT_KERNEL)
+	RouteProtocol_RTPROT_BOOT     = RouteProtocol(network.RouteProtocol_RTPROT_BOOT)
+	RouteProtocol_RTPROT_STATIC   = RouteProtocol(network.RouteProtocol_RTPROT_STATIC)
+	RouteProtocol_RTPROT_GATED    = RouteProtocol(network.RouteProtocol_RTPROT_GATED)
+	RouteProtocol_RTPROT_RA       = RouteProtocol(network.RouteProtocol_RTPROT_RA)
+	RouteProtocol_RTPROT_MRT      = RouteProtocol(network.RouteProtocol_RTPROT_MRT)
+	RouteProtocol_RTPROT_ZEBRA    = RouteProtocol(network.RouteProtocol_RTPROT_ZEBRA)
+	RouteProtocol_RTPROT_BIRD     = RouteProtocol(network.RouteProtocol_RTPROT_BIRD)
+	RouteProtocol_RTPROT_DNROUTED = RouteProtocol(network.RouteProtocol_RTPROT_DNROUTED)
+	RouteProtocol_RTPROT_XORP     = RouteProtocol(network.RouteProtocol_RTPROT_XORP)
+	RouteProtocol_RTPROT_NTK      = RouteProtocol(network.RouteProtocol_RTPROT_NTK)
+	RouteProtocol_RTPROT_DHCP     = RouteProtocol(network.RouteProtocol_RTPROT_DHCP)
+	RouteProtocol_RTPROT_MROUTED  = RouteProtocol(network.RouteProtocol_RTPROT_MROUTED)
+	RouteProtocol_RTPROT_BABEL    = RouteProtocol(network.RouteProtocol_RTPROT_BABEL)
+)
 
 // InterfaceFlags from public import network/network.proto
 type InterfaceFlags = network.InterfaceFlags
 
-var InterfaceFlags_name = network.InterfaceFlags_name
-var InterfaceFlags_value = network.InterfaceFlags_value
+var (
+	InterfaceFlags_name  = network.InterfaceFlags_name
+	InterfaceFlags_value = network.InterfaceFlags_value
+)
 
-const InterfaceFlags_FLAG_UNKNOWN = InterfaceFlags(network.InterfaceFlags_FLAG_UNKNOWN)
-const InterfaceFlags_FLAG_UP = InterfaceFlags(network.InterfaceFlags_FLAG_UP)
-const InterfaceFlags_FLAG_BROADCAST = InterfaceFlags(network.InterfaceFlags_FLAG_BROADCAST)
-const InterfaceFlags_FLAG_LOOPBACK = InterfaceFlags(network.InterfaceFlags_FLAG_LOOPBACK)
-const InterfaceFlags_FLAG_POINT_TO_POINT = InterfaceFlags(network.InterfaceFlags_FLAG_POINT_TO_POINT)
-const InterfaceFlags_FLAG_MULTICAST = InterfaceFlags(network.InterfaceFlags_FLAG_MULTICAST)
+const (
+	InterfaceFlags_FLAG_UNKNOWN        = InterfaceFlags(network.InterfaceFlags_FLAG_UNKNOWN)
+	InterfaceFlags_FLAG_UP             = InterfaceFlags(network.InterfaceFlags_FLAG_UP)
+	InterfaceFlags_FLAG_BROADCAST      = InterfaceFlags(network.InterfaceFlags_FLAG_BROADCAST)
+	InterfaceFlags_FLAG_LOOPBACK       = InterfaceFlags(network.InterfaceFlags_FLAG_LOOPBACK)
+	InterfaceFlags_FLAG_POINT_TO_POINT = InterfaceFlags(network.InterfaceFlags_FLAG_POINT_TO_POINT)
+	InterfaceFlags_FLAG_MULTICAST      = InterfaceFlags(network.InterfaceFlags_FLAG_MULTICAST)
+)
 
 // NodeMetadata from public import common/common.proto
 type NodeMetadata = common.NodeMetadata
@@ -301,11 +315,15 @@ type DataReply = common.DataReply
 // ContainerDriver from public import common/common.proto
 type ContainerDriver = common.ContainerDriver
 
-var ContainerDriver_name = common.ContainerDriver_name
-var ContainerDriver_value = common.ContainerDriver_value
+var (
+	ContainerDriver_name  = common.ContainerDriver_name
+	ContainerDriver_value = common.ContainerDriver_value
+)
 
-const ContainerDriver_CONTAINERD = ContainerDriver(common.ContainerDriver_CONTAINERD)
-const ContainerDriver_CRI = ContainerDriver(common.ContainerDriver_CRI)
+const (
+	ContainerDriver_CONTAINERD = ContainerDriver(common.ContainerDriver_CONTAINERD)
+	ContainerDriver_CRI        = ContainerDriver(common.ContainerDriver_CRI)
+)
 
 // Empty from public import google/protobuf/empty.proto
 type Empty = empty.Empty

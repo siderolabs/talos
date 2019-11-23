@@ -14,8 +14,10 @@ import (
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 )
 
-var instance = map[string]*Log{}
-var mu sync.Mutex
+var (
+	instance = map[string]*Log{}
+	mu       sync.Mutex
+)
 
 // Log represents the log of a service. It supports streaming of the contents of
 // the log file by way of implementing the chunker.Chunker interface.

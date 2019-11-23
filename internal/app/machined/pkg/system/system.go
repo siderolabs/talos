@@ -35,8 +35,10 @@ type singleton struct {
 	terminating bool
 }
 
-var instance *singleton
-var once sync.Once
+var (
+	instance *singleton
+	once     sync.Once
+)
 
 // Services returns the instance of the system services API.
 // nolint: golint

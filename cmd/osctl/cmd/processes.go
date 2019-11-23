@@ -27,8 +27,10 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
-var sortMethod string
-var watchProcesses bool
+var (
+	sortMethod     string
+	watchProcesses bool
+)
 
 // processesCmd represents the processes command
 var processesCmd = &cobra.Command{
