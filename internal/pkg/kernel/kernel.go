@@ -118,8 +118,10 @@ type Cmdline struct {
 	Parameters
 }
 
-var instance *Cmdline
-var once sync.Once
+var (
+	instance *Cmdline
+	once     sync.Once
+)
 
 // Cmdline returns a representation of /proc/cmdline.
 // nolint: golint
