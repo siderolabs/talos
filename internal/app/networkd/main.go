@@ -80,15 +80,15 @@ func configureNetworking(n *networkd.Networkd) {
 	// Configure specified interface
 	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
 
-	for link, opts := range netconf {
+	for _, opts := range netconf {
 		var iface *nic.NetworkInterface
 
-		log.Printf("creating interface %s", link)
-
-		iface, err = nic.Create(link, opts...)
+		iface, err = nic.Create(opts...)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		log.Printf("found %s", iface.Name)
 
 		if iface.IsIgnored() {
 			continue

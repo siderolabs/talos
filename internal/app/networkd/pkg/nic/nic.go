@@ -46,7 +46,7 @@ func (n *NetworkInterface) IsIgnored() bool {
 
 // Create returns a NetworkInterface with all of the given setter options
 // applied
-func Create(link *net.Interface, setters ...Option) (*NetworkInterface, error) {
+func Create(setters ...Option) (*NetworkInterface, error) {
 	// Default interface setup
 	iface := defaultOptions()
 
@@ -65,8 +65,15 @@ func Create(link *net.Interface, setters ...Option) (*NetworkInterface, error) {
 	// If no addressing methods have been configured, default to DHCP
 	// TODO: do we want this behavior or to be explicit with config
 	// so we dont configure every interface be default?
-	if len(iface.AddressMethod) == 0 {
-		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{NetIf: link})
+	if len(iface.AddressMethod) == 0 && iface.Name != "" {
+		link, err := net.InterfaceByName(iface.Name)
+		if err != nil {
+			result = multierror.Append(err)
+		}
+
+		if link != nil {
+			iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{NetIf: link})
+		}
 	}
 
 	return iface, result.ErrorOrNil()

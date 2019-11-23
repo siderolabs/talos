@@ -85,3 +85,29 @@ func (n *NetConf) BuildOptions(config runtime.Configurator) error {
 
 	return nil
 }
+
+/*
+// InterfaceNames
+func InterfaceNames() ([]string, error) {
+	ifaces := []string{}
+
+	for _, device := range config.Machine().Network().Devices() {
+		ifaces = append(ifaces, device.Interface)
+		if device.Bond == nil {
+			continue
+		}
+
+		ifaces = append(ifaces, device.Bond.Interfaces...)
+	}
+
+	netifs, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+	for _, device := range netifs {
+		ifaces = append(ifaces, device.Name)
+	}
+
+	return ifaces
+}
+*/
