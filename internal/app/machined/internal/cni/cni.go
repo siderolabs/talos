@@ -15,7 +15,6 @@ import (
 func Mounts(config runtime.Configurator) ([]specs.Mount, error) {
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/opt/cni", Source: "/opt/cni", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
 	return mounts, nil
