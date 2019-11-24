@@ -362,6 +362,16 @@ func (c *Client) TimeCheck(ctx context.Context, server string) (*timeapi.TimeRep
 	return c.TimeClient.TimeCheck(ctx, &timeapi.TimeRequest{Server: server})
 }
 
+// Read reads a file.
+func (c *Client) Read(ctx context.Context, path string) (io.Reader, <-chan error, error) {
+	stream, err := c.MachineClient.Read(ctx, &machineapi.ReadRequest{Path: path})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return readStream(stream)
+}
+
 type machineStream interface {
 	Recv() (*machineapi.StreamingData, error)
 	grpc.ClientStream

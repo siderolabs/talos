@@ -507,3 +507,38 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 		return nil, fmt.Errorf("unsupported driver %q", driver)
 	}
 }
+
+// Read implements the read API.
+func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.Machine_ReadServer) (err error) {
+	stat, err := os.Stat(in.Path)
+	if err != nil {
+		return err
+	}
+
+	switch mode := stat.Mode(); {
+	case mode.IsRegular():
+		f, err := os.OpenFile(in.Path, os.O_RDONLY, 0)
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		defer cancel()
+
+		chunker := stream.NewChunker(f)
+
+		chunkCh := chunker.Read(ctx)
+
+		for data := range chunkCh {
+			err := srv.SendMsg(&machineapi.StreamingData{Bytes: data})
+			if err != nil {
+				cancel()
+			}
+		}
+
+		return nil
+	default:
+		return fmt.Errorf("path must be a regular file")
+	}
+}
