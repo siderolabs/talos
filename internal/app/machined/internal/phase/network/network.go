@@ -11,7 +11,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
@@ -34,7 +33,6 @@ func (task *InitialNetworkSetup) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	}
 }
 
-// nolint: gocyclo
 func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 	// Check to see if a static IP was set via kernel args;
 	// if so, we'll skip the initial dhcp discovery
@@ -43,54 +41,17 @@ func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 		return nil
 	}
 
-	nwd, err := networkd.New()
+	nwd, err := networkd.New(r.Config())
 	if err != nil {
 		return err
 	}
 
-	// Convert links to nic
-	log.Println("discovering local network interfaces")
-
-	netconf, err := nwd.Discover()
-	if err != nil {
-		return err
-	}
-
-	// Handle initial discovery where runtime (config) is not defined
-	if r.Config() != nil {
-		log.Println("merging user defined network configuration")
-
-		if err = netconf.BuildOptions(r.Config()); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// Configure specified interface
-	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
-
-	var iface *nic.NetworkInterface
-
-	for link, opts := range netconf {
-		iface, err = nic.Create(link, opts...)
-		if err != nil {
-			return err
-		}
-
-		if iface.IsIgnored() {
-			continue
-		}
-
-		netIfaces = append(netIfaces, iface)
-	}
-
-	// kick off the addressing mechanism
-	// Add any necessary routes
-	if err = nwd.Configure(netIfaces...); err != nil {
+	if err = nwd.Configure(); err != nil {
 		return err
 	}
 
 	// This next chunk is around saving off the hostname if necessary
-	hostname := nwd.Hostname(netIfaces...)
+	hostname := nwd.Hostname()
 	if hostname == "" {
 		return nil
 	}

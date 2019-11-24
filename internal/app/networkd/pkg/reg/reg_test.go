@@ -76,7 +76,7 @@ func (suite *NetworkdSuite) TestInterfaces() {
 
 func (suite *NetworkdSuite) fakeNetworkdRPC() (*grpc.Server, net.Listener) {
 	// Create networkd instance
-	n, err := networkd.New()
+	n, err := networkd.New(nil)
 	suite.Assert().NoError(err)
 
 	// Create gRPC server

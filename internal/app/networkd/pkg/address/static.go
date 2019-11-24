@@ -23,7 +23,8 @@ type Static struct {
 
 // Discover doesnt do anything in the static configuration since all
 // the necessary configuration data is supplied via config.
-func (s *Static) Discover(ctx context.Context) error {
+func (s *Static) Discover(ctx context.Context, link *net.Interface) error {
+	s.NetIf = link
 	return nil
 }
 
@@ -93,20 +94,10 @@ func (s *Static) Routes() (routes []*Route) {
 
 // Resolvers returns the DNS resolvers
 func (s *Static) Resolvers() []net.IP {
-	if len(s.NameServers) == 0 {
-		return []net.IP{}
-	}
-
-	resolvers := make([]net.IP, 0, len(s.NameServers))
-	for _, resolver := range s.NameServers {
-		resolvers = append(resolvers, net.ParseIP(resolver))
-	}
-
-	return resolvers
+	return []net.IP{}
 }
 
 // Hostname returns the hostname
-// TODO: Should we put kernel.get(hostname param) here?
 func (s *Static) Hostname() string {
 	return ""
 }

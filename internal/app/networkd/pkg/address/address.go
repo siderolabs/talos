@@ -17,7 +17,7 @@ import (
 // supported.
 type Addressing interface {
 	Address() *net.IPNet
-	Discover(context.Context) error
+	Discover(context.Context, *net.Interface) error
 	Family() int
 	Hostname() string
 	Link() *net.Interface
