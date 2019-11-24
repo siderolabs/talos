@@ -213,6 +213,9 @@ type PlatformInfo = machine.PlatformInfo
 // LogsRequest from public import machine/machine.proto
 type LogsRequest = machine.LogsRequest
 
+// ReadRequest from public import machine/machine.proto
+type ReadRequest = machine.ReadRequest
+
 // TimeRequest from public import time/time.proto
 type TimeRequest = time.TimeRequest
 
@@ -782,6 +785,24 @@ func (p *ApiProxy) StreamProxy(ss grpc.ServerStream, method string, creds creden
 		}
 		var msg common.Data
 		return copyClientServer(&msg, clientStream, ss.(grpc.ServerStream))
+	case "/machine.Machine/Read":
+		// Initialize target clients
+		clients, err := createMachineClient(targets, creds, proxyMd)
+		if err != nil {
+			break
+		}
+		m := new(machine.ReadRequest)
+		if err := ss.RecvMsg(m); err != nil {
+			return err
+		}
+		// artificially limit this to only the first client/target until
+		// we get multi-stream stuff sorted
+		clientStream, err := clients[0].Conn.Read(clients[0].Context, m)
+		if err != nil {
+			return err
+		}
+		var msg machine.StreamingData
+		return copyClientServer(&msg, clientStream, ss.(grpc.ServerStream))
 
 	}
 
@@ -1321,6 +1342,15 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (*machine.Mou
 	return r.MachineClient.Mounts(ctx, in)
 }
 
+func (r *Registrator) Read(in *machine.ReadRequest, srv machine.Machine_ReadServer) error {
+	client, err := r.MachineClient.Read(srv.Context(), in)
+	if err != nil {
+		return err
+	}
+	var msg machine.StreamingData
+	return copyClientServer(&msg, client, srv)
+}
+
 func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (*machine.RebootReply, error) {
 	return r.MachineClient.Reboot(ctx, in)
 }
@@ -1455,6 +1485,10 @@ func (c *LocalMachineClient) Logs(ctx context.Context, in *machine.LogsRequest, 
 
 func (c *LocalMachineClient) Mounts(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.MountsReply, error) {
 	return c.MachineClient.Mounts(ctx, in, opts...)
+}
+
+func (c *LocalMachineClient) Read(ctx context.Context, in *machine.ReadRequest, opts ...grpc.CallOption) (machine.Machine_ReadClient, error) {
+	return c.MachineClient.Read(ctx, in, opts...)
 }
 
 func (c *LocalMachineClient) Reboot(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*machine.RebootReply, error) {
