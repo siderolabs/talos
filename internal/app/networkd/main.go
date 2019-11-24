@@ -9,7 +9,6 @@ import (
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/config"
@@ -28,7 +27,19 @@ func init() {
 }
 
 func main() {
-	nwd, err := networkd.New()
+	log.Println("starting initial network configuration")
+
+	content, err := config.FromFile(*configPath)
+	if err != nil {
+		log.Fatalf("failed to open config: %v", err)
+	}
+
+	config, err := config.New(content)
+	if err != nil {
+		log.Fatalf("failed to create config: %v", err)
+	}
+
+	nwd, err := networkd.New(config)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,8 +47,14 @@ func main() {
 	// Check to see if a static IP was set via kernel args;
 	// if so, we'll skip the networking configuration via networkd
 	if option := kernel.ProcCmdline().Get("ip").First(); option == nil {
-		configureNetworking(nwd)
+		if err = nwd.Configure(); err != nil {
+			log.Fatal(err)
+		}
 	}
+
+	log.Println("completed initial network configuration")
+
+	nwd.Renew()
 
 	log.Fatalf("%+v", factory.ListenAndServe(
 		reg.NewRegistrator(nwd),
@@ -46,69 +63,4 @@ func main() {
 		factory.WithDefaultLog(),
 	),
 	)
-}
-
-func configureNetworking(n *networkd.Networkd) {
-	// Convert links to nic
-	log.Println("discovering local network interfaces")
-
-	var (
-		netconf networkd.NetConf
-		err     error
-	)
-
-	if netconf, err = n.Discover(); err != nil {
-		log.Fatal(err)
-	}
-
-	content, err := config.FromFile(*configPath)
-	if err != nil {
-		log.Fatalf("open config: %v", err)
-	}
-
-	config, err := config.New(content)
-	if err != nil {
-		log.Fatalf("open config: %v", err)
-	}
-
-	log.Println("merging user defined network configuration")
-
-	if err = netconf.BuildOptions(config); err != nil {
-		log.Fatal(err)
-	}
-
-	// Configure specified interface
-	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
-
-	for link, opts := range netconf {
-		var iface *nic.NetworkInterface
-
-		log.Printf("creating interface %s", link.Name)
-
-		iface, err = nic.Create(link, opts...)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if iface.IsIgnored() {
-			continue
-		}
-
-		netIfaces = append(netIfaces, iface)
-	}
-
-	// kick off the addressing mechanism
-	// Add any necessary routes
-	log.Println("configuring interface addressing")
-
-	if err = n.Configure(netIfaces...); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("interface configuration")
-	n.PrintState()
-
-	log.Println("starting renewal watcher")
-	// handle dhcp renewal
-	go n.Renew(netIfaces...)
 }

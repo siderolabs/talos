@@ -5,7 +5,7 @@
 package nic
 
 import (
-	"errors"
+	"github.com/mdlayher/netlink"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 )
@@ -16,9 +16,10 @@ type Option func(*NetworkInterface) error
 // defaultOptions defines our default network interface configuration.
 func defaultOptions() *NetworkInterface {
 	return &NetworkInterface{
-		Type:          Single,
+		Bonded:        false,
 		MTU:           1500,
 		AddressMethod: []address.Addressing{},
+		BondSettings:  netlink.NewAttributeEncoder(),
 	}
 }
 
@@ -34,51 +35,6 @@ func WithIgnore() Option {
 func WithName(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.Name = o
-		return err
-	}
-}
-
-// WithIndex sets the interface index
-func WithIndex(o uint32) Option {
-	return func(n *NetworkInterface) (err error) {
-		n.Index = o
-		return err
-	}
-}
-
-// WithType defines how the interface should be configured - bonded or single.
-func WithType(o int) Option {
-	return func(n *NetworkInterface) (err error) {
-		switch o {
-		case Bond:
-			n.Type = Bond
-		case Single:
-			n.Type = Single
-		default:
-			return errors.New("unsupported network interface type")
-		}
-		return err
-	}
-}
-
-// WithMTU defines the MTU for the interface
-// TODO: I think we should drop this since MTU is getting set
-// by address configuration method ( either via dhcp or config )
-func WithMTU(mtu uint32) Option {
-	return func(n *NetworkInterface) (err error) {
-		if (mtu < MinimumMTU) || (mtu > MaximumMTU) {
-			return errors.New("mtu is out of acceptable range")
-		}
-
-		n.MTU = mtu
-		return err
-	}
-}
-
-// WithSubInterface defines which interfaces make up the bond
-func WithSubInterface(o string) Option {
-	return func(n *NetworkInterface) (err error) {
-		n.SubInterfaces = append(n.SubInterfaces, o)
 		return err
 	}
 }

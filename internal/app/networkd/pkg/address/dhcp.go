@@ -37,7 +37,8 @@ func (d *DHCP) Link() *net.Interface {
 }
 
 // Discover handles the DHCP client exchange stores the DHCP Ack.
-func (d *DHCP) Discover(ctx context.Context) error {
+func (d *DHCP) Discover(ctx context.Context, link *net.Interface) error {
+	d.NetIf = link
 	// TODO do something with context
 	ack, err := d.discover()
 	d.Ack = ack

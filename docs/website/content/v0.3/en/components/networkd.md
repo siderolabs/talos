@@ -57,3 +57,25 @@ machine:
 
 
 ```
+
+### Bonding
+
+The following example shows how to create a bonded interface.
+
+```yaml
+machine:
+  network:
+    interfaces:
+    - interface: bond0
+      dhcp: true
+      bond:
+        mode: 802.3ad
+        lacprate: fast
+        hashpolicy: layer3+4
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        interfaces:
+        - eth0
+        - eth1
+```

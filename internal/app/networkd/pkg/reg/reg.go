@@ -11,6 +11,7 @@ import (
 	"net"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -22,12 +23,19 @@ import (
 // networkapi.NetworkServer interfaces.
 type Registrator struct {
 	Networkd *networkd.Networkd
+	Conn     *rtnetlink.Conn
 }
 
 // NewRegistrator builds new Registrator instance.
 func NewRegistrator(n *networkd.Networkd) *Registrator {
+	nlConn, err := rtnetlink.Dial(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &Registrator{
 		Networkd: n,
+		Conn:     nlConn,
 	}
 }
 
@@ -38,7 +46,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 
 // Routes returns the hosts routing table.
 func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *networkapi.RoutesReply, err error) {
-	list, err := r.Networkd.NlConn.Route.List()
+	list, err := r.Conn.Route.List()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get route list: %w", err)
 	}
@@ -46,7 +54,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 	routes := []*networkapi.Route{}
 
 	for _, rMesg := range list {
-		ifaceData, err := r.Networkd.Conn.LinkByIndex(int(rMesg.Attributes.OutIface))
+		ifaceData, err := r.Conn.Link.Get((rMesg.Attributes.OutIface))
 		if err != nil {
 			log.Printf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
 			// TODO: Remove once we get this sorted on why there's a
@@ -57,7 +65,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 		}
 
 		routes = append(routes, &networkapi.Route{
-			Interface:   ifaceData.Name,
+			Interface:   ifaceData.Attributes.Name,
 			Destination: toCIDR(rMesg.Family, rMesg.Attributes.Dst, int(rMesg.DstLength)),
 			Gateway:     toCIDR(rMesg.Family, rMesg.Attributes.Gateway, 32),
 			Metric:      rMesg.Attributes.Priority,
@@ -80,14 +88,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 
 // Interfaces returns the hosts network interfaces and addresses.
 func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesReply, err error) {
-	var (
-		ifaces  []*net.Interface
-		addrs   []string
-		ifaddrs []*net.IPNet
-	)
-
-	// List out all interfaces/links
-	ifaces, err = r.Networkd.Conn.Links()
+	ifaces, err := net.Interfaces()
 	if err != nil {
 		return reply, err
 	}
@@ -95,18 +96,14 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *n
 	resp := &networkapi.InterfacesResponse{}
 
 	for _, iface := range ifaces {
-		addrs = []string{}
-		// Gather addresses configured on the given interface
-		// both ipv4 and ipv6
-		for _, fam := range []int{unix.AF_INET, unix.AF_INET6} {
-			ifaddrs, err = r.Networkd.Conn.Addrs(iface, fam)
-			if err != nil {
-				return reply, err
-			}
+		ifaceaddrs, err := iface.Addrs()
+		if err != nil {
+			return reply, err
+		}
 
-			for _, ifaddr := range ifaddrs {
-				addrs = append(addrs, ifaddr.String())
-			}
+		addrs := make([]string, 0, len(ifaceaddrs))
+		for _, addr := range ifaceaddrs {
+			addrs = append(addrs, addr.String())
 		}
 
 		ifmsg := &networkapi.Interface{

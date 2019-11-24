@@ -10,15 +10,11 @@ import (
 	"log"
 	"net"
 	"strings"
-
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // filterInterfaceByName filters network links by name so we only mange links
-// we need to
-func filterInterfaceByName(links []*net.Interface) (filteredLinks []*net.Interface) {
+// we need to.
+func filterInterfaceByName(links []net.Interface) (filteredLinks []net.Interface) {
 	for _, link := range links {
 		switch {
 		case strings.HasPrefix(link.Name, "en"):
@@ -27,45 +23,16 @@ func filterInterfaceByName(links []*net.Interface) (filteredLinks []*net.Interfa
 			filteredLinks = append(filteredLinks, link)
 		case strings.HasPrefix(link.Name, "lo"):
 			filteredLinks = append(filteredLinks, link)
+		case strings.HasPrefix(link.Name, "bond"):
+			filteredLinks = append(filteredLinks, link)
 		}
 	}
 
 	return filteredLinks
 }
 
-// parseLinkMessage creates the base set of attributes for nic creation
-func parseLinkMessage(link *net.Interface) []nic.Option {
-	opts := []nic.Option{}
-
-	opts = append(opts, nic.WithName(link.Name))
-	opts = append(opts, nic.WithMTU(uint32(link.MTU)))
-	opts = append(opts, nic.WithIndex(uint32(link.Index)))
-
-	// Ensure lo has proper loopback address
-	// Ensure MTU for loopback is 64k
-	// https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0cf833aefaa85bbfce3ff70485e5534e09254773
-	if strings.HasPrefix(link.Name, "lo") {
-		opts = append(opts, nic.WithAddressing(
-			&address.Static{
-				Device: &machine.Device{
-					CIDR: "127.0.0.1/8",
-					MTU:  65536,
-				},
-				NetIf: link,
-			},
-		))
-	}
-
-	return opts
-}
-
 // writeResolvConf generates a /etc/resolv.conf with the specified nameservers.
-func writeResolvConf(resolvers []net.IP) error {
-	if len(resolvers) == 0 {
-		log.Printf("no DNS servers defined, using defaults %s and %s\n", DefaultPrimaryResolver, DefaultSecondaryResolver)
-		resolvers = []net.IP{net.ParseIP(DefaultPrimaryResolver), net.ParseIP(DefaultSecondaryResolver)}
-	}
-
+func writeResolvConf(resolvers []string) error {
 	var (
 		resolvconf strings.Builder
 		err        error
@@ -78,7 +45,7 @@ func writeResolvConf(resolvers []net.IP) error {
 		}
 
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
-			log.Println("failed to add some resolver to resolvconf")
+			log.Println("failed to add some resolver to resolvconf:", resolver)
 			return err
 		}
 	}

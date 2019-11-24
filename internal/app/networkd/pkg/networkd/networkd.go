@@ -2,25 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package networkd handles the network interface configuration on a host.
+// If no configuration is provided, automatic configuration via dhcp will
+// be performed on interfaces ( eth, en, bond ).
 package networkd
 
 import (
-	"context"
-	"io/ioutil"
 	"log"
 	"net"
-	"os"
+	"strings"
 	"sync"
-	"syscall"
-	"time"
 
-	"github.com/jsimonetti/rtnetlink"
-	"github.com/jsimonetti/rtnetlink/rtnl"
-	"github.com/mdlayher/netlink"
-	"golang.org/x/sys/unix"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Set up default nameservers
@@ -33,210 +31,220 @@ const (
 // on a host system. This currently supports addressing configuration via dhcp
 // and/or a specified configuration file.
 type Networkd struct {
-	Conn   *rtnl.Conn
-	NlConn *rtnetlink.Conn
+	Interfaces map[string]*nic.NetworkInterface
+
+	hostname  string
+	resolvers []string
 }
 
-// New instantiates a new rtnetlink connection that is used for all subsequent
-// actions
-func New() (*Networkd, error) {
-	// Handle netlink connection
-	conn, err := rtnl.Dial(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Need rtnetlink for MTU setting
-	// TODO: possible rtnl enhancement
-	nlConn, err := rtnetlink.Dial(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Networkd{Conn: conn, NlConn: nlConn}, err
-}
-
-// Discover enumerates a list of network links on the host and creates a
-// base set of interface configuration options
-func (n *Networkd) Discover() (NetConf, error) {
-	links, err := n.Conn.Links()
-	if err != nil {
-		return NetConf{}, err
-	}
-
-	linkmap := NetConf{}
-
-	for _, link := range filterInterfaceByName(links) {
-		linkmap[link] = parseLinkMessage(link)
-	}
-
-	return linkmap, nil
-}
-
-// Configure handles the interface configuration portion. This is inclusive of
-// the address discovery ( static vs dhcp ) as well as the netlink interaction
-// to set an address on the link and create any routes.
-func (n *Networkd) Configure(ifaces ...*nic.NetworkInterface) error {
+// New takes the supplied configuration and creates an abstract representation
+// of all interfaces (as nic.NetworkInterface).
+// nolint: gocyclo
+func New(config runtime.Configurator) (*Networkd, error) {
 	var (
-		err       error
-		mu        sync.Mutex
-		resolvers []net.IP
-		wg        sync.WaitGroup
+		hostname  string
+		result    *multierror.Error
+		resolvers []string
 	)
 
-	wg.Add(len(ifaces))
+	resolvers = []string{DefaultPrimaryResolver, DefaultSecondaryResolver}
 
-	for _, iface := range ifaces {
-		go func(i *nic.NetworkInterface) {
+	netconf := make(map[string][]nic.Option)
+
+	// Gather settings for all config driven interfaces
+	if config != nil {
+		log.Println("parsing configuration file")
+
+		for _, device := range config.Machine().Network().Devices() {
+			name, opts, err := buildOptions(device)
+			if err != nil {
+				result = multierror.Append(result, err)
+				continue
+			}
+
+			netconf[name] = opts
+		}
+
+		hostname = config.Machine().Network().Hostname()
+
+		if len(config.Machine().Network().Resolvers()) > 0 {
+			resolvers = config.Machine().Network().Resolvers()
+		}
+	}
+
+	log.Println("discovering local interfaces")
+
+	// Gather already present interfaces
+	localInterfaces, err := net.Interfaces()
+	if err != nil {
+		result = multierror.Append(result, err)
+		return &Networkd{}, result.ErrorOrNil()
+	}
+
+	// Add locally discovered interfaces to our list of interfaces
+	// if they are not already present
+	for _, device := range filterInterfaceByName(localInterfaces) {
+		if _, ok := netconf[device.Name]; !ok {
+			netconf[device.Name] = []nic.Option{nic.WithName(device.Name)}
+		}
+
+		// Ensure lo has proper loopback address
+		// Ensure MTU for loopback is 64k
+		// ref: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0cf833aefaa85bbfce3ff70485e5534e09254773
+		if strings.HasPrefix(device.Name, "lo") {
+			netconf[device.Name] = append(netconf[device.Name], nic.WithAddressing(
+				&address.Static{
+					Device: &machine.Device{
+						CIDR: "127.0.0.1/8",
+						MTU:  nic.MaximumMTU,
+					},
+				},
+			))
+		}
+	}
+
+	interfaces := make(map[string]*nic.NetworkInterface)
+
+	// Create nic.NetworkInterface representation of the interface
+	for ifname, opts := range netconf {
+		netif, err := nic.New(opts...)
+		if err != nil {
+			result = multierror.Append(result, err)
+			continue
+		}
+
+		interfaces[ifname] = netif
+	}
+
+	// Set interfaces that are part of a bond to ignored
+	for _, netif := range interfaces {
+		if !netif.Bonded {
+			continue
+		}
+
+		for _, subif := range netif.SubInterfaces {
+			interfaces[subif.Name].Ignore = true
+		}
+	}
+
+	return &Networkd{Interfaces: interfaces, hostname: hostname, resolvers: resolvers}, result.ErrorOrNil()
+}
+
+// Configure handles the lifecycle for an interface. This includes creation,
+// configuration, and any addressing that is needed. We care about ordering
+// here so that we can ensure any links that make up a bond will be in
+// the correct state when we get to bonding configuration.
+// nolint: gocyclo
+func (n *Networkd) Configure() (err error) {
+	var wg sync.WaitGroup
+
+	log.Println("configuring non-bonded interfaces")
+
+	for _, iface := range n.Interfaces {
+		// Skip bonded interfaces so we can ensure a proper base state
+		if iface.Bonded {
+			continue
+		}
+
+		wg.Add(1)
+
+		go func(netif *nic.NetworkInterface, wg *sync.WaitGroup) {
 			defer wg.Done()
-			// Bring up the interface
-			if err = n.Conn.LinkUp(&net.Interface{Index: int(i.Index)}); err != nil {
-				log.Printf("failed to bring up %s: %v", i.Name, err)
+
+			// Ensure link exists
+			if err = netif.Create(); err != nil {
+				log.Println("error creating nic", err)
 				return
 			}
 
-			// Generate rtnetlink.AddressMessage for each address method defined on
-			// the interface
-			for _, method := range i.AddressMethod {
-				log.Printf("configuring %s addressing for %s\n", method.Name(), i.Name)
-
-				if err = n.configureInterface(method); err != nil {
-					// Treat as non fatal error when failing to configure an interface
-					log.Println(err)
-					return
-				}
-
-				if !method.Valid() {
-					return
-				}
-
-				// Aggregate a list of DNS servers/resolvers
-				mu.Lock()
-				resolvers = append(resolvers, method.Resolvers()...)
-				mu.Unlock()
+			if err = netif.Configure(); err != nil {
+				log.Println("error configuring nic", err)
+				return
 			}
-		}(iface)
+
+			if err = netif.Addressing(); err != nil {
+				log.Println("error configuring addressing", err)
+				return
+			}
+		}(iface, &wg)
 	}
 
 	wg.Wait()
 
-	// Write out resolv.conf
-	if err = writeResolvConf(resolvers); err != nil {
-		return err
+	log.Println("configuring bonded interfaces")
+
+	for _, iface := range n.Interfaces {
+		// Only work on bonded interfaces
+		if !iface.Bonded {
+			continue
+		}
+
+		wg.Add(1)
+
+		go func(netif *nic.NetworkInterface, wg *sync.WaitGroup) {
+			defer wg.Done()
+
+			log.Printf("setting up %s", netif.Name)
+
+			// Ensure link exists
+			if err = netif.Create(); err != nil {
+				log.Println("error creating nic", err)
+				return
+			}
+
+			if err = netif.Configure(); err != nil {
+				log.Println("error configuring nic", err)
+				return
+			}
+
+			if err = netif.Addressing(); err != nil {
+				log.Println("error configuring addressing", err)
+				return
+			}
+		}(iface, &wg)
 	}
 
-	return nil
+	wg.Wait()
+
+	resolvers := []string{}
+
+	for _, netif := range n.Interfaces {
+		for _, method := range netif.AddressMethod {
+			if !method.Valid() {
+				continue
+			}
+
+			for _, resolver := range method.Resolvers() {
+				resolvers = append(resolvers, resolver.String())
+			}
+		}
+	}
+
+	if len(resolvers) == 0 {
+		resolvers = n.resolvers
+	}
+
+	return writeResolvConf(resolvers)
 }
 
 // Renew sets up a long running loop to refresh a network interfaces
 // addressing configuration. Currently this only applies to interfaces
 // configured by DHCP.
-func (n *Networkd) Renew(ifaces ...*nic.NetworkInterface) {
-	for _, iface := range ifaces {
-		for _, method := range iface.AddressMethod {
-			if method.TTL() == 0 {
-				continue
-			}
-
-			go n.renew(method)
-		}
+func (n *Networkd) Renew() {
+	for _, iface := range n.Interfaces {
+		iface.Renew()
 	}
-
-	// TODO switch this out with context when that gets added
-	select {}
-}
-
-// renew sets up the looping to ensure we keep the addressing information
-// up to date. We attempt to do our first reconfiguration halfway through
-// address TTL. If that fails, we'll continue to attempt to retry every
-// halflife.
-func (n *Networkd) renew(method address.Addressing) {
-	renewDuration := method.TTL() / 2
-
-	for {
-		<-time.After(renewDuration)
-
-		if err := n.configureInterface(method); err != nil {
-			log.Printf("failed to renew interface address for %s: %v\n", method.Link().Name, err)
-
-			renewDuration = (renewDuration / 2)
-		} else {
-			renewDuration = method.TTL() / 2
-		}
-	}
-}
-
-// configureInterface handles the actual address discovery mechanism and
-// netlink interaction to configure the interface
-// nolint: gocyclo
-func (n *Networkd) configureInterface(method address.Addressing) error {
-	// TODO s/Discover/Something else/
-	// TODO make context more relevant
-	var err error
-	if err = method.Discover(context.Background()); err != nil {
-		// Right now this would only happen during dhcp discovery failure
-		log.Printf("failed to prep %s: %v", method.Link().Name, err)
-		return err
-	}
-
-	// Set link MTU if we got a response
-	if err = n.setMTU(method.Link().Index, method.MTU()); err != nil {
-		log.Printf("failed to set mtu %d for %s: %v", method.MTU(), method.Link().Name, err)
-		return err
-	}
-
-	// Check to see if we need to configure the address
-	addrs, err := n.Conn.Addrs(method.Link(), method.Family())
-	if err != nil {
-		return err
-	}
-
-	addressExists := false
-
-	for _, addr := range addrs {
-		if method.Address().String() == addr.String() {
-			addressExists = true
-			break
-		}
-	}
-
-	if !addressExists {
-		if err = n.Conn.AddrAdd(method.Link(), method.Address()); err != nil {
-			switch err := err.(type) {
-			case *netlink.OpError:
-				// ignore the error if it's -EEXIST or -ESRCH
-				if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
-					log.Printf("failed to add address %+v to %s: %v", method.Address(), method.Link().Name, err)
-					return err
-				}
-			default:
-				log.Printf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
-			}
-		}
-	}
-
-	// Add any routes
-	for _, r := range method.Routes() {
-		if err = n.Conn.RouteAddSrc(method.Link(), *r.Dest, method.Address(), r.Router); err != nil {
-			switch err := err.(type) {
-			case *netlink.OpError:
-				// ignore the error if it's -EEXIST or -ESRCH
-				if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
-					log.Printf("failed to add route %+v for %s: %v", r, method.Link().Name, err)
-					continue
-				}
-			default:
-				log.Printf("failed to add route (already exists) %+v for %s: %v", r, method.Link().Name, err)
-			}
-		}
-	}
-
-	return nil
 }
 
 // Hostname returns the first hostname found from the addressing methods.
-func (n *Networkd) Hostname(ifaces ...*nic.NetworkInterface) string {
-	for _, iface := range ifaces {
+func (n *Networkd) Hostname() string {
+	// Allow user supplied hostname to override what was returned
+	// during dhcp
+	if n.hostname != "" {
+		return n.hostname
+	}
+
+	for _, iface := range n.Interfaces {
 		for _, method := range iface.AddressMethod {
 			if !method.Valid() {
 				continue
@@ -251,83 +259,9 @@ func (n *Networkd) Hostname(ifaces ...*nic.NetworkInterface) string {
 	return ""
 }
 
-// PrintState displays the current links, addresses, and routing table.
-// nolint: gocyclo
-func (n *Networkd) PrintState() {
-	rl, err := n.NlConn.Route.List()
-	if err != nil {
-		log.Println(err)
-		return
+// Reset handles removing addresses from previously configured interfaces.
+func (n *Networkd) Reset() {
+	for _, iface := range n.Interfaces {
+		iface.Reset()
 	}
-
-	for _, r := range rl {
-		log.Printf("%+v", r)
-	}
-
-	links, err := n.Conn.Links()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	for _, link := range links {
-		log.Printf("%+v", link)
-
-		for _, fam := range []int{unix.AF_INET, unix.AF_INET6} {
-			var addrs []*net.IPNet
-
-			addrs, err = n.Conn.Addrs(link, fam)
-			if err != nil {
-				log.Println(err)
-			}
-
-			for _, addr := range addrs {
-				log.Printf("%+v", addr)
-			}
-		}
-	}
-
-	var b []byte
-
-	b, err = ioutil.ReadFile("/etc/resolv.conf")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	log.Printf("resolv.conf: %s", string(b))
-}
-
-// Reset handles removing addresses from previously configured interfaces
-func (n *Networkd) Reset(ifaces ...*nic.NetworkInterface) error {
-	var (
-		err error
-		wg  sync.WaitGroup
-	)
-
-	wg.Add(len(ifaces))
-
-	for _, iface := range ifaces {
-		go func(i *nic.NetworkInterface) {
-			defer wg.Done()
-
-			var nets []*net.IPNet
-
-			if nets, err = n.Conn.Addrs(&net.Interface{Index: int(i.Index)}, 0); err != nil {
-				log.Printf("failed to retrieve addresses for %s: %v", i.Name, err)
-				return
-			}
-
-			for _, ipnet := range nets {
-				if err = n.Conn.AddrDel(&net.Interface{Index: int(i.Index)}, ipnet); err != nil {
-					log.Printf("failed to delete addresses %s for %s: %v", ipnet, i.Name, err)
-					continue
-				}
-			}
-		}(iface)
-	}
-
-	wg.Wait()
-
-	return err
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
@@ -41,37 +40,12 @@ func (task *ResetNetworkNetwork) runtime(r runtime.Runtime) (err error) {
 		return nil
 	}
 
-	nwd, err := networkd.New()
+	nwd, err := networkd.New(r.Config())
 	if err != nil {
 		return err
 	}
 
-	// Convert links to nic
-	log.Println("discovering local network interfaces")
+	nwd.Reset()
 
-	netconf, err := nwd.Discover()
-	if err != nil {
-		return err
-	}
-
-	// Configure specified interface
-	netIfaces := make([]*nic.NetworkInterface, 0, len(netconf))
-
-	var iface *nic.NetworkInterface
-
-	for link, opts := range netconf {
-		iface, err = nic.Create(link, opts...)
-		if err != nil {
-			return err
-		}
-
-		if iface.IsIgnored() {
-			continue
-		}
-
-		netIfaces = append(netIfaces, iface)
-	}
-
-	// Reset the network interfaces ( remove addresses )
-	return nwd.Reset(netIfaces...)
+	return nil
 }

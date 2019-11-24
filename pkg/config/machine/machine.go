@@ -81,10 +81,33 @@ type Device struct {
 // Bond contains the various options for configuring a
 // bonded interface.
 type Bond struct {
-	Mode       string   `yaml:"mode"`
-	HashPolicy string   `yaml:"hashpolicy"`
-	LACPRate   string   `yaml:"lacprate"`
-	Interfaces []string `yaml:"interfaces"`
+	Interfaces      []string `yaml:"interfaces"`
+	ARPIPTarget     []string `yaml:"arpiptarget"`
+	Mode            string   `yaml:"mode"`
+	HashPolicy      string   `yaml:"hashpolicy"`
+	LACPRate        string   `yaml:"lacprate"`
+	ADActorSystem   string   `yaml:"adactorsystem"`
+	ARPValidate     string   `yaml:"arpvalidate"`
+	ARPAllTargets   string   `yaml:"arpalltargets"`
+	Primary         string   `yaml:"primary"`
+	PrimaryReselect string   `yaml:"primaryreselect"`
+	FailOverMac     string   `yaml:"failovermac"`
+	ADSelect        string   `yaml:"adselect"`
+	MIIMon          uint32   `yaml:"miimon"`
+	UpDelay         uint32   `yaml:"updelay"`
+	DownDelay       uint32   `yaml:"downdelay"`
+	ARPInterval     uint32   `yaml:"arpinterval"`
+	ResendIGMP      uint32   `yaml:"resendigmp"`
+	MinLinks        uint32   `yaml:"minlinks"`
+	LPInterval      uint32   `yaml:"lpinterval"`
+	PacketsPerSlave uint32   `yaml:"packetsperslave"`
+	NumPeerNotif    uint8    `yaml:"numpeernotif"`
+	TLBDynamicLB    uint8    `yaml:"tlbdynamiclb"`
+	AllSlavesActive uint8    `yaml:"allslavesactive"`
+	UseCarrier      bool     `yaml:"usecarrier"`
+	ADActorSysPrio  uint16   `yaml:"adactorsysprio"`
+	ADUserPortKey   uint16   `yaml:"aduserportkey"`
+	PeerNotifyDelay uint32   `yaml:"peernotifydelay"`
 }
 
 // Route represents a network route.

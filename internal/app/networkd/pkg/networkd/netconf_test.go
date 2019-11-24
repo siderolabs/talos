@@ -5,15 +5,12 @@
 package networkd
 
 import (
-	"net"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 type NetconfSuite struct {
@@ -27,23 +24,56 @@ func TestNetconfSuite(t *testing.T) {
 }
 
 func (suite *NetconfSuite) TestNetconf() {
-	conf := sampleConfig()
-	eth0 := &net.Interface{Index: 1, MTU: 1500, Name: "eth0"}
-	nc := NetConf{eth0: []nic.Option{nic.WithName(eth0.Name)}}
-	err := nc.BuildOptions(conf)
-	suite.Assert().NoError(err)
+	for _, device := range sampleConfig() {
+		_, opts, err := buildOptions(device)
+		suite.Require().NoError(err)
 
-	iface, err := nic.Create(eth0, nc[eth0]...)
-	suite.Assert().NoError(err)
-
-	suite.Assert().Equal(iface.AddressMethod[0].Resolvers()[0], net.ParseIP(conf.Machine().Network().Resolvers()[0]))
-	suite.Assert().Equal(iface.AddressMethod[0].Resolvers()[1], net.ParseIP(conf.Machine().Network().Resolvers()[1]))
-	suite.Assert().Equal(int(iface.AddressMethod[0].MTU()), conf.Machine().Network().Devices()[0].MTU)
-	// nolint: errcheck
-	addr, _, _ := net.ParseCIDR(conf.Machine().Network().Devices()[0].CIDR)
-	suite.Assert().Equal(iface.AddressMethod[0].Address().IP, addr)
+		_, err = nic.New(opts...)
+		suite.Require().NoError(err)
+	}
 }
 
+func sampleConfig() []machine.Device {
+	return []machine.Device{
+		{
+			Interface: "eth0",
+			CIDR:      "192.168.0.10/24",
+		},
+		{
+			Interface: "bond0",
+			CIDR:      "192.168.0.10/24",
+			Bond:      &machine.Bond{Interfaces: []string{"lo"}},
+		},
+		{
+			Interface: "bond0",
+			Bond:      &machine.Bond{Interfaces: []string{"lo"}, Mode: "balance-rr"},
+		},
+		{
+			Interface: "eth0",
+			Ignore:    true,
+		},
+		{
+			Interface: "eth0",
+			MTU:       9100,
+			CIDR:      "192.168.0.10/24",
+			Routes:    []machine.Route{{Network: "10.0.0.0/8", Gateway: "10.0.0.1"}},
+		},
+		{
+			Interface: "bond0",
+			Bond: &machine.Bond{
+				Interfaces: []string{"lo"},
+				Mode:       "balance-rr",
+				HashPolicy: "layer2",
+				LACPRate:   "fast",
+				MIIMon:     200,
+				UpDelay:    100,
+				DownDelay:  100,
+			},
+		},
+	}
+}
+
+/*
 func sampleConfig() runtime.Configurator {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
@@ -62,3 +92,4 @@ func sampleConfig() runtime.Configurator {
 		},
 	}
 }
+*/
