@@ -36,6 +36,7 @@ type Machine interface {
 	Files() []File
 	Type() Type
 	Kubelet() Kubelet
+	Sysctls() map[string]string
 }
 
 // Env represents a set of environment variables.

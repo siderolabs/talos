@@ -128,6 +128,7 @@ func (d *Sequencer) Boot() error {
 			"user requests",
 			configtask.NewExtraEnvVarsTask(),
 			configtask.NewExtraFilesTask(),
+			configtask.NewSysctlsTask(),
 		),
 		phase.NewPhase(
 			"start services",

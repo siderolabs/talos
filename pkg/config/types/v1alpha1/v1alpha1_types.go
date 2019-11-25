@@ -165,6 +165,14 @@ type MachineConfig struct {
 	//         servers:
 	//           - time.cloudflare.com
 	MachineTime *TimeConfig `yaml:"time,omitempty"`
+	//   description: |
+	//     Used to configure the machine's sysctls.
+	//   examples:
+	//     - |
+	//       sysctls:
+	//         kernel.domainname: talos.dev
+	//         net.ipv4.ip_forward: "0"
+	MachineSysctls map[string]string `yaml:"sysctls,omitempty"`
 }
 
 // ClusterConfig reperesents the cluster-wide config values
