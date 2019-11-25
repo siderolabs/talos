@@ -312,6 +312,21 @@ time:
 
 ```
 
+#### sysctls
+
+Used to configure the machine's sysctls.
+
+Type: `map`
+
+Examples:
+
+```yaml
+sysctls:
+  kernel.domainname: talos.dev
+  net.ipv4.ip_forward: "0"
+
+```
+
 ---
 
 ### ClusterConfig

@@ -148,6 +148,15 @@ func (m *MachineConfig) Server() string {
 	return ""
 }
 
+// Sysctls implements the Configurator interface.
+func (m *MachineConfig) Sysctls() map[string]string {
+	if m.MachineSysctls == nil {
+		m.MachineSysctls = make(map[string]string)
+	}
+
+	return m.MachineSysctls
+}
+
 // CA implements the Configurator interface.
 func (m *MachineConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return m.MachineCA
