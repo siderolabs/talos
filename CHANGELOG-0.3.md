@@ -1,3 +1,16 @@
+# [v0.3.0-alpha.9](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.8...v0.3.0-alpha.9) (2019-11-25)
+
+### Bug Fixes
+
+- require arg length of 1 for kubeconfig command ([7b99d32](https://github.com/talos-systems/talos/commit/7b99d32f1e7001d465c1d7e22a93a36b267a5641))
+- retry cordon and uncordon ([6a1a9fc](https://github.com/talos-systems/talos/commit/6a1a9fc8d97fed6c87c1c5fac6afb324947efb73))
+
+### Features
+
+- add read API ([ac089dc](https://github.com/talos-systems/talos/commit/ac089dc33049c31ab6380eef64ac2cde89954be4))
+- allow sysctl writes ([43ad18f](https://github.com/talos-systems/talos/commit/43ad18fbeedbedc33156c2d46dafc85829c2c743))
+- upgrade packages ([e78e165](https://github.com/talos-systems/talos/commit/e78e1655f1e2039e78c5dfb65c465104a6c2d2f6))
+
 # [v0.3.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.7...v0.3.0-alpha.8) (2019-11-15)
 
 ### Bug Fixes
