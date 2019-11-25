@@ -912,24 +912,6 @@ steps:
   depends_on:
   - installer
 
-- name: image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-azure
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
 - name: image-gcp
   pull: always
   image: autonomy/build-container:latest
@@ -973,32 +955,6 @@ steps:
     path: /tmp
   depends_on:
   - image-aws
-
-- name: push-image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-azure
-  environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-azure
 
 - name: push-image-gcp
   pull: always
@@ -1560,24 +1516,6 @@ steps:
   depends_on:
   - installer
 
-- name: image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-azure
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
 - name: image-gcp
   pull: always
   image: autonomy/build-container:latest
@@ -1621,32 +1559,6 @@ steps:
     path: /tmp
   depends_on:
   - image-aws
-
-- name: push-image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-azure
-  environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-azure
 
 - name: push-image-gcp
   pull: always
@@ -1694,27 +1606,6 @@ steps:
   depends_on:
   - capi
   - push-image-aws
-
-- name: conformance-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    CONFORMANCE: run
-    PLATFORM: azure
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-azure
 
 - name: conformance-gcp
   pull: always
@@ -2231,24 +2122,6 @@ steps:
   depends_on:
   - installer
 
-- name: image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-azure
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
 - name: image-gcp
   pull: always
   image: autonomy/build-container:latest
@@ -2292,32 +2165,6 @@ steps:
     path: /tmp
   depends_on:
   - image-aws
-
-- name: push-image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-azure
-  environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-azure
 
 - name: push-image-gcp
   pull: always
@@ -2365,27 +2212,6 @@ steps:
   depends_on:
   - capi
   - push-image-aws
-
-- name: conformance-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    BINDIR: /usr/local/bin
-    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
-    CONFORMANCE: run
-    PLATFORM: azure
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-azure
 
 - name: conformance-gcp
   pull: always
