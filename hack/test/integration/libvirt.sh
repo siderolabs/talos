@@ -29,6 +29,8 @@ function usage {
 
 NODES=(control-plane-1 control-plane-2 control-plane-3 worker-1)
 
+INSTALLER=${INSTALLER:-docker.io/autonomy/installer:latest}
+
 VM_MEMORY=${VM_MEMORY:-2048}
 VM_DISK=${VM_DISK:-10}
 
@@ -47,10 +49,11 @@ WORKER_1_NAME=worker-1
 WORKER_1_MAC=52:54:00:d7:99:c7
 
 function up {
+    echo ${INSTALLER}
     cp $PWD/../../../build/initramfs.xz ./matchbox/assets/
     cp $PWD/../../../build/vmlinuz ./matchbox/assets/
     cd matchbox/assets
-    $PWD/../../../../..//build/osctl-linux-amd64 config generate --install-image docker.io/autonomy/installer:latest integration-test https://kubernetes.talos.dev:6443
+    $PWD/../../../../../build/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
     yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i join.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
