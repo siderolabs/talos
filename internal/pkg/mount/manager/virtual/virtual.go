@@ -27,6 +27,7 @@ func SubMountPoints() (mountpoints *mount.Points, err error) {
 	virtual := mount.NewMountPoints()
 	virtual.Set("devshm", mount.NewMountPoint("tmpfs", "/dev/shm", "tmpfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
 	virtual.Set("devpts", mount.NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"))
+	virtual.Set("securityfs", mount.NewMountPoint("securityfs", "/sys/kernel/security", "securityfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
 
 	return virtual, nil
 }
