@@ -28,7 +28,7 @@ type EventBusObserver struct {
 
 func recovery() {
 	if r := recover(); r != nil {
-		log.Printf("%+v\n", r)
+		log.Printf("recovered from: %+v\n", r)
 
 		for i := 10; i >= 0; i-- {
 			log.Printf("rebooting in %d seconds\n", i)

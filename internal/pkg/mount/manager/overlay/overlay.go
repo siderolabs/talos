@@ -5,6 +5,8 @@
 package overlay
 
 import (
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/pkg/mount"
 )
 
@@ -22,7 +24,7 @@ func MountPoints() (mountpoints *mount.Points, err error) {
 	}
 
 	for _, target := range overlays {
-		mountpoint := mount.NewMountPoint("", target, "", 0, "", mount.WithOverlay(true))
+		mountpoint := mount.NewMountPoint("", target, "", unix.MS_I_VERSION, "", mount.WithOverlay(true))
 		mountpoints.Set(target, mountpoint)
 	}
 

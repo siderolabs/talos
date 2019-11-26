@@ -22,7 +22,7 @@ func MountPoints(prefix string) (mountpoints *mount.Points, err error) {
 	}
 
 	squashfs := mount.NewMountPoints()
-	squashfs.Set("squashfs", mount.NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY, "", mount.WithPrefix(prefix), mount.WithReadOnly(true), mount.WithShared(true)))
+	squashfs.Set("squashfs", mount.NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", mount.WithPrefix(prefix), mount.WithReadOnly(true), mount.WithShared(true)))
 
 	return squashfs, nil
 }
