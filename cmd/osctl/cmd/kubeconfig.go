@@ -17,6 +17,8 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
+var force bool
+
 // kubeconfigCmd represents the kubeconfig command
 var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
@@ -55,12 +57,21 @@ Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if speci
 			if len(args) == 1 {
 				localPath = args[0]
 			}
+			localPath = filepath.Clean(localPath)
 
-			extractTarGz(filepath.Clean(localPath), r)
+			// Drop the existing kubeconfig before writing the new one if force flag is specified.
+			if force {
+				err = os.Remove(filepath.Join(localPath, "kubeconfig"))
+				if err != nil && !os.IsNotExist(err) {
+					helpers.Fatalf("error deleting existing kubeconfig: %s", err)
+				}
+			}
+			extractTarGz(localPath, r)
 		})
 	},
 }
 
 func init() {
+	kubeconfigCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of kubeconfig if already present")
 	rootCmd.AddCommand(kubeconfigCmd)
 }
