@@ -48,6 +48,10 @@ func (d *Sequencer) Boot() error {
 			sysctls.NewSysctlsTask(),
 		),
 		phase.NewPhase(
+			"configure Integrity Measurement Architecture",
+			security.NewIMATask(),
+		),
+		phase.NewPhase(
 			"basic system configuration",
 			rootfs.NewNetworkConfigurationTask(),
 			rootfs.NewOSReleaseTask(),

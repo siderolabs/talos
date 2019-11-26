@@ -147,6 +147,7 @@ func NewCmdline(parameters string) *Cmdline {
 }
 
 // AppendDefaults add the Talos default kernel commandline options to the existing set
+// See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/admin-guide/kernel-parameters.txt
 func (c *Cmdline) AppendDefaults() {
 	c.Append("page_poison", "1")
 	c.Append("slub_debug", "P")
@@ -159,6 +160,9 @@ func (c *Cmdline) AppendDefaults() {
 	c.Append("random.trust_cpu", "on")
 	// Disable rate limited printk
 	c.Append("printk.devkmsg", "on")
+	c.Append("ima_template", "ima-ng")
+	c.Append("ima_appraise", "fix")
+	c.Append("ima_hash", "sha512")
 }
 
 // Get gets a kernel parameter.
