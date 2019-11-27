@@ -119,7 +119,7 @@ func setupClient(action func(*client.Client)) {
 		helpers.Fatalf("error getting client credentials: %s", err)
 	}
 
-	c, err := client.NewClient(creds, t, constants.OsdPort)
+	c, err := client.NewClient(creds, t, constants.ApidPort)
 	if err != nil {
 		helpers.Fatalf("error constructing client: %s", err)
 	}

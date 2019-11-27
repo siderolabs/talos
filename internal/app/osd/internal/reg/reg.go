@@ -181,7 +181,7 @@ func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *common.
 	data = &common.DataReply{
 		Response: []*common.DataResponse{
 			{
-				Bytes: &common.Data{Bytes: buf[:n]},
+				Bytes: buf[:n],
 			},
 		},
 	}

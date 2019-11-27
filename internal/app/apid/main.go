@@ -9,12 +9,15 @@ import (
 	"log"
 	stdlibnet "net"
 	"os"
+	"regexp"
 	"strings"
 
+	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/talos-systems/talos/api"
+	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
+	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
@@ -61,43 +64,57 @@ func main() {
 		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
 	}
 
-	machineClient, err := api.NewLocalMachineClient()
+	// TODO: refactor
+	certs, err := provider.GetCertificate(nil)
 	if err != nil {
-		log.Fatalf("machine client: %v", err)
+		log.Fatalf("failed to get TLS certs: %v", err)
 	}
 
-	osClient, err := api.NewLocalOSClient()
+	clientTLSConfig, err := tls.New(
+		tls.WithClientAuthType(tls.Mutual),
+		tls.WithCACertPEM(ca),
+		tls.WithKeypair(*certs), // TODO: this doesn't support cert refresh, fix me!
+	)
 	if err != nil {
-		log.Fatalf("networkd client: %v", err)
+		log.Fatalf("failed to create client TLS config: %v", err)
 	}
 
-	timeClient, err := api.NewLocalTimeClient()
-	if err != nil {
-		log.Fatalf("time client: %v", err)
+	backendFactory := backend.NewAPIDFactory(clientTLSConfig)
+	router := director.NewRouter(backendFactory.Get)
+
+	router.RegisterLocalBackend("os.OS", backend.NewLocal("osd", constants.OSSocketPath))
+	router.RegisterLocalBackend("machine.Machine", backend.NewLocal("machined", constants.MachineSocketPath))
+	router.RegisterLocalBackend("time.Time", backend.NewLocal("timed", constants.TimeSocketPath))
+	router.RegisterLocalBackend("network.Network", backend.NewLocal("networkd", constants.NetworkSocketPath))
+
+	// all existing streaming methods
+	for _, methodName := range []string{
+		"/machine.Machine/CopyOut",
+		"/machine.Machine/Kubeconfig",
+		"/machine.Machine/LS",
+		"/machine.Machine/Logs",
+		"/machine.Machine/Read",
+	} {
+		router.RegisterStreamedRegex("^" + regexp.QuoteMeta(methodName) + "$")
 	}
 
-	networkClient, err := api.NewLocalNetworkClient()
-	if err != nil {
-		log.Fatalf("time client: %v", err)
-	}
-
-	protoProxy := api.NewApiProxy(provider)
+	// register future pattern: method should have suffix "Stream"
+	router.RegisterStreamedRegex("Stream$")
 
 	err = factory.ListenAndServe(
-		&api.Registrator{
-			MachineClient: machineClient,
-			OSClient:      osClient,
-			TimeClient:    timeClient,
-			NetworkClient: networkClient,
-		},
-		factory.Port(constants.OsdPort),
-		factory.WithStreamInterceptor(protoProxy.StreamInterceptor()),
-		factory.WithUnaryInterceptor(protoProxy.UnaryInterceptor()),
+		router,
+		factory.Port(constants.ApidPort),
 		factory.WithDefaultLog(),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(tlsConfig),
 			),
+			grpc.CustomCodec(proxy.Codec()),
+			grpc.UnknownServiceHandler(
+				proxy.TransparentHandler(
+					router.Director,
+					proxy.WithStreamedDetector(router.StreamedDetector),
+				)),
 		),
 	)
 	if err != nil {

@@ -13,12 +13,12 @@ import "common/common.proto";
 
 // The machine service definition.
 service Machine {
-  rpc CopyOut(CopyOutRequest) returns (stream StreamingData);
-  rpc Kubeconfig(google.protobuf.Empty) returns (stream StreamingData);
+  rpc CopyOut(CopyOutRequest) returns (stream common.DataResponse);
+  rpc Kubeconfig(google.protobuf.Empty) returns (stream common.DataResponse);
   rpc LS(LSRequest) returns (stream FileInfo);
-  rpc Logs(LogsRequest) returns (stream common.Data);
+  rpc Logs(LogsRequest) returns (stream common.DataResponse);
   rpc Mounts(google.protobuf.Empty) returns (MountsReply);
-  rpc Read(ReadRequest) returns (stream StreamingData);
+  rpc Read(ReadRequest) returns (stream common.DataResponse);
   rpc Reboot(google.protobuf.Empty) returns (RebootReply);
   rpc Reset(google.protobuf.Empty) returns (ResetReply);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply);
@@ -41,7 +41,7 @@ service Machine {
 // rpc reboot
 // The response message containing the reboot status.
 message RebootResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
 }
 message RebootReply {
   repeated RebootResponse response = 1;
@@ -50,7 +50,7 @@ message RebootReply {
 // rpc reset
 // The response message containing the restart status.
 message ResetResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
 }
 message ResetReply {
   repeated ResetResponse response = 1;
@@ -59,7 +59,7 @@ message ResetReply {
 // rpc shutdown
 // The response message containing the shutdown status.
 message ShutdownResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
 }
 message ShutdownReply {
   repeated ShutdownResponse response = 1;
@@ -70,7 +70,7 @@ message UpgradeRequest {
   string image = 1;
 }
 message UpgradeResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   string ack = 2;
 }
 message UpgradeReply {
@@ -79,7 +79,7 @@ message UpgradeReply {
 
 // rpc servicelist
 message ServiceListResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   repeated ServiceInfo services = 2;
 }
 message ServiceListReply {
@@ -116,7 +116,7 @@ message ServiceStartRequest {
 }
 
 message ServiceStartResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   string resp = 2;
 }
 message ServiceStartReply {
@@ -128,7 +128,7 @@ message ServiceStopRequest {
 }
 
 message ServiceStopResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   string resp = 2;
 }
 message ServiceStopReply {
@@ -140,7 +140,7 @@ message ServiceRestartRequest {
 }
 
 message ServiceRestartResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   string resp = 2;
 }
 message ServiceRestartReply {
@@ -167,12 +167,6 @@ message StopReply {
   string resp = 1;
 }
 
-// StreamingData is used to stream back responses
-message StreamingData {
-  bytes bytes = 1;
-  string errors = 2;
-}
-
 // CopyOutRequest describes a request to copy data out of Talos node
 //
 // CopyOut produces .tar.gz archive which is streamed back to the caller
@@ -195,28 +189,29 @@ message LSRequest {
 
 // FileInfo describes a file or directory's information
 message FileInfo {
+  common.ResponseMetadata metadata = 1;
   // Name is the name (including prefixed path) of the file or directory
-  string name = 1;
+  string name = 2;
   // Size indicates the number of bytes contained within the file
-  int64 size = 2;
+  int64 size = 3;
   // Mode is the bitmap of UNIX mode/permission flags of the file
-  uint32 mode = 3;
+  uint32 mode = 4;
   // Modified indicates the UNIX timestamp at which the file was last modified
-  int64 modified = 4; // TODO: unix timestamp or include proto's Date type
+  int64 modified = 5; // TODO: unix timestamp or include proto's Date type
   // IsDir indicates that the file is a directory
-  bool is_dir = 5;
+  bool is_dir = 6;
   // Error describes any error encountered while trying to read the file
   // information.
-  string error = 6;
+  string error = 7;
   // Link is filled with symlink target
-  string link = 7;
+  string link = 8;
   // RelativeName is the name of the file or directory relative to the RootPath
-  string relative_name = 8;
+  string relative_name = 9;
 }
 
 // The response message containing the requested df stats.
 message MountsResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   repeated MountStat stats = 2;
 }
 message MountsReply {
@@ -232,7 +227,7 @@ message MountStat {
 }
 
 message VersionResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   VersionInfo version = 2;
   PlatformInfo platform = 3;
 }

@@ -373,7 +373,7 @@ func (c *Client) Read(ctx context.Context, path string) (io.Reader, <-chan error
 }
 
 type machineStream interface {
-	Recv() (*machineapi.StreamingData, error)
+	Recv() (*common.DataResponse, error)
 	grpc.ClientStream
 }
 
@@ -404,8 +404,8 @@ func readStream(stream machineStream) (io.Reader, <-chan error, error) {
 				}
 			}
 
-			if data.Errors != "" {
-				errCh <- errors.New(data.Errors)
+			if data.Metadata != nil && data.Metadata.Error != "" {
+				errCh <- errors.New(data.Metadata.Error)
 			}
 		}
 	}()

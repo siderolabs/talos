@@ -18,7 +18,6 @@ RUN cd $(mktemp -d) \
     && go get mvdan.cc/gofumpt/gofumports \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
-COPY --from=autonomy/protoc-gen-proxy:4a9e5da /protoc-gen-proxy /toolchain/bin/protoc-gen-proxy
 COPY ./hack/docgen /go/src/github.com/talos-systems/docgen
 RUN cd /go/src/github.com/talos-systems/docgen \
     && go build . \
@@ -52,15 +51,11 @@ COPY ./api/time/time.proto /api/time/time.proto
 RUN protoc -I/api --go_out=plugins=grpc:/api/time /api/time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
 RUN protoc -I/api --go_out=plugins=grpc:/api/network /api/network/network.proto
-# Genenrate api bits last so we have other proto files in place to satisfy the import
-COPY ./api/api.proto /api/api.proto
-RUN protoc -I/api --plugin=proxy --proxy_out=plugins=grpc+proxy:/api /api/api.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 FROM scratch AS generate
 COPY --from=generate-build /api/common/github.com/talos-systems/talos/api/common/common.pb.go /api/common/
-COPY --from=generate-build /api/github.com/talos-systems/talos/api/api.pb.go /api/
 COPY --from=generate-build /api/os/github.com/talos-systems/talos/api/os/os.pb.go /api/os/
 COPY --from=generate-build /api/security/github.com/talos-systems/talos/api/security/security.pb.go /api/security/
 COPY --from=generate-build /api/machine/github.com/talos-systems/talos/api/machine/machine.pb.go /api/machine/

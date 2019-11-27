@@ -5,22 +5,28 @@ package common;
 option go_package = "github.com/talos-systems/talos/api/common";
 
 // Common metadata message nested in all reply message types
-message NodeMetadata {
+message ResponseMetadata {
+  // hostname of the server response comes from (injected by proxy)
   string hostname = 1;
-}
-
-// The response message containing the requested logs.
-message Data {
-  bytes bytes = 1;
+  // error is set if request failed to the upstream (rest of response is undefined)
+  string error = 2;
 }
 
 message DataResponse {
-  NodeMetadata metadata = 1;
-  Data bytes = 2;
+  ResponseMetadata metadata = 1;
+  bytes bytes = 2;
 }
 
 message DataReply {
   repeated DataResponse response = 1;
+}
+
+message EmptyResponse {
+  ResponseMetadata metadata = 1;
+}
+
+message EmptyReply {
+  repeated EmptyResponse response = 1;
 }
 
 enum ContainerDriver {

@@ -44,7 +44,7 @@ message Container {
 
 // The response message containing the requested containers.
 message ContainerResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   repeated Container containers = 2;
 }
 
@@ -60,7 +60,7 @@ message ProcessesReply {
 }
 
 message ProcessResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   repeated Process processes = 2;
 }
 
@@ -87,7 +87,7 @@ message RestartRequest {
 }
 
 message RestartResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
 }
 
 // The response message containing the restart status.
@@ -106,7 +106,7 @@ message StatsRequest {
 
 // The response message containing the requested stats.
 message StatsResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   repeated Stat stats = 2;
 }
 
@@ -126,7 +126,7 @@ message Stat {
 
 
 message MemInfoResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   MemInfo meminfo = 2;
 }
 
