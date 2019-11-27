@@ -28,6 +28,7 @@ var rules = []string{
 	"dont_measure fsmagic=0x6e736673", // NSFS_MAGIC
 	"dont_measure fsmagic=0xde5e81e4", // EFIVARFS_MAGIC
 	"dont_measure fsmagic=0x58465342", // XFS_MAGIC
+	"dont_measure fsmagic=0x794c7630", // OVERLAYFS_SUPER_MAGIC
 	"measure func=MMAP_CHECK mask=MAY_EXEC",
 	"measure func=BPRM_CHECK mask=MAY_EXEC",
 	"measure func=FILE_CHECK mask=^MAY_READ euid=0",
