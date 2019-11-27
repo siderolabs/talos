@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	stdlibnet "net"
 	"os"
@@ -365,22 +366,28 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 	// If the initial cluster isn't explicitly defined, we need to discover any
 	// existing members.
 	if !extraArgs.Contains("initial-cluster") {
-		var (
-			initialCluster string = fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
-			err            error
-		)
-
-		existing := config.Machine().Type() == machine.ControlPlane || metadata.Upgraded
-		if existing {
-			blackListArgs.Set("initial-cluster-state", "existing")
-
-			initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
-			if err != nil {
-				return nil, err
-			}
+		ok, err := IsDirEmpty(constants.EtcdDataPath)
+		if err != nil {
+			return nil, err
 		}
 
-		blackListArgs.Set("initial-cluster", initialCluster)
+		if ok {
+			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
+
+			existing := config.Machine().Type() == machine.ControlPlane || metadata.Upgraded
+			if existing {
+				blackListArgs.Set("initial-cluster-state", "existing")
+
+				initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			blackListArgs.Set("initial-cluster", initialCluster)
+		} else {
+			blackListArgs.Set("initial-cluster-state", "existing")
+		}
 	}
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
@@ -392,4 +399,21 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 	}
 
 	return blackListArgs.Merge(extraArgs).Args(), nil
+}
+
+// IsDirEmpty checks if a directory is empty or not.
+func IsDirEmpty(name string) (bool, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return false, err
+	}
+	// nolint: errcheck
+	defer f.Close()
+
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+
+	return false, err
 }
