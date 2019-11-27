@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
 )
@@ -50,5 +51,6 @@ var validateCmd = &cobra.Command{
 func init() {
 	validateCmd.Flags().StringVarP(&validateConfigArg, "config", "c", "", "the path of the config file")
 	validateCmd.Flags().StringVarP(&validateModeArg, "mode", "m", "", "the mode to validate the config for")
+	helpers.Should(validateCmd.MarkFlagRequired("mode"))
 	rootCmd.AddCommand(validateCmd)
 }
