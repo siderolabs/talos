@@ -166,15 +166,15 @@ local coverage = {
   depends_on: [unit_tests.name],
 };
 
-local push = {
-  name: 'push',
+local push_latest = {
+  name: 'push-latest',
   image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
     DOCKER_USERNAME: { from_secret: 'docker_username' },
     DOCKER_PASSWORD: { from_secret: 'docker_password' },
   },
-  commands: ['make gitmeta', 'make login', 'make push'],
+  commands: ['make gitmeta', 'make login', 'make push-latest'],
   volumes: volumes.ForStep(),
   when: {
     event: {
@@ -210,7 +210,7 @@ local default_steps = [
   unit_tests_race,
   coverage,
   basic_integration,
-  push,
+  push_latest,
 ];
 
 local default_trigger = {
@@ -281,6 +281,28 @@ local conformance_aws = Step("conformance-aws", "e2e-integration", depends_on=[c
 local conformance_azure = Step("conformance-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure", CONFORMANCE: "run"});
 local conformance_gcp = Step("conformance-gcp", "e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp", CONFORMANCE: "run"});
 
+
+local push_edge = {
+  name: 'push-edge',
+  image: 'autonomy/build-container:latest',
+  pull: 'always',
+  environment: {
+    DOCKER_USERNAME: { from_secret: 'docker_username' },
+    DOCKER_PASSWORD: { from_secret: 'docker_password' },
+  },
+  commands: ['make gitmeta', 'make login', 'make push-edge'],
+  volumes: volumes.ForStep(),
+  when: {
+    event: {
+      exclude: [
+        'pull_request',
+        'promote',
+      ],
+    },
+  },
+  depends_on: [conformance_aws.name, /*conformance_azure.name,*/ conformance_gcp.name],
+};
+
 local conformance_steps = default_steps + [
   capi,
   image_aws,
@@ -292,6 +314,7 @@ local conformance_steps = default_steps + [
   conformance_aws,
   //conformance_azure,
   conformance_gcp,
+  push_edge,
 ];
 
 local conformance_trigger = {
@@ -347,7 +370,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, image_gcp.name, image_azure.name, image_aws.name, push.name]
+  depends_on: [kernel.name, iso.name, image_gcp.name, image_azure.name, image_aws.name, push_latest.name]
 };
 
 local release_steps = default_steps + [

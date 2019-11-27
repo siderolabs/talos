@@ -386,13 +386,13 @@ steps:
   - osctl-linux
   - integration-test
 
-- name: push
+- name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
   - make login
-  - make push
+  - make push-latest
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -841,13 +841,13 @@ steps:
   - osctl-linux
   - integration-test
 
-- name: push
+- name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
   - make login
-  - make push
+  - make push-latest
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -1445,13 +1445,13 @@ steps:
   - osctl-linux
   - integration-test
 
-- name: push
+- name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
   - make login
-  - make push
+  - make push-latest
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -1627,6 +1627,34 @@ steps:
   depends_on:
   - capi
   - push-image-gcp
+
+- name: push-edge
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make gitmeta
+  - make login
+  - make push-edge
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+      - promote
+  depends_on:
+  - conformance-aws
+  - conformance-gcp
 
 services:
 - name: docker
@@ -2051,13 +2079,13 @@ steps:
   - osctl-linux
   - integration-test
 
-- name: push
+- name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
   - make login
-  - make push
+  - make push-latest
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -2233,6 +2261,34 @@ steps:
   depends_on:
   - capi
   - push-image-gcp
+
+- name: push-edge
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make gitmeta
+  - make login
+  - make push-edge
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+      - promote
+  depends_on:
+  - conformance-aws
+  - conformance-gcp
 
 services:
 - name: docker
@@ -2657,13 +2713,13 @@ steps:
   - osctl-linux
   - integration-test
 
-- name: push
+- name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make gitmeta
   - make login
-  - make push
+  - make push-latest
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -2828,7 +2884,7 @@ steps:
   - image-gcp
   - image-azure
   - image-aws
-  - push
+  - push-latest
 
 services:
 - name: docker

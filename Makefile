@@ -411,15 +411,14 @@ images:
 login:
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)"
 
-.PHONY: push
-push: gitmeta login
+push-%: gitmeta login
 	@docker push autonomy/installer:$(TAG)
 	@docker push autonomy/talos:$(TAG)
 ifeq ($(BRANCH),master)
-	@docker tag autonomy/installer:$(TAG) autonomy/installer:latest
-	@docker tag autonomy/talos:$(TAG) autonomy/talos:latest
-	@docker push autonomy/installer:latest
-	@docker push autonomy/talos:latest
+	@docker tag autonomy/installer:$(TAG) autonomy/installer:$*
+	@docker tag autonomy/talos:$(TAG) autonomy/talos:$*
+	@docker push autonomy/installer:$*
+	@docker push autonomy/talos:$*
 endif
 
 .PHONY: clean
