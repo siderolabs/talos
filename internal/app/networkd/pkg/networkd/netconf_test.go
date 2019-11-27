@@ -5,6 +5,7 @@
 package networkd
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -23,7 +24,7 @@ func TestNetconfSuite(t *testing.T) {
 	suite.Run(t, new(NetconfSuite))
 }
 
-func (suite *NetconfSuite) TestNetconf() {
+func (suite *NetconfSuite) TestBaseNetconf() {
 	for _, device := range sampleConfig() {
 		_, opts, err := buildOptions(device)
 		suite.Require().NoError(err)
@@ -31,6 +32,24 @@ func (suite *NetconfSuite) TestNetconf() {
 		_, err = nic.New(opts...)
 		suite.Require().NoError(err)
 	}
+}
+
+func (suite *NetconfSuite) TestKernelNetconf() {
+	name, opts := buildKernelOptions(sampleKernelIPParam())
+
+	iface, err := nic.New(opts...)
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(iface.Name, name)
+	suite.Assert().Equal(len(iface.AddressMethod), 1)
+	addr := iface.AddressMethod[0]
+	suite.Assert().Equal(addr.Name(), "static")
+	suite.Assert().Equal(addr.Hostname(), "hostname")
+	suite.Assert().Equal(addr.Address().IP, net.ParseIP("1.1.1.1"))
+	suite.Assert().Equal(len(addr.Resolvers()), 2)
+	suite.Assert().Equal(addr.Resolvers()[0], net.ParseIP("4.4.4.4"))
+	suite.Assert().Equal(addr.Resolvers()[1], net.ParseIP("5.5.5.5"))
+	suite.Assert().Equal(len(addr.Routes()), 1)
 }
 
 func sampleConfig() []machine.Device {
@@ -70,26 +89,39 @@ func sampleConfig() []machine.Device {
 				DownDelay:  100,
 			},
 		},
-	}
-}
-
-/*
-func sampleConfig() runtime.Configurator {
-	return &v1alpha1.Config{
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NameServers:     []string{"1.2.3.4", "2.3.4.5"},
-				NetworkHostname: "myhostname",
-				NetworkInterfaces: []machine.Device{
-					{
-						Interface: "eth0",
-						CIDR:      "192.168.0.10/24",
-						MTU:       9100,
-						DHCP:      false,
-					},
-				},
+		{
+			Interface: "bondyolo0",
+			Bond: &machine.Bond{
+				Interfaces:      []string{"lo"},
+				Mode:            "balance-rr",
+				HashPolicy:      "layer2",
+				LACPRate:        "fast",
+				MIIMon:          200,
+				UpDelay:         100,
+				DownDelay:       100,
+				UseCarrier:      false,
+				ARPInterval:     230,
+				ARPValidate:     "all",
+				ARPAllTargets:   "all",
+				Primary:         "lo",
+				PrimaryReselect: "better",
+				FailOverMac:     "none",
+				ResendIGMP:      10,
+				NumPeerNotif:    5,
+				AllSlavesActive: 1,
+				MinLinks:        1,
+				LPInterval:      100,
+				PacketsPerSlave: 50,
+				ADSelect:        "bandwidth",
+				ADActorSysPrio:  23,
+				ADUserPortKey:   323,
+				TLBDynamicLB:    1,
+				PeerNotifyDelay: 200,
 			},
 		},
 	}
 }
-*/
+
+func sampleKernelIPParam() string {
+	return "1.1.1.1:2.2.2.2:3.3.3.3:255.255.255.0:hostname:eth0:none:4.4.4.4:5.5.5.5:6.6.6.6"
+}

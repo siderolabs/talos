@@ -10,7 +10,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
@@ -44,12 +43,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Check to see if a static IP was set via kernel args;
-	// if so, we'll skip the networking configuration via networkd
-	if option := kernel.ProcCmdline().Get("ip").First(); option == nil {
-		if err = nwd.Configure(); err != nil {
-			log.Fatal(err)
-		}
+	if err = nwd.Configure(); err != nil {
+		log.Fatal(err)
 	}
 
 	log.Println("completed initial network configuration")
