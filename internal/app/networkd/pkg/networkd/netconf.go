@@ -6,6 +6,8 @@ package networkd
 
 import (
 	"fmt"
+	"net"
+	"strings"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
@@ -81,19 +83,19 @@ func buildOptions(device machine.Device) (name string, opts []nic.Option, err er
 	}
 
 	// if device.Bond.ARPIPTarget {
-	//	opts = append(opts, nic.WithUseCarrier(device.Bond.UseCarrier))
+	//	opts = append(opts, nic.WithARPIPTarget(device.Bond.ARPIPTarget))
 	//}
 
 	if device.Bond.ARPValidate != "" {
-		opts = append(opts, nic.WithUseCarrier(device.Bond.UseCarrier))
+		opts = append(opts, nic.WithARPValidate(device.Bond.ARPValidate))
 	}
 
 	if device.Bond.ARPAllTargets != "" {
-		opts = append(opts, nic.WithUseCarrier(device.Bond.UseCarrier))
+		opts = append(opts, nic.WithARPAllTargets(device.Bond.ARPAllTargets))
 	}
 
 	if device.Bond.Primary != "" {
-		opts = append(opts, nic.WithUseCarrier(device.Bond.UseCarrier))
+		opts = append(opts, nic.WithPrimary(device.Bond.Primary))
 	}
 
 	if device.Bond.PrimaryReselect != "" {
@@ -153,4 +155,102 @@ func buildOptions(device machine.Device) (name string, opts []nic.Option, err er
 	}
 
 	return device.Interface, opts, err
+}
+
+// nolint: gocyclo
+func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
+	// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
+	// ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
+	fields := strings.Split(cmdline, ":")
+
+	// If dhcp is specified, we'll handle it as a normal discovered
+	// interface
+	if len(fields) == 1 && fields[0] == "dhcp" {
+		return name, opts
+	}
+
+	// If there are not enough fields specified, we'll bail
+	if len(fields) < 4 {
+		return name, opts
+	}
+
+	var (
+		device    = &machine.Device{}
+		hostname  string
+		link      *net.Interface
+		resolvers = []net.IP{}
+	)
+
+	for idx, field := range fields {
+		switch idx {
+		// Address
+		case 0:
+			device.CIDR = field
+		// NFS Server
+		// case 1:
+		// Gateway
+		case 2:
+			device.Routes = []machine.Route{
+				{
+					Network: "0.0.0.0/0",
+					Gateway: field,
+				},
+			}
+		// Netmask
+		case 3:
+			mask := net.ParseIP(field).To4()
+			ipmask := net.IPv4Mask(mask[0], mask[1], mask[2], mask[3])
+			ones, _ := ipmask.Size()
+			device.CIDR = fmt.Sprintf("%s/%d", device.CIDR, ones)
+		// Hostname
+		case 4:
+			hostname = field
+		// Interface name
+		case 5:
+			iface, err := net.InterfaceByName(field)
+			if err == nil {
+				link = iface
+			}
+		// Configuration method
+		// case 6:
+		// Primary DNS Resolver
+		case 7:
+			resolvers = append(resolvers, net.ParseIP(field))
+		// Secondary DNS Resolver
+		case 8:
+			resolvers = append(resolvers, net.ParseIP(field))
+		}
+	}
+	// NTP server
+	// case 9:
+	// 	// k.NTPServer = field
+
+	// Find the first non-loopback interface
+	if link == nil {
+		ifaces, err := net.Interfaces()
+		if err != nil {
+			return hostname, opts
+		}
+
+		for _, iface := range ifaces {
+			if iface.Flags&net.FlagLoopback != 0 {
+				continue
+			}
+
+			i := iface
+
+			link = &i
+
+			break
+		}
+	}
+
+	if device.Interface == "" {
+		opts = append(opts, nic.WithName(link.Name))
+	}
+
+	s := &address.Static{Device: device, NameServers: resolvers, FQDN: hostname, NetIf: link}
+	opts = append(opts, nic.WithAddressing(s))
+
+	return link.Name, opts
 }

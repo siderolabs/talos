@@ -17,8 +17,9 @@ import (
 // Static implements the Addressing interface
 type Static struct {
 	Device      *machine.Device
+	FQDN        string
 	NetIf       *net.Interface
-	NameServers []string
+	NameServers []net.IP
 }
 
 // Discover doesnt do anything in the static configuration since all
@@ -94,12 +95,12 @@ func (s *Static) Routes() (routes []*Route) {
 
 // Resolvers returns the DNS resolvers
 func (s *Static) Resolvers() []net.IP {
-	return []net.IP{}
+	return s.NameServers
 }
 
 // Hostname returns the hostname
 func (s *Static) Hostname() string {
-	return ""
+	return s.FQDN
 }
 
 // Link returns the underlying net.Interface that this address

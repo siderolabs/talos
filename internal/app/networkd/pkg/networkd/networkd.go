@@ -17,6 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -43,6 +44,7 @@ type Networkd struct {
 func New(config runtime.Configurator) (*Networkd, error) {
 	var (
 		hostname  string
+		option    *string
 		result    *multierror.Error
 		resolvers []string
 	)
@@ -70,6 +72,11 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		if len(config.Machine().Network().Resolvers()) > 0 {
 			resolvers = config.Machine().Network().Resolvers()
 		}
+	}
+
+	if option = kernel.ProcCmdline().Get("ip").First(); option != nil {
+		name, opts := buildKernelOptions(*option)
+		netconf[name] = opts
 	}
 
 	log.Println("discovering local interfaces")

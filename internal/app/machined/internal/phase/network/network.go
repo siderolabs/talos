@@ -5,13 +5,10 @@
 package network
 
 import (
-	"log"
-
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
@@ -34,13 +31,6 @@ func (task *InitialNetworkSetup) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
-	// Check to see if a static IP was set via kernel args;
-	// if so, we'll skip the initial dhcp discovery
-	if option := kernel.ProcCmdline().Get("ip").First(); option != nil {
-		log.Println("skipping initial network setup, found kernel arg 'ip'")
-		return nil
-	}
-
 	nwd, err := networkd.New(r.Config())
 	if err != nil {
 		return err
