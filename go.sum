@@ -392,8 +392,8 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e h1:QjF5rxNgRSLHJDwKUvfYP3qOx1vTDzUi/+oSC8FXnCI=
 github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/bootkube v0.14.1-0.20191127161749-57a53bb3d3da h1:eByLWutxH8EnTYe3fWhyzH+ZJ1HtrPvdjhLJhUrAXuU=
-github.com/talos-systems/bootkube v0.14.1-0.20191127161749-57a53bb3d3da/go.mod h1:CIpoNLW4Lm9zNVFRgqQIylnbZi/x9TnulTEA8edC0O4=
+github.com/talos-systems/bootkube v0.14.1-0.20191127182503-08e42a4c200c h1:By7EcuWOTMwvsmymyiWsi+RfK2pVbYEA6Kuk3Ma/K6g=
+github.com/talos-systems/bootkube v0.14.1-0.20191127182503-08e42a4c200c/go.mod h1:CIpoNLW4Lm9zNVFRgqQIylnbZi/x9TnulTEA8edC0O4=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 h1:LnC5Kc/wtumK+WB441p7ynQJzVuNRJiqddSIE3IlSEQ=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/u-root/u-root v6.0.0+incompatible h1:YqPGmRoRyYmeg17KIWFRSyVq6LX5T6GSzawyA6wG6EE=
