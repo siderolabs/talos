@@ -292,6 +292,9 @@ func generateAssets(config runtime.Configurator) (err error) {
 	images := asset.DefaultImages
 
 	images.Hyperkube = fmt.Sprintf("k8s.gcr.io/hyperkube:v%s", config.Cluster().Version())
+	// TODO(andrewrynhard): This is a hack workaround for now. Update this once
+	// there is an official image.
+	images.PodCheckpointer = "docker.io/autonomy/pod-checkpointer:51fba9528e96d3be488562574c288b2fb82a1e3b"
 
 	conf := asset.Config{
 		CACert:                 k8sCA,
