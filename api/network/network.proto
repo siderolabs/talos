@@ -59,7 +59,7 @@ message RoutesReply {
 }
 
 message RoutesResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   repeated Route routes = 2;
 }
 
@@ -90,7 +90,7 @@ message InterfacesReply {
 }
 
 message InterfacesResponse {
-	common.NodeMetadata metadata = 1;
+	common.ResponseMetadata metadata = 1;
   repeated Interface interfaces = 2;
 }
 

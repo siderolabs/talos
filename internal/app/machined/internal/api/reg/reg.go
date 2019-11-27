@@ -259,7 +259,7 @@ func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machi
 	chunkCh := chunker.Read(ctx)
 
 	for data := range chunkCh {
-		err := s.SendMsg(&machineapi.StreamingData{Bytes: data})
+		err := s.SendMsg(&common.DataResponse{Bytes: data})
 		if err != nil {
 			ctxCancel()
 		}
@@ -267,7 +267,11 @@ func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machi
 
 	archiveErr := <-errCh
 	if archiveErr != nil {
-		return s.SendMsg(&machineapi.StreamingData{Errors: archiveErr.Error()})
+		return s.SendMsg(&common.DataResponse{
+			Metadata: &common.ResponseMetadata{
+				Error: archiveErr.Error(),
+			},
+		})
 	}
 
 	return nil
@@ -460,7 +464,7 @@ func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.Machine_Log
 	}
 
 	for data := range chunk.Read(l.Context()) {
-		if err = l.Send(&common.Data{Bytes: data}); err != nil {
+		if err = l.Send(&common.DataResponse{Bytes: data}); err != nil {
 			return
 		}
 	}
@@ -531,7 +535,7 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.Machine_Re
 		chunkCh := chunker.Read(ctx)
 
 		for data := range chunkCh {
-			err := srv.SendMsg(&machineapi.StreamingData{Bytes: data})
+			err := srv.SendMsg(&common.DataResponse{Bytes: data})
 			if err != nil {
 				cancel()
 			}

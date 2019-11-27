@@ -86,8 +86,8 @@ func NewNode(clusterName string, req *Request) (err error) {
 
 	switch req.Type {
 	case generate.TypeInit:
-		var osdPort nat.Port
-		osdPort, err = nat.NewPort("tcp", "50000")
+		var apidPort nat.Port
+		apidPort, err = nat.NewPort("tcp", "50000")
 
 		if err != nil {
 			return err
@@ -101,12 +101,12 @@ func NewNode(clusterName string, req *Request) (err error) {
 		}
 
 		containerConfig.ExposedPorts = nat.PortSet{
-			osdPort:       struct{}{},
+			apidPort:      struct{}{},
 			apiServerPort: struct{}{},
 		}
 
 		hostConfig.PortBindings = nat.PortMap{
-			osdPort: []nat.PortBinding{
+			apidPort: []nat.PortBinding{
 				{
 					HostIP:   "0.0.0.0",
 					HostPort: "50000",

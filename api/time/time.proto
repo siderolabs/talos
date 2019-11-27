@@ -26,7 +26,7 @@ message TimeReply {
 }
 
 message TimeResponse {
-  common.NodeMetadata metadata = 1;
+  common.ResponseMetadata metadata = 1;
   string server = 2;
   google.protobuf.Timestamp localtime = 3;
   google.protobuf.Timestamp remotetime = 4;

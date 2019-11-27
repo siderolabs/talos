@@ -146,7 +146,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 func (o *APID) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
-		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.OsdPort))
+		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.ApidPort))
 		if err != nil {
 			return err
 		}

@@ -30,7 +30,7 @@ func (apiSuite *APISuite) SetupSuite() {
 		target = apiSuite.Target
 	}
 
-	apiSuite.Client, err = client.NewClient(creds, target, constants.OsdPort)
+	apiSuite.Client, err = client.NewClient(creds, target, constants.ApidPort)
 	apiSuite.Require().NoError(err)
 }
 
