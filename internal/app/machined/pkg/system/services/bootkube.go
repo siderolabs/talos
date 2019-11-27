@@ -18,8 +18,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/kubernetes-incubator/bootkube/pkg/asset"
-	"github.com/kubernetes-incubator/bootkube/pkg/tlsutil"
+	"github.com/kubernetes-sigs/bootkube/pkg/asset"
+	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"go.etcd.io/etcd/clientv3"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/bootkube"

@@ -8,7 +8,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/kubernetes-incubator/bootkube/pkg/bootkube"
+	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
