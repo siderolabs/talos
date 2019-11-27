@@ -86,6 +86,13 @@ func New(config runtime.Configurator) (*Networkd, error) {
 	for _, device := range filterInterfaceByName(localInterfaces) {
 		if _, ok := netconf[device.Name]; !ok {
 			netconf[device.Name] = []nic.Option{nic.WithName(device.Name)}
+
+			// Explicitly ignore bonded interfaces if no configuration was specified
+			// This should speed up initial boot times since an unconfigured bond
+			// does not provide any value.
+			if strings.HasPrefix(device.Name, "bond") {
+				netconf[device.Name] = append(netconf[device.Name], nic.WithIgnore())
+			}
 		}
 
 		// Ensure lo has proper loopback address
