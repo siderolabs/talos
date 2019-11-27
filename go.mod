@@ -5,7 +5,7 @@ go 1.13
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20191116224831-33eac9dd89f6
-	github.com/kubernetes-incubator/bootkube => github.com/andrewrynhard/bootkube v0.14.1-0.20191015145817-ac01e28e2840
+	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191127161749-57a53bb3d3da
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 
@@ -32,16 +32,13 @@ require (
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.1.0 // indirect
 	github.com/golang/protobuf v1.3.2
-	github.com/google/btree v1.0.0 // indirect
 	github.com/google/uuid v1.1.1
-	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 // indirect
-	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20190814082028-393ae75a101b
 	github.com/jsimonetti/rtnetlink v0.0.0-20191019172534-d21b2cb70d39
-	github.com/kubernetes-incubator/bootkube v0.14.1-0.20190731222813-f0fc1bdb404d
+	github.com/kubernetes-sigs/bootkube v0.14.1-0.20190731222813-f0fc1bdb404d
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
 	github.com/mdlayher/netlink v0.0.0-20191009155606-de872b0d824b
@@ -59,21 +56,17 @@ require (
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
-	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
-	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5 // indirect
+	golang.org/x/crypto v0.0.0-20191108234033-bd318be0434a
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4
 	golang.org/x/text v0.3.2
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	google.golang.org/grpc v1.23.0
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	google.golang.org/grpc v1.25.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
-	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.5
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.0.0-20191016110408-35e52d86657a
-	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
+	k8s.io/api v0.0.0-20191109101513-0171b7c15da1
+	k8s.io/apimachinery v0.0.0-20191111054156-6eb29fdf75dc
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
 	k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
 )
