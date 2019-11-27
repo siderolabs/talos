@@ -14,22 +14,22 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/pseudo"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/squashfs"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/virtual"
 	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // nolint: gocyclo
 func run() (err error) {
-	// Mount the virtual devices.
-	mountpoints, err := virtual.MountPoints()
+	// Mount the pseudo devices.
+	mountpoints, err := pseudo.MountPoints()
 	if err != nil {
 		return err
 	}
 
-	virtual := manager.NewManager(mountpoints)
-	if err = virtual.MountAll(); err != nil {
+	pseudo := manager.NewManager(mountpoints)
+	if err = pseudo.MountAll(); err != nil {
 		return err
 	}
 
@@ -55,7 +55,7 @@ func run() (err error) {
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
-	if err = switchroot.Switch(constants.NewRoot, virtual); err != nil {
+	if err = switchroot.Switch(constants.NewRoot, pseudo); err != nil {
 		return err
 	}
 
