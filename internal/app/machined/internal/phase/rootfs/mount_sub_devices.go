@@ -8,7 +8,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/virtual"
+	"github.com/talos-systems/talos/internal/pkg/mount/manager/pseudo"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
@@ -33,7 +33,7 @@ func (task *MountSubDevices) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 func (task *MountSubDevices) runtime(r runtime.Runtime) (err error) {
 	var mountpoints *mount.Points
 
-	mountpoints, err = virtual.SubMountPoints()
+	mountpoints, err = pseudo.SubMountPoints()
 	if err != nil {
 		return err
 	}
