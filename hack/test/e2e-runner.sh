@@ -28,7 +28,7 @@ export CAPG_COMPONENTS="https://github.com/kubernetes-sigs/cluster-api-provider-
 
 export KUSTOMIZE_VERSION="3.1.0"
 export KUSTOMIZE_URL="https://github.com/kubernetes-sigs/kustomize/releases/download/v${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64"
-export SONOBUOY_VERSION="0.16.1"
+export SONOBUOY_VERSION="0.16.4"
 export SONOBUOY_URL="https://github.com/heptio/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_amd64.tar.gz"
 export CABPT_NS="cabpt-system"
 
