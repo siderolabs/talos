@@ -82,7 +82,7 @@ func main() {
 	tlsConfig, err := tls.New(
 		tls.WithClientAuthType(tls.ServerOnly),
 		tls.WithCACertPEM(ca),
-		tls.WithCertificateProvider(provider),
+		tls.WithServerCertificateProvider(provider),
 	)
 	if err != nil {
 		log.Fatalf("failed to create TLS config: %v", err)

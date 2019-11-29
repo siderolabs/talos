@@ -25,6 +25,9 @@ type CertificateProvider interface {
 	// GetCertificate returns the current certificate matching the given client request.
 	GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error)
 
+	// GetClientCertificate returns the current certificate to present to the server.
+	GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error)
+
 	// UpdateCertificate updates the stored certificate for the given client request.
 	UpdateCertificates([]byte, *tls.Certificate) error
 }
@@ -62,6 +65,10 @@ func (p *embeddableCertificateProvider) GetCertificate(h *tls.ClientHelloInfo) (
 	defer p.RUnlock()
 
 	return p.crt, nil
+}
+
+func (p *embeddableCertificateProvider) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	return p.GetCertificate(nil)
 }
 
 func (p *embeddableCertificateProvider) UpdateCertificates(ca []byte, cert *tls.Certificate) error {

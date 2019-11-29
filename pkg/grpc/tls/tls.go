@@ -41,18 +41,34 @@ func WithClientAuthType(t Type) func(*tls.Config) error {
 	}
 }
 
-// WithCertificateProvider declares a dynamic provider for the client
+// WithServerCertificateProvider declares a dynamic provider for the server
 // certificate.
 //
 // NOTE: specifying this option will CLEAR any configured Certificates, since
 // they would otherwise override this option.
-func WithCertificateProvider(p CertificateProvider) func(*tls.Config) error {
+func WithServerCertificateProvider(p CertificateProvider) func(*tls.Config) error {
 	return func(cfg *tls.Config) error {
 		if p == nil {
 			return errors.New("no provider")
 		}
 		cfg.Certificates = nil
 		cfg.GetCertificate = p.GetCertificate
+		return nil
+	}
+}
+
+// WithClientCertificateProvider declares a dynamic provider for the client
+// certificate.
+//
+// NOTE: specifying this option will CLEAR any configured Certificates, since
+// they would otherwise override this option.
+func WithClientCertificateProvider(p CertificateProvider) func(*tls.Config) error {
+	return func(cfg *tls.Config) error {
+		if p == nil {
+			return errors.New("no provider")
+		}
+		cfg.Certificates = nil
+		cfg.GetClientCertificate = p.GetClientCertificate
 		return nil
 	}
 }

@@ -58,22 +58,16 @@ func main() {
 	tlsConfig, err := tls.New(
 		tls.WithClientAuthType(tls.Mutual),
 		tls.WithCACertPEM(ca),
-		tls.WithCertificateProvider(provider),
+		tls.WithServerCertificateProvider(provider),
 	)
 	if err != nil {
 		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
 	}
 
-	// TODO: refactor
-	certs, err := provider.GetCertificate(nil)
-	if err != nil {
-		log.Fatalf("failed to get TLS certs: %v", err)
-	}
-
 	clientTLSConfig, err := tls.New(
 		tls.WithClientAuthType(tls.Mutual),
 		tls.WithCACertPEM(ca),
-		tls.WithKeypair(*certs), // TODO: this doesn't support cert refresh, fix me!
+		tls.WithClientCertificateProvider(provider),
 	)
 	if err != nil {
 		log.Fatalf("failed to create client TLS config: %v", err)
