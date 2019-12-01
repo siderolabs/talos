@@ -25,8 +25,8 @@ e2e_run "set -eou pipefail
             --wait \
             --skip-preflight \
             --plugin e2e \
-            --plugin-env e2e.E2E_USE_GO_RUNNER=true \
-            --e2e-parallel=y \
             --mode certified-conformance
          results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG})
-         sonobuoy e2e --kubeconfig ${KUBECONFIG} \$results"
+         sonobuoy e2e --kubeconfig ${KUBECONFIG} \$results
+         sonobuoy status --kubeconfig ${KUBECONFIG} --json | tee /tmp/status.json
+         if [ \$(cat /tmp/status.json | jq -r '.plugins[] | select(.plugin == \"e2e\") | .\"result-status\"') != 'passed' ]; then exit 1; fi"
