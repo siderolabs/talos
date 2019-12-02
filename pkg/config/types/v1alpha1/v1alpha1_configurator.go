@@ -179,6 +179,10 @@ func (m *MachineConfig) SetCertSANs(sans []string) {
 
 // ExtraArgs implements the Configurator interface.
 func (k *KubeletConfig) ExtraArgs() map[string]string {
+	if k == nil {
+		k = &KubeletConfig{}
+	}
+
 	if k.KubeletExtraArgs == nil {
 		k.KubeletExtraArgs = make(map[string]string)
 	}
