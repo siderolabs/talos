@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"path"
@@ -17,6 +18,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -191,4 +193,16 @@ func extractTarGz(localPath string, r io.Reader) {
 			}
 		}
 	}
+}
+
+func remotePeer(ctx context.Context) (peerHost string) {
+	peerHost = "unknown"
+
+	remote, ok := peer.FromContext(ctx)
+	if ok {
+		peerHost = remote.Addr.String()
+		peerHost, _, _ = net.SplitHostPort(peerHost) //nolint: errcheck
+	}
+
+	return
 }
