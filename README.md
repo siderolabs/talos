@@ -21,7 +21,7 @@
 
 ## Documentation
 
-For instructions on deploying and managing Talos, see the [Documentation](https://www.talos-systems.com/docs/talos).
+For instructions on deploying and managing Talos, see the [Documentation](https://www.talos.dev/docs/v0.3/).
 
 ## Community
 
