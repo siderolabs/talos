@@ -78,7 +78,13 @@ func containerRender(reply *osapi.ContainersReply) {
 				display = "└─ " + display
 			}
 
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", resp.Metadata.Hostname, p.Namespace, display, p.Image, p.Pid, p.Status)
+			node := ""
+
+			if resp.Metadata != nil {
+				node = resp.Metadata.Hostname
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", node, p.Namespace, display, p.Image, p.Pid, p.Status)
 		}
 	}
 

@@ -51,9 +51,15 @@ func briefRender(reply *osapi.MemInfoReply) {
 	fmt.Fprintln(w, "NODE\tTOTAL\tUSED\tFREE\tSHARED\tBUFFERS\tCACHE\tAVAILABLE")
 
 	for _, resp := range reply.Response {
+		node := ""
+
+		if resp.Metadata != nil {
+			node = resp.Metadata.Hostname
+		}
+
 		// Default to displaying output as MB
 		fmt.Fprintf(w, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-			resp.Metadata.Hostname,
+			node,
 			resp.Meminfo.Memtotal/1024,
 			(resp.Meminfo.Memtotal-resp.Meminfo.Memfree-resp.Meminfo.Cached-resp.Meminfo.Buffers)/1024,
 			resp.Meminfo.Memfree/1024,
@@ -70,7 +76,10 @@ func briefRender(reply *osapi.MemInfoReply) {
 func verboseRender(reply *osapi.MemInfoReply) {
 	// Dump as /proc/meminfo
 	for _, resp := range reply.Response {
-		fmt.Printf("%s: %s\n", "NODE", resp.Metadata.Hostname)
+		if resp.Metadata != nil {
+			fmt.Printf("%s: %s\n", "NODE", resp.Metadata.Hostname)
+		}
+
 		fmt.Printf("%s: %d %s\n", "MemTotal", resp.Meminfo.Memtotal, "kB")
 		fmt.Printf("%s: %d %s\n", "MemFree", resp.Meminfo.Memfree, "kB")
 		fmt.Printf("%s: %d %s\n", "MemAvailable", resp.Meminfo.Memavailable, "kB")
