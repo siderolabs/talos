@@ -1,3 +1,29 @@
+# [v0.3.0-alpha.10](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.9...v0.3.0-alpha.10) (2019-12-02)
+
+### Bug Fixes
+
+- don't measure overlayfs ([4bec94f](https://github.com/talos-systems/talos/commit/4bec94f6552394ff811aa885e588d2bbd59d98c0))
+- ensure etcd comes back up on reboot of all members ([f3882e7](https://github.com/talos-systems/talos/commit/f3882e7e0ac8b1d1dc00c48561c452e14582eaef))
+- osctl panic when metadata is nil ([f0a080a](https://github.com/talos-systems/talos/commit/f0a080a34042fcdb281967bd18bbb588be526fea))
+- prevent nil pointer panic ([aef38d0](https://github.com/talos-systems/talos/commit/aef38d0e1104b24d2441d7ab34efccbdb8c71c8e))
+- provide a way for client TLS config to use Provider ([ad2f257](https://github.com/talos-systems/talos/commit/ad2f2574d7e769e3c9ea185c4184179a728b761e))
+- recover control plane on reboot ([aaefcbd](https://github.com/talos-systems/talos/commit/aaefcbd8919b1ef132fefd6801c0e97d6698352a))
+- require mode flag when validating ([c9a91b7](https://github.com/talos-systems/talos/commit/c9a91b7d9d5410ad615014965ddac86c4ba14030))
+- update kernel version constant ([9745c3a](https://github.com/talos-systems/talos/commit/9745c3a504dc0d21ca2d61f6b92bc44c6d7fac2d))
+
+### Features
+
+- **networkd:** Add support for bonding ([119bf3e](https://github.com/talos-systems/talos/commit/119bf3e7bbc45630225c2d021ae1f5afd4e0e6ca))
+- add Google Analytics tracking to the project website ([83d9e01](https://github.com/talos-systems/talos/commit/83d9e0121792f39d28482d0cba3bcc78c8dee409))
+- add IMA policy ([031c65b](https://github.com/talos-systems/talos/commit/031c65be47ccb13af11e26861c565fd0d4b47359))
+- enable aggregation layer ([48d5aac](https://github.com/talos-systems/talos/commit/48d5aac0fc34d3f05684b7dd81a825354e03bff3))
+- enable IMA measurement and appraisal ([3f49a15](https://github.com/talos-systems/talos/commit/3f49a15c06b9e4c076be3a15979df29839e3da25))
+- enable webhook authorization mode ([21c4aa8](https://github.com/talos-systems/talos/commit/21c4aa8aa6c8a8573cbfef104258981e680b63c5))
+- support force flag for osctl kubeconfig ([c8f7336](https://github.com/talos-systems/talos/commit/c8f7336569049366c1c282a80e8bfedb4521df81))
+- upgrade packages ([9ea041c](https://github.com/talos-systems/talos/commit/9ea041c7d9872d102d4d6dcc3fc9fdb2c1c5b8f6))
+- use grpc-proxy in apid ([5b7bea2](https://github.com/talos-systems/talos/commit/5b7bea2471e823391a754efc44cd296e655fff1a))
+- **networkd:** Add support for kernel nfsroot arguments. ([05c1659](https://github.com/talos-systems/talos/commit/05c1659126714063bf84af1d79bb4f0a44c1bba1))
+
 # [v0.3.0-alpha.9](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.8...v0.3.0-alpha.9) (2019-11-25)
 
 ### Bug Fixes
