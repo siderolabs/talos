@@ -35,7 +35,7 @@ var dmesgCmd = &cobra.Command{
 			}
 
 			for _, resp := range reply.Response {
-				if len(reply.Response) > 1 {
+				if len(reply.Response) > 1 && resp.Metadata != nil {
 					fmt.Println(resp.Metadata.Hostname)
 				}
 				_, err = os.Stdout.Write(resp.Bytes)

@@ -42,13 +42,10 @@ var versionCmd = &cobra.Command{
 				helpers.Fatalf("error getting version: %s", err)
 			}
 			for _, resp := range reply.Response {
-				node := ""
-
 				if resp.Metadata != nil {
-					node = resp.Metadata.Hostname
+					fmt.Printf("\t%s:        %s\n", "NODE", resp.Metadata.Hostname)
 				}
 
-				fmt.Printf("\t%s:        %s\n", "NODE", node)
 				version.PrintLongVersionFromExisting(resp.Version)
 			}
 		})

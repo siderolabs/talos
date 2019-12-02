@@ -180,6 +180,7 @@ var cpu = func(p1, p2 *osapi.Process) bool {
 	return p1.CpuTime > p2.CpuTime
 }
 
+//nolint: gocyclo
 func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
 	reply, err := c.Processes(ctx)
 	if err != nil {
@@ -216,9 +217,15 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 				args = p.Args
 			}
 
+			node := ""
+
+			if resp.Metadata != nil {
+				node = resp.Metadata.Hostname
+			}
+
 			s = append(s,
 				fmt.Sprintf("%12s | %6d | %1s | %4d | %8.2f | %7s | %7s | %s",
-					resp.Metadata.Hostname, p.Pid, p.State, p.Threads, p.CpuTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), args))
+					node, p.Pid, p.State, p.Threads, p.CpuTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), args))
 		}
 	}
 

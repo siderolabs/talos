@@ -76,7 +76,13 @@ func statsRender(reply *osapi.StatsReply) {
 				display = "└─ " + display
 			}
 
-			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Metadata.Hostname, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+			node := ""
+
+			if resp.Metadata != nil {
+				node = resp.Metadata.Hostname
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 		}
 	}
 
