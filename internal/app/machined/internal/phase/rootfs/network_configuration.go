@@ -34,5 +34,10 @@ func (task *NetworkConfiguration) runtime(r runtime.Runtime) (err error) {
 		return err
 	}
 
+	// Create /etc/hosts
+	if err = etc.Hosts(); err != nil {
+		return err
+	}
+
 	return nil
 }

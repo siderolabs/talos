@@ -5,11 +5,13 @@
 package networkd
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"strings"
+	"text/template"
 )
 
 // filterInterfaceByName filters network links by name so we only mange links
@@ -32,11 +34,8 @@ func filterInterfaceByName(links []net.Interface) (filteredLinks []net.Interface
 }
 
 // writeResolvConf generates a /etc/resolv.conf with the specified nameservers.
-func writeResolvConf(resolvers []string) error {
-	var (
-		resolvconf strings.Builder
-		err        error
-	)
+func writeResolvConf(resolvers []string) (err error) {
+	var resolvconf strings.Builder
 
 	for idx, resolver := range resolvers {
 		// Only allow the first 3 nameservers since that is all that will be used
@@ -53,4 +52,42 @@ func writeResolvConf(resolvers []string) error {
 	log.Println("writing resolvconf")
 
 	return ioutil.WriteFile("/etc/resolv.conf", []byte(resolvconf.String()), 0644)
+}
+
+const hostsTemplate = `
+127.0.0.1       localhost
+{{ .IP }}       {{ .Hostname }} {{ if ne .Hostname .Alias }}{{ .Alias }}{{ end }}
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+`
+
+func writeHosts(hostname string, address net.IP) (err error) {
+	data := struct {
+		IP       string
+		Hostname string
+		Alias    string
+	}{
+		IP:       address.String(),
+		Hostname: hostname,
+		Alias:    strings.Split(hostname, ".")[0],
+	}
+
+	var tmpl *template.Template
+
+	tmpl, err = template.New("").Parse(hostsTemplate)
+	if err != nil {
+		return err
+	}
+
+	var buf []byte
+
+	writer := bytes.NewBuffer(buf)
+
+	err = tmpl.Execute(writer, data)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile("/etc/hosts", writer.Bytes(), 0644)
 }

@@ -5,8 +5,6 @@
 package network
 
 import (
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -40,11 +38,5 @@ func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	// This next chunk is around saving off the hostname if necessary
-	hostname := nwd.Hostname()
-	if hostname == "" {
-		return nil
-	}
-
-	return unix.Sethostname([]byte(hostname))
+	return nwd.Hostname()
 }

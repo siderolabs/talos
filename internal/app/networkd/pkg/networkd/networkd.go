@@ -8,18 +8,22 @@
 package networkd
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strings"
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Set up default nameservers
@@ -33,6 +37,7 @@ const (
 // and/or a specified configuration file.
 type Networkd struct {
 	Interfaces map[string]*nic.NetworkInterface
+	Config     runtime.Configurator
 
 	hostname  string
 	resolvers []string
@@ -63,7 +68,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		log.Println("parsing configuration file")
 
 		for _, device := range config.Machine().Network().Devices() {
-			name, opts, err := buildOptions(device)
+			name, opts, err := buildOptions(device, config.Machine().Network().Hostname())
 			if err != nil {
 				result = multierror.Append(result, err)
 				continue
@@ -141,7 +146,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		}
 	}
 
-	return &Networkd{Interfaces: interfaces, hostname: hostname, resolvers: resolvers}, result.ErrorOrNil()
+	return &Networkd{Interfaces: interfaces, Config: config, hostname: hostname, resolvers: resolvers}, result.ErrorOrNil()
 }
 
 // Configure handles the lifecycle for an interface. This includes creation,
@@ -250,14 +255,52 @@ func (n *Networkd) Renew() {
 	}
 }
 
+// Reset handles removing addresses from previously configured interfaces.
+func (n *Networkd) Reset() {
+	for _, iface := range n.Interfaces {
+		iface.Reset()
+	}
+}
+
 // Hostname returns the first hostname found from the addressing methods.
-func (n *Networkd) Hostname() string {
-	// Allow user supplied hostname to override what was returned
-	// during dhcp
-	if n.hostname != "" {
-		return n.hostname
+// Create /etc/hosts and set hostname.
+// Priority is:
+// 1. Config (explicitly defined by the user)
+// 2. Kernel arg
+// 3. Platform
+// 4. DHCP
+// 5. Default with the format: talos-<ip addr>
+func (n *Networkd) Hostname() (err error) {
+	hostname, domainname, address, err := n.decideHostname()
+	if err != nil {
+		return err
 	}
 
+	if err = writeHosts(hostname, address); err != nil {
+		return err
+	}
+
+	if err = unix.Sethostname([]byte(hostname)); err != nil {
+		return err
+	}
+
+	if domainname != "" {
+		if err = unix.Setdomainname([]byte(domainname)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// nolint: gocyclo
+func (n *Networkd) decideHostname() (hostname string, domainname string, address net.IP, err error) {
+	// Set hostname to default
+	address = net.ParseIP("127.0.1.1")
+	hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(address.String(), ".", "-"))
+
+	// Loop through address responses and use the first hostname
+	// and address response.
 	for _, iface := range n.Interfaces {
 		for _, method := range iface.AddressMethod {
 			if !method.Valid() {
@@ -265,17 +308,53 @@ func (n *Networkd) Hostname() string {
 			}
 
 			if method.Hostname() != "" {
-				return method.Hostname()
+				hostname = method.Hostname()
+
+				address = method.Address().IP
+
+				break
 			}
 		}
 	}
 
-	return ""
-}
+	// Platform
+	var p runtime.Platform
 
-// Reset handles removing addresses from previously configured interfaces.
-func (n *Networkd) Reset() {
-	for _, iface := range n.Interfaces {
-		iface.Reset()
+	p, err = platform.NewPlatform()
+	if err == nil {
+		var pHostname []byte
+
+		if pHostname, err = p.Hostname(); err == nil && string(pHostname) != "" {
+			hostname = string(pHostname)
+		}
 	}
+
+	// Kernel
+	if kHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First(); kHostname != nil {
+		hostname = *kHostname
+	}
+
+	// Allow user supplied hostname to win
+	if n.hostname != "" {
+		hostname = n.hostname
+	}
+
+	hostParts := strings.Split(hostname, ".")
+
+	if len(hostParts[0]) > 63 {
+		return "", "", net.IP{}, fmt.Errorf("hostname length longer than max allowed (63): %s", hostParts[0])
+	}
+
+	if len(hostname) > 253 {
+		return "", "", net.IP{}, fmt.Errorf("hostname fqdn length longer than max allowed (253): %s", hostname)
+	}
+
+	hostname = hostParts[0]
+
+	if len(hostParts) > 1 {
+		domainname = strings.Join(hostParts[1:], ".")
+	}
+
+	// Only return the hostname portion of the name ( strip domain bits off )
+	return hostname, domainname, address, nil
 }

@@ -26,7 +26,7 @@ func TestNetconfSuite(t *testing.T) {
 
 func (suite *NetconfSuite) TestBaseNetconf() {
 	for _, device := range sampleConfig() {
-		_, opts, err := buildOptions(device)
+		_, opts, err := buildOptions(device, "")
 		suite.Require().NoError(err)
 
 		_, err = nic.New(opts...)
