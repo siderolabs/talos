@@ -15,7 +15,10 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-var shortVersion bool
+var (
+	clientOnly   bool
+	shortVersion bool
+)
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
@@ -33,6 +36,11 @@ var versionCmd = &cobra.Command{
 			version.PrintShortVersion()
 		} else {
 			version.PrintLongVersion()
+		}
+
+		// Exit early if we're only looking for client version
+		if clientOnly {
+			os.Exit(0)
 		}
 
 		fmt.Println("Server:")
@@ -54,5 +62,7 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	versionCmd.Flags().BoolVar(&shortVersion, "short", false, "Print the short version")
+	versionCmd.Flags().BoolVar(&clientOnly, "client", false, "Print client version only")
+
 	rootCmd.AddCommand(versionCmd)
 }
