@@ -19,7 +19,7 @@ import (
 // buildOptions translates the supplied config to nic.Option used for
 // configuring the interface.
 // nolint: gocyclo
-func buildOptions(device machine.Device) (name string, opts []nic.Option, err error) {
+func buildOptions(device machine.Device, hostname string) (name string, opts []nic.Option, err error) {
 	opts = append(opts, nic.WithName(device.Interface))
 
 	if device.Ignore || kernel.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface) {
@@ -31,6 +31,16 @@ func buildOptions(device machine.Device) (name string, opts []nic.Option, err er
 	switch {
 	case device.CIDR != "":
 		s := &address.Static{Device: &device}
+
+		// Set a default for the hostname to ensure we always have a valid
+		// ip + hostname pair
+		ip := s.Address().IP.String()
+		s.FQDN = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(ip, ".", "-"))
+
+		if hostname != "" {
+			s.FQDN = hostname
+		}
+
 		opts = append(opts, nic.WithAddressing(s))
 	default:
 		d := &address.DHCP{}

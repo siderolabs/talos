@@ -122,7 +122,6 @@ func (d *Sequencer) Boot() error {
 		phase.NewPhase(
 			"save config",
 			configtask.NewSaveConfigTask(),
-			rootfs.NewHostnameTask(),
 		),
 		phase.NewPhase(
 			"mount extra disks",

@@ -5,6 +5,7 @@
 package networkd
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -34,6 +35,64 @@ func (suite *NetworkdSuite) TestNetworkd() {
 	suite.Assert().True(nwd.Interfaces["bond0"].Bonded)
 	suite.Assert().Equal(1, len(nwd.Interfaces["bond0"].SubInterfaces))
 	suite.Require().Contains(nwd.Interfaces, "lo")
+}
+
+func (suite *NetworkdSuite) TestHostname() {
+	var (
+		address      net.IP
+		domainname   string
+		err          error
+		hostname     string
+		nwd          *Networkd
+		sampleConfig runtime.Configurator
+	)
+
+	nwd, err = New(nil)
+	suite.Require().NoError(err)
+
+	hostname, _, address, err = nwd.decideHostname()
+	suite.Require().NoError(err)
+	suite.Assert().Equal("talos-127-0-1-1", hostname)
+	suite.Assert().Equal(address, net.ParseIP("127.0.1.1"))
+
+	sampleConfig = sampleConfigFile()
+
+	nwd, err = New(sampleConfig)
+	suite.Require().NoError(err)
+
+	hostname, _, address, err = nwd.decideHostname()
+	suite.Require().NoError(err)
+	suite.Assert().Equal("myhostname", hostname)
+	suite.Assert().Equal(address, net.ParseIP("192.168.0.10"))
+
+	sampleConfig.Machine().Network().SetHostname("")
+
+	nwd, err = New(sampleConfig)
+	suite.Require().NoError(err)
+
+	hostname, _, address, err = nwd.decideHostname()
+	suite.Require().NoError(err)
+	suite.Assert().Equal("talos-192-168-0-10", hostname)
+	suite.Assert().Equal(address, net.ParseIP("192.168.0.10"))
+
+	sampleConfig.Machine().Network().SetHostname("somereallyreallyreallylongstringthathasmorethan63charactersbecauseweneedtotestit")
+
+	nwd, err = New(sampleConfig)
+	suite.Require().NoError(err)
+
+	// nolint: dogsled
+	_, _, _, err = nwd.decideHostname()
+	suite.Require().Error(err)
+
+	sampleConfig.Machine().Network().SetHostname("dadjokes.biz.dev.com.org.io")
+
+	nwd, err = New(sampleConfig)
+	suite.Require().NoError(err)
+
+	hostname, domainname, _, err = nwd.decideHostname()
+	suite.Require().NoError(err)
+	suite.Assert().Equal("dadjokes", hostname)
+	suite.Assert().Equal("biz.dev.com.org.io", domainname)
 }
 
 func sampleConfigFile() runtime.Configurator {

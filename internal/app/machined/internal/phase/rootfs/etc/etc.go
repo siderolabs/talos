@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"strings"
 	"text/template"
@@ -17,15 +16,6 @@ import (
 
 	"golang.org/x/sys/unix"
 )
-
-const hostsTemplate = `
-127.0.0.1       localhost
-127.0.0.1       {{ .Hostname }}
-{{ .IP }}       {{ .Hostname }}
-::1             localhost ip6-localhost ip6-loopback
-ff02::1         ip6-allnodes
-ff02::2         ip6-allrouters
-`
 
 const osReleaseTemplate = `
 NAME="{{ .Name }}"
@@ -36,77 +26,27 @@ HOME_URL="https://docs.talos-systems.com/"
 BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 `
 
-// Hosts renders a valid /etc/hosts file and writes it to disk.
-func Hosts(hostname string) (err error) {
-	ip := ip()
-
-	// If no hostname, set it to `talos-<ip>`, talos-1-2-3-4
-	if hostname == "" {
-		hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(ip, ".", "-"))
-	}
-
-	if err = unix.Sethostname([]byte(hostname)); err != nil {
-		return err
-	}
-
-	data := struct {
-		IP       string
-		Hostname string
-	}{
-		IP:       ip,
-		Hostname: hostname,
-	}
-
-	tmpl, err := template.New("").Parse(hostsTemplate)
-	if err != nil {
-		return
-	}
-
-	var buf []byte
-
-	writer := bytes.NewBuffer(buf)
-
-	err = tmpl.Execute(writer, data)
-	if err != nil {
-		return
-	}
-
-	if err = ioutil.WriteFile("/run/system/etc/hosts", writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /run/hosts: %w", err)
-	}
-
-	if err = unix.Mount("/run/system/etc/hosts", "/etc/hosts", "", unix.MS_BIND, ""); err != nil {
-		return fmt.Errorf("failed to create bind mount for /etc/hosts: %w", err)
-	}
-
-	return nil
+// Hosts creates a persistent and writable /etc/hosts file.
+func Hosts() (err error) {
+	return createBindMount("/run/system/etc/hosts", "/etc/hosts")
 }
 
-// ResolvConf copies the resolv.conf generated in the early boot to the new
-// root.
+// ResolvConf creates a persistent and writable /etc/resolv.conf file.
 func ResolvConf() (err error) {
-	target := "/run/system/etc/resolv.conf"
-
-	var f *os.File
-
-	if f, err = os.OpenFile(target, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
-		return err
-	}
-
-	// nolint: errcheck
-	defer f.Close()
-
-	if err = unix.Mount("/run/system/etc/resolv.conf", "/etc/resolv.conf", "", unix.MS_BIND, ""); err != nil {
-		return fmt.Errorf("failed to create bind mount for /etc/resolv.conf: %w", err)
-	}
-
-	return nil
+	return createBindMount("/run/system/etc/resolv.conf", "/etc/resolv.conf")
 }
 
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
 // node's OS Image field is reported by the node from /etc/os-release.
 func OSRelease() (err error) {
-	var v string
+	if err = createBindMount("/run/system/etc/os-release", "/etc/os-release"); err != nil {
+		return err
+	}
+
+	var (
+		v    string
+		tmpl *template.Template
+	)
 
 	switch version.Tag {
 	case "none":
@@ -125,9 +65,9 @@ func OSRelease() (err error) {
 		Version: v,
 	}
 
-	tmpl, err := template.New("").Parse(osReleaseTemplate)
+	tmpl, err = template.New("").Parse(osReleaseTemplate)
 	if err != nil {
-		return
+		return err
 	}
 
 	var buf []byte
@@ -136,33 +76,30 @@ func OSRelease() (err error) {
 
 	err = tmpl.Execute(writer, data)
 	if err != nil {
-		return
+		return err
 	}
 
-	if err = ioutil.WriteFile("/run/system/etc/os-release", writer.Bytes(), 0644); err != nil {
-		return fmt.Errorf("write /run/system/etc/os-release: %w", err)
+	return ioutil.WriteFile("/run/system/etc/os-release", writer.Bytes(), 0644)
+}
+
+// createBindMount creates a common way to create a writable source file with a
+// bind mounted destination. This is most commonly used for well known files
+// under /etc that need to be adjusted during startup.
+func createBindMount(src, dst string) (err error) {
+	var f *os.File
+
+	if f, err = os.OpenFile(src, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
+		return err
 	}
 
-	if err = unix.Mount("/run/system/etc/os-release", "/etc/os-release", "", unix.MS_BIND, ""); err != nil {
-		return fmt.Errorf("failed to create bind mount for /etc/os-release: %w", err)
+	// nolint: errcheck
+	if err = f.Close(); err != nil {
+		return err
+	}
+
+	if err = unix.Mount(src, dst, "", unix.MS_BIND, ""); err != nil {
+		return fmt.Errorf("failed to create bind mount for %s: %w", dst, err)
 	}
 
 	return nil
-}
-
-func ip() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-
-	return ""
 }
