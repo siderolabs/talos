@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ var (
 	kubernetesVersion string
 	installDisk       string
 	installImage      string
+	outputDir         string
 )
 
 // configCmd represents the config command.
@@ -149,6 +151,20 @@ var configGenerateCmd = &cobra.Command{
 }
 
 func genV1Alpha1Config(args []string) {
+	// If output dir isn't specified, set to the current working dir
+	var err error
+	if outputDir == "" {
+		outputDir, err = os.Getwd()
+		if err != nil {
+			helpers.Fatalf("failed to get working dir: %w", err)
+		}
+	}
+
+	// Create dir path, ignoring "already exists" messages
+	if err = os.MkdirAll(outputDir, os.ModePerm); err != nil && !os.IsExist(err) {
+		helpers.Fatalf("failed to create output dir: %w", err)
+	}
+
 	input, err := genv1alpha1.NewInput(args[0], args[1], kubernetesVersion)
 	if err != nil {
 		helpers.Fatalf("failed to generate PKI and tokens: %w", err)
@@ -181,11 +197,13 @@ func genV1Alpha1Config(args []string) {
 		helpers.Fatalf("failed to marshal config: %+v", err)
 	}
 
-	if err = ioutil.WriteFile("talosconfig", data, 0644); err != nil {
+	fullFilePath := filepath.Join(outputDir, "talosconfig")
+
+	if err = ioutil.WriteFile(fullFilePath, data, 0644); err != nil {
 		helpers.Fatalf("%w", err)
 	}
 
-	fmt.Println("created talosconfig")
+	fmt.Printf("created %s\n", fullFilePath)
 }
 
 func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {
@@ -197,11 +215,13 @@ func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name stri
 	}
 
 	name = strings.ToLower(name) + ".yaml"
-	if err = ioutil.WriteFile(name, []byte(data), 0644); err != nil {
+	fullFilePath := filepath.Join(outputDir, name)
+
+	if err = ioutil.WriteFile(fullFilePath, []byte(data), 0644); err != nil {
 		return err
 	}
 
-	fmt.Printf("created %s\n", name)
+	fmt.Printf("created %s\n", fullFilePath)
 
 	return nil
 }
@@ -216,6 +236,7 @@ func init() {
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	configGenerateCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	configGenerateCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
 	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
 	helpers.Should(configAddCmd.MarkFlagRequired("key"))
