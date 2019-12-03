@@ -29,8 +29,15 @@ export default {
 
   computed: {
     doc() {
-      const activeDocPath = this.$store.getters['sidebar/getActiveDocPath']
       const sections = this.$store.getters['sidebar/getSections']
+      let activeDocPath = ''
+
+      // if there's an #anchor specified, go there instead of the top-level
+      if (this.$route.hash) {
+        activeDocPath = this.$route.hash.substring(1)
+      } else {
+        activeDocPath = this.$store.getters['sidebar/getActiveDocPath']
+      }
 
       return sections[activeDocPath]
     }
