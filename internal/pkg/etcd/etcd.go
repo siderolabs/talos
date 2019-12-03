@@ -49,12 +49,7 @@ func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
 func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *clientv3.Client, err error) {
-	h, err := kubernetes.NewTemporaryClientFromPKI(
-		creds.Crt,
-		creds.Key,
-		endpoint.Hostname(),
-		endpoint.Port(),
-	)
+	h, err := kubernetes.NewTemporaryClientFromPKI(creds, endpoint)
 	if err != nil {
 		return nil, err
 	}
