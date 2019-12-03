@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
@@ -123,13 +124,23 @@ var configAddCmd = &cobra.Command{
 
 // configGenerateCmd represents the config generate command.
 var configGenerateCmd = &cobra.Command{
-	Use:   "generate <cluster name> <load balancer IP or DNS name>",
+	Use:   "generate <cluster name> https://<load balancer IP or DNS name>",
 	Short: "Generate a set of configuration files",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
 			log.Fatal("expected a cluster name and load balancer IP or DNS name")
 		}
+
+		// Validate url input to ensure it has https:// scheme before we attempt to gen
+		u, err := url.Parse(args[1])
+		if err != nil {
+			helpers.Fatalf("failed to parse load balancer IP or DNS name: %s", err)
+		}
+		if u.Scheme == "" {
+			helpers.Fatalf("no scheme specified for load balancer IP or DNS name\ntry \"https://<load balancer IP or DNS name>\"")
+		}
+
 		switch configVersion {
 		case "v1alpha1":
 			genV1Alpha1Config(args)
