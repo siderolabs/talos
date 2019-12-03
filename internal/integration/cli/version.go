@@ -26,7 +26,7 @@ func (suite *VersionSuite) SuiteName() string {
 func (suite *VersionSuite) TestExpectedVersionMaster() {
 	suite.RunOsctl([]string{"version"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
-		base.StdoutShouldMatch(regexp.MustCompile(`Server:\n\s*NODE:[^\n]+\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
+		base.StdoutShouldMatch(regexp.MustCompile(`Server:\n(\s*NODE:[^\n]+\n)?\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
 	)
 }
 
