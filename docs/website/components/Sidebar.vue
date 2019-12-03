@@ -9,7 +9,7 @@
       >
         <a
           class="sidebar-category"
-          :href="'#' + entry.title"
+          :href="'#' + entry.path"
           @click="handleClick(entry)"
         >
           <span class="relative">{{ entry.title }}</span>
@@ -18,7 +18,7 @@
           <li v-for="item in entry.items" :key="item.path" class="ml-0">
             <a
               class="sidebar-item"
-              :href="'#' + item.title"
+              :href="'#' + item.path"
               @click="handleClick(item)"
             >
               <span class="relative">{{ item.title }}</span>
@@ -27,7 +27,7 @@
               <li v-for="child in item.children" :key="child.path" class="ml-0">
                 <a
                   class="sidebar-child"
-                  :href="'#' + child.title"
+                  :href="'#' + child.path"
                   @click="handleClick(child)"
                 >
                   <span class="relative">{{ child.title }}</span>
