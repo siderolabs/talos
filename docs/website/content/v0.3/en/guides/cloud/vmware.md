@@ -76,10 +76,12 @@ export GOVC_NETWORK=<vCenter network>
 
 ### Download the OVA
 
-A `talos.ova` asset is published with each release:
+A `talos.ova` asset is published with each [release](https://github.com/talos-systems/talos/releases).
+We will refer to the version of the release as $TALOS_VERSION below.
+It can be easily exported with `export TALOS_VERSION="v0.3.0-alpha.10"` or similar.
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/download/v0.3.0-alpha.2/talos.ova
+curl -LO https://github.com/talos-systems/talos/releases/download/$TALOS_VERSION/talos.ova
 ```
 
 ### Import the OVA into vCenter
@@ -89,7 +91,7 @@ In a typical HA setup, we'll have 3 control plane nodes and N workers.
 In the following example, we'll setup a HA control plane with two worker nodes.
 
 ```bash
-govc import.ova -name talos-v0.3.0-alpha.2 $talos/build/talos.ova
+govc import.ova -name talos-$TALOS_VERSION /path/to/downloaded/talos.ova
 ```
 
 #### Create the Bootstrap Node
@@ -97,7 +99,7 @@ govc import.ova -name talos-v0.3.0-alpha.2 $talos/build/talos.ova
 We'll clone the OVA to create the bootstrap node (our first control plane node).
 
 ```bash
-govc vm.clone -on=false -vm talos-v0.3.0-alpha.2 control-plane-1
+govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-1
 ```
 
 Talos makes use of the `guestinfo` facility of VMware to provide the machine/cluster configuration.
@@ -136,12 +138,12 @@ govc vm.power -on control-plane-1
 #### Create the Remaining Control Plane Nodes
 
 ```bash
-govc vm.clone -on=false -vm talos-v0.3.0-alpha.2 control-plane-2
+govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-2
 govc vm.change \
   -e "guestinfo.talos.config=$(base64 controlplane.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-2
-govc vm.clone -on=false -vm talos-v0.3.0-alpha.2 control-plane-3
+govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-3
 govc vm.change \
   -e "guestinfo.talos.config=$(base64 controlplane.yaml)" \
   -e "disk.enableUUID=1" \
@@ -172,12 +174,12 @@ govc vm.power -on control-plane-3
 #### Update Settings for the Worker Nodes
 
 ```bash
-govc vm.clone -on=false -vm talos-v0.3.0-alpha.2 worker-1
+govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-1
 govc vm.change \
   -e "guestinfo.talos.config=$(base64 join.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-1
-govc vm.clone -on=false -vm talos-v0.3.0-alpha.2 worker-2
+govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-2
 govc vm.change \
   -e "guestinfo.talos.config=$(base64 join.yaml)" \
   -e "disk.enableUUID=1" \
