@@ -34,12 +34,7 @@ func (task *LabelNodeAsMaster) standard(r runtime.Runtime) (err error) {
 		return nil
 	}
 
-	h, err := kubernetes.NewTemporaryClientFromPKI(
-		r.Config().Cluster().CA().Crt,
-		r.Config().Cluster().CA().Key,
-		r.Config().Cluster().Endpoint().Hostname(),
-		r.Config().Cluster().Endpoint().Port(),
-	)
+	h, err := kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 	if err != nil {
 		return err
 	}

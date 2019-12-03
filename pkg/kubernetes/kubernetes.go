@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
+	"net/url"
 	"sync"
 	"time"
 
@@ -69,7 +69,9 @@ func NewForConfig(config *restclient.Config) (client *Client, err error) {
 }
 
 // NewClientFromPKI initializes and returns a Client.
-func NewClientFromPKI(ca, crt, key []byte, host, port string) (client *Client, err error) {
+//
+// nolint: interfacer
+func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, err error) {
 	tlsClientConfig := restclient.TLSClientConfig{
 		CAData:   ca,
 		CertData: crt,
@@ -77,7 +79,7 @@ func NewClientFromPKI(ca, crt, key []byte, host, port string) (client *Client, e
 	}
 
 	config := &restclient.Config{
-		Host:            "https://" + net.JoinHostPort(host, port),
+		Host:            endpoint.String(),
 		TLSClientConfig: tlsClientConfig,
 	}
 
@@ -93,7 +95,7 @@ func NewClientFromPKI(ca, crt, key []byte, host, port string) (client *Client, e
 
 // NewTemporaryClientFromPKI initializes a Kubernetes client using a certificate
 // with a TTL of 10 minutes.
-func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (client *Client, err error) {
+func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
 	opts := []x509.Option{
 		x509.RSA(true),
 		x509.CommonName("admin"),
@@ -121,12 +123,12 @@ func NewTemporaryClientFromPKI(caCrt, caKey []byte, endpoint, port string) (clie
 		return nil, fmt.Errorf("failed to create CSR: %w", err)
 	}
 
-	crt, err := x509.NewCertificateFromCSRBytes(caCrt, caKey, csr.X509CertificateRequestPEM, opts...)
+	crt, err := x509.NewCertificateFromCSRBytes(ca.Crt, ca.Key, csr.X509CertificateRequestPEM, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
 	}
 
-	h, err := NewClientFromPKI(caCrt, crt.X509CertificatePEM, key.KeyPEM, endpoint, port)
+	h, err := NewClientFromPKI(ca.Crt, crt.X509CertificatePEM, key.KeyPEM, endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
