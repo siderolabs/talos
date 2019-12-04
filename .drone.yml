@@ -368,7 +368,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: autonomy/build-container:latest
+  image: golang:1.13
   commands:
   - make basic-integration
   environment:
@@ -823,7 +823,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: autonomy/build-container:latest
+  image: golang:1.13
   commands:
   - make basic-integration
   environment:
@@ -1427,7 +1427,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: autonomy/build-container:latest
+  image: golang:1.13
   commands:
   - make basic-integration
   environment:
@@ -2061,7 +2061,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: autonomy/build-container:latest
+  image: golang:1.13
   commands:
   - make basic-integration
   environment:
@@ -2695,7 +2695,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: autonomy/build-container:latest
+  image: golang:1.13
   commands:
   - make basic-integration
   environment:

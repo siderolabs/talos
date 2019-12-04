@@ -152,7 +152,7 @@ local markdownlint = Step("markdownlint");
 local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[lint]);
-local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux, integration_test]);
+local basic_integration = Step("basic-integration", image="golang:1.13", depends_on=[container, osctl_linux, integration_test]);
 
 local coverage = {
   name: 'coverage',
