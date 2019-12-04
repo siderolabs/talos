@@ -281,7 +281,7 @@ container: buildkitd
 
 .PHONY: basic-integration
 basic-integration:
-	@TAG=$(TAG) ./hack/test/$@.sh
+	cd ./hack/test/integration && ./libvirt.sh up
 
 .PHONY: capi
 capi:

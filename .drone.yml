@@ -27,6 +27,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -45,6 +47,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -63,6 +67,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -81,6 +87,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -99,6 +107,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -117,6 +127,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -135,6 +147,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -153,6 +167,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -171,6 +187,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -189,6 +207,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - machined
   - osd
@@ -196,6 +216,24 @@ steps:
   - ntpd
   - networkd
   - apid
+
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: initramfs
   pull: always
@@ -212,6 +250,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -230,6 +270,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -248,6 +290,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -266,6 +310,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: protolint
   pull: always
@@ -282,6 +328,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: markdownlint
   pull: always
@@ -298,6 +346,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: image-test
   pull: always
@@ -314,6 +364,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -332,6 +384,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -350,6 +404,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - lint
 
@@ -381,10 +437,11 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
-  - container
-  - osctl-linux
-  - integration-test
+  - initramfs
+  - kernel
 
 - name: push-latest
   pull: always
@@ -405,6 +462,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -431,6 +490,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 volumes:
 - name: dockersock
@@ -440,6 +501,9 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
+- name: libvirt
+  host:
+    path: /var/run/libvirt
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -482,6 +546,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -500,6 +566,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -518,6 +586,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -536,6 +606,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -554,6 +626,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -572,6 +646,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -590,6 +666,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -608,6 +686,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -626,6 +706,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -644,6 +726,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - machined
   - osd
@@ -651,6 +735,24 @@ steps:
   - ntpd
   - networkd
   - apid
+
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: initramfs
   pull: always
@@ -667,6 +769,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -685,6 +789,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -703,6 +809,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -721,6 +829,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: protolint
   pull: always
@@ -737,6 +847,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: markdownlint
   pull: always
@@ -753,6 +865,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: image-test
   pull: always
@@ -769,6 +883,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -787,6 +903,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -805,6 +923,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - lint
 
@@ -836,10 +956,11 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
-  - container
-  - osctl-linux
-  - integration-test
+  - initramfs
+  - kernel
 
 - name: push-latest
   pull: always
@@ -860,6 +981,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -891,6 +1014,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - basic-integration
 
@@ -909,6 +1034,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -927,6 +1054,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -953,6 +1082,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - image-aws
 
@@ -979,6 +1110,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - image-gcp
 
@@ -998,6 +1131,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - capi
   - push-image-aws
@@ -1018,6 +1153,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - capi
   - push-image-gcp
@@ -1040,6 +1177,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 volumes:
 - name: dockersock
@@ -1049,6 +1188,9 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
+- name: libvirt
+  host:
+    path: /var/run/libvirt
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1086,6 +1228,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1104,6 +1248,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1122,6 +1268,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1140,6 +1288,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1158,6 +1308,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1176,6 +1328,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1194,6 +1348,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1212,6 +1368,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1230,6 +1388,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1248,6 +1408,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - machined
   - osd
@@ -1255,6 +1417,24 @@ steps:
   - ntpd
   - networkd
   - apid
+
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: initramfs
   pull: always
@@ -1271,6 +1451,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1289,6 +1471,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1307,6 +1491,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1325,6 +1511,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: protolint
   pull: always
@@ -1341,6 +1529,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: markdownlint
   pull: always
@@ -1357,6 +1547,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: image-test
   pull: always
@@ -1373,6 +1565,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -1391,6 +1585,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1409,6 +1605,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - lint
 
@@ -1440,10 +1638,11 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
-  - container
-  - osctl-linux
-  - integration-test
+  - initramfs
+  - kernel
 
 - name: push-latest
   pull: always
@@ -1464,6 +1663,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -1495,6 +1696,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - basic-integration
 
@@ -1513,6 +1716,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -1531,6 +1736,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -1557,6 +1764,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - image-aws
 
@@ -1583,6 +1792,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - image-gcp
 
@@ -1603,6 +1814,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - capi
   - push-image-aws
@@ -1624,6 +1837,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - capi
   - push-image-gcp
@@ -1647,6 +1862,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -1674,6 +1891,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 volumes:
 - name: dockersock
@@ -1683,6 +1902,9 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
+- name: libvirt
+  host:
+    path: /var/run/libvirt
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1720,6 +1942,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1738,6 +1962,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1756,6 +1982,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1774,6 +2002,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1792,6 +2022,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1810,6 +2042,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1828,6 +2062,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1846,6 +2082,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1864,6 +2102,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -1882,6 +2122,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - machined
   - osd
@@ -1889,6 +2131,24 @@ steps:
   - ntpd
   - networkd
   - apid
+
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: initramfs
   pull: always
@@ -1905,6 +2165,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1923,6 +2185,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1941,6 +2205,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -1959,6 +2225,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: protolint
   pull: always
@@ -1975,6 +2243,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: markdownlint
   pull: always
@@ -1991,6 +2261,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: image-test
   pull: always
@@ -2007,6 +2279,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2025,6 +2299,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -2043,6 +2319,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - lint
 
@@ -2074,10 +2352,11 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
-  - container
-  - osctl-linux
-  - integration-test
+  - initramfs
+  - kernel
 
 - name: push-latest
   pull: always
@@ -2098,6 +2377,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -2129,6 +2410,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - basic-integration
 
@@ -2147,6 +2430,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2165,6 +2450,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2191,6 +2478,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - image-aws
 
@@ -2217,6 +2506,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - image-gcp
 
@@ -2237,6 +2528,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - capi
   - push-image-aws
@@ -2258,6 +2551,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - capi
   - push-image-gcp
@@ -2281,6 +2576,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -2308,6 +2605,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 volumes:
 - name: dockersock
@@ -2317,6 +2616,9 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
+- name: libvirt
+  host:
+    path: /var/run/libvirt
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -2354,6 +2656,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2372,6 +2676,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2390,6 +2696,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2408,6 +2716,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2426,6 +2736,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2444,6 +2756,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2462,6 +2776,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2480,6 +2796,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2498,6 +2816,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - fetch-tags
 
@@ -2516,6 +2836,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - machined
   - osd
@@ -2523,6 +2845,24 @@ steps:
   - ntpd
   - networkd
   - apid
+
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  environment:
+    BINDIR: /usr/local/bin
+    BUILDKIT_HOST: ${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: initramfs
   pull: always
@@ -2539,6 +2879,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -2557,6 +2899,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -2575,6 +2919,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -2593,6 +2939,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: protolint
   pull: always
@@ -2609,6 +2957,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: markdownlint
   pull: always
@@ -2625,6 +2975,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: image-test
   pull: always
@@ -2641,6 +2993,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2659,6 +3013,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - rootfs
 
@@ -2677,6 +3033,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - lint
 
@@ -2708,10 +3066,11 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
-  - container
-  - osctl-linux
-  - integration-test
+  - initramfs
+  - kernel
 
 - name: push-latest
   pull: always
@@ -2732,6 +3091,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   when:
     event:
       exclude:
@@ -2755,6 +3116,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 - name: image-aws
   pull: always
@@ -2771,6 +3134,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2789,6 +3154,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2807,6 +3174,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2825,6 +3194,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2843,6 +3214,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2861,6 +3234,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
   depends_on:
   - installer
 
@@ -2904,6 +3279,8 @@ services:
     path: /dev
   - name: tmp
     path: /tmp
+  - name: libvirt
+    path: /var/run/libvirt
 
 volumes:
 - name: dockersock
@@ -2913,6 +3290,9 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
+- name: libvirt
+  host:
+    path: /var/run/libvirt
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -2948,6 +3328,9 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
+- name: libvirt
+  host:
+    path: /var/run/libvirt
 
 node:
   node-role.kubernetes.io/ci: ""

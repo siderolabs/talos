@@ -48,15 +48,19 @@ CONTROL_PLANE_3_MAC=52:54:00:c3:61:77
 WORKER_1_NAME=worker-1
 WORKER_1_MAC=52:54:00:d7:99:c7
 
+trap down EXIT
+
 function up {
+    apk add virt-install libvirt-qemu
+    docker-compose down -d
     echo ${INSTALLER}
     cp $PWD/../../../build/initramfs.xz ./matchbox/assets/
     cp $PWD/../../../build/vmlinuz ./matchbox/assets/
     cd matchbox/assets
     $PWD/../../../../../build/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
-    yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
-    yq w -i controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
-    yq w -i join.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    # yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    # yq w -i controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    # yq w -i join.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     cd -
     virt-install --name $CONTROL_PLANE_1_NAME --network=bridge:talos0,model=e1000,mac=$CONTROL_PLANE_1_MAC $COMMON_VIRT_OPTS --boot=hd,network
     virt-install --name $CONTROL_PLANE_2_NAME --network=bridge:talos0,model=e1000,mac=$CONTROL_PLANE_2_MAC $COMMON_VIRT_OPTS --boot=hd,network
@@ -75,6 +79,8 @@ function down {
     for node in ${NODES[@]}; do
       virsh vol-delete --pool default $node.qcow2
     done
+
+    docker-compose down
 }
 
 function workspace {

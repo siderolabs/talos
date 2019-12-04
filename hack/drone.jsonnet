@@ -42,16 +42,31 @@ local volumes = {
     },
   },
 
+  libvirt: {
+    pipeline: {
+      name: 'libvirt',
+      host: {
+        path: '/var/run/libvirt',
+      },
+    },
+    step: {
+      name: $.libvirt.pipeline.name,
+      path: '/var/run/libvirt',
+    },
+  },
+
   ForStep(): [
     self.dockersock.step,
     self.dev.step,
     self.tmp.step,
+    self.libvirt.step,
   ],
 
   ForPipeline(): [
     self.dockersock.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,
+    self.libvirt.pipeline,
   ],
 };
 
@@ -143,6 +158,7 @@ local osctl_linux = Step("osctl-linux", depends_on=[fetchtags]);
 local osctl_darwin = Step("osctl-darwin", depends_on=[fetchtags]);
 local integration_test = Step("integration-test", depends_on=[fetchtags]);
 local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
+local kernel = Step("kernel");
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
@@ -152,7 +168,7 @@ local markdownlint = Step("markdownlint");
 local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[lint]);
-local basic_integration = Step("basic-integration", depends_on=[container, osctl_linux, integration_test]);
+local basic_integration = Step("basic-integration", depends_on=[initramfs, kernel]);
 
 local coverage = {
   name: 'coverage',
@@ -200,6 +216,7 @@ local default_steps = [
   osctl_darwin,
   integration_test,
   rootfs,
+  kernel,
   initramfs,
   installer,
   container,
