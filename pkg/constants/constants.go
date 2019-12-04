@@ -194,6 +194,9 @@ const (
 	// SystemContainerdAddress is the path to the system containerd socket.
 	SystemContainerdAddress = SystemRunPath + "/containerd/containerd.sock"
 
+	// CRIContainerdConfig is the path to the config for the containerd instance that provides the CRI.
+	CRIContainerdConfig = "/etc/cri/containerd.toml"
+
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 
