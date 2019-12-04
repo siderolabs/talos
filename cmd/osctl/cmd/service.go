@@ -12,6 +12,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -63,7 +65,9 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 }
 
 func serviceList(c *client.Client) {
-	reply, err := c.ServiceList(globalCtx)
+	var remotePeer peer.Peer
+
+	reply, err := c.ServiceList(globalCtx, grpc.Peer(&remotePeer))
 	if err != nil {
 		helpers.Fatalf("error listing services: %s", err)
 	}
@@ -71,11 +75,13 @@ func serviceList(c *client.Client) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tSERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
 
+	defaultNode := addrFromPeer(&remotePeer)
+
 	for _, resp := range reply.Response {
 		for _, s := range resp.Services {
 			svc := serviceInfoWrapper{s}
 
-			node := ""
+			node := defaultNode
 
 			if resp.Metadata != nil {
 				node = resp.Metadata.Hostname
@@ -89,49 +95,44 @@ func serviceList(c *client.Client) {
 }
 
 func serviceInfo(c *client.Client, id string) {
-	reply, err := c.ServiceInfo(globalCtx, id)
+	var remotePeer peer.Peer
+
+	services, err := c.ServiceInfo(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		helpers.Fatalf("error listing services: %s", err)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
-	services := make([]*machineapi.ServiceInfo, 0, len(reply.Response))
+	defaultNode := addrFromPeer(&remotePeer)
 
-	for _, resp := range reply.Response {
-		for _, svc := range resp.Services {
-			if svc.Id == id {
-				services = append(services, svc)
-				for _, s := range services {
-					node := ""
+	for _, s := range services {
+		node := defaultNode
 
-					if resp.Metadata != nil {
-						node = resp.Metadata.Hostname
-					}
+		if s.Metadata != nil {
+			node = s.Metadata.Hostname
+		}
 
-					fmt.Fprintf(w, "NODE\t%s\n", node)
+		fmt.Fprintf(w, "NODE\t%s\n", node)
 
-					svc := serviceInfoWrapper{s}
-					fmt.Fprintf(w, "ID\t%s\n", svc.Id)
-					fmt.Fprintf(w, "STATE\t%s\n", svc.State)
-					fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
+		svc := serviceInfoWrapper{s.Service}
+		fmt.Fprintf(w, "ID\t%s\n", svc.Id)
+		fmt.Fprintf(w, "STATE\t%s\n", svc.State)
+		fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
 
-					if svc.Health.LastMessage != "" {
-						fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
-					}
+		if svc.Health.LastMessage != "" {
+			fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
+		}
 
-					label := "EVENTS"
+		label := "EVENTS"
 
-					for i := range svc.Events.Events {
-						event := svc.Events.Events[len(svc.Events.Events)-1-i]
+		for i := range svc.Events.Events {
+			event := svc.Events.Events[len(svc.Events.Events)-1-i]
 
-						// nolint: errcheck
-						ts, _ := ptypes.Timestamp(event.Ts)
-						fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
-						label = ""
-					}
-				}
-			}
+			// nolint: errcheck
+			ts, _ := ptypes.Timestamp(event.Ts)
+			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
+			label = ""
 		}
 	}
 
@@ -143,16 +144,20 @@ func serviceInfo(c *client.Client, id string) {
 }
 
 func serviceStart(c *client.Client, id string) {
-	reply, err := c.ServiceStart(globalCtx, id)
+	var remotePeer peer.Peer
+
+	reply, err := c.ServiceStart(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
+
+	defaultNode := addrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
 	for _, resp := range reply.Response {
-		node := ""
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname
@@ -165,16 +170,20 @@ func serviceStart(c *client.Client, id string) {
 }
 
 func serviceStop(c *client.Client, id string) {
-	reply, err := c.ServiceStop(globalCtx, id)
+	var remotePeer peer.Peer
+
+	reply, err := c.ServiceStop(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
+
+	defaultNode := addrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
 	for _, resp := range reply.Response {
-		node := ""
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname
@@ -187,16 +196,20 @@ func serviceStop(c *client.Client, id string) {
 }
 
 func serviceRestart(c *client.Client, id string) {
-	reply, err := c.ServiceRestart(globalCtx, id)
+	var remotePeer peer.Peer
+
+	reply, err := c.ServiceRestart(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		helpers.Fatalf("error starting service: %s", err)
 	}
+
+	defaultNode := addrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
 	for _, resp := range reply.Response {
-		node := ""
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname

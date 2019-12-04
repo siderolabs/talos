@@ -14,7 +14,9 @@ import (
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/api/common"
 	osapi "github.com/talos-systems/talos/api/os"
@@ -50,19 +52,23 @@ var containersCmd = &cobra.Command{
 			md := metadata.New(make(map[string]string))
 			md.Set("targets", target...)
 
-			reply, err := c.Containers(metadata.NewOutgoingContext(globalCtx, md), namespace, driver)
+			var remotePeer peer.Peer
+
+			reply, err := c.Containers(metadata.NewOutgoingContext(globalCtx, md), namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
 				helpers.Fatalf("error getting process list: %s", err)
 			}
 
-			containerRender(reply)
+			containerRender(&remotePeer, reply)
 		})
 	},
 }
 
-func containerRender(reply *osapi.ContainersReply) {
+func containerRender(remotePeer *peer.Peer, reply *osapi.ContainersReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
+
+	defaultNode := addrFromPeer(remotePeer)
 
 	for _, rep := range reply.Response {
 		resp := rep
@@ -78,7 +84,7 @@ func containerRender(reply *osapi.ContainersReply) {
 				display = "└─ " + display
 			}
 
-			node := ""
+			node := defaultNode
 
 			if resp.Metadata != nil {
 				node = resp.Metadata.Hostname

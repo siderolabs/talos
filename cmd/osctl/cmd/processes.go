@@ -20,7 +20,9 @@ import (
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -182,7 +184,9 @@ var cpu = func(p1, p2 *osapi.Process) bool {
 
 //nolint: gocyclo
 func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
-	reply, err := c.Processes(ctx)
+	var remotePeer peer.Peer
+
+	reply, err := c.Processes(ctx, grpc.Peer(&remotePeer))
 	if err != nil {
 		// TODO: Figure out how to expose errors to client without messing
 		// up display
@@ -190,6 +194,8 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 		// no longer exists ( /proc/1234/comm no such file or directory )
 		return output, nil
 	}
+
+	defaultNode := addrFromPeer(&remotePeer)
 
 	s := []string{}
 
@@ -217,7 +223,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 				args = p.Args
 			}
 
-			node := ""
+			node := defaultNode
 
 			if resp.Metadata != nil {
 				node = resp.Metadata.Hostname

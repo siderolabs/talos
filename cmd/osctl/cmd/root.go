@@ -200,9 +200,15 @@ func remotePeer(ctx context.Context) (peerHost string) {
 
 	remote, ok := peer.FromContext(ctx)
 	if ok {
-		peerHost = remote.Addr.String()
-		peerHost, _, _ = net.SplitHostPort(peerHost) //nolint: errcheck
+		peerHost = addrFromPeer(remote)
 	}
 
 	return
+}
+
+func addrFromPeer(remote *peer.Peer) (peerHost string) {
+	peerHost = remote.Addr.String()
+	peerHost, _, _ = net.SplitHostPort(peerHost) //nolint: errcheck
+
+	return peerHost
 }

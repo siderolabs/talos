@@ -12,6 +12,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -31,14 +33,23 @@ var mountsCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			mountsRender(c.Mounts(globalCtx))
+			var remotePeer peer.Peer
+
+			reply, err := c.Mounts(globalCtx, grpc.Peer(&remotePeer))
+			if err != nil {
+				helpers.Fatalf("error getting interfaces: %s", err)
+			}
+
+			mountsRender(&remotePeer, reply)
 		})
 	},
 }
 
-func mountsRender(reply *machineapi.MountsReply, err error) {
+func mountsRender(remotePeer *peer.Peer, reply *machineapi.MountsReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
+
+	defaultNode := addrFromPeer(remotePeer)
 
 	for _, resp := range reply.Response {
 		for _, r := range resp.Stats {
@@ -48,7 +59,7 @@ func mountsRender(reply *machineapi.MountsReply, err error) {
 				continue
 			}
 
-			node := ""
+			node := defaultNode
 
 			if resp.Metadata != nil {
 				node = resp.Metadata.Hostname
