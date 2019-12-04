@@ -19,3 +19,12 @@ func Fatalf(message string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, message, args...)
 	os.Exit(1)
 }
+
+// Warning prints formatted message to stderr
+func Warning(message string, args ...interface{}) {
+	if !strings.HasSuffix(message, "\n") {
+		message += "\n"
+	}
+
+	fmt.Fprintf(os.Stderr, "WARNING: "+message, args...)
+}

@@ -286,6 +286,10 @@ func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (r
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.VersionReply) //nolint: errcheck
+
 	return
 }
 
