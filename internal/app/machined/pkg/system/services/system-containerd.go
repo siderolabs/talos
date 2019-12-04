@@ -59,8 +59,6 @@ func (c *SystemContainerd) Runner(config runtime.Configurator) (runner.Runner, e
 			"--address", constants.SystemContainerdAddress,
 			"--state", "/run/system/containerd",
 			"--root", "/run/system/lib/containerd",
-			"--config",
-			"/etc/containerd-system.toml",
 		},
 	}
 

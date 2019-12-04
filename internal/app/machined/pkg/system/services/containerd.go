@@ -61,7 +61,7 @@ func (c *Containerd) Runner(config runtime.Configurator) (runner.Runner, error) 
 			"--address",
 			constants.ContainerdAddress,
 			"--config",
-			"/etc/containerd.toml",
+			"/etc/containerd/cri.toml",
 		},
 	}
 

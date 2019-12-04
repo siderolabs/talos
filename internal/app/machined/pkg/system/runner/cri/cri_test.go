@@ -67,6 +67,7 @@ func (suite *CRISuite) SetupSuite() {
 			"--address", suite.containerdAddress,
 			"--state", stateDir,
 			"--root", rootDir,
+			"--config", "/etc/containerd/cri.toml",
 		},
 	}
 
