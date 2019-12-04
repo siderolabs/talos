@@ -206,29 +206,29 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:d313fca /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:d313fca /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:ed3b1fd /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:ed3b1fd /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:d313fca / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:d313fca / /rootfs
-COPY --from=docker.io/autonomy/containerd:d313fca / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:d313fca / /rootfs
-COPY --from=docker.io/autonomy/eudev:d313fca / /rootfs
-COPY --from=docker.io/autonomy/iptables:d313fca / /rootfs
-COPY --from=docker.io/autonomy/libressl:d313fca / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:d313fca / /rootfs
-COPY --from=docker.io/autonomy/musl:d313fca / /rootfs
-COPY --from=docker.io/autonomy/runc:d313fca / /rootfs
-COPY --from=docker.io/autonomy/socat:d313fca / /rootfs
-COPY --from=docker.io/autonomy/syslinux:d313fca / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:d313fca / /rootfs
-COPY --from=docker.io/autonomy/util-linux:d313fca /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:d313fca /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:d313fca /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:d313fca /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/containerd:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/eudev:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/iptables:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/libressl:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/musl:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/runc:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/socat:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/syslinux:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:ed3b1fd / /rootfs
+COPY --from=docker.io/autonomy/util-linux:ed3b1fd /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:ed3b1fd /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:ed3b1fd /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:ed3b1fd /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY images/apid.tar /rootfs/usr/images/
 COPY images/ntpd.tar /rootfs/usr/images/
