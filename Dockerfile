@@ -239,7 +239,7 @@ COPY images/networkd.tar /rootfs/usr/images/
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-COPY hack/containerd.toml /rootfs/etc/containerd/cri.toml
+COPY hack/containerd.toml /rootfs/etc/cri/containerd.toml
 RUN touch /rootfs/etc/resolv.conf
 RUN touch /rootfs/etc/hosts
 RUN touch /rootfs/etc/os-release
