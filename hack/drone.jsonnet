@@ -90,15 +90,16 @@ local buildkit = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, target='', depends_on=[], environment={}) = {
+local Step(name, image='', target='', depends_on=[], environment={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
+
   local common_env_vars = {
     BUILDKIT_HOST: '${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}',
     BINDIR: '/usr/local/bin',
   },
 
   name: name,
-  image: build_container,
+  image: if image == '' then build_container else image,
   pull: "always",
   commands: [make],
   environment: common_env_vars + environment,
@@ -248,9 +249,9 @@ local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_
 local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
 local push_image_gcp = Step("push-image-gcp", depends_on=[image_gcp], environment=creds_env_vars);
-local e2e_integration_aws = Step("e2e-integration-aws", "e2e-integration", depends_on=[capi, push_image_aws], environment={PLATFORM: "aws"});
-local e2e_integration_azure = Step("e2e-integration-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure"});
-local e2e_integration_gcp = Step("e2e-integration-gcp", "e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp"});
+local e2e_integration_aws = Step("e2e-integration-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={PLATFORM: "aws"});
+local e2e_integration_azure = Step("e2e-integration-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure"});
+local e2e_integration_gcp = Step("e2e-integration-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp"});
 
 local e2e_steps = default_steps + [
   capi,
@@ -277,9 +278,9 @@ local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
-local conformance_aws = Step("conformance-aws", "e2e-integration", depends_on=[capi, push_image_aws], environment={PLATFORM: "aws", CONFORMANCE: "run"});
-local conformance_azure = Step("conformance-azure", "e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure", CONFORMANCE: "run"});
-local conformance_gcp = Step("conformance-gcp", "e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp", CONFORMANCE: "run"});
+local conformance_aws = Step("conformance-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={PLATFORM: "aws", CONFORMANCE: "run"});
+local conformance_azure = Step("conformance-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure", CONFORMANCE: "run"});
+local conformance_gcp = Step("conformance-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp", CONFORMANCE: "run"});
 
 
 local push_edge = {
