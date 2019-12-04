@@ -5,7 +5,9 @@
 package retry
 
 import (
+	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -22,6 +24,42 @@ type Ticker interface {
 	Tick() time.Duration
 	StopChan() <-chan struct{}
 	Stop()
+}
+
+// ErrorSet represents a set of unique errors.
+type ErrorSet struct {
+	errs map[string]error
+
+	mu sync.Mutex
+}
+
+func (e *ErrorSet) Error() string {
+	if len(e.errs) == 0 {
+		return ""
+	}
+
+	errString := fmt.Sprintf("%d error(s) occurred:", len(e.errs))
+	for _, err := range e.errs {
+		errString = fmt.Sprintf("%s\n%s", errString, err)
+	}
+
+	return errString
+}
+
+// Append adds the error to the set if the error is not already present.
+func (e *ErrorSet) Append(err error) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if e.errs == nil {
+		e.errs = make(map[string]error)
+	}
+
+	if _, ok := e.errs[err.Error()]; !ok {
+		e.errs[err.Error()] = err
+	}
+
+	return e
 }
 
 // TimeoutError represents a timeout error.
@@ -90,10 +128,12 @@ func retry(f RetryableFunc, d time.Duration, t Ticker) error {
 	timer := time.NewTimer(d)
 	defer timer.Stop()
 
+	errs := &ErrorSet{}
+
 	// We run the func first to avoid having to wait for the next tick.
 	if err := f(); err != nil {
 		if _, ok := err.(unexpectedError); ok {
-			return err
+			return errs.Append(err)
 		}
 	} else {
 		return nil
@@ -102,7 +142,7 @@ func retry(f RetryableFunc, d time.Duration, t Ticker) error {
 	for {
 		select {
 		case <-timer.C:
-			return TimeoutError{}
+			return errs.Append(TimeoutError{})
 		case <-t.StopChan():
 			return nil
 		case <-time.After(t.Tick()):
@@ -111,9 +151,11 @@ func retry(f RetryableFunc, d time.Duration, t Ticker) error {
 		if err := f(); err != nil {
 			switch err.(type) {
 			case expectedError:
+				// nolint: errcheck
+				errs.Append(err)
 				continue
 			case unexpectedError:
-				return err
+				return errs.Append(err)
 			}
 		}
 
