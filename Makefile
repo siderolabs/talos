@@ -280,8 +280,8 @@ container: buildkitd
 	@docker load < build/$@.tar
 
 .PHONY: basic-integration
-basic-integration:
-	@TAG=$(TAG) ./hack/test/$@.sh
+basic-integration: gitmeta
+	@TAG=$(TAG) SHA=$(SHA) go run ./internal/test-framework/main.go basic-integration
 
 .PHONY: capi
 capi:
