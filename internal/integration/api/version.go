@@ -33,8 +33,6 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 
 // TestSameVersionCluster verifies that all the nodes are on the same version
 func (suite *VersionSuite) TestSameVersionCluster() {
-	suite.T().Skip("disabled test as it frequently fails on e2e (less responses than expected)")
-
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)
 

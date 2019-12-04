@@ -51,7 +51,10 @@ var versionCmd = &cobra.Command{
 
 			reply, err := c.Version(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting version: %s", err)
+				if reply == nil {
+					helpers.Fatalf("error getting version: %s", err)
+				}
+				helpers.Warning("%s", err)
 			}
 
 			defaultNode := addrFromPeer(&remotePeer)
