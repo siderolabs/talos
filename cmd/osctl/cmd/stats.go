@@ -14,7 +14,9 @@ import (
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/api/common"
 	osapi "github.com/talos-systems/talos/api/os"
@@ -47,20 +49,25 @@ var statsCmd = &cobra.Command{
 			}
 			md := metadata.New(make(map[string]string))
 			md.Set("targets", target...)
-			reply, err := c.Stats(metadata.NewOutgoingContext(globalCtx, md), namespace, driver)
+
+			var remotePeer peer.Peer
+
+			reply, err := c.Stats(metadata.NewOutgoingContext(globalCtx, md), namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
 				helpers.Fatalf("error getting stats: %s", err)
 			}
 
-			statsRender(reply)
+			statsRender(&remotePeer, reply)
 		})
 	},
 }
 
-func statsRender(reply *osapi.StatsReply) {
+func statsRender(remotePeer *peer.Peer, reply *osapi.StatsReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
+
+	defaultNode := addrFromPeer(remotePeer)
 
 	for _, rep := range reply.Response {
 		resp := rep
@@ -76,7 +83,7 @@ func statsRender(reply *osapi.StatsReply) {
 				display = "└─ " + display
 			}
 
-			node := ""
+			node := defaultNode
 
 			if resp.Metadata != nil {
 				node = resp.Metadata.Hostname

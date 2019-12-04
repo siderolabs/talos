@@ -11,6 +11,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -29,22 +31,25 @@ var routesCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			reply, err := c.Routes(globalCtx)
+			var remotePeer peer.Peer
+			reply, err := c.Routes(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
 				helpers.Fatalf("error getting routes: %s", err)
 			}
 
-			routesRender(reply)
+			routesRender(&remotePeer, reply)
 		})
 	},
 }
 
-func routesRender(reply *networkapi.RoutesReply) {
+func routesRender(remotePeer *peer.Peer, reply *networkapi.RoutesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
 
+	defaultNode := addrFromPeer(remotePeer)
+
 	for _, resp := range reply.Response {
-		var node string
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname

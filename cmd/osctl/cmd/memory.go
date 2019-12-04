@@ -11,6 +11,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -32,26 +34,30 @@ var memoryCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			reply, err := c.Memory(globalCtx)
+			var remotePeer peer.Peer
+
+			reply, err := c.Memory(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
 				helpers.Fatalf("error getting memory stats: %s", err)
 			}
 
 			if verbose {
-				verboseRender(reply)
+				verboseRender(&remotePeer, reply)
 			} else {
-				briefRender(reply)
+				briefRender(&remotePeer, reply)
 			}
 		})
 	},
 }
 
-func briefRender(reply *osapi.MemInfoReply) {
+func briefRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tTOTAL\tUSED\tFREE\tSHARED\tBUFFERS\tCACHE\tAVAILABLE")
 
+	defaultNode := addrFromPeer(remotePeer)
+
 	for _, resp := range reply.Response {
-		node := ""
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname
@@ -73,13 +79,18 @@ func briefRender(reply *osapi.MemInfoReply) {
 	helpers.Should(w.Flush())
 }
 
-func verboseRender(reply *osapi.MemInfoReply) {
+func verboseRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) {
+	defaultNode := addrFromPeer(remotePeer)
+
 	// Dump as /proc/meminfo
 	for _, resp := range reply.Response {
+		node := defaultNode
+
 		if resp.Metadata != nil {
-			fmt.Printf("%s: %s\n", "NODE", resp.Metadata.Hostname)
+			node = resp.Metadata.Hostname
 		}
 
+		fmt.Printf("%s: %s\n", "NODE", node)
 		fmt.Printf("%s: %d %s\n", "MemTotal", resp.Meminfo.Memtotal, "kB")
 		fmt.Printf("%s: %d %s\n", "MemFree", resp.Meminfo.Memfree, "kB")
 		fmt.Printf("%s: %d %s\n", "MemAvailable", resp.Meminfo.Memavailable, "kB")

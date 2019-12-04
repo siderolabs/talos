@@ -11,6 +11,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -29,22 +31,26 @@ var interfacesCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			reply, err := c.Interfaces(globalCtx)
+			var remotePeer peer.Peer
+
+			reply, err := c.Interfaces(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
 				helpers.Fatalf("error getting interfaces: %s", err)
 			}
 
-			intersRender(reply)
+			intersRender(&remotePeer, reply)
 		})
 	},
 }
 
-func intersRender(reply *networkapi.InterfacesReply) {
+func intersRender(remotePeer *peer.Peer, reply *networkapi.InterfacesReply) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINDEX\tNAME\tMAC\tMTU\tADDRESS")
 
+	defaultNode := addrFromPeer(remotePeer)
+
 	for _, resp := range reply.Response {
-		node := ""
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname

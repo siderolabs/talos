@@ -12,6 +12,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -30,14 +32,18 @@ var timeCmd = &cobra.Command{
 				helpers.Fatalf("failed to parse check flag: %w", err)
 			}
 
-			var reply *timeapi.TimeReply
+			var (
+				reply      *timeapi.TimeReply
+				remotePeer peer.Peer
+			)
+
 			if server == "" {
-				reply, err = c.Time(globalCtx)
+				reply, err = c.Time(globalCtx, grpc.Peer(&remotePeer))
 				if err != nil {
 					helpers.Fatalf("error fetching time: %s", err)
 				}
 			} else {
-				reply, err = c.TimeCheck(globalCtx, server)
+				reply, err = c.TimeCheck(globalCtx, server, grpc.Peer(&remotePeer))
 				if err != nil {
 					helpers.Fatalf("error fetching time: %s", err)
 				}
@@ -46,9 +52,11 @@ var timeCmd = &cobra.Command{
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			fmt.Fprintln(w, "NODE\tNTP-SERVER\tLOCAL-TIME\tREMOTE-TIME")
 
+			defaultNode := addrFromPeer(&remotePeer)
+
 			var localtime, remotetime time.Time
 			for _, resp := range reply.Response {
-				node := ""
+				node := defaultNode
 
 				if resp.Metadata != nil {
 					node = resp.Metadata.Hostname

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -37,14 +39,15 @@ func init() {
 
 func upgrade() {
 	var (
-		err   error
-		reply *machineapi.UpgradeReply
+		err        error
+		reply      *machineapi.UpgradeReply
+		remotePeer peer.Peer
 	)
 
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent starting upgrades to
 		// an unknown version
-		reply, err = c.Upgrade(globalCtx, upgradeImage)
+		reply, err = c.Upgrade(globalCtx, upgradeImage, grpc.Peer(&remotePeer))
 	})
 
 	if err != nil {
@@ -54,8 +57,10 @@ func upgrade() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tACK\tSTARTED")
 
+	defaultNode := addrFromPeer(&remotePeer)
+
 	for _, resp := range reply.Response {
-		node := ""
+		node := defaultNode
 
 		if resp.Metadata != nil {
 			node = resp.Metadata.Hostname

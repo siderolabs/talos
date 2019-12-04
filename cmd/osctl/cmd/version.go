@@ -9,6 +9,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -45,14 +47,23 @@ var versionCmd = &cobra.Command{
 
 		fmt.Println("Server:")
 		setupClient(func(c *client.Client) {
-			reply, err := c.Version(globalCtx)
+			var remotePeer peer.Peer
+
+			reply, err := c.Version(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
 				helpers.Fatalf("error getting version: %s", err)
 			}
+
+			defaultNode := addrFromPeer(&remotePeer)
+
 			for _, resp := range reply.Response {
+				node := defaultNode
+
 				if resp.Metadata != nil {
-					fmt.Printf("\t%s:        %s\n", "NODE", resp.Metadata.Hostname)
+					node = resp.Metadata.Hostname
 				}
+
+				fmt.Printf("\t%s:        %s\n", "NODE", node)
 
 				version.PrintLongVersionFromExisting(resp.Version)
 			}
