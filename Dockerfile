@@ -206,29 +206,29 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:ed3b1fd /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:ed3b1fd /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:a70af2a /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:a70af2a /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/containerd:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/eudev:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/iptables:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/libressl:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/musl:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/runc:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/socat:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/syslinux:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:ed3b1fd / /rootfs
-COPY --from=docker.io/autonomy/util-linux:ed3b1fd /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:ed3b1fd /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:ed3b1fd /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:ed3b1fd /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/containerd:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/eudev:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/iptables:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/libressl:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/musl:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/runc:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/socat:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/syslinux:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:a70af2a / /rootfs
+COPY --from=docker.io/autonomy/util-linux:a70af2a /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:a70af2a /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:a70af2a /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:a70af2a /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY images/apid.tar /rootfs/usr/images/
 COPY images/ntpd.tar /rootfs/usr/images/
@@ -239,8 +239,7 @@ COPY images/networkd.tar /rootfs/usr/images/
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-COPY hack/containerd.toml /etc/containerd.toml
-COPY hack/containerd.toml /etc/containerd-system.toml
+COPY hack/containerd.toml /rootfs/etc/containerd/cri.toml
 RUN touch /rootfs/etc/resolv.conf
 RUN touch /rootfs/etc/hosts
 RUN touch /rootfs/etc/os-release
