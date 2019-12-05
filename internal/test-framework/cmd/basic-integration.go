@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +20,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/test-framework/internal/pkg/runner"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -38,9 +41,7 @@ var basicIntegrationCmd = &cobra.Command{
 	Use:   "basic-integration",
 	Short: "Runs the docker-based basic integration test",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := basicIntegration(); err != nil {
-			panic(err)
-		}
+		helpers.Should(basicIntegration())
 	},
 }
 
@@ -94,8 +95,16 @@ func basicIntegration() error {
 		return err
 	}
 
-	_, err = cli.ImagePull(ctx, kubeImage, types.ImagePullOptions{})
-	if err != nil {
+	var reader io.ReadCloser
+
+	if reader, err = cli.ImagePull(ctx, kubeImage, types.ImagePullOptions{}); err != nil {
+		return err
+	}
+
+	// nolint: errcheck
+	defer reader.Close()
+
+	if _, err = io.Copy(ioutil.Discard, reader); err != nil {
 		return err
 	}
 

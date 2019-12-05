@@ -269,6 +269,9 @@ func ensureImageExists(ctx context.Context, cli *client.Client, image string) er
 			return err
 		}
 
+		// nolint: errcheck
+		defer reader.Close()
+
 		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
 			return err
 		}
