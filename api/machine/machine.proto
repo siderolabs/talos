@@ -257,6 +257,7 @@ message LogsRequest {
   string id = 2;
   // driver might be default "containerd" or "cri"
   common.ContainerDriver driver = 3;
+  bool follow = 4;
 }
 
 message ReadRequest {

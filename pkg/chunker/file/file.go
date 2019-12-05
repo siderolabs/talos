@@ -18,16 +18,24 @@ import (
 
 // Options is the functional options struct.
 type Options struct {
-	Size int
+	Size   int
+	Follow bool
 }
 
 // Option is the functional option func.
 type Option func(*Options)
 
-// Size sets the chunk size of the Chunker.
-func Size(s int) Option {
+// WithSize sets the chunk size of the Chunker.
+func WithSize(s int) Option {
 	return func(args *Options) {
 		args.Size = s
+	}
+}
+
+// WithFollow file updates using inotify().
+func WithFollow() Option {
+	return func(args *Options) {
+		args.Follow = true
 	}
 }
 
@@ -68,35 +76,38 @@ func (c *File) Read(ctx context.Context) <-chan []byte {
 	go func(ch chan []byte) {
 		defer close(ch)
 
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			log.Printf("failed to watch: %v\n", err)
-			return
-		}
-		// nolint: errcheck
-		defer watcher.Close()
+		var (
+			watcherEvents chan fsnotify.Event
+			watcherErrors chan error
+		)
 
-		if err = watcher.Add(filepath.Dir(filename)); err != nil {
-			log.Printf("failed to watch add: %v\n", err)
-			return
-		}
-		offset, err := c.source.Seek(0, io.SeekStart)
-		if err != nil {
-			log.Printf("failed to seek: %v\n", err)
-			return
+		if c.options.Follow {
+			watcher, err := fsnotify.NewWatcher()
+			if err != nil {
+				log.Printf("failed to watch: %v\n", err)
+				return
+			}
+			// nolint: errcheck
+			defer watcher.Close()
+
+			watcherEvents = watcher.Events
+			watcherErrors = watcher.Errors
+
+			if err = watcher.Add(filepath.Dir(filename)); err != nil {
+				log.Printf("failed to watch add: %v\n", err)
+				return
+			}
 		}
 
 		buf := make([]byte, c.options.Size)
 
 		for {
 			for {
-				n, err := c.source.ReadAt(buf, offset)
+				n, err := c.source.Read(buf)
 				if err != nil && err != io.EOF {
 					log.Printf("read error: %s\n", err.Error())
 					return
 				}
-
-				offset += int64(n)
 
 				if n > 0 {
 					// Copy the buffer since we will modify it in the next loop.
@@ -107,7 +118,7 @@ func (c *File) Read(ctx context.Context) <-chan []byte {
 					select {
 					case <-ctx.Done():
 						return
-					case event := <-watcher.Events:
+					case event := <-watcherEvents:
 						// drain events while waiting for the buffer to be delivered
 						// otherwise inotify() queue might overflow
 						if event.Name == filename && event.Op == fsnotify.Write {
@@ -125,11 +136,15 @@ func (c *File) Read(ctx context.Context) <-chan []byte {
 				}
 			}
 
+			if !c.options.Follow {
+				return
+			}
+
 		WATCH:
 			select {
 			case <-ctx.Done():
 				return
-			case event := <-watcher.Events:
+			case event := <-watcherEvents:
 				if event.Name != filename {
 					// ignore events for other files
 					goto WATCH
@@ -144,7 +159,7 @@ func (c *File) Read(ctx context.Context) <-chan []byte {
 					log.Printf("ignoring fsnotify event: %v\n", event)
 					goto WATCH
 				}
-			case err := <-watcher.Errors:
+			case err := <-watcherErrors:
 				log.Printf("failed to watch: %v\n", err)
 				return
 			}

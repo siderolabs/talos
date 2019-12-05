@@ -23,6 +23,8 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
+var follow bool
+
 // logsCmd represents the logs command
 var logsCmd = &cobra.Command{
 	Use:   "logs <id>",
@@ -46,7 +48,7 @@ var logsCmd = &cobra.Command{
 				driver = common.ContainerDriver_CRI
 			}
 
-			stream, err := c.Logs(globalCtx, namespace, driver, args[0])
+			stream, err := c.Logs(globalCtx, namespace, driver, args[0], follow)
 			if err != nil {
 				helpers.Fatalf("error fetching logs: %s", err)
 			}
@@ -59,6 +61,7 @@ var logsCmd = &cobra.Command{
 				if data.Metadata != nil && data.Metadata.Error != "" {
 					_, err = fmt.Fprintf(os.Stderr, "ERROR: %s\n", data.Metadata.Error)
 					helpers.Should(err)
+					continue
 				}
 
 				node := defaultNode
@@ -70,7 +73,9 @@ var logsCmd = &cobra.Command{
 				helpers.Should(err)
 			}
 
-			helpers.Should(<-errCh)
+			if err = <-errCh; err != nil {
+				helpers.Fatalf("error getting logs: %v", err)
+			}
 		})
 	},
 }
@@ -172,5 +177,6 @@ func (slicer *lineSlicer) run(stream machine.Machine_LogsClient) {
 func init() {
 	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	logsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
+	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
 	rootCmd.AddCommand(logsCmd)
 }
