@@ -11,25 +11,24 @@ replace (
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
-	github.com/Microsoft/go-winio v0.4.14 // indirect
-	github.com/Microsoft/hcsshim v0.8.6 // indirect
+	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/beevik/ntp v0.2.0
-	github.com/containerd/cgroups v0.0.0-20190328223300-4994991857f9
-	github.com/containerd/containerd v1.2.7
-	github.com/containerd/continuity v0.0.0-20181003075958-be9bd761db19 // indirect
+	github.com/containerd/cgroups v0.0.0-20191125132625-80b32e3c75c9
+	github.com/containerd/containerd v1.3.2
+	github.com/containerd/continuity v0.0.0-20191127005431-f65d91d395eb // indirect
 	github.com/containerd/cri v1.11.1
-	github.com/containerd/fifo v0.0.0-20180307165137-3d5202aec260 // indirect
-	github.com/containerd/typeurl v0.0.0-20190228175220-2a93cfde8c20
+	github.com/containerd/fifo v0.0.0-20190816180239-bda0ff6ed73c // indirect
+	github.com/containerd/ttrpc v0.0.0-20191028202541-4f1b8fe65a5c // indirect
+	github.com/containerd/typeurl v0.0.0-20190911142611-5eb25027c9fd
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
-	github.com/docker/go-events v0.0.0-20170721190031-9461782956ad // indirect
-	github.com/docker/go-units v0.4.0 // indirect
+	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5
 	github.com/gizak/termui/v3 v3.0.0
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
-	github.com/gogo/googleapis v1.1.0 // indirect
+	github.com/gogo/googleapis v1.3.0 // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
@@ -38,6 +37,7 @@ require (
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20190814082028-393ae75a101b
 	github.com/jsimonetti/rtnetlink v0.0.0-20191019172534-d21b2cb70d39
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubernetes-sigs/bootkube v0.14.1-0.20190731222813-f0fc1bdb404d
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
@@ -51,16 +51,17 @@ require (
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/syndtr/gocapability v0.0.0-20180223013746-33e07d32887e
+	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/grpc-proxy v0.0.0-20191129165806-5c579a7a6147
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
 	golang.org/x/crypto v0.0.0-20191108234033-bd318be0434a
-	golang.org/x/net v0.0.0-20191116160921-f9c825593386 // indirect
+	golang.org/x/net v0.0.0-20191204025024-5ee1b9f4859a // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4
+	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e
 	golang.org/x/text v0.3.2
+	google.golang.org/genproto v0.0.0-20191205163323-51378566eb59 // indirect
 	google.golang.org/grpc v1.25.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
