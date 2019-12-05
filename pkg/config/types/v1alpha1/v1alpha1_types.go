@@ -125,14 +125,19 @@ type MachineConfig struct {
 	MachineInstall *InstallConfig `yaml:"install,omitempty"`
 	//   description: |
 	//     Allows the addition of user specified files.
+	//     The value of `op` can be `create`, `overwrite`, or `append`.
+	//     In the case of `create`, `path` must not exist.
+	//     In the case of `overwrite`, and `append`, `path` must be a valid file.
+	//     If an `op` value of `append` is used, the existing file will be appended.
 	//     Note that the file contents are not required to be base64 encoded.
 	//   examples:
 	//     - |
-	//       kubelet:
-	//         contents: |
-	//           ...
-	//         permissions: 0666
-	//         path: /tmp/file.txt
+	//       files:
+	//         - content: |
+	//             ...
+	//           permissions: 0666
+	//           path: /tmp/file.txt
+	//           op: append
 	MachineFiles []machine.File `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
 	//   description: |
 	//     The `env` field allows for the addition of environment variables to a machine.

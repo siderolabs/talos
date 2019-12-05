@@ -44,7 +44,7 @@ type Env = map[string]string
 
 // File represents a file to write to disk.
 type File struct {
-	Contents    string      `yaml:"contents"`
+	Content     string      `yaml:"content"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
 	Op          string      `yaml:"op"`

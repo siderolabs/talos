@@ -31,12 +31,30 @@ func (task *ExtraFiles) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.runtime
 }
 
+// nolint: gocyclo
 func (task *ExtraFiles) runtime(r runtime.Runtime) (err error) {
 	var result *multierror.Error
 
 	for _, f := range r.Config().Machine().Files() {
-		// Slurp existing file if append is our op and add contents to it
-		if f.Op == "append" {
+		content := f.Content
+
+		switch f.Op {
+		case "create":
+			if err = doesNotExists(f.Path); err != nil {
+				result = multierror.Append(result, fmt.Errorf("file must not exist: %q", f.Path))
+				continue
+			}
+		case "overwrite":
+			if err = existsAndIsFile(f.Path); err != nil {
+				result = multierror.Append(result, err)
+				continue
+			}
+		case "append":
+			if err = existsAndIsFile(f.Path); err != nil {
+				result = multierror.Append(result, err)
+				continue
+			}
+
 			var existingFileContents []byte
 
 			existingFileContents, err = ioutil.ReadFile(f.Path)
@@ -45,7 +63,10 @@ func (task *ExtraFiles) runtime(r runtime.Runtime) (err error) {
 				continue
 			}
 
-			f.Contents = string(existingFileContents) + "\n" + f.Contents
+			content = string(existingFileContents) + "\n" + f.Content
+		default:
+			result = multierror.Append(result, fmt.Errorf("unknown operation for file %q: %q", f.Path, f.Op))
+			continue
 		}
 
 		// Determine if supplied path is in /var or not.
@@ -62,12 +83,18 @@ func (task *ExtraFiles) runtime(r runtime.Runtime) (err error) {
 			inVar = false
 		}
 
+		// We do not want to support creating new files anywhere outside of
+		// /var. If a valid use case comes up, we can reconsider then.
+		if !inVar && f.Op == "create" {
+			return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path)
+		}
+
 		if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
 
-		if err = ioutil.WriteFile(p, []byte(f.Contents), f.Permissions); err != nil {
+		if err = ioutil.WriteFile(p, []byte(content), f.Permissions); err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
@@ -81,4 +108,36 @@ func (task *ExtraFiles) runtime(r runtime.Runtime) (err error) {
 	}
 
 	return result.ErrorOrNil()
+}
+
+func doesNotExists(p string) (err error) {
+	_, err = os.Stat(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	return fmt.Errorf("file exists")
+}
+
+func existsAndIsFile(p string) (err error) {
+	var info os.FileInfo
+
+	info, err = os.Stat(p)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+
+		return fmt.Errorf("file must exist: %q", p)
+	}
+
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("invalid mode: %q", info.Mode().String())
+	}
+
+	return nil
 }
