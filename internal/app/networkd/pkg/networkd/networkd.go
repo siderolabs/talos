@@ -53,6 +53,11 @@ func New(config runtime.Configurator) (*Networkd, error) {
 
 	netconf := make(map[string][]nic.Option)
 
+	if option = kernel.ProcCmdline().Get("ip").First(); option != nil {
+		name, opts := buildKernelOptions(*option)
+		netconf[name] = opts
+	}
+
 	// Gather settings for all config driven interfaces
 	if config != nil {
 		log.Println("parsing configuration file")
@@ -72,11 +77,6 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		if len(config.Machine().Network().Resolvers()) > 0 {
 			resolvers = config.Machine().Network().Resolvers()
 		}
-	}
-
-	if option = kernel.ProcCmdline().Get("ip").First(); option != nil {
-		name, opts := buildKernelOptions(*option)
-		netconf[name] = opts
 	}
 
 	log.Println("discovering local interfaces")
