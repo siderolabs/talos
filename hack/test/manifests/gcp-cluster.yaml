@@ -70,6 +70,7 @@ spec:
   image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
   serviceAccounts: {}
   publicIP: true
+  rootDeviceSize: 100
 ---
 
 ## Controlplane 1 configs
@@ -116,6 +117,7 @@ spec:
   image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
   serviceAccounts: {}
   publicIP: true
+  rootDeviceSize: 100
 ---
 
 ## Controlplane 2 configs
@@ -162,6 +164,7 @@ spec:
   image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
   serviceAccounts: {}
   publicIP: true
+  rootDeviceSize: 100
 ---
 
 ## Worker deployment configs
@@ -220,3 +223,4 @@ spec:
       instanceType: n1-standard-2
       zone: us-central1-a
       image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
+      rootDeviceSize: 100
