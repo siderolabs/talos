@@ -9,6 +9,7 @@ package networkd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"strings"
@@ -96,6 +97,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 	// Add locally discovered interfaces to our list of interfaces
 	// if they are not already present
 	for _, device := range filterInterfaceByName(localInterfaces) {
+		// Handle interfaces that dont have user defined configuration
 		if _, ok := netconf[device.Name]; !ok {
 			netconf[device.Name] = []nic.Option{nic.WithName(device.Name)}
 
@@ -103,6 +105,20 @@ func New(config runtime.Configurator) (*Networkd, error) {
 			// This should speed up initial boot times since an unconfigured bond
 			// does not provide any value.
 			if strings.HasPrefix(device.Name, "bond") {
+				netconf[device.Name] = append(netconf[device.Name], nic.WithIgnore())
+			}
+
+			// Ignore links that do not have a carrier
+			carrier, err := ioutil.ReadFile("/sys/class/net/" + device.Name + "/carrier")
+			if err != nil {
+				result = multierror.Append(result, err)
+				continue
+			}
+
+			// note -- since we're only applying this to discovered interfaces
+			// that we don't have an explicit user defined, it wont negatively
+			// impact bond interfaces
+			if string(carrier) == "0" {
 				netconf[device.Name] = append(netconf[device.Name], nic.WithIgnore())
 			}
 		}
