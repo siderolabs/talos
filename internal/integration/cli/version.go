@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// VersionSuite verifies version API
+// VersionSuite verifies version command
 type VersionSuite struct {
 	base.CLISuite
 }

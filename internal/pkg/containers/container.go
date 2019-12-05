@@ -66,7 +66,7 @@ func (c *Container) Kill(signal syscall.Signal) error {
 }
 
 // GetLogChunker returns chunker for container log file
-func (c *Container) GetLogChunker() (chunker.Chunker, io.Closer, error) {
+func (c *Container) GetLogChunker(follow bool) (chunker.Chunker, io.Closer, error) {
 	logFile := c.GetLogFile()
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_RDONLY, 0)
@@ -74,7 +74,12 @@ func (c *Container) GetLogChunker() (chunker.Chunker, io.Closer, error) {
 			return nil, nil, err
 		}
 
-		return file.NewChunker(f), f, nil
+		chunkerOptions := []file.Option{}
+		if follow {
+			chunkerOptions = append(chunkerOptions, file.WithFollow())
+		}
+
+		return file.NewChunker(f, chunkerOptions...), f, nil
 	}
 
 	filename, err := c.GetProcessStderr()

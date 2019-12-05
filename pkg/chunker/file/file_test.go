@@ -71,7 +71,7 @@ func collectChunks(chunksCh <-chan []byte) <-chan []byte {
 }
 
 func (suite *FileChunkerSuite) TestStreaming() {
-	chunker := file.NewChunker(suite.reader)
+	chunker := file.NewChunker(suite.reader, file.WithFollow())
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
@@ -98,7 +98,7 @@ func (suite *FileChunkerSuite) TestStreaming() {
 }
 
 func (suite *FileChunkerSuite) TestStreamingWithSomeHead() {
-	chunker := file.NewChunker(suite.reader)
+	chunker := file.NewChunker(suite.reader, file.WithFollow())
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
@@ -127,7 +127,7 @@ func (suite *FileChunkerSuite) TestStreamingWithSomeHead() {
 }
 
 func (suite *FileChunkerSuite) TestStreamingSmallBuffer() {
-	chunker := file.NewChunker(suite.reader, file.Size(1))
+	chunker := file.NewChunker(suite.reader, file.WithSize(1), file.WithFollow())
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
@@ -159,7 +159,7 @@ func (suite *FileChunkerSuite) TestStreamingSmallBuffer() {
 }
 
 func (suite *FileChunkerSuite) TestStreamingDeleted() {
-	chunker := file.NewChunker(suite.reader)
+	chunker := file.NewChunker(suite.reader, file.WithFollow())
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
@@ -184,6 +184,26 @@ func (suite *FileChunkerSuite) TestStreamingDeleted() {
 	suite.Require().NoError(os.Remove(suite.writer.Name()))
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
+}
+
+func (suite *FileChunkerSuite) TestNoFollow() {
+	chunker := file.NewChunker(suite.reader)
+
+	ctx, ctxCancel := context.WithCancel(context.Background())
+	defer ctxCancel()
+
+	// nolint: errcheck
+	suite.writer.WriteString("abc")
+	// nolint: errcheck
+	suite.writer.WriteString("def")
+	// nolint: errcheck
+	suite.writer.WriteString("ghi")
+	time.Sleep(50 * time.Millisecond)
+
+	chunksCh := chunker.Read(ctx)
+	combinedCh := collectChunks(chunksCh)
+
+	suite.Require().Equal([]byte("abcdefghi"), <-combinedCh)
 }
 
 func TestFileChunkerSuite(t *testing.T) {

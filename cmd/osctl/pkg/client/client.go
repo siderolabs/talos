@@ -31,7 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/net"
 )
 
-// Credentials represents the set of values required to initialize a vaild
+// Credentials represents the set of values required to initialize a valid
 // Client.
 type Credentials struct {
 	ca  []byte
@@ -159,7 +159,7 @@ func (c *Client) KubeconfigRaw(ctx context.Context) (io.Reader, <-chan error, er
 		return nil, nil, err
 	}
 
-	return readStream(stream)
+	return ReadStream(stream)
 }
 
 // Kubeconfig returns K8s client config (kubeconfig).
@@ -268,11 +268,12 @@ func (c *Client) Dmesg(ctx context.Context) (*common.DataReply, error) {
 }
 
 // Logs implements the proto.OSClient interface.
-func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string) (stream machineapi.Machine_LogsClient, err error) {
+func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool) (stream machineapi.Machine_LogsClient, err error) {
 	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
 		Namespace: namespace,
 		Driver:    driver,
 		Id:        id,
+		Follow:    follow,
 	})
 
 	return
@@ -362,7 +363,7 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-cha
 		return nil, nil, err
 	}
 
-	return readStream(stream)
+	return ReadStream(stream)
 }
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
@@ -487,15 +488,17 @@ func (c *Client) Read(ctx context.Context, path string) (io.Reader, <-chan error
 		return nil, nil, err
 	}
 
-	return readStream(stream)
+	return ReadStream(stream)
 }
 
-type machineStream interface {
+// MachineStream is a common interface for streams returned by streaming APIs.
+type MachineStream interface {
 	Recv() (*common.DataResponse, error)
 	grpc.ClientStream
 }
 
-func readStream(stream machineStream) (io.Reader, <-chan error, error) {
+// ReadStream converts grpc stream into io.Reader.
+func ReadStream(stream MachineStream) (io.Reader, <-chan error, error) {
 	errCh := make(chan error)
 	pr, pw := io.Pipe()
 
@@ -528,5 +531,5 @@ func readStream(stream machineStream) (io.Reader, <-chan error, error) {
 		}
 	}()
 
-	return pr, errCh, nil
+	return pr, errCh, stream.CloseSend()
 }

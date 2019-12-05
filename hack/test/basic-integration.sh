@@ -92,4 +92,4 @@ run "osctl config target 10.5.0.4 && osctl -t 10.5.0.4 service etcd | grep Runni
 run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers"
 run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 services"
 
-run "integration-test -test.v -talos.target 10.5.0.2"
+run "integration-test -test.v"

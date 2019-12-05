@@ -238,7 +238,7 @@ func basicIntegration() error {
 		ctx,
 		cli,
 		runnerConfig,
-		"integration-test -test.v -talos.target 10.5.0.2",
+		"osctl config target 10.5.0.2 && integration-test -test.v",
 	); err != nil {
 		return err
 	}

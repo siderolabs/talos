@@ -22,8 +22,10 @@ type RunOption func(*runOptions)
 
 type runOptions struct {
 	shouldFail     bool
+	stdoutEmpty    bool
 	stderrNotEmpty bool
 	stdoutRegexps  []*regexp.Regexp
+	stderrRegexps  []*regexp.Regexp
 }
 
 // ShouldFail tells Run command should fail.
@@ -43,9 +45,16 @@ func ShouldSucceed() RunOption {
 }
 
 // StderrNotEmpty tells run that stderr of the command should not be empty.
-func StdErrNotEmpty() RunOption {
+func StderrNotEmpty() RunOption {
 	return func(opts *runOptions) {
 		opts.stderrNotEmpty = true
+	}
+}
+
+// StdoutEmpty tells run that stdout of the command should be empty.
+func StdoutEmpty() RunOption {
+	return func(opts *runOptions) {
+		opts.stdoutEmpty = true
 	}
 }
 
@@ -53,6 +62,13 @@ func StdErrNotEmpty() RunOption {
 func StdoutShouldMatch(r *regexp.Regexp) RunOption {
 	return func(opts *runOptions) {
 		opts.stdoutRegexps = append(opts.stdoutRegexps, r)
+	}
+}
+
+// StderrShouldMatch appends to the set of regexps sterr contents should match.
+func StderrShouldMatch(r *regexp.Regexp) RunOption {
+	return func(opts *runOptions) {
+		opts.stderrRegexps = append(opts.stderrRegexps, r)
 	}
 }
 
@@ -106,6 +122,12 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 		}
 	}
 
+	if opts.stdoutEmpty {
+		suite.Assert().Empty(stdout.String(), "stdout should be empty")
+	} else {
+		suite.Assert().NotEmpty(stdout.String(), "stdout should be not empty")
+	}
+
 	if opts.stderrNotEmpty {
 		suite.Assert().NotEmpty(stderr.String(), "stderr should be not empty")
 	} else {
@@ -114,5 +136,9 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 
 	for _, rx := range opts.stdoutRegexps {
 		suite.Assert().Regexp(rx, stdout.String())
+	}
+
+	for _, rx := range opts.stderrRegexps {
+		suite.Assert().Regexp(rx, stderr.String())
 	}
 }

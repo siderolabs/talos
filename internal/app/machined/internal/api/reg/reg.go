@@ -452,7 +452,12 @@ func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.Machine_Log
 		// nolint: errcheck
 		defer file.Close()
 
-		chunk = filechunker.NewChunker(file)
+		options := []filechunker.Option{}
+		if req.Follow {
+			options = append(options, filechunker.WithFollow())
+		}
+
+		chunk = filechunker.NewChunker(file, options...)
 	default:
 		var file io.Closer
 
@@ -489,7 +494,7 @@ func k8slogs(ctx context.Context, req *machineapi.LogsRequest) (chunker.Chunker,
 		return nil, nil, fmt.Errorf("container %q not found", req.Id)
 	}
 
-	return container.GetLogChunker()
+	return container.GetLogChunker(req.Follow)
 }
 
 func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {

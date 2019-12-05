@@ -5,7 +5,6 @@
 package log
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,12 +67,6 @@ func (l *Log) Close() error {
 	mu.Unlock()
 
 	return l.source.Close()
-}
-
-// Read implements chunker.Chunker.
-func (l *Log) Read(ctx context.Context) <-chan []byte {
-	c := filechunker.NewChunker(l.source)
-	return c.Read(ctx)
 }
 
 // FormatLogPath formats the path the log file.
