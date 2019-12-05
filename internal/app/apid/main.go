@@ -7,8 +7,6 @@ package main
 import (
 	"flag"
 	"log"
-	stdlibnet "net"
-	"os"
 	"regexp"
 	"strings"
 
@@ -18,11 +16,11 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
+	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
-	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
@@ -45,30 +43,22 @@ func main() {
 		log.Fatalf("failed to seed RNG: %v", err)
 	}
 
-	provider, err := createProvider()
+	config, err := loadConfig()
+	if err != nil {
+		log.Fatalf("open config: %v", err)
+	}
+
+	tlsConfig, err := provider.NewTLSConfig(config, strings.Split(*endpoints, ","))
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
 
-	ca, err := provider.GetCA()
-	if err != nil {
-		log.Fatalf("failed to get root CA: %+v", err)
-	}
-
-	tlsConfig, err := tls.New(
-		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(ca),
-		tls.WithServerCertificateProvider(provider),
-	)
+	serverTLSConfig, err := tlsConfig.ServerConfig()
 	if err != nil {
 		log.Fatalf("failed to create OS-level TLS configuration: %v", err)
 	}
 
-	clientTLSConfig, err := tls.New(
-		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(ca),
-		tls.WithClientCertificateProvider(provider),
-	)
+	clientTLSConfig, err := tlsConfig.ClientConfig()
 	if err != nil {
 		log.Fatalf("failed to create client TLS config: %v", err)
 	}
@@ -101,7 +91,7 @@ func main() {
 		factory.WithDefaultLog(),
 		factory.ServerOptions(
 			grpc.Creds(
-				credentials.NewTLS(tlsConfig),
+				credentials.NewTLS(serverTLSConfig),
 			),
 			grpc.CustomCodec(proxy.Codec()),
 			grpc.UnknownServiceHandler(
@@ -116,32 +106,11 @@ func main() {
 	}
 }
 
-func createProvider() (tls.CertificateProvider, error) {
+func loadConfig() (runtime.Configurator, error) {
 	content, err := config.FromFile(*configPath)
 	if err != nil {
-		log.Fatalf("open config: %v", err)
+		return nil, err
 	}
 
-	config, err := config.New(content)
-	if err != nil {
-		log.Fatalf("open config: %v", err)
-	}
-
-	ips, err := net.IPAddrs()
-	if err != nil {
-		log.Fatalf("failed to discover IP addresses: %+v", err)
-	}
-	// TODO(andrewrynhard): Allow for DNS names.
-	for _, san := range config.Machine().Security().CertSANs() {
-		if ip := stdlibnet.ParseIP(san); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Fatalf("failed to discover hostname: %+v", err)
-	}
-
-	return tls.NewRemoteRenewingFileCertificateProvider(config.Machine().Security().Token(), strings.Split(*endpoints, ","), constants.TrustdPort, hostname, ips)
+	return config.New(content)
 }
