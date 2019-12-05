@@ -242,6 +242,10 @@ install:
 #### files
 
 Allows the addition of user specified files.
+The value of `op` can be `create`, `overwrite`, or `append`.
+In the case of `create`, `path` must not exist.
+In the case of `overwrite`, and `append`, `path` must be a valid file.
+If an `op` value of `append` is used, the existing file will be appended.
 Note that the file contents are not required to be base64 encoded.
 
 Type: `array`
@@ -249,11 +253,12 @@ Type: `array`
 Examples:
 
 ```yaml
-kubelet:
-  contents: |
-    ...
-  permissions: 0666
-  path: /tmp/file.txt
+files:
+  - content: |
+      ...
+    permissions: 0666
+    path: /tmp/file.txt
+    op: append
 
 ```
 

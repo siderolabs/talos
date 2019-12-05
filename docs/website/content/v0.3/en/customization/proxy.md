@@ -10,7 +10,7 @@ Put into each machine the PEM encoded certificate:
 machine:
   ...
   files:
-    - contents: |
+    - content: |
         -----BEGIN CERTIFICATE-----
         ...
         -----END CERTIFICATE-----
