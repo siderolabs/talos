@@ -47,6 +47,7 @@ type File struct {
 	Contents    string      `yaml:"contents"`
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
+	Op          string      `yaml:"op"`
 }
 
 // Security defines the requirements for a config that pertains to security
