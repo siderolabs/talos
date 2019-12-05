@@ -13,7 +13,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/containerd/cgroups"
+	v1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/containerd/containerd"
 	tasks "github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/errdefs"
@@ -167,9 +167,9 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 			return nil, fmt.Errorf("error unmarshalling metrics for %q: %w", cntr.ID(), err)
 		}
 
-		data, ok := anydata.(*cgroups.Metrics)
+		data, ok := anydata.(*v1.Metrics)
 		if !ok {
-			return nil, errors.New("failed to convert metric data to cgroups.Metrics")
+			return nil, errors.New("failed to convert metric data to v1.Metrics")
 		}
 
 		cp.Metrics = &ctrs.ContainerMetrics{}
