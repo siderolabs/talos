@@ -65,6 +65,10 @@ func TestFilterResponseNil(t *testing.T) {
 	filtered, err := client.FilterReply(nil, e)
 	assert.Nil(t, filtered)
 	assert.Equal(t, e, err)
+
+	filtered, err = client.FilterReply((*common.DataReply)(nil), e)
+	assert.Nil(t, filtered)
+	assert.Equal(t, e, err)
 }
 
 func TestFilterResponseOnlyErrors(t *testing.T) {

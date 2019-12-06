@@ -8,6 +8,7 @@ package base
 
 import (
 	"context"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,10 @@ import (
 )
 
 func discoverNodesK8s(client *client.Client) ([]string, error) {
-	kubeconfig, err := client.Kubeconfig(context.Background())
+	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
+	defer ctxCancel()
+
+	kubeconfig, err := client.Kubeconfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +34,9 @@ func discoverNodesK8s(client *client.Client) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// patch timeout
+	config.Timeout = time.Minute
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {

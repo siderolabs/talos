@@ -8,14 +8,20 @@ package api
 
 import (
 	"context"
+	"time"
 
+	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // VersionSuite verifies version API
 type VersionSuite struct {
 	base.APISuite
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
 }
 
 // SuiteName ...
@@ -23,9 +29,20 @@ func (suite *VersionSuite) SuiteName() string {
 	return "api.VersionSuite"
 }
 
+// SetupTest ...
+func (suite *VersionSuite) SetupTest() {
+	// make sure API calls have timeout
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
+}
+
+// TearDownTest ...
+func (suite *VersionSuite) TearDownTest() {
+	suite.ctxCancel()
+}
+
 // TestExpectedVersionMaster verifies master node version matches expected
 func (suite *VersionSuite) TestExpectedVersionMaster() {
-	v, err := suite.Client.Version(context.Background())
+	v, err := suite.Client.Version(suite.ctx)
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(suite.Version, v.Response[0].Version.Tag)
@@ -36,9 +53,19 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)
 
-	ctx := client.WithTargets(context.Background(), nodes...)
+	ctx := client.WithTargets(suite.ctx, nodes...)
 
-	v, err := suite.Client.Version(ctx)
+	var v *machine.VersionReply
+
+	err := retry.Constant(
+		time.Minute,
+	).Retry(func() error {
+		var e error
+		v, e = suite.Client.Version(ctx)
+
+		return retry.ExpectedError(e)
+	})
+
 	suite.Require().NoError(err)
 
 	suite.Require().Len(v.Response, len(nodes))
