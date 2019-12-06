@@ -49,7 +49,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc8 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1
-	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.0.8
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/spf13/cobra v0.0.5
