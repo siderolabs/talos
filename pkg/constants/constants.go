@@ -248,6 +248,9 @@ const (
 	// DefaultCNI is the default CNI.
 	DefaultCNI = "flannel"
 
+	// CustomCNI is the string to use custom CNI.
+	CustomCNI = "custom"
+
 	// DefaultPodCIDR is the default pod CIDR block.
 	DefaultPodCIDR = "10.244.0.0/16"
 

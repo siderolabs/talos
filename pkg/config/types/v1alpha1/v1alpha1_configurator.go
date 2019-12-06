@@ -47,6 +47,7 @@ func (c *Config) Cluster() cluster.Cluster {
 }
 
 // Validate implements the Configurator interface.
+// nolint: gocyclo
 func (c *Config) Validate(mode runtime.Mode) error {
 	if c.MachineConfig == nil {
 		return errors.New("machine instructions are required")
@@ -63,6 +64,19 @@ func (c *Config) Validate(mode runtime.Mode) error {
 	if mode == runtime.Metal {
 		if c.MachineConfig.MachineInstall == nil {
 			return fmt.Errorf("install instructions are required by the %q mode", runtime.Metal.String())
+		}
+	}
+
+	if c.Machine().Type() == machine.Bootstrap {
+		switch c.Cluster().Network().CNI().Name() {
+		case "custom":
+			if len(c.Cluster().Network().CNI().URLs()) == 0 {
+				return errors.New("a cni url should be specified if using \"custom\" option for cni")
+			}
+		case constants.DefaultCNI:
+			// it's flannel bby
+		default:
+			return errors.New("cni name should be one of [custom,flannel]")
 		}
 	}
 
@@ -298,12 +312,15 @@ func (c *ClusterConfig) Network() cluster.Network {
 }
 
 // CNI implements the Configurator interface.
-func (c *ClusterConfig) CNI() string {
+func (c *ClusterConfig) CNI() cluster.CNI {
 	switch {
 	case c.ClusterNetwork == nil:
 		fallthrough
-	case c.ClusterNetwork.CNI == "":
-		return constants.DefaultCNI
+
+	case c.ClusterNetwork.CNI == nil:
+		return &CNIConfig{
+			CNIName: constants.DefaultCNI,
+		}
 	}
 
 	return c.ClusterNetwork.CNI
@@ -331,6 +348,16 @@ func (c *ClusterConfig) ServiceCIDR() string {
 	}
 
 	return c.ClusterNetwork.ServiceSubnet[0]
+}
+
+// Name implements the Configurator interface.
+func (c *CNIConfig) Name() string {
+	return c.CNIName
+}
+
+// URLs implements the Configurator interface.
+func (c *CNIConfig) URLs() []string {
+	return c.CNIUrls
 }
 
 // Hostname implements the Configurator interface.

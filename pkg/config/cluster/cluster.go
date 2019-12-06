@@ -30,9 +30,16 @@ type Cluster interface {
 // Network defines the requirements for a config that pertains to cluster
 // network options.
 type Network interface {
-	CNI() string
+	CNI() CNI
 	PodCIDR() string
 	ServiceCIDR() string
+}
+
+// CNI defines the requirements for a config that pertains to Kubernetes
+// cni.
+type CNI interface {
+	Name() string
+	URLs() []string
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related
