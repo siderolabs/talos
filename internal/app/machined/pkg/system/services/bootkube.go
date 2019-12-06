@@ -381,6 +381,15 @@ func fetchCNIManifests(urls []string) error {
 			continue
 		}
 
+		// Disable netrc since we don't have getent installed, and most likely
+		// never will.
+		httpGetter := &getter.HttpGetter{
+			Netrc: false,
+		}
+
+		getter.Getters["http"] = httpGetter
+		getter.Getters["https"] = httpGetter
+
 		client := &getter.Client{
 			Ctx:     ctx,
 			Src:     url,
