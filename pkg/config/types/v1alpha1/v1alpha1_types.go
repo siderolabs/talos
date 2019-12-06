@@ -194,7 +194,8 @@ type ClusterConfig struct {
 	//   examples:
 	//     - |
 	//       network:
-	//         cni: flannel
+	//         cni:
+	//           name: flannel
 	//         dnsDomain: cluster.local
 	//         podSubnets:
 	//         - 10.244.0.0/16
