@@ -40,7 +40,7 @@ func (e *ErrorSet) Error() string {
 
 	errString := fmt.Sprintf("%d error(s) occurred:", len(e.errs))
 	for _, err := range e.errs {
-		errString = fmt.Sprintf("%s\n%s", errString, err)
+		errString = fmt.Sprintf("%s\n\t%s", errString, err)
 	}
 
 	return errString
@@ -124,12 +124,20 @@ func (t ticker) Stop() {
 // ExpectedError error represents an error that is expected by the retrying
 // function. This error is ignored.
 func ExpectedError(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	return expectedError{err}
 }
 
 // UnexpectedError error represents an error that is unexpected by the retrying
 // function. This error is fatal.
 func UnexpectedError(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	return unexpectedError{err}
 }
 

@@ -48,9 +48,7 @@ func (apiSuite *APISuite) DiscoverNodes() []string {
 	var err error
 
 	apiSuite.discoveredNodes, err = discoverNodesK8s(apiSuite.Client)
-	if err != nil {
-		apiSuite.Require().Error(err)
-	}
+	apiSuite.Require().NoError(err, "k8s discovery failed")
 
 	if apiSuite.discoveredNodes == nil {
 		// still no nodes, skip the test

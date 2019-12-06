@@ -34,6 +34,10 @@ func FilterReply(reply interface{}, err error) (interface{}, error) {
 		panic("reply should be pointer to struct")
 	}
 
+	if replyStructPtr.IsNil() {
+		return nil, err
+	}
+
 	replyStruct := replyStructPtr.Elem()
 	if replyStruct.Kind() != reflect.Struct {
 		panic("reply should be struct")

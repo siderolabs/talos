@@ -30,7 +30,7 @@ func Test_retry(t *testing.T) {
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
 			},
-			wantString: "2 error(s) occurred:\ntest\ntimeout",
+			wantString: "2 error(s) occurred:\n\ttest\n\ttimeout",
 		},
 		{
 			name: "unexpected error string",
@@ -39,7 +39,7 @@ func Test_retry(t *testing.T) {
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
 			},
-			wantString: "1 error(s) occurred:\ntest",
+			wantString: "1 error(s) occurred:\n\ttest",
 		},
 		{
 			name: "no error string",
