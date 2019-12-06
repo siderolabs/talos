@@ -25,16 +25,16 @@ var kubeconfigCmd = &cobra.Command{
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
 Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			r, errCh, err := c.KubeconfigRaw(globalCtx)
 			if err != nil {
-				helpers.Fatalf("error copying: %s", err)
+				return fmt.Errorf("error copying: %w", err)
 			}
 
 			var wg sync.WaitGroup
@@ -51,7 +51,7 @@ Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if speci
 
 			localPath, err := os.Getwd()
 			if err != nil {
-				helpers.Fatalf("error getting current working directory: %s", err)
+				return fmt.Errorf("error getting current working directory: %s", err)
 			}
 
 			if len(args) == 1 {
@@ -63,10 +63,11 @@ Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if speci
 			if force {
 				err = os.Remove(filepath.Join(localPath, "kubeconfig"))
 				if err != nil && !os.IsNotExist(err) {
-					helpers.Fatalf("error deleting existing kubeconfig: %s", err)
+					return fmt.Errorf("error deleting existing kubeconfig: %s", err)
 				}
 			}
-			extractTarGz(localPath, r)
+
+			return extractTarGz(localPath, r)
 		})
 	},
 }

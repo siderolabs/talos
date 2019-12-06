@@ -153,7 +153,7 @@ func (c *Client) Close() error {
 }
 
 // KubeconfigRaw returns K8s client config (kubeconfig).
-func (c *Client) KubeconfigRaw(ctx context.Context) (io.Reader, <-chan error, error) {
+func (c *Client) KubeconfigRaw(ctx context.Context) (io.ReadCloser, <-chan error, error) {
 	stream, err := c.MachineClient.Kubeconfig(ctx, &empty.Empty{})
 	if err != nil {
 		return nil, nil, err
@@ -162,12 +162,8 @@ func (c *Client) KubeconfigRaw(ctx context.Context) (io.Reader, <-chan error, er
 	return ReadStream(stream)
 }
 
-// Kubeconfig returns K8s client config (kubeconfig).
-func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
-	r, errCh, err := c.KubeconfigRaw(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (c *Client) extractKubeconfig(r io.ReadCloser) ([]byte, error) {
+	defer r.Close() //nolint: errcheck
 
 	gzR, err := gzip.NewReader(r)
 	if err != nil {
@@ -199,11 +195,25 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	if err = <-errCh; err != nil {
+	return kubeconfigBuf.Bytes(), nil
+}
+
+// Kubeconfig returns K8s client config (kubeconfig).
+func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
+	r, errCh, err := c.KubeconfigRaw(ctx)
+	if err != nil {
 		return nil, err
 	}
 
-	return kubeconfigBuf.Bytes(), nil
+	kubeconfig, err := c.extractKubeconfig(r)
+
+	if err2 := <-errCh; err2 != nil {
+		// prefer errCh (error from server) as if server failed,
+		// extractKubeconfig failed as well, but server failure is more descriptive
+		return nil, err2
+	}
+
+	return kubeconfig, err
 }
 
 // Stats implements the proto.OSClient interface.
@@ -355,7 +365,7 @@ func (c *Client) LS(ctx context.Context, req machineapi.LSRequest) (stream machi
 }
 
 // CopyOut implements the proto.OSClient interface
-func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.Reader, <-chan error, error) {
+func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
 	stream, err := c.MachineClient.CopyOut(ctx, &machineapi.CopyOutRequest{
 		RootPath: rootPath,
 	})
@@ -498,8 +508,8 @@ type MachineStream interface {
 }
 
 // ReadStream converts grpc stream into io.Reader.
-func ReadStream(stream MachineStream) (io.Reader, <-chan error, error) {
-	errCh := make(chan error)
+func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
+	errCh := make(chan error, 1)
 	pr, pw := io.Pipe()
 
 	go func() {
