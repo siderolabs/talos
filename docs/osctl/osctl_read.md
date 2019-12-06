@@ -1,23 +1,20 @@
 <!-- markdownlint-disable -->
-## osctl logs
+## osctl read
 
-Retrieve logs for a process or container
+Read a file on the machine
 
 ### Synopsis
 
-Retrieve logs for a process or container
+Read a file on the machine
 
 ```
-osctl logs <id> [flags]
+osctl read <path> [flags]
 ```
 
 ### Options
 
 ```
-  -f, --follow       specify if the logs should be streamed
-  -h, --help         help for logs
-  -k, --kubernetes   use the k8s.io containerd namespace
-  -c, --use-cri      use the CRI driver
+  -h, --help   help for read
 ```
 
 ### Options inherited from parent commands
