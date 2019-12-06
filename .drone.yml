@@ -386,6 +386,14 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: gitstatus
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - gitmeta status
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
@@ -840,6 +848,14 @@ steps:
   - container
   - osctl-linux
   - integration-test
+
+- name: gitstatus
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - gitmeta status
+  depends_on:
+  - basic-integration
 
 - name: push-latest
   pull: always
@@ -1444,6 +1460,14 @@ steps:
   - container
   - osctl-linux
   - integration-test
+
+- name: gitstatus
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - gitmeta status
+  depends_on:
+  - basic-integration
 
 - name: push-latest
   pull: always
@@ -2079,6 +2103,14 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: gitstatus
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - gitmeta status
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
@@ -2712,6 +2744,14 @@ steps:
   - container
   - osctl-linux
   - integration-test
+
+- name: gitstatus
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - gitmeta status
+  depends_on:
+  - basic-integration
 
 - name: push-latest
   pull: always

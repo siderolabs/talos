@@ -154,6 +154,18 @@ local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[lint]);
 local basic_integration = Step("basic-integration", image="golang:1.13", depends_on=[container, osctl_linux, integration_test]);
 
+local print_git_status = {
+  name: "gitstatus",
+  image:  build_container,
+  pull: "always",
+  commands: ["gitmeta status"],
+  depends_on: [ basic_integration.name ],
+//  when: {
+//    status: [ "failure" ],
+//  },
+};
+
+
 local coverage = {
   name: 'coverage',
   image: 'plugins/codecov',
@@ -211,6 +223,7 @@ local default_steps = [
   unit_tests_race,
   coverage,
   basic_integration,
+  print_git_status,
   push_latest,
 ];
 
