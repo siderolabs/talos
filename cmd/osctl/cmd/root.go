@@ -45,9 +45,11 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "osctl",
-	Short: "A CLI for out-of-band management of Kubernetes nodes created by Talos",
-	Long:  ``,
+	Use:           "osctl",
+	Short:         "A CLI for out-of-band management of Kubernetes nodes created by Talos",
+	Long:          ``,
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 // Global context to be used in the commands.
@@ -111,31 +113,45 @@ func Execute() {
 	}
 }
 
-// setupClient wraps common code to initialize osd client
-func setupClient(action func(*client.Client)) {
+// setupClientE wraps common code to initialize osd client
+func setupClientE(action func(*client.Client) error) error {
 	// Update context with grpc metadata for proxy/relay requests
 	globalCtx = client.WithTargets(globalCtx, target...)
 
 	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig, cmdcontext)
 	if err != nil {
-		helpers.Fatalf("error getting client credentials: %s", err)
+		return fmt.Errorf("error getting client credentials: %w", err)
 	}
 
 	c, err := client.NewClient(creds, t, constants.ApidPort)
 	if err != nil {
-		helpers.Fatalf("error constructing client: %s", err)
+		return fmt.Errorf("error constructing client: %w", err)
 	}
 	// nolint: errcheck
 	defer c.Close()
 
-	action(c)
+	return action(c)
+}
+
+// setupClient is like setupClient, but without an error
+func setupClient(action func(*client.Client)) {
+	err := setupClientE(func(c *client.Client) error {
+		action(c)
+
+		return nil
+	})
+	if err != nil {
+		helpers.Fatalf("%s", err)
+	}
 }
 
 // nolint: gocyclo
-func extractTarGz(localPath string, r io.Reader) {
+func extractTarGz(localPath string, r io.ReadCloser) error {
+	defer r.Close() //nolint: errcheck
+
 	zr, err := gzip.NewReader(r)
 	if err != nil {
-		helpers.Fatalf("error initializing gzip: %s", err)
+		return fmt.Errorf("error initializing gzip: %w", err)
 	}
 
 	tr := tar.NewReader(zr)
@@ -147,7 +163,7 @@ func extractTarGz(localPath string, r io.Reader) {
 				break
 			}
 
-			helpers.Fatalf("error reading tar header: %s", err)
+			return fmt.Errorf("error reading tar header: %s", err)
 		}
 
 		path := filepath.Clean(filepath.Join(localPath, hdr.Name))
@@ -159,16 +175,16 @@ func extractTarGz(localPath string, r io.Reader) {
 			mode |= 0700 // make rwx for the owner
 
 			if err = os.Mkdir(path, mode); err != nil {
-				helpers.Fatalf("error creating directory %q mode %s: %s", path, mode, err)
+				return fmt.Errorf("error creating directory %q mode %s: %w", path, mode, err)
 			}
 
 			if err = os.Chmod(path, mode); err != nil {
-				helpers.Fatalf("error updating mode %s for %q: %s", mode, path, err)
+				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
 			}
 
 		case tar.TypeSymlink:
 			if err = os.Symlink(hdr.Linkname, path); err != nil {
-				helpers.Fatalf("error creating symlink %q -> %q: %s", path, hdr.Linkname, err)
+				return fmt.Errorf("error creating symlink %q -> %q: %w", path, hdr.Linkname, err)
 			}
 
 		default:
@@ -176,23 +192,25 @@ func extractTarGz(localPath string, r io.Reader) {
 
 			fp, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
 			if err != nil {
-				helpers.Fatalf("error creating file %q mode %s: %s", path, mode, err)
+				return fmt.Errorf("error creating file %q mode %s: %w", path, mode, err)
 			}
 
 			_, err = io.Copy(fp, tr)
 			if err != nil {
-				helpers.Fatalf("error copying data to %q: %s", path, err)
+				return fmt.Errorf("error copying data to %q: %w", path, err)
 			}
 
 			if err = fp.Close(); err != nil {
-				helpers.Fatalf("error closing %q: %s", path, err)
+				return fmt.Errorf("error closing %q: %w", path, err)
 			}
 
 			if err = os.Chmod(path, mode); err != nil {
-				helpers.Fatalf("error updating mode %s for %q: %s", mode, path, err)
+				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
 			}
 		}
 	}
+
+	return nil
 }
 
 func remotePeer(ctx context.Context) (peerHost string) {

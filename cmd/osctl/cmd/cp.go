@@ -79,7 +79,9 @@ captures ownership and permission bits.`,
 				}
 			}
 
-			extractTarGz(localPath, r)
+			if err = extractTarGz(localPath, r); err != nil {
+				helpers.Fatalf("%s", err)
+			}
 		})
 	},
 }
