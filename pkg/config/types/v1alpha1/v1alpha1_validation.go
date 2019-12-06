@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package v1alpha1 provides user-facing v1alpha1 machine configs
-// nolint: dupl
+//nolint: dupl
 package v1alpha1
 
 import (
@@ -14,7 +14,9 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 var (
@@ -49,12 +51,58 @@ var (
 )
 
 // NetworkDeviceCheck defines the function type for checks.
-// nolint: dupl
-type NetworkDeviceCheck func(*machine.Device) error
+//nolint: dupl
+type NetworkDeviceCheck func(machine.Device) error
 
-// Validate triggers the specified validation checks to run.
-// nolint: dupl
-func Validate(d *machine.Device, checks ...NetworkDeviceCheck) error {
+// Validate implements the Configurator interface.
+//nolint: gocyclo
+func (c *Config) Validate(mode runtime.Mode) error {
+	var result *multierror.Error
+
+	if c.MachineConfig == nil {
+		result = multierror.Append(result, errors.New("machine instructions are required"))
+	}
+
+	if c.ClusterConfig == nil {
+		result = multierror.Append(result, errors.New("cluster instructions are required"))
+	}
+
+	if c.Cluster().Endpoint() == nil || c.Cluster().Endpoint().String() == "" {
+		result = multierror.Append(result, errors.New("a cluster endpoint is required"))
+	}
+
+	if mode == runtime.Metal {
+		if c.MachineConfig.MachineInstall == nil {
+			result = multierror.Append(result, fmt.Errorf("install instructions are required by the %q mode", runtime.Metal.String()))
+		}
+	}
+
+	if c.Machine().Type() == machine.Bootstrap {
+		switch c.Cluster().Network().CNI().Name() {
+		case "custom":
+			if len(c.Cluster().Network().CNI().URLs()) == 0 {
+				result = multierror.Append(result, errors.New("a cni url should be specified if using \"custom\" option for cni"))
+			}
+		case constants.DefaultCNI:
+			// it's flannel bby
+		default:
+			result = multierror.Append(result, errors.New("cni name should be one of [custom,flannel]"))
+		}
+	}
+
+	for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+		if err := ValidateNetworkDevices(device, CheckDeviceInterface, CheckDeviceAddressing); err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// ValidateNetworkDevices runs the specified validation checks specific to the
+// network devices.
+//nolint: dupl
+func ValidateNetworkDevices(d machine.Device, checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
 	if d.Ignore {
@@ -69,66 +117,61 @@ func Validate(d *machine.Device, checks ...NetworkDeviceCheck) error {
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
-// nolint: dupl
-func CheckDeviceInterface() NetworkDeviceCheck {
-	return func(d *machine.Device) error {
-		var result *multierror.Error
+//nolint: dupl
+func CheckDeviceInterface(d machine.Device) error {
+	var result *multierror.Error
 
-		if d.Interface == "" {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.interface", "", ErrRequiredSection))
-		}
-
-		return result.ErrorOrNil()
+	if d.Interface == "" {
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.interface", "", ErrRequiredSection))
 	}
+
+	return result.ErrorOrNil()
 }
 
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified
-// nolint: dupl
-func CheckDeviceAddressing() NetworkDeviceCheck {
-	return func(d *machine.Device) error {
-		var result *multierror.Error
+//nolint: dupl
+func CheckDeviceAddressing(d machine.Device) error {
+	var result *multierror.Error
 
-		// Test for both dhcp and cidr specified
-		if d.DHCP && d.CIDR != "" {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
-		}
-
-		// test for neither dhcp nor cidr specified
-		if !d.DHCP && d.CIDR == "" {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
-		}
-
-		// ensure cidr is a valid address
-		if d.CIDR != "" {
-			if _, _, err := net.ParseCIDR(d.CIDR); err != nil {
-				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", "", err))
-			}
-		}
-
-		return result.ErrorOrNil()
+	// Test for both dhcp and cidr specified
+	if d.DHCP && d.CIDR != "" {
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
 	}
+
+	// test for neither dhcp nor cidr specified
+	if !d.DHCP && d.CIDR == "" {
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
+	}
+
+	// ensure cidr is a valid address
+	if d.CIDR != "" {
+		if _, _, err := net.ParseCIDR(d.CIDR); err != nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", "", err))
+		}
+	}
+
+	return result.ErrorOrNil()
 }
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
-// nolint: dupl
-func CheckDeviceRoutes() NetworkDeviceCheck {
-	return func(d *machine.Device) error {
-		var result *multierror.Error
+//nolint: dupl
+func CheckDeviceRoutes(d machine.Device) error {
+	var result *multierror.Error
 
-		if len(d.Routes) == 0 {
-			return result.ErrorOrNil()
-		}
-
-		for idx, route := range d.Routes {
-			if _, _, err := net.ParseCIDR(route.Network); err != nil {
-				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network, ErrInvalidAddress))
-			}
-
-			if ip := net.ParseIP(route.Gateway); ip == nil {
-				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway, ErrInvalidAddress))
-			}
-		}
+	if len(d.Routes) == 0 {
 		return result.ErrorOrNil()
 	}
+
+	for idx, route := range d.Routes {
+		if _, _, err := net.ParseCIDR(route.Network); err != nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network, ErrInvalidAddress))
+		}
+
+		if ip := net.ParseIP(route.Gateway); ip == nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway, ErrInvalidAddress))
+		}
+	}
+
+	return result.ErrorOrNil()
 }

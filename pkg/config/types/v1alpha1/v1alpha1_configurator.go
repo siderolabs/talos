@@ -5,7 +5,6 @@
 package v1alpha1
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -44,43 +42,6 @@ func (c *Config) Machine() machine.Machine {
 // Cluster implements the Configurator interface.
 func (c *Config) Cluster() cluster.Cluster {
 	return c.ClusterConfig
-}
-
-// Validate implements the Configurator interface.
-// nolint: gocyclo
-func (c *Config) Validate(mode runtime.Mode) error {
-	if c.MachineConfig == nil {
-		return errors.New("machine instructions are required")
-	}
-
-	if c.ClusterConfig == nil {
-		return errors.New("cluster instructions are required")
-	}
-
-	if c.Cluster().Endpoint() == nil || c.Cluster().Endpoint().String() == "" {
-		return errors.New("a cluster endpoint is required")
-	}
-
-	if mode == runtime.Metal {
-		if c.MachineConfig.MachineInstall == nil {
-			return fmt.Errorf("install instructions are required by the %q mode", runtime.Metal.String())
-		}
-	}
-
-	if c.Machine().Type() == machine.Bootstrap {
-		switch c.Cluster().Network().CNI().Name() {
-		case "custom":
-			if len(c.Cluster().Network().CNI().URLs()) == 0 {
-				return errors.New("a cni url should be specified if using \"custom\" option for cni")
-			}
-		case constants.DefaultCNI:
-			// it's flannel bby
-		default:
-			return errors.New("cni name should be one of [custom,flannel]")
-		}
-	}
-
-	return nil
 }
 
 // String implements the Configurator interface.
