@@ -363,7 +363,8 @@ Examples:
 
 ```yaml
 network:
-  cni: flannel
+  cni:
+    name: flannel
   dnsDomain: cluster.local
   podSubnets:
   - 10.244.0.0/16
@@ -829,12 +830,23 @@ extraArgs:
 #### cni
 
 The CNI used.
+Composed of "name" and "url".
+The "name" key only supports upstream bootkube options of "flannel" or "custom".
+URLs is only used if name is equal to "custom".
+URLs should point to a single yaml file that will get deployed.
+Empty struct or any other name will default to bootkube's flannel.
 
-Type: `string`
+Type: `CNIConfig`
 
-Valid Values:
+Examples:
 
-- `flannel`
+```yaml
+cni:
+  name: "custom"
+  urls:
+    - "https://www.mysweethttpserver.com/supersecretcni.yaml"
+
+```
 
 #### dnsDomain
 
@@ -876,6 +888,22 @@ serviceSubnets:
   - 10.96.0.0/12
 
 ```
+
+---
+
+### CNIConfig
+
+#### name
+
+Name of CNI to use.
+
+Type: `string`
+
+#### urls
+
+URLs containing manifests to apply for CNI.
+
+Type: `array`
 
 ---
 
