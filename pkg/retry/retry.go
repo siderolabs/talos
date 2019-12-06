@@ -28,7 +28,7 @@ type Ticker interface {
 
 // ErrorSet represents a set of unique errors.
 type ErrorSet struct {
-	errs map[string]error
+	errs []error
 
 	mu sync.Mutex
 }
@@ -52,11 +52,20 @@ func (e *ErrorSet) Append(err error) error {
 	defer e.mu.Unlock()
 
 	if e.errs == nil {
-		e.errs = make(map[string]error)
+		e.errs = []error{}
 	}
 
-	if _, ok := e.errs[err.Error()]; !ok {
-		e.errs[err.Error()] = err
+	ok := false
+
+	for _, existingErr := range e.errs {
+		if err.Error() == existingErr.Error() {
+			ok = true
+			break
+		}
+	}
+
+	if !ok {
+		e.errs = append(e.errs, err)
 	}
 
 	return e
