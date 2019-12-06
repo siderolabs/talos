@@ -30,7 +30,7 @@ func (task *MountShared) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *MountShared) container(r runtime.Runtime) (err error) {
-	targets := []string{"/", "/var/lib/kubelet", "/etc/cni"}
+	targets := []string{"/", "/var/lib/kubelet", "/etc/cni", "/run"}
 	for _, t := range targets {
 		if err = unix.Mount("", t, "", unix.MS_SHARED, ""); err != nil {
 			return err
