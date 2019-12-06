@@ -34,7 +34,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 			name: "test expected number of retries",
 			fields: fields{
 				retryer: retryer{
-					duration: 1 * time.Second,
+					duration: 1*time.Second + 200*time.Millisecond,
 					options:  NewDefaultOptions(WithUnits(100 * time.Millisecond)),
 				},
 			},
@@ -44,7 +44,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 					return ExpectedError(fmt.Errorf("expected"))
 				},
 			},
-			expectedCount: 4,
+			expectedCount: 5,
 			wantErr:       true,
 		},
 		{
