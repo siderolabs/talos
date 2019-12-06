@@ -15,12 +15,16 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/kubernetes-sigs/bootkube/pkg/asset"
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"go.etcd.io/etcd/clientv3"
+
+	getter "github.com/hashicorp/go-getter"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/bootkube"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
@@ -310,7 +314,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		DNSServiceIP:           dnsServiceIP,
 		PodCIDR:                podCIDR,
 		ServiceCIDR:            serviceCIDR,
-		NetworkProvider:        config.Cluster().Network().CNI(),
+		NetworkProvider:        config.Cluster().Network().CNI().Name(),
 		AltNames:               altNames,
 		Images:                 images,
 		BootstrapSecretsSubdir: "/assets/tls",
@@ -325,6 +329,13 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	if err = as.WriteFiles(constants.AssetsDirectory); err != nil {
 		return err
+	}
+
+	// If "custom" is the CNI, we expect the user to supply one or more urls that point to CNI yamls
+	if config.Cluster().Network().CNI().Name() == constants.CustomCNI {
+		if err = fetchCNIManifests(config.Cluster().Network().CNI().URLs()); err != nil {
+			return err
+		}
 	}
 
 	if err = ioutil.WriteFile(filepath.Join(constants.AssetsDirectory, "manifests", "psp.yaml"), DefaultPodSecurityPolicy, 0600); err != nil {
@@ -353,4 +364,37 @@ func altNamesFromURLs(urls []string) *tlsutil.AltNames {
 	}
 
 	return &an
+}
+
+// fetchCNIManifests will lay down provided CNI files to the bootkube assets directory
+func fetchCNIManifests(urls []string) error {
+	ctx := context.Background()
+
+	var result *multierror.Error
+
+	for _, url := range urls {
+		fileName := path.Base(url)
+
+		pwd, err := os.Getwd()
+		if err != nil {
+			result = multierror.Append(result, err)
+			continue
+		}
+
+		client := &getter.Client{
+			Ctx:     ctx,
+			Src:     url,
+			Dst:     filepath.Join(constants.AssetsDirectory, "manifests", fileName),
+			Pwd:     pwd,
+			Mode:    getter.ClientModeFile,
+			Options: []getter.ClientOption{},
+		}
+
+		if err = client.Get(); err != nil {
+			result = multierror.Append(result, err)
+			continue
+		}
+	}
+
+	return result.ErrorOrNil()
 }

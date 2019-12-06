@@ -510,9 +510,18 @@ type EtcdConfig struct {
 type ClusterNetworkConfig struct {
 	//   description: |
 	//     The CNI used.
-	//   values:
-	//     - flannel
-	CNI string `yaml:"cni"`
+	//     Composed of "name" and "url".
+	//     The "name" key only supports upstream bootkube options of "flannel" or "custom".
+	//     URLs is only used if name is equal to "custom".
+	//     URLs should point to a single yaml file that will get deployed.
+	//     Empty struct or any other name will default to bootkube's flannel.
+	//   examples:
+	//     - |
+	//       cni:
+	//         name: "custom"
+	//         urls:
+	//           - "https://www.mysweethttpserver.com/supersecretcni.yaml"
+	CNI *CNIConfig `yaml:"cni,omitempty"`
 	//   description: |
 	//     The domain used by Kubernetes DNS.
 	//     The default is `cluster.local`
@@ -533,6 +542,16 @@ type ClusterNetworkConfig struct {
 	//       serviceSubnets:
 	//         - 10.96.0.0/12
 	ServiceSubnet []string `yaml:"serviceSubnets"`
+}
+
+// CNIConfig contains the info about which CNI we'll deploy
+type CNIConfig struct {
+	//   description: |
+	//     Name of CNI to use.
+	CNIName string `yaml:"name"`
+	//   description: |
+	//     URLs containing manifests to apply for CNI.
+	CNIUrls []string `yaml:"urls,omitempty"`
 }
 
 // Bond contains the various options for configuring a bonded interface.
