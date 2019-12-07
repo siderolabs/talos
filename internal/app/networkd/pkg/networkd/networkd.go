@@ -302,6 +302,12 @@ func (n *Networkd) decideHostname() (hostname string, domainname string, address
 	// Loop through address responses and use the first hostname
 	// and address response.
 	for _, iface := range n.Interfaces {
+		// Skip loopback interface because it will always have
+		// a hardcoded hostname of `talos-ip`
+		if iface.Link != nil && iface.Link.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+
 		for _, method := range iface.AddressMethod {
 			if !method.Valid() {
 				continue
