@@ -31,15 +31,23 @@ func (task *Task) runtime(r runtime.Runtime) error {
 	var multiErr *multierror.Error
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set IPv4 forwarding: %w", err))
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv4.ip_forward: %w", err))
+	}
+
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.bridge.bridge-nf-call-iptables", Value: "1"}); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.bridge.bridge-nf-call-iptables: %w", err))
+	}
+
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.bridge.bridge-nf-call-ip6tables", Value: "1"}); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.bridge.bridge-nf-call-ip6tables: %w", err))
 	}
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set IPv6 forwarding: %w", err))
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
 	}
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set pid_max: %w", err))
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set kernel.pid_max: %w", err))
 	}
 
 	return multiErr.ErrorOrNil()
