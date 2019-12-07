@@ -33,6 +33,7 @@ INSTALLER=${INSTALLER:-docker.io/autonomy/installer:latest}
 
 VM_MEMORY=${VM_MEMORY:-2048}
 VM_DISK=${VM_DISK:-10}
+CNI_URL=${CNI_URL:-https://raw.githubusercontent.com/cilium/cilium/1.6.4/install/kubernetes/quick-install.yaml}
 
 COMMON_VIRT_OPTS="--memory=${VM_MEMORY} --cpu=host --vcpus=1 --disk pool=default,size=${VM_DISK} --os-type=linux --os-variant=generic --noautoconsole --graphics none --events on_poweroff=preserve --rng /dev/urandom"
 
@@ -55,6 +56,8 @@ function up {
     cd matchbox/assets
     $PWD/../../../../../build/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
     yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    yq w -i init.yaml cluster.network.cni.name 'custom'
+    yq w -i init.yaml cluster.network.cni.urls[+] "${CNI_URL}"
     yq w -i controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i join.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     cd -
