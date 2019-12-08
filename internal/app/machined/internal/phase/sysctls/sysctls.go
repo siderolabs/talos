@@ -24,10 +24,15 @@ func NewSysctlsTask() phase.Task {
 
 // TaskFunc returns the runtime function.
 func (task *Task) TaskFunc(mode runtime.Mode) phase.TaskFunc {
-	return task.runtime
+	switch mode {
+	case runtime.Container:
+		return task.container
+	default:
+		return task.standard
+	}
 }
 
-func (task *Task) runtime(r runtime.Runtime) error {
+func (task *Task) standard(r runtime.Runtime) error {
 	var multiErr *multierror.Error
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
@@ -40,6 +45,24 @@ func (task *Task) runtime(r runtime.Runtime) error {
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.bridge.bridge-nf-call-ip6tables", Value: "1"}); err != nil {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.bridge.bridge-nf-call-ip6tables: %w", err))
+	}
+
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
+	}
+
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set kernel.pid_max: %w", err))
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
+func (task *Task) container(r runtime.Runtime) error {
+	var multiErr *multierror.Error
+
+	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv4.ip_forward: %w", err))
 	}
 
 	if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
