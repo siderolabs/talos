@@ -222,7 +222,7 @@ func unmount(p *Point) error {
 }
 
 func share(p *Point) error {
-	return unix.Mount("", p.target, "", unix.MS_SHARED, "")
+	return unix.Mount("", p.target, "", unix.MS_SHARED|unix.MS_REC, "")
 }
 
 func overlay(p *Point) error {
