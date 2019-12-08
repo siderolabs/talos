@@ -8,7 +8,6 @@ import (
 	"flag"
 	"log"
 	stdlibnet "net"
-	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -56,20 +55,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, san := range config.Machine().Security().CertSANs() {
-		if ip := stdlibnet.ParseIP(san); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-
-	hostname, err := os.Hostname()
+	dnsNames, err := net.DNSNames()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	for _, san := range config.Machine().Security().CertSANs() {
+		if ip := stdlibnet.ParseIP(san); ip != nil {
+			ips = append(ips, ip)
+		} else {
+			dnsNames = append(dnsNames, san)
+		}
+	}
+
 	var provider tls.CertificateProvider
 
-	provider, err = tls.NewLocalRenewingFileCertificateProvider(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt, hostname, ips)
+	provider, err = tls.NewLocalRenewingFileCertificateProvider(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt, dnsNames, ips)
 	if err != nil {
 		log.Fatalln("failed to create local certificate provider:", err)
 	}

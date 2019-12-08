@@ -505,7 +505,7 @@ func NewCertificateAndKeyFromFiles(crt, key string) (p *PEMEncodedCertificateAnd
 
 // NewCSRAndIdentity generates and PEM encoded certificate and key, along with a
 // CSR for the generated key.
-func NewCSRAndIdentity(hostname string, ips []net.IP) (csr *CertificateSigningRequest, identity *PEMEncodedCertificateAndKey, err error) {
+func NewCSRAndIdentity(dnsNames []string, ips []net.IP) (csr *CertificateSigningRequest, identity *PEMEncodedCertificateAndKey, err error) {
 	var key *Ed25519Key
 
 	key, err = NewEd25519Key()
@@ -528,7 +528,7 @@ func NewCSRAndIdentity(hostname string, ips []net.IP) (csr *CertificateSigningRe
 	}
 
 	opts := []Option{}
-	opts = append(opts, DNSNames([]string{hostname}))
+	opts = append(opts, DNSNames(dnsNames))
 	opts = append(opts, IPAddresses(ips))
 
 	csr, err = NewCertificateSigningRequest(priv, opts...)

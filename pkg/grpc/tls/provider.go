@@ -38,7 +38,7 @@ type embeddableCertificateProvider struct {
 	ca  []byte
 	crt *tls.Certificate
 
-	hostname string
+	dnsNames []string
 	ips      []net.IP
 
 	updateFunc  func() ([]byte, tls.Certificate, error)

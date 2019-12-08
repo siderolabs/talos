@@ -6,7 +6,10 @@ package net
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
 )
 
 // IPAddrs finds and returns a list of non-loopback IPv4 addresses of the
@@ -65,4 +68,52 @@ func NthIPInNetwork(network *net.IPNet, n int) (net.IP, error) {
 	}
 
 	return nil, errors.New("network does not contain enough IPs")
+}
+
+// DNSNames returns a default set of machine names. It includes the hostname,
+// and FQDN if the kernel domain name is set. If the kernel domain name is not
+// set, only the hostname is included in the set.
+func DNSNames() (dnsNames []string, err error) {
+	var (
+		hostname   string
+		domainname string
+	)
+
+	// Add the hostname.
+
+	if hostname, err = os.Hostname(); err != nil {
+		return nil, err
+	}
+
+	dnsNames = []string{hostname}
+
+	// Add the domain name if it is set.
+
+	if domainname, err = DomainName(); err != nil {
+		return nil, err
+	}
+
+	if domainname != "" {
+		dnsNames = append(dnsNames, fmt.Sprintf("%s.%s", hostname, domainname))
+	}
+
+	return dnsNames, nil
+}
+
+// DomainName returns the kernel domain name. If a domain name is not found, an
+// empty string is returned.
+func DomainName() (domainname string, err error) {
+	var b []byte
+
+	if b, err = ioutil.ReadFile("/proc/sys/kernel/domainname"); err != nil {
+		return "", err
+	}
+
+	domainname = string(b)
+
+	if domainname == "(none)\n" {
+		return "", nil
+	}
+
+	return domainname, nil
 }
