@@ -9,7 +9,6 @@ import (
 	stdlibtls "crypto/tls"
 	"fmt"
 	stdlibnet "net"
-	"os"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -28,16 +27,18 @@ func NewTLSConfig(config runtime.Configurator, endpoints []string) (*TLSConfig, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
 	}
-	// TODO(andrewrynhard): Allow for DNS names.
+
+	dnsNames, err := net.DNSNames()
+	if err != nil {
+		return nil, err
+	}
+
 	for _, san := range config.Machine().Security().CertSANs() {
 		if ip := stdlibnet.ParseIP(san); ip != nil {
 			ips = append(ips, ip)
+		} else {
+			dnsNames = append(dnsNames, san)
 		}
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, fmt.Errorf("failed to discover hostname: %w", err)
 	}
 
 	tlsConfig := &TLSConfig{}
@@ -46,7 +47,7 @@ func NewTLSConfig(config runtime.Configurator, endpoints []string) (*TLSConfig, 
 		config.Machine().Security().Token(),
 		endpoints,
 		constants.TrustdPort,
-		hostname,
+		dnsNames,
 		ips,
 	)
 	if err != nil {

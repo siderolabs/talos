@@ -22,7 +22,7 @@ type renewingRemoteCertificateProvider struct {
 
 // NewRemoteRenewingFileCertificateProvider returns a new CertificateProvider
 // which manages and updates its certificates from the security API.
-func NewRemoteRenewingFileCertificateProvider(token string, endpoints []string, port int, hostname string, ips []net.IP) (CertificateProvider, error) {
+func NewRemoteRenewingFileCertificateProvider(token string, endpoints []string, port int, dnsNames []string, ips []net.IP) (CertificateProvider, error) {
 	g, err := gen.NewRemoteGenerator(token, endpoints, port)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TLS generator: %w", err)
@@ -33,7 +33,7 @@ func NewRemoteRenewingFileCertificateProvider(token string, endpoints []string, 
 	}
 
 	provider.embeddableCertificateProvider = embeddableCertificateProvider{
-		hostname:   hostname,
+		dnsNames:   dnsNames,
 		ips:        ips,
 		updateFunc: provider.update,
 	}
@@ -65,7 +65,7 @@ func (p *renewingRemoteCertificateProvider) update() (ca []byte, cert tls.Certif
 		identity *x509.PEMEncodedCertificateAndKey
 	)
 
-	csr, identity, err = x509.NewCSRAndIdentity(p.hostname, p.ips)
+	csr, identity, err = x509.NewCSRAndIdentity(p.dnsNames, p.ips)
 	if err != nil {
 		return nil, cert, err
 	}

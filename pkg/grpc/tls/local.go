@@ -25,7 +25,7 @@ type renewingLocalCertificateProvider struct {
 
 // NewLocalRenewingFileCertificateProvider returns a new CertificateProvider
 // which manages and updates its certificates using a local key.
-func NewLocalRenewingFileCertificateProvider(caKey, caCrt []byte, hostname string, ips []net.IP) (CertificateProvider, error) {
+func NewLocalRenewingFileCertificateProvider(caKey, caCrt []byte, dnsNames []string, ips []net.IP) (CertificateProvider, error) {
 	g, err := gen.NewLocalGenerator(caKey, caCrt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TLS generator: %w", err)
@@ -38,7 +38,7 @@ func NewLocalRenewingFileCertificateProvider(caKey, caCrt []byte, hostname strin
 	}
 
 	provider.embeddableCertificateProvider = embeddableCertificateProvider{
-		hostname:   hostname,
+		dnsNames:   dnsNames,
 		ips:        ips,
 		updateFunc: provider.update,
 	}
@@ -70,7 +70,7 @@ func (p *renewingLocalCertificateProvider) update() (ca []byte, cert tls.Certifi
 		identity *x509.PEMEncodedCertificateAndKey
 	)
 
-	csr, identity, err = x509.NewCSRAndIdentity(p.hostname, p.ips)
+	csr, identity, err = x509.NewCSRAndIdentity(p.dnsNames, p.ips)
 	if err != nil {
 		return nil, cert, err
 	}
