@@ -78,6 +78,7 @@ func main() {
 		"/machine.Machine/LS",
 		"/machine.Machine/Logs",
 		"/machine.Machine/Read",
+		"/os.OS/Dmesg",
 	} {
 		router.RegisterStreamedRegex("^" + regexp.QuoteMeta(methodName) + "$")
 	}
