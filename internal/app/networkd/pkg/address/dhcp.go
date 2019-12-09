@@ -6,6 +6,7 @@ package address
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"strings"
@@ -127,9 +128,14 @@ func (d *DHCP) Resolvers() []net.IP {
 
 // Hostname returns the hostname from the DHCP offer.
 func (d *DHCP) Hostname() string {
-	// Truncate the returned hostname to only return
-	// the actual host entry
-	return strings.Split(d.Ack.HostName(), ".")[0]
+	// If we received a domain name, append it to the truncated hostname to form the FQDN
+	if d.Ack.DomainName() != "" {
+		shortHostname := strings.Split(d.Ack.HostName(), ".")[0]
+
+		return fmt.Sprintf("%s.%s", shortHostname, d.Ack.DomainName())
+	}
+
+	return d.Ack.HostName()
 }
 
 // discover handles the actual DHCP conversation.
