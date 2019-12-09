@@ -49,9 +49,9 @@ type Client struct {
 	NetworkClient networkapi.NetworkClient
 }
 
-// NewClientTargetAndCredentialsFromConfig initializes ClientCredentials using default paths
+// NewClientContextAndCredentialsFromConfig initializes ClientCredentials using default paths
 // to the required CA, certificate, and key.
-func NewClientTargetAndCredentialsFromConfig(p string, ctx string) (target string, creds *Credentials, err error) {
+func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *config.Context, creds *Credentials, err error) {
 	c, err := config.Open(p)
 	if err != nil {
 		return
@@ -62,27 +62,27 @@ func NewClientTargetAndCredentialsFromConfig(p string, ctx string) (target strin
 	}
 
 	if c.Context == "" {
-		return "", nil, fmt.Errorf("'context' key is not set in the config")
+		return nil, nil, fmt.Errorf("'context' key is not set in the config")
 	}
 
-	context := c.Contexts[c.Context]
+	context = c.Contexts[c.Context]
 	if context == nil {
-		return "", nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
+		return nil, nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
 	}
 
 	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
 	if err != nil {
-		return "", nil, fmt.Errorf("error decoding CA: %w", err)
+		return nil, nil, fmt.Errorf("error decoding CA: %w", err)
 	}
 
 	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
 	if err != nil {
-		return "", nil, fmt.Errorf("error decoding certificate: %w", err)
+		return nil, nil, fmt.Errorf("error decoding certificate: %w", err)
 	}
 
 	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
 	if err != nil {
-		return "", nil, fmt.Errorf("error decoding key: %w", err)
+		return nil, nil, fmt.Errorf("error decoding key: %w", err)
 	}
 
 	creds = &Credentials{
@@ -91,7 +91,7 @@ func NewClientTargetAndCredentialsFromConfig(p string, ctx string) (target strin
 		key: keyBytes,
 	}
 
-	return context.Target, creds, nil
+	return context, creds, nil
 }
 
 // NewClientCredentials initializes ClientCredentials using default paths
@@ -107,7 +107,7 @@ func NewClientCredentials(ca, crt, key []byte) (creds *Credentials) {
 }
 
 // NewClient initializes a Client.
-func NewClient(creds *Credentials, target string, port int) (c *Client, err error) {
+func NewClient(creds *Credentials, endpoints []string, port int) (c *Client, err error) {
 	grpcOpts := []grpc.DialOption{}
 
 	c = &Client{}
@@ -124,8 +124,9 @@ func NewClient(creds *Credentials, target string, port int) (c *Client, err erro
 
 	// TODO(andrewrynhard): Do not parse the address. Pass the IP and port in as separate
 	// parameters.
+	// TODO(smira): endpoints[0] should be replaced with proper load-balancing
 	transportCreds := credentials.NewTLS(&tls.Config{
-		ServerName:   target,
+		ServerName:   endpoints[0],
 		Certificates: []tls.Certificate{crt},
 		// Set the root certificate authorities to use the self-signed
 		// certificate.
@@ -134,7 +135,7 @@ func NewClient(creds *Credentials, target string, port int) (c *Client, err erro
 
 	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(transportCreds))
 
-	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(target), port), grpcOpts...)
+	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(endpoints[0]), port), grpcOpts...)
 	if err != nil {
 		return
 	}

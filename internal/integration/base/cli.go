@@ -20,9 +20,7 @@ type CLISuite struct {
 
 // RunOsctl runs osctl binary with the options provided
 func (cliSuite *CLISuite) RunOsctl(args []string, options ...RunOption) {
-	if cliSuite.Target != "" {
-		args = append([]string{"--target", cliSuite.Target}, args...)
-	}
+	// TODO: add support for calling `osctl config endpoint` before running osctl
 
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
 

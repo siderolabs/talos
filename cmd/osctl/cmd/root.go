@@ -39,7 +39,8 @@ var (
 	organization   string
 	rsa            bool
 	talosconfig    string
-	target         []string
+	endpoints      []string
+	nodes          []string
 	cmdcontext     string
 )
 
@@ -106,7 +107,8 @@ func Execute() {
 
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	rootCmd.PersistentFlags().StringVar(&cmdcontext, "context", "", "Context to be used in command")
-	rootCmd.PersistentFlags().StringSliceVarP(&target, "target", "t", []string{}, "target the specificed node")
+	rootCmd.PersistentFlags().StringSliceVarP(&nodes, "nodes", "", []string{}, "target the specified nodes")
+	rootCmd.PersistentFlags().StringSliceVarP(&endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
 
 	if err := rootCmd.Execute(); err != nil {
 		helpers.Fatalf("%s", err)
@@ -115,15 +117,28 @@ func Execute() {
 
 // setupClientE wraps common code to initialize osd client
 func setupClientE(action func(*client.Client) error) error {
-	// Update context with grpc metadata for proxy/relay requests
-	globalCtx = client.WithTargets(globalCtx, target...)
-
-	t, creds, err := client.NewClientTargetAndCredentialsFromConfig(talosconfig, cmdcontext)
+	configContext, creds, err := client.NewClientContextAndCredentialsFromConfig(talosconfig, cmdcontext)
 	if err != nil {
 		return fmt.Errorf("error getting client credentials: %w", err)
 	}
 
-	c, err := client.NewClient(creds, t, constants.ApidPort)
+	configEndpoints := configContext.Endpoints
+
+	if len(endpoints) > 0 {
+		// override endpoints from command-line flags
+		configEndpoints = endpoints
+	}
+
+	targetNodes := configContext.Nodes
+
+	if len(nodes) > 0 {
+		targetNodes = nodes
+	}
+
+	// Update context with grpc metadata for proxy/relay requests
+	globalCtx = client.WithNodes(globalCtx, targetNodes...)
+
+	c, err := client.NewClient(creds, configEndpoints, constants.ApidPort)
 	if err != nil {
 		return fmt.Errorf("error constructing client: %w", err)
 	}

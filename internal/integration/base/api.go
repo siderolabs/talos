@@ -23,14 +23,15 @@ type APISuite struct {
 
 // SetupSuite initializes Talos API client
 func (apiSuite *APISuite) SetupSuite() {
-	target, creds, err := client.NewClientTargetAndCredentialsFromConfig(apiSuite.TalosConfig, "")
+	configContext, creds, err := client.NewClientContextAndCredentialsFromConfig(apiSuite.TalosConfig, "")
 	apiSuite.Require().NoError(err)
 
-	if apiSuite.Target != "" {
-		target = apiSuite.Target
+	endpoints := configContext.Endpoints
+	if apiSuite.Endpoint != "" {
+		endpoints = []string{apiSuite.Endpoint}
 	}
 
-	apiSuite.Client, err = client.NewClient(creds, target, constants.ApidPort)
+	apiSuite.Client, err = client.NewClient(creds, endpoints, constants.ApidPort)
 	apiSuite.Require().NoError(err)
 }
 

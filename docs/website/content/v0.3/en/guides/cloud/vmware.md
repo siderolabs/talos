@@ -212,6 +212,6 @@ govc vm.power -on worker-2
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-osctl --talosconfig talosconfig config target <control plane 1 IP>
+osctl --talosconfig talosconfig config endpoint <control plane 1 IP>
 osctl --talosconfig talosconfig kubeconfig > kubeconfig
 ```

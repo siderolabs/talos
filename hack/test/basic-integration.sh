@@ -42,7 +42,7 @@ run() {
 }
 
 ${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --masters=3 --mtu 1440 --cpus 4.0
-${LOCALOSCTL} config target 10.5.0.2
+${LOCALOSCTL} config endpoint 10.5.0.2
 
 ## Wait for bootkube to finish successfully.
 run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
@@ -86,10 +86,10 @@ run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-ap
 # Wait for DNS addon to report ready
 run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-app=kube-dns -n kube-system"
 
-run "osctl config target 10.5.0.2 && osctl -t 10.5.0.2 service etcd | grep Running"
-run "osctl config target 10.5.0.3 && osctl -t 10.5.0.3 service etcd | grep Running"
-run "osctl config target 10.5.0.4 && osctl -t 10.5.0.4 service etcd | grep Running"
-run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers"
-run "osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 services"
+run "osctl -e 10.5.0.2 service etcd | grep Running"
+run "osctl -e 10.5.0.3 service etcd | grep Running"
+run "osctl -e 10.5.0.4 service etcd | grep Running"
+run "osctl --nodes 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers"
+run "osctl --nodes 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 services"
 
 run "integration-test -test.v"

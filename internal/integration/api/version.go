@@ -53,7 +53,7 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)
 
-	ctx := client.WithTargets(suite.ctx, nodes...)
+	ctx := client.WithNodes(suite.ctx, nodes...)
 
 	var v *machine.VersionReply
 

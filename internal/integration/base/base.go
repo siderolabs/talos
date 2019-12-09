@@ -9,8 +9,8 @@ package base
 
 // TalosSuite defines most common settings for integration test suites
 type TalosSuite struct {
-	// Target is address of master node, if not set config is used
-	Target string
+	// Endpoint to use to connect, if not set config is used
+	Endpoint string
 	// Nodes is a list of Talos cluster addresses (overrides discovery if set)
 	Nodes []string
 	// TalosConfig is a path to talosconfig

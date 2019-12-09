@@ -40,7 +40,7 @@ func (suite *APIDSuite) SetupSuite() {
 func (suite *APIDSuite) TestGetConnection() {
 	md := metadata.New(nil)
 	md.Set(":authority", "127.0.0.2")
-	md.Set("targets", "127.0.0.1")
+	md.Set("nodes", "127.0.0.1")
 	md.Set("key", "value1", "value2")
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 

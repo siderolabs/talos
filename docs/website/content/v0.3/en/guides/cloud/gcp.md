@@ -161,6 +161,6 @@ CONTROL_PLANE_0_IP=$(gcloud compute instances describe talos-controlplane-0 \
                      --format json \
                      | jq -r '.networkInterfaces[0].accessConfigs[0].natIP')
 
-osctl --talosconfig ./talosconfig config target $CONTROL_PLANE_0_IP
+osctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
 osctl --talosconfig ./talosconfig kubeconfig .
 kubectl --kubeconfig ./kubeconfig get nodes

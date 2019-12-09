@@ -272,7 +272,7 @@ CONTROL_PLANE_0_IP=$(az network public-ip show \
                     --name talos-controlplane-public-ip-0 \
                     --query [ipAddress] \
                     --output tsv)
-osctl --talosconfig ./talosconfig config target $CONTROL_PLANE_0_IP
+osctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
 osctl --talosconfig ./talosconfig kubeconfig .
 kubectl --kubeconfig ./kubeconfig get nodes
 ```

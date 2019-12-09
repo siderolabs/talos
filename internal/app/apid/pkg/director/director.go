@@ -55,7 +55,7 @@ func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mod
 
 	var targets []string
 
-	if targets, ok = md["targets"]; !ok {
+	if targets, ok = md["nodes"]; !ok {
 		// send directly to local node, skips another layer of proxying
 		return r.localDirector(fullMethodName)
 	}

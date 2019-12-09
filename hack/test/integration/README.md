@@ -61,7 +61,7 @@ export KUBECONFIG=$PWD/matchbox/assets/kubeconfig
 ```
 
 ```bash
-osctl config target 172.28.1.10
+osctl config endpoint 172.28.1.10
 osctl kubeconfig ./matchbox/assets/kubeconfig
 ```
 
@@ -72,7 +72,7 @@ osctl kubeconfig ./matchbox/assets/kubeconfig
 ```
 
 ```bash
-osctl config target 172.28.1.10
+osctl config endpoint 172.28.1.10
 osctl kubeconfig .
 ```
 

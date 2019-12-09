@@ -38,7 +38,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
 
 ## Target master 0 for osctl
 e2e_run "MASTER_0_IP=\$( cat ${TMP}/master0ip )
-         /bin/osctl config target \${MASTER_0_IP}"
+         /bin/osctl config endpoint \${MASTER_0_IP}"
 
 ## Wait for kubeconfig from capi master-0
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))

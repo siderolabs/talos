@@ -18,12 +18,27 @@ type Config struct {
 	Contexts map[string]*Context `yaml:"contexts"`
 }
 
+func (c *Config) upgrade() {
+	for _, ctx := range c.Contexts {
+		ctx.upgrade()
+	}
+}
+
 // Context represents the set of credentials required to talk to a target.
 type Context struct {
-	Target string `yaml:"target"`
-	CA     string `yaml:"ca"`
-	Crt    string `yaml:"crt"`
-	Key    string `yaml:"key"`
+	DeprecatedTarget string   `yaml:"target,omitempty"` // Field deprecated in favor of Endpoints
+	Endpoints        []string `yaml:"endpoints"`
+	Nodes            []string `yaml:"nodes,omitempty"`
+	CA               string   `yaml:"ca"`
+	Crt              string   `yaml:"crt"`
+	Key              string   `yaml:"key"`
+}
+
+func (c *Context) upgrade() {
+	if c.DeprecatedTarget != "" {
+		c.Endpoints = append(c.Endpoints, c.DeprecatedTarget)
+		c.DeprecatedTarget = ""
+	}
 }
 
 // Open reads the config and initilzes a Config struct.
@@ -42,6 +57,8 @@ func Open(p string) (c *Config, err error) {
 		return nil, err
 	}
 
+	c.upgrade()
+
 	return c, nil
 }
 
@@ -51,6 +68,8 @@ func FromString(p string) (c *Config, err error) {
 	if err = yaml.Unmarshal([]byte(p), c); err != nil {
 		return
 	}
+
+	c.upgrade()
 
 	return c, nil
 }

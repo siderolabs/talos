@@ -331,10 +331,10 @@ func saveConfig(input *generate.Input) (err error) {
 		Context: input.ClusterName,
 		Contexts: map[string]*config.Context{
 			input.ClusterName: {
-				Target: "127.0.0.1",
-				CA:     base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
-				Crt:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
-				Key:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
+				Endpoints: []string{"127.0.0.1"},
+				CA:        base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
+				Crt:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
+				Key:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
 			},
 		},
 	}
