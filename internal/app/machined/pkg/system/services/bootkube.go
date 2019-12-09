@@ -320,6 +320,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		BootstrapSecretsSubdir: "/assets/tls",
 		BootstrapTokenID:       config.Cluster().Token().ID(),
 		BootstrapTokenSecret:   config.Cluster().Token().Secret(),
+		AESCBCEncryptionSecret: config.Cluster().AESCBCEncryptionSecret(),
 	}
 
 	as, err := asset.NewDefaultAssets(conf)
