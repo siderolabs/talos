@@ -12,6 +12,8 @@ import (
 	"net"
 	"strings"
 	"text/template"
+
+	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
 // filterInterfaceByName filters network links by name so we only mange links
@@ -46,6 +48,14 @@ func writeResolvConf(resolvers []string) (err error) {
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
 			log.Println("failed to add some resolver to resolvconf:", resolver)
 			return err
+		}
+	}
+
+	if domain, err := talosnet.DomainName(); err == nil {
+		if domain != "" {
+			if _, err = resolvconf.WriteString(fmt.Sprintf("search %s\n", domain)); err != nil {
+				return fmt.Errorf("failed to add domain search line to resolvconf: %s", err)
+			}
 		}
 	}
 
