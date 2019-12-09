@@ -29,7 +29,7 @@ var allSuites []suite.TestingSuite
 // Flag values
 var (
 	talosConfig     string
-	target          string
+	endpoint        string
 	nodes           stringList
 	expectedVersion string
 	osctlPath       string
@@ -43,7 +43,7 @@ func TestIntegration(t *testing.T) {
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
-				Target:      target,
+				Endpoint:    endpoint,
 				Nodes:       []string(nodes),
 				TalosConfig: talosConfig,
 				Version:     expectedVersion,
@@ -76,7 +76,7 @@ func init() {
 	}
 
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
-	flag.StringVar(&target, "talos.target", "", "target the specificed node")
+	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")
 	flag.Var(&nodes, "talos.nodes", "list of node addresses (overrides discovery)")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
 	flag.StringVar(&osctlPath, "talos.osctlpath", "osctl", "The path to 'osctl' binary")

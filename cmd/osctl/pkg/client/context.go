@@ -10,10 +10,14 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// WithTargets wraps the context with metadata to send request to set of nodes.
-func WithTargets(ctx context.Context, target ...string) context.Context {
+// WithNodes wraps the context with metadata to send request to set of nodes.
+func WithNodes(ctx context.Context, nodes ...string) context.Context {
+	if len(nodes) == 0 {
+		return ctx
+	}
+
 	md := metadata.New(nil)
-	md.Set("targets", target...)
+	md.Set("nodes", nodes...)
 
 	return metadata.NewOutgoingContext(ctx, md)
 }

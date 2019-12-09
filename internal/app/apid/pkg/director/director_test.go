@@ -83,7 +83,7 @@ func (suite *DirectorSuite) TestDirectorAggregate() {
 	ctx := context.Background()
 
 	md := metadata.New(nil)
-	md.Set("targets", "127.0.0.1", "127.0.0.2")
+	md.Set("nodes", "127.0.0.1", "127.0.0.2")
 	mode, backends, err := suite.router.Director(metadata.NewIncomingContext(ctx, md), "/service.Service/method")
 	suite.Assert().Equal(proxy.One2Many, mode)
 	suite.Assert().Len(backends, 2)
@@ -92,7 +92,7 @@ func (suite *DirectorSuite) TestDirectorAggregate() {
 	suite.Assert().NoError(err)
 
 	md = metadata.New(nil)
-	md.Set("targets", "127.0.0.1")
+	md.Set("nodes", "127.0.0.1")
 	mode, backends, err = suite.router.Director(metadata.NewIncomingContext(ctx, md), "/service.Service/method")
 	suite.Assert().Equal(proxy.One2Many, mode)
 	suite.Assert().Len(backends, 1)

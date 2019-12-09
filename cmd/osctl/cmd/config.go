@@ -39,10 +39,10 @@ var configCmd = &cobra.Command{
 	Long:  ``,
 }
 
-// configTargetCmd represents the config target command.
-var configTargetCmd = &cobra.Command{
-	Use:   "target <target>",
-	Short: "Set the target for the current context",
+// configEndpointCmd represents the config endpoint command.
+var configEndpointCmd = &cobra.Command{
+	Use:   "endpoint <endpoint>...",
+	Short: "Set the endpoint(s) for the current context",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := config.Open(talosconfig)
@@ -53,7 +53,7 @@ var configTargetCmd = &cobra.Command{
 			helpers.Fatalf("no context is set")
 		}
 
-		c.Contexts[c.Context].Target = args[0]
+		c.Contexts[c.Context].Endpoints = args
 		if err := c.Save(talosconfig); err != nil {
 			helpers.Fatalf("error writing config: %s", err)
 		}
@@ -184,10 +184,10 @@ func genV1Alpha1Config(args []string) {
 		Context: input.ClusterName,
 		Contexts: map[string]*config.Context{
 			input.ClusterName: {
-				Target: "127.0.0.1",
-				CA:     base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
-				Crt:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
-				Key:    base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
+				Endpoints: []string{"127.0.0.1"},
+				CA:        base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
+				Crt:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
+				Key:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
 			},
 		},
 	}
@@ -227,7 +227,7 @@ func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name stri
 }
 
 func init() {
-	configCmd.AddCommand(configContextCmd, configTargetCmd, configAddCmd, configGenerateCmd)
+	configCmd.AddCommand(configContextCmd, configEndpointCmd, configAddCmd, configGenerateCmd)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")

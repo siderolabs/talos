@@ -150,7 +150,7 @@ func basicIntegration() error {
 	// Set osctl to talk to master-1
 	log.Println("targeting master-1 in talosconfig")
 
-	if err = runner.CommandLocal(osctlBinPath + " config target 10.5.0.2"); err != nil {
+	if err = runner.CommandLocal(osctlBinPath + " config endpoint 10.5.0.2"); err != nil {
 		return err
 	}
 
@@ -224,7 +224,7 @@ func basicIntegration() error {
 			ctx,
 			cli,
 			runnerConfig,
-			"osctl config target "+ip+" && osctl -t "+ip+" service etcd | grep Running",
+			"osctl -e "+ip+" service etcd | grep Running",
 		); err != nil {
 			return err
 		}
@@ -236,7 +236,7 @@ func basicIntegration() error {
 			ctx,
 			cli,
 			runnerConfig,
-			"osctl --target 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 "+desiredCommand,
+			"osctl --nodes 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 "+desiredCommand,
 		); err != nil {
 			return err
 		}
@@ -247,7 +247,7 @@ func basicIntegration() error {
 		ctx,
 		cli,
 		runnerConfig,
-		"osctl config target 10.5.0.2 && integration-test -test.v",
+		"osctl config endpoint 10.5.0.2 && integration-test -test.v",
 	); err != nil {
 		return err
 	}

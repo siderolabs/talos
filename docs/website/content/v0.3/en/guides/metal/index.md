@@ -47,7 +47,7 @@ The configuration file location can also be specified at runtime via `osctl --ta
 In the previous step, the Talos configuration was generated in your working directory as `talosconfig`.
 
 By default, the Talos configuration points to a single node.
-This can be overridden at runtime via `--target <ip>` flag so you can point to another node in your cluster.
+This can be overridden at runtime via `--nodes <ip>` flag so you can point to another node in your cluster.
 
 Next, we'll need to generate the kubeconfig for our cluster.
 This can be achieved by runng `osctl kubeconfig`.

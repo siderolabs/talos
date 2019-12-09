@@ -53,7 +53,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 	origMd, ok := metadata.FromIncomingContext(ctx)
 
 	md := origMd.Copy()
-	delete(md, "targets")
+	delete(md, "nodes")
 	delete(md, ":authority")
 
 	if ok {
