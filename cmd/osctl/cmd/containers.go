@@ -15,7 +15,6 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/api/common"
@@ -31,13 +30,13 @@ var containersCmd = &cobra.Command{
 	Aliases: []string{"c"},
 	Short:   "List containers",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var namespace string
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
@@ -49,22 +48,23 @@ var containersCmd = &cobra.Command{
 				driver = common.ContainerDriver_CRI
 			}
 
-			md := metadata.New(make(map[string]string))
-			md.Set("targets", target...)
-
 			var remotePeer peer.Peer
 
-			reply, err := c.Containers(metadata.NewOutgoingContext(globalCtx, md), namespace, driver, grpc.Peer(&remotePeer))
+			reply, err := c.Containers(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting process list: %s", err)
+				if reply == nil {
+					return fmt.Errorf("error getting container list: %s", err)
+				}
+
+				helpers.Warning("%s", err)
 			}
 
-			containerRender(&remotePeer, reply)
+			return containerRender(&remotePeer, reply)
 		})
 	},
 }
 
-func containerRender(remotePeer *peer.Peer, reply *osapi.ContainersReply) {
+func containerRender(remotePeer *peer.Peer, reply *osapi.ContainersReply) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 
@@ -94,7 +94,7 @@ func containerRender(remotePeer *peer.Peer, reply *osapi.ContainersReply) {
 		}
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }
 
 func init() {

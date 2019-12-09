@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -21,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	osapi "github.com/talos-systems/talos/api/os"
@@ -40,40 +38,35 @@ var processesCmd = &cobra.Command{
 	Aliases: []string{"p"},
 	Short:   "List running processes",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var err error
-
-			md := metadata.New(make(map[string]string))
-			md.Set("targets", target...)
 
 			switch {
 			case watchProcesses:
-				// Only allow single node view refresh..
-				// No hard limitiation that I can think of to prevent aggregating all nodes
-				if len(target) > 1 {
-					md.Set("targets", target[0])
-				}
-
 				if err = ui.Init(); err != nil {
-					log.Fatalf("failed to initialize termui: %v", err)
+					return fmt.Errorf("failed to initialize termui: %w", err)
 				}
 				defer ui.Close()
 
-				processesUI(metadata.NewOutgoingContext(globalCtx, md), c)
+				processesUI(globalCtx, c)
 			default:
 				var output string
-				output, err = processesOutput(metadata.NewOutgoingContext(globalCtx, md), c)
-				helpers.Should(err)
+				output, err = processesOutput(globalCtx, c)
+				if err != nil {
+					return err
+				}
 				// Note this is unlimited output of process lines
 				// we arent artificially limited by the box we would otherwise draw
 				fmt.Println(output)
 			}
+
+			return nil
 		})
 	},
 }

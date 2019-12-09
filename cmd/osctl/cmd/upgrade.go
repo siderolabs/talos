@@ -27,8 +27,8 @@ var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade Talos on the target node",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		upgrade()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return upgrade()
 	},
 }
 
@@ -37,7 +37,7 @@ func init() {
 	rootCmd.AddCommand(upgradeCmd)
 }
 
-func upgrade() {
+func upgrade() error {
 	var (
 		err        error
 		reply      *machineapi.UpgradeReply
@@ -51,7 +51,11 @@ func upgrade() {
 	})
 
 	if err != nil {
-		helpers.Fatalf("error performing upgrade: %s", err)
+		if reply == nil {
+			return fmt.Errorf("error performing upgrade: %s", err)
+		}
+
+		helpers.Warning("%s", err)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
@@ -69,5 +73,5 @@ func upgrade() {
 		fmt.Fprintf(w, "%s\t%s\t%s\t", node, resp.Ack, time.Now())
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }

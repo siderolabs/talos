@@ -24,26 +24,30 @@ var interfacesCmd = &cobra.Command{
 	Use:   "interfaces",
 	Short: "List network interfaces",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 
 			reply, err := c.Interfaces(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting interfaces: %s", err)
+				if reply == nil {
+					return fmt.Errorf("error getting interfaces: %s", err)
+				}
+
+				helpers.Warning("%s", err)
 			}
 
-			intersRender(&remotePeer, reply)
+			return intersRender(&remotePeer, reply)
 		})
 	},
 }
 
-func intersRender(remotePeer *peer.Peer, reply *networkapi.InterfacesReply) {
+func intersRender(remotePeer *peer.Peer, reply *networkapi.InterfacesReply) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINDEX\tNAME\tMAC\tMTU\tADDRESS")
 
@@ -63,7 +67,7 @@ func intersRender(remotePeer *peer.Peer, reply *networkapi.InterfacesReply) {
 		}
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }
 
 func init() {

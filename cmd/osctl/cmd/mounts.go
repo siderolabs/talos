@@ -26,26 +26,30 @@ var mountsCmd = &cobra.Command{
 	Aliases: []string{"m"},
 	Short:   "List mounts",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 
 			reply, err := c.Mounts(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting interfaces: %s", err)
+				if reply == nil {
+					return fmt.Errorf("error getting interfaces: %s", err)
+				}
+
+				helpers.Warning("%s", err)
 			}
 
-			mountsRender(&remotePeer, reply)
+			return mountsRender(&remotePeer, reply)
 		})
 	},
 }
 
-func mountsRender(remotePeer *peer.Peer, reply *machineapi.MountsReply) {
+func mountsRender(remotePeer *peer.Peer, reply *machineapi.MountsReply) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
 
@@ -70,7 +74,7 @@ func mountsRender(remotePeer *peer.Peer, reply *machineapi.MountsReply) {
 		}
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }
 
 func init() {

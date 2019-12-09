@@ -27,30 +27,34 @@ var memoryCmd = &cobra.Command{
 	Aliases: []string{"m"},
 	Short:   "Show memory usage",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 
 			reply, err := c.Memory(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting memory stats: %s", err)
+				if reply == nil {
+					return fmt.Errorf("error getting memory stats: %s", err)
+				}
+
+				helpers.Warning("%s", err)
 			}
 
 			if verbose {
-				verboseRender(&remotePeer, reply)
-			} else {
-				briefRender(&remotePeer, reply)
+				return verboseRender(&remotePeer, reply)
 			}
+
+			return briefRender(&remotePeer, reply)
 		})
 	},
 }
 
-func briefRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) {
+func briefRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tTOTAL\tUSED\tFREE\tSHARED\tBUFFERS\tCACHE\tAVAILABLE")
 
@@ -76,10 +80,10 @@ func briefRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) {
 		)
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }
 
-func verboseRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) {
+func verboseRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) error {
 	defaultNode := addrFromPeer(remotePeer)
 
 	// Dump as /proc/meminfo
@@ -140,6 +144,8 @@ func verboseRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) {
 		fmt.Printf("%s: %d %s\n", "DirectMap2M", resp.Meminfo.Directmap2M, "kB")
 		fmt.Printf("%s: %d %s\n", "DirectMap1G", resp.Meminfo.Directmap1G, "kB")
 	}
+
+	return nil
 }
 
 func init() {

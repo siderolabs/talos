@@ -25,11 +25,11 @@ var timeCmd = &cobra.Command{
 	Use:   "time [--check server]",
 	Short: "Gets current server time",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		setupClient(func(c *client.Client) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return setupClientE(func(c *client.Client) error {
 			server, err := cmd.Flags().GetString("check")
 			if err != nil {
-				helpers.Fatalf("failed to parse check flag: %w", err)
+				return fmt.Errorf("failed to parse check flag: %w", err)
 			}
 
 			var (
@@ -39,14 +39,16 @@ var timeCmd = &cobra.Command{
 
 			if server == "" {
 				reply, err = c.Time(globalCtx, grpc.Peer(&remotePeer))
-				if err != nil {
-					helpers.Fatalf("error fetching time: %s", err)
-				}
 			} else {
 				reply, err = c.TimeCheck(globalCtx, server, grpc.Peer(&remotePeer))
-				if err != nil {
-					helpers.Fatalf("error fetching time: %s", err)
+			}
+
+			if err != nil {
+				if reply == nil {
+					return fmt.Errorf("error fetching time: %w", err)
 				}
+
+				helpers.Warning("%s", err)
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
@@ -64,16 +66,17 @@ var timeCmd = &cobra.Command{
 
 				localtime, err = ptypes.Timestamp(resp.Localtime)
 				if err != nil {
-					helpers.Fatalf("error parsing local time: %s", err)
+					return fmt.Errorf("error parsing local time: %w", err)
 				}
 				remotetime, err = ptypes.Timestamp(resp.Remotetime)
 				if err != nil {
-					helpers.Fatalf("error parsing remote time: %s", err)
+					return fmt.Errorf("error parsing remote time: %w", err)
 				}
 
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", node, resp.Server, localtime.String(), remotetime.String())
 			}
-			helpers.Should(w.Flush())
+
+			return w.Flush()
 		})
 	},
 }

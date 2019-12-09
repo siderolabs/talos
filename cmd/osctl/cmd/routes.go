@@ -24,25 +24,28 @@ var routesCmd = &cobra.Command{
 	Use:   "routes",
 	Short: "List network routes",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 			reply, err := c.Routes(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting routes: %s", err)
+				if reply == nil {
+					return fmt.Errorf("error getting routes: %w", err)
+				}
+				helpers.Warning("%s", err)
 			}
 
-			routesRender(&remotePeer, reply)
+			return routesRender(&remotePeer, reply)
 		})
 	},
 }
 
-func routesRender(remotePeer *peer.Peer, reply *networkapi.RoutesReply) {
+func routesRender(remotePeer *peer.Peer, reply *networkapi.RoutesReply) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
 
@@ -60,7 +63,7 @@ func routesRender(remotePeer *peer.Peer, reply *networkapi.RoutesReply) {
 		}
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }
 
 func init() {
