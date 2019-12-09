@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strings"
 )
 
 // IPAddrs finds and returns a list of non-loopback IPv4 addresses of the
@@ -115,5 +116,5 @@ func DomainName() (domainname string, err error) {
 		return "", nil
 	}
 
-	return domainname, nil
+	return strings.TrimSuffix(domainname, "\n"), nil
 }
