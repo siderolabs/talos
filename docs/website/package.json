@@ -1,7 +1,7 @@
 {
   "name": "Talos",
   "version": "0.1.0",
-  "description": "A static site for Talos documentation",
+  "description": "A modern, open source, API-managed operating system for Kubernetes.",
   "author": "Talos Systems, Inc.",
   "private": true,
   "scripts": {
