@@ -164,29 +164,23 @@ func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*o
 // to read from the ring buffer at /proc/kmsg by taking the
 // SYSLOG_ACTION_READ_ALL action. This action reads all messages remaining in
 // the ring buffer non-destructively.
-func (r *Registrator) Dmesg(ctx context.Context, in *empty.Empty) (data *common.DataReply, err error) {
+func (r *Registrator) Dmesg(req *osapi.DmesgRequest, srv osapi.OS_DmesgServer) error {
 	// Return the size of the kernel ring buffer
 	size, err := unix.Klogctl(constants.SYSLOG_ACTION_SIZE_BUFFER, nil)
 	if err != nil {
-		return
+		return err
 	}
 	// Read all messages from the log (non-destructively)
 	buf := make([]byte, size)
 
 	n, err := unix.Klogctl(constants.SYSLOG_ACTION_READ_ALL, buf)
 	if err != nil {
-		return
+		return err
 	}
 
-	data = &common.DataReply{
-		Response: []*common.DataResponse{
-			{
-				Bytes: buf[:n],
-			},
-		},
-	}
-
-	return data, err
+	return srv.Send(&common.DataResponse{
+		Bytes: buf[:n],
+	})
 }
 
 // Processes implements the osapi.OSDServer interface

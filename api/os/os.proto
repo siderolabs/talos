@@ -15,7 +15,7 @@ import "common/common.proto";
 // OS Service also implements all the API of Init Service
 service OS {
   rpc Containers(ContainersRequest) returns (ContainersReply);
-  rpc Dmesg(google.protobuf.Empty) returns (common.DataReply);
+  rpc Dmesg(DmesgRequest) returns (stream common.DataResponse);
   rpc Memory(google.protobuf.Empty) returns (MemInfoReply);
   rpc Processes(google.protobuf.Empty) returns (ProcessesReply);
   rpc Restart(RestartRequest) returns (RestartReply);
@@ -50,6 +50,12 @@ message ContainerResponse {
 
 message ContainersReply {
   repeated ContainerResponse response = 1;
+}
+
+// dmesg
+message DmesgRequest {
+  bool follow = 1;
+  bool tail = 2;
 }
 
 // rpc processes
