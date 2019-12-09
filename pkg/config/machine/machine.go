@@ -83,32 +83,32 @@ type Device struct {
 // bonded interface.
 type Bond struct {
 	Interfaces      []string `yaml:"interfaces"`
-	ARPIPTarget     []string `yaml:"arpiptarget"`
+	ARPIPTarget     []string `yaml:"arpIPTarget"`
 	Mode            string   `yaml:"mode"`
-	HashPolicy      string   `yaml:"hashpolicy"`
-	LACPRate        string   `yaml:"lacprate"`
-	ADActorSystem   string   `yaml:"adactorsystem"`
-	ARPValidate     string   `yaml:"arpvalidate"`
-	ARPAllTargets   string   `yaml:"arpalltargets"`
+	HashPolicy      string   `yaml:"xmitHashPolicy"`
+	LACPRate        string   `yaml:"lacpRate"`
+	ADActorSystem   string   `yaml:"adActorSystem"`
+	ARPValidate     string   `yaml:"arpValidate"`
+	ARPAllTargets   string   `yaml:"arpAllTargets"`
 	Primary         string   `yaml:"primary"`
-	PrimaryReselect string   `yaml:"primaryreselect"`
-	FailOverMac     string   `yaml:"failovermac"`
-	ADSelect        string   `yaml:"adselect"`
+	PrimaryReselect string   `yaml:"primaryReselect"`
+	FailOverMac     string   `yaml:"failOverMac"`
+	ADSelect        string   `yaml:"adSelect"`
 	MIIMon          uint32   `yaml:"miimon"`
 	UpDelay         uint32   `yaml:"updelay"`
 	DownDelay       uint32   `yaml:"downdelay"`
-	ARPInterval     uint32   `yaml:"arpinterval"`
-	ResendIGMP      uint32   `yaml:"resendigmp"`
-	MinLinks        uint32   `yaml:"minlinks"`
-	LPInterval      uint32   `yaml:"lpinterval"`
-	PacketsPerSlave uint32   `yaml:"packetsperslave"`
-	NumPeerNotif    uint8    `yaml:"numpeernotif"`
-	TLBDynamicLB    uint8    `yaml:"tlbdynamiclb"`
-	AllSlavesActive uint8    `yaml:"allslavesactive"`
-	UseCarrier      bool     `yaml:"usecarrier"`
-	ADActorSysPrio  uint16   `yaml:"adactorsysprio"`
-	ADUserPortKey   uint16   `yaml:"aduserportkey"`
-	PeerNotifyDelay uint32   `yaml:"peernotifydelay"`
+	ARPInterval     uint32   `yaml:"arpInterval"`
+	ResendIGMP      uint32   `yaml:"resendIgmp"`
+	MinLinks        uint32   `yaml:"minLinks"`
+	LPInterval      uint32   `yaml:"lpInterval"`
+	PacketsPerSlave uint32   `yaml:"packetsPerSlave"`
+	NumPeerNotif    uint8    `yaml:"numPeerNotif"`
+	TLBDynamicLB    uint8    `yaml:"tlbDynamicLb"`
+	AllSlavesActive uint8    `yaml:"allSlavesActive"`
+	UseCarrier      bool     `yaml:"useCarrier"`
+	ADActorSysPrio  uint16   `yaml:"adActorSysPrio"`
+	ADUserPortKey   uint16   `yaml:"adUserPortKey"`
+	PeerNotifyDelay uint32   `yaml:"peerNotifyDelay"`
 }
 
 // Route represents a network route.
