@@ -2,47 +2,21 @@
 title: 'Running Behind a Corporate Proxy'
 ---
 
-## Creating an Image for MITM Proxies
+## Appending the Certificate Authority of MITM Proxies
 
-Create a `Dockerfile` that will be used to customize the installer image:
+Put into each machine the PEM encoded certificate:
 
-```dockerfile
-FROM alpine AS ca
-COPY --from=docker.io/autonomy/ca-certificates:febbf49 / /rootfs
-COPY ca.crt /tmp/ca.crt
-RUN cat /tmp/ca.crt >> /rootfs/etc/ssl/certs/ca-certificates.crt
-
-FROM scratch AS customization
-COPY --from=ca /rootfs/ /
-
-FROM docker.io/autonomy/installer:latest
-```
-
-Build the image:
-
-```bash
-docker build -t <organization>/installer:latest .
-```
-
-> Note: You can use the `--squash` flag to create smaller images.
-
-At this point, you will need to generate an image for your desired platform.
-We will use VMware as an example:
-
-```bash
-docker run --rm -v /dev:/dev -v $PWD/build:/out \
-    --privileged \
-    <organization>/installer:latest \
-    install \
-    -r \
-    -p vmware \
-    -u guestinfo \
-    -e console=tty0 \
-    -e earlyprintk=ttyS0,115200
-docker run --rm -v /dev:/dev -v $PWD/build:/out \
-    --privileged \
-    <organization>/installer:latest \
-    ova
+```yaml
+machine:
+  ...
+  files:
+    - contents: |
+        -----BEGIN CERTIFICATE-----
+        ...
+        -----END CERTIFICATE-----
+      permissions: 0644
+      path: /etc/ssl/certs/ca-certificates
+      op: append
 ```
 
 ## Configuring a Machine to Use the Proxy
