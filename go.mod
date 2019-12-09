@@ -5,7 +5,7 @@ go 1.13
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20191116224831-33eac9dd89f6
-	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191206182628-b27669e2498d
+	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191209231016-df7ca3993392
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 
