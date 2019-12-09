@@ -15,7 +15,6 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/api/common"
@@ -30,13 +29,13 @@ var statsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "Get processes stats",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			helpers.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
-		setupClient(func(c *client.Client) {
+		return setupClientE(func(c *client.Client) error {
 			var namespace string
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
@@ -47,22 +46,24 @@ var statsCmd = &cobra.Command{
 			if useCRI {
 				driver = common.ContainerDriver_CRI
 			}
-			md := metadata.New(make(map[string]string))
-			md.Set("targets", target...)
 
 			var remotePeer peer.Peer
 
-			reply, err := c.Stats(metadata.NewOutgoingContext(globalCtx, md), namespace, driver, grpc.Peer(&remotePeer))
+			reply, err := c.Stats(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
-				helpers.Fatalf("error getting stats: %s", err)
+				if reply == nil {
+					return fmt.Errorf("error getting stats: %s", err)
+				}
+
+				helpers.Warning("%s", err)
 			}
 
-			statsRender(&remotePeer, reply)
+			return statsRender(&remotePeer, reply)
 		})
 	},
 }
 
-func statsRender(remotePeer *peer.Peer, reply *osapi.StatsReply) {
+func statsRender(remotePeer *peer.Peer, reply *osapi.StatsReply) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
@@ -93,7 +94,7 @@ func statsRender(remotePeer *peer.Peer, reply *osapi.StatsReply) {
 		}
 	}
 
-	helpers.Should(w.Flush())
+	return w.Flush()
 }
 
 func init() {

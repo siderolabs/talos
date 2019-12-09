@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -27,9 +26,7 @@ var dmesgCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
-			md := metadata.New(make(map[string]string))
-			md.Set("targets", target...)
-			reply, err := c.Dmesg(metadata.NewOutgoingContext(globalCtx, md))
+			reply, err := c.Dmesg(globalCtx)
 			if err != nil {
 				helpers.Fatalf("error getting dmesg: %s", err)
 			}

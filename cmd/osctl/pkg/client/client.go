@@ -226,6 +226,10 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver common.Cont
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*osapi.StatsReply) //nolint: errcheck
+
 	return
 }
 
@@ -239,6 +243,10 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 		},
 		callOptions...,
 	)
+
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*osapi.ContainersReply) //nolint: errcheck
 
 	return
 }
@@ -312,6 +320,10 @@ func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (re
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*networkapi.RoutesReply) //nolint: errcheck
+
 	return
 }
 
@@ -322,6 +334,10 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 		&empty.Empty{},
 		callOptions...,
 	)
+
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*networkapi.InterfacesReply) //nolint: errcheck
 
 	return
 }
@@ -334,6 +350,10 @@ func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) 
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*osapi.ProcessesReply) //nolint: errcheck
+
 	return
 }
 
@@ -345,6 +365,10 @@ func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (re
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*osapi.MemInfoReply) //nolint: errcheck
+
 	return
 }
 
@@ -355,6 +379,10 @@ func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (re
 		&empty.Empty{},
 		callOptions...,
 	)
+
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.MountsReply) //nolint: errcheck
 
 	return
 }
@@ -385,6 +413,10 @@ func (c *Client) Upgrade(ctx context.Context, image string, callOptions ...grpc.
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.UpgradeReply) //nolint: errcheck
+
 	return
 }
 
@@ -395,6 +427,10 @@ func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption
 		&empty.Empty{},
 		callOptions...,
 	)
+
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.ServiceListReply) //nolint: errcheck
 
 	return
 }
@@ -422,6 +458,10 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 		return
 	}
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.ServiceListReply) //nolint: errcheck
+
 	for _, resp := range reply.Response {
 		for _, svc := range resp.Services {
 			if svc.Id == id {
@@ -444,6 +484,10 @@ func (c *Client) ServiceStart(ctx context.Context, id string, callOptions ...grp
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.ServiceStartReply) //nolint: errcheck
+
 	return
 }
 
@@ -454,6 +498,10 @@ func (c *Client) ServiceStop(ctx context.Context, id string, callOptions ...grpc
 		&machineapi.ServiceStopRequest{Id: id},
 		callOptions...,
 	)
+
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.ServiceStopReply) //nolint: errcheck
 
 	return
 }
@@ -466,6 +514,10 @@ func (c *Client) ServiceRestart(ctx context.Context, id string, callOptions ...g
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*machineapi.ServiceRestartReply) //nolint: errcheck
+
 	return
 }
 
@@ -477,6 +529,10 @@ func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (repl
 		callOptions...,
 	)
 
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*timeapi.TimeReply) //nolint: errcheck
+
 	return
 }
 
@@ -487,6 +543,10 @@ func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...gr
 		&timeapi.TimeRequest{Server: server},
 		callOptions...,
 	)
+
+	var filtered interface{}
+	filtered, err = FilterReply(reply, err)
+	reply, _ = filtered.(*timeapi.TimeReply) //nolint: errcheck
 
 	return
 }
