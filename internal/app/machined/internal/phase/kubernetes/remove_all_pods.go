@@ -6,11 +6,9 @@ package kubernetes
 
 import (
 	"context"
-	"log"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-	"k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
@@ -47,78 +45,20 @@ func (task *RemoveAllPods) standard() (err error) {
 	// nolint: errcheck
 	defer client.Close()
 
-	ctx := context.Background()
+	// We remove pods with POD network mode first so that the CNI can perform
+	// any cleanup tasks. If we don't do this, we run the risk of killing the
+	// CNI, preventing the CRI from cleaning up the pod's netwokring.
 
-	pods, err := client.ListPodSandbox(ctx, nil)
-	if err != nil {
+	if err = client.RemovePodSandboxes(runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
 		return err
 	}
 
-	var g errgroup.Group
+	// With the POD network mode pods out of the way, we kill the remaining
+	// pods.
 
-	for _, pod := range pods {
-		pod := pod // https://golang.org/doc/faq#closures_and_goroutines
-
-		g.Go(func() error {
-			if err := remove(ctx, client, pod); err != nil {
-				return err
-			}
-
-			return nil
-		})
-	}
-
-	return g.Wait()
-}
-
-func remove(ctx context.Context, client *cri.Client, pod *v1alpha2.PodSandbox) (err error) {
-	log.Printf("removing pod %s/%s", pod.Metadata.Namespace, pod.Metadata.Name)
-
-	filter := &v1alpha2.ContainerFilter{
-		PodSandboxId: pod.Id,
-	}
-
-	containers, err := client.ListContainers(ctx, filter)
-	if err != nil {
+	if err = client.RemovePodSandboxes(); err != nil {
 		return err
 	}
-
-	var g errgroup.Group
-
-	for _, container := range containers {
-		container := container // https://golang.org/doc/faq#closures_and_goroutines
-
-		g.Go(func() error {
-			log.Printf("removing container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
-
-			// TODO(andrewrynhard): Can we set the timeout dynamically?
-			if err = client.StopContainer(ctx, container.Id, 30); err != nil {
-				return err
-			}
-
-			if err = client.RemoveContainer(ctx, container.Id); err != nil {
-				return err
-			}
-
-			log.Printf("removed container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
-
-			return nil
-		})
-	}
-
-	if err = g.Wait(); err != nil {
-		return err
-	}
-
-	if err = client.StopPodSandbox(ctx, pod.Id); err != nil {
-		return err
-	}
-
-	if err = client.RemovePodSandbox(ctx, pod.Id); err != nil {
-		return err
-	}
-
-	log.Printf("removed pod %s/%s", pod.Metadata.Namespace, pod.Metadata.Name)
 
 	return nil
 }

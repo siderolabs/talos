@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/defaults"
+	cni "github.com/containerd/go-cni"
 )
 
 const (
@@ -65,7 +66,7 @@ const (
 	ISOFilesystemLabel = "TALOS"
 
 	// PATH defines all locations where executables are stored.
-	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/opt/cni/bin"
+	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:" + cni.DefaultCNIDir
 
 	// CNICalico is used to specify Calico CNI.
 	CNICalico = "calico"

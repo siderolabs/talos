@@ -21,9 +21,10 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
+	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/internal/app/machined/internal/cni"
+	internalcni "github.com/talos-systems/talos/internal/app/machined/internal/cni"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -158,7 +159,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	// Add in the additional CNI mounts.
-	cniMounts, err := cni.Mounts(config)
+	cniMounts, err := internalcni.Mounts(config)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +248,7 @@ func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 		"anonymous-auth":               "false",
 		"cert-dir":                     "/var/lib/kubelet/pki",
 		"client-ca-file":               constants.KubernetesCACert,
-		"cni-conf-dir":                 "/etc/cni/net.d",
+		"cni-conf-dir":                 cni.DefaultNetDir,
 		"pod-manifest-path":            "/etc/kubernetes/manifests",
 		"rotate-certificates":          "true",
 		"cluster-dns":                  dnsServiceIP.String(),
