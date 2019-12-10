@@ -343,7 +343,6 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 	blackListArgs := argsbuilder.Args{
 		"name":                  hostname,
 		"data-dir":              constants.EtcdDataPath,
-		"initial-cluster-state": "new",
 		"listen-peer-urls":      "https://0.0.0.0:2380",
 		"listen-client-urls":    "https://0.0.0.0:2379",
 		"cert-file":             constants.KubernetesEtcdPeerCert,
@@ -361,6 +360,10 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		if extraArgs.Contains(k) {
 			return nil, argsbuilder.NewBlacklistError(k)
 		}
+	}
+
+	if !extraArgs.Contains("initial-cluster-state") {
+		blackListArgs.Set("initial-cluster-state", "new")
 	}
 
 	// If the initial cluster isn't explicitly defined, we need to discover any
