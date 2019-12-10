@@ -109,7 +109,7 @@ local Step(name, image='', target='', depends_on=[], environment={}) = {
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
-local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=true) = {
+local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=true, disable_clone=false) = {
   local node = { 'node-role.kubernetes.io/ci': '' },
 
   kind: 'pipeline',
@@ -119,6 +119,9 @@ local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=t
     if with_docker then docker,
     if with_buildkit then buildkit,
   ],
+  [ if disable_clone then 'clone']: {
+    disable: true,
+  },
   steps: steps,
   volumes: volumes.ForPipeline(),
   depends_on: [x.name for x in depends_on],
@@ -435,7 +438,7 @@ local notify_depends_on = {
   ],
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false, true) + notify_trigger;
 
 // Final configuration file definition.
 

@@ -5,7 +5,7 @@ go 1.13
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20191116224831-33eac9dd89f6
-	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191209231016-df7ca3993392
+	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191210195608-7606a2efb62d
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 
@@ -69,8 +69,8 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.2.5
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.0.0-20191109101513-0171b7c15da1
-	k8s.io/apimachinery v0.0.0-20191111054156-6eb29fdf75dc
-	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
-	k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
+	k8s.io/api v0.0.0-20191204082340-384b28a90b2b
+	k8s.io/apimachinery v0.0.0-20191121175448-79c2a76c473a
+	k8s.io/client-go v0.0.0-20191204083517-ea72ff2b5b2f
+	k8s.io/cri-api v0.0.0-20191121183020-775aa3c1cf73
 )

@@ -14,7 +14,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
   -e, --endpoints strings    override default endpoints in Talos configuration
   -h, --help                 help for osctl
       --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/smira/.talos/config")
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
 ```
 
 ### SEE ALSO

@@ -1,5 +1,5 @@
 # NB: There is a known bug that causes CRD scaling issues in 1.15 kubectl or later.
-export KUBERNETES_VERSION=v1.16.2
+export KUBERNETES_VERSION=v1.17.0
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export TMPPLATFORM="${TMP}/${PLATFORM}"
@@ -37,7 +37,7 @@ e2e_run() {
          --rm \
          --interactive \
          --net=integration \
-         --entrypoint=bash \
+         --entrypoint=/bin/bash \
          --mount type=bind,source=${TMP},target=${TMP} \
          --mount type=bind,source=${PWD}/hack/test/manifests,target=/e2emanifests \
          -v ${OSCTL}:/bin/osctl:ro \

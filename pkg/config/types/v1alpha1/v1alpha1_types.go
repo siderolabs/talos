@@ -182,7 +182,7 @@ type ClusterConfig struct {
 	//   examples:
 	//     - |
 	//       controlPlane:
-	//         version: 1.16.2
+	//         version: 1.17.0
 	//         endpoint: https://1.2.3.4
 	//         localAPIServerPort: 443
 	ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
@@ -421,7 +421,7 @@ type ControlPlaneConfig struct {
 	//   description: |
 	//     Indicates which version of Kubernetes for all control plane components.
 	//   examples:
-	//     - 1.16.2
+	//     - 1.17.0
 	Version string `yaml:"version"` // Note: The version must be of the format `major.minor.patch`, _without_ a leading `v`.
 	//   description: |
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.

@@ -35,7 +35,7 @@ machine:
     force: false
 cluster:
   controlPlane:
-    version: 1.16.2
+    version: 1.17.0
     endpoint: https://1.2.3.4
   clusterName: example
   network:
@@ -341,7 +341,7 @@ Examples:
 
 ```yaml
 controlPlane:
-  version: 1.16.2
+  version: 1.17.0
   endpoint: https://1.2.3.4
   localAPIServerPort: 443
 
@@ -688,7 +688,7 @@ Type: `string`
 Examples:
 
 ```yaml
-1.16.2
+1.17.0
 ```
 
 > Note: The version must be of the format `major.minor.patch`, _without_ a leading `v`.

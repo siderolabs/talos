@@ -44,7 +44,8 @@ func CommandLocal(command string) error {
 // CommandInContainer simply runs a bash command in the hyperkube containers
 // nolint: gocyclo
 func CommandInContainer(ctx context.Context, client *client.Client, runnerConfig *ContainerConfigs, command string) error {
-	runnerConfig.ContainerConfig.Cmd = []string{"bash", "-c", command}
+	runnerConfig.ContainerConfig.Entrypoint = []string{"/bin/bash"}
+	runnerConfig.ContainerConfig.Cmd = []string{"-c", command}
 	log.Println("issuing container command : '" + command + "'")
 
 	// List networks and fish out the integration network ID
