@@ -2,7 +2,7 @@ TOOLS ?= autonomy/tools:8fdb32d
 
 # TODO(andrewrynhard): Move this logic to a shell script.
 BUILDKIT_VERSION ?= v0.6.0
-KUBECTL_VERSION ?= v1.16.2
+KUBECTL_VERSION ?= v1.17.0
 GO_VERSION ?= 1.13
 BUILDKIT_IMAGE ?= moby/buildkit:$(BUILDKIT_VERSION)
 BUILDKIT_HOST ?= tcp://0.0.0.0:1234
@@ -30,6 +30,15 @@ GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alp
 endif
 ifeq ($(UNAME_S),Darwin)
 GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.3/gitmeta-darwin-amd64
+endif
+
+ifeq ($(UNAME_S),Linux)
+OSCTL_DEFAULT_TARGET := osctl-linux
+OSCTL_COMMAND := build/osctl-linux-amd64
+endif
+ifeq ($(UNAME_S),Darwin)
+OSCTL_DEFAULT_TARGET := osctl-darwin
+OSCTL_COMMAND := build/osctl-darwin-amd64
 endif
 
 BINDIR ?= ./bin
@@ -119,12 +128,13 @@ generate: buildkitd
 		$(COMMON_ARGS)
 
 .PHONY: docs
-docs: buildkitd
+docs: buildkitd $(OSCTL_DEFAULT_TARGET)
 	$(BINDIR)/buildctl --addr $(BUILDKIT_HOST) \
 		build \
 		--output type=local,dest=./ \
 		--opt target=$@ \
 		$(COMMON_ARGS)
+	@env HOME=/home/user $(OSCTL_COMMAND) docs docs/osctl
 
 .PHONY: kernel
 kernel: buildkitd

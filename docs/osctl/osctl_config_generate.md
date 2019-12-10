@@ -17,8 +17,8 @@ osctl config generate <cluster name> https://<load balancer IP or DNS name> [fla
       --additional-sans strings     additional Subject-Alt-Names for the APIServer certificate
   -h, --help                        help for generate
       --install-disk string         the disk to install to (default "/dev/sda")
-      --install-image string        the image used to perform an installation (default "docker.io/autonomy/installer:v0.3.0-alpha.10-51-g3a93e65b-dirty")
-      --kubernetes-version string   desired kubernetes version to run (default "1.16.2")
+      --install-image string        the image used to perform an installation (default "docker.io/autonomy/installer:v0.3.0-alpha.10-58-g5fb12f73-dirty")
+      --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
   -o, --output-dir string           destination to output generated files
       --version string              the desired machine config version to generate (default "v1alpha1")
 ```
@@ -29,7 +29,7 @@ osctl config generate <cluster name> https://<load balancer IP or DNS name> [fla
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
       --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/smira/.talos/config")
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
 ```
 
 ### SEE ALSO

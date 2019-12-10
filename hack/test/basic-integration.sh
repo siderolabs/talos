@@ -3,7 +3,7 @@
 set -eou pipefail
 
 
-export KUBERNETES_VERSION=v1.16.2
+export KUBERNETES_VERSION=v1.17.0
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export TALOSCONFIG="${TMP}/talosconfig"
@@ -32,7 +32,7 @@ run() {
          --rm \
          --interactive \
          --net=integration \
-         --entrypoint=bash \
+         --entrypoint=/bin/bash \
          --mount type=bind,source=${TMP},target=${TMP} \
          -v ${OSCTL}:/bin/osctl:ro \
          -v ${INTEGRATIONTEST}:/bin/integration-test:ro \
