@@ -17,6 +17,8 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
+var dmesgTail bool
+
 // dmesgCmd represents the dmesg command
 var dmesgCmd = &cobra.Command{
 	Use:   "dmesg",
@@ -29,7 +31,7 @@ var dmesgCmd = &cobra.Command{
 		}
 
 		return setupClientE(func(c *client.Client) error {
-			stream, err := c.Dmesg(globalCtx)
+			stream, err := c.Dmesg(globalCtx, follow, dmesgTail)
 			if err != nil {
 				return fmt.Errorf("error getting dmesg: %w", err)
 			}
@@ -51,7 +53,7 @@ var dmesgCmd = &cobra.Command{
 					node = resp.Metadata.Hostname
 
 					if resp.Metadata.Error != "" {
-						fmt.Fprintf(os.Stderr, "%s: %s", node, resp.Metadata.Error)
+						fmt.Fprintf(os.Stderr, "%s: %s\n", node, resp.Metadata.Error)
 					}
 				}
 
@@ -67,4 +69,6 @@ var dmesgCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(dmesgCmd)
+	dmesgCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the kernel log should be streamed")
+	dmesgCmd.Flags().BoolVarP(&dmesgTail, "tail", "", false, "specify if only new messages should be sent (makes sense only when combined with --follow)")
 }

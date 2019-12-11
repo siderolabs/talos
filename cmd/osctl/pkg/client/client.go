@@ -282,8 +282,11 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 }
 
 // Dmesg implements the proto.OSClient interface.
-func (c *Client) Dmesg(ctx context.Context) (osapi.OSService_DmesgClient, error) {
-	return c.client.Dmesg(ctx, &osapi.DmesgRequest{})
+func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (osapi.OSService_DmesgClient, error) {
+	return c.client.Dmesg(ctx, &osapi.DmesgRequest{
+		Follow: follow,
+		Tail:   tail,
+	})
 }
 
 // Logs implements the proto.OSClient interface.
