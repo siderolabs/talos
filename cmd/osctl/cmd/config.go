@@ -41,9 +41,10 @@ var configCmd = &cobra.Command{
 
 // configEndpointCmd represents the config endpoint command.
 var configEndpointCmd = &cobra.Command{
-	Use:   "endpoint <endpoint>...",
-	Short: "Set the endpoint(s) for the current context",
-	Long:  ``,
+	Use:     "endpoint <endpoint>...",
+	Aliases: []string{"endpoints"},
+	Short:   "Set the endpoint(s) for the current context",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := config.Open(talosconfig)
 		if err != nil {
@@ -54,6 +55,28 @@ var configEndpointCmd = &cobra.Command{
 		}
 
 		c.Contexts[c.Context].Endpoints = args
+		if err := c.Save(talosconfig); err != nil {
+			helpers.Fatalf("error writing config: %s", err)
+		}
+	},
+}
+
+// configNodeCmd represents the config node command.
+var configNodeCmd = &cobra.Command{
+	Use:     "node <endpoint>...",
+	Aliases: []string{"nodes"},
+	Short:   "Set the node(s) for the current context",
+	Long:    ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		c, err := config.Open(talosconfig)
+		if err != nil {
+			helpers.Fatalf("error reading config: %s", err)
+		}
+		if c.Context == "" {
+			helpers.Fatalf("no context is set")
+		}
+
+		c.Contexts[c.Context].Nodes = args
 		if err := c.Save(talosconfig); err != nil {
 			helpers.Fatalf("error writing config: %s", err)
 		}
@@ -227,7 +250,7 @@ func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name stri
 }
 
 func init() {
-	configCmd.AddCommand(configContextCmd, configEndpointCmd, configAddCmd, configGenerateCmd)
+	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
