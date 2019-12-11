@@ -43,10 +43,10 @@ type Credentials struct {
 // concrete type with the required methods.
 type Client struct {
 	conn          *grpc.ClientConn
-	client        osapi.OSClient
-	MachineClient machineapi.MachineClient
-	TimeClient    timeapi.TimeClient
-	NetworkClient networkapi.NetworkClient
+	client        osapi.OSServiceClient
+	MachineClient machineapi.MachineServiceClient
+	TimeClient    timeapi.TimeServiceClient
+	NetworkClient networkapi.NetworkServiceClient
 }
 
 // NewClientContextAndCredentialsFromConfig initializes ClientCredentials using default paths
@@ -140,10 +140,10 @@ func NewClient(creds *Credentials, endpoints []string, port int) (c *Client, err
 		return
 	}
 
-	c.client = osapi.NewOSClient(c.conn)
-	c.MachineClient = machineapi.NewMachineClient(c.conn)
-	c.TimeClient = timeapi.NewTimeClient(c.conn)
-	c.NetworkClient = networkapi.NewNetworkClient(c.conn)
+	c.client = osapi.NewOSServiceClient(c.conn)
+	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
+	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
+	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 
 	return c, nil
 }
@@ -218,8 +218,8 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 }
 
 // Stats implements the proto.OSClient interface.
-func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (reply *osapi.StatsReply, err error) {
-	reply, err = c.client.Stats(
+func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *osapi.StatsResponse, err error) {
+	resp, err = c.client.Stats(
 		ctx, &osapi.StatsRequest{
 			Namespace: namespace,
 			Driver:    driver,
@@ -228,15 +228,15 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver common.Cont
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*osapi.StatsReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*osapi.StatsResponse) //nolint: errcheck
 
 	return
 }
 
 // Containers implements the proto.OSClient interface.
-func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (reply *osapi.ContainersReply, err error) {
-	reply, err = c.client.Containers(
+func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *osapi.ContainersResponse, err error) {
+	resp, err = c.client.Containers(
 		ctx,
 		&osapi.ContainersRequest{
 			Namespace: namespace,
@@ -246,8 +246,8 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*osapi.ContainersReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*osapi.ContainersResponse) //nolint: errcheck
 
 	return
 }
@@ -282,12 +282,12 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 }
 
 // Dmesg implements the proto.OSClient interface.
-func (c *Client) Dmesg(ctx context.Context) (osapi.OS_DmesgClient, error) {
+func (c *Client) Dmesg(ctx context.Context) (osapi.OSService_DmesgClient, error) {
 	return c.client.Dmesg(ctx, &osapi.DmesgRequest{})
 }
 
 // Logs implements the proto.OSClient interface.
-func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool) (stream machineapi.Machine_LogsClient, err error) {
+func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool) (stream machineapi.MachineService_LogsClient, err error) {
 	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
 		Namespace: namespace,
 		Driver:    driver,
@@ -299,103 +299,103 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver common.Conta
 }
 
 // Version implements the proto.OSClient interface.
-func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (reply *machineapi.VersionReply, err error) {
-	reply, err = c.MachineClient.Version(
+func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.VersionResponse, err error) {
+	resp, err = c.MachineClient.Version(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.VersionReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.VersionResponse) //nolint: errcheck
 
 	return
 }
 
 // Routes implements the networkdproto.NetworkClient interface.
-func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (reply *networkapi.RoutesReply, err error) {
-	reply, err = c.NetworkClient.Routes(
+func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.RoutesResponse, err error) {
+	resp, err = c.NetworkClient.Routes(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*networkapi.RoutesReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*networkapi.RoutesResponse) //nolint: errcheck
 
 	return
 }
 
 // Interfaces implements the proto.OSClient interface.
-func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption) (reply *networkapi.InterfacesReply, err error) {
-	reply, err = c.NetworkClient.Interfaces(
+func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.InterfacesResponse, err error) {
+	resp, err = c.NetworkClient.Interfaces(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*networkapi.InterfacesReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*networkapi.InterfacesResponse) //nolint: errcheck
 
 	return
 }
 
 // Processes implements the proto.OSClient interface.
-func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (reply *osapi.ProcessesReply, err error) {
-	reply, err = c.client.Processes(
+func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *osapi.ProcessesResponse, err error) {
+	resp, err = c.client.Processes(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*osapi.ProcessesReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*osapi.ProcessesResponse) //nolint: errcheck
 
 	return
 }
 
 // Memory implements the proto.OSClient interface.
-func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (reply *osapi.MemInfoReply, err error) {
-	reply, err = c.client.Memory(
+func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (resp *osapi.MemoryResponse, err error) {
+	resp, err = c.client.Memory(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*osapi.MemInfoReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*osapi.MemoryResponse) //nolint: errcheck
 
 	return
 }
 
 // Mounts implements the proto.OSClient interface.
-func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (reply *machineapi.MountsReply, err error) {
-	reply, err = c.MachineClient.Mounts(
+func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.MountsResponse, err error) {
+	resp, err = c.MachineClient.Mounts(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.MountsReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.MountsResponse) //nolint: errcheck
 
 	return
 }
 
 // LS implements the proto.OSClient interface.
-func (c *Client) LS(ctx context.Context, req machineapi.LSRequest) (stream machineapi.Machine_LSClient, err error) {
-	return c.MachineClient.LS(ctx, &req)
+func (c *Client) LS(ctx context.Context, req machineapi.ListRequest) (stream machineapi.MachineService_ListClient, err error) {
+	return c.MachineClient.List(ctx, &req)
 }
 
-// CopyOut implements the proto.OSClient interface
-func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
-	stream, err := c.MachineClient.CopyOut(ctx, &machineapi.CopyOutRequest{
+// Copy implements the proto.OSClient interface
+func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
+	stream, err := c.MachineClient.Copy(ctx, &machineapi.CopyRequest{
 		RootPath: rootPath,
 	})
 	if err != nil {
@@ -407,38 +407,38 @@ func (c *Client) CopyOut(ctx context.Context, rootPath string) (io.ReadCloser, <
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
 // interface
-func (c *Client) Upgrade(ctx context.Context, image string, callOptions ...grpc.CallOption) (reply *machineapi.UpgradeReply, err error) {
-	reply, err = c.MachineClient.Upgrade(
+func (c *Client) Upgrade(ctx context.Context, image string, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
+	resp, err = c.MachineClient.Upgrade(
 		ctx,
 		&machineapi.UpgradeRequest{Image: image},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.UpgradeReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.UpgradeResponse) //nolint: errcheck
 
 	return
 }
 
 // ServiceList returns list of services with their state
-func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption) (reply *machineapi.ServiceListReply, err error) {
-	reply, err = c.MachineClient.ServiceList(
+func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ServiceListResponse, err error) {
+	resp, err = c.MachineClient.ServiceList(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.ServiceListReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint: errcheck
 
 	return
 }
 
 // ServiceInfo provides info about a service and node metadata
 type ServiceInfo struct {
-	Metadata *common.ResponseMetadata
+	Metadata *common.Metadata
 	Service  *machineapi.ServiceInfo
 }
 
@@ -447,9 +447,9 @@ type ServiceInfo struct {
 // This is implemented via service list API, as we don't have many services
 // If service with given id is not registered, function returns nil
 func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc.CallOption) (services []ServiceInfo, err error) {
-	var reply *machineapi.ServiceListReply
+	var resp *machineapi.ServiceListResponse
 
-	reply, err = c.MachineClient.ServiceList(
+	resp, err = c.MachineClient.ServiceList(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
@@ -460,10 +460,10 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 	}
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.ServiceListReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint: errcheck
 
-	for _, resp := range reply.Response {
+	for _, resp := range resp.Messages {
 		for _, svc := range resp.Services {
 			if svc.Id == id {
 				services = append(services, ServiceInfo{
@@ -478,76 +478,76 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 }
 
 // ServiceStart starts a service.
-func (c *Client) ServiceStart(ctx context.Context, id string, callOptions ...grpc.CallOption) (reply *machineapi.ServiceStartReply, err error) {
-	reply, err = c.MachineClient.ServiceStart(
+func (c *Client) ServiceStart(ctx context.Context, id string, callOptions ...grpc.CallOption) (resp *machineapi.ServiceStartResponse, err error) {
+	resp, err = c.MachineClient.ServiceStart(
 		ctx,
 		&machineapi.ServiceStartRequest{Id: id},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.ServiceStartReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.ServiceStartResponse) //nolint: errcheck
 
 	return
 }
 
 // ServiceStop stops a service.
-func (c *Client) ServiceStop(ctx context.Context, id string, callOptions ...grpc.CallOption) (reply *machineapi.ServiceStopReply, err error) {
-	reply, err = c.MachineClient.ServiceStop(
+func (c *Client) ServiceStop(ctx context.Context, id string, callOptions ...grpc.CallOption) (resp *machineapi.ServiceStopResponse, err error) {
+	resp, err = c.MachineClient.ServiceStop(
 		ctx,
 		&machineapi.ServiceStopRequest{Id: id},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.ServiceStopReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.ServiceStopResponse) //nolint: errcheck
 
 	return
 }
 
 // ServiceRestart restarts a service.
-func (c *Client) ServiceRestart(ctx context.Context, id string, callOptions ...grpc.CallOption) (reply *machineapi.ServiceRestartReply, err error) {
-	reply, err = c.MachineClient.ServiceRestart(
+func (c *Client) ServiceRestart(ctx context.Context, id string, callOptions ...grpc.CallOption) (resp *machineapi.ServiceRestartResponse, err error) {
+	resp, err = c.MachineClient.ServiceRestart(
 		ctx,
 		&machineapi.ServiceRestartRequest{Id: id},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*machineapi.ServiceRestartReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.ServiceRestartResponse) //nolint: errcheck
 
 	return
 }
 
 // Time returns the time
-func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (reply *timeapi.TimeReply, err error) {
-	reply, err = c.TimeClient.Time(
+func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (resp *timeapi.TimeResponse, err error) {
+	resp, err = c.TimeClient.Time(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*timeapi.TimeReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*timeapi.TimeResponse) //nolint: errcheck
 
 	return
 }
 
 // TimeCheck returns the time compared to the specified ntp server
-func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...grpc.CallOption) (reply *timeapi.TimeReply, err error) {
-	reply, err = c.TimeClient.TimeCheck(
+func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...grpc.CallOption) (resp *timeapi.TimeResponse, err error) {
+	resp, err = c.TimeClient.TimeCheck(
 		ctx,
 		&timeapi.TimeRequest{Server: server},
 		callOptions...,
 	)
 
 	var filtered interface{}
-	filtered, err = FilterReply(reply, err)
-	reply, _ = filtered.(*timeapi.TimeReply) //nolint: errcheck
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*timeapi.TimeResponse) //nolint: errcheck
 
 	return
 }
@@ -564,7 +564,7 @@ func (c *Client) Read(ctx context.Context, path string) (io.Reader, <-chan error
 
 // MachineStream is a common interface for streams returned by streaming APIs.
 type MachineStream interface {
-	Recv() (*common.DataResponse, error)
+	Recv() (*common.Data, error)
 	grpc.ClientStream
 }
 

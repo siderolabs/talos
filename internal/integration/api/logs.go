@@ -47,11 +47,11 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 	servicesReply, err := suite.Client.ServiceList(suite.ctx)
 	suite.Require().NoError(err)
 
-	suite.Require().Len(servicesReply.Response, 1)
+	suite.Require().Len(servicesReply.Messages, 1)
 
 	logsSize := int64(0)
 
-	for _, svc := range servicesReply.Response[0].Services {
+	for _, svc := range servicesReply.Messages[0].Services {
 		logsStream, err := suite.Client.Logs(
 			suite.ctx,
 			constants.SystemContainerdNamespace,
@@ -110,7 +110,7 @@ func (suite *LogsSuite) TestStreaming() {
 
 	suite.Require().NoError(logsStream.CloseSend())
 
-	respCh := make(chan *common.DataResponse)
+	respCh := make(chan *common.Data)
 	errCh := make(chan error, 1)
 
 	go func() {

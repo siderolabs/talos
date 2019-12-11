@@ -67,13 +67,13 @@ func NewRegistrator(config runtime.Configurator) *Registrator {
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	machineapi.RegisterMachineServer(s, r)
+	machineapi.RegisterMachineServiceServer(s, r)
 }
 
 // Reboot implements the machineapi.MachineServer interface.
-func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machineapi.RebootReply, err error) {
-	reply = &machineapi.RebootReply{
-		Response: []*machineapi.RebootResponse{},
+func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machineapi.RebootResponse, err error) {
+	reply = &machineapi.RebootResponse{
+		Messages: []*machineapi.Reboot{},
 	}
 
 	log.Printf("reboot via API received")
@@ -83,9 +83,9 @@ func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machi
 }
 
 // Shutdown implements the machineapi.MachineServer interface.
-func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *machineapi.ShutdownReply, err error) {
-	reply = &machineapi.ShutdownReply{
-		Response: []*machineapi.ShutdownResponse{},
+func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *machineapi.ShutdownResponse, err error) {
+	reply = &machineapi.ShutdownResponse{
+		Messages: []*machineapi.Shutdown{},
 	}
 
 	log.Printf("shutdown via API received")
@@ -95,15 +95,15 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 }
 
 // Upgrade initiates an upgrade.
-func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeReply, err error) {
+func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeResponse, err error) {
 	if err = etcd.ValidateForUpgrade(); err != nil {
 		return nil, err
 	}
 
 	event.Bus().Notify(event.Event{Type: event.Upgrade, Data: in})
 
-	data = &machineapi.UpgradeReply{
-		Response: []*machineapi.UpgradeResponse{
+	data = &machineapi.UpgradeResponse{
+		Messages: []*machineapi.Upgrade{
 			{
 				Ack: "Upgrade request received",
 			},
@@ -114,7 +114,7 @@ func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest
 }
 
 // Reset resets the node.
-func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machineapi.ResetReply, err error) {
+func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machineapi.ResetResponse, err error) {
 	// Stop the kubelet.
 	if err = system.Services(r.config).Stop(ctx, "kubelet"); err != nil {
 		return data, err
@@ -125,17 +125,17 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machine
 		return nil, err
 	}
 
-	return &machineapi.ResetReply{
-		Response: []*machineapi.ResetResponse{},
+	return &machineapi.ResetResponse{
+		Messages: []*machineapi.Reset{},
 	}, err
 }
 
 // ServiceList returns list of the registered services and their status
-func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *machineapi.ServiceListReply, err error) {
+func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result *machineapi.ServiceListResponse, err error) {
 	services := system.Services(r.config).List()
 
-	result = &machineapi.ServiceListReply{
-		Response: []*machineapi.ServiceListResponse{
+	result = &machineapi.ServiceListResponse{
+		Messages: []*machineapi.ServiceList{
 			{
 				Services: make([]*machineapi.ServiceInfo, len(services)),
 			},
@@ -143,7 +143,7 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 	}
 
 	for i := range services {
-		result.Response[0].Services[i] = services[i].AsProto()
+		result.Messages[0].Services[i] = services[i].AsProto()
 	}
 
 	return result, nil
@@ -151,13 +151,13 @@ func (r *Registrator) ServiceList(ctx context.Context, in *empty.Empty) (result 
 
 // ServiceStart implements the machineapi.MachineServer interface and starts a
 // service running on Talos.
-func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceStartRequest) (reply *machineapi.ServiceStartReply, err error) {
+func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceStartRequest) (reply *machineapi.ServiceStartResponse, err error) {
 	if err = system.Services(r.config).APIStart(ctx, in.Id); err != nil {
-		return &machineapi.ServiceStartReply{}, err
+		return &machineapi.ServiceStartResponse{}, err
 	}
 
-	reply = &machineapi.ServiceStartReply{
-		Response: []*machineapi.ServiceStartResponse{
+	reply = &machineapi.ServiceStartResponse{
+		Messages: []*machineapi.ServiceStart{
 			{
 				Resp: fmt.Sprintf("Service %q started", in.Id),
 			},
@@ -169,13 +169,13 @@ func (r *Registrator) ServiceStart(ctx context.Context, in *machineapi.ServiceSt
 
 // Start implements deprecated Start method which forwards to 'ServiceStart'.
 //nolint: staticcheck
-func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (reply *machineapi.StartReply, err error) {
-	var rep *machineapi.ServiceStartReply
+func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (reply *machineapi.StartResponse, err error) {
+	var rep *machineapi.ServiceStartResponse
 
 	rep, err = r.ServiceStart(ctx, &machineapi.ServiceStartRequest{Id: in.Id})
 	if rep != nil {
-		reply = &machineapi.StartReply{
-			Resp: rep.Response[0].Resp,
+		reply = &machineapi.StartResponse{
+			Resp: rep.Messages[0].Resp,
 		}
 	}
 
@@ -184,13 +184,13 @@ func (r *Registrator) Start(ctx context.Context, in *machineapi.StartRequest) (r
 
 // Stop implements deprecated Stop method which forwards to 'ServiceStop'.
 //nolint: staticcheck
-func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (reply *machineapi.StopReply, err error) {
-	var rep *machineapi.ServiceStopReply
+func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (reply *machineapi.StopResponse, err error) {
+	var rep *machineapi.ServiceStopResponse
 
 	rep, err = r.ServiceStop(ctx, &machineapi.ServiceStopRequest{Id: in.Id})
 	if rep != nil {
-		reply = &machineapi.StopReply{
-			Resp: rep.Response[0].Resp,
+		reply = &machineapi.StopResponse{
+			Resp: rep.Messages[0].Resp,
 		}
 	}
 
@@ -199,13 +199,13 @@ func (r *Registrator) Stop(ctx context.Context, in *machineapi.StopRequest) (rep
 
 // ServiceStop implements the machineapi.MachineServer interface and stops a
 // service running on Talos.
-func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceStopRequest) (reply *machineapi.ServiceStopReply, err error) {
+func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceStopRequest) (reply *machineapi.ServiceStopResponse, err error) {
 	if err = system.Services(r.config).APIStop(ctx, in.Id); err != nil {
-		return &machineapi.ServiceStopReply{}, err
+		return &machineapi.ServiceStopResponse{}, err
 	}
 
-	reply = &machineapi.ServiceStopReply{
-		Response: []*machineapi.ServiceStopResponse{
+	reply = &machineapi.ServiceStopResponse{
+		Messages: []*machineapi.ServiceStop{
 			{
 				Resp: fmt.Sprintf("Service %q stopped", in.Id),
 			},
@@ -217,13 +217,13 @@ func (r *Registrator) ServiceStop(ctx context.Context, in *machineapi.ServiceSto
 
 // ServiceRestart implements the machineapi.MachineServer interface and stops a
 // service running on Talos.
-func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.ServiceRestartRequest) (reply *machineapi.ServiceRestartReply, err error) {
+func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.ServiceRestartRequest) (reply *machineapi.ServiceRestartResponse, err error) {
 	if err = system.Services(r.config).APIRestart(ctx, in.Id); err != nil {
-		return &machineapi.ServiceRestartReply{}, err
+		return &machineapi.ServiceRestartResponse{}, err
 	}
 
-	reply = &machineapi.ServiceRestartReply{
-		Response: []*machineapi.ServiceRestartResponse{
+	reply = &machineapi.ServiceRestartResponse{
+		Messages: []*machineapi.ServiceRestart{
 			{
 				Resp: fmt.Sprintf("Service %q restarted", in.Id),
 			},
@@ -233,8 +233,8 @@ func (r *Registrator) ServiceRestart(ctx context.Context, in *machineapi.Service
 	return reply, err
 }
 
-// CopyOut implements the machineapi.MachineServer interface and copies data out of Talos node
-func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machine_CopyOutServer) error {
+// Copy implements the machineapi.MachineServer interface and copies data out of Talos node
+func (r *Registrator) Copy(req *machineapi.CopyRequest, s machineapi.MachineService_CopyServer) error {
 	path := req.RootPath
 	path = filepath.Clean(path)
 
@@ -259,7 +259,7 @@ func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machi
 	chunkCh := chunker.Read(ctx)
 
 	for data := range chunkCh {
-		err := s.SendMsg(&common.DataResponse{Bytes: data})
+		err := s.SendMsg(&common.Data{Bytes: data})
 		if err != nil {
 			ctxCancel()
 		}
@@ -267,8 +267,8 @@ func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machi
 
 	archiveErr := <-errCh
 	if archiveErr != nil {
-		return s.SendMsg(&common.DataResponse{
-			Metadata: &common.ResponseMetadata{
+		return s.SendMsg(&common.Data{
+			Metadata: &common.Metadata{
 				Error: archiveErr.Error(),
 			},
 		})
@@ -277,10 +277,10 @@ func (r *Registrator) CopyOut(req *machineapi.CopyOutRequest, s machineapi.Machi
 	return nil
 }
 
-// LS implements the machineapi.MachineServer interface.
-func (r *Registrator) LS(req *machineapi.LSRequest, s machineapi.Machine_LSServer) error {
+// List implements the machineapi.MachineServer interface.
+func (r *Registrator) List(req *machineapi.ListRequest, s machineapi.MachineService_ListServer) error {
 	if req == nil {
-		req = new(machineapi.LSRequest)
+		req = new(machineapi.ListRequest)
 	}
 
 	if !strings.HasPrefix(req.Root, OSPathSeparator) {
@@ -336,7 +336,7 @@ func (r *Registrator) LS(req *machineapi.LSRequest, s machineapi.Machine_LSServe
 }
 
 // Mounts implements the machineapi.OSDServer interface.
-func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machineapi.MountsReply, err error) {
+func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machineapi.MountsResponse, err error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
 		return nil, err
@@ -394,8 +394,8 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machi
 		multiErr = multierror.Append(multiErr, err)
 	}
 
-	reply = &machineapi.MountsReply{
-		Response: []*machineapi.MountsResponse{
+	reply = &machineapi.MountsResponse{
+		Messages: []*machineapi.Mounts{
 			{
 				Stats: stats,
 			},
@@ -406,7 +406,7 @@ func (r *Registrator) Mounts(ctx context.Context, in *empty.Empty) (reply *machi
 }
 
 // Version implements the machineapi.MachineServer interface.
-func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionReply, err error) {
+func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *machineapi.VersionResponse, err error) {
 	var platform *machineapi.PlatformInfo
 
 	if r.platform != nil {
@@ -416,8 +416,8 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *mach
 		}
 	}
 
-	return &machineapi.VersionReply{
-		Response: []*machineapi.VersionResponse{
+	return &machineapi.VersionResponse{
+		Messages: []*machineapi.Version{
 			{
 				Version:  version.NewVersion(),
 				Platform: platform,
@@ -427,16 +427,16 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *mach
 }
 
 // Kubeconfig implements the osapi.OSDServer interface.
-func (r *Registrator) Kubeconfig(empty *empty.Empty, s machineapi.Machine_KubeconfigServer) error {
-	in := &machine.CopyOutRequest{RootPath: constants.AdminKubeconfig}
+func (r *Registrator) Kubeconfig(empty *empty.Empty, s machineapi.MachineService_KubeconfigServer) error {
+	in := &machine.CopyRequest{RootPath: constants.AdminKubeconfig}
 
-	return r.CopyOut(in, s)
+	return r.Copy(in, s)
 }
 
 // Logs provides a service or container logs can be requested and the contents of the
 // log file are streamed in chunks.
 // nolint: gocyclo
-func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.Machine_LogsServer) (err error) {
+func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.MachineService_LogsServer) (err error) {
 	var chunk chunker.Chunker
 
 	switch {
@@ -469,7 +469,7 @@ func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.Machine_Log
 	}
 
 	for data := range chunk.Read(l.Context()) {
-		if err = l.Send(&common.DataResponse{Bytes: data}); err != nil {
+		if err = l.Send(&common.Data{Bytes: data}); err != nil {
 			return
 		}
 	}
@@ -518,7 +518,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 }
 
 // Read implements the read API.
-func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.Machine_ReadServer) (err error) {
+func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.MachineService_ReadServer) (err error) {
 	stat, err := os.Stat(in.Path)
 	if err != nil {
 		return err
@@ -540,7 +540,7 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.Machine_Re
 		chunkCh := chunker.Read(ctx)
 
 		for data := range chunkCh {
-			err := srv.SendMsg(&common.DataResponse{Bytes: data})
+			err := srv.SendMsg(&common.Data{Bytes: data})
 			if err != nil {
 				cancel()
 			}

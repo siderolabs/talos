@@ -41,11 +41,11 @@ func NewRegistrator(n *networkd.Networkd) *Registrator {
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	networkapi.RegisterNetworkServer(s, r)
+	networkapi.RegisterNetworkServiceServer(s, r)
 }
 
 // Routes returns the hosts routing table.
-func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *networkapi.RoutesReply, err error) {
+func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *networkapi.RoutesResponse, err error) {
 	list, err := r.Conn.Route.List()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get route list: %w", err)
@@ -77,8 +77,8 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 		})
 	}
 
-	return &networkapi.RoutesReply{
-		Response: []*networkapi.RoutesResponse{
+	return &networkapi.RoutesResponse{
+		Messages: []*networkapi.Routes{
 			{
 				Routes: routes,
 			},
@@ -87,13 +87,13 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 }
 
 // Interfaces returns the hosts network interfaces and addresses.
-func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesReply, err error) {
+func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesResponse, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return reply, err
 	}
 
-	resp := &networkapi.InterfacesResponse{}
+	resp := &networkapi.Interfaces{}
 
 	for _, iface := range ifaces {
 		ifaceaddrs, err := iface.Addrs()
@@ -118,8 +118,8 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *n
 		resp.Interfaces = append(resp.Interfaces, ifmsg)
 	}
 
-	return &networkapi.InterfacesReply{
-		Response: []*networkapi.InterfacesResponse{
+	return &networkapi.InterfacesResponse{
+		Messages: []*networkapi.Interfaces{
 			resp,
 		},
 	}, nil

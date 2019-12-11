@@ -40,18 +40,18 @@ func init() {
 func upgrade() error {
 	var (
 		err        error
-		reply      *machineapi.UpgradeReply
+		resp       *machineapi.UpgradeResponse
 		remotePeer peer.Peer
 	)
 
 	setupClient(func(c *client.Client) {
 		// TODO: See if we can validate version and prevent starting upgrades to
 		// an unknown version
-		reply, err = c.Upgrade(globalCtx, upgradeImage, grpc.Peer(&remotePeer))
+		resp, err = c.Upgrade(globalCtx, upgradeImage, grpc.Peer(&remotePeer))
 	})
 
 	if err != nil {
-		if reply == nil {
+		if resp == nil {
 			return fmt.Errorf("error performing upgrade: %s", err)
 		}
 
@@ -63,14 +63,14 @@ func upgrade() error {
 
 	defaultNode := addrFromPeer(&remotePeer)
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t", node, resp.Ack, time.Now())
+		fmt.Fprintf(w, "%s\t%s\t%s\t", node, msg.Ack, time.Now())
 	}
 
 	return w.Flush()

@@ -33,34 +33,34 @@ var interfacesCmd = &cobra.Command{
 		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 
-			reply, err := c.Interfaces(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Interfaces(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error getting interfaces: %s", err)
 				}
 
 				helpers.Warning("%s", err)
 			}
 
-			return intersRender(&remotePeer, reply)
+			return intersRender(&remotePeer, resp)
 		})
 	},
 }
 
-func intersRender(remotePeer *peer.Peer, reply *networkapi.InterfacesReply) error {
+func intersRender(remotePeer *peer.Peer, resp *networkapi.InterfacesResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINDEX\tNAME\tMAC\tMTU\tADDRESS")
 
 	defaultNode := addrFromPeer(remotePeer)
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
-		for _, netif := range resp.Interfaces {
+		for _, netif := range msg.Interfaces {
 			for _, addr := range netif.Ipaddress {
 				fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%d\t%s\n", node, netif.Index, netif.Name, netif.Hardwareaddr, netif.Mtu, addr)
 			}

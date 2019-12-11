@@ -134,9 +134,9 @@ func processesUI(ctx context.Context, c *client.Client) {
 	}
 }
 
-type by func(p1, p2 *osapi.Process) bool
+type by func(p1, p2 *osapi.ProcessInfo) bool
 
-func (b by) sort(procs []*osapi.Process) {
+func (b by) sort(procs []*osapi.ProcessInfo) {
 	ps := &procSorter{
 		procs: procs,
 		by:    b, // The Sort method's receiver is the function (closure) that defines the sort order.
@@ -145,8 +145,8 @@ func (b by) sort(procs []*osapi.Process) {
 }
 
 type procSorter struct {
-	procs []*osapi.Process
-	by    func(p1, p2 *osapi.Process) bool // Closure used in the Less method.
+	procs []*osapi.ProcessInfo
+	by    func(p1, p2 *osapi.ProcessInfo) bool // Closure used in the Less method.
 }
 
 // Len is part of sort.Interface.
@@ -165,12 +165,12 @@ func (s *procSorter) Less(i, j int) bool {
 }
 
 // Sort Methods
-var rss = func(p1, p2 *osapi.Process) bool {
+var rss = func(p1, p2 *osapi.ProcessInfo) bool {
 	// Reverse sort ( Descending )
 	return p1.ResidentMemory > p2.ResidentMemory
 }
 
-var cpu = func(p1, p2 *osapi.Process) bool {
+var cpu = func(p1, p2 *osapi.ProcessInfo) bool {
 	// Reverse sort ( Descending )
 	return p1.CpuTime > p2.CpuTime
 }
@@ -179,7 +179,7 @@ var cpu = func(p1, p2 *osapi.Process) bool {
 func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
 	var remotePeer peer.Peer
 
-	reply, err := c.Processes(ctx, grpc.Peer(&remotePeer))
+	resp, err := c.Processes(ctx, grpc.Peer(&remotePeer))
 	if err != nil {
 		// TODO: Figure out how to expose errors to client without messing
 		// up display
@@ -194,8 +194,8 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 	s = append(s, "NODE | PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | COMMAND")
 
-	for _, resp := range reply.Response {
-		procs := resp.Processes
+	for _, msg := range resp.Messages {
+		procs := msg.Processes
 
 		switch sortMethod {
 		case "cpu":
@@ -218,8 +218,8 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 			node := defaultNode
 
-			if resp.Metadata != nil {
-				node = resp.Metadata.Hostname
+			if msg.Metadata != nil {
+				node = msg.Metadata.Hostname
 			}
 
 			s = append(s,

@@ -80,8 +80,8 @@ func (m *ContainersRequest) GetDriver() common.ContainerDriver {
 	return common.ContainerDriver_CONTAINERD
 }
 
-// The response message containing the requested containers.
-type Container struct {
+// The messages message containing the requested containers.
+type ContainerInfo struct {
 	Namespace            string   `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Id                   string   `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	Image                string   `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
@@ -94,11 +94,98 @@ type Container struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
+func (m *ContainerInfo) Reset()         { *m = ContainerInfo{} }
+func (m *ContainerInfo) String() string { return proto.CompactTextString(m) }
+func (*ContainerInfo) ProtoMessage()    {}
+func (*ContainerInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b20a722d09fd3254, []int{1}
+}
+
+func (m *ContainerInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContainerInfo.Unmarshal(m, b)
+}
+
+func (m *ContainerInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContainerInfo.Marshal(b, m, deterministic)
+}
+
+func (m *ContainerInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContainerInfo.Merge(m, src)
+}
+
+func (m *ContainerInfo) XXX_Size() int {
+	return xxx_messageInfo_ContainerInfo.Size(m)
+}
+
+func (m *ContainerInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContainerInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContainerInfo proto.InternalMessageInfo
+
+func (m *ContainerInfo) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *ContainerInfo) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *ContainerInfo) GetImage() string {
+	if m != nil {
+		return m.Image
+	}
+	return ""
+}
+
+func (m *ContainerInfo) GetPid() uint32 {
+	if m != nil {
+		return m.Pid
+	}
+	return 0
+}
+
+func (m *ContainerInfo) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *ContainerInfo) GetPodId() string {
+	if m != nil {
+		return m.PodId
+	}
+	return ""
+}
+
+func (m *ContainerInfo) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+// The messages message containing the requested containers.
+type Container struct {
+	Metadata             *common.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Containers           []*ContainerInfo `protobuf:"bytes,2,rep,name=containers,proto3" json:"containers,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
 func (m *Container) Reset()         { *m = Container{} }
 func (m *Container) String() string { return proto.CompactTextString(m) }
 func (*Container) ProtoMessage()    {}
 func (*Container) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{1}
+	return fileDescriptor_b20a722d09fd3254, []int{2}
 }
 
 func (m *Container) XXX_Unmarshal(b []byte) error {
@@ -123,146 +210,59 @@ func (m *Container) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Container proto.InternalMessageInfo
 
-func (m *Container) GetNamespace() string {
-	if m != nil {
-		return m.Namespace
-	}
-	return ""
-}
-
-func (m *Container) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Container) GetImage() string {
-	if m != nil {
-		return m.Image
-	}
-	return ""
-}
-
-func (m *Container) GetPid() uint32 {
-	if m != nil {
-		return m.Pid
-	}
-	return 0
-}
-
-func (m *Container) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *Container) GetPodId() string {
-	if m != nil {
-		return m.PodId
-	}
-	return ""
-}
-
-func (m *Container) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-// The response message containing the requested containers.
-type ContainerResponse struct {
-	Metadata             *common.ResponseMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Containers           []*Container             `protobuf:"bytes,2,rep,name=containers,proto3" json:"containers,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
-}
-
-func (m *ContainerResponse) Reset()         { *m = ContainerResponse{} }
-func (m *ContainerResponse) String() string { return proto.CompactTextString(m) }
-func (*ContainerResponse) ProtoMessage()    {}
-func (*ContainerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{2}
-}
-
-func (m *ContainerResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ContainerResponse.Unmarshal(m, b)
-}
-
-func (m *ContainerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ContainerResponse.Marshal(b, m, deterministic)
-}
-
-func (m *ContainerResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContainerResponse.Merge(m, src)
-}
-
-func (m *ContainerResponse) XXX_Size() int {
-	return xxx_messageInfo_ContainerResponse.Size(m)
-}
-
-func (m *ContainerResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContainerResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ContainerResponse proto.InternalMessageInfo
-
-func (m *ContainerResponse) GetMetadata() *common.ResponseMetadata {
+func (m *Container) GetMetadata() *common.Metadata {
 	if m != nil {
 		return m.Metadata
 	}
 	return nil
 }
 
-func (m *ContainerResponse) GetContainers() []*Container {
+func (m *Container) GetContainers() []*ContainerInfo {
 	if m != nil {
 		return m.Containers
 	}
 	return nil
 }
 
-type ContainersReply struct {
-	Response             []*ContainerResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+type ContainersResponse struct {
+	Messages             []*Container `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *ContainersReply) Reset()         { *m = ContainersReply{} }
-func (m *ContainersReply) String() string { return proto.CompactTextString(m) }
-func (*ContainersReply) ProtoMessage()    {}
-func (*ContainersReply) Descriptor() ([]byte, []int) {
+func (m *ContainersResponse) Reset()         { *m = ContainersResponse{} }
+func (m *ContainersResponse) String() string { return proto.CompactTextString(m) }
+func (*ContainersResponse) ProtoMessage()    {}
+func (*ContainersResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b20a722d09fd3254, []int{3}
 }
 
-func (m *ContainersReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ContainersReply.Unmarshal(m, b)
+func (m *ContainersResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContainersResponse.Unmarshal(m, b)
 }
 
-func (m *ContainersReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ContainersReply.Marshal(b, m, deterministic)
+func (m *ContainersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContainersResponse.Marshal(b, m, deterministic)
 }
 
-func (m *ContainersReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContainersReply.Merge(m, src)
+func (m *ContainersResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContainersResponse.Merge(m, src)
 }
 
-func (m *ContainersReply) XXX_Size() int {
-	return xxx_messageInfo_ContainersReply.Size(m)
+func (m *ContainersResponse) XXX_Size() int {
+	return xxx_messageInfo_ContainersResponse.Size(m)
 }
 
-func (m *ContainersReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContainersReply.DiscardUnknown(m)
+func (m *ContainersResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContainersResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ContainersReply proto.InternalMessageInfo
+var xxx_messageInfo_ContainersResponse proto.InternalMessageInfo
 
-func (m *ContainersReply) GetResponse() []*ContainerResponse {
+func (m *ContainersResponse) GetMessages() []*Container {
 	if m != nil {
-		return m.Response
+		return m.Messages
 	}
 	return nil
 }
@@ -355,121 +355,62 @@ func (m *ProcessesRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ProcessesRequest proto.InternalMessageInfo
 
-type ProcessesReply struct {
-	Response             []*ProcessResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+type ProcessesResponse struct {
+	Messages             []*Process `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *ProcessesReply) Reset()         { *m = ProcessesReply{} }
-func (m *ProcessesReply) String() string { return proto.CompactTextString(m) }
-func (*ProcessesReply) ProtoMessage()    {}
-func (*ProcessesReply) Descriptor() ([]byte, []int) {
+func (m *ProcessesResponse) Reset()         { *m = ProcessesResponse{} }
+func (m *ProcessesResponse) String() string { return proto.CompactTextString(m) }
+func (*ProcessesResponse) ProtoMessage()    {}
+func (*ProcessesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b20a722d09fd3254, []int{6}
 }
 
-func (m *ProcessesReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ProcessesReply.Unmarshal(m, b)
+func (m *ProcessesResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProcessesResponse.Unmarshal(m, b)
 }
 
-func (m *ProcessesReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ProcessesReply.Marshal(b, m, deterministic)
+func (m *ProcessesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProcessesResponse.Marshal(b, m, deterministic)
 }
 
-func (m *ProcessesReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProcessesReply.Merge(m, src)
+func (m *ProcessesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProcessesResponse.Merge(m, src)
 }
 
-func (m *ProcessesReply) XXX_Size() int {
-	return xxx_messageInfo_ProcessesReply.Size(m)
+func (m *ProcessesResponse) XXX_Size() int {
+	return xxx_messageInfo_ProcessesResponse.Size(m)
 }
 
-func (m *ProcessesReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProcessesReply.DiscardUnknown(m)
+func (m *ProcessesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProcessesResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProcessesReply proto.InternalMessageInfo
+var xxx_messageInfo_ProcessesResponse proto.InternalMessageInfo
 
-func (m *ProcessesReply) GetResponse() []*ProcessResponse {
+func (m *ProcessesResponse) GetMessages() []*Process {
 	if m != nil {
-		return m.Response
-	}
-	return nil
-}
-
-type ProcessResponse struct {
-	Metadata             *common.ResponseMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Processes            []*Process               `protobuf:"bytes,2,rep,name=processes,proto3" json:"processes,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
-}
-
-func (m *ProcessResponse) Reset()         { *m = ProcessResponse{} }
-func (m *ProcessResponse) String() string { return proto.CompactTextString(m) }
-func (*ProcessResponse) ProtoMessage()    {}
-func (*ProcessResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{7}
-}
-
-func (m *ProcessResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ProcessResponse.Unmarshal(m, b)
-}
-
-func (m *ProcessResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ProcessResponse.Marshal(b, m, deterministic)
-}
-
-func (m *ProcessResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProcessResponse.Merge(m, src)
-}
-
-func (m *ProcessResponse) XXX_Size() int {
-	return xxx_messageInfo_ProcessResponse.Size(m)
-}
-
-func (m *ProcessResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProcessResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProcessResponse proto.InternalMessageInfo
-
-func (m *ProcessResponse) GetMetadata() *common.ResponseMetadata {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-func (m *ProcessResponse) GetProcesses() []*Process {
-	if m != nil {
-		return m.Processes
+		return m.Messages
 	}
 	return nil
 }
 
 type Process struct {
-	Pid                  int32    `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
-	Ppid                 int32    `protobuf:"varint,2,opt,name=ppid,proto3" json:"ppid,omitempty"`
-	State                string   `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
-	Threads              int32    `protobuf:"varint,4,opt,name=threads,proto3" json:"threads,omitempty"`
-	CpuTime              float64  `protobuf:"fixed64,5,opt,name=cpu_time,json=cpuTime,proto3" json:"cpu_time,omitempty"`
-	VirtualMemory        uint64   `protobuf:"varint,6,opt,name=virtual_memory,json=virtualMemory,proto3" json:"virtual_memory,omitempty"`
-	ResidentMemory       uint64   `protobuf:"varint,7,opt,name=resident_memory,json=residentMemory,proto3" json:"resident_memory,omitempty"`
-	Command              string   `protobuf:"bytes,8,opt,name=command,proto3" json:"command,omitempty"`
-	Executable           string   `protobuf:"bytes,9,opt,name=executable,proto3" json:"executable,omitempty"`
-	Args                 string   `protobuf:"bytes,10,opt,name=args,proto3" json:"args,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Metadata             *common.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Processes            []*ProcessInfo   `protobuf:"bytes,2,rep,name=processes,proto3" json:"processes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
 func (m *Process) Reset()         { *m = Process{} }
 func (m *Process) String() string { return proto.CompactTextString(m) }
 func (*Process) ProtoMessage()    {}
 func (*Process) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{8}
+	return fileDescriptor_b20a722d09fd3254, []int{7}
 }
 
 func (m *Process) XXX_Unmarshal(b []byte) error {
@@ -494,70 +435,129 @@ func (m *Process) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Process proto.InternalMessageInfo
 
-func (m *Process) GetPid() int32 {
+func (m *Process) GetMetadata() *common.Metadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+func (m *Process) GetProcesses() []*ProcessInfo {
+	if m != nil {
+		return m.Processes
+	}
+	return nil
+}
+
+type ProcessInfo struct {
+	Pid                  int32    `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	Ppid                 int32    `protobuf:"varint,2,opt,name=ppid,proto3" json:"ppid,omitempty"`
+	State                string   `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	Threads              int32    `protobuf:"varint,4,opt,name=threads,proto3" json:"threads,omitempty"`
+	CpuTime              float64  `protobuf:"fixed64,5,opt,name=cpu_time,json=cpuTime,proto3" json:"cpu_time,omitempty"`
+	VirtualMemory        uint64   `protobuf:"varint,6,opt,name=virtual_memory,json=virtualMemory,proto3" json:"virtual_memory,omitempty"`
+	ResidentMemory       uint64   `protobuf:"varint,7,opt,name=resident_memory,json=residentMemory,proto3" json:"resident_memory,omitempty"`
+	Command              string   `protobuf:"bytes,8,opt,name=command,proto3" json:"command,omitempty"`
+	Executable           string   `protobuf:"bytes,9,opt,name=executable,proto3" json:"executable,omitempty"`
+	Args                 string   `protobuf:"bytes,10,opt,name=args,proto3" json:"args,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ProcessInfo) Reset()         { *m = ProcessInfo{} }
+func (m *ProcessInfo) String() string { return proto.CompactTextString(m) }
+func (*ProcessInfo) ProtoMessage()    {}
+func (*ProcessInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b20a722d09fd3254, []int{8}
+}
+
+func (m *ProcessInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProcessInfo.Unmarshal(m, b)
+}
+
+func (m *ProcessInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProcessInfo.Marshal(b, m, deterministic)
+}
+
+func (m *ProcessInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProcessInfo.Merge(m, src)
+}
+
+func (m *ProcessInfo) XXX_Size() int {
+	return xxx_messageInfo_ProcessInfo.Size(m)
+}
+
+func (m *ProcessInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProcessInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProcessInfo proto.InternalMessageInfo
+
+func (m *ProcessInfo) GetPid() int32 {
 	if m != nil {
 		return m.Pid
 	}
 	return 0
 }
 
-func (m *Process) GetPpid() int32 {
+func (m *ProcessInfo) GetPpid() int32 {
 	if m != nil {
 		return m.Ppid
 	}
 	return 0
 }
 
-func (m *Process) GetState() string {
+func (m *ProcessInfo) GetState() string {
 	if m != nil {
 		return m.State
 	}
 	return ""
 }
 
-func (m *Process) GetThreads() int32 {
+func (m *ProcessInfo) GetThreads() int32 {
 	if m != nil {
 		return m.Threads
 	}
 	return 0
 }
 
-func (m *Process) GetCpuTime() float64 {
+func (m *ProcessInfo) GetCpuTime() float64 {
 	if m != nil {
 		return m.CpuTime
 	}
 	return 0
 }
 
-func (m *Process) GetVirtualMemory() uint64 {
+func (m *ProcessInfo) GetVirtualMemory() uint64 {
 	if m != nil {
 		return m.VirtualMemory
 	}
 	return 0
 }
 
-func (m *Process) GetResidentMemory() uint64 {
+func (m *ProcessInfo) GetResidentMemory() uint64 {
 	if m != nil {
 		return m.ResidentMemory
 	}
 	return 0
 }
 
-func (m *Process) GetCommand() string {
+func (m *ProcessInfo) GetCommand() string {
 	if m != nil {
 		return m.Command
 	}
 	return ""
 }
 
-func (m *Process) GetExecutable() string {
+func (m *ProcessInfo) GetExecutable() string {
 	if m != nil {
 		return m.Executable
 	}
 	return ""
 }
 
-func (m *Process) GetArgs() string {
+func (m *ProcessInfo) GetArgs() string {
 	if m != nil {
 		return m.Args
 	}
@@ -626,18 +626,62 @@ func (m *RestartRequest) GetDriver() common.ContainerDriver {
 	return common.ContainerDriver_CONTAINERD
 }
 
+type Restart struct {
+	Metadata             *common.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Restart) Reset()         { *m = Restart{} }
+func (m *Restart) String() string { return proto.CompactTextString(m) }
+func (*Restart) ProtoMessage()    {}
+func (*Restart) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b20a722d09fd3254, []int{10}
+}
+
+func (m *Restart) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Restart.Unmarshal(m, b)
+}
+
+func (m *Restart) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Restart.Marshal(b, m, deterministic)
+}
+
+func (m *Restart) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Restart.Merge(m, src)
+}
+
+func (m *Restart) XXX_Size() int {
+	return xxx_messageInfo_Restart.Size(m)
+}
+
+func (m *Restart) XXX_DiscardUnknown() {
+	xxx_messageInfo_Restart.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Restart proto.InternalMessageInfo
+
+func (m *Restart) GetMetadata() *common.Metadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+// The messages message containing the restart status.
 type RestartResponse struct {
-	Metadata             *common.ResponseMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	Messages             []*Restart `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
 func (m *RestartResponse) Reset()         { *m = RestartResponse{} }
 func (m *RestartResponse) String() string { return proto.CompactTextString(m) }
 func (*RestartResponse) ProtoMessage()    {}
 func (*RestartResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{10}
+	return fileDescriptor_b20a722d09fd3254, []int{11}
 }
 
 func (m *RestartResponse) XXX_Unmarshal(b []byte) error {
@@ -662,53 +706,9 @@ func (m *RestartResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_RestartResponse proto.InternalMessageInfo
 
-func (m *RestartResponse) GetMetadata() *common.ResponseMetadata {
+func (m *RestartResponse) GetMessages() []*Restart {
 	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-// The response message containing the restart status.
-type RestartReply struct {
-	Response             []*RestartResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
-}
-
-func (m *RestartReply) Reset()         { *m = RestartReply{} }
-func (m *RestartReply) String() string { return proto.CompactTextString(m) }
-func (*RestartReply) ProtoMessage()    {}
-func (*RestartReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{11}
-}
-
-func (m *RestartReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RestartReply.Unmarshal(m, b)
-}
-
-func (m *RestartReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RestartReply.Marshal(b, m, deterministic)
-}
-
-func (m *RestartReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RestartReply.Merge(m, src)
-}
-
-func (m *RestartReply) XXX_Size() int {
-	return xxx_messageInfo_RestartReply.Size(m)
-}
-
-func (m *RestartReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_RestartReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RestartReply proto.InternalMessageInfo
-
-func (m *RestartReply) GetResponse() []*RestartResponse {
-	if m != nil {
-		return m.Response
+		return m.Messages
 	}
 	return nil
 }
@@ -766,20 +766,70 @@ func (m *StatsRequest) GetDriver() common.ContainerDriver {
 	return common.ContainerDriver_CONTAINERD
 }
 
-// The response message containing the requested stats.
+// The messages message containing the requested stats.
+type Stats struct {
+	Metadata             *common.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Stats                []*Stat          `protobuf:"bytes,2,rep,name=stats,proto3" json:"stats,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Stats) Reset()         { *m = Stats{} }
+func (m *Stats) String() string { return proto.CompactTextString(m) }
+func (*Stats) ProtoMessage()    {}
+func (*Stats) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b20a722d09fd3254, []int{13}
+}
+
+func (m *Stats) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Stats.Unmarshal(m, b)
+}
+
+func (m *Stats) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Stats.Marshal(b, m, deterministic)
+}
+
+func (m *Stats) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Stats.Merge(m, src)
+}
+
+func (m *Stats) XXX_Size() int {
+	return xxx_messageInfo_Stats.Size(m)
+}
+
+func (m *Stats) XXX_DiscardUnknown() {
+	xxx_messageInfo_Stats.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Stats proto.InternalMessageInfo
+
+func (m *Stats) GetMetadata() *common.Metadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+func (m *Stats) GetStats() []*Stat {
+	if m != nil {
+		return m.Stats
+	}
+	return nil
+}
+
 type StatsResponse struct {
-	Metadata             *common.ResponseMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Stats                []*Stat                  `protobuf:"bytes,2,rep,name=stats,proto3" json:"stats,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	Messages             []*Stats `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *StatsResponse) Reset()         { *m = StatsResponse{} }
 func (m *StatsResponse) String() string { return proto.CompactTextString(m) }
 func (*StatsResponse) ProtoMessage()    {}
 func (*StatsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{13}
+	return fileDescriptor_b20a722d09fd3254, []int{14}
 }
 
 func (m *StatsResponse) XXX_Unmarshal(b []byte) error {
@@ -804,64 +854,14 @@ func (m *StatsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_StatsResponse proto.InternalMessageInfo
 
-func (m *StatsResponse) GetMetadata() *common.ResponseMetadata {
+func (m *StatsResponse) GetMessages() []*Stats {
 	if m != nil {
-		return m.Metadata
+		return m.Messages
 	}
 	return nil
 }
 
-func (m *StatsResponse) GetStats() []*Stat {
-	if m != nil {
-		return m.Stats
-	}
-	return nil
-}
-
-type StatsReply struct {
-	Response             []*StatsResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
-}
-
-func (m *StatsReply) Reset()         { *m = StatsReply{} }
-func (m *StatsReply) String() string { return proto.CompactTextString(m) }
-func (*StatsReply) ProtoMessage()    {}
-func (*StatsReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b20a722d09fd3254, []int{14}
-}
-
-func (m *StatsReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StatsReply.Unmarshal(m, b)
-}
-
-func (m *StatsReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StatsReply.Marshal(b, m, deterministic)
-}
-
-func (m *StatsReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatsReply.Merge(m, src)
-}
-
-func (m *StatsReply) XXX_Size() int {
-	return xxx_messageInfo_StatsReply.Size(m)
-}
-
-func (m *StatsReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_StatsReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StatsReply proto.InternalMessageInfo
-
-func (m *StatsReply) GetResponse() []*StatsResponse {
-	if m != nil {
-		return m.Response
-	}
-	return nil
-}
-
-// The response message containing the requested stat.
+// The messages message containing the requested stat.
 type Stat struct {
 	Namespace            string   `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Id                   string   `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
@@ -945,96 +945,96 @@ func (m *Stat) GetName() string {
 	return ""
 }
 
-type MemInfoResponse struct {
-	Metadata             *common.ResponseMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Meminfo              *MemInfo                 `protobuf:"bytes,2,opt,name=meminfo,proto3" json:"meminfo,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+type Memory struct {
+	Metadata             *common.Metadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Meminfo              *MemInfo         `protobuf:"bytes,2,opt,name=meminfo,proto3" json:"meminfo,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
-func (m *MemInfoResponse) Reset()         { *m = MemInfoResponse{} }
-func (m *MemInfoResponse) String() string { return proto.CompactTextString(m) }
-func (*MemInfoResponse) ProtoMessage()    {}
-func (*MemInfoResponse) Descriptor() ([]byte, []int) {
+func (m *Memory) Reset()         { *m = Memory{} }
+func (m *Memory) String() string { return proto.CompactTextString(m) }
+func (*Memory) ProtoMessage()    {}
+func (*Memory) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b20a722d09fd3254, []int{16}
 }
 
-func (m *MemInfoResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MemInfoResponse.Unmarshal(m, b)
+func (m *Memory) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Memory.Unmarshal(m, b)
 }
 
-func (m *MemInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MemInfoResponse.Marshal(b, m, deterministic)
+func (m *Memory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Memory.Marshal(b, m, deterministic)
 }
 
-func (m *MemInfoResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MemInfoResponse.Merge(m, src)
+func (m *Memory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Memory.Merge(m, src)
 }
 
-func (m *MemInfoResponse) XXX_Size() int {
-	return xxx_messageInfo_MemInfoResponse.Size(m)
+func (m *Memory) XXX_Size() int {
+	return xxx_messageInfo_Memory.Size(m)
 }
 
-func (m *MemInfoResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MemInfoResponse.DiscardUnknown(m)
+func (m *Memory) XXX_DiscardUnknown() {
+	xxx_messageInfo_Memory.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MemInfoResponse proto.InternalMessageInfo
+var xxx_messageInfo_Memory proto.InternalMessageInfo
 
-func (m *MemInfoResponse) GetMetadata() *common.ResponseMetadata {
+func (m *Memory) GetMetadata() *common.Metadata {
 	if m != nil {
 		return m.Metadata
 	}
 	return nil
 }
 
-func (m *MemInfoResponse) GetMeminfo() *MemInfo {
+func (m *Memory) GetMeminfo() *MemInfo {
 	if m != nil {
 		return m.Meminfo
 	}
 	return nil
 }
 
-type MemInfoReply struct {
-	Response             []*MemInfoResponse `protobuf:"bytes,1,rep,name=response,proto3" json:"response,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+type MemoryResponse struct {
+	Messages             []*Memory `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
-func (m *MemInfoReply) Reset()         { *m = MemInfoReply{} }
-func (m *MemInfoReply) String() string { return proto.CompactTextString(m) }
-func (*MemInfoReply) ProtoMessage()    {}
-func (*MemInfoReply) Descriptor() ([]byte, []int) {
+func (m *MemoryResponse) Reset()         { *m = MemoryResponse{} }
+func (m *MemoryResponse) String() string { return proto.CompactTextString(m) }
+func (*MemoryResponse) ProtoMessage()    {}
+func (*MemoryResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b20a722d09fd3254, []int{17}
 }
 
-func (m *MemInfoReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MemInfoReply.Unmarshal(m, b)
+func (m *MemoryResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MemoryResponse.Unmarshal(m, b)
 }
 
-func (m *MemInfoReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MemInfoReply.Marshal(b, m, deterministic)
+func (m *MemoryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MemoryResponse.Marshal(b, m, deterministic)
 }
 
-func (m *MemInfoReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MemInfoReply.Merge(m, src)
+func (m *MemoryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MemoryResponse.Merge(m, src)
 }
 
-func (m *MemInfoReply) XXX_Size() int {
-	return xxx_messageInfo_MemInfoReply.Size(m)
+func (m *MemoryResponse) XXX_Size() int {
+	return xxx_messageInfo_MemoryResponse.Size(m)
 }
 
-func (m *MemInfoReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_MemInfoReply.DiscardUnknown(m)
+func (m *MemoryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MemoryResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MemInfoReply proto.InternalMessageInfo
+var xxx_messageInfo_MemoryResponse proto.InternalMessageInfo
 
-func (m *MemInfoReply) GetResponse() []*MemInfoResponse {
+func (m *MemoryResponse) GetMessages() []*Memory {
 	if m != nil {
-		return m.Response
+		return m.Messages
 	}
 	return nil
 }
@@ -1460,120 +1460,120 @@ func (m *MemInfo) GetDirectmap1G() uint64 {
 
 func init() {
 	proto.RegisterType((*ContainersRequest)(nil), "os.ContainersRequest")
+	proto.RegisterType((*ContainerInfo)(nil), "os.ContainerInfo")
 	proto.RegisterType((*Container)(nil), "os.Container")
-	proto.RegisterType((*ContainerResponse)(nil), "os.ContainerResponse")
-	proto.RegisterType((*ContainersReply)(nil), "os.ContainersReply")
+	proto.RegisterType((*ContainersResponse)(nil), "os.ContainersResponse")
 	proto.RegisterType((*DmesgRequest)(nil), "os.DmesgRequest")
 	proto.RegisterType((*ProcessesRequest)(nil), "os.ProcessesRequest")
-	proto.RegisterType((*ProcessesReply)(nil), "os.ProcessesReply")
-	proto.RegisterType((*ProcessResponse)(nil), "os.ProcessResponse")
+	proto.RegisterType((*ProcessesResponse)(nil), "os.ProcessesResponse")
 	proto.RegisterType((*Process)(nil), "os.Process")
+	proto.RegisterType((*ProcessInfo)(nil), "os.ProcessInfo")
 	proto.RegisterType((*RestartRequest)(nil), "os.RestartRequest")
+	proto.RegisterType((*Restart)(nil), "os.Restart")
 	proto.RegisterType((*RestartResponse)(nil), "os.RestartResponse")
-	proto.RegisterType((*RestartReply)(nil), "os.RestartReply")
 	proto.RegisterType((*StatsRequest)(nil), "os.StatsRequest")
+	proto.RegisterType((*Stats)(nil), "os.Stats")
 	proto.RegisterType((*StatsResponse)(nil), "os.StatsResponse")
-	proto.RegisterType((*StatsReply)(nil), "os.StatsReply")
 	proto.RegisterType((*Stat)(nil), "os.Stat")
-	proto.RegisterType((*MemInfoResponse)(nil), "os.MemInfoResponse")
-	proto.RegisterType((*MemInfoReply)(nil), "os.MemInfoReply")
+	proto.RegisterType((*Memory)(nil), "os.Memory")
+	proto.RegisterType((*MemoryResponse)(nil), "os.MemoryResponse")
 	proto.RegisterType((*MemInfo)(nil), "os.MemInfo")
 }
 
 func init() { proto.RegisterFile("os/os.proto", fileDescriptor_b20a722d09fd3254) }
 
 var fileDescriptor_b20a722d09fd3254 = []byte{
-	// 1436 bytes of a gzipped FileDescriptorProto
+	// 1437 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0xdf, 0x6e, 0xdb, 0xb6,
-	0x17, 0x86, 0x1d, 0xff, 0xa5, 0x13, 0x27, 0x61, 0xda, 0x94, 0x75, 0xfb, 0xeb, 0x2f, 0xf5, 0x9a,
-	0x36, 0xdd, 0x1a, 0xbb, 0xf5, 0x0a, 0x6c, 0xd8, 0x06, 0x0c, 0xed, 0x32, 0x0c, 0xbd, 0x28, 0x5a,
-	0xa8, 0xdb, 0xcd, 0x80, 0x21, 0xa0, 0x25, 0xda, 0x26, 0x22, 0x8a, 0x9a, 0x48, 0x39, 0xcd, 0x5e,
-	0x61, 0x2f, 0xb0, 0xbb, 0xdd, 0xec, 0x29, 0xf6, 0x74, 0xc3, 0x21, 0x29, 0x99, 0x72, 0xbb, 0xae,
-	0x5d, 0xb0, 0x2b, 0xeb, 0x7c, 0xe7, 0xe8, 0xe3, 0x39, 0x87, 0x1f, 0xa9, 0x63, 0xd4, 0x93, 0x6a,
-	0x2c, 0xd5, 0x28, 0xcd, 0xa4, 0x96, 0xb8, 0x2e, 0xd5, 0xe0, 0xc6, 0x5c, 0xca, 0x79, 0xcc, 0xc6,
-	0x06, 0x99, 0xe6, 0xb3, 0x31, 0x13, 0xa9, 0xbe, 0xb0, 0x01, 0x83, 0xbd, 0x50, 0x0a, 0x21, 0x93,
-	0xb1, 0xfd, 0xb1, 0xe0, 0x70, 0x8a, 0x76, 0xbf, 0x91, 0x89, 0xa6, 0x3c, 0x61, 0x99, 0x0a, 0xd8,
-	0xcf, 0x39, 0x53, 0x1a, 0xdf, 0x44, 0xdd, 0x84, 0x0a, 0xa6, 0x52, 0x1a, 0x32, 0x52, 0x3b, 0xa8,
-	0x1d, 0x75, 0x83, 0x15, 0x80, 0xc7, 0xa8, 0x15, 0x65, 0x7c, 0xc9, 0x32, 0x52, 0x3f, 0xa8, 0x1d,
-	0xf5, 0x27, 0xd7, 0x46, 0x8e, 0xb1, 0x24, 0x3a, 0x31, 0xee, 0xc0, 0x85, 0x0d, 0xff, 0xa8, 0xa1,
-	0x6e, 0xe9, 0xfb, 0x07, 0xf2, 0x3e, 0xaa, 0xf3, 0xc8, 0x10, 0x77, 0x83, 0x3a, 0x8f, 0xf0, 0x15,
-	0xd4, 0xe4, 0x82, 0xce, 0x19, 0xd9, 0x30, 0x90, 0x35, 0xf0, 0x0e, 0xda, 0x48, 0x79, 0x44, 0x1a,
-	0x07, 0xb5, 0xa3, 0xad, 0x00, 0x1e, 0xf1, 0x3e, 0x6a, 0x29, 0x4d, 0x75, 0xae, 0x48, 0xd3, 0x04,
-	0x3a, 0x0b, 0x5f, 0x45, 0xad, 0x54, 0x46, 0xa7, 0x3c, 0x22, 0x2d, 0x4b, 0x90, 0xca, 0xe8, 0x59,
-	0x84, 0x31, 0x6a, 0xc0, 0x9a, 0xa4, 0x6d, 0x40, 0xf3, 0x3c, 0x7c, 0xed, 0xb5, 0x22, 0x60, 0x2a,
-	0x95, 0x89, 0x62, 0xf8, 0x31, 0xea, 0x08, 0xa6, 0x69, 0x44, 0x35, 0x35, 0xc9, 0xf6, 0x26, 0xa4,
-	0x28, 0xb7, 0x88, 0x79, 0xee, 0xfc, 0x41, 0x19, 0x89, 0x8f, 0x11, 0x0a, 0xcb, 0xae, 0x92, 0xfa,
-	0xc1, 0xc6, 0x51, 0x6f, 0xb2, 0x35, 0x92, 0x6a, 0xd5, 0xa2, 0xc0, 0x0b, 0x18, 0x9e, 0xa0, 0x6d,
-	0x7f, 0x13, 0xd2, 0xf8, 0x02, 0x3f, 0x42, 0x9d, 0xcc, 0xf1, 0x93, 0x9a, 0x79, 0xff, 0x6a, 0xf5,
-	0x7d, 0xe7, 0x0c, 0xca, 0xb0, 0xe1, 0x17, 0x68, 0xf3, 0x44, 0x30, 0x35, 0x2f, 0x76, 0x71, 0x1f,
-	0xb5, 0x66, 0x32, 0x8e, 0xe5, 0xb9, 0x49, 0xbc, 0x13, 0x38, 0x0b, 0x6a, 0xd7, 0x94, 0xc7, 0xa6,
-	0xc9, 0x9d, 0xc0, 0x3c, 0x0f, 0x31, 0xda, 0x79, 0x99, 0xc9, 0x90, 0x29, 0xc5, 0x0a, 0x15, 0x0c,
-	0x9f, 0xa0, 0xbe, 0x87, 0x41, 0x52, 0xe3, 0x37, 0x92, 0xda, 0x83, 0xa4, 0x5c, 0xd4, 0x5b, 0x52,
-	0xca, 0xd0, 0xf6, 0x9a, 0xf3, 0x5f, 0x36, 0xf4, 0x3e, 0xea, 0xa6, 0x45, 0x2e, 0xae, 0x9f, 0x3d,
-	0x7f, 0xe9, 0x95, 0x77, 0xf8, 0x5b, 0x1d, 0xb5, 0x1d, 0x5c, 0xe8, 0x04, 0xd6, 0x69, 0x5a, 0x9d,
-	0x60, 0xd4, 0x48, 0x53, 0xa7, 0xb0, 0x66, 0x60, 0x9e, 0x41, 0x63, 0xa0, 0x96, 0x52, 0x63, 0xc6,
-	0xc0, 0x04, 0xb5, 0xf5, 0x22, 0x63, 0x34, 0x52, 0x46, 0x67, 0xcd, 0xa0, 0x30, 0xf1, 0x75, 0xd4,
-	0x09, 0xd3, 0xfc, 0x54, 0x73, 0xc1, 0x8c, 0xda, 0x6a, 0x41, 0x3b, 0x4c, 0xf3, 0xef, 0xb9, 0x60,
-	0xf8, 0x10, 0xf5, 0x97, 0x3c, 0xd3, 0x39, 0x8d, 0x4f, 0x05, 0x13, 0x32, 0xbb, 0x30, 0xb2, 0x6b,
-	0x04, 0x5b, 0x0e, 0x7d, 0x6e, 0x40, 0x7c, 0x0f, 0x6d, 0x67, 0x4c, 0xf1, 0x88, 0x25, 0xba, 0x88,
-	0x6b, 0x9b, 0xb8, 0x7e, 0x01, 0xbb, 0x40, 0x82, 0xda, 0xd0, 0x1c, 0x9a, 0x44, 0xa4, 0x63, 0x92,
-	0x2b, 0x4c, 0x7c, 0x0b, 0x21, 0xf6, 0x9a, 0x85, 0xb9, 0xa6, 0xd3, 0x98, 0x91, 0xae, 0x71, 0x7a,
-	0x08, 0x14, 0x4a, 0xb3, 0xb9, 0x22, 0xc8, 0x2a, 0x1c, 0x9e, 0x87, 0x12, 0xf5, 0x03, 0xa6, 0x34,
-	0xcd, 0xf4, 0xfb, 0x9d, 0xf4, 0xf5, 0xc3, 0xb8, 0x3a, 0xf9, 0x1b, 0xef, 0x77, 0xf2, 0xbf, 0x43,
-	0xdb, 0xe5, 0x82, 0x97, 0xd9, 0xff, 0xe1, 0xd7, 0x68, 0xb3, 0x24, 0x7a, 0x87, 0x12, 0xd7, 0x16,
-	0xf3, 0x94, 0xf8, 0x13, 0xda, 0x7c, 0xa5, 0xa9, 0xfe, 0xaf, 0xae, 0x38, 0x86, 0xb6, 0x1c, 0xfd,
-	0xa5, 0x64, 0x7e, 0xcb, 0x2a, 0xb1, 0x90, 0x78, 0x07, 0x6a, 0x02, 0x5e, 0xab, 0x49, 0x35, 0xfc,
-	0x12, 0x21, 0xb7, 0x0c, 0x34, 0xe1, 0xf8, 0x8d, 0x26, 0xec, 0x16, 0x2f, 0xbc, 0xed, 0x30, 0xfe,
-	0x5e, 0x43, 0x0d, 0xf0, 0x7d, 0xe0, 0xa6, 0xdf, 0x46, 0x9b, 0x56, 0xa2, 0xa7, 0xb9, 0x82, 0x8b,
-	0xb8, 0x61, 0x84, 0xda, 0xb3, 0xd8, 0x0f, 0x00, 0xe1, 0x1b, 0xa8, 0x0b, 0x07, 0xc2, 0xfa, 0x9b,
-	0xc6, 0x0f, 0x27, 0xc4, 0x3a, 0x3f, 0xe0, 0x06, 0x4e, 0xd0, 0xf6, 0x73, 0x26, 0x9e, 0x25, 0x33,
-	0x79, 0xc9, 0x3e, 0x1e, 0xa2, 0xb6, 0x60, 0x82, 0x27, 0x33, 0x69, 0x0a, 0x71, 0x97, 0x45, 0xc1,
-	0x5d, 0xf8, 0x40, 0x55, 0xe5, 0x7a, 0xef, 0x50, 0xd5, 0x5a, 0x4e, 0x5e, 0x4b, 0x7f, 0xdd, 0x44,
-	0x6d, 0xe7, 0xc5, 0x03, 0xc8, 0x54, 0x68, 0xa9, 0x69, 0x6c, 0x32, 0x6d, 0x04, 0xa5, 0x0d, 0xc7,
-	0x58, 0x30, 0x31, 0xcb, 0x18, 0x33, 0xf9, 0x34, 0x82, 0xc2, 0xc4, 0x43, 0xd3, 0x5d, 0xba, 0xa4,
-	0x3c, 0x36, 0x07, 0x79, 0xc3, 0xb8, 0x2b, 0x18, 0xbc, 0x3d, 0xcd, 0x67, 0x33, 0xf8, 0x94, 0xd8,
-	0xe6, 0x17, 0x26, 0x5c, 0xf1, 0x21, 0x0d, 0x17, 0x2c, 0x72, 0x5d, 0x77, 0x16, 0x5c, 0x0e, 0xea,
-	0x9c, 0xa6, 0xce, 0x67, 0xaf, 0x20, 0x0f, 0x81, 0xf7, 0x68, 0xa8, 0xf9, 0x92, 0xb9, 0x6b, 0xc7,
-	0x59, 0x50, 0x03, 0x4f, 0x9c, 0xa7, 0x63, 0x6b, 0x28, 0x6c, 0xe0, 0xb4, 0x4f, 0x34, 0x91, 0x89,
-	0xb9, 0x70, 0x1a, 0x81, 0x87, 0x40, 0x25, 0x45, 0xac, 0x89, 0x40, 0xb6, 0x12, 0x1f, 0x5b, 0x71,
-	0xcc, 0x78, 0xcc, 0x48, 0xcf, 0xe7, 0x00, 0xc4, 0xe7, 0x30, 0x11, 0x9b, 0x55, 0x0e, 0x13, 0x73,
-	0x80, 0x7a, 0x79, 0xc2, 0x96, 0x3c, 0xb4, 0x37, 0xdf, 0x96, 0x95, 0xa3, 0x07, 0x99, 0x6e, 0xc7,
-	0x32, 0x3c, 0x63, 0x11, 0xe9, 0xbb, 0x6e, 0x5b, 0x13, 0x94, 0x0f, 0x5d, 0xb0, 0x9b, 0xb4, 0x6d,
-	0x7c, 0x2b, 0x00, 0xaa, 0x07, 0xc3, 0x6c, 0xd3, 0x8e, 0xad, 0xbe, 0xb0, 0xe1, 0x1b, 0x11, 0xf1,
-	0x4c, 0x5f, 0x90, 0x5d, 0xe3, 0xb0, 0x06, 0xf0, 0x9d, 0x67, 0x5c, 0xb3, 0x29, 0x0d, 0xcf, 0x08,
-	0xb6, 0x7c, 0x25, 0x00, 0x5e, 0xa8, 0x3a, 0xa5, 0x73, 0xa6, 0xc8, 0x9e, 0xf5, 0x96, 0x00, 0xec,
-	0x81, 0xa0, 0x69, 0xca, 0x22, 0x72, 0xc5, 0xee, 0x81, 0xb5, 0xcc, 0xd7, 0x68, 0x21, 0x98, 0x20,
-	0x57, 0xed, 0x4a, 0xc6, 0x80, 0xe3, 0xa2, 0x62, 0x3a, 0x25, 0xfb, 0x06, 0x34, 0xcf, 0xd0, 0x2d,
-	0x95, 0xb1, 0x30, 0xa6, 0x5c, 0x98, 0x56, 0x5c, 0xb3, 0xdd, 0xf2, 0x31, 0xa3, 0x84, 0x3c, 0x71,
-	0x08, 0x21, 0x4e, 0x09, 0x25, 0x02, 0xdd, 0x3c, 0x63, 0x59, 0xc2, 0x62, 0xa5, 0xa1, 0x86, 0xeb,
-	0xb6, 0x9b, 0x1e, 0x04, 0x0c, 0x90, 0xb0, 0x69, 0xad, 0x22, 0x03, 0xcb, 0xb0, 0x42, 0x80, 0x21,
-	0x99, 0xa9, 0x3c, 0x51, 0x76, 0x3f, 0x6e, 0x58, 0x06, 0x0f, 0x82, 0x4a, 0xa7, 0x32, 0x4f, 0x42,
-	0x46, 0x6e, 0xda, 0x4a, 0xad, 0x05, 0xf9, 0x97, 0xcd, 0xd2, 0x22, 0x25, 0xff, 0xb3, 0xf9, 0xfb,
-	0x18, 0xb0, 0xc3, 0x71, 0xe7, 0x3a, 0xe6, 0x82, 0x6b, 0x72, 0xcb, 0xb2, 0x7b, 0xd0, 0x2a, 0x42,
-	0xb3, 0x88, 0x2a, 0xf2, 0x7f, 0x3f, 0xc2, 0x40, 0xb0, 0xce, 0x52, 0xd0, 0x38, 0x96, 0xa1, 0xdd,
-	0xf8, 0x03, 0xbb, 0x8e, 0x8f, 0x01, 0x8b, 0xb3, 0x73, 0xc5, 0x22, 0x72, 0xdb, 0xb2, 0x78, 0x90,
-	0xc7, 0x12, 0x2e, 0xf2, 0xe4, 0x8c, 0x0c, 0x2b, 0x2c, 0x06, 0xc3, 0x0f, 0xd0, 0xee, 0x82, 0x66,
-	0xd1, 0x39, 0xcd, 0x58, 0x28, 0xb3, 0x2c, 0x4f, 0x35, 0x8b, 0xc8, 0x47, 0x26, 0xf0, 0x4d, 0x07,
-	0xbe, 0x83, 0xb6, 0x40, 0x0e, 0x8b, 0x7c, 0xce, 0xac, 0x46, 0xee, 0xd8, 0x59, 0xa1, 0x02, 0xe2,
-	0xbb, 0xa8, 0x6f, 0x24, 0xb0, 0x0a, 0x3b, 0xb4, 0xa3, 0x42, 0x15, 0x2d, 0xe3, 0x52, 0x11, 0x39,
-	0x5d, 0xdd, 0xf5, 0xe2, 0x4a, 0x14, 0x54, 0x1e, 0x0a, 0x6a, 0x3b, 0x71, 0xcf, 0xdd, 0xd5, 0xce,
-	0x36, 0xe3, 0x86, 0xa0, 0xe6, 0x00, 0x1c, 0xd9, 0x93, 0xe3, 0x4c, 0x60, 0x2f, 0x97, 0xb2, 0xef,
-	0xde, 0xb7, 0xec, 0x55, 0x14, 0x6a, 0x2a, 0x11, 0xc3, 0xf3, 0xb1, 0xad, 0xa9, 0x02, 0x56, 0xa2,
-	0x32, 0xb5, 0x8c, 0xc8, 0x27, 0x6b, 0x51, 0x00, 0x56, 0xa2, 0x54, 0x9e, 0xa5, 0xe4, 0xc1, 0x5a,
-	0x14, 0x80, 0xb0, 0x2f, 0x25, 0xc0, 0x7f, 0x61, 0xe4, 0xd8, 0xee, 0x8b, 0x8f, 0xc1, 0xee, 0x46,
-	0x3c, 0x63, 0xa1, 0x16, 0x34, 0x7d, 0x7c, 0x46, 0x46, 0x76, 0x77, 0x3d, 0xa8, 0x12, 0x31, 0x11,
-	0x64, 0xbc, 0x16, 0x31, 0x11, 0x95, 0x88, 0x47, 0x73, 0xf2, 0x70, 0x2d, 0xe2, 0xd1, 0x7c, 0xf2,
-	0x67, 0x1d, 0xd5, 0x5f, 0xbc, 0xc2, 0x9f, 0x23, 0xb4, 0x9a, 0xe6, 0x71, 0x75, 0x6c, 0x2f, 0xe6,
-	0x8f, 0xc1, 0xde, 0x3a, 0x6c, 0x87, 0xfe, 0xa6, 0x99, 0xe0, 0xf1, 0x0e, 0x78, 0xfd, 0x61, 0x7e,
-	0x70, 0xa5, 0xf8, 0xea, 0x9d, 0xc0, 0x97, 0xce, 0x7d, 0x7f, 0x1e, 0xd6, 0xf0, 0x04, 0xb5, 0xdc,
-	0xa8, 0xb8, 0x3f, 0xb2, 0x7f, 0xfe, 0x46, 0xc5, 0x9f, 0xbf, 0xd1, 0xb7, 0xf0, 0xe7, 0x6f, 0xb0,
-	0x53, 0xf9, 0x84, 0xc1, 0x32, 0x9f, 0xa1, 0x6e, 0x39, 0xd8, 0xff, 0xed, 0x6b, 0xd8, 0x1b, 0xaf,
-	0x57, 0xf3, 0x7f, 0xdb, 0x4d, 0x58, 0x18, 0x57, 0xc6, 0x2d, 0x9b, 0xe3, 0x4e, 0x05, 0x83, 0x17,
-	0xee, 0xa3, 0xa6, 0x99, 0x46, 0x6c, 0x41, 0xfe, 0x00, 0x36, 0xe8, 0x7b, 0x48, 0x1a, 0x5f, 0x3c,
-	0xfd, 0x0a, 0xfe, 0x32, 0x09, 0x00, 0x69, 0xca, 0x9f, 0x36, 0x5f, 0xa8, 0x27, 0x29, 0x7f, 0x59,
-	0xfb, 0xf1, 0x70, 0xce, 0xf5, 0x22, 0x9f, 0x42, 0xf5, 0x63, 0x4d, 0x63, 0xa9, 0x8e, 0xd5, 0x85,
-	0xd2, 0x4c, 0x28, 0x6b, 0x8d, 0x69, 0xca, 0xc7, 0x52, 0x4d, 0x5b, 0x26, 0xfb, 0x4f, 0xff, 0x0a,
-	0x00, 0x00, 0xff, 0xff, 0x7d, 0x50, 0x09, 0x08, 0x12, 0x0f, 0x00, 0x00,
+	0x17, 0x86, 0x13, 0x3b, 0x8e, 0xe9, 0xc4, 0x49, 0xd8, 0x26, 0x65, 0xd3, 0xfe, 0xfa, 0x4b, 0xbd,
+	0xa6, 0x4d, 0xb7, 0xd4, 0x6e, 0xb3, 0x62, 0x1b, 0xba, 0x02, 0xc3, 0xba, 0xee, 0xa2, 0x17, 0x45,
+	0x0b, 0x75, 0xbd, 0x19, 0x50, 0x04, 0xb4, 0x44, 0x3b, 0x44, 0x44, 0x51, 0x13, 0x29, 0x67, 0xd9,
+	0x2b, 0xec, 0x15, 0x06, 0xec, 0x76, 0x6f, 0xb2, 0xd7, 0x1a, 0xce, 0x21, 0x25, 0x53, 0x09, 0xb6,
+	0x35, 0x17, 0xbb, 0xb2, 0xce, 0x77, 0x3e, 0x1d, 0x9e, 0x3f, 0x1f, 0x29, 0x9a, 0xf4, 0xb5, 0x19,
+	0x6b, 0x33, 0xca, 0x0b, 0x6d, 0x35, 0x5d, 0xd2, 0x66, 0xf7, 0xd6, 0x4c, 0xeb, 0x59, 0x2a, 0xc6,
+	0x88, 0x4c, 0xca, 0xe9, 0x58, 0xa8, 0xdc, 0x9e, 0x3b, 0xc2, 0xee, 0xb5, 0x58, 0x2b, 0xa5, 0xb3,
+	0xb1, 0xfb, 0x71, 0xe0, 0x70, 0x42, 0xb6, 0xbe, 0xd3, 0x99, 0xe5, 0x32, 0x13, 0x85, 0x89, 0xc4,
+	0x4f, 0xa5, 0x30, 0x96, 0xde, 0x26, 0xbd, 0x8c, 0x2b, 0x61, 0x72, 0x1e, 0x0b, 0xd6, 0xda, 0x6b,
+	0x1d, 0xf4, 0xa2, 0x05, 0x40, 0xc7, 0x64, 0x25, 0x29, 0xe4, 0x5c, 0x14, 0x6c, 0x69, 0xaf, 0x75,
+	0x30, 0x38, 0xba, 0x31, 0xf2, 0x11, 0xeb, 0x40, 0x2f, 0xd1, 0x1d, 0x79, 0xda, 0xf0, 0x8f, 0x16,
+	0x59, 0xaf, 0x7d, 0xaf, 0xb2, 0xa9, 0xfe, 0x97, 0x05, 0x06, 0x64, 0x49, 0x26, 0x18, 0xbc, 0x17,
+	0x2d, 0xc9, 0x84, 0x5e, 0x27, 0x1d, 0xa9, 0xf8, 0x4c, 0xb0, 0x65, 0x84, 0x9c, 0x41, 0x37, 0xc9,
+	0x72, 0x2e, 0x13, 0xd6, 0xde, 0x6b, 0x1d, 0xac, 0x47, 0xf0, 0x48, 0x77, 0xc8, 0x8a, 0xb1, 0xdc,
+	0x96, 0x86, 0x75, 0x90, 0xe8, 0x2d, 0xba, 0x4d, 0x56, 0x72, 0x9d, 0x1c, 0xcb, 0x84, 0xad, 0xb8,
+	0x00, 0xb9, 0x4e, 0x5e, 0x25, 0x94, 0x92, 0x36, 0xac, 0xc9, 0xba, 0x08, 0xe2, 0xf3, 0x30, 0x25,
+	0xbd, 0x3a, 0x53, 0x7a, 0x48, 0x56, 0x95, 0xb0, 0x3c, 0xe1, 0x96, 0x63, 0x92, 0xfd, 0xa3, 0xcd,
+	0xaa, 0xd4, 0xd7, 0x1e, 0x8f, 0x6a, 0x06, 0x7d, 0x42, 0x48, 0x5c, 0x77, 0x92, 0x2d, 0xed, 0x2d,
+	0x1f, 0xf4, 0x8f, 0xb6, 0x46, 0xda, 0x8c, 0x1a, 0xa5, 0x47, 0x01, 0x69, 0xf8, 0x0d, 0xa1, 0x61,
+	0xf3, 0x4d, 0xae, 0x33, 0x23, 0xe8, 0x43, 0x58, 0xd6, 0x18, 0x3e, 0x13, 0x86, 0xb5, 0x30, 0xcc,
+	0x7a, 0x23, 0x4c, 0x54, 0xbb, 0x87, 0xcf, 0xc8, 0xda, 0x4b, 0x25, 0xcc, 0xac, 0x1a, 0xdc, 0x0e,
+	0x59, 0x99, 0xea, 0x34, 0xd5, 0x67, 0x98, 0xef, 0x6a, 0xe4, 0x2d, 0x28, 0xd5, 0x72, 0x99, 0x62,
+	0x4f, 0x57, 0x23, 0x7c, 0x1e, 0x52, 0xb2, 0xf9, 0xb6, 0xd0, 0xb1, 0x30, 0x46, 0x54, 0x83, 0x1f,
+	0x3e, 0x27, 0x5b, 0x01, 0xe6, 0xf3, 0x79, 0x70, 0x29, 0x9f, 0x3e, 0xe4, 0xe3, 0x89, 0x41, 0x36,
+	0x53, 0xd2, 0xf5, 0xe0, 0x15, 0x5b, 0xf7, 0x88, 0xf4, 0xf2, 0x6a, 0x59, 0xdf, 0xb9, 0x8d, 0x60,
+	0x09, 0xec, 0xdb, 0x82, 0x31, 0xfc, 0x6d, 0x89, 0xf4, 0x03, 0x57, 0xa5, 0x04, 0x58, 0xa7, 0xe3,
+	0x94, 0x40, 0x49, 0x3b, 0xcf, 0xbd, 0x86, 0x3a, 0x11, 0x3e, 0x83, 0x8a, 0x40, 0x0f, 0xb5, 0x8a,
+	0xd0, 0xa0, 0x8c, 0x74, 0xed, 0x49, 0x21, 0x78, 0x62, 0x50, 0x49, 0x9d, 0xa8, 0x32, 0xe9, 0x4d,
+	0xb2, 0x1a, 0xe7, 0xe5, 0xb1, 0x95, 0x4a, 0xa0, 0x9e, 0x5a, 0x51, 0x37, 0xce, 0xcb, 0x1f, 0xa4,
+	0x12, 0x74, 0x9f, 0x0c, 0xe6, 0xb2, 0xb0, 0x25, 0x4f, 0x8f, 0x95, 0x50, 0xba, 0x38, 0x47, 0x61,
+	0xb5, 0xa3, 0x75, 0x8f, 0xbe, 0x46, 0x90, 0x3e, 0x20, 0x1b, 0x85, 0x30, 0x32, 0x11, 0x99, 0xad,
+	0x78, 0x5d, 0xe4, 0x0d, 0x2a, 0xd8, 0x13, 0x19, 0xe9, 0x42, 0x73, 0x78, 0x96, 0xb0, 0x55, 0x4c,
+	0xae, 0x32, 0xe9, 0x1d, 0x42, 0xc4, 0xcf, 0x22, 0x2e, 0x2d, 0x9f, 0xa4, 0x82, 0xf5, 0xd0, 0x19,
+	0x20, 0x50, 0x28, 0x2f, 0x66, 0x86, 0x11, 0xa7, 0x61, 0x78, 0x1e, 0x6a, 0x32, 0x88, 0x84, 0xb1,
+	0xbc, 0xb0, 0x1f, 0xb7, 0x9f, 0x2f, 0x6e, 0xb7, 0xc5, 0xfe, 0x5e, 0xfe, 0xb8, 0xfd, 0xfd, 0x25,
+	0xe9, 0xfa, 0x05, 0xaf, 0x36, 0xf7, 0xe1, 0x33, 0xb2, 0x51, 0x67, 0xfa, 0xcf, 0x62, 0xab, 0x68,
+	0x0b, 0xb1, 0x7d, 0x20, 0x6b, 0xef, 0x2c, 0xb7, 0xff, 0xd5, 0x99, 0xf5, 0x9e, 0x74, 0x30, 0xfc,
+	0x15, 0x95, 0x7c, 0xc7, 0x89, 0xac, 0x52, 0xf1, 0x2a, 0xe4, 0x0e, 0x71, 0x9c, 0xdc, 0xcc, 0xf0,
+	0x0b, 0xb2, 0xee, 0xb3, 0xf6, 0xf5, 0xee, 0x5f, 0xaa, 0xb7, 0x57, 0xbd, 0x13, 0x6e, 0xad, 0xdf,
+	0x5b, 0xa4, 0x0d, 0xd8, 0x15, 0x47, 0x79, 0x97, 0xac, 0x39, 0xe1, 0x1d, 0x97, 0x10, 0x07, 0x25,
+	0xde, 0x8e, 0xfa, 0x0e, 0x7b, 0x0f, 0x10, 0xbd, 0x45, 0x7a, 0x20, 0x73, 0xe7, 0xef, 0xa0, 0x1f,
+	0x74, 0xef, 0x9c, 0x57, 0x38, 0x39, 0x3f, 0x90, 0x15, 0xaf, 0xe6, 0xab, 0x75, 0x6c, 0x9f, 0x74,
+	0x95, 0x50, 0x32, 0x9b, 0x6a, 0xcc, 0xdb, 0xcf, 0xfb, 0xb5, 0x50, 0xb8, 0xeb, 0x2b, 0xdf, 0xf0,
+	0x2b, 0x32, 0x70, 0xe1, 0xeb, 0xce, 0xdd, 0xbf, 0xd4, 0x39, 0xe2, 0xdf, 0x04, 0xd6, 0xa2, 0x75,
+	0xbf, 0xae, 0x91, 0xae, 0x0f, 0x47, 0x77, 0xe1, 0x1d, 0x65, 0xb5, 0xe5, 0x29, 0xa6, 0xd6, 0x8e,
+	0x6a, 0x1b, 0x36, 0xa1, 0x12, 0x6a, 0x5a, 0x08, 0x81, 0x89, 0xb4, 0xa3, 0xca, 0xa4, 0x43, 0xec,
+	0x22, 0x9f, 0x73, 0x99, 0xe2, 0x36, 0x5c, 0x46, 0x77, 0x03, 0x83, 0xb7, 0x27, 0xe5, 0x74, 0x0a,
+	0x47, 0xbf, 0x6b, 0x72, 0x65, 0xc2, 0x99, 0x1c, 0xf3, 0xf8, 0x44, 0x24, 0xbe, 0xbb, 0xde, 0x82,
+	0xad, 0x6d, 0xce, 0x78, 0xee, 0x7d, 0xee, 0x00, 0x09, 0x10, 0x78, 0x8f, 0xc7, 0x56, 0xce, 0x85,
+	0x3f, 0x34, 0xbc, 0x05, 0x35, 0xc8, 0xcc, 0x7b, 0x56, 0x5d, 0x0d, 0x95, 0x0d, 0x31, 0xdd, 0x13,
+	0xcf, 0x74, 0x86, 0xc7, 0x45, 0x3b, 0x0a, 0x10, 0xa8, 0xa4, 0xe2, 0x22, 0x83, 0xb8, 0x4a, 0x42,
+	0x6c, 0x11, 0x63, 0x2a, 0x53, 0xc1, 0xfa, 0x61, 0x0c, 0x40, 0xc2, 0x18, 0xc8, 0x58, 0x6b, 0xc6,
+	0x40, 0xce, 0x1e, 0xe9, 0x97, 0x99, 0x98, 0xcb, 0xd8, 0x9d, 0x5b, 0xeb, 0x4e, 0x76, 0x01, 0x84,
+	0xdd, 0x4e, 0x75, 0x7c, 0x2a, 0x12, 0x36, 0xf0, 0xdd, 0x76, 0x26, 0x28, 0x1c, 0xba, 0xe0, 0x86,
+	0xb4, 0x81, 0xbe, 0x05, 0x00, 0xd5, 0x83, 0x81, 0x63, 0xda, 0x74, 0xd5, 0x57, 0x36, 0x9c, 0xf0,
+	0x89, 0x2c, 0xec, 0x39, 0xdb, 0x42, 0x87, 0x33, 0x20, 0xde, 0x59, 0x21, 0xad, 0x98, 0xf0, 0xf8,
+	0x94, 0x51, 0x17, 0xaf, 0x06, 0xc0, 0x0b, 0x55, 0xe7, 0x28, 0xa3, 0x6b, 0xce, 0x5b, 0x03, 0x30,
+	0x03, 0xc5, 0xf3, 0x5c, 0x24, 0xec, 0xba, 0x9b, 0x81, 0xb3, 0xf0, 0x5b, 0x72, 0xa2, 0x84, 0x62,
+	0xdb, 0x6e, 0x25, 0x34, 0x60, 0x5b, 0x98, 0x94, 0x4f, 0xd8, 0x0e, 0x82, 0xf8, 0x0c, 0xdd, 0x32,
+	0x85, 0x88, 0x53, 0x2e, 0x15, 0xb6, 0xe2, 0x86, 0xeb, 0x56, 0x88, 0xa1, 0x12, 0xca, 0xcc, 0x23,
+	0x8c, 0x79, 0x25, 0xd4, 0x08, 0x74, 0xf3, 0x54, 0x14, 0x99, 0x48, 0x8d, 0x85, 0x1a, 0x6e, 0xba,
+	0x6e, 0x06, 0x10, 0x44, 0x80, 0x84, 0xb1, 0xb5, 0x86, 0xed, 0xba, 0x08, 0x0b, 0x04, 0x22, 0x64,
+	0x53, 0x53, 0x66, 0xc6, 0xcd, 0xe3, 0x96, 0x8b, 0x10, 0x40, 0x50, 0xe9, 0x44, 0x97, 0x59, 0x2c,
+	0xd8, 0x6d, 0x57, 0xa9, 0xb3, 0x20, 0xff, 0xba, 0x59, 0x56, 0xe5, 0xec, 0x7f, 0x2e, 0xff, 0x10,
+	0x83, 0xe8, 0xb0, 0xbf, 0xa5, 0x4d, 0xa5, 0x92, 0x96, 0xdd, 0x71, 0xd1, 0x03, 0x68, 0xc1, 0xb0,
+	0x22, 0xe1, 0x86, 0xfd, 0x3f, 0x64, 0x20, 0x04, 0xeb, 0xcc, 0x15, 0x4f, 0x53, 0x1d, 0xbb, 0xc1,
+	0xef, 0xb9, 0x75, 0x42, 0x0c, 0xa2, 0x78, 0xbb, 0x34, 0x22, 0x61, 0x77, 0x5d, 0x94, 0x00, 0x0a,
+	0xa2, 0xc4, 0x27, 0x65, 0x76, 0xca, 0x86, 0x8d, 0x28, 0x88, 0xd1, 0x43, 0xb2, 0x75, 0xc2, 0x8b,
+	0xe4, 0x8c, 0x17, 0x22, 0xd6, 0x45, 0x51, 0xe6, 0x56, 0x24, 0xec, 0x13, 0x24, 0x5e, 0x76, 0xd0,
+	0x7b, 0x64, 0x1d, 0xe4, 0x70, 0x52, 0xce, 0x84, 0xd3, 0xc8, 0x3d, 0xf7, 0xa5, 0x6f, 0x80, 0xf4,
+	0x3e, 0x19, 0xa0, 0x04, 0x16, 0xb4, 0x7d, 0xf7, 0xa1, 0x6f, 0xa2, 0x35, 0x2f, 0x57, 0x89, 0xd7,
+	0xd5, 0xfd, 0x80, 0x57, 0xa3, 0xa0, 0xf2, 0x58, 0x71, 0xd7, 0x89, 0x07, 0xfe, 0x4c, 0xf6, 0x36,
+	0x5e, 0x16, 0x14, 0xc7, 0x0d, 0x70, 0xe0, 0x76, 0x8e, 0x37, 0x21, 0x7a, 0xbd, 0x94, 0x7b, 0xf7,
+	0xa1, 0x8b, 0xde, 0x44, 0xa1, 0xa6, 0x1a, 0xc1, 0x38, 0x9f, 0xba, 0x9a, 0x1a, 0x60, 0x83, 0x55,
+	0x98, 0x79, 0xc2, 0x3e, 0xbb, 0xc0, 0x02, 0xb0, 0xc1, 0x32, 0x65, 0x91, 0xb3, 0xc3, 0x0b, 0x2c,
+	0x00, 0x61, 0x2e, 0x35, 0x20, 0x7f, 0x11, 0xec, 0x91, 0x9b, 0x4b, 0x88, 0xc1, 0x74, 0x13, 0x59,
+	0x88, 0xd8, 0x2a, 0x9e, 0x3f, 0x3d, 0x65, 0x23, 0x37, 0xdd, 0x00, 0x6a, 0x30, 0x8e, 0x14, 0x1b,
+	0x5f, 0x60, 0x1c, 0xa9, 0x06, 0xe3, 0xc9, 0x8c, 0x3d, 0xbe, 0xc0, 0x78, 0x32, 0x3b, 0xfa, 0x73,
+	0x89, 0xf4, 0xde, 0xbc, 0x7b, 0x27, 0x8a, 0xb9, 0x8c, 0x05, 0xfd, 0x9a, 0x90, 0xc5, 0x05, 0x9c,
+	0x6e, 0x37, 0xae, 0xd9, 0xd5, 0xcd, 0x62, 0x77, 0xe7, 0x22, 0x5c, 0xdf, 0xd3, 0x3b, 0x78, 0xf9,
+	0xa6, 0x9b, 0x40, 0x08, 0xef, 0xe1, 0xbb, 0x6b, 0xd5, 0x07, 0xef, 0x25, 0xb7, 0xfc, 0x71, 0x8b,
+	0x3e, 0xad, 0x3f, 0x8e, 0x3b, 0x23, 0xf7, 0x17, 0x6d, 0x54, 0xfd, 0x45, 0x1b, 0x7d, 0x0f, 0x7f,
+	0xd1, 0x76, 0x69, 0xf0, 0xed, 0xaa, 0x16, 0x78, 0x46, 0x7a, 0xf5, 0x6d, 0xfc, 0x6f, 0x5f, 0xdc,
+	0x0e, 0x2e, 0xca, 0xc1, 0xa5, 0xfd, 0x68, 0x71, 0x27, 0xa3, 0xe1, 0x05, 0xca, 0x27, 0x78, 0xad,
+	0x81, 0xf9, 0x77, 0x0e, 0xab, 0x3b, 0xcf, 0xe6, 0xe2, 0x0a, 0xe2, 0xf9, 0x5b, 0x01, 0xe2, 0xd8,
+	0x2f, 0x9e, 0xc3, 0xff, 0x1d, 0x05, 0x38, 0xcf, 0xe5, 0x8b, 0xce, 0x1b, 0xf3, 0x6d, 0x2e, 0xdf,
+	0xb6, 0x7e, 0xdc, 0x9f, 0x49, 0x7b, 0x52, 0x4e, 0xa0, 0x01, 0x63, 0xcb, 0x53, 0x6d, 0x1e, 0x99,
+	0x73, 0x63, 0x85, 0x32, 0xce, 0x1a, 0xf3, 0x5c, 0x8e, 0xb5, 0x99, 0xac, 0x60, 0x19, 0x9f, 0xff,
+	0x15, 0x00, 0x00, 0xff, 0xff, 0xef, 0x25, 0xa5, 0xa9, 0xc3, 0x0e, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1586,41 +1586,41 @@ var (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// OSClient is the client API for OS service.
+// OSServiceClient is the client API for OSService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type OSClient interface {
-	Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersReply, error)
-	Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.CallOption) (OS_DmesgClient, error)
-	Memory(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*MemInfoReply, error)
-	Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesReply, error)
-	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartReply, error)
-	Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsReply, error)
+type OSServiceClient interface {
+	Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersResponse, error)
+	Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.CallOption) (OSService_DmesgClient, error)
+	Memory(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*MemoryResponse, error)
+	Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesResponse, error)
+	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartResponse, error)
+	Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error)
 }
 
-type oSClient struct {
+type oSServiceClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewOSClient(cc *grpc.ClientConn) OSClient {
-	return &oSClient{cc}
+func NewOSServiceClient(cc *grpc.ClientConn) OSServiceClient {
+	return &oSServiceClient{cc}
 }
 
-func (c *oSClient) Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersReply, error) {
-	out := new(ContainersReply)
-	err := c.cc.Invoke(ctx, "/os.OS/Containers", in, out, opts...)
+func (c *oSServiceClient) Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersResponse, error) {
+	out := new(ContainersResponse)
+	err := c.cc.Invoke(ctx, "/os.OSService/Containers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *oSClient) Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.CallOption) (OS_DmesgClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_OS_serviceDesc.Streams[0], "/os.OS/Dmesg", opts...)
+func (c *oSServiceClient) Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.CallOption) (OSService_DmesgClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_OSService_serviceDesc.Streams[0], "/os.OSService/Dmesg", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &oSDmesgClient{stream}
+	x := &oSServiceDmesgClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1630,213 +1630,213 @@ func (c *oSClient) Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.Cal
 	return x, nil
 }
 
-type OS_DmesgClient interface {
-	Recv() (*common.DataResponse, error)
+type OSService_DmesgClient interface {
+	Recv() (*common.Data, error)
 	grpc.ClientStream
 }
 
-type oSDmesgClient struct {
+type oSServiceDmesgClient struct {
 	grpc.ClientStream
 }
 
-func (x *oSDmesgClient) Recv() (*common.DataResponse, error) {
-	m := new(common.DataResponse)
+func (x *oSServiceDmesgClient) Recv() (*common.Data, error) {
+	m := new(common.Data)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *oSClient) Memory(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*MemInfoReply, error) {
-	out := new(MemInfoReply)
-	err := c.cc.Invoke(ctx, "/os.OS/Memory", in, out, opts...)
+func (c *oSServiceClient) Memory(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*MemoryResponse, error) {
+	out := new(MemoryResponse)
+	err := c.cc.Invoke(ctx, "/os.OSService/Memory", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *oSClient) Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesReply, error) {
-	out := new(ProcessesReply)
-	err := c.cc.Invoke(ctx, "/os.OS/Processes", in, out, opts...)
+func (c *oSServiceClient) Processes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ProcessesResponse, error) {
+	out := new(ProcessesResponse)
+	err := c.cc.Invoke(ctx, "/os.OSService/Processes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *oSClient) Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartReply, error) {
-	out := new(RestartReply)
-	err := c.cc.Invoke(ctx, "/os.OS/Restart", in, out, opts...)
+func (c *oSServiceClient) Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartResponse, error) {
+	out := new(RestartResponse)
+	err := c.cc.Invoke(ctx, "/os.OSService/Restart", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *oSClient) Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsReply, error) {
-	out := new(StatsReply)
-	err := c.cc.Invoke(ctx, "/os.OS/Stats", in, out, opts...)
+func (c *oSServiceClient) Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error) {
+	out := new(StatsResponse)
+	err := c.cc.Invoke(ctx, "/os.OSService/Stats", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// OSServer is the server API for OS service.
-type OSServer interface {
-	Containers(context.Context, *ContainersRequest) (*ContainersReply, error)
-	Dmesg(*DmesgRequest, OS_DmesgServer) error
-	Memory(context.Context, *empty.Empty) (*MemInfoReply, error)
-	Processes(context.Context, *empty.Empty) (*ProcessesReply, error)
-	Restart(context.Context, *RestartRequest) (*RestartReply, error)
-	Stats(context.Context, *StatsRequest) (*StatsReply, error)
+// OSServiceServer is the server API for OSService service.
+type OSServiceServer interface {
+	Containers(context.Context, *ContainersRequest) (*ContainersResponse, error)
+	Dmesg(*DmesgRequest, OSService_DmesgServer) error
+	Memory(context.Context, *empty.Empty) (*MemoryResponse, error)
+	Processes(context.Context, *empty.Empty) (*ProcessesResponse, error)
+	Restart(context.Context, *RestartRequest) (*RestartResponse, error)
+	Stats(context.Context, *StatsRequest) (*StatsResponse, error)
 }
 
-func RegisterOSServer(s *grpc.Server, srv OSServer) {
-	s.RegisterService(&_OS_serviceDesc, srv)
+func RegisterOSServiceServer(s *grpc.Server, srv OSServiceServer) {
+	s.RegisterService(&_OSService_serviceDesc, srv)
 }
 
-func _OS_Containers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OSService_Containers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ContainersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OSServer).Containers(ctx, in)
+		return srv.(OSServiceServer).Containers(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/os.OS/Containers",
+		FullMethod: "/os.OSService/Containers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Containers(ctx, req.(*ContainersRequest))
+		return srv.(OSServiceServer).Containers(ctx, req.(*ContainersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OS_Dmesg_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _OSService_Dmesg_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(DmesgRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(OSServer).Dmesg(m, &oSDmesgServer{stream})
+	return srv.(OSServiceServer).Dmesg(m, &oSServiceDmesgServer{stream})
 }
 
-type OS_DmesgServer interface {
-	Send(*common.DataResponse) error
+type OSService_DmesgServer interface {
+	Send(*common.Data) error
 	grpc.ServerStream
 }
 
-type oSDmesgServer struct {
+type oSServiceDmesgServer struct {
 	grpc.ServerStream
 }
 
-func (x *oSDmesgServer) Send(m *common.DataResponse) error {
+func (x *oSServiceDmesgServer) Send(m *common.Data) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _OS_Memory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OSService_Memory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OSServer).Memory(ctx, in)
+		return srv.(OSServiceServer).Memory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/os.OS/Memory",
+		FullMethod: "/os.OSService/Memory",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Memory(ctx, req.(*empty.Empty))
+		return srv.(OSServiceServer).Memory(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OS_Processes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OSService_Processes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OSServer).Processes(ctx, in)
+		return srv.(OSServiceServer).Processes(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/os.OS/Processes",
+		FullMethod: "/os.OSService/Processes",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Processes(ctx, req.(*empty.Empty))
+		return srv.(OSServiceServer).Processes(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OS_Restart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OSService_Restart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RestartRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OSServer).Restart(ctx, in)
+		return srv.(OSServiceServer).Restart(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/os.OS/Restart",
+		FullMethod: "/os.OSService/Restart",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Restart(ctx, req.(*RestartRequest))
+		return srv.(OSServiceServer).Restart(ctx, req.(*RestartRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OS_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OSService_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StatsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OSServer).Stats(ctx, in)
+		return srv.(OSServiceServer).Stats(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/os.OS/Stats",
+		FullMethod: "/os.OSService/Stats",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OSServer).Stats(ctx, req.(*StatsRequest))
+		return srv.(OSServiceServer).Stats(ctx, req.(*StatsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _OS_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "os.OS",
-	HandlerType: (*OSServer)(nil),
+var _OSService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "os.OSService",
+	HandlerType: (*OSServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Containers",
-			Handler:    _OS_Containers_Handler,
+			Handler:    _OSService_Containers_Handler,
 		},
 		{
 			MethodName: "Memory",
-			Handler:    _OS_Memory_Handler,
+			Handler:    _OSService_Memory_Handler,
 		},
 		{
 			MethodName: "Processes",
-			Handler:    _OS_Processes_Handler,
+			Handler:    _OSService_Processes_Handler,
 		},
 		{
 			MethodName: "Restart",
-			Handler:    _OS_Restart_Handler,
+			Handler:    _OSService_Restart_Handler,
 		},
 		{
 			MethodName: "Stats",
-			Handler:    _OS_Stats_Handler,
+			Handler:    _OSService_Stats_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Dmesg",
-			Handler:       _OS_Dmesg_Handler,
+			Handler:       _OSService_Dmesg_Handler,
 			ServerStreams: true,
 		},
 	},

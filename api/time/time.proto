@@ -12,22 +12,20 @@ import "google/protobuf/timestamp.proto";
 import "common/common.proto";
 
 // The time service definition.
-service Time {
-  rpc Time(google.protobuf.Empty) returns (TimeReply);
-  rpc TimeCheck(TimeRequest) returns (TimeReply);
+service TimeService {
+  rpc Time(google.protobuf.Empty) returns (TimeResponse);
+  rpc TimeCheck(TimeRequest) returns (TimeResponse);
 }
 
 // The response message containing the ntp server
 message TimeRequest { string server = 1; }
 
-// The response message containing the ntp server, time, and offset
-message TimeReply {
-  repeated TimeResponse response = 1;
-}
-
-message TimeResponse {
-  common.ResponseMetadata metadata = 1;
+message Time {
+  common.Metadata metadata = 1;
   string server = 2;
   google.protobuf.Timestamp localtime = 3;
   google.protobuf.Timestamp remotetime = 4;
 }
+
+// The response message containing the ntp server, time, and offset
+message TimeResponse { repeated Time messages = 1; }

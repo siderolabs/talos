@@ -33,18 +33,18 @@ var timeCmd = &cobra.Command{
 			}
 
 			var (
-				reply      *timeapi.TimeReply
+				resp       *timeapi.TimeResponse
 				remotePeer peer.Peer
 			)
 
 			if server == "" {
-				reply, err = c.Time(globalCtx, grpc.Peer(&remotePeer))
+				resp, err = c.Time(globalCtx, grpc.Peer(&remotePeer))
 			} else {
-				reply, err = c.TimeCheck(globalCtx, server, grpc.Peer(&remotePeer))
+				resp, err = c.TimeCheck(globalCtx, server, grpc.Peer(&remotePeer))
 			}
 
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error fetching time: %w", err)
 				}
 
@@ -57,23 +57,23 @@ var timeCmd = &cobra.Command{
 			defaultNode := addrFromPeer(&remotePeer)
 
 			var localtime, remotetime time.Time
-			for _, resp := range reply.Response {
+			for _, msg := range resp.Messages {
 				node := defaultNode
 
-				if resp.Metadata != nil {
-					node = resp.Metadata.Hostname
+				if msg.Metadata != nil {
+					node = msg.Metadata.Hostname
 				}
 
-				localtime, err = ptypes.Timestamp(resp.Localtime)
+				localtime, err = ptypes.Timestamp(msg.Localtime)
 				if err != nil {
 					return fmt.Errorf("error parsing local time: %w", err)
 				}
-				remotetime, err = ptypes.Timestamp(resp.Remotetime)
+				remotetime, err = ptypes.Timestamp(msg.Remotetime)
 				if err != nil {
 					return fmt.Errorf("error parsing remote time: %w", err)
 				}
 
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", node, resp.Server, localtime.String(), remotetime.String())
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", node, msg.Server, localtime.String(), remotetime.String())
 			}
 
 			return w.Flush()

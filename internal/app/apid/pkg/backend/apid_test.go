@@ -64,8 +64,8 @@ func (suite *APIDSuite) TestGetConnection() {
 }
 
 func (suite *APIDSuite) TestAppendInfoUnary() {
-	reply := &common.DataReply{
-		Response: []*common.DataResponse{
+	reply := &common.DataResponse{
+		Messages: []*common.Data{
 			{
 				Bytes: []byte("foobar"),
 			},
@@ -78,17 +78,17 @@ func (suite *APIDSuite) TestAppendInfoUnary() {
 	newResp, err := suite.b.AppendInfo(false, resp)
 	suite.Require().NoError(err)
 
-	var newReply common.DataReply
+	var newReply common.DataResponse
 	err = proto.Unmarshal(newResp, &newReply)
 	suite.Require().NoError(err)
 
-	suite.Assert().EqualValues([]byte("foobar"), newReply.Response[0].Bytes)
-	suite.Assert().Equal(suite.b.String(), newReply.Response[0].Metadata.Hostname)
-	suite.Assert().Empty(newReply.Response[0].Metadata.Error)
+	suite.Assert().EqualValues([]byte("foobar"), newReply.Messages[0].Bytes)
+	suite.Assert().Equal(suite.b.String(), newReply.Messages[0].Metadata.Hostname)
+	suite.Assert().Empty(newReply.Messages[0].Metadata.Error)
 }
 
 func (suite *APIDSuite) TestAppendInfoStreaming() {
-	response := &common.DataResponse{
+	response := &common.Data{
 		Bytes: []byte("foobar"),
 	}
 
@@ -98,7 +98,7 @@ func (suite *APIDSuite) TestAppendInfoStreaming() {
 	newResp, err := suite.b.AppendInfo(true, resp)
 	suite.Require().NoError(err)
 
-	var newResponse common.DataResponse
+	var newResponse common.Data
 	err = proto.Unmarshal(newResp, &newResponse)
 	suite.Require().NoError(err)
 
@@ -110,8 +110,8 @@ func (suite *APIDSuite) TestAppendInfoStreaming() {
 func (suite *APIDSuite) TestAppendInfoStreamingMetadata() {
 	// this tests the case when metadata field is appended twice
 	// to the message, but protobuf merges definitions
-	response := &common.DataResponse{
-		Metadata: &common.ResponseMetadata{
+	response := &common.Data{
+		Metadata: &common.Metadata{
 			Error: "something went wrong",
 		},
 	}
@@ -122,7 +122,7 @@ func (suite *APIDSuite) TestAppendInfoStreamingMetadata() {
 	newResp, err := suite.b.AppendInfo(true, resp)
 	suite.Require().NoError(err)
 
-	var newResponse common.DataResponse
+	var newResponse common.Data
 	err = proto.Unmarshal(newResp, &newResponse)
 	suite.Require().NoError(err)
 
@@ -135,20 +135,20 @@ func (suite *APIDSuite) TestBuildErrorUnary() {
 	resp, err := suite.b.BuildError(false, errors.New("some error"))
 	suite.Require().NoError(err)
 
-	var reply common.DataReply
+	var reply common.DataResponse
 	err = proto.Unmarshal(resp, &reply)
 	suite.Require().NoError(err)
 
-	suite.Assert().Nil(reply.Response[0].Bytes)
-	suite.Assert().Equal(suite.b.String(), reply.Response[0].Metadata.Hostname)
-	suite.Assert().Equal("some error", reply.Response[0].Metadata.Error)
+	suite.Assert().Nil(reply.Messages[0].Bytes)
+	suite.Assert().Equal(suite.b.String(), reply.Messages[0].Metadata.Hostname)
+	suite.Assert().Equal("some error", reply.Messages[0].Metadata.Error)
 }
 
 func (suite *APIDSuite) TestBuildErrorStreaming() {
 	resp, err := suite.b.BuildError(true, errors.New("some error"))
 	suite.Require().NoError(err)
 
-	var response common.DataResponse
+	var response common.Data
 	err = proto.Unmarshal(resp, &response)
 	suite.Require().NoError(err)
 

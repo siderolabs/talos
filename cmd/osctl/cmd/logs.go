@@ -83,15 +83,15 @@ var logsCmd = &cobra.Command{
 // lineSlicer splits random chunks of bytes coming from nodes into a stream
 // of lines aggregated per node.
 type lineSlicer struct {
-	respCh chan *common.DataResponse
+	respCh chan *common.Data
 	errCh  chan error
 	pipes  map[string]*io.PipeWriter
 	wg     sync.WaitGroup
 }
 
-func newLineSlicer(stream machine.Machine_LogsClient) (chan *common.DataResponse, chan error) {
+func newLineSlicer(stream machine.MachineService_LogsClient) (chan *common.Data, chan error) {
 	slicer := &lineSlicer{
-		respCh: make(chan *common.DataResponse),
+		respCh: make(chan *common.Data),
 		errCh:  make(chan error, 1),
 		pipes:  map[string]*io.PipeWriter{},
 	}
@@ -107,8 +107,8 @@ func (slicer *lineSlicer) chopper(r io.Reader, hostname string) {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		slicer.respCh <- &common.DataResponse{
-			Metadata: &common.ResponseMetadata{
+		slicer.respCh <- &common.Data{
+			Metadata: &common.Metadata{
 				Hostname: hostname,
 			},
 			Bytes: scanner.Bytes(),
@@ -140,7 +140,7 @@ func (slicer *lineSlicer) cleanupChoppers() {
 	slicer.wg.Wait()
 }
 
-func (slicer *lineSlicer) run(stream machine.Machine_LogsClient) {
+func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 	defer close(slicer.errCh)
 	defer close(slicer.respCh)
 

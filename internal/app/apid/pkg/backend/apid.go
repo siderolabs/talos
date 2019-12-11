@@ -94,7 +94,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 //   }
 //
 //   message SomeResponse {
-//	   common.ResponseMetadata metadata = 1;
+//	   common.Metadata metadata = 1;
 //     <other fields go here ...>
 //   }
 //
@@ -107,16 +107,16 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 // as string with length). So if we want to add fields to 'SomeResponse', we can simply read field
 // header, adjust length for new 'SomeResponse' representation, and prepend new field header.
 //
-// At the same time, we can add 'common.ResponseMetadata' structure to 'SomeResponse' by simply
-// appending or prepending 'common.ResponseMetadata' as a single field. This requires 'metadata'
+// At the same time, we can add 'common.Metadata' structure to 'SomeResponse' by simply
+// appending or prepending 'common.Metadata' as a single field. This requires 'metadata'
 // field to be not defined in original response. (This is due to the fact that protobuf message
 // representation is concatenation of each field representation).
 //
-// To build only single field (ResponseMetadata) we use helper message which contains exactly this
+// To build only single field (Metadata) we use helper message which contains exactly this
 // field with same field ID as in every other 'Response':
 //
 //   message EmptyResponse {
-//     common.ResponseMetadata metadata = 1;
+//     common.Metadata metadata = 1;
 //	}
 //
 // As streaming responses are not wrapped into 'SomeReply' with 'repeated', handling is simpler: we just
@@ -124,11 +124,11 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 //
 // So AppendInfo does the following: validates that reply contains field ID 1 encoded as string,
 // cuts field header, rest is representation of some 'Response'. Marshal 'EmptyResponse' as protobuf,
-// which builds 'common.ResponseMetadata' field, append it to original 'Response' message, build new header
+// which builds 'common.Metadata' field, append it to original 'Response' message, build new header
 // for new length of some 'Response', and add back new field header.
 func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
-	payload, err := proto.Marshal(&common.EmptyResponse{
-		Metadata: &common.ResponseMetadata{
+	payload, err := proto.Marshal(&common.Empty{
+		Metadata: &common.Metadata{
 			Hostname: a.target,
 		},
 	})
@@ -170,10 +170,10 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 //
 // This simply relies on the fact that any response contains 'EmptyReply' message.
 // So if 'EmptyReply' is unmarshalled into any other 'Reply' message, all the fields
-// are undefined but 'ResponseMetadata':
+// are undefined but 'Metadata':
 //
 //   message EmptyResponse {
-//    common.ResponseMetadata metadata = 1;
+//    common.Metadata metadata = 1;
 //	}
 //
 //  message EmptyReply {
@@ -183,17 +183,17 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 // Streaming responses are not wrapped into EmptyReply, so we simply marshall EmptyResponse
 // message.
 func (a *APID) BuildError(streaming bool, err error) ([]byte, error) {
-	var resp proto.Message = &common.EmptyResponse{
-		Metadata: &common.ResponseMetadata{
+	var resp proto.Message = &common.Empty{
+		Metadata: &common.Metadata{
 			Hostname: a.target,
 			Error:    err.Error(),
 		},
 	}
 
 	if !streaming {
-		resp = &common.EmptyReply{
-			Response: []*common.EmptyResponse{
-				resp.(*common.EmptyResponse),
+		resp = &common.EmptyResponse{
+			Messages: []*common.Empty{
+				resp.(*common.Empty),
 			},
 		}
 	}

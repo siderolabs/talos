@@ -45,7 +45,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 	v, err := suite.Client.Version(suite.ctx)
 	suite.Require().NoError(err)
 
-	suite.Assert().Equal(suite.Version, v.Response[0].Version.Tag)
+	suite.Assert().Equal(suite.Version, v.Messages[0].Version.Tag)
 }
 
 // TestSameVersionCluster verifies that all the nodes are on the same version
@@ -55,7 +55,7 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 
 	ctx := client.WithNodes(suite.ctx, nodes...)
 
-	var v *machine.VersionReply
+	var v *machine.VersionResponse
 
 	err := retry.Constant(
 		time.Minute,
@@ -68,10 +68,10 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 
 	suite.Require().NoError(err)
 
-	suite.Require().Len(v.Response, len(nodes))
+	suite.Require().Len(v.Messages, len(nodes))
 
-	expectedVersion := v.Response[0].Version.Tag
-	for _, version := range v.Response {
+	expectedVersion := v.Messages[0].Version.Tag
+	for _, version := range v.Messages {
 		suite.Assert().Equal(expectedVersion, version.Version.Tag)
 	}
 }

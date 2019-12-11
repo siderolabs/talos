@@ -26,7 +26,7 @@ type Registrator struct {
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	securityapi.RegisterSecurityServer(s, r)
+	securityapi.RegisterSecurityServiceServer(s, r)
 }
 
 // Certificate implements the securityapi.SecurityServer interface.

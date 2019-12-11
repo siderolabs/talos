@@ -32,33 +32,33 @@ var routesCmd = &cobra.Command{
 
 		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
-			reply, err := c.Routes(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Routes(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error getting routes: %w", err)
 				}
 				helpers.Warning("%s", err)
 			}
 
-			return routesRender(&remotePeer, reply)
+			return routesRender(&remotePeer, resp)
 		})
 	},
 }
 
-func routesRender(remotePeer *peer.Peer, reply *networkapi.RoutesReply) error {
+func routesRender(remotePeer *peer.Peer, resp *networkapi.RoutesResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
 
 	defaultNode := addrFromPeer(remotePeer)
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
-		for _, route := range resp.Routes {
+		for _, route := range msg.Routes {
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", node, route.Interface, route.Destination, route.Gateway, route.Metric)
 		}
 	}

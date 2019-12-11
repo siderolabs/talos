@@ -54,10 +54,10 @@ func (suite *NtpdSuite) TestTime() {
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
 
-	nClient := timeapi.NewTimeClient(conn)
+	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.Time(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
-	suite.Assert().Equal(reply.Response[0].Server, testServer)
+	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 
 func (suite *NtpdSuite) TestTimeCheck() {
@@ -85,10 +85,10 @@ func (suite *NtpdSuite) TestTimeCheck() {
 	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
 	suite.Assert().NoError(err)
 
-	nClient := timeapi.NewTimeClient(conn)
+	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
 	suite.Assert().NoError(err)
-	suite.Assert().Equal(reply.Response[0].Server, testServer)
+	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 
 func fakeNtpdRPC() (net.Listener, error) {

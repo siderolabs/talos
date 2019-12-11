@@ -67,9 +67,9 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 func serviceList(c *client.Client) error {
 	var remotePeer peer.Peer
 
-	reply, err := c.ServiceList(globalCtx, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceList(globalCtx, grpc.Peer(&remotePeer))
 	if err != nil {
-		if reply == nil {
+		if resp == nil {
 			return fmt.Errorf("error listing services: %w", err)
 		}
 
@@ -81,14 +81,14 @@ func serviceList(c *client.Client) error {
 
 	defaultNode := addrFromPeer(&remotePeer)
 
-	for _, resp := range reply.Response {
-		for _, s := range resp.Services {
+	for _, msg := range resp.Messages {
+		for _, s := range msg.Services {
 			svc := serviceInfoWrapper{s}
 
 			node := defaultNode
 
-			if resp.Metadata != nil {
-				node = resp.Metadata.Hostname
+			if msg.Metadata != nil {
+				node = msg.Metadata.Hostname
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", node, svc.Id, svc.State, svc.HealthStatus(), svc.LastUpdated(), svc.LastEvent())
@@ -154,9 +154,9 @@ func serviceInfo(c *client.Client, id string) error {
 func serviceStart(c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	reply, err := c.ServiceStart(globalCtx, id, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceStart(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
-		if reply == nil {
+		if resp == nil {
 			return fmt.Errorf("error starting service: %w", err)
 		}
 
@@ -168,14 +168,14 @@ func serviceStart(c *client.Client, id string) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
-		fmt.Fprintf(w, "%s\t%s\n", node, resp.Resp)
+		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
 	}
 
 	return w.Flush()
@@ -184,9 +184,9 @@ func serviceStart(c *client.Client, id string) error {
 func serviceStop(c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	reply, err := c.ServiceStop(globalCtx, id, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceStop(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
-		if reply == nil {
+		if resp == nil {
 			return fmt.Errorf("error starting service: %w", err)
 		}
 
@@ -198,14 +198,14 @@ func serviceStop(c *client.Client, id string) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
-		fmt.Fprintf(w, "%s\t%s\n", node, resp.Resp)
+		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
 	}
 
 	return w.Flush()
@@ -214,9 +214,9 @@ func serviceStop(c *client.Client, id string) error {
 func serviceRestart(c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	reply, err := c.ServiceRestart(globalCtx, id, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceRestart(globalCtx, id, grpc.Peer(&remotePeer))
 	if err != nil {
-		if reply == nil {
+		if resp == nil {
 			return fmt.Errorf("error starting service: %w", err)
 		}
 
@@ -228,14 +228,14 @@ func serviceRestart(c *client.Client, id string) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
-		fmt.Fprintf(w, "%s\t%s\n", node, resp.Resp)
+		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
 	}
 
 	return w.Flush()

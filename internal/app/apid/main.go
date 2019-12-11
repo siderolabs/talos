@@ -66,19 +66,19 @@ func main() {
 	backendFactory := backend.NewAPIDFactory(clientTLSConfig)
 	router := director.NewRouter(backendFactory.Get)
 
-	router.RegisterLocalBackend("os.OS", backend.NewLocal("osd", constants.OSSocketPath))
-	router.RegisterLocalBackend("machine.Machine", backend.NewLocal("machined", constants.MachineSocketPath))
-	router.RegisterLocalBackend("time.Time", backend.NewLocal("timed", constants.TimeSocketPath))
-	router.RegisterLocalBackend("network.Network", backend.NewLocal("networkd", constants.NetworkSocketPath))
+	router.RegisterLocalBackend("os.OSService", backend.NewLocal("osd", constants.OSSocketPath))
+	router.RegisterLocalBackend("machine.MachineService", backend.NewLocal("machined", constants.MachineSocketPath))
+	router.RegisterLocalBackend("time.TimeService", backend.NewLocal("timed", constants.TimeSocketPath))
+	router.RegisterLocalBackend("network.NetworkService", backend.NewLocal("networkd", constants.NetworkSocketPath))
 
 	// all existing streaming methods
 	for _, methodName := range []string{
-		"/machine.Machine/CopyOut",
-		"/machine.Machine/Kubeconfig",
-		"/machine.Machine/LS",
-		"/machine.Machine/Logs",
-		"/machine.Machine/Read",
-		"/os.OS/Dmesg",
+		"/machine.MachineService/Copy",
+		"/machine.MachineService/Kubeconfig",
+		"/machine.MachineService/List",
+		"/machine.MachineService/Logs",
+		"/machine.MachineService/Read",
+		"/os.OSService/Dmesg",
 	} {
 		router.RegisterStreamedRegex("^" + regexp.QuoteMeta(methodName) + "$")
 	}
