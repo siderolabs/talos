@@ -115,6 +115,7 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 			}),
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithMounts(mounts),
+			oci.WithLinuxDevice("/dev/kmsg", "r"),
 		),
 	),
 		restart.WithType(restart.Forever),

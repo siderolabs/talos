@@ -18,7 +18,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// VersionSuite verifies version API
+// LogsSuite verifies Logs API
 type LogsSuite struct {
 	base.APISuite
 
