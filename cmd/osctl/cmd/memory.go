@@ -36,9 +36,9 @@ var memoryCmd = &cobra.Command{
 		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 
-			reply, err := c.Memory(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Memory(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error getting memory stats: %s", err)
 				}
 
@@ -46,103 +46,103 @@ var memoryCmd = &cobra.Command{
 			}
 
 			if verbose {
-				return verboseRender(&remotePeer, reply)
+				return verboseRender(&remotePeer, resp)
 			}
 
-			return briefRender(&remotePeer, reply)
+			return briefRender(&remotePeer, resp)
 		})
 	},
 }
 
-func briefRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) error {
+func briefRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tTOTAL\tUSED\tFREE\tSHARED\tBUFFERS\tCACHE\tAVAILABLE")
 
 	defaultNode := addrFromPeer(remotePeer)
 
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
 		// Default to displaying output as MB
 		fmt.Fprintf(w, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
 			node,
-			resp.Meminfo.Memtotal/1024,
-			(resp.Meminfo.Memtotal-resp.Meminfo.Memfree-resp.Meminfo.Cached-resp.Meminfo.Buffers)/1024,
-			resp.Meminfo.Memfree/1024,
-			resp.Meminfo.Shmem/1024,
-			resp.Meminfo.Buffers/1024,
-			resp.Meminfo.Cached/1024,
-			resp.Meminfo.Memavailable/1024,
+			msg.Meminfo.Memtotal/1024,
+			(msg.Meminfo.Memtotal-msg.Meminfo.Memfree-msg.Meminfo.Cached-msg.Meminfo.Buffers)/1024,
+			msg.Meminfo.Memfree/1024,
+			msg.Meminfo.Shmem/1024,
+			msg.Meminfo.Buffers/1024,
+			msg.Meminfo.Cached/1024,
+			msg.Meminfo.Memavailable/1024,
 		)
 	}
 
 	return w.Flush()
 }
 
-func verboseRender(remotePeer *peer.Peer, reply *osapi.MemInfoReply) error {
+func verboseRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
 	defaultNode := addrFromPeer(remotePeer)
 
 	// Dump as /proc/meminfo
-	for _, resp := range reply.Response {
+	for _, msg := range resp.Messages {
 		node := defaultNode
 
-		if resp.Metadata != nil {
-			node = resp.Metadata.Hostname
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
 		}
 
 		fmt.Printf("%s: %s\n", "NODE", node)
-		fmt.Printf("%s: %d %s\n", "MemTotal", resp.Meminfo.Memtotal, "kB")
-		fmt.Printf("%s: %d %s\n", "MemFree", resp.Meminfo.Memfree, "kB")
-		fmt.Printf("%s: %d %s\n", "MemAvailable", resp.Meminfo.Memavailable, "kB")
-		fmt.Printf("%s: %d %s\n", "Buffers", resp.Meminfo.Buffers, "kB")
-		fmt.Printf("%s: %d %s\n", "Cached", resp.Meminfo.Cached, "kB")
-		fmt.Printf("%s: %d %s\n", "SwapCached", resp.Meminfo.Swapcached, "kB")
-		fmt.Printf("%s: %d %s\n", "Active", resp.Meminfo.Active, "kB")
-		fmt.Printf("%s: %d %s\n", "Inactive", resp.Meminfo.Inactive, "kB")
-		fmt.Printf("%s: %d %s\n", "ActiveAnon", resp.Meminfo.Activeanon, "kB")
-		fmt.Printf("%s: %d %s\n", "InactiveAnon", resp.Meminfo.Inactiveanon, "kB")
-		fmt.Printf("%s: %d %s\n", "ActiveFile", resp.Meminfo.Activefile, "kB")
-		fmt.Printf("%s: %d %s\n", "InactiveFile", resp.Meminfo.Inactivefile, "kB")
-		fmt.Printf("%s: %d %s\n", "Unevictable", resp.Meminfo.Unevictable, "kB")
-		fmt.Printf("%s: %d %s\n", "Mlocked", resp.Meminfo.Mlocked, "kB")
-		fmt.Printf("%s: %d %s\n", "SwapTotal", resp.Meminfo.Swaptotal, "kB")
-		fmt.Printf("%s: %d %s\n", "SwapFree", resp.Meminfo.Swapfree, "kB")
-		fmt.Printf("%s: %d %s\n", "Dirty", resp.Meminfo.Dirty, "kB")
-		fmt.Printf("%s: %d %s\n", "Writeback", resp.Meminfo.Writeback, "kB")
-		fmt.Printf("%s: %d %s\n", "AnonPages", resp.Meminfo.Anonpages, "kB")
-		fmt.Printf("%s: %d %s\n", "Mapped", resp.Meminfo.Mapped, "kB")
-		fmt.Printf("%s: %d %s\n", "Shmem", resp.Meminfo.Shmem, "kB")
-		fmt.Printf("%s: %d %s\n", "Slab", resp.Meminfo.Slab, "kB")
-		fmt.Printf("%s: %d %s\n", "SReclaimable", resp.Meminfo.Sreclaimable, "kB")
-		fmt.Printf("%s: %d %s\n", "SUnreclaim", resp.Meminfo.Sunreclaim, "kB")
-		fmt.Printf("%s: %d %s\n", "KernelStack", resp.Meminfo.Kernelstack, "kB")
-		fmt.Printf("%s: %d %s\n", "PageTables", resp.Meminfo.Pagetables, "kB")
-		fmt.Printf("%s: %d %s\n", "NFSUnstable", resp.Meminfo.Nfsunstable, "kB")
-		fmt.Printf("%s: %d %s\n", "Bounce", resp.Meminfo.Bounce, "kB")
-		fmt.Printf("%s: %d %s\n", "WritebackTmp", resp.Meminfo.Writebacktmp, "kB")
-		fmt.Printf("%s: %d %s\n", "CommitLimit", resp.Meminfo.Commitlimit, "kB")
-		fmt.Printf("%s: %d %s\n", "CommittedAS", resp.Meminfo.Committedas, "kB")
-		fmt.Printf("%s: %d %s\n", "VmallocTotal", resp.Meminfo.Vmalloctotal, "kB")
-		fmt.Printf("%s: %d %s\n", "VmallocUsed", resp.Meminfo.Vmallocused, "kB")
-		fmt.Printf("%s: %d %s\n", "VmallocChunk", resp.Meminfo.Vmallocchunk, "kB")
-		fmt.Printf("%s: %d %s\n", "HardwareCorrupted", resp.Meminfo.Hardwarecorrupted, "kB")
-		fmt.Printf("%s: %d %s\n", "AnonHugePages", resp.Meminfo.Anonhugepages, "kB")
-		fmt.Printf("%s: %d %s\n", "ShmemHugePages", resp.Meminfo.Shmemhugepages, "kB")
-		fmt.Printf("%s: %d %s\n", "ShmemPmdMapped", resp.Meminfo.Shmempmdmapped, "kB")
-		fmt.Printf("%s: %d %s\n", "CmaTotal", resp.Meminfo.Cmatotal, "kB")
-		fmt.Printf("%s: %d %s\n", "CmaFree", resp.Meminfo.Cmafree, "kB")
-		fmt.Printf("%s: %d\n", "HugePagesTotal", resp.Meminfo.Hugepagestotal)
-		fmt.Printf("%s: %d\n", "HugePagesFree", resp.Meminfo.Hugepagesfree)
-		fmt.Printf("%s: %d\n", "HugePagesRsvd", resp.Meminfo.Hugepagesrsvd)
-		fmt.Printf("%s: %d\n", "HugePagesSurp", resp.Meminfo.Hugepagessurp)
-		fmt.Printf("%s: %d %s\n", "Hugepagesize", resp.Meminfo.Hugepagesize, "kB")
-		fmt.Printf("%s: %d %s\n", "DirectMap4k", resp.Meminfo.Directmap4K, "kB")
-		fmt.Printf("%s: %d %s\n", "DirectMap2M", resp.Meminfo.Directmap2M, "kB")
-		fmt.Printf("%s: %d %s\n", "DirectMap1G", resp.Meminfo.Directmap1G, "kB")
+		fmt.Printf("%s: %d %s\n", "MemTotal", msg.Meminfo.Memtotal, "kB")
+		fmt.Printf("%s: %d %s\n", "MemFree", msg.Meminfo.Memfree, "kB")
+		fmt.Printf("%s: %d %s\n", "MemAvailable", msg.Meminfo.Memavailable, "kB")
+		fmt.Printf("%s: %d %s\n", "Buffers", msg.Meminfo.Buffers, "kB")
+		fmt.Printf("%s: %d %s\n", "Cached", msg.Meminfo.Cached, "kB")
+		fmt.Printf("%s: %d %s\n", "SwapCached", msg.Meminfo.Swapcached, "kB")
+		fmt.Printf("%s: %d %s\n", "Active", msg.Meminfo.Active, "kB")
+		fmt.Printf("%s: %d %s\n", "Inactive", msg.Meminfo.Inactive, "kB")
+		fmt.Printf("%s: %d %s\n", "ActiveAnon", msg.Meminfo.Activeanon, "kB")
+		fmt.Printf("%s: %d %s\n", "InactiveAnon", msg.Meminfo.Inactiveanon, "kB")
+		fmt.Printf("%s: %d %s\n", "ActiveFile", msg.Meminfo.Activefile, "kB")
+		fmt.Printf("%s: %d %s\n", "InactiveFile", msg.Meminfo.Inactivefile, "kB")
+		fmt.Printf("%s: %d %s\n", "Unevictable", msg.Meminfo.Unevictable, "kB")
+		fmt.Printf("%s: %d %s\n", "Mlocked", msg.Meminfo.Mlocked, "kB")
+		fmt.Printf("%s: %d %s\n", "SwapTotal", msg.Meminfo.Swaptotal, "kB")
+		fmt.Printf("%s: %d %s\n", "SwapFree", msg.Meminfo.Swapfree, "kB")
+		fmt.Printf("%s: %d %s\n", "Dirty", msg.Meminfo.Dirty, "kB")
+		fmt.Printf("%s: %d %s\n", "Writeback", msg.Meminfo.Writeback, "kB")
+		fmt.Printf("%s: %d %s\n", "AnonPages", msg.Meminfo.Anonpages, "kB")
+		fmt.Printf("%s: %d %s\n", "Mapped", msg.Meminfo.Mapped, "kB")
+		fmt.Printf("%s: %d %s\n", "Shmem", msg.Meminfo.Shmem, "kB")
+		fmt.Printf("%s: %d %s\n", "Slab", msg.Meminfo.Slab, "kB")
+		fmt.Printf("%s: %d %s\n", "SReclaimable", msg.Meminfo.Sreclaimable, "kB")
+		fmt.Printf("%s: %d %s\n", "SUnreclaim", msg.Meminfo.Sunreclaim, "kB")
+		fmt.Printf("%s: %d %s\n", "KernelStack", msg.Meminfo.Kernelstack, "kB")
+		fmt.Printf("%s: %d %s\n", "PageTables", msg.Meminfo.Pagetables, "kB")
+		fmt.Printf("%s: %d %s\n", "NFSUnstable", msg.Meminfo.Nfsunstable, "kB")
+		fmt.Printf("%s: %d %s\n", "Bounce", msg.Meminfo.Bounce, "kB")
+		fmt.Printf("%s: %d %s\n", "WritebackTmp", msg.Meminfo.Writebacktmp, "kB")
+		fmt.Printf("%s: %d %s\n", "CommitLimit", msg.Meminfo.Commitlimit, "kB")
+		fmt.Printf("%s: %d %s\n", "CommittedAS", msg.Meminfo.Committedas, "kB")
+		fmt.Printf("%s: %d %s\n", "VmallocTotal", msg.Meminfo.Vmalloctotal, "kB")
+		fmt.Printf("%s: %d %s\n", "VmallocUsed", msg.Meminfo.Vmallocused, "kB")
+		fmt.Printf("%s: %d %s\n", "VmallocChunk", msg.Meminfo.Vmallocchunk, "kB")
+		fmt.Printf("%s: %d %s\n", "HardwareCorrupted", msg.Meminfo.Hardwarecorrupted, "kB")
+		fmt.Printf("%s: %d %s\n", "AnonHugePages", msg.Meminfo.Anonhugepages, "kB")
+		fmt.Printf("%s: %d %s\n", "ShmemHugePages", msg.Meminfo.Shmemhugepages, "kB")
+		fmt.Printf("%s: %d %s\n", "ShmemPmdMapped", msg.Meminfo.Shmempmdmapped, "kB")
+		fmt.Printf("%s: %d %s\n", "CmaTotal", msg.Meminfo.Cmatotal, "kB")
+		fmt.Printf("%s: %d %s\n", "CmaFree", msg.Meminfo.Cmafree, "kB")
+		fmt.Printf("%s: %d\n", "HugePagesTotal", msg.Meminfo.Hugepagestotal)
+		fmt.Printf("%s: %d\n", "HugePagesFree", msg.Meminfo.Hugepagesfree)
+		fmt.Printf("%s: %d\n", "HugePagesRsvd", msg.Meminfo.Hugepagesrsvd)
+		fmt.Printf("%s: %d\n", "HugePagesSurp", msg.Meminfo.Hugepagessurp)
+		fmt.Printf("%s: %d %s\n", "Hugepagesize", msg.Meminfo.Hugepagesize, "kB")
+		fmt.Printf("%s: %d %s\n", "DirectMap4k", msg.Meminfo.Directmap4K, "kB")
+		fmt.Printf("%s: %d %s\n", "DirectMap2M", msg.Meminfo.Directmap2M, "kB")
+		fmt.Printf("%s: %d %s\n", "DirectMap1G", msg.Meminfo.Directmap1G, "kB")
 	}
 
 	return nil

@@ -32,11 +32,11 @@ type Registrator struct{}
 
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
-	osapi.RegisterOSServer(s, r)
+	osapi.RegisterOSServiceServer(s, r)
 }
 
 // Containers implements the osapi.OSDServer interface.
-func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersRequest) (reply *osapi.ContainersReply, err error) {
+func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersRequest) (reply *osapi.ContainersResponse, err error) {
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
@@ -54,11 +54,11 @@ func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersReques
 		log.Println(err.Error())
 	}
 
-	containers := []*osapi.Container{}
+	containers := []*osapi.ContainerInfo{}
 
 	for _, pod := range pods {
 		for _, container := range pod.Containers {
-			container := &osapi.Container{
+			container := &osapi.ContainerInfo{
 				Namespace: in.Namespace,
 				Id:        container.Display,
 				PodId:     pod.Name,
@@ -71,8 +71,8 @@ func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersReques
 		}
 	}
 
-	reply = &osapi.ContainersReply{
-		Response: []*osapi.ContainerResponse{
+	reply = &osapi.ContainersResponse{
+		Messages: []*osapi.Container{
 			{
 				Containers: containers,
 			},
@@ -84,7 +84,7 @@ func (r *Registrator) Containers(ctx context.Context, in *osapi.ContainersReques
 
 // Stats implements the osapi.OSDServer interface.
 // nolint: gocyclo
-func (r *Registrator) Stats(ctx context.Context, in *osapi.StatsRequest) (reply *osapi.StatsReply, err error) {
+func (r *Registrator) Stats(ctx context.Context, in *osapi.StatsRequest) (reply *osapi.StatsResponse, err error) {
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
@@ -123,8 +123,8 @@ func (r *Registrator) Stats(ctx context.Context, in *osapi.StatsRequest) (reply 
 		}
 	}
 
-	reply = &osapi.StatsReply{
-		Response: []*osapi.StatsResponse{
+	reply = &osapi.StatsResponse{
+		Messages: []*osapi.Stats{
 			{
 				Stats: stats,
 			},
@@ -135,7 +135,7 @@ func (r *Registrator) Stats(ctx context.Context, in *osapi.StatsRequest) (reply 
 }
 
 // Restart implements the osapi.OSDServer interface.
-func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*osapi.RestartReply, error) {
+func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*osapi.RestartResponse, error) {
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
@@ -157,14 +157,14 @@ func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*o
 		return nil, err
 	}
 
-	return &osapi.RestartReply{}, nil
+	return &osapi.RestartResponse{}, nil
 }
 
 // Dmesg implements the osapi.OSDServer interface. The klogctl syscall is used
 // to read from the ring buffer at /proc/kmsg by taking the
 // SYSLOG_ACTION_READ_ALL action. This action reads all messages remaining in
 // the ring buffer non-destructively.
-func (r *Registrator) Dmesg(req *osapi.DmesgRequest, srv osapi.OS_DmesgServer) error {
+func (r *Registrator) Dmesg(req *osapi.DmesgRequest, srv osapi.OSService_DmesgServer) error {
 	// Return the size of the kernel ring buffer
 	size, err := unix.Klogctl(constants.SYSLOG_ACTION_SIZE_BUFFER, nil)
 	if err != nil {
@@ -178,19 +178,19 @@ func (r *Registrator) Dmesg(req *osapi.DmesgRequest, srv osapi.OS_DmesgServer) e
 		return err
 	}
 
-	return srv.Send(&common.DataResponse{
+	return srv.Send(&common.Data{
 		Bytes: buf[:n],
 	})
 }
 
 // Processes implements the osapi.OSDServer interface
-func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *osapi.ProcessesReply, err error) {
+func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *osapi.ProcessesResponse, err error) {
 	procs, err := procfs.AllProcs()
 	if err != nil {
 		return nil, err
 	}
 
-	processes := make([]*osapi.Process, 0, len(procs))
+	processes := make([]*osapi.ProcessInfo, 0, len(procs))
 
 	var (
 		command    string
@@ -220,7 +220,7 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *os
 			return nil, err
 		}
 
-		p := &osapi.Process{
+		p := &osapi.ProcessInfo{
 			Pid:            int32(proc.PID),
 			Ppid:           int32(stats.PPID),
 			State:          stats.State,
@@ -236,8 +236,8 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *os
 		processes = append(processes, p)
 	}
 
-	reply = &osapi.ProcessesReply{
-		Response: []*osapi.ProcessResponse{
+	reply = &osapi.ProcessesResponse{
+		Messages: []*osapi.Process{
 			{
 				Processes: processes,
 			},
@@ -268,7 +268,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 }
 
 // Memory implements the osdapi.OSDServer interface.
-func (r *Registrator) Memory(ctx context.Context, in *empty.Empty) (reply *osapi.MemInfoReply, err error) {
+func (r *Registrator) Memory(ctx context.Context, in *empty.Empty) (reply *osapi.MemoryResponse, err error) {
 	proc, err := procfs.NewDefaultFS()
 	if err != nil {
 		return nil, err
@@ -330,8 +330,8 @@ func (r *Registrator) Memory(ctx context.Context, in *empty.Empty) (reply *osapi
 		Directmap1G:       info.DirectMap1G,
 	}
 
-	reply = &osapi.MemInfoReply{
-		Response: []*osapi.MemInfoResponse{
+	reply = &osapi.MemoryResponse{
+		Messages: []*osapi.Memory{
 			{
 				Meminfo: meminfo,
 			},

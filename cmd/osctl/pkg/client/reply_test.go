@@ -14,17 +14,17 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 )
 
-func TestFilterResponse(t *testing.T) {
-	reply := &common.DataReply{
-		Response: []*common.DataResponse{
+func TestFilterMessages(t *testing.T) {
+	reply := &common.DataResponse{
+		Messages: []*common.Data{
 			{
-				Metadata: &common.ResponseMetadata{
+				Metadata: &common.Metadata{
 					Hostname: "host1",
 				},
 				Bytes: []byte("abc"),
 			},
 			{
-				Metadata: &common.ResponseMetadata{
+				Metadata: &common.Metadata{
 					Hostname: "host2",
 					Error:    "something wrong",
 				},
@@ -33,7 +33,7 @@ func TestFilterResponse(t *testing.T) {
 				Bytes: []byte("def"),
 			},
 			{
-				Metadata: &common.ResponseMetadata{
+				Metadata: &common.Metadata{
 					Hostname: "host4",
 					Error:    "even more wrong",
 				},
@@ -41,13 +41,13 @@ func TestFilterResponse(t *testing.T) {
 		},
 	}
 
-	filtered, err := client.FilterReply(reply, nil)
+	filtered, err := client.FilterMessages(reply, nil)
 	assert.EqualError(t, err, "2 errors occurred:\n\t* host2: something wrong\n\t* host4: even more wrong\n\n")
 	assert.Equal(t, filtered,
-		&common.DataReply{
-			Response: []*common.DataResponse{
+		&common.DataResponse{
+			Messages: []*common.Data{
 				{
-					Metadata: &common.ResponseMetadata{
+					Metadata: &common.Metadata{
 						Hostname: "host1",
 					},
 					Bytes: []byte("abc"),
@@ -59,29 +59,29 @@ func TestFilterResponse(t *testing.T) {
 		})
 }
 
-func TestFilterResponseNil(t *testing.T) {
+func TestFilterMessagesNil(t *testing.T) {
 	e := errors.New("wrong")
 
-	filtered, err := client.FilterReply(nil, e)
+	filtered, err := client.FilterMessages(nil, e)
 	assert.Nil(t, filtered)
 	assert.Equal(t, e, err)
 
-	filtered, err = client.FilterReply((*common.DataReply)(nil), e)
+	filtered, err = client.FilterMessages((*common.Data)(nil), e)
 	assert.Nil(t, filtered)
 	assert.Equal(t, e, err)
 }
 
-func TestFilterResponseOnlyErrors(t *testing.T) {
-	reply := &common.DataReply{
-		Response: []*common.DataResponse{
+func TestFilterMessagesOnlyErrors(t *testing.T) {
+	reply := &common.DataResponse{
+		Messages: []*common.Data{
 			{
-				Metadata: &common.ResponseMetadata{
+				Metadata: &common.Metadata{
 					Hostname: "host2",
 					Error:    "something wrong",
 				},
 			},
 			{
-				Metadata: &common.ResponseMetadata{
+				Metadata: &common.Metadata{
 					Hostname: "host4",
 					Error:    "even more wrong",
 				},
@@ -89,7 +89,7 @@ func TestFilterResponseOnlyErrors(t *testing.T) {
 		},
 	}
 
-	filtered, err := client.FilterReply(reply, nil)
+	filtered, err := client.FilterMessages(reply, nil)
 	assert.EqualError(t, err, "2 errors occurred:\n\t* host2: something wrong\n\t* host4: even more wrong\n\n")
 	assert.Nil(t, filtered)
 }

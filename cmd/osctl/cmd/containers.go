@@ -50,28 +50,28 @@ var containersCmd = &cobra.Command{
 
 			var remotePeer peer.Peer
 
-			reply, err := c.Containers(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
+			resp, err := c.Containers(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error getting container list: %s", err)
 				}
 
 				helpers.Warning("%s", err)
 			}
 
-			return containerRender(&remotePeer, reply)
+			return containerRender(&remotePeer, resp)
 		})
 	},
 }
 
-func containerRender(remotePeer *peer.Peer, reply *osapi.ContainersReply) error {
+func containerRender(remotePeer *peer.Peer, resp *osapi.ContainersResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 
 	defaultNode := addrFromPeer(remotePeer)
 
-	for _, rep := range reply.Response {
-		resp := rep
+	for _, msg := range resp.Messages {
+		resp := msg
 		sort.Slice(resp.Containers,
 			func(i, j int) bool {
 				return strings.Compare(resp.Containers[i].Id, resp.Containers[j].Id) < 0

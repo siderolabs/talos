@@ -12,78 +12,78 @@ import "google/protobuf/timestamp.proto";
 import "common/common.proto";
 
 // The machine service definition.
-service Machine {
-  rpc CopyOut(CopyOutRequest) returns (stream common.DataResponse);
-  rpc Kubeconfig(google.protobuf.Empty) returns (stream common.DataResponse);
-  rpc LS(LSRequest) returns (stream FileInfo);
-  rpc Logs(LogsRequest) returns (stream common.DataResponse);
-  rpc Mounts(google.protobuf.Empty) returns (MountsReply);
-  rpc Read(ReadRequest) returns (stream common.DataResponse);
-  rpc Reboot(google.protobuf.Empty) returns (RebootReply);
-  rpc Reset(google.protobuf.Empty) returns (ResetReply);
-  rpc ServiceList(google.protobuf.Empty) returns (ServiceListReply);
-  rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartReply);
-  rpc ServiceStart(ServiceStartRequest) returns (ServiceStartReply);
-  rpc ServiceStop(ServiceStopRequest) returns (ServiceStopReply);
-  rpc Shutdown(google.protobuf.Empty) returns (ShutdownReply);
-  rpc Upgrade(UpgradeRequest) returns (UpgradeReply);
+service MachineService {
+  rpc Copy(CopyRequest) returns (stream common.Data);
+  rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
+  rpc List(ListRequest) returns (stream FileInfo);
+  rpc Logs(LogsRequest) returns (stream common.Data);
+  rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
+  rpc Read(ReadRequest) returns (stream common.Data);
+  rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
+  rpc Reset(google.protobuf.Empty) returns (ResetResponse);
+  rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
+  rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
+  rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
+  rpc ServiceStop(ServiceStopRequest) returns (ServiceStopResponse);
+  rpc Shutdown(google.protobuf.Empty) returns (ShutdownResponse);
+  rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
 
-  rpc Start(StartRequest) returns (StartReply) {
+  rpc Start(StartRequest) returns (StartResponse) {
     option deprecated = true;
   };
-  rpc Stop(StopRequest) returns (StopReply) {
+  rpc Stop(StopRequest) returns (StopResponse) {
     option deprecated = true;
   };
 
-  rpc Version(google.protobuf.Empty) returns (VersionReply);
+  rpc Version(google.protobuf.Empty) returns (VersionResponse);
 }
 
 // rpc reboot
-// The response message containing the reboot status.
-message RebootResponse {
-  common.ResponseMetadata metadata = 1;
+// The reboot message containing the reboot status.
+message Reboot {
+  common.Metadata metadata = 1;
 }
-message RebootReply {
-  repeated RebootResponse response = 1;
+message RebootResponse {
+  repeated Reboot messages = 1;
 }
 
 // rpc reset
-// The response message containing the restart status.
-message ResetResponse {
-  common.ResponseMetadata metadata = 1;
+// The reset message containing the restart status.
+message Reset {
+  common.Metadata metadata = 1;
 }
-message ResetReply {
-  repeated ResetResponse response = 1;
+message ResetResponse {
+  repeated Reset messages = 1;
 }
 
 // rpc shutdown
-// The response message containing the shutdown status.
-message ShutdownResponse {
-  common.ResponseMetadata metadata = 1;
+// The messages message containing the shutdown status.
+message Shutdown {
+  common.Metadata metadata = 1;
 }
-message ShutdownReply {
-  repeated ShutdownResponse response = 1;
+message ShutdownResponse {
+  repeated Shutdown messages = 1;
 }
 
 // rpc upgrade
 message UpgradeRequest {
   string image = 1;
 }
-message UpgradeResponse {
-  common.ResponseMetadata metadata = 1;
+message Upgrade {
+  common.Metadata metadata = 1;
   string ack = 2;
 }
-message UpgradeReply {
-  repeated UpgradeResponse response = 1;
+message UpgradeResponse {
+  repeated Upgrade messages = 1;
 }
 
 // rpc servicelist
-message ServiceListResponse {
-  common.ResponseMetadata metadata = 1;
+message ServiceList {
+  common.Metadata metadata = 1;
   repeated ServiceInfo services = 2;
 }
-message ServiceListReply {
-  repeated ServiceListResponse response = 1;
+message ServiceListResponse {
+  repeated ServiceList messages = 1;
 }
 
 message ServiceInfo {
@@ -115,36 +115,36 @@ message ServiceStartRequest {
   string id = 1;
 }
 
-message ServiceStartResponse {
-  common.ResponseMetadata metadata = 1;
+message ServiceStart {
+  common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceStartReply {
-  repeated ServiceStartResponse response = 1;
+message ServiceStartResponse {
+  repeated ServiceStart messages = 1;
 }
 
 message ServiceStopRequest {
   string id = 1;
 }
 
-message ServiceStopResponse {
-  common.ResponseMetadata metadata = 1;
+message ServiceStop {
+  common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceStopReply {
-  repeated ServiceStopResponse response = 1;
+message ServiceStopResponse {
+  repeated ServiceStop messages = 1;
 }
 
 message ServiceRestartRequest {
   string id = 1;
 }
 
-message ServiceRestartResponse {
-  common.ResponseMetadata metadata = 1;
+message ServiceRestart {
+  common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceRestartReply {
-  repeated ServiceRestartResponse response = 1;
+message ServiceRestartResponse {
+  repeated ServiceRestart messages = 1;
 }
 
 message StartRequest {
@@ -152,7 +152,7 @@ message StartRequest {
   string id = 1;
 }
 
-message StartReply {
+message StartResponse {
   option deprecated = true;
   string resp = 1;
 }
@@ -162,21 +162,21 @@ message StopRequest {
   string id = 1;
 }
 
-message StopReply {
+message StopResponse {
   option deprecated = true;
   string resp = 1;
 }
 
-// CopyOutRequest describes a request to copy data out of Talos node
+// CopyRequest describes a request to copy data out of Talos node
 //
-// CopyOut produces .tar.gz archive which is streamed back to the caller
-message CopyOutRequest {
+// Copy produces .tar.gz archive which is streamed back to the caller
+message CopyRequest {
   // Root path to start copying data out, it might be either a file or directory
   string root_path = 1;
 }
 
-// LSRequest describes a request to list the contents of a directory
-message LSRequest {
+// ListRequest describes a request to list the contents of a directory
+message ListRequest {
   // Root indicates the root directory for the list.  If not indicated, '/' is
   // presumed.
   string root = 1;
@@ -189,7 +189,7 @@ message LSRequest {
 
 // FileInfo describes a file or directory's information
 message FileInfo {
-  common.ResponseMetadata metadata = 1;
+  common.Metadata metadata = 1;
   // Name is the name (including prefixed path) of the file or directory
   string name = 2;
   // Size indicates the number of bytes contained within the file
@@ -209,16 +209,16 @@ message FileInfo {
   string relative_name = 9;
 }
 
-// The response message containing the requested df stats.
-message MountsResponse {
-  common.ResponseMetadata metadata = 1;
+// The messages message containing the requested df stats.
+message Mounts {
+  common.Metadata metadata = 1;
   repeated MountStat stats = 2;
 }
-message MountsReply {
-  repeated MountsResponse response = 1;
+message MountsResponse {
+  repeated Mounts messages = 1;
 }
 
-// The response message containing the requested processes.
+// The messages message containing the requested processes.
 message MountStat {
   string filesystem = 1;
   uint64 size = 2;
@@ -226,14 +226,14 @@ message MountStat {
   string mounted_on = 4;
 }
 
-message VersionResponse {
-  common.ResponseMetadata metadata = 1;
+message Version {
+  common.Metadata metadata = 1;
   VersionInfo version = 2;
   PlatformInfo platform = 3;
 }
 
-message VersionReply {
-  repeated VersionResponse response = 1;
+message VersionResponse {
+  repeated Version messages = 1;
 }
 
 message VersionInfo {

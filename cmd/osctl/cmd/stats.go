@@ -49,29 +49,29 @@ var statsCmd = &cobra.Command{
 
 			var remotePeer peer.Peer
 
-			reply, err := c.Stats(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
+			resp, err := c.Stats(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error getting stats: %s", err)
 				}
 
 				helpers.Warning("%s", err)
 			}
 
-			return statsRender(&remotePeer, reply)
+			return statsRender(&remotePeer, resp)
 		})
 	},
 }
 
-func statsRender(remotePeer *peer.Peer, reply *osapi.StatsReply) error {
+func statsRender(remotePeer *peer.Peer, resp *osapi.StatsResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
 
 	defaultNode := addrFromPeer(remotePeer)
 
-	for _, rep := range reply.Response {
-		resp := rep
+	for _, msg := range resp.Messages {
+		resp := msg
 		sort.Slice(resp.Stats,
 			func(i, j int) bool {
 				return strings.Compare(resp.Stats[i].Id, resp.Stats[j].Id) < 0

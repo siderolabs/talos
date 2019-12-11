@@ -11,9 +11,9 @@ import "google/protobuf/empty.proto";
 import "common/common.proto";
 
 // The network service definition.
-service Network {
-  rpc Routes(google.protobuf.Empty) returns (RoutesReply);
-  rpc Interfaces(google.protobuf.Empty) returns (InterfacesReply);
+service NetworkService {
+  rpc Routes(google.protobuf.Empty) returns (RoutesResponse);
+  rpc Interfaces(google.protobuf.Empty) returns (InterfacesResponse);
 }
 
 enum AddressFamily {
@@ -53,17 +53,17 @@ enum InterfaceFlags {
   FLAG_MULTICAST = 5;
 }
 
-// The response message containing the routes.
-message RoutesReply {
-  repeated RoutesResponse response = 1;
+// The messages message containing the routes.
+message RoutesResponse {
+  repeated Routes messages = 1;
 }
 
-message RoutesResponse {
-  common.ResponseMetadata metadata = 1;
+message Routes {
+  common.Metadata metadata = 1;
   repeated Route routes = 2;
 }
 
-// The response message containing a route.
+// The messages message containing a route.
 message Route {
   // Interface is the interface over which traffic to this destination should be sent
   string interface = 1;
@@ -85,12 +85,12 @@ message Route {
   uint32 flags = 9;
 }
 
-message InterfacesReply {
-  repeated InterfacesResponse response = 1;
+message InterfacesResponse {
+  repeated Interfaces messages = 1;
 }
 
-message InterfacesResponse {
-	common.ResponseMetadata metadata = 1;
+message Interfaces {
+	common.Metadata metadata = 1;
   repeated Interface interfaces = 2;
 }
 

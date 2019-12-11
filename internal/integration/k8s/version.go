@@ -39,7 +39,7 @@ func (suite *VersionSuite) TestExpectedVersion() {
 	v, err := suite.Client.Version(context.Background())
 	suite.Require().NoError(err)
 
-	checkKernelVersion := v.Response[0].Platform != nil && v.Response[0].Platform.Mode != runtime.Container.String()
+	checkKernelVersion := v.Messages[0].Platform != nil && v.Messages[0].Platform.Mode != runtime.Container.String()
 
 	// verify each node (kubelet version, Talos version, etc.)
 	nodes, err := suite.Clientset.CoreV1().Nodes().List(metav1.ListOptions{})

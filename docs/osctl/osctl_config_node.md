@@ -1,20 +1,20 @@
 <!-- markdownlint-disable -->
-## osctl config endpoint
+## osctl config node
 
-Set the endpoint(s) for the current context
+Set the node(s) for the current context
 
 ### Synopsis
 
-Set the endpoint(s) for the current context
+Set the node(s) for the current context
 
 ```
-osctl config endpoint <endpoint>... [flags]
+osctl config node <endpoint>... [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for endpoint
+  -h, --help   help for node
 ```
 
 ### Options inherited from parent commands

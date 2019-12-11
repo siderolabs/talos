@@ -49,9 +49,9 @@ var versionCmd = &cobra.Command{
 		setupClient(func(c *client.Client) {
 			var remotePeer peer.Peer
 
-			reply, err := c.Version(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Version(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					helpers.Fatalf("error getting version: %s", err)
 				}
 				helpers.Warning("%s", err)
@@ -59,16 +59,16 @@ var versionCmd = &cobra.Command{
 
 			defaultNode := addrFromPeer(&remotePeer)
 
-			for _, resp := range reply.Response {
+			for _, msg := range resp.Messages {
 				node := defaultNode
 
-				if resp.Metadata != nil {
-					node = resp.Metadata.Hostname
+				if msg.Metadata != nil {
+					node = msg.Metadata.Hostname
 				}
 
 				fmt.Printf("\t%s:        %s\n", "NODE", node)
 
-				version.PrintLongVersionFromExisting(resp.Version)
+				version.PrintLongVersionFromExisting(msg.Version)
 			}
 		})
 	},

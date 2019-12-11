@@ -19,8 +19,9 @@ import (
 
 // cpCmd represents the cp command
 var cpCmd = &cobra.Command{
-	Use:   "cp <src-path> -|<local-path>",
-	Short: "Copy data out from the node",
+	Use:     "copy <src-path> -|<local-path>",
+	Aliases: []string{"cp"},
+	Short:   "Copy data out from the node",
 	Long: `Creates an .tar.gz archive at the node starting at <src-path> and
 streams it back to the client.
 
@@ -36,7 +37,7 @@ captures ownership and permission bits.`,
 		}
 
 		setupClient(func(c *client.Client) {
-			r, errCh, err := c.CopyOut(globalCtx, args[0])
+			r, errCh, err := c.Copy(globalCtx, args[0])
 			if err != nil {
 				helpers.Fatalf("error copying: %s", err)
 			}

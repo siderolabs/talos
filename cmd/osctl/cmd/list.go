@@ -22,9 +22,10 @@ import (
 
 // lsCmd represents the ls command
 var lsCmd = &cobra.Command{
-	Use:   "ls [path]",
-	Short: "Retrieve a directory listing",
-	Long:  ``,
+	Use:     "list [path]",
+	Aliases: []string{"ls"},
+	Short:   "Retrieve a directory listing",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		setupClient(func(c *client.Client) {
 			rootDir := "/"
@@ -44,7 +45,7 @@ var lsCmd = &cobra.Command{
 				helpers.Fatalf("failed to parse depth flag: %w", err)
 			}
 
-			stream, err := c.LS(globalCtx, machineapi.LSRequest{
+			stream, err := c.LS(globalCtx, machineapi.ListRequest{
 				Root:           rootDir,
 				Recurse:        recurse,
 				RecursionDepth: recursionDepth,

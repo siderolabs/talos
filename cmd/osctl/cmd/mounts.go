@@ -35,28 +35,28 @@ var mountsCmd = &cobra.Command{
 		return setupClientE(func(c *client.Client) error {
 			var remotePeer peer.Peer
 
-			reply, err := c.Mounts(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Mounts(globalCtx, grpc.Peer(&remotePeer))
 			if err != nil {
-				if reply == nil {
+				if resp == nil {
 					return fmt.Errorf("error getting interfaces: %s", err)
 				}
 
 				helpers.Warning("%s", err)
 			}
 
-			return mountsRender(&remotePeer, reply)
+			return mountsRender(&remotePeer, resp)
 		})
 	},
 }
 
-func mountsRender(remotePeer *peer.Peer, reply *machineapi.MountsReply) error {
+func mountsRender(remotePeer *peer.Peer, resp *machineapi.MountsResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
 
 	defaultNode := addrFromPeer(remotePeer)
 
-	for _, resp := range reply.Response {
-		for _, r := range resp.Stats {
+	for _, msg := range resp.Messages {
+		for _, r := range msg.Stats {
 			percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
 
 			if math.IsNaN(percentAvailable) {
@@ -65,8 +65,8 @@ func mountsRender(remotePeer *peer.Peer, reply *machineapi.MountsReply) error {
 
 			node := defaultNode
 
-			if resp.Metadata != nil {
-				node = resp.Metadata.Hostname
+			if msg.Metadata != nil {
+				node = msg.Metadata.Hostname
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n",

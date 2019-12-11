@@ -8,7 +8,7 @@ option java_outer_classname = "SecurityApi";
 option java_package = "com.security.api";
 
 // The security service definition.
-service Security {
+service SecurityService {
   rpc Certificate(CertificateRequest) returns (CertificateResponse);
   rpc ReadFile(ReadFileRequest) returns (ReadFileResponse);
   rpc WriteFile(WriteFileRequest) returns (WriteFileResponse);

@@ -20,7 +20,7 @@ import (
 
 // RemoteGenerator represents the OS identity generator.
 type RemoteGenerator struct {
-	client securityapi.SecurityClient
+	client securityapi.SecurityServiceClient
 }
 
 // NewRemoteGenerator initializes a RemoteGenerator with a preconfigured grpc.ClientConn.
@@ -45,7 +45,7 @@ func NewRemoteGenerator(token string, endpoints []string, port int) (g *RemoteGe
 			continue
 		}
 
-		client := securityapi.NewSecurityClient(conn)
+		client := securityapi.NewSecurityServiceClient(conn)
 
 		return &RemoteGenerator{client: client}, nil
 	}

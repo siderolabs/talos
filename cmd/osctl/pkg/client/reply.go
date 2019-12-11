@@ -21,57 +21,57 @@ func (ne *NodeError) Error() string {
 	return fmt.Sprintf("%s: %s", ne.Node, ne.Err)
 }
 
-// FilterReply removes error responses from reply and builds multierror.
+// FilterMessages removes error Messagess from resp and builds multierror.
 //
 //nolint: gocyclo
-func FilterReply(reply interface{}, err error) (interface{}, error) {
-	if reply == nil {
+func FilterMessages(resp interface{}, err error) (interface{}, error) {
+	if resp == nil {
 		return nil, err
 	}
 
-	replyStructPtr := reflect.ValueOf(reply)
-	if replyStructPtr.Kind() != reflect.Ptr {
-		panic("reply should be pointer to struct")
+	respStructPtr := reflect.ValueOf(resp)
+	if respStructPtr.Kind() != reflect.Ptr {
+		panic("response should be pointer to struct")
 	}
 
-	if replyStructPtr.IsNil() {
+	if respStructPtr.IsNil() {
 		return nil, err
 	}
 
-	replyStruct := replyStructPtr.Elem()
-	if replyStruct.Kind() != reflect.Struct {
-		panic("reply should be struct")
+	respStruct := respStructPtr.Elem()
+	if respStruct.Kind() != reflect.Struct {
+		panic("response should be struct")
 	}
 
-	responseField := replyStruct.FieldByName("Response")
-	if !responseField.IsValid() {
-		panic("Response field missing")
+	messagesField := respStruct.FieldByName("Messages")
+	if !messagesField.IsValid() {
+		panic("Messages field missing")
 	}
 
-	if responseField.Kind() != reflect.Slice {
-		panic("Response field should be a slice")
+	if messagesField.Kind() != reflect.Slice {
+		panic("Messages field should be a slice")
 	}
 
 	var multiErr *multierror.Error
 
-	for i := 0; i < responseField.Len(); {
-		responsePtr := responseField.Index(i)
-		if responsePtr.Kind() != reflect.Ptr {
-			panic("response slice should container pointers")
+	for i := 0; i < messagesField.Len(); {
+		MessagesPtr := messagesField.Index(i)
+		if MessagesPtr.Kind() != reflect.Ptr {
+			panic("Messages slice should container pointers")
 		}
 
-		response := responsePtr.Elem()
-		if response.Kind() != reflect.Struct {
-			panic("response slice should container pointers to structs")
+		Messages := MessagesPtr.Elem()
+		if Messages.Kind() != reflect.Struct {
+			panic("Messages slice should container pointers to structs")
 		}
 
-		metadataField := response.FieldByName("Metadata")
+		metadataField := Messages.FieldByName("Metadata")
 		if !metadataField.IsValid() {
-			panic("response metadata field missing")
+			panic("Messages metadata field missing")
 		}
 
 		if metadataField.Kind() != reflect.Ptr {
-			panic("response metadata field should be a pointer")
+			panic("Messages metadata field should be a pointer")
 		}
 
 		if metadataField.IsNil() {
@@ -82,7 +82,7 @@ func FilterReply(reply interface{}, err error) (interface{}, error) {
 
 		metadata := metadataField.Elem()
 		if metadata.Kind() != reflect.Struct {
-			panic("response metadata should be struct")
+			panic("Messages metadata should be struct")
 		}
 
 		errorField := metadata.FieldByName("Error")
@@ -117,15 +117,15 @@ func FilterReply(reply interface{}, err error) (interface{}, error) {
 
 		multiErr = multierror.Append(multiErr, nodeError)
 
-		// remove ith response
-		reflect.Copy(responseField.Slice(i, responseField.Len()), responseField.Slice(i+1, responseField.Len()))
-		responseField.SetLen(responseField.Len() - 1)
+		// remove ith Messages
+		reflect.Copy(messagesField.Slice(i, messagesField.Len()), messagesField.Slice(i+1, messagesField.Len()))
+		messagesField.SetLen(messagesField.Len() - 1)
 	}
 
-	// if all the responses were error responses...
-	if multiErr != nil && responseField.Len() == 0 {
-		reply = nil
+	// if all the Messagess were error Messagess...
+	if multiErr != nil && messagesField.Len() == 0 {
+		resp = nil
 	}
 
-	return reply, multiErr.ErrorOrNil()
+	return resp, multiErr.ErrorOrNil()
 }
