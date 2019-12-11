@@ -144,5 +144,5 @@ At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
 osctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-osctl --talosconfig talosconfig kubeconfig > kubeconfig
+osctl --talosconfig talosconfig kubeconfig .
 ```

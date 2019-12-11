@@ -77,7 +77,7 @@ export GOVC_NETWORK=<vCenter network>
 ### Download the OVA
 
 A `talos.ova` asset is published with each [release](https://github.com/talos-systems/talos/releases).
-We will refer to the version of the release as $TALOS_VERSION below.
+We will refer to the version of the release as `$TALOS_VERSION` below.
 It can be easily exported with `export TALOS_VERSION="v0.3.0-alpha.10"` or similar.
 
 ```bash
@@ -213,5 +213,5 @@ At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
 osctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-osctl --talosconfig talosconfig kubeconfig > kubeconfig
+osctl --talosconfig talosconfig kubeconfig .
 ```
