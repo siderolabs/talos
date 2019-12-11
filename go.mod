@@ -69,8 +69,8 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.2.5
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.0.0-20191204082340-384b28a90b2b
-	k8s.io/apimachinery v0.0.0-20191121175448-79c2a76c473a
-	k8s.io/client-go v0.0.0-20191204083517-ea72ff2b5b2f
+	k8s.io/api v0.17.0
+	k8s.io/apimachinery v0.17.0
+	k8s.io/client-go v0.17.0
 	k8s.io/cri-api v0.0.0-20191121183020-775aa3c1cf73
 )
