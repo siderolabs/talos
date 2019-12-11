@@ -291,7 +291,7 @@ container: buildkitd
 
 .PHONY: basic-integration
 basic-integration: gitmeta
-	@TAG=$(TAG) SHA=$(SHA) go run ./internal/test-framework/main.go basic-integration
+	@TAG=$(TAG) SHA=$(SHA) go run ./internal/test-framework/main.go basic-integration run
 
 .PHONY: capi
 capi:

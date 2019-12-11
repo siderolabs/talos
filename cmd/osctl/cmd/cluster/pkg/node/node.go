@@ -137,10 +137,13 @@ func NewNode(clusterName string, req *Request) (err error) {
 
 	ctx := context.Background()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
+
+	// Ensure docker client version works with server
+	cli.NegotiateAPIVersion(ctx)
 
 	resp, err := cli.ContainerCreate(ctx, containerConfig, hostConfig, networkConfig, req.Name)
 	if err != nil {

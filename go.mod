@@ -4,6 +4,7 @@ go 1.13
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/docker/docker v1.13.1 => github.com/docker/engine v1.4.2-0.20191113042239-ea84732a7725
 	github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20191116224831-33eac9dd89f6
 	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191210195608-7606a2efb62d
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
@@ -11,6 +12,7 @@ replace (
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/beevik/ntp v0.2.0
@@ -34,6 +36,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
+	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/go-multierror v1.0.0
@@ -46,6 +49,7 @@ require (
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
 	github.com/mdlayher/netlink v0.0.0-20191009155606-de872b0d824b
 	github.com/mdlayher/raw v0.0.0-20190606144222-a54781e5f38f // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc8 // indirect

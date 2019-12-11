@@ -78,10 +78,13 @@ var clusterDownCmd = &cobra.Command{
 func create() (err error) {
 	ctx := context.Background()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
+
+	// Ensure docker client version works with server
+	cli.NegotiateAPIVersion(ctx)
 
 	if masters < 1 {
 		helpers.Fatalf("number of masters can't be less than 1")
@@ -210,10 +213,13 @@ func createNodes(requests []*node.Request) (err error) {
 }
 
 func destroy() error {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
+
+	// Ensure docker client version works with server
+	cli.NegotiateAPIVersion(context.Background())
 
 	filters := filters.NewArgs()
 	filters.Add("label", "talos.owned=true")

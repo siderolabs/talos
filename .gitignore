@@ -10,6 +10,7 @@ talosconfig
 kubeconfig
 hack/test/integration/matchbox/assets/*
 !hack/test/integration/matchbox/assets/.gitkeep
+internal/test-framework/test-framework
 
 # vim Swap
 [._]*.s[a-v][a-z]
