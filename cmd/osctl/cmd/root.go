@@ -107,7 +107,7 @@ func Execute() {
 
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	rootCmd.PersistentFlags().StringVar(&cmdcontext, "context", "", "Context to be used in command")
-	rootCmd.PersistentFlags().StringSliceVarP(&nodes, "nodes", "", []string{}, "target the specified nodes")
+	rootCmd.PersistentFlags().StringSliceVarP(&nodes, "nodes", "n", []string{}, "target the specified nodes")
 	rootCmd.PersistentFlags().StringSliceVarP(&endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
 
 	if err := rootCmd.Execute(); err != nil {
