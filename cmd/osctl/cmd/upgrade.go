@@ -33,7 +33,7 @@ var upgradeCmd = &cobra.Command{
 }
 
 func init() {
-	upgradeCmd.Flags().StringVarP(&upgradeImage, "image", "u", "", "the container image to use for performing the install")
+	upgradeCmd.Flags().StringVarP(&upgradeImage, "image", "i", "", "the container image to use for performing the install")
 	rootCmd.AddCommand(upgradeCmd)
 }
 
