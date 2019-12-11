@@ -29,7 +29,7 @@ Once the above finishes successfully, your talosconfig(`~/.talos/config`) will b
 ## Retrieve and Configure the `kubeconfig`
 
 ```bash
-osctl kubeconfig > kubeconfig
+osctl kubeconfig .
 kubectl --kubeconfig kubeconfig config set-cluster talos_default --server https://127.0.0.1:6443
 ```
 
