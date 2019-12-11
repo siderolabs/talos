@@ -1,3 +1,53 @@
+# [v0.3.0-beta.0](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.10...v0.3.0-beta.0) (2019-12-11)
+
+### Bug Fixes
+
+- Add hostname setting to networkd ([e1651a8](https://github.com/talos-systems/talos/commit/e1651a8a986fb2bec938957930397353504a4334))
+- add missing sysctl params required by containerd ([e8bb6b9](https://github.com/talos-systems/talos/commit/e8bb6b9119d2e8cf5e8bd964024813d1433d815e))
+- allow initial-cluster-state to be set ([3725975](https://github.com/talos-systems/talos/commit/3725975df94c9ca1364389d92c822b4171be28cb))
+- append domainname to DHCP-sourced hostname ([d8caa53](https://github.com/talos-systems/talos/commit/d8caa5316a9818cad23b62f9ecaacfc1a6ca217d)), closes [#1628](https://github.com/talos-systems/talos/issues/1628)
+- close io.ReadCloser ([829c3d7](https://github.com/talos-systems/talos/commit/829c3d72aa43e086e36c995d4a7c2335b01b98ee))
+- don't set br_netfilter sysctls in container mode ([e8a5c13](https://github.com/talos-systems/talos/commit/e8a5c132bdadb66be8b52f6dd3a6f9e018f4a9cc))
+- don't use netrc ([d1c050d](https://github.com/talos-systems/talos/commit/d1c050d2daa391d1193aae95d7bead1c501bfe9a))
+- error reporting in `osctl kubeconfig` ([b1d282a](https://github.com/talos-systems/talos/commit/b1d282adf3892a7342d6931a0ef72e1637c70a17))
+- extract errors from API response ([10a40a1](https://github.com/talos-systems/talos/commit/10a40a15d964902ad2b678a166bc19db2a7bf074))
+- improve the project site meta description ([9a2fd98](https://github.com/talos-systems/talos/commit/9a2fd989c9243ae94401ee7681361cc05be468b3))
+- kill POD network mode pods first on upgrades ([fa515b8](https://github.com/talos-systems/talos/commit/fa515b81171059386ddff03280f2989e0ac1fd3b))
+- make retry errors ordered ([6d8194b](https://github.com/talos-systems/talos/commit/6d8194be2154809d42ccd8c46864638de3a3397b))
+- mount /run as shared in container mode ([9325f12](https://github.com/talos-systems/talos/commit/9325f124d7f26df4b48be7208e1455bd1235412a))
+- mount as rshared ([f8c2f14](https://github.com/talos-systems/talos/commit/f8c2f14119b81f33c3d5d749787d9086aac14bdf))
+- provide peer remote address for 'NODE': as default in osctl ([fc52025](https://github.com/talos-systems/talos/commit/fc52025490d357e79c38a7bfefcb02f3a193b7f6))
+- response filtering for client API, RunE for osctl ([e907507](https://github.com/talos-systems/talos/commit/e907507aa690940dd5f23aaa47b06df72071aa94))
+- **networkd:** Ignore loopback interface during hostname decision. ([653100d](https://github.com/talos-systems/talos/commit/653100dc3b6659f84ffe8af09a8727210053ad93))
+- return a unique set of errors on retry failure ([66052d6](https://github.com/talos-systems/talos/commit/66052d6304c4a35c8f54336160d8eccde361ff8a))
+- reverse preference order of network config ([9d9b958](https://github.com/talos-systems/talos/commit/9d9b958fba8c56dda640371fdc4441cb9a1d9cc1)), closes [#1588](https://github.com/talos-systems/talos/issues/1588)
+- run go mod tidy ([4fa324a](https://github.com/talos-systems/talos/commit/4fa324a9bed0044882498bfdd189e0d2c3141a8b))
+- strip line feed from domainname after read ([549db4d](https://github.com/talos-systems/talos/commit/549db4d3b18fa623804c77513d0abc1c08781748)), closes [#1624](https://github.com/talos-systems/talos/issues/1624)
+- update kernel version constant ([7b6a1fd](https://github.com/talos-systems/talos/commit/7b6a1fdc94c4ccf90c8a7872313bea71ef390466))
+- update node dependencies for project website ([343cba0](https://github.com/talos-systems/talos/commit/343cba04d3af8674a3250168543baff583cd3e0d))
+
+### Features
+
+- add ability to append to existing files with extrafiles ([84354c5](https://github.com/talos-systems/talos/commit/84354c59414b6795af94e7c62b7443a077064913)), closes [#1467](https://github.com/talos-systems/talos/issues/1467)
+- add config nodes command ([f86465e](https://github.com/talos-systems/talos/commit/f86465ecae89557bd59e439041f57f5b86e4c153))
+- add create and overwrite file operations ([fa4fb4d](https://github.com/talos-systems/talos/commit/fa4fb4d4448b1715ed05339dd1cfd200c618e00c))
+- add domain search line to resolv.conf ([b597306](https://github.com/talos-systems/talos/commit/b597306989e6a72385bccf688450709b75f23492)), closes [#1626](https://github.com/talos-systems/talos/issues/1626)
+- add security hardening settings ([09fbe2d](https://github.com/talos-systems/talos/commit/09fbe2d9ad23dec09cb08bf6092140dd352dceae))
+- add support for `osctl logs -f` ([edb4043](https://github.com/talos-systems/talos/commit/edb40437ece722ceadb4f6a88b1aa7c51a347dc3))
+- add universal TUN/TAP device driver support ([1f4c172](https://github.com/talos-systems/talos/commit/1f4c17269d2116f19535edafdb834785071beda8))
+- allow ability to specify custom CNIs ([92b5bd9](https://github.com/talos-systems/talos/commit/92b5bd9b2be0a34303f88fe3a2754e731422e364)), closes [#1593](https://github.com/talos-systems/talos/issues/1593)
+- allow configurable SANs for API ([e1ac4c4](https://github.com/talos-systems/talos/commit/e1ac4c4151dfe168efc2fb8dd63f469b88417372))
+- allow deep-linking to specific docs pages ([4debea6](https://github.com/talos-systems/talos/commit/4debea685685aba2481f53dd2f8e5e9fd6806a15))
+- make osd.Dmesg API streaming ([3a93e65](https://github.com/talos-systems/talos/commit/3a93e65b5480a02c22397244284417d4ee5c5b46))
+- osctl logs now supports multiple targets ([5b316f7](https://github.com/talos-systems/talos/commit/5b316f7ea3bafea845e0b12dd8ba8bf6ad6e5e94))
+- rename confusing target options, --endpoints, etc. ([399aeda](https://github.com/talos-systems/talos/commit/399aeda0b9470e4d3c7b14d701fb9ecdc64bbaf0)), closes [#1610](https://github.com/talos-systems/talos/issues/1610)
+- support client only version for osctl ([190f0c6](https://github.com/talos-systems/talos/commit/190f0c6281881ae671b3275056fc86cf39838a46)), closes [#1363](https://github.com/talos-systems/talos/issues/1363)
+- support output directory for osctl config generate ([739ce61](https://github.com/talos-systems/talos/commit/739ce61efa44917ce60aede56f1059695cbc93bc)), closes [#1509](https://github.com/talos-systems/talos/issues/1509)
+- upgrade containerd to v1.3.2 ([43e6703](https://github.com/talos-systems/talos/commit/43e6703b8b92251756dc43d6ac503e67c04fe37b))
+- Upgrade kubernetes to 1.17.0 ([9584b47](https://github.com/talos-systems/talos/commit/9584b47cd75c10c16da61ad608350c9209e3480c))
+- upgrade Linux to v5.3.15 ([0347286](https://github.com/talos-systems/talos/commit/034728651156985b7732fbf41c11e14b9e16cf37))
+- use containerd-shim-runc-v2 ([1d3cc00](https://github.com/talos-systems/talos/commit/1d3cc0038b5a090f64786705b0d38d280196101a))
+
 # [v0.3.0-alpha.10](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.9...v0.3.0-alpha.10) (2019-12-02)
 
 ### Bug Fixes
