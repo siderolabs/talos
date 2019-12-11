@@ -11,11 +11,11 @@ import (
 	"log"
 	"strings"
 	"syscall"
+	"time"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/prometheus/procfs"
-	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/api/common"
@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
+	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -160,27 +161,59 @@ func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*o
 	return &osapi.RestartResponse{}, nil
 }
 
-// Dmesg implements the osapi.OSDServer interface. The klogctl syscall is used
-// to read from the ring buffer at /proc/kmsg by taking the
-// SYSLOG_ACTION_READ_ALL action. This action reads all messages remaining in
-// the ring buffer non-destructively.
+// Dmesg implements the osapi.OSDServer interface.
+//
+//nolint: gocyclo
 func (r *Registrator) Dmesg(req *osapi.DmesgRequest, srv osapi.OSService_DmesgServer) error {
-	// Return the size of the kernel ring buffer
-	size, err := unix.Klogctl(constants.SYSLOG_ACTION_SIZE_BUFFER, nil)
-	if err != nil {
-		return err
-	}
-	// Read all messages from the log (non-destructively)
-	buf := make([]byte, size)
+	ctx := srv.Context()
 
-	n, err := unix.Klogctl(constants.SYSLOG_ACTION_READ_ALL, buf)
-	if err != nil {
-		return err
+	var options []kmsg.Option
+
+	if req.Follow {
+		options = append(options, kmsg.Follow())
 	}
 
-	return srv.Send(&common.Data{
-		Bytes: buf[:n],
-	})
+	if req.Tail {
+		options = append(options, kmsg.FromTail())
+	}
+
+	reader, err := kmsg.NewReader(options...)
+	if err != nil {
+		return fmt.Errorf("error opening /dev/kmsg reader: %w", err)
+	}
+	defer reader.Close() //nolint: errcheck
+
+	ch := reader.Scan(ctx)
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err = reader.Close(); err != nil {
+				return err
+			}
+		case packet, ok := <-ch:
+			if !ok {
+				return nil
+			}
+
+			if packet.Err != nil {
+				err = srv.Send(&common.Data{
+					Metadata: &common.Metadata{
+						Error: packet.Err.Error(),
+					},
+				})
+			} else {
+				msg := packet.Message
+				err = srv.Send(&common.Data{
+					Bytes: []byte(fmt.Sprintf("%s: %7s: [%s]: %s", msg.Facility, msg.Priority, msg.Timestamp.Format(time.RFC3339Nano), msg.Message)),
+				})
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+	}
 }
 
 // Processes implements the osapi.OSDServer interface
