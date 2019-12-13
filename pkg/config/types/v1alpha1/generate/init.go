@@ -37,7 +37,6 @@ func initUd(in *Input) (string, error) {
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterName: in.ClusterName,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			Version:  in.KubernetesVersion,
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		APIServer: &v1alpha1.APIServerConfig{

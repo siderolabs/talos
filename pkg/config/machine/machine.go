@@ -150,6 +150,7 @@ type Time interface {
 // Kubelet defines the requirements for a config that pertains to kubelet
 // related options.
 type Kubelet interface {
+	Image() string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
 }

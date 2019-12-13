@@ -39,8 +39,6 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-var etcdImage = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
-
 // Etcd implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Etcd struct{}
@@ -69,8 +67,8 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-	if _, err = client.Pull(containerdctx, etcdImage, containerdapi.WithPullUnpack); err != nil {
-		return fmt.Errorf("failed to pull image %q: %w", etcdImage, err)
+	if _, err = client.Pull(containerdctx, config.Cluster().Etcd().Image(), containerdapi.WithPullUnpack); err != nil {
+		return fmt.Errorf("failed to pull image %q: %w", config.Cluster().Etcd().Image(), err)
 	}
 
 	return nil
@@ -118,7 +116,7 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		config.Debug(),
 		&args,
 		runner.WithNamespace(constants.SystemContainerdNamespace),
-		runner.WithContainerImage(etcdImage),
+		runner.WithContainerImage(config.Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithHostNamespace(specs.NetworkNamespace),
