@@ -187,7 +187,6 @@ type ClusterConfig struct {
 	//   examples:
 	//     - |
 	//       controlPlane:
-	//         version: 1.17.0
 	//         endpoint: https://1.2.3.4
 	//         localAPIServerPort: 443
 	ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
@@ -273,7 +272,7 @@ type KubeletConfig struct {
 	//     The `image` field is an optional reference to an alternative hyperkube image.
 	//   examples:
 	//     - "image: docker.io/<org>/hyperkube:latest"
-	Image string `yaml:"image,omitempty"`
+	KubeletImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     The `extraArgs` field is used to provide additional flags to the kubelet.
 	//   examples:
@@ -423,11 +422,6 @@ func (e *Endpoint) MarshalYAML() (interface{}, error) {
 
 // ControlPlaneConfig represents control plane config vals.
 type ControlPlaneConfig struct {
-	//   description: |
-	//     Indicates which version of Kubernetes for all control plane components.
-	//   examples:
-	//     - 1.17.0
-	Version string `yaml:"version"` // Note: The version must be of the format `major.minor.patch`, _without_ a leading `v`.
 	//   description: |
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 	//     It is single-valued, and may optionally include a port number.
