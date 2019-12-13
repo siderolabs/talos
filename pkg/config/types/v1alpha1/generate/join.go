@@ -36,7 +36,6 @@ func workerUd(in *Input) (string, error) {
 		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
 		BootstrapToken: in.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			Version:  in.KubernetesVersion,
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{

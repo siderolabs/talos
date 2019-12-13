@@ -35,7 +35,6 @@ func controlPlaneUd(in *Input) (string, error) {
 	cluster := &v1alpha1.ClusterConfig{
 		BootstrapToken: in.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			Version:  in.KubernetesVersion,
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		EtcdConfig: &v1alpha1.EtcdConfig{

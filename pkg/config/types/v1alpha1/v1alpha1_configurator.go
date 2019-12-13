@@ -191,6 +191,17 @@ func (m *MachineConfig) SetCertSANs(sans []string) {
 	m.MachineCertSANs = append(m.MachineCertSANs, sans...)
 }
 
+// Image implements the Configurator interface.
+func (k *KubeletConfig) Image() string {
+	image := k.KubeletImage
+
+	if image == "" {
+		image = fmt.Sprintf("%s:v%s", constants.KubernetesImage, constants.DefaultKubernetesVersion)
+	}
+
+	return image
+}
+
 // ExtraArgs implements the Configurator interface.
 func (k *KubeletConfig) ExtraArgs() map[string]string {
 	if k == nil {
@@ -207,11 +218,6 @@ func (k *KubeletConfig) ExtraArgs() map[string]string {
 // ExtraMounts implements the Configurator interface.
 func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 	return nil
-}
-
-// Version implements the Configurator interface.
-func (c *ClusterConfig) Version() string {
-	return c.ControlPlane.Version
 }
 
 // Endpoint implements the Configurator interface.
@@ -264,7 +270,13 @@ func (c *ClusterConfig) Etcd() cluster.Etcd {
 
 // Image implements the Configurator interface.
 func (e *EtcdConfig) Image() string {
-	return e.ContainerImage
+	image := e.ContainerImage
+
+	if image == "" {
+		image = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
+	}
+
+	return image
 }
 
 // CA implements the Configurator interface.
