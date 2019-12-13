@@ -40,9 +40,7 @@ var installCmd = &cobra.Command{
 
 		config = &v1alpha1.Config{
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Version: constants.DefaultKubernetesVersion,
-				},
+				ControlPlane: &v1alpha1.ControlPlaneConfig{},
 			},
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineInstall: &v1alpha1.InstallConfig{

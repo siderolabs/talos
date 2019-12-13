@@ -106,9 +106,8 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
 
-	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
-	if _, err = client.Pull(containerdctx, image, containerdapi.WithPullUnpack); err != nil {
-		return fmt.Errorf("failed to pull image %q: %w", image, err)
+	if _, err = client.Pull(containerdctx, config.Machine().Kubelet().Image(), containerdapi.WithPullUnpack); err != nil {
+		return fmt.Errorf("failed to pull image %q: %w", config.Machine().Kubelet().Image(), err)
 	}
 
 	return nil
@@ -131,8 +130,6 @@ func (k *Kubelet) DependsOn(config runtime.Configurator) []string {
 
 // Runner implements the Service interface.
 func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
-	image := fmt.Sprintf("%s:v%s", constants.KubernetesImage, config.Cluster().Version())
-
 	a, err := k.args(config)
 	if err != nil {
 		return nil, err
@@ -181,7 +178,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 		config.Debug(),
 		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
-		runner.WithContainerImage(image),
+		runner.WithContainerImage(config.Machine().Kubelet().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
