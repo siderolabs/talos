@@ -33,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
+	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
@@ -452,6 +453,13 @@ func (r *Registrator) Logs(req *machineapi.LogsRequest, l machineapi.MachineServ
 		// nolint: errcheck
 		defer file.Close()
 
+		if req.TailLines >= 0 {
+			err = tail.SeekLines(file, int(req.TailLines))
+			if err != nil {
+				return fmt.Errorf("error tailing log: %w", err)
+			}
+		}
+
 		options := []filechunker.Option{}
 		if req.Follow {
 			options = append(options, filechunker.WithFollow())
@@ -494,7 +502,7 @@ func k8slogs(ctx context.Context, req *machineapi.LogsRequest) (chunker.Chunker,
 		return nil, nil, fmt.Errorf("container %q not found", req.Id)
 	}
 
-	return container.GetLogChunker(req.Follow)
+	return container.GetLogChunker(req.Follow, int(req.TailLines))
 }
 
 func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {

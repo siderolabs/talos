@@ -7,7 +7,9 @@
 package cli
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 )
@@ -25,6 +27,24 @@ func (suite *LogsSuite) SuiteName() string {
 // TestServiceLogs verifies that logs are displayed.
 func (suite *LogsSuite) TestServiceLogs() {
 	suite.RunOsctl([]string{"logs", "kubelet"}) // default checks for stdout not empty
+}
+
+// TestTailLogs verifies that logs can be displayed with tail lines.
+func (suite *LogsSuite) TestTailLogs() {
+	// run some machined API calls to produce enough log lines
+	for i := 0; i < 10; i++ {
+		suite.RunOsctl([]string{"version"})
+	}
+
+	suite.RunOsctl([]string{"logs", "machined-api", "--tail", "5"},
+		base.StdoutMatchFunc(func(stdout string) error {
+			lines := strings.Count(stdout, "\n")
+			if lines != 5 {
+				return fmt.Errorf("expected %d lines, found %d lines", 5, lines)
+			}
+
+			return nil
+		}))
 }
 
 // TestServiceNotFound verifies that logs displays an error if service is not found.

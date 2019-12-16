@@ -23,7 +23,10 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-var follow bool
+var (
+	follow    bool
+	tailLines int32
+)
 
 // logsCmd represents the logs command
 var logsCmd = &cobra.Command{
@@ -48,7 +51,7 @@ var logsCmd = &cobra.Command{
 				driver = common.ContainerDriver_CRI
 			}
 
-			stream, err := c.Logs(globalCtx, namespace, driver, args[0], follow)
+			stream, err := c.Logs(globalCtx, namespace, driver, args[0], follow, tailLines)
 			if err != nil {
 				helpers.Fatalf("error fetching logs: %s", err)
 			}
@@ -178,5 +181,6 @@ func init() {
 	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	logsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
+	logsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
 	rootCmd.AddCommand(logsCmd)
 }
