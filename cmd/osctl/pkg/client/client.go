@@ -290,12 +290,13 @@ func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (osapi.OSService_
 }
 
 // Logs implements the proto.OSClient interface.
-func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool) (stream machineapi.MachineService_LogsClient, err error) {
+func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool, tailLines int32) (stream machineapi.MachineService_LogsClient, err error) {
 	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
 		Namespace: namespace,
 		Driver:    driver,
 		Id:        id,
 		Follow:    follow,
+		TailLines: tailLines,
 	})
 
 	return

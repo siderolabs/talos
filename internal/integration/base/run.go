@@ -17,8 +17,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// RunOption configures options for Run
+// RunOption configures options for Run.
 type RunOption func(*runOptions)
+
+// MatchFunc runs against output (stdout or stderr).
+type MatchFunc func(output string) error
 
 type runOptions struct {
 	shouldFail     bool
@@ -26,6 +29,8 @@ type runOptions struct {
 	stderrNotEmpty bool
 	stdoutRegexps  []*regexp.Regexp
 	stderrRegexps  []*regexp.Regexp
+	stdoutMatchers []MatchFunc
+	stderrMatchers []MatchFunc
 }
 
 // ShouldFail tells Run command should fail.
@@ -69,6 +74,20 @@ func StdoutShouldMatch(r *regexp.Regexp) RunOption {
 func StderrShouldMatch(r *regexp.Regexp) RunOption {
 	return func(opts *runOptions) {
 		opts.stderrRegexps = append(opts.stderrRegexps, r)
+	}
+}
+
+// StdoutMatchFunc appends to the list of MatchFuncs to run against stdout.
+func StdoutMatchFunc(f MatchFunc) RunOption {
+	return func(opts *runOptions) {
+		opts.stdoutMatchers = append(opts.stdoutMatchers, f)
+	}
+}
+
+// StderrtMatchFunc appends to the list of MatchFuncs to run against stderr.
+func StderrMatchFunc(f MatchFunc) RunOption {
+	return func(opts *runOptions) {
+		opts.stderrMatchers = append(opts.stderrMatchers, f)
 	}
 }
 
@@ -140,5 +159,13 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 
 	for _, rx := range opts.stderrRegexps {
 		suite.Assert().Regexp(rx, stderr.String())
+	}
+
+	for _, f := range opts.stdoutMatchers {
+		suite.Assert().NoError(f(stdout.String()), "stdout match: %q", stdout.String())
+	}
+
+	for _, f := range opts.stderrMatchers {
+		suite.Assert().NoError(f(stderr.String()), "stderr match: %q", stderr.String())
 	}
 }

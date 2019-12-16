@@ -12,6 +12,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/chunker"
 	"github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
@@ -66,12 +67,19 @@ func (c *Container) Kill(signal syscall.Signal) error {
 }
 
 // GetLogChunker returns chunker for container log file
-func (c *Container) GetLogChunker(follow bool) (chunker.Chunker, io.Closer, error) {
+func (c *Container) GetLogChunker(follow bool, tailLines int) (chunker.Chunker, io.Closer, error) {
 	logFile := c.GetLogFile()
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_RDONLY, 0)
 		if err != nil {
 			return nil, nil, err
+		}
+
+		if tailLines >= 0 {
+			err = tail.SeekLines(f, tailLines)
+			if err != nil {
+				return nil, nil, fmt.Errorf("error tailing log: %w", err)
+			}
 		}
 
 		chunkerOptions := []file.Option{}
