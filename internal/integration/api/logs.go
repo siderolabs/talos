@@ -7,6 +7,8 @@
 package api
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"io"
 	"io/ioutil"
@@ -58,6 +60,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 			common.ContainerDriver_CONTAINERD,
 			svc.Id,
 			false,
+			-1,
 		)
 		suite.Require().NoError(err)
 
@@ -76,6 +79,44 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 	suite.Require().Greater(logsSize, int64(1024))
 }
 
+// TestTail verifies that log tail might be requested.
+func (suite *LogsSuite) TestTail() {
+	// invoke machined-api enough times to generate
+	// some logs
+	for i := 0; i < 20; i++ {
+		_, err := suite.Client.Version(suite.ctx)
+		suite.Require().NoError(err)
+	}
+
+	for _, tailLines := range []int32{0, 1, 10} {
+		logsStream, err := suite.Client.Logs(
+			suite.ctx,
+			constants.SystemContainerdNamespace,
+			common.ContainerDriver_CONTAINERD,
+			"machined-api",
+			false,
+			tailLines,
+		)
+		suite.Require().NoError(err)
+
+		logReader, errCh, err := client.ReadStream(logsStream)
+		suite.Require().NoError(err)
+
+		scanner := bufio.NewScanner(logReader)
+		lines := 0
+
+		for scanner.Scan() {
+			lines++
+		}
+
+		suite.Require().NoError(scanner.Err())
+
+		suite.Require().NoError(<-errCh)
+
+		suite.Assert().EqualValues(tailLines, lines)
+	}
+}
+
 // TODO: TestContainersHaveLogs (CRI, containerd)
 
 // TestServiceNotFound verifies error if service name is not found
@@ -86,6 +127,7 @@ func (suite *LogsSuite) TestServiceNotFound() {
 		common.ContainerDriver_CONTAINERD,
 		"nosuchservice",
 		false,
+		-1,
 	)
 	suite.Require().NoError(err)
 
@@ -99,12 +141,36 @@ func (suite *LogsSuite) TestServiceNotFound() {
 
 // TestStreaming verifies that logs are streamed in real-time
 func (suite *LogsSuite) TestStreaming() {
+	suite.testStreaming(-1)
+}
+
+// TestTailStreaming3 verifies tail + streaming
+func (suite *LogsSuite) TestTailStreaming3() {
+	suite.testStreaming(3)
+}
+
+// TestTailStreaming0 verifies tail + streaming
+func (suite *LogsSuite) TestTailStreaming0() {
+	suite.testStreaming(0)
+}
+
+func (suite *LogsSuite) testStreaming(tailLines int32) {
+	if tailLines >= 0 {
+		// invoke osd enough times to generate
+		// some logs
+		for i := int32(0); i < tailLines; i++ {
+			_, err := suite.Client.Stats(suite.ctx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
+			suite.Require().NoError(err)
+		}
+	}
+
 	logsStream, err := suite.Client.Logs(
 		suite.ctx,
 		constants.SystemContainerdNamespace,
 		common.ContainerDriver_CONTAINERD,
-		"machined-api",
+		"osd",
 		true,
+		tailLines,
 	)
 	suite.Require().NoError(err)
 
@@ -134,6 +200,8 @@ func (suite *LogsSuite) TestStreaming() {
 		}
 	}()
 
+	linesDrained := 0
+
 	// first, drain the stream until flow stops
 DrainLoop:
 	for {
@@ -141,16 +209,22 @@ DrainLoop:
 		case msg, ok := <-respCh:
 			suite.Require().True(ok)
 			suite.Assert().NotEmpty(msg.Bytes)
+			linesDrained += bytes.Count(msg.Bytes, []byte{'\n'})
 		case <-time.After(200 * time.Millisecond):
 			break DrainLoop
 		}
 	}
 
-	// invoke machined API
-	_, err = suite.Client.Version(suite.ctx)
+	if tailLines >= 0 {
+		// we might expect one line to be streamed extra for concurrent request
+		suite.Assert().InDelta(tailLines, linesDrained, 1)
+	}
+
+	// invoke osd API
+	_, err = suite.Client.Stats(suite.ctx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
 	suite.Require().NoError(err)
 
-	// there should be line in the logs
+	// there should be a line in the logs
 	select {
 	case msg, ok := <-respCh:
 		suite.Require().True(ok)
