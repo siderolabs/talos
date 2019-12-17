@@ -32,6 +32,10 @@ Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if speci
 		}
 
 		return setupClientE(func(c *client.Client) error {
+			if err := failIfMultiNodes(globalCtx, "kubeconfig"); err != nil {
+				return err
+			}
+
 			r, errCh, err := c.KubeconfigRaw(globalCtx)
 			if err != nil {
 				return fmt.Errorf("error copying: %w", err)
