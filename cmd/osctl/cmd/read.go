@@ -28,6 +28,10 @@ var readCmd = &cobra.Command{
 		}
 
 		setupClient(func(c *client.Client) {
+			if err := failIfMultiNodes(globalCtx, "read"); err != nil {
+				helpers.Fatalf("%s", err)
+			}
+
 			r, errCh, err := c.Read(globalCtx, args[0])
 			if err != nil {
 				helpers.Fatalf("error reading file: %s", err)

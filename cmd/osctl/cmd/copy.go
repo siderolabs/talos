@@ -37,6 +37,10 @@ captures ownership and permission bits.`,
 		}
 
 		setupClient(func(c *client.Client) {
+			if err := failIfMultiNodes(globalCtx, "copy"); err != nil {
+				helpers.Fatalf("%s", err)
+			}
+
 			r, errCh, err := c.Copy(globalCtx, args[0])
 			if err != nil {
 				helpers.Fatalf("error copying: %s", err)
