@@ -18,6 +18,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -245,4 +246,17 @@ func addrFromPeer(remote *peer.Peer) (peerHost string) {
 	peerHost, _, _ = net.SplitHostPort(peerHost) //nolint: errcheck
 
 	return peerHost
+}
+
+func failIfMultiNodes(ctx context.Context, command string) error {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	if len(md.Get("nodes")) <= 1 {
+		return nil
+	}
+
+	return fmt.Errorf("command %q is not supported with multiple nodes", command)
 }

@@ -7,24 +7,27 @@
 package cli
 
 import (
+	"regexp"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// DmesgSuite verifies dmesg command
-type DmesgSuite struct {
+// ListSuite verifies dmesg command
+type ListSuite struct {
 	base.CLISuite
 }
 
 // SuiteName ...
-func (suite *DmesgSuite) SuiteName() string {
-	return "cli.DmesgSuite"
+func (suite *ListSuite) SuiteName() string {
+	return "cli.ListSuite"
 }
 
-// TestHasOutput verifies that dmesg is displayed.
-func (suite *DmesgSuite) TestHasOutput() {
-	suite.RunOsctl([]string{"dmesg"}) // default checks for stdout not empty
+// TestSuccess runs comand with success.
+func (suite *ListSuite) TestSuccess() {
+	suite.RunOsctl([]string{"list", "/etc"},
+		base.StdoutShouldMatch(regexp.MustCompile(`os-release`)))
 }
 
 func init() {
-	allSuites = append(allSuites, new(DmesgSuite))
+	allSuites = append(allSuites, new(ListSuite))
 }
