@@ -26,6 +26,7 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
+	github.com/dustin/go-humanize v1.0.0
 	github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5
 	github.com/gizak/termui/v3 v3.0.0
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
