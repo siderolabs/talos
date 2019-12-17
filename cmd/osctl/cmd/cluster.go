@@ -28,20 +28,20 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
+	talosnet "github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
 	clusterName   string
 	nodeImage     string
+	networkCIDR   string
 	networkMTU    string
 	workers       int
 	masters       int
 	clusterCpus   string
 	clusterMemory int
 )
-
-const baseNetwork = "10.5.0.%d"
 
 // clusterCmd represents the cluster command
 var clusterCmd = &cobra.Command{
@@ -100,14 +100,29 @@ func create() (err error) {
 		return err
 	}
 
-	// Generate all PKI and tokens required by Talos.
+	// Validate CIDR range and allocate IPs
+	fmt.Println("validating CIDR and reserving master IPs")
 
-	fmt.Println("generating PKI and tokens")
-
-	ips := make([]string, masters)
-	for i := range ips {
-		ips[i] = fmt.Sprintf(baseNetwork, i+2)
+	_, cidr, err := net.ParseCIDR(networkCIDR)
+	if err != nil {
+		return fmt.Errorf("error validating cidr block: %w", err)
 	}
+
+	// Set starting ip at 2nd ip in range, ex: 192.168.0.2
+	ips := make([]string, masters)
+
+	var masterIP net.IP
+	for i := range ips {
+		masterIP, err = talosnet.NthIPInNetwork(cidr, i+2)
+		if err != nil {
+			return err
+		}
+
+		ips[i] = masterIP.String()
+	}
+
+	// Generate all PKI and tokens required by Talos.
+	fmt.Println("generating PKI and tokens")
 
 	input, err := generate.NewInput(clusterName, "https://"+ips[0]+":6443", kubernetesVersion)
 	if err != nil {
@@ -129,7 +144,7 @@ func create() (err error) {
 		requests[i] = &node.Request{
 			Input:    *input,
 			Image:    nodeImage,
-			Name:     fmt.Sprintf("master-%d", i+1),
+			Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
 			IP:       net.ParseIP(ips[i]),
 			Memory:   memory,
 			NanoCPUs: nanoCPUs,
@@ -155,7 +170,7 @@ func create() (err error) {
 			Type:     generate.TypeJoin,
 			Input:    *input,
 			Image:    nodeImage,
-			Name:     fmt.Sprintf("worker-%d", i),
+			Name:     fmt.Sprintf("%s-worker-%d", clusterName, i),
 			Memory:   memory,
 			NanoCPUs: nanoCPUs,
 		}
@@ -289,7 +304,7 @@ func createNetwork(cli *client.Client) (types.NetworkCreateResponse, error) {
 		IPAM: &network.IPAM{
 			Config: []network.IPAMConfig{
 				{
-					Subnet: fmt.Sprintf(baseNetwork, 0) + "/24",
+					Subnet: networkCIDR,
 				},
 			},
 		},
@@ -372,6 +387,7 @@ func parseCPUShare() (int64, error) {
 func init() {
 	clusterUpCmd.Flags().StringVar(&nodeImage, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
 	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
+	clusterUpCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterUpCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
