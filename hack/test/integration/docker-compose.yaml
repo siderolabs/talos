@@ -10,6 +10,7 @@ services:
         ipv4_address: 172.28.1.1
     volumes:
       - ./dnsmasq/talos0.conf:/etc/dnsmasq.conf:Z
+      - ./dnsmasq/tftpboot:/var/lib/tftpboot
     cap_add:
       - NET_ADMIN
     restart: always
