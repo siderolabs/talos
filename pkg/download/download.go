@@ -67,8 +67,9 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		opt(dlOpts)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-	if err != nil {
+	var req *http.Request
+
+	if req, err = http.NewRequest(http.MethodGet, u.String(), nil); err != nil {
 		return b, err
 	}
 
@@ -82,27 +83,26 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 			return retry.ExpectedError(err)
 		}
 
-		if dlOpts.Format == b64 {
-			var b64 []byte
-
-			b64, err = base64.StdEncoding.DecodeString(string(b))
-			if err != nil {
-				return err
-			}
-
-			b = b64
-		}
-
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to download config from %q: %w", u.String(), err)
 	}
 
+	if dlOpts.Format == b64 {
+		var b64 []byte
+
+		b64, err = base64.StdEncoding.DecodeString(string(b))
+		if err != nil {
+			return nil, err
+		}
+
+		b = b64
+	}
+
 	return b, nil
 }
 
-// download handles the actual http request
 func download(req *http.Request) (data []byte, err error) {
 	client := &http.Client{}
 
@@ -123,4 +123,9 @@ func download(req *http.Request) (data []byte, err error) {
 	}
 
 	return data, err
+}
+
+func init() {
+	transport := (http.DefaultTransport.(*http.Transport))
+	transport.RegisterProtocol("tftp", NewTFTPTransport())
 }

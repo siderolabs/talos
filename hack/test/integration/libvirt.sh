@@ -53,7 +53,7 @@ function up {
     echo ${INSTALLER}
     cp $PWD/../../../build/initramfs.xz ./matchbox/assets/
     cp $PWD/../../../build/vmlinuz ./matchbox/assets/
-    cd matchbox/assets
+    cd ./matchbox/assets
     $PWD/../../../../../build/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
     yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i init.yaml cluster.network.cni.name 'custom'
