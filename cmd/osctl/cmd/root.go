@@ -46,11 +46,12 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:           "osctl",
-	Short:         "A CLI for out-of-band management of Kubernetes nodes created by Talos",
-	Long:          ``,
-	SilenceErrors: true,
-	SilenceUsage:  true,
+	Use:               "osctl",
+	Short:             "A CLI for out-of-band management of Kubernetes nodes created by Talos",
+	Long:              ``,
+	SilenceErrors:     true,
+	SilenceUsage:      true,
+	DisableAutoGenTag: true,
 }
 
 // Global context to be used in the commands.
