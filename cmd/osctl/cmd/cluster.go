@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
+	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
 var (
@@ -35,8 +36,6 @@ var (
 	clusterMemory int
 	clusterWait   bool
 )
-
-const baseNetwork = "10.5.0.%d"
 
 // clusterCmd represents the cluster command
 var clusterCmd = &cobra.Command{
@@ -83,11 +82,22 @@ func create(ctx context.Context) (err error) {
 	// Validate CIDR range and allocate IPs
 	fmt.Println("validating CIDR and reserving master IPs")
 
-	fmt.Println("generating PKI and tokens")
+	_, cidr, err := net.ParseCIDR(networkCIDR)
+	if err != nil {
+		return fmt.Errorf("error validating cidr block: %w", err)
+	}
 
+	// Set starting ip at 2nd ip in range, ex: 192.168.0.2
 	ips := make([]string, masters)
+
+	var masterIP net.IP
 	for i := range ips {
-		ips[i] = fmt.Sprintf(baseNetwork, i+2)
+		masterIP, err = talosnet.NthIPInNetwork(cidr, i+2)
+		if err != nil {
+			return err
+		}
+
+		ips[i] = masterIP.String()
 	}
 
 	provisioner, err := docker.NewProvisioner(ctx)
@@ -222,7 +232,7 @@ func init() {
 	clusterUpCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
 	clusterUpCmd.Flags().BoolVar(&clusterWait, "wait", false, "wait for the cluster to be ready before returning")
 	clusterUpCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
-	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos_default", "the name of the cluster")
+	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)
 	rootCmd.AddCommand(clusterCmd)
