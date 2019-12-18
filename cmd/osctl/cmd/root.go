@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/safepath"
 )
 
 var (
@@ -183,7 +184,12 @@ func extractTarGz(localPath string, r io.ReadCloser) error {
 			return fmt.Errorf("error reading tar header: %s", err)
 		}
 
-		path := filepath.Clean(filepath.Join(localPath, hdr.Name))
+		hdrPath := safepath.CleanPath(hdr.Name)
+		if hdrPath == "" {
+			return fmt.Errorf("empty tar header path")
+		}
+
+		path := filepath.Join(localPath, hdrPath)
 		// TODO: do we need to clean up any '..' references?
 
 		switch hdr.Typeflag {
