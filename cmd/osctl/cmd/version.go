@@ -5,8 +5,8 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -27,12 +27,8 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Prints the version",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 0 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Client:")
 		if shortVersion {
 			version.PrintShortVersion()
@@ -42,22 +38,22 @@ var versionCmd = &cobra.Command{
 
 		// Exit early if we're only looking for client version
 		if clientOnly {
-			os.Exit(0)
+			return nil
 		}
 
 		fmt.Println("Server:")
-		setupClient(func(c *client.Client) {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer
 
-			resp, err := c.Version(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Version(ctx, grpc.Peer(&remotePeer))
 			if err != nil {
 				if resp == nil {
-					helpers.Fatalf("error getting version: %s", err)
+					return fmt.Errorf("error getting version: %s", err)
 				}
 				helpers.Warning("%s", err)
 			}
 
-			defaultNode := addrFromPeer(&remotePeer)
+			defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 			for _, msg := range resp.Messages {
 				node := defaultNode
@@ -70,6 +66,8 @@ var versionCmd = &cobra.Command{
 
 				version.PrintLongVersionFromExisting(msg.Version)
 			}
+
+			return nil
 		})
 	},
 }

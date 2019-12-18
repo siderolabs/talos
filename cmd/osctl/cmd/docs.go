@@ -5,12 +5,11 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-
-	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 )
 
 func filePrepender(filename string) string {
@@ -21,23 +20,23 @@ func linkHandler(s string) string { return s }
 
 // docsCmd represents the docs command
 var docsCmd = &cobra.Command{
-	Use:   "docs <output>",
-	Short: "Generate documentation for the CLI",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Fatalf("an output path is required")
-		}
-
+	Use:    "docs <output>",
+	Short:  "Generate documentation for the CLI",
+	Long:   ``,
+	Args:   cobra.ExactArgs(1),
+	Hidden: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		out := args[0]
 
 		if err := os.MkdirAll(out, 0777); err != nil {
-			helpers.Fatalf("failed to create output directory %q", out)
+			return fmt.Errorf("failed to create output directory %q", out)
 		}
 
 		if err := doc.GenMarkdownTreeCustom(rootCmd, out, filePrepender, linkHandler); err != nil {
-			helpers.Fatalf("failed to generate docs: %v", err)
+			return fmt.Errorf("failed to generate docs: %w", err)
 		}
+
+		return nil
 	},
 }
 

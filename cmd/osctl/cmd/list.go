@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -23,45 +24,38 @@ import (
 
 const sixMonths = 6 * time.Hour * 24 * 30
 
+var (
+	long           bool
+	recurse        bool
+	recursionDepth int32
+	humanizeFlag   bool
+)
+
 // lsCmd represents the ls command
 var lsCmd = &cobra.Command{
 	Use:     "list [path]",
 	Aliases: []string{"ls"},
 	Short:   "Retrieve a directory listing",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		setupClient(func(c *client.Client) {
+	Args:    cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			rootDir := "/"
+
 			if len(args) > 0 {
 				rootDir = args[0]
 			}
-			long, err := cmd.Flags().GetBool("long")
-			if err != nil {
-				helpers.Fatalf("failed to parse long flag: %w", err)
-			}
-			recurse, err := cmd.Flags().GetBool("recurse")
-			if err != nil {
-				helpers.Fatalf("failed to parse recurse flag: %w", err)
-			}
-			recursionDepth, err := cmd.Flags().GetInt32("depth")
-			if err != nil {
-				helpers.Fatalf("failed to parse depth flag: %w", err)
-			}
-			humanizeFlag, err := cmd.Flags().GetBool("humanize")
-			if err != nil {
-				helpers.Fatalf("failed to parse humanize flag: %w", err)
-			}
 
-			stream, err := c.LS(globalCtx, machineapi.ListRequest{
+			stream, err := c.LS(ctx, machineapi.ListRequest{
 				Root:           rootDir,
 				Recurse:        recurse,
 				RecursionDepth: recursionDepth,
 			})
 			if err != nil {
-				helpers.Fatalf("error fetching logs: %s", err)
+				return fmt.Errorf("error fetching logs: %s", err)
 			}
 
-			defaultNode := remotePeer(stream.Context())
+			defaultNode := helpers.RemotePeer(stream.Context())
 
 			if !long {
 				w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
@@ -75,11 +69,12 @@ var lsCmd = &cobra.Command{
 					if err != nil {
 						if err == io.EOF || status.Code(err) == codes.Canceled {
 							if multipleNodes {
-								helpers.Should(w.Flush())
+								return w.Flush()
 							}
-							return
+
+							return nil
 						}
-						helpers.Fatalf("error streaming results: %s", err)
+						return fmt.Errorf("error streaming results: %s", err)
 					}
 
 					if info.Metadata != nil && info.Metadata.Hostname != "" {
@@ -115,10 +110,9 @@ var lsCmd = &cobra.Command{
 				info, err := stream.Recv()
 				if err != nil {
 					if err == io.EOF || status.Code(err) == codes.Canceled {
-						helpers.Should(w.Flush())
-						return
+						return w.Flush()
 					}
-					helpers.Fatalf("error streaming results: %s", err)
+					return fmt.Errorf("error streaming results: %s", err)
 				}
 
 				node := defaultNode
@@ -173,9 +167,9 @@ var lsCmd = &cobra.Command{
 }
 
 func init() {
-	lsCmd.Flags().BoolP("long", "l", false, "display additional file details")
-	lsCmd.Flags().BoolP("recurse", "r", false, "recurse into subdirectories")
-	lsCmd.Flags().BoolP("humanize", "H", false, "humanize size and time in the output")
-	lsCmd.Flags().Int32P("depth", "d", 0, "maximum recursion depth")
+	lsCmd.Flags().BoolVarP(&long, "long", "l", false, "display additional file details")
+	lsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
+	lsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
+	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
 	rootCmd.AddCommand(lsCmd)
 }

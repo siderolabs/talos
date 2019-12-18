@@ -346,7 +346,6 @@ Examples:
 
 ```yaml
 controlPlane:
-  version: 1.17.0
   endpoint: https://1.2.3.4
   localAPIServerPort: 443
 
@@ -684,20 +683,6 @@ Type: `array`
 
 ### ControlPlaneConfig
 
-#### version
-
-Indicates which version of Kubernetes for all control plane components.
-
-Type: `string`
-
-Examples:
-
-```yaml
-1.17.0
-```
-
-> Note: The version must be of the format `major.minor.patch`, _without_ a leading `v`.
-
 #### endpoint
 
 Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
@@ -909,49 +894,5 @@ Type: `string`
 URLs containing manifests to apply for CNI.
 
 Type: `array`
-
----
-
-### Bond
-
-#### mode
-
-The bond mode.
-
-Type: `string`
-
-#### hashpolicy
-
-The hash policy.
-
-Type: `string`
-
-#### lacprate
-
-The LACP rate.
-
-Type: `string`
-
-#### interfaces
-
-The interfaces if which the bond should be comprised of.
-
-Type: `array`
-
----
-
-### Route
-
-#### network
-
-TODO.
-
-Type: `string`
-
-#### gateway
-
-TODO.
-
-Type: `string`
 
 ---

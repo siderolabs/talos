@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,golint
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,18 +25,14 @@ var kubeconfigCmd = &cobra.Command{
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
 Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		return setupClientE(func(c *client.Client) error {
-			if err := failIfMultiNodes(globalCtx, "kubeconfig"); err != nil {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "kubeconfig"); err != nil {
 				return err
 			}
 
-			r, errCh, err := c.KubeconfigRaw(globalCtx)
+			r, errCh, err := c.KubeconfigRaw(ctx)
 			if err != nil {
 				return fmt.Errorf("error copying: %w", err)
 			}
@@ -71,7 +67,7 @@ Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if speci
 				}
 			}
 
-			return extractTarGz(localPath, r)
+			return helpers.ExtractTarGz(localPath, r)
 		})
 	},
 }

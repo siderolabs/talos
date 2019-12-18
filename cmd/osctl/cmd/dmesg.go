@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -24,19 +25,15 @@ var dmesgCmd = &cobra.Command{
 	Use:   "dmesg",
 	Short: "Retrieve kernel logs",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		return setupClientE(func(c *client.Client) error {
-			stream, err := c.Dmesg(globalCtx, follow, dmesgTail)
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			stream, err := c.Dmesg(ctx, follow, dmesgTail)
 			if err != nil {
 				return fmt.Errorf("error getting dmesg: %w", err)
 			}
 
-			defaultNode := remotePeer(stream.Context())
+			defaultNode := helpers.RemotePeer(stream.Context())
 
 			for {
 				resp, err := stream.Recv()
