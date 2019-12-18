@@ -156,7 +156,7 @@ func (n *NetworkInterface) Configure() (err error) {
 		link, err = n.rtnlConn.LinkByIndex(n.Link.Index)
 		if err != nil {
 			// nolint: errcheck
-			retry.UnexpectedError(err)
+			return retry.UnexpectedError(err)
 		}
 
 		if link.Flags&net.FlagUp != net.FlagUp {
