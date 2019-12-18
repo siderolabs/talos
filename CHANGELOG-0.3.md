@@ -1,3 +1,17 @@
+# [v0.3.0-beta.1](https://github.com/talos-systems/talos/compare/v0.3.0-beta.0...v0.3.0-beta.1) (2019-12-19)
+
+### Bug Fixes
+
+- fail on muliple nodes for commands which don't support it ([462b01e](https://github.com/talos-systems/talos/commit/462b01e1f0e50cb631ecfefc55a2e45f6ea5b835)), closes [#1663](https://github.com/talos-systems/talos/issues/1663)
+- issues discovered by lgtm tool ([f1b33b8](https://github.com/talos-systems/talos/commit/f1b33b8fbbc4d6d616cf8c9a15e9e7bf6fd7c1b7))
+- update `osctl list` to report node name ([6eb5f33](https://github.com/talos-systems/talos/commit/6eb5f33281f2717cdadb859a781576d671eaa442))
+- use specified kubelet and etcd images ([ad7c638](https://github.com/talos-systems/talos/commit/ad7c638f3498185598786fc0f2757cf4159d135d))
+
+### Features
+
+- humanize timestamp and size in `osctl list` output ([2b14182](https://github.com/talos-systems/talos/commit/2b14182208bcb90803dc91c484f820afc5ed12d5)), closes [#1565](https://github.com/talos-systems/talos/issues/1565)
+- implement streaming mode of dmesg, parse messages ([2eb0937](https://github.com/talos-systems/talos/commit/2eb09372c21c012d52948550c02701673580fa69)), closes [#1563](https://github.com/talos-systems/talos/issues/1563)
+
 # [v0.3.0-beta.0](https://github.com/talos-systems/talos/compare/v0.3.0-alpha.10...v0.3.0-beta.0) (2019-12-11)
 
 ### Bug Fixes
