@@ -61,25 +61,56 @@ var lsCmd = &cobra.Command{
 				helpers.Fatalf("error fetching logs: %s", err)
 			}
 
+			defaultNode := remotePeer(stream.Context())
+
 			if !long {
+				w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+				fmt.Fprintln(w, "NODE\tNAME")
+
+				multipleNodes := false
+				node := defaultNode
+
 				for {
 					info, err := stream.Recv()
 					if err != nil {
 						if err == io.EOF || status.Code(err) == codes.Canceled {
+							if multipleNodes {
+								helpers.Should(w.Flush())
+							}
 							return
 						}
 						helpers.Fatalf("error streaming results: %s", err)
 					}
-					if info.Error != "" {
-						fmt.Fprintf(os.Stderr, "error reading file %s: %s\n", info.Name, info.Error)
-					} else {
-						fmt.Println(info.RelativeName)
+
+					if info.Metadata != nil && info.Metadata.Hostname != "" {
+						multipleNodes = true
+						node = info.Metadata.Hostname
 					}
+
+					if info.Metadata != nil && info.Metadata.Error != "" {
+						fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
+						continue
+					}
+
+					if info.Error != "" {
+						fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
+						continue
+					}
+
+					if !multipleNodes {
+						fmt.Println(info.RelativeName)
+					} else {
+						fmt.Fprintf(w, "%s\t%s\n",
+							node,
+							info.RelativeName,
+						)
+					}
+
 				}
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "MODE\tSIZE(B)\tLASTMOD\tNAME")
+			fmt.Fprintln(w, "NODE\tMODE\tSIZE(B)\tLASTMOD\tNAME")
 			for {
 				info, err := stream.Recv()
 				if err != nil {
@@ -90,40 +121,52 @@ var lsCmd = &cobra.Command{
 					helpers.Fatalf("error streaming results: %s", err)
 				}
 
-				if info.Error != "" {
-					fmt.Fprintf(os.Stderr, "error reading file %s: %s\n", info.Name, info.Error)
-				} else {
-					display := info.RelativeName
-					if info.Link != "" {
-						display += " -> " + info.Link
-					}
-
-					size := fmt.Sprintf("%d", info.Size)
-
-					if humanizeFlag {
-						size = humanize.Bytes(uint64(info.Size))
-					}
-
-					timestamp := time.Unix(info.Modified, 0)
-					timestampFormatted := ""
-
-					if humanizeFlag {
-						timestampFormatted = humanize.Time(timestamp)
-					} else {
-						if time.Since(timestamp) < sixMonths {
-							timestampFormatted = timestamp.Format("Jan _2 15:04:05")
-						} else {
-							timestampFormatted = timestamp.Format("Jan _2 2006 15:04")
-						}
-					}
-
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-						os.FileMode(info.Mode).String(),
-						size,
-						timestampFormatted,
-						display,
-					)
+				node := defaultNode
+				if info.Metadata != nil && info.Metadata.Hostname != "" {
+					node = info.Metadata.Hostname
 				}
+
+				if info.Error != "" {
+					fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
+					continue
+				}
+
+				if info.Metadata != nil && info.Metadata.Error != "" {
+					fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
+					continue
+				}
+
+				display := info.RelativeName
+				if info.Link != "" {
+					display += " -> " + info.Link
+				}
+
+				size := fmt.Sprintf("%d", info.Size)
+
+				if humanizeFlag {
+					size = humanize.Bytes(uint64(info.Size))
+				}
+
+				timestamp := time.Unix(info.Modified, 0)
+				timestampFormatted := ""
+
+				if humanizeFlag {
+					timestampFormatted = humanize.Time(timestamp)
+				} else {
+					if time.Since(timestamp) < sixMonths {
+						timestampFormatted = timestamp.Format("Jan _2 15:04:05")
+					} else {
+						timestampFormatted = timestamp.Format("Jan _2 2006 15:04")
+					}
+				}
+
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+					node,
+					os.FileMode(info.Mode).String(),
+					size,
+					timestampFormatted,
+					display,
+				)
 			}
 		})
 	},
