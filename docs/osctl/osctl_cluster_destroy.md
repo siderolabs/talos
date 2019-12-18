@@ -22,7 +22,7 @@ osctl cluster destroy [flags]
 ```
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
-      --name string          the name of the cluster (default "talos_default")
+      --name string          the name of the cluster (default "talos-default")
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file (default "/root/.talos/config")
 ```

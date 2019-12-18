@@ -16,11 +16,7 @@ osctl cluster create [flags]
 ```
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
   -h, --help                        help for create
-      --image string                the image to use (default "docker.io/autonomy/talos:v0.3.0-beta.0-7-gd95fd756")
-      --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
-      --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
-      --mtu string                  MTU of the docker bridge network (default "1500")
       --workers int                 the number of workers to create (default 1)
 ```
 
@@ -29,7 +25,7 @@ osctl cluster create [flags]
 ```
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
-      --name string          the name of the cluster (default "talos_default")
+      --name string          the name of the cluster (default "talos-default")
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file (default "/root/.talos/config")
 ```
@@ -37,4 +33,3 @@ osctl cluster create [flags]
 ### SEE ALSO
 
 * [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based clusters
-

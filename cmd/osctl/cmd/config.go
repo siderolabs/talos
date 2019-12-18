@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -45,19 +44,22 @@ var configEndpointCmd = &cobra.Command{
 	Aliases: []string{"endpoints"},
 	Short:   "Set the endpoint(s) for the current context",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:    cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			helpers.Fatalf("error reading config: %s", err)
+			return fmt.Errorf("error reading config: %w", err)
 		}
 		if c.Context == "" {
-			helpers.Fatalf("no context is set")
+			return fmt.Errorf("no context is set")
 		}
 
 		c.Contexts[c.Context].Endpoints = args
 		if err := c.Save(talosconfig); err != nil {
-			helpers.Fatalf("error writing config: %s", err)
+			return fmt.Errorf("error writing config: %w", err)
 		}
+
+		return nil
 	},
 }
 
@@ -67,19 +69,22 @@ var configNodeCmd = &cobra.Command{
 	Aliases: []string{"nodes"},
 	Short:   "Set the node(s) for the current context",
 	Long:    ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:    cobra.ArbitraryArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			helpers.Fatalf("error reading config: %s", err)
+			return fmt.Errorf("error reading config: %w", err)
 		}
 		if c.Context == "" {
-			helpers.Fatalf("no context is set")
+			return fmt.Errorf("no context is set")
 		}
 
 		c.Contexts[c.Context].Nodes = args
 		if err := c.Save(talosconfig); err != nil {
-			helpers.Fatalf("error writing config: %s", err)
+			return fmt.Errorf("error writing config: %w", err)
 		}
+
+		return nil
 	},
 }
 
@@ -88,20 +93,22 @@ var configContextCmd = &cobra.Command{
 	Use:   "context <context>",
 	Short: "Set the current context",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
+
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			helpers.Fatalf("error reading config: %s", err)
+			return fmt.Errorf("error reading config: %w", err)
 		}
+
 		c.Context = context
+
 		if err := c.Save(talosconfig); err != nil {
-			helpers.Fatalf("error writing config: %s", err)
+			return fmt.Errorf("error writing config: %s", err)
 		}
+
+		return nil
 	},
 }
 
@@ -110,40 +117,45 @@ var configAddCmd = &cobra.Command{
 	Use:   "add <context>",
 	Short: "Add a new context",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
 		c, err := config.Open(talosconfig)
 		if err != nil {
-			helpers.Fatalf("error reading config: %s", err)
+			return fmt.Errorf("error reading config: %w", err)
 		}
+
 		caBytes, err := ioutil.ReadFile(ca)
 		if err != nil {
-			helpers.Fatalf("error reading CA: %s", err)
+			return fmt.Errorf("error reading CA: %w", err)
 		}
+
 		crtBytes, err := ioutil.ReadFile(crt)
 		if err != nil {
-			helpers.Fatalf("error reading certificate: %s", err)
+			return fmt.Errorf("error reading certificate: %w", err)
 		}
+
 		keyBytes, err := ioutil.ReadFile(key)
 		if err != nil {
-			helpers.Fatalf("error reading key: %s", err)
+			return fmt.Errorf("error reading key: %w", err)
 		}
+
 		newContext := &config.Context{
 			CA:  base64.StdEncoding.EncodeToString(caBytes),
 			Crt: base64.StdEncoding.EncodeToString(crtBytes),
 			Key: base64.StdEncoding.EncodeToString(keyBytes),
 		}
+
 		if c.Contexts == nil {
 			c.Contexts = map[string]*config.Context{}
 		}
+
 		c.Contexts[context] = newContext
 		if err := c.Save(talosconfig); err != nil {
-			helpers.Fatalf("error writing config: %s", err)
+			return fmt.Errorf("error writing config: %w", err)
 		}
+
+		return nil
 	},
 }
 
@@ -152,45 +164,44 @@ var configGenerateCmd = &cobra.Command{
 	Use:   "generate <cluster name> https://<load balancer IP or DNS name>",
 	Short: "Generate a set of configuration files",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 2 {
-			log.Fatal("expected a cluster name and load balancer IP or DNS name")
-		}
-
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// Validate url input to ensure it has https:// scheme before we attempt to gen
 		u, err := url.Parse(args[1])
 		if err != nil {
-			helpers.Fatalf("failed to parse load balancer IP or DNS name: %s", err)
+			return fmt.Errorf("failed to parse load balancer IP or DNS name: %w", err)
 		}
 		if u.Scheme == "" {
-			helpers.Fatalf("no scheme specified for load balancer IP or DNS name\ntry \"https://<load balancer IP or DNS name>\"")
+			return fmt.Errorf("no scheme specified for load balancer IP or DNS name\ntry \"https://<load balancer IP or DNS name>\"")
 		}
 
 		switch configVersion {
 		case "v1alpha1":
-			genV1Alpha1Config(args)
+			return genV1Alpha1Config(args)
 		}
+
+		return nil
 	},
 }
 
-func genV1Alpha1Config(args []string) {
+func genV1Alpha1Config(args []string) error {
 	// If output dir isn't specified, set to the current working dir
 	var err error
 	if outputDir == "" {
 		outputDir, err = os.Getwd()
 		if err != nil {
-			helpers.Fatalf("failed to get working dir: %w", err)
+			return fmt.Errorf("failed to get working dir: %w", err)
 		}
 	}
 
 	// Create dir path, ignoring "already exists" messages
 	if err = os.MkdirAll(outputDir, os.ModePerm); err != nil && !os.IsExist(err) {
-		helpers.Fatalf("failed to create output dir: %w", err)
+		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
 	input, err := genv1alpha1.NewInput(args[0], args[1], kubernetesVersion)
 	if err != nil {
-		helpers.Fatalf("failed to generate PKI and tokens: %w", err)
+		return fmt.Errorf("failed to generate PKI and tokens: %w", err)
 	}
 
 	input.AdditionalSubjectAltNames = additionalSANs
@@ -199,7 +210,7 @@ func genV1Alpha1Config(args []string) {
 
 	for _, t := range []genv1alpha1.Type{genv1alpha1.TypeInit, genv1alpha1.TypeControlPlane, genv1alpha1.TypeJoin} {
 		if err = writeV1Alpha1Config(input, t, t.String()); err != nil {
-			helpers.Fatalf("failed to generate config for %s: %w", t.String(), err)
+			return fmt.Errorf("failed to generate config for %s: %w", t.String(), err)
 		}
 	}
 
@@ -217,16 +228,18 @@ func genV1Alpha1Config(args []string) {
 
 	data, err := yaml.Marshal(newConfig)
 	if err != nil {
-		helpers.Fatalf("failed to marshal config: %+v", err)
+		return fmt.Errorf("failed to marshal config: %+v", err)
 	}
 
 	fullFilePath := filepath.Join(outputDir, "talosconfig")
 
 	if err = ioutil.WriteFile(fullFilePath, data, 0644); err != nil {
-		helpers.Fatalf("%w", err)
+		return fmt.Errorf("%w", err)
 	}
 
 	fmt.Printf("created %s\n", fullFilePath)
+
+	return nil
 }
 
 func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {

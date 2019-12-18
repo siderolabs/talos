@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,golint
 package cmd
 
 import (
@@ -32,7 +31,8 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install Talos to a specified disk",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
 			config runtime.Configurator
 			err    error
@@ -57,13 +57,13 @@ var installCmd = &cobra.Command{
 		cmdline.Append(constants.KernelParamPlatform, platformArg)
 		cmdline.Append(constants.KernelParamConfig, endpoint)
 		if err = cmdline.AppendAll(config.Machine().Install().ExtraKernelArgs()); err != nil {
-			log.Fatal(err)
+			return err
 		}
 		cmdline.AppendDefaults()
 
 		i, err := installer.NewInstaller(cmdline, config.Machine().Install())
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		sequence := runtime.None
@@ -72,10 +72,12 @@ var installCmd = &cobra.Command{
 		}
 
 		if err = i.Install(sequence); err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		log.Printf("Talos (%s) installation complete", version.Tag)
+
+		return nil
 	},
 }
 

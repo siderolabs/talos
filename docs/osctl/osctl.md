@@ -24,7 +24,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [osctl containers](osctl_containers.md)	 - List containers
 * [osctl copy](osctl_copy.md)	 - Copy data out from the node
 * [osctl dmesg](osctl_dmesg.md)	 - Retrieve kernel logs
-* [osctl docs](osctl_docs.md)	 - Generate documentation for the CLI
 * [osctl gen](osctl_gen.md)	 - Generate CAs, certificates, and private keys
 * [osctl install](osctl_install.md)	 - Install Talos to a specified disk
 * [osctl interfaces](osctl_interfaces.md)	 - List network interfaces

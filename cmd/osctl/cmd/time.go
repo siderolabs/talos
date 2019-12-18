@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -25,8 +26,9 @@ var timeCmd = &cobra.Command{
 	Use:   "time [--check server]",
 	Short: "Gets current server time",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return setupClientE(func(c *client.Client) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			server, err := cmd.Flags().GetString("check")
 			if err != nil {
 				return fmt.Errorf("failed to parse check flag: %w", err)
@@ -38,9 +40,9 @@ var timeCmd = &cobra.Command{
 			)
 
 			if server == "" {
-				resp, err = c.Time(globalCtx, grpc.Peer(&remotePeer))
+				resp, err = c.Time(ctx, grpc.Peer(&remotePeer))
 			} else {
-				resp, err = c.TimeCheck(globalCtx, server, grpc.Peer(&remotePeer))
+				resp, err = c.TimeCheck(ctx, server, grpc.Peer(&remotePeer))
 			}
 
 			if err != nil {
@@ -54,7 +56,7 @@ var timeCmd = &cobra.Command{
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			fmt.Fprintln(w, "NODE\tNTP-SERVER\tLOCAL-TIME\tREMOTE-TIME")
 
-			defaultNode := addrFromPeer(&remotePeer)
+			defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 			var localtime, remotetime time.Time
 			for _, msg := range resp.Messages {

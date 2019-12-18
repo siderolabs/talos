@@ -11,7 +11,7 @@ A collection of commands for managing local docker-based clusters
 
 ```
   -h, --help          help for cluster
-      --name string   the name of the cluster (default "talos_default")
+      --name string   the name of the cluster (default "talos-default")
 ```
 
 ### Options inherited from parent commands
