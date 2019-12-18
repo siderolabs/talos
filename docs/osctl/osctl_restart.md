@@ -8,7 +8,7 @@ Restart a process
 Restart a process
 
 ```
-osctl restart [flags]
+osctl restart <id> [flags]
 ```
 
 ### Options

@@ -2,35 +2,28 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,golint
 package cmd
 
 import (
-	"os"
+	"context"
+	"fmt"
 
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
-	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // restartCmd represents the restart command
 var restartCmd = &cobra.Command{
-	Use:   "restart",
+	Use:   "restart <id>",
 	Short: "Restart a process",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			if err := cmd.Usage(); err != nil {
-				os.Exit(1)
-			}
-			os.Exit(1)
-		}
-
-		setupClient(func(c *client.Client) {
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var namespace string
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
@@ -41,9 +34,11 @@ var restartCmd = &cobra.Command{
 			if useCRI {
 				driver = common.ContainerDriver_CRI
 			}
-			if err := c.Restart(globalCtx, namespace, driver, args[0]); err != nil {
-				helpers.Fatalf("error restarting process: %s", err)
+			if err := c.Restart(ctx, namespace, driver, args[0]); err != nil {
+				return fmt.Errorf("error restarting process: %s", err)
 			}
+
+			return nil
 		})
 	},
 }

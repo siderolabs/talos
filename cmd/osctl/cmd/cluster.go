@@ -55,10 +55,9 @@ var clusterUpCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Creates a local docker-based kubernetes cluster",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := create(); err != nil {
-			helpers.Fatalf("%+v", err)
-		}
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return create()
 	},
 }
 
@@ -67,10 +66,9 @@ var clusterDownCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "Destroys a local docker-based kubernetes cluster",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := destroy(); err != nil {
-			helpers.Fatalf("%+v", err)
-		}
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return destroy()
 	},
 }
 
@@ -84,12 +82,12 @@ func create() (err error) {
 	}
 
 	if masters < 1 {
-		helpers.Fatalf("number of masters can't be less than 1")
+		return fmt.Errorf("number of masters can't be less than 1")
 	}
 
 	nanoCPUs, err := parseCPUShare()
 	if err != nil {
-		helpers.Fatalf("error parsing --cpus: %s", err)
+		return fmt.Errorf("error parsing --cpus: %s", err)
 	}
 
 	memory := int64(clusterMemory) * 1024 * 1024

@@ -5,6 +5,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/talos-systems/talos/cmd/osctl/cmd"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/startup"
@@ -13,5 +15,7 @@ import (
 func main() {
 	helpers.Should(startup.RandSeed())
 
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

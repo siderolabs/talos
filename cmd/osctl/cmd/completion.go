@@ -49,6 +49,7 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 # Set the osctl completion code for zsh[1] to autoload on startup
 osctl completion zsh > "${fpath[1]}/_osctl"`,
 	ValidArgs: []string{"bash", "zsh"},
+	Args:      cobra.ExactValidArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			helpers.Should(cmd.Usage())

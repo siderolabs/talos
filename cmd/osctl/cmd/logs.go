@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -33,37 +34,36 @@ var logsCmd = &cobra.Command{
 	Use:   "logs <id>",
 	Short: "Retrieve logs for a process or container",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		setupClient(func(c *client.Client) {
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var namespace string
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
 			} else {
 				namespace = constants.SystemContainerdNamespace
 			}
+
 			driver := common.ContainerDriver_CONTAINERD
 			if useCRI {
 				driver = common.ContainerDriver_CRI
 			}
 
-			stream, err := c.Logs(globalCtx, namespace, driver, args[0], follow, tailLines)
+			stream, err := c.Logs(ctx, namespace, driver, args[0], follow, tailLines)
 			if err != nil {
-				helpers.Fatalf("error fetching logs: %s", err)
+				return fmt.Errorf("error fetching logs: %s", err)
 			}
 
-			defaultNode := remotePeer(stream.Context())
+			defaultNode := helpers.RemotePeer(stream.Context())
 
 			respCh, errCh := newLineSlicer(stream)
 
 			for data := range respCh {
 				if data.Metadata != nil && data.Metadata.Error != "" {
 					_, err = fmt.Fprintf(os.Stderr, "ERROR: %s\n", data.Metadata.Error)
-					helpers.Should(err)
+					if err != nil {
+						return err
+					}
 					continue
 				}
 
@@ -73,12 +73,16 @@ var logsCmd = &cobra.Command{
 				}
 
 				_, err = fmt.Printf("%s: %s\n", node, data.Bytes)
-				helpers.Should(err)
+				if err != nil {
+					return err
+				}
 			}
 
 			if err = <-errCh; err != nil {
-				helpers.Fatalf("error getting logs: %v", err)
+				return fmt.Errorf("error getting logs: %v", err)
 			}
+
+			return nil
 		})
 	},
 }

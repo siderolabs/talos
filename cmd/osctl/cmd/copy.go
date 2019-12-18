@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -30,20 +31,16 @@ Otherwise archive is extracted to <local-path> which should be an empty director
 osctl creates a directory if <local-path> doesn't exist. Command doesn't preserve
 ownership and access mode for the files in extract mode, while  streamed .tar archive
 captures ownership and permission bits.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 2 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		setupClient(func(c *client.Client) {
-			if err := failIfMultiNodes(globalCtx, "copy"); err != nil {
-				helpers.Fatalf("%s", err)
+	Args: cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "copy"); err != nil {
+				return err
 			}
 
-			r, errCh, err := c.Copy(globalCtx, args[0])
+			r, errCh, err := c.Copy(ctx, args[0])
 			if err != nil {
-				helpers.Fatalf("error copying: %s", err)
+				return fmt.Errorf("error copying: %w", err)
 			}
 
 			var wg sync.WaitGroup
@@ -61,32 +58,26 @@ captures ownership and permission bits.`,
 			localPath := args[1]
 
 			if localPath == "-" {
-				// nolint: errcheck
 				_, err = io.Copy(os.Stdout, r)
-				if err != nil {
-					helpers.Fatalf("error copying: %s", err)
-				}
-				return
+				return err
 			}
 
 			localPath = filepath.Clean(localPath)
 
 			fi, err := os.Stat(localPath)
 			if err == nil && !fi.IsDir() {
-				helpers.Fatalf("local path %q should be a directory", args[1])
+				return fmt.Errorf("local path %q should be a directory", args[1])
 			}
 			if err != nil {
 				if !os.IsNotExist(err) {
-					helpers.Fatalf("failed to stat local path: %s", err)
+					return fmt.Errorf("failed to stat local path: %w", err)
 				}
 				if err = os.MkdirAll(localPath, 0777); err != nil {
-					helpers.Fatalf("error creating local path %q: %s", localPath, err)
+					return fmt.Errorf("error creating local path %q: %w", localPath, err)
 				}
 			}
 
-			if err = extractTarGz(localPath, r); err != nil {
-				helpers.Fatalf("%s", err)
-			}
+			return helpers.ExtractTarGz(localPath, r)
 		})
 	},
 }
