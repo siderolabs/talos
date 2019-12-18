@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,golint
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sort"
@@ -29,13 +29,9 @@ var statsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "Get processes stats",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		return setupClientE(func(c *client.Client) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var namespace string
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
@@ -49,7 +45,7 @@ var statsCmd = &cobra.Command{
 
 			var remotePeer peer.Peer
 
-			resp, err := c.Stats(globalCtx, namespace, driver, grpc.Peer(&remotePeer))
+			resp, err := c.Stats(ctx, namespace, driver, grpc.Peer(&remotePeer))
 			if err != nil {
 				if resp == nil {
 					return fmt.Errorf("error getting stats: %s", err)
@@ -68,7 +64,7 @@ func statsRender(remotePeer *peer.Peer, resp *osapi.StatsResponse) error {
 
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
 
-	defaultNode := addrFromPeer(remotePeer)
+	defaultNode := helpers.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
 		resp := msg

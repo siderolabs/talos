@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -38,13 +37,9 @@ var processesCmd = &cobra.Command{
 	Aliases: []string{"p"},
 	Short:   "List running processes",
 	Long:    ``,
+	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		return setupClientE(func(c *client.Client) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var err error
 
 			switch {
@@ -54,10 +49,10 @@ var processesCmd = &cobra.Command{
 				}
 				defer ui.Close()
 
-				processesUI(globalCtx, c)
+				processesUI(ctx, c)
 			default:
 				var output string
-				output, err = processesOutput(globalCtx, c)
+				output, err = processesOutput(ctx, c)
 				if err != nil {
 					return err
 				}
@@ -188,7 +183,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 		return output, nil
 	}
 
-	defaultNode := addrFromPeer(&remotePeer)
+	defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 	s := []string{}
 

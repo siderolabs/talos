@@ -2,12 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,golint
 package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 
@@ -26,25 +24,28 @@ var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate config",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		content, err := config.FromFile(validateConfigArg)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		config, err := config.New(content)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		mode, err := runtime.ModeFromString(validateModeArg)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		if err := config.Validate(mode); err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		fmt.Printf("%s is valid for %s mode", validateConfigArg, validateModeArg)
+
+		return nil
 	},
 }
 

@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,golint
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -24,16 +24,12 @@ var interfacesCmd = &cobra.Command{
 	Use:   "interfaces",
 	Short: "List network interfaces",
 	Long:  ``,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		return setupClientE(func(c *client.Client) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer
 
-			resp, err := c.Interfaces(globalCtx, grpc.Peer(&remotePeer))
+			resp, err := c.Interfaces(ctx, grpc.Peer(&remotePeer))
 			if err != nil {
 				if resp == nil {
 					return fmt.Errorf("error getting interfaces: %s", err)
@@ -51,7 +47,7 @@ func intersRender(remotePeer *peer.Peer, resp *networkapi.InterfacesResponse) er
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINDEX\tNAME\tMAC\tMTU\tADDRESS")
 
-	defaultNode := addrFromPeer(remotePeer)
+	defaultNode := helpers.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
 		node := defaultNode

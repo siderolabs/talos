@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -21,20 +22,16 @@ var readCmd = &cobra.Command{
 	Use:   "read <path>",
 	Short: "Read a file on the machine",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
-		setupClient(func(c *client.Client) {
-			if err := failIfMultiNodes(globalCtx, "read"); err != nil {
-				helpers.Fatalf("%s", err)
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "read"); err != nil {
+				return err
 			}
 
-			r, errCh, err := c.Read(globalCtx, args[0])
+			r, errCh, err := c.Read(ctx, args[0])
 			if err != nil {
-				helpers.Fatalf("error reading file: %s", err)
+				return fmt.Errorf("error reading file: %w", err)
 			}
 
 			var wg sync.WaitGroup
@@ -49,11 +46,12 @@ var readCmd = &cobra.Command{
 
 			defer wg.Wait()
 
-			// nolint: errcheck
 			_, err = io.Copy(os.Stdout, r)
 			if err != nil {
-				helpers.Fatalf("error reading: %s", err)
+				return fmt.Errorf("error reading: %w", err)
 			}
+
+			return nil
 		})
 	},
 }

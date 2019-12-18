@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -28,35 +29,33 @@ var serviceCmd = &cobra.Command{
 	Long: `Service control command. If run without arguments, lists all the services and their state.
 If service ID is specified, default action 'status' is executed which shows status of a single list service.
 With actions 'start', 'stop', 'restart', service state is updated respectively.`,
+	Args: cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 2 {
-			helpers.Should(cmd.Usage())
-			os.Exit(1)
-		}
-
 		action := "status"
 		serviceID := ""
+
 		if len(args) >= 1 {
 			serviceID = args[0]
 		}
+
 		if len(args) == 2 {
 			action = args[1]
 		}
 
-		return setupClientE(func(c *client.Client) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
 			switch action {
 			case "status":
 				if serviceID == "" {
-					return serviceList(c)
+					return serviceList(ctx, c)
 				}
 
-				return serviceInfo(c, serviceID)
+				return serviceInfo(ctx, c, serviceID)
 			case "start":
-				return serviceStart(c, serviceID)
+				return serviceStart(ctx, c, serviceID)
 			case "stop":
-				return serviceStop(c, serviceID)
+				return serviceStop(ctx, c, serviceID)
 			case "restart":
-				return serviceRestart(c, serviceID)
+				return serviceRestart(ctx, c, serviceID)
 			default:
 				return fmt.Errorf("unsupported service action: %q", action)
 			}
@@ -64,10 +63,10 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 	},
 }
 
-func serviceList(c *client.Client) error {
+func serviceList(ctx context.Context, c *client.Client) error {
 	var remotePeer peer.Peer
 
-	resp, err := c.ServiceList(globalCtx, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
 	if err != nil {
 		if resp == nil {
 			return fmt.Errorf("error listing services: %w", err)
@@ -79,7 +78,7 @@ func serviceList(c *client.Client) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tSERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
 
-	defaultNode := addrFromPeer(&remotePeer)
+	defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 	for _, msg := range resp.Messages {
 		for _, s := range msg.Services {
@@ -98,10 +97,10 @@ func serviceList(c *client.Client) error {
 	return w.Flush()
 }
 
-func serviceInfo(c *client.Client, id string) error {
+func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	services, err := c.ServiceInfo(globalCtx, id, grpc.Peer(&remotePeer))
+	services, err := c.ServiceInfo(ctx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		if services == nil {
 			return fmt.Errorf("error listing services: %w", err)
@@ -112,7 +111,7 @@ func serviceInfo(c *client.Client, id string) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
-	defaultNode := addrFromPeer(&remotePeer)
+	defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 	for _, s := range services {
 		node := defaultNode
@@ -151,10 +150,10 @@ func serviceInfo(c *client.Client, id string) error {
 	return w.Flush()
 }
 
-func serviceStart(c *client.Client, id string) error {
+func serviceStart(ctx context.Context, c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	resp, err := c.ServiceStart(globalCtx, id, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceStart(ctx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		if resp == nil {
 			return fmt.Errorf("error starting service: %w", err)
@@ -163,7 +162,7 @@ func serviceStart(c *client.Client, id string) error {
 		helpers.Warning("%s", err)
 	}
 
-	defaultNode := addrFromPeer(&remotePeer)
+	defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
@@ -181,10 +180,10 @@ func serviceStart(c *client.Client, id string) error {
 	return w.Flush()
 }
 
-func serviceStop(c *client.Client, id string) error {
+func serviceStop(ctx context.Context, c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	resp, err := c.ServiceStop(globalCtx, id, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceStop(ctx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		if resp == nil {
 			return fmt.Errorf("error starting service: %w", err)
@@ -193,7 +192,7 @@ func serviceStop(c *client.Client, id string) error {
 		helpers.Warning("%s", err)
 	}
 
-	defaultNode := addrFromPeer(&remotePeer)
+	defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
@@ -211,10 +210,10 @@ func serviceStop(c *client.Client, id string) error {
 	return w.Flush()
 }
 
-func serviceRestart(c *client.Client, id string) error {
+func serviceRestart(ctx context.Context, c *client.Client, id string) error {
 	var remotePeer peer.Peer
 
-	resp, err := c.ServiceRestart(globalCtx, id, grpc.Peer(&remotePeer))
+	resp, err := c.ServiceRestart(ctx, id, grpc.Peer(&remotePeer))
 	if err != nil {
 		if resp == nil {
 			return fmt.Errorf("error starting service: %w", err)
@@ -223,7 +222,7 @@ func serviceRestart(c *client.Client, id string) error {
 		helpers.Warning("%s", err)
 	}
 
-	defaultNode := addrFromPeer(&remotePeer)
+	defaultNode := helpers.AddrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
