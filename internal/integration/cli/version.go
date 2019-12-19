@@ -30,6 +30,21 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 	)
 }
 
+// TestShortVersion verifies short version output.
+func (suite *VersionSuite) TestShortVersion() {
+	suite.RunOsctl([]string{"version", "--short"},
+		base.StdoutShouldMatch(regexp.MustCompile(`Client\s*`+regexp.QuoteMeta(suite.Version))),
+	)
+}
+
+// TestClientVersion verifies only client version output.
+func (suite *VersionSuite) TestClient() {
+	suite.RunOsctl([]string{"version", "--client"},
+		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
+		base.StdoutShouldNotMatch(regexp.MustCompile(`Server`)),
+	)
+}
+
 func init() {
 	allSuites = append(allSuites, new(VersionSuite))
 }

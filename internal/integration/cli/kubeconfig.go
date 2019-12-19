@@ -25,8 +25,8 @@ func (suite *KubeconfigSuite) SuiteName() string {
 	return "cli.KubeconfigSuite"
 }
 
-// TestSuccess runs comand with success.
-func (suite *KubeconfigSuite) TestSuccess() {
+// TestDirectory generates kubeconfig in specified directory.
+func (suite *KubeconfigSuite) TestDirectory() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
@@ -35,8 +35,29 @@ func (suite *KubeconfigSuite) TestSuccess() {
 	suite.RunOsctl([]string{"kubeconfig", tempDir},
 		base.StdoutEmpty())
 
-	_, err = os.Stat(filepath.Join(tempDir, "kubeconfig"))
+	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
+
+	// TODO: launch kubectl with config to verify it
+}
+
+// TestCwd generates kubeconfig in cwd.
+func (suite *KubeconfigSuite) TestCwd() {
+	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	defer os.RemoveAll(tempDir) //nolint: errcheck
+
+	savedCwd, err := os.Getwd()
+	suite.Require().NoError(err)
+
+	defer os.Chdir(savedCwd) //nolint: errcheck
+
+	suite.Require().NoError(os.Chdir(tempDir))
+
+	suite.RunOsctl([]string{"kubeconfig"},
+		base.StdoutEmpty())
+
+	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
 }
 
 // TestMultiNodeFail verifies that command fails with multiple nodes.

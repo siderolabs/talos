@@ -7,9 +7,14 @@
 package base
 
 import (
+	"fmt"
 	"os/exec"
+	"regexp"
+	"time"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // CLISuite is a base suite for CLI tests
@@ -18,13 +23,30 @@ type CLISuite struct {
 	TalosSuite
 }
 
-// RunOsctl runs osctl binary with the options provided
-func (cliSuite *CLISuite) RunOsctl(args []string, options ...RunOption) {
+func (cliSuite *CLISuite) buildOsctlCmd(args []string) *exec.Cmd {
 	// TODO: add support for calling `osctl config endpoint` before running osctl
 
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
 
-	cmd := exec.Command(cliSuite.OsctlPath, args...)
+	return exec.Command(cliSuite.OsctlPath, args...)
+}
 
-	Run(&cliSuite.Suite, cmd, options...)
+// RunOsctl runs osctl binary with the options provided
+func (cliSuite *CLISuite) RunOsctl(args []string, options ...RunOption) {
+	Run(&cliSuite.Suite, cliSuite.buildOsctlCmd(args), options...)
+}
+
+func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
+	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
+		stdout, _, err := RunAndWait(&cliSuite.Suite, cliSuite.buildOsctlCmd(args))
+		if err != nil {
+			return retry.UnexpectedError(err)
+		}
+
+		if !regex.MatchString(stdout.String()) {
+			return retry.ExpectedError(fmt.Errorf("stdout doesn't match: %q", stdout))
+		}
+
+		return nil
+	}))
 }
