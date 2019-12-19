@@ -25,7 +25,7 @@ var kubeconfigCmd = &cobra.Command{
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
 Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if err := helpers.FailIfMultiNodes(ctx, "kubeconfig"); err != nil {

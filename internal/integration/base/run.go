@@ -24,13 +24,15 @@ type RunOption func(*runOptions)
 type MatchFunc func(output string) error
 
 type runOptions struct {
-	shouldFail     bool
-	stdoutEmpty    bool
-	stderrNotEmpty bool
-	stdoutRegexps  []*regexp.Regexp
-	stderrRegexps  []*regexp.Regexp
-	stdoutMatchers []MatchFunc
-	stderrMatchers []MatchFunc
+	shouldFail            bool
+	stdoutEmpty           bool
+	stderrNotEmpty        bool
+	stdoutRegexps         []*regexp.Regexp
+	stderrRegexps         []*regexp.Regexp
+	stdoutNegativeRegexps []*regexp.Regexp
+	stderrNegativeRegexps []*regexp.Regexp
+	stdoutMatchers        []MatchFunc
+	stderrMatchers        []MatchFunc
 }
 
 // ShouldFail tells Run command should fail.
@@ -70,10 +72,24 @@ func StdoutShouldMatch(r *regexp.Regexp) RunOption {
 	}
 }
 
+// StdoutShouldNotMatch appends to the set of regexps stdout contents should not match.
+func StdoutShouldNotMatch(r *regexp.Regexp) RunOption {
+	return func(opts *runOptions) {
+		opts.stdoutNegativeRegexps = append(opts.stdoutNegativeRegexps, r)
+	}
+}
+
 // StderrShouldMatch appends to the set of regexps sterr contents should match.
 func StderrShouldMatch(r *regexp.Regexp) RunOption {
 	return func(opts *runOptions) {
 		opts.stderrRegexps = append(opts.stderrRegexps, r)
+	}
+}
+
+// StderrShouldNotMatch appends to the set of regexps sterr contents should not match.
+func StderrShouldNotMatch(r *regexp.Regexp) RunOption {
+	return func(opts *runOptions) {
+		opts.stderrNegativeRegexps = append(opts.stderrNegativeRegexps, r)
 	}
 }
 
@@ -91,14 +107,10 @@ func StderrMatchFunc(f MatchFunc) RunOption {
 	}
 }
 
-// Run executes command and asserts on its exit status/output
-func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
-	var opts runOptions
-
-	for _, o := range options {
-		o(&opts)
-	}
-
+// RunAndWait launches the command and waits for completion.
+//
+// RunAndWait doesn't do any assertions on result.
+func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	var stdout, stderr bytes.Buffer
 
 	cmd.Stdin = nil
@@ -124,7 +136,20 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 
 	suite.Require().NoError(cmd.Start())
 
-	err := cmd.Wait()
+	err = cmd.Wait()
+
+	return &stdout, &stderr, err
+}
+
+// Run executes command and asserts on its exit status/output
+func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
+	var opts runOptions
+
+	for _, o := range options {
+		o(&opts)
+	}
+
+	stdout, stderr, err := RunAndWait(suite, cmd)
 
 	if err == nil {
 		if opts.shouldFail {
@@ -159,6 +184,14 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 
 	for _, rx := range opts.stderrRegexps {
 		suite.Assert().Regexp(rx, stderr.String())
+	}
+
+	for _, rx := range opts.stdoutNegativeRegexps {
+		suite.Assert().NotRegexp(rx, stdout.String())
+	}
+
+	for _, rx := range opts.stderrNegativeRegexps {
+		suite.Assert().NotRegexp(rx, stderr.String())
 	}
 
 	for _, f := range opts.stdoutMatchers {
