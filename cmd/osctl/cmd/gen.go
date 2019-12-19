@@ -244,8 +244,8 @@ func init() {
 	crtCmd.Flags().IntVar(&hours, "hours", 24, "the hours from now on which the certificate validity period ends")
 	// Keypairs
 	keypairCmd.Flags().StringVar(&ip, "ip", "", "generate the certificate for this IP address")
-	keypairCmd.Flags().StringVar(&ca, "ca", "", "path to the PEM encoded CERTIFICATE")
-	helpers.Should(cobra.MarkFlagRequired(keypairCmd.Flags(), "ca"))
+	keypairCmd.Flags().StringVar(&organization, "organization", "", "X.509 distinguished name for the Organization")
+	helpers.Should(cobra.MarkFlagRequired(keypairCmd.Flags(), "organization"))
 	// Certificate Signing Requests
 	csrCmd.Flags().StringVar(&key, "key", "", "path to the PEM encoded EC or RSA PRIVATE KEY")
 	helpers.Should(cobra.MarkFlagRequired(csrCmd.Flags(), "key"))
