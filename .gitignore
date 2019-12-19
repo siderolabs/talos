@@ -2,11 +2,15 @@ bin
 build
 images
 .vscode
+*-init.yaml
+*-controlplane.yaml
+*-join.yaml
+*-talosconfig
 init.yaml
 controlplane.yaml
 join.yaml
-docgen
 talosconfig
+docgen
 kubeconfig
 hack/test/integration/matchbox/assets/*
 !hack/test/integration/matchbox/assets/.gitkeep

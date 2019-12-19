@@ -53,11 +53,13 @@ Save it, as we will need it in the next step.
 Using the DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines:
 
 ```bash
-$ osctl config generate talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>
-created init.yaml
-created controlplane.yaml
-created join.yaml
-created talosconfig
+export CLUSTER_NAME=talos-k8s-digital-ocean-tutorial
+
+$ osctl config generate $CLUSTER_NAME https://<load balancer IP or DNS>
+created talos-k8s-digital-ocean-tutorial-init.yaml
+created talos-k8s-digital-ocean-tutorial-controlplane.yaml
+created talos-k8s-digital-ocean-tutorial-join.yaml
+created talos-k8s-digital-ocean-tutorial-talosconfig
 ```
 
 At this point, you can modify the generated configs to your liking.
@@ -65,12 +67,12 @@ At this point, you can modify the generated configs to your liking.
 #### Validate the Configuration Files
 
 ```bash
-$ osctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
-$ osctl validate --config controlplane.yaml --mode cloud
-controlplane.yaml is valid for cloud mode
-$ osctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-init.yaml --mode cloud
+talos-k8s-digital-ocean-tutorial-init.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-controlplane.yaml --mode cloud
+talos-k8s-digital-ocean-tutorial-controlplane.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-join.yaml --mode cloud
+talos-k8s-digital-ocean-tutorial-join.yaml is valid for cloud mode
 ```
 
 ### Create the Droplets
@@ -84,7 +86,7 @@ doctl compute droplet create \
     --size s-2vcpu-4gb \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
-    --user-data-file init.yaml \
+    --user-data-file $CLUSTER_NAME-init.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-control-plane-1
 ```
@@ -103,7 +105,7 @@ doctl compute droplet create \
     --size s-2vcpu-4gb \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
-    --user-data-file controlplane.yaml \
+    --user-data-file $CLUSTER_NAME-controlplane.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-control-plane-2
 doctl compute droplet create \
@@ -112,7 +114,7 @@ doctl compute droplet create \
     --size s-2vcpu-4gb \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
-    --user-data-file controlplane.yaml \
+    --user-data-file $CLUSTER_NAME-controlplane.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-control-plane-3
 ```
@@ -127,7 +129,7 @@ doctl compute droplet create \
     --image <image ID> \
     --size s-2vcpu-4gb \
     --enable-private-networking \
-    --user-data-file join.yaml \
+    --user-data-file $CLUSTER_NAME-join.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-worker-1
 ```
@@ -143,6 +145,6 @@ doctl compute droplet get --format PublicIPv4 <droplet ID>
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-osctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-osctl --talosconfig talosconfig kubeconfig .
+osctl --talosconfig $CLUSTER_NAME-talosconfig config endpoint <control plane 1 IP>
+osctl --talosconfig $CLUSTER_NAME-talosconfig kubeconfig .
 ```

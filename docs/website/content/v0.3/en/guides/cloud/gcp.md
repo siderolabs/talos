@@ -104,12 +104,14 @@ gcloud compute forwarding-rules create talos-fwd-rule \
 With our networking bits setup, we'll fetch the IP for our load balancer and create our configuration files.
 
 ```bash
+export CLUSTER_NAME=talos-k8s-gcp-tutorial
+
 LB_PUBLIC_IP=$(gcloud compute forwarding-rules describe talos-fwd-rule \
                --global \
                --format json \
                | jq -r .IPAddress)
 
-osctl config generate talos-k8s-gcp-tutorial https://${LB_PUBLIC_IP}:443
+osctl config generate $CLUSTER_NAME https://${LB_PUBLIC_IP}:443
 ```
 
 ### Compute Creation
@@ -123,7 +125,7 @@ gcloud compute instances create talos-controlplane-0 \
   --zone $REGION-b \
   --tags talos-controlplane \
   --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./init.yaml
+  --metadata-from-file=user-data=./$CLUSTER_NAME-init.yaml
 
 # Create control plane 1/2
 for i in $( seq 1 2 ); do
@@ -132,7 +134,7 @@ for i in $( seq 1 2 ); do
     --zone $REGION-b \
     --tags talos-controlplane \
     --boot-disk-size 20GB \
-    --metadata-from-file=user-data=./controlplane.yaml
+    --metadata-from-file=user-data=./$CLUSTER_NAME-controlplane.yaml
 done
 
 # Add control plane nodes to instance group
@@ -147,7 +149,7 @@ gcloud compute instances create talos-worker-0 \
   --image talos \
   --zone $REGION-b \
   --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./join.yaml
+  --metadata-from-file=user-data=./$CLUSTER_NAME-join.yaml
 ```
 
 ### Retrieve the `kubeconfig`
@@ -161,6 +163,6 @@ CONTROL_PLANE_0_IP=$(gcloud compute instances describe talos-controlplane-0 \
                      --format json \
                      | jq -r '.networkInterfaces[0].accessConfigs[0].natIP')
 
-osctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
-osctl --talosconfig ./talosconfig kubeconfig .
+osctl --talosconfig ./$CLUSTER_NAME-talosconfig config endpoint $CONTROL_PLANE_0_IP
+osctl --talosconfig ./$CLUSTER_NAME-talosconfig kubeconfig .
 kubectl --kubeconfig ./kubeconfig get nodes

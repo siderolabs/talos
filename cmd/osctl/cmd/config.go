@@ -231,7 +231,7 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to marshal config: %+v", err)
 	}
 
-	fullFilePath := filepath.Join(outputDir, "talosconfig")
+	fullFilePath := filepath.Join(outputDir, input.ClusterName+"-talosconfig")
 
 	if err = ioutil.WriteFile(fullFilePath, data, 0644); err != nil {
 		return fmt.Errorf("%w", err)
@@ -250,7 +250,7 @@ func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name stri
 		return err
 	}
 
-	name = strings.ToLower(name) + ".yaml"
+	name = strings.ToLower(input.ClusterName+"-"+name) + ".yaml"
 	fullFilePath := filepath.Join(outputDir, name)
 
 	if err = ioutil.WriteFile(fullFilePath, []byte(data), 0644); err != nil {

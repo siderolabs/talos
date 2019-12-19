@@ -55,10 +55,10 @@ function up {
     cp $PWD/../../../build/vmlinuz ./matchbox/assets/
     cd ./matchbox/assets
     $PWD/../../../../../build/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
-    yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
-    yq w -i init.yaml cluster.network.cni.name 'custom'
-    yq w -i init.yaml cluster.network.cni.urls[+] "${CNI_URL}"
-    yq w -i controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    yq w -i integration-test-init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    yq w -i integration-test-init.yaml cluster.network.cni.name 'custom'
+    yq w -i integration-test-init.yaml cluster.network.cni.urls[+] "${CNI_URL}"
+    yq w -i integration-test-controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i join.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     cd -
     virt-install --name $CONTROL_PLANE_1_NAME --network=bridge:talos0,model=e1000,mac=$CONTROL_PLANE_1_MAC $COMMON_VIRT_OPTS --boot=hd,network
@@ -81,7 +81,7 @@ function down {
 }
 
 function workspace {
-  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../build/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.0
+  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../build/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/integration-test-talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.0
 }
 
 main $@

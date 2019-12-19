@@ -140,11 +140,13 @@ We will need these soon.
 Using the DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines:
 
 ```bash
-$ osctl config generate talos-k8s-aws-tutorial https://<load balancer IP or DNS>
-created init.yaml
-created controlplane.yaml
-created join.yaml
-created talosconfig
+export CLUSTER_NAME=talos-k8s-aws-tutorial
+
+$ osctl config generate $CLUSTER_NAME https://<load balancer IP or DNS>
+created talos-k8s-aws-tutorial-init.yaml
+created talos-k8s-aws-tutorial-controlplane.yaml
+created talos-k8s-aws-tutorial-join.yaml
+created talos-k8s-aws-tutorial-talosconfig
 ```
 
 At this point, you can modify the generated configs to your liking.
@@ -152,12 +154,12 @@ At this point, you can modify the generated configs to your liking.
 #### Validate the Configuration Files
 
 ```bash
-$ osctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
-$ osctl validate --config controlplane.yaml --mode cloud
-controlplane.yaml is valid for cloud mode
-$ osctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-init.yaml --mode cloud
+talos-k8s-aws-tutorial-init.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-controlplane.yaml --mode cloud
+talos-k8s-aws-tutorial-controlplane.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-join.yaml --mode cloud
+talos-k8s-aws-tutorial-join.yaml is valid for cloud mode
 ```
 
 ### Create the EC2 Instances
@@ -173,7 +175,7 @@ aws ec2 run-instances \
     --image-id $AMI \
     --count 1 \
     --instance-type t3.small \
-    --user-data file://init.yaml \
+    --user-data file://$CLUSTER_NAME-init.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP
 ```
@@ -186,7 +188,7 @@ aws ec2 run-instances \
     --image-id $AMI \
     --count 2 \
     --instance-type t3.small \
-    --user-data file://controlplane.yaml \
+    --user-data file://$CLUSTER_NAME-controlplane.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP
 ```
@@ -199,7 +201,7 @@ aws ec2 run-instances \
     --image-id $AMI \
     --count 3 \
     --instance-type t3.small \
-    --user-data file://join.yaml \
+    --user-data file://$CLUSTER_NAME-join.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP
 ```
@@ -240,6 +242,6 @@ aws elbv2 create-listener \
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-osctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-osctl --talosconfig talosconfig kubeconfig .
+osctl --talosconfig $CLUSTER_NAME-talosconfig config endpoint <control plane 1 IP>
+osctl --talosconfig $CLUSTER_NAME-talosconfig kubeconfig .
 ```

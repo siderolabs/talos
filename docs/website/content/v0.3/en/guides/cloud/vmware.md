@@ -23,21 +23,23 @@ Prior to starting, it is important to have the following infrastructure in place
 Using the DNS name or name of the loadbalancer used in the prereq steps, generate the base configuration files for the Talos machines:
 
 ```bash
-$ osctl config generate talos-k8s-vmware-tutorial https://<load balancer IP or DNS>
-created init.yaml
-created controlplane.yaml
-created join.yaml
-created talosconfig
+export CLUSTER_NAME=talos-k8s-vmware-tutorial
+
+$ osctl config generate $CLUSTER_NAME https://<load balancer IP or DNS>
+created talos-k8s-vmware-tutorial-init.yaml
+created talos-k8s-vmware-tutorial-controlplane.yaml
+created talos-k8s-vmware-tutorial-join.yaml
+created talos-k8s-vmware-tutorial-talosconfig
 ```
 
 > Note: If you are using a DNS record, you will want to specify the port for the API Server (`tcp/6443`)
 
 ```bash
-$ osctl config generate talos-k8s-vmware-tutorial https://<DNS name>:6443
-created init.yaml
-created controlplane.yaml
-created join.yaml
-created talosconfig
+$ osctl config generate $CLUSTER_NAME https://<DNS name>:6443
+created talos-k8s-vmware-tutorial-init.yaml
+created talos-k8s-vmware-tutorial-controlplane.yaml
+created talos-k8s-vmware-tutorial-join.yaml
+created talos-k8s-vmware-tutorial-talosconfig
 ```
 
 At this point, you can modify the generated configs to your liking.
@@ -45,12 +47,12 @@ At this point, you can modify the generated configs to your liking.
 #### Validate the Configuration Files
 
 ```bash
-$ osctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
-$ osctl validate --config controlplane.yaml --mode cloud
-controlplane.yaml is valid for cloud mode
-$ osctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-init.yaml --mode cloud
+talos-k8s-vmware-tutorial-init.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-controlplane.yaml --mode cloud
+talos-k8s-vmware-tutorial-controlplane.yaml is valid for cloud mode
+$ osctl validate --config $CLUSTER_NAME-join.yaml --mode cloud
+talos-k8s-vmware-tutorial-join.yaml is valid for cloud mode
 ```
 
 ### Set Environment Variables
@@ -108,7 +110,7 @@ To facilitate persistent storage using the vSphere cloud provider integration wi
 
 ```bash
 govc vm.change \
-  -e "guestinfo.talos.config=$(cat init.yaml | base64)" \
+  -e "guestinfo.talos.config=$(cat $CLUSTER_NAME-init.yaml | base64)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-1
 ```
@@ -140,12 +142,12 @@ govc vm.power -on control-plane-1
 ```bash
 govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-2
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 controlplane.yaml)" \
+  -e "guestinfo.talos.config=$(base64 $CLUSTER_NAME-controlplane.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-2
 govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-3
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 controlplane.yaml)" \
+  -e "guestinfo.talos.config=$(base64 $CLUSTER_NAME-controlplane.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-3
 ```
@@ -176,12 +178,12 @@ govc vm.power -on control-plane-3
 ```bash
 govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-1
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 join.yaml)" \
+  -e "guestinfo.talos.config=$(base64 $CLUSTER_NAME-join.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-1
 govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-2
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 join.yaml)" \
+  -e "guestinfo.talos.config=$(base64 $CLUSTER_NAME-join.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-2
 ```
@@ -212,6 +214,6 @@ govc vm.power -on worker-2
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-osctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-osctl --talosconfig talosconfig kubeconfig .
+osctl --talosconfig $CLUSTER_NAME-talosconfig config endpoint <control plane 1 IP>
+osctl --talosconfig $CLUSTER_NAME-talosconfig kubeconfig .
 ```

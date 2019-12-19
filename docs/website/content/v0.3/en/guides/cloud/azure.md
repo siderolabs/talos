@@ -188,13 +188,15 @@ done
 With our networking bits setup, we'll fetch the IP for our load balancer and create our configuration files.
 
 ```bash
+export CLUSTER_NAME=talos-k8s-azure-tutorial
+
 LB_PUBLIC_IP=$(az network public-ip show \
               --resource-group $GROUP \
               --name talos-public-ip \
               --query [ipAddress] \
               --output tsv)
 
-osctl config generate talos-k8s-azure-tutorial https://${LB_PUBLIC_IP}:6443
+osctl config generate $CLUSTER_NAME https://${LB_PUBLIC_IP}:6443
 ```
 
 ### Compute Creation
@@ -211,7 +213,7 @@ az vm availability-set create \
 az vm create \
   --name talos-controlplane-0 \
   --image talos \
-  --custom-data ./init.yaml \
+  --custom-data ./$CLUSTER_NAME-init.yaml \
   -g $GROUP \
   --admin-username talos \
   --generate-ssh-keys \
@@ -227,7 +229,7 @@ for i in $( seq 1 2 ); do
   az vm create \
     --name talos-controlplane-$i \
     --image talos \
-    --custom-data ./controlplane.yaml \
+    --custom-data ./$CLUSTER_NAME-controlplane.yaml \
     -g $GROUP \
     --admin-username talos \
     --generate-ssh-keys \
@@ -243,7 +245,7 @@ done
   az vm create \
     --name talos-worker-0 \
     --image talos \
-    --custom-data ./join.yaml \
+    --custom-data ./$CLUSTER_NAME-join.yaml \
     -g $GROUP \
     --admin-username talos \
     --generate-ssh-keys \
@@ -272,7 +274,7 @@ CONTROL_PLANE_0_IP=$(az network public-ip show \
                     --name talos-controlplane-public-ip-0 \
                     --query [ipAddress] \
                     --output tsv)
-osctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
-osctl --talosconfig ./talosconfig kubeconfig .
+osctl --talosconfig ./$CLUSTER_NAME-talosconfig config endpoint $CONTROL_PLANE_0_IP
+osctl --talosconfig ./$CLUSTER_NAME-talosconfig kubeconfig .
 kubectl --kubeconfig ./kubeconfig get nodes
 ```

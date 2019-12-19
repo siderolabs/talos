@@ -18,7 +18,7 @@
       "console=ttyS0",
       "printk.devkmsg=on",
       "talos.platform=metal",
-      "talos.config=http://matchbox.talos.dev:8080/assets/join.yaml"
+      "talos.config=http://matchbox.talos.dev:8080/assets/integration-test-join.yaml"
     ]
   }
 }
