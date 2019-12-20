@@ -433,8 +433,8 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/talos-systems/bootkube v0.14.1-0.20191210195608-7606a2efb62d h1:84Lc1mjR85Afl8tZ75BcdAwelW7JLgiyIvMPuy+fpuQ=
 github.com/talos-systems/bootkube v0.14.1-0.20191210195608-7606a2efb62d/go.mod h1:CIpoNLW4Lm9zNVFRgqQIylnbZi/x9TnulTEA8edC0O4=
-github.com/talos-systems/grpc-proxy v0.0.0-20191129165806-5c579a7a6147 h1:Sf4q46/8IkNY+JaYoBV0peSYsO5quJlvvmv2AytJlLI=
-github.com/talos-systems/grpc-proxy v0.0.0-20191129165806-5c579a7a6147/go.mod h1:sm97Vc/z2cok3pu6ruNeszQej4KDxFrDgfWs4C1mtC4=
+github.com/talos-systems/grpc-proxy v0.2.0 h1:DN75bLfaW4xfhq0r0mwFRnfGhSB+HPhK1LNzuMEs9Pw=
+github.com/talos-systems/grpc-proxy v0.2.0/go.mod h1:sm97Vc/z2cok3pu6ruNeszQej4KDxFrDgfWs4C1mtC4=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 h1:LnC5Kc/wtumK+WB441p7ynQJzVuNRJiqddSIE3IlSEQ=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/u-root/u-root v6.0.0+incompatible h1:YqPGmRoRyYmeg17KIWFRSyVq6LX5T6GSzawyA6wG6EE=
