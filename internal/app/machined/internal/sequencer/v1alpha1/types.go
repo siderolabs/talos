@@ -99,6 +99,10 @@ func (d *Sequencer) Boot() error {
 			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
+			"set environment variables",
+			configtask.NewExtraEnvVarsTask(),
+		),
+		phase.NewPhase(
 			"start system-containerd",
 			services.NewStartSystemContainerdTask(),
 		),
@@ -129,7 +133,6 @@ func (d *Sequencer) Boot() error {
 		),
 		phase.NewPhase(
 			"user requests",
-			configtask.NewExtraEnvVarsTask(),
 			configtask.NewExtraFilesTask(),
 			configtask.NewSysctlsTask(),
 		),

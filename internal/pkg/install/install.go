@@ -7,17 +7,28 @@ package install
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/net/http/httpproxy"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
+
+// Proxy returns a proxy for a given request. This function is identical to the
+// standard library `http.ProxyFromEnvironment`, with the exception of the use
+// of `once.Do` to cache the configuration of the proxy.
+func Proxy(req *http.Request) (*url.URL, error) {
+	return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
+}
 
 // Install performs an installation via the installer container.
 //
@@ -30,7 +41,19 @@ func Install(r runtime.Runtime) error {
 		return err
 	}
 
-	image, err := client.Pull(ctx, r.Config().Machine().Install().Image(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+	resolver := docker.NewResolver(
+		docker.ResolverOptions{
+			Client: &http.Client{
+				Transport: &http.Transport{
+					Proxy: Proxy,
+				},
+			},
+		},
+	)
+
+	opts := []containerd.RemoteOpt{containerd.WithPullUnpack, containerd.WithResolver(resolver)}
+
+	image, err := client.Pull(ctx, r.Config().Machine().Install().Image(), opts...)
 	if err != nil {
 		return err
 	}
