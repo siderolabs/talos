@@ -55,7 +55,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
-	github.com/talos-systems/grpc-proxy v0.0.0-20191129165806-5c579a7a6147
+	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
