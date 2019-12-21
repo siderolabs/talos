@@ -19,6 +19,7 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/mdlayher/netlink"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
@@ -150,17 +151,20 @@ func (n *NetworkInterface) Configure() (err error) {
 	}
 
 	// Wait for link to report up
-	err = retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		var link *net.Interface
+	var link rtnetlink.LinkMessage
 
-		link, err = n.rtnlConn.LinkByIndex(n.Link.Index)
+	err = retry.Constant(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
+		link, err = n.rtConn.Link.Get(uint32(n.Link.Index))
 		if err != nil {
-			// nolint: errcheck
 			return retry.UnexpectedError(err)
 		}
 
-		if link.Flags&net.FlagUp != net.FlagUp {
+		if link.Flags&unix.IFF_UP != unix.IFF_UP {
 			return retry.ExpectedError(fmt.Errorf("link is not up %s", n.Link.Name))
+		}
+
+		if link.Flags&unix.IFF_RUNNING != unix.IFF_RUNNING {
+			return retry.ExpectedError(fmt.Errorf("link is not ready %s", n.Link.Name))
 		}
 
 		return nil
