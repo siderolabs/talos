@@ -7,10 +7,13 @@ package phase
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	goruntime "runtime"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"golang.org/x/net/http/httpproxy"
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -59,6 +62,16 @@ func NewRunner(config runtime.Configurator, sequence runtime.Sequence) (*Runner,
 		if err = kmsg.Setup("[talos]", true); err != nil {
 			return nil, fmt.Errorf("failed to setup logging: %w", err)
 		}
+	}
+
+	// Re-define the default http client
+	// Work around our fun proxy.Do once bug
+	http.DefaultClient = &http.Client{
+		Transport: &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
+			},
+		},
 	}
 
 	runner := &Runner{
