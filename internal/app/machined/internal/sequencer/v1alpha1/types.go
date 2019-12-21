@@ -93,6 +93,7 @@ func (d *Sequencer) Boot() error {
 		phase.NewPhase(
 			"network reset",
 			network.NewResetNetworkTask(),
+			configtask.NewExtraEnvVarsTask(),
 		),
 		phase.NewPhase(
 			"initial network",
@@ -129,7 +130,6 @@ func (d *Sequencer) Boot() error {
 		),
 		phase.NewPhase(
 			"user requests",
-			configtask.NewExtraEnvVarsTask(),
 			configtask.NewExtraFilesTask(),
 			configtask.NewSysctlsTask(),
 		),
