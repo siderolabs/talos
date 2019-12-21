@@ -1,3 +1,15 @@
+# [v0.3.0-beta.2](https://github.com/andrewrynhard/talos/compare/v0.3.0-beta.1...v0.3.0-beta.2) (2019-12-21)
+
+### Bug Fixes
+
+- **networkd:** Check for IFF_RUNNING on link up ([f7ca6d3](https://github.com/talos-systems/talos/commit/f7ca6d326ecf60a8bbc37056fe797da1ce8ce82d))
+- Reset default http client to work around proxyEnv ([b342629](https://github.com/andrewrynhard/talos/commit/b34262973dcd6e9159323358aff11415e8c67661))
+
+### Features
+
+- add support for tailing logs ([8830788](https://github.com/andrewrynhard/talos/commit/8830788a7f6dddc14e1bb764fd5a6cf8aa67fcc5)), closes [#1564](https://github.com/andrewrynhard/talos/issues/1564)
+- upgrade Linux to v5.4.5 ([bab9213](https://github.com/andrewrynhard/talos/commit/bab9213fb0877b36328cc923167a2cc934db9a2d))
+
 # [v0.3.0-beta.1](https://github.com/talos-systems/talos/compare/v0.3.0-beta.0...v0.3.0-beta.1) (2019-12-19)
 
 ### Bug Fixes
