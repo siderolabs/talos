@@ -64,7 +64,7 @@ func upgrade() error {
 				node = msg.Metadata.Hostname
 			}
 
-			fmt.Fprintf(w, "%s\t%s\t%s\t", node, msg.Ack, time.Now())
+			fmt.Fprintf(w, "%s\t%s\t%s\t\n", node, msg.Ack, time.Now())
 		}
 
 		return w.Flush()
