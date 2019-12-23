@@ -4,7 +4,6 @@ go 1.13
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
-	github.com/jsimonetti/rtnetlink => github.com/bradbeam/rtnetlink v0.0.0-20191116224831-33eac9dd89f6
 	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20191210195608-7606a2efb62d
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
@@ -39,7 +38,7 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20190814082028-393ae75a101b
-	github.com/jsimonetti/rtnetlink v0.0.0-20191019172534-d21b2cb70d39
+	github.com/jsimonetti/rtnetlink v0.0.0-20191223084007-1b9462860ac0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubernetes-sigs/bootkube v0.14.1-0.20190731222813-f0fc1bdb404d
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect

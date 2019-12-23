@@ -74,7 +74,11 @@ func New(config runtime.Configurator) (*Networkd, error) {
 				continue
 			}
 
-			netconf[name] = opts
+			if _, ok := netconf[name]; ok {
+				netconf[name] = append(netconf[name], opts...)
+			} else {
+				netconf[name] = opts
+			}
 		}
 
 		hostname = config.Machine().Network().Hostname()
