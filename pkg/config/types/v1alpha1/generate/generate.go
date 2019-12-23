@@ -10,6 +10,7 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"time"
@@ -47,9 +48,23 @@ const (
 	TypeJoin
 )
 
-// Sring returns the string representation of Type.
+// String returns the string representation of Type.
 func (t Type) String() string {
 	return [...]string{"Init", "ControlPlane", "Join"}[t]
+}
+
+// ParseType parses string constant as Type
+func ParseType(t string) (Type, error) {
+	switch t {
+	case "Init":
+		return TypeInit, nil
+	case "ControlPlane":
+		return TypeControlPlane, nil
+	case "Join":
+		return TypeJoin, nil
+	default:
+		return 0, fmt.Errorf("unknown type %q", t)
+	}
 }
 
 // Config returns the talos config for a given node type.

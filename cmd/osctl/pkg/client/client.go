@@ -49,14 +49,20 @@ type Client struct {
 	NetworkClient networkapi.NetworkServiceClient
 }
 
-// NewClientContextAndCredentialsFromConfig initializes ClientCredentials using default paths
-// to the required CA, certificate, and key.
+// NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
 func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *config.Context, creds *Credentials, err error) {
 	c, err := config.Open(p)
 	if err != nil {
 		return
 	}
 
+	context, creds, err = NewClientContextAndCredentialsFromParsedConfig(c, ctx)
+
+	return
+}
+
+// NewClientContextAndCredentialsFromParsedConfig initializes Credentials from parsed configuration.
+func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string) (context *config.Context, creds *Credentials, err error) {
 	if ctx != "" {
 		c.Context = ctx
 	}

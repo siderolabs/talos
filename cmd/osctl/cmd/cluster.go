@@ -6,26 +6,20 @@ package cmd
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"math/big"
 	"net"
-	"sync"
+	"time"
 
-	"github.com/docker/distribution/reference"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
-	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/osctl/cmd/cluster/pkg/node"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/access"
+	"github.com/talos-systems/talos/internal/pkg/provision/check"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
@@ -35,11 +29,12 @@ var (
 	clusterName   string
 	nodeImage     string
 	networkCIDR   string
-	networkMTU    string
+	networkMTU    int
 	workers       int
 	masters       int
 	clusterCpus   string
 	clusterMemory int
+	clusterWait   bool
 )
 
 // clusterCmd represents the cluster command
@@ -56,7 +51,7 @@ var clusterUpCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return create()
+		return helpers.WithCLIContext(context.Background(), create)
 	},
 }
 
@@ -67,19 +62,12 @@ var clusterDownCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return destroy()
+		return helpers.WithCLIContext(context.Background(), destroy)
 	},
 }
 
-// nolint: gocyclo
-func create() (err error) {
-	ctx := context.Background()
-
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		return err
-	}
-
+//nolint: gocyclo
+func create(ctx context.Context) (err error) {
 	if masters < 1 {
 		return fmt.Errorf("number of masters can't be less than 1")
 	}
@@ -90,12 +78,6 @@ func create() (err error) {
 	}
 
 	memory := int64(clusterMemory) * 1024 * 1024
-
-	// Ensure the image is present.
-
-	if err = ensureImageExists(ctx, cli, nodeImage); err != nil {
-		return err
-	}
 
 	// Validate CIDR range and allocate IPs
 	fmt.Println("validating CIDR and reserving master IPs")
@@ -118,238 +100,97 @@ func create() (err error) {
 		ips[i] = masterIP.String()
 	}
 
-	// Generate all PKI and tokens required by Talos.
-	fmt.Println("generating PKI and tokens")
-
-	input, err := generate.NewInput(clusterName, "https://"+ips[0]+":6443", kubernetesVersion)
+	provisioner, err := docker.NewProvisioner(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Setup the network.
+	defer provisioner.Close() //nolint: errcheck
 
-	fmt.Println("creating network", clusterName)
+	request := provision.ClusterRequest{
+		Name: clusterName,
 
-	if _, err = createNetwork(cli); err != nil {
-		return fmt.Errorf("a cluster might already exist, run \"osctl cluster destroy\" to permanently delete the existing cluster, and try again: %w", err)
+		Network: provision.NetworkRequest{
+			Name: clusterName,
+			CIDR: *cidr,
+			MTU:  networkMTU,
+		},
+
+		Image:             nodeImage,
+		KubernetesVersion: kubernetesVersion,
 	}
 
 	// Create the master nodes.
-
-	requests := make([]*node.Request, masters)
-	for i := range requests {
-		requests[i] = &node.Request{
-			Input:    *input,
-			Image:    nodeImage,
-			Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
-			IP:       net.ParseIP(ips[i]),
-			Memory:   memory,
-			NanoCPUs: nanoCPUs,
-		}
-
+	for i := 0; i < masters; i++ {
+		var typ generate.Type
 		if i == 0 {
-			requests[i].Type = generate.TypeInit
+			typ = generate.TypeInit
 		} else {
-			requests[i].Type = generate.TypeControlPlane
+			typ = generate.TypeControlPlane
 		}
+
+		request.Nodes = append(request.Nodes,
+			provision.NodeRequest{
+				Type:     typ,
+				Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
+				IP:       net.ParseIP(ips[i]),
+				Memory:   memory,
+				NanoCPUs: nanoCPUs,
+			})
 	}
-
-	if err := createNodes(requests); err != nil {
-		return err
-	}
-
-	// Create the worker nodes.
-
-	requests = []*node.Request{}
 
 	for i := 1; i <= workers; i++ {
-		r := &node.Request{
-			Type:     generate.TypeJoin,
-			Input:    *input,
-			Image:    nodeImage,
-			Name:     fmt.Sprintf("%s-worker-%d", clusterName, i),
-			Memory:   memory,
-			NanoCPUs: nanoCPUs,
-		}
-		requests = append(requests, r)
+		request.Nodes = append(request.Nodes,
+			provision.NodeRequest{
+				Type:     generate.TypeJoin,
+				Name:     fmt.Sprintf("%s-worker-%d", clusterName, i),
+				Memory:   memory,
+				NanoCPUs: nanoCPUs,
+			})
 	}
 
-	if err := createNodes(requests); err != nil {
+	cluster, err := provisioner.Create(ctx, request)
+	if err != nil {
 		return err
 	}
 
 	// Create and save the osctl configuration file.
-
-	return saveConfig(input)
-}
-
-// nolint: gocyclo
-func createNodes(requests []*node.Request) (err error) {
-	var wg sync.WaitGroup
-
-	wg.Add(len(requests))
-
-	for _, req := range requests {
-		go func(req *node.Request) {
-			fmt.Println("creating node", req.Name)
-
-			if err = node.NewNode(clusterName, req); err != nil {
-				helpers.Fatalf("failed to create node: %w", err)
-			}
-
-			wg.Done()
-		}(req)
+	if err = saveConfig(cluster); err != nil {
+		return err
 	}
 
-	wg.Wait()
+	if !clusterWait {
+		return nil
+	}
 
-	return nil
+	// Run cluster readiness checks
+	checkCtx, checkCtxCancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer checkCtxCancel()
+
+	clusterAccess := access.NewAdapter(cluster)
+	defer clusterAccess.Close() //nolint: errcheck
+
+	return check.Wait(checkCtx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter())
 }
 
-func destroy() error {
-	cli, err := client.NewEnvClient()
+func destroy(ctx context.Context) error {
+	provisioner, err := docker.NewProvisioner(ctx)
 	if err != nil {
 		return err
 	}
 
-	filters := filters.NewArgs()
-	filters.Add("label", "talos.owned=true")
-	filters.Add("label", "talos.cluster.name="+clusterName)
+	defer provisioner.Close() //nolint: errcheck
 
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true, Filters: filters})
+	cluster, err := provisioner.(provision.ClusterNameReflector).Reflect(ctx, clusterName)
 	if err != nil {
 		return err
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(len(containers))
-
-	for _, container := range containers {
-		go func(container types.Container) {
-			fmt.Println("destroying node", container.Names[0][1:])
-
-			err := cli.ContainerRemove(context.Background(), container.ID, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
-			if err != nil {
-				helpers.Fatalf("%+v", err)
-			}
-
-			wg.Done()
-		}(container)
-	}
-
-	wg.Wait()
-
-	fmt.Println("destroying network", clusterName)
-
-	return destroyNetwork(cli)
+	return provisioner.Destroy(ctx, cluster)
 }
 
-func ensureImageExists(ctx context.Context, cli *client.Client, image string) error {
-	// In order to pull an image, the reference must be in canononical
-	// format (e.g. domain/repo/image:tag).
-	ref, err := reference.ParseNormalizedNamed(image)
-	if err != nil {
-		return err
-	}
-
-	image = ref.String()
-
-	// To filter the images, we need a familiar name and a tag
-	// (e.g. domain/repo/image:tag => repo/image:tag).
-	familiarName := reference.FamiliarName(ref)
-	tag := ""
-
-	if tagged, isTagged := ref.(reference.Tagged); isTagged {
-		tag = tagged.Tag()
-	}
-
-	filters := filters.NewArgs()
-	filters.Add("reference", familiarName+":"+tag)
-
-	images, err := cli.ImageList(ctx, types.ImageListOptions{Filters: filters})
-	if err != nil {
-		return err
-	}
-
-	if len(images) == 0 {
-		fmt.Println("downloading", image)
-
-		var reader io.ReadCloser
-
-		if reader, err = cli.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer reader.Close()
-
-		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func createNetwork(cli *client.Client) (types.NetworkCreateResponse, error) {
-	options := types.NetworkCreate{
-		Labels: map[string]string{
-			"talos.owned":        "true",
-			"talos.cluster.name": clusterName,
-		},
-		IPAM: &network.IPAM{
-			Config: []network.IPAMConfig{
-				{
-					Subnet: networkCIDR,
-				},
-			},
-		},
-		Options: map[string]string{
-			"com.docker.network.driver.mtu": networkMTU,
-		},
-	}
-
-	return cli.NetworkCreate(context.Background(), clusterName, options)
-}
-
-func destroyNetwork(cli *client.Client) error {
-	filters := filters.NewArgs()
-	filters.Add("label", "talos.owned=true")
-	filters.Add("label", "talos.cluster.name="+clusterName)
-
-	options := types.NetworkListOptions{
-		Filters: filters,
-	}
-
-	networks, err := cli.NetworkList(context.Background(), options)
-	if err != nil {
-		return err
-	}
-
-	var result *multierror.Error
-
-	for _, network := range networks {
-		if err := cli.NetworkRemove(context.Background(), network.ID); err != nil {
-			result = multierror.Append(result, err)
-		}
-	}
-
-	return result.ErrorOrNil()
-}
-
-func saveConfig(input *generate.Input) (err error) {
-	newConfig := &config.Config{
-		Context: input.ClusterName,
-		Contexts: map[string]*config.Context{
-			input.ClusterName: {
-				Endpoints: []string{"127.0.0.1"},
-				CA:        base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
-				Crt:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
-				Key:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
-			},
-		},
-	}
+func saveConfig(cluster provision.Cluster) (err error) {
+	newConfig := cluster.TalosConfig()
 
 	c, err := config.Open(talosconfig)
 	if err != nil {
@@ -360,9 +201,9 @@ func saveConfig(input *generate.Input) (err error) {
 		c.Contexts = map[string]*config.Context{}
 	}
 
-	c.Contexts[input.ClusterName] = newConfig.Contexts[input.ClusterName]
+	c.Contexts[cluster.Info().ClusterName] = newConfig.Contexts[cluster.Info().ClusterName]
 
-	c.Context = input.ClusterName
+	c.Context = cluster.Info().ClusterName
 
 	return c.Save(talosconfig)
 }
@@ -383,12 +224,13 @@ func parseCPUShare() (int64, error) {
 
 func init() {
 	clusterUpCmd.Flags().StringVar(&nodeImage, "image", defaultImage(constants.DefaultTalosImageRepository), "the image to use")
-	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
+	clusterUpCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the docker bridge network")
 	clusterUpCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterUpCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
 	clusterUpCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
+	clusterUpCmd.Flags().BoolVar(&clusterWait, "wait", false, "wait for the cluster to be ready before returning")
 	clusterUpCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
