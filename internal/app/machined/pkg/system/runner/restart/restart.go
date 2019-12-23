@@ -136,12 +136,12 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 				return nil
 			}
 
-			eventSink(events.StateWaiting, "Error running %s, going to restart until it succeeds: %w", r.wrappedRunner, err)
+			eventSink(events.StateWaiting, "Error running %s, going to restart until it succeeds: %v", r.wrappedRunner, err)
 		case Forever:
 			if err == nil {
 				eventSink(events.StateWaiting, "Runner %s exited without error, going to restart it", r.wrappedRunner)
 			} else {
-				eventSink(events.StateWaiting, "Error running %v, going to restart forever: %w", r.wrappedRunner, err)
+				eventSink(events.StateWaiting, "Error running %v, going to restart forever: %v", r.wrappedRunner, err)
 			}
 		}
 
