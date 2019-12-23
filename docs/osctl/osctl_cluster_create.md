@@ -21,6 +21,8 @@ osctl cluster create [flags]
       --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
+      --mtu int                     MTU of the docker bridge network (default 1500)
+      --wait                        wait for the cluster to be ready before returning
       --workers int                 the number of workers to create (default 1)
 ```
 
