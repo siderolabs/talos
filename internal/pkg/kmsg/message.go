@@ -15,13 +15,38 @@ import (
 type Facility int
 
 // Kernel log facilities.
+//
+// From <sys/syslog.h>.
 const (
 	Kern Facility = iota
 	User
+	Mail
+	Daemon
+	Auth
+	Syslog
+	Lpr
+	News
+	Uucp
+	Cron
+	AuthPriv
+	Local0
+	Local1
+	Local2
+	Local3
+	Local4
+	Local5
+	Local6
+	Local7
 )
 
 func (f Facility) String() string {
-	return [...]string{"kern", "user"}[f]
+	return [...]string{
+		"kern", "user", "mail", "daemon",
+		"auth", "syslog", "lpr", "news", "uucp",
+		"cron", "authpriv",
+		"local0", "local1", "local2", "local3",
+		"local4", "local5", "local6", "local7",
+	}[f]
 }
 
 // Priority is an attribute of kernel log message.
