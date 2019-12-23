@@ -141,6 +141,7 @@ func (n *NetworkInterface) Configure() (err error) {
 
 		bondIndex := proto.Uint32(uint32(n.Link.Index))
 
+		// TODO: Add check if link is already part of a bond
 		if err = n.enslaveLink(bondIndex, n.SubInterfaces...); err != nil {
 			return err
 		}
@@ -187,11 +188,7 @@ func (n *NetworkInterface) Addressing() error {
 	for _, method := range n.AddressMethod {
 		if err := n.configureInterface(method); err != nil {
 			// Treat as non fatal error when failing to configure an interface
-			return nil
-		}
-
-		if !method.Valid() {
-			return nil
+			continue
 		}
 	}
 
@@ -234,6 +231,7 @@ func (n *NetworkInterface) renew(method address.Addressing) {
 // nolint: gocyclo
 func (n *NetworkInterface) configureInterface(method address.Addressing) error {
 	var err error
+
 	if err = method.Discover(context.Background(), n.Link); err != nil {
 		return err
 	}
@@ -273,9 +271,15 @@ func (n *NetworkInterface) configureInterface(method address.Addressing) error {
 
 	// Add any routes
 	for _, r := range method.Routes() {
+		// If gateway/router is 0.0.0.0 we'll set to nil so route scope decision will be correct
+		gw := r.Router
+		if net.IPv4zero.Equal(gw) {
+			gw = nil
+		}
+
 		// Any errors here would be non-fatal, so we'll just ignore them
-		// nolint: errcheck
-		n.rtnlConn.RouteAddSrc(method.Link(), *r.Dest, method.Address(), r.Router)
+		//nolint: errcheck
+		n.rtnlConn.RouteAddSrc(method.Link(), *r.Dest, method.Address(), gw)
 	}
 
 	return nil
