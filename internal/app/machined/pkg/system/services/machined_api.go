@@ -8,9 +8,9 @@ import (
 	"context"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/api"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/conditions"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
+	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
