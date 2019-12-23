@@ -6,6 +6,15 @@
 
 local build_container = 'autonomy/build-container:latest';
 
+local secret = {
+  kind: 'secret',
+  name: 'kubeconfig',
+  get: {
+    path: 'buildx',
+    name: 'kubeconfig'
+  },
+};
+
 local volumes = {
   dockersock: {
     pipeline: {
@@ -15,6 +24,28 @@ local volumes = {
     step: {
       name: $.dockersock.pipeline.name,
       path: '/var/run',
+    },
+  },
+
+  docker: {
+    pipeline: {
+      name: 'docker',
+      temp: {},
+    },
+    step: {
+      name: $.docker.pipeline.name,
+      path: '/root/.docker/buildx',
+    },
+  },
+
+  kube: {
+    pipeline: {
+      name: 'kube',
+      temp: {},
+    },
+    step: {
+      name: $.kube.pipeline.name,
+      path: '/root/.kube',
     },
   },
 
@@ -44,12 +75,16 @@ local volumes = {
 
   ForStep(): [
     self.dockersock.step,
+    self.docker.step,
+    self.kube.step,
     self.dev.step,
     self.tmp.step,
   ],
 
   ForPipeline(): [
     self.dockersock.pipeline,
+    self.docker.pipeline,
+    self.kube.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,
   ],
@@ -70,18 +105,21 @@ local docker = {
   volumes: volumes.ForStep(),
 };
 
-// This step is used only when `drone exec` is executed.
-local buildkit = {
-  name: 'buildkit',
-  image: 'moby/buildkit:v0.6.0',
+// Sets up the buildx backend
+local buildx = {
+  name: 'buildx',
+  image: 'autonomy/build-container:latest',
   privileged: true,
-  detach: true,
-  commands: ['buildkitd --addr tcp://0.0.0.0:1234 --allow-insecure-entitlement security.insecure'],
-  when: {
-    event: {
-      include: [''],
-    },
+  environment: {
+    BUILDX_KUBECONFIG: { from_secret: secret.name },
   },
+  commands: [
+    "apk add coreutils",
+    'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
+    'docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
+    'docker buildx inspect --bootstrap'
+  ],
+  volumes: volumes.ForStep(),
 };
 
 // Step standardizes the creation of build steps. The name of the step is used
@@ -94,7 +132,6 @@ local Step(name, image='', target='', depends_on=[], environment={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
 
   local common_env_vars = {
-    BUILDKIT_HOST: '${BUILDKIT_HOST=tcp://buildkitd.ci.svc:1234}',
     BINDIR: '/usr/local/bin',
   },
 
@@ -109,7 +146,7 @@ local Step(name, image='', target='', depends_on=[], environment={}) = {
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
-local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=true, disable_clone=false) = {
+local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
   local node = { 'node-role.kubernetes.io/ci': '' },
 
   kind: 'pipeline',
@@ -117,7 +154,6 @@ local Pipeline(name, steps=[], depends_on=[], with_buildkit=false, with_docker=t
   node: node,
   services: [
     if with_docker then docker,
-    if with_buildkit then buildkit,
   ],
   [ if disable_clone then 'clone']: {
     disable: true,
@@ -136,22 +172,22 @@ local fetchtags = {
   ],
 };
 
-local machined = Step("machined", depends_on=[fetchtags]);
-local osd = Step("osd", depends_on=[fetchtags]);
-local trustd = Step("trustd", depends_on=[fetchtags]);
-local ntpd = Step("ntpd", depends_on=[fetchtags]);
-local networkd = Step("networkd", depends_on=[fetchtags]);
-local apid = Step("apid", depends_on=[fetchtags]);
-local osctl_linux = Step("osctl-linux", depends_on=[fetchtags]);
-local osctl_darwin = Step("osctl-darwin", depends_on=[fetchtags]);
-local integration_test = Step("integration-test", depends_on=[fetchtags]);
+local machined = Step("machined", depends_on=[buildx]);
+local osd = Step("osd", depends_on=[buildx]);
+local trustd = Step("trustd", depends_on=[buildx]);
+local ntpd = Step("ntpd", depends_on=[buildx]);
+local networkd = Step("networkd", depends_on=[buildx]);
+local apid = Step("apid", depends_on=[buildx]);
+local osctl_linux = Step("osctl-linux", depends_on=[buildx]);
+local osctl_darwin = Step("osctl-darwin", depends_on=[buildx]);
+local integration_test = Step("integration-test", depends_on=[buildx]);
 local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
-local lint = Step("lint");
-local protolint = Step("protolint");
-local markdownlint = Step("markdownlint");
+local lint = Step("lint", depends_on=[buildx]);
+local protolint = Step("protolint", depends_on=[buildx]);
+local markdownlint = Step("markdownlint", depends_on=[buildx]);
 local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[lint]);
@@ -193,6 +229,7 @@ local push_latest = {
 
 local default_steps = [
   fetchtags,
+  buildx,
   machined,
   osd,
   apid,
@@ -438,11 +475,12 @@ local notify_depends_on = {
   ],
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, false, true) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
 
 // Final configuration file definition.
 
 [
+  secret,
   default_pipeline,
   e2e_pipeline,
   conformance_pipeline,
