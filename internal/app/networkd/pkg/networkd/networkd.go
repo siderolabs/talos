@@ -172,17 +172,17 @@ func (n *Networkd) Configure() (err error) {
 
 			// Ensure link exists
 			if err = netif.Create(); err != nil {
-				log.Println("error creating nic", err)
+				log.Printf("error creating nic: %v", err)
 				return
 			}
 
 			if err = netif.Configure(); err != nil {
-				log.Println("error configuring nic", err)
+				log.Printf("error configuring nic: %v", err)
 				return
 			}
 
 			if err = netif.Addressing(); err != nil {
-				log.Println("error configuring addressing", err)
+				log.Printf("error configuring addressing: %v", err)
 				return
 			}
 		}(iface, &wg)
@@ -207,17 +207,17 @@ func (n *Networkd) Configure() (err error) {
 
 			// Ensure link exists
 			if err = netif.Create(); err != nil {
-				log.Println("error creating nic", err)
+				log.Printf("error creating nic: %v", err)
 				return
 			}
 
 			if err = netif.Configure(); err != nil {
-				log.Println("error configuring nic", err)
+				log.Printf("error configuring nic: %v", err)
 				return
 			}
 
 			if err = netif.Addressing(); err != nil {
-				log.Println("error configuring addressing", err)
+				log.Printf("error configuring addressing: %v", err)
 				return
 			}
 		}(iface, &wg)
