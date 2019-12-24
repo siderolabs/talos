@@ -17,7 +17,7 @@ osctl cluster create [flags]
       --cidr string                 CIDR of the docker bridge network (default "10.5.0.0/24")
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
   -h, --help                        help for create
-      --image string                the image to use (default "docker.io/autonomy/talos:v0.3.0-beta.0-16-g1b0b6b3d-dirty")
+      --image string                the image to use (default "docker.io/autonomy/talos:latest")
       --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)

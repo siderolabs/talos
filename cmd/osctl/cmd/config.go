@@ -20,7 +20,6 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
@@ -268,7 +267,7 @@ func init() {
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
 	configGenerateCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
-	configGenerateCmd.Flags().StringVar(&installImage, "install-image", fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, version.Tag), "the image used to perform an installation")
+	configGenerateCmd.Flags().StringVar(&installImage, "install-image", defaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation") // nolint: lll
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	configGenerateCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")

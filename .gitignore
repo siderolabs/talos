@@ -1,6 +1,4 @@
-bin
-build
-images
+_out
 .vscode
 init.yaml
 controlplane.yaml
