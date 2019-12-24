@@ -243,6 +243,10 @@ const (
 	// the installer.
 	DefaultInstallerImageRepository = "docker.io/autonomy/installer"
 
+	// DefaultTalosImageRepository is the default container repository for
+	// the talos image.
+	DefaultTalosImageRepository = "docker.io/autonomy/talos"
+
 	// DefaultLogPath is the default path to the log storage directory.
 	DefaultLogPath = SystemRunPath + "/log"
 

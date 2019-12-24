@@ -60,11 +60,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-osd
+- name: osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-osd
+  - make osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -81,11 +81,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-apid
+- name: apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-apid
+  - make apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -102,11 +102,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-trustd
+- name: trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-trustd
+  - make trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -123,11 +123,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-ntpd
+- name: ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-ntpd
+  - make ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -144,11 +144,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-networkd
+- name: networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-networkd
+  - make networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -207,6 +207,27 @@ steps:
   depends_on:
   - setup-ci
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - osctl-linux
+
 - name: integration-test
   pull: always
   image: autonomy/build-container:latest
@@ -232,7 +253,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make rootfs
+  - make target-rootfs
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -248,11 +269,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - service-osd
-  - service-trustd
-  - service-ntpd
-  - service-networkd
-  - service-apid
+  - osd
+  - trustd
+  - ntpd
+  - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -296,11 +317,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
+- name: talos
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make container
+  - make talos
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -421,6 +442,7 @@ steps:
     path: /tmp
   depends_on:
   - rootfs
+  - talos
 
 - name: unit-tests-race
   pull: always
@@ -475,7 +497,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - container
+  - unit-tests
+  - talos
   - osctl-linux
   - integration-test
 
@@ -612,11 +635,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-osd
+- name: osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-osd
+  - make osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -633,11 +656,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-apid
+- name: apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-apid
+  - make apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -654,11 +677,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-trustd
+- name: trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-trustd
+  - make trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -675,11 +698,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-ntpd
+- name: ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-ntpd
+  - make ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -696,11 +719,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-networkd
+- name: networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-networkd
+  - make networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -759,6 +782,27 @@ steps:
   depends_on:
   - setup-ci
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - osctl-linux
+
 - name: integration-test
   pull: always
   image: autonomy/build-container:latest
@@ -784,7 +828,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make rootfs
+  - make target-rootfs
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -800,11 +844,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - service-osd
-  - service-trustd
-  - service-ntpd
-  - service-networkd
-  - service-apid
+  - osd
+  - trustd
+  - ntpd
+  - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -848,11 +892,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
+- name: talos
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make container
+  - make talos
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -973,6 +1017,7 @@ steps:
     path: /tmp
   depends_on:
   - rootfs
+  - talos
 
 - name: unit-tests-race
   pull: always
@@ -1027,7 +1072,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - container
+  - unit-tests
+  - talos
   - osctl-linux
   - integration-test
 
@@ -1334,11 +1380,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-osd
+- name: osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-osd
+  - make osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1355,11 +1401,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-apid
+- name: apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-apid
+  - make apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1376,11 +1422,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-trustd
+- name: trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-trustd
+  - make trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1397,11 +1443,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-ntpd
+- name: ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-ntpd
+  - make ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1418,11 +1464,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-networkd
+- name: networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-networkd
+  - make networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1481,6 +1527,27 @@ steps:
   depends_on:
   - setup-ci
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - osctl-linux
+
 - name: integration-test
   pull: always
   image: autonomy/build-container:latest
@@ -1506,7 +1573,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make rootfs
+  - make target-rootfs
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1522,11 +1589,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - service-osd
-  - service-trustd
-  - service-ntpd
-  - service-networkd
-  - service-apid
+  - osd
+  - trustd
+  - ntpd
+  - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -1570,11 +1637,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
+- name: talos
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make container
+  - make talos
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1695,6 +1762,7 @@ steps:
     path: /tmp
   depends_on:
   - rootfs
+  - talos
 
 - name: unit-tests-race
   pull: always
@@ -1749,7 +1817,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - container
+  - unit-tests
+  - talos
   - osctl-linux
   - integration-test
 
@@ -2090,11 +2159,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-osd
+- name: osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-osd
+  - make osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2111,11 +2180,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-apid
+- name: apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-apid
+  - make apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2132,11 +2201,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-trustd
+- name: trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-trustd
+  - make trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2153,11 +2222,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-ntpd
+- name: ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-ntpd
+  - make ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2174,11 +2243,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-networkd
+- name: networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-networkd
+  - make networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2237,6 +2306,27 @@ steps:
   depends_on:
   - setup-ci
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - osctl-linux
+
 - name: integration-test
   pull: always
   image: autonomy/build-container:latest
@@ -2262,7 +2352,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make rootfs
+  - make target-rootfs
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2278,11 +2368,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - service-osd
-  - service-trustd
-  - service-ntpd
-  - service-networkd
-  - service-apid
+  - osd
+  - trustd
+  - ntpd
+  - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -2326,11 +2416,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
+- name: talos
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make container
+  - make talos
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2451,6 +2541,7 @@ steps:
     path: /tmp
   depends_on:
   - rootfs
+  - talos
 
 - name: unit-tests-race
   pull: always
@@ -2505,7 +2596,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - container
+  - unit-tests
+  - talos
   - osctl-linux
   - integration-test
 
@@ -2846,11 +2938,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-osd
+- name: osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-osd
+  - make osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2867,11 +2959,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-apid
+- name: apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-apid
+  - make apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2888,11 +2980,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-trustd
+- name: trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-trustd
+  - make trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2909,11 +3001,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-ntpd
+- name: ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-ntpd
+  - make ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2930,11 +3022,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: service-networkd
+- name: networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make service-networkd
+  - make networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2993,6 +3085,27 @@ steps:
   depends_on:
   - setup-ci
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - osctl-linux
+
 - name: integration-test
   pull: always
   image: autonomy/build-container:latest
@@ -3018,7 +3131,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make rootfs
+  - make target-rootfs
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -3034,11 +3147,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - service-osd
-  - service-trustd
-  - service-ntpd
-  - service-networkd
-  - service-apid
+  - osd
+  - trustd
+  - ntpd
+  - networkd
+  - apid
 
 - name: initramfs
   pull: always
@@ -3082,11 +3195,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: container
+- name: talos
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make container
+  - make talos
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -3207,6 +3320,7 @@ steps:
     path: /tmp
   depends_on:
   - rootfs
+  - talos
 
 - name: unit-tests-race
   pull: always
@@ -3261,7 +3375,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - container
+  - unit-tests
+  - talos
   - osctl-linux
   - integration-test
 
@@ -3451,7 +3566,7 @@ steps:
     - sha512
     draft: true
     files:
-    - build/*
+    - _out/*
   when:
     event:
     - tag

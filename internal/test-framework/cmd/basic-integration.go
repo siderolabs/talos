@@ -31,6 +31,7 @@ const (
 )
 
 var (
+	artifacts  string
 	cleanup    bool
 	talosImage = "docker.io/autonomy/talos:" + os.Getenv("TAG")
 	kubeImage  = constants.KubernetesImage + ":v" + constants.DefaultKubernetesVersion
@@ -67,6 +68,7 @@ var runnerConfig = &runner.ContainerConfigs{
 }
 
 func init() {
+	basicIntegrationCmd.Flags().StringVar(&artifacts, "artifacts", os.Getenv("ARTIFACTS"), "The artifact source directory")
 	basicIntegrationCmd.Flags().BoolVar(&cleanup, "cleanup", false, "Cleanup the created cluster after completion")
 	rootCmd.AddCommand(basicIntegrationCmd)
 }
@@ -119,7 +121,7 @@ func basicIntegration() error {
 		return err
 	}
 
-	osctlBinPath := filepath.Join(currentDir, "build", osctlBinary)
+	osctlBinPath := filepath.Join(currentDir, artifacts, osctlBinary)
 	integrationBinPath := filepath.Join(currentDir, "bin", "integration-test")
 
 	runnerConfig.HostConfig.Mounts = append(runnerConfig.HostConfig.Mounts,

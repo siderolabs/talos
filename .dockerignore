@@ -3,7 +3,7 @@
 !cmd
 !docs
 !hack
-!images/*.tar
+!_out/images/*.tar
 !internal
 !pkg
 !vendor
