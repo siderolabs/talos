@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
@@ -118,4 +119,16 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 
 		return action(ctx, c)
 	})
+}
+
+func defaultImage(image string) string {
+	return fmt.Sprintf("%s:%s", image, getEnv("TAG", version.Tag))
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return fallback
 }

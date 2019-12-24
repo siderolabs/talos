@@ -1,4 +1,5 @@
 <!-- markdownlint-disable -->
+
 ## osctl cluster create
 
 Creates a local docker-based kubernetes cluster
@@ -16,6 +17,9 @@ osctl cluster create [flags]
 ```
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
   -h, --help                        help for create
+      --image string                the image to use (default "docker.io/autonomy/talos:latest")
+      --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
+      --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
       --workers int                 the number of workers to create (default 1)
 ```
@@ -32,4 +36,4 @@ osctl cluster create [flags]
 
 ### SEE ALSO
 
-* [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based clusters
+- [osctl cluster](osctl_cluster.md) - A collection of commands for managing local docker-based clusters
