@@ -105,16 +105,17 @@ local docker = {
   volumes: volumes.ForStep(),
 };
 
-// Sets up the buildx backend
-local buildx = {
-  name: 'buildx',
+// Sets up the CI environment
+local setup_ci = {
+  name: 'setup-ci',
   image: 'autonomy/build-container:latest',
   privileged: true,
   environment: {
     BUILDX_KUBECONFIG: { from_secret: secret.name },
   },
   commands: [
-    "apk add coreutils",
+    'git fetch --tags',
+    'apk add coreutils',
     'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
     'docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
     'docker buildx inspect --bootstrap'
@@ -164,33 +165,26 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 };
 
 // Default pipeline.
-local fetchtags = {
-  name: 'fetch-tags',
-  image: 'docker:git',
-  commands: [
-    'git fetch --tags',
-  ],
-};
 
-local machined = Step("machined", depends_on=[buildx]);
-local osd = Step("osd", depends_on=[buildx]);
-local trustd = Step("trustd", depends_on=[buildx]);
-local ntpd = Step("ntpd", depends_on=[buildx]);
-local networkd = Step("networkd", depends_on=[buildx]);
-local apid = Step("apid", depends_on=[buildx]);
-local osctl_linux = Step("osctl-linux", depends_on=[buildx]);
-local osctl_darwin = Step("osctl-darwin", depends_on=[buildx]);
-local integration_test = Step("integration-test", depends_on=[buildx]);
+local machined = Step("machined", depends_on=[setup_ci]);
+local osd = Step("service-osd", depends_on=[setup_ci]);
+local trustd = Step("service-trustd", depends_on=[setup_ci]);
+local ntpd = Step("service-ntpd", depends_on=[setup_ci]);
+local networkd = Step("service-networkd", depends_on=[setup_ci]);
+local apid = Step("service-apid", depends_on=[setup_ci]);
+local osctl_linux = Step("osctl-linux", depends_on=[setup_ci]);
+local osctl_darwin = Step("osctl-darwin", depends_on=[setup_ci]);
+local integration_test = Step("integration-test", depends_on=[setup_ci]);
 local rootfs =  Step("rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
 local initramfs = Step("initramfs", depends_on=[rootfs]);
 local installer = Step("installer", depends_on=[rootfs]);
 local container = Step("container", depends_on=[rootfs]);
-local lint = Step("lint", depends_on=[buildx]);
-local protolint = Step("protolint", depends_on=[buildx]);
-local markdownlint = Step("markdownlint", depends_on=[buildx]);
+local golint = Step("lint-go", depends_on=[setup_ci]);
+local protobuflint = Step("lint-protobuf", depends_on=[setup_ci]);
+local markdownlint = Step("lint-markdown", depends_on=[setup_ci]);
 local image_test = Step("image-test", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs]);
-local unit_tests_race = Step("unit-tests-race", depends_on=[lint]);
+local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
 local basic_integration = Step("basic-integration", image="golang:1.13", depends_on=[container, osctl_linux, integration_test]);
 
 local coverage = {
@@ -228,8 +222,7 @@ local push_latest = {
 };
 
 local default_steps = [
-  fetchtags,
-  buildx,
+  setup_ci,
   machined,
   osd,
   apid,
@@ -243,8 +236,8 @@ local default_steps = [
   initramfs,
   installer,
   container,
-  lint,
-  protolint,
+  golint,
+  protobuflint,
   markdownlint,
   image_test,
   unit_tests,
