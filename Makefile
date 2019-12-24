@@ -1,16 +1,9 @@
 TOOLS ?= autonomy/tools:8fdb32d
 
-KUBECTL_VERSION ?= v1.17.0
 GO_VERSION ?= 1.13
 
+BINDIR ?= ./bin
 UNAME_S := $(shell uname -s)
-
-ifeq ($(UNAME_S),Linux)
-KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
-endif
-ifeq ($(UNAME_S),Darwin)
-KUBECTL_ARCHIVE := https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/darwin/amd64/kubectl
-endif
 
 ifeq ($(UNAME_S),Linux)
 GITMETA := https://github.com/talos-systems/gitmeta/releases/download/v0.1.0-alpha.3/gitmeta-linux-amd64
@@ -27,8 +20,6 @@ ifeq ($(UNAME_S),Darwin)
 OSCTL_DEFAULT_TARGET := osctl-darwin
 OSCTL_COMMAND := build/osctl-darwin-amd64
 endif
-
-BINDIR ?= ./bin
 
 REGISTRY ?= docker.io
 USERNAME ?= autonomy
@@ -52,14 +43,9 @@ COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
 COMMON_ARGS += .
 
-DOCKER_ARGS ?=
-
 TESTPKGS ?= ./...
 
-all: ci rootfs initramfs kernel osctl-linux osctl-darwin installer container
-
-.PHONY: ci
-ci: builddeps
+all: builddeps rootfs initramfs kernel osctl-linux osctl-darwin installer container
 
 .PHONY: builddeps
 builddeps: gitmeta
@@ -70,13 +56,6 @@ $(BINDIR)/gitmeta:
 	@mkdir -p $(BINDIR)
 	@curl -L $(GITMETA) -o $(BINDIR)/gitmeta
 	@chmod +x $(BINDIR)/gitmeta
-
-kubectl: $(BINDIR)/kubectl
-
-$(BINDIR)/kubectl:
-	@mkdir -p $(BINDIR)
-	@curl -L -o $(BINDIR)/kubectl $(KUBECTL_ARCHIVE)
-	@chmod +x $(BINDIR)/kubectl
 
 base:
 	@$(BUILD) \
@@ -115,14 +94,14 @@ initramfs:
 		$(COMMON_ARGS)
 
 .PHONY: squashfs
-squashfs: osd trustd ntpd networkd apid
+squashfs: service-osd service-trustd service-ntpd service-networkd service-apid
 	@$(BUILD) \
 		--output type=local,dest=build \
 		--target=$@ \
 		$(COMMON_ARGS)
 
 .PHONY: rootfs
-rootfs: osd trustd ntpd networkd apid
+rootfs: service-osd service-trustd service-ntpd service-networkd service-apid
 	@$(BUILD) \
 		--target=$@ \
 		$(COMMON_ARGS)
@@ -139,7 +118,7 @@ installer:
 .PHONY: image-aws
 image-aws:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n aws \
@@ -154,7 +133,7 @@ image-aws:
 .PHONY: image-azure
 image-azure:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n azure \
@@ -164,7 +143,7 @@ image-azure:
 		-e console=ttyS0,115200n8 \
 		-e earlyprintk=ttyS0,115200 \
 		-e rootdelay=300
-	@docker run --rm -v $(PWD)/build:/out $(DOCKER_ARGS) \
+	@docker run --rm -v $(PWD)/build:/out \
 		--entrypoint qemu-img \
 		autonomy/installer:$(TAG) \
 		convert \
@@ -177,7 +156,7 @@ image-azure:
 .PHONY: image-digital-ocean
 image-digital-ocean:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n digital-ocean \
@@ -190,7 +169,7 @@ image-digital-ocean:
 .PHONY: image-gcp
 image-gcp:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-n disk \
@@ -204,7 +183,7 @@ image-gcp:
 .PHONY: image-vmware
 image-vmware:
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		install \
 		-r \
@@ -213,26 +192,17 @@ image-vmware:
 		-e console=tty0 \
 		-e earlyprintk=ttyS0,115200
 	@docker run --rm -v /dev:/dev -v $(PWD)/build:/out \
-		--privileged $(DOCKER_ARGS) \
+		--privileged \
 		autonomy/installer:$(TAG) \
 		ova
 	@rm -rf $(PWD)/build/talos.raw
 
-.PHONY: push-image-aws
-push-image-aws:
-	@TAG=$(TAG) SHA=$(SHA) ./hack/test/aws-setup.sh
-
-.PHONY: push-image-azure
-push-image-azure:
-	@TAG=$(TAG) ./hack/test/azure-setup.sh
-
-.PHONY: push-image-gcp
-push-image-gcp:
-	@TAG=$(TAG) SHA=$(SHA) ./hack/test/gcp-setup.sh
-
 .PHONY: image-test
 image-test:
-	@docker run --rm -v /dev:/dev -v /tmp:/out --privileged $(DOCKER_ARGS) autonomy/installer:$(TAG) install -n test -r -p test -u none
+	@docker run --rm -v /dev:/dev -v /tmp:/out --privileged autonomy/installer:$(TAG) install -n test -r -p test -u none
+
+push-image-%:
+	@TAG=$(TAG) SHA=$(SHA) ./hack/test/$*-setup.sh
 
 .PHONY: iso
 iso:
@@ -285,81 +255,30 @@ integration-test:
 fmt:
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports && cd - && gofumports -w -local github.com/talos-systems/talos ."
 
-.PHONY: lint
-lint:
+lint-%:
 	@$(BUILD) \
 		--target=$@ \
 		$(COMMON_ARGS)
 
-.PHONY: protolint
-protolint:
-	@$(BUILD) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: markdownlint
-markdownlint:
-	@$(BUILD) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: osctl-linux
-osctl-linux:
+osctl-%:
 	@$(BUILD) \
 		--output type=local,dest=build \
-		--target=$@ \
+		--target=osctl-$* \
 		$(COMMON_ARGS)
-
-.PHONY: osctl-darwin
-osctl-darwin:
-	@$(BUILD) \
-		--output type=local,dest=build \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: machined
-machined: images
-	@$(BUILD) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: osd
-osd: images
-	@$(BUILD) \
-		--output type=docker,dest=images/$@.tar,name=$(REGISTRY_AND_USERNAME)/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: apid
-apid: images
-	@$(BUILD) \
-		--output type=docker,dest=images/$@.tar,name=$(REGISTRY_AND_USERNAME)/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: trustd
-trustd: images
-	@$(BUILD) \
-		--output type=docker,dest=images/$@.tar,name=$(REGISTRY_AND_USERNAME)/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: ntpd
-ntpd: images
-	@$(BUILD) \
-		--output type=docker,dest=images/$@.tar,name=$(REGISTRY_AND_USERNAME)/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
-.PHONY: networkd
-networkd: images
-	@$(BUILD) \
-		--output type=docker,dest=images/$@.tar,name=$(REGISTRY_AND_USERNAME)/$@:$(TAG) \
-		--target=$@ \
-		$(COMMON_ARGS)
-
 images:
 	@mkdir -p images
+
+.PHONY: machined
+machined:
+	@$(BUILD) \
+		--target=$@ \
+		$(COMMON_ARGS)
+
+service-%: images
+	@$(BUILD) \
+		--output type=docker,dest=images/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) \
+		--target=$* \
+		$(COMMON_ARGS)
 
 .PHONY: login
 login:
@@ -377,4 +296,4 @@ endif
 
 .PHONY: clean
 clean:
-	@-rm -rf build images vendor
+	@-rm -rf build images
