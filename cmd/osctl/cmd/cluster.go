@@ -29,7 +29,6 @@ import (
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
-	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
@@ -383,7 +382,7 @@ func parseCPUShare() (int64, error) {
 }
 
 func init() {
-	clusterUpCmd.Flags().StringVar(&nodeImage, "image", "docker.io/autonomy/talos:"+version.Tag, "the image to use")
+	clusterUpCmd.Flags().StringVar(&nodeImage, "image", defaultImage(constants.DefaultTalosImageRepository), "the image to use")
 	clusterUpCmd.Flags().StringVar(&networkMTU, "mtu", "1500", "MTU of the docker bridge network")
 	clusterUpCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")

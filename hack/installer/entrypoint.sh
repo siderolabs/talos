@@ -137,6 +137,19 @@ case "$1" in
     create_iso
     ;;
   ova)
+  shift
+    while getopts "n:" opt; do
+      case ${opt} in
+        n )
+          TALOS_RAW="/out/${OPTARG}.raw"
+          ;;
+        : )
+          echo "Invalid Option: -${OPTARG} requires an argument" 1>&2
+          exit 1
+          ;;
+      esac
+    done
+    shift $((OPTIND-1))
     create_ova
     ;;
   ami)

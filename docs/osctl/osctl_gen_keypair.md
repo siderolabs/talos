@@ -14,9 +14,9 @@ osctl gen keypair [flags]
 ### Options
 
 ```
-      --ca string   path to the PEM encoded CERTIFICATE
-  -h, --help        help for keypair
-      --ip string   generate the certificate for this IP address
+  -h, --help                  help for keypair
+      --ip string             generate the certificate for this IP address
+      --organization string   X.509 distinguished name for the Organization
 ```
 
 ### Options inherited from parent commands

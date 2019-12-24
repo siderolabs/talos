@@ -77,12 +77,6 @@ COPY --from=generate /api ./api
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 
-FROM base AS docs-build
-RUN go generate ./pkg/config/types/v1alpha1
-
-FROM scratch AS docs
-COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.3/en/configuration/v1alpha1.md
-
 # The init target builds the init binary.
 
 FROM base AS init-build
@@ -230,11 +224,12 @@ COPY --from=docker.io/autonomy/util-linux:497d974 /lib/libuuid.* /rootfs/lib
 COPY --from=docker.io/autonomy/kmod:497d974 /usr/lib/libkmod.* /rootfs/lib
 COPY --from=docker.io/autonomy/kernel:497d974 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
-COPY images/apid.tar /rootfs/usr/images/
-COPY images/ntpd.tar /rootfs/usr/images/
-COPY images/osd.tar /rootfs/usr/images/
-COPY images/trustd.tar /rootfs/usr/images/
-COPY images/networkd.tar /rootfs/usr/images/
+ARG IMAGES
+COPY ${IMAGES}/apid.tar /rootfs/usr/images/
+COPY ${IMAGES}/ntpd.tar /rootfs/usr/images/
+COPY ${IMAGES}/osd.tar /rootfs/usr/images/
+COPY ${IMAGES}/trustd.tar /rootfs/usr/images/
+COPY ${IMAGES}/networkd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -271,10 +266,10 @@ RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 
 FROM scratch AS initramfs
 COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
 
-# The container target generates a docker image that can be used to run Talos
+# The talos target generates a docker image that can be used to run Talos
 # in containers.
 
-FROM scratch AS container
+FROM scratch AS talos
 COPY --from=rootfs / /
 ENTRYPOINT ["/sbin/init"]
 
@@ -379,3 +374,15 @@ WORKDIR /src
 COPY .markdownlint.json .
 COPY docs .
 RUN markdownlint --rules /node_modules/sentences-per-line/index.js .
+
+# The docs target generates documentation.
+
+FROM base AS docs-build
+RUN go generate ./pkg/config/types/v1alpha1
+COPY --from=osctl-linux /osctl-linux-amd64 /bin/osctl
+RUN mkdir -p /docs/osctl \
+    && env HOME=/home/user TAG=latest /bin/osctl docs /docs/osctl
+
+FROM scratch AS docs
+COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.3/en/configuration/v1alpha1.md
+COPY --from=docs-build /docs/osctl/* /docs/osctl/
