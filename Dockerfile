@@ -357,7 +357,7 @@ COPY --from=integration-test-build /src/integration.test /integration-test
 
 # The lint target performs linting on the source code.
 
-FROM base AS lint
+FROM base AS lint-go
 COPY hack/golang/golangci-lint.yaml .
 ENV GOGC=50
 RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
@@ -366,13 +366,13 @@ RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z 
 
 # The protolint target performs linting on Markdown files.
 
-FROM base AS protolint
+FROM base AS lint-protobuf
 COPY prototool.yaml /src
 RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include .
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:8.16.1-alpine AS markdownlint
+FROM node:8.16.1-alpine AS lint-markdown
 RUN npm install -g markdownlint-cli
 RUN npm i sentences-per-line
 WORKDIR /src

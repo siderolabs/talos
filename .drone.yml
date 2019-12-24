@@ -15,14 +15,10 @@ platform:
   arch: amd64
 
 steps:
-- name: fetch-tags
-  image: docker:git
-  commands:
-  - git fetch --tags
-
-- name: buildx
+- name: setup-ci
   image: autonomy/build-container:latest
   commands:
+  - git fetch --tags
   - apk add coreutils
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
@@ -62,13 +58,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: osd
+- name: service-osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osd
+  - make service-osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -83,13 +79,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: apid
+- name: service-apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make apid
+  - make service-apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -104,13 +100,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: trustd
+- name: service-trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make trustd
+  - make service-trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -125,13 +121,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: ntpd
+- name: service-ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make ntpd
+  - make service-ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -146,13 +142,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: networkd
+- name: service-networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make networkd
+  - make service-networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -167,7 +163,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-linux
   pull: always
@@ -188,7 +184,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-darwin
   pull: always
@@ -209,7 +205,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: integration-test
   pull: always
@@ -230,7 +226,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: rootfs
   pull: always
@@ -252,11 +248,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
+  - service-osd
+  - service-trustd
+  - service-ntpd
+  - service-networkd
+  - service-apid
 
 - name: initramfs
   pull: always
@@ -321,11 +317,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
+- name: lint-go
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make lint
+  - make lint-go
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -340,13 +336,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: protolint
+- name: lint-protobuf
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make protolint
+  - make lint-protobuf
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -361,13 +357,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: markdownlint
+- name: lint-markdown
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make markdownlint
+  - make lint-markdown
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -382,7 +378,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: image-test
   pull: always
@@ -445,7 +441,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint
+  - lint-go
 
 - name: coverage
   image: plugins/codecov
@@ -571,14 +567,10 @@ platform:
   arch: amd64
 
 steps:
-- name: fetch-tags
-  image: docker:git
-  commands:
-  - git fetch --tags
-
-- name: buildx
+- name: setup-ci
   image: autonomy/build-container:latest
   commands:
+  - git fetch --tags
   - apk add coreutils
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
@@ -618,13 +610,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: osd
+- name: service-osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osd
+  - make service-osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -639,13 +631,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: apid
+- name: service-apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make apid
+  - make service-apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -660,13 +652,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: trustd
+- name: service-trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make trustd
+  - make service-trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -681,13 +673,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: ntpd
+- name: service-ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make ntpd
+  - make service-ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -702,13 +694,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: networkd
+- name: service-networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make networkd
+  - make service-networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -723,7 +715,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-linux
   pull: always
@@ -744,7 +736,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-darwin
   pull: always
@@ -765,7 +757,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: integration-test
   pull: always
@@ -786,7 +778,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: rootfs
   pull: always
@@ -808,11 +800,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
+  - service-osd
+  - service-trustd
+  - service-ntpd
+  - service-networkd
+  - service-apid
 
 - name: initramfs
   pull: always
@@ -877,11 +869,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
+- name: lint-go
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make lint
+  - make lint-go
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -896,13 +888,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: protolint
+- name: lint-protobuf
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make protolint
+  - make lint-protobuf
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -917,13 +909,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: markdownlint
+- name: lint-markdown
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make markdownlint
+  - make lint-markdown
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -938,7 +930,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: image-test
   pull: always
@@ -1001,7 +993,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint
+  - lint-go
 
 - name: coverage
   image: plugins/codecov
@@ -1297,14 +1289,10 @@ platform:
   arch: amd64
 
 steps:
-- name: fetch-tags
-  image: docker:git
-  commands:
-  - git fetch --tags
-
-- name: buildx
+- name: setup-ci
   image: autonomy/build-container:latest
   commands:
+  - git fetch --tags
   - apk add coreutils
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
@@ -1344,13 +1332,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: osd
+- name: service-osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osd
+  - make service-osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1365,13 +1353,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: apid
+- name: service-apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make apid
+  - make service-apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1386,13 +1374,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: trustd
+- name: service-trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make trustd
+  - make service-trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1407,13 +1395,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: ntpd
+- name: service-ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make ntpd
+  - make service-ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1428,13 +1416,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: networkd
+- name: service-networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make networkd
+  - make service-networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1449,7 +1437,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-linux
   pull: always
@@ -1470,7 +1458,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-darwin
   pull: always
@@ -1491,7 +1479,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: integration-test
   pull: always
@@ -1512,7 +1500,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: rootfs
   pull: always
@@ -1534,11 +1522,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
+  - service-osd
+  - service-trustd
+  - service-ntpd
+  - service-networkd
+  - service-apid
 
 - name: initramfs
   pull: always
@@ -1603,11 +1591,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
+- name: lint-go
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make lint
+  - make lint-go
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1622,13 +1610,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: protolint
+- name: lint-protobuf
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make protolint
+  - make lint-protobuf
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1643,13 +1631,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: markdownlint
+- name: lint-markdown
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make markdownlint
+  - make lint-markdown
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -1664,7 +1652,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: image-test
   pull: always
@@ -1727,7 +1715,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint
+  - lint-go
 
 - name: coverage
   image: plugins/codecov
@@ -2057,14 +2045,10 @@ platform:
   arch: amd64
 
 steps:
-- name: fetch-tags
-  image: docker:git
-  commands:
-  - git fetch --tags
-
-- name: buildx
+- name: setup-ci
   image: autonomy/build-container:latest
   commands:
+  - git fetch --tags
   - apk add coreutils
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
@@ -2104,13 +2088,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: osd
+- name: service-osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osd
+  - make service-osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2125,13 +2109,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: apid
+- name: service-apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make apid
+  - make service-apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2146,13 +2130,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: trustd
+- name: service-trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make trustd
+  - make service-trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2167,13 +2151,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: ntpd
+- name: service-ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make ntpd
+  - make service-ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2188,13 +2172,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: networkd
+- name: service-networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make networkd
+  - make service-networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2209,7 +2193,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-linux
   pull: always
@@ -2230,7 +2214,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-darwin
   pull: always
@@ -2251,7 +2235,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: integration-test
   pull: always
@@ -2272,7 +2256,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: rootfs
   pull: always
@@ -2294,11 +2278,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
+  - service-osd
+  - service-trustd
+  - service-ntpd
+  - service-networkd
+  - service-apid
 
 - name: initramfs
   pull: always
@@ -2363,11 +2347,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
+- name: lint-go
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make lint
+  - make lint-go
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2382,13 +2366,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: protolint
+- name: lint-protobuf
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make protolint
+  - make lint-protobuf
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2403,13 +2387,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: markdownlint
+- name: lint-markdown
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make markdownlint
+  - make lint-markdown
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2424,7 +2408,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: image-test
   pull: always
@@ -2487,7 +2471,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint
+  - lint-go
 
 - name: coverage
   image: plugins/codecov
@@ -2817,14 +2801,10 @@ platform:
   arch: amd64
 
 steps:
-- name: fetch-tags
-  image: docker:git
-  commands:
-  - git fetch --tags
-
-- name: buildx
+- name: setup-ci
   image: autonomy/build-container:latest
   commands:
+  - git fetch --tags
   - apk add coreutils
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
@@ -2864,13 +2844,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: osd
+- name: service-osd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osd
+  - make service-osd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2885,13 +2865,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: apid
+- name: service-apid
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make apid
+  - make service-apid
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2906,13 +2886,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: trustd
+- name: service-trustd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make trustd
+  - make service-trustd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2927,13 +2907,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: ntpd
+- name: service-ntpd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make ntpd
+  - make service-ntpd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2948,13 +2928,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: networkd
+- name: service-networkd
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make networkd
+  - make service-networkd
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -2969,7 +2949,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-linux
   pull: always
@@ -2990,7 +2970,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: osctl-darwin
   pull: always
@@ -3011,7 +2991,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: integration-test
   pull: always
@@ -3032,7 +3012,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: rootfs
   pull: always
@@ -3054,11 +3034,11 @@ steps:
     path: /tmp
   depends_on:
   - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
+  - service-osd
+  - service-trustd
+  - service-ntpd
+  - service-networkd
+  - service-apid
 
 - name: initramfs
   pull: always
@@ -3123,11 +3103,11 @@ steps:
   depends_on:
   - rootfs
 
-- name: lint
+- name: lint-go
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make lint
+  - make lint-go
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -3142,13 +3122,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: protolint
+- name: lint-protobuf
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make protolint
+  - make lint-protobuf
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -3163,13 +3143,13 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
-- name: markdownlint
+- name: lint-markdown
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make markdownlint
+  - make lint-markdown
   environment:
     BINDIR: /usr/local/bin
   volumes:
@@ -3184,7 +3164,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - buildx
+  - setup-ci
 
 - name: image-test
   pull: always
@@ -3247,7 +3227,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint
+  - lint-go
 
 - name: coverage
   image: plugins/codecov
