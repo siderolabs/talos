@@ -213,7 +213,7 @@ local push_latest = {
     DOCKER_USERNAME: { from_secret: 'docker_username' },
     DOCKER_PASSWORD: { from_secret: 'docker_password' },
   },
-  commands: ['make gitmeta', 'make login', 'make push-latest'],
+  commands: ['make login', 'make push-latest'],
   volumes: volumes.ForStep(),
   when: {
     event: {
@@ -326,7 +326,7 @@ local push_edge = {
     DOCKER_USERNAME: { from_secret: 'docker_username' },
     DOCKER_PASSWORD: { from_secret: 'docker_password' },
   },
-  commands: ['make gitmeta', 'make login', 'make push-edge'],
+  commands: ['make login', 'make push-edge'],
   volumes: volumes.ForStep(),
   when: {
     event: {
