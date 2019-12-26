@@ -590,7 +590,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-latest
   environment:
@@ -1249,7 +1248,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-latest
   environment:
@@ -2036,7 +2034,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-latest
   environment:
@@ -2244,7 +2241,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-edge
   environment:
@@ -2899,7 +2895,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-latest
   environment:
@@ -3107,7 +3102,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-edge
   environment:
@@ -3762,7 +3756,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make gitmeta
   - make login
   - make push-latest
   environment:
