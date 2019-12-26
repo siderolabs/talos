@@ -29,7 +29,12 @@ func NewMiddleware(logger *log.Logger) *Middleware {
 	}
 }
 
-func extractMetadata(ctx context.Context) string {
+var sensitiveFields = map[string]struct{}{
+	"token": {},
+}
+
+// ExtractMetadata formats metadata from incoming grpc context as string for the log.
+func ExtractMetadata(ctx context.Context) string {
 	md, _ := metadata.FromIncomingContext(ctx)
 	keys := make([]string, 0, len(md))
 
@@ -42,7 +47,13 @@ func extractMetadata(ctx context.Context) string {
 	pairs := make([]string, 0, len(keys))
 
 	for _, key := range keys {
-		pairs = append(pairs, key+"="+strings.Join(md[key], ","))
+		value := strings.Join(md[key], ",")
+
+		if _, sensitive := sensitiveFields[key]; sensitive {
+			value = "<hidden>"
+		}
+
+		pairs = append(pairs, key+"="+value)
 	}
 
 	return strings.Join(pairs, ";")
@@ -63,7 +74,7 @@ func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 			msg = err.Error()
 		}
 
-		m.logger.Printf("%s [%s] %s unary %s (%s)", code, info.FullMethod, duration, msg, extractMetadata(ctx))
+		m.logger.Printf("%s [%s] %s unary %s (%s)", code, info.FullMethod, duration, msg, ExtractMetadata(ctx))
 
 		return resp, err
 	}
@@ -84,7 +95,7 @@ func (m *Middleware) StreamInterceptor() grpc.StreamServerInterceptor {
 			msg = err.Error()
 		}
 
-		m.logger.Printf("%s [%s] %s stream %s (%s)", code, info.FullMethod, duration, msg, extractMetadata(stream.Context()))
+		m.logger.Printf("%s [%s] %s stream %s (%s)", code, info.FullMethod, duration, msg, ExtractMetadata(stream.Context()))
 
 		return err
 	}
