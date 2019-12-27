@@ -4,6 +4,7 @@ go 1.13
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/firecracker-microvm/firecracker-go-sdk v0.19.0 => github.com/smira/firecracker-go-sdk v0.19.1-0.20200110185541-4fce8cba9f84
 	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20200114174616-69b2e9624d84
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
@@ -17,15 +18,17 @@ require (
 	github.com/containerd/containerd v1.3.2
 	github.com/containerd/continuity v0.0.0-20191127005431-f65d91d395eb // indirect
 	github.com/containerd/cri v1.11.1
-	github.com/containerd/fifo v0.0.0-20190816180239-bda0ff6ed73c // indirect
 	github.com/containerd/go-cni v0.0.0-20191121212822-60d125212faf
 	github.com/containerd/ttrpc v0.0.0-20191028202541-4f1b8fe65a5c // indirect
 	github.com/containerd/typeurl v0.0.0-20190911142611-5eb25027c9fd
+	github.com/containernetworking/cni v0.7.2-0.20190807151350-8c6c47d1c7fc
+	github.com/containernetworking/plugins v0.8.2
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/dustin/go-humanize v1.0.0
+	github.com/firecracker-microvm/firecracker-go-sdk v0.19.0
 	github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5
 	github.com/gizak/termui/v3 v3.0.0
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect

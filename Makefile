@@ -27,6 +27,7 @@ COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
 COMMON_ARGS += --build-arg=IMAGES=$(IMAGES)
+COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 
 all: initramfs kernel installer osctl talos

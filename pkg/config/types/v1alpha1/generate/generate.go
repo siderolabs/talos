@@ -309,6 +309,8 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		TrustdInfo:                trustdInfo,
 		AdditionalSubjectAltNames: additionalSubjectAltNames,
 		AdditionalMachineCertSANs: additionalMachineCertSANs,
+		InstallDisk:               options.InstallDisk,
+		InstallImage:              options.InstallImage,
 	}
 
 	return input, nil

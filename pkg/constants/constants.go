@@ -213,6 +213,9 @@ const (
 	// OSSocketPath is the path to file socket of os API.
 	OSSocketPath = SystemRunPath + "/osd/osd.sock"
 
+	// KernelUncompressedAsset defines a well known name for our uncompressed kernel filename
+	KernelUncompressedAsset = "vmlinux"
+
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
 

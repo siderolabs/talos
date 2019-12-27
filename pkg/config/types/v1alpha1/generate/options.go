@@ -16,9 +16,29 @@ func WithEndpointList(endpoints []string) GenOption {
 	}
 }
 
+// WithInstallDisk specifies install disk to use in Talos cluster.
+func WithInstallDisk(disk string) GenOption {
+	return func(o *GenOptions) error {
+		o.InstallDisk = disk
+
+		return nil
+	}
+}
+
+// WithInstallImage specifies install container image to use in Talos cluster.
+func WithInstallImage(imageRef string) GenOption {
+	return func(o *GenOptions) error {
+		o.InstallImage = imageRef
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList []string
+	InstallDisk  string
+	InstallImage string
 }
 
 // DefaultGenOptions returns default options.
