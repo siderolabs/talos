@@ -73,4 +73,5 @@ require (
 	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v0.17.0
 	k8s.io/cri-api v0.0.0-20191121183020-775aa3c1cf73
+	k8s.io/kubelet v0.17.0
 )
