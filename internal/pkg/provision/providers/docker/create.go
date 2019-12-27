@@ -15,6 +15,8 @@ import (
 )
 
 // Create Talos cluster as a set of docker containers on docker network.
+//
+//nolint: gocyclo
 func (p *provisioner) Create(ctx context.Context, request provision.ClusterRequest, opts ...provision.Option) (provision.Cluster, error) {
 	options := provision.DefaultOptions()
 
@@ -38,6 +40,11 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	input, err := generate.NewInput(request.Name, fmt.Sprintf("https://%s:6443", initNode.IP), request.KubernetesVersion)
 	if err != nil {
 		return nil, err
+	}
+
+	if options.ForceEndpoint != "" {
+		input.AdditionalSubjectAltNames = append(input.AdditionalSubjectAltNames, options.ForceEndpoint)
+		input.AdditionalMachineCertSANs = append(input.AdditionalMachineCertSANs, options.ForceEndpoint)
 	}
 
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
@@ -64,12 +71,20 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	nodeInfo = append(nodeInfo, workerNodeInfo...)
 
+	endpoints := []string{"127.0.0.1"}
+
+	if options.ForceEndpoint != "" {
+		endpoints = []string{options.ForceEndpoint}
+	} else if options.ForceInitNodeAsEndpoint {
+		endpoints = []string{initNode.IP.String()}
+	}
+
 	res := &result{
 		talosConfig: &config.Config{
 			Context: request.Name,
 			Contexts: map[string]*config.Context{
 				request.Name: {
-					Endpoints: []string{"127.0.0.1"},
+					Endpoints: endpoints,
 					CA:        base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
 					Crt:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
 					Key:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),

@@ -18,7 +18,7 @@ func initUd(in *Input) (string, error) {
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  &v1alpha1.NetworkConfig{},
 		MachineCA:       in.Certs.OS,
-		MachineCertSANs: []string{},
+		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.TrustdInfo.Token,
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:       in.InstallDisk,

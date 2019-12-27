@@ -3,93 +3,35 @@
 set -eou pipefail
 
 
-export KUBERNETES_VERSION=v1.17.0
-export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
-export TMP="/tmp/e2e"
+TALOS_IMG="docker.io/autonomy/talos:${TAG}"
+OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
+INTEGRATIONTEST="${PWD}/bin/integration-test"
+TMP="/tmp/e2e"
 export TALOSCONFIG="${TMP}/talosconfig"
-export KUBECONFIG="${TMP}/kubeconfig"
-export TIMEOUT=300
-export OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
-export INTEGRATIONTEST="${PWD}/bin/integration-test"
+
+case "${CI:-false}" in
+  true)
+    ENDPOINT="docker"
+    ;;
+  *)
+    ENDPOINT="127.0.0.1"
+    ;;
+esac
 
 case $(uname -s) in
   Linux*)
-    export LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
+    LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
     ;;
   Darwin*)
-    export LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-darwin-amd64"
+    LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-darwin-amd64"
     ;;
   *)
     exit 1
     ;;
 esac
 
-## Create tmp dir
-mkdir -p ${TMP}
+mkdir -p "${TMP}"
 
-run() {
-  docker run \
-         --rm \
-         --interactive \
-         --net=integration \
-         --entrypoint=/bin/bash \
-         --mount type=bind,source=${TMP},target=${TMP} \
-         -v ${OSCTL}:/bin/osctl:ro \
-         -v ${INTEGRATIONTEST}:/bin/integration-test:ro \
-         -e KUBECONFIG=${KUBECONFIG} \
-         -e TALOSCONFIG=${TALOSCONFIG} \
-         k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
-}
+${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --masters=3 --mtu 1440 --cpus 4.0 --wait --endpoint "${ENDPOINT}"
 
-${LOCALOSCTL} cluster create --name integration --image ${TALOS_IMG} --masters=3 --mtu 1440 --cpus 4.0
-${LOCALOSCTL} config endpoint 10.5.0.2
-
-## Wait for bootkube to finish successfully.
-run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until osctl service bootkube | grep Finished >/dev/null; do
-       [[ \$(date +%s) -gt \$timeout ]] && exit 1
-       osctl service bootkube
-       sleep 5
-     done"
-
-## Fetch kubeconfig
-run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until osctl kubeconfig ${TMP}; do
-       [[ \$(date +%s) -gt \$timeout ]] && exit 1
-       sleep 2
-     done"
-
-run "kubectl --kubeconfig ${KUBECONFIG} config set-cluster local --server https://10.5.0.2:6443"
-
-## Wait for all nodes to report in
-run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until kubectl get nodes -o go-template='{{ len .items }}' | grep 4 >/dev/null; do
-       [[ \$(date +%s) -gt \$timeout ]] && exit 1
-       kubectl get nodes -o wide
-       sleep 5
-     done"
-
-## Wait for all nodes ready
-run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true --all nodes"
-
-## Verify that we have an HA controlplane
-run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-     until kubectl get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 >/dev/null; do
-       [[ \$(date +%s) -gt \$timeout ]] && exit 1
-       kubectl get nodes -o wide -l node-role.kubernetes.io/master=''
-       sleep 5
-     done"
-
-# Wait for kube-proxy to report ready
-run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-app=kube-proxy -n kube-system"
-
-# Wait for DNS addon to report ready
-run "kubectl wait --timeout=${TIMEOUT}s --for=condition=ready=true pod -l k8s-app=kube-dns -n kube-system"
-
-run "osctl -e 10.5.0.2 service etcd | grep Running"
-run "osctl -e 10.5.0.3 service etcd | grep Running"
-run "osctl -e 10.5.0.4 service etcd | grep Running"
-run "osctl --nodes 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 containers"
-run "osctl --nodes 10.5.0.2,10.5.0.3,10.5.0.4,10.5.0.5 services"
-
-run "integration-test -test.v"
+"${INTEGRATIONTEST}" -test.v -talos.osctlpath "${LOCALOSCTL}" -talos.k8sendpoint "${ENDPOINT}:6443"
