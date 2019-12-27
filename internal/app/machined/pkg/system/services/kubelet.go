@@ -23,6 +23,9 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	internalcni "github.com/talos-systems/talos/internal/app/machined/internal/cni"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -93,6 +96,10 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 	}
 
 	if err := ioutil.WriteFile(constants.KubernetesCACert, config.Cluster().CA().Crt, 0500); err != nil {
+		return err
+	}
+
+	if err := writeKubeletConfig(config); err != nil {
 		return err
 	}
 
@@ -225,34 +232,53 @@ func (k *Kubelet) HealthSettings(runtime.Configurator) *health.Settings {
 	return &settings
 }
 
+func newKubeletConfiguration(clusterDNS []string) *kubeletconfig.KubeletConfiguration {
+	f := false
+	t := true
+
+	return &kubeletconfig.KubeletConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "kubelet.config.k8s.io/v1beta1",
+			Kind:       "KubeletConfiguration",
+		},
+		StaticPodPath:      "/etc/kubernetes/manifests",
+		Address:            "0.0.0.0",
+		Port:               10250,
+		ReadOnlyPort:       10255, // TODO(andrewrynhard): Disable this.
+		RotateCertificates: true,
+		Authentication: kubeletconfig.KubeletAuthentication{
+			X509: kubeletconfig.KubeletX509Authentication{
+				ClientCAFile: constants.KubernetesCACert,
+			},
+			Webhook: kubeletconfig.KubeletWebhookAuthentication{
+				Enabled: &t,
+			},
+			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
+				Enabled: &f,
+			},
+		},
+		Authorization: kubeletconfig.KubeletAuthorization{
+			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
+		},
+		ClusterDomain:       "cluster.local",
+		ClusterDNS:          clusterDNS,
+		SerializeImagePulls: &f,
+		FailSwapOn:          &f,
+	}
+}
+
 // nolint: gocyclo
 func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
-	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
-	if err != nil {
-		return nil, err
-	}
-
-	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
-	if err != nil {
-		return nil, err
-	}
-
 	blackListArgs := argsbuilder.Args{
-		"bootstrap-kubeconfig":         constants.KubeletBootstrapKubeconfig,
-		"kubeconfig":                   constants.KubeletKubeconfig,
-		"container-runtime":            "remote",
-		"container-runtime-endpoint":   "unix://" + constants.ContainerdAddress,
-		"anonymous-auth":               "false",
-		"cert-dir":                     "/var/lib/kubelet/pki",
-		"client-ca-file":               constants.KubernetesCACert,
-		"cni-conf-dir":                 cni.DefaultNetDir,
-		"pod-manifest-path":            "/etc/kubernetes/manifests",
-		"rotate-certificates":          "true",
-		"cluster-dns":                  dnsServiceIP.String(),
-		"authentication-token-webhook": "true",
-		"authorization-mode":           "Webhook",
-		// TODO(andrewrynhard): Only set this in the case of container run mode.
-		"fail-swap-on": "false",
+		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
+		"kubeconfig":                 constants.KubeletKubeconfig,
+		"container-runtime":          "remote",
+		"container-runtime-endpoint": "unix://" + constants.ContainerdAddress,
+		"config":                     "/etc/kubernetes/kubelet.yaml",
+		"dynamic-config-dir":         "/etc/kubernetes/kubelet",
+
+		"cert-dir":     "/var/lib/kubelet/pki",
+		"cni-conf-dir": cni.DefaultNetDir,
 	}
 
 	extraArgs := argsbuilder.Args(config.Machine().Kubelet().ExtraArgs())
@@ -263,9 +289,42 @@ func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 		}
 	}
 
-	if !extraArgs.Contains("cluster-domain") {
-		extraArgs.Set("cluster-domain", "cluster.local")
+	return blackListArgs.Merge(extraArgs).Args(), nil
+}
+
+func writeKubeletConfig(config runtime.Configurator) error {
+	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
+	if err != nil {
+		return err
 	}
 
-	return blackListArgs.Merge(extraArgs).Args(), nil
+	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
+	if err != nil {
+		return err
+	}
+
+	kubeletConfiguration := newKubeletConfiguration([]string{dnsServiceIP.String()})
+
+	serializer := json.NewSerializerWithOptions(
+		json.DefaultMetaFactory,
+		nil,
+		nil,
+		json.SerializerOptions{
+			Yaml:   true,
+			Pretty: true,
+			Strict: true,
+		},
+	)
+
+	var buf bytes.Buffer
+
+	if err := serializer.Encode(kubeletConfiguration, &buf); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0600); err != nil {
+		return err
+	}
+
+	return nil
 }
