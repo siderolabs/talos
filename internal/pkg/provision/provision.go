@@ -5,12 +5,18 @@
 // Package provision provides abstract definitions for Talos cluster provisioners.
 package provision
 
-import "context"
+import (
+	"context"
+
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+)
 
 // Provisioner is an interface each provisioner should implement.
 type Provisioner interface {
 	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
 	Destroy(context.Context, Cluster, ...Option) error
+
+	GenOptions() []generate.GenOption
 
 	Close() error
 }

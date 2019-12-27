@@ -20,14 +20,27 @@ type ClusterRequest struct {
 	Nodes   NodeRequests
 
 	Image             string
+	KernelPath        string
+	InitramfsPath     string
 	KubernetesVersion string
+}
+
+// CNIConfig describes CNI part of NetworkRequest.
+type CNIConfig struct {
+	BinPath  []string
+	ConfDir  string
+	CacheDir string
 }
 
 // NetworkRequest describe cluster network.
 type NetworkRequest struct {
-	Name string
-	CIDR net.IPNet
-	MTU  int
+	Name        string
+	CIDR        net.IPNet
+	GatewayAddr net.IP
+	MTU         int
+
+	// CNI-specific parameters.
+	CNI CNIConfig
 }
 
 // NodeRequests is a list of NodeRequest.
@@ -88,4 +101,6 @@ type NodeRequest struct {
 	NanoCPUs int64
 	// Memory limit in bytes
 	Memory int64
+	// Disk (volume) size in bytes, if applicable
+	DiskSize int64
 }

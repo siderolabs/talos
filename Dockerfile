@@ -178,9 +178,10 @@ ENTRYPOINT ["/networkd"]
 FROM base AS osctl-linux-build
 ARG SHA
 ARG TAG
+ARG ARTIFACTS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-linux-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X github.com/talos-systems/talos/cmd/osctl/pkg/helpers.ArtifactsPath=${ARTIFACTS}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 
 FROM scratch AS osctl-linux
@@ -189,9 +190,10 @@ COPY --from=osctl-linux-build /osctl-linux-amd64 /osctl-linux-amd64
 FROM base AS osctl-darwin-build
 ARG SHA
 ARG TAG
+ARG ARTIFACTS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X github.com/talos-systems/talos/cmd/osctl/pkg/helpers.ArtifactsPath=${ARTIFACTS}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 
 FROM scratch AS osctl-darwin
