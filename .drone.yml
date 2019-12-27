@@ -613,6 +613,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - basic-integration
 
@@ -1271,6 +1272,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - basic-integration
 
@@ -2057,6 +2059,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - basic-integration
 
@@ -2088,48 +2091,6 @@ steps:
     path: /tmp
   depends_on:
   - basic-integration
-
-- name: image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-aws
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: image-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gcp
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
 
 - name: push-image-aws
   pull: always
@@ -2264,6 +2225,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - conformance-aws
   - conformance-gcp
@@ -2918,6 +2880,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - basic-integration
 
@@ -2949,48 +2912,6 @@ steps:
     path: /tmp
   depends_on:
   - basic-integration
-
-- name: image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-aws
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: image-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gcp
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
 
 - name: push-image-aws
   pull: always
@@ -3125,6 +3046,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - conformance-aws
   - conformance-gcp
@@ -3779,6 +3701,7 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
   depends_on:
   - basic-integration
 
@@ -3800,111 +3723,6 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
-
-- name: image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-aws
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: image-azure
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-azure
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: image-digital-ocean
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-digital-ocean
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: image-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-gcp
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
-
-- name: image-vmware
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make image-vmware
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer
 
 - name: iso
   pull: always
