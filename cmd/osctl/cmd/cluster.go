@@ -26,15 +26,18 @@ import (
 )
 
 var (
-	clusterName   string
-	nodeImage     string
-	networkCIDR   string
-	networkMTU    int
-	workers       int
-	masters       int
-	clusterCpus   string
-	clusterMemory int
-	clusterWait   bool
+	clusterName             string
+	nodeImage               string
+	networkCIDR             string
+	networkMTU              int
+	workers                 int
+	masters                 int
+	clusterCpus             string
+	clusterMemory           int
+	clusterWait             bool
+	clusterWaitTimeout      time.Duration
+	forceInitNodeAsEndpoint bool
+	forceEndpoint           string
 )
 
 // clusterCmd represents the cluster command
@@ -149,7 +152,17 @@ func create(ctx context.Context) (err error) {
 			})
 	}
 
-	cluster, err := provisioner.Create(ctx, request)
+	var provisionOptions []provision.Option
+
+	if forceInitNodeAsEndpoint {
+		provisionOptions = append(provisionOptions, provision.WithForceInitNodeAsEndpoint())
+	}
+
+	if forceEndpoint != "" {
+		provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
+	}
+
+	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
 	if err != nil {
 		return err
 	}
@@ -164,10 +177,10 @@ func create(ctx context.Context) (err error) {
 	}
 
 	// Run cluster readiness checks
-	checkCtx, checkCtxCancel := context.WithTimeout(ctx, 20*time.Minute)
+	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 	defer checkCtxCancel()
 
-	clusterAccess := access.NewAdapter(cluster)
+	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
 	defer clusterAccess.Close() //nolint: errcheck
 
 	return check.Wait(checkCtx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter())
@@ -231,6 +244,9 @@ func init() {
 	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
 	clusterUpCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
 	clusterUpCmd.Flags().BoolVar(&clusterWait, "wait", false, "wait for the cluster to be ready before returning")
+	clusterUpCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
+	clusterUpCmd.Flags().BoolVar(&forceInitNodeAsEndpoint, "init-node-as-endpoint", false, "use init node as endpoint instead of any load balancer endpoint")
+	clusterUpCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
 	clusterUpCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)

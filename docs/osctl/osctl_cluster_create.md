@@ -16,13 +16,16 @@ osctl cluster create [flags]
 ```
       --cidr string                 CIDR of the docker bridge network (default "10.5.0.0/24")
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
+      --endpoint string             use endpoint instead of provider defaults
   -h, --help                        help for create
       --image string                the image to use (default "docker.io/autonomy/talos:latest")
+      --init-node-as-endpoint       use init node as endpoint instead of any load balancer endpoint
       --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
       --mtu int                     MTU of the docker bridge network (default 1500)
       --wait                        wait for the cluster to be ready before returning
+      --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
       --workers int                 the number of workers to create (default 1)
 ```
 

@@ -186,7 +186,7 @@ integration-test: ## Runs the CLI and API integration tests against a running cl
 
 .PHONY: basic-integration
 basic-integration: ## Runs the basic integration test.
-	@TAG=$(TAG) SHA=$(SHA) ARTIFACTS=$(ARTIFACTS) go run ./internal/test-framework/main.go $@ --artifacts=$(ARTIFACTS)
+	@$(MAKE) hack-test-$@
 
 .PHONY: e2e-integration
 e2e-integration: ## Runs the E2E integration for the specified cloud provider.

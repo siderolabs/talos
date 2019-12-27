@@ -30,6 +30,7 @@ var allSuites []suite.TestingSuite
 var (
 	talosConfig     string
 	endpoint        string
+	k8sEndpoint     string
 	nodes           stringList
 	expectedVersion string
 	osctlPath       string
@@ -44,6 +45,7 @@ func TestIntegration(t *testing.T) {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
 				Endpoint:    endpoint,
+				K8sEndpoint: k8sEndpoint,
 				Nodes:       []string(nodes),
 				TalosConfig: talosConfig,
 				Version:     expectedVersion,
@@ -77,6 +79,7 @@ func init() {
 
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")
+	flag.StringVar(&k8sEndpoint, "talos.k8sendpoint", "", "Kubernetes endpoint to use (overrides kubeconfig)")
 	flag.Var(&nodes, "talos.nodes", "list of node addresses (overrides discovery)")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
 	flag.StringVar(&osctlPath, "talos.osctlpath", "osctl", "The path to 'osctl' binary")

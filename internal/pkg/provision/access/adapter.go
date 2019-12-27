@@ -6,6 +6,7 @@ package access
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -19,10 +20,19 @@ import (
 )
 
 // NewAdapter returns ClusterAccess object from Cluster.
-func NewAdapter(cluster provision.Cluster) provision.ClusterAccess {
+func NewAdapter(cluster provision.Cluster, opts ...provision.Option) provision.ClusterAccess {
+	options := provision.DefaultOptions()
+
+	for _, opt := range opts {
+		if err := opt(&options); err != nil {
+			panic(err)
+		}
+	}
+
 	return &adapter{
 		Cluster: cluster,
 		clients: make(map[string]*client.Client),
+		options: &options,
 	}
 }
 
@@ -31,6 +41,7 @@ type adapter struct {
 
 	clients   map[string]*client.Client
 	clientset *kubernetes.Clientset
+	options   *provision.Options
 }
 
 func (a *adapter) Client(endpoints ...string) (*client.Client, error) {
@@ -81,6 +92,10 @@ func (a *adapter) K8sClient(ctx context.Context) (*kubernetes.Clientset, error) 
 
 	// patch timeout
 	config.Timeout = time.Minute
+
+	if a.options.ForceEndpoint != "" {
+		config.Host = fmt.Sprintf("%s:%d", a.options.ForceEndpoint, 6443)
+	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err == nil {
