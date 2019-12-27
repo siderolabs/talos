@@ -220,6 +220,7 @@ local push_latest = {
       exclude: [
         'pull_request',
         'promote',
+        'tag',
       ],
     },
   },
@@ -294,10 +295,8 @@ local e2e_integration_gcp = Step("e2e-integration-gcp", target="e2e-integration"
 local e2e_steps = default_steps + [
   capi,
   push_image_aws,
-  //push_image_azure,
   push_image_gcp,
   e2e_integration_aws,
-  // e2e_integration_azure,
   e2e_integration_gcp,
 ];
 
@@ -333,22 +332,18 @@ local push_edge = {
       exclude: [
         'pull_request',
         'promote',
+        'tag',
       ],
     },
   },
-  depends_on: [conformance_aws.name, /*conformance_azure.name,*/ conformance_gcp.name],
+  depends_on: [conformance_aws.name, conformance_gcp.name],
 };
 
 local conformance_steps = default_steps + [
   capi,
-  image_aws,
-  //image_azure,
-  image_gcp,
   push_image_aws,
-  //push_image_azure,
   push_image_gcp,
   conformance_aws,
-  //conformance_azure,
   conformance_gcp,
   push_edge,
 ];
@@ -411,11 +406,6 @@ local release = {
 
 local release_steps = default_steps + [
   kernel,
-  image_aws,
-  image_azure,
-  image_digital_ocean,
-  image_gcp,
-  image_vmware,
   iso,
   release,
 ];
