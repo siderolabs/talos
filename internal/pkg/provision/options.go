@@ -21,9 +21,30 @@ func WithLogWriter(w io.Writer) Option {
 	}
 }
 
+// WithForceInitNodeAsEndpoint uses direct IP of init node as endpoint instead of (default)
+// mode.
+func WithForceInitNodeAsEndpoint() Option {
+	return func(o *Options) error {
+		o.ForceInitNodeAsEndpoint = true
+
+		return nil
+	}
+}
+
+// WithEndpoint specifies endpoint to use when acessing Talos cluster.
+func WithEndpoint(endpoint string) Option {
+	return func(o *Options) error {
+		o.ForceEndpoint = endpoint
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
-	LogWriter io.Writer
+	LogWriter               io.Writer
+	ForceInitNodeAsEndpoint bool
+	ForceEndpoint           string
 }
 
 // DefaultOptions returns default options.

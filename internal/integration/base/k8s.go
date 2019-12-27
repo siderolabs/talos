@@ -8,6 +8,7 @@ package base
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
@@ -34,6 +35,12 @@ func (k8sSuite *K8sSuite) SetupSuite() {
 		return clientcmd.Load(kubeconfig)
 	})
 	k8sSuite.Require().NoError(err)
+
+	// patch timeout
+	config.Timeout = time.Minute
+	if k8sSuite.K8sEndpoint != "" {
+		config.Host = k8sSuite.K8sEndpoint
+	}
 
 	k8sSuite.Clientset, err = kubernetes.NewForConfig(config)
 	k8sSuite.Require().NoError(err)

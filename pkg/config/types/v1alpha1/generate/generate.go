@@ -101,6 +101,7 @@ type Input struct {
 	ControlPlaneEndpoint string
 
 	AdditionalSubjectAltNames []string
+	AdditionalMachineCertSANs []string
 
 	ClusterName       string
 	ServiceDomain     string

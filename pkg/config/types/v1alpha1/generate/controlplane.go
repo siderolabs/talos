@@ -17,7 +17,7 @@ func controlPlaneUd(in *Input) (string, error) {
 		MachineType:     "controlplane",
 		MachineToken:    in.TrustdInfo.Token,
 		MachineCA:       in.Certs.OS,
-		MachineCertSANs: []string{},
+		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  &v1alpha1.NetworkConfig{},
 		MachineInstall: &v1alpha1.InstallConfig{

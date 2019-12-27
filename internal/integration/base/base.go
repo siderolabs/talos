@@ -11,6 +11,8 @@ package base
 type TalosSuite struct {
 	// Endpoint to use to connect, if not set config is used
 	Endpoint string
+	// K8sEndpoint is API server endpoint, if set overrides kubeconfig
+	K8sEndpoint string
 	// Nodes is a list of Talos cluster addresses (overrides discovery if set)
 	Nodes []string
 	// TalosConfig is a path to talosconfig

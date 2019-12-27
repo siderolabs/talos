@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 )
 
-func discoverNodesK8s(client *client.Client) ([]string, error) {
+func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error) {
 	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
 	defer ctxCancel()
 
@@ -37,6 +37,9 @@ func discoverNodesK8s(client *client.Client) ([]string, error) {
 
 	// patch timeout
 	config.Timeout = time.Minute
+	if suite.K8sEndpoint != "" {
+		config.Host = suite.K8sEndpoint
+	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {

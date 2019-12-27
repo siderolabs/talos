@@ -564,7 +564,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: golang:1.13
+  image: autonomy/build-container:latest
   commands:
   - make basic-integration
   environment:
@@ -629,6 +629,9 @@ services:
   - --mtu=1440
   - --log-level=error
   privileged: true
+  ports:
+  - 6443
+  - 50000
   volumes:
   - name: dockersock
     path: /var/run
@@ -1224,7 +1227,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: golang:1.13
+  image: autonomy/build-container:latest
   commands:
   - make basic-integration
   environment:
@@ -1422,6 +1425,9 @@ services:
   - --mtu=1440
   - --log-level=error
   privileged: true
+  ports:
+  - 6443
+  - 50000
   volumes:
   - name: dockersock
     path: /var/run
@@ -2012,7 +2018,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: golang:1.13
+  image: autonomy/build-container:latest
   commands:
   - make basic-integration
   environment:
@@ -2244,6 +2250,9 @@ services:
   - --mtu=1440
   - --log-level=error
   privileged: true
+  ports:
+  - 6443
+  - 50000
   volumes:
   - name: dockersock
     path: /var/run
@@ -2834,7 +2843,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: golang:1.13
+  image: autonomy/build-container:latest
   commands:
   - make basic-integration
   environment:
@@ -3066,6 +3075,9 @@ services:
   - --mtu=1440
   - --log-level=error
   privileged: true
+  ports:
+  - 6443
+  - 50000
   volumes:
   - name: dockersock
     path: /var/run
@@ -3656,7 +3668,7 @@ steps:
 
 - name: basic-integration
   pull: always
-  image: golang:1.13
+  image: autonomy/build-container:latest
   commands:
   - make basic-integration
   environment:
@@ -3783,6 +3795,9 @@ services:
   - --mtu=1440
   - --log-level=error
   privileged: true
+  ports:
+  - 6443
+  - 50000
   volumes:
   - name: dockersock
     path: /var/run
