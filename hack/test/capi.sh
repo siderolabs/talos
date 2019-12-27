@@ -18,11 +18,15 @@ export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
 cat ${PWD}/hack/test/manifests/capa-components.yaml| envsubst > ${TMP}/capa-components.yaml
 
 ## Template out gcp components
-export GCP_B64ENCODED_CREDENTIALS=${GCE_SVC_ACCT} 
+export GCP_B64ENCODED_CREDENTIALS=${GCE_SVC_ACCT}
 cat ${PWD}/hack/test/manifests/capg-components.yaml| envsubst > ${TMP}/capg-components.yaml
-##Until next alpha release, keep a local copy of capg-components.yaml. 
+##Until next alpha release, keep a local copy of capg-components.yaml.
 ##They've got an incorrect image pull policy.
 ##curl -L ${CAPG_COMPONENTS} | envsubst > ${TMP}/capg-components.yaml
+
+## Clean up osctl endpoint, fetch kubeconfig
+e2e_run "osctl config endpoint 10.5.0.2"
+e2e_run "osctl kubeconfig ${TMP}"
 
 ## Drop in capi stuff
 e2e_run "kubectl apply -f ${TMP}/provider-components.yaml"

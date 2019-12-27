@@ -102,6 +102,10 @@ local docker = {
     '--mtu=1440',
     '--log-level=error',
   ],
+  ports: [
+    6443,
+    50000,
+  ],
   volumes: volumes.ForStep(),
 };
 
@@ -190,7 +194,7 @@ local image_gcp = Step("image-gcp", depends_on=[installer]);
 local image_vmware = Step("image-vmware", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[rootfs, talos]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
-local basic_integration = Step("basic-integration", image="golang:1.13", depends_on=[unit_tests, talos, osctl_linux, integration_test]);
+local basic_integration = Step("basic-integration", depends_on=[unit_tests, talos, osctl_linux, integration_test]);
 
 local coverage = {
   name: 'coverage',
