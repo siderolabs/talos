@@ -221,6 +221,7 @@ local push_latest = {
         'pull_request',
         'promote',
         'tag',
+        'cron',
       ],
     },
   },
