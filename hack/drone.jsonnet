@@ -220,6 +220,8 @@ local push_latest = {
       exclude: [
         'pull_request',
         'promote',
+        'tag',
+        'cron',
       ],
     },
   },
