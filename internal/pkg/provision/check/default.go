@@ -10,11 +10,18 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.
 func DefaultClusterChecks() []ClusterCheck {
 	return []ClusterCheck{
+		// wait for etcd to be healthy on all control plane nodes
+		func(cluster provision.ClusterAccess) conditions.Condition {
+			return conditions.PollingCondition("etcd to be healthy", func(ctx context.Context) error {
+				return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(generate.TypeInit, generate.TypeControlPlane))
+			}, 5*time.Minute, 5*time.Second)
+		},
 		// wait for bootkube to finish on init node
 		func(cluster provision.ClusterAccess) conditions.Condition {
 			return conditions.PollingCondition("bootkube to finish", func(ctx context.Context) error {
