@@ -613,6 +613,8 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
+      - cron
   depends_on:
   - basic-integration
 
@@ -1271,6 +1273,8 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
+      - cron
   depends_on:
   - basic-integration
 
@@ -2057,6 +2061,8 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
+      - cron
   depends_on:
   - basic-integration
 
@@ -2918,6 +2924,8 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
+      - cron
   depends_on:
   - basic-integration
 
@@ -3779,6 +3787,8 @@ steps:
       exclude:
       - pull_request
       - promote
+      - tag
+      - cron
   depends_on:
   - basic-integration
 
