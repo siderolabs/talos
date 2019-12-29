@@ -40,27 +40,27 @@ WORKDIR /src
 FROM build AS generate-build
 # Common needs to be at or near the top to satisfy the subsequent imports
 COPY ./api/common/common.proto /api/common/common.proto
-RUN protoc -I/api --go_out=plugins=grpc:/api/common /api/common/common.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api common/common.proto
 COPY ./api/os/os.proto /api/os/os.proto
-RUN protoc -I/api --go_out=plugins=grpc:/api/os /api/os/os.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api os/os.proto
 COPY ./api/security/security.proto /api/security/security.proto
-RUN protoc -I/api --go_out=plugins=grpc:/api/security /api/security/security.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api security/security.proto
 COPY ./api/machine/machine.proto /api/machine/machine.proto
-RUN protoc -I/api --go_out=plugins=grpc:/api/machine /api/machine/machine.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api machine/machine.proto
 COPY ./api/time/time.proto /api/time/time.proto
-RUN protoc -I/api --go_out=plugins=grpc:/api/time /api/time/time.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
-RUN protoc -I/api --go_out=plugins=grpc:/api/network /api/network/network.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 FROM scratch AS generate
-COPY --from=generate-build /api/common/github.com/talos-systems/talos/api/common/common.pb.go /api/common/
-COPY --from=generate-build /api/os/github.com/talos-systems/talos/api/os/os.pb.go /api/os/
-COPY --from=generate-build /api/security/github.com/talos-systems/talos/api/security/security.pb.go /api/security/
-COPY --from=generate-build /api/machine/github.com/talos-systems/talos/api/machine/machine.pb.go /api/machine/
-COPY --from=generate-build /api/time/github.com/talos-systems/talos/api/time/time.pb.go /api/time/
-COPY --from=generate-build /api/network/github.com/talos-systems/talos/api/network/network.pb.go /api/network/
+COPY --from=generate-build /api/common/common.pb.go /api/common/
+COPY --from=generate-build /api/os/os.pb.go /api/os/
+COPY --from=generate-build /api/security/security.pb.go /api/security/
+COPY --from=generate-build /api/machine/machine.pb.go /api/machine/
+COPY --from=generate-build /api/time/time.pb.go /api/time/
+COPY --from=generate-build /api/network/network.pb.go /api/network/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
