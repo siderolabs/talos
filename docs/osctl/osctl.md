@@ -14,12 +14,13 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
   -e, --endpoints strings    override default endpoints in Talos configuration
   -h, --help                 help for osctl
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/root/.talos/config")
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
 ```
 
 ### SEE ALSO
 
 * [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based clusters
+* [osctl completion](osctl_completion.md)	 - Output shell completion code for the specified shell (bash or zsh)
 * [osctl config](osctl_config.md)	 - Manage the client configuration
 * [osctl containers](osctl_containers.md)	 - List containers
 * [osctl copy](osctl_copy.md)	 - Copy data out from the node
