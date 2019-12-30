@@ -1,14 +1,30 @@
-# [v0.3.0-beta.2](https://github.com/andrewrynhard/talos/compare/v0.3.0-beta.1...v0.3.0-beta.2) (2019-12-21)
+# [v0.3.0-beta.3](https://github.com/talos-systems/talos/compare/v0.3.0-beta.2...v0.3.0-beta.3) (2019-12-30)
+
+### Bug Fixes
+
+- use the correct TLD for the container version label ([b58cee3](https://github.com/talos-systems/talos/commit/b58cee3d1c3c35f089e3e5f3eb9c8a80429e1586))
+- **machined:** Add additional defaults for http transport ([c9bd38d](https://github.com/talos-systems/talos/commit/c9bd38da537796201104f07e79be44dc4ba28a08)), closes [#1680](https://github.com/talos-systems/talos/issues/1680)
+- don't log `token` metadata field in grpc request log ([beb44d1](https://github.com/talos-systems/talos/commit/beb44d10eb68faf651391c8e184ef6f9d6d9768b))
+- extend list of kmsg facilities ([33332d0](https://github.com/talos-systems/talos/commit/33332d03fbf295a5c494426fa4ad552f05343072))
+- **networkd:** Make better route scoping decisions ([a634edc](https://github.com/talos-systems/talos/commit/a634edc1878eb16ca7c2a3004370d311895ac5fb))
+- fix output formats ([bc4e0c9](https://github.com/talos-systems/talos/commit/bc4e0c9a35aa4bc0ae3dbf3cc167bd0bc9697d08))
+
+### Features
+
+- add installer command to installer container ([0050b69](https://github.com/talos-systems/talos/commit/0050b69b95024e3f664e1b572b6c1a31e5415636))
+- support specifying CIDR for docker network ([7d35183](https://github.com/talos-systems/talos/commit/7d351832f0f73c8215e6e6f6c1c2972bab96808e))
+
+# [v0.3.0-beta.2](https://github.com/talos-systems/talos/compare/v0.3.0-beta.1...v0.3.0-beta.2) (2019-12-21)
 
 ### Bug Fixes
 
 - **networkd:** Check for IFF_RUNNING on link up ([f7ca6d3](https://github.com/talos-systems/talos/commit/f7ca6d326ecf60a8bbc37056fe797da1ce8ce82d))
-- Reset default http client to work around proxyEnv ([b342629](https://github.com/andrewrynhard/talos/commit/b34262973dcd6e9159323358aff11415e8c67661))
+- Reset default http client to work around proxyEnv ([b342629](https://github.com/talos-systems/talos/commit/b34262973dcd6e9159323358aff11415e8c67661))
 
 ### Features
 
-- add support for tailing logs ([8830788](https://github.com/andrewrynhard/talos/commit/8830788a7f6dddc14e1bb764fd5a6cf8aa67fcc5)), closes [#1564](https://github.com/andrewrynhard/talos/issues/1564)
-- upgrade Linux to v5.4.5 ([bab9213](https://github.com/andrewrynhard/talos/commit/bab9213fb0877b36328cc923167a2cc934db9a2d))
+- add support for tailing logs ([8830788](https://github.com/talos-systems/talos/commit/8830788a7f6dddc14e1bb764fd5a6cf8aa67fcc5)), closes [#1564](https://github.com/talos-systems/talos/issues/1564)
+- upgrade Linux to v5.4.5 ([bab9213](https://github.com/talos-systems/talos/commit/bab9213fb0877b36328cc923167a2cc934db9a2d))
 
 # [v0.3.0-beta.1](https://github.com/talos-systems/talos/compare/v0.3.0-beta.0...v0.3.0-beta.1) (2019-12-19)
 
