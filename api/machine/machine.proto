@@ -15,6 +15,7 @@ import "common/common.proto";
 service MachineService {
   rpc Copy(CopyRequest) returns (stream common.Data);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
+  rpc Limits(ResourceRequest) returns (ResourceResponse);
   rpc List(ListRequest) returns (stream FileInfo);
   rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
@@ -263,4 +264,40 @@ message LogsRequest {
 
 message ReadRequest {
   string path = 1;
+}
+
+enum Resource {
+  RLIMIT_CPU = 0;
+  RLIMIT_FSIZE = 1;
+  RLIMIT_DATA = 2;
+  RLIMIT_STACK = 3;
+  RLIMIT_CORE = 4;
+  RLIMIT_NOFILE = 7;
+  RLIMIT_AS = 9;
+  reserved 5,6,8;
+}
+
+message ResourceLimit {
+  Resource resource = 1;
+  uint64 pid = 2;
+  uint64 soft = 3;
+  uint64 hard = 4;
+}
+
+message ResourceRequest {
+	repeated ResourceLimit resources = 1;
+}
+
+message ResourceLimitChange {
+	ResourceLimit old = 1;
+  ResourceLimit new = 2;
+}
+
+message ResourceLimits {
+	common.Metadata metadata = 1;
+  repeated ResourceLimitChange resources = 2;
+}
+
+message ResourceResponse {
+	repeated ResourceLimits messages = 1;
 }

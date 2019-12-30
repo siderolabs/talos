@@ -13,7 +13,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
+	"unsafe"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
@@ -558,4 +561,87 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.MachineSer
 	default:
 		return fmt.Errorf("path must be a regular file")
 	}
+}
+
+func (r *Registrator) Limits(ctx context.Context, in *machineapi.ResourceRequest) (reply *machineapi.ResourceResponse, err error) {
+	var (
+		currlim   syscall.Rlimit
+		lim       syscall.Rlimit
+		resources = &machineapi.ResourceLimits{}
+	)
+	reply = &machineapi.ResourceResponse{}
+
+	for _, resourceSetting := range in.GetResources() {
+		var (
+			rlc = &machineapi.ResourceLimitChange{}
+			old = &machineapi.ResourceLimit{}
+			new = &machineapi.ResourceLimit{}
+		)
+
+		// Check if resourceSetting.Pid is valid(?)
+		_, err := os.Stat(filepath.Join("/proc", strconv.FormatUint(resourceSetting.GetPid(), 10)))
+		if err != nil {
+			return reply, err
+		}
+
+		// Get process current limit
+		err = prlimit(resourceSetting.GetPid(), int32(resourceSetting.GetResource()), nil, &lim)
+		if err != nil {
+			return reply, err
+		}
+
+		old = &machineapi.ResourceLimit{
+			Resource: resourceSetting.GetResource(),
+			Pid:      resourceSetting.GetPid(),
+			Soft:     lim.Cur,
+			Hard:     lim.Max,
+		}
+
+		// Return current settings is no soft limit
+		if resourceSetting.GetSoft() == 0 {
+			rlc.Old = old
+			resources.Resources = append(resources.Resources, rlc)
+
+			continue
+		}
+
+		// Create new Rlimit
+		newlim := &syscall.Rlimit{Cur: resourceSetting.GetSoft(), Max: lim.Max}
+
+		// Set new limit
+		err = prlimit(resourceSetting.GetPid(), int32(resourceSetting.GetResource()), newlim, &lim)
+		if err != nil {
+			return reply, err
+		}
+
+		// Look up new limit
+		err = prlimit(resourceSetting.GetPid(), int32(resourceSetting.GetResource()), nil, &currlim)
+		if err != nil {
+			return reply, err
+		}
+
+		new = &machineapi.ResourceLimit{
+			Resource: resourceSetting.GetResource(),
+			Pid:      resourceSetting.GetPid(),
+			Soft:     currlim.Cur,
+			Hard:     currlim.Max,
+		}
+
+		rlc.Old = old
+		rlc.New = new
+		resources.Resources = append(resources.Resources, rlc)
+	}
+
+	reply.Messages = append(reply.Messages, resources)
+
+	return reply, err
+}
+
+func prlimit(pid uint64, resource int32, newlimit *syscall.Rlimit, old *syscall.Rlimit) error {
+	_, _, err := syscall.RawSyscall6(syscall.SYS_PRLIMIT64, uintptr(pid), uintptr(resource), uintptr(unsafe.Pointer(newlimit)), uintptr(unsafe.Pointer(old)), 0, 0)
+	if err != 0 {
+		return fmt.Errorf("syscall.SYS_PRLIMIT64 returned %d", err)
+	}
+
+	return nil
 }
