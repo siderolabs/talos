@@ -553,29 +553,3 @@ type CNIConfig struct {
 	//     URLs containing manifests to apply for CNI.
 	CNIUrls []string `yaml:"urls,omitempty"`
 }
-
-// Bond contains the various options for configuring a bonded interface.
-type Bond struct {
-	//   description: |
-	//     The bond mode.
-	Mode string `yaml:"mode"`
-	//   description: |
-	//     The hash policy.
-	HashPolicy string `yaml:"hashpolicy"`
-	//   description: |
-	//     The LACP rate.
-	LACPRate string `yaml:"lacprate"`
-	//   description: |
-	//     The interfaces if which the bond should be comprised of.
-	Interfaces []string `yaml:"interfaces"`
-}
-
-// Route represents a network route.
-type Route struct {
-	//   description: |
-	//     TODO.
-	Network string `yaml:"network"`
-	//   description: |
-	//     TODO.
-	Gateway string `yaml:"gateway"`
-}

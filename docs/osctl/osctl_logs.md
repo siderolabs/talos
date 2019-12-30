@@ -17,6 +17,7 @@ osctl logs <id> [flags]
   -f, --follow       specify if the logs should be streamed
   -h, --help         help for logs
   -k, --kubernetes   use the k8s.io containerd namespace
+      --tail int32   lines of log file to display (default is to show from the beginning) (default -1)
   -c, --use-cri      use the CRI driver
 ```
 
@@ -26,7 +27,7 @@ osctl logs <id> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/root/.talos/config")
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
 ```
 
 ### SEE ALSO
