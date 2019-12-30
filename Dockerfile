@@ -300,7 +300,7 @@ COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/osctl
 ARG TAG
 ENV VERSION ${TAG}
-LABEL "alpha.talos.io/version"="${VERSION}"
+LABEL "alpha.talos.dev/version"="${VERSION}"
 ENTRYPOINT ["/bin/installer"]
 ONBUILD RUN apk add --no-cache --update \
     cpio \
