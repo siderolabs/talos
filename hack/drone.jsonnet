@@ -400,7 +400,21 @@ local release = {
   settings: {
     api_key: { from_secret: 'github_token' },
     draft: true,
-    files: ['_out/*'],
+    files: [
+      '_out/aws.tar.gz',
+      '_out/azure.tar.gz',
+      '_out/container.tar',
+      '_out/digital-ocean.tar.gz',
+      '_out/gcp.tar.gz',
+      '_out/initramfs.xz',
+      '_out/installer.tar',
+      '_out/osctl-darwin-amd64',
+      '_out/osctl-linux-amd64',
+      '_out/talos.iso',
+      '_out/vmware.ova',
+      '_out/vmlinux',
+      '_out/vmlinuz',
+    ],
     checksum: ['sha256', 'sha512'],
   },
   when: {
