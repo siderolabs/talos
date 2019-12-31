@@ -166,6 +166,8 @@ const (
 	MetalConfigISOLabel = "metal-iso"
 
 	// ConfigGuestInfo is the name of the VMware guestinfo config strategy.
+	// Deprecation notice:
+	// This parameter is no longer used and will be removed in the next release.
 	ConfigGuestInfo = "guestinfo"
 
 	// VMwareGuestInfoConfigKey is the guestinfo key used to provide a config file.

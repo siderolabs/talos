@@ -28,41 +28,32 @@ func (v *VMware) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (v *VMware) Configuration() ([]byte, error) {
-	var option *string
-	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
-		return nil, fmt.Errorf("no config option was found")
+	ok, err := vmcheck.IsVirtualWorld()
+	if err != nil {
+		return nil, err
 	}
 
-	if *option == constants.ConfigGuestInfo {
-		ok, err := vmcheck.IsVirtualWorld()
-		if err != nil {
-			return nil, err
-		}
-
-		if !ok {
-			return nil, errors.New("not a virtual world")
-		}
-
-		config := rpcvmx.NewConfig()
-
-		val, err := config.String(constants.VMwareGuestInfoConfigKey, "")
-		if err != nil {
-			return nil, fmt.Errorf("failed to get guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
-		}
-
-		if val == "" {
-			return nil, fmt.Errorf("config is required, no value found for guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
-		}
-
-		b, err := base64.StdEncoding.DecodeString(val)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
-		}
-
-		return b, nil
+	if !ok {
+		return nil, errors.New("not a virtual world")
 	}
 
-	return nil, nil
+	config := rpcvmx.NewConfig()
+
+	val, err := config.String(constants.VMwareGuestInfoConfigKey, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
+	}
+
+	if val == "" {
+		return nil, fmt.Errorf("config is required, no value found for guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
+	}
+
+	b, err := base64.StdEncoding.DecodeString(val)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
+	}
+
+	return b, nil
 }
 
 // Hostname implements the platform.Platform interface.
@@ -83,7 +74,7 @@ func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
 // KernelArgs implements the runtime.Platform interface.
 func (v *VMware) KernelArgs() kernel.Parameters {
 	return []*kernel.Parameter{
-		kernel.NewParameter("console").Append("ttyS0"),
+		kernel.NewParameter("console").Append("tty0"),
 		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
 	}
 }
