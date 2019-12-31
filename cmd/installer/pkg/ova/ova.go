@@ -8,19 +8,19 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
 	"github.com/talos-systems/talos/pkg/cmd"
 )
 
 const mfTpl = `SHA256({{ .VMDK }})= {{ .VMDKSHA }}
-SHA256(talos.ovf)= {{ .OVFSHA }}`
+SHA256({{ .OVF }})= {{ .OVFSHA }}`
 
 // OVF format reference: https://www.dmtf.org/standards/ovf.
 //nolint: lll
@@ -135,8 +135,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 		return err
 	}
 
-	file := name + ".vmdk"
-	dest := filepath.Join(dir, file)
+	dest := filepath.Join(dir, name+".vmdk")
 
 	if err = qemuimg.Convert("raw", "vmdk", "compat6,subformat=streamOptimized,adapter_type=lsilogic", src, dest); err != nil {
 		return err
@@ -149,7 +148,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 
 	size := f.Size()
 
-	ovf, err := renderOVF(file, size, 544)
+	ovf, err := renderOVF(name, size, 544)
 	if err != nil {
 		return err
 	}
@@ -169,7 +168,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 		return err
 	}
 
-	mf, err := renderMF(file, vmdkSHA25Sum, ovfSHA25Sum)
+	mf, err := renderMF(name, vmdkSHA25Sum, ovfSHA25Sum)
 	if err != nil {
 		return err
 	}
@@ -204,14 +203,16 @@ func sha256sum(input io.Reader) (string, error) {
 	return fmt.Sprintf("%x", sum), nil
 }
 
-func renderMF(vmdk, vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
+func renderMF(name, vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
 	cfg := struct {
 		VMDK    string
 		VMDKSHA string
+		OVF     string
 		OVFSHA  string
 	}{
-		VMDK:    vmdk,
+		VMDK:    name + ".vmdk",
 		VMDKSHA: vmdkSHA25Sum,
+		OVF:     name + ".ovf",
 		OVFSHA:  ovfSHA25Sum,
 	}
 
@@ -226,13 +227,13 @@ func renderMF(vmdk, vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
 	return buf.String(), nil
 }
 
-func renderOVF(vmdk string, size, capacity int64) (string, error) {
+func renderOVF(name string, size, capacity int64) (string, error) {
 	cfg := struct {
 		VMDK     string
 		Size     int64
 		Capacity int64
 	}{
-		VMDK:     vmdk,
+		VMDK:     name + ".vmdk",
 		Size:     size,
 		Capacity: capacity,
 	}
