@@ -172,7 +172,7 @@ func (n *NetworkInterface) Configure() (err error) {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to bring up interface%s: %w", n.Link.Name, err)
+		return fmt.Errorf("failed to bring up interface %q: %w", n.Link.Name, err)
 	}
 
 	return err
