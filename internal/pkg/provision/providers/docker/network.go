@@ -6,6 +6,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/docker/docker/api/types"
@@ -16,7 +17,24 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
+// createNetwork will take a network request and check if a network with the same name + cidr exists.
+// If so, it simply returns without error and assumes we will re-use that network. Otherwise it will create a new one.
 func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRequest) error {
+	existingNet, err := p.listNetworks(ctx, req.Name)
+	if err != nil {
+		return err
+	}
+
+	// If named net already exists, see if we can reuse it
+	if len(existingNet) > 0 {
+		if existingNet[0].IPAM.Config[0].Subnet != req.CIDR.String() {
+			return fmt.Errorf("existing network has differing cidr: %s vs %s", existingNet[0].IPAM.Config[0].Subnet, req.CIDR.String())
+		}
+		// CIDRs match, we'll reuse
+		return nil
+	}
+
+	// Create new net
 	options := types.NetworkCreate{
 		Labels: map[string]string{
 			"talos.owned":        "true",
@@ -34,7 +52,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 		},
 	}
 
-	_, err := p.client.NetworkCreate(ctx, req.Name, options)
+	_, err = p.client.NetworkCreate(ctx, req.Name, options)
 
 	return err
 }
