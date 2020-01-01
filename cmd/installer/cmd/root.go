@@ -33,7 +33,8 @@ func Execute() {
 var options = &pkg.InstallOptions{}
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "none", "The value of "+constants.KernelParamConfig)
+	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "", "The value of "+constants.KernelParamConfig)
+	rootCmd.PersistentFlags().MarkHidden("config") //nolint: errcheck
 	rootCmd.PersistentFlags().StringVar(&options.Disk, "disk", "", "The path to the disk to install to")
 	rootCmd.PersistentFlags().StringVar(&options.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.PersistentFlags().StringArrayVar(&options.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
