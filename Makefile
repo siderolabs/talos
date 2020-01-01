@@ -205,15 +205,15 @@ capi: ## Deploys Cluster API to the basic integration cluster.
 login: ## Logs in to the configured container registry.
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)" $(REGISTRY)
 
-push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
+push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
 	@docker push autonomy/installer:$(TAG)
 	@docker push autonomy/talos:$(TAG)
-ifeq ($(BRANCH),master)
+
+push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
 	@docker tag autonomy/installer:$(TAG) autonomy/installer:$*
 	@docker tag autonomy/talos:$(TAG) autonomy/talos:$*
 	@docker push autonomy/installer:$*
 	@docker push autonomy/talos:$*
-endif
 
 .PHONY: clean
 clean: ## Cleans up all artifacts.
