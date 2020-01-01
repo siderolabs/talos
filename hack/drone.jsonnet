@@ -220,14 +220,12 @@ local push_latest = {
   commands: ['make login', 'make push-latest'],
   volumes: volumes.ForStep(),
   when: {
-    event: {
-      exclude: [
-        'pull_request',
-        'promote',
-        'tag',
-        'cron',
-      ],
-    },
+    branch: [
+      'master',
+    ],
+    event: [
+      'push',
+    ],
   },
   depends_on: [basic_integration.name],
 };
@@ -333,13 +331,9 @@ local push_edge = {
   commands: ['make login', 'make push-edge'],
   volumes: volumes.ForStep(),
   when: {
-    event: {
-      exclude: [
-        'pull_request',
-        'promote',
-        'tag',
-      ],
-    },
+    cron: [
+      'nightly',
+    ],
   },
   depends_on: [conformance_aws.name, conformance_gcp.name],
 };
