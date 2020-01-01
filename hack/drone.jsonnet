@@ -223,6 +223,8 @@ local push = {
     event: {
       exclude: [
         'pull_request',
+        'promote',
+        'cron',
       ],
     },
   },
@@ -240,9 +242,11 @@ local push_latest = {
   commands: ['make push-latest'],
   volumes: volumes.ForStep(),
   when: {
-    ref: [
-      'refs/heads/master',
-      'refs/tags/v0.4.0*',
+    branch: [
+      'master',
+    ],
+    event: [
+      'push',
     ],
   },
   depends_on: [basic_integration.name],
