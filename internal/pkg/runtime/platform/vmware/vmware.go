@@ -83,7 +83,7 @@ func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
 // KernelArgs implements the runtime.Platform interface.
 func (v *VMware) KernelArgs() kernel.Parameters {
 	return []*kernel.Parameter{
-		kernel.NewParameter("console").Append("ttyS0"),
+		kernel.NewParameter("console").Append("tty0"),
 		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
 	}
 }
