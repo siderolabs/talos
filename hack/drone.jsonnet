@@ -209,6 +209,26 @@ local coverage = {
   depends_on: [unit_tests.name],
 };
 
+local push = {
+  name: 'push',
+  image: 'autonomy/build-container:latest',
+  pull: 'always',
+  environment: {
+    DOCKER_USERNAME: { from_secret: 'docker_username' },
+    DOCKER_PASSWORD: { from_secret: 'docker_password' },
+  },
+  commands: ['make push'],
+  volumes: volumes.ForStep(),
+  when: {
+    event: {
+      exclude: [
+        'pull_request',
+      ],
+    },
+  },
+  depends_on: [basic_integration.name],
+};
+
 local push_latest = {
   name: 'push-latest',
   image: 'autonomy/build-container:latest',
@@ -217,14 +237,12 @@ local push_latest = {
     DOCKER_USERNAME: { from_secret: 'docker_username' },
     DOCKER_PASSWORD: { from_secret: 'docker_password' },
   },
-  commands: ['make login', 'make push-latest'],
+  commands: ['make push-latest'],
   volumes: volumes.ForStep(),
   when: {
-    branch: [
-      'master',
-    ],
-    event: [
-      'push',
+    ref: [
+      'refs/heads/master',
+      'refs/tags/v0.4.0*',
     ],
   },
   depends_on: [basic_integration.name],
@@ -258,6 +276,7 @@ local default_steps = [
   unit_tests_race,
   coverage,
   basic_integration,
+  push,
   push_latest,
 ];
 
@@ -319,7 +338,6 @@ local conformance_aws = Step("conformance-aws", target="e2e-integration", depend
 local conformance_azure = Step("conformance-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={PLATFORM: "azure", CONFORMANCE: "run"});
 local conformance_gcp = Step("conformance-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={PLATFORM: "gcp", CONFORMANCE: "run"});
 
-
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -328,7 +346,7 @@ local push_edge = {
     DOCKER_USERNAME: { from_secret: 'docker_username' },
     DOCKER_PASSWORD: { from_secret: 'docker_password' },
   },
-  commands: ['make login', 'make push-edge'],
+  commands: ['make push-edge'],
   volumes: volumes.ForStep(),
   when: {
     cron: [
