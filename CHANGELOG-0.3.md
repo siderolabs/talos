@@ -1,18 +1,20 @@
-# [v0.3.0-beta.3](https://github.com/talos-systems/talos/compare/v0.3.0-beta.2...v0.3.0-beta.3) (2019-12-30)
+# [v0.3.0-beta.3](https://github.com/talos-systems/talos/compare/v0.3.0-beta.2...v0.3.0-beta.3) (2020-01-01)
 
 ### Bug Fixes
 
-- use the correct TLD for the container version label ([b58cee3](https://github.com/talos-systems/talos/commit/b58cee3d1c3c35f089e3e5f3eb9c8a80429e1586))
-- **machined:** Add additional defaults for http transport ([c9bd38d](https://github.com/talos-systems/talos/commit/c9bd38da537796201104f07e79be44dc4ba28a08)), closes [#1680](https://github.com/talos-systems/talos/issues/1680)
-- don't log `token` metadata field in grpc request log ([beb44d1](https://github.com/talos-systems/talos/commit/beb44d10eb68faf651391c8e184ef6f9d6d9768b))
-- extend list of kmsg facilities ([33332d0](https://github.com/talos-systems/talos/commit/33332d03fbf295a5c494426fa4ad552f05343072))
-- **networkd:** Make better route scoping decisions ([a634edc](https://github.com/talos-systems/talos/commit/a634edc1878eb16ca7c2a3004370d311895ac5fb))
-- fix output formats ([bc4e0c9](https://github.com/talos-systems/talos/commit/bc4e0c9a35aa4bc0ae3dbf3cc167bd0bc9697d08))
+- set the correct kernel args for VMware ([f8d638d](https://github.com/talos-systems/talos/commit/f8d638d09580d048f861bb3c0fc63ecb5809c643))
+- use the correct mf file name ([07731eb](https://github.com/talos-systems/talos/commit/07731eb22e8ada593b1e7515b86e48d2485e2fe3))
+- use the correct TLD for the container version label ([c4d0fe1](https://github.com/talos-systems/talos/commit/c4d0fe148534b2d237af67715250eaf3f4f02497))
+- **machined:** Add additional defaults for http transport ([7c57cd7](https://github.com/talos-systems/talos/commit/7c57cd72343bef08458af532a2c6aafaabfe4556)), closes [#1680](https://github.com/talos-systems/talos/issues/1680)
+- don't log `token` metadata field in grpc request log ([b6e16cd](https://github.com/talos-systems/talos/commit/b6e16cd935f28ff487c821ae1bd9c75e1852f8e1))
+- extend list of kmsg facilities ([3df7104](https://github.com/talos-systems/talos/commit/3df710427b17908a486217270910e29872e40c9c))
+- **networkd:** Make better route scoping decisions ([df165ba](https://github.com/talos-systems/talos/commit/df165ba4ada6acba6ef9a515e360d602f8709ee4))
+- fix output formats ([afc4bd2](https://github.com/talos-systems/talos/commit/afc4bd2b6fbd7c0df52dc1dfb647978815fd0a92))
 
 ### Features
 
-- add installer command to installer container ([0050b69](https://github.com/talos-systems/talos/commit/0050b69b95024e3f664e1b572b6c1a31e5415636))
-- support specifying CIDR for docker network ([7d35183](https://github.com/talos-systems/talos/commit/7d351832f0f73c8215e6e6f6c1c2972bab96808e))
+- add installer command to installer container ([7a5141a](https://github.com/talos-systems/talos/commit/7a5141a64956dbe41536999ff5c5ba34ecc0ee7a))
+- support specifying CIDR for docker network ([b795d7a](https://github.com/talos-systems/talos/commit/b795d7a260dd2f4750a1fe1ff44e08adf9033e33))
 
 # [v0.3.0-beta.2](https://github.com/talos-systems/talos/compare/v0.3.0-beta.1...v0.3.0-beta.2) (2019-12-21)
 
