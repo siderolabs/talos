@@ -609,12 +609,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
+    branch:
+    - master
     event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
-      - cron
+    - push
   depends_on:
   - basic-integration
 
@@ -1272,12 +1270,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
+    branch:
+    - master
     event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
-      - cron
+    - push
   depends_on:
   - basic-integration
 
@@ -2063,12 +2059,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
+    branch:
+    - master
     event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
-      - cron
+    - push
   depends_on:
   - basic-integration
 
@@ -2230,11 +2224,8 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
+    cron:
+    - nightly
   depends_on:
   - conformance-aws
   - conformance-gcp
@@ -2888,12 +2879,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
+    branch:
+    - master
     event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
-      - cron
+    - push
   depends_on:
   - basic-integration
 
@@ -3055,11 +3044,8 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
+    cron:
+    - nightly
   depends_on:
   - conformance-aws
   - conformance-gcp
@@ -3713,12 +3699,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
+    branch:
+    - master
     event:
-      exclude:
-      - pull_request
-      - promote
-      - tag
-      - cron
+    - push
   depends_on:
   - basic-integration
 
