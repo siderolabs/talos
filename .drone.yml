@@ -611,6 +611,8 @@ steps:
     event:
       exclude:
       - pull_request
+      - promote
+      - cron
   depends_on:
   - basic-integration
 
@@ -636,9 +638,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    ref:
-    - refs/heads/master
-    - refs/tags/v0.4.0*
+    branch:
+    - master
+    event:
+    - push
   depends_on:
   - basic-integration
 
@@ -1298,6 +1301,8 @@ steps:
     event:
       exclude:
       - pull_request
+      - promote
+      - cron
   depends_on:
   - basic-integration
 
@@ -1323,9 +1328,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    ref:
-    - refs/heads/master
-    - refs/tags/v0.4.0*
+    branch:
+    - master
+    event:
+    - push
   depends_on:
   - basic-integration
 
@@ -2113,6 +2119,8 @@ steps:
     event:
       exclude:
       - pull_request
+      - promote
+      - cron
   depends_on:
   - basic-integration
 
@@ -2138,9 +2146,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    ref:
-    - refs/heads/master
-    - refs/tags/v0.4.0*
+    branch:
+    - master
+    event:
+    - push
   depends_on:
   - basic-integration
 
@@ -2958,6 +2967,8 @@ steps:
     event:
       exclude:
       - pull_request
+      - promote
+      - cron
   depends_on:
   - basic-integration
 
@@ -2983,9 +2994,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    ref:
-    - refs/heads/master
-    - refs/tags/v0.4.0*
+    branch:
+    - master
+    event:
+    - push
   depends_on:
   - basic-integration
 
@@ -3803,6 +3815,8 @@ steps:
     event:
       exclude:
       - pull_request
+      - promote
+      - cron
   depends_on:
   - basic-integration
 
@@ -3828,9 +3842,10 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    ref:
-    - refs/heads/master
-    - refs/tags/v0.4.0*
+    branch:
+    - master
+    event:
+    - push
   depends_on:
   - basic-integration
 
