@@ -586,11 +586,38 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-latest
   environment:
     DOCKER_PASSWORD:
@@ -609,10 +636,9 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    branch:
-    - master
-    event:
-    - push
+    ref:
+    - refs/heads/master
+    - refs/tags/v0.4.0*
   depends_on:
   - basic-integration
 
@@ -1247,11 +1273,38 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-latest
   environment:
     DOCKER_PASSWORD:
@@ -1270,10 +1323,9 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    branch:
-    - master
-    event:
-    - push
+    ref:
+    - refs/heads/master
+    - refs/tags/v0.4.0*
   depends_on:
   - basic-integration
 
@@ -2036,11 +2088,38 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-latest
   environment:
     DOCKER_PASSWORD:
@@ -2059,10 +2138,9 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    branch:
-    - master
-    event:
-    - push
+    ref:
+    - refs/heads/master
+    - refs/tags/v0.4.0*
   depends_on:
   - basic-integration
 
@@ -2205,7 +2283,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-edge
   environment:
     DOCKER_PASSWORD:
@@ -2856,11 +2933,38 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-latest
   environment:
     DOCKER_PASSWORD:
@@ -2879,10 +2983,9 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    branch:
-    - master
-    event:
-    - push
+    ref:
+    - refs/heads/master
+    - refs/tags/v0.4.0*
   depends_on:
   - basic-integration
 
@@ -3025,7 +3128,6 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-edge
   environment:
     DOCKER_PASSWORD:
@@ -3676,11 +3778,38 @@ steps:
   - osctl-linux
   - integration-test
 
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  when:
+    event:
+      exclude:
+      - pull_request
+  depends_on:
+  - basic-integration
+
 - name: push-latest
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make login
   - make push-latest
   environment:
     DOCKER_PASSWORD:
@@ -3699,10 +3828,9 @@ steps:
   - name: tmp
     path: /tmp
   when:
-    branch:
-    - master
-    event:
-    - push
+    ref:
+    - refs/heads/master
+    - refs/tags/v0.4.0*
   depends_on:
   - basic-integration
 
