@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 var outputArg string
@@ -39,6 +40,7 @@ func init() {
 	rootCmd.AddCommand(imageCmd)
 }
 
+//nolint: gocyclo
 func runImageCmd() (err error) {
 	p, err := platform.NewPlatform(options.Platform)
 	if err != nil {
@@ -81,6 +83,16 @@ func runImageCmd() (err error) {
 				InstallExtraKernelArgs: options.ExtraKernelArgs,
 			},
 		},
+	}
+
+	if options.ConfigSource == "" {
+		switch p.Name() {
+		case "aws", "azure", "digital-ocean", "gcp":
+			options.ConfigSource = "none"
+		case "vmware":
+			options.ConfigSource = constants.ConfigGuestInfo
+		default:
+		}
 	}
 
 	if err = pkg.Install(p, config, runtime.None, options); err != nil {
