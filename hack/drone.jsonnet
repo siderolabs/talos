@@ -436,7 +436,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, image_gcp.name, image_azure.name, image_aws.name, push_latest.name]
+  depends_on: [kernel.name, iso.name, image_gcp.name, image_azure.name, image_aws.name, push.name]
 };
 
 local release_steps = default_steps + [
