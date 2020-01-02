@@ -79,9 +79,10 @@ func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 
 // NodeRequest describes a request for a node.
 type NodeRequest struct {
-	Type generate.Type
-	Name string
-	IP   net.IP
+	Type       generate.Type
+	Name       string
+	IP         net.IP
+	ConfigData string
 
 	// Share of CPUs, in 1e-9 fractions
 	NanoCPUs int64

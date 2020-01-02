@@ -239,7 +239,15 @@ func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEnc
 // NewInput generates the sensitive data required to generate all config
 // types.
 // nolint: dupl,gocyclo
-func NewInput(clustername string, endpoint string, kubernetesVersion string) (input *Input, err error) {
+func NewInput(clustername string, endpoint string, kubernetesVersion string, opts ...GenOption) (input *Input, err error) {
+	options := DefaultGenOptions()
+
+	for _, opt := range opts {
+		if err = opt(&options); err != nil {
+			return nil, err
+		}
+	}
+
 	var loopback, podNet, serviceNet string
 
 	if isIPv6(endpoint) {
@@ -314,16 +322,27 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string) (in
 		},
 	}
 
+	var additionalSubjectAltNames []string
+
+	var additionalMachineCertSANs []string
+
+	if len(options.EndpointList) > 0 {
+		additionalSubjectAltNames = options.EndpointList
+		additionalMachineCertSANs = options.EndpointList
+	}
+
 	input = &Input{
-		Certs:                certs,
-		ControlPlaneEndpoint: endpoint,
-		PodNet:               []string{podNet},
-		ServiceNet:           []string{serviceNet},
-		ServiceDomain:        "cluster.local",
-		ClusterName:          clustername,
-		KubernetesVersion:    kubernetesVersion,
-		Secrets:              kubeadmTokens,
-		TrustdInfo:           trustdInfo,
+		Certs:                     certs,
+		ControlPlaneEndpoint:      endpoint,
+		PodNet:                    []string{podNet},
+		ServiceNet:                []string{serviceNet},
+		ServiceDomain:             "cluster.local",
+		ClusterName:               clustername,
+		KubernetesVersion:         kubernetesVersion,
+		Secrets:                   kubeadmTokens,
+		TrustdInfo:                trustdInfo,
+		AdditionalSubjectAltNames: additionalSubjectAltNames,
+		AdditionalMachineCertSANs: additionalMachineCertSANs,
 	}
 
 	return input, nil

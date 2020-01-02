@@ -14,8 +14,6 @@ import (
 
 func (p *provisioner) Reflect(ctx context.Context, clusterName string) (provision.Cluster, error) {
 	res := &result{
-		talosConfig: nil, // TODO: recover talosConfig
-
 		clusterInfo: provision.ClusterInfo{
 			ClusterName: clusterName,
 		},

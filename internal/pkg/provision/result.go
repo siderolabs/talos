@@ -7,13 +7,11 @@ package provision
 import (
 	"net"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
 // Cluster describes the provisioned Cluster.
 type Cluster interface {
-	TalosConfig() *config.Config
 	Info() ClusterInfo
 }
 

@@ -51,7 +51,7 @@ func (a *adapter) Client(endpoints ...string) (*client.Client, error) {
 		return cli, nil
 	}
 
-	configContext, creds, err := client.NewClientContextAndCredentialsFromParsedConfig(a.TalosConfig(), "")
+	configContext, creds, err := client.NewClientContextAndCredentialsFromParsedConfig(a.options.TalosConfig, "")
 	if err != nil {
 		return nil, err
 	}
