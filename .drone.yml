@@ -3921,7 +3921,7 @@ steps:
   - image-gcp
   - image-azure
   - image-aws
-  - push-latest
+  - push
 
 services:
 - name: docker
