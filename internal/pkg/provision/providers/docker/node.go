@@ -6,7 +6,6 @@ package docker
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -23,13 +22,13 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.ClusterRequest, input *generate.Input, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
-			nodeInfo, err := p.createNode(ctx, clusterReq, input, nodeReq)
+			nodeInfo, err := p.createNode(ctx, clusterReq, nodeReq)
 			errCh <- err
 
 			if err == nil {
@@ -56,22 +55,12 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 }
 
 //nolint: gocyclo
-func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, input *generate.Input, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
-	inputCopy := *input // TOD: this looks like a bug in generate?
-
-	data, err := generate.Config(nodeReq.Type, &inputCopy)
-	if err != nil {
-		return provision.NodeInfo{}, err
-	}
-
-	b64data := base64.StdEncoding.EncodeToString([]byte(data))
-
+func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
 	// Create the container config.
-
 	containerConfig := &container.Config{
 		Hostname: nodeReq.Name,
 		Image:    clusterReq.Image,
-		Env:      []string{"PLATFORM=container", "USERDATA=" + b64data},
+		Env:      []string{"PLATFORM=container", "USERDATA=" + nodeReq.ConfigData},
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": clusterReq.Name,
@@ -111,15 +100,15 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	switch nodeReq.Type {
 	case generate.TypeInit:
 		var apidPort nat.Port
-		apidPort, err = nat.NewPort("tcp", "50000")
 
+		apidPort, err := nat.NewPort("tcp", "50000")
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}
 
 		var apiServerPort nat.Port
-		apiServerPort, err = nat.NewPort("tcp", "6443")
 
+		apiServerPort, err = nat.NewPort("tcp", "6443")
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}

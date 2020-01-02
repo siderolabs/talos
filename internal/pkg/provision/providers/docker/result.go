@@ -5,18 +5,11 @@
 package docker
 
 import (
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
 type result struct {
-	talosConfig *config.Config
-
 	clusterInfo provision.ClusterInfo
-}
-
-func (res *result) TalosConfig() *config.Config {
-	return res.talosConfig
 }
 
 func (res *result) Info() provision.ClusterInfo {

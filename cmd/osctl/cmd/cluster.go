@@ -6,13 +6,18 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"net"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
@@ -38,6 +43,7 @@ var (
 	clusterWaitTimeout      time.Duration
 	forceInitNodeAsEndpoint bool
 	forceEndpoint           string
+	inputDir                string
 )
 
 // clusterCmd represents the cluster command
@@ -110,6 +116,78 @@ func create(ctx context.Context) (err error) {
 
 	defer provisioner.Close() //nolint: errcheck
 
+	b64Configs := map[string]string{"Init": "", "ControlPlane": "", "Join": ""}
+	talosConfigObj := &config.Config{}
+	provisionOptions := []provision.Option{}
+
+	if inputDir == "" {
+		fmt.Println("generating PKI and tokens")
+
+		var input *generate.Input
+
+		var genOptions []generate.GenOption
+
+		if forceEndpoint != "" {
+			genOptions = append(genOptions, generate.WithEndpointList([]string{forceEndpoint}))
+			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
+		} else if forceInitNodeAsEndpoint {
+			genOptions = append(genOptions, generate.WithEndpointList([]string{ips[0]}))
+		}
+
+		input, err = generate.NewInput(clusterName, fmt.Sprintf("https://%s:6443", ips[0]), kubernetesVersion, genOptions...)
+		if err != nil {
+			return err
+		}
+
+		for key := range b64Configs {
+			var configType generate.Type
+
+			configType, err = generate.ParseType(key)
+			if err != nil {
+				return err
+			}
+
+			var data string
+
+			data, err = generate.Config(configType, input)
+			if err != nil {
+				return err
+			}
+
+			b64Configs[key] = base64.StdEncoding.EncodeToString([]byte(data))
+		}
+
+		talosConfigObj, err = generate.Talosconfig(input, genOptions...)
+		if err != nil {
+			return err
+		}
+	} else {
+		// parse out existing config data files
+		for key := range b64Configs {
+			var data []byte
+			data, err = ioutil.ReadFile(filepath.Join(inputDir, strings.ToLower(key)+".yaml"))
+			if err != nil {
+				return err
+			}
+			b64Configs[key] = base64.StdEncoding.EncodeToString(data)
+		}
+
+		// parse out existing talosconfig
+		var talosConfig []byte
+		talosConfig, err = ioutil.ReadFile(filepath.Join(inputDir, "talosconfig"))
+		if err != nil {
+			return err
+		}
+
+		if err = yaml.Unmarshal(talosConfig, talosConfigObj); err != nil {
+			return err
+		}
+	}
+
+	// Add talosconfig to provision options so we'll have it to parse there
+	provisionOptions = append(provisionOptions, provision.WithTalosConfig(talosConfigObj))
+
+	// Craft cluster and node requests
 	request := provision.ClusterRequest{
 		Name: clusterName,
 
@@ -134,32 +212,24 @@ func create(ctx context.Context) (err error) {
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Type:     typ,
-				Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
-				IP:       net.ParseIP(ips[i]),
-				Memory:   memory,
-				NanoCPUs: nanoCPUs,
+				Type:       typ,
+				Name:       fmt.Sprintf("%s-master-%d", clusterName, i+1),
+				IP:         net.ParseIP(ips[i]),
+				Memory:     memory,
+				NanoCPUs:   nanoCPUs,
+				ConfigData: b64Configs[typ.String()],
 			})
 	}
 
 	for i := 1; i <= workers; i++ {
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Type:     generate.TypeJoin,
-				Name:     fmt.Sprintf("%s-worker-%d", clusterName, i),
-				Memory:   memory,
-				NanoCPUs: nanoCPUs,
+				Type:       generate.TypeJoin,
+				Name:       fmt.Sprintf("%s-worker-%d", clusterName, i),
+				Memory:     memory,
+				NanoCPUs:   nanoCPUs,
+				ConfigData: b64Configs[generate.TypeJoin.String()],
 			})
-	}
-
-	var provisionOptions []provision.Option
-
-	if forceInitNodeAsEndpoint {
-		provisionOptions = append(provisionOptions, provision.WithForceInitNodeAsEndpoint())
-	}
-
-	if forceEndpoint != "" {
-		provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
 	}
 
 	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
@@ -168,7 +238,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	// Create and save the osctl configuration file.
-	if err = saveConfig(cluster); err != nil {
+	if err = saveConfig(cluster, talosConfigObj); err != nil {
 		return err
 	}
 
@@ -202,9 +272,7 @@ func destroy(ctx context.Context) error {
 	return provisioner.Destroy(ctx, cluster)
 }
 
-func saveConfig(cluster provision.Cluster) (err error) {
-	newConfig := cluster.TalosConfig()
-
+func saveConfig(cluster provision.Cluster, talosConfigObj *config.Config) (err error) {
 	c, err := config.Open(talosconfig)
 	if err != nil {
 		return err
@@ -214,7 +282,7 @@ func saveConfig(cluster provision.Cluster) (err error) {
 		c.Contexts = map[string]*config.Context{}
 	}
 
-	c.Contexts[cluster.Info().ClusterName] = newConfig.Contexts[cluster.Info().ClusterName]
+	c.Contexts[cluster.Info().ClusterName] = talosConfigObj.Contexts[cluster.Info().ClusterName]
 
 	c.Context = cluster.Info().ClusterName
 
@@ -248,6 +316,7 @@ func init() {
 	clusterUpCmd.Flags().BoolVar(&forceInitNodeAsEndpoint, "init-node-as-endpoint", false, "use init node as endpoint instead of any load balancer endpoint")
 	clusterUpCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
 	clusterUpCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	clusterUpCmd.Flags().StringVarP(&inputDir, "input-dir", "i", "", "location of pre-generated config files")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)

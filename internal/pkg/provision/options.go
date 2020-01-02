@@ -7,6 +7,8 @@ package provision
 import (
 	"io"
 	"os"
+
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 )
 
 // Option controls Provisioner.
@@ -21,16 +23,6 @@ func WithLogWriter(w io.Writer) Option {
 	}
 }
 
-// WithForceInitNodeAsEndpoint uses direct IP of init node as endpoint instead of (default)
-// mode.
-func WithForceInitNodeAsEndpoint() Option {
-	return func(o *Options) error {
-		o.ForceInitNodeAsEndpoint = true
-
-		return nil
-	}
-}
-
 // WithEndpoint specifies endpoint to use when acessing Talos cluster.
 func WithEndpoint(endpoint string) Option {
 	return func(o *Options) error {
@@ -40,11 +32,20 @@ func WithEndpoint(endpoint string) Option {
 	}
 }
 
+// WithTalosConfig specifies talosconfig to use when acessing Talos cluster.
+func WithTalosConfig(talosConfig *config.Config) Option {
+	return func(o *Options) error {
+		o.TalosConfig = talosConfig
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
-	LogWriter               io.Writer
-	ForceInitNodeAsEndpoint bool
-	ForceEndpoint           string
+	LogWriter     io.Writer
+	TalosConfig   *config.Config
+	ForceEndpoint string
 }
 
 // DefaultOptions returns default options.

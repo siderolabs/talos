@@ -20,6 +20,7 @@ osctl cluster create [flags]
   -h, --help                        help for create
       --image string                the image to use (default "docker.io/autonomy/talos:latest")
       --init-node-as-endpoint       use init node as endpoint instead of any load balancer endpoint
+  -i, --input-dir string            location of pre-generated config files
       --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
