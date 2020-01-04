@@ -345,7 +345,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build go test -v -count 1 -race ${
 
 # The integration-test target builds integration test binary.
 
-FROM base AS integration-test-build
+FROM base AS integration-test-linux-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
@@ -354,8 +354,20 @@ RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
-FROM scratch AS integration-test
-COPY --from=integration-test-build /src/integration.test /integration-test
+FROM scratch AS integration-test-linux
+COPY --from=integration-test-linux-build /src/integration.test /integration-test-linux-amd64
+
+FROM base AS integration-test-darwin-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go test -c \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" \
+    -tags integration,integration_api,integration_cli,integration_k8s \
+    ./internal/integration
+
+FROM scratch AS integration-test-darwin
+COPY --from=integration-test-darwin-build /src/integration.test /integration-test-darwin-amd64
 
 # The lint target performs linting on the source code.
 
