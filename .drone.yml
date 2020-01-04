@@ -228,53 +228,6 @@ steps:
   depends_on:
   - osctl-linux
 
-- name: integration-test
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make integration-test
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: rootfs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make target-rootfs
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
-
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -294,7 +247,12 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - apid
+  - machined
+  - networkd
+  - ntpd
+  - osd
+  - trustd
 
 - name: installer
   pull: always
@@ -315,7 +273,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - initramfs
 
 - name: talos
   pull: always
@@ -336,7 +294,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - installer
 
 - name: lint-go
   pull: always
@@ -525,7 +483,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
   - talos
 
 - name: unit-tests-race
@@ -584,7 +541,6 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
-  - integration-test
 
 - name: push
   pull: always
@@ -918,53 +874,6 @@ steps:
   depends_on:
   - osctl-linux
 
-- name: integration-test
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make integration-test
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: rootfs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make target-rootfs
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
-
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -984,7 +893,12 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - apid
+  - machined
+  - networkd
+  - ntpd
+  - osd
+  - trustd
 
 - name: installer
   pull: always
@@ -1005,7 +919,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - initramfs
 
 - name: talos
   pull: always
@@ -1026,7 +940,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - installer
 
 - name: lint-go
   pull: always
@@ -1215,7 +1129,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
   - talos
 
 - name: unit-tests-race
@@ -1274,7 +1187,6 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
-  - integration-test
 
 - name: push
   pull: always
@@ -1736,53 +1648,6 @@ steps:
   depends_on:
   - osctl-linux
 
-- name: integration-test
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make integration-test
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: rootfs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make target-rootfs
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
-
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -1802,7 +1667,12 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - apid
+  - machined
+  - networkd
+  - ntpd
+  - osd
+  - trustd
 
 - name: installer
   pull: always
@@ -1823,7 +1693,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - initramfs
 
 - name: talos
   pull: always
@@ -1844,7 +1714,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - installer
 
 - name: lint-go
   pull: always
@@ -2033,7 +1903,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
   - talos
 
 - name: unit-tests-race
@@ -2092,7 +1961,6 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
-  - integration-test
 
 - name: push
   pull: always
@@ -2584,53 +2452,6 @@ steps:
   depends_on:
   - osctl-linux
 
-- name: integration-test
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make integration-test
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: rootfs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make target-rootfs
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
-
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -2650,7 +2471,12 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - apid
+  - machined
+  - networkd
+  - ntpd
+  - osd
+  - trustd
 
 - name: installer
   pull: always
@@ -2671,7 +2497,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - initramfs
 
 - name: talos
   pull: always
@@ -2692,7 +2518,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - installer
 
 - name: lint-go
   pull: always
@@ -2881,7 +2707,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
   - talos
 
 - name: unit-tests-race
@@ -2940,7 +2765,6 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
-  - integration-test
 
 - name: push
   pull: always
@@ -3432,53 +3256,6 @@ steps:
   depends_on:
   - osctl-linux
 
-- name: integration-test
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make integration-test
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: rootfs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make target-rootfs
-  environment:
-    BINDIR: /usr/local/bin
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - machined
-  - osd
-  - trustd
-  - ntpd
-  - networkd
-  - apid
-
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -3498,7 +3275,12 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - apid
+  - machined
+  - networkd
+  - ntpd
+  - osd
+  - trustd
 
 - name: installer
   pull: always
@@ -3519,7 +3301,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - initramfs
 
 - name: talos
   pull: always
@@ -3540,7 +3322,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
+  - installer
 
 - name: lint-go
   pull: always
@@ -3729,7 +3511,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - rootfs
   - talos
 
 - name: unit-tests-race
@@ -3788,7 +3569,6 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
-  - integration-test
 
 - name: push
   pull: always
