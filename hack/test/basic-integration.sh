@@ -2,11 +2,9 @@
 
 set -eou pipefail
 
-
-TALOS_IMG="docker.io/autonomy/talos:${TAG}"
-OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
-INTEGRATIONTEST="${PWD}/bin/integration-test"
 TMP="/tmp/e2e"
+TALOS_IMG="docker.io/autonomy/talos:${TAG}"
+
 export TALOSCONFIG="${TMP}/talosconfig"
 
 case "${CI:-false}" in
@@ -20,10 +18,12 @@ esac
 
 case $(uname -s) in
   Linux*)
-    LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
+    OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
+    INTEGRATION_TEST="${PWD}/${ARTIFACTS}/integration-test-linux-amd64"
     ;;
   Darwin*)
-    LOCALOSCTL="${PWD}/${ARTIFACTS}/osctl-darwin-amd64"
+    OSCTL="${PWD}/${ARTIFACTS}/osctl-darwin-amd64"
+    INTEGRATION_TEST="${PWD}/${ARTIFACTS}/integration-test-darwin-amd64"
     ;;
   *)
     exit 1

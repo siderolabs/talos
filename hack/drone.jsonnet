@@ -179,11 +179,9 @@ local apid = Step("apid", depends_on=[setup_ci]);
 local osctl_linux = Step("osctl-linux", depends_on=[setup_ci]);
 local osctl_darwin = Step("osctl-darwin", depends_on=[setup_ci]);
 local docs = Step("docs", depends_on=[osctl_linux]);
-local integration_test = Step("integration-test", depends_on=[setup_ci]);
-local rootfs =  Step("rootfs", target="target-rootfs", depends_on=[machined, osd, trustd, ntpd, networkd, apid]);
-local initramfs = Step("initramfs", depends_on=[rootfs]);
-local installer = Step("installer", depends_on=[rootfs]);
-local talos = Step("talos", depends_on=[rootfs]);
+local initramfs = Step("initramfs", depends_on=[apid, machined, networkd, ntpd, osd, trustd]);
+local installer = Step("installer", depends_on=[initramfs]);
+local talos = Step("talos", depends_on=[installer]);
 local golint = Step("lint-go", depends_on=[setup_ci]);
 local protobuflint = Step("lint-protobuf", depends_on=[setup_ci]);
 local markdownlint = Step("lint-markdown", depends_on=[setup_ci]);
@@ -192,9 +190,9 @@ local image_azure = Step("image-azure", depends_on=[installer]);
 local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
 local image_gcp = Step("image-gcp", depends_on=[installer]);
 local image_vmware = Step("image-vmware", depends_on=[installer]);
-local unit_tests = Step("unit-tests", depends_on=[rootfs, talos]);
+local unit_tests = Step("unit-tests", depends_on=[talos]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
-local basic_integration = Step("basic-integration", depends_on=[unit_tests, talos, osctl_linux, integration_test]);
+local basic_integration = Step("basic-integration", depends_on=[unit_tests, talos, osctl_linux]);
 
 local coverage = {
   name: 'coverage',
@@ -263,8 +261,6 @@ local default_steps = [
   osctl_linux,
   osctl_darwin,
   docs,
-  integration_test,
-  rootfs,
   initramfs,
   installer,
   talos,
