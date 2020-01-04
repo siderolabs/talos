@@ -6,11 +6,12 @@ BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 
 ARTIFACTS := _out
+IMAGES := $(ARTIFACTS)/images
 TOOLS ?= autonomy/tools:8fdb32d
 GO_VERSION ?= 1.13
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
-OSCTL_COMMAND := $(ARTIFACTS)/osctl-$(OPERATING_SYSTEM)-amd64
+INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 TESTPKGS ?= ./...
 
 BUILD := docker buildx build
@@ -25,10 +26,10 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
-COMMON_ARGS += --build-arg=IMAGES=$(ARTIFACTS)/images
+COMMON_ARGS += --build-arg=IMAGES=$(IMAGES)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 
-all: help
+all: initramfs kernel installer osctl talos
 
 # Help Menu
 
@@ -103,22 +104,22 @@ docs: ## Generates the documentation for machine config, and osctl.
 # Apps
 
 apid: ## Builds the apid container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(ARTIFACTS)/images
+	@$(MAKE) docker-$@ DEST=./$(IMAGES)
 
 machined: ## Builds machined. The build result will only remain in the build cache.
 	@$(MAKE) target-$@
 
 networkd: ## Builds the networkd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(ARTIFACTS)/images
+	@$(MAKE) docker-$@ DEST=./$(IMAGES)
 
 ntpd: ## Builds the ntpd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(ARTIFACTS)/images
+	@$(MAKE) docker-$@ DEST=./$(IMAGES)
 
 osd: ## Builds the osd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(ARTIFACTS)/images
+	@$(MAKE) docker-$@ DEST=./$(IMAGES)
 
 trustd: ## Builds the trustd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(ARTIFACTS)/images
+	@$(MAKE) docker-$@ DEST=./$(IMAGES)
 
 apps: apid machined networkd ntpd osd trustd ## Builds all apps (apid, machined, networkd, ntpd, osd, and trustd).
 
@@ -130,16 +131,16 @@ kernel: ## Outputs the kernel package contents (vmlinuz, and vmlinux) to the art
 	@-rm -rf $(ARTIFACTS)/modules
 
 .PHONY: initramfs
-initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
+initramfs: apps ## Builds the compressed initramfs and outputs it to the artifact directory.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
 
 .PHONY: installer
-installer: ## Builds the container image for the installer and outputs it to the artifact directory.
+installer: apps ## Builds the container image for the installer and outputs it to the artifact directory.
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS)
 	@docker load < $(ARTIFACTS)/$@.tar
 
 .PHONY: talos
-talos: ## Builds the Talos container image and outputs it to the artifact directory.
+talos: apps ## Builds the Talos container image and outputs it to the artifact directory.
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS)
 	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
 	@docker load < $(ARTIFACTS)/container.tar
@@ -180,12 +181,13 @@ unit-tests: apps ## Performs unit tests.
 unit-tests-race: ## Performs unit tests with race detection enabled.
 	@$(MAKE) local-$@ DEST=./
 
-.PHONY: integration-test
-integration-test: ## Runs the CLI and API integration tests against a running cluster.
-	@$(MAKE) local-$@ DEST=./bin
+integration-test-%:
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+
+integration-test: $(INTEGRATION_TEST_DEFAULT_TARGET) ## Builds the integration-test binary for the local machine.
 
 .PHONY: basic-integration
-basic-integration: ## Runs the basic integration test.
+basic-integration: integration-test osctl talos ## Runs the basic integration test.
 	@$(MAKE) hack-test-$@
 
 .PHONY: e2e-integration
