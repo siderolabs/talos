@@ -426,7 +426,6 @@ local release = {
       '_out/installer.tar',
       '_out/osctl-darwin-amd64',
       '_out/osctl-linux-amd64',
-      '_out/talos.iso',
       '_out/vmware.ova',
       '_out/vmlinux',
       '_out/vmlinuz',
