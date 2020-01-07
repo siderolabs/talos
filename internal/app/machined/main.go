@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/http/httpproxy"
@@ -134,6 +136,17 @@ func main() {
 	if err = os.Setenv("PATH", constants.PATH); err != nil {
 		panic(errors.New("error setting PATH"))
 	}
+
+	signalChan := make(chan os.Signal, 2)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		sig := <-signalChan
+		switch sig {
+		case os.Interrupt, syscall.SIGTERM:
+			init.Channel() <- event.Event{Type: event.Shutdown}
+		}
+	}()
 
 	// Boot the machine.
 	seq := sequencer.New(sequencer.V1Alpha1)
