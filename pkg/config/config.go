@@ -7,11 +7,15 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
 // Content represents the raw config data.
@@ -19,6 +23,102 @@ type Content struct {
 	Version string `yaml:"version"`
 
 	data []byte
+}
+
+// NewConfigBundle returns a new bundle
+// nolint: gocyclo
+func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
+	options := DefaultBundleOptions()
+
+	for _, opt := range opts {
+		if err := opt(&options); err != nil {
+			return nil, err
+		}
+	}
+
+	bundle := &v1alpha1.ConfigBundle{}
+
+	// Configs already exist, we'll pull them in.
+	if options.ExistingConfigs != "" {
+		if options.InputOptions != nil {
+			return bundle, fmt.Errorf("both existing config path and input options specified")
+		}
+
+		// Pull existing machine configs of each type
+		for _, configType := range []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin} {
+			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
+			if err != nil {
+				return bundle, err
+			}
+
+			unmarshalledConfig := &v1alpha1.Config{}
+			if err := yaml.Unmarshal(data, unmarshalledConfig); err != nil {
+				return bundle, err
+			}
+
+			switch configType {
+			case generate.TypeInit:
+				bundle.InitCfg = unmarshalledConfig
+			case generate.TypeControlPlane:
+				bundle.ControlPlaneCfg = unmarshalledConfig
+			case generate.TypeJoin:
+				bundle.JoinCfg = unmarshalledConfig
+			}
+		}
+
+		// Pull existing talosconfig
+		talosConfig, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, "talosconfig"))
+		if err != nil {
+			return bundle, err
+		}
+
+		bundle.TalosCfg = &config.Config{}
+		if err = yaml.Unmarshal(talosConfig, bundle.TalosCfg); err != nil {
+			return bundle, err
+		}
+
+		return bundle, nil
+	}
+
+	// Handle generating net-new configs
+	fmt.Println("generating PKI and tokens")
+
+	var input *generate.Input
+
+	input, err := generate.NewInput(
+		options.InputOptions.ClusterName,
+		fmt.Sprintf("https://%s:6443", options.InputOptions.MasterIPs[0]),
+		options.InputOptions.KubeVersion,
+		options.InputOptions.GenOptions...,
+	)
+	if err != nil {
+		return bundle, err
+	}
+
+	for _, configType := range []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin} {
+		var generatedConfig *v1alpha1.Config
+
+		generatedConfig, err = generate.Config(configType, input)
+		if err != nil {
+			return bundle, err
+		}
+
+		switch configType {
+		case generate.TypeInit:
+			bundle.InitCfg = generatedConfig
+		case generate.TypeControlPlane:
+			bundle.ControlPlaneCfg = generatedConfig
+		case generate.TypeJoin:
+			bundle.JoinCfg = generatedConfig
+		}
+	}
+
+	bundle.TalosCfg, err = generate.Talosconfig(input, options.InputOptions.GenOptions...)
+	if err != nil {
+		return bundle, err
+	}
+
+	return bundle, nil
 }
 
 // New initializes and returns a Configurator.

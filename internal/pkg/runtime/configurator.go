@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -17,4 +18,12 @@ type Configurator interface {
 	Cluster() cluster.Cluster
 	Validate(Mode) error
 	String() (string, error)
+}
+
+// ConfiguratorBundle defines the configuration bundle interface.
+type ConfiguratorBundle interface {
+	Init() Configurator
+	ControlPlane() Configurator
+	Join() Configurator
+	TalosConfig() *config.Config
 }

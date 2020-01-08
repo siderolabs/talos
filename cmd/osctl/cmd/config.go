@@ -183,6 +183,7 @@ var configGenerateCmd = &cobra.Command{
 	},
 }
 
+// TODO(rsmitty): move this to use the configbundle interface
 func genV1Alpha1Config(args []string) error {
 	// If output dir isn't specified, set to the current working dir
 	var err error
