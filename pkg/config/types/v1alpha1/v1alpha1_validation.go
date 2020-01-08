@@ -14,7 +14,9 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 var (
@@ -52,9 +54,55 @@ var (
 // nolint: dupl
 type NetworkDeviceCheck func(*machine.Device) error
 
-// Validate triggers the specified validation checks to run.
-// nolint: dupl
-func Validate(d *machine.Device, checks ...NetworkDeviceCheck) error {
+// Validate implements the Configurator interface.
+//nolint: gocyclo
+func (c *Config) Validate(mode runtime.Mode) error {
+	var result *multierror.Error
+
+	if c.MachineConfig == nil {
+		result = multierror.Append(result, errors.New("machine instructions are required"))
+	}
+
+	if c.ClusterConfig == nil {
+		result = multierror.Append(result, errors.New("cluster instructions are required"))
+	}
+
+	if c.Cluster().Endpoint() == nil || c.Cluster().Endpoint().String() == "" {
+		result = multierror.Append(result, errors.New("a cluster endpoint is required"))
+	}
+
+	if mode == runtime.Metal {
+		if c.MachineConfig.MachineInstall == nil {
+			result = multierror.Append(result, fmt.Errorf("install instructions are required by the %q mode", runtime.Metal.String()))
+		}
+	}
+
+	if c.Machine().Type() == machine.Bootstrap {
+		switch c.Cluster().Network().CNI().Name() {
+		case "custom":
+			if len(c.Cluster().Network().CNI().URLs()) == 0 {
+				result = multierror.Append(result, errors.New("at least one url should be specified if using \"custom\" option for CNI"))
+			}
+		case constants.DefaultCNI:
+			// it's flannel bby
+		default:
+			result = multierror.Append(result, errors.New("cni name should be one of [custom,flannel]"))
+		}
+	}
+
+	for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+		if err := ValidateNetworkDevices(device, CheckDeviceInterface, CheckDeviceAddressing); err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// ValidateNetworkDevices runs the specified validation checks specific to the
+// network devices.
+//nolint: dupl
+func ValidateNetworkDevices(d machine.Device, checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
 	if d.Ignore {
