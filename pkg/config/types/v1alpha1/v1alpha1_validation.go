@@ -81,7 +81,7 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		switch c.Cluster().Network().CNI().Name() {
 		case "custom":
 			if len(c.Cluster().Network().CNI().URLs()) == 0 {
-				result = multierror.Append(result, errors.New("a cni url should be specified if using \"custom\" option for cni"))
+				result = multierror.Append(result, errors.New("at least one url should be specified if using \"custom\" option for CNI"))
 			}
 		case constants.DefaultCNI:
 			// it's flannel bby
