@@ -9,22 +9,19 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	clientconfig "github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -117,15 +114,12 @@ func create(ctx context.Context) (err error) {
 
 	defer provisioner.Close() //nolint: errcheck
 
-	b64Configs := map[string]string{"Init": "", "ControlPlane": "", "Join": ""}
-	talosConfigObj := &config.Config{}
 	provisionOptions := []provision.Option{}
+	configBundleOpts := []config.BundleOption{}
 
-	if inputDir == "" {
-		fmt.Println("generating PKI and tokens")
-
-		var input *generate.Input
-
+	if inputDir != "" {
+		configBundleOpts = append(configBundleOpts, config.WithExistingConfigs(inputDir))
+	} else {
 		var genOptions []generate.GenOption
 
 		if forceEndpoint != "" {
@@ -135,65 +129,24 @@ func create(ctx context.Context) (err error) {
 			genOptions = append(genOptions, generate.WithEndpointList([]string{ips[0]}))
 		}
 
-		input, err = generate.NewInput(clusterName, fmt.Sprintf("https://%s:6443", ips[0]), kubernetesVersion, genOptions...)
-		if err != nil {
-			return err
-		}
+		configBundleOpts = append(configBundleOpts,
+			config.WithInputOptions(
+				&config.InputOptions{
+					ClusterName: clusterName,
+					MasterIPs:   ips,
+					KubeVersion: kubernetesVersion,
+					GenOptions:  genOptions,
+				}),
+		)
+	}
 
-		for key := range b64Configs {
-			var configType generate.Type
-
-			configType, err = generate.ParseType(key)
-			if err != nil {
-				return err
-			}
-
-			var data string
-
-			var configStruct *v1alpha1.Config
-
-			configStruct, err = generate.Config(configType, input)
-			if err != nil {
-				return err
-			}
-
-			data, err = configStruct.String()
-			if err != nil {
-				return err
-			}
-
-			b64Configs[key] = base64.StdEncoding.EncodeToString([]byte(data))
-		}
-
-		talosConfigObj, err = generate.Talosconfig(input, genOptions...)
-		if err != nil {
-			return err
-		}
-	} else {
-		// parse out existing config data files
-		for key := range b64Configs {
-			var data []byte
-			data, err = ioutil.ReadFile(filepath.Join(inputDir, strings.ToLower(key)+".yaml"))
-			if err != nil {
-				return err
-			}
-			b64Configs[key] = base64.StdEncoding.EncodeToString(data)
-		}
-
-		// parse out existing talosconfig
-		var talosConfig []byte
-		talosConfig, err = ioutil.ReadFile(filepath.Join(inputDir, "talosconfig"))
-		if err != nil {
-			return err
-		}
-
-		if err = yaml.Unmarshal(talosConfig, talosConfigObj); err != nil {
-			return err
-		}
+	configBundle, err := config.NewConfigBundle(configBundleOpts...)
+	if err != nil {
+		return err
 	}
 
 	// Add talosconfig to provision options so we'll have it to parse there
-	provisionOptions = append(provisionOptions, provision.WithTalosConfig(talosConfigObj))
+	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
 	// Craft cluster and node requests
 	request := provision.ClusterRequest{
@@ -212,10 +165,22 @@ func create(ctx context.Context) (err error) {
 	// Create the master nodes.
 	for i := 0; i < masters; i++ {
 		var typ generate.Type
+
+		var configDataStruct *v1alpha1.Config
+
+		var configDataString string
+
 		if i == 0 {
 			typ = generate.TypeInit
+			configDataStruct = configBundle.InitCfg
 		} else {
 			typ = generate.TypeControlPlane
+			configDataStruct = configBundle.ControlPlaneCfg
+		}
+
+		configDataString, err = configDataStruct.String()
+		if err != nil {
+			return err
 		}
 
 		request.Nodes = append(request.Nodes,
@@ -225,18 +190,25 @@ func create(ctx context.Context) (err error) {
 				IP:         net.ParseIP(ips[i]),
 				Memory:     memory,
 				NanoCPUs:   nanoCPUs,
-				ConfigData: b64Configs[typ.String()],
+				ConfigData: base64.StdEncoding.EncodeToString([]byte(configDataString)),
 			})
 	}
 
 	for i := 1; i <= workers; i++ {
+		var configDataString string
+
+		configDataString, err = configBundle.Join().String()
+		if err != nil {
+			return err
+		}
+
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Type:       generate.TypeJoin,
 				Name:       fmt.Sprintf("%s-worker-%d", clusterName, i),
 				Memory:     memory,
 				NanoCPUs:   nanoCPUs,
-				ConfigData: b64Configs[generate.TypeJoin.String()],
+				ConfigData: base64.StdEncoding.EncodeToString([]byte(configDataString)),
 			})
 	}
 
@@ -246,7 +218,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	// Create and save the osctl configuration file.
-	if err = saveConfig(cluster, talosConfigObj); err != nil {
+	if err = saveConfig(cluster, configBundle.TalosConfig()); err != nil {
 		return err
 	}
 
@@ -280,14 +252,14 @@ func destroy(ctx context.Context) error {
 	return provisioner.Destroy(ctx, cluster)
 }
 
-func saveConfig(cluster provision.Cluster, talosConfigObj *config.Config) (err error) {
-	c, err := config.Open(talosconfig)
+func saveConfig(cluster provision.Cluster, talosConfigObj *clientconfig.Config) (err error) {
+	c, err := clientconfig.Open(talosconfig)
 	if err != nil {
 		return err
 	}
 
 	if c.Contexts == nil {
-		c.Contexts = map[string]*config.Context{}
+		c.Contexts = map[string]*clientconfig.Context{}
 	}
 
 	c.Contexts[cluster.Info().ClusterName] = talosConfigObj.Contexts[cluster.Info().ClusterName]
