@@ -1,3 +1,16 @@
+# [v0.4.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.0...v0.4.0-alpha.1) (2020-01-09)
+
+### Bug Fixes
+
+- make the CNI URL error better ([7fb8289](https://github.com/talos-systems/talos/commit/7fb8289a223984937ee74f9241c57bc088de81d6))
+
+### Features
+
+- enable DynamicKubeletConfiguration ([79878c1](https://github.com/talos-systems/talos/commit/79878c1d8d56fa9823806789f30d8b9166a15f8d))
+- support configurable docker-based clusters ([75d9f7b](https://github.com/talos-systems/talos/commit/75d9f7b454cb956ac3659347884c20ffac2c4021))
+- Upgrade bootkube ([0742e52](https://github.com/talos-systems/talos/commit/0742e5245a393f15f916f891ddf07c9fb8d256fc))
+- upgrade linux to v5.4.8 ([4242acd](https://github.com/talos-systems/talos/commit/4242acd085a573b8d117f779a87e3c5bf375434a))
+
 # [v0.4.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.3.0-beta.0...v0.4.0-alpha.0) (2020-01-01)
 
 ### Bug Fixes
