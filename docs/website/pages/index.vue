@@ -1,32 +1,46 @@
 <template>
   <div id="landing-page" class="c-rich-text">
-    <div class="w-auto lg:w-1/2 h-auto mx-auto md:mt-10 mb-16 px-4">
-      <div class="text-center py-8 m-0">
-        <h1>What is Talos?</h1>
-      </div>
+    <div class="w-auto lg:w-3/4 h-auto mx-auto md:mt-10 mb-16 px-4 bg-white">
       <div class="flex flex-wrap justify-center items-center">
-        <div class="px-4 md:px-2 md:w-3/4 text-xl text-gray-700">
+        <div class="text-xl text-gray-700 lg:w-1/2">
+          <div class="text-center py-8 m-0">
+            <h1>What is Talos?</h1>
+          </div>
+
           <p>
             Talos is a modern OS designed to be secure, immutable, and minimal.
             Its purpose is to host Kubernetes clusters, so it is tightly
             integrated with Kubernetes.
           </p>
+
           <p>
             Talos is based on the Linux kernel, and supports most cloud
             platforms, bare metal, and most virtualization platforms. All system
             management is done via an API, and there is no shell or interactive
             console.
           </p>
+
+          <div class="py-4">
+            <p class="text-sm text-gray-600 mr-4">
+              It takes about 3 minutes to launch a small Talos cluster on your
+              laptop inside Docker.
+            </p>
+            <div class="text-center pb-4 m-0">
+              <a
+                href="https://www.talos.dev/docs/v0.3/#v0.3/en/guides/getting-started"
+              >
+                <button class="teal-cta-button">
+                  Try it now
+                </button></a
+              >
+            </div>
+          </div>
         </div>
-        <div class="w-1/3 md:w-1/6 md:ml-8 pt-4 md:pt-0">
-          <a
-            href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
-            target="_blank"
-          >
-            <img
-              src="/images/certified-kubernetes-color.png"
-              alt="Certified Kubernetes Logo"
-          /></a>
+        <div class="w-full lg:w-1/2 p-16 pr-0">
+          <img
+            src="~/assets/images/talos-arch.svg"
+            alt="A description of the basic Talos architecture."
+          />
         </div>
       </div>
     </div>
@@ -100,7 +114,7 @@
       </div>
     </div>
 
-    <div class="w-3/4 h-auto mx-auto pb-12 mb-20">
+    <div class="w-3/4 h-auto mx-auto pb-8">
       <div class="text-center">
         <h1>Features</h1>
       </div>
@@ -163,14 +177,14 @@
       <div
         class="md:grid grid-columns-2 grid-gap-12 justify-center md:w-2/3 md:mx-auto"
       >
-        <div>
+        <div class="py-8">
           <h2 class="text-center">Ephemeral</h2>
           <div>
             Talos runs in memory from a SquashFS, and persists nothing, leaving
             the primary disk entirely to Kubernetes.
           </div>
         </div>
-        <div>
+        <div class="py-8">
           <h2 class="text-center">Current</h2>
           <div>
             We are committed to staying current with the latest stable versions
@@ -200,16 +214,6 @@ export default {
 </script>
 
 <style>
-#landing-page {
-  height: 100%;
-  background: url(~assets/images/chips_bg_v1.svg) no-repeat center center fixed;
-  -webkit-background-size: contain;
-  -moz-background-size: contain;
-  -o-background-size: contain;
-  background-size: contain;
-  background-position: center bottom;
-}
-
 .logo {
   display: block;
   width: 189px;

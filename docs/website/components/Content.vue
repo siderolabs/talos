@@ -19,7 +19,7 @@
         Edit this page
       </a>
     </div>
-    <div class="border-t pt-4" v-html="doc.content"></div>
+    <div v-html="doc.content" class="border-t pt-4"></div>
   </article>
 </template>
 
