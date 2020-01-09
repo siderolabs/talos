@@ -3887,7 +3887,28 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
+  - basic-integration
+
+- name: boot
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make boot
+  environment:
+    BINDIR: /usr/local/bin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - basic-integration
 
 - name: release
   image: plugins/github-release
@@ -3901,6 +3922,7 @@ steps:
     files:
     - _out/aws.tar.gz
     - _out/azure.tar.gz
+    - _out/boot.tar.gz
     - _out/container.tar
     - _out/digital-ocean.tar.gz
     - _out/gcp.tar.gz
@@ -3917,6 +3939,7 @@ steps:
   depends_on:
   - kernel
   - iso
+  - boot
   - image-gcp
   - image-azure
   - image-aws
