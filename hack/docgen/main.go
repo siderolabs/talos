@@ -97,29 +97,44 @@ func collectStructs(node ast.Node) []*structType {
 	structs := []*structType{}
 
 	collectStructs := func(n ast.Node) bool {
-		t, ok := n.(*ast.TypeSpec)
+		g, ok := n.(*ast.GenDecl)
 		if !ok {
 			return true
 		}
 
-		if t.Type == nil {
-			return true
+		if g.Doc != nil {
+			for _, comment := range g.Doc.List {
+				if strings.Contains(comment.Text, "docgen: nodoc") {
+					return true
+				}
+			}
 		}
 
-		x, ok := t.Type.(*ast.StructType)
-		if !ok {
-			return true
+		for _, spec := range g.Specs {
+			t, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				return true
+			}
+
+			if t.Type == nil {
+				return true
+			}
+
+			x, ok := t.Type.(*ast.StructType)
+			if !ok {
+				return true
+			}
+
+			structName := t.Name.Name
+
+			s := &structType{
+				name: structName,
+				node: x,
+				pos:  x.Pos(),
+			}
+
+			structs = append(structs, s)
 		}
-
-		structName := t.Name.Name
-
-		s := &structType{
-			name: structName,
-			node: x,
-			pos:  x.Pos(),
-		}
-
-		structs = append(structs, s)
 
 		return true
 	}
