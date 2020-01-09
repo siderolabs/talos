@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/cis"
+	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
@@ -69,25 +70,25 @@ func ParseType(t string) (Type, error) {
 
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
-func Config(t Type, in *Input) (s string, err error) {
+func Config(t Type, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
 	case TypeInit:
-		if s, err = initUd(in); err != nil {
-			return "", err
+		if c, err = initUd(in); err != nil {
+			return c, err
 		}
 	case TypeControlPlane:
-		if s, err = controlPlaneUd(in); err != nil {
-			return "", err
+		if c, err = controlPlaneUd(in); err != nil {
+			return c, err
 		}
 	case TypeJoin:
-		if s, err = workerUd(in); err != nil {
-			return "", err
+		if c, err = workerUd(in); err != nil {
+			return c, err
 		}
 	default:
-		return "", errors.New("failed to determine config type to generate")
+		return c, errors.New("failed to determine config type to generate")
 	}
 
-	return s, nil
+	return c, nil
 }
 
 // Input holds info about certs, ips, and node type.

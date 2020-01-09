@@ -7,12 +7,12 @@ package generate
 import (
 	"net/url"
 
-	yaml "gopkg.in/yaml.v2"
-
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
-func initUd(in *Input) (string, error) {
+func initUd(in *Input) (*v1alpha1.Config, error) {
+	config := &v1alpha1.Config{ConfigVersion: "v1alpha1"}
+
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "init",
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
@@ -31,7 +31,7 @@ func initUd(in *Input) (string, error) {
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
-		return "", err
+		return config, err
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
@@ -57,16 +57,8 @@ func initUd(in *Input) (string, error) {
 		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
 	}
 
-	ud := v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: machine,
-		ClusterConfig: cluster,
-	}
+	config.MachineConfig = machine
+	config.ClusterConfig = cluster
 
-	udMarshal, err := yaml.Marshal(ud)
-	if err != nil {
-		return "", err
-	}
-
-	return string(udMarshal), nil
+	return config, nil
 }

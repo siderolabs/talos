@@ -8,9 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/yaml.v2"
 
-	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -32,29 +30,17 @@ func (suite *GenerateSuite) SetupSuite() {
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
-	dataString, err := genv1alpha1.Config(genv1alpha1.TypeInit, suite.input)
-	suite.Require().NoError(err)
-
-	data := &v1alpha1.Config{}
-	err = yaml.Unmarshal([]byte(dataString), data)
+	_, err := genv1alpha1.Config(genv1alpha1.TypeInit, suite.input)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
-	dataString, err := genv1alpha1.Config(genv1alpha1.TypeControlPlane, suite.input)
-	suite.Require().NoError(err)
-
-	data := &v1alpha1.Config{}
-	err = yaml.Unmarshal([]byte(dataString), data)
+	_, err := genv1alpha1.Config(genv1alpha1.TypeControlPlane, suite.input)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
-	dataString, err := genv1alpha1.Config(genv1alpha1.TypeJoin, suite.input)
-	suite.Require().NoError(err)
-
-	data := &v1alpha1.Config{}
-	err = yaml.Unmarshal([]byte(dataString), data)
+	_, err := genv1alpha1.Config(genv1alpha1.TypeJoin, suite.input)
 	suite.Require().NoError(err)
 }
 

@@ -242,9 +242,12 @@ func genV1Alpha1Config(args []string) error {
 }
 
 func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {
-	var data string
+	generatedConfig, err := genv1alpha1.Config(t, input)
+	if err != nil {
+		return err
+	}
 
-	data, err = genv1alpha1.Config(t, input)
+	configString, err := generatedConfig.String()
 	if err != nil {
 		return err
 	}
@@ -252,7 +255,7 @@ func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name stri
 	name = strings.ToLower(name) + ".yaml"
 	fullFilePath := filepath.Join(outputDir, name)
 
-	if err = ioutil.WriteFile(fullFilePath, []byte(data), 0644); err != nil {
+	if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0644); err != nil {
 		return err
 	}
 
