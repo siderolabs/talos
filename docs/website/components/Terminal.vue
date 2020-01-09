@@ -8,9 +8,9 @@
         <button
           v-for="cast in casts"
           :key="cast.src"
+          @click="handleClick(cast.src, cast.cols, cast.rows)"
           class="bg-primary-color-500 text-white font-semibold m-1 p-1 rounded"
           style="width: 100px"
-          @click="handleClick(cast.src, cast.cols, cast.rows)"
         >
           <span class="mr-1">{{ cast.title }}</span>
         </button>

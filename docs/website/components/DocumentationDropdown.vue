@@ -17,8 +17,8 @@
       <li v-for="option in options" :key="option.version" class="">
         <a
           :href="option.url"
-          class="rounded-t py-2 px-4 block whitespace-no-wrap"
           @click="handleClick(option)"
+          class="rounded-t py-2 px-4 block whitespace-no-wrap"
           >{{ version(option) }}</a
         >
       </li>

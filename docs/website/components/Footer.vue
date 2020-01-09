@@ -1,26 +1,36 @@
 <template>
-  <footer>
-    <div class="flex flex-col items-center my-3">
-      <img class="cncf" src="/images/cncf-color.png" alt="" />
-      <p>
-        We are a
-        <a href="https://cncf.io" target="_blank"
-          >Cloud Native Computing Foundation</a
-        >
-        member.
-      </p>
-    </div>
-    <div>
-      <a class="inline-block no-underline color-inherit" href="/">
-        © 2019 Talos Systems, Inc.
-      </a>
-    </div>
-  </footer>
+  <div>
+    <footer>
+      <div class="pb-32 lg:pb-64">
+        <div class="flex flex-col items-center my-3">
+          <img class="cncf" src="/images/cncf-color.png" alt="" />
+          <p class="pt-2">
+            We are a
+            <a href="https://cncf.io" target="_blank"
+              >Cloud Native Computing Foundation</a
+            >
+            member.
+          </p>
+        </div>
+        <div class="text-center">
+          <a class="inline-block no-underline color-inherit" href="/">
+            © 2019 Talos Systems, Inc.
+          </a>
+        </div>
+      </div>
+    </footer>
+  </div>
 </template>
 
 <style>
+body {
+  background-image: url(~assets/images/chips_bg_v1.svg);
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}
+
 footer {
-  @apply bg-white flex flex-col items-center font-sans justify-between py-5;
+  @apply flex flex-col items-center font-sans justify-between py-5;
 }
 
 footer a {

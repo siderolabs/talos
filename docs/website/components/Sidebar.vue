@@ -4,31 +4,31 @@
       <li
         v-for="entry in $store.state.sidebar.menu"
         :key="entry.title"
-        class="py-2"
         @click="selected = entry.title"
+        class="py-2"
       >
         <a
-          class="sidebar-category"
           :href="'#' + entry.path"
           @click="handleClick(entry)"
+          class="sidebar-category"
         >
           <span class="relative">{{ entry.title }}</span>
         </a>
         <ul class="py-0 pl-4">
           <li v-for="item in entry.items" :key="item.path" class="ml-0">
             <a
-              class="sidebar-item"
               :href="'#' + item.path"
               @click="handleClick(item)"
+              class="sidebar-item"
             >
               <span class="relative">{{ item.title }}</span>
             </a>
             <ul class="py-0 pl-4">
               <li v-for="child in item.children" :key="child.path" class="ml-0">
                 <a
-                  class="sidebar-child"
                   :href="'#' + child.path"
                   @click="handleClick(child)"
+                  class="sidebar-child"
                 >
                   <span class="relative">{{ child.title }}</span>
                 </a>
