@@ -25,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
@@ -149,7 +150,14 @@ func create(ctx context.Context) (err error) {
 
 			var data string
 
-			data, err = generate.Config(configType, input)
+			var configStruct *v1alpha1.Config
+
+			configStruct, err = generate.Config(configType, input)
+			if err != nil {
+				return err
+			}
+
+			data, err = configStruct.String()
 			if err != nil {
 				return err
 			}
