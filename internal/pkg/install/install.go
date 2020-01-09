@@ -21,7 +21,15 @@ import (
 
 // RunInstallerContainer performs an installation via the installer container.
 //nolint: gocyclo
-func RunInstallerContainer(r runtime.Runtime) error {
+func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
+	options := DefaultInstallOptions()
+
+	for _, opt := range opts {
+		if err := opt(&options); err != nil {
+			return err
+		}
+	}
+
 	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
@@ -29,9 +37,18 @@ func RunInstallerContainer(r runtime.Runtime) error {
 		return err
 	}
 
-	image, err := client.Pull(ctx, r.Config().Machine().Install().Image(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
-	if err != nil {
-		return err
+	var image containerd.Image
+
+	if options.ImagePull {
+		image, err = client.Pull(ctx, r.Config().Machine().Install().Image(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+		if err != nil {
+			return err
+		}
+	} else {
+		image, err = client.GetImage(ctx, r.Config().Machine().Install().Image())
+		if err != nil {
+			return err
+		}
 	}
 
 	mounts := []specs.Mount{
