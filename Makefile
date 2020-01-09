@@ -159,6 +159,10 @@ images: image-aws image-azure image-digital-ocean image-gcp image-vmware ## Buil
 iso: ## Builds the ISO and outputs it to the artifact directory.
 	@docker run --rm -i -v $(PWD)/$(ARTIFACTS):/out autonomy/installer:$(TAG) iso
 
+.PHONY: boot
+boot: ## Creates a compressed tarball that includes vmlinuz and initramfs.xz. Note that these files must already be present in the artifacts directory.
+	@tar  -C $(ARTIFACTS) -czf $(ARTIFACTS)/boot.tar.gz vmlinuz initramfs.xz
+
 # Code Quality
 
 .PHONY: fmt

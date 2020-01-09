@@ -403,7 +403,8 @@ local ami_trigger = {
 };
 
 local kernel = Step('kernel');
-local iso = Step('iso', depends_on=[installer]);
+local iso = Step('iso', depends_on=[basic_integration]);
+local boot = Step('boot', depends_on=[basic_integration]);
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
@@ -415,6 +416,7 @@ local release = {
     files: [
       '_out/aws.tar.gz',
       '_out/azure.tar.gz',
+      '_out/boot.tar.gz',
       '_out/container.tar',
       '_out/digital-ocean.tar.gz',
       '_out/gcp.tar.gz',
@@ -431,12 +433,13 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, image_gcp.name, image_azure.name, image_aws.name, push.name]
+  depends_on: [kernel.name, iso.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, push.name]
 };
 
 local release_steps = default_steps + [
   kernel,
   iso,
+  boot,
   release,
 ];
 
