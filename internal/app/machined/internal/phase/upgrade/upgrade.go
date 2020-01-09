@@ -45,7 +45,8 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 		r = runtime.NewRuntime(r.Platform(), runtime.Configurator(cfg), runtime.Upgrade)
 	}
 
-	if err = install.RunInstallerContainer(r); err != nil {
+	// We pull the installer image when we receive an upgrade request. No need to re-pull inside of installer container
+	if err = install.RunInstallerContainer(r, install.WithImagePull(false)); err != nil {
 		return err
 	}
 
