@@ -22,6 +22,10 @@ module.exports = {
           800: '#174F59',
           900: '#0F353B'
         },
+        'logo-teal': {
+          default: '#32AFC5',
+          darker: '#2c95a8'
+        },
         'logo-colors': {
           1: '#32AFC5',
           2: '#6D9CBC',

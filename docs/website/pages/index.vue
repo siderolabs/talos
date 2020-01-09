@@ -1,32 +1,46 @@
 <template>
   <div id="landing-page" class="c-rich-text">
-    <div class="w-auto lg:w-1/2 h-auto mx-auto md:mt-10 mb-16 px-4">
-      <div class="text-center py-8 m-0">
-        <h1>What is Talos?</h1>
-      </div>
+    <div class="w-auto lg:w-3/4 h-auto mx-auto md:mt-10 mb-16 px-4 bg-white">
       <div class="flex flex-wrap justify-center items-center">
-        <div class="px-4 md:px-2 md:w-3/4 text-xl text-gray-700">
+        <div class="text-xl text-gray-700 lg:w-1/2">
+          <div class="text-center py-8 m-0">
+            <h1>What is Talos?</h1>
+          </div>
+
           <p>
             Talos is a modern OS designed to be secure, immutable, and minimal.
             Its purpose is to host Kubernetes clusters, so it is tightly
             integrated with Kubernetes.
           </p>
+
           <p>
             Talos is based on the Linux kernel, and supports most cloud
             platforms, bare metal, and most virtualization platforms. All system
             management is done via an API, and there is no shell or interactive
             console.
           </p>
+
+          <div class="py-4 flex">
+            <p class="flex-1 text-sm text-gray-600 mr-2">
+              It takes about 3 minutes to launch a small Talos cluster on your
+              laptop inside Docker.
+            </p>
+            <div class="flex-1 text-center pb-4 m-0">
+              <a
+                href="https://www.talos.dev/docs/v0.3/#v0.3/en/guides/getting-started"
+              >
+                <button class="teal-cta-button">
+                  Try it now
+                </button></a
+              >
+            </div>
+          </div>
         </div>
-        <div class="w-1/3 md:w-1/6 md:ml-8 pt-4 md:pt-0">
-          <a
-            href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
-            target="_blank"
-          >
-            <img
-              src="/images/certified-kubernetes-color.png"
-              alt="Certified Kubernetes Logo"
-          /></a>
+        <div class="w-full lg:w-1/2 p-16 pr-0">
+          <img
+            src="~/assets/images/talos-arch.svg"
+            alt="A description of the basic Talos architecture."
+          />
         </div>
       </div>
     </div>
@@ -72,7 +86,7 @@
       </div>
     </div>
 
-    <div class="w-1/2 h-auto mx-auto mb-20">
+    <div class="w-1/2 h-auto mx-auto">
       <div class="text-center pt-6">
         <h1>Built with Modern Technology</h1>
       </div>
@@ -100,7 +114,7 @@
       </div>
     </div>
 
-    <div class="w-3/4 h-auto mx-auto pb-12 mb-20">
+    <div class="w-3/4 h-auto mx-auto pb-8">
       <div class="text-center">
         <h1>Features</h1>
       </div>
@@ -153,37 +167,44 @@
         </div>
         <div>
           <h2 class="text-center">Immutable</h2>
-          <div>
+          <p>
             Talos improves its security posture further by mounting the root
             filesystem as read-only and removing any host-level access by
             traditional means such as a shell and SSH.
-          </div>
+          </p>
         </div>
       </div>
+
       <div
-        class="md:grid grid-columns-2 grid-gap-12 justify-center md:w-2/3 md:mx-auto"
+        class="md:grid grid-columns-2 grid-gap-12 justify-center w-2/3 mx-auto"
       >
         <div>
           <h2 class="text-center">Ephemeral</h2>
-          <div>
+          <p>
             Talos runs in memory from a SquashFS, and persists nothing, leaving
             the primary disk entirely to Kubernetes.
-          </div>
+          </p>
         </div>
         <div>
           <h2 class="text-center">Current</h2>
-          <div>
+          <p>
             We are committed to staying current with the latest stable versions
             of Kubernetes, and Linux.
-          </div>
-        </div>
-        <div>
-          <img
-            class="hidden"
-            src="https://placeholder.pics/svg/300/DEDEDE/555555/some%20nifty%20image%20here"
-          />
+          </p>
         </div>
       </div>
+    </div>
+
+    <div class="pb-8">
+      <a
+        href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
+        target="_blank"
+      >
+        <img
+          class="h-48 mx-auto"
+          src="/images/certified-kubernetes-color.png"
+          alt="Certified Kubernetes Logo"
+      /></a>
     </div>
   </div>
 </template>
@@ -200,16 +221,6 @@ export default {
 </script>
 
 <style>
-#landing-page {
-  height: 100%;
-  background: url(~assets/images/chips_bg_v1.svg) no-repeat center center fixed;
-  -webkit-background-size: contain;
-  -moz-background-size: contain;
-  -o-background-size: contain;
-  background-size: contain;
-  background-position: center bottom;
-}
-
 .logo {
   display: block;
   width: 189px;
