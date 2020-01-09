@@ -20,6 +20,8 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
 	criconstants "github.com/containerd/cri/pkg/constants"
 
 	"github.com/talos-systems/talos/api/common"
@@ -27,7 +29,7 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/containers"
-	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
+	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/event"
@@ -97,6 +99,21 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 
 // Upgrade initiates an upgrade.
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeResponse, err error) {
+	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
+	containerdctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
+
+	client, err := containerd.New(constants.SystemContainerdAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(rsmitty): validate that image that gets pulled down is in fact a talos installer.
+	// Something as easy as `docker run -ti --entrypoint "" autonomy/installer:$version /bin/installer --help` should suffice
+	_, err = client.Pull(containerdctx, in.GetImage(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = etcd.ValidateForUpgrade(); err != nil {
 		return nil, err
 	}
@@ -519,7 +536,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 			addr = constants.SystemContainerdAddress
 		}
 
-		return containerd.NewInspector(ctx, namespace, containerd.WithContainerdAddress(addr))
+		return taloscontainerd.NewInspector(ctx, namespace, taloscontainerd.WithContainerdAddress(addr))
 	default:
 		return nil, fmt.Errorf("unsupported driver %q", driver)
 	}
