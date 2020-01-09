@@ -13,6 +13,7 @@ import (
 	configtask "github.com/talos-systems/talos/internal/app/machined/internal/phase/config"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/disk"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/kubernetes"
+	"github.com/talos-systems/talos/internal/app/machined/internal/phase/limits"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/network"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/platform"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/rootfs"
@@ -46,6 +47,7 @@ func (d *Sequencer) Boot() error {
 			rootfs.NewMountCgroupsTask(),
 			rootfs.NewMountSubDevicesTask(),
 			sysctls.NewSysctlsTask(),
+			limits.NewFileLimitTask(),
 		),
 		phase.NewPhase(
 			"configure Integrity Measurement Architecture",
