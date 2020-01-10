@@ -243,11 +243,22 @@ func (n *Networkd) Configure() (err error) {
 		}
 	}
 
+	// Set hostname must be before the resolv configuration
+	// so we can ensure the hosts domainname is set properly
+	// before we write the search stanza
+	if err = n.Hostname(); err != nil {
+		return err
+	}
+
 	if len(resolvers) == 0 {
 		resolvers = n.resolvers
 	}
 
-	return writeResolvConf(resolvers)
+	if err = writeResolvConf(resolvers); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Renew sets up a long running loop to refresh a network interfaces
@@ -284,14 +295,24 @@ func (n *Networkd) Hostname() (err error) {
 		return err
 	}
 
+	var p runtime.Platform
+
+	p, err = platform.CurrentPlatform()
+	if err != nil {
+		return err
+	}
+
+	// Skip hostname/domainname setting when running in container mode
+	if p.Mode() == runtime.Container {
+		return nil
+	}
+
 	if err = unix.Sethostname([]byte(hostname)); err != nil {
 		return err
 	}
 
-	if domainname != "" {
-		if err = unix.Setdomainname([]byte(domainname)); err != nil {
-			return err
-		}
+	if err = unix.Setdomainname([]byte(domainname)); err != nil {
+		return err
 	}
 
 	return nil
