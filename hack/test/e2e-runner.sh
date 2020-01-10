@@ -4,7 +4,7 @@ export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
 export TMPPLATFORM="${TMP}/${PLATFORM}"
 export OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
-export INTEGRATIONTEST="${PWD}/bin/integration-test"
+export INTEGRATION_TEST="${PWD}/${ARTIFACTS}/integration-test-linux-amd64"
 export TALOSCONFIG="${TMPPLATFORM}/talosconfig"
 export KUBECONFIG="${TMPPLATFORM}/kubeconfig"
 
@@ -36,12 +36,12 @@ e2e_run() {
   docker run \
          --rm \
          --interactive \
-         --net=integration \
+         --net=basic-integration \
          --entrypoint=/bin/bash \
          --mount type=bind,source=${TMP},target=${TMP} \
          --mount type=bind,source=${PWD}/hack/test/manifests,target=/e2emanifests \
          -v ${OSCTL}:/bin/osctl:ro \
-         -v ${INTEGRATIONTEST}:/bin/integration-test:ro \
+         -v ${INTEGRATION_TEST}:/bin/integration-test:ro \
          -e KUBECONFIG=${KUBECONFIG} \
          -e TALOSCONFIG=${TALOSCONFIG} \
          k8s.gcr.io/hyperkube:${KUBERNETES_VERSION} -c "${1}"
