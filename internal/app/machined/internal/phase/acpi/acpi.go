@@ -134,6 +134,8 @@ func parse(msgs []genetlink.Message, event string) (bool, error) {
 			if strings.HasPrefix(ad.String(), event) {
 				return true, nil
 			}
+
+			log.Printf("ignoring ACPI event: %q", ad.String())
 		}
 	}
 
