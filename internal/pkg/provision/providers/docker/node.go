@@ -6,6 +6,7 @@ package docker
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -18,7 +19,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -56,15 +57,20 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 
 //nolint: gocyclo
 func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
+	cfg, err := nodeReq.Config.String()
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
+
 	// Create the container config.
 	containerConfig := &container.Config{
 		Hostname: nodeReq.Name,
 		Image:    clusterReq.Image,
-		Env:      []string{"PLATFORM=container", "USERDATA=" + nodeReq.ConfigData},
+		Env:      []string{"PLATFORM=container", "USERDATA=" + base64.StdEncoding.EncodeToString([]byte(cfg))},
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": clusterReq.Name,
-			"talos.type":         nodeReq.Type.String(),
+			"talos.type":         nodeReq.Config.Machine().Type().String(),
 		},
 		Volumes: map[string]struct{}{
 			"/var/lib/containerd": {},
@@ -97,11 +103,11 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 	// Mutate the container configurations based on the node type.
 
-	switch nodeReq.Type {
-	case generate.TypeInit:
+	switch nodeReq.Config.Machine().Type() {
+	case machine.TypeInit:
 		var apidPort nat.Port
 
-		apidPort, err := nat.NewPort("tcp", "50000")
+		apidPort, err = nat.NewPort("tcp", "50000")
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}
@@ -134,7 +140,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		}
 
 		fallthrough
-	case generate.TypeControlPlane:
+	case machine.TypeControlPlane:
 		containerConfig.Volumes[constants.EtcdDataPath] = struct{}{}
 
 		if nodeReq.IP == nil {
@@ -167,7 +173,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	nodeInfo := provision.NodeInfo{
 		ID:   info.ID,
 		Name: info.Name,
-		Type: nodeReq.Type,
+		Type: nodeReq.Config.Machine().Type(),
 
 		PrivateIP: net.ParseIP(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress),
 	}

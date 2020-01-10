@@ -33,7 +33,7 @@ func (task *LeaveEtcd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 
 // nolint: gocyclo
 func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
-	if r.Config().Machine().Type() == machine.Worker {
+	if r.Config().Machine().Type() == machine.TypeWorker {
 		return nil
 	}
 

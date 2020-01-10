@@ -7,7 +7,7 @@ package provision
 import (
 	"net"
 
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Cluster describes the provisioned Cluster.
@@ -33,7 +33,7 @@ type NetworkInfo struct {
 type NodeInfo struct {
 	ID   string
 	Name string
-	Type generate.Type
+	Type machine.Type
 
 	PublicIP  net.IP
 	PrivateIP net.IP

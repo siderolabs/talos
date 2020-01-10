@@ -110,11 +110,11 @@ func (m *MachineConfig) Files() []machine.File {
 func (m *MachineConfig) Type() machine.Type {
 	switch m.MachineType {
 	case "init":
-		return machine.Bootstrap
+		return machine.TypeInit
 	case "controlplane":
-		return machine.ControlPlane
+		return machine.TypeControlPlane
 	default:
-		return machine.Worker
+		return machine.TypeWorker
 	}
 }
 

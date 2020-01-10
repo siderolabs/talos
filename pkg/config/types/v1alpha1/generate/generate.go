@@ -10,12 +10,12 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"net"
 	"net/url"
 	"time"
 
 	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
@@ -33,54 +33,19 @@ const DefaultIPv6PodNet = "fc00:db8:10::/56"
 // DefaultIPv6ServiceNet is the network to be used for kubernetes Services when using IPv6-based master nodes
 const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
-// Type represents a config type.
-type Type int
-
-const (
-	// TypeInit indicates a config type should correspond to the kubeadm
-	// InitConfiguration type.
-	TypeInit Type = iota
-	// TypeControlPlane indicates a config type should correspond to the
-	// kubeadm JoinConfiguration type that has the ControlPlane field
-	// defined.
-	TypeControlPlane
-	// TypeJoin indicates a config type should correspond to the kubeadm
-	// JoinConfiguration type.
-	TypeJoin
-)
-
-// String returns the string representation of Type.
-func (t Type) String() string {
-	return [...]string{"Init", "ControlPlane", "Join"}[t]
-}
-
-// ParseType parses string constant as Type
-func ParseType(t string) (Type, error) {
-	switch t {
-	case "Init":
-		return TypeInit, nil
-	case "ControlPlane":
-		return TypeControlPlane, nil
-	case "Join":
-		return TypeJoin, nil
-	default:
-		return 0, fmt.Errorf("unknown type %q", t)
-	}
-}
-
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
-func Config(t Type, in *Input) (c *v1alpha1.Config, err error) {
+func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
-	case TypeInit:
+	case machine.TypeInit:
 		if c, err = initUd(in); err != nil {
 			return c, err
 		}
-	case TypeControlPlane:
+	case machine.TypeControlPlane:
 		if c, err = controlPlaneUd(in); err != nil {
 			return c, err
 		}
-	case TypeJoin:
+	case machine.TypeWorker:
 		if c, err = workerUd(in); err != nil {
 			return c, err
 		}

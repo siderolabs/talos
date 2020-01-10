@@ -5,6 +5,7 @@
 package machine
 
 import (
+	"fmt"
 	"os"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -12,17 +13,36 @@ import (
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
-// Type represents the node type.
+// Type represents a machine type.
 type Type int
 
 const (
-	// Bootstrap represents a bootstrap node.
-	Bootstrap Type = iota
-	// ControlPlane represents a control plane node.
-	ControlPlane
-	// Worker represents a worker node.
-	Worker
+	// TypeInit represents an init node.
+	TypeInit Type = iota
+	// TypeControlPlane represents a control plane node.
+	TypeControlPlane
+	// TypeWorker represents a worker node.
+	TypeWorker
 )
+
+// String returns the string representation of Type.
+func (t Type) String() string {
+	return [...]string{"Init", "ControlPlane", "Join"}[t]
+}
+
+// ParseType parses string constant as Type
+func ParseType(t string) (Type, error) {
+	switch t {
+	case "Init":
+		return TypeInit, nil
+	case "ControlPlane":
+		return TypeControlPlane, nil
+	case "Join":
+		return TypeWorker, nil
+	default:
+		return 0, fmt.Errorf("unknown type %q", t)
+	}
+}
 
 // Machine defines the requirements for a config that pertains to machine
 // related options.

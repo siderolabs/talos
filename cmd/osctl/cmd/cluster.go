@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"math/big"
@@ -21,8 +20,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
@@ -164,51 +163,31 @@ func create(ctx context.Context) (err error) {
 
 	// Create the master nodes.
 	for i := 0; i < masters; i++ {
-		var typ generate.Type
-
-		var configDataStruct *v1alpha1.Config
-
-		var configDataString string
+		var cfg runtime.Configurator
 
 		if i == 0 {
-			typ = generate.TypeInit
-			configDataStruct = configBundle.InitCfg
+			cfg = configBundle.Init()
 		} else {
-			typ = generate.TypeControlPlane
-			configDataStruct = configBundle.ControlPlaneCfg
-		}
-
-		configDataString, err = configDataStruct.String()
-		if err != nil {
-			return err
+			cfg = configBundle.ControlPlane()
 		}
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Type:       typ,
-				Name:       fmt.Sprintf("%s-master-%d", clusterName, i+1),
-				IP:         net.ParseIP(ips[i]),
-				Memory:     memory,
-				NanoCPUs:   nanoCPUs,
-				ConfigData: base64.StdEncoding.EncodeToString([]byte(configDataString)),
+				Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
+				IP:       net.ParseIP(ips[i]),
+				Memory:   memory,
+				NanoCPUs: nanoCPUs,
+				Config:   cfg,
 			})
 	}
 
 	for i := 1; i <= workers; i++ {
-		var configDataString string
-
-		configDataString, err = configBundle.Join().String()
-		if err != nil {
-			return err
-		}
-
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Type:       generate.TypeJoin,
-				Name:       fmt.Sprintf("%s-worker-%d", clusterName, i),
-				Memory:     memory,
-				NanoCPUs:   nanoCPUs,
-				ConfigData: base64.StdEncoding.EncodeToString([]byte(configDataString)),
+				Name:     fmt.Sprintf("%s-worker-%d", clusterName, i),
+				Memory:   memory,
+				NanoCPUs: nanoCPUs,
+				Config:   configBundle.Join(),
 			})
 	}
 

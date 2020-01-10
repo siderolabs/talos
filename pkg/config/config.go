@@ -14,6 +14,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
@@ -45,7 +46,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		// Pull existing machine configs of each type
-		for _, configType := range []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin} {
+		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
 				return bundle, err
@@ -57,11 +58,11 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 			}
 
 			switch configType {
-			case generate.TypeInit:
+			case machine.TypeInit:
 				bundle.InitCfg = unmarshalledConfig
-			case generate.TypeControlPlane:
+			case machine.TypeControlPlane:
 				bundle.ControlPlaneCfg = unmarshalledConfig
-			case generate.TypeJoin:
+			case machine.TypeWorker:
 				bundle.JoinCfg = unmarshalledConfig
 			}
 		}
@@ -95,7 +96,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		return bundle, err
 	}
 
-	for _, configType := range []generate.Type{generate.TypeInit, generate.TypeControlPlane, generate.TypeJoin} {
+	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		var generatedConfig *v1alpha1.Config
 
 		generatedConfig, err = generate.Config(configType, input)
@@ -104,11 +105,11 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		switch configType {
-		case generate.TypeInit:
+		case machine.TypeInit:
 			bundle.InitCfg = generatedConfig
-		case generate.TypeControlPlane:
+		case machine.TypeControlPlane:
 			bundle.ControlPlaneCfg = generatedConfig
-		case generate.TypeJoin:
+		case machine.TypeWorker:
 			bundle.JoinCfg = generatedConfig
 		}
 	}

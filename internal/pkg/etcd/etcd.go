@@ -81,7 +81,7 @@ func ValidateForUpgrade() error {
 		return err
 	}
 
-	if config.Machine().Type() != machine.Worker {
+	if config.Machine().Type() != machine.TypeWorker {
 		client, err := NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
 		if err != nil {
 			return err

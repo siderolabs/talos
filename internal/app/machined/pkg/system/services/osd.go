@@ -61,7 +61,7 @@ func (o *OSD) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *OSD) DependsOn(config runtime.Configurator) []string {
-	if config.Machine().Type() == machine.Worker {
+	if config.Machine().Type() == machine.TypeWorker {
 		return []string{"system-containerd", "containerd"}
 	}
 

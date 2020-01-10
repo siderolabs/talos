@@ -18,6 +18,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -208,7 +209,7 @@ func genV1Alpha1Config(args []string) error {
 	input.InstallDisk = installDisk
 	input.InstallImage = installImage
 
-	for _, t := range []genv1alpha1.Type{genv1alpha1.TypeInit, genv1alpha1.TypeControlPlane, genv1alpha1.TypeJoin} {
+	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		if err = writeV1Alpha1Config(input, t, t.String()); err != nil {
 			return fmt.Errorf("failed to generate config for %s: %w", t.String(), err)
 		}
@@ -242,7 +243,7 @@ func genV1Alpha1Config(args []string) error {
 	return nil
 }
 
-func writeV1Alpha1Config(input *genv1alpha1.Input, t genv1alpha1.Type, name string) (err error) {
+func writeV1Alpha1Config(input *genv1alpha1.Input, t machine.Type, name string) (err error) {
 	generatedConfig, err := genv1alpha1.Config(t, input)
 	if err != nil {
 		return err
