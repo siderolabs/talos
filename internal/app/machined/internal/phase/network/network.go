@@ -38,5 +38,5 @@ func (task *InitialNetworkSetup) runtime(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	return nwd.Hostname()
+	return nil
 }
