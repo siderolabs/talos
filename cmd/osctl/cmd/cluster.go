@@ -121,11 +121,6 @@ func create(ctx context.Context) (err error) {
 		}
 	}
 
-	masterIPs := make([]string, 0, masters)
-	for _, ip := range ips[:masters] {
-		masterIPs = append(masterIPs, ip.String())
-	}
-
 	provisioner, err := providers.Factory(ctx, provisioner)
 	if err != nil {
 		return err
@@ -139,24 +134,27 @@ func create(ctx context.Context) (err error) {
 	if inputDir != "" {
 		configBundleOpts = append(configBundleOpts, config.WithExistingConfigs(inputDir))
 	} else {
-		genOptions := []generate.GenOption{
-			generate.WithInstallImage(nodeInstallImage),
-		}
-
-		genOptions = append(genOptions, provisioner.GenOptions()...)
+		var genOptions []generate.GenOption
+		endpointList := []string{}
 
 		if forceEndpoint != "" {
-			genOptions = append(genOptions, generate.WithEndpointList([]string{forceEndpoint}))
+			endpointList = append(endpointList, forceEndpoint)
 			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
 		} else if forceInitNodeAsEndpoint {
-			genOptions = append(genOptions, generate.WithEndpointList([]string{ips[0].String()}))
+			endpointList = append(endpointList, ips[0].String())
 		}
+
+		// NB: the localhost endpoint must come last since we currently expect the first endpoint
+		// listed to be the default osctl endpoint and that broke CI
+		endpointList = append(endpointList, "127.0.0.1")
+
+		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
 
 		configBundleOpts = append(configBundleOpts,
 			config.WithInputOptions(
 				&config.InputOptions{
 					ClusterName: clusterName,
-					MasterIPs:   masterIPs,
+					Endpoint:    fmt.Sprintf("https://%s:6443", ips[0]),
 					KubeVersion: kubernetesVersion,
 					GenOptions:  genOptions,
 				}),

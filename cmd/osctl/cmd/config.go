@@ -16,10 +16,10 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	clientconfig "github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/machine"
-	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -46,7 +46,7 @@ var configEndpointCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := config.Open(talosconfig)
+		c, err := clientconfig.Open(talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -71,7 +71,7 @@ var configNodeCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := config.Open(talosconfig)
+		c, err := clientconfig.Open(talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -97,7 +97,7 @@ var configContextCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
 
-		c, err := config.Open(talosconfig)
+		c, err := clientconfig.Open(talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -120,7 +120,7 @@ var configAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
-		c, err := config.Open(talosconfig)
+		c, err := clientconfig.Open(talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -140,14 +140,14 @@ var configAddCmd = &cobra.Command{
 			return fmt.Errorf("error reading key: %w", err)
 		}
 
-		newContext := &config.Context{
+		newContext := &clientconfig.Context{
 			CA:  base64.StdEncoding.EncodeToString(caBytes),
 			Crt: base64.StdEncoding.EncodeToString(crtBytes),
 			Key: base64.StdEncoding.EncodeToString(keyBytes),
 		}
 
 		if c.Contexts == nil {
-			c.Contexts = map[string]*config.Context{}
+			c.Contexts = map[string]*clientconfig.Context{}
 		}
 
 		c.Contexts[context] = newContext
@@ -184,7 +184,7 @@ var configGenerateCmd = &cobra.Command{
 	},
 }
 
-// TODO(rsmitty): move this to use the configbundle interface
+//nolint: gocyclo
 func genV1Alpha1Config(args []string) error {
 	// If output dir isn't specified, set to the current working dir
 	var err error
@@ -200,34 +200,57 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	input, err := genv1alpha1.NewInput(args[0], args[1], kubernetesVersion)
+	configBundle, err := config.NewConfigBundle(
+		config.WithInputOptions(
+			&config.InputOptions{
+				ClusterName:               args[0],
+				Endpoint:                  args[1],
+				KubeVersion:               kubernetesVersion,
+				AdditionalSubjectAltNames: additionalSANs,
+				InstallDisk:               installDisk,
+				InstallImage:              installImage,
+			},
+		),
+	)
 	if err != nil {
-		return fmt.Errorf("failed to generate PKI and tokens: %w", err)
+		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
-
-	input.AdditionalSubjectAltNames = additionalSANs
-	input.InstallDisk = installDisk
-	input.InstallImage = installImage
 
 	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
-		if err = writeV1Alpha1Config(input, t, t.String()); err != nil {
-			return fmt.Errorf("failed to generate config for %s: %w", t.String(), err)
+		name = strings.ToLower(t.String()) + ".yaml"
+		fullFilePath := filepath.Join(outputDir, name)
+
+		var configString string
+
+		switch t {
+		case machine.TypeInit:
+			configString, err = configBundle.Init().String()
+			if err != nil {
+				return err
+			}
+		case machine.TypeControlPlane:
+			configString, err = configBundle.ControlPlane().String()
+			if err != nil {
+				return err
+			}
+		case machine.TypeWorker:
+			configString, err = configBundle.Join().String()
+			if err != nil {
+				return err
+			}
 		}
+
+		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0644); err != nil {
+			return err
+		}
+
+		fmt.Printf("created %s\n", fullFilePath)
 	}
 
-	newConfig := &config.Config{
-		Context: input.ClusterName,
-		Contexts: map[string]*config.Context{
-			input.ClusterName: {
-				Endpoints: []string{"127.0.0.1"},
-				CA:        base64.StdEncoding.EncodeToString(input.Certs.OS.Crt),
-				Crt:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Crt),
-				Key:       base64.StdEncoding.EncodeToString(input.Certs.Admin.Key),
-			},
-		},
-	}
+	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later
+	configBundle.TalosConfig().Contexts[args[0]].Endpoints = []string{"127.0.0.1"}
 
-	data, err := yaml.Marshal(newConfig)
+	data, err := yaml.Marshal(configBundle.TalosConfig())
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %+v", err)
 	}
@@ -236,29 +259,6 @@ func genV1Alpha1Config(args []string) error {
 
 	if err = ioutil.WriteFile(fullFilePath, data, 0644); err != nil {
 		return fmt.Errorf("%w", err)
-	}
-
-	fmt.Printf("created %s\n", fullFilePath)
-
-	return nil
-}
-
-func writeV1Alpha1Config(input *genv1alpha1.Input, t machine.Type, name string) (err error) {
-	generatedConfig, err := genv1alpha1.Config(t, input)
-	if err != nil {
-		return err
-	}
-
-	configString, err := generatedConfig.String()
-	if err != nil {
-		return err
-	}
-
-	name = strings.ToLower(name) + ".yaml"
-	fullFilePath := filepath.Join(outputDir, name)
-
-	if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0644); err != nil {
-		return err
 	}
 
 	fmt.Printf("created %s\n", fullFilePath)

@@ -43,7 +43,5 @@ type GenOptions struct {
 
 // DefaultGenOptions returns default options.
 func DefaultGenOptions() GenOptions {
-	return GenOptions{
-		EndpointList: []string{"127.0.0.1"},
-	}
+	return GenOptions{}
 }
