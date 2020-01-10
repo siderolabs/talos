@@ -88,12 +88,20 @@
         "path": "v0.3/en/components/init"
       },
       {
+        "title": "kernel",
+        "path": "v0.3/en/components/kernel"
+      },
+      {
         "title": "machined",
         "path": "v0.3/en/components/machined"
       },
       {
         "title": "networkd",
         "path": "v0.3/en/components/networkd"
+      },
+      {
+        "title": "ntpd",
+        "path": "v0.3/en/components/ntpd"
       },
       {
         "title": "osd",
@@ -106,14 +114,6 @@
       {
         "title": "udevd",
         "path": "v0.3/en/components/udevd"
-      },
-      {
-        "title": "init",
-        "path": "v0.3/en/components/init"
-      },
-      {
-        "title": "kernel",
-        "path": "v0.3/en/components/kernel"
       }
     ]
   }
