@@ -9,12 +9,21 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/mdlayher/genetlink"
+	"github.com/mdlayher/netlink"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+)
+
+const (
+	// PowerButtonEvent is the ACPI event name associated with the power off
+	// button.
+	PowerButtonEvent = "button/power"
 )
 
 // Handler represents the ACPI handler task.
@@ -49,6 +58,7 @@ const (
 	acpiGenlMcastGroupName = "acpi_mc_group"
 )
 
+//nolint: gocyclo
 func listenForPowerButton() (err error) {
 	// Get the acpi_event family.
 	conn, err := genetlink.Dial(nil)
@@ -87,13 +97,45 @@ func listenForPowerButton() (err error) {
 				log.Printf("error reading from ACPI channel: %s", err)
 				return
 			}
+
 			if len(msgs) > 0 {
+				ok, err := parse(msgs, PowerButtonEvent)
+				if err != nil {
+					log.Printf("failed to parse netlink message: %v", err)
+					continue
+				}
+
+				if !ok {
+					continue
+				}
+
 				log.Printf("shutdown via ACPI received")
 				event.Bus().Notify(event.Event{Type: event.Shutdown})
+
 				return
 			}
 		}
 	}()
 
 	return nil
+}
+
+func parse(msgs []genetlink.Message, event string) (bool, error) {
+	var result *multierror.Error
+
+	for _, msg := range msgs {
+		ad, err := netlink.NewAttributeDecoder(msg.Data)
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("failed to create attribute decoder: %w", err))
+			continue
+		}
+
+		for ad.Next() {
+			if strings.HasPrefix(ad.String(), event) {
+				return true, nil
+			}
+		}
+	}
+
+	return false, result.ErrorOrNil()
 }
