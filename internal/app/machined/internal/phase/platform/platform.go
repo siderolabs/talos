@@ -56,9 +56,6 @@ func (task *Platform) runtime(r runtime.Runtime) (err error) {
 	}
 
 	if r.Platform().Mode() == runtime.Container {
-		// TODO: add ::1 back once I figure out why bootkube barfs
-		sans = append(sans, "127.0.0.1")
-
 		m := metadata.NewMetadata(r.Sequence())
 		if err = m.Save(); err != nil {
 			return err
