@@ -61,7 +61,7 @@ func DefaultClusterChecks() []ClusterCheck {
 		// wait for coredns to report ready
 		func(cluster provision.ClusterAccess) conditions.Condition {
 			return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
-				return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=coredns")
+				return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-dns")
 			}, 3*time.Minute, 5*time.Second)
 		},
 	}
