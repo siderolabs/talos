@@ -91,6 +91,11 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
+	// This is really only here to support container runtime
+	if p, ok := os.LookupEnv("PLATFORM"); ok {
+		env = append(env, fmt.Sprintf("%s=%s", "PLATFORM", p))
+	}
+
 	return restart.New(containerd.NewRunner(
 		config.Debug(),
 		&args,
