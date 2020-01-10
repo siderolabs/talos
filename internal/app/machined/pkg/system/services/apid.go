@@ -56,7 +56,7 @@ func (o *APID) PostFunc(config runtime.Configurator) (err error) {
 
 // Condition implements the Service interface.
 func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
-	if config.Machine().Type() == machine.Worker {
+	if config.Machine().Type() == machine.TypeWorker {
 		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
 
@@ -73,7 +73,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	endpoints := []string{"127.0.0.1"}
 
-	if config.Machine().Type() == machine.Worker {
+	if config.Machine().Type() == machine.TypeWorker {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
 		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {

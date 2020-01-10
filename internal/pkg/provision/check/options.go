@@ -4,15 +4,13 @@
 
 package check
 
-import (
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
-)
+import "github.com/talos-systems/talos/pkg/config/machine"
 
 // Option represents functional option.
 type Option func(o *Options) error
 
 // WithNodeTypes sets the node types for a check.
-func WithNodeTypes(t ...generate.Type) Option {
+func WithNodeTypes(t ...machine.Type) Option {
 	return func(o *Options) error {
 		o.Types = t
 
@@ -22,7 +20,7 @@ func WithNodeTypes(t ...generate.Type) Option {
 
 // Options describes ClusterCheck parameters.
 type Options struct {
-	Types []generate.Type
+	Types []machine.Type
 }
 
 // DefaultOptions returns the default options.

@@ -30,7 +30,7 @@ func (task *LabelNodeAsMaster) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *LabelNodeAsMaster) standard(r runtime.Runtime) (err error) {
-	if r.Config().Machine().Type() == machine.Worker {
+	if r.Config().Machine().Type() == machine.TypeWorker {
 		return nil
 	}
 

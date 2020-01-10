@@ -34,7 +34,7 @@ func (task *StopServices) standard(r runtime.Runtime) (err error) {
 	if task.upgrade {
 		services := []string{"containerd", "networkd", "ntpd", "udevd"}
 
-		if r.Config().Machine().Type() == machine.Bootstrap || r.Config().Machine().Type() == machine.ControlPlane {
+		if r.Config().Machine().Type() == machine.TypeInit || r.Config().Machine().Type() == machine.TypeControlPlane {
 			services = append(services, "trustd")
 		}
 

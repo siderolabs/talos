@@ -9,7 +9,7 @@ import (
 	"net"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 func (p *provisioner) Reflect(ctx context.Context, clusterName string) (provision.Cluster, error) {
@@ -46,7 +46,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName string) (provisio
 	}
 
 	for _, node := range nodes {
-		t, err := generate.ParseType(node.Labels["talos.type"])
+		t, err := machine.ParseType(node.Labels["talos.type"])
 		if err != nil {
 			return nil, err
 		}

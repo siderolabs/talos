@@ -375,7 +375,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		if ok {
 			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
 
-			existing := config.Machine().Type() == machine.ControlPlane || metadata.Upgraded
+			existing := config.Machine().Type() == machine.TypeControlPlane || metadata.Upgraded
 			if existing {
 				blackListArgs.Set("initial-cluster-state", "existing")
 
