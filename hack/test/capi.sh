@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eou pipefail
 
-PLATFORM=""
+export TALOS_PLATFORM="docker"
 
 source ./hack/test/e2e-runner.sh
 
@@ -24,10 +24,6 @@ cat ${PWD}/hack/test/manifests/capg-components.yaml| envsubst > ${TMP}/capg-comp
 ##They've got an incorrect image pull policy.
 ##curl -L ${CAPG_COMPONENTS} | envsubst > ${TMP}/capg-components.yaml
 
-## Clean up osctl endpoint, fetch kubeconfig
-e2e_run "osctl config endpoint 10.5.0.2"
-e2e_run "osctl kubeconfig ${TMP}"
-
 ## Drop in capi stuff
 e2e_run "kubectl apply -f ${TMP}/provider-components.yaml"
 e2e_run "kubectl apply -f ${CAPI_COMPONENTS}"
@@ -36,7 +32,7 @@ e2e_run "kubectl apply -f ${TMP}/capg-components.yaml"
 
 ## Wait for talosconfig in cm then dump it out
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
-         until KUBECONFIG=${TMP}/kubeconfig kubectl wait --timeout=1s --for=condition=Ready -n ${CABPT_NS} pods --all; do
+         until KUBECONFIG=${KUBECONFIG} kubectl wait --timeout=1s --for=condition=Ready -n ${CABPT_NS} pods --all; do
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            echo 'Waiting to CABPT pod to be available...'
            sleep 10
