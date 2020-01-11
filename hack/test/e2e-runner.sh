@@ -2,7 +2,7 @@
 export KUBERNETES_VERSION=v1.17.0
 export TALOS_IMG="docker.io/autonomy/talos:${TAG}"
 export TMP="/tmp/e2e"
-export TMPPLATFORM="${TMP}/${PLATFORM}"
+export TMPPLATFORM="${TMP}/${TALOS_PLATFORM}"
 export OSCTL="${PWD}/${ARTIFACTS}/osctl-linux-amd64"
 export INTEGRATION_TEST="${PWD}/${ARTIFACTS}/integration-test-linux-amd64"
 export TALOSCONFIG="${TMPPLATFORM}/talosconfig"
@@ -28,8 +28,9 @@ export CAPG_COMPONENTS="https://github.com/kubernetes-sigs/cluster-api-provider-
 
 export KUSTOMIZE_VERSION="3.1.0"
 export KUSTOMIZE_URL="https://github.com/kubernetes-sigs/kustomize/releases/download/v${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64"
-export SONOBUOY_VERSION="0.16.5"
+export SONOBUOY_VERSION="0.17.1"
 export SONOBUOY_URL="https://github.com/heptio/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_amd64.tar.gz"
+export SONOBUOY_MODE=${SONOBUOY_MODE:-quick}
 export CABPT_NS="cabpt-system"
 
 e2e_run() {
