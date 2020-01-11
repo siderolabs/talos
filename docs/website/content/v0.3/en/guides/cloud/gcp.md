@@ -123,7 +123,7 @@ gcloud compute instances create talos-controlplane-0 \
   --zone $REGION-b \
   --tags talos-controlplane \
   --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./init.yaml
+  --metadata-from-file=user-data=./bootstrap.yaml
 
 # Create control plane 1/2
 for i in $( seq 1 2 ); do
@@ -147,7 +147,7 @@ gcloud compute instances create talos-worker-0 \
   --image talos \
   --zone $REGION-b \
   --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./join.yaml
+  --metadata-from-file=user-data=./worker.yaml
 ```
 
 ### Retrieve the `kubeconfig`
@@ -164,3 +164,4 @@ CONTROL_PLANE_0_IP=$(gcloud compute instances describe talos-controlplane-0 \
 osctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
 osctl --talosconfig ./talosconfig kubeconfig .
 kubectl --kubeconfig ./kubeconfig get nodes
+```

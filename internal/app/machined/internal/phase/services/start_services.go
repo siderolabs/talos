@@ -58,7 +58,7 @@ func (task *StartServices) loadSystemServices(r runtime.Runtime) {
 	// Start the services common to all control plane nodes.
 
 	switch r.Config().Machine().Type() {
-	case machine.TypeInit:
+	case machine.TypeBootstrap:
 		fallthrough
 	case machine.TypeControlPlane:
 		svcs.Load(
@@ -74,7 +74,7 @@ func (task *StartServices) loadKubernetesServices(r runtime.Runtime) {
 		&services.Kubelet{},
 	)
 
-	if r.Config().Machine().Type() == machine.TypeInit {
+	if r.Config().Machine().Type() == machine.TypeBootstrap {
 		svcs.Load(
 			&services.Bootkube{},
 		)

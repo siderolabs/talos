@@ -37,7 +37,7 @@ const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 // nolint: gocyclo
 func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
-	case machine.TypeInit:
+	case machine.TypeBootstrap:
 		if c, err = initUd(in); err != nil {
 			return c, err
 		}

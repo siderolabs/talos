@@ -55,11 +55,11 @@ function up {
     cp $PWD/../../../${ARTIFACTS}/vmlinuz ./matchbox/assets/
     cd ./matchbox/assets
     $PWD/../../../../../${ARTIFACTS}/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
-    yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
-    yq w -i init.yaml cluster.network.cni.name 'custom'
-    yq w -i init.yaml cluster.network.cni.urls[+] "${CNI_URL}"
+    yq w -i bootstrap.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    yq w -i bootstrap.yaml cluster.network.cni.name 'custom'
+    yq w -i bootstrap.yaml cluster.network.cni.urls[+] "${CNI_URL}"
     yq w -i controlplane.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
-    yq w -i join.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
+    yq w -i worker.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     cd -
     virt-install --name $CONTROL_PLANE_1_NAME --network=bridge:talos0,model=e1000,mac=$CONTROL_PLANE_1_MAC $COMMON_VIRT_OPTS --boot=hd,network
     virt-install --name $CONTROL_PLANE_2_NAME --network=bridge:talos0,model=e1000,mac=$CONTROL_PLANE_2_MAC $COMMON_VIRT_OPTS --boot=hd,network

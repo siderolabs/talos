@@ -7,6 +7,7 @@ package generate
 import (
 	"net/url"
 
+	"github.com/talos-systems/talos/pkg/config/machine"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
@@ -14,7 +15,7 @@ func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{ConfigVersion: "v1alpha1"}
 
 	machine := &v1alpha1.MachineConfig{
-		MachineType:     "controlplane",
+		MachineType:     machine.TypeControlPlane.String(),
 		MachineToken:    in.TrustdInfo.Token,
 		MachineCA:       in.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,

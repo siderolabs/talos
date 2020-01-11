@@ -17,27 +17,36 @@ import (
 type Type int
 
 const (
-	// TypeInit represents an init node.
-	TypeInit Type = iota
+	// TypeBootstrap represents a bootstrap node.
+	TypeBootstrap Type = iota
 	// TypeControlPlane represents a control plane node.
 	TypeControlPlane
 	// TypeWorker represents a worker node.
 	TypeWorker
 )
 
+const (
+	// TypeBootstrapString is the string representation of TypeBootstrap.
+	TypeBootstrapString = "bootstrap"
+	// TypeControlPlaneString is the string representation of TypeControlPlane.
+	TypeControlPlaneString = "controlplane"
+	// TypeWorkerString is the string representation of TypeWorker.
+	TypeWorkerString = "worker"
+)
+
 // String returns the string representation of Type.
 func (t Type) String() string {
-	return [...]string{"Init", "ControlPlane", "Join"}[t]
+	return [...]string{TypeBootstrapString, TypeControlPlaneString, TypeWorkerString}[t]
 }
 
 // ParseType parses string constant as Type
 func ParseType(t string) (Type, error) {
 	switch t {
-	case "Init":
-		return TypeInit, nil
-	case "ControlPlane":
+	case TypeBootstrap.String():
+		return TypeBootstrap, nil
+	case TypeControlPlane.String():
 		return TypeControlPlane, nil
-	case "Join":
+	case TypeWorker.String():
 		return TypeWorker, nil
 	default:
 		return 0, fmt.Errorf("unknown type %q", t)

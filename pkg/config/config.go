@@ -46,7 +46,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		// Pull existing machine configs of each type
-		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+		for _, configType := range []machine.Type{machine.TypeBootstrap, machine.TypeControlPlane, machine.TypeWorker} {
 			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
 				return bundle, err
@@ -58,7 +58,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 			}
 
 			switch configType {
-			case machine.TypeInit:
+			case machine.TypeBootstrap:
 				bundle.InitCfg = unmarshalledConfig
 			case machine.TypeControlPlane:
 				bundle.ControlPlaneCfg = unmarshalledConfig
@@ -96,7 +96,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		return bundle, err
 	}
 
-	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+	for _, configType := range []machine.Type{machine.TypeBootstrap, machine.TypeControlPlane, machine.TypeWorker} {
 		var generatedConfig *v1alpha1.Config
 
 		generatedConfig, err = generate.Config(configType, input)
@@ -105,7 +105,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		switch configType {
-		case machine.TypeInit:
+		case machine.TypeBootstrap:
 			bundle.InitCfg = generatedConfig
 		case machine.TypeControlPlane:
 			bundle.ControlPlaneCfg = generatedConfig

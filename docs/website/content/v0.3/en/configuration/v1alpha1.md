@@ -14,7 +14,7 @@ osctl config generate --version v1alpha1 <cluster name> <cluster endpoint>
 ````
 
 This will generate a machine config for each node type, and a talosconfig.
-The following is an example of an `init.yaml`:
+The following is an example of an `bootstrap.yaml`:
 
 ```yaml
 version: v1alpha1

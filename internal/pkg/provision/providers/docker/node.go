@@ -104,7 +104,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	// Mutate the container configurations based on the node type.
 
 	switch nodeReq.Config.Machine().Type() {
-	case machine.TypeInit:
+	case machine.TypeBootstrap:
 		var apidPort nat.Port
 
 		apidPort, err = nat.NewPort("tcp", "50000")

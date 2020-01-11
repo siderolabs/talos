@@ -109,14 +109,12 @@ func (m *MachineConfig) Files() []machine.File {
 
 // Type implements the Configurator interface.
 func (m *MachineConfig) Type() machine.Type {
-	switch m.MachineType {
-	case "init":
-		return machine.TypeInit
-	case "controlplane":
-		return machine.TypeControlPlane
-	default:
+	t, err := machine.ParseType(m.MachineType)
+	if err != nil {
 		return machine.TypeWorker
 	}
+
+	return t
 }
 
 // Server implements the Configurator interface.

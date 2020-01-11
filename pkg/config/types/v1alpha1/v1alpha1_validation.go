@@ -77,7 +77,7 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		}
 	}
 
-	if c.Machine().Type() == machine.TypeInit {
+	if c.Machine().Type() == machine.TypeBootstrap {
 		switch c.Cluster().Network().CNI().Name() {
 		case "custom":
 			if len(c.Cluster().Network().CNI().URLs()) == 0 {

@@ -31,7 +31,7 @@ func (suite *GenerateSuite) SetupSuite() {
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeInit, suite.input)
+	_, err := genv1alpha1.Config(machine.TypeBootstrap, suite.input)
 	suite.Require().NoError(err)
 }
 

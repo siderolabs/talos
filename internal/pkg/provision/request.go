@@ -57,7 +57,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 	found := false
 
 	for i := range reqs {
-		if reqs[i].Config.Machine().Type() == machine.TypeInit {
+		if reqs[i].Config.Machine().Type() == machine.TypeBootstrap {
 			if found {
 				err = fmt.Errorf("duplicate init node in requests")
 				return
@@ -78,7 +78,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 // MasterNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 	for i := range reqs {
-		if reqs[i].Config.Machine().Type() == machine.TypeInit || reqs[i].Config.Machine().Type() == machine.TypeControlPlane {
+		if reqs[i].Config.Machine().Type() == machine.TypeBootstrap || reqs[i].Config.Machine().Type() == machine.TypeControlPlane {
 			nodes = append(nodes, reqs[i])
 		}
 	}

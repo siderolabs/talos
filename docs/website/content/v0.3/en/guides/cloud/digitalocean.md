@@ -54,9 +54,9 @@ Using the DNS name of the loadbalancer created earlier, generate the base config
 
 ```bash
 $ osctl config generate talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>
-created init.yaml
+created bootstrap.yaml
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -65,12 +65,12 @@ At this point, you can modify the generated configs to your liking.
 #### Validate the Configuration Files
 
 ```bash
-$ osctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
+$ osctl validate --config bootstrap.yaml --mode cloud
+bootstrap.yaml is valid for cloud mode
 $ osctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
-$ osctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ osctl validate --config worker.yaml --mode cloud
+worker.yaml is valid for cloud mode
 ```
 
 ### Create the Droplets
@@ -84,7 +84,7 @@ doctl compute droplet create \
     --size s-2vcpu-4gb \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
-    --user-data-file init.yaml \
+    --user-data-file bootstrap.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-control-plane-1
 ```
@@ -127,7 +127,7 @@ doctl compute droplet create \
     --image <image ID> \
     --size s-2vcpu-4gb \
     --enable-private-networking \
-    --user-data-file join.yaml \
+    --user-data-file worker.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-worker-1
 ```

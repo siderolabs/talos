@@ -68,7 +68,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster provision.Cluster
 	var expectedNodes []string
 
 	for _, node := range cluster.Info().Nodes {
-		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
+		if node.Type == machine.TypeBootstrap || node.Type == machine.TypeControlPlane {
 			expectedNodes = append(expectedNodes, node.PrivateIP.String())
 		}
 	}

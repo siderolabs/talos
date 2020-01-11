@@ -1,9 +1,9 @@
 bin
 _out
 .vscode
-init.yaml
+bootstrap.yaml
 controlplane.yaml
-join.yaml
+worker.yaml
 docgen
 talosconfig
 kubeconfig

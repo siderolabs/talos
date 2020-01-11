@@ -7,19 +7,20 @@ package generate
 import (
 	"net/url"
 
+	"github.com/talos-systems/talos/pkg/config/machine"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
-func initUd(in *Input) (*v1alpha1.Config, error) {
+func workerUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{ConfigVersion: "v1alpha1"}
 
 	machine := &v1alpha1.MachineConfig{
-		MachineType:     "init",
+		MachineType:     machine.TypeWorker.String(),
+		MachineToken:    in.TrustdInfo.Token,
+		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  &v1alpha1.NetworkConfig{},
-		MachineCA:       in.Certs.OS,
-		MachineCertSANs: in.AdditionalMachineCertSANs,
-		MachineToken:    in.TrustdInfo.Token,
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:       in.InstallDisk,
 			InstallImage:      in.InstallImage,
@@ -27,34 +28,22 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		},
 	}
 
-	certSANs := in.GetAPIServerSANs()
-
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
 		return config, err
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterName: in.ClusterName,
+		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
+		BootstrapToken: in.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
-		},
-		APIServer: &v1alpha1.APIServerConfig{
-			CertSANs: certSANs,
-		},
-		ControllerManager: &v1alpha1.ControllerManagerConfig{},
-		Scheduler:         &v1alpha1.SchedulerConfig{},
-		EtcdConfig: &v1alpha1.EtcdConfig{
-			RootCA: in.Certs.Etcd,
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 			DNSDomain:     in.ServiceDomain,
 			PodSubnet:     in.PodNet,
 			ServiceSubnet: in.ServiceNet,
 		},
-		ClusterCA:                     in.Certs.K8s,
-		BootstrapToken:                in.Secrets.BootstrapToken,
-		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
 	}
 
 	config.MachineConfig = machine

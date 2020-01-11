@@ -18,9 +18,9 @@ Using the DNS name of the load balancer, generate the base configuration files f
 
 ```bash
 $ osctl config generate talos-k8s-metal-tutorial https://<load balancer IP or DNS>
-created init.yaml
+created bootstrap.yaml
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -29,19 +29,19 @@ At this point, you can modify the generated configs to your liking.
 #### Validate the Configuration Files
 
 ```bash
-$ osctl validate --config init.yaml --mode metal
-init.yaml is valid for metal mode
+$ osctl validate --config bootstrap.yaml --mode metal
+bootstrap.yaml is valid for metal mode
 $ osctl validate --config controlplane.yaml --mode metal
 controlplane.yaml is valid for metal mode
-$ osctl validate --config join.yaml --mode metal
-join.yaml is valid for metal mode
+$ osctl validate --config worker.yaml --mode metal
+worker.yaml is valid for metal mode
 ```
 
 #### Publishing the Machine Configuration Files
 
 In bare-metal setups it is up to the user to provide the configuration files over HTTP(S).
 A special kernel parameter (`talos.config`) must be used to inform Talos about _where_ it should retreive its' configuration file.
-To keep things simple we will place `init.yaml`, `controlplane.yaml`, and `join.yaml` into Matchbox's `assets` directory.
+To keep things simple we will place `bootstrap.yaml`, `controlplane.yaml`, and `worker.yaml` into Matchbox's `assets` directory.
 This directory is automatically served by Matchbox.
 
 ### Create the Matchbox Configuration Files
@@ -71,7 +71,7 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
       "console=ttyS0",
       "printk.devkmsg=on",
       "talos.platform=metal",
-      "talos.config=http://matchbox.talos.dev/assets/init.yaml"
+      "talos.config=http://matchbox.talos.dev/assets/bootstrap.yaml"
     ]
   }
 }
@@ -125,7 +125,7 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
       "console=ttyS0",
       "printk.devkmsg=on",
       "talos.platform=metal",
-      "talos.config=http://matchbox.talos.dev/assets/join.yaml"
+      "talos.config=http://matchbox.talos.dev/assets/worker.yaml"
     ]
   }
 }

@@ -211,7 +211,7 @@ az vm availability-set create \
 az vm create \
   --name talos-controlplane-0 \
   --image talos \
-  --custom-data ./init.yaml \
+  --custom-data ./bootstrap.yaml \
   -g $GROUP \
   --admin-username talos \
   --generate-ssh-keys \
@@ -243,7 +243,7 @@ done
   az vm create \
     --name talos-worker-0 \
     --image talos \
-    --custom-data ./join.yaml \
+    --custom-data ./worker.yaml \
     -g $GROUP \
     --admin-username talos \
     --generate-ssh-keys \

@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // ValidateSuite verifies dmesg command
@@ -46,8 +47,8 @@ func (suite *ValidateSuite) TearDownTest() {
 func (suite *ValidateSuite) TestValidate() {
 	suite.RunOsctl([]string{"config", "generate", "foobar", "https://10.0.0.1"})
 
-	for _, configFile := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
-		for _, mode := range []string{"Cloud", "Container", "Interactive", "Metal"} {
+	for _, configFile := range []string{machine.TypeBootstrap.String() + ".yaml", machine.TypeControlPlane.String() + ".yaml", machine.TypeWorker.String() + ".yaml"} {
+		for _, mode := range []string{"cloud", "container", "interactive", "metal"} {
 			suite.RunOsctl([]string{"validate", "-m", mode, "-c", configFile})
 		}
 	}

@@ -219,14 +219,14 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
-	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+	for _, t := range []machine.Type{machine.TypeBootstrap, machine.TypeControlPlane, machine.TypeWorker} {
 		name = strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
 
 		var configString string
 
 		switch t {
-		case machine.TypeInit:
+		case machine.TypeBootstrap:
 			configString, err = configBundle.Init().String()
 			if err != nil {
 				return err

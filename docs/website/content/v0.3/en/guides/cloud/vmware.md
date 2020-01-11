@@ -24,9 +24,9 @@ Using the DNS name or name of the loadbalancer used in the prereq steps, generat
 
 ```bash
 $ osctl config generate talos-k8s-vmware-tutorial https://<load balancer IP or DNS>
-created init.yaml
+created bootstrap.yaml
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -34,9 +34,9 @@ created talosconfig
 
 ```bash
 $ osctl config generate talos-k8s-vmware-tutorial https://<DNS name>:6443
-created init.yaml
+created bootstrap.yaml
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -45,12 +45,12 @@ At this point, you can modify the generated configs to your liking.
 #### Validate the Configuration Files
 
 ```bash
-$ osctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
+$ osctl validate --config bootstrap.yaml --mode cloud
+bootstrap.yaml is valid for cloud mode
 $ osctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
-$ osctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ osctl validate --config worker.yaml --mode cloud
+worker.yaml is valid for cloud mode
 ```
 
 ### Set Environment Variables
@@ -108,7 +108,7 @@ To facilitate persistent storage using the vSphere cloud provider integration wi
 
 ```bash
 govc vm.change \
-  -e "guestinfo.talos.config=$(cat init.yaml | base64)" \
+  -e "guestinfo.talos.config=$(cat bootstrap.yaml | base64)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-1
 ```
@@ -176,12 +176,12 @@ govc vm.power -on control-plane-3
 ```bash
 govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-1
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 join.yaml)" \
+  -e "guestinfo.talos.config=$(base64 worker.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-1
 govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-2
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 join.yaml)" \
+  -e "guestinfo.talos.config=$(base64 worker.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-2
 ```
