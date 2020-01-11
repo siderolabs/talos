@@ -1,3 +1,19 @@
+# [v0.3.0-rc.0](https://github.com/talos-systems/talos/compare/v0.3.0-beta.3...v0.3.0-rc.0) (2020-01-11)
+
+### Bug Fixes
+
+- check for installer image before proceeding with upgrade ([198cd8b](https://github.com/talos-systems/talos/commit/198cd8b527800ff2272c7dfb06bb391da529ffa6))
+- make the CNI URL error better ([b71aec5](https://github.com/talos-systems/talos/commit/b71aec549d98ee39399b4fe559191341809ad2f2))
+- raise default NOFILE limit ([3fdf74c](https://github.com/talos-systems/talos/commit/3fdf74c2665fd27fcb0713fc78a6c0e4d0d18923))
+- set kube-dns labels ([375d2af](https://github.com/talos-systems/talos/commit/375d2af16d68373a3154ea85355eae2a241f0096))
+- shutdown on button/power ACPI event ([9fec814](https://github.com/talos-systems/talos/commit/9fec814db437365fae4fed00861357def801d24a))
+
+### Features
+
+- Upgrade bootkube ([1ae6c81](https://github.com/talos-systems/talos/commit/1ae6c81ea3e50f7bea12186b0076d919c400bc6e))
+- upgrade Linux to v5.4.10 ([bfa70ff](https://github.com/talos-systems/talos/commit/bfa70ff480b13132893d5688b94c18be088c4fa3))
+- upgrade linux to v5.4.8 ([e5cbbf7](https://github.com/talos-systems/talos/commit/e5cbbf73e7bf14423c7f83eb23b1b2248727fa16))
+
 # [v0.3.0-beta.3](https://github.com/talos-systems/talos/compare/v0.3.0-beta.2...v0.3.0-beta.3) (2020-01-01)
 
 ### Bug Fixes
