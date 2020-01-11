@@ -5,13 +5,13 @@ source ./hack/test/e2e-runner.sh
 
 # ## Run CIS conformance
 # echo "Master CIS Conformance:"
-# e2e_run "export KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi
+# e2e_run "export KUBECONFIG=${KUBECONFIG}-${TALOS_PLATFORM}-capi
 #          kubectl apply -f /e2emanifests/cis-kube-bench-master.yaml
 #          kubectl wait --timeout=300s --for=condition=complete job/kube-bench-master > /dev/null
 #          kubectl logs job/kube-bench-master"
 
 # echo "Worker CIS Conformance:"
-# e2e_run "export KUBECONFIG=${KUBECONFIG}-${PLATFORM}-capi
+# e2e_run "export KUBECONFIG=${KUBECONFIG}-${TALOS_PLATFORM}-capi
 #          kubectl apply -f /e2emanifests/cis-kube-bench-node.yaml
 #          kubectl wait --timeout=300s --for=condition=complete job/kube-bench-node > /dev/null
 #          kubectl logs job/kube-bench-node"
@@ -25,7 +25,7 @@ e2e_run "set -eou pipefail
             --wait \
             --skip-preflight \
             --plugin e2e \
-            --mode certified-conformance
+            --mode ${SONOBUOY_MODE}
          results=\$(sonobuoy retrieve --kubeconfig ${KUBECONFIG})
          sonobuoy e2e --kubeconfig ${KUBECONFIG} \$results
          sonobuoy status --kubeconfig ${KUBECONFIG} --json | tee /tmp/status.json
