@@ -6,24 +6,24 @@ source ./hack/test/e2e-runner.sh
 ## Create tmp dir
 mkdir -p ${TMPPLATFORM}
 
-NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
+NAME_PREFIX="talos-e2e-${SHA}-${TALOS_PLATFORM}"
 
 ## Cleanup the platform resources upon any exit
 cleanup() {
-  e2e_run "KUBECONFIG=${TMP}/kubeconfig kubectl delete cluster ${NAME_PREFIX}"
+  e2e_run "KUBECONFIG=${TMP}/docker/kubeconfig kubectl delete cluster ${NAME_PREFIX}"
 }
 
 trap cleanup EXIT
 
 ## Download kustomize and template out capi cluster, then deploy it
-e2e_run "KUBECONFIG=${TMP}/kubeconfig kubectl apply -f ${TMPPLATFORM}/cluster.yaml"
+e2e_run "KUBECONFIG=${TMP}/docker/kubeconfig kubectl apply -f ${TMPPLATFORM}/cluster.yaml"
 
 ## Wait for talosconfig in cm then dump it out
 e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
          until [ -n \"\${STATUS_TALOSCONFIG}\" ]; do
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            sleep 10
-           STATUS_TALOSCONFIG=\$( KUBECONFIG=${TMP}/kubeconfig kubectl get talosconfig ${NAME_PREFIX}-controlplane-0 -o jsonpath='{.status.talosConfig}' )
+           STATUS_TALOSCONFIG=\$( KUBECONFIG=${TMP}/docker/kubeconfig kubectl get talosconfig ${NAME_PREFIX}-controlplane-0 -o jsonpath='{.status.talosConfig}' )
          done
          echo \"\${STATUS_TALOSCONFIG}\" > ${TALOSCONFIG}"
 
@@ -32,7 +32,7 @@ e2e_run "timeout=\$((\$(date +%s) + ${TIMEOUT}))
          until [ -n \"\${MASTER_0_IP}\" ]; do
            [[ \$(date +%s) -gt \$timeout ]] && exit 1
            sleep 10
-           MASTER_0_IP=\$( KUBECONFIG=${TMP}/kubeconfig kubectl get machine -o go-template --template='{{range .status.addresses}}{{if eq .type \"ExternalIP\"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0 )
+           MASTER_0_IP=\$( KUBECONFIG=${TMP}/docker/kubeconfig kubectl get machine -o go-template --template='{{range .status.addresses}}{{if eq .type \"ExternalIP\"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0 )
          done
          echo \${MASTER_0_IP} > ${TMP}/master0ip"
 
@@ -78,8 +78,6 @@ e2e_run "kubectl get nodes -o wide"
 ## Run integration tests
 e2e_run "integration-test -test.v"
 
-## Run conformance tests if var is not null
-if [ ${CONFORMANCE:-"dontrun"} == "run" ]; then
-  echo "Beginning conformance tests..."
-  ./hack/test/conformance.sh
-fi
+## Run conformance tests
+echo "Beginning conformance tests..."
+./hack/test/conformance.sh

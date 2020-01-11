@@ -35,3 +35,7 @@ mkdir -p "${TMP}"
 "${OSCTL}" cluster create --name basic-integration --image "${TALOS_IMG}" --masters=3 --mtu 1440 --cpus 4.0 --wait --endpoint "${ENDPOINT}"
 
 "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.k8sendpoint "${ENDPOINT}:6443"
+
+mkdir -p ${TMP}/${TALOS_PLATFORM}
+"${OSCTL}" kubeconfig ${TMP}/${TALOS_PLATFORM}
+./hack/test/conformance.sh
