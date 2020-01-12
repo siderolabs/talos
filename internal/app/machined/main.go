@@ -19,6 +19,7 @@ import (
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
+	sequencerv1alpha1 "github.com/talos-systems/talos/internal/app/machined/internal/sequencer/v1alpha1"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
@@ -138,12 +139,12 @@ func main() {
 	// Boot the machine.
 	seq := sequencer.New(sequencer.V1Alpha1)
 
-	// Start the boot sequence in a go routine so that we can list for events.
+	// Start the boot sequence in a go routine so that we can listen for events.
 	go func() {
 		defer recovery()
 		if err := seq.Boot(); err != nil {
 			log.Println(err)
-			panic(fmt.Errorf("boot failed: %w", err))
+			panic(fmt.Errorf("failed to run boot sequence: %v", err))
 		}
 	}()
 
@@ -157,31 +158,48 @@ func main() {
 			rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
 			fallthrough
 		case event.Reboot:
-			if err := seq.Shutdown(); err != nil {
-				panic(fmt.Errorf("shutdown failed: %w", err))
-			}
+			go func() {
+				if err := seq.Shutdown(); err != nil {
+					if errors.Is(err, sequencerv1alpha1.ErrLocked{}) {
+						log.Printf("failed to run shutdown sequence: %v", err)
 
-			sync()
+						return
+					}
 
-			if unix.Reboot(rebootFlag) == nil {
-				select {}
-			}
+					panic(err)
+				}
+
+				sync()
+
+				if unix.Reboot(rebootFlag) == nil {
+					select {}
+				}
+			}()
 		case event.Upgrade:
-			var (
-				req *machineapi.UpgradeRequest
-				ok  bool
-			)
+			go func() {
+				var (
+					req *machineapi.UpgradeRequest
+					ok  bool
+				)
 
-			if req, ok = e.Data.(*machineapi.UpgradeRequest); !ok {
-				log.Println("cannot perform upgrade, unexpected data type")
-				continue
-			}
+				if req, ok = e.Data.(*machineapi.UpgradeRequest); !ok {
+					log.Println("cannot perform upgrade, unexpected data type")
 
-			if err := seq.Upgrade(req); err != nil {
-				panic(fmt.Errorf("upgrade failed: %w", err))
-			}
+					return
+				}
 
-			event.Bus().Notify(event.Event{Type: event.Reboot})
+				if err := seq.Upgrade(req); err != nil {
+					if errors.Is(err, sequencerv1alpha1.ErrLocked{}) {
+						log.Printf("failed to run upgrade sequence: %v", err)
+
+						return
+					}
+
+					panic(err)
+				}
+
+				event.Bus().Notify(event.Event{Type: event.Reboot})
+			}()
 		}
 	}
 }

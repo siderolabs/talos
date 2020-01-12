@@ -6,6 +6,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -28,221 +29,265 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
+// ErrLocked represents an error indicating that the sequencer is locked.
+type ErrLocked struct{}
+
+// Error implements the error interface.
+func (e ErrLocked) Error() string {
+	return fmt.Sprintf("sequence in progress")
+}
+
 // Sequencer represents the v1alpha1 sequencer.
-type Sequencer struct{}
+type Sequencer struct {
+	semaphore int32
+}
 
 // Boot implements the Sequencer interface.
-func (d *Sequencer) Boot() error {
-	phaserunner, err := phase.NewRunner(nil, runtime.Boot)
-	if err != nil {
-		return err
+func (s *Sequencer) Boot() error {
+	f := func() error {
+		phaserunner, err := phase.NewRunner(nil, runtime.Boot)
+		if err != nil {
+			return err
+		}
+
+		phaserunner.Add(
+			phase.NewPhase(
+				"system requirements",
+				security.NewSecurityTask(),
+				rootfs.NewSystemDirectoryTask(),
+				rootfs.NewMountBPFFSTask(),
+				rootfs.NewMountCgroupsTask(),
+				rootfs.NewMountSubDevicesTask(),
+				sysctls.NewSysctlsTask(),
+				limits.NewFileLimitTask(),
+			),
+			phase.NewPhase(
+				"configure Integrity Measurement Architecture",
+				security.NewIMATask(),
+			),
+			phase.NewPhase(
+				"basic system configuration",
+				rootfs.NewNetworkConfigurationTask(),
+				rootfs.NewOSReleaseTask(),
+			),
+			phase.NewPhase(
+				"discover network",
+				network.NewInitialNetworkSetupTask(),
+			),
+			phase.NewPhase(
+				"config",
+				configtask.NewConfigTask(),
+			),
+		)
+
+		if err = phaserunner.Run(); err != nil {
+			return err
+		}
+
+		content, err := config.FromFile(constants.ConfigPath)
+		if err != nil {
+			return fmt.Errorf("failed to read config: %w", err)
+		}
+
+		config, err := config.New(content)
+		if err != nil {
+			return fmt.Errorf("failed to parse config: %w", err)
+		}
+
+		phaserunner, err = phase.NewRunner(config, runtime.Boot)
+		if err != nil {
+			return err
+		}
+
+		phaserunner.Add(
+			phase.NewPhase(
+				"config validation",
+				rootfs.NewValidateConfigTask(),
+			),
+			phase.NewPhase(
+				"network reset",
+				network.NewResetNetworkTask(),
+				configtask.NewExtraEnvVarsTask(),
+			),
+			phase.NewPhase(
+				"initial network",
+				network.NewInitialNetworkSetupTask(),
+			),
+			phase.NewPhase(
+				"start system-containerd",
+				services.NewStartSystemContainerdTask(),
+			),
+			phase.NewPhase(
+				"platform tasks",
+				platform.NewPlatformTask(),
+			),
+			phase.NewPhase(
+				"installation verification",
+				rootfs.NewCheckInstallTask(),
+			),
+			phase.NewPhase(
+				"overlay mounts",
+				rootfs.NewMountOverlayTask(),
+				rootfs.NewMountSharedTask(),
+			),
+			phase.NewPhase(
+				"setup /var",
+				rootfs.NewVarDirectoriesTask(),
+			),
+			phase.NewPhase(
+				"save config",
+				configtask.NewSaveConfigTask(),
+			),
+			phase.NewPhase(
+				"mount extra disks",
+				configtask.NewExtraDisksTask(),
+			),
+			phase.NewPhase(
+				"user requests",
+				configtask.NewExtraFilesTask(),
+				configtask.NewSysctlsTask(),
+			),
+			phase.NewPhase(
+				"start services",
+				acpi.NewHandlerTask(),
+				services.NewStartServicesTask(),
+				signal.NewHandlerTask(),
+			),
+			phase.NewPhase(
+				"post startup tasks",
+				services.NewLabelNodeAsMasterTask(),
+			),
+		)
+
+		return phaserunner.Run()
 	}
 
-	phaserunner.Add(
-		phase.NewPhase(
-			"system requirements",
-			security.NewSecurityTask(),
-			rootfs.NewSystemDirectoryTask(),
-			rootfs.NewMountBPFFSTask(),
-			rootfs.NewMountCgroupsTask(),
-			rootfs.NewMountSubDevicesTask(),
-			sysctls.NewSysctlsTask(),
-			limits.NewFileLimitTask(),
-		),
-		phase.NewPhase(
-			"configure Integrity Measurement Architecture",
-			security.NewIMATask(),
-		),
-		phase.NewPhase(
-			"basic system configuration",
-			rootfs.NewNetworkConfigurationTask(),
-			rootfs.NewOSReleaseTask(),
-		),
-		phase.NewPhase(
-			"discover network",
-			network.NewInitialNetworkSetupTask(),
-		),
-		phase.NewPhase(
-			"config",
-			configtask.NewConfigTask(),
-		),
-	)
-
-	if err = phaserunner.Run(); err != nil {
-		return err
-	}
-
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return fmt.Errorf("failed to read config: %w", err)
-	}
-
-	config, err := config.New(content)
-	if err != nil {
-		return fmt.Errorf("failed to parse config: %w", err)
-	}
-
-	phaserunner, err = phase.NewRunner(config, runtime.Boot)
-	if err != nil {
-		return err
-	}
-
-	phaserunner.Add(
-		phase.NewPhase(
-			"config validation",
-			rootfs.NewValidateConfigTask(),
-		),
-		phase.NewPhase(
-			"network reset",
-			network.NewResetNetworkTask(),
-			configtask.NewExtraEnvVarsTask(),
-		),
-		phase.NewPhase(
-			"initial network",
-			network.NewInitialNetworkSetupTask(),
-		),
-		phase.NewPhase(
-			"start system-containerd",
-			services.NewStartSystemContainerdTask(),
-		),
-		phase.NewPhase(
-			"platform tasks",
-			platform.NewPlatformTask(),
-		),
-		phase.NewPhase(
-			"installation verification",
-			rootfs.NewCheckInstallTask(),
-		),
-		phase.NewPhase(
-			"overlay mounts",
-			rootfs.NewMountOverlayTask(),
-			rootfs.NewMountSharedTask(),
-		),
-		phase.NewPhase(
-			"setup /var",
-			rootfs.NewVarDirectoriesTask(),
-		),
-		phase.NewPhase(
-			"save config",
-			configtask.NewSaveConfigTask(),
-		),
-		phase.NewPhase(
-			"mount extra disks",
-			configtask.NewExtraDisksTask(),
-		),
-		phase.NewPhase(
-			"user requests",
-			configtask.NewExtraFilesTask(),
-			configtask.NewSysctlsTask(),
-		),
-		phase.NewPhase(
-			"start services",
-			acpi.NewHandlerTask(),
-			services.NewStartServicesTask(),
-			signal.NewHandlerTask(),
-		),
-		phase.NewPhase(
-			"post startup tasks",
-			services.NewLabelNodeAsMasterTask(),
-		),
-	)
-
-	return phaserunner.Run()
+	return s.run(f)
 }
 
 // Shutdown implements the Sequencer interface.
-func (d *Sequencer) Shutdown() error {
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return err
+func (s *Sequencer) Shutdown() error {
+	f := func() error {
+		content, err := config.FromFile(constants.ConfigPath)
+		if err != nil {
+			return err
+		}
+
+		config, err := config.New(content)
+		if err != nil {
+			return err
+		}
+
+		phaserunner, err := phase.NewRunner(config, runtime.Shutdown)
+		if err != nil {
+			return err
+		}
+
+		phaserunner.Add(
+			phase.NewPhase(
+				"stop services",
+				services.NewStopServicesTask(false),
+			),
+		)
+
+		return phaserunner.Run()
 	}
 
-	config, err := config.New(content)
-	if err != nil {
-		return err
-	}
-
-	phaserunner, err := phase.NewRunner(config, runtime.Shutdown)
-	if err != nil {
-		return err
-	}
-
-	phaserunner.Add(
-		phase.NewPhase(
-			"stop services",
-			services.NewStopServicesTask(false),
-		),
-	)
-
-	return phaserunner.Run()
+	return s.run(f)
 }
 
 // Upgrade implements the Sequencer interface.
-func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return err
+func (s *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
+	f := func() error {
+		content, err := config.FromFile(constants.ConfigPath)
+		if err != nil {
+			return err
+		}
+
+		config, err := config.New(content)
+		if err != nil {
+			return err
+		}
+
+		phaserunner, err := phase.NewRunner(config, runtime.Upgrade)
+		if err != nil {
+			return err
+		}
+
+		var dev *probe.ProbedBlockDevice
+
+		dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
+		if err != nil {
+			return err
+		}
+
+		devname := dev.Device().Name()
+
+		if err := dev.Close(); err != nil {
+			return err
+		}
+
+		phaserunner.Add(
+			phase.NewPhase(
+				"cordon and drain node",
+				kubernetes.NewCordonAndDrainTask(),
+				upgrade.NewLeaveEtcdTask(),
+			),
+			phase.NewPhase(
+				"remove all pods",
+				kubernetes.NewRemoveAllPodsTask(),
+			),
+			phase.NewPhase(
+				"stop services",
+				services.NewStopServicesTask(true),
+			),
+			phase.NewPhase(
+				"unmount system disk submounts",
+				rootfs.NewUnmountOverlayTask(),
+				rootfs.NewUnmountPodMountsTask(),
+			),
+			phase.NewPhase(
+				"unmount system disk",
+				rootfs.NewUnmountSystemDisksTask(devname),
+			),
+			phase.NewPhase(
+				"verify system disk not in use",
+				disk.NewVerifyDiskAvailabilityTask(devname),
+			),
+			phase.NewPhase(
+				"reset system disk",
+				disk.NewResetSystemDiskTask(devname),
+			),
+			phase.NewPhase(
+				"upgrade",
+				upgrade.NewUpgradeTask(devname, req),
+			),
+		)
+
+		return phaserunner.Run()
 	}
 
-	config, err := config.New(content)
-	if err != nil {
-		return err
+	return s.run(f)
+}
+
+// TryLock attempts to set a lock that prevents multiple sequences from running
+// at once. If successful, a value of true will be returned, and false
+// if not.
+func (s *Sequencer) TryLock() bool {
+	return !atomic.CompareAndSwapInt32(&s.semaphore, 0, 1)
+}
+
+// Unlock removes the lock.
+func (s *Sequencer) Unlock() {
+	atomic.CompareAndSwapInt32(&s.semaphore, 1, 0)
+}
+
+func (s *Sequencer) run(f func() error) error {
+	if s.TryLock() {
+		return ErrLocked{}
 	}
 
-	phaserunner, err := phase.NewRunner(config, runtime.Upgrade)
-	if err != nil {
-		return err
-	}
+	defer s.Unlock()
 
-	var dev *probe.ProbedBlockDevice
-
-	dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
-	if err != nil {
-		return err
-	}
-
-	devname := dev.Device().Name()
-
-	if err := dev.Close(); err != nil {
-		return err
-	}
-
-	phaserunner.Add(
-		phase.NewPhase(
-			"cordon and drain node",
-			kubernetes.NewCordonAndDrainTask(),
-			upgrade.NewLeaveEtcdTask(),
-		),
-		phase.NewPhase(
-			"remove all pods",
-			kubernetes.NewRemoveAllPodsTask(),
-		),
-		phase.NewPhase(
-			"stop services",
-			services.NewStopServicesTask(true),
-		),
-		phase.NewPhase(
-			"unmount system disk submounts",
-			rootfs.NewUnmountOverlayTask(),
-			rootfs.NewUnmountPodMountsTask(),
-		),
-		phase.NewPhase(
-			"unmount system disk",
-			rootfs.NewUnmountSystemDisksTask(devname),
-		),
-		phase.NewPhase(
-			"verify system disk not in use",
-			disk.NewVerifyDiskAvailabilityTask(devname),
-		),
-		phase.NewPhase(
-			"reset system disk",
-			disk.NewResetSystemDiskTask(devname),
-		),
-		phase.NewPhase(
-			"upgrade",
-			upgrade.NewUpgradeTask(devname, req),
-		),
-	)
-
-	return phaserunner.Run()
+	return f()
 }
