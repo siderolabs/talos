@@ -264,6 +264,15 @@ type ClusterConfig struct {
 	//           key: LS0tLS1CRUdJTiBSU0...
 	//         image: ...
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
+	//   description: |
+	//     A list of urls that point to additional manifests.
+	//     These will get automatically deployed by bootkube.
+	//   examples:
+	//     - |
+	//       extraManifests:
+	//         - "https://www.mysweethttpserver.com/manifest1.yaml"
+	//         - "https://www.mysweethttpserver.com/manifest2.yaml"
+	ExtraManifests []string `yaml:"extraManifests,omitempty"`
 }
 
 // KubeletConfig reperesents the kubelet config values
