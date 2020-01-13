@@ -341,15 +341,21 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
+	if err = ioutil.WriteFile(filepath.Join(constants.AssetsDirectory, "manifests", "psp.yaml"), DefaultPodSecurityPolicy, 0600); err != nil {
+		return err
+	}
+
 	// If "custom" is the CNI, we expect the user to supply one or more urls that point to CNI yamls
 	if config.Cluster().Network().CNI().Name() == constants.CustomCNI {
-		if err = fetchCNIManifests(config.Cluster().Network().CNI().URLs()); err != nil {
+		if err = fetchManifests(config.Cluster().Network().CNI().URLs()); err != nil {
 			return err
 		}
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(constants.AssetsDirectory, "manifests", "psp.yaml"), DefaultPodSecurityPolicy, 0600); err != nil {
-		return err
+	if len(config.Cluster().ExtraManifestURLs()) > 0 {
+		if err = fetchManifests(config.Cluster().ExtraManifestURLs()); err != nil {
+			return err
+		}
 	}
 
 	input, err := ioutil.ReadFile(constants.GeneratedKubeconfigAsset)
@@ -376,8 +382,8 @@ func altNamesFromURLs(urls []string) *tlsutil.AltNames {
 	return &an
 }
 
-// fetchCNIManifests will lay down provided CNI files to the bootkube assets directory
-func fetchCNIManifests(urls []string) error {
+// fetchManifests will lay down manifests in the provided urls to the bootkube assets directory
+func fetchManifests(urls []string) error {
 	ctx := context.Background()
 
 	var result *multierror.Error
@@ -400,10 +406,13 @@ func fetchCNIManifests(urls []string) error {
 		getter.Getters["http"] = httpGetter
 		getter.Getters["https"] = httpGetter
 
+		// We will squirrel all user-supplied manifests into a `zzz-talos` directory.
+		// Bootkube applies manifests alphabetically, so pushing these into a subdir with this name
+		// allows us to ensure they're the last things that get applied and things like PSPs and whatnot are present
 		client := &getter.Client{
 			Ctx:     ctx,
 			Src:     url,
-			Dst:     filepath.Join(constants.AssetsDirectory, "manifests", fileName),
+			Dst:     filepath.Join(constants.AssetsDirectory, "manifests", "zzz-talos", fileName),
 			Pwd:     pwd,
 			Mode:    getter.ClientModeFile,
 			Options: []getter.ClientOption{},

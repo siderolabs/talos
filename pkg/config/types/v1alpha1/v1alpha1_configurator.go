@@ -323,6 +323,11 @@ func (c *ClusterConfig) ServiceCIDR() string {
 	return c.ClusterNetwork.ServiceSubnet[0]
 }
 
+// ExtraManifestURLs implements the Configurator interface.
+func (c *ClusterConfig) ExtraManifestURLs() []string {
+	return c.ExtraManifests
+}
+
 // Name implements the Configurator interface.
 func (c *CNIConfig) Name() string {
 	return c.CNIName
