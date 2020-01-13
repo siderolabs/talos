@@ -24,6 +24,7 @@ type Cluster interface {
 	Etcd() Etcd
 	Network() Network
 	LocalAPIServerPort() int
+	ExtraManifestURLs() []string
 }
 
 // Network defines the requirements for a config that pertains to cluster

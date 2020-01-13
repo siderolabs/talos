@@ -484,6 +484,22 @@ etcd:
 
 ```
 
+#### extraManifests
+
+A list of urls that point to additional manifests.
+These will get automatically deployed by bootkube.
+
+Type: `array`
+
+Examples:
+
+```yaml
+extraManifests:
+  - "https://www.mysweethttpserver.com/manifest1.yaml"
+  - "https://www.mysweethttpserver.com/manifest2.yaml"
+
+```
+
 ---
 
 ### KubeletConfig
