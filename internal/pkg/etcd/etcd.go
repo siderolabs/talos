@@ -95,6 +95,10 @@ func ValidateForUpgrade() error {
 			return err
 		}
 
+		if len(resp.Members) == 1 {
+			return fmt.Errorf("only 1 etcd member found. assuming this is not an HA setup and refusing to upgrade")
+		}
+
 		for _, member := range resp.Members {
 			// If the member is not started, the name will be an empty string.
 			if len(member.Name) == 0 {
