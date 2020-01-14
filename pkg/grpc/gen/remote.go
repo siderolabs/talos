@@ -21,6 +21,8 @@ import (
 // RemoteGenerator represents the OS identity generator.
 type RemoteGenerator struct {
 	client securityapi.SecurityServiceClient
+	conn   *grpc.ClientConn
+	done   chan struct{}
 }
 
 // NewRemoteGenerator initializes a RemoteGenerator with a preconfigured grpc.ClientConn.
@@ -47,7 +49,13 @@ func NewRemoteGenerator(token string, endpoints []string, port int) (g *RemoteGe
 
 		client := securityapi.NewSecurityServiceClient(conn)
 
-		return &RemoteGenerator{client: client}, nil
+		g := &RemoteGenerator{
+			client: client,
+			conn:   conn,
+			done:   make(chan struct{}),
+		}
+
+		return g, nil
 	}
 
 	// We were unable to connect to any trustd endpoint
@@ -81,6 +89,13 @@ func (g *RemoteGenerator) Identity(csr *x509.CertificateSigningRequest) (ca, crt
 	return ca, crt, nil
 }
 
+// Close closes the gRPC client connection.
+func (g *RemoteGenerator) Close() error {
+	g.done <- struct{}{}
+
+	return g.conn.Close()
+}
+
 func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca []byte, crt []byte, err error) {
 	timeout := time.NewTimer(time.Minute * 5)
 	defer timeout.Stop()
@@ -105,6 +120,8 @@ func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca []byte, c
 			crt = resp.Crt
 
 			return ca, crt, nil
+		case <-g.done:
+			return nil, nil, nil
 		}
 	}
 }
