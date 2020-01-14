@@ -199,6 +199,14 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
+	// Ensure assets directory does not exist / is left over from a failed install
+	if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
+		// Ignore if the directory does not exist
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+
 	peerCrt, err := ioutil.ReadFile(constants.KubernetesEtcdPeerCert)
 	if err != nil {
 		return err
