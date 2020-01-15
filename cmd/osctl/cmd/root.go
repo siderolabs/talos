@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -110,7 +111,16 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 		// Update context with grpc metadata for proxy/relay requests
 		ctx = client.WithNodes(ctx, targetNodes...)
 
-		c, err := client.NewClient(creds, configEndpoints, constants.ApidPort)
+		tlsconfig, err := tls.New(
+			tls.WithKeypair(creds.Crt),
+			tls.WithClientAuthType(tls.Mutual),
+			tls.WithCACertPEM(creds.CA),
+		)
+		if err != nil {
+			return err
+		}
+
+		c, err := client.NewClient(tlsconfig, configEndpoints, constants.ApidPort)
 		if err != nil {
 			return fmt.Errorf("error constructing client: %w", err)
 		}

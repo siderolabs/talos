@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/tls"
 )
 
 // NewAdapter returns ClusterAccess object from Cluster.
@@ -60,7 +61,16 @@ func (a *adapter) Client(endpoints ...string) (*client.Client, error) {
 		endpoints = configContext.Endpoints
 	}
 
-	client, err := client.NewClient(creds, endpoints, constants.ApidPort)
+	tlsconfig, err := tls.New(
+		tls.WithKeypair(creds.Crt),
+		tls.WithClientAuthType(tls.Mutual),
+		tls.WithCACertPEM(creds.CA),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := client.NewClient(tlsconfig, endpoints, constants.ApidPort)
 	if err == nil {
 		a.clients[key] = client
 	}
