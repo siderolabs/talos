@@ -34,7 +34,7 @@ import (
 // Client represents a set of helper methods for interacting with the
 // Kubernetes API.
 type Client struct {
-	client *kubernetes.Clientset
+	*kubernetes.Clientset
 }
 
 // NewClientFromKubeletKubeconfig initializes and returns a Client.
@@ -138,7 +138,7 @@ func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *u
 
 // MasterIPs cordons and drains a node in one call.
 func (h *Client) MasterIPs() (addrs []string, err error) {
-	endpoints, err := h.client.CoreV1().Endpoints("default").Get("kubernetes", metav1.GetOptions{})
+	endpoints, err := h.CoreV1().Endpoints("default").Get("kubernetes", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (h *Client) MasterIPs() (addrs []string, err error) {
 
 // LabelNodeAsMaster labels a node with the required master label.
 func (h *Client) LabelNodeAsMaster(name string) (err error) {
-	n, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	n, err := h.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 		return fmt.Errorf("failed to create two way merge patch: %w", err)
 	}
 
-	if _, err := h.client.CoreV1().Nodes().Patch(n.Name, types.StrategicMergePatchType, patchBytes); err != nil {
+	if _, err := h.CoreV1().Nodes().Patch(n.Name, types.StrategicMergePatchType, patchBytes); err != nil {
 		if apierrors.IsConflict(err) {
 			return fmt.Errorf("unable to update node metadata due to conflict: %w", err)
 		}
@@ -207,7 +207,7 @@ func (h *Client) CordonAndDrain(node string) (err error) {
 // Cordon marks a node as unschedulable.
 func (h *Client) Cordon(name string) error {
 	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		node, err := h.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}
@@ -218,7 +218,7 @@ func (h *Client) Cordon(name string) error {
 
 		node.Spec.Unschedulable = true
 
-		if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
+		if _, err := h.CoreV1().Nodes().Update(node); err != nil {
 			return retry.ExpectedError(err)
 		}
 
@@ -234,14 +234,14 @@ func (h *Client) Cordon(name string) error {
 // Uncordon marks a node as schedulable.
 func (h *Client) Uncordon(name string) error {
 	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		node, err := h.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+		node, err := h.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}
 
 		if node.Spec.Unschedulable {
 			node.Spec.Unschedulable = false
-			if _, err := h.client.CoreV1().Nodes().Update(node); err != nil {
+			if _, err := h.CoreV1().Nodes().Update(node); err != nil {
 				return retry.ExpectedError(err)
 			}
 		}
@@ -261,7 +261,7 @@ func (h *Client) Drain(node string) error {
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": node}).String(),
 	}
 
-	pods, err := h.client.CoreV1().Pods(metav1.NamespaceAll).List(opts)
+	pods, err := h.CoreV1().Pods(metav1.NamespaceAll).List(opts)
 	if err != nil {
 		return fmt.Errorf("cannot get pods for node %s: %w", node, err)
 	}
@@ -298,7 +298,7 @@ func (h *Client) evict(p corev1.Pod, gracePeriod int64) error {
 			ObjectMeta:    metav1.ObjectMeta{Namespace: p.GetNamespace(), Name: p.GetName()},
 			DeleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod},
 		}
-		err := h.client.CoreV1().Pods(p.GetNamespace()).Evict(pol)
+		err := h.CoreV1().Pods(p.GetNamespace()).Evict(pol)
 
 		switch {
 		case apierrors.IsTooManyRequests(err):
@@ -317,7 +317,7 @@ func (h *Client) evict(p corev1.Pod, gracePeriod int64) error {
 
 func (h *Client) waitForPodDeleted(p *corev1.Pod) error {
 	return retry.Constant(time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
-		pod, err := h.client.CoreV1().Pods(p.GetNamespace()).Get(p.GetName(), metav1.GetOptions{})
+		pod, err := h.CoreV1().Pods(p.GetNamespace()).Get(p.GetName(), metav1.GetOptions{})
 		switch {
 		case apierrors.IsNotFound(err):
 			return nil

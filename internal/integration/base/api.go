@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/tls"
 )
 
 // APISuite is a base suite for API tests
@@ -31,7 +32,16 @@ func (apiSuite *APISuite) SetupSuite() {
 		endpoints = []string{apiSuite.Endpoint}
 	}
 
-	apiSuite.Client, err = client.NewClient(creds, endpoints, constants.ApidPort)
+	tlsconfig, err := tls.New(
+		tls.WithKeypair(creds.Crt),
+		tls.WithClientAuthType(tls.Mutual),
+		tls.WithCACertPEM(creds.CA),
+	)
+	if err != nil {
+		apiSuite.Require().NoError(err)
+	}
+
+	apiSuite.Client, err = client.NewClient(tlsconfig, endpoints, constants.ApidPort)
 	apiSuite.Require().NoError(err)
 }
 

@@ -10,7 +10,6 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -34,9 +33,8 @@ import (
 // Credentials represents the set of values required to initialize a valid
 // Client.
 type Credentials struct {
-	ca  []byte
-	crt []byte
-	key []byte
+	CA  []byte
+	Crt tls.Certificate
 }
 
 // Client implements the proto.OSClient interface. It serves as the
@@ -91,57 +89,29 @@ func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string
 		return nil, nil, fmt.Errorf("error decoding key: %w", err)
 	}
 
+	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not load client key pair: %s", err)
+	}
+
 	creds = &Credentials{
-		ca:  caBytes,
-		crt: crtBytes,
-		key: keyBytes,
+		CA:  caBytes,
+		Crt: crt,
 	}
 
 	return context, creds, nil
 }
 
-// NewClientCredentials initializes ClientCredentials using default paths
-// to the required CA, certificate, and key.
-func NewClientCredentials(ca, crt, key []byte) (creds *Credentials) {
-	creds = &Credentials{
-		ca:  ca,
-		crt: crt,
-		key: key,
-	}
-
-	return creds
-}
-
 // NewClient initializes a Client.
-func NewClient(creds *Credentials, endpoints []string, port int) (c *Client, err error) {
-	grpcOpts := []grpc.DialOption{}
+func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialOption) (c *Client, err error) {
+	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
+
+	cfg.ServerName = endpoints[0]
 
 	c = &Client{}
 
-	crt, err := tls.X509KeyPair(creds.crt, creds.key)
-	if err != nil {
-		return nil, fmt.Errorf("could not load client key pair: %s", err)
-	}
-
-	certPool := x509.NewCertPool()
-	if ok := certPool.AppendCertsFromPEM(creds.ca); !ok {
-		return nil, fmt.Errorf("failed to append client certs")
-	}
-
-	// TODO(andrewrynhard): Do not parse the address. Pass the IP and port in as separate
-	// parameters.
 	// TODO(smira): endpoints[0] should be replaced with proper load-balancing
-	transportCreds := credentials.NewTLS(&tls.Config{
-		ServerName:   endpoints[0],
-		Certificates: []tls.Certificate{crt},
-		// Set the root certificate authorities to use the self-signed
-		// certificate.
-		RootCAs: certPool,
-	})
-
-	grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(transportCreds))
-
-	c.conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(endpoints[0]), port), grpcOpts...)
+	c.conn, err = grpc.DialContext(context.Background(), fmt.Sprintf("%s:%d", net.FormatAddress(endpoints[0]), port), opts...)
 	if err != nil {
 		return
 	}
