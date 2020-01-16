@@ -135,6 +135,10 @@ func (d *DHCP) Hostname() string {
 		return fmt.Sprintf("%s.%s", shortHostname, d.Ack.DomainName())
 	}
 
+	if d.Ack.HostName() == "" {
+		return fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(d.Address().IP.String(), ".", "-"))
+	}
+
 	return d.Ack.HostName()
 }
 
