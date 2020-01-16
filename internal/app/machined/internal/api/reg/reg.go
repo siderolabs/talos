@@ -15,14 +15,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/oci"
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
-
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
-	criconstants "github.com/containerd/cri/pkg/constants"
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
@@ -99,18 +100,7 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 
 // Upgrade initiates an upgrade.
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeResponse, err error) {
-	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
-	containerdctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
-
-	client, err := containerd.New(constants.SystemContainerdAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO(rsmitty): validate that image that gets pulled down is in fact a talos installer.
-	// Something as easy as `docker run -ti --entrypoint "" autonomy/installer:$version /bin/installer --help` should suffice
-	_, err = client.Pull(containerdctx, in.GetImage(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
-	if err != nil {
+	if err = pullAndValidateInstallerImage(ctx, in.GetImage()); err != nil {
 		return nil, err
 	}
 
@@ -575,4 +565,74 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.MachineSer
 	default:
 		return fmt.Errorf("path must be a regular file")
 	}
+}
+
+func pullAndValidateInstallerImage(ctx context.Context, imageName string) error {
+	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
+	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+
+	client, err := containerd.New(constants.SystemContainerdAddress)
+	if err != nil {
+		return err
+	}
+
+	image, err := client.Pull(containerdctx, imageName, []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+	if err != nil {
+		return err
+	}
+
+	// Launch the container with a known help command for a simple check to make sure the image is valid
+	args := []string{
+		"/bin/installer",
+		"--help",
+	}
+
+	specOpts := []oci.SpecOpts{
+		oci.WithImageConfig(image),
+		oci.WithProcessArgs(args...),
+	}
+
+	containerOpts := []containerd.NewContainerOpts{
+		containerd.WithImage(image),
+		containerd.WithNewSnapshot("validate", image),
+		containerd.WithNewSpec(specOpts...),
+	}
+
+	container, err := client.NewContainer(containerdctx, "validate", containerOpts...)
+	if err != nil {
+		return err
+	}
+
+	//nolint: errcheck
+	defer container.Delete(containerdctx, containerd.WithSnapshotCleanup)
+
+	task, err := container.NewTask(containerdctx, cio.NewCreator(cio.WithStdio))
+	if err != nil {
+		return err
+	}
+
+	//nolint: errcheck
+	defer task.Delete(containerdctx)
+
+	exitStatusC, err := task.Wait(containerdctx)
+	if err != nil {
+		return err
+	}
+
+	if err = task.Start(containerdctx); err != nil {
+		return err
+	}
+
+	status := <-exitStatusC
+
+	code, _, err := status.Result()
+	if err != nil {
+		return err
+	}
+
+	if code != 0 {
+		return fmt.Errorf("installer help returned non-zero exit. assuming invalid installer")
+	}
+
+	return nil
 }
