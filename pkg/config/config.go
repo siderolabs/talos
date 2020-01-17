@@ -96,10 +96,6 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		return bundle, err
 	}
 
-	input.AdditionalSubjectAltNames = append(input.AdditionalSubjectAltNames, options.InputOptions.AdditionalSubjectAltNames...)
-	input.InstallDisk = options.InputOptions.InstallDisk
-	input.InstallImage = options.InputOptions.InstallImage
-
 	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		var generatedConfig *v1alpha1.Config
 

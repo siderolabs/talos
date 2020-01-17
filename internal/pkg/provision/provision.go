@@ -16,12 +16,9 @@ type Provisioner interface {
 	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
 	Destroy(context.Context, Cluster, ...Option) error
 
+	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
+
 	GenOptions() []generate.GenOption
 
 	Close() error
-}
-
-// ClusterNameReflector rebuilds Cluster information by cluster name.
-type ClusterNameReflector interface {
-	Reflect(ctx context.Context, clusterName string) (Cluster, error)
 }

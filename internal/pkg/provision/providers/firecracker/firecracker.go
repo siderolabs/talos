@@ -12,6 +12,8 @@ import (
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
+const stateFileName = "state.yaml"
+
 type provisioner struct {
 }
 

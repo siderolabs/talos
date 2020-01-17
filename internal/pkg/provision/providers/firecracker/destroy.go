@@ -6,6 +6,8 @@ package firecracker
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
@@ -20,7 +22,18 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		}
 	}
 
-	// TODO: implement me
+	fmt.Fprintln(options.LogWriter, "stopping VMs")
 
-	return nil
+	if err := p.destroyNodes(cluster.Info(), &options); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(options.LogWriter, "removing state directory")
+
+	stateDirectoryPath, err := cluster.StatePath()
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(stateDirectoryPath)
 }

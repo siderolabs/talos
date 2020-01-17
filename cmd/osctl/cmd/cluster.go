@@ -10,8 +10,13 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"os"
+	"path/filepath"
+	"sort"
+	"text/tabwriter"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
 	clientconfig "github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
@@ -20,7 +25,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
@@ -50,19 +54,20 @@ var (
 	cniBinPath              []string
 	cniConfDir              string
 	cniCacheDir             string
+	stateDir                string
 )
 
 // clusterCmd represents the cluster command
 var clusterCmd = &cobra.Command{
 	Use:   "cluster",
-	Short: "A collection of commands for managing local docker-based clusters",
+	Short: "A collection of commands for managing local docker-based or firecracker-based clusters",
 	Long:  ``,
 }
 
 // clusterUpCmd represents the cluster up command
 var clusterUpCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Creates a local docker-based kubernetes cluster",
+	Short: "Creates a local docker-based or firecracker-based kubernetes cluster",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,11 +78,22 @@ var clusterUpCmd = &cobra.Command{
 // clusterDownCmd represents the cluster up command
 var clusterDownCmd = &cobra.Command{
 	Use:   "destroy",
-	Short: "Destroys a local docker-based kubernetes cluster",
+	Short: "Destroys a local docker-based or firecracker-based kubernetes cluster",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return helpers.WithCLIContext(context.Background(), destroy)
+	},
+}
+
+// clusterShowCmd represents the cluster show command
+var clusterShowCmd = &cobra.Command{
+	Use:   "show",
+	Short: "Shows info about a local provisioned kubernetes cluster",
+	Long:  ``,
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return helpers.WithCLIContext(context.Background(), show)
 	},
 }
 
@@ -134,7 +150,12 @@ func create(ctx context.Context) (err error) {
 	if inputDir != "" {
 		configBundleOpts = append(configBundleOpts, config.WithExistingConfigs(inputDir))
 	} else {
-		var genOptions []generate.GenOption
+		genOptions := []generate.GenOption{
+			generate.WithInstallImage(nodeInstallImage),
+		}
+
+		genOptions = append(genOptions, provisioner.GenOptions()...)
+
 		endpointList := []string{}
 
 		if forceEndpoint != "" {
@@ -189,6 +210,9 @@ func create(ctx context.Context) (err error) {
 		KernelPath:        nodeVmlinuxPath,
 		InitramfsPath:     nodeInitramfsPath,
 		KubernetesVersion: kubernetesVersion,
+
+		SelfExecutable: os.Args[0],
+		StateDirectory: stateDir,
 	}
 
 	// Create the master nodes.
@@ -249,19 +273,84 @@ func create(ctx context.Context) (err error) {
 }
 
 func destroy(ctx context.Context) error {
-	provisioner, err := docker.NewProvisioner(ctx)
+	provisioner, err := providers.Factory(ctx, provisioner)
 	if err != nil {
 		return err
 	}
 
 	defer provisioner.Close() //nolint: errcheck
 
-	cluster, err := provisioner.(provision.ClusterNameReflector).Reflect(ctx, clusterName)
+	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
 	if err != nil {
 		return err
 	}
 
 	return provisioner.Destroy(ctx, cluster)
+}
+
+func show(ctx context.Context) error {
+	provisioner, err := providers.Factory(ctx, provisioner)
+	if err != nil {
+		return err
+	}
+
+	defer provisioner.Close() //nolint: errcheck
+
+	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
+	if err != nil {
+		return err
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "PROVISIONER\t%s\n", cluster.Provisioner())
+	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
+	fmt.Fprintf(w, "NETWORK NAME\t%s\n", cluster.Info().Network.Name)
+
+	ones, _ := cluster.Info().Network.CIDR.Mask.Size()
+	fmt.Fprintf(w, "NETWORK CIDR\t%s/%d\n", cluster.Info().Network.CIDR.IP, ones)
+	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", cluster.Info().Network.GatewayAddr)
+	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
+
+	if err = w.Flush(); err != nil {
+		return err
+	}
+
+	fmt.Fprint(os.Stdout, "\nNODES:\n\n")
+
+	w = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+
+	fmt.Fprintf(w, "NAME\tTYPE\tIP\tCPU\tRAM\tDISK\n")
+
+	nodes := cluster.Info().Nodes
+	sort.Slice(nodes, func(i, j int) bool { return nodes[i].Name < nodes[j].Name })
+
+	for _, node := range nodes {
+		cpus := "-"
+		if node.NanoCPUs > 0 {
+			cpus = fmt.Sprintf("%.2f", float64(node.NanoCPUs)/1000.0/1000.0/1000.0)
+		}
+
+		mem := "-"
+		if node.Memory > 0 {
+			mem = humanize.Bytes(uint64(node.Memory))
+		}
+
+		disk := "-"
+		if node.DiskSize > 0 {
+			disk = humanize.Bytes(uint64(node.DiskSize))
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+			node.Name,
+			node.Type,
+			node.PrivateIP,
+			cpus,
+			mem,
+			disk,
+		)
+	}
+
+	return w.Flush()
 }
 
 func saveConfig(cluster provision.Cluster, talosConfigObj *clientconfig.Config) (err error) {
@@ -296,7 +385,11 @@ func parseCPUShare() (int64, error) {
 }
 
 func init() {
-	clusterUpCmd.Flags().StringVar(&provisioner, "provisioner", "docker", "Talos cluster provisioner to use")
+	defaultStateDir, err := clientconfig.GetTalosDirectory()
+	if err == nil {
+		defaultStateDir = filepath.Join(defaultStateDir, "clusters")
+	}
+
 	clusterUpCmd.Flags().StringVar(&nodeImage, "image", defaultImage(constants.DefaultTalosImageRepository), "the image to use")
 	clusterUpCmd.Flags().StringVar(&nodeInstallImage, "install-image", defaultImage(constants.DefaultInstallerImageRepository), "the installer image to use")
 	clusterUpCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(constants.KernelUncompressedAsset), "the uncompressed kernel image to use")
@@ -317,8 +410,11 @@ func init() {
 	clusterUpCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries")
 	clusterUpCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path")
 	clusterUpCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path")
+	clusterCmd.PersistentFlags().StringVar(&provisioner, "provisioner", "docker", "Talos cluster provisioner to use")
+	clusterCmd.PersistentFlags().StringVar(&stateDir, "state", defaultStateDir, "directory path to store cluster state")
 	clusterCmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 	clusterCmd.AddCommand(clusterUpCmd)
 	clusterCmd.AddCommand(clusterDownCmd)
+	clusterCmd.AddCommand(clusterShowCmd)
 	rootCmd.AddCommand(clusterCmd)
 }

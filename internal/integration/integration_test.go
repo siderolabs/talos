@@ -9,17 +9,15 @@ package integration_test
 
 import (
 	"flag"
-	"os"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/internal/integration/api"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/internal/integration/k8s"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -65,17 +63,7 @@ func TestIntegration(t *testing.T) {
 }
 
 func init() {
-	var (
-		defaultTalosConfig string
-		ok                 bool
-	)
-
-	if defaultTalosConfig, ok = os.LookupEnv(constants.TalosConfigEnvVar); !ok {
-		home, err := os.UserHomeDir()
-		if err == nil {
-			defaultTalosConfig = path.Join(home, ".talos", "config")
-		}
-	}
+	defaultTalosConfig, _ := config.GetDefaultPath() //nolint: errcheck
 
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")

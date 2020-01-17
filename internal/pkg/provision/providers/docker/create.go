@@ -57,8 +57,10 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		clusterInfo: provision.ClusterInfo{
 			ClusterName: request.Name,
 			Network: provision.NetworkInfo{
-				Name: request.Network.Name,
-				CIDR: request.Network.CIDR,
+				Name:        request.Network.Name,
+				CIDR:        request.Network.CIDR,
+				GatewayAddr: request.Network.GatewayAddr,
+				MTU:         request.Network.MTU,
 			},
 			Nodes: nodeInfo,
 		},

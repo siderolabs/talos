@@ -297,6 +297,8 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		additionalMachineCertSANs = options.EndpointList
 	}
 
+	additionalSubjectAltNames = append(additionalSubjectAltNames, options.AdditionalSubjectAltNames...)
+
 	input = &Input{
 		Certs:                     certs,
 		ControlPlaneEndpoint:      endpoint,

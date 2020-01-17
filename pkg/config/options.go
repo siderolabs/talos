@@ -11,13 +11,10 @@ type BundleOption func(o *BundleOptions) error
 
 // InputOptions holds necessary params for generating an input
 type InputOptions struct {
-	ClusterName               string
-	Endpoint                  string
-	KubeVersion               string
-	AdditionalSubjectAltNames []string
-	InstallDisk               string
-	InstallImage              string
-	GenOptions                []generate.GenOption
+	ClusterName string
+	Endpoint    string
+	KubeVersion string
+	GenOptions  []generate.GenOption
 }
 
 // BundleOptions describes generate parameters.

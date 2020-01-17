@@ -8,12 +8,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
@@ -51,18 +51,9 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	var (
-		defaultTalosConfig string
-		ok                 bool
-	)
-
-	if defaultTalosConfig, ok = os.LookupEnv(constants.TalosConfigEnvVar); !ok {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-
-		defaultTalosConfig = path.Join(home, ".talos", "config")
+	defaultTalosConfig, err := config.GetDefaultPath()
+	if err != nil {
+		return err
 	}
 
 	rootCmd.PersistentFlags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
