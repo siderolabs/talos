@@ -7,12 +7,13 @@ package docker
 import (
 	"context"
 	"net"
+	"strconv"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
-func (p *provisioner) Reflect(ctx context.Context, clusterName string) (provision.Cluster, error) {
+func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
 	res := &result{
 		clusterInfo: provision.ClusterInfo{
 			ClusterName: clusterName,
@@ -37,6 +38,14 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName string) (provisio
 
 		res.clusterInfo.Network.Name = network.Name
 		res.clusterInfo.Network.CIDR = *cidr
+		res.clusterInfo.Network.GatewayAddr = net.ParseIP(network.IPAM.Config[0].Gateway)
+
+		mtuStr := network.Options["com.docker.network.driver.mtu"]
+		res.clusterInfo.Network.MTU, err = strconv.Atoi(mtuStr)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// find nodes (containers)

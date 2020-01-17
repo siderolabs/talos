@@ -1,11 +1,11 @@
 <!-- markdownlint-disable -->
 ## osctl cluster create
 
-Creates a local docker-based kubernetes cluster
+Creates a local docker-based or firecracker-based kubernetes cluster
 
 ### Synopsis
 
-Creates a local docker-based kubernetes cluster
+Creates a local docker-based or firecracker-based kubernetes cluster
 
 ```
 osctl cluster create [flags]
@@ -31,7 +31,6 @@ osctl cluster create [flags]
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
       --mtu int                     MTU of the docker bridge network (default 1500)
-      --provisioner string          Talos cluster provisioner to use (default "docker")
       --vmlinux-path string         the uncompressed kernel image to use (default "_out/vmlinux")
       --wait                        wait for the cluster to be ready before returning
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
@@ -45,10 +44,12 @@ osctl cluster create [flags]
   -e, --endpoints strings    override default endpoints in Talos configuration
       --name string          the name of the cluster (default "talos-default")
   -n, --nodes strings        target the specified nodes
+      --provisioner string   Talos cluster provisioner to use (default "docker")
+      --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
       --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
 ```
 
 ### SEE ALSO
 
-* [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based clusters
+* [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based or firecracker-based clusters
 

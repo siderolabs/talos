@@ -7,9 +7,12 @@ package firecracker
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"text/template"
 
 	"github.com/containernetworking/cni/libcni"
@@ -21,6 +24,12 @@ import (
 )
 
 func (p *provisioner) createNetwork(ctx context.Context, state *state, network provision.NetworkRequest) error {
+	// build bridge interface name by taking part of checksum of the network name
+	// so that interface name is defined by network name, and different networks have
+	// different bridge interfaces
+	networkNameHash := sha256.Sum256([]byte(network.Name))
+	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
+
 	// bring up the bridge interface for the first time to get gateway IP assigned
 	t := template.Must(template.New("bridge").Parse(bridgeTemplate))
 
@@ -29,9 +38,11 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 	err := t.Execute(&buf, struct {
 		NetworkName   string
 		InterfaceName string
+		MTU           string
 	}{
 		NetworkName:   network.Name,
-		InterfaceName: state.bridgeInterfaceName,
+		InterfaceName: state.BridgeName,
+		MTU:           strconv.Itoa(network.MTU),
 	})
 	if err != nil {
 		return err
@@ -49,7 +60,10 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 		return err
 	}
 
-	defer testutils.UnmountNS(ns) //nolint: errcheck
+	defer func() {
+		ns.Close()              //nolint: errcheck
+		testutils.UnmountNS(ns) //nolint: errcheck
+	}()
 
 	// pick a fake address to use for provisioning an interface
 	fakeIP, err := talosnet.NthIPInNetwork(&network.CIDR, 2)
@@ -57,14 +71,14 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 		return err
 	}
 
-	ones, bits := network.CIDR.IP.DefaultMask().Size()
+	ones, _ := network.CIDR.IP.DefaultMask().Size()
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,
 		NetNS:       ns.Path(),
 		IfName:      "veth0",
 		Args: [][2]string{
-			{"IP", fmt.Sprintf("%s/%d", fakeIP, bits-ones)},
+			{"IP", fmt.Sprintf("%s/%d", fakeIP, ones)},
 			{"GATEWAY", network.GatewayAddr.String()},
 		},
 	}
@@ -92,9 +106,11 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 	err = t.Execute(f, struct {
 		NetworkName   string
 		InterfaceName string
+		MTU           string
 	}{
 		NetworkName:   network.Name,
-		InterfaceName: state.bridgeInterfaceName,
+		InterfaceName: state.BridgeName,
+		MTU:           strconv.Itoa(network.MTU),
 	})
 	if err != nil {
 		return err
@@ -114,7 +130,8 @@ const bridgeTemplate = `
 	"isDefaultGateway": true,
 	"ipam": {
 		  "type": "static"
-	}
+	},
+	"mtu": {{ .MTU }}
 }
 `
 
@@ -131,8 +148,9 @@ const networkTemplate = `
 		"isDefaultGateway": true,
 		"ipam": {
 		  "type": "static"
-		}
-	  },
+		},
+		"mtu": {{ .MTU }}
+	},
 	  {
 		"type": "firewall"
 	  },

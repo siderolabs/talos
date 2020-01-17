@@ -175,6 +175,9 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		Name: info.Name,
 		Type: nodeReq.Config.Machine().Type(),
 
+		NanoCPUs: nodeReq.NanoCPUs,
+		Memory:   nodeReq.Memory,
+
 		PrivateIP: net.ParseIP(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress),
 	}
 

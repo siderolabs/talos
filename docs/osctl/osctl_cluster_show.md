@@ -1,20 +1,20 @@
 <!-- markdownlint-disable -->
-## osctl cluster destroy
+## osctl cluster show
 
-Destroys a local docker-based or firecracker-based kubernetes cluster
+Shows info about a local provisioned kubernetes cluster
 
 ### Synopsis
 
-Destroys a local docker-based or firecracker-based kubernetes cluster
+Shows info about a local provisioned kubernetes cluster
 
 ```
-osctl cluster destroy [flags]
+osctl cluster show [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for destroy
+  -h, --help   help for show
 ```
 
 ### Options inherited from parent commands

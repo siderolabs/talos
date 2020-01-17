@@ -25,6 +25,15 @@ func WithInstallDisk(disk string) GenOption {
 	}
 }
 
+// WithAdditionalSubjectAltNames specifies additional SANs.
+func WithAdditionalSubjectAltNames(sans []string) GenOption {
+	return func(o *GenOptions) error {
+		o.AdditionalSubjectAltNames = sans
+
+		return nil
+	}
+}
+
 // WithInstallImage specifies install container image to use in Talos cluster.
 func WithInstallImage(imageRef string) GenOption {
 	return func(o *GenOptions) error {
@@ -36,9 +45,10 @@ func WithInstallImage(imageRef string) GenOption {
 
 // GenOptions describes generate parameters.
 type GenOptions struct {
-	EndpointList []string
-	InstallDisk  string
-	InstallImage string
+	EndpointList              []string
+	InstallDisk               string
+	InstallImage              string
+	AdditionalSubjectAltNames []string
 }
 
 // DefaultGenOptions returns default options.

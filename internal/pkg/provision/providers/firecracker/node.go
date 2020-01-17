@@ -5,23 +5,27 @@
 package firecracker
 
 import (
-	"context"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"syscall"
 
 	"github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	"github.com/hashicorp/go-multierror"
+	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
 func (p *provisioner) createDisk(state *state, nodeReq provision.NodeRequest) (diskPath string, err error) {
-	diskPath = filepath.Join(state.tempDir, fmt.Sprintf("%s.disk", nodeReq.Name))
+	diskPath = filepath.Join(state.statePath, fmt.Sprintf("%s.disk", nodeReq.Name))
 
 	var diskF *os.File
 
@@ -37,13 +41,13 @@ func (p *provisioner) createDisk(state *state, nodeReq provision.NodeRequest) (d
 	return
 }
 
-func (p *provisioner) createNodes(ctx context.Context, state *state, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
-			nodeInfo, err := p.createNode(ctx, state, clusterReq, nodeReq)
+			nodeInfo, err := p.createNode(state, clusterReq, nodeReq)
 			errCh <- err
 
 			if err == nil {
@@ -69,8 +73,10 @@ func (p *provisioner) createNodes(ctx context.Context, state *state, clusterReq 
 	return nodesInfo, multiErr.ErrorOrNil()
 }
 
-func (p *provisioner) createNode(ctx context.Context, state *state, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
-	socketPath := filepath.Join(state.tempDir, fmt.Sprintf("%s.sock", nodeReq.Name))
+//nolint: gocyclo
+func (p *provisioner) createNode(state *state, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
+	socketPath := filepath.Join(state.statePath, fmt.Sprintf("%s.sock", nodeReq.Name))
+	pidPath := filepath.Join(state.statePath, fmt.Sprintf("%s.pid", nodeReq.Name))
 
 	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
 	if vcpuCount < 2 {
@@ -100,7 +106,7 @@ func (p *provisioner) createNode(ctx context.Context, state *state, clusterReq p
 
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
-	cmdline.Append("talos.config", fmt.Sprintf("%s%s.yaml", state.baseConfigURL, nodeReq.Name))
+	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
 
 	// networking
 	cmdline.Append("ip", fmt.Sprintf(
@@ -110,7 +116,7 @@ func (p *provisioner) createNode(ctx context.Context, state *state, clusterReq p
 		net.IP(clusterReq.Network.CIDR.Mask),
 		nodeReq.Name))
 
-	ones, bits := clusterReq.Network.CIDR.IP.DefaultMask().Size()
+	ones, _ := clusterReq.Network.CIDR.IP.DefaultMask().Size()
 
 	cfg := firecracker.Config{
 		DisableValidation: true, // TODO: enable when firecracker Go SDK is fixed
@@ -132,7 +138,7 @@ func (p *provisioner) createNode(ctx context.Context, state *state, clusterReq p
 					CacheDir:    clusterReq.Network.CNI.CacheDir,
 					NetworkName: clusterReq.Network.Name,
 					Args: [][2]string{
-						{"IP", fmt.Sprintf("%s/%d", nodeReq.IP, bits-ones)},
+						{"IP", fmt.Sprintf("%s/%d", nodeReq.IP, ones)},
 						{"GATEWAY", clusterReq.Network.GatewayAddr.String()},
 					},
 					IfName: "veth0",
@@ -149,50 +155,137 @@ func (p *provisioner) createNode(ctx context.Context, state *state, clusterReq p
 		},
 	}
 
-	defer os.Remove(cfg.SocketPath) //nolint: errcheck
-
-	logFile, err := os.OpenFile(filepath.Join(state.tempDir, fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	logFile, err := os.OpenFile(filepath.Join(state.statePath, fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
 
-	// defer logFile.Close() //nolint: errcheck
+	defer logFile.Close() //nolint: errcheck
 
-	// TODO: this loop is to boot VM for the first time, let installer do its work
-	//       handle reboot and then leave it running
-	//       this is going to change with control process to the non-hacky way
-	for i := 0; i < 2; i++ {
-		cmd := firecracker.VMCommandBuilder{}.
-			WithBin("firecracker").
-			WithSocketPath(socketPath).
-			WithStdout(logFile).
-			WithStderr(logFile).
-			Build(ctx)
-
-		m, err := firecracker.NewMachine(ctx, cfg, firecracker.WithProcessRunner(cmd))
-		if err != nil {
-			return provision.NodeInfo{}, fmt.Errorf("failed to create new machine: %w", err)
-		}
-
-		if err := m.Start(ctx); err != nil {
-			return provision.NodeInfo{}, fmt.Errorf("failed to initialize machine: %w", err)
-		}
-
-		if i == 0 {
-			// wait for VMM to execute
-			if err := m.Wait(ctx); err != nil {
-				return provision.NodeInfo{}, err
-			}
-		}
+	nodeConfig, err := nodeReq.Config.String()
+	if err != nil {
+		return provision.NodeInfo{}, err
 	}
 
+	launchConfig := LaunchConfig{
+		FirecrackerConfig: cfg,
+		Config:            nodeConfig,
+		GatewayAddr:       clusterReq.Network.GatewayAddr.String(),
+	}
+
+	launchConfigFile, err := os.Create(filepath.Join(state.statePath, fmt.Sprintf("%s.config", nodeReq.Name)))
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
+
+	if err = json.NewEncoder(launchConfigFile).Encode(&launchConfig); err != nil {
+		return provision.NodeInfo{}, err
+	}
+
+	if _, err = launchConfigFile.Seek(0, io.SeekStart); err != nil {
+		return provision.NodeInfo{}, err
+	}
+
+	defer launchConfigFile.Close() //nolint: errcheck
+
+	cmd := exec.Command(clusterReq.SelfExecutable, "firecracker-launch")
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	cmd.Stdin = launchConfigFile
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true, // daemonize
+	}
+
+	if err = cmd.Start(); err != nil {
+		return provision.NodeInfo{}, err
+	}
+
+	pidFile, err := os.Create(pidPath)
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
+
+	defer pidFile.Close() //nolint: errcheck
+
+	if _, err = fmt.Fprintf(pidFile, "%d", cmd.Process.Pid); err != nil {
+		return provision.NodeInfo{}, fmt.Errorf("error wriring PID file: %w", err)
+	}
+
+	// no need to wait here, as cmd has all the Stdin/out/err via *os.File
+
 	nodeInfo := provision.NodeInfo{
-		ID:   socketPath,
+		ID:   pidPath,
 		Name: nodeReq.Name,
 		Type: nodeReq.Config.Machine().Type(),
+
+		NanoCPUs: nodeReq.NanoCPUs,
+		Memory:   nodeReq.Memory,
+		DiskSize: nodeReq.DiskSize,
 
 		PrivateIP: nodeReq.IP,
 	}
 
 	return nodeInfo, nil
+}
+
+func (p *provisioner) destroyNodes(cluster provision.ClusterInfo, options *provision.Options) error {
+	errCh := make(chan error)
+
+	for _, node := range cluster.Nodes {
+		go func(node provision.NodeInfo) {
+			fmt.Fprintln(options.LogWriter, "stopping VM", node.Name)
+
+			errCh <- p.destroyNode(node)
+		}(node)
+	}
+
+	var multiErr *multierror.Error
+
+	for range cluster.Nodes {
+		multiErr = multierror.Append(multiErr, <-errCh)
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
+func (p *provisioner) destroyNode(node provision.NodeInfo) error {
+	pidFile, err := os.Open(node.ID) // node.ID stores PID path for control process
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return fmt.Errorf("error checking PID file for %q: %w", node.Name, err)
+	}
+
+	defer pidFile.Close() //nolint: errcheck
+
+	var pid int
+
+	if _, err = fmt.Fscanf(pidFile, "%d", &pid); err != nil {
+		return fmt.Errorf("error reading PID for %q: %w", node.Name, err)
+	}
+
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return fmt.Errorf("error finding process %d for %q: %w", pid, node.Name, err)
+	}
+
+	if err = proc.Signal(syscall.SIGTERM); err != nil {
+		if err.Error() == "os: process already finished" {
+			return nil
+		}
+
+		return fmt.Errorf("error sending SIGTERM to %d (node %q): %w", pid, node.Name, err)
+	}
+
+	if _, err = proc.Wait(); err != nil {
+		if errors.Is(err, syscall.ECHILD) {
+			return nil
+		}
+
+		return fmt.Errorf("error waiting for %d to exit (node %q): %w", pid, node.Name, err)
+	}
+
+	return nil
 }

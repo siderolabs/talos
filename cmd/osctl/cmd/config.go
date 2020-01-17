@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -203,12 +204,14 @@ func genV1Alpha1Config(args []string) error {
 	configBundle, err := config.NewConfigBundle(
 		config.WithInputOptions(
 			&config.InputOptions{
-				ClusterName:               args[0],
-				Endpoint:                  args[1],
-				KubeVersion:               kubernetesVersion,
-				AdditionalSubjectAltNames: additionalSANs,
-				InstallDisk:               installDisk,
-				InstallImage:              installImage,
+				ClusterName: args[0],
+				Endpoint:    args[1],
+				KubeVersion: kubernetesVersion,
+				GenOptions: []generate.GenOption{
+					generate.WithInstallDisk(installDisk),
+					generate.WithInstallImage(installImage),
+					generate.WithAdditionalSubjectAltNames(additionalSANs),
+				},
 			},
 		),
 	)

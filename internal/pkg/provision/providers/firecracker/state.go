@@ -5,24 +5,32 @@
 package firecracker
 
 import (
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	"fmt"
+
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
 type state struct {
-	tempDir             string
-	baseConfigURL       string
-	bridgeInterfaceName string
+	ProvisionerName string
+	BridgeName      string
 
-	talosConfig *config.Config
+	ClusterInfo provision.ClusterInfo
 
-	clusterInfo provision.ClusterInfo
+	statePath string
 }
 
-func (s *state) TalosConfig() *config.Config {
-	return s.talosConfig
+func (s *state) Provisioner() string {
+	return "firecracker"
 }
 
 func (s *state) Info() provision.ClusterInfo {
-	return s.clusterInfo
+	return s.ClusterInfo
+}
+
+func (s *state) StatePath() (string, error) {
+	if s.statePath == "" {
+		return "", fmt.Errorf("state path is not set")
+	}
+
+	return s.statePath, nil
 }

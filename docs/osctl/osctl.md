@@ -19,7 +19,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 
 ### SEE ALSO
 
-* [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based clusters
+* [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based or firecracker-based clusters
 * [osctl completion](osctl_completion.md)	 - Output shell completion code for the specified shell (bash or zsh)
 * [osctl config](osctl_config.md)	 - Manage the client configuration
 * [osctl containers](osctl_containers.md)	 - List containers
