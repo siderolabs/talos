@@ -138,34 +138,23 @@ func main() {
 	// Boot the machine.
 	seq := sequencer.New(sequencer.V1Alpha1)
 
-	// Start the boot sequence in a go routine so that we can list for events.
-	go func() {
-		defer recovery()
-		if err := seq.Boot(); err != nil {
-			log.Println(err)
-			panic(fmt.Errorf("boot failed: %w", err))
-		}
-	}()
-
-	rebootFlag := unix.LINUX_REBOOT_CMD_RESTART
+	if err := seq.Boot(); err != nil {
+		log.Println(err)
+		panic(fmt.Errorf("boot failed: %w", err))
+	}
 
 	// Wait for an event.
 
+	flag := unix.LINUX_REBOOT_CMD_RESTART
+
+L:
 	for {
 		switch e := <-init.Channel(); e.Type {
 		case event.Shutdown:
-			rebootFlag = unix.LINUX_REBOOT_CMD_POWER_OFF
+			flag = unix.LINUX_REBOOT_CMD_POWER_OFF
 			fallthrough
 		case event.Reboot:
-			if err := seq.Shutdown(); err != nil {
-				panic(fmt.Errorf("shutdown failed: %w", err))
-			}
-
-			sync()
-
-			if unix.Reboot(rebootFlag) == nil {
-				select {}
-			}
+			break L
 		case event.Upgrade:
 			var (
 				req *machineapi.UpgradeRequest
@@ -178,10 +167,27 @@ func main() {
 			}
 
 			if err := seq.Upgrade(req); err != nil {
+				log.Println(err)
 				panic(fmt.Errorf("upgrade failed: %w", err))
 			}
 
-			event.Bus().Notify(event.Event{Type: event.Reboot})
+			break L
 		}
 	}
+
+	if err := seq.Shutdown(); err != nil {
+		log.Println(err)
+		panic(fmt.Errorf("shutdown failed: %w", err))
+	}
+
+	sync()
+
+	if err := unix.Reboot(flag); err != nil {
+		log.Println(err)
+		panic(err)
+	}
+
+	// Prevent a kernel panic.
+
+	select {}
 }

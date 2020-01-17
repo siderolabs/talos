@@ -23,12 +23,12 @@ func (suite *EventSuite) TestBus() {
 	subscriber1 := struct {
 		*event.Embeddable
 	}{
-		&event.Embeddable{},
+		&event.Embeddable{Chan: make(event.Channel, 20)},
 	}
 	subscriber2 := struct {
 		*event.Embeddable
 	}{
-		&event.Embeddable{},
+		&event.Embeddable{Chan: make(event.Channel, 20)},
 	}
 
 	event.Bus().Register(subscriber1)
