@@ -1,5 +1,4 @@
 <!-- markdownlint-disable -->
-
 ## osctl cluster create
 
 Creates a local docker-based kubernetes cluster
@@ -21,9 +20,6 @@ osctl cluster create [flags]
   -h, --help                        help for create
       --image string                the image to use (default "docker.io/autonomy/talos:latest")
       --init-node-as-endpoint       use init node as endpoint instead of any load balancer endpoint
-      --initrd-path string          the uncompressed kernel image to use (default "_out/initramfs.xz")
-  -i, --input-dir string            location of pre-generated config files
-      --install-image string        the installer image to use (default "docker.io/autonomy/installer:latest")
       --kubernetes-version string   desired kubernetes version to run (default "1.17.1")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
@@ -45,4 +41,5 @@ osctl cluster create [flags]
 
 ### SEE ALSO
 
-- [osctl cluster](osctl_cluster.md) - A collection of commands for managing local docker-based clusters
+* [osctl cluster](osctl_cluster.md)	 - A collection of commands for managing local docker-based clusters
+
