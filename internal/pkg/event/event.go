@@ -52,17 +52,17 @@ type ObserveNotifier interface {
 
 // Embeddable is a type that implements sane defaults as an observer.
 type Embeddable struct {
-	channel Channel
-	types   []Type
+	Chan  Channel
+	types []Type
 }
 
 // Channel implements the Observer interface.
 func (e *Embeddable) Channel() Channel {
-	if cap(e.channel) == 0 {
-		e.channel = make(Channel, 20)
+	if e.Chan == nil {
+		e.Chan = make(Channel)
 	}
 
-	return e.channel
+	return e.Chan
 }
 
 // Types implements the Observer interface.
