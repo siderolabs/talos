@@ -106,6 +106,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 			containerd.WithMemoryLimit(int64(1000000*32)),
 			oci.WithCapabilities([]string{
 				strings.ToUpper("CAP_" + capability.CAP_NET_ADMIN.String()),
+				strings.ToUpper("CAP_" + capability.CAP_SYS_ADMIN.String()),
 				strings.ToUpper("CAP_" + capability.CAP_NET_RAW.String()),
 			}),
 			oci.WithHostNamespace(specs.NetworkNamespace),
