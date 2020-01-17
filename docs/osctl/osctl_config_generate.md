@@ -18,7 +18,7 @@ osctl config generate <cluster name> https://<load balancer IP or DNS name> [fla
   -h, --help                        help for generate
       --install-disk string         the disk to install to (default "/dev/sda")
       --install-image string        the image used to perform an installation (default "docker.io/autonomy/installer:latest")
-      --kubernetes-version string   desired kubernetes version to run (default "1.17.0")
+      --kubernetes-version string   desired kubernetes version to run (default "1.17.1")
   -o, --output-dir string           destination to output generated files
       --version string              the desired machine config version to generate (default "v1alpha1")
 ```
