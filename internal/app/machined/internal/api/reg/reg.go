@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -567,7 +568,7 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.MachineSer
 	}
 }
 
-func pullAndValidateInstallerImage(ctx context.Context, imageName string) error {
+func pullAndValidateInstallerImage(ctx context.Context, ref string) error {
 	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
@@ -576,7 +577,7 @@ func pullAndValidateInstallerImage(ctx context.Context, imageName string) error 
 		return err
 	}
 
-	image, err := client.Pull(containerdctx, imageName, []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+	img, err := image.Pull(containerdctx, client, ref)
 	if err != nil {
 		return err
 	}
@@ -588,13 +589,13 @@ func pullAndValidateInstallerImage(ctx context.Context, imageName string) error 
 	}
 
 	specOpts := []oci.SpecOpts{
-		oci.WithImageConfig(image),
+		oci.WithImageConfig(img),
 		oci.WithProcessArgs(args...),
 	}
 
 	containerOpts := []containerd.NewContainerOpts{
-		containerd.WithImage(image),
-		containerd.WithNewSnapshot("validate", image),
+		containerd.WithImage(img),
+		containerd.WithNewSnapshot("validate", img),
 		containerd.WithNewSpec(specOpts...),
 	}
 

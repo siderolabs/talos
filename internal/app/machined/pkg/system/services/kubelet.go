@@ -33,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -113,8 +114,9 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
 
-	if _, err = client.Pull(containerdctx, config.Machine().Kubelet().Image(), containerdapi.WithPullUnpack); err != nil {
-		return fmt.Errorf("failed to pull image %q: %w", config.Machine().Kubelet().Image(), err)
+	_, err = image.Pull(containerdctx, client, config.Machine().Kubelet().Image())
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -132,7 +134,7 @@ func (k *Kubelet) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd"}
+	return []string{"containerd", "networkd"}
 }
 
 // Runner implements the Service interface.
