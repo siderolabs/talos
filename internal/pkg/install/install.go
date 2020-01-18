@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -37,15 +38,15 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		return err
 	}
 
-	var image containerd.Image
+	var img containerd.Image
 
 	if options.ImagePull {
-		image, err = client.Pull(ctx, r.Config().Machine().Install().Image(), []containerd.RemoteOpt{containerd.WithPullUnpack}...)
+		img, err = image.Pull(ctx, client, r.Config().Machine().Install().Image())
 		if err != nil {
 			return err
 		}
 	} else {
-		image, err = client.GetImage(ctx, r.Config().Machine().Install().Image())
+		img, err = client.GetImage(ctx, r.Config().Machine().Install().Image())
 		if err != nil {
 			return err
 		}
@@ -81,7 +82,7 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 	}
 
 	specOpts := []oci.SpecOpts{
-		oci.WithImageConfig(image),
+		oci.WithImageConfig(img),
 		oci.WithProcessArgs(args...),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
@@ -92,8 +93,8 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		oci.WithPrivileged,
 	}
 	containerOpts := []containerd.NewContainerOpts{
-		containerd.WithImage(image),
-		containerd.WithNewSnapshot("upgrade", image),
+		containerd.WithImage(img),
+		containerd.WithNewSnapshot("upgrade", img),
 		containerd.WithNewSpec(specOpts...),
 	}
 
