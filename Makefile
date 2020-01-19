@@ -7,7 +7,7 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 
 ARTIFACTS := _out
 IMAGES := $(ARTIFACTS)/images
-TOOLS ?= autonomy/tools:b1b5672
+TOOLS ?= autonomy/tools:v0.1.0
 GO_VERSION ?= 1.13
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
