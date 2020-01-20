@@ -32,9 +32,12 @@ esac
 
 mkdir -p "${TMP}"
 
-"${OSCTL}" cluster create --name basic-integration --image "${TALOS_IMG}" --masters=3 --mtu 1440 --cpus 4.0 --wait --endpoint "${ENDPOINT}"
+"${OSCTL}" cluster create --provisioner firecracker --name basic-integration \
+  --masters=3 --mtu 1440 --memory 1536 --cpus 4.0 --cidr 172.20.0.0/24  \
+  --init-node-as-endpoint --wait \
+   --install-image docker.io/autonomy/installer:v0.4.0-alpha.1 # TODO: fixme (how?)
 
-"${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.k8sendpoint "${ENDPOINT}:6443"
+"${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}"
 
 mkdir -p ${TMP}/${TALOS_PLATFORM}
 "${OSCTL}" kubeconfig ${TMP}/${TALOS_PLATFORM}

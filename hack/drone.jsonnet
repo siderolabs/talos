@@ -38,6 +38,19 @@ local volumes = {
     },
   },
 
+  netns: {
+    pipeline: {
+      name: 'netns',
+      host: {
+        path: '/var/run/netns',
+      },
+    },
+    step: {
+      name: $.netns.pipeline.name,
+      path: '/var/run/netns',
+    },
+  },
+
   kube: {
     pipeline: {
       name: 'kube',
@@ -76,6 +89,7 @@ local volumes = {
   ForStep(): [
     self.dockersock.step,
     self.docker.step,
+    self.netns.step,
     self.kube.step,
     self.dev.step,
     self.tmp.step,
@@ -84,6 +98,7 @@ local volumes = {
   ForPipeline(): [
     self.dockersock.pipeline,
     self.docker.pipeline,
+    self.netns.pipeline,
     self.kube.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,

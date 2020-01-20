@@ -32,6 +32,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -49,6 +51,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -68,6 +72,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -87,6 +93,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -106,6 +114,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -125,6 +135,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -144,6 +156,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -163,6 +177,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -182,6 +198,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -201,6 +219,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -220,6 +240,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -244,6 +266,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -263,6 +287,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -282,6 +308,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -301,6 +329,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -320,6 +350,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -339,6 +371,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -358,6 +392,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -377,6 +413,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -396,6 +434,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -415,6 +455,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -434,6 +476,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -453,6 +497,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -487,6 +533,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -513,6 +561,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -543,6 +593,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -576,6 +628,8 @@ services:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -588,6 +642,9 @@ volumes:
   temp: {}
 - name: docker
   temp: {}
+- name: netns
+  host:
+    path: /var/run/netns
 - name: kube
   temp: {}
 - name: dev
@@ -634,6 +691,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -651,6 +710,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -670,6 +731,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -689,6 +752,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -708,6 +773,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -727,6 +794,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -746,6 +815,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -765,6 +836,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -784,6 +857,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -803,6 +878,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -822,6 +899,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -846,6 +925,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -865,6 +946,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -884,6 +967,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -903,6 +988,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -922,6 +1009,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -941,6 +1030,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -960,6 +1051,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -979,6 +1072,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -998,6 +1093,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1017,6 +1114,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1036,6 +1135,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1055,6 +1156,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1089,6 +1192,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1115,6 +1220,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1145,6 +1252,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1178,6 +1287,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1206,6 +1317,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1234,6 +1347,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1255,6 +1370,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1277,6 +1394,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1306,6 +1425,8 @@ services:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1318,6 +1439,9 @@ volumes:
   temp: {}
 - name: docker
   temp: {}
+- name: netns
+  host:
+    path: /var/run/netns
 - name: kube
   temp: {}
 - name: dev
@@ -1359,6 +1483,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1376,6 +1502,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1395,6 +1523,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1414,6 +1544,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1433,6 +1565,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1452,6 +1586,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1471,6 +1607,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1490,6 +1628,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1509,6 +1649,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1528,6 +1670,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1547,6 +1691,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1571,6 +1717,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1590,6 +1738,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1609,6 +1759,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1628,6 +1780,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1647,6 +1801,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1666,6 +1822,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1685,6 +1843,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1704,6 +1864,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1723,6 +1885,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1742,6 +1906,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1761,6 +1927,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1780,6 +1948,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1814,6 +1984,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1840,6 +2012,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1870,6 +2044,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1903,6 +2079,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1931,6 +2109,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1959,6 +2139,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1981,6 +2163,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2004,6 +2188,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2029,6 +2215,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2061,6 +2249,8 @@ services:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2073,6 +2263,9 @@ volumes:
   temp: {}
 - name: docker
   temp: {}
+- name: netns
+  host:
+    path: /var/run/netns
 - name: kube
   temp: {}
 - name: dev
@@ -2114,6 +2307,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2131,6 +2326,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2150,6 +2347,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2169,6 +2368,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2188,6 +2389,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2207,6 +2410,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2226,6 +2431,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2245,6 +2452,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2264,6 +2473,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2283,6 +2494,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2302,6 +2515,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2326,6 +2541,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2345,6 +2562,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2364,6 +2583,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2383,6 +2604,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2402,6 +2625,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2421,6 +2646,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2440,6 +2667,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2459,6 +2688,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2478,6 +2709,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2497,6 +2730,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2516,6 +2751,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2535,6 +2772,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2569,6 +2808,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2595,6 +2836,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2625,6 +2868,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2658,6 +2903,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2686,6 +2933,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2714,6 +2963,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2736,6 +2987,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2759,6 +3012,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2784,6 +3039,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2816,6 +3073,8 @@ services:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2828,6 +3087,9 @@ volumes:
   temp: {}
 - name: docker
   temp: {}
+- name: netns
+  host:
+    path: /var/run/netns
 - name: kube
   temp: {}
 - name: dev
@@ -2869,6 +3131,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2886,6 +3150,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2905,6 +3171,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2924,6 +3192,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2943,6 +3213,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2962,6 +3234,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2981,6 +3255,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3000,6 +3276,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3019,6 +3297,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3038,6 +3318,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3057,6 +3339,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3081,6 +3365,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3100,6 +3386,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3119,6 +3407,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3138,6 +3428,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3157,6 +3449,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3176,6 +3470,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3195,6 +3491,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3214,6 +3512,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3233,6 +3533,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3252,6 +3554,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3271,6 +3575,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3290,6 +3596,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3324,6 +3632,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3350,6 +3660,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3380,6 +3692,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3404,6 +3718,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3421,6 +3737,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3440,6 +3758,8 @@ steps:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3503,6 +3823,8 @@ services:
     path: /var/run
   - name: docker
     path: /root/.docker/buildx
+  - name: netns
+    path: /var/run/netns
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3515,6 +3837,9 @@ volumes:
   temp: {}
 - name: docker
   temp: {}
+- name: netns
+  host:
+    path: /var/run/netns
 - name: kube
   temp: {}
 - name: dev
@@ -3557,6 +3882,9 @@ volumes:
   temp: {}
 - name: docker
   temp: {}
+- name: netns
+  host:
+    path: /var/run/netns
 - name: kube
   temp: {}
 - name: dev
