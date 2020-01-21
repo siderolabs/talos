@@ -181,6 +181,11 @@ func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 	return nil
 }
 
+// Name implements the Configurator interface.
+func (c *ClusterConfig) Name() string {
+	return c.ClusterName
+}
+
 // Endpoint implements the Configurator interface.
 func (c *ClusterConfig) Endpoint() *url.URL {
 	return c.ControlPlane.Endpoint.URL
