@@ -1,3 +1,24 @@
+# [v0.3.0](https://github.com/talos-systems/talos/compare/v0.3.0-rc.0...v0.3.0) (2020-01-21)
+
+### Bug Fixes
+
+- add Close func in remote generator ([a5184ea](https://github.com/talos-systems/talos/commit/a5184ead2b6f16164ec48d5797d6e08acc433dca))
+- block when handling bus event ([4804033](https://github.com/talos-systems/talos/commit/4804033674da67c840c5d9bd8b567a187e4cae6a))
+- Ensure assets directory does not exist ([a8ece47](https://github.com/talos-systems/talos/commit/a8ece47e9cd9004b010f0f131bd38f127230c787))
+- refuse to upgrade if single master ([ed9d92f](https://github.com/talos-systems/talos/commit/ed9d92f8531ffcad17645f478136da97d6c74379)), closes [#1770](https://github.com/talos-systems/talos/issues/1770)
+- stop race condition between kubelet and networkd ([995110d](https://github.com/talos-systems/talos/commit/995110d36431e766b178da7283e8a81fb0649d98))
+- Update bootkube to include node ready check ([884d8da](https://github.com/talos-systems/talos/commit/884d8da693fa509f3ee93f75d858432b8c050461))
+- update networkd permissions ([79b721b](https://github.com/talos-systems/talos/commit/79b721bc2f14d3dc6d53e77c5b23c418b88dccc5))
+- **networkd:** Fix incorrect resolver settings ([4d78f17](https://github.com/talos-systems/talos/commit/4d78f17231d3f1a84e50d15e8b481e0c75d92575))
+- **networkd:** Set hostname properly for dhcp when no hostname option is returned ([d5280a0](https://github.com/talos-systems/talos/commit/d5280a099dae7a476b0db8d411f60945122175dc))
+- update kernel version constant ([749cbc7](https://github.com/talos-systems/talos/commit/749cbc7f1af1148e105cc529750665587ace9864))
+
+### Features
+
+- allow additional manifests to be provided to bootkube ([4cdeee4](https://github.com/talos-systems/talos/commit/4cdeee4dae5fe6ad56ca8ce8ae13d20037b6fe8a))
+- upgrade kubernetes version to 1.17.1 ([c37e6a1](https://github.com/talos-systems/talos/commit/c37e6a1b929536fc8c258c5893aee01a3e3656bc))
+- upgrade Linux to v5.4.11 ([c7dcfe3](https://github.com/talos-systems/talos/commit/c7dcfe384a0904dd45c0f7031c51ffbf766c038b))
+
 # [v0.3.0-rc.0](https://github.com/talos-systems/talos/compare/v0.3.0-beta.3...v0.3.0-rc.0) (2020-01-11)
 
 ### Bug Fixes
