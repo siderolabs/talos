@@ -14,6 +14,7 @@ import (
 // Cluster defines the requirements for a config that pertains to cluster
 // related options.
 type Cluster interface {
+	Name() string
 	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
