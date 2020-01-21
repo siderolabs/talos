@@ -5,7 +5,7 @@ go 1.13
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/firecracker-microvm/firecracker-go-sdk v0.19.0 => github.com/smira/firecracker-go-sdk v0.19.1-0.20200110185541-4fce8cba9f84
-	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20200114174616-69b2e9624d84
+	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20200121212854-f29021689bee
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 

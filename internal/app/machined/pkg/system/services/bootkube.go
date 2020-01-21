@@ -309,6 +309,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 	images.PodCheckpointer = config.Cluster().PodCheckpointer().Image()
 
 	conf := asset.Config{
+		ClusterName:            config.Cluster().Name(),
 		CACert:                 k8sCA,
 		CAPrivKey:              k8sKey,
 		EtcdCACert:             ca,
