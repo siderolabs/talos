@@ -211,6 +211,9 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		phase.NewPhase(
 			"cordon and drain node",
 			kubernetes.NewCordonAndDrainTask(),
+		),
+		phase.NewPhase(
+			"handle control plane requirements",
 			upgrade.NewLeaveEtcdTask(),
 		),
 		phase.NewPhase(
