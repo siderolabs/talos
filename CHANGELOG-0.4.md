@@ -1,3 +1,30 @@
+# [v0.4.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (2020-01-21)
+
+### Bug Fixes
+
+- block when handling bus event ([5b5d171](https://github.com/talos-systems/talos/commit/5b5d171c07eecc9d85076eea609dd7ef1f277d6b))
+- stop race condition between kubelet and networkd ([28782c2](https://github.com/talos-systems/talos/commit/28782c2d46d7cd98a79072e8a4987495b3e62ae6))
+- update networkd permissions ([aac899f](https://github.com/talos-systems/talos/commit/aac899f23d5135a079f2cf5119a5b2ffe4945ae4))
+- **networkd:** Fix incorrect resolver settings ([9321868](https://github.com/talos-systems/talos/commit/93218687ec1a2a3116911d66a45d200461b02b02))
+- **networkd:** Set hostname properly for dhcp when no hostname option is returned ([3dff2b2](https://github.com/talos-systems/talos/commit/3dff2b234d24392b81d2cb42dbd73006fd89d9cc))
+- add Close func in remote generator ([0e47df0](https://github.com/talos-systems/talos/commit/0e47df01c9e7e32d50ccc6d891ce9b17cfdf53dc))
+- check for installer image before proceeding with upgrade ([5e8cab4](https://github.com/talos-systems/talos/commit/5e8cab4dd54923907cd4dc1266063d6962f498ec))
+- Ensure assets directory does not exist ([5f14dd3](https://github.com/talos-systems/talos/commit/5f14dd3246fe4384d5a88e224bf6735d2e541446))
+- raise default NOFILE limit ([33777da](https://github.com/talos-systems/talos/commit/33777da05dc24a2044d5710eb838921b467e450d))
+- refuse to upgrade if single master ([7719a67](https://github.com/talos-systems/talos/commit/7719a6783405db010df22d9da2f0b3265f0e6cf8)), closes [#1770](https://github.com/talos-systems/talos/issues/1770)
+- set kube-dns labels ([5cac4f5](https://github.com/talos-systems/talos/commit/5cac4f5f39b9e30deaab0b61d181ec9b74bc26db))
+- shutdown on button/power ACPI event ([825d821](https://github.com/talos-systems/talos/commit/825d8215106275bcd3a871e0176cf0f1ff028872))
+- Update bootkube to include node ready check ([9566690](https://github.com/talos-systems/talos/commit/95666900a760b619c7a0d49a1e503dda6a2f4f98))
+- update kernel version constant ([cb93646](https://github.com/talos-systems/talos/commit/cb93646c078951fa667611735d29718a80c0f949))
+
+### Features
+
+- add a basic architectural diagram and a call to action ([d6f5ff3](https://github.com/talos-systems/talos/commit/d6f5ff34148ce7914510fc89c666e49583689bc5))
+- allow additional manifests to be provided to bootkube ([4b81907](https://github.com/talos-systems/talos/commit/4b81907bd36351b6119ee8ec418bd486de79fa4a))
+- upgrade kubernetes version to 1.17.1 ([60260c8](https://github.com/talos-systems/talos/commit/60260c85d119e3e39b26111aaba66f6132f455d3))
+- upgrade Linux to v5.4.10 ([7edd969](https://github.com/talos-systems/talos/commit/7edd96947a33a39e12ab2ffe2dc4c4712dbf9a03))
+- upgrade Linux to v5.4.11 ([e66ac62](https://github.com/talos-systems/talos/commit/e66ac62877eb4637dd030de78ca1bd15f06a992a))
+
 # [v0.4.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.0...v0.4.0-alpha.1) (2020-01-09)
 
 ### Bug Fixes
