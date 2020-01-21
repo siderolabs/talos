@@ -5,6 +5,7 @@
 package phase
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	goruntime "runtime"
@@ -103,18 +104,29 @@ func (r *Runner) runPhase(phase *Phase) error {
 		go r.runTask(task, errCh)
 	}
 
-	var result *multierror.Error
+	var (
+		result *multierror.Error
+		reboot bool
+	)
 
 	for range phase.tasks {
 		err := <-errCh
 		if err != nil {
-			log.Printf("[phase]: %s error running task: %s", phase.description, err)
+			if errors.Is(err, runtime.ErrReboot) {
+				reboot = true
+			} else {
+				log.Printf("[phase]: %s error running task: %s", phase.description, err)
+			}
 		}
 
 		result = multierror.Append(result, err)
 	}
 
 	log.Printf("[phase]: %s done, %s", phase.description, time.Since(start))
+
+	if reboot {
+		return runtime.ErrReboot
+	}
 
 	return result.ErrorOrNil()
 }
@@ -128,7 +140,13 @@ func (r *Runner) runTask(task Task, errCh chan<- error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			buf := make([]byte, 8192)
+			// don't generate traceback for reboot error
+			if r == runtime.ErrReboot {
+				err = r.(error) //nolint: errcheck
+				return
+			}
+
+			buf := make([]byte, 512) // using small buffer here, as kmsg has its limits
 			n := goruntime.Stack(buf, false)
 			err = fmt.Errorf("panic recovered: %v\n%s", r, string(buf[:n]))
 		}

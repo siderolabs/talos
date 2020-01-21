@@ -7,7 +7,6 @@ package metal
 import (
 	"errors"
 
-	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/install"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
@@ -36,11 +35,7 @@ func (b *Metal) Initialize(r runtime.Runtime) (err error) {
 			return err
 		}
 
-		event.Bus().Notify(event.Event{Type: event.Reboot})
-
-		// Prevent the task from returning to prevent the next phase from
-		// running.
-		select {}
+		panic(runtime.ErrReboot)
 	}
 
 	m := manager.NewManager(mountpoints)
