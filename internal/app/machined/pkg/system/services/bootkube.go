@@ -19,12 +19,11 @@ import (
 	"path/filepath"
 	"time"
 
+	getter "github.com/hashicorp/go-getter"
+	"github.com/hashicorp/go-multierror"
 	"github.com/kubernetes-sigs/bootkube/pkg/asset"
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"go.etcd.io/etcd/clientv3"
-
-	getter "github.com/hashicorp/go-getter"
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/bootkube"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -305,9 +304,9 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	images.Hyperkube = config.Machine().Kubelet().Image()
 
-	// TODO(andrewrynhard): This is a hack workaround for now. Update this once
-	// there is an official image.
-	images.PodCheckpointer = "docker.io/autonomy/pod-checkpointer:51fba9528e96d3be488562574c288b2fb82a1e3b"
+	// Allow for overriding by users via config data
+	images.CoreDNS = config.Cluster().CoreDNS().Image()
+	images.PodCheckpointer = config.Cluster().PodCheckpointer().Image()
 
 	conf := asset.Config{
 		CACert:                 k8sCA,

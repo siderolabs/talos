@@ -24,6 +24,8 @@ type Cluster interface {
 	Etcd() Etcd
 	Network() Network
 	LocalAPIServerPort() int
+	PodCheckpointer() PodCheckpointer
+	CoreDNS() CoreDNS
 	ExtraManifestURLs() []string
 }
 
@@ -55,4 +57,16 @@ type Etcd interface {
 type Token interface {
 	ID() string
 	Secret() string
+}
+
+// PodCheckpointer defines the requirements for a config that pertains to bootkube
+// pod-checkpointer options.
+type PodCheckpointer interface {
+	Image() string
+}
+
+// CoreDNS defines the requirements for a config that pertains to bootkube
+// coredns options.
+type CoreDNS interface {
+	Image() string
 }

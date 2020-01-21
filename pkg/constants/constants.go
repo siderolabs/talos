@@ -132,6 +132,11 @@ const (
 	// KubernetesImage is the enforced hyperkube image to use for the control plane.
 	KubernetesImage = "k8s.gcr.io/hyperkube"
 
+	// PodCheckpointerImage is the enforced pod checkpointer for bootkube to use
+	// TODO(andrewrynhard): This is a hack workaround for now. Update this once
+	// there is an official image.
+	PodCheckpointerImage = "docker.io/autonomy/pod-checkpointer:51fba9528e96d3be488562574c288b2fb82a1e3b"
+
 	// LabelNodeRoleMaster is the node label required by a control plane node.
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 

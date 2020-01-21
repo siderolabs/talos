@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/kubernetes-sigs/bootkube/pkg/asset"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/pkg/config/cluster"
@@ -328,6 +329,24 @@ func (c *ClusterConfig) ExtraManifestURLs() []string {
 	return c.ExtraManifests
 }
 
+// PodCheckpointer implements the Configurator interface.
+func (c *ClusterConfig) PodCheckpointer() cluster.PodCheckpointer {
+	if c.PodCheckpointerConfig == nil {
+		return &PodCheckpointer{}
+	}
+
+	return c.PodCheckpointerConfig
+}
+
+// CoreDNS implements the Configurator interface.
+func (c *ClusterConfig) CoreDNS() cluster.CoreDNS {
+	if c.CoreDNSConfig == nil {
+		return &CoreDNS{}
+	}
+
+	return c.CoreDNSConfig
+}
+
 // Name implements the Configurator interface.
 func (c *CNIConfig) Name() string {
 	return c.CNIName
@@ -391,4 +410,26 @@ func (i *InstallConfig) Force() bool {
 // WithBootloader implements the Configurator interface.
 func (i *InstallConfig) WithBootloader() bool {
 	return i.InstallBootloader
+}
+
+// Image implements the Configurator interface.
+func (c *CoreDNS) Image() string {
+	coreDNSImage := asset.DefaultImages.CoreDNS
+
+	if c.CoreDNSImage != "" {
+		coreDNSImage = c.CoreDNSImage
+	}
+
+	return coreDNSImage
+}
+
+// Image implements the Configurator interface.
+func (p *PodCheckpointer) Image() string {
+	checkpointerImage := constants.PodCheckpointerImage
+
+	if p.PodCheckpointerImage != "" {
+		checkpointerImage = p.PodCheckpointerImage
+	}
+
+	return checkpointerImage
 }
