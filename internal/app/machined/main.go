@@ -20,6 +20,7 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
 	"github.com/talos-systems/talos/internal/pkg/event"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/startup"
@@ -135,26 +136,31 @@ func main() {
 		panic(errors.New("error setting PATH"))
 	}
 
+	immediateReboot := false
+
 	// Boot the machine.
 	seq := sequencer.New(sequencer.V1Alpha1)
 
 	if err := seq.Boot(); err != nil {
-		log.Println(err)
-		panic(fmt.Errorf("boot failed: %w", err))
+		if errors.Is(err, runtime.ErrReboot) {
+			immediateReboot = true
+		} else {
+			log.Println(err)
+			panic(fmt.Errorf("boot failed: %w", err))
+		}
 	}
 
 	// Wait for an event.
 
 	flag := unix.LINUX_REBOOT_CMD_RESTART
 
-L:
-	for {
+	for !immediateReboot {
 		switch e := <-init.Channel(); e.Type {
 		case event.Shutdown:
 			flag = unix.LINUX_REBOOT_CMD_POWER_OFF
 			fallthrough
 		case event.Reboot:
-			break L
+			immediateReboot = true
 		case event.Upgrade:
 			var (
 				req *machineapi.UpgradeRequest
@@ -171,7 +177,7 @@ L:
 				panic(fmt.Errorf("upgrade failed: %w", err))
 			}
 
-			break L
+			immediateReboot = true
 		}
 	}
 
