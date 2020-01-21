@@ -484,6 +484,34 @@ etcd:
 
 ```
 
+#### podCheckpointer
+
+Pod Checkpointer specific configuration options.
+
+Type: `PodCheckpointer`
+
+Examples:
+
+```yaml
+podCheckpointer:
+  image: ...
+
+```
+
+#### coreDNS
+
+Core DNS specific configuration options.
+
+Type: `CoreDNS`
+
+Examples:
+
+```yaml
+coreDNS:
+  image: ...
+
+```
+
 #### extraManifests
 
 A list of urls that point to additional manifests.
@@ -690,6 +718,26 @@ Defaults to `pool.ntp.org`
 > Note: This parameter only supports a single time server
 
 Type: `array`
+
+---
+
+### PodCheckpointer
+
+#### image
+
+The `image` field is an override to the default pod-checkpointer image.
+
+Type: `string`
+
+---
+
+### CoreDNS
+
+#### image
+
+The `image` field is an override to the default coredns image.
+
+Type: `string`
 
 ---
 

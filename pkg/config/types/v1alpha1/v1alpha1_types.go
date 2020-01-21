@@ -265,6 +265,20 @@ type ClusterConfig struct {
 	//         image: ...
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
 	//   description: |
+	//     Pod Checkpointer specific configuration options.
+	//   examples:
+	//     - |
+	//       podCheckpointer:
+	//         image: ...
+	PodCheckpointerConfig *PodCheckpointer `yaml:"podCheckpointer,omitempty"`
+	//   description: |
+	//     Core DNS specific configuration options.
+	//   examples:
+	//     - |
+	//       coreDNS:
+	//         image: ...
+	CoreDNSConfig *CoreDNS `yaml:"coreDNS,omitempty"`
+	//   description: |
 	//     A list of urls that point to additional manifests.
 	//     These will get automatically deployed by bootkube.
 	//   examples:
@@ -399,6 +413,20 @@ type TimeConfig struct {
 	//
 	//     > Note: This parameter only supports a single time server
 	TimeServers []string `yaml:"servers,omitempty"`
+}
+
+// PodCheckpointer represents the pod-checkpointer config values
+type PodCheckpointer struct {
+	//   description: |
+	//     The `image` field is an override to the default pod-checkpointer image.
+	PodCheckpointerImage string `yaml:"image,omitempty"`
+}
+
+// CoreDNS represents the coredns config values
+type CoreDNS struct {
+	//   description: |
+	//     The `image` field is an override to the default coredns image.
+	CoreDNSImage string `yaml:"image,omitempty"`
 }
 
 // Endpoint struct holds the endpoint url parsed out of machine config.
