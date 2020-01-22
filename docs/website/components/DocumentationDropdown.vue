@@ -32,7 +32,7 @@ export default {
 
   data() {
     return {
-      options: [{ version: 'v0.3', url: '/docs/v0.3', prerelease: true }]
+      options: [{ version: 'v0.3', url: '/docs/v0.3', prerelease: false }]
     }
   },
 
