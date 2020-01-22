@@ -41,6 +41,9 @@ type Networkd struct {
 
 	hostname  string
 	resolvers []string
+
+	sync.Mutex
+	ready bool
 }
 
 // New takes the supplied configuration and creates an abstract representation
@@ -258,6 +261,8 @@ func (n *Networkd) Configure() (err error) {
 		return err
 	}
 
+	n.SetReady()
+
 	return nil
 }
 
@@ -388,4 +393,20 @@ func (n *Networkd) decideHostname() (hostname string, domainname string, address
 
 	// Only return the hostname portion of the name ( strip domain bits off )
 	return hostname, domainname, address, nil
+}
+
+// Ready exposes the readiness state of networkd.
+func (n *Networkd) Ready() bool {
+	n.Lock()
+	defer n.Unlock()
+
+	return n.ready
+}
+
+// SetReady sets the readiness state of networkd.
+func (n *Networkd) SetReady() {
+	n.Lock()
+	defer n.Unlock()
+
+	n.ready = true
 }

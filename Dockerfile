@@ -41,6 +41,8 @@ FROM build AS generate-build
 # Common needs to be at or near the top to satisfy the subsequent imports
 COPY ./api/common/common.proto /api/common/common.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api common/common.proto
+COPY ./api/health/health.proto /api/health/health.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api health/health.proto
 COPY ./api/os/os.proto /api/os/os.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api os/os.proto
 COPY ./api/security/security.proto /api/security/security.proto
@@ -56,6 +58,7 @@ RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 FROM scratch AS generate
 COPY --from=generate-build /api/common/common.pb.go /api/common/
+COPY --from=generate-build /api/health/health.pb.go /api/health/
 COPY --from=generate-build /api/os/os.pb.go /api/os/
 COPY --from=generate-build /api/security/security.pb.go /api/security/
 COPY --from=generate-build /api/machine/machine.pb.go /api/machine/

@@ -6,15 +6,18 @@ package reg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	healthapi "github.com/talos-systems/talos/api/health"
 	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 )
@@ -42,6 +45,7 @@ func NewRegistrator(n *networkd.Networkd) *Registrator {
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
 	networkapi.RegisterNetworkServiceServer(s, r)
+	healthapi.RegisterHealthServer(s, r)
 }
 
 // Routes returns the hosts routing table.
@@ -148,4 +152,68 @@ func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
 	}
 
 	return ipNet.String()
+}
+
+// Check implements the Health api and provides visibilty into the state of networkd.
+// Ready signifies the daemon (api) is healthy and ready to serve requests.
+func (r *Registrator) Check(ctx context.Context, in *empty.Empty) (reply *healthapi.HealthCheckResponse, err error) {
+	reply = &healthapi.HealthCheckResponse{
+		Messages: []*healthapi.HealthCheck{
+			{
+				Status: healthapi.HealthCheck_SERVING,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// Watch implements the Health api and provides visibilty into the state of networkd.
+// Ready signifies the daemon (api) is healthy and ready to serve requests.
+func (r *Registrator) Watch(in *healthapi.HealthWatchRequest, srv healthapi.Health_WatchServer) (err error) {
+	if in == nil {
+		return errors.New("an input interval is required")
+	}
+
+	var (
+		resp   *healthapi.HealthCheckResponse
+		ticker = time.NewTicker(time.Duration(in.IntervalSeconds) * time.Second)
+	)
+
+	for range ticker.C {
+		// select {
+		// case <-srv.Context().Done():
+		//	return nil
+		// case <-ticker.C:
+		resp, err = r.Check(srv.Context(), &empty.Empty{})
+		if err != nil {
+			return err
+		}
+
+		if err = srv.Send(resp); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Ready implements the Health api and provides visibility to the state of networkd.
+// Ready signifies the initial network configuration ( interfaces, routes, hostname, resolv.conf )
+// settings have been applied.
+// Not Ready signifies that the initial network configuration still needs to happen.
+func (r *Registrator) Ready(ctx context.Context, in *empty.Empty) (reply *healthapi.ReadyCheckResponse, err error) {
+	rdy := &healthapi.ReadyCheck{Status: healthapi.ReadyCheck_NOT_READY}
+
+	if r.Networkd.Ready() {
+		rdy.Status = healthapi.ReadyCheck_READY
+	}
+
+	reply = &healthapi.ReadyCheckResponse{
+		Messages: []*healthapi.ReadyCheck{
+			rdy,
+		},
+	}
+
+	return reply, nil
 }
