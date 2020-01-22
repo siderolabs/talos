@@ -1,3 +1,10 @@
+# [v0.3.1](https://github.com/talos-systems/talos/compare/v0.3.0...v0.3.1) (2020-01-22)
+
+### Bug Fixes
+
+- install sequence stuck on event bus ([485c9c7](https://github.com/talos-systems/talos/commit/485c9c7a75065a61364702eda537264e35a3df34))
+- leave etcd after draining node ([a0066c7](https://github.com/talos-systems/talos/commit/a0066c7c9031cf4ac9bb0e9b0bb39585d61ae2bd))
+
 # [v0.3.0](https://github.com/talos-systems/talos/compare/v0.3.0-rc.0...v0.3.0) (2020-01-21)
 
 ### Bug Fixes
