@@ -36,7 +36,7 @@ e2e_run() {
   docker run \
          --rm \
          --interactive \
-         --net=basic-integration \
+         --net=${DOCKER_NET} \
          --entrypoint=/bin/bash \
          --mount type=bind,source=${TMP},target=${TMP} \
          --mount type=bind,source=${PWD}/hack/test/manifests,target=/e2emanifests \
