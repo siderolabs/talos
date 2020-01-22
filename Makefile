@@ -191,9 +191,8 @@ integration-test-%:
 
 integration-test: $(INTEGRATION_TEST_DEFAULT_TARGET) ## Builds the integration-test binary for the local machine.
 
-.PHONY: basic-integration
-basic-integration: integration-test osctl talos ## Runs the basic integration test.
-	@$(MAKE) hack-test-$@
+basic-integration-%: integration-test osctl talos ## Runs the basic integration test.
+	@$(MAKE) hack-test-basic-integration PROVISIONER=$*
 
 .PHONY: e2e-integration
 e2e-integration: ## Runs the E2E integration for the specified cloud provider.

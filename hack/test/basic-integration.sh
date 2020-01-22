@@ -32,10 +32,44 @@ esac
 
 mkdir -p "${TMP}"
 
-"${OSCTL}" cluster create --name basic-integration --image "${TALOS_IMG}" --masters=3 --mtu 1440 --cpus 4.0 --wait --endpoint "${ENDPOINT}"
+case ${PROVISIONER} in
+  docker)
+    "${OSCTL}" cluster create \
+      --provisioner docker \
+      --image "${TALOS_IMG}" \
+      --name basic-integration \
+      --masters=3 \
+      --mtu 1500 \
+      --memory 2048 \
+      --cpus 4.0 \
+      --wait \
+      --endpoint "${ENDPOINT}"
 
-"${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.k8sendpoint "${ENDPOINT}:6443"
+    "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.k8sendpoint "${ENDPOINT}:6443"
 
-mkdir -p ${TMP}/${TALOS_PLATFORM}
-"${OSCTL}" kubeconfig ${TMP}/${TALOS_PLATFORM}
-./hack/test/conformance.sh
+    mkdir -p ${TMP}/${TALOS_PLATFORM}
+    "${OSCTL}" kubeconfig ${TMP}/${TALOS_PLATFORM}
+    ./hack/test/conformance.sh
+    ;;
+
+  firecracker)
+    "${OSCTL}" cluster create \
+      --provisioner firecracker \
+      --name basic-integration \
+      --masters=3 \
+      --mtu 1500 \
+      --memory 2048 \
+      --cpus 2.0 \
+      --cidr 172.20.0.0/24 \
+      --init-node-as-endpoint \
+      --wait \
+      --install-image docker.io/autonomy/installer:latest
+
+      "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}"
+    ;;
+
+  *)
+    echo "unknown provisioner: ${PROVISIONER}"
+    exit 1
+    ;;
+esac

@@ -99,7 +99,7 @@ local docker = {
   command: [
     '--dns=8.8.8.8',
     '--dns=8.8.4.4',
-    '--mtu=1440',
+    '--mtu=1500',
     '--log-level=error',
   ],
   ports: [
@@ -133,7 +133,7 @@ local setup_ci = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, image='', target='', depends_on=[], environment={}) = {
+local Step(name, image='', target='', privileged=false, depends_on=[], environment={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
 
   local common_env_vars = {},
@@ -142,6 +142,7 @@ local Step(name, image='', target='', depends_on=[], environment={}) = {
   image: if image == '' then build_container else image,
   pull: "always",
   commands: [make],
+  privileged: privileged,
   environment: common_env_vars + environment,
   volumes: volumes.ForStep(),
   depends_on: [x.name for x in depends_on],
@@ -177,6 +178,7 @@ local apid = Step("apid", depends_on=[setup_ci]);
 local osctl_linux = Step("osctl-linux", depends_on=[setup_ci]);
 local osctl_darwin = Step("osctl-darwin", depends_on=[setup_ci]);
 local docs = Step("docs", depends_on=[osctl_linux]);
+local kernel = Step('kernel');
 local initramfs = Step("initramfs", depends_on=[apid, machined, networkd, ntpd, osd, trustd]);
 local installer = Step("installer", depends_on=[initramfs]);
 local talos = Step("talos", depends_on=[installer]);
@@ -190,7 +192,8 @@ local image_gcp = Step("image-gcp", depends_on=[installer]);
 local image_vmware = Step("image-vmware", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[talos]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
-local basic_integration = Step("basic-integration", depends_on=[unit_tests, talos, osctl_linux], environment={TALOS_PLATFORM: "docker"});
+local basic_integration_docker = Step("basic-integration-docker", depends_on=[unit_tests, talos, osctl_linux], environment={TALOS_PLATFORM: "docker", DOCKER_NET: "basic-integration"});
+local basic_integration_firecracker = Step("basic-integration-firecracker", privileged=true, depends_on=[kernel, basic_integration_docker], environment={TALOS_PLATFORM: "firecracker", DOCKER_NET: "host"});
 
 local coverage = {
   name: 'coverage',
@@ -224,7 +227,7 @@ local push = {
       ],
     },
   },
-  depends_on: [basic_integration.name],
+  depends_on: [basic_integration_docker.name, basic_integration_firecracker.name],
 };
 
 local push_latest = {
@@ -245,7 +248,7 @@ local push_latest = {
       'push',
     ],
   },
-  depends_on: [basic_integration.name],
+  depends_on: [basic_integration_docker.name, basic_integration_firecracker.name],
 };
 
 local default_steps = [
@@ -259,6 +262,7 @@ local default_steps = [
   osctl_linux,
   osctl_darwin,
   docs,
+  kernel,
   initramfs,
   installer,
   talos,
@@ -273,7 +277,8 @@ local default_steps = [
   unit_tests,
   unit_tests_race,
   coverage,
-  basic_integration,
+  basic_integration_docker,
+  basic_integration_firecracker,
   push,
   push_latest,
 ];
@@ -304,7 +309,7 @@ local creds_env_vars = {
     AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
 };
 
-local capi = Step("capi", depends_on=[basic_integration], environment=creds_env_vars);
+local capi = Step("capi", depends_on=[basic_integration_docker, basic_integration_firecracker], environment=creds_env_vars);
 local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
 local push_image_gcp = Step("push-image-gcp", depends_on=[image_gcp], environment=creds_env_vars);
@@ -400,9 +405,8 @@ local ami_trigger = {
   },
 };
 
-local kernel = Step('kernel');
-local iso = Step('iso', depends_on=[basic_integration]);
-local boot = Step('boot', depends_on=[basic_integration]);
+local iso = Step('iso', depends_on=[basic_integration_docker, basic_integration_firecracker]);
+local boot = Step('boot', depends_on=[basic_integration_docker, basic_integration_firecracker]);
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
@@ -435,7 +439,6 @@ local release = {
 };
 
 local release_steps = default_steps + [
-  kernel,
   iso,
   boot,
   release,

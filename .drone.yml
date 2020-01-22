@@ -210,6 +210,23 @@ steps:
   depends_on:
   - osctl-linux
 
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -475,12 +492,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration
+- name: basic-integration-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration
+  - make basic-integration-docker
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: docker
   volumes:
   - name: dockersock
@@ -497,6 +515,30 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
+
+- name: basic-integration-firecracker
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration-firecracker
+  environment:
+    DOCKER_NET: host
+    TALOS_PLATFORM: firecracker
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - kernel
+  - basic-integration-docker
 
 - name: push
   pull: always
@@ -526,7 +568,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-latest
   pull: always
@@ -555,7 +598,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 services:
 - name: docker
@@ -565,7 +609,7 @@ services:
   command:
   - --dns=8.8.8.8
   - --dns=8.8.4.4
-  - --mtu=1440
+  - --mtu=1500
   - --log-level=error
   privileged: true
   ports:
@@ -812,6 +856,23 @@ steps:
   depends_on:
   - osctl-linux
 
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -1077,12 +1138,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration
+- name: basic-integration-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration
+  - make basic-integration-docker
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: docker
   volumes:
   - name: dockersock
@@ -1099,6 +1161,30 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
+
+- name: basic-integration-firecracker
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration-firecracker
+  environment:
+    DOCKER_NET: host
+    TALOS_PLATFORM: firecracker
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - kernel
+  - basic-integration-docker
 
 - name: push
   pull: always
@@ -1128,7 +1214,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-latest
   pull: always
@@ -1157,7 +1244,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: capi
   pull: always
@@ -1185,7 +1273,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-image-aws
   pull: always
@@ -1295,7 +1384,7 @@ services:
   command:
   - --dns=8.8.8.8
   - --dns=8.8.4.4
-  - --mtu=1440
+  - --mtu=1500
   - --log-level=error
   privileged: true
   ports:
@@ -1537,6 +1626,23 @@ steps:
   depends_on:
   - osctl-linux
 
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -1802,12 +1908,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration
+- name: basic-integration-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration
+  - make basic-integration-docker
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: docker
   volumes:
   - name: dockersock
@@ -1824,6 +1931,30 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
+
+- name: basic-integration-firecracker
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration-firecracker
+  environment:
+    DOCKER_NET: host
+    TALOS_PLATFORM: firecracker
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - kernel
+  - basic-integration-docker
 
 - name: push
   pull: always
@@ -1853,7 +1984,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-latest
   pull: always
@@ -1882,7 +2014,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: capi
   pull: always
@@ -1910,7 +2043,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-image-aws
   pull: always
@@ -2050,7 +2184,7 @@ services:
   command:
   - --dns=8.8.8.8
   - --dns=8.8.4.4
-  - --mtu=1440
+  - --mtu=1500
   - --log-level=error
   privileged: true
   ports:
@@ -2292,6 +2426,23 @@ steps:
   depends_on:
   - osctl-linux
 
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -2557,12 +2708,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration
+- name: basic-integration-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration
+  - make basic-integration-docker
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: docker
   volumes:
   - name: dockersock
@@ -2579,6 +2731,30 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
+
+- name: basic-integration-firecracker
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration-firecracker
+  environment:
+    DOCKER_NET: host
+    TALOS_PLATFORM: firecracker
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - kernel
+  - basic-integration-docker
 
 - name: push
   pull: always
@@ -2608,7 +2784,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-latest
   pull: always
@@ -2637,7 +2814,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: capi
   pull: always
@@ -2665,7 +2843,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-image-aws
   pull: always
@@ -2805,7 +2984,7 @@ services:
   command:
   - --dns=8.8.8.8
   - --dns=8.8.4.4
-  - --mtu=1440
+  - --mtu=1500
   - --log-level=error
   privileged: true
   ports:
@@ -3047,6 +3226,23 @@ steps:
   depends_on:
   - osctl-linux
 
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+
 - name: initramfs
   pull: always
   image: autonomy/build-container:latest
@@ -3312,12 +3508,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration
+- name: basic-integration-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration
+  - make basic-integration-docker
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: docker
   volumes:
   - name: dockersock
@@ -3334,6 +3531,30 @@ steps:
   - unit-tests
   - talos
   - osctl-linux
+
+- name: basic-integration-firecracker
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make basic-integration-firecracker
+  environment:
+    DOCKER_NET: host
+    TALOS_PLATFORM: firecracker
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - kernel
+  - basic-integration-docker
 
 - name: push
   pull: always
@@ -3363,7 +3584,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: push-latest
   pull: always
@@ -3392,24 +3614,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration
-
-- name: kernel
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make kernel
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: iso
   pull: always
@@ -3428,7 +3634,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: boot
   pull: always
@@ -3447,7 +3654,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration
+  - basic-integration-docker
+  - basic-integration-firecracker
 
 - name: release
   image: plugins/github-release
@@ -3492,7 +3700,7 @@ services:
   command:
   - --dns=8.8.8.8
   - --dns=8.8.4.4
-  - --mtu=1440
+  - --mtu=1500
   - --log-level=error
   privileged: true
   ports:
