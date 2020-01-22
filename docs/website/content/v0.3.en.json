@@ -70,12 +70,16 @@
     "path": "v0.3/en/customization",
     "items": [
       {
-        "title": "Kernel",
-        "path": "v0.3/en/customization/kernel"
+        "title": "Containerd",
+        "path": "v0.3/en/customization/containerd"
       },
       {
         "title": "Corporate Proxy",
         "path": "v0.3/en/customization/proxy"
+      },
+      {
+        "title": "Kernel",
+        "path": "v0.3/en/customization/kernel"
       }
     ]
   },
