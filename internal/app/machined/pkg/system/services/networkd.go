@@ -7,6 +7,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,10 +15,12 @@ import (
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
+	"github.com/golang/protobuf/ptypes/empty"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
+	healthapi "github.com/talos-systems/talos/api/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -120,11 +123,36 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface
 func (n *Networkd) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
-		conn, err := grpc.Dial("unix:"+constants.NetworkSocketPath, grpc.WithInsecure())
-		if err != nil {
+		var (
+			conn      *grpc.ClientConn
+			err       error
+			hcResp    *healthapi.HealthCheckResponse
+			readyResp *healthapi.ReadyCheckResponse
+		)
+
+		if conn, err = grpc.Dial("unix:"+constants.NetworkSocketPath, grpc.WithInsecure()); err != nil {
 			return err
 		}
-		return conn.Close()
+		defer conn.Close() //nolint: errcheck
+
+		nClient := healthapi.NewHealthClient(conn)
+		if readyResp, err = nClient.Ready(ctx, &empty.Empty{}); err != nil {
+			return err
+		}
+
+		if readyResp.Messages[0].Status != healthapi.ReadyCheck_READY {
+			return errors.New("networkd is not ready")
+		}
+
+		if hcResp, err = nClient.Check(ctx, &empty.Empty{}); err != nil {
+			return err
+		}
+
+		if hcResp.Messages[0].Status == healthapi.HealthCheck_SERVING {
+			return nil
+		}
+
+		return errors.New("networkd is unhealthy")
 	}
 }
 
