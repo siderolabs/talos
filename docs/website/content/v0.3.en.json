@@ -84,8 +84,8 @@
     "path": "v0.3/en/components",
     "items": [
       {
-        "title": "init",
-        "path": "v0.3/en/components/init"
+        "title": "kernel",
+        "path": "v0.3/en/components/kernel"
       },
       {
         "title": "machined",
