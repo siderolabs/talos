@@ -5,6 +5,8 @@
 package rootfs
 
 import (
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
@@ -41,6 +43,8 @@ func (task *UnmountSystemDisks) standard(r runtime.Runtime) (err error) {
 	if err != nil {
 		return err
 	}
+
+	unix.Sync()
 
 	m := manager.NewManager(mountpoints)
 	if err = m.UnmountAll(); err != nil {
