@@ -39,11 +39,11 @@ func initUd(in *Input) (string, error) {
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
-		APIServer: &v1alpha1.APIServerConfig{
+		APIServerConfig: &v1alpha1.APIServerConfig{
 			CertSANs: certSANs,
 		},
-		ControllerManager: &v1alpha1.ControllerManagerConfig{},
-		Scheduler:         &v1alpha1.SchedulerConfig{},
+		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
+		SchedulerConfig:         &v1alpha1.SchedulerConfig{},
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,
 		},

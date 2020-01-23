@@ -197,16 +197,16 @@ func (c *ClusterConfig) LocalAPIServerPort() int {
 
 // CertSANs implements the Configurator interface.
 func (c *ClusterConfig) CertSANs() []string {
-	return c.APIServer.CertSANs
+	return c.APIServerConfig.CertSANs
 }
 
 // SetCertSANs implements the Configurator interface.
 func (c *ClusterConfig) SetCertSANs(sans []string) {
-	if c.APIServer == nil {
-		c.APIServer = &APIServerConfig{}
+	if c.APIServerConfig == nil {
+		c.APIServerConfig = &APIServerConfig{}
 	}
 
-	c.APIServer.CertSANs = append(c.APIServer.CertSANs, sans...)
+	c.APIServerConfig.CertSANs = append(c.APIServerConfig.CertSANs, sans...)
 }
 
 // CA implements the Configurator interface.
@@ -222,6 +222,48 @@ func (c *ClusterConfig) AESCBCEncryptionSecret() string {
 // Config implements the Configurator interface.
 func (c *ClusterConfig) Config(t machine.Type) (string, error) {
 	return "", nil
+}
+
+// APIServer implements the Configurator interface.
+func (c *ClusterConfig) APIServer() cluster.APIServer {
+	if c.APIServerConfig == nil {
+		return &APIServerConfig{}
+	}
+
+	return c.APIServerConfig
+}
+
+// ExtraArgs implements the Configurator interface.
+func (a *APIServerConfig) ExtraArgs() map[string]string {
+	return a.ExtraArgsConfig
+}
+
+// ControllerManager implements the Configurator interface.
+func (c *ClusterConfig) ControllerManager() cluster.ControllerManager {
+	if c.ControllerManagerConfig == nil {
+		return &ControllerManagerConfig{}
+	}
+
+	return c.ControllerManagerConfig
+}
+
+// ExtraArgs implements the Configurator interface.
+func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
+	return c.ExtraArgsConfig
+}
+
+// Scheduler implements the Configurator interface.
+func (c *ClusterConfig) Scheduler() cluster.Scheduler {
+	if c.SchedulerConfig == nil {
+		return &SchedulerConfig{}
+	}
+
+	return c.SchedulerConfig
+}
+
+// ExtraArgs implements the Configurator interface.
+func (s *SchedulerConfig) ExtraArgs() map[string]string {
+	return s.ExtraArgsConfig
 }
 
 // Etcd implements the Configurator interface.
