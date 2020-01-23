@@ -525,8 +525,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0TYG7HtkIgExQo+2RdLuwRft63jn2HWj8=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/bootkube v0.14.1-0.20200121212854-f29021689bee h1:Grx/Ut3pPr+ZaBF/TdqmeEw5RLuX7e0m93yMpSOth1E=
-github.com/talos-systems/bootkube v0.14.1-0.20200121212854-f29021689bee/go.mod h1:zLrZfPQ49k0O6x6QN0pDSJn9iD0EMyj6J+5x1vqJSFw=
+github.com/talos-systems/bootkube v0.14.1-0.20200123150754-82cbbbe2c4de h1:aXXO2cMA1iAxVtC2ailC/stPAlpNjpS3OyV0rxJsy7g=
+github.com/talos-systems/bootkube v0.14.1-0.20200123150754-82cbbbe2c4de/go.mod h1:zLrZfPQ49k0O6x6QN0pDSJn9iD0EMyj6J+5x1vqJSFw=
 github.com/talos-systems/grpc-proxy v0.2.0 h1:DN75bLfaW4xfhq0r0mwFRnfGhSB+HPhK1LNzuMEs9Pw=
 github.com/talos-systems/grpc-proxy v0.2.0/go.mod h1:sm97Vc/z2cok3pu6ruNeszQej4KDxFrDgfWs4C1mtC4=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=

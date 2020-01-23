@@ -235,7 +235,7 @@ type ClusterConfig struct {
 	//         certSANs:
 	//           - 1.2.3.4
 	//           - 5.6.7.8
-	APIServer *APIServerConfig `yaml:"apiServer,omitempty"`
+	APIServerConfig *APIServerConfig `yaml:"apiServer,omitempty"`
 	//   description: |
 	//     Controller manager server specific configuration options.
 	//   examples:
@@ -244,7 +244,7 @@ type ClusterConfig struct {
 	//         image: ...
 	//         extraArgs:
 	//           key: value
-	ControllerManager *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
+	ControllerManagerConfig *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
 	//   description: |
 	//     Scheduler server specific configuration options.
 	//   examples:
@@ -253,7 +253,7 @@ type ClusterConfig struct {
 	//         image: ...
 	//         extraArgs:
 	//           key: value
-	Scheduler *SchedulerConfig `yaml:"scheduler,omitempty"`
+	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
 	//   description: |
 	//     Etcd specific configuration options.
 	//   examples:
@@ -479,7 +479,7 @@ type APIServerConfig struct {
 	Image string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the API server.
-	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
 	CertSANs []string `yaml:"certSANs,omitempty"`
@@ -492,7 +492,7 @@ type ControllerManagerConfig struct {
 	Image string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
-	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // SchedulerConfig represents kube scheduler config vals.
@@ -502,7 +502,7 @@ type SchedulerConfig struct {
 	Image string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the scheduler.
-	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // EtcdConfig represents etcd config vals.

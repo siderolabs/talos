@@ -15,6 +15,9 @@ import (
 // related options.
 type Cluster interface {
 	Name() string
+	APIServer() APIServer
+	ControllerManager() ControllerManager
+	Scheduler() Scheduler
 	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
@@ -43,6 +46,24 @@ type Network interface {
 type CNI interface {
 	Name() string
 	URLs() []string
+}
+
+// APIServer defines the requirements for a config that pertains to apiserver related
+// options.
+type APIServer interface {
+	ExtraArgs() map[string]string
+}
+
+// ControllerManager defines the requirements for a config that pertains to controller manager related
+// options.
+type ControllerManager interface {
+	ExtraArgs() map[string]string
+}
+
+// Scheduler defines the requirements for a config that pertains to scheduler related
+// options.
+type Scheduler interface {
+	ExtraArgs() map[string]string
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related
