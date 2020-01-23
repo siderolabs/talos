@@ -17,6 +17,7 @@ policies:
           - test
         scopes:
           - ami
+          - apid
           - ci
           - conformance
           - gpt

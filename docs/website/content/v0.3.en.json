@@ -88,6 +88,10 @@
     "path": "v0.3/en/components",
     "items": [
       {
+        "title": "apid",
+        "path": "v0.3/en/components/apid"
+      },
+      {
         "title": "kernel",
         "path": "v0.3/en/components/kernel"
       },
