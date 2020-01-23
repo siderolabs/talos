@@ -6,11 +6,13 @@ package disk
 
 import (
 	"errors"
+	"time"
 
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // VerifyDiskAvailability represents the task for verifying that the system
@@ -35,11 +37,13 @@ func (task *VerifyDiskAvailability) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *VerifyDiskAvailability) standard() (err error) {
-	if isBusy(task.devname) {
-		return errors.New("system disk in use")
-	}
+	return retry.Constant(3*time.Minute, retry.WithUnits(500*time.Millisecond)).Retry(func() error {
+		if isBusy(task.devname) {
+			return retry.ExpectedError(errors.New("system disk in use"))
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func isBusy(devname string) bool {
