@@ -122,7 +122,9 @@ local setup_ci = {
     'apk add coreutils',
     'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
     'docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
-    'docker buildx inspect --bootstrap'
+    'docker buildx inspect --bootstrap',
+    'make ./_out/sonobuoy',
+    'make ./_out/kubectl',
   ],
   volumes: volumes.ForStep(),
 };
@@ -192,16 +194,19 @@ local image_gcp = Step("image-gcp", depends_on=[installer]);
 local image_vmware = Step("image-vmware", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[talos]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
-local basic_integration_docker = Step("basic-integration-docker", depends_on=[unit_tests, talos, osctl_linux], environment={TALOS_PLATFORM: "docker", DOCKER_NET: "basic-integration"});
-local basic_integration_firecracker = Step("basic-integration-firecracker", privileged=true, depends_on=[kernel, basic_integration_docker], environment={TALOS_PLATFORM: "firecracker", DOCKER_NET: "host"});
+local e2e_docker = Step("e2e-docker", depends_on=[unit_tests, talos, osctl_linux]);
+local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[unit_tests, osctl_linux, kernel]);
 
 local coverage = {
   name: 'coverage',
-  image: 'plugins/codecov',
-  settings: {
-    token: { from_secret: 'codecov_token' },
-    files: ['coverage.txt'],
+  image: 'alpine:3.10',
+  environment: {
+    CODECOV_TOKEN: { from_secret: 'codecov_token' },
   },
+  commands: [
+    'apk --no-cache add bash curl git',
+    'bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"'
+  ],
   when: {
     event: ['pull_request'],
   },
@@ -227,7 +232,7 @@ local push = {
       ],
     },
   },
-  depends_on: [basic_integration_docker.name, basic_integration_firecracker.name],
+  depends_on: [e2e_docker.name, e2e_firecracker.name],
 };
 
 local push_latest = {
@@ -248,7 +253,7 @@ local push_latest = {
       'push',
     ],
   },
-  depends_on: [basic_integration_docker.name, basic_integration_firecracker.name],
+  depends_on: [e2e_docker.name, e2e_firecracker.name],
 };
 
 local default_steps = [
@@ -277,8 +282,8 @@ local default_steps = [
   unit_tests,
   unit_tests_race,
   coverage,
-  basic_integration_docker,
-  basic_integration_firecracker,
+  e2e_docker,
+  e2e_firecracker,
   push,
   push_latest,
 ];
@@ -302,27 +307,24 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 // E2E pipeline.
 
 local creds_env_vars = {
-    AZURE_SVC_ACCT: {from_secret: "azure_svc_acct"},
-    // TODO(andrewrynhard): Rename this to the GCP convention.
-    GCE_SVC_ACCT: {from_secret: "gce_svc_acct"},
-    PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
-    AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
+  AWS_ACCESS_KEY_ID: { from_secret: 'aws_access_key_id' },
+  AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
+  AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
+  AZURE_SVC_ACCT: {from_secret: "azure_svc_acct"},
+  // TODO(andrewrynhard): Rename this to the GCP convention.
+  GCE_SVC_ACCT: {from_secret: "gce_svc_acct"},
+  PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local capi = Step("capi", depends_on=[basic_integration_docker, basic_integration_firecracker], environment=creds_env_vars+{DOCKER_NET: "basic-integration"});
-local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
-local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
-local push_image_gcp = Step("push-image-gcp", depends_on=[image_gcp], environment=creds_env_vars);
-local e2e_integration_aws = Step("e2e-integration-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={TALOS_PLATFORM: "aws", DOCKER_NET: "basic-integration"});
-local e2e_integration_azure = Step("e2e-integration-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={TALOS_PLATFORM: "azure", DOCKER_NET: "basic-integration"});
-local e2e_integration_gcp = Step("e2e-integration-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={TALOS_PLATFORM: "gcp", DOCKER_NET: "basic-integration"});
+local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker, e2e_firecracker], environment=creds_env_vars);
+local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars);
+local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars);
+local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars);
 
 local e2e_steps = default_steps + [
-  capi,
-  push_image_aws,
-  push_image_gcp,
-  e2e_integration_aws,
-  e2e_integration_gcp,
+  e2e_capi,
+  e2e_aws,
+  e2e_gcp,
 ];
 
 local e2e_trigger = {
@@ -337,9 +339,9 @@ local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
-local conformance_aws = Step("conformance-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "aws", DOCKER_NET: "basic-integration"});
-local conformance_azure = Step("conformance-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "azure", DOCKER_NET: "basic-integration"});
-local conformance_gcp = Step("conformance-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "gcp", DOCKER_NET: "basic-integration"});
+local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
+local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
+local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
 
 local push_edge = {
   name: 'push-edge',
@@ -360,9 +362,7 @@ local push_edge = {
 };
 
 local conformance_steps = default_steps + [
-  capi,
-  push_image_aws,
-  push_image_gcp,
+  e2e_capi,
   conformance_aws,
   conformance_gcp,
   push_edge,
@@ -392,21 +392,8 @@ local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigge
 
 // Release pipeline.
 
-local aws_env_vars = {
-  AWS_ACCESS_KEY_ID: { from_secret: 'aws_access_key_id' },
-  AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
-  AWS_DEFAULT_REGION: 'us-west-2',
-  AWS_PUBLISH_REGIONS: 'us-west-2,us-east-1,us-east-2,us-west-1,eu-central-1',
-};
-
-local ami_trigger = {
-  when: {
-    event: ['tag'],
-  },
-};
-
-local iso = Step('iso', depends_on=[basic_integration_docker, basic_integration_firecracker]);
-local boot = Step('boot', depends_on=[basic_integration_docker, basic_integration_firecracker]);
+local iso = Step('iso', depends_on=[e2e_docker, e2e_firecracker]);
+local boot = Step('boot', depends_on=[e2e_docker, e2e_firecracker]);
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {

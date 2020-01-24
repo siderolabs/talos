@@ -23,6 +23,8 @@ steps:
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
   - docker buildx inspect --bootstrap
+  - make ./_out/sonobuoy
+  - make ./_out/kubectl
   environment:
     BUILDX_KUBECONFIG:
       from_secret: kubeconfig
@@ -482,11 +484,12 @@ steps:
   - lint-go
 
 - name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
+  image: alpine:3.10
+  commands:
+  - apk --no-cache add bash curl git
+  - bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"
+  environment:
+    CODECOV_TOKEN:
       from_secret: codecov_token
   when:
     event:
@@ -494,14 +497,11 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration-docker
+- name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-docker
-  environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: docker
+  - make e2e-docker
   volumes:
   - name: dockersock
     path: /var/run
@@ -518,14 +518,11 @@ steps:
   - talos
   - osctl-linux
 
-- name: basic-integration-firecracker
+- name: e2e-firecracker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-firecracker
-  environment:
-    DOCKER_NET: host
-    TALOS_PLATFORM: firecracker
+  - make e2e-firecracker
   privileged: true
   volumes:
   - name: dockersock
@@ -539,8 +536,9 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - unit-tests
+  - osctl-linux
   - kernel
-  - basic-integration-docker
 
 - name: push
   pull: always
@@ -570,8 +568,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -600,8 +598,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 services:
 - name: docker
@@ -671,6 +669,8 @@ steps:
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
   - docker buildx inspect --bootstrap
+  - make ./_out/sonobuoy
+  - make ./_out/kubectl
   environment:
     BUILDX_KUBECONFIG:
       from_secret: kubeconfig
@@ -1130,11 +1130,12 @@ steps:
   - lint-go
 
 - name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
+  image: alpine:3.10
+  commands:
+  - apk --no-cache add bash curl git
+  - bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"
+  environment:
+    CODECOV_TOKEN:
       from_secret: codecov_token
   when:
     event:
@@ -1142,14 +1143,11 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration-docker
+- name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-docker
-  environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: docker
+  - make e2e-docker
   volumes:
   - name: dockersock
     path: /var/run
@@ -1166,14 +1164,11 @@ steps:
   - talos
   - osctl-linux
 
-- name: basic-integration-firecracker
+- name: e2e-firecracker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-firecracker
-  environment:
-    DOCKER_NET: host
-    TALOS_PLATFORM: firecracker
+  - make e2e-firecracker
   privileged: true
   volumes:
   - name: dockersock
@@ -1187,8 +1182,9 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - unit-tests
+  - osctl-linux
   - kernel
-  - basic-integration-docker
 
 - name: push
   pull: always
@@ -1218,8 +1214,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -1248,45 +1244,19 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
-- name: capi
+- name: e2e-capi
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make capi
+  - make e2e-capi
   environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    DOCKER_NET: basic-integration
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
-
-- name: push-image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-aws
-  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
@@ -1307,14 +1277,19 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-aws
+  - e2e-docker
+  - e2e-firecracker
 
-- name: push-image-gcp
+- name: e2e-aws
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make push-image-gcp
+  - make e2e-aws
   environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
@@ -1335,16 +1310,26 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-gcp
+  - e2e-capi
 
-- name: e2e-integration-aws
+- name: e2e-gcp
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-integration
+  - make e2e-gcp
   environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: aws
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
   volumes:
   - name: dockersock
     path: /var/run
@@ -1357,31 +1342,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - capi
-  - push-image-aws
-
-- name: e2e-integration-gcp
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: gcp
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - capi
-  - push-image-gcp
+  - e2e-capi
 
 services:
 - name: docker
@@ -1446,6 +1407,8 @@ steps:
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
   - docker buildx inspect --bootstrap
+  - make ./_out/sonobuoy
+  - make ./_out/kubectl
   environment:
     BUILDX_KUBECONFIG:
       from_secret: kubeconfig
@@ -1905,11 +1868,12 @@ steps:
   - lint-go
 
 - name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
+  image: alpine:3.10
+  commands:
+  - apk --no-cache add bash curl git
+  - bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"
+  environment:
+    CODECOV_TOKEN:
       from_secret: codecov_token
   when:
     event:
@@ -1917,14 +1881,11 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration-docker
+- name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-docker
-  environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: docker
+  - make e2e-docker
   volumes:
   - name: dockersock
     path: /var/run
@@ -1941,14 +1902,11 @@ steps:
   - talos
   - osctl-linux
 
-- name: basic-integration-firecracker
+- name: e2e-firecracker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-firecracker
-  environment:
-    DOCKER_NET: host
-    TALOS_PLATFORM: firecracker
+  - make e2e-firecracker
   privileged: true
   volumes:
   - name: dockersock
@@ -1962,8 +1920,9 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - unit-tests
+  - osctl-linux
   - kernel
-  - basic-integration-docker
 
 - name: push
   pull: always
@@ -1993,8 +1952,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -2023,45 +1982,19 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
-- name: capi
+- name: e2e-capi
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make capi
+  - make e2e-capi
   environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    DOCKER_NET: basic-integration
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
-
-- name: push-image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-aws
-  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
@@ -2082,14 +2015,19 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-aws
+  - e2e-docker
+  - e2e-firecracker
 
-- name: push-image-gcp
+- name: e2e-aws
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make push-image-gcp
+  - make e2e-aws
   environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
@@ -2098,29 +2036,7 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-gcp
-
-- name: conformance-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    DOCKER_NET: basic-integration
     SONOBUOY_MODE: certified-conformance
-    TALOS_PLATFORM: aws
   volumes:
   - name: dockersock
     path: /var/run
@@ -2133,18 +2049,27 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - capi
-  - push-image-aws
+  - e2e-capi
 
-- name: conformance-gcp
+- name: e2e-gcp
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-integration
+  - make e2e-gcp
   environment:
-    DOCKER_NET: basic-integration
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
     SONOBUOY_MODE: certified-conformance
-    TALOS_PLATFORM: gcp
   volumes:
   - name: dockersock
     path: /var/run
@@ -2157,8 +2082,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - capi
-  - push-image-gcp
+  - e2e-capi
 
 - name: push-edge
   pull: always
@@ -2185,8 +2109,8 @@ steps:
     cron:
     - nightly
   depends_on:
-  - conformance-aws
-  - conformance-gcp
+  - e2e-aws
+  - e2e-gcp
 
 services:
 - name: docker
@@ -2251,6 +2175,8 @@ steps:
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
   - docker buildx inspect --bootstrap
+  - make ./_out/sonobuoy
+  - make ./_out/kubectl
   environment:
     BUILDX_KUBECONFIG:
       from_secret: kubeconfig
@@ -2710,11 +2636,12 @@ steps:
   - lint-go
 
 - name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
+  image: alpine:3.10
+  commands:
+  - apk --no-cache add bash curl git
+  - bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"
+  environment:
+    CODECOV_TOKEN:
       from_secret: codecov_token
   when:
     event:
@@ -2722,14 +2649,11 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration-docker
+- name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-docker
-  environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: docker
+  - make e2e-docker
   volumes:
   - name: dockersock
     path: /var/run
@@ -2746,14 +2670,11 @@ steps:
   - talos
   - osctl-linux
 
-- name: basic-integration-firecracker
+- name: e2e-firecracker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-firecracker
-  environment:
-    DOCKER_NET: host
-    TALOS_PLATFORM: firecracker
+  - make e2e-firecracker
   privileged: true
   volumes:
   - name: dockersock
@@ -2767,8 +2688,9 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - unit-tests
+  - osctl-linux
   - kernel
-  - basic-integration-docker
 
 - name: push
   pull: always
@@ -2798,8 +2720,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -2828,45 +2750,19 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
-- name: capi
+- name: e2e-capi
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make capi
+  - make e2e-capi
   environment:
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    DOCKER_NET: basic-integration
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
-
-- name: push-image-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push-image-aws
-  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
@@ -2887,14 +2783,19 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - image-aws
+  - e2e-docker
+  - e2e-firecracker
 
-- name: push-image-gcp
+- name: e2e-aws
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make push-image-gcp
+  - make e2e-aws
   environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
@@ -2903,29 +2804,7 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - image-gcp
-
-- name: conformance-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-integration
-  environment:
-    DOCKER_NET: basic-integration
     SONOBUOY_MODE: certified-conformance
-    TALOS_PLATFORM: aws
   volumes:
   - name: dockersock
     path: /var/run
@@ -2938,18 +2817,27 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - capi
-  - push-image-aws
+  - e2e-capi
 
-- name: conformance-gcp
+- name: e2e-gcp
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-integration
+  - make e2e-gcp
   environment:
-    DOCKER_NET: basic-integration
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
     SONOBUOY_MODE: certified-conformance
-    TALOS_PLATFORM: gcp
   volumes:
   - name: dockersock
     path: /var/run
@@ -2962,8 +2850,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - capi
-  - push-image-gcp
+  - e2e-capi
 
 - name: push-edge
   pull: always
@@ -2990,8 +2877,8 @@ steps:
     cron:
     - nightly
   depends_on:
-  - conformance-aws
-  - conformance-gcp
+  - e2e-aws
+  - e2e-gcp
 
 services:
 - name: docker
@@ -3056,6 +2943,8 @@ steps:
   - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
   - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
   - docker buildx inspect --bootstrap
+  - make ./_out/sonobuoy
+  - make ./_out/kubectl
   environment:
     BUILDX_KUBECONFIG:
       from_secret: kubeconfig
@@ -3515,11 +3404,12 @@ steps:
   - lint-go
 
 - name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-    - coverage.txt
-    token:
+  image: alpine:3.10
+  commands:
+  - apk --no-cache add bash curl git
+  - bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"
+  environment:
+    CODECOV_TOKEN:
       from_secret: codecov_token
   when:
     event:
@@ -3527,14 +3417,11 @@ steps:
   depends_on:
   - unit-tests
 
-- name: basic-integration-docker
+- name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-docker
-  environment:
-    DOCKER_NET: basic-integration
-    TALOS_PLATFORM: docker
+  - make e2e-docker
   volumes:
   - name: dockersock
     path: /var/run
@@ -3551,14 +3438,11 @@ steps:
   - talos
   - osctl-linux
 
-- name: basic-integration-firecracker
+- name: e2e-firecracker
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make basic-integration-firecracker
-  environment:
-    DOCKER_NET: host
-    TALOS_PLATFORM: firecracker
+  - make e2e-firecracker
   privileged: true
   volumes:
   - name: dockersock
@@ -3572,8 +3456,9 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - unit-tests
+  - osctl-linux
   - kernel
-  - basic-integration-docker
 
 - name: push
   pull: always
@@ -3603,8 +3488,8 @@ steps:
       - promote
       - cron
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -3633,8 +3518,8 @@ steps:
     event:
     - push
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: iso
   pull: always
@@ -3653,8 +3538,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: boot
   pull: always
@@ -3673,8 +3558,8 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - basic-integration-docker
-  - basic-integration-firecracker
+  - e2e-docker
+  - e2e-firecracker
 
 - name: release
   image: plugins/github-release
