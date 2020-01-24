@@ -226,6 +226,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - setup-ci
 
 - name: initramfs
   pull: always
@@ -872,6 +874,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - setup-ci
 
 - name: initramfs
   pull: always
@@ -1257,6 +1261,7 @@ steps:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
+    DOCKER_NET: basic-integration
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -1338,6 +1343,7 @@ steps:
   commands:
   - make e2e-integration
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: aws
   volumes:
   - name: dockersock
@@ -1360,6 +1366,7 @@ steps:
   commands:
   - make e2e-integration
   environment:
+    DOCKER_NET: basic-integration
     TALOS_PLATFORM: gcp
   volumes:
   - name: dockersock
@@ -1642,6 +1649,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - setup-ci
 
 - name: initramfs
   pull: always
@@ -2027,6 +2036,7 @@ steps:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
+    DOCKER_NET: basic-integration
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -2108,6 +2118,7 @@ steps:
   commands:
   - make e2e-integration
   environment:
+    DOCKER_NET: basic-integration
     SONOBUOY_MODE: certified-conformance
     TALOS_PLATFORM: aws
   volumes:
@@ -2131,6 +2142,7 @@ steps:
   commands:
   - make e2e-integration
   environment:
+    DOCKER_NET: basic-integration
     SONOBUOY_MODE: certified-conformance
     TALOS_PLATFORM: gcp
   volumes:
@@ -2442,6 +2454,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - setup-ci
 
 - name: initramfs
   pull: always
@@ -2827,6 +2841,7 @@ steps:
       from_secret: aws_svc_acct
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
+    DOCKER_NET: basic-integration
     GCE_SVC_ACCT:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
@@ -2908,6 +2923,7 @@ steps:
   commands:
   - make e2e-integration
   environment:
+    DOCKER_NET: basic-integration
     SONOBUOY_MODE: certified-conformance
     TALOS_PLATFORM: aws
   volumes:
@@ -2931,6 +2947,7 @@ steps:
   commands:
   - make e2e-integration
   environment:
+    DOCKER_NET: basic-integration
     SONOBUOY_MODE: certified-conformance
     TALOS_PLATFORM: gcp
   volumes:
@@ -3242,6 +3259,8 @@ steps:
     path: /dev
   - name: tmp
     path: /tmp
+  depends_on:
+  - setup-ci
 
 - name: initramfs
   pull: always

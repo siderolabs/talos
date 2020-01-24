@@ -178,7 +178,7 @@ local apid = Step("apid", depends_on=[setup_ci]);
 local osctl_linux = Step("osctl-linux", depends_on=[setup_ci]);
 local osctl_darwin = Step("osctl-darwin", depends_on=[setup_ci]);
 local docs = Step("docs", depends_on=[osctl_linux]);
-local kernel = Step('kernel');
+local kernel = Step('kernel', depends_on=[setup_ci]);
 local initramfs = Step("initramfs", depends_on=[apid, machined, networkd, ntpd, osd, trustd]);
 local installer = Step("installer", depends_on=[initramfs]);
 local talos = Step("talos", depends_on=[installer]);
@@ -309,13 +309,13 @@ local creds_env_vars = {
     AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
 };
 
-local capi = Step("capi", depends_on=[basic_integration_docker, basic_integration_firecracker], environment=creds_env_vars);
+local capi = Step("capi", depends_on=[basic_integration_docker, basic_integration_firecracker], environment=creds_env_vars+{DOCKER_NET: "basic-integration"});
 local push_image_aws = Step("push-image-aws", depends_on=[image_aws], environment=creds_env_vars);
 local push_image_azure = Step("push-image-azure", depends_on=[image_azure], environment=creds_env_vars);
 local push_image_gcp = Step("push-image-gcp", depends_on=[image_gcp], environment=creds_env_vars);
-local e2e_integration_aws = Step("e2e-integration-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={TALOS_PLATFORM: "aws"});
-local e2e_integration_azure = Step("e2e-integration-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={TALOS_PLATFORM: "azure"});
-local e2e_integration_gcp = Step("e2e-integration-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={TALOS_PLATFORM: "gcp"});
+local e2e_integration_aws = Step("e2e-integration-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={TALOS_PLATFORM: "aws", DOCKER_NET: "basic-integration"});
+local e2e_integration_azure = Step("e2e-integration-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={TALOS_PLATFORM: "azure", DOCKER_NET: "basic-integration"});
+local e2e_integration_gcp = Step("e2e-integration-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={TALOS_PLATFORM: "gcp", DOCKER_NET: "basic-integration"});
 
 local e2e_steps = default_steps + [
   capi,
@@ -337,9 +337,9 @@ local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
-local conformance_aws = Step("conformance-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "aws"});
-local conformance_azure = Step("conformance-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "azure"});
-local conformance_gcp = Step("conformance-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "gcp"});
+local conformance_aws = Step("conformance-aws", target="e2e-integration", depends_on=[capi, push_image_aws], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "aws", DOCKER_NET: "basic-integration"});
+local conformance_azure = Step("conformance-azure", target="e2e-integration", depends_on=[capi, push_image_azure], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "azure", DOCKER_NET: "basic-integration"});
+local conformance_gcp = Step("conformance-gcp", target="e2e-integration", depends_on=[capi, push_image_gcp], environment={SONOBUOY_MODE: "certified-conformance", TALOS_PLATFORM: "gcp", DOCKER_NET: "basic-integration"});
 
 local push_edge = {
   name: 'push-edge',
