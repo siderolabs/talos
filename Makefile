@@ -12,6 +12,9 @@ GO_VERSION ?= 1.13
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
+KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.17.1/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+SONOBUOY_VERSION ?= 0.17.1
+SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
 
 BUILD := docker buildx build
@@ -89,7 +92,7 @@ docker-%: ## Builds the specified target defined in the Dockerfile using the doc
 	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
 
 hack-test-%: ## Runs the specied script in ./hack/test with well known environment variables.
-	@TAG=$(TAG) SHA=$(SHA) ARTIFACTS=$(ARTIFACTS) ./hack/test/$*.sh
+	@./hack/test/$*.sh
 
 # Generators
 
@@ -180,30 +183,36 @@ lint: ## Runs linters on go, protobuf, and markdown file types.
 
 .PHONY: unit-tests
 unit-tests: apps ## Performs unit tests.
-	@$(MAKE) local-$@ DEST=./ TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 
 .PHONY: unit-tests-race
 unit-tests-race: ## Performs unit tests with race detection enabled.
-	@$(MAKE) local-$@ DEST=./
+	@$(MAKE) target-$@
 
-integration-test-%:
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS)
 
-integration-test: $(INTEGRATION_TEST_DEFAULT_TARGET) ## Builds the integration-test binary for the local machine.
+$(ARTIFACTS)/sonobuoy:
+	@mkdir -p $(ARTIFACTS)
+	@curl -L -o /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
+	@tar -xf /tmp/sonobuoy.tar.gz -C $(ARTIFACTS)
 
-basic-integration-%: integration-test osctl talos ## Runs the basic integration test.
-	@$(MAKE) hack-test-basic-integration PROVISIONER=$*
+$(ARTIFACTS)/kubectl:
+	@mkdir -p $(ARTIFACTS)
+	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
+	@chmod +x $(ARTIFACTS)/kubectl
 
-.PHONY: e2e-integration
-e2e-integration: ## Runs the E2E integration for the specified cloud provider.
-	@$(MAKE) hack-test-$@
-
-push-image-%: ## Pushes a VM image into the specified cloud provider. Valid options are aws, azure, and gcp (e.g. push-image-aws).
-	@$(MAKE) hack-test-$*-setup
-
-.PHONY: capi
-capi: ## Deploys Cluster API to the basic integration cluster.
-	@$(MAKE) hack-test-$@
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobuoy $(ARTIFACTS)/kubectl ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+	@$(MAKE) hack-test-$@ \
+		PLATFORM=$* \
+		TAG=$(TAG) \
+		SHA=$(SHA) \
+		IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(TAG) \
+		ARTIFACTS=$(ARTIFACTS) \
+		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
+		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
+		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
+		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy
 
 # Utilities
 
@@ -223,4 +232,4 @@ push-%: login ## Pushes the installer, and talos images to the configured contai
 
 .PHONY: clean
 clean: ## Cleans up all artifacts.
-	@-rm -rf $(ARTIFACTS) coverage.txt
+	@-rm -rf $(ARTIFACTS)

@@ -7,8 +7,8 @@ join.yaml
 docgen
 talosconfig
 kubeconfig
-hack/test/integration/matchbox/assets/*
-!hack/test/integration/matchbox/assets/.gitkeep
+hack/test/libvirt/matchbox/assets/*
+!hack/test/libvirt/matchbox/assets/.gitkeep
 
 # vim Swap
 [._]*.s[a-v][a-z]
@@ -18,7 +18,6 @@ hack/test/integration/matchbox/assets/*
 [._]sw[a-p]
 
 # Go
-coverage.txt
 .artifacts/
 
 sha256sum.txt
