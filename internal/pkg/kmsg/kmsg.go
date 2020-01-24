@@ -25,7 +25,7 @@ func Setup(prefix string, withLogFile bool) error {
 		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}
 
-	var writer io.Writer = kmsg
+	var writer io.Writer = &Writer{KmsgWriter: kmsg}
 
 	if withLogFile {
 		if err := os.MkdirAll(constants.DefaultLogPath, 0700); err != nil {
@@ -39,7 +39,7 @@ func Setup(prefix string, withLogFile bool) error {
 			return fmt.Errorf("failed to open %s: %w", logPath, err)
 		}
 
-		writer = io.MultiWriter(kmsg, f)
+		writer = io.MultiWriter(writer, f)
 	}
 
 	log.SetOutput(writer)

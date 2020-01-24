@@ -146,7 +146,7 @@ func (r *Runner) runTask(task Task, errCh chan<- error) {
 				return
 			}
 
-			buf := make([]byte, 512) // using small buffer here, as kmsg has its limits
+			buf := make([]byte, 8192)
 			n := goruntime.Stack(buf, false)
 			err = fmt.Errorf("panic recovered: %v\n%s", r, string(buf[:n]))
 		}

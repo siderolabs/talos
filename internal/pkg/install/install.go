@@ -7,6 +7,7 @@ package install
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -37,6 +38,8 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("pulling installer container image: %q", r.Config().Machine().Install().Image())
 
 	var img containerd.Image
 
