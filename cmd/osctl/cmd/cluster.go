@@ -41,6 +41,7 @@ var (
 	nodeInitramfsPath       string
 	networkCIDR             string
 	networkMTU              int
+	nameservers             []string
 	workers                 int
 	masters                 int
 	clusterCpus             string
@@ -137,12 +138,48 @@ func create(ctx context.Context) (err error) {
 		}
 	}
 
+	// Parse nameservers
+	nameserverIPs := make([]net.IP, len(nameservers))
+
+	for i := range nameserverIPs {
+		nameserverIPs[i] = net.ParseIP(nameservers[i])
+		if nameserverIPs[i] == nil {
+			return fmt.Errorf("failed parsing nameserver IP %q", nameservers[i])
+		}
+	}
+
 	provisioner, err := providers.Factory(ctx, provisioner)
 	if err != nil {
 		return err
 	}
 
 	defer provisioner.Close() //nolint: errcheck
+
+	// Craft cluster and node requests
+	request := provision.ClusterRequest{
+		Name: clusterName,
+
+		Network: provision.NetworkRequest{
+			Name:        clusterName,
+			CIDR:        *cidr,
+			GatewayAddr: gatewayIP,
+			MTU:         networkMTU,
+			Nameservers: nameserverIPs,
+			CNI: provision.CNIConfig{
+				BinPath:  cniBinPath,
+				ConfDir:  cniConfDir,
+				CacheDir: cniCacheDir,
+			},
+		},
+
+		Image:             nodeImage,
+		KernelPath:        nodeVmlinuxPath,
+		InitramfsPath:     nodeInitramfsPath,
+		KubernetesVersion: kubernetesVersion,
+
+		SelfExecutable: os.Args[0],
+		StateDirectory: stateDir,
+	}
 
 	provisionOptions := []provision.Option{}
 	configBundleOpts := []config.BundleOption{}
@@ -154,7 +191,7 @@ func create(ctx context.Context) (err error) {
 			generate.WithInstallImage(nodeInstallImage),
 		}
 
-		genOptions = append(genOptions, provisioner.GenOptions()...)
+		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
 
 		endpointList := []string{}
 
@@ -189,31 +226,6 @@ func create(ctx context.Context) (err error) {
 
 	// Add talosconfig to provision options so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
-
-	// Craft cluster and node requests
-	request := provision.ClusterRequest{
-		Name: clusterName,
-
-		Network: provision.NetworkRequest{
-			Name:        clusterName,
-			CIDR:        *cidr,
-			GatewayAddr: gatewayIP,
-			MTU:         networkMTU,
-			CNI: provision.CNIConfig{
-				BinPath:  cniBinPath,
-				ConfDir:  cniConfDir,
-				CacheDir: cniCacheDir,
-			},
-		},
-
-		Image:             nodeImage,
-		KernelPath:        nodeVmlinuxPath,
-		InitramfsPath:     nodeInitramfsPath,
-		KubernetesVersion: kubernetesVersion,
-
-		SelfExecutable: os.Args[0],
-		StateDirectory: stateDir,
-	}
 
 	// Create the master nodes.
 	for i := 0; i < masters; i++ {
@@ -396,6 +408,7 @@ func init() {
 	clusterUpCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
 	clusterUpCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the docker bridge network")
 	clusterUpCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
+	clusterUpCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use (VM only)")
 	clusterUpCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	clusterUpCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	clusterUpCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")

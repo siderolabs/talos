@@ -11,8 +11,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
-	"os"
-	"path/filepath"
 	"strconv"
 	"text/template"
 
@@ -47,12 +45,12 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 		MTU:           strconv.Itoa(network.MTU),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error templating bridge CNI config: %w", err)
 	}
 
 	bridgeConfig, err := libcni.ConfFromBytes(buf.Bytes())
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing bridge CNI config: %w", err)
 	}
 
 	cniConfig := libcni.NewCNIConfigWithCacheDir(network.CNI.BinPath, network.CNI.CacheDir, nil)
@@ -73,7 +71,7 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 		return err
 	}
 
-	ones, _ := network.CIDR.IP.DefaultMask().Size()
+	ones, _ := network.CIDR.Mask.Size()
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,
@@ -98,14 +96,9 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 	// prepare an actual network config to be used by the VMs
 	t = template.Must(template.New("network").Parse(networkTemplate))
 
-	f, err := os.Create(filepath.Join(network.CNI.ConfDir, fmt.Sprintf("%s.conflist", network.Name)))
-	if err != nil {
-		return err
-	}
+	buf.Reset()
 
-	defer f.Close() //nolint: errcheck
-
-	err = t.Execute(f, struct {
+	err = t.Execute(&buf, struct {
 		NetworkName   string
 		InterfaceName string
 		MTU           string
@@ -115,10 +108,14 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 		MTU:           strconv.Itoa(network.MTU),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error templating VM CNI config: %w", err)
 	}
 
-	return f.Close()
+	if state.vmCNIConfig, err = libcni.ConfListFromBytes(buf.Bytes()); err != nil {
+		return fmt.Errorf("error parsing VM CNI config: %w", err)
+	}
+
+	return nil
 }
 
 func (p *provisioner) destroyNetwork(state *state) error {
@@ -161,23 +158,23 @@ const networkTemplate = `
 	"name": "{{ .NetworkName }}",
 	"cniVersion": "0.4.0",
 	"plugins": [
-	  {
-		"type": "bridge",
-		"bridge": "{{ .InterfaceName }}",
-		"ipMasq": true,
-		"isGateway": true,
-		"isDefaultGateway": true,
-		"ipam": {
-		  "type": "static"
+		{
+			"type": "bridge",
+			"bridge": "{{ .InterfaceName }}",
+			"ipMasq": true,
+			"isGateway": true,
+			"isDefaultGateway": true,
+			"ipam": {
+				"type": "static"
+			},
+			"mtu": {{ .MTU }}
 		},
-		"mtu": {{ .MTU }}
-	},
-	  {
-		"type": "firewall"
-	  },
-	  {
-		"type": "tc-redirect-tap"
-	  }
+		{
+			"type": "firewall"
+		},
+		{
+			"type": "tc-redirect-tap"
+		}
 	]
 }
 `

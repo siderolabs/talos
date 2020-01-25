@@ -24,7 +24,7 @@ func IPAddrs() (ips []net.IP, err error) {
 	}
 
 	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+		if ipnet, ok := a.(*net.IPNet); ok && ipnet.IP.IsGlobalUnicast() {
 			if ipnet.IP.To4() != nil {
 				ips = append(ips, ipnet.IP)
 			}

@@ -44,6 +44,7 @@ type NetworkRequest struct {
 	CIDR        net.IPNet
 	GatewayAddr net.IP
 	MTU         int
+	Nameservers []net.IP
 
 	// CNI-specific parameters.
 	CNI CNIConfig
