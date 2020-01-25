@@ -18,7 +18,7 @@ type Provisioner interface {
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 
-	GenOptions() []generate.GenOption
+	GenOptions(NetworkRequest) []generate.GenOption
 
 	Close() error
 }

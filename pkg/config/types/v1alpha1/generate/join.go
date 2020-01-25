@@ -19,7 +19,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		MachineToken:    in.TrustdInfo.Token,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
-		MachineNetwork:  &v1alpha1.NetworkConfig{},
+		MachineNetwork:  in.NetworkConfig,
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:       in.InstallDisk,
 			InstallImage:      in.InstallImage,

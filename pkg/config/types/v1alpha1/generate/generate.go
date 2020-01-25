@@ -81,6 +81,8 @@ type Input struct {
 
 	InstallDisk  string
 	InstallImage string
+
+	NetworkConfig *v1alpha1.NetworkConfig
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
@@ -299,6 +301,10 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 
 	additionalSubjectAltNames = append(additionalSubjectAltNames, options.AdditionalSubjectAltNames...)
 
+	if options.NetworkConfig == nil {
+		options.NetworkConfig = &v1alpha1.NetworkConfig{}
+	}
+
 	input = &Input{
 		Certs:                     certs,
 		ControlPlaneEndpoint:      endpoint,
@@ -313,6 +319,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		AdditionalMachineCertSANs: additionalMachineCertSANs,
 		InstallDisk:               options.InstallDisk,
 		InstallImage:              options.InstallImage,
+		NetworkConfig:             options.NetworkConfig,
 	}
 
 	return input, nil

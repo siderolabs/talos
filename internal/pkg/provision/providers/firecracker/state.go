@@ -7,6 +7,8 @@ package firecracker
 import (
 	"fmt"
 
+	"github.com/containernetworking/cni/libcni"
+
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
@@ -16,7 +18,8 @@ type state struct {
 
 	ClusterInfo provision.ClusterInfo
 
-	statePath string
+	vmCNIConfig *libcni.NetworkConfigList
+	statePath   string
 }
 
 func (s *state) Provisioner() string {

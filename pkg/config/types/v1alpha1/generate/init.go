@@ -16,7 +16,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "init",
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
-		MachineNetwork:  &v1alpha1.NetworkConfig{},
+		MachineNetwork:  in.NetworkConfig,
 		MachineCA:       in.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.TrustdInfo.Token,

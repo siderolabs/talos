@@ -88,6 +88,9 @@ func Launch() error {
 			WithStderr(os.Stderr).
 			Build(ctx)
 
+		// reset static configuration, as it gets set each time CNI runs
+		config.FirecrackerConfig.NetworkInterfaces[0].StaticConfiguration = nil
+
 		m, err := firecracker.NewMachine(ctx, config.FirecrackerConfig, firecracker.WithProcessRunner(cmd))
 		if err != nil {
 			return fmt.Errorf("failed to create new machine: %w", err)

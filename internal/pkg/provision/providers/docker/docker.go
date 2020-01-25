@@ -42,6 +42,6 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions() []generate.GenOption {
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
 	return nil
 }

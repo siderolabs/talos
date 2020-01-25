@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -107,24 +106,16 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
 	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
+	cmdline.Append("talos.hostname", nodeReq.Name)
 
-	// networking
-	cmdline.Append("ip", fmt.Sprintf(
-		"%s::%s:%s:%s:eth0:off",
-		nodeReq.IP,
-		clusterReq.Network.GatewayAddr,
-		net.IP(clusterReq.Network.CIDR.Mask),
-		nodeReq.Name))
-
-	ones, _ := clusterReq.Network.CIDR.IP.DefaultMask().Size()
+	ones, _ := clusterReq.Network.CIDR.Mask.Size()
 
 	cfg := firecracker.Config{
-		DisableValidation: true, // TODO: enable when firecracker Go SDK is fixed
-		SocketPath:        socketPath,
-		KernelImagePath:   clusterReq.KernelPath,
-		KernelArgs:        cmdline.String(),
-		InitrdPath:        clusterReq.InitramfsPath,
-		ForwardSignals:    []os.Signal{}, // don't forward any signals
+		SocketPath:      socketPath,
+		KernelImagePath: clusterReq.KernelPath,
+		KernelArgs:      cmdline.String(),
+		InitrdPath:      clusterReq.InitramfsPath,
+		ForwardSignals:  []os.Signal{}, // don't forward any signals
 		MachineCfg: models.MachineConfiguration{
 			HtEnabled:  firecracker.Bool(false),
 			VcpuCount:  firecracker.Int64(vcpuCount),
@@ -133,15 +124,16 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 		NetworkInterfaces: firecracker.NetworkInterfaces{
 			firecracker.NetworkInterface{
 				CNIConfiguration: &firecracker.CNIConfiguration{
-					BinPath:     clusterReq.Network.CNI.BinPath,
-					ConfDir:     clusterReq.Network.CNI.ConfDir,
-					CacheDir:    clusterReq.Network.CNI.CacheDir,
-					NetworkName: clusterReq.Network.Name,
+					BinPath:       clusterReq.Network.CNI.BinPath,
+					ConfDir:       clusterReq.Network.CNI.ConfDir,
+					CacheDir:      clusterReq.Network.CNI.CacheDir,
+					NetworkConfig: state.vmCNIConfig,
 					Args: [][2]string{
 						{"IP", fmt.Sprintf("%s/%d", nodeReq.IP, ones)},
 						{"GATEWAY", clusterReq.Network.GatewayAddr.String()},
 					},
-					IfName: "veth0",
+					IfName:   "veth0",
+					VMIfName: "eth0",
 				},
 			},
 		},
