@@ -52,6 +52,22 @@ func (suite *NetconfSuite) TestKernelNetconf() {
 	suite.Assert().Equal(len(addr.Routes()), 1)
 }
 
+func (suite *NetconfSuite) TestKernelNetconfIncomplete() {
+	name, opts := buildKernelOptions("1.1.1.1::3.3.3.3:255.255.255.0::eth0:none:::")
+
+	iface, err := nic.New(opts...)
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(iface.Name, name)
+	suite.Assert().Equal(len(iface.AddressMethod), 1)
+	addr := iface.AddressMethod[0]
+	suite.Assert().Equal(addr.Name(), "static")
+	suite.Assert().Equal(addr.Hostname(), "")
+	suite.Assert().Equal(addr.Address().IP, net.ParseIP("1.1.1.1"))
+	suite.Assert().Len(addr.Resolvers(), 0)
+	suite.Assert().Equal(len(addr.Routes()), 1)
+}
+
 func sampleConfig() []machine.Device {
 	return []machine.Device{
 		{
