@@ -28,6 +28,17 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
+	fmt.Fprintln(options.LogWriter, "removing network")
+
+	state, ok := cluster.(*state)
+	if !ok {
+		return fmt.Errorf("error inspecting firecracker state, %#+v", cluster)
+	}
+
+	if err := p.destroyNetwork(state); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(options.LogWriter, "removing state directory")
 
 	stateDirectoryPath, err := cluster.StatePath()

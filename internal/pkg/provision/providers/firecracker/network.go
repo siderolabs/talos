@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
+	"github.com/jsimonetti/rtnetlink"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	talosnet "github.com/talos-systems/talos/pkg/net"
@@ -117,6 +119,25 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 	}
 
 	return f.Close()
+}
+
+func (p *provisioner) destroyNetwork(state *state) error {
+	// destroy bridge interface by name to clean up
+	iface, err := net.InterfaceByName(state.BridgeName)
+	if err != nil {
+		return fmt.Errorf("error looking up bridge interface %q: %w", state.BridgeName, err)
+	}
+
+	rtconn, err := rtnetlink.Dial(nil)
+	if err != nil {
+		return fmt.Errorf("error dialing rnetlink: %w", err)
+	}
+
+	if err = rtconn.Link.Delete(uint32(iface.Index)); err != nil {
+		return fmt.Errorf("error deleting bridge interface: %w", err)
+	}
+
+	return nil
 }
 
 const bridgeTemplate = `
