@@ -225,10 +225,13 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 		// case 6:
 		// Primary DNS Resolver
 		case 7:
-			resolvers = append(resolvers, net.ParseIP(field))
+			fallthrough
 		// Secondary DNS Resolver
 		case 8:
-			resolvers = append(resolvers, net.ParseIP(field))
+			nameserverIP := net.ParseIP(field)
+			if nameserverIP != nil {
+				resolvers = append(resolvers, nameserverIP)
+			}
 		}
 	}
 	// NTP server
