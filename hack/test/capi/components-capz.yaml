@@ -1,0 +1,973 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: capz-controller-manager
+  name: capz-system
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: azureclusters.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: AzureCluster
+    listKind: AzureClusterList
+    plural: azureclusters
+    singular: azurecluster
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: AzureCluster is the Schema for the azureclusters API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: AzureClusterSpec defines the desired state of AzureCluster
+          properties:
+            additionalTags:
+              additionalProperties:
+                type: string
+              description: AdditionalTags is an optional set of tags to add to Azure
+                resources managed by the Azure provider, in addition to the ones added
+                by default.
+              type: object
+            location:
+              type: string
+            networkSpec:
+              description: NetworkSpec encapsulates all things related to Azure network.
+              properties:
+                subnets:
+                  description: Subnets is the configuration for the control-plane
+                    subnet and the node subnet.
+                  items:
+                    description: SubnetSpec configures an Azure subnet.
+                    properties:
+                      cidrBlock:
+                        description: CidrBlock is the CIDR block to be used when the
+                          provider creates a managed Vnet.
+                        type: string
+                      id:
+                        description: ID defines a unique identifier to reference this
+                          resource.
+                        type: string
+                      internalLBIPAddress:
+                        description: InternalLBIPAddress is the IP address that will
+                          be used as the internal LB private IP. For the control plane
+                          subnet only.
+                        type: string
+                      name:
+                        description: Name defines a name for the subnet resource.
+                        type: string
+                      role:
+                        description: Role defines the subnet role (eg. Node, ControlPlane)
+                        type: string
+                      securityGroup:
+                        description: SecurityGroup defines the NSG (network security
+                          group) that should be attached to this subnet.
+                        properties:
+                          id:
+                            type: string
+                          ingressRule:
+                            description: IngressRules is a slice of Azure ingress
+                              rules for security groups.
+                            items:
+                              description: IngressRule defines an Azure ingress rule
+                                for security groups.
+                              properties:
+                                description:
+                                  type: string
+                                destination:
+                                  description: Destination - The destination address
+                                    prefix. CIDR or destination IP range. Asterix
+                                    '*' can also be used to match all source IPs.
+                                    Default tags such as 'VirtualNetwork', 'AzureLoadBalancer'
+                                    and 'Internet' can also be used.
+                                  type: string
+                                destinationPorts:
+                                  description: DestinationPorts - The destination
+                                    port or range. Integer or range between 0 and
+                                    65535. Asterix '*' can also be used to match all
+                                    ports.
+                                  type: string
+                                protocol:
+                                  description: SecurityGroupProtocol defines the protocol
+                                    type for a security group rule.
+                                  type: string
+                                source:
+                                  description: Source - The CIDR or source IP range.
+                                    Asterix '*' can also be used to match all source
+                                    IPs. Default tags such as 'VirtualNetwork', 'AzureLoadBalancer'
+                                    and 'Internet' can also be used. If this is an
+                                    ingress rule, specifies where network traffic
+                                    originates from.
+                                  type: string
+                                sourcePorts:
+                                  description: SourcePorts - The source port or range.
+                                    Integer or range between 0 and 65535. Asterix
+                                    '*' can also be used to match all ports.
+                                  type: string
+                              required:
+                              - description
+                              - protocol
+                              type: object
+                            type: array
+                          name:
+                            type: string
+                          tags:
+                            additionalProperties:
+                              type: string
+                            description: Tags defines a map of tags.
+                            type: object
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  type: array
+                vnet:
+                  description: Vnet is the configuration for the Azure virtual network.
+                  properties:
+                    cidrBlock:
+                      description: CidrBlock is the CIDR block to be used when the
+                        provider creates a managed virtual network.
+                      type: string
+                    id:
+                      description: ID is the identifier of the virtual network this
+                        provider should use to create resources.
+                      type: string
+                    name:
+                      description: Name defines a name for the virtual network resource.
+                      type: string
+                    resourceGroup:
+                      description: ResourceGroup is the name of the resource group
+                        of the existing virtual network or the resource group where
+                        a managed virtual network should be created.
+                      type: string
+                    tags:
+                      additionalProperties:
+                        type: string
+                      description: Tags is a collection of tags describing the resource.
+                      type: object
+                  required:
+                  - name
+                  type: object
+              type: object
+            resourceGroup:
+              type: string
+          required:
+          - location
+          - resourceGroup
+          type: object
+        status:
+          description: AzureClusterStatus defines the observed state of AzureCluster
+          properties:
+            apiEndpoints:
+              description: APIEndpoints represents the endpoints to communicate with
+                the control plane.
+              items:
+                description: APIEndpoint represents a reachable Kubernetes API endpoint.
+                properties:
+                  host:
+                    description: The hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: The port on which the API server is serving.
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
+              type: array
+            bastion:
+              description: VM describes an Azure virtual machine.
+              properties:
+                addresses:
+                  description: Addresses contains the Azure instance associated addresses.
+                  items:
+                    description: NodeAddress contains information for the node's address.
+                    properties:
+                      address:
+                        description: The node address.
+                        type: string
+                      type:
+                        description: Node address type, one of Hostname, ExternalIP
+                          or InternalIP.
+                        type: string
+                    required:
+                    - address
+                    - type
+                    type: object
+                  type: array
+                availabilityZone:
+                  type: string
+                id:
+                  type: string
+                identity:
+                  description: VMIdentity defines the identity of the virtual machine,
+                    if configured.
+                  type: string
+                image:
+                  description: Storage profile
+                  properties:
+                    gallery:
+                      type: string
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    offer:
+                      type: string
+                    publisher:
+                      type: string
+                    resourceGroup:
+                      type: string
+                    sku:
+                      type: string
+                    subscriptionID:
+                      type: string
+                    version:
+                      type: string
+                  type: object
+                name:
+                  type: string
+                osDisk:
+                  properties:
+                    diskSizeGB:
+                      format: int32
+                      type: integer
+                    managedDisk:
+                      properties:
+                        storageAccountType:
+                          type: string
+                      required:
+                      - storageAccountType
+                      type: object
+                    osType:
+                      type: string
+                  required:
+                  - diskSizeGB
+                  - managedDisk
+                  - osType
+                  type: object
+                startupScript:
+                  type: string
+                tags:
+                  additionalProperties:
+                    type: string
+                  description: Tags defines a map of tags.
+                  type: object
+                vmSize:
+                  description: Hardware profile
+                  type: string
+                vmState:
+                  description: State - The provisioning state, which only appears
+                    in the response.
+                  type: string
+              type: object
+            network:
+              description: Network encapsulates Azure networking resources.
+              properties:
+                apiServerIp:
+                  description: APIServerIP is the Kubernetes API server public IP
+                    address.
+                  properties:
+                    dnsName:
+                      type: string
+                    id:
+                      type: string
+                    ipAddress:
+                      type: string
+                    name:
+                      type: string
+                  type: object
+                apiServerLb:
+                  description: APIServerLB is the Kubernetes API server load balancer.
+                  properties:
+                    backendPool:
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                      type: object
+                    frontendIpConfig:
+                      type: object
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    sku:
+                      description: LoadBalancerSKU enumerates the values for load
+                        balancer sku name.
+                      type: string
+                    tags:
+                      additionalProperties:
+                        type: string
+                      description: Tags defines a map of tags.
+                      type: object
+                  type: object
+                securityGroups:
+                  additionalProperties:
+                    description: SecurityGroup defines an Azure security group.
+                    properties:
+                      id:
+                        type: string
+                      ingressRule:
+                        description: IngressRules is a slice of Azure ingress rules
+                          for security groups.
+                        items:
+                          description: IngressRule defines an Azure ingress rule for
+                            security groups.
+                          properties:
+                            description:
+                              type: string
+                            destination:
+                              description: Destination - The destination address prefix.
+                                CIDR or destination IP range. Asterix '*' can also
+                                be used to match all source IPs. Default tags such
+                                as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet'
+                                can also be used.
+                              type: string
+                            destinationPorts:
+                              description: DestinationPorts - The destination port
+                                or range. Integer or range between 0 and 65535. Asterix
+                                '*' can also be used to match all ports.
+                              type: string
+                            protocol:
+                              description: SecurityGroupProtocol defines the protocol
+                                type for a security group rule.
+                              type: string
+                            source:
+                              description: Source - The CIDR or source IP range. Asterix
+                                '*' can also be used to match all source IPs. Default
+                                tags such as 'VirtualNetwork', 'AzureLoadBalancer'
+                                and 'Internet' can also be used. If this is an ingress
+                                rule, specifies where network traffic originates from.
+                              type: string
+                            sourcePorts:
+                              description: SourcePorts - The source port or range.
+                                Integer or range between 0 and 65535. Asterix '*'
+                                can also be used to match all ports.
+                              type: string
+                          required:
+                          - description
+                          - protocol
+                          type: object
+                        type: array
+                      name:
+                        type: string
+                      tags:
+                        additionalProperties:
+                          type: string
+                        description: Tags defines a map of tags.
+                        type: object
+                    type: object
+                  description: SecurityGroups is a map from the role/kind of the security
+                    group to its unique name, if any.
+                  type: object
+              type: object
+            ready:
+              description: Ready is true when the provider resource is ready.
+              type: boolean
+          type: object
+      type: object
+  version: v1alpha2
+  versions:
+  - name: v1alpha2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: azuremachines.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: AzureMachine
+    listKind: AzureMachineList
+    plural: azuremachines
+    singular: azuremachine
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: AzureMachine is the Schema for the azuremachines API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: AzureMachineSpec defines the desired state of AzureMachine
+          properties:
+            additionalTags:
+              additionalProperties:
+                type: string
+              description: AdditionalTags is an optional set of tags to add to an
+                instance, in addition to the ones added by default by the Azure provider.
+                If both the AzureCluster and the AzureMachine specify the same tag
+                name with different values, the AzureMachine's value takes precedence.
+              type: object
+            allocatePublicIP:
+              description: AllocatePublicIP allows the ability to create dynamic public
+                ips for machines where this value is true.
+              type: boolean
+            availabilityZone:
+              properties:
+                enabled:
+                  type: boolean
+                id:
+                  type: string
+              type: object
+            image:
+              description: 'Image defines information about the image to use for VM
+                creation. There are three ways to specify an image: by ID, by publisher,
+                or by Shared Image Gallery. If specifying an image by ID, only the
+                ID field needs to be set. If specifying an image by publisher, the
+                Publisher, Offer, SKU, and Version fields must be set. If specifying
+                an image from a Shared Image Gallery, the SubscriptionID, ResourceGroup,
+                Gallery, Name, and Version fields must be set.'
+              properties:
+                gallery:
+                  type: string
+                id:
+                  type: string
+                name:
+                  type: string
+                offer:
+                  type: string
+                publisher:
+                  type: string
+                resourceGroup:
+                  type: string
+                sku:
+                  type: string
+                subscriptionID:
+                  type: string
+                version:
+                  type: string
+              type: object
+            location:
+              type: string
+            osDisk:
+              properties:
+                diskSizeGB:
+                  format: int32
+                  type: integer
+                managedDisk:
+                  properties:
+                    storageAccountType:
+                      type: string
+                  required:
+                  - storageAccountType
+                  type: object
+                osType:
+                  type: string
+              required:
+              - diskSizeGB
+              - managedDisk
+              - osType
+              type: object
+            providerID:
+              description: ProviderID is the unique identifier as specified by the
+                cloud provider.
+              type: string
+            sshPublicKey:
+              type: string
+            vmSize:
+              type: string
+          required:
+          - location
+          - osDisk
+          - sshPublicKey
+          - vmSize
+          type: object
+        status:
+          description: AzureMachineStatus defines the observed state of AzureMachine
+          properties:
+            addresses:
+              description: Addresses contains the Azure instance associated addresses.
+              items:
+                description: NodeAddress contains information for the node's address.
+                properties:
+                  address:
+                    description: The node address.
+                    type: string
+                  type:
+                    description: Node address type, one of Hostname, ExternalIP or
+                      InternalIP.
+                    type: string
+                required:
+                - address
+                - type
+                type: object
+              type: array
+            errorMessage:
+              description: "ErrorMessage will be set in the event that there is a
+                terminal problem reconciling the Machine and will contain a more verbose
+                string suitable for logging and human consumption. \n This field should
+                not be set for transitive errors that a controller faces that are
+                expected to be fixed automatically over time (like service outages),
+                but instead indicate that something is fundamentally wrong with the
+                Machine's spec or the configuration of the controller, and that manual
+                intervention is required. Examples of terminal errors would be invalid
+                combinations of settings in the spec, values that are unsupported
+                by the controller, or the responsible controller itself being critically
+                misconfigured. \n Any transient errors that occur during the reconciliation
+                of Machines can be added as events to the Machine object and/or logged
+                in the controller's output."
+              type: string
+            errorReason:
+              description: "ErrorReason will be set in the event that there is a terminal
+                problem reconciling the Machine and will contain a succinct value
+                suitable for machine interpretation. \n This field should not be set
+                for transitive errors that a controller faces that are expected to
+                be fixed automatically over time (like service outages), but instead
+                indicate that something is fundamentally wrong with the Machine's
+                spec or the configuration of the controller, and that manual intervention
+                is required. Examples of terminal errors would be invalid combinations
+                of settings in the spec, values that are unsupported by the controller,
+                or the responsible controller itself being critically misconfigured.
+                \n Any transient errors that occur during the reconciliation of Machines
+                can be added as events to the Machine object and/or logged in the
+                controller's output."
+              type: string
+            ready:
+              description: Ready is true when the provider resource is ready.
+              type: boolean
+            vmState:
+              description: VMState is the provisioning state of the Azure virtual
+                machine.
+              type: string
+          type: object
+      type: object
+  version: v1alpha2
+  versions:
+  - name: v1alpha2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: azuremachinetemplates.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: AzureMachineTemplate
+    listKind: AzureMachineTemplateList
+    plural: azuremachinetemplates
+    singular: azuremachinetemplate
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: AzureMachineTemplate is the Schema for the azuremachinetemplates
+        API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: AzureMachineTemplateSpec defines the desired state of AzureMachineTemplate
+          properties:
+            template:
+              description: AzureMachineTemplateResource describes the data needed
+                to create am AzureMachine from a template
+              properties:
+                spec:
+                  description: Spec is the specification of the desired behavior of
+                    the machine.
+                  properties:
+                    additionalTags:
+                      additionalProperties:
+                        type: string
+                      description: AdditionalTags is an optional set of tags to add
+                        to an instance, in addition to the ones added by default by
+                        the Azure provider. If both the AzureCluster and the AzureMachine
+                        specify the same tag name with different values, the AzureMachine's
+                        value takes precedence.
+                      type: object
+                    allocatePublicIP:
+                      description: AllocatePublicIP allows the ability to create dynamic
+                        public ips for machines where this value is true.
+                      type: boolean
+                    availabilityZone:
+                      properties:
+                        enabled:
+                          type: boolean
+                        id:
+                          type: string
+                      type: object
+                    image:
+                      description: 'Image defines information about the image to use
+                        for VM creation. There are three ways to specify an image:
+                        by ID, by publisher, or by Shared Image Gallery. If specifying
+                        an image by ID, only the ID field needs to be set. If specifying
+                        an image by publisher, the Publisher, Offer, SKU, and Version
+                        fields must be set. If specifying an image from a Shared Image
+                        Gallery, the SubscriptionID, ResourceGroup, Gallery, Name,
+                        and Version fields must be set.'
+                      properties:
+                        gallery:
+                          type: string
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        offer:
+                          type: string
+                        publisher:
+                          type: string
+                        resourceGroup:
+                          type: string
+                        sku:
+                          type: string
+                        subscriptionID:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    location:
+                      type: string
+                    osDisk:
+                      properties:
+                        diskSizeGB:
+                          format: int32
+                          type: integer
+                        managedDisk:
+                          properties:
+                            storageAccountType:
+                              type: string
+                          required:
+                          - storageAccountType
+                          type: object
+                        osType:
+                          type: string
+                      required:
+                      - diskSizeGB
+                      - managedDisk
+                      - osType
+                      type: object
+                    providerID:
+                      description: ProviderID is the unique identifier as specified
+                        by the cloud provider.
+                      type: string
+                    sshPublicKey:
+                      type: string
+                    vmSize:
+                      type: string
+                  required:
+                  - location
+                  - osDisk
+                  - sshPublicKey
+                  - vmSize
+                  type: object
+              required:
+              - spec
+              type: object
+          required:
+          - template
+          type: object
+      type: object
+  version: v1alpha2
+  versions:
+  - name: v1alpha2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: capz-leader-election-role
+  namespace: capz-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: capz-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - clusters
+  - clusters/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - azureclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - azureclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - azuremachines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - azuremachines/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: capz-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: capz-leader-election-rolebinding
+  namespace: capz-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: capz-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: capz-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: capz-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: capz-manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: capz-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: capz-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: capz-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: capz-system
+---
+apiVersion: v1
+data:
+  client-id: ${AZURE_CLIENT_ID_B64}
+  client-secret: ${AZURE_CLIENT_SECRET_B64}
+  subscription-id: ${AZURE_SUBSCRIPTION_ID_B64}
+  tenant-id: ${AZURE_TENANT_ID_B64}
+kind: Secret
+metadata:
+  name: capz-manager-bootstrap-credentials
+  namespace: capz-system
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "8443"
+    prometheus.io/scheme: https
+    prometheus.io/scrape: "true"
+  labels:
+    control-plane: capz-controller-manager
+  name: capz-controller-manager-metrics-service
+  namespace: capz-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: capz-controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: capz-controller-manager
+  name: capz-controller-manager
+  namespace: capz-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: capz-controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: capz-controller-manager
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        env:
+        - name: AZURE_SUBSCRIPTION_ID
+          valueFrom:
+            secretKeyRef:
+              key: subscription-id
+              name: capz-manager-bootstrap-credentials
+        - name: AZURE_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              key: tenant-id
+              name: capz-manager-bootstrap-credentials
+        - name: AZURE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: client-id
+              name: capz-manager-bootstrap-credentials
+        - name: AZURE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: client-secret
+              name: capz-manager-bootstrap-credentials
+        image: rsmitty/cluster-api-azure-controller-amd64
+        imagePullPolicy: Always
+        name: manager
+      terminationGracePeriodSeconds: 10

@@ -331,7 +331,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: autonomy/cluster-api-talos-controller:latest
+        image: rsmitty/cluster-api-talos-controller:latest
         name: manager
         resources:
           limits:

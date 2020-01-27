@@ -1312,6 +1312,38 @@ steps:
   depends_on:
   - e2e-capi
 
+- name: e2e-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-azure
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - e2e-capi
+
 - name: e2e-gcp
   pull: always
   image: autonomy/build-container:latest
@@ -2051,6 +2083,39 @@ steps:
   depends_on:
   - e2e-capi
 
+- name: e2e-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-azure
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+    SONOBUOY_MODE: certified-conformance
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - e2e-capi
+
 - name: e2e-gcp
   pull: always
   image: autonomy/build-container:latest
@@ -2110,6 +2175,7 @@ steps:
     - nightly
   depends_on:
   - e2e-aws
+  - e2e-azure
   - e2e-gcp
 
 services:
@@ -2819,6 +2885,39 @@ steps:
   depends_on:
   - e2e-capi
 
+- name: e2e-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-azure
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+    SONOBUOY_MODE: certified-conformance
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - e2e-capi
+
 - name: e2e-gcp
   pull: always
   image: autonomy/build-container:latest
@@ -2878,6 +2977,7 @@ steps:
     - nightly
   depends_on:
   - e2e-aws
+  - e2e-azure
   - e2e-gcp
 
 services:

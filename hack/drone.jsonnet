@@ -324,6 +324,7 @@ local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_var
 local e2e_steps = default_steps + [
   e2e_capi,
   e2e_aws,
+  e2e_azure,
   e2e_gcp,
 ];
 
@@ -358,12 +359,13 @@ local push_edge = {
       'nightly',
     ],
   },
-  depends_on: [conformance_aws.name, conformance_gcp.name],
+  depends_on: [conformance_aws.name, conformance_azure.name, conformance_gcp.name],
 };
 
 local conformance_steps = default_steps + [
   e2e_capi,
   conformance_aws,
+  conformance_azure,
   conformance_gcp,
   push_edge,
 ];

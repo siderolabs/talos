@@ -5,11 +5,18 @@
 package azure
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -28,10 +35,18 @@ const (
 	AzureInternalEndpoint = "http://168.63.129.16"
 	// AzureInterfacesEndpoint is the local endpoint to get external IPs.
 	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2019-06-01"
+
+	mnt = "/mnt"
 )
 
 // Azure is the concrete type that implements the platform.Platform interface.
 type Azure struct{}
+
+// ovfXML is a simple struct to help us fish custom data out from the ovf-env.xml file
+type ovfXML struct {
+	XMLName    xml.Name `xml:"Environment"`
+	CustomData string   `xml:"ProvisioningSection>LinuxProvisioningConfigurationSet>CustomData"`
+}
 
 // Name implements the platform.Platform interface.
 func (a *Azure) Name() string {
@@ -40,11 +55,26 @@ func (a *Azure) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (a *Azure) Configuration() ([]byte, error) {
+	// attempt to download from metadata endpoint
+	config, err := download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
+	if err != nil {
+		fmt.Printf("metadata download failed")
+		return nil, err
+	}
+
+	// fall back to cdrom read b/c we failed to pull userdata from metadata server
+	if len(config) == 0 {
+		config, err = a.configFromCD()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := linuxAgent(); err != nil {
 		return nil, err
 	}
 
-	return download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
+	return config, nil
 }
 
 // Hostname implements the platform.Platform interface.
@@ -153,4 +183,57 @@ func (a *Azure) KernelArgs() kernel.Parameters {
 		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
 		kernel.NewParameter("rootdelay").Append("300"),
 	}
+}
+
+// configFromCD handles looking for devices and trying to mount/fetch xml to get the userdata
+func (a *Azure) configFromCD() ([]byte, error) {
+	devList, err := ioutil.ReadDir("/dev")
+	if err != nil {
+		return nil, err
+	}
+
+	diskRegex := regexp.MustCompile("(sr[0-9]|hd[c-z]|cdrom[0-9]|cd[0-9])")
+
+	for _, dev := range devList {
+		if diskRegex.MatchString(dev.Name()) {
+			fmt.Printf("found matching device. checking for ovf-env.xml: %s\n", dev.Name())
+
+			// Mount and slurp xml from disk
+			if err = unix.Mount(filepath.Join("/dev", dev.Name()), mnt, "udf", unix.MS_RDONLY, ""); err != nil {
+				fmt.Printf("unable to mount %s, possibly not udf: %s", dev.Name(), err.Error())
+				continue
+			}
+
+			ovfEnvFile, err := ioutil.ReadFile(filepath.Join(mnt, "ovf-env.xml"))
+			if err != nil {
+				// Device mount worked, but it wasn't the "CD" that contains the xml file
+				if os.IsNotExist(err) {
+					continue
+				}
+
+				return nil, fmt.Errorf("failed to read config: %s", err.Error())
+			}
+
+			if err = unix.Unmount(mnt, 0); err != nil {
+				return nil, fmt.Errorf("failed to unmount: %w", err)
+			}
+
+			// Unmarshall xml we slurped
+			ovfEnvData := ovfXML{}
+
+			err = xml.Unmarshal(ovfEnvFile, &ovfEnvData)
+			if err != nil {
+				return nil, err
+			}
+
+			b64CustomData, err := base64.StdEncoding.DecodeString(ovfEnvData.CustomData)
+			if err != nil {
+				return nil, err
+			}
+
+			return b64CustomData, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no devices seemed to contain ovf-env.xml for pulling machine config")
 }

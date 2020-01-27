@@ -28,13 +28,13 @@ function setup {
   AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}" az storage blob upload --container-name ${AZURE_STORAGE_CONTAINER} -f ${TMP}/disk.vhd -n azure-${TAG}.vhd
 
   # Delete image
-  az image delete --name talos-e2e-${TAG} -g ${AZURE_GROUP}
+  az image delete --name talos-e2e-${SHA} -g ${AZURE_GROUP}
 
   # Create image
-  az image create --name talos-e2e-${TAG} --source https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${AZURE_GROUP}
+  az image create --name talos-e2e-${SHA} --source https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_STORAGE_CONTAINER}/azure-${TAG}.vhd --os-type linux -g ${AZURE_GROUP}
 
   # Setup the cluster YAML.
-  sed "s/{{TAG}}/${TAG}/" ${PWD}/hack/test/manifests/azure-cluster.yaml > ${TMP}/cluster.yaml
+  sed "s/{{TAG}}/${SHA}/" ${PWD}/hack/test/capi/cluster-azure.yaml > ${TMP}/cluster.yaml
 }
 
 setup
