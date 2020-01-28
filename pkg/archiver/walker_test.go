@@ -7,6 +7,8 @@ package archiver_test
 
 import (
 	"context"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -73,6 +75,33 @@ func (suite *WalkerSuite) TestIterationFile() {
 
 	suite.Assert().Equal([]string{"cp"},
 		relPaths)
+}
+
+func (suite *WalkerSuite) TestIterationSymlink() {
+	original := filepath.Join(suite.tmpDir, "original")
+	err := os.Mkdir(original, 0755)
+	suite.Require().NoError(err)
+
+	newname := filepath.Join(suite.tmpDir, "new")
+
+	// NB: We make this a relative symlink to make the test more complete.
+	err = os.Symlink("original", newname)
+	suite.Require().NoError(err)
+
+	err = ioutil.WriteFile(filepath.Join(original, "original.txt"), []byte{}, 0666)
+	suite.Require().NoError(err)
+
+	ch, err := archiver.Walker(context.Background(), newname)
+	suite.Require().NoError(err)
+
+	relPaths := []string(nil)
+
+	for fi := range ch {
+		suite.Require().NoError(fi.Error)
+		relPaths = append(relPaths, fi.RelPath)
+	}
+
+	suite.Assert().Equal([]string{".", "original.txt"}, relPaths)
 }
 
 func (suite *WalkerSuite) TestIterationNotFound() {

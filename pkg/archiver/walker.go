@@ -55,9 +55,16 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 		o(&opts)
 	}
 
-	_, err := os.Stat(rootPath)
+	info, err := os.Lstat(rootPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+		rootPath, err = filepath.EvalSymlinks(rootPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ch := make(chan FileItem)
