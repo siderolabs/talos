@@ -118,7 +118,6 @@ type MachineConfig struct {
 	//     - |
 	//       install:
 	//         disk:
-	//         extraDiskArgs:
 	//         extraKernelArgs:
 	//         image:
 	//         bootloader:
