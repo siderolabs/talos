@@ -230,7 +230,6 @@ Examples:
 ```yaml
 install:
   disk:
-  extraDiskArgs:
   extraKernelArgs:
   image:
   bootloader:
