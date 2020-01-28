@@ -1,3 +1,20 @@
+# [v0.4.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.2...v0.4.0-alpha.3) (2020-01-28)
+
+### Bug Fixes
+
+- correctly split lines with /dev/kmsg output ([1edc08a](https://github.com/talos-systems/talos/commit/1edc08aa245225161d85ee6d9e536bd840558769))
+- install sequence stuck on event bus ([565c747](https://github.com/talos-systems/talos/commit/565c7475826c0ce651202c551e8b4d64451eb3a4))
+- leave etcd after draining node ([e7749d2](https://github.com/talos-systems/talos/commit/e7749d2e8fce4cd435efcb36b06f228e907af268))
+- parse correctly kernel command line missing DNS config ([cebd88f](https://github.com/talos-systems/talos/commit/cebd88f77c312c3886a023881f2aa6d89e0228b9))
+- re-enable control plane flags ([aabd46e](https://github.com/talos-systems/talos/commit/aabd46e65103bc26870c67217ffbfbe135925c1c)), closes [#1523](https://github.com/talos-systems/talos/issues/1523)
+- retry system disk busy check ([e495e29](https://github.com/talos-systems/talos/commit/e495e293080ccd7093cf15cbcf97cd19fce166a7))
+
+### Features
+
+- allow ability to customize containerd ([e0181c8](https://github.com/talos-systems/talos/commit/e0181c85eb32c64f3acd07340cb09d46b669820b)), closes [#1718](https://github.com/talos-systems/talos/issues/1718)
+- allow for bootkube images to be customized ([67e50f6](https://github.com/talos-systems/talos/commit/67e50f6f50bd3d1b7a67cefe5688eb31c7befce5))
+- update kernel ([4f39907](https://github.com/talos-systems/talos/commit/4f39907b6e6cdda3d3309b7e882f1275f74dcfb9))
+
 # [v0.4.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (2020-01-21)
 
 ### Bug Fixes
