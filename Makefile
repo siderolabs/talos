@@ -183,7 +183,7 @@ unit-tests: apps ## Performs unit tests.
 
 .PHONY: unit-tests-race
 unit-tests-race: ## Performs unit tests with race detection enabled.
-	@$(MAKE) local-$@ DEST=./
+	@$(MAKE) target-$@
 
 integration-test-%:
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
