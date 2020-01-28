@@ -1,3 +1,14 @@
+# [](https://github.com/andrewrynhard/talos/compare/v0.3.1...v) (2020-01-28)
+
+
+### Bug Fixes
+
+* parse correctly kernel command line missing DNS config ([9933f75](https://github.com/andrewrynhard/talos/commit/9933f7574a55c3fadcaeadeb41ae66d0ab41ccdd))
+* re-enable control plane flags ([a4a1229](https://github.com/andrewrynhard/talos/commit/a4a12296ef71d64b5a40189db27067864ae71fe5)), closes [#1523](https://github.com/andrewrynhard/talos/issues/1523)
+* retry system disk busy check ([c9cef6d](https://github.com/andrewrynhard/talos/commit/c9cef6dd57c27004ab76f17c62ba006bc1a9f079))
+
+
+
 # [v0.3.1](https://github.com/talos-systems/talos/compare/v0.3.0...v0.3.1) (2020-01-22)
 
 ### Bug Fixes
