@@ -178,7 +178,7 @@ func (k *KubeletConfig) ExtraArgs() map[string]string {
 
 // ExtraMounts implements the Configurator interface.
 func (k *KubeletConfig) ExtraMounts() []specs.Mount {
-	return nil
+	return k.KubeletExtraMounts
 }
 
 // Name implements the Configurator interface.

@@ -529,6 +529,25 @@ extraArgs:
 
 ```
 
+#### extraMounts
+
+The `extraMounts` field is used to add additional mounts to the kubelet container.
+
+Type: `array`
+
+Examples:
+
+```yaml
+extraMounts:
+  - source: /var/lib/example
+    destination: /var/lib/example
+    type: bind
+    options:
+      - rshared
+      - ro
+
+```
+
 ---
 
 ### NetworkConfig

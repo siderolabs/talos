@@ -9,6 +9,8 @@ package v1alpha1
 import (
 	"net/url"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
+
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
@@ -288,6 +290,18 @@ type KubeletConfig struct {
 	//       extraArgs:
 	//         key: value
 	KubeletExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	//   description: |
+	//     The `extraMounts` field is used to add additional mounts to the kubelet container.
+	//   examples:
+	//     - |
+	//       extraMounts:
+	//         - source: /var/lib/example
+	//           destination: /var/lib/example
+	//           type: bind
+	//           options:
+	//             - rshared
+	//             - ro
+	KubeletExtraMounts []specs.Mount `yaml:"extraMounts,omitempty"`
 }
 
 // NetworkConfig reperesents the machine's networking config values.
