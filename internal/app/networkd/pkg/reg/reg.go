@@ -180,22 +180,23 @@ func (r *Registrator) Watch(in *healthapi.HealthWatchRequest, srv healthapi.Heal
 		ticker = time.NewTicker(time.Duration(in.IntervalSeconds) * time.Second)
 	)
 
-	for range ticker.C {
-		// select {
-		// case <-srv.Context().Done():
-		//	return nil
-		// case <-ticker.C:
-		resp, err = r.Check(srv.Context(), &empty.Empty{})
-		if err != nil {
-			return err
-		}
+	defer ticker.Stop()
 
-		if err = srv.Send(resp); err != nil {
-			return err
+	for {
+		select {
+		case <-srv.Context().Done():
+			return srv.Context().Err()
+		case <-ticker.C:
+			resp, err = r.Check(srv.Context(), &empty.Empty{})
+			if err != nil {
+				return err
+			}
+
+			if err = srv.Send(resp); err != nil {
+				return err
+			}
 		}
 	}
-
-	return nil
 }
 
 // Ready implements the Health api and provides visibility to the state of networkd.
