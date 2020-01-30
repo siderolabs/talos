@@ -533,7 +533,7 @@ func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...gr
 }
 
 // Read reads a file.
-func (c *Client) Read(ctx context.Context, path string) (io.Reader, <-chan error, error) {
+func (c *Client) Read(ctx context.Context, path string) (io.ReadCloser, <-chan error, error) {
 	stream, err := c.MachineClient.Read(ctx, &machineapi.ReadRequest{Path: path})
 	if err != nil {
 		return nil, nil, err

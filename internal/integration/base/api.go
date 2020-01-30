@@ -7,9 +7,15 @@
 package base
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
+	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/access"
+	"github.com/talos-systems/talos/internal/pkg/provision/check"
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 )
@@ -67,6 +73,44 @@ func (apiSuite *APISuite) DiscoverNodes() []string {
 	}
 
 	return apiSuite.discoveredNodes
+}
+
+// Capabilities describes current cluster allowed actions.
+type Capabilities struct {
+	RunsTalosKernel bool
+	SupportsReboot  bool
+}
+
+// Capabilities returns a set of capabilities to skip tests for different environments.
+func (apiSuite *APISuite) Capabilities() Capabilities {
+	v, err := apiSuite.Client.Version(context.Background())
+	apiSuite.Require().NoError(err)
+
+	caps := Capabilities{}
+
+	if v.Messages[0].Platform != nil {
+		switch v.Messages[0].Platform.Mode {
+		case runtime.Container.String():
+		default:
+			caps.RunsTalosKernel = true
+			caps.SupportsReboot = true
+		}
+	}
+
+	return caps
+}
+
+// AssertClusterHealthy verifies that cluster is healthy using provisioning checks.
+func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
+	if apiSuite.Cluster == nil {
+		// can't assert if cluster state was provided
+		apiSuite.T().Skip("cluster health can't be verified when cluster state is not provided")
+	}
+
+	clusterAccess := access.NewAdapter(apiSuite.Cluster, provision.WithTalosClient(apiSuite.Client))
+	defer clusterAccess.Close() //nolint: errcheck
+
+	apiSuite.Require().NoError(check.Wait(ctx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
 }
 
 // TearDownSuite closes Talos API client

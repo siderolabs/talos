@@ -78,7 +78,9 @@ func (r *Registrator) Register(s *grpc.Server) {
 // Reboot implements the machineapi.MachineServer interface.
 func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machineapi.RebootResponse, err error) {
 	reply = &machineapi.RebootResponse{
-		Messages: []*machineapi.Reboot{},
+		Messages: []*machineapi.Reboot{
+			{},
+		},
 	}
 
 	log.Printf("reboot via API received")
@@ -90,7 +92,9 @@ func (r *Registrator) Reboot(ctx context.Context, in *empty.Empty) (reply *machi
 // Shutdown implements the machineapi.MachineServer interface.
 func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *machineapi.ShutdownResponse, err error) {
 	reply = &machineapi.ShutdownResponse{
-		Messages: []*machineapi.Shutdown{},
+		Messages: []*machineapi.Shutdown{
+			{},
+		},
 	}
 
 	log.Printf("shutdown via API received")
@@ -135,7 +139,9 @@ func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machine
 	}
 
 	return &machineapi.ResetResponse{
-		Messages: []*machineapi.Reset{},
+		Messages: []*machineapi.Reset{
+			{},
+		},
 	}, err
 }
 

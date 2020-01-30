@@ -34,6 +34,8 @@ var readCmd = &cobra.Command{
 				return fmt.Errorf("error reading file: %w", err)
 			}
 
+			defer r.Close() //nolint: errcheck
+
 			var wg sync.WaitGroup
 
 			wg.Add(1)
@@ -51,7 +53,7 @@ var readCmd = &cobra.Command{
 				return fmt.Errorf("error reading: %w", err)
 			}
 
-			return nil
+			return r.Close()
 		})
 	},
 }

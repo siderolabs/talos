@@ -30,11 +30,18 @@ func NewAdapter(cluster provision.Cluster, opts ...provision.Option) provision.C
 		}
 	}
 
-	return &adapter{
+	adapter := &adapter{
 		Cluster: cluster,
 		clients: make(map[string]*client.Client),
 		options: &options,
 	}
+
+	if options.TalosClient != nil {
+		// inject default client if provided
+		adapter.clients[""] = options.TalosClient
+	}
+
+	return adapter
 }
 
 type adapter struct {
@@ -117,6 +124,11 @@ func (a *adapter) K8sClient(ctx context.Context) (*kubernetes.Clientset, error) 
 
 func (a *adapter) Close() error {
 	for _, cli := range a.clients {
+		if cli == a.options.TalosClient {
+			// this client was provided, don't close it
+			continue
+		}
+
 		if err := cli.Close(); err != nil {
 			return err
 		}
