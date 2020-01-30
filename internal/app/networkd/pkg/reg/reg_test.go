@@ -118,7 +118,9 @@ func (suite *NetworkdSuite) TestHealthAPI() {
 	nClient := healthapi.NewHealthClient(conn)
 	hcResp, err := nClient.Check(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
-	suite.Assert().Equal(healthapi.HealthCheck_SERVING, hcResp.Messages[0].Status)
+	// Can only check against unknown since its not guaranteed that
+	// the host the tests will run on will have an arp table populated.
+	suite.Assert().NotEqual(healthapi.HealthCheck_UNKNOWN, hcResp.Messages[0].Status)
 
 	rResp, err := nClient.Ready(context.Background(), &empty.Empty{})
 	suite.Assert().NoError(err)
@@ -139,7 +141,7 @@ func (suite *NetworkdSuite) TestHealthAPI() {
 	for i := 0; i < 2; i++ {
 		hcResp, err = stream.Recv()
 		suite.Assert().NoError(err)
-		suite.Assert().Equal(healthapi.HealthCheck_SERVING, hcResp.Messages[0].Status)
+		suite.Assert().NotEqual(healthapi.HealthCheck_UNKNOWN, hcResp.Messages[0].Status)
 	}
 
 	cancel()

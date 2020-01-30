@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package reg provides the gRPC network service implementation.
 package reg
 
 import (
@@ -155,14 +156,52 @@ func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
 }
 
 // Check implements the Health api and provides visibilty into the state of networkd.
-// Ready signifies the daemon (api) is healthy and ready to serve requests.
+// We determine networkd health based on neighbor (arp table) entries.
+// Under normal operating circumstances, there should be a steady state of reachable neighbor entries.
+// If we get in a situation where all of our neighbor entries are stale, then we're in trouble.
 func (r *Registrator) Check(ctx context.Context, in *empty.Empty) (reply *healthapi.HealthCheckResponse, err error) {
+	// Set initial state to unknown
 	reply = &healthapi.HealthCheckResponse{
 		Messages: []*healthapi.HealthCheck{
 			{
-				Status: healthapi.HealthCheck_SERVING,
+				Status: healthapi.HealthCheck_UNKNOWN,
 			},
 		},
+	}
+
+	var neighbors []rtnetlink.NeighMessage
+
+	neighbors, err = r.Conn.Neigh.List()
+	if err != nil {
+		return reply, err
+	}
+
+	// After getting a list of neighbors we can upgrade to not serving
+	reply.Messages[0].Status = healthapi.HealthCheck_NOT_SERVING
+
+	// Find at least one neighbor in a reachable state
+	for _, neighbor := range neighbors {
+		// Verify neighbor is associated with a link
+		// managed by networkd ( skip cni links )
+		link, err := r.Conn.Link.Get(neighbor.Index)
+		if err != nil {
+			continue
+		}
+
+		if _, ok := r.Networkd.Interfaces[link.Attributes.Name]; !ok {
+			continue
+		}
+
+		// Verify neighbor state
+		switch neighbor.State {
+		case unix.NUD_REACHABLE:
+			fallthrough
+		case unix.NUD_STALE:
+			fallthrough
+		case unix.NUD_DELAY:
+			reply.Messages[0].Status = healthapi.HealthCheck_SERVING
+			return reply, nil
+		}
 	}
 
 	return reply, nil
