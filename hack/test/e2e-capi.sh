@@ -9,7 +9,7 @@ export KUBECONFIG="/tmp/e2e/docker/kubeconfig"
 
 # CAPI
 
-export CAPI_VERSION="0.2.6"
+export CAPI_VERSION="0.2.9"
 export CAPI_COMPONENTS="https://github.com/kubernetes-sigs/cluster-api/releases/download/v${CAPI_VERSION}/cluster-api-components.yaml"
 
 # CABPT
