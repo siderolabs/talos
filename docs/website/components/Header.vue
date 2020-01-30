@@ -5,17 +5,21 @@
         <Logo></Logo>
       </div>
       <div class="flex py-6 ml-auto">
-        <ul class="flex flex-wrap items-center justify-end">
-          <li class="link min-w-full md:min-w-0">
+        <ul class="header-menu">
+          <li>
             <a href="/docs/v0.3">
               <span class="font-semibold mr-1">Documentation</span>
             </a>
           </li>
-          <li class="link min-w-full md:min-w-0">
+          <li>
             <ProjectDropdown></ProjectDropdown>
           </li>
-          <li class="link min-w-full md:min-w-0">
+          <li class="">
             <CommunityDropdown></CommunityDropdown>
+          </li>
+          <li class="invisible lg:visible"><span class="divider"></span></li>
+          <li>
+            <EnterpriseLink />
           </li>
         </ul>
       </div>
@@ -27,19 +31,51 @@
 import Logo from '~/components/Logo.vue'
 import ProjectDropdown from '~/components/ProjectDropdown.vue'
 import CommunityDropdown from '~/components/CommunityDropdown.vue'
+import EnterpriseLink from '~/components/EnterpriseLink.vue'
 
 export default {
   name: 'Header',
   components: {
     Logo,
     ProjectDropdown,
-    CommunityDropdown
+    CommunityDropdown,
+    EnterpriseLink
   }
 }
 </script>
 
 <style scoped>
+ul.header-menu {
+  @apply flex flex-wrap items-center justify-end font-bold;
+}
+
+ul.header-menu li {
+  @apply min-w-full;
+  @screen md {
+    @apply min-w-0;
+  }
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+}
+
 li {
   margin-left: 1.25rem;
+  border-bottom-width: 4px;
+  border-bottom-color: transparent;
+}
+
+/* this class doesn't do anything right now, but exists to match the style of the
+   corp site and for future expansion. */
+li:hover {
+  border-bottom-width: 4px;
+  border-bottom-color: transparent;
+}
+
+.divider {
+  border-left-width: 4px;
+  border-left-color: ddd;
 }
 </style>
