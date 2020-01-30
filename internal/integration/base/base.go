@@ -7,14 +7,18 @@
 // Package base provides shared definition of base suites for tests
 package base
 
+import (
+	"github.com/talos-systems/talos/internal/pkg/provision"
+)
+
 // TalosSuite defines most common settings for integration test suites
 type TalosSuite struct {
 	// Endpoint to use to connect, if not set config is used
 	Endpoint string
 	// K8sEndpoint is API server endpoint, if set overrides kubeconfig
 	K8sEndpoint string
-	// Nodes is a list of Talos cluster addresses (overrides discovery if set)
-	Nodes []string
+	// Cluster describes provisioned cluster, used for discovery purposes
+	Cluster provision.Cluster
 	// TalosConfig is a path to talosconfig
 	TalosConfig string
 	// Version is the (expected) version of Talos tests are running against
@@ -30,8 +34,10 @@ type TalosSuite struct {
 // This method is overridden in specific suites to allow for specific discovery.
 func (talosSuite *TalosSuite) DiscoverNodes() []string {
 	if talosSuite.discoveredNodes == nil {
-		if talosSuite.Nodes != nil {
-			talosSuite.discoveredNodes = talosSuite.Nodes
+		if talosSuite.Cluster != nil {
+			for _, node := range talosSuite.Cluster.Info().Nodes {
+				talosSuite.discoveredNodes = append(talosSuite.discoveredNodes, node.PrivateIP.String())
+			}
 		}
 	}
 

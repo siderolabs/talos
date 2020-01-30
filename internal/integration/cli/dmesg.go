@@ -7,6 +7,10 @@
 package cli
 
 import (
+	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
@@ -23,6 +27,23 @@ func (suite *DmesgSuite) SuiteName() string {
 // TestHasOutput verifies that dmesg is displayed.
 func (suite *DmesgSuite) TestHasOutput() {
 	suite.RunOsctl([]string{"dmesg"}) // default checks for stdout not empty
+}
+
+// TestClusterHasOutput verifies that each node in the cluster has some output
+func (suite *DmesgSuite) TestClusterHasOutput() {
+	nodes := suite.DiscoverNodes()
+	suite.Require().NotEmpty(nodes)
+
+	matchers := make([]base.RunOption, 0, len(nodes))
+
+	for _, node := range nodes {
+		matchers = append(matchers,
+			base.StdoutShouldMatch(
+				regexp.MustCompile(fmt.Sprintf(`(?m)^%s:`, regexp.QuoteMeta(node)))))
+	}
+
+	suite.RunOsctl([]string{"--nodes", strings.Join(nodes, ","), "dmesg"},
+		matchers...)
 }
 
 func init() {

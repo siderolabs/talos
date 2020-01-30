@@ -23,6 +23,21 @@ type CLISuite struct {
 	TalosSuite
 }
 
+// DiscoverNodes provides list of Talos nodes in the cluster.
+//
+// As there's no way to provide this functionality via Talos CLI, it relies on cluster info.
+func (cliSuite *CLISuite) DiscoverNodes() []string {
+	discoveredNodes := cliSuite.TalosSuite.DiscoverNodes()
+	if discoveredNodes != nil {
+		return discoveredNodes
+	}
+
+	// still no nodes, skip the test
+	cliSuite.T().Skip("no nodes were discovered")
+
+	return nil
+}
+
 func (cliSuite *CLISuite) buildOsctlCmd(args []string) *exec.Cmd {
 	// TODO: add support for calling `osctl config endpoint` before running osctl
 

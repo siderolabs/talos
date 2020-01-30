@@ -4,10 +4,13 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
+PROVISIONER=firecracker
+CLUSTER_NAME=e2e-${PROVISIONER}
+
 function create_cluster {
   "${OSCTL}" cluster create \
-    --provisioner firecracker \
-    --name e2e-firecracker \
+    --provisioner "${PROVISIONER}" \
+    --name "${CLUSTER_NAME}" \
     --masters=3 \
     --mtu 1500 \
     --memory 2048 \
