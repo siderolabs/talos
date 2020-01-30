@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
 )
 
@@ -41,10 +42,20 @@ func WithTalosConfig(talosConfig *config.Config) Option {
 	}
 }
 
+// WithTalosClient specifies client to use when acessing Talos cluster.
+func WithTalosClient(client *client.Client) Option {
+	return func(o *Options) error {
+		o.TalosClient = client
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
 	TalosConfig   *config.Config
+	TalosClient   *client.Client
 	ForceEndpoint string
 }
 

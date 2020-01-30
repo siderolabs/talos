@@ -7,13 +7,11 @@
 package k8s
 
 import (
-	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -36,10 +34,7 @@ func (suite *VersionSuite) TestExpectedVersion() {
 	expectedApiServerVersion := fmt.Sprintf("v%s", constants.DefaultKubernetesVersion)
 	suite.Assert().Equal(expectedApiServerVersion, apiServerVersion.GitVersion)
 
-	v, err := suite.Client.Version(context.Background())
-	suite.Require().NoError(err)
-
-	checkKernelVersion := v.Messages[0].Platform != nil && v.Messages[0].Platform.Mode != runtime.Container.String()
+	checkKernelVersion := suite.Capabilities().RunsTalosKernel
 
 	// verify each node (kubelet version, Talos version, etc.)
 	nodes, err := suite.Clientset.CoreV1().Nodes().List(metav1.ListOptions{})

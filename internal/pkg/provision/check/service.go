@@ -14,7 +14,7 @@ import (
 )
 
 // ServiceStateAssertion checks whether service reached some specified state.
-func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess, service, state string) error {
+func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess, service string, states ...string) error {
 	cli, err := cluster.Client()
 	if err != nil {
 		return err
@@ -27,14 +27,19 @@ func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess,
 
 	serviceOk := false
 
+	acceptedStates := map[string]struct{}{}
+	for _, state := range states {
+		acceptedStates[state] = struct{}{}
+	}
+
 	for _, serviceInfo := range servicesInfo {
 		if len(serviceInfo.Service.Events.Events) == 0 {
 			return fmt.Errorf("no events recorded yet for service %q", service)
 		}
 
 		lastEvent := serviceInfo.Service.Events.Events[len(serviceInfo.Service.Events.Events)-1]
-		if lastEvent.State != state {
-			return fmt.Errorf("service %q not in expected state %q: current state [%s] %s", service, state, lastEvent.State, lastEvent.Msg)
+		if _, ok := acceptedStates[lastEvent.State]; !ok {
+			return fmt.Errorf("service %q not in expected state %q: current state [%s] %s", service, states, lastEvent.State, lastEvent.Msg)
 		}
 
 		serviceOk = true

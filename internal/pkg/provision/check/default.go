@@ -25,7 +25,7 @@ func DefaultClusterChecks() []ClusterCheck {
 		// wait for bootkube to finish on init node
 		func(cluster provision.ClusterAccess) conditions.Condition {
 			return conditions.PollingCondition("bootkube to finish", func(ctx context.Context) error {
-				return ServiceStateAssertion(ctx, cluster, "bootkube", "Finished")
+				return ServiceStateAssertion(ctx, cluster, "bootkube", "Finished", "Skipped")
 			}, 5*time.Minute, 5*time.Second)
 		},
 		// wait for apid to be ready on all the nodes
