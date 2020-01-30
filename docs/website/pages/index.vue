@@ -1,6 +1,6 @@
 <template>
   <div id="landing-page" class="c-rich-text">
-    <div class="w-auto lg:w-3/4 h-auto mx-auto md:mt-10 mb-16 px-4 bg-white">
+    <div class="w-auto lg:w-3/4 mx-auto md:mt-10 mb-8 px-4 bg-white">
       <div class="flex flex-wrap justify-center items-center">
         <div class="text-xl text-gray-700 lg:w-1/2">
           <div class="text-center py-8 m-0">
@@ -36,7 +36,7 @@
             </div>
           </div>
         </div>
-        <div class="w-full lg:w-1/2 p-16 pr-0">
+        <div class="w-2/3 lg:w-1/2 lg:pl-8">
           <img
             src="~/assets/images/talos-arch.svg"
             alt="A description of the basic Talos architecture."
