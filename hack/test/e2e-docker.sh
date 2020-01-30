@@ -13,11 +13,14 @@ case "${CI:-false}" in
     ;;
 esac
 
+PROVISIONER=docker
+CLUSTER_NAME=e2e-${PROVISIONER}
+
 function create_cluster {
   "${OSCTL}" cluster create \
-    --provisioner docker \
+    --provisioner "${PROVISIONER}" \
+    --name "${CLUSTER_NAME}" \
     --image "${IMAGE}" \
-    --name e2e-docker \
     --masters=3 \
     --mtu 1500 \
     --memory 2048 \

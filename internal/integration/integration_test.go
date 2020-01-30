@@ -8,7 +8,9 @@
 package integration_test
 
 import (
+	"context"
 	"flag"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -18,6 +20,8 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/internal/integration/k8s"
+	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -29,9 +33,11 @@ var (
 	talosConfig     string
 	endpoint        string
 	k8sEndpoint     string
-	nodes           stringList
 	expectedVersion string
 	osctlPath       string
+	provisionerName string
+	clusterName     string
+	stateDir        string
 )
 
 func TestIntegration(t *testing.T) {
@@ -39,12 +45,31 @@ func TestIntegration(t *testing.T) {
 		t.Error("--talos.config is not provided")
 	}
 
+	var cluster provision.Cluster
+
+	if provisionerName != "" {
+		// use provisioned cluster state as discovery source
+		ctx := context.Background()
+
+		provisioner, err := providers.Factory(ctx, provisionerName)
+		if err != nil {
+			t.Error("error iniitalizing provisioner", err)
+		}
+
+		defer provisioner.Close() //nolint: errcheck
+
+		cluster, err = provisioner.Reflect(ctx, clusterName, stateDir)
+		if err != nil {
+			t.Error("error reflecting cluster via provisioner", err)
+		}
+	}
+
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
 				Endpoint:    endpoint,
 				K8sEndpoint: k8sEndpoint,
-				Nodes:       []string(nodes),
+				Cluster:     cluster,
 				TalosConfig: talosConfig,
 				Version:     expectedVersion,
 				OsctlPath:   osctlPath,
@@ -65,10 +90,17 @@ func TestIntegration(t *testing.T) {
 func init() {
 	defaultTalosConfig, _ := config.GetDefaultPath() //nolint: errcheck
 
+	defaultStateDir, err := config.GetTalosDirectory()
+	if err == nil {
+		defaultStateDir = filepath.Join(defaultStateDir, "clusters")
+	}
+
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")
 	flag.StringVar(&k8sEndpoint, "talos.k8sendpoint", "", "Kubernetes endpoint to use (overrides kubeconfig)")
-	flag.Var(&nodes, "talos.nodes", "list of node addresses (overrides discovery)")
+	flag.StringVar(&provisionerName, "talos.provisioner", "", "Talos cluster provisioner to use, if not set cluster state is disabled")
+	flag.StringVar(&stateDir, "talos.state", defaultStateDir, "directory path to store cluster state")
+	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
 	flag.StringVar(&osctlPath, "talos.osctlpath", "osctl", "The path to 'osctl' binary")
 

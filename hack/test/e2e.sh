@@ -31,6 +31,10 @@ export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
 export NUM_NODES=6
 
+# default values, overridden by osctl cluster create tests
+PROVISIONER=
+CLUSTER_NAME=
+
 cleanup_capi() {
   ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig delete cluster ${NAME_PREFIX}
 }
@@ -90,11 +94,11 @@ function create_cluster_capi {
 }
 
 function run_talos_integration_test {
-  "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}"
+  "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
 }
 
 function run_talos_integration_test_docker {
-  "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443
+  "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
 }
 
 function run_kubernetes_integration_test {
