@@ -118,3 +118,21 @@ func DomainName() (domainname string, err error) {
 
 	return strings.TrimSuffix(domainname, "\n"), nil
 }
+
+// IsIPv6 indicates whether any IP address within the provided set is an IPv6
+// address
+func IsIPv6(addrs ...net.IP) bool {
+	for _, a := range addrs {
+		if a == nil || a.IsLoopback() || a.IsUnspecified() {
+			continue
+		}
+
+		if a.To4() == nil {
+			if a.To16() != nil {
+				return true
+			}
+		}
+	}
+
+	return false
+}
