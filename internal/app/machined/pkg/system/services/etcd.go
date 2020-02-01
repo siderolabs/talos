@@ -86,7 +86,7 @@ func (e *Etcd) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (e *Etcd) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd"}
+	return []string{"containerd", "networkd"}
 }
 
 // Runner implements the Service interface.
@@ -164,15 +164,25 @@ func generatePKI(config runtime.Configurator) (err error) {
 	}
 
 	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
+	if net.IsIPv6(ips...) {
+		ips = append(ips, stdlibnet.ParseIP("::1"))
+	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("failed to get hostname: %w", err)
 	}
 
+	dnsNames, err := net.DNSNames()
+	if err != nil {
+		return fmt.Errorf("failed to get host DNS names: %w", err)
+	}
+
+	dnsNames = append(dnsNames, "localhost")
+
 	opts := []x509.Option{
 		x509.CommonName(hostname),
-		x509.DNSNames([]string{"localhost", hostname}),
+		x509.DNSNames(dnsNames),
 		x509.RSA(true),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
@@ -338,11 +348,16 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		return nil, errors.New("failed to discover local IP")
 	}
 
+	listenAddress := "0.0.0.0"
+	if net.IsIPv6(ips...) {
+		listenAddress = "[::]"
+	}
+
 	blackListArgs := argsbuilder.Args{
 		"name":                  hostname,
 		"data-dir":              constants.EtcdDataPath,
-		"listen-peer-urls":      "https://0.0.0.0:2380",
-		"listen-client-urls":    "https://0.0.0.0:2379",
+		"listen-peer-urls":      "https://" + listenAddress + ":2380",
+		"listen-client-urls":    "https://" + listenAddress + ":2379",
 		"cert-file":             constants.KubernetesEtcdPeerCert,
 		"key-file":              constants.KubernetesEtcdPeerKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,

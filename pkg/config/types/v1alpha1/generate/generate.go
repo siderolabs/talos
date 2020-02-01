@@ -218,7 +218,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 
 	var loopback, podNet, serviceNet string
 
-	if isIPv6(endpoint) {
+	if tnet.IsIPv6(net.ParseIP(endpoint)) {
 		loopback = "::1"
 		podNet = DefaultIPv6PodNet
 		serviceNet = DefaultIPv6ServiceNet
@@ -379,16 +379,4 @@ func genToken(lenFirst int, lenSecond int) (string, error) {
 	}
 
 	return tokenTemp[0] + "." + tokenTemp[1], nil
-}
-
-func isIPv6(addrs ...string) bool {
-	for _, a := range addrs {
-		if ip := net.ParseIP(a); ip != nil {
-			if ip.To4() == nil {
-				return true
-			}
-		}
-	}
-
-	return false
 }
