@@ -160,77 +160,23 @@ func New(config runtime.Configurator) (*Networkd, error) {
 // configuration, and any addressing that is needed. We care about ordering
 // here so that we can ensure any links that make up a bond will be in
 // the correct state when we get to bonding configuration.
-// nolint: gocyclo
+//
+//nolint: gocyclo
 func (n *Networkd) Configure() (err error) {
-	var wg sync.WaitGroup
-
-	log.Println("configuring non-bonded interfaces")
-
-	for _, iface := range n.Interfaces {
-		// Skip bonded interfaces so we can ensure a proper base state
-		if iface.Bonded {
-			continue
+	// Configure non-bonded interfaces first so we can ensure basic
+	// interfaces exist prior to bonding
+	for _, bonded := range []bool{false, true} {
+		if bonded {
+			log.Println("configuring bonded interfaces")
+		} else {
+			log.Println("configuring non-bonded interfaces")
 		}
 
-		wg.Add(1)
-
-		go func(netif *nic.NetworkInterface, wg *sync.WaitGroup) {
-			defer wg.Done()
-
-			// Ensure link exists
-			if err = netif.Create(); err != nil {
-				log.Printf("error creating nic: %v", err)
-				return
-			}
-
-			if err = netif.Configure(); err != nil {
-				log.Printf("error configuring nic: %v", err)
-				return
-			}
-
-			if err = netif.Addressing(); err != nil {
-				log.Printf("error configuring addressing: %v", err)
-				return
-			}
-		}(iface, &wg)
-	}
-
-	wg.Wait()
-
-	log.Println("configuring bonded interfaces")
-
-	for _, iface := range n.Interfaces {
-		// Only work on bonded interfaces
-		if !iface.Bonded {
-			continue
+		if err = n.configureLinks(bonded); err != nil {
+			// Treat errors as non-fatal
+			log.Println(err)
 		}
-
-		wg.Add(1)
-
-		go func(netif *nic.NetworkInterface, wg *sync.WaitGroup) {
-			defer wg.Done()
-
-			log.Printf("setting up %s", netif.Name)
-
-			// Ensure link exists
-			if err = netif.Create(); err != nil {
-				log.Printf("error creating nic: %v", err)
-				return
-			}
-
-			if err = netif.Configure(); err != nil {
-				log.Printf("error configuring nic: %v", err)
-				return
-			}
-
-			if err = netif.Addressing(); err != nil {
-				log.Printf("error configuring addressing: %v", err)
-				return
-			}
-		}(iface, &wg)
 	}
-
-	wg.Wait()
 
 	resolvers := []string{}
 
@@ -409,4 +355,46 @@ func (n *Networkd) SetReady() {
 	defer n.Unlock()
 
 	n.ready = true
+}
+
+func (n *Networkd) configureLinks(bonded bool) error {
+	errCh := make(chan error, len(n.Interfaces))
+	count := 0
+
+	for _, iface := range n.Interfaces {
+		if iface.Bonded != bonded {
+			continue
+		}
+
+		count++
+
+		go func(netif *nic.NetworkInterface) {
+			log.Printf("setting up %s", netif.Name)
+
+			errCh <- func() error {
+				// Ensure link exists
+				if err := netif.Create(); err != nil {
+					return fmt.Errorf("error creating nic %q: %w", netif.Name, err)
+				}
+
+				if err := netif.Configure(); err != nil {
+					return fmt.Errorf("error configuring nic %q: %w", netif.Name, err)
+				}
+
+				if err := netif.Addressing(); err != nil {
+					return fmt.Errorf("error configuring addressing %q: %w", netif.Name, err)
+				}
+
+				return nil
+			}()
+		}(iface)
+	}
+
+	var multiErr *multierror.Error
+
+	for i := 0; i < count; i++ {
+		multiErr = multierror.Append(multiErr, <-errCh)
+	}
+
+	return multiErr.ErrorOrNil()
 }
