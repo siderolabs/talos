@@ -35,6 +35,7 @@ osctl cluster create [flags]
       --vmlinux-path string         the uncompressed kernel image to use (default "_out/vmlinux")
       --wait                        wait for the cluster to be ready before returning
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
+      --with-bootloader-emulation   enable bootloader emulation to load kernel and initramfs from disk image
       --workers int                 the number of workers to create (default 1)
 ```
 

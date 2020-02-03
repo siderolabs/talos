@@ -28,14 +28,29 @@ type LogicalBlockAddresser struct {
 
 // New initializes and returns a LogicalBlockAddresser.
 func New(f *os.File) (lba *LogicalBlockAddresser, err error) {
+	st, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("stat disk error: %w", err)
+	}
+
 	var psize uint64
 	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKPBSZGET, uintptr(unsafe.Pointer(&psize))); errno != 0 {
-		return nil, errors.New("BLKPBSZGET failed")
+		if st.Mode().IsRegular() {
+			// not a device, assume default block size
+			psize = 512
+		} else {
+			return nil, errors.New("BLKPBSZGET failed")
+		}
 	}
 
 	var lsize uint64
 	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKSSZGET, uintptr(unsafe.Pointer(&lsize))); errno != 0 {
-		return nil, errors.New("BLKSSZGET failed")
+		if st.Mode().IsRegular() {
+			// not a device, assume default block size
+			lsize = 512
+		} else {
+			return nil, errors.New("BLKSSZGET failed")
+		}
 	}
 
 	lba = &LogicalBlockAddresser{

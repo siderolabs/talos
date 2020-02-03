@@ -51,12 +51,24 @@ func WithTalosClient(client *client.Client) Option {
 	}
 }
 
+// WithBootladerEmulation enables bootloader emulation.
+func WithBootladerEmulation() Option {
+	return func(o *Options) error {
+		o.BootloaderEmulation = true
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
 	TalosConfig   *config.Config
 	TalosClient   *client.Client
 	ForceEndpoint string
+
+	// Enable bootloader by booting from disk image assets.
+	BootloaderEmulation bool
 }
 
 // DefaultOptions returns default options.

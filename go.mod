@@ -54,6 +54,7 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.0.8
 	github.com/ryanuber/columnize v2.1.0+incompatible
+	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2

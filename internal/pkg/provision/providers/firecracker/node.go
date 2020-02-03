@@ -41,13 +41,13 @@ func (p *provisioner) createDisk(state *state, nodeReq provision.NodeRequest) (d
 	return
 }
 
-func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
-			nodeInfo, err := p.createNode(state, clusterReq, nodeReq)
+			nodeInfo, err := p.createNode(state, clusterReq, nodeReq, opts)
 			errCh <- err
 
 			if err == nil {
@@ -74,7 +74,7 @@ func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequ
 }
 
 //nolint: gocyclo
-func (p *provisioner) createNode(state *state, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
+func (p *provisioner) createNode(state *state, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	socketPath := filepath.Join(state.statePath, fmt.Sprintf("%s.sock", nodeReq.Name))
 	pidPath := filepath.Join(state.statePath, fmt.Sprintf("%s.pid", nodeReq.Name))
 
@@ -161,9 +161,10 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 	}
 
 	launchConfig := LaunchConfig{
-		FirecrackerConfig: cfg,
-		Config:            nodeConfig,
-		GatewayAddr:       clusterReq.Network.GatewayAddr.String(),
+		FirecrackerConfig:   cfg,
+		Config:              nodeConfig,
+		GatewayAddr:         clusterReq.Network.GatewayAddr.String(),
+		BootloaderEmulation: opts.BootloaderEmulation,
 	}
 
 	launchConfigFile, err := os.Create(filepath.Join(state.statePath, fmt.Sprintf("%s.config", nodeReq.Name)))
