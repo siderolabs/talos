@@ -160,6 +160,8 @@ github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/evanphx/json-patch v4.2.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
+github.com/firecracker-microvm/firecracker-go-sdk v0.20.1-0.20200203221942-7dce86a91e4f h1:45BQjWW8hvvSOmr1A2RJT0s8/KW/QYXkjl4veRBl654=
+github.com/firecracker-microvm/firecracker-go-sdk v0.20.1-0.20200203221942-7dce86a91e4f/go.mod h1:kW0gxvPpPvMukUxxTO9DrpSlScrtrTDGY3VgjAj/Qwc=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5 h1:v+vxrd9XS8uWIXG2RK0BHCnXc30qLVQXVqbK+IOmpXk=
@@ -491,8 +493,6 @@ github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPx
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=
 github.com/sirupsen/logrus v1.4.2 h1:SPIRibHv4MatM3XXNO2BJeFLZwZ2LvZgfQ5+UNI2im4=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
-github.com/smira/firecracker-go-sdk v0.19.1-0.20200124123725-fb8b25794e34 h1:Tgxf84uXZM2R+NSFX1TVWlHw3Ka7SM39/NMmUZTG92U=
-github.com/smira/firecracker-go-sdk v0.19.1-0.20200124123725-fb8b25794e34/go.mod h1:kW0gxvPpPvMukUxxTO9DrpSlScrtrTDGY3VgjAj/Qwc=
 github.com/soheilhy/cmux v0.1.4 h1:0HKaf1o97UwFjHH9o5XsHUOF+tqmdA7KEzXLpiyaw0E=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
 github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c h1:gqEdF4VwBu3lTKGHS9rXE9x1/pEaSwCXRLOZRF6qtlw=
