@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@master
 
-      - name: Apply ok-to-test Label
+      - name: Apply needs-e2e Label
         uses: actions/github@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

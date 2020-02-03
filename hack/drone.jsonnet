@@ -90,6 +90,20 @@ local volumes = {
   ],
 };
 
+// TODO(rsmitty): figure out how we can keep docker and setup-ci from running while also supporting 
+// times when we're not using those in the default pipeline (e2e and conformance for ex.)
+// Sets up the CI environment
+local check_ok_test = {
+  name: 'ok-to-test',
+  image: 'autonomy/build-container:latest',
+  privileged: false,
+  environment: {},
+  commands: [
+      'curl --request GET "https://api.github.com/repos/$DRONE_REPO/issues/$DRONE_PULL_REQUEST" | jq -e \'.labels[]|select(.name == "ok-to-test")\''
+  ],
+  volumes: [],
+};
+
 // This provides the docker service.
 local docker = {
   name: 'docker',
@@ -302,7 +316,7 @@ local default_trigger = {
   },
 };
 
-local default_pipeline = Pipeline('default', default_steps) + default_trigger;
+local default_pipeline = Pipeline('default', [check_ok_test] + default_steps) + default_trigger;
 
 // E2E pipeline.
 
