@@ -15,6 +15,11 @@ platform:
   arch: amd64
 
 steps:
+- name: ok-to-test
+  image: autonomy/build-container:latest
+  commands:
+  - curl --request GET "https://api.github.com/repos/$DRONE_REPO/issues/$DRONE_PULL_REQUEST" | jq -e '.labels[]|select(.name == "ok-to-test")'
+
 - name: setup-ci
   image: autonomy/build-container:latest
   commands:
