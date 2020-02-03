@@ -39,6 +39,7 @@ var (
 	nodeInstallImage        string
 	nodeVmlinuxPath         string
 	nodeInitramfsPath       string
+	bootloaderEmulation     bool
 	networkCIDR             string
 	networkMTU              int
 	nameservers             []string
@@ -183,6 +184,10 @@ func create(ctx context.Context) (err error) {
 
 	provisionOptions := []provision.Option{}
 	configBundleOpts := []config.BundleOption{}
+
+	if bootloaderEmulation {
+		provisionOptions = append(provisionOptions, provision.WithBootladerEmulation())
+	}
 
 	if inputDir != "" {
 		configBundleOpts = append(configBundleOpts, config.WithExistingConfigs(inputDir))
@@ -412,6 +417,7 @@ func init() {
 	clusterUpCmd.Flags().StringVar(&nodeInstallImage, "install-image", defaultImage(constants.DefaultInstallerImageRepository), "the installer image to use")
 	clusterUpCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(constants.KernelUncompressedAsset), "the uncompressed kernel image to use")
 	clusterUpCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
+	clusterUpCmd.Flags().BoolVar(&bootloaderEmulation, "with-bootloader-emulation", false, "enable bootloader emulation to load kernel and initramfs from disk image")
 	clusterUpCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the docker bridge network")
 	clusterUpCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
 	clusterUpCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use (VM only)")

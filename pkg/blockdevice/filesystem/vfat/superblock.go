@@ -19,7 +19,7 @@ type SuperBlock struct {
 	Sysid        [8]uint8
 	SectorSize   [2]uint8
 	ClusterSize  uint8
-	Reserved     uint16
+	Reserved     [2]uint8
 	Fats         uint8
 	DirEntries   [2]uint8
 	Sectors      [2]uint8
@@ -29,10 +29,10 @@ type SuperBlock struct {
 	Heads        uint16
 	Hidden       uint32
 	TotalSect    uint32
-	Fat32Length  uint32
+	Fat32Length  [4]uint8
 	Flags        uint16
 	Version      [2]uint8
-	RootCluster  uint32
+	RootCluster  [4]uint8
 	FsinfoSector uint16
 	BackupBoot   uint16
 	Reserved2    [6]uint16

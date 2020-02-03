@@ -21,9 +21,10 @@ import (
 
 // LaunchConfig is passed in to the Launch function over stdin.
 type LaunchConfig struct {
-	GatewayAddr       string
-	Config            string
-	FirecrackerConfig firecracker.Config
+	GatewayAddr         string
+	Config              string
+	BootloaderEmulation bool
+	FirecrackerConfig   firecracker.Config
 }
 
 // Launch a control process around firecracker VM manager.
@@ -80,57 +81,90 @@ func Launch() error {
 	defer httpServer.Shutdown(ctx) //nolint: errcheck
 
 	for {
-		cmd := firecracker.VMCommandBuilder{}.
-			WithBin("firecracker").
-			WithSocketPath(config.FirecrackerConfig.SocketPath).
-			WithStdin(os.Stdin).
-			WithStdout(os.Stdout).
-			WithStderr(os.Stderr).
-			Build(ctx)
+		err := func() error {
+			var (
+				err        error
+				bootLoader *BootLoader
+			)
 
-		// reset static configuration, as it gets set each time CNI runs
-		config.FirecrackerConfig.NetworkInterfaces[0].StaticConfiguration = nil
-
-		m, err := firecracker.NewMachine(ctx, config.FirecrackerConfig, firecracker.WithProcessRunner(cmd))
-		if err != nil {
-			return fmt.Errorf("failed to create new machine: %w", err)
-		}
-
-		if err := m.Start(ctx); err != nil {
-			return fmt.Errorf("failed to initialize machine: %w", err)
-		}
-
-		waitCh := make(chan error)
-
-		go func() {
-			waitCh <- m.Wait(ctx)
-		}()
-
-		select {
-		case err := <-waitCh:
+			bootLoader, err = NewBootLoader(*config.FirecrackerConfig.Drives[0].PathOnHost)
 			if err != nil {
-				return fmt.Errorf("failed running VM: %w", err)
+				// print err but continue boot process
+				fmt.Fprintf(os.Stderr, "error initializing bootloader: %s\n", err.Error())
+			} else {
+				defer bootLoader.Close() //nolint: errcheck
+
+				var assets BootAssets
+
+				assets, err = bootLoader.ExtractAssets()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "error extracting kernel assets: %s\n", err.Error())
+				} else if config.BootloaderEmulation {
+					// boot partition found, pass kernel & initrd from boot partition to Firecracker
+					config.FirecrackerConfig.KernelImagePath = assets.KernelPath
+					config.FirecrackerConfig.InitrdPath = assets.InitrdPath
+
+					fmt.Fprintf(os.Stderr, "successfully extracted boot assets from the disk image")
+				}
 			}
+
+			cmd := firecracker.VMCommandBuilder{}.
+				WithBin("firecracker").
+				WithSocketPath(config.FirecrackerConfig.SocketPath).
+				WithStdin(os.Stdin).
+				WithStdout(os.Stdout).
+				WithStderr(os.Stderr).
+				Build(ctx)
+
+			// reset static configuration, as it gets set each time CNI runs
+			config.FirecrackerConfig.NetworkInterfaces[0].StaticConfiguration = nil
+
+			m, err := firecracker.NewMachine(ctx, config.FirecrackerConfig, firecracker.WithProcessRunner(cmd))
+			if err != nil {
+				return fmt.Errorf("failed to create new machine: %w", err)
+			}
+
+			if err := m.Start(ctx); err != nil {
+				return fmt.Errorf("failed to initialize machine: %w", err)
+			}
+
+			waitCh := make(chan error)
+
+			go func() {
+				waitCh <- m.Wait(ctx)
+			}()
 
 			select {
+			case err := <-waitCh:
+				if err != nil {
+					return fmt.Errorf("failed running VM: %w", err)
+				}
+
+				select {
+				case sig := <-c:
+					fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
+
+					return nil
+
+				case <-time.After(500 * time.Millisecond): // wait a bit to prevent crash loop
+				}
 			case sig := <-c:
-				fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
+				fmt.Fprintf(os.Stderr, "stopping VM as signal %s was received\n", sig)
+
+				m.StopVMM() //nolint: errcheck
+
+				<-waitCh // wait for process to exit
 
 				return nil
-
-			case <-time.After(500 * time.Millisecond): // wait a bit to prevent crash loop
 			}
-		case sig := <-c:
-			fmt.Fprintf(os.Stderr, "stopping VM as signal %s was received\n", sig)
 
-			m.StopVMM() //nolint: errcheck
-
-			<-waitCh // wait for process to exit
+			// restart the vm by proceeding with the for loop
+			os.Remove(config.FirecrackerConfig.SocketPath) //nolint: errcheck
 
 			return nil
+		}()
+		if err != nil {
+			return err
 		}
-
-		// restart the vm by proceeding with the for loop
-		os.Remove(config.FirecrackerConfig.SocketPath) //nolint: errcheck
 	}
 }
