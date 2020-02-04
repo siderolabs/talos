@@ -35,7 +35,7 @@ jobs:
           STATUS_URL=$(echo $PR_INFO | jq -r .statuses_url)
 
           ## Discover previous drone build number and send it a post to retrigger
-          DRONE_BUILD_URL=$(curl -s $STATUS_URL | jq -r .[0].target_url )
+          DRONE_BUILD_URL=$(curl -s $STATUS_URL | jq -r '[.[] | select(.context == "continuous-integration/drone/pr")][0].target_url')
           DRONE_BUILD_NUM=${DRONE_BUILD_URL##*/}
 
           docker run -e "DRONE_SERVER=$DRONE_SERVER" -e "DRONE_TOKEN=$DRONE_TOKEN" drone/cli:1.2.1 build restart $GITHUB_REPOSITORY $DRONE_BUILD_NUM
