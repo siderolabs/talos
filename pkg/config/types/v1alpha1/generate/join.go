@@ -7,6 +7,7 @@ package generate
 import (
 	"net/url"
 
+	"github.com/talos-systems/talos/pkg/config/machine"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
@@ -24,6 +25,22 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 			InstallDisk:       in.InstallDisk,
 			InstallImage:      in.InstallImage,
 			InstallBootloader: true,
+		},
+		MachineFiles: []machine.File{
+			{
+				Path:        "/etc/cri/containerd.toml",
+				Permissions: 0644,
+				Op:          "append",
+				Content: `
+				[plugins.cri.registry.mirrors]
+				  [plugins.cri.registry.mirrors."docker.io"]
+					endpoint = ["http://172.20.0.1:5000"]
+  				  [plugins.cri.registry.mirrors."k8s.gcr.io"]
+					endpoint = ["http://172.20.0.1:5001"]
+  				  [plugins.cri.registry.mirrors."quay.io"]
+					endpoint = ["http://172.20.0.1:5002"]
+					`,
+			},
 		},
 	}
 
