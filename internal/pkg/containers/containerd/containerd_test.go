@@ -65,9 +65,11 @@ func WithAnnotations(annotations map[string]string) oci.SpecOpts {
 		if s.Annotations == nil {
 			s.Annotations = make(map[string]string)
 		}
+
 		for k, v := range annotations {
 			s.Annotations[k] = v
 		}
+
 		return nil
 	}
 }

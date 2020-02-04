@@ -65,6 +65,7 @@ func (c *Stream) Read(ctx context.Context) <-chan []byte {
 		defer c.source.Close()
 
 		buf := make([]byte, c.options.Size)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -77,8 +78,10 @@ func (c *Stream) Read(ctx context.Context) <-chan []byte {
 				if err != io.EOF {
 					fmt.Printf("read error: %s\n", err.Error())
 				}
+
 				break
 			}
+
 			if n != 0 {
 				// Copy the buffer since we will modify it in the next loop.
 				b := make([]byte, n)

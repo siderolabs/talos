@@ -566,6 +566,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 				}
 				//nolint: errcheck
 				pw.CloseWithError(err)
+
 				return
 			}
 

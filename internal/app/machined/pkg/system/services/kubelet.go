@@ -209,6 +209,7 @@ func (k *Kubelet) HealthFunc(runtime.Configurator) health.Check {
 		if err != nil {
 			return err
 		}
+
 		req = req.WithContext(ctx)
 
 		resp, err := http.DefaultClient.Do(req)

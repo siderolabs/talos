@@ -44,7 +44,9 @@ func WithMaxPoll(o int) Option {
 		if o > MaxAllowablePoll {
 			return fmt.Errorf("MaxPoll(%d) is larger than maximum allowed value(%d)", o, MaxAllowablePoll)
 		}
+
 		n.MaxPoll = time.Duration(o) * time.Second
+
 		return err
 	}
 }
@@ -55,7 +57,9 @@ func WithMinPoll(o int) Option {
 		if o < MinAllowablePoll {
 			return fmt.Errorf("MinPoll(%d) is smaller than minimum allowed value(%d)", o, MinAllowablePoll)
 		}
+
 		n.MinPoll = time.Duration(o) * time.Second
+
 		return err
 	}
 }

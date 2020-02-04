@@ -275,12 +275,14 @@ func (h *Client) Drain(node string) error {
 	for _, pod := range pods.Items {
 		go func(p corev1.Pod) {
 			defer wg.Done()
+
 			for _, ref := range p.ObjectMeta.OwnerReferences {
 				if ref.Kind == "DaemonSet" {
 					log.Printf("skipping DaemonSet pod %s\n", p.GetName())
 					return
 				}
 			}
+
 			if err := h.evict(p, int64(60)); err != nil {
 				log.Printf("WARNING: failed to evict pod: %v", err)
 			}

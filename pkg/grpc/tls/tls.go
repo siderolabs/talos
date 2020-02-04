@@ -37,6 +37,7 @@ func WithClientAuthType(t Type) func(*tls.Config) error {
 		default:
 			return fmt.Errorf("unhandled client auth type %+v", t)
 		}
+
 		return nil
 	}
 }
@@ -51,8 +52,10 @@ func WithServerCertificateProvider(p CertificateProvider) func(*tls.Config) erro
 		if p == nil {
 			return errors.New("no provider")
 		}
+
 		cfg.Certificates = nil
 		cfg.GetCertificate = p.GetCertificate
+
 		return nil
 	}
 }
@@ -67,8 +70,10 @@ func WithClientCertificateProvider(p CertificateProvider) func(*tls.Config) erro
 		if p == nil {
 			return errors.New("no provider")
 		}
+
 		cfg.Certificates = nil
 		cfg.GetClientCertificate = p.GetClientCertificate
+
 		return nil
 	}
 }
@@ -88,12 +93,15 @@ func WithCACertPEM(ca []byte) func(*tls.Config) error {
 		if len(ca) == 0 {
 			return errors.New("no CA cert provided")
 		}
+
 		if ok := cfg.ClientCAs.AppendCertsFromPEM(ca); !ok {
 			return errors.New("failed to append CA certificate to ClientCAs pool")
 		}
+
 		if ok := cfg.RootCAs.AppendCertsFromPEM(ca); !ok {
 			return errors.New("failed to append CA certificate to RootCAs pool")
 		}
+
 		return nil
 	}
 }
