@@ -102,6 +102,9 @@ local check_ok_test = {
       'curl --request GET "https://api.github.com/repos/$DRONE_REPO/issues/$DRONE_PULL_REQUEST" | jq -e \'.labels[]|select(.name == "ok-to-test")\''
   ],
   volumes: [],
+  when: {
+    event: ['pull_request'],
+  },
 };
 
 // This provides the docker service.
