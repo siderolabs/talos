@@ -28,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -66,8 +67,9 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 	defer client.Close()
 
 	// Pull the image and unpack it.
+
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-	if _, err = client.Pull(containerdctx, config.Cluster().Etcd().Image(), containerdapi.WithPullUnpack); err != nil {
+	if _, err = image.Pull(containerdctx, client, config.Cluster().Etcd().Image()); err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", config.Cluster().Etcd().Image(), err)
 	}
 
