@@ -129,6 +129,7 @@ func (o *OSD) HealthFunc(runtime.Configurator) health.Check {
 		if err != nil {
 			return err
 		}
+
 		return conn.Close()
 	}
 }

@@ -194,7 +194,9 @@ func (s *singleton) Shutdown() {
 
 		go func(svcrunner *ServiceRunner, reverseDeps []string) {
 			defer shutdownWg.Done()
+
 			conds := make([]conditions.Condition, len(reverseDeps))
+
 			for i := range reverseDeps {
 				conds[i] = WaitForService(StateEventDown, reverseDeps[i])
 			}

@@ -47,6 +47,7 @@ func WithSubInterface(o ...string) Option {
 
 			n.SubInterfaces = append(n.SubInterfaces, iface)
 		}
+
 		return err
 	}
 }
@@ -55,6 +56,7 @@ func WithSubInterface(o ...string) Option {
 func WithBondMode(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var mode BondMode
+
 		if mode, err = BondModeByName(o); err != nil {
 			return err
 		}
@@ -69,6 +71,7 @@ func WithBondMode(o string) Option {
 func WithHashPolicy(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var policy BondXmitHashPolicy
+
 		if policy, err = BondXmitHashPolicyByName(o); err != nil {
 			return err
 		}
@@ -83,6 +86,7 @@ func WithHashPolicy(o string) Option {
 func WithLACPRate(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var rate LACPRate
+
 		if rate, err = LACPRateByName(o); err != nil {
 			return err
 		}
@@ -131,6 +135,7 @@ func WithUseCarrier(o bool) Option {
 		}
 
 		n.BondSettings.Uint8(uint16(IFLA_BOND_USE_CARRIER), carrier)
+
 		return err
 	}
 }
@@ -148,6 +153,7 @@ func WithARPInterval(o uint32) Option {
 func WithARPValidate(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var valid ARPValidate
+
 		if valid, err = ARPValidateByName(o); err != nil {
 			return err
 		}
@@ -163,6 +169,7 @@ func WithARPValidate(o string) Option {
 func WithARPAllTargets(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var target ARPAllTargets
+
 		if target, err = ARPAllTargetsByName(o); err != nil {
 			return err
 		}
@@ -177,11 +184,13 @@ func WithARPAllTargets(o string) Option {
 func WithPrimary(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var iface *net.Interface
+
 		if iface, err = net.InterfaceByName(o); err != nil {
 			return err
 		}
 
 		n.BondSettings.Uint8(uint16(IFLA_BOND_PRIMARY_RESELECT), uint8(iface.Index))
+
 		return err
 	}
 }
@@ -190,10 +199,13 @@ func WithPrimary(o string) Option {
 func WithPrimaryReselect(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var primary PrimaryReselect
+
 		if primary, err = PrimaryReselectByName(o); err != nil {
 			return err
 		}
+
 		n.BondSettings.Uint8(uint16(IFLA_BOND_PRIMARY_RESELECT), uint8(primary))
+
 		return err
 	}
 }
@@ -203,10 +215,13 @@ func WithPrimaryReselect(o string) Option {
 func WithFailOverMAC(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var fo FailOverMAC
+
 		if fo, err = FailOverMACByName(o); err != nil {
 			return err
 		}
+
 		n.BondSettings.Uint8(uint16(IFLA_BOND_FAIL_OVER_MAC), uint8(fo))
+
 		return err
 	}
 }
@@ -269,10 +284,13 @@ func WithPacketsPerSlave(o uint32) Option {
 func WithADSelect(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		var sel ADSelect
+
 		if sel, err = ADSelectByName(o); err != nil {
 			return err
 		}
+
 		n.BondSettings.Uint8(uint16(IFLA_BOND_AD_SELECT), uint8(sel))
+
 		return err
 	}
 }
