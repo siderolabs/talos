@@ -3700,4 +3700,8 @@ depends_on:
 - nightly
 - release
 
+---
+kind: signature
+hmac: 6e1cb951c820c10c2b05d40cfb5577b8395b79d751b2c4246734de03c8a76422
+
 ...
