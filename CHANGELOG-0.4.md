@@ -1,3 +1,17 @@
+# [v0.4.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.3...v0.4.0-alpha.4) (2020-02-04)
+
+### Bug Fixes
+
+- bind etcd to IPv6 if available ([dbf408e](https://github.com/talos-systems/talos/commit/dbf408ea58bec8b6f10bbbd9d47dc1c0e42d320e)), closes [#1842](https://github.com/talos-systems/talos/issues/1842) [#1843](https://github.com/talos-systems/talos/issues/1843)
+- **networkd:** fix ticker leak ([4593c4f](https://github.com/talos-systems/talos/commit/4593c4f7270ef62186c7b1b5593eee244ca43bda))
+- follow symlinks ([f567f8c](https://github.com/talos-systems/talos/commit/f567f8c84d4248328d0c972102e37d9d810be6f7))
+- implement kubelet extra mounts ([6d1a2f7](https://github.com/talos-systems/talos/commit/6d1a2f7b6d415bf5e017c733dc5025a7adb096f2))
+
+### Features
+
+- **networkd:** Add health api ([88df1b5](https://github.com/talos-systems/talos/commit/88df1b50b81d1b27428971f345ee9d72b7e23a93))
+- **networkd:** Make healthcheck perform a check ([e911353](https://github.com/talos-systems/talos/commit/e9113537f909cee7d96d49fc7d96934d69841dce))
+
 # [v0.4.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.2...v0.4.0-alpha.3) (2020-01-28)
 
 ### Bug Fixes
