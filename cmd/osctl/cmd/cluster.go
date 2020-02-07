@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -37,6 +38,7 @@ var (
 	clusterName             string
 	nodeImage               string
 	nodeInstallImage        string
+	registryMirrors         []string
 	nodeVmlinuxPath         string
 	nodeInitramfsPath       string
 	bootloaderEmulation     bool
@@ -194,6 +196,15 @@ func create(ctx context.Context) (err error) {
 	} else {
 		genOptions := []generate.GenOption{
 			generate.WithInstallImage(nodeInstallImage),
+		}
+
+		for _, registryMirror := range registryMirrors {
+			components := strings.SplitN(registryMirror, "=", 2)
+			if len(components) != 2 {
+				return fmt.Errorf("invalid registry mirror spec: %q", registryMirror)
+			}
+
+			genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
 		}
 
 		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
@@ -418,6 +429,7 @@ func init() {
 	clusterUpCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(constants.KernelUncompressedAsset), "the uncompressed kernel image to use")
 	clusterUpCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
 	clusterUpCmd.Flags().BoolVar(&bootloaderEmulation, "with-bootloader-emulation", false, "enable bootloader emulation to load kernel and initramfs from disk image")
+	clusterUpCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	clusterUpCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the docker bridge network")
 	clusterUpCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
 	clusterUpCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use (VM only)")

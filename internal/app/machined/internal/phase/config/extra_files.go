@@ -35,7 +35,12 @@ func (task *ExtraFiles) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 func (task *ExtraFiles) runtime(r runtime.Runtime) (err error) {
 	var result *multierror.Error
 
-	for _, f := range r.Config().Machine().Files() {
+	files, err := r.Config().Machine().Files()
+	if err != nil {
+		return fmt.Errorf("error generating extra files: %w", err)
+	}
+
+	for _, f := range files {
 		content := f.Content
 
 		switch f.Op {

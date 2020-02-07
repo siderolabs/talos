@@ -42,6 +42,7 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker"
 	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
+	machinecfg "github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -105,7 +106,7 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 
 // Upgrade initiates an upgrade.
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeResponse, err error) {
-	if err = pullAndValidateInstallerImage(ctx, in.GetImage()); err != nil {
+	if err = pullAndValidateInstallerImage(ctx, r.config.Machine().Registries(), in.GetImage()); err != nil {
 		return nil, err
 	}
 
@@ -574,7 +575,7 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.MachineSer
 	}
 }
 
-func pullAndValidateInstallerImage(ctx context.Context, ref string) error {
+func pullAndValidateInstallerImage(ctx context.Context, config machinecfg.Registries, ref string) error {
 	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
@@ -583,7 +584,7 @@ func pullAndValidateInstallerImage(ctx context.Context, ref string) error {
 		return err
 	}
 
-	img, err := image.Pull(containerdctx, client, ref)
+	img, err := image.Pull(containerdctx, config, client, ref)
 	if err != nil {
 		return err
 	}

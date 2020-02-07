@@ -44,7 +44,7 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 	var img containerd.Image
 
 	if options.ImagePull {
-		img, err = image.Pull(ctx, client, r.Config().Machine().Install().Image())
+		img, err = image.Pull(ctx, r.Config().Machine().Registries(), client, r.Config().Machine().Install().Image())
 		if err != nil {
 			return err
 		}

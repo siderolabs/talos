@@ -10,6 +10,7 @@ replace (
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
+	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/beevik/ntp v0.2.0

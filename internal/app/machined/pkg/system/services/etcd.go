@@ -69,7 +69,7 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 	// Pull the image and unpack it.
 
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-	if _, err = image.Pull(containerdctx, client, config.Cluster().Etcd().Image()); err != nil {
+	if _, err = image.Pull(containerdctx, config.Machine().Registries(), client, config.Cluster().Etcd().Image()); err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", config.Cluster().Etcd().Image(), err)
 	}
 

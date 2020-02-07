@@ -331,6 +331,49 @@ sysctls:
 
 ```
 
+#### registries
+
+Used to configure the machine's container image registry mirrors.
+
+Automatically generates matching CRI configuration for registry mirrors.
+
+Section `mirrors` allows to redirect requests for images to non-default registry,
+which might be local registry or caching mirror.
+
+Section `config` provides a way to authenticate to the registry with TLS client
+identity, provide registry CA, or authentication information.
+Authentication information has same meaning with the corresponding field in `.docker/config.json`.
+
+See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).
+
+Type: `RegistriesConfig`
+
+Examples:
+
+```yaml
+registries:
+  mirrors:
+    docker.io:
+      endpoints:
+        - https://registry-1.docker.io
+    '*':
+      endpoints:
+        - http://some.host:123/
+ config:
+  "some.host:123":
+    tls:
+      CA: ... # base64-encoded CA certificate in PEM format
+      clientIdentity:
+        cert: ...  # base64-encoded client certificate in PEM format
+        key: ...  # base64-encoded client key in PEM format
+    auth:
+      username: ...
+      password: ...
+      auth: ...
+      identityToken: ...
+
+```
+
 ---
 
 ### ClusterConfig
@@ -736,6 +779,32 @@ Defaults to `pool.ntp.org`
 > Note: This parameter only supports a single time server
 
 Type: `array`
+
+---
+
+### RegistriesConfig
+
+#### mirrors
+
+Specifies mirror configuration for each registry.
+This setting allows to use local pull-through caching registires,
+air-gapped installations, etc.
+
+Registry name is the first segment of image identifier, with 'docker.io'
+being default one.
+Name '*' catches any registry names not specified explicitly.
+
+Type: `map`
+
+#### config
+
+Specifies TLS & auth configuration for HTTPS image registries.
+Mutual TLS can be enabled with 'clientIdentity' option.
+
+TLS configuration can be skipped if registry has trusted
+server certificate.
+
+Type: `map`
 
 ---
 
