@@ -201,17 +201,28 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
+	var genOptions []generate.GenOption //nolint: prealloc
+
+	for _, registryMirror := range registryMirrors {
+		components := strings.SplitN(registryMirror, "=", 2)
+		if len(components) != 2 {
+			return fmt.Errorf("invalid registry mirror spec: %q", registryMirror)
+		}
+
+		genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
+	}
+
 	configBundle, err := config.NewConfigBundle(
 		config.WithInputOptions(
 			&config.InputOptions{
 				ClusterName: args[0],
 				Endpoint:    args[1],
 				KubeVersion: kubernetesVersion,
-				GenOptions: []generate.GenOption{
+				GenOptions: append(genOptions,
 					generate.WithInstallDisk(installDisk),
 					generate.WithInstallImage(installImage),
 					generate.WithAdditionalSubjectAltNames(additionalSANs),
-				},
+				),
 			},
 		),
 	)
@@ -280,6 +291,7 @@ func init() {
 	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	configGenerateCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	configGenerateCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
+	configGenerateCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	helpers.Should(configAddCmd.MarkFlagRequired("ca"))
 	helpers.Should(configAddCmd.MarkFlagRequired("crt"))
 	helpers.Should(configAddCmd.MarkFlagRequired("key"))

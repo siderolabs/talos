@@ -25,6 +25,9 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			InstallImage:      in.InstallImage,
 			InstallBootloader: true,
 		},
+		MachineRegistries: v1alpha1.RegistriesConfig{
+			RegistryMirrors: in.RegistryMirrors,
+		},
 	}
 
 	certSANs := in.GetAPIServerSANs()

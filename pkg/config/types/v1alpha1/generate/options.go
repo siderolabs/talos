@@ -4,7 +4,10 @@
 
 package generate
 
-import v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+import (
+	"github.com/talos-systems/talos/pkg/config/machine"
+	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+)
 
 // GenOption controls generate options specific to input generation.
 type GenOption func(o *GenOptions) error
@@ -54,6 +57,19 @@ func WithNetworkConfig(network *v1alpha1.NetworkConfig) GenOption {
 	}
 }
 
+// WithRegistryMirror configures registry mirror endpoint(s).
+func WithRegistryMirror(host string, endpoints ...string) GenOption {
+	return func(o *GenOptions) error {
+		if o.RegistryMirrors == nil {
+			o.RegistryMirrors = make(map[string]machine.RegistryMirrorConfig)
+		}
+
+		o.RegistryMirrors[host] = machine.RegistryMirrorConfig{Endpoints: endpoints}
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -61,6 +77,7 @@ type GenOptions struct {
 	InstallImage              string
 	AdditionalSubjectAltNames []string
 	NetworkConfig             *v1alpha1.NetworkConfig
+	RegistryMirrors           map[string]machine.RegistryMirrorConfig
 }
 
 // DefaultGenOptions returns default options.

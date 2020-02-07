@@ -114,7 +114,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
 
-	_, err = image.Pull(containerdctx, client, config.Machine().Kubelet().Image())
+	_, err = image.Pull(containerdctx, config.Machine().Registries(), client, config.Machine().Kubelet().Image())
 	if err != nil {
 		return err
 	}

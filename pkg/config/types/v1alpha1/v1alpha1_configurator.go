@@ -14,6 +14,7 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/asset"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
+	criplugin "github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -103,8 +104,10 @@ func (m *MachineConfig) Env() machine.Env {
 }
 
 // Files implements the Configurator interface.
-func (m *MachineConfig) Files() []machine.File {
-	return m.MachineFiles
+func (m *MachineConfig) Files() ([]machine.File, error) {
+	files, err := m.Registries().ExtraFiles()
+
+	return append(files, m.MachineFiles...), err
 }
 
 // Type implements the Configurator interface.
@@ -151,6 +154,11 @@ func (m *MachineConfig) CertSANs() []string {
 // SetCertSANs implements the Configurator interface.
 func (m *MachineConfig) SetCertSANs(sans []string) {
 	m.MachineCertSANs = append(m.MachineCertSANs, sans...)
+}
+
+// Registries implements the Configurator interface.
+func (m *MachineConfig) Registries() machine.Registries {
+	return &m.MachineRegistries
 }
 
 // Image implements the Configurator interface.
@@ -300,6 +308,21 @@ func (e *EtcdConfig) ExtraArgs() map[string]string {
 	}
 
 	return e.EtcdExtraArgs
+}
+
+// Mirrors implements the Registries interface.
+func (r *RegistriesConfig) Mirrors() map[string]machine.RegistryMirrorConfig {
+	return r.RegistryMirrors
+}
+
+// Config implements the Registries interface.
+func (r *RegistriesConfig) Config() map[string]machine.RegistryConfig {
+	return r.RegistryConfig
+}
+
+// ExtraFiles implements the Registries interface.
+func (r *RegistriesConfig) ExtraFiles() ([]machine.File, error) {
+	return criplugin.GenerateRegistriesConfig(r)
 }
 
 // Token implements the Configurator interface.

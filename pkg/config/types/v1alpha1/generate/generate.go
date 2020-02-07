@@ -83,6 +83,8 @@ type Input struct {
 	InstallImage string
 
 	NetworkConfig *v1alpha1.NetworkConfig
+
+	RegistryMirrors map[string]machine.RegistryMirrorConfig
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
@@ -320,6 +322,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		InstallDisk:               options.InstallDisk,
 		InstallImage:              options.InstallImage,
 		NetworkConfig:             options.NetworkConfig,
+		RegistryMirrors:           options.RegistryMirrors,
 	}
 
 	return input, nil

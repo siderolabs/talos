@@ -5,6 +5,8 @@
 package machine
 
 import (
+	"crypto/tls"
+	stdx509 "crypto/x509"
 	"fmt"
 	"os"
 
@@ -53,10 +55,11 @@ type Machine interface {
 	Disks() []Disk
 	Time() Time
 	Env() Env
-	Files() []File
+	Files() ([]File, error)
 	Type() Type
 	Kubelet() Kubelet
 	Sysctls() map[string]string
+	Registries() Registries
 }
 
 // Env represents a set of environment variables.
@@ -173,4 +176,96 @@ type Kubelet interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
+}
+
+// RegistryMirrorConfig represents mirror configuration for a registry.
+type RegistryMirrorConfig struct {
+	//   description: |
+	//     List of endpoints (URLs) for registry mirrors to use.
+	//     Endpoint configures HTTP/HTTPS access mode, host name,
+	//     port and path (if path is not set, it defaults to `/v2`).
+	Endpoints []string `yaml:"endpoints"`
+}
+
+// RegistryConfig specifies auth & TLS config per registry.
+type RegistryConfig struct {
+	TLS  *RegistryTLSConfig  `yaml:"tls,omitempty"`
+	Auth *RegistryAuthConfig `yaml:"auth,omitempty"`
+}
+
+// RegistryAuthConfig specifies authentication configuration for a registry.
+type RegistryAuthConfig struct {
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	Username string `yaml:"username"`
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	Password string `yaml:"password"`
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	Auth string `yaml:"auth"`
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	IdentityToken string `yaml:"identityToken"`
+}
+
+// RegistryTLSConfig specifies TLS config for HTTPS registries.
+type RegistryTLSConfig struct {
+	//   description: |
+	//     Enable mutual TLS authentication with the registry.
+	//     Client certificate and key should be base64-encoded.
+	//   examples:
+	//     - |
+	//       clientIdentity:
+	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
+	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
+	ClientIdentity *x509.PEMEncodedCertificateAndKey `yaml:"clientIdentity,omitempty"`
+	//   description: |
+	//     CA registry certificate to add the list of trusted certificates.
+	//     Certificate should be base64-encoded.
+	CA []byte `yaml:"ca,omitempty"`
+	//   description: |
+	//     Skip TLS server certificate verification (not recommended).
+	InsecureSkipVerify bool `yaml:"insecureSkipVerify,omitempty"`
+}
+
+// GetTLSConfig prepares TLS configuration for connection.
+func (cfg *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+
+	if cfg.ClientIdentity != nil {
+		cert, err := tls.X509KeyPair(cfg.ClientIdentity.Crt, cfg.ClientIdentity.Key)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing client identity: %w", err)
+		}
+
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	if cfg.CA != nil {
+		tlsConfig.RootCAs = stdx509.NewCertPool()
+		tlsConfig.RootCAs.AppendCertsFromPEM(cfg.CA)
+	}
+
+	if cfg.InsecureSkipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	tlsConfig.BuildNameToCertificate()
+
+	return tlsConfig, nil
+}
+
+// Registries defines the configuration for image fetching.
+type Registries interface {
+	// Mirror config by registry host (first part of image reference).
+	Mirrors() map[string]RegistryMirrorConfig
+	// Registry config (auth, TLS) by hostname.
+	Config() map[string]RegistryConfig
+	// ExtraFiles generates TOML config for containerd CRI plugin.
+	ExtraFiles() ([]File, error)
 }
