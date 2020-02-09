@@ -11,6 +11,8 @@ import (
 
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
+	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
 
 // Client is a lightweight implementation of CRI client.
@@ -34,7 +36,9 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 		grpc.WithBlock(),
 		grpc.FailOnNonTempDialError(false),
 		grpc.WithBackoffMaxDelay(3*time.Second), //nolint: staticcheck
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)))
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
+		grpc.WithContextDialer(dialer.DialUnix()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to CRI: %w", err)
 	}
