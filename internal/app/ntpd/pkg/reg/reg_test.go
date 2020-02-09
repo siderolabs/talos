@@ -18,6 +18,7 @@ import (
 
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
+	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
 
@@ -51,7 +52,11 @@ func (suite *NtpdSuite) TestTime() {
 	// nolint: errcheck
 	go server.Serve(listener)
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
+		grpc.WithInsecure(),
+		grpc.WithContextDialer(dialer.DialUnix()),
+	)
 	suite.Assert().NoError(err)
 
 	nClient := timeapi.NewTimeServiceClient(conn)
@@ -82,7 +87,11 @@ func (suite *NtpdSuite) TestTimeCheck() {
 	// nolint: errcheck
 	go server.Serve(listener)
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s://%s", "unix", listener.Addr().String()), grpc.WithInsecure())
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
+		grpc.WithInsecure(),
+		grpc.WithContextDialer(dialer.DialUnix()),
+	)
 	suite.Assert().NoError(err)
 
 	nClient := timeapi.NewTimeServiceClient(conn)

@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
 
 // OSD implements the Service interface. It serves as the concrete type with
@@ -125,7 +126,11 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface
 func (o *OSD) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
-		conn, err := grpc.Dial("unix:"+constants.OSSocketPath, grpc.WithInsecure())
+		conn, err := grpc.Dial(
+			fmt.Sprintf("%s://%s", "unix", constants.OSSocketPath),
+			grpc.WithInsecure(),
+			grpc.WithContextDialer(dialer.DialUnix()),
+		)
 		if err != nil {
 			return err
 		}
