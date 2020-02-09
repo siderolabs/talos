@@ -28,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
 
 // Networkd implements the Service interface. It serves as the concrete type with
@@ -130,7 +131,12 @@ func (n *Networkd) HealthFunc(runtime.Configurator) health.Check {
 			readyResp *healthapi.ReadyCheckResponse
 		)
 
-		if conn, err = grpc.Dial("unix:"+constants.NetworkSocketPath, grpc.WithInsecure()); err != nil {
+		conn, err = grpc.Dial(
+			fmt.Sprintf("%s://%s", "unix", constants.NetworkSocketPath),
+			grpc.WithInsecure(),
+			grpc.WithContextDialer(dialer.DialUnix()),
+		)
+		if err != nil {
 			return err
 		}
 		defer conn.Close() //nolint: errcheck
