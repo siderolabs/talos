@@ -62,8 +62,9 @@ func New(config runtime.Configurator) (*Networkd, error) {
 	netconf := make(map[string][]nic.Option)
 
 	if option = kernel.ProcCmdline().Get("ip").First(); option != nil {
-		name, opts := buildKernelOptions(*option)
-		netconf[name] = opts
+		if name, opts := buildKernelOptions(*option); name != "" {
+			netconf[name] = opts
+		}
 	}
 
 	// Gather settings for all config driven interfaces
