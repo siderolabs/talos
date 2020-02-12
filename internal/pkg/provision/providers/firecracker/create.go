@@ -57,6 +57,12 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("unable to provision CNI network: %w", err)
 	}
 
+	fmt.Fprintln(options.LogWriter, "creating load balancer")
+
+	if err = p.createLoadBalancer(state, request); err != nil {
+		return nil, fmt.Errorf("error creating loadbalancer: %w", err)
+	}
+
 	var nodeInfo []provision.NodeInfo
 
 	fmt.Fprintln(options.LogWriter, "creating master nodes")

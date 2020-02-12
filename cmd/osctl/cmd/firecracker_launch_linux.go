@@ -13,7 +13,7 @@ import (
 // firecrackerLaunchCmd represents the firecracker-launch command
 var firecrackerLaunchCmd = &cobra.Command{
 	Use:    "firecracker-launch",
-	Short:  "Intneral command used by Firecracker provisioner",
+	Short:  "Internal command used by Firecracker provisioner",
 	Long:   ``,
 	Args:   cobra.NoArgs,
 	Hidden: true,

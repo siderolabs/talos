@@ -11,16 +11,35 @@ import (
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // ServiceStateAssertion checks whether service reached some specified state.
+//
+//nolint: gocyclo
 func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess, service string, states ...string) error {
 	cli, err := cluster.Client()
 	if err != nil {
 		return err
 	}
 
-	servicesInfo, err := cli.ServiceInfo(ctx, service)
+	// perform check against "init" node
+	var initNode string
+
+	for _, node := range cluster.Info().Nodes {
+		if node.Type == machine.TypeInit {
+			initNode = node.PrivateIP.String()
+			break
+		}
+	}
+
+	if initNode == "" {
+		return fmt.Errorf("init node not discovered")
+	}
+
+	nodeCtx := client.WithNodes(ctx, initNode)
+
+	servicesInfo, err := cli.ServiceInfo(nodeCtx, service)
 	if err != nil {
 		return err
 	}

@@ -45,3 +45,10 @@ func (p *provisioner) Close() error {
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
 	return nil
 }
+
+// GetLoadBalancers returns internal/external loadbalancer endpoints.
+func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
+	// docker doesn't provide internal LB, so return empty string
+	// external LB is always localhost where docker exposes ports
+	return "", "127.0.0.1"
+}
