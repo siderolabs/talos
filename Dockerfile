@@ -205,29 +205,29 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:e393bff /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:e393bff /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:32d9f21 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:32d9f21 /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:e393bff / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:e393bff / /rootfs
-COPY --from=docker.io/autonomy/containerd:e393bff / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:e393bff / /rootfs
-COPY --from=docker.io/autonomy/eudev:e393bff / /rootfs
-COPY --from=docker.io/autonomy/iptables:e393bff / /rootfs
-COPY --from=docker.io/autonomy/libressl:e393bff / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:e393bff / /rootfs
-COPY --from=docker.io/autonomy/musl:e393bff / /rootfs
-COPY --from=docker.io/autonomy/runc:e393bff / /rootfs
-COPY --from=docker.io/autonomy/socat:e393bff / /rootfs
-COPY --from=docker.io/autonomy/syslinux:e393bff / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:e393bff / /rootfs
-COPY --from=docker.io/autonomy/util-linux:e393bff /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:e393bff /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:e393bff /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:e393bff /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/containerd:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/eudev:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/iptables:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/libressl:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/musl:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/runc:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/socat:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/syslinux:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:32d9f21 / /rootfs
+COPY --from=docker.io/autonomy/util-linux:32d9f21 /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:32d9f21 /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:32d9f21 /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:32d9f21 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 ARG IMAGES
 COPY ${IMAGES}/apid.tar /rootfs/usr/images/
