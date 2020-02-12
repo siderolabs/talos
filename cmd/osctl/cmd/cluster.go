@@ -193,18 +193,24 @@ func create(ctx context.Context) (err error) {
 
 		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
 
-		endpointList := []string{}
+		defaultInternalLB, defaultExternalLB := provisioner.GetLoadBalancers(request.Network)
 
-		if forceEndpoint != "" {
-			endpointList = append(endpointList, forceEndpoint)
-			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
-		} else if forceInitNodeAsEndpoint {
-			endpointList = append(endpointList, ips[0].String())
+		if defaultInternalLB == "" {
+			// provisioner doesn't provide internal LB, so use first master node
+			defaultInternalLB = ips[0].String()
 		}
 
-		// NB: the localhost endpoint must come last since we currently expect the first endpoint
-		// listed to be the default osctl endpoint and that broke CI
-		endpointList = append(endpointList, "127.0.0.1")
+		var endpointList []string
+
+		switch {
+		case forceEndpoint != "":
+			endpointList = []string{forceEndpoint}
+			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
+		case forceInitNodeAsEndpoint:
+			endpointList = []string{ips[0].String()}
+		default:
+			endpointList = []string{defaultExternalLB}
+		}
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
 
@@ -212,7 +218,7 @@ func create(ctx context.Context) (err error) {
 			config.WithInputOptions(
 				&config.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s:6443", ips[0]),
+					Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
 					KubeVersion: kubernetesVersion,
 					GenOptions:  genOptions,
 				}),

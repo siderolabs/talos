@@ -5,13 +5,14 @@
 package firecracker
 
 import (
-	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/firecracker-microvm/firecracker-go-sdk"
@@ -192,15 +193,8 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 		return provision.NodeInfo{}, err
 	}
 
-	pidFile, err := os.Create(pidPath)
-	if err != nil {
-		return provision.NodeInfo{}, err
-	}
-
-	defer pidFile.Close() //nolint: errcheck
-
-	if _, err = fmt.Fprintf(pidFile, "%d", cmd.Process.Pid); err != nil {
-		return provision.NodeInfo{}, fmt.Errorf("error wriring PID file: %w", err)
+	if err = ioutil.WriteFile(pidPath, []byte(strconv.Itoa(cmd.Process.Pid)), os.ModePerm); err != nil {
+		return provision.NodeInfo{}, fmt.Errorf("error writing PID file: %w", err)
 	}
 
 	// no need to wait here, as cmd has all the Stdin/out/err via *os.File
@@ -241,43 +235,5 @@ func (p *provisioner) destroyNodes(cluster provision.ClusterInfo, options *provi
 }
 
 func (p *provisioner) destroyNode(node provision.NodeInfo) error {
-	pidFile, err := os.Open(node.ID) // node.ID stores PID path for control process
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-
-		return fmt.Errorf("error checking PID file for %q: %w", node.Name, err)
-	}
-
-	defer pidFile.Close() //nolint: errcheck
-
-	var pid int
-
-	if _, err = fmt.Fscanf(pidFile, "%d", &pid); err != nil {
-		return fmt.Errorf("error reading PID for %q: %w", node.Name, err)
-	}
-
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("error finding process %d for %q: %w", pid, node.Name, err)
-	}
-
-	if err = proc.Signal(syscall.SIGTERM); err != nil {
-		if err.Error() == "os: process already finished" {
-			return nil
-		}
-
-		return fmt.Errorf("error sending SIGTERM to %d (node %q): %w", pid, node.Name, err)
-	}
-
-	if _, err = proc.Wait(); err != nil {
-		if errors.Is(err, syscall.ECHILD) {
-			return nil
-		}
-
-		return fmt.Errorf("error waiting for %d to exit (node %q): %w", pid, node.Name, err)
-	}
-
-	return nil
+	return stopProcessByPidfile(node.ID) // node.ID stores PID path for control process
 }

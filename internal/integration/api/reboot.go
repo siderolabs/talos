@@ -42,8 +42,6 @@ func (suite *RebootSuite) TearDownTest() {
 }
 
 func (suite *RebootSuite) readUptime(ctx context.Context) (float64, error) {
-	suite.T().Skip("test disabled due to issues with single endpoint")
-
 	reader, errCh, err := suite.Client.Read(ctx, "/proc/uptime")
 	if err != nil {
 		return 0, err

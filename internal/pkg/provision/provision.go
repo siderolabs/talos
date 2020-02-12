@@ -19,6 +19,7 @@ type Provisioner interface {
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 
 	GenOptions(NetworkRequest) []generate.GenOption
+	GetLoadBalancers(NetworkRequest) (internalEndpoint, externalEndpoint string)
 
 	Close() error
 }

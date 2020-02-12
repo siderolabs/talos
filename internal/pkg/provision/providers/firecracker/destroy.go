@@ -28,12 +28,18 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	fmt.Fprintln(options.LogWriter, "removing network")
-
 	state, ok := cluster.(*state)
 	if !ok {
 		return fmt.Errorf("error inspecting firecracker state, %#+v", cluster)
 	}
+
+	fmt.Fprintln(options.LogWriter, "removing load balancer")
+
+	if err := p.destroyLoadBalancer(state); err != nil {
+		return fmt.Errorf("error stopping loadbalancer: %w", err)
+	}
+
+	fmt.Fprintln(options.LogWriter, "removing network")
 
 	if err := p.destroyNetwork(state); err != nil {
 		return err
