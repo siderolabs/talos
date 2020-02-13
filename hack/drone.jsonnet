@@ -5,6 +5,7 @@
 // Generate with `drone jsonnet --source ./hack/drone.jsonnet --stream --format`
 
 local build_container = 'autonomy/build-container:latest';
+local local_registry = 'registry.ci.svc:5000';
 
 local secret = {
   kind: 'secret',
@@ -118,6 +119,7 @@ local docker = {
     '--dns=8.8.4.4',
     '--mtu=1500',
     '--log-level=error',
+    '--insecure-registry=' + local_registry,
   ],
   ports: [
     6443,
@@ -195,6 +197,8 @@ local kernel = Step('kernel', depends_on=[setup_ci]);
 local initramfs = Step("initramfs", depends_on=[setup_ci]);
 local installer = Step("installer", depends_on=[initramfs]);
 local talos = Step("talos", depends_on=[initramfs]);
+local installer_local = Step("installer-local",  depends_on=[installer], target="installer", environment={"REGISTRY": local_registry});
+local talos_local = Step("talos-local",  depends_on=[talos], target="talos", environment={"REGISTRY": local_registry});
 local golint = Step("lint-go", depends_on=[setup_ci]);
 local protobuflint = Step("lint-protobuf", depends_on=[setup_ci]);
 local markdownlint = Step("lint-markdown", depends_on=[setup_ci]);
@@ -203,10 +207,11 @@ local image_azure = Step("image-azure", depends_on=[installer]);
 local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
 local image_gcp = Step("image-gcp", depends_on=[installer]);
 local image_vmware = Step("image-vmware", depends_on=[installer]);
+local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
 local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux]);
-local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel]);
+local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
@@ -275,7 +280,9 @@ local default_steps = [
   kernel,
   initramfs,
   installer,
+  installer_local,
   talos,
+  talos_local,
   golint,
   protobuflint,
   markdownlint,
@@ -287,6 +294,7 @@ local default_steps = [
   unit_tests,
   unit_tests_race,
   coverage,
+  push_local,
   e2e_docker,
   e2e_firecracker,
   push,

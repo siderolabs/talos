@@ -163,6 +163,27 @@ steps:
   depends_on:
   - initramfs
 
+- name: installer-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: talos
   pull: always
   image: autonomy/build-container:latest
@@ -181,6 +202,27 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
+
+- name: talos-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - talos
 
 - name: lint-go
   pull: always
@@ -386,6 +428,29 @@ steps:
   depends_on:
   - unit-tests
 
+- name: push-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_LOGIN_ENABLED: false
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer-local
+  - talos-local
+
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
@@ -411,6 +476,8 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
   - name: dockersock
@@ -427,6 +494,7 @@ steps:
   - initramfs
   - osctl-linux
   - kernel
+  - push-local
 
 - name: push
   pull: always
@@ -499,6 +567,7 @@ services:
   - --dns=8.8.4.4
   - --mtu=1500
   - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
   privileged: true
   ports:
   - 6443
@@ -689,6 +758,27 @@ steps:
   depends_on:
   - initramfs
 
+- name: installer-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: talos
   pull: always
   image: autonomy/build-container:latest
@@ -707,6 +797,27 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
+
+- name: talos-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - talos
 
 - name: lint-go
   pull: always
@@ -912,6 +1023,29 @@ steps:
   depends_on:
   - unit-tests
 
+- name: push-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_LOGIN_ENABLED: false
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer-local
+  - talos-local
+
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
@@ -937,6 +1071,8 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
   - name: dockersock
@@ -953,6 +1089,7 @@ steps:
   - initramfs
   - osctl-linux
   - kernel
+  - push-local
 
 - name: push
   pull: always
@@ -1122,6 +1259,7 @@ services:
   - --dns=8.8.4.4
   - --mtu=1500
   - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
   privileged: true
   ports:
   - 6443
@@ -1307,6 +1445,27 @@ steps:
   depends_on:
   - initramfs
 
+- name: installer-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: talos
   pull: always
   image: autonomy/build-container:latest
@@ -1325,6 +1484,27 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
+
+- name: talos-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - talos
 
 - name: lint-go
   pull: always
@@ -1530,6 +1710,29 @@ steps:
   depends_on:
   - unit-tests
 
+- name: push-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_LOGIN_ENABLED: false
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer-local
+  - talos-local
+
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
@@ -1555,6 +1758,8 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
   - name: dockersock
@@ -1571,6 +1776,7 @@ steps:
   - initramfs
   - osctl-linux
   - kernel
+  - push-local
 
 - name: push
   pull: always
@@ -1770,6 +1976,7 @@ services:
   - --dns=8.8.4.4
   - --mtu=1500
   - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
   privileged: true
   ports:
   - 6443
@@ -1955,6 +2162,27 @@ steps:
   depends_on:
   - initramfs
 
+- name: installer-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: talos
   pull: always
   image: autonomy/build-container:latest
@@ -1973,6 +2201,27 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
+
+- name: talos-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - talos
 
 - name: lint-go
   pull: always
@@ -2178,6 +2427,29 @@ steps:
   depends_on:
   - unit-tests
 
+- name: push-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_LOGIN_ENABLED: false
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer-local
+  - talos-local
+
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
@@ -2203,6 +2475,8 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
   - name: dockersock
@@ -2219,6 +2493,7 @@ steps:
   - initramfs
   - osctl-linux
   - kernel
+  - push-local
 
 - name: push
   pull: always
@@ -2418,6 +2693,7 @@ services:
   - --dns=8.8.4.4
   - --mtu=1500
   - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
   privileged: true
   ports:
   - 6443
@@ -2603,6 +2879,27 @@ steps:
   depends_on:
   - initramfs
 
+- name: installer-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer
+
 - name: talos
   pull: always
   image: autonomy/build-container:latest
@@ -2621,6 +2918,27 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
+
+- name: talos-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - talos
 
 - name: lint-go
   pull: always
@@ -2826,6 +3144,29 @@ steps:
   depends_on:
   - unit-tests
 
+- name: push-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_LOGIN_ENABLED: false
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - installer-local
+  - talos-local
+
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
@@ -2851,6 +3192,8 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
   - name: dockersock
@@ -2867,6 +3210,7 @@ steps:
   - initramfs
   - osctl-linux
   - kernel
+  - push-local
 
 - name: push
   pull: always
@@ -3014,6 +3358,7 @@ services:
   - --dns=8.8.4.4
   - --mtu=1500
   - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
   privileged: true
   ports:
   - 6443
@@ -3102,6 +3447,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 84131ac5504f383563cba78fdadbf8f21721bc9a2e46991f236944c533137850
+hmac: bd5e6446a0d875f2acec08a36fbb274e4763fdf115e1042bf07f8cacc6c37263
 
 ...
