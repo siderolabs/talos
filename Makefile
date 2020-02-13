@@ -4,6 +4,7 @@ SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
+DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
 TOOLS ?= autonomy/tools:v0.1.0-1-g1c0644f
@@ -57,7 +58,8 @@ docker buildx create --driver docker-container --name local --buildkitd-flags '-
 
 If you already have a compatible builder instance, you may use that instead.
 
-> Note: The security.insecure entitlement is only required, and used by the unit-tests target.
+> Note: The security.insecure entitlement is only required, and used by the unit-tests target and targets which build container images
+for applications using `img` tool.
 
 ## Artifacts
 
@@ -195,17 +197,19 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 
 .PHONY: login
 login: ## Logs in to the configured container registry.
+ifeq ($(DOCKER_LOGIN_ENABLED), true)
 	@docker login --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)" $(REGISTRY)
+endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
-	@docker push autonomy/installer:$(TAG)
-	@docker push autonomy/talos:$(TAG)
+	@docker push $(REGISTRY_AND_USERNAME)/installer:$(TAG)
+	@docker push $(REGISTRY_AND_USERNAME)/talos:$(TAG)
 
 push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
-	@docker tag autonomy/installer:$(TAG) autonomy/installer:$*
-	@docker tag autonomy/talos:$(TAG) autonomy/talos:$*
-	@docker push autonomy/installer:$*
-	@docker push autonomy/talos:$*
+	@docker tag $(REGISTRY_AND_USERNAME)/installer:$(TAG) $(REGISTRY_AND_USERNAME)/installer:$*
+	@docker tag $(REGISTRY_AND_USERNAME)/talos:$(TAG) $(REGISTRY_AND_USERNAME)/talos:$*
+	@docker push $(REGISTRY_AND_USERNAME)/installer:$*
+	@docker push $(REGISTRY_AND_USERNAME)/talos:$*
 
 .PHONY: clean
 clean: ## Cleans up all artifacts.
