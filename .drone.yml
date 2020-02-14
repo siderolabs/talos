@@ -49,120 +49,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: machined
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make machined
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: osd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make osd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: apid
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make apid
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: trustd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make trustd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: ntpd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make ntpd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: networkd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make networkd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
 - name: osctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -256,12 +142,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - apid
-  - machined
-  - networkd
-  - ntpd
-  - osd
-  - trustd
+  - setup-ci
 
 - name: installer
   pull: always
@@ -299,7 +180,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
+  - initramfs
 
 - name: lint-go
   pull: always
@@ -470,7 +351,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - talos
+  - initramfs
 
 - name: unit-tests-race
   pull: always
@@ -522,7 +403,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
   - talos
   - osctl-linux
 
@@ -544,7 +424,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
+  - initramfs
   - osctl-linux
   - kernel
 
@@ -695,120 +575,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: machined
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make machined
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: osd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make osd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: apid
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make apid
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: trustd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make trustd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: ntpd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make ntpd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: networkd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make networkd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
 - name: osctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -902,12 +668,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - apid
-  - machined
-  - networkd
-  - ntpd
-  - osd
-  - trustd
+  - setup-ci
 
 - name: installer
   pull: always
@@ -945,7 +706,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
+  - initramfs
 
 - name: lint-go
   pull: always
@@ -1116,7 +877,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - talos
+  - initramfs
 
 - name: unit-tests-race
   pull: always
@@ -1168,7 +929,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
   - talos
   - osctl-linux
 
@@ -1190,7 +950,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
+  - initramfs
   - osctl-linux
   - kernel
 
@@ -1433,120 +1193,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: machined
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make machined
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: osd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make osd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: apid
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make apid
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: trustd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make trustd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: ntpd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make ntpd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: networkd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make networkd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
 - name: osctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -1640,12 +1286,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - apid
-  - machined
-  - networkd
-  - ntpd
-  - osd
-  - trustd
+  - setup-ci
 
 - name: installer
   pull: always
@@ -1683,7 +1324,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
+  - initramfs
 
 - name: lint-go
   pull: always
@@ -1854,7 +1495,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - talos
+  - initramfs
 
 - name: unit-tests-race
   pull: always
@@ -1906,7 +1547,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
   - talos
   - osctl-linux
 
@@ -1928,7 +1568,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
+  - initramfs
   - osctl-linux
   - kernel
 
@@ -2201,120 +1841,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: machined
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make machined
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: osd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make osd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: apid
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make apid
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: trustd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make trustd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: ntpd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make ntpd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: networkd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make networkd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
 - name: osctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -2408,12 +1934,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - apid
-  - machined
-  - networkd
-  - ntpd
-  - osd
-  - trustd
+  - setup-ci
 
 - name: installer
   pull: always
@@ -2451,7 +1972,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
+  - initramfs
 
 - name: lint-go
   pull: always
@@ -2622,7 +2143,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - talos
+  - initramfs
 
 - name: unit-tests-race
   pull: always
@@ -2674,7 +2195,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
   - talos
   - osctl-linux
 
@@ -2696,7 +2216,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
+  - initramfs
   - osctl-linux
   - kernel
 
@@ -2969,120 +2489,6 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: machined
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make machined
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: osd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make osd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: apid
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make apid
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: trustd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make trustd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: ntpd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make ntpd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
-- name: networkd
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make networkd
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
-
 - name: osctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -3176,12 +2582,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - apid
-  - machined
-  - networkd
-  - ntpd
-  - osd
-  - trustd
+  - setup-ci
 
 - name: installer
   pull: always
@@ -3219,7 +2620,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - installer
+  - initramfs
 
 - name: lint-go
   pull: always
@@ -3390,7 +2791,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - talos
+  - initramfs
 
 - name: unit-tests-race
   pull: always
@@ -3442,7 +2843,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
   - talos
   - osctl-linux
 
@@ -3464,7 +2864,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - unit-tests
+  - initramfs
   - osctl-linux
   - kernel
 
@@ -3702,6 +3102,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 6e1cb951c820c10c2b05d40cfb5577b8395b79d751b2c4246734de03c8a76422
+hmac: 84131ac5504f383563cba78fdadbf8f21721bc9a2e46991f236944c533137850
 
 ...

@@ -6,8 +6,7 @@ BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 
 ARTIFACTS := _out
-IMAGES := $(ARTIFACTS)/images
-TOOLS ?= autonomy/tools:v0.1.0
+TOOLS ?= autonomy/tools:v0.1.0-1-g1c0644f
 GO_VERSION ?= 1.13
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
@@ -29,9 +28,9 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
-COMMON_ARGS += --build-arg=IMAGES=$(IMAGES)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
+COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 
 all: initramfs kernel installer osctl talos
 
@@ -105,28 +104,6 @@ docs: ## Generates the documentation for machine config, and osctl.
 	@rm -rf docs/osctl/*
 	@$(MAKE) local-$@ DEST=./
 
-# Apps
-
-apid: ## Builds the apid container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(IMAGES)
-
-machined: ## Builds machined. The build result will only remain in the build cache.
-	@$(MAKE) target-$@
-
-networkd: ## Builds the networkd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(IMAGES)
-
-ntpd: ## Builds the ntpd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(IMAGES)
-
-osd: ## Builds the osd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(IMAGES)
-
-trustd: ## Builds the trustd container image. The build result will be output to the specified local destination.
-	@$(MAKE) docker-$@ DEST=./$(IMAGES)
-
-apps: apid machined networkd ntpd osd trustd ## Builds all apps (apid, machined, networkd, ntpd, osd, and trustd).
-
 # Local Artifacts
 
 .PHONY: kernel
@@ -135,17 +112,17 @@ kernel: ## Outputs the kernel package contents (vmlinuz, and vmlinux) to the art
 	@-rm -rf $(ARTIFACTS)/modules
 
 .PHONY: initramfs
-initramfs: apps ## Builds the compressed initramfs and outputs it to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 
 .PHONY: installer
-installer: apps ## Builds the container image for the installer and outputs it to the artifact directory.
-	@$(MAKE) docker-$@ DEST=$(ARTIFACTS)
+installer: ## Builds the container image for the installer and outputs it to the artifact directory.
+	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 	@docker load < $(ARTIFACTS)/$@.tar
 
 .PHONY: talos
-talos: apps ## Builds the Talos container image and outputs it to the artifact directory.
-	@$(MAKE) docker-$@ DEST=$(ARTIFACTS)
+talos: ## Builds the Talos container image and outputs it to the artifact directory.
+	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
 	@docker load < $(ARTIFACTS)/container.tar
 
@@ -182,7 +159,7 @@ lint: ## Runs linters on go, protobuf, and markdown file types.
 # Tests
 
 .PHONY: unit-tests
-unit-tests: apps ## Performs unit tests.
+unit-tests: ## Performs unit tests.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 
 .PHONY: unit-tests-race

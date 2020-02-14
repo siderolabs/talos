@@ -116,9 +116,13 @@ WORKDIR /src/internal/app/ntpd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
 RUN chmod +x /ntpd
 
-FROM scratch AS ntpd
-COPY --from=ntpd-build /ntpd /ntpd
-ENTRYPOINT ["/ntpd"]
+FROM base AS ntpd-image
+ARG TAG
+ARG USERNAME
+COPY --from=ntpd-build /ntpd /scratch/ntpd
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./ntpd /ntpd\nENTRYPOINT [\"/ntpd\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/ntpd:${TAG} --output type=docker,dest=/ntpd.tar --no-console  .
 
 # The apid target builds the api image.
 
@@ -130,9 +134,13 @@ WORKDIR /src/internal/app/apid
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /apid
 RUN chmod +x /apid
 
-FROM scratch AS apid
-COPY --from=apid-build /apid /apid
-ENTRYPOINT ["/apid"]
+FROM base AS apid-image
+ARG TAG
+ARG USERNAME
+COPY --from=apid-build /apid /scratch/apid
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./apid /apid\nENTRYPOINT [\"/apid\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/apid:${TAG} --output type=docker,dest=/apid.tar --no-console  .
 
 # The osd target builds the osd image.
 
@@ -144,9 +152,13 @@ WORKDIR /src/internal/app/osd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
 RUN chmod +x /osd
 
-FROM scratch AS osd
-COPY --from=osd-build /osd /osd
-ENTRYPOINT ["/osd"]
+FROM base AS osd-image
+ARG TAG
+ARG USERNAME
+COPY --from=osd-build /osd /scratch/osd
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./osd /osd\nENTRYPOINT [\"/osd\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/osd:${TAG} --output type=docker,dest=/osd.tar --no-console  .
 
 # The trustd target builds the trustd image.
 
@@ -158,9 +170,13 @@ WORKDIR /src/internal/app/trustd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /trustd
 RUN chmod +x /trustd
 
-FROM scratch AS trustd
-COPY --from=trustd-build /trustd /trustd
-ENTRYPOINT ["/trustd"]
+FROM base AS trustd-image
+ARG TAG
+ARG USERNAME
+COPY --from=trustd-build /trustd /scratch/trustd
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./trustd /trustd\nENTRYPOINT [\"/trustd\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/trustd:${TAG} --output type=docker,dest=/trustd.tar --no-console  .
 
 # The networkd target builds the networkd image.
 
@@ -172,9 +188,14 @@ WORKDIR /src/internal/app/networkd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /networkd
 RUN chmod +x /networkd
 
-FROM scratch AS networkd
-COPY --from=networkd-build /networkd /networkd
-ENTRYPOINT ["/networkd"]
+FROM base AS networkd-image
+ARG TAG
+ARG USERNAME
+COPY --from=networkd-build /networkd /scratch/networkd
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./networkd /networkd\nENTRYPOINT [\"/networkd\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/networkd:${TAG} --output type=docker,dest=/networkd.tar --no-console  .
+
 
 # The osctl targets build the osctl binaries.
 
@@ -229,12 +250,11 @@ COPY --from=docker.io/autonomy/util-linux:f2a8e95 /lib/libuuid.* /rootfs/lib
 COPY --from=docker.io/autonomy/kmod:f2a8e95 /usr/lib/libkmod.* /rootfs/lib
 COPY --from=docker.io/autonomy/kernel:f2a8e95 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
-ARG IMAGES
-COPY ${IMAGES}/apid.tar /rootfs/usr/images/
-COPY ${IMAGES}/ntpd.tar /rootfs/usr/images/
-COPY ${IMAGES}/osd.tar /rootfs/usr/images/
-COPY ${IMAGES}/trustd.tar /rootfs/usr/images/
-COPY ${IMAGES}/networkd.tar /rootfs/usr/images/
+COPY --from=apid-image /apid.tar /rootfs/usr/images/
+COPY --from=ntpd-image /ntpd.tar /rootfs/usr/images/
+COPY --from=osd-image /osd.tar /rootfs/usr/images/
+COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
+COPY --from=networkd-image /networkd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
