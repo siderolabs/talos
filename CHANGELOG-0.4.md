@@ -1,3 +1,14 @@
+# [v0.4.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.4...v0.4.0-alpha.5) (2020-02-15)
+
+### Bug Fixes
+
+- do not add empty netconf ([5f34859](https://github.com/talos-systems/talos/commit/5f3485979ad206813d41d708cbfe628ffc696020)), closes [#1869](https://github.com/talos-systems/talos/issues/1869)
+- don't proxy gRPC unix connections ([fcaed8b](https://github.com/talos-systems/talos/commit/fcaed8b0dd27f582a7f81b516f938a6eb2701349))
+
+### Features
+
+- implement registry mirror & config for image pull ([e1779ac](https://github.com/talos-systems/talos/commit/e1779ac77cd942d23fde1374ddebd04242de05db))
+
 # [v0.4.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.3...v0.4.0-alpha.4) (2020-02-04)
 
 ### Bug Fixes
