@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/hashicorp/go-multierror"
@@ -73,7 +74,15 @@ func (c *Config) Validate(mode runtime.Mode) error {
 
 	if mode == runtime.Metal {
 		if c.MachineConfig.MachineInstall == nil {
-			result = multierror.Append(result, fmt.Errorf("install instructions are required by the %q mode", runtime.Metal.String()))
+			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", runtime.Metal.String()))
+		}
+
+		if c.MachineConfig.MachineInstall.InstallDisk == "" {
+			result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", runtime.Metal.String()))
+		}
+
+		if _, err := os.Stat(c.MachineConfig.MachineInstall.InstallDisk); os.IsNotExist(err) {
+			result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", c.MachineConfig.MachineInstall.InstallDisk))
 		}
 	}
 
