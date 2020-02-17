@@ -212,6 +212,7 @@ local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
 local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux]);
 local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
+local provision_tests = Step("provision-tests", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
@@ -297,6 +298,7 @@ local default_steps = [
   push_local,
   e2e_docker,
   e2e_firecracker,
+  provision_tests,
   push,
   push_latest,
 ];

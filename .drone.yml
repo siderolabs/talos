@@ -496,6 +496,31 @@ steps:
   - kernel
   - push-local
 
+- name: provision-tests
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - initramfs
+  - osctl-linux
+  - kernel
+  - push-local
+
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -1071,6 +1096,31 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - initramfs
+  - osctl-linux
+  - kernel
+  - push-local
+
+- name: provision-tests
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -1758,6 +1808,31 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-firecracker
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - initramfs
+  - osctl-linux
+  - kernel
+  - push-local
+
+- name: provision-tests
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -2495,6 +2570,31 @@ steps:
   - kernel
   - push-local
 
+- name: provision-tests
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - initramfs
+  - osctl-linux
+  - kernel
+  - push-local
+
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -3212,6 +3312,31 @@ steps:
   - kernel
   - push-local
 
+- name: provision-tests
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - initramfs
+  - osctl-linux
+  - kernel
+  - push-local
+
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -3447,6 +3572,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: bd5e6446a0d875f2acec08a36fbb274e4763fdf115e1042bf07f8cacc6c37263
+hmac: 0ee401dcb1d7b3fcdf17392c436730a6031e265543436865a68b95c7560e63df
 
 ...
