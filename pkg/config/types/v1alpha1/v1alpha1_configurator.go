@@ -379,7 +379,7 @@ func (c *ClusterConfig) PodCIDR() string {
 		return constants.DefaultPodCIDR
 	}
 
-	return c.ClusterNetwork.PodSubnet[0]
+	return strings.Join(c.ClusterNetwork.PodSubnet, ",")
 }
 
 // ServiceCIDR implements the Configurator interface.
@@ -391,7 +391,7 @@ func (c *ClusterConfig) ServiceCIDR() string {
 		return constants.DefaultServiceCIDR
 	}
 
-	return c.ClusterNetwork.ServiceSubnet[0]
+	return strings.Join(c.ClusterNetwork.ServiceSubnet, ",")
 }
 
 // ExtraManifestURLs implements the Configurator interface.
