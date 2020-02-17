@@ -19,10 +19,9 @@ type ClusterRequest struct {
 	Network NetworkRequest
 	Nodes   NodeRequests
 
-	Image             string
-	KernelPath        string
-	InitramfsPath     string
-	KubernetesVersion string
+	Image         string
+	KernelPath    string
+	InitramfsPath string
 
 	// Path to osctl executable to re-execute itself as needed.
 	SelfExecutable string

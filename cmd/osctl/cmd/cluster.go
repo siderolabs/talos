@@ -175,10 +175,9 @@ func create(ctx context.Context) (err error) {
 			},
 		},
 
-		Image:             nodeImage,
-		KernelPath:        nodeVmlinuxPath,
-		InitramfsPath:     nodeInitramfsPath,
-		KubernetesVersion: kubernetesVersion,
+		Image:         nodeImage,
+		KernelPath:    nodeVmlinuxPath,
+		InitramfsPath: nodeInitramfsPath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: stateDir,
