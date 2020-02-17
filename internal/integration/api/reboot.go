@@ -126,6 +126,64 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 	}
 }
 
+// TestRebootAllNodes reboots all cluster nodes at the same time.
+func (suite *RebootSuite) TestRebootAllNodes() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboots")
+	}
+
+	nodes := suite.DiscoverNodes()
+	suite.Require().NotEmpty(nodes)
+
+	errCh := make(chan error, len(nodes))
+
+	for _, node := range nodes {
+		go func(node string) {
+			errCh <- func() error {
+				// timeout for single node reboot
+				nodeCtx := client.WithNodes(suite.ctx, node)
+
+				// read uptime before reboot
+				uptimeBefore, err := suite.readUptime(nodeCtx)
+				if err != nil {
+					return fmt.Errorf("error reading initial uptime (node %q): %w", node, err)
+				}
+
+				if err = suite.Client.Reboot(nodeCtx); err != nil {
+					return fmt.Errorf("error rebooting node %q: %w", node, err)
+				}
+
+				var uptimeAfter float64
+
+				return retry.Constant(3 * time.Minute).Retry(func() error {
+					uptimeAfter, err = suite.readUptime(nodeCtx)
+					if err != nil {
+						// API might be unresponsive during reboot
+						return retry.ExpectedError(err)
+					}
+
+					if uptimeAfter >= uptimeBefore {
+						// uptime should go down after reboot
+						return retry.ExpectedError(fmt.Errorf("uptime didn't go down: before %f, after %f", uptimeBefore, uptimeAfter))
+					}
+
+					return nil
+				})
+			}()
+		}(node)
+	}
+
+	for range nodes {
+		suite.Assert().NoError(<-errCh)
+	}
+
+	if suite.Cluster != nil {
+		// without cluster state we can't do deep checks, but basic reboot test still works
+		// NB: using `ctx` here to have client talking to init node by default
+		suite.AssertClusterHealthy(suite.ctx)
+	}
+}
+
 func init() {
 	allSuites = append(allSuites, new(RebootSuite))
 }
