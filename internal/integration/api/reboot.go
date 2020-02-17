@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"sync"
 	"time"
 
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
@@ -137,10 +138,11 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 
 	errCh := make(chan error, len(nodes))
 
+	var initialUptime sync.Map
+
 	for _, node := range nodes {
 		go func(node string) {
 			errCh <- func() error {
-				// timeout for single node reboot
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
 				// read uptime before reboot
@@ -149,14 +151,34 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 					return fmt.Errorf("error reading initial uptime (node %q): %w", node, err)
 				}
 
-				if err = suite.Client.Reboot(nodeCtx); err != nil {
-					return fmt.Errorf("error rebooting node %q: %w", node, err)
+				initialUptime.Store(node, uptimeBefore)
+				return nil
+			}()
+		}(node)
+	}
+
+	for range nodes {
+		suite.Require().NoError(<-errCh)
+	}
+
+	allNodesCtx := client.WithNodes(suite.ctx, nodes...)
+
+	suite.Require().NoError(suite.Client.Reboot(allNodesCtx))
+
+	for _, node := range nodes {
+		go func(node string) {
+			errCh <- func() error {
+				uptimeBeforeInterface, ok := initialUptime.Load(node)
+				if !ok {
+					return fmt.Errorf("uptime record not found for %q", node)
 				}
 
-				var uptimeAfter float64
+				uptimeBefore := uptimeBeforeInterface.(float64) //nolint: errcheck
+
+				nodeCtx := client.WithNodes(suite.ctx, node)
 
 				return retry.Constant(3 * time.Minute).Retry(func() error {
-					uptimeAfter, err = suite.readUptime(nodeCtx)
+					uptimeAfter, err := suite.readUptime(nodeCtx)
 					if err != nil {
 						// API might be unresponsive during reboot
 						return retry.ExpectedError(err)
