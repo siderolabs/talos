@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/internal/integration/k8s"
+	provision_test "github.com/talos-systems/talos/internal/integration/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/version"
@@ -64,6 +65,8 @@ func TestIntegration(t *testing.T) {
 		}
 	}
 
+	provision_test.DefaultSettings.CurrentVersion = expectedVersion
+
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
@@ -104,7 +107,18 @@ func init() {
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
 	flag.StringVar(&osctlPath, "talos.osctlpath", "osctl", "The path to 'osctl' binary")
 
+	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
+	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")
+	flag.IntVar(&provision_test.DefaultSettings.MTU, "talos.provision.mtu", provision_test.DefaultSettings.MTU, "MTU to use for cluster network (provision tests only)")
+	flag.Int64Var(&provision_test.DefaultSettings.CPUs, "talos.provision.cpu", provision_test.DefaultSettings.CPUs, "CPU count for each VM (provision tests only)")
+	flag.Int64Var(&provision_test.DefaultSettings.MemMB, "talos.provision.mem", provision_test.DefaultSettings.MemMB, "memory (in MiB) for each VM (provision tests only)")
+	flag.Int64Var(&provision_test.DefaultSettings.DiskGB, "talos.provision.disk", provision_test.DefaultSettings.DiskGB, "disk size (in GiB) for each VM (provision tests only)")
+	flag.IntVar(&provision_test.DefaultSettings.MasterNodes, "talos.provision.masters", provision_test.DefaultSettings.MasterNodes, "master node count (provision tests only)")
+	flag.IntVar(&provision_test.DefaultSettings.WorkerNodes, "talos.provision.workers", provision_test.DefaultSettings.WorkerNodes, "worker node count (provision tests only)")
+	flag.StringVar(&provision_test.DefaultSettings.TargetInstallImageRegistry, "talos.provision.target-installer-registry", provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
+
 	allSuites = append(allSuites, api.GetAllSuites()...)
 	allSuites = append(allSuites, cli.GetAllSuites()...)
 	allSuites = append(allSuites, k8s.GetAllSuites()...)
+	allSuites = append(allSuites, provision_test.GetAllSuites()...)
 }

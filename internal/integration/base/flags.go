@@ -4,17 +4,20 @@
 
 // +build integration
 
-package integration_test
+package base
 
 import "strings"
 
-type stringList []string
+// StringList implements flag.Value for list of strings.
+type StringList []string
 
-func (l *stringList) String() string {
+// String implements flag.Value.
+func (l *StringList) String() string {
 	return strings.Join(*l, ",")
 }
 
-func (l *stringList) Set(value string) error {
+// Set implements flag.Value.
+func (l *StringList) Set(value string) error {
 	*l = append(*l, strings.Split(value, ",")...)
 
 	return nil
