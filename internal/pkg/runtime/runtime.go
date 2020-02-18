@@ -21,6 +21,8 @@ const (
 	Shutdown
 	// Upgrade is the upgrade sequence.
 	Upgrade
+	// Reset is the reset sequence.
+	Reset
 )
 
 // Mode is a runtime mode.

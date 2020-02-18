@@ -14,7 +14,8 @@ osctl reset [flags]
 ### Options
 
 ```
-  -h, --help   help for reset
+      --graceful   if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
+  -h, --help       help for reset
 ```
 
 ### Options inherited from parent commands

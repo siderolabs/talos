@@ -20,7 +20,7 @@ service MachineService {
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
-  rpc Reset(google.protobuf.Empty) returns (ResetResponse);
+  rpc Reset(ResetRequest) returns (ResetResponse);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
@@ -48,6 +48,9 @@ message RebootResponse {
 }
 
 // rpc reset
+message ResetRequest {
+  bool graceful = 1;
+}
 // The reset message containing the restart status.
 message Reset {
   common.Metadata metadata = 1;
