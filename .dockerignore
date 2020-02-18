@@ -8,6 +8,7 @@
 !pkg
 !vendor
 !web
+!.golangci.yml
 !.markdownlint.json
 !go.mod
 !go.sum
