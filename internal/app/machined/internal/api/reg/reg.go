@@ -128,16 +128,8 @@ func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest
 }
 
 // Reset resets the node.
-func (r *Registrator) Reset(ctx context.Context, in *empty.Empty) (data *machineapi.ResetResponse, err error) {
-	// Stop the kubelet.
-	if err = system.Services(r.config).Stop(ctx, "kubelet"); err != nil {
-		return data, err
-	}
-
-	// Remove the machine config.
-	if err = os.Remove(constants.ConfigPath); err != nil {
-		return nil, err
-	}
+func (r *Registrator) Reset(ctx context.Context, in *machineapi.ResetRequest) (data *machineapi.ResetResponse, err error) {
+	event.Bus().Notify(event.Event{Type: event.Reset, Data: in})
 
 	return &machineapi.ResetResponse{
 		Messages: []*machineapi.Reset{

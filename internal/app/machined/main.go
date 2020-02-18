@@ -178,6 +178,24 @@ func main() {
 			}
 
 			immediateReboot = true
+		case event.Reset:
+			var (
+				req *machineapi.ResetRequest
+				ok  bool
+			)
+
+			if req, ok = e.Data.(*machineapi.ResetRequest); !ok {
+				log.Println("cannot perform reset, unexpected data type")
+				continue
+			}
+
+			if err := seq.Reset(req); err != nil {
+				log.Println(err)
+				panic(fmt.Errorf("reset failed: %w", err))
+			}
+
+			flag = unix.LINUX_REBOOT_CMD_POWER_OFF
+			immediateReboot = true
 		}
 	}
 

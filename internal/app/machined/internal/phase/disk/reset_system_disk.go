@@ -5,12 +5,9 @@
 package disk
 
 import (
-	"fmt"
-
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
-	"github.com/talos-systems/talos/pkg/blockdevice/table"
 )
 
 // ResetSystemDisk represents the task for stop all containerd tasks in the
@@ -34,29 +31,5 @@ func (task *ResetSystemDisk) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *ResetSystemDisk) standard() (err error) {
-	var bd *blockdevice.BlockDevice
-
-	if bd, err = blockdevice.Open(task.devname); err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer bd.Close()
-
-	var pt table.PartitionTable
-
-	if pt, err = bd.PartitionTable(true); err != nil {
-		return err
-	}
-
-	for _, p := range pt.Partitions() {
-		if err = pt.Delete(p); err != nil {
-			return fmt.Errorf("failed to delete partition: %w", err)
-		}
-	}
-
-	if err = pt.Write(); err != nil {
-		return err
-	}
-
-	return nil
+	return blockdevice.ResetDevice(task.devname)
 }

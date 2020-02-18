@@ -249,3 +249,73 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 
 	return phaserunner.Run()
 }
+
+// Reset implements the Sequencer interface.
+func (d *Sequencer) Reset(req *machineapi.ResetRequest) error {
+	content, err := config.FromFile(constants.ConfigPath)
+	if err != nil {
+		return err
+	}
+
+	config, err := config.New(content)
+	if err != nil {
+		return err
+	}
+
+	phaserunner, err := phase.NewRunner(config, runtime.Reset)
+	if err != nil {
+		return err
+	}
+
+	var dev *probe.ProbedBlockDevice
+
+	dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
+	if err != nil {
+		return err
+	}
+
+	devname := dev.Device().Name()
+
+	if err := dev.Close(); err != nil {
+		return err
+	}
+
+	if req.GetGraceful() {
+		phaserunner.Add(
+			phase.NewPhase(
+				"cordon and drain node",
+				kubernetes.NewCordonAndDrainTask(),
+			),
+			phase.NewPhase(
+				"handle control plane requirements",
+				upgrade.NewLeaveEtcdTask(),
+			),
+			phase.NewPhase(
+				"remove all pods",
+				kubernetes.NewRemoveAllPodsTask(),
+			),
+		)
+	}
+
+	phaserunner.Add(
+		phase.NewPhase(
+			"stop services",
+			services.NewStopServicesTask(true),
+		),
+		phase.NewPhase(
+			"unmount system disk submounts",
+			rootfs.NewUnmountOverlayTask(),
+			rootfs.NewUnmountPodMountsTask(),
+		),
+		phase.NewPhase(
+			"unmount system disk",
+			rootfs.NewUnmountSystemDisksTask(devname),
+		),
+		phase.NewPhase(
+			"reset system disk",
+			disk.NewResetSystemDiskTask(devname),
+		),
+	)
+
+	return phaserunner.Run()
+}

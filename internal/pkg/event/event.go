@@ -16,6 +16,8 @@ const (
 	Reboot
 	// Upgrade is the upgrade event.
 	Upgrade
+	// Reset is the reset event.
+	Reset
 )
 
 // Event represents an event in the observer pattern.
@@ -68,7 +70,7 @@ func (e *Embeddable) Channel() Channel {
 // Types implements the Observer interface.
 func (e *Embeddable) Types() []Type {
 	if e.types == nil {
-		e.types = []Type{Shutdown, Reboot, Upgrade}
+		e.types = []Type{Shutdown, Reboot, Upgrade, Reset}
 	}
 
 	return e.types

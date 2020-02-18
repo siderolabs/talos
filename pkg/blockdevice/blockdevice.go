@@ -162,3 +162,35 @@ func (bd *BlockDevice) Size() (uint64, error) {
 
 	return devsize, nil
 }
+
+// ResetDevice will reset a block device given a device name.
+// Simply deletes partition table on device.
+func ResetDevice(devname string) error {
+	var bd *BlockDevice
+
+	var err error
+
+	if bd, err = Open(devname); err != nil {
+		return err
+	}
+	// nolint: errcheck
+	defer bd.Close()
+
+	var pt table.PartitionTable
+
+	if pt, err = bd.PartitionTable(true); err != nil {
+		return err
+	}
+
+	for _, p := range pt.Partitions() {
+		if err = pt.Delete(p); err != nil {
+			return fmt.Errorf("failed to delete partition: %w", err)
+		}
+	}
+
+	if err = pt.Write(); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -14,6 +14,7 @@ type Sequencer interface {
 	Boot() error
 	Shutdown() error
 	Upgrade(*machineapi.UpgradeRequest) error
+	Reset(*machineapi.ResetRequest) error
 }
 
 // Version represents the sequencer version.
