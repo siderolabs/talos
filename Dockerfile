@@ -397,9 +397,9 @@ COPY --from=integration-test-darwin-build /src/integration.test /integration-tes
 # The lint target performs linting on the source code.
 
 FROM base AS lint-go
-COPY hack/golang/golangci-lint.yaml .
+COPY .golangci.yml .
 ENV GOGC=50
-RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config golangci-lint.yaml
+RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config .golangci.yml
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
