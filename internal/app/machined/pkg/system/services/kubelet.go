@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -296,17 +297,23 @@ func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 }
 
 func writeKubeletConfig(config runtime.Configurator) error {
-	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
-	if err != nil {
-		return err
+	dnsServiceIPs := []string{}
+
+	for _, cidr := range strings.Split(config.Cluster().Network().ServiceCIDR(), ",") {
+		_, svcCIDR, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return fmt.Errorf("failed to parse service CIDR %s: %v", cidr, err)
+		}
+
+		dnsIP, err := tnet.NthIPInNetwork(svcCIDR, 10)
+		if err != nil {
+			return fmt.Errorf("failed to calculate Nth IP in CIDR %s: %v", svcCIDR, err)
+		}
+
+		dnsServiceIPs = append(dnsServiceIPs, dnsIP.String())
 	}
 
-	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
-	if err != nil {
-		return err
-	}
-
-	kubeletConfiguration := newKubeletConfiguration([]string{dnsServiceIP.String()})
+	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs)
 
 	serializer := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,
