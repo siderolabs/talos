@@ -16,6 +16,7 @@ osctl reset [flags]
 ```
       --graceful   if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
   -h, --help       help for reset
+      --reboot     if true, reboot the node after resetting (default is to shutdown) (default true)
 ```
 
 ### Options inherited from parent commands
