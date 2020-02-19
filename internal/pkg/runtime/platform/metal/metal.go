@@ -7,10 +7,14 @@ package metal
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
+	"net/url"
 	"path/filepath"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/talos-systems/go-smbios/smbios"
 
 	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -32,10 +36,44 @@ func (m *Metal) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
+//
+// nolint: gocyclo
 func (m *Metal) Configuration() ([]byte, error) {
 	var option *string
 	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("no config option was found")
+	}
+
+	u, err := url.Parse(*option)
+	if err != nil {
+		return nil, err
+	}
+
+	values := u.Query()
+
+	if len(values) > 0 {
+		for key := range values {
+			switch key {
+			case "uuid":
+				s, err := smbios.New()
+				if err != nil {
+					return nil, err
+				}
+
+				uuid, err := s.SystemInformation().UUID()
+				if err != nil {
+					return nil, err
+				}
+
+				values.Set("uuid", uuid.String())
+			default:
+				log.Printf("unsupported query parameter: %q", key)
+			}
+		}
+
+		u.RawQuery = values.Encode()
+
+		*option = u.String()
 	}
 
 	switch *option {
