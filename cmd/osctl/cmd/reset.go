@@ -37,5 +37,6 @@ var resetCmd = &cobra.Command{
 
 func init() {
 	resetCmd.Flags().BoolVar(&graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
+	resetCmd.Flags().BoolVar(&reboot, "reboot", true, "if true, reboot the node after resetting (default is to shutdown)")
 	rootCmd.AddCommand(resetCmd)
 }
