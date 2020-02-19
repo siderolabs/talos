@@ -104,7 +104,7 @@ func Launch() error {
 					config.FirecrackerConfig.KernelImagePath = assets.KernelPath
 					config.FirecrackerConfig.InitrdPath = assets.InitrdPath
 
-					fmt.Fprintf(os.Stderr, "successfully extracted boot assets from the disk image")
+					fmt.Fprintf(os.Stderr, "successfully extracted boot assets from the disk image\n")
 				}
 			}
 
@@ -144,7 +144,7 @@ func Launch() error {
 				case sig := <-c:
 					fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
 
-					return nil
+					return fmt.Errorf("process stopped")
 
 				case <-time.After(500 * time.Millisecond): // wait a bit to prevent crash loop
 				}
@@ -155,7 +155,7 @@ func Launch() error {
 
 				<-waitCh // wait for process to exit
 
-				return nil
+				return fmt.Errorf("process stopped")
 			}
 
 			// restart the vm by proceeding with the for loop
