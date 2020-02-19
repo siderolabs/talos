@@ -17,9 +17,10 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/config/machine"
@@ -61,7 +62,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 
 	netconf := make(map[string][]nic.Option)
 
-	if option = kernel.ProcCmdline().Get("ip").First(); option != nil {
+	if option = procfs.ProcCmdline().Get("ip").First(); option != nil {
 		if name, opts := buildKernelOptions(*option); name != "" {
 			netconf[name] = opts
 		}
@@ -313,7 +314,7 @@ func (n *Networkd) decideHostname() (hostname string, domainname string, address
 	}
 
 	// Kernel
-	if kHostname := kernel.ProcCmdline().Get(constants.KernelParamHostname).First(); kHostname != nil {
+	if kHostname := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); kHostname != nil {
 		hostname = *kHostname
 	}
 

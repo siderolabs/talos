@@ -59,8 +59,9 @@ require (
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
 	github.com/spf13/cobra v0.0.5
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.0
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
+	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
@@ -74,7 +75,7 @@ require (
 	google.golang.org/grpc v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
-	gopkg.in/yaml.v2 v2.2.7
+	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	k8s.io/api v0.17.2

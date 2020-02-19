@@ -14,9 +14,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-smbios/smbios"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -40,7 +40,7 @@ func (m *Metal) Name() string {
 // nolint: gocyclo
 func (m *Metal) Configuration() ([]byte, error) {
 	var option *string
-	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
+	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("no config option was found")
 	}
 
@@ -127,6 +127,6 @@ func readConfigFromISO() (b []byte, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (m *Metal) KernelArgs() kernel.Parameters {
+func (m *Metal) KernelArgs() procfs.Parameters {
 	return nil
 }

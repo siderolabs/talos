@@ -7,7 +7,7 @@ package runtime
 import (
 	"net"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
 )
 
 // Platform is an interface describing a platform.
@@ -17,5 +17,5 @@ type Platform interface {
 	Hostname() ([]byte, error)
 	Mode() Mode
 	ExternalIPs() ([]net.IP, error)
-	KernelArgs() kernel.Parameters
+	KernelArgs() procfs.Parameters
 }

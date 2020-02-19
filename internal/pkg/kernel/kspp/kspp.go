@@ -9,17 +9,18 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/pkg/sysctl"
 )
 
 // RequiredKSPPKernelParameters is the set of kernel parameters required to
 // satisfy the KSPP.
-var RequiredKSPPKernelParameters = kernel.Parameters{
-	kernel.NewParameter("page_poison").Append("1"),
-	kernel.NewParameter("slab_nomerge").Append(""),
-	kernel.NewParameter("slub_debug").Append("P"),
-	kernel.NewParameter("pti").Append("on"),
+var RequiredKSPPKernelParameters = procfs.Parameters{
+	procfs.NewParameter("page_poison").Append("1"),
+	procfs.NewParameter("slab_nomerge").Append(""),
+	procfs.NewParameter("slub_debug").Append("P"),
+	procfs.NewParameter("pti").Append("on"),
 }
 
 // EnforceKSPPKernelParameters verifies that all required KSPP kernel
@@ -29,7 +30,7 @@ func EnforceKSPPKernelParameters() error {
 
 	for _, values := range RequiredKSPPKernelParameters {
 		var val *string
-		if val = kernel.ProcCmdline().Get(values.Key()).First(); val == nil {
+		if val = procfs.ProcCmdline().Get(values.Key()).First(); val == nil {
 			result = multierror.Append(result, fmt.Errorf("KSPP kernel parameter %s is required", values.Key()))
 			continue
 		}

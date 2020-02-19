@@ -8,7 +8,8 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
@@ -26,7 +27,7 @@ type InstallOptions struct {
 
 // Install installs Talos.
 func Install(p runtime.Platform, config runtime.Configurator, sequence runtime.Sequence, opts *InstallOptions) (err error) {
-	cmdline := kernel.NewCmdline("")
+	cmdline := procfs.NewCmdline("")
 	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 	cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)

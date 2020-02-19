@@ -13,8 +13,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/cmd/installer/pkg"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -62,7 +63,7 @@ func (i *Interactive) Initialize(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	cmdline := kernel.NewDefaultCmdline()
+	cmdline := procfs.NewDefaultCmdline()
 	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 	cmdline.Append(constants.KernelParamPlatform, r.Platform().Name())
 	cmdline.Append(constants.KernelParamConfig, endpoint)

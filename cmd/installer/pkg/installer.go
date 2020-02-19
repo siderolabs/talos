@@ -13,9 +13,10 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/cmd/installer/pkg/manifest"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
@@ -28,13 +29,13 @@ import (
 // Installer represents the installer logic. It serves as the entrypoint to all
 // installation methods.
 type Installer struct {
-	cmdline  *kernel.Cmdline
+	cmdline  *procfs.Cmdline
 	install  machine.Install
 	manifest *manifest.Manifest
 }
 
 // NewInstaller initializes and returns an Installer.
-func NewInstaller(cmdline *kernel.Cmdline, install machine.Install) (i *Installer, err error) {
+func NewInstaller(cmdline *procfs.Cmdline, install machine.Install) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
 		install: install,

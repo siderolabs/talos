@@ -9,9 +9,10 @@ import (
 	"net"
 	"strings"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -22,7 +23,7 @@ import (
 func buildOptions(device machine.Device, hostname string) (name string, opts []nic.Option, err error) {
 	opts = append(opts, nic.WithName(device.Interface))
 
-	if device.Ignore || kernel.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface) {
+	if device.Ignore || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface) {
 		opts = append(opts, nic.WithIgnore())
 		return device.Interface, opts, err
 	}
