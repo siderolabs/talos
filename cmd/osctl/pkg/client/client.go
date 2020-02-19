@@ -240,8 +240,8 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver common.Co
 }
 
 // Reset implements the proto.OSClient interface.
-func (c *Client) Reset(ctx context.Context, graceful bool) (err error) {
-	_, err = c.MachineClient.Reset(ctx, &machineapi.ResetRequest{Graceful: graceful})
+func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
+	_, err = c.MachineClient.Reset(ctx, &machineapi.ResetRequest{Graceful: graceful, Reboot: reboot})
 	return
 }
 

@@ -13,7 +13,10 @@ import (
 	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
 )
 
-var graceful bool
+var (
+	graceful bool
+	reboot   bool
+)
 
 // resetCmd represents the reset command
 var resetCmd = &cobra.Command{
@@ -23,7 +26,7 @@ var resetCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if err := c.Reset(ctx, graceful); err != nil {
+			if err := c.Reset(ctx, graceful, reboot); err != nil {
 				return fmt.Errorf("error executing reset: %s", err)
 			}
 

@@ -50,7 +50,9 @@ message RebootResponse {
 // rpc reset
 message ResetRequest {
   bool graceful = 1;
+  bool reboot = 2;
 }
+
 // The reset message containing the restart status.
 message Reset {
   common.Metadata metadata = 1;
