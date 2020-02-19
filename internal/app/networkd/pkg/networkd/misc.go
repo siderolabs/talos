@@ -13,26 +13,61 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/jsimonetti/rtnetlink"
+	"golang.org/x/sys/unix"
+
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
-// filterInterfaceByName filters network links by name so we only mange links
+// filterInterfaces filters network links by name so we only mange links
 // we need to.
-func filterInterfaceByName(links []net.Interface) (filteredLinks []net.Interface) {
-	for _, link := range links {
+//
+// nolint: gocyclo
+func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err error) {
+	var conn *rtnetlink.Conn
+
+	for _, iface := range interfaces {
 		switch {
-		case strings.HasPrefix(link.Name, "en"):
-			filteredLinks = append(filteredLinks, link)
-		case strings.HasPrefix(link.Name, "eth"):
-			filteredLinks = append(filteredLinks, link)
-		case strings.HasPrefix(link.Name, "lo"):
-			filteredLinks = append(filteredLinks, link)
-		case strings.HasPrefix(link.Name, "bond"):
-			filteredLinks = append(filteredLinks, link)
+		case strings.HasPrefix(iface.Name, "en"):
+			filtered = append(filtered, iface)
+		case strings.HasPrefix(iface.Name, "eth"):
+			filtered = append(filtered, iface)
+		case strings.HasPrefix(iface.Name, "lo"):
+			filtered = append(filtered, iface)
+		case strings.HasPrefix(iface.Name, "bond"):
+			filtered = append(filtered, iface)
 		}
 	}
 
-	return filteredLinks
+	conn, err = rtnetlink.Dial(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// nolint: errcheck
+	defer conn.Close()
+
+	n := 0 // nolint: wsl
+	for _, iface := range filtered {
+		link, err := conn.Link.Get(uint32(iface.Index))
+		if err != nil {
+			log.Printf("error getting link %q", iface.Name)
+
+			continue
+		}
+
+		if link.Flags&unix.IFF_UP == unix.IFF_UP && !(link.Flags&unix.IFF_RUNNING == unix.IFF_RUNNING) {
+			log.Printf("no carrier for link %q", iface.Name)
+		} else {
+			log.Printf("link %q has carrier signal", iface.Name)
+			filtered[n] = iface
+			n++
+		}
+	}
+
+	filtered = filtered[:n]
+
+	return filtered, nil
 }
 
 // writeResolvConf generates a /etc/resolv.conf with the specified nameservers.

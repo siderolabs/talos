@@ -104,7 +104,13 @@ func New(config runtime.Configurator) (*Networkd, error) {
 
 	// Add locally discovered interfaces to our list of interfaces
 	// if they are not already present
-	for _, device := range filterInterfaceByName(localInterfaces) {
+	filtered, err := filterInterfaces(localInterfaces)
+	if err != nil {
+		result = multierror.Append(result, err)
+		return &Networkd{}, result.ErrorOrNil()
+	}
+
+	for _, device := range filtered {
 		if _, ok := netconf[device.Name]; !ok {
 			netconf[device.Name] = []nic.Option{nic.WithName(device.Name)}
 
