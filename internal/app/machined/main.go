@@ -194,7 +194,10 @@ func main() {
 				panic(fmt.Errorf("reset failed: %w", err))
 			}
 
-			flag = unix.LINUX_REBOOT_CMD_POWER_OFF
+			if !req.GetReboot() {
+				flag = unix.LINUX_REBOOT_CMD_POWER_OFF
+			}
+
 			immediateReboot = true
 		}
 	}
