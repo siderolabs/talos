@@ -11,7 +11,8 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -147,10 +148,10 @@ func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (a *Azure) KernelArgs() kernel.Parameters {
-	return []*kernel.Parameter{
-		kernel.NewParameter("console").Append("ttyS0,115200n8"),
-		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
-		kernel.NewParameter("rootdelay").Append("300"),
+func (a *Azure) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS0,115200n8"),
+		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
+		procfs.NewParameter("rootdelay").Append("300"),
 	}
 }

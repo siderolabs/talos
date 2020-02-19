@@ -10,7 +10,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
@@ -53,6 +54,6 @@ func (c *Container) ExternalIPs() (addrs []net.IP, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (c *Container) KernelArgs() kernel.Parameters {
+func (c *Container) KernelArgs() procfs.Parameters {
 	return nil
 }

@@ -21,8 +21,9 @@ import (
 	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
@@ -98,7 +99,7 @@ func New(setters ...Option) (*NetworkInterface, error) {
 
 // IsIgnored checks the network interface to see if it should be ignored and not configured.
 func (n *NetworkInterface) IsIgnored() bool {
-	if n.Ignore || kernel.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(n.Name) {
+	if n.Ignore || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(n.Name) {
 		return true
 	}
 

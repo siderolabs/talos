@@ -9,7 +9,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
@@ -58,6 +59,6 @@ func (i *ISO) ExternalIPs() (addrs []net.IP, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (i *ISO) KernelArgs() kernel.Parameters {
+func (i *ISO) KernelArgs() procfs.Parameters {
 	return nil
 }

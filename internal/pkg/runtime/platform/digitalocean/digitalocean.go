@@ -10,7 +10,8 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -92,8 +93,8 @@ func (d *DigitalOcean) ExternalIPs() (addrs []net.IP, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (d *DigitalOcean) KernelArgs() kernel.Parameters {
-	return []*kernel.Parameter{
-		kernel.NewParameter("console").Append("ttyS0"),
+func (d *DigitalOcean) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS0"),
 	}
 }

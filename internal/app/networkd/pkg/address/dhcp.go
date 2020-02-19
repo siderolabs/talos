@@ -16,7 +16,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -157,7 +158,7 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	// <3 azure
 	// When including dhcp.OptionInterfaceMTU we don't get a dhcp offer back on azure.
 	// So we'll need to explicitly exclude adding this option for azure.
-	if p := kernel.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
+	if p := procfs.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
 		if *p != "azure" {
 			opts = append(opts, dhcpv4.OptionInterfaceMTU)
 		}

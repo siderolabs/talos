@@ -20,7 +20,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"k8s.io/apimachinery/pkg/util/json"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
@@ -90,7 +91,7 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 		return provision.NodeInfo{}, err
 	}
 
-	cmdline := kernel.NewDefaultCmdline()
+	cmdline := procfs.NewDefaultCmdline()
 
 	// required to get kernel console
 	cmdline.Append("console", "ttyS0")

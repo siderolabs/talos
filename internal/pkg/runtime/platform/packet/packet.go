@@ -7,7 +7,8 @@ package packet
 import (
 	"net"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/download"
 )
@@ -46,8 +47,8 @@ func (p *Packet) ExternalIPs() (addrs []net.IP, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (p *Packet) KernelArgs() kernel.Parameters {
-	return []*kernel.Parameter{
-		kernel.NewParameter("console").Append("ttyS1,115200n8"),
+func (p *Packet) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS1,115200n8"),
 	}
 }

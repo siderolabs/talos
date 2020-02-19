@@ -15,8 +15,9 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
-	"github.com/talos-systems/talos/internal/pkg/kernel"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -62,7 +63,7 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
 	var config *string
-	if config = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
+	if config = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
 		return fmt.Errorf("no config option was found")
 	}
 

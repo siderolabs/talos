@@ -13,7 +13,8 @@ import (
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -29,7 +30,7 @@ func (v *VMware) Name() string {
 // Configuration implements the platform.Platform interface.
 func (v *VMware) Configuration() ([]byte, error) {
 	var option *string
-	if option = kernel.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
+	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("no config option was found")
 	}
 
@@ -81,9 +82,9 @@ func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (v *VMware) KernelArgs() kernel.Parameters {
-	return []*kernel.Parameter{
-		kernel.NewParameter("console").Append("tty0"),
-		kernel.NewParameter("earlyprintk").Append("ttyS0,115200"),
+func (v *VMware) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("tty0"),
+		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 	}
 }

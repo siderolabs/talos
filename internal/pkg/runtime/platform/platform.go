@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/talos-systems/talos/internal/pkg/kernel"
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/aws"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform/azure"
@@ -28,7 +29,7 @@ import (
 // nolint: gocyclo
 func CurrentPlatform() (p runtime.Platform, err error) {
 	var platform string
-	if p := kernel.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
+	if p := procfs.ProcCmdline().Get(constants.KernelParamPlatform).First(); p != nil {
 		platform = *p
 	}
 
