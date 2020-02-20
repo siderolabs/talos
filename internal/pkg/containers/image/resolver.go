@@ -15,6 +15,7 @@ import (
 
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
+	"golang.org/x/net/http/httpproxy"
 
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -153,7 +154,10 @@ func PrepareAuth(auth *machine.RegistryAuthConfig, host, expectedHost string) (s
 // newTransport creates HTTP transport with default settings.
 func newTransport() *http.Transport {
 	return &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		// work around for  proxy.Do once bug.
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
+		},
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
