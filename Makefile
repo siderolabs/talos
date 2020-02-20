@@ -31,6 +31,8 @@ COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
+COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
+COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 
 all: initramfs kernel installer osctl talos
 
