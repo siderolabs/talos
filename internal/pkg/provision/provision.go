@@ -7,6 +7,7 @@ package provision
 
 import (
 	"context"
+	"io"
 
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
@@ -15,6 +16,8 @@ import (
 type Provisioner interface {
 	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
 	Destroy(context.Context, Cluster, ...Option) error
+
+	CrashDump(context.Context, Cluster, io.Writer)
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 

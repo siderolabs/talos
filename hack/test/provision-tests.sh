@@ -13,4 +13,4 @@ case "${REGISTRY:-false}" in
 esac
 
 
-"${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" ${INTEGRATION_TEST_FLAGS}
+"${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.provision.mem 2048 -talos.provision.cpu 2 ${INTEGRATION_TEST_FLAGS}
