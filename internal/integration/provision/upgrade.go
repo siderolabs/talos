@@ -8,6 +8,7 @@ package provision
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -54,7 +55,7 @@ type upgradeSpec struct {
 
 const (
 	talos03Version = "v0.3.2-1-g71ac6696"
-	talos04Version = "v0.4.0-alpha.5"
+	talos04Version = "v0.4.0-alpha.5-19-g8913d9df"
 )
 
 var (
@@ -145,6 +146,12 @@ func (suite *UpgradeSuite) SetupSuite() {
 
 // TearDownSuite ...
 func (suite *UpgradeSuite) TearDownSuite() {
+	if suite.T().Failed() && suite.Cluster != nil {
+		// for failed tests, produce crash dump for easier debugging,
+		// as cluster is going to be torn down below
+		suite.provisioner.CrashDump(suite.ctx, suite.Cluster, os.Stderr)
+	}
+
 	if suite.clusterAccess != nil {
 		suite.Assert().NoError(suite.clusterAccess.Close())
 	}
@@ -166,7 +173,8 @@ func (suite *UpgradeSuite) TearDownSuite() {
 
 // setupCluster provisions source clusters and waits for health
 func (suite *UpgradeSuite) setupCluster() {
-	clusterName := fmt.Sprintf("upgrade.%s", suite.spec.ShortName)
+	shortNameHash := sha256.Sum256([]byte(suite.spec.ShortName))
+	clusterName := fmt.Sprintf("upgrade.%x", shortNameHash[:8])
 
 	_, cidr, err := net.ParseCIDR(DefaultSettings.CIDR)
 	suite.Require().NoError(err)
@@ -396,7 +404,6 @@ func (suite *UpgradeSuite) SuiteName() string {
 func init() {
 	allSuites = append(allSuites,
 		&UpgradeSuite{specGen: upgradeZeroThreeToZeroFour},
-		// disabled until root cause can be figured out:
-		// &UpgradeSuite{specGen: upgradeZeroFourToCurrent},
+		&UpgradeSuite{specGen: upgradeZeroFourToCurrent},
 	)
 }

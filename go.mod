@@ -59,7 +59,7 @@ require (
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
 	github.com/spf13/cobra v0.0.5
-	github.com/stretchr/testify v1.5.0
+	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee
