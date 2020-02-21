@@ -234,6 +234,10 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 			rootfs.NewUnmountSystemDisksTask(devname),
 		),
 		phase.NewPhase(
+			"unmount system disk bind mounts",
+			rootfs.NewUnmountSystemDiskBindMountsTask(devname),
+		),
+		phase.NewPhase(
 			"verify system disk not in use",
 			disk.NewVerifyDiskAvailabilityTask(devname),
 		),

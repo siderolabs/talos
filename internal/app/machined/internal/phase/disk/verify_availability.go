@@ -6,6 +6,9 @@ package disk
 
 import (
 	"errors"
+	"io"
+	"log"
+	"os"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -37,8 +40,17 @@ func (task *VerifyDiskAvailability) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *VerifyDiskAvailability) standard() (err error) {
+	mountsReported := false
+
 	return retry.Constant(3*time.Minute, retry.WithUnits(500*time.Millisecond)).Retry(func() error {
 		if isBusy(task.devname) {
+			if !mountsReported {
+				// if disk is busy, report mounts for debugging purposes but just once
+				// otherwise console might be flooded with messages
+				dumpMounts()
+				mountsReported = true
+			}
+
 			return retry.ExpectedError(errors.New("system disk in use"))
 		}
 
@@ -53,4 +65,18 @@ func isBusy(devname string) bool {
 	defer unix.Close(fd)
 
 	return errno == unix.EBUSY
+}
+
+func dumpMounts() {
+	mounts, err := os.Open("/proc/mounts")
+	if err != nil {
+		log.Printf("failed to read mounts: %s", err)
+		return
+	}
+
+	defer mounts.Close() //nolint: errcheck
+
+	log.Printf("contents of /proc/mounts:")
+
+	_, _ = io.Copy(log.Writer(), mounts) //nolint: errcheck
 }
