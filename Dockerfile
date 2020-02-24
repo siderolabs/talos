@@ -394,6 +394,21 @@ RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go test 
 FROM scratch AS integration-test-darwin
 COPY --from=integration-test-darwin-build /src/integration.test /integration-test-darwin-amd64
 
+# The integration-test-provision target builds integration test binary with provisioning tests.
+
+FROM base AS integration-test-provision-linux-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG ARTIFACTS
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X github.com/talos-systems/talos/cmd/osctl/pkg/helpers.ArtifactsPath=${ARTIFACTS}" \
+    -tags integration,integration_provision \
+    ./internal/integration
+
+FROM scratch AS integration-test-provision-linux
+COPY --from=integration-test-provision-linux-build /src/integration.test /integration-test-provision-linux-amd64
+
 # The lint target performs linting on the source code.
 
 FROM base AS lint-go

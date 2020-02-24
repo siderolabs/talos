@@ -12,10 +12,12 @@ GO_VERSION ?= 1.13
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
+INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.17.1/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 SONOBUOY_VERSION ?= 0.17.1
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
+RELEASES ?= v0.3.2 v0.4.0-alpha.5
 
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
@@ -173,6 +175,9 @@ unit-tests-race: ## Performs unit tests with race detection enabled.
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS)
 
+$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
+	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS)
+
 $(ARTIFACTS)/sonobuoy:
 	@mkdir -p $(ARTIFACTS)
 	@curl -L -o /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
@@ -194,6 +199,28 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy
+
+provision-tests: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
+	@$(MAKE) hack-test-$@ \
+		TAG=$(TAG) \
+		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
+		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
+
+# Assets for releases
+
+.PHONY: $(ARTIFACTS)/$(TALOS_RELEASE)
+$(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinux $(ARTIFACTS)/$(TALOS_RELEASE)/initramfs.xz
+
+# download release artifacts for specific version
+$(ARTIFACTS)/$(TALOS_RELEASE)/%:
+	@mkdir -p $(ARTIFACTS)/$(TALOS_RELEASE)/
+	@curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/$*"
+
+.PHONY: release-artifacts
+release-artifacts:
+	@for release in $(RELEASES); do \
+		$(MAKE) $(ARTIFACTS)/$$release TALOS_RELEASE=$$release; \
+	done
 
 # Utilities
 

@@ -247,9 +247,13 @@ const (
 	// and directories.
 	SystemRunPath = "/run/system"
 
+	// DefaultInstallerImageName is the default container image name for
+	// the installer.
+	DefaultInstallerImageName = "autonomy/installer"
+
 	// DefaultInstallerImageRepository is the default container repository for
 	// the installer.
-	DefaultInstallerImageRepository = "docker.io/autonomy/installer"
+	DefaultInstallerImageRepository = "docker.io/" + DefaultInstallerImageName
 
 	// DefaultTalosImageRepository is the default container repository for
 	// the talos image.
