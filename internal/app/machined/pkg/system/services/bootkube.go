@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -403,7 +404,8 @@ func fetchManifests(urls []string) error {
 		// Disable netrc since we don't have getent installed, and most likely
 		// never will.
 		httpGetter := &getter.HttpGetter{
-			Netrc: false,
+			Netrc:  false,
+			Client: http.DefaultClient,
 		}
 
 		getter.Getters["http"] = httpGetter
