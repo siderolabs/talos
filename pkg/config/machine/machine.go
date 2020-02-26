@@ -255,8 +255,6 @@ func (cfg *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
 		tlsConfig.InsecureSkipVerify = true
 	}
 
-	tlsConfig.BuildNameToCertificate()
-
 	return tlsConfig, nil
 }
 

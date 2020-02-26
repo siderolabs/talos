@@ -12,7 +12,7 @@ ENV PATH /toolchain/bin:/toolchain/go/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.23.3
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.23.6
 RUN cd $(mktemp -d) \
     && go mod init tmp \
     && go get mvdan.cc/gofumpt/gofumports \
@@ -226,29 +226,29 @@ COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:f2a8e95 /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:f2a8e95 /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:08da02e /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:08da02e /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/containerd:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/eudev:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/iptables:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/libressl:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/musl:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/runc:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/socat:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/syslinux:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:f2a8e95 / /rootfs
-COPY --from=docker.io/autonomy/util-linux:f2a8e95 /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:f2a8e95 /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:f2a8e95 /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:f2a8e95 /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:08da02e / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:08da02e / /rootfs
+COPY --from=docker.io/autonomy/containerd:08da02e / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:08da02e / /rootfs
+COPY --from=docker.io/autonomy/eudev:08da02e / /rootfs
+COPY --from=docker.io/autonomy/iptables:08da02e / /rootfs
+COPY --from=docker.io/autonomy/libressl:08da02e / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:08da02e / /rootfs
+COPY --from=docker.io/autonomy/musl:08da02e / /rootfs
+COPY --from=docker.io/autonomy/runc:08da02e / /rootfs
+COPY --from=docker.io/autonomy/socat:08da02e / /rootfs
+COPY --from=docker.io/autonomy/syslinux:08da02e / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:08da02e / /rootfs
+COPY --from=docker.io/autonomy/util-linux:08da02e /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:08da02e /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:08da02e /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:08da02e /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=ntpd-image /ntpd.tar /rootfs/usr/images/
