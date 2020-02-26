@@ -585,6 +585,36 @@ func (p *PEMEncodedCertificateAndKey) MarshalYAML() (interface{}, error) {
 	return aux, nil
 }
 
+// GetCert parses PEM-encoded certificate as x509.Certificate.
+func (p *PEMEncodedCertificateAndKey) GetCert() (*x509.Certificate, error) {
+	block, _ := pem.Decode(p.Crt)
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse certificate: %w", err)
+	}
+
+	return cert, nil
+}
+
+// GetRSAKey parses PEM-encoded RSA key.
+func (p *PEMEncodedCertificateAndKey) GetRSAKey() (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(p.Key)
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse PEM block")
+	}
+
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse RSA key: %w", err)
+	}
+
+	return key, nil
+}
+
 // NewCertficateAndKey generates a new key and certificate signed by a CA.
 //
 //nolint: gocyclo

@@ -37,7 +37,13 @@ type CNIConfig struct {
 	CacheDir string
 }
 
-// NetworkRequest describe cluster network.
+// LoadBalancerConfig describes load balancer provisioned for the cluster.
+type LoadBalancerConfig struct {
+	// Limit apid connection load-balancing to init node
+	LimitApidOnlyInitNode bool
+}
+
+// NetworkRequest describes cluster network.
 type NetworkRequest struct {
 	Name        string
 	CIDR        net.IPNet
@@ -47,6 +53,8 @@ type NetworkRequest struct {
 
 	// CNI-specific parameters.
 	CNI CNIConfig
+
+	LoadBalancer LoadBalancerConfig
 }
 
 // NodeRequests is a list of NodeRequest.

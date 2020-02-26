@@ -5,7 +5,10 @@
 package reg
 
 import (
+	"archive/tar"
 	"bufio"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -14,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -26,7 +30,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/api/machine"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/containers"
@@ -35,6 +38,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/event"
+	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/internal/pkg/tail"
@@ -436,9 +440,42 @@ func (r *Registrator) Version(ctx context.Context, in *empty.Empty) (reply *mach
 
 // Kubeconfig implements the osapi.OSDServer interface.
 func (r *Registrator) Kubeconfig(empty *empty.Empty, s machineapi.MachineService_KubeconfigServer) error {
-	in := &machine.CopyRequest{RootPath: constants.AdminKubeconfig}
+	var kubeconfigBuf bytes.Buffer
 
-	return r.Copy(in, s)
+	if err := kubeconfig.GenerateAdmin(r.config.Cluster(), &kubeconfigBuf); err != nil {
+		return err
+	}
+
+	// wrap in .tar.gz to match Copy protocol
+	var buf bytes.Buffer
+
+	zw := gzip.NewWriter(&buf)
+
+	tarW := tar.NewWriter(zw)
+
+	err := tarW.WriteHeader(&tar.Header{
+		Typeflag: tar.TypeReg,
+		Name:     "kubeconfig",
+		Size:     int64(kubeconfigBuf.Len()),
+		ModTime:  time.Now(),
+		Mode:     0600,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(tarW, &kubeconfigBuf)
+	if err != nil {
+		return err
+	}
+
+	if err = zw.Close(); err != nil {
+		return err
+	}
+
+	return s.Send(&common.Data{
+		Bytes: buf.Bytes(),
+	})
 }
 
 // Logs provides a service or container logs can be requested and the contents of the

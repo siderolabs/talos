@@ -210,6 +210,11 @@ func (suite *UpgradeSuite) setupCluster() {
 				ConfDir:  defaultCNIConfDir,
 				CacheDir: defaultCNICacheDir,
 			},
+			LoadBalancer: provision.LoadBalancerConfig{
+				// as we're upgrading from older versions of Talos,
+				// disable LB to all apid nodes
+				LimitApidOnlyInitNode: true,
+			},
 		},
 
 		KernelPath:    suite.spec.SourceKernelPath,

@@ -106,7 +106,7 @@ func runImageCmd() (err error) {
 	return nil
 }
 
-//nolint: gocyclo
+//nolint: gocyclo,interfacer
 func finalize(platform runtime.Platform, img string) (err error) {
 	dir := filepath.Dir(img)
 

@@ -271,22 +271,12 @@ func generateAssets(config runtime.Configurator) (err error) {
 	urls = append(urls, config.Cluster().CertSANs()...)
 	altNames := altNamesFromURLs(urls)
 
-	block, _ = pem.Decode(config.Cluster().CA().Crt)
-	if block == nil {
-		return errors.New("failed to Kubernetes CA certificate")
-	}
-
-	k8sCA, err := x509.ParseCertificate(block.Bytes)
+	k8sCA, err := config.Cluster().CA().GetCert()
 	if err != nil {
-		return fmt.Errorf("failed to parse Kubernetes CA certificate: %w", err)
+		return fmt.Errorf("failed to get Kubernetes CA certificate: %w", err)
 	}
 
-	block, _ = pem.Decode(config.Cluster().CA().Key)
-	if block == nil {
-		return errors.New("failed to Kubernetes CA key")
-	}
-
-	k8sKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	k8sKey, err := config.Cluster().CA().GetRSAKey()
 	if err != nil {
 		return fmt.Errorf("failed to parse Kubernetes key: %w", err)
 	}
@@ -362,12 +352,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		}
 	}
 
-	input, err := ioutil.ReadFile(constants.GeneratedKubeconfigAsset)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(constants.AdminKubeconfig, input, 0600)
+	return nil
 }
 
 func altNamesFromURLs(urls []string) *tlsutil.AltNames {

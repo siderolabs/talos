@@ -6,7 +6,7 @@ controlplane.yaml
 join.yaml
 docgen
 talosconfig
-kubeconfig
+/kubeconfig
 hack/test/libvirt/matchbox/assets/*
 !hack/test/libvirt/matchbox/assets/.gitkeep
 

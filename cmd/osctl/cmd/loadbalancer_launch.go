@@ -14,8 +14,9 @@ import (
 )
 
 var loadbalancerLaunchCmdFlags struct {
-	addr      string
-	upstreams []string
+	addr             string
+	upstreams        []string
+	apidOnlyInitNode bool
 }
 
 // loadbalancerLaunchCmd represents the loadbalancer-launch command
@@ -34,9 +35,11 @@ var loadbalancerLaunchCmd = &cobra.Command{
 				upstreams[i] = fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.upstreams[i], port)
 			}
 
-			// for apid, add only init node for now (first item)
-			if port == constants.ApidPort && len(upstreams) > 1 {
-				upstreams = upstreams[:1]
+			if loadbalancerLaunchCmdFlags.apidOnlyInitNode {
+				// for apid, add only init node for now (first item)
+				if port == constants.ApidPort && len(upstreams) > 1 {
+					upstreams = upstreams[:1]
+				}
 			}
 
 			if err := lb.AddRoute(fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.addr, port), upstreams); err != nil {
@@ -51,5 +54,6 @@ var loadbalancerLaunchCmd = &cobra.Command{
 func init() {
 	loadbalancerLaunchCmd.Flags().StringVar(&loadbalancerLaunchCmdFlags.addr, "loadbalancer-addr", "localhost", "load balancer listen address (IP or host)")
 	loadbalancerLaunchCmd.Flags().StringSliceVar(&loadbalancerLaunchCmdFlags.upstreams, "loadbalancer-upstreams", []string{}, "load balancer upstreams (nodes to proxy to)")
+	loadbalancerLaunchCmd.Flags().BoolVar(&loadbalancerLaunchCmdFlags.apidOnlyInitNode, "apid-only-init-node", false, "use only apid init node for load balancing")
 	rootCmd.AddCommand(loadbalancerLaunchCmd)
 }
