@@ -11,18 +11,33 @@ import (
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
+// Name defines subset of Cluster to provide cluster name.
+type Name interface {
+	Name() string
+}
+
+// CA defines subset of Cluster to provide cluster CA certificate and key.
+type CA interface {
+	CA() *x509.PEMEncodedCertificateAndKey
+}
+
+// Endpoint defines subset of Cluster to provide API endpoint.
+type Endpoint interface {
+	Endpoint() *url.URL
+}
+
 // Cluster defines the requirements for a config that pertains to cluster
 // related options.
 type Cluster interface {
-	Name() string
+	Name
 	APIServer() APIServer
 	ControllerManager() ControllerManager
 	Scheduler() Scheduler
-	Endpoint() *url.URL
+	Endpoint
 	Token() Token
 	CertSANs() []string
 	SetCertSANs([]string)
-	CA() *x509.PEMEncodedCertificateAndKey
+	CA
 	AESCBCEncryptionSecret() string
 	Config(machine.Type) (string, error)
 	Etcd() Etcd

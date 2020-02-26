@@ -122,6 +122,15 @@ const (
 	// KubernetesAPIServerEtcdClientKey defines apiserver's etcd client key name
 	KubernetesAPIServerEtcdClientKey = DefaultCertificatesDir + "/" + "apiserver-etcd-client.key"
 
+	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
+	KubernetesAdminCertCommonName = "apiserver-kubelet-client"
+
+	// KubernetesAdminCertOrganization defines Organization values of Kubernetes admin certificate.
+	KubernetesAdminCertOrganization = "system:masters"
+
+	// KubernetesAdminCertDefaultLifetime defines default lifetime for Kubernetes generated admin certificate.
+	KubernetesAdminCertDefaultLifetime = 365 * 24 * time.Hour
+
 	// KubeletBootstrapKubeconfig is the path to the kubeconfig required to
 	// bootstrap the kubelet.
 	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
@@ -142,12 +151,6 @@ const (
 
 	// AssetsDirectory is the directory that contains all bootstrap assets.
 	AssetsDirectory = "/etc/kubernetes/assets"
-
-	// GeneratedKubeconfigAsset is the directory that contains bootstrap TLS assets.
-	GeneratedKubeconfigAsset = AssetsDirectory + "/auth/kubeconfig"
-
-	// AdminKubeconfig is the generated admin kubeconfig.
-	AdminKubeconfig = "/etc/kubernetes/kubeconfig"
 
 	// KubeletKubeconfig is the generated kubeconfig for kubelet.
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
