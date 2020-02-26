@@ -34,7 +34,7 @@ func (upstream lbUpstream) HealthCheck(ctx context.Context) error {
 
 	c, err := d.DialContext(ctx, "tcp", string(upstream))
 	if err != nil {
-		log.Printf("healhcheck failed for %q: %s", string(upstream), err)
+		log.Printf("healthcheck failed for %q: %s", string(upstream), err)
 
 		return err
 	}
