@@ -7,8 +7,8 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= autonomy/tools:v0.1.0-1-g1c0644f
-GO_VERSION ?= 1.13
+TOOLS ?= autonomy/tools:v0.1.0-2-g4d7ce7d
+GO_VERSION ?= 1.14
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
