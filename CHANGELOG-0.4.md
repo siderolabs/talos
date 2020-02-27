@@ -1,3 +1,24 @@
+# [v0.4.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.5...v0.4.0-alpha.6) (2020-02-27)
+
+### Bug Fixes
+
+- add reboot flag to reset command ([8a3a76f](https://github.com/talos-systems/talos/commit/8a3a76f73e1b31e464299415ffdb0672ab45083c))
+- allow kublet to handle multiple service CIDRs ([16594a8](https://github.com/talos-systems/talos/commit/16594a83a8bd6f92f622c155387a193f3551cc4f)), closes [#1888](https://github.com/talos-systems/talos/issues/1888)
+- default reboot flag to false ([9cf217d](https://github.com/talos-systems/talos/commit/9cf217d2c125a5cc5a2ad670a97c3302fb325feb))
+- ensre proxy is used when fetching additional manifests for bootkube ([f0f5cca](https://github.com/talos-systems/talos/commit/f0f5cca30b73d2676a88c2c83647c38709387bb4))
+- fix reset command ([8092362](https://github.com/talos-systems/talos/commit/8092362098a6f30b5ff8b8b7d0301b85af918867))
+- PodCIDR, ServiceCIDR should be comma sets ([1a71753](https://github.com/talos-systems/talos/commit/1a7175353e473dc07ccfd2b7679cdc26ee6d0ffd)), closes [/kubernetes.io/docs/concepts/services-networking/dual-stack/#enable-ipv4-ipv6](https://github.com//kubernetes.io/docs/concepts/services-networking/dual-stack//issues/enable-ipv4-ipv6) [#1883](https://github.com/talos-systems/talos/issues/1883)
+- refresh proxy settings from environment in image resolver ([cafd33a](https://github.com/talos-systems/talos/commit/cafd33acd84ae0b90b2a086c45cbbe599327cc1e)), closes [#1901](https://github.com/talos-systems/talos/issues/1901) [#1680](https://github.com/talos-systems/talos/issues/1680) [#1690](https://github.com/talos-systems/talos/issues/1690)
+- stop firecracker launcher on signal ([afea21b](https://github.com/talos-systems/talos/commit/afea21bc5aacc2f01339361403a2633981c755c8))
+- unmount bind mounts for system (fixes upgrade stuck on disk busy) ([8913d9d](https://github.com/talos-systems/talos/commit/8913d9df7afde1468030f206277581baff031551))
+- validate install disk ([5b50456](https://github.com/talos-systems/talos/commit/5b50456c051f692c10f7bf687f494c451965a13a))
+
+### Features
+
+- add reboot flag to reset API ([fe7847e](https://github.com/talos-systems/talos/commit/fe7847e0b8982c725299ee892dbe745c7fc9ed6d))
+- support proxy in docker buildx ([08b1a78](https://github.com/talos-systems/talos/commit/08b1a782cd40a470606a00842ab6091b601c6c91))
+- support sending machine info ([63ca83a](https://github.com/talos-systems/talos/commit/63ca83a02ca037d6bb6eb117c4187757552332ba))
+
 # [v0.4.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.4...v0.4.0-alpha.5) (2020-02-15)
 
 ### Bug Fixes
