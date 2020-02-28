@@ -28,14 +28,9 @@ func init() {
 func main() {
 	log.Println("starting initial network configuration")
 
-	content, err := config.FromFile(*configPath)
+	config, err := config.NewFromFile(*configPath)
 	if err != nil {
-		log.Fatalf("failed to open config: %v", err)
-	}
-
-	config, err := config.New(content)
-	if err != nil {
-		log.Fatalf("failed to create config: %v", err)
+		log.Fatalf("failed to create config from file: %v", err)
 	}
 
 	nwd, err := networkd.New(config)

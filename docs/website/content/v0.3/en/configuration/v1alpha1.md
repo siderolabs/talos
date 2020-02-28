@@ -72,6 +72,19 @@ Valid Values:
 
 - ``v1alpha1``
 
+#### persist
+
+Indicates whether to pull the machine config upon every boot.
+
+Type: `bool`
+
+Valid Values:
+
+- `true`
+- `yes`
+- `false`
+- `no`
+
 #### machine
 
 Provides machine specific configuration options.

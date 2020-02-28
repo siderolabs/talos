@@ -56,9 +56,7 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 }
 
 // MountPointForLabel returns a mount point for the specified device and label.
-func MountPointForLabel(label string) (mountpoint *mount.Point, err error) {
-	opts := []mount.Option{}
-
+func MountPointForLabel(label string, opts ...mount.Option) (mountpoint *mount.Point, err error) {
 	var target string
 
 	switch label {
@@ -89,26 +87,4 @@ func MountPointForLabel(label string) (mountpoint *mount.Point, err error) {
 	mountpoint = mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
 
 	return mountpoint, nil
-}
-
-// MountPointsFromLabels returns the mountpoints required to boot the system.
-// Since this function is called exclusively during boot time, this is when
-// we want to grow the data filesystem.
-func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
-	mountpoints = mount.NewMountPoints()
-
-	for _, label := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
-		mountpoint, err := MountPointForLabel(label)
-		if err != nil {
-			return nil, err
-		}
-
-		if mountpoint == nil {
-			continue
-		}
-
-		mountpoints.Set(label, mountpoint)
-	}
-
-	return mountpoints, nil
 }

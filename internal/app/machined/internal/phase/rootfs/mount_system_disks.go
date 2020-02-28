@@ -5,7 +5,7 @@
 package rootfs
 
 import (
-	"golang.org/x/sys/unix"
+	"log"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -14,42 +14,49 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
-// UnmountSystemDisks represents the UnmountSystemDisks task.
-type UnmountSystemDisks struct {
+// MountSystemDisks represents the MountSystemDisks task.
+type MountSystemDisks struct {
 	devlabel string
+	opts     []mount.Option
 }
 
-// NewUnmountSystemDisksTask initializes and returns an UnmountSystemDisks task.
-func NewUnmountSystemDisksTask(devlabel string) phase.Task {
-	return &UnmountSystemDisks{
+// NewMountSystemDisksTask initializes and returns an MountSystemDisks task.
+func NewMountSystemDisksTask(devlabel string, opts ...mount.Option) phase.Task {
+	return &MountSystemDisks{
 		devlabel: devlabel,
+		opts:     opts,
 	}
 }
 
 // TaskFunc returns the runtime function.
-func (task *UnmountSystemDisks) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+func (task *MountSystemDisks) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	switch mode {
 	case runtime.Container:
 		return nil
 	default:
-		return task.standard
+		return task.runtime
 	}
 }
 
-func (task *UnmountSystemDisks) standard(r runtime.Runtime) (err error) {
+func (task *MountSystemDisks) runtime(r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
-	mountpoint, err := owned.MountPointForLabel(task.devlabel)
+	log.Printf("fetching mountpoint for label %q\n", task.devlabel)
+
+	mountpoint, err := owned.MountPointForLabel(task.devlabel, task.opts...)
 	if err != nil {
 		return err
 	}
 
+	if mountpoint == nil {
+		log.Printf("could not find boot partition with label %q\n", task.devlabel)
+		return nil
+	}
+
 	mountpoints.Set(task.devlabel, mountpoint)
 
-	unix.Sync()
-
 	m := manager.NewManager(mountpoints)
-	if err = m.UnmountAll(); err != nil {
+	if err = m.MountAll(); err != nil {
 		return err
 	}
 

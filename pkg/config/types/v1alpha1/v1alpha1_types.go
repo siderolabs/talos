@@ -24,6 +24,14 @@ type Config struct {
 	//     - "`v1alpha1`"
 	ConfigVersion string `yaml:"version"`
 	//   description: |
+	//     Indicates whether to pull the machine config upon every boot.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	ConfigPersist bool `yaml:"persist"`
+	//   description: |
 	//     Provides machine specific configuration options.
 	MachineConfig *MachineConfig `yaml:"machine"`
 	//   description: |

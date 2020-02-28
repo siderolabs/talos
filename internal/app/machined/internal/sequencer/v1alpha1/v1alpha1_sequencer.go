@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/upgrade"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/config"
@@ -37,6 +38,8 @@ func (d *Sequencer) Boot() error {
 	if err != nil {
 		return err
 	}
+
+	cfgBytes := []byte{}
 
 	phaserunner.Add(
 		phase.NewPhase(
@@ -63,8 +66,12 @@ func (d *Sequencer) Boot() error {
 			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
+			"mount /boot as ro",
+			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel, mount.WithReadOnly(true)),
+		),
+		phase.NewPhase(
 			"config",
-			configtask.NewConfigTask(),
+			configtask.NewConfigTask(&cfgBytes),
 		),
 	)
 
@@ -72,17 +79,12 @@ func (d *Sequencer) Boot() error {
 		return err
 	}
 
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return fmt.Errorf("failed to read config: %w", err)
-	}
-
-	config, err := config.New(content)
+	cfg, err := config.NewFromBytes(cfgBytes)
 	if err != nil {
 		return fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	phaserunner, err = phase.NewRunner(config, runtime.Boot)
+	phaserunner, err = phase.NewRunner(cfg, runtime.Boot)
 	if err != nil {
 		return err
 	}
@@ -123,8 +125,24 @@ func (d *Sequencer) Boot() error {
 			rootfs.NewVarDirectoriesTask(),
 		),
 		phase.NewPhase(
+			"unmount /boot",
+			rootfs.NewUnmountSystemDisksTask(constants.BootPartitionLabel),
+		),
+		phase.NewPhase(
+			"mount /boot as rw",
+			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel),
+		),
+		phase.NewPhase(
 			"save config",
 			configtask.NewSaveConfigTask(),
+		),
+		phase.NewPhase(
+			"unmount /boot",
+			rootfs.NewUnmountSystemDisksTask(constants.BootPartitionLabel),
+		),
+		phase.NewPhase(
+			"mount /boot as ro",
+			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel, mount.WithReadOnly(true)),
 		),
 		phase.NewPhase(
 			"mount extra disks",
@@ -152,12 +170,7 @@ func (d *Sequencer) Boot() error {
 
 // Shutdown implements the Sequencer interface.
 func (d *Sequencer) Shutdown() error {
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return err
-	}
-
-	config, err := config.New(content)
+	config, err := config.NewFromFile(constants.ConfigPath)
 	if err != nil {
 		return err
 	}
@@ -179,12 +192,7 @@ func (d *Sequencer) Shutdown() error {
 
 // Upgrade implements the Sequencer interface.
 func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return err
-	}
-
-	config, err := config.New(content)
+	config, err := config.NewFromFile(constants.ConfigPath)
 	if err != nil {
 		return err
 	}
@@ -231,7 +239,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		),
 		phase.NewPhase(
 			"unmount system disk",
-			rootfs.NewUnmountSystemDisksTask(devname),
+			rootfs.NewUnmountSystemDisksTask(constants.EphemeralPartitionLabel),
 		),
 		phase.NewPhase(
 			"unmount system disk bind mounts",
@@ -256,12 +264,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 
 // Reset implements the Sequencer interface.
 func (d *Sequencer) Reset(req *machineapi.ResetRequest) error {
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return err
-	}
-
-	config, err := config.New(content)
+	config, err := config.NewFromFile(constants.ConfigPath)
 	if err != nil {
 		return err
 	}
@@ -313,7 +316,7 @@ func (d *Sequencer) Reset(req *machineapi.ResetRequest) error {
 		),
 		phase.NewPhase(
 			"unmount system disk",
-			rootfs.NewUnmountSystemDisksTask(devname),
+			rootfs.NewUnmountSystemDisksTask(constants.EphemeralPartitionLabel),
 		),
 		phase.NewPhase(
 			"reset system disk",

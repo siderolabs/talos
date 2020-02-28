@@ -44,14 +44,9 @@ func main() {
 
 	server := DefaultServer
 
-	content, err := config.FromFile(*configPath)
+	config, err := config.NewFromFile(*configPath)
 	if err != nil {
-		log.Fatalf("open config: %v", err)
-	}
-
-	config, err := config.New(content)
-	if err != nil {
-		log.Fatalf("open config: %v", err)
+		log.Fatalf("failed to create config from file: %v", err)
 	}
 
 	// Check if ntp servers are defined

@@ -122,8 +122,8 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 	return bundle, nil
 }
 
-// New initializes and returns a Configurator.
-func New(c Content) (config runtime.Configurator, err error) {
+// newConfig initializes and returns a Configurator.
+func newConfig(c Content) (config runtime.Configurator, err error) {
 	switch c.Version {
 	case v1alpha1.Version:
 		config = &v1alpha1.Config{}
@@ -137,9 +137,29 @@ func New(c Content) (config runtime.Configurator, err error) {
 	}
 }
 
-// FromFile is a convenience function that reads the config from disk, and
+// NewFromFile will take a filepath and attempt to parse a config file from it
+func NewFromFile(filepath string) (runtime.Configurator, error) {
+	content, err := fromFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConfig(content)
+}
+
+// NewFromBytes will take a byteslice and attempt to parse a config file from it
+func NewFromBytes(in []byte) (runtime.Configurator, error) {
+	content, err := fromBytes(in)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConfig(content)
+}
+
+// fromFile is a convenience function that reads the config from disk, and
 // unmarshals it.
-func FromFile(p string) (c Content, err error) {
+func fromFile(p string) (c Content, err error) {
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		return c, fmt.Errorf("read config: %w", err)
@@ -148,9 +168,9 @@ func FromFile(p string) (c Content, err error) {
 	return unmarshal(b)
 }
 
-// FromBytes is a convenience function that reads the config from a string, and
+// fromBytes is a convenience function that reads the config from a string, and
 // unmarshals it.
-func FromBytes(b []byte) (c Content, err error) {
+func fromBytes(b []byte) (c Content, err error) {
 	return unmarshal(b)
 }
 

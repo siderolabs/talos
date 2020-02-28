@@ -26,11 +26,7 @@ var validateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		content, err := config.FromFile(validateConfigArg)
-		if err != nil {
-			return err
-		}
-		config, err := config.New(content)
+		config, err := config.NewFromFile(validateConfigArg)
 		if err != nil {
 			return err
 		}

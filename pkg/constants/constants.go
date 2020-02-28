@@ -168,7 +168,7 @@ const (
 	EtcdDataPath = "/var/lib/etcd"
 
 	// ConfigPath is the path to the downloaded config.
-	ConfigPath = "/run/config.yaml"
+	ConfigPath = "/boot/config.yaml"
 
 	// MetalConfigISOLabel is the volume label for ISO based configuration.
 	MetalConfigISOLabel = "metal-iso"
