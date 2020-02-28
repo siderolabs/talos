@@ -38,7 +38,7 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 		if dev, err = probe.DevForFileSystemLabel(devpath, name); err != nil {
 			if name == constants.BootPartitionLabel {
 				// A bootloader is not always required.
-				log.Println("WARNING: no ESP partition was found")
+				log.Println("WARNING: no boot partition was found")
 				continue
 			}
 
@@ -55,43 +55,59 @@ func MountPointsForDevice(devpath string) (mountpoints *mount.Points, err error)
 	return mountpoints, nil
 }
 
+// MountPointForLabel returns a mount point for the specified device and label.
+func MountPointForLabel(label string) (mountpoint *mount.Point, err error) {
+	opts := []mount.Option{}
+
+	var target string
+
+	switch label {
+	case constants.EphemeralPartitionLabel:
+		target = constants.EphemeralMountPoint
+
+		opts = append(opts, mount.WithResize(true))
+	case constants.BootPartitionLabel:
+		target = constants.BootMountPoint
+	default:
+		return nil, fmt.Errorf("unknown label: %q", label)
+	}
+
+	var dev *probe.ProbedBlockDevice
+
+	if dev, err = probe.GetDevWithFileSystemLabel(label); err != nil {
+		// A boot partitition is not required.
+		if label == constants.BootPartitionLabel {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to find device with label %s: %w", label, err)
+	}
+
+	// nolint: errcheck
+	defer dev.Close()
+
+	mountpoint = mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
+
+	return mountpoint, nil
+}
+
 // MountPointsFromLabels returns the mountpoints required to boot the system.
 // Since this function is called exclusively during boot time, this is when
 // we want to grow the data filesystem.
 func MountPointsFromLabels() (mountpoints *mount.Points, err error) {
 	mountpoints = mount.NewMountPoints()
 
-	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
-		opts := []mount.Option{}
-
-		var target string
-
-		switch name {
-		case constants.EphemeralPartitionLabel:
-			target = constants.EphemeralMountPoint
-
-			opts = append(opts, mount.WithResize(true))
-		case constants.BootPartitionLabel:
-			target = constants.BootMountPoint
+	for _, label := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
+		mountpoint, err := MountPointForLabel(label)
+		if err != nil {
+			return nil, err
 		}
 
-		var dev *probe.ProbedBlockDevice
-
-		if dev, err = probe.GetDevWithFileSystemLabel(name); err != nil {
-			// A bootloader is not always required.
-			if name == constants.BootPartitionLabel {
-				log.Println("WARNING: no ESP partition was found")
-				continue
-			}
-
-			return nil, fmt.Errorf("find device with label %s: %w", name, err)
+		if mountpoint == nil {
+			continue
 		}
 
-		// nolint: errcheck
-		defer dev.Close()
-
-		mountpoint := mount.NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
-		mountpoints.Set(name, mountpoint)
+		mountpoints.Set(label, mountpoint)
 	}
 
 	return mountpoints, nil
