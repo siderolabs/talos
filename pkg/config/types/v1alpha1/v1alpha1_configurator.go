@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -275,6 +276,11 @@ func (c *ClusterConfig) Scheduler() cluster.Scheduler {
 	return c.SchedulerConfig
 }
 
+// AdminKubeconfig implements the Configurator interface.
+func (c *ClusterConfig) AdminKubeconfig() cluster.AdminKubeconfig {
+	return c.AdminKubeconfigConfig
+}
+
 // ExtraArgs implements the Configurator interface.
 func (s *SchedulerConfig) ExtraArgs() map[string]string {
 	return s.ExtraArgsConfig
@@ -502,4 +508,13 @@ func (p *PodCheckpointer) Image() string {
 	}
 
 	return checkpointerImage
+}
+
+// CertLifetime implements the Configurator interface.
+func (a AdminKubeconfigConfig) CertLifetime() time.Duration {
+	if a.AdminKubeconfigCertLifetime == 0 {
+		return constants.KubernetesAdminCertDefaultLifetime
+	}
+
+	return a.AdminKubeconfigCertLifetime
 }

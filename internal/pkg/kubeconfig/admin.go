@@ -36,15 +36,8 @@ contexts:
 current-context: admin@{{ .Cluster }}
 `
 
-// Cluster defines minimal interface for certificate generation.
-type Cluster interface {
-	cluster.Name
-	cluster.CA
-	cluster.Endpoint
-}
-
 // GenerateAdmin generates admin kubeconfig for the cluster.
-func GenerateAdmin(config Cluster, out io.Writer) error {
+func GenerateAdmin(config cluster.Cluster, out io.Writer) error {
 	tpl, err := template.New("kubeconfig").Parse(adminKubeConfigTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing kubeconfig template: %w", err)
@@ -64,7 +57,7 @@ func GenerateAdmin(config Cluster, out io.Writer) error {
 		x509.RSA(true),
 		x509.CommonName(constants.KubernetesAdminCertCommonName),
 		x509.Organization(constants.KubernetesAdminCertOrganization),
-		x509.NotAfter(time.Now().Add(constants.KubernetesAdminCertDefaultLifetime)))
+		x509.NotAfter(time.Now().Add(config.AdminKubeconfig().CertLifetime())))
 	if err != nil {
 		return fmt.Errorf("error generating admin certificate: %w", err)
 	}
