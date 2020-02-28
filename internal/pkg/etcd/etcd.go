@@ -71,12 +71,7 @@ func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpo
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
 func ValidateForUpgrade() error {
-	content, err := config.FromFile(constants.ConfigPath)
-	if err != nil {
-		return err
-	}
-
-	config, err := config.New(content)
+	config, err := config.NewFromFile(constants.ConfigPath)
 	if err != nil {
 		return err
 	}

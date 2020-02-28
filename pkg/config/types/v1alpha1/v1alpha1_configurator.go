@@ -37,6 +37,11 @@ func (c *Config) Debug() bool {
 	return false
 }
 
+// Persist implements the Configurator interface.
+func (c *Config) Persist() bool {
+	return c.ConfigPersist
+}
+
 // Machine implements the Configurator interface.
 func (c *Config) Machine() machine.Machine {
 	return c.MachineConfig
@@ -49,12 +54,22 @@ func (c *Config) Cluster() cluster.Cluster {
 
 // String implements the Configurator interface.
 func (c *Config) String() (string, error) {
-	b, err := yaml.Marshal(c)
+	b, err := c.Bytes()
 	if err != nil {
 		return "", err
 	}
 
 	return string(b), nil
+}
+
+// Bytes implements the Configurator interface.
+func (c *Config) Bytes() ([]byte, error) {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 // Install implements the Configurator interface.

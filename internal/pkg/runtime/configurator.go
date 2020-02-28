@@ -14,10 +14,12 @@ import (
 type Configurator interface {
 	Version() string
 	Debug() bool
+	Persist() bool
 	Machine() machine.Machine
 	Cluster() cluster.Cluster
 	Validate(Mode) error
 	String() (string, error)
+	Bytes() ([]byte, error)
 }
 
 // ConfiguratorBundle defines the configuration bundle interface.

@@ -9,19 +9,25 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Task represents the Task task.
-type Task struct{}
+type Task struct {
+	cfgBytes *[]byte
+}
 
 // NewConfigTask initializes and returns a Task task.
-func NewConfigTask() phase.Task {
-	return &Task{}
+func NewConfigTask(cfgBytes *[]byte) phase.Task {
+	return &Task{
+		cfgBytes: cfgBytes,
+	}
 }
 
 // TaskFunc returns the runtime function.
@@ -30,30 +36,63 @@ func (task *Task) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *Task) standard(r runtime.Runtime) (err error) {
+	cfg, err := config.NewFromFile(constants.ConfigPath)
+	if err != nil || !cfg.Persist() {
+		log.Printf("failed to read config from file or persistence disabled. re-pulling config")
+
+		var cfgBytes []byte
+
+		cfgBytes, err = fetchConfig(r)
+		if err != nil {
+			return err
+		}
+
+		*task.cfgBytes = cfgBytes
+
+		return nil
+	}
+
+	log.Printf("using existing config on disk")
+
+	cfgBytes, err := cfg.Bytes()
+	if err != nil {
+		return err
+	}
+
+	*task.cfgBytes = cfgBytes
+
+	return nil
+}
+
+func fetchConfig(r runtime.Runtime) (out []byte, err error) {
 	var b []byte
 
 	if b, err = r.Platform().Configuration(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Detect if config is a gzip archive and unzip it if so
 	contentType := http.DetectContentType(b)
 	if contentType == "application/x-gzip" {
-		gzipReader, err := gzip.NewReader(bytes.NewReader(b))
+		var gzipReader *gzip.Reader
+
+		gzipReader, err = gzip.NewReader(bytes.NewReader(b))
 		if err != nil {
-			return fmt.Errorf("error creating gzip reader: %w", err)
+			return nil, fmt.Errorf("error creating gzip reader: %w", err)
 		}
 
 		// nolint: errcheck
 		defer gzipReader.Close()
 
-		unzippedData, err := ioutil.ReadAll(gzipReader)
+		var unzippedData []byte
+
+		unzippedData, err = ioutil.ReadAll(gzipReader)
 		if err != nil {
-			return fmt.Errorf("error unzipping machine config: %w", err)
+			return nil, fmt.Errorf("error unzipping machine config: %w", err)
 		}
 
 		b = unzippedData
 	}
 
-	return ioutil.WriteFile(constants.ConfigPath, b, 0600)
+	return b, nil
 }

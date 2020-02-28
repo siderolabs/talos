@@ -106,10 +106,5 @@ func main() {
 }
 
 func loadConfig() (runtime.Configurator, error) {
-	content, err := config.FromFile(*configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return config.New(content)
+	return config.NewFromFile(*configPath)
 }

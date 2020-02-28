@@ -29,12 +29,12 @@ func (task *SaveConfig) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 func (task *SaveConfig) runtime(r runtime.Runtime) (err error) {
 	log.Printf("saving config %s to disk\n", r.Config().Version())
 
-	s, err := r.Config().String()
+	b, err := r.Config().Bytes()
 	if err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.ConfigPath, []byte(s), 0644); err != nil {
+	if err = ioutil.WriteFile(constants.ConfigPath, b, 0644); err != nil {
 		return err
 	}
 

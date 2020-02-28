@@ -54,14 +54,7 @@ func runInstallCmd() (err error) {
 			return err
 		}
 
-		var content machineconfig.Content
-
-		content, err = machineconfig.FromBytes(b)
-		if err != nil {
-			return err
-		}
-
-		config, err = machineconfig.New(content)
+		config, err = machineconfig.NewFromBytes(b)
 		if err != nil {
 			return err
 		}

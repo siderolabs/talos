@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Metal represents an initializer that performs a full installation to a
@@ -23,9 +24,9 @@ func (b *Metal) Initialize(r runtime.Runtime) (err error) {
 	// Attempt to discover a previous installation
 	// An err case should only happen if no partitions
 	// with matching labels were found
-	var mountpoints *mount.Points
+	mountpoints := mount.NewMountPoints()
 
-	mountpoints, err = owned.MountPointsFromLabels()
+	mountpoint, err := owned.MountPointForLabel(constants.EphemeralPartitionLabel)
 	if err != nil {
 		if r.Config().Machine().Install().Image() == "" {
 			return errors.New("an install image is required")
@@ -37,6 +38,8 @@ func (b *Metal) Initialize(r runtime.Runtime) (err error) {
 
 		panic(runtime.ErrReboot)
 	}
+
+	mountpoints.Set(constants.EphemeralPartitionLabel, mountpoint)
 
 	m := manager.NewManager(mountpoints)
 	if err = m.MountAll(); err != nil {
