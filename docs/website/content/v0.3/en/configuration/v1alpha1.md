@@ -570,6 +570,21 @@ extraManifests:
 
 ```
 
+#### adminKubeconfig
+
+Settings for admin kubeconfig generation.
+Certificate lifetime can be configured.
+
+Type: `AdminKubeconfigConfig`
+
+Examples:
+
+```yaml
+adminKubeconfig:
+  certLifetime: 1h
+
+```
+
 ---
 
 ### KubeletConfig
@@ -1045,5 +1060,16 @@ Type: `string`
 URLs containing manifests to apply for CNI.
 
 Type: `array`
+
+---
+
+### AdminKubeconfigConfig
+
+#### certLifetime
+
+Admin kubeconfig certificate lifetime (default is 1 year).
+Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
+
+Type: `Duration`
 
 ---

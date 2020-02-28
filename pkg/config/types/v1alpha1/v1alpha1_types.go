@@ -8,6 +8,7 @@ package v1alpha1
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
@@ -324,6 +325,14 @@ type ClusterConfig struct {
 	//         - "https://www.mysweethttpserver.com/manifest1.yaml"
 	//         - "https://www.mysweethttpserver.com/manifest2.yaml"
 	ExtraManifests []string `yaml:"extraManifests,omitempty"`
+	//   description: |
+	//     Settings for admin kubeconfig generation.
+	//     Certificate lifetime can be configured.
+	//   examples:
+	//     - |
+	//       adminKubeconfig:
+	//         certLifetime: 1h
+	AdminKubeconfigConfig AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 }
 
 // KubeletConfig reperesents the kubelet config values
@@ -658,4 +667,12 @@ type CNIConfig struct {
 	//   description: |
 	//     URLs containing manifests to apply for CNI.
 	CNIUrls []string `yaml:"urls,omitempty"`
+}
+
+// AdminKubeconfigConfig contains admin kubeconfig settings.
+type AdminKubeconfigConfig struct {
+	//   description: |
+	//     Admin kubeconfig certificate lifetime (default is 1 year).
+	//     Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
+	AdminKubeconfigCertLifetime time.Duration `yaml:"certLifetime,omitempty"`
 }
