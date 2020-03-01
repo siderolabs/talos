@@ -98,6 +98,10 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 		return err
 	}
 
+	if err := os.MkdirAll(cni.DefaultCNIDir, 0700); err != nil {
+		return err
+	}
+
 	if err := ioutil.WriteFile(constants.KubernetesCACert, config.Cluster().CA().Crt, 0500); err != nil {
 		return err
 	}
@@ -164,6 +168,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: "/opt/cni/bin", Source: "/opt/cni/bin", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
 	// Add in the additional CNI mounts.
