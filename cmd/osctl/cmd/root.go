@@ -25,7 +25,8 @@ var (
 	crt            string
 	additionalSANs []string
 	csr            string
-	hours          int
+	caHours        int
+	crtHours       int
 	ip             string
 	key            string
 	kubernetes     bool
