@@ -39,6 +39,8 @@ var caCmd = &cobra.Command{
 			opts = append(opts, x509.Organization(organization))
 		}
 
+		opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(caHours)*time.Hour)))
+
 		ca, err := x509.NewSelfSignedCertificateAuthority(opts...)
 		if err != nil {
 			return fmt.Errorf("error generating CA: %w", err)
@@ -111,7 +113,7 @@ var csrCmd = &cobra.Command{
 
 		ips := []net.IP{parsed}
 		opts = append(opts, x509.IPAddresses(ips))
-		opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(hours)*time.Hour)))
+		opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(crtHours)*time.Hour)))
 
 		csr, err := x509.NewCertificateSigningRequest(keyEC, opts...)
 		if err != nil {
@@ -178,7 +180,7 @@ var crtCmd = &cobra.Command{
 			return fmt.Errorf("error parsing CSR: %s", err)
 		}
 
-		signedCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, x509.NotAfter(time.Now().Add(time.Duration(hours)*time.Hour)))
+		signedCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, x509.NotAfter(time.Now().Add(time.Duration(crtHours)*time.Hour)))
 		if err != nil {
 			return fmt.Errorf("error signing certificate: %s", err)
 		}
@@ -229,7 +231,7 @@ func init() {
 	// Certificate Authorities
 	caCmd.Flags().StringVar(&organization, "organization", "", "X.509 distinguished name for the Organization")
 	helpers.Should(cobra.MarkFlagRequired(caCmd.Flags(), "organization"))
-	caCmd.Flags().IntVar(&hours, "hours", 87600, "the hours from now on which the certificate validity period ends")
+	caCmd.Flags().IntVar(&caHours, "hours", 87600, "the hours from now on which the certificate validity period ends")
 	caCmd.Flags().BoolVar(&rsa, "rsa", false, "generate in RSA format")
 	// Keys
 	keyCmd.Flags().StringVar(&name, "name", "", "the basename of the generated file")
@@ -241,7 +243,7 @@ func init() {
 	helpers.Should(cobra.MarkFlagRequired(crtCmd.Flags(), "ca"))
 	crtCmd.Flags().StringVar(&csr, "csr", "", "path to the PEM encoded CERTIFICATE REQUEST")
 	helpers.Should(cobra.MarkFlagRequired(crtCmd.Flags(), "csr"))
-	crtCmd.Flags().IntVar(&hours, "hours", 24, "the hours from now on which the certificate validity period ends")
+	crtCmd.Flags().IntVar(&crtHours, "hours", 24, "the hours from now on which the certificate validity period ends")
 	// Keypairs
 	keypairCmd.Flags().StringVar(&ip, "ip", "", "generate the certificate for this IP address")
 	keypairCmd.Flags().StringVar(&organization, "organization", "", "X.509 distinguished name for the Organization")
