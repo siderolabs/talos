@@ -22,7 +22,7 @@ import (
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	talosclient "github.com/talos-systems/talos/cmd/osctl/pkg/client"
-	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"

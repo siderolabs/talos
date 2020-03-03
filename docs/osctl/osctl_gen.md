@@ -26,6 +26,7 @@ Generate CAs, certificates, and private keys
 
 * [osctl](osctl.md)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [osctl gen ca](osctl_gen_ca.md)	 - Generates a self-signed X.509 certificate authority
+* [osctl gen config](osctl_gen_config.md)	 - Generates a set of configuration files for Talos cluster
 * [osctl gen crt](osctl_gen_crt.md)	 - Generates an X.509 Ed25519 certificate
 * [osctl gen csr](osctl_gen_csr.md)	 - Generates a CSR using an Ed25519 private key
 * [osctl gen key](osctl_gen_key.md)	 - Generates an Ed25519 private key

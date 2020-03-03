@@ -8,12 +8,12 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/cmd/osctl/cmd"
-	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
 func main() {
-	helpers.Should(startup.RandSeed())
+	cli.Should(startup.RandSeed())
 
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)

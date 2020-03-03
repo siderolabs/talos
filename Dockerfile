@@ -222,8 +222,9 @@ ARG SHA
 ARG TAG
 ARG ARTIFACTS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X github.com/talos-systems/talos/cmd/osctl/pkg/helpers.ArtifactsPath=${ARTIFACTS}" -o /osctl-linux-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /osctl-linux-amd64
 RUN chmod +x /osctl-linux-amd64
 
 FROM scratch AS osctl-linux
@@ -234,8 +235,9 @@ ARG SHA
 ARG TAG
 ARG ARTIFACTS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X github.com/talos-systems/talos/cmd/osctl/pkg/helpers.ArtifactsPath=${ARTIFACTS}" -o /osctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /osctl-darwin-amd64
 RUN chmod +x /osctl-darwin-amd64
 
 FROM scratch AS osctl-darwin
@@ -419,9 +421,10 @@ FROM base AS integration-test-provision-linux-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
 ARG ARTIFACTS
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X github.com/talos-systems/talos/cmd/osctl/pkg/helpers.ArtifactsPath=${ARTIFACTS}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
     -tags integration,integration_provision \
     ./internal/integration
 
