@@ -44,7 +44,7 @@ func (suite *ValidateSuite) TearDownTest() {
 
 // TestValidate generates config and validates it for all the modes.
 func (suite *ValidateSuite) TestValidate() {
-	suite.RunOsctl([]string{"config", "generate", "foobar", "https://10.0.0.1"})
+	suite.RunOsctl([]string{"gen", "config", "foobar", "https://10.0.0.1"})
 
 	for _, configFile := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
 		for _, mode := range []string{"Cloud", "Container", "Interactive", "Metal"} {

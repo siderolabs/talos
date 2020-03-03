@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/helpers"
+	"github.com/talos-systems/talos/pkg/cli"
 )
 
 // completionCmd represents the completion command
@@ -52,7 +52,7 @@ osctl completion zsh > "${fpath[1]}/_osctl"`,
 	Args:      cobra.ExactValidArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
-			helpers.Should(cmd.Usage())
+			cli.Should(cmd.Usage())
 			os.Exit(1)
 		}
 
