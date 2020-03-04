@@ -60,6 +60,14 @@ func NewServiceRunner(service Service, config runtime.Configurator) *ServiceRunn
 	}
 }
 
+// GetState implements events.Recorder
+func (svcrunner *ServiceRunner) GetState() events.ServiceState {
+	svcrunner.mu.Lock()
+	defer svcrunner.mu.Unlock()
+
+	return svcrunner.state
+}
+
 // UpdateState implements events.Recorder
 func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, message string, args ...interface{}) {
 	svcrunner.mu.Lock()
@@ -224,7 +232,10 @@ func (svcrunner *ServiceRunner) Start() {
 		svcrunner.UpdateState(events.StateFinished, "Service finished successfully")
 	}
 
-	if err := svcrunner.service.PostFunc(svcrunner.config); err != nil {
+	// PostFunc passes in the state so that we can take actions that depend on the outcome of the run
+	state := svcrunner.GetState()
+
+	if err := svcrunner.service.PostFunc(svcrunner.config, state); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run post stage: %v", err)
 		return
 	}

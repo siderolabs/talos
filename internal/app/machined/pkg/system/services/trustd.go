@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -45,7 +46,7 @@ func (t *Trustd) PreFunc(ctx context.Context, config runtime.Configurator) error
 }
 
 // PostFunc implements the Service interface.
-func (t *Trustd) PostFunc(config runtime.Configurator) (err error) {
+func (t *Trustd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

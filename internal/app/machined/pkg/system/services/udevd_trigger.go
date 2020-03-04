@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
@@ -31,7 +32,7 @@ func (c *UdevdTrigger) PreFunc(ctx context.Context, config runtime.Configurator)
 }
 
 // PostFunc implements the Service interface.
-func (c *UdevdTrigger) PostFunc(config runtime.Configurator) (err error) {
+func (c *UdevdTrigger) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

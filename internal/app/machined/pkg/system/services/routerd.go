@@ -17,6 +17,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -49,7 +50,7 @@ func (o *Routerd) PreFunc(ctx context.Context, config runtime.Configurator) erro
 }
 
 // PostFunc implements the Service interface.
-func (o *Routerd) PostFunc(config runtime.Configurator) (err error) {
+func (o *Routerd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

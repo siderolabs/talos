@@ -29,6 +29,7 @@ import (
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	internalcni "github.com/talos-systems/talos/internal/app/machined/internal/cni"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -124,7 +125,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubelet) PostFunc(config runtime.Configurator) (err error) {
+func (k *Kubelet) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

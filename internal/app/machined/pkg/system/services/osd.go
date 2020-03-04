@@ -18,6 +18,7 @@ import (
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -51,7 +52,7 @@ func (o *OSD) PreFunc(ctx context.Context, config runtime.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (o *OSD) PostFunc(config runtime.Configurator) (err error) {
+func (o *OSD) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

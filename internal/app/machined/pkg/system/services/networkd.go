@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 
 	healthapi "github.com/talos-systems/talos/api/health"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -53,7 +54,7 @@ func (n *Networkd) PreFunc(ctx context.Context, config runtime.Configurator) err
 }
 
 // PostFunc implements the Service interface.
-func (n *Networkd) PostFunc(config runtime.Configurator) (err error) {
+func (n *Networkd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 
