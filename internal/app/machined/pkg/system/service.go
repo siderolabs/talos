@@ -7,6 +7,7 @@ package system
 import (
 	"context"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
@@ -22,7 +23,7 @@ type Service interface {
 	// Runner creates runner for the service
 	Runner(runtime.Configurator) (runner.Runner, error)
 	// PostFunc is invoked after a runner is closed.
-	PostFunc(runtime.Configurator) error
+	PostFunc(runtime.Configurator, events.ServiceState) error
 	// Condition describes the conditions under which a service should
 	// start.
 	Condition(runtime.Configurator) conditions.Condition

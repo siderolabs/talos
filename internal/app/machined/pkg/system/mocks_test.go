@@ -52,7 +52,7 @@ func (m *MockService) Runner(runtime.Configurator) (runner.Runner, error) {
 	return &MockRunner{exitCh: make(chan error)}, m.runnerError
 }
 
-func (m *MockService) PostFunc(runtime.Configurator) error {
+func (m *MockService) PostFunc(runtime.Configurator, events.ServiceState) error {
 	return m.postError
 }
 

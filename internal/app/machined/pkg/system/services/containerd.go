@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/containerd/defaults"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
@@ -37,7 +38,7 @@ func (c *Containerd) PreFunc(ctx context.Context, config runtime.Configurator) e
 }
 
 // PostFunc implements the Service interface.
-func (c *Containerd) PostFunc(config runtime.Configurator) (err error) {
+func (c *Containerd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

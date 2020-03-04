@@ -23,6 +23,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -77,7 +78,7 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 }
 
 // PostFunc implements the Service interface.
-func (e *Etcd) PostFunc(config runtime.Configurator) (err error) {
+func (e *Etcd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

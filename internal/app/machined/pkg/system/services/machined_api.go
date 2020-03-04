@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/api"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
@@ -29,7 +30,7 @@ func (c *MachinedAPI) PreFunc(ctx context.Context, config runtime.Configurator) 
 }
 
 // PostFunc implements the Service interface.
-func (c *MachinedAPI) PostFunc(config runtime.Configurator) (err error) {
+func (c *MachinedAPI) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 

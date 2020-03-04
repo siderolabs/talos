@@ -27,6 +27,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/bootkube"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
@@ -146,7 +147,12 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 }
 
 // PostFunc implements the Service interface.
-func (b *Bootkube) PostFunc(config runtime.Configurator) (err error) {
+func (b *Bootkube) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+	if state != events.StateFinished {
+		log.Println("bootkube run did not complete successfully. skipping etcd update")
+		return nil
+	}
+
 	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
 	if err != nil {
 		return err

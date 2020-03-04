@@ -17,6 +17,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/syndtr/gocapability/capability"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
@@ -47,7 +48,7 @@ func (n *NTPd) PreFunc(ctx context.Context, config runtime.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (n *NTPd) PostFunc(config runtime.Configurator) (err error) {
+func (n *NTPd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 
