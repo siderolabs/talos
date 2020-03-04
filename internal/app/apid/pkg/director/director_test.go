@@ -23,14 +23,7 @@ type DirectorSuite struct {
 }
 
 func (suite *DirectorSuite) SetupSuite() {
-	suite.router = director.NewRouter(mockBackendFactory)
-}
-
-func (suite *DirectorSuite) TestRegisterLocalBackend() {
-	suite.router.RegisterLocalBackend("a.A", &mockBackend{})
-	suite.router.RegisterLocalBackend("b.B", &mockBackend{})
-
-	suite.Require().Panics(func() { suite.router.RegisterLocalBackend("a.A", &mockBackend{}) })
+	suite.router = director.NewRouter(mockBackendFactory, &mockBackend{})
 }
 
 func (suite *DirectorSuite) TestStreamedDetector() {
@@ -46,37 +39,6 @@ func (suite *DirectorSuite) TestStreamedDetector() {
 
 	suite.Assert().True(suite.router.StreamedDetector("/service.Service/getStream"))
 	suite.Assert().False(suite.router.StreamedDetector("/service.Service/getStreamItem"))
-}
-
-func (suite *DirectorSuite) TestDirectorLocal() {
-	ctx := context.Background()
-
-	mode, backends, err := suite.router.Director(ctx, "/service.Service/method")
-	suite.Assert().Equal(proxy.One2One, mode)
-	suite.Assert().Nil(backends)
-	suite.Assert().EqualError(err, "rpc error: code = Unknown desc = service service.Service is not defined")
-
-	suite.router.RegisterLocalBackend("service.Service", &mockBackend{target: "local"})
-
-	mode, backends, err = suite.router.Director(ctx, "/service.Service/method")
-	suite.Assert().Equal(proxy.One2One, mode)
-	suite.Assert().Len(backends, 1)
-	suite.Assert().Equal("local", backends[0].(*mockBackend).target)
-	suite.Assert().NoError(err)
-
-	ctxProxyFrom := metadata.NewIncomingContext(ctx, metadata.Pairs("proxyfrom", "127.0.0.1"))
-	mode, backends, err = suite.router.Director(ctxProxyFrom, "/service.Service/method")
-	suite.Assert().Equal(proxy.One2One, mode)
-	suite.Assert().Len(backends, 1)
-	suite.Assert().Equal("local", backends[0].(*mockBackend).target)
-	suite.Assert().NoError(err)
-
-	ctxNoTargets := metadata.NewIncomingContext(ctx, metadata.Pairs(":authority", "127.0.0.1"))
-	mode, backends, err = suite.router.Director(ctxNoTargets, "/service.Service/method")
-	suite.Assert().Equal(proxy.One2One, mode)
-	suite.Assert().Len(backends, 1)
-	suite.Assert().Equal("local", backends[0].(*mockBackend).target)
-	suite.Assert().NoError(err)
 }
 
 func (suite *DirectorSuite) TestDirectorAggregate() {

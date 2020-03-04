@@ -221,6 +221,9 @@ const (
 	// OSSocketPath is the path to file socket of os API.
 	OSSocketPath = SystemRunPath + "/osd/osd.sock"
 
+	// RouterdSocketPath is the path to file socket of router API.
+	RouterdSocketPath = SystemRunPath + "/routerd/routerd.sock"
+
 	// KernelUncompressedAsset defines a well known name for our uncompressed kernel filename
 	KernelUncompressedAsset = "vmlinux"
 

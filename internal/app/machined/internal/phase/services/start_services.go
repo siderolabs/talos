@@ -43,6 +43,7 @@ func (task *StartServices) loadSystemServices(r runtime.Runtime) {
 		&services.APID{},
 		&services.OSD{},
 		&services.Networkd{},
+		&services.Routerd{},
 	)
 
 	if r.Platform().Mode() != runtime.Container {
