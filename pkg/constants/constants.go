@@ -152,6 +152,9 @@ const (
 	// AssetsDirectory is the directory that contains all bootstrap assets.
 	AssetsDirectory = "/etc/kubernetes/assets"
 
+	// ManifestsDirectory is the directory that contains all static manifests.
+	ManifestsDirectory = "/etc/kubernetes/manifests"
+
 	// KubeletKubeconfig is the generated kubeconfig for kubelet.
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
 
