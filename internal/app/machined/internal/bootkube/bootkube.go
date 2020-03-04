@@ -7,6 +7,9 @@ package bootkube
 import (
 	"context"
 	"io"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 
@@ -32,10 +35,8 @@ func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWrit
 	}
 
 	cfg := bootkube.Config{
-		// TODO(andrewrynhard): Clean this directory up once bootstrap is
-		// complete.
 		AssetDir:        constants.AssetsDirectory,
-		PodManifestPath: "/etc/kubernetes/manifests",
+		PodManifestPath: constants.ManifestsDirectory,
 		Strict:          true,
 		RequiredPods:    defaultRequiredPods,
 	}
@@ -44,6 +45,25 @@ func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWrit
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
+			log.Printf("failed to cleanup bootkube assets dir %s", constants.AssetsDirectory)
+		}
+
+		bootstrapWildcard := filepath.Join(constants.ManifestsDirectory, "bootstrap-*")
+
+		bootstrapFiles, err := filepath.Glob(bootstrapWildcard)
+		if err != nil {
+			log.Printf("error finding bootstrap files in manifests dir %s", constants.ManifestsDirectory)
+		}
+
+		for _, bootstrapFile := range bootstrapFiles {
+			if err := os.Remove(bootstrapFile); err != nil {
+				log.Printf("error deleting bootstrap file in manifests dir : %s", err)
+			}
+		}
+	}()
 
 	return bk.Run()
 }
