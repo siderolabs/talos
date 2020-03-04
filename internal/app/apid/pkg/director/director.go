@@ -7,9 +7,7 @@ package director
 
 import (
 	"context"
-	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
@@ -20,7 +18,7 @@ import (
 
 // Router wraps grpc-proxy StreamDirector
 type Router struct {
-	localBackends        map[string]proxy.Backend
+	localBackend         proxy.Backend
 	remoteBackendFactory RemoteBackendFactory
 	streamedMatchers     []*regexp.Regexp
 }
@@ -29,9 +27,9 @@ type Router struct {
 type RemoteBackendFactory func(target string) (proxy.Backend, error)
 
 // NewRouter builds new Router
-func NewRouter(backendFactory RemoteBackendFactory) *Router {
+func NewRouter(backendFactory RemoteBackendFactory, localBackend proxy.Backend) *Router {
 	return &Router{
-		localBackends:        map[string]proxy.Backend{},
+		localBackend:         localBackend,
 		remoteBackendFactory: backendFactory,
 	}
 }
@@ -46,35 +44,21 @@ func (r *Router) Register(srv *grpc.Server) {
 func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mode, []proxy.Backend, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return r.localDirector(fullMethodName)
+		return proxy.One2One, []proxy.Backend{r.localBackend}, nil
 	}
 
 	if _, exists := md["proxyfrom"]; exists {
-		return r.localDirector(fullMethodName)
+		return proxy.One2One, []proxy.Backend{r.localBackend}, nil
 	}
 
 	var targets []string
 
 	if targets, ok = md["nodes"]; !ok {
 		// send directly to local node, skips another layer of proxying
-		return r.localDirector(fullMethodName)
+		return proxy.One2One, []proxy.Backend{r.localBackend}, nil
 	}
 
 	return r.aggregateDirector(targets)
-}
-
-// localDirector sends requests down to local service in one2one mode.
-//
-// Local backends are registered via RegisterLocalBackend
-func (r *Router) localDirector(fullMethodName string) (proxy.Mode, []proxy.Backend, error) {
-	parts := strings.SplitN(fullMethodName, "/", 3)
-	serviceName := parts[1]
-
-	if backend, ok := r.localBackends[serviceName]; ok {
-		return proxy.One2One, []proxy.Backend{backend}, nil
-	}
-
-	return proxy.One2One, nil, status.Errorf(codes.Unknown, "service %v is not defined", serviceName)
 }
 
 // aggregateDirector sends request across set of remote instances and aggregates results.
@@ -91,15 +75,6 @@ func (r *Router) aggregateDirector(targets []string) (proxy.Mode, []proxy.Backen
 	}
 
 	return proxy.One2Many, backends, nil
-}
-
-// RegisterLocalBackend registers local backend by service name.
-func (r *Router) RegisterLocalBackend(serviceName string, backend proxy.Backend) {
-	if _, exists := r.localBackends[serviceName]; exists {
-		panic(fmt.Sprintf("local backend %v already registered", serviceName))
-	}
-
-	r.localBackends[serviceName] = backend
 }
 
 // StreamedDetector implements proxy.StreamedDetector.

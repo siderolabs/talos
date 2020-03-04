@@ -9,10 +9,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
+	"github.com/talos-systems/grpc-proxy/proxy"
+
+	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
 )
 
 func TestLocalInterfaces(t *testing.T) {

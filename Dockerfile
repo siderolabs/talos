@@ -196,6 +196,24 @@ WORKDIR /scratch
 RUN printf "FROM scratch\nCOPY ./networkd /networkd\nENTRYPOINT [\"/networkd\"]" > Dockerfile
 RUN --security=insecure img build --tag ${USERNAME}/networkd:${TAG} --output type=docker,dest=/networkd.tar --no-console  .
 
+# The routerd target builds the routerd image.
+
+FROM base AS routerd-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
+WORKDIR /src/internal/app/routerd
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /routerd
+RUN chmod +x /routerd
+
+FROM base AS routerd-image
+ARG TAG
+ARG USERNAME
+COPY --from=routerd-build /routerd /scratch/routerd
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./routerd /routerd\nENTRYPOINT [\"/routerd\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/routerd:${TAG} --output type=docker,dest=/routerd.tar --no-console  .
+
 
 # The osctl targets build the osctl binaries.
 
@@ -255,6 +273,7 @@ COPY --from=ntpd-image /ntpd.tar /rootfs/usr/images/
 COPY --from=osd-image /osd.tar /rootfs/usr/images/
 COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
 COPY --from=networkd-image /networkd.tar /rootfs/usr/images/
+COPY --from=routerd-image /routerd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh

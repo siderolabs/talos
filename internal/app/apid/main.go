@@ -14,13 +14,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
+	apidbackend "github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
@@ -63,13 +64,10 @@ func main() {
 		log.Fatalf("failed to create client TLS config: %v", err)
 	}
 
-	backendFactory := backend.NewAPIDFactory(clientTLSConfig)
-	router := director.NewRouter(backendFactory.Get)
+	backendFactory := apidbackend.NewAPIDFactory(clientTLSConfig)
+	localBackend := backend.NewLocal("routerd", constants.RouterdSocketPath)
 
-	router.RegisterLocalBackend("os.OSService", backend.NewLocal("osd", constants.OSSocketPath))
-	router.RegisterLocalBackend("machine.MachineService", backend.NewLocal("machined", constants.MachineSocketPath))
-	router.RegisterLocalBackend("time.TimeService", backend.NewLocal("timed", constants.TimeSocketPath))
-	router.RegisterLocalBackend("network.NetworkService", backend.NewLocal("networkd", constants.NetworkSocketPath))
+	router := director.NewRouter(backendFactory.Get, localBackend)
 
 	// all existing streaming methods
 	for _, methodName := range []string{
