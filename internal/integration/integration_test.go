@@ -10,6 +10,7 @@ package integration_test
 import (
 	"context"
 	"flag"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -31,6 +32,7 @@ var allSuites []suite.TestingSuite
 
 // Flag values
 var (
+	failFast        bool
 	talosConfig     string
 	endpoint        string
 	k8sEndpoint     string
@@ -46,13 +48,17 @@ func TestIntegration(t *testing.T) {
 		t.Error("--talos.config is not provided")
 	}
 
-	var cluster provision.Cluster
+	var (
+		cluster     provision.Cluster
+		provisioner provision.Provisioner
+		err         error
+	)
 
 	if provisionerName != "" {
 		// use provisioned cluster state as discovery source
 		ctx := context.Background()
 
-		provisioner, err := providers.Factory(ctx, provisionerName)
+		provisioner, err = providers.Factory(ctx, provisionerName)
 		if err != nil {
 			t.Error("error iniitalizing provisioner", err)
 		}
@@ -87,6 +93,17 @@ func TestIntegration(t *testing.T) {
 		t.Run(suiteName, func(tt *testing.T) {
 			suite.Run(tt, s) //nolint: scopelint
 		})
+
+		if failFast && t.Failed() {
+			t.Log("fastfail mode enabled, aborting on first failure")
+			break
+		}
+	}
+
+	if t.Failed() && cluster != nil && provisioner != nil {
+		// if provisioner & cluster are available,
+		// debugging failed test is easier with crashdump
+		provisioner.CrashDump(context.Background(), cluster, os.Stderr)
 	}
 }
 
@@ -97,6 +114,8 @@ func init() {
 	if err == nil {
 		defaultStateDir = filepath.Join(defaultStateDir, "clusters")
 	}
+
+	flag.BoolVar(&failFast, "talos.failfast", false, "fail the test run on the first failed test")
 
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")

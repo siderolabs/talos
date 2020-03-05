@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	getter "github.com/hashicorp/go-getter"
 	"github.com/hashicorp/go-multierror"
 	"github.com/kubernetes-sigs/bootkube/pkg/asset"
@@ -116,28 +117,37 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 	// nolint: errcheck
 	defer client.Close()
 
-	// nolint: errcheck
-	retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+	err = retry.Exponential(3*time.Minute, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
 		var resp *clientv3.GetResponse
-		var err error
 
-		ctx := clientv3.WithRequireLeader(context.Background())
-		if resp, err = client.Get(ctx, constants.InitializedKey); err != nil {
+		// limit single attempt to 15 seconds to allow for 12 attempts at least
+		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 15*time.Second)
+		defer attemptCtxCancel()
+
+		if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
+			if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
+				// no key set yet, treat as not provisioned yet
+				return nil
+			}
+
 			return retry.ExpectedError(err)
 		}
 
 		if len(resp.Kvs) == 0 {
-			return retry.ExpectedError(errors.New("no value found"))
+			// no key/values in the range, treat as not provisioned yet
+			return nil
 		}
 
-		if len(resp.Kvs) > 0 {
-			if string(resp.Kvs[0].Value) == "true" {
-				b.provisioned = true
-			}
+		if string(resp.Kvs[0].Value) == "true" {
+			b.provisioned = true
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		return fmt.Errorf("error querying cluster provisioned state in etcd: %w", err)
+	}
 
 	if b.provisioned {
 		return nil
