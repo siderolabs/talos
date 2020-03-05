@@ -94,7 +94,7 @@ function create_cluster_capi {
 }
 
 function run_talos_integration_test {
-  "${INTEGRATION_TEST}" -test.v -talos.osctlpath "${OSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
+  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.osctlpath "${OSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
 }
 
 function run_talos_integration_test_docker {
