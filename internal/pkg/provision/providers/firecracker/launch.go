@@ -77,6 +77,9 @@ func Launch() error {
 	// patch kernel args
 	config.FirecrackerConfig.KernelArgs = strings.ReplaceAll(config.FirecrackerConfig.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServer.GetAddr()))
 
+	// save original kernel/initrd asset paths, so that we can re-use them if assets can't be extracted with NewBootLoader
+	origKernelImagePath, origInitrdPath := config.FirecrackerConfig.KernelImagePath, config.FirecrackerConfig.InitrdPath
+
 	httpServer.Serve()
 	defer httpServer.Shutdown(ctx) //nolint: errcheck
 
@@ -86,6 +89,10 @@ func Launch() error {
 				err        error
 				bootLoader *BootLoader
 			)
+
+			// reset kernel/initrd assets to default values
+			// bootloader (if enabled) might overwrite them with extracted assets
+			config.FirecrackerConfig.KernelImagePath, config.FirecrackerConfig.InitrdPath = origKernelImagePath, origInitrdPath
 
 			bootLoader, err = NewBootLoader(*config.FirecrackerConfig.Drives[0].PathOnHost)
 			if err != nil {

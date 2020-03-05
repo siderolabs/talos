@@ -8,6 +8,9 @@ package base
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"io/ioutil"
 
 	"github.com/stretchr/testify/suite"
 
@@ -111,6 +114,42 @@ func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
 	defer clusterAccess.Close() //nolint: errcheck
 
 	apiSuite.Require().NoError(check.Wait(ctx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
+}
+
+// ReadUptime reads node uptime.
+//
+// Context provided might have specific node attached for API call.
+func (apiSuite *APISuite) ReadUptime(ctx context.Context) (float64, error) {
+	reader, errCh, err := apiSuite.Client.Read(ctx, "/proc/uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	defer reader.Close() //nolint: errcheck
+
+	var uptime float64
+
+	n, err := fmt.Fscanf(reader, "%f", &uptime)
+	if err != nil {
+		return 0, err
+	}
+
+	if n != 1 {
+		return 0, fmt.Errorf("not all fields scanned: %d", n)
+	}
+
+	_, err = io.Copy(ioutil.Discard, reader)
+	if err != nil {
+		return 0, err
+	}
+
+	for err = range errCh {
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return uptime, reader.Close()
 }
 
 // TearDownSuite closes Talos API client
