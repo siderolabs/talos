@@ -9,8 +9,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"sync"
 	"time"
 
@@ -42,39 +40,6 @@ func (suite *RebootSuite) TearDownTest() {
 	suite.ctxCancel()
 }
 
-func (suite *RebootSuite) readUptime(ctx context.Context) (float64, error) {
-	reader, errCh, err := suite.Client.Read(ctx, "/proc/uptime")
-	if err != nil {
-		return 0, err
-	}
-
-	defer reader.Close() //nolint: errcheck
-
-	var uptime float64
-
-	n, err := fmt.Fscanf(reader, "%f", &uptime)
-	if err != nil {
-		return 0, err
-	}
-
-	if n != 1 {
-		return 0, fmt.Errorf("not all fields scanned: %d", n)
-	}
-
-	_, err = io.Copy(ioutil.Discard, reader)
-	if err != nil {
-		return 0, err
-	}
-
-	for err = range errCh {
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return uptime, reader.Close()
-}
-
 // TestRebootNodeByNode reboots cluster node by node, waiting for health between reboots.
 func (suite *RebootSuite) TestRebootNodeByNode() {
 	if !suite.Capabilities().SupportsReboot {
@@ -95,7 +60,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 			nodeCtx := client.WithNodes(ctx, node)
 
 			// read uptime before reboot
-			uptimeBefore, err := suite.readUptime(nodeCtx)
+			uptimeBefore, err := suite.ReadUptime(nodeCtx)
 			suite.Require().NoError(err)
 
 			suite.Assert().NoError(suite.Client.Reboot(nodeCtx))
@@ -103,7 +68,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 			var uptimeAfter float64
 
 			suite.Require().NoError(retry.Constant(3 * time.Minute).Retry(func() error {
-				uptimeAfter, err = suite.readUptime(nodeCtx)
+				uptimeAfter, err = suite.ReadUptime(nodeCtx)
 				if err != nil {
 					// API might be unresponsive during reboot
 					return retry.ExpectedError(err)
@@ -146,7 +111,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
 				// read uptime before reboot
-				uptimeBefore, err := suite.readUptime(nodeCtx)
+				uptimeBefore, err := suite.ReadUptime(nodeCtx)
 				if err != nil {
 					return fmt.Errorf("error reading initial uptime (node %q): %w", node, err)
 				}
@@ -178,7 +143,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
 				return retry.Constant(3 * time.Minute).Retry(func() error {
-					uptimeAfter, err := suite.readUptime(nodeCtx)
+					uptimeAfter, err := suite.ReadUptime(nodeCtx)
 					if err != nil {
 						// API might be unresponsive during reboot
 						return retry.ExpectedError(err)
