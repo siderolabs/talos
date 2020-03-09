@@ -24,6 +24,17 @@ created join.yaml
 created talosconfig
 ```
 
+> Note: If you are using a DNS record, you will want to specify the port for the API Server (`tcp/6443`)
+
+```bash
+$ osctl config generate talos-k8s-metal-tutorial https://<DNS name>:6443
+created init.yaml
+created controlplane.yaml
+created join.yaml
+created talosconfig
+```
+
+
 At this point, you can modify the generated configs to your liking.
 
 #### Validate the Configuration Files
