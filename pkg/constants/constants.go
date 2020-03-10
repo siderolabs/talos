@@ -34,6 +34,9 @@ const (
 	// KernelParamNetworkInterfaceIgnore is the kernel parameter for specifying network interfaces which should be ignored by talos
 	KernelParamNetworkInterfaceIgnore = "talos.network.interface.ignore"
 
+	// KernelParamPanic is the kernel parameter name for specifying the time to wait until rebooting after kernel panic (0 disables reboot).
+	KernelParamPanic = "panic"
+
 	// KernelCurrentRoot is the kernel parameter name for specifying the
 	// current root partition.
 	KernelCurrentRoot = "talos.root"
