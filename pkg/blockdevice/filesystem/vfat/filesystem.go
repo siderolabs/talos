@@ -62,7 +62,7 @@ func NewFileSystem(f io.ReaderAt, sb *SuperBlock) (*FileSystem, error) {
 }
 
 // Open the file as read-only stream on the filesystem.
-func (fs *FileSystem) Open(path string) (io.Reader, error) {
+func (fs *FileSystem) Open(path string) (*File, error) {
 	components := strings.Split(path, string(os.PathSeparator))
 
 	// start with rootDirectory
@@ -93,7 +93,7 @@ func (fs *FileSystem) Open(path string) (io.Reader, error) {
 						return nil, fmt.Errorf("expected file entry, but directory found")
 					}
 
-					return &file{
+					return &File{
 						fs:    fs,
 						chain: fs.fatChain(entry.firstCluster),
 						size:  entry.size,
@@ -114,11 +114,11 @@ func (fs *FileSystem) Open(path string) (io.Reader, error) {
 		}
 
 		if !found {
-			return nil, fmt.Errorf("path not found")
+			return nil, os.ErrNotExist
 		}
 	}
 
-	return nil, fmt.Errorf("path not found")
+	return nil, os.ErrNotExist
 }
 
 // fatChain results list of clusters for a file (or directory) based on first
@@ -206,14 +206,15 @@ func (d *directory) scan() ([]directoryEntry, error) {
 	return entries, nil
 }
 
-type file struct {
+// File represents a VFAT backed file.
+type File struct {
 	fs     *FileSystem
 	chain  []uint32
 	offset uint32
 	size   uint32
 }
 
-func (f *file) Read(p []byte) (n int, err error) {
+func (f *File) Read(p []byte) (n int, err error) {
 	remaining := len(p)
 	if uint32(remaining) > f.size-f.offset {
 		remaining = int(f.size - f.offset)
@@ -251,6 +252,25 @@ func (f *file) Read(p []byte) (n int, err error) {
 	}
 
 	return n, err
+}
+
+// Seek sets the offset for the next Read or Write on file to offset, interpreted
+// according to whence: 0 means relative to the origin of the file, 1 means
+// relative to the current offset, and 2 means relative to the end.
+// It returns the new offset and an error, if any.
+func (f *File) Seek(offset int64, whence int) (int64, error) {
+	switch whence {
+	case 0:
+		f.offset = uint32(offset)
+	case 1:
+		f.offset = uint32(int64(f.offset) + offset)
+	case 2:
+		f.offset = uint32(int64(f.size) + offset)
+	default:
+		return 0, fmt.Errorf("unknown whence: %d", whence)
+	}
+
+	return int64(f.offset), nil
 }
 
 func readAtFull(r io.ReaderAt, off int64, buf []byte) error {

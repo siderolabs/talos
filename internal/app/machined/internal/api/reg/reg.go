@@ -114,7 +114,7 @@ func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest
 		return nil, err
 	}
 
-	if err = etcd.ValidateForUpgrade(); err != nil {
+	if err = etcd.ValidateForUpgrade(in.GetPreserve()); err != nil {
 		return nil, err
 	}
 

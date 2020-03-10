@@ -6,13 +6,17 @@ package firecracker
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 
+	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/kernel/vmlinuz"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
@@ -54,27 +58,37 @@ func NewBootLoader(diskImage string) (*BootLoader, error) {
 }
 
 // ExtractAssets from disk image.
-func (b *BootLoader) ExtractAssets() (BootAssets, error) {
-	if err := b.findBootPartition(); err != nil {
-		return BootAssets{}, err
+//
+// nolint: gocyclo
+func (b *BootLoader) ExtractAssets() (assets BootAssets, err error) {
+	if err = b.findBootPartition(); err != nil {
+		return assets, err
 	}
 
-	if err := b.openFilesystem(); err != nil {
-		return BootAssets{}, err
+	if err = b.openFilesystem(); err != nil {
+		return assets, err
 	}
 
-	if err := b.extractKernel(); err != nil {
-		return BootAssets{}, err
+	var label string
+
+	if label, err = b.findLabel(); err != nil {
+		return assets, err
 	}
 
-	if err := b.extractInitrd(); err != nil {
-		return BootAssets{}, err
+	if err := b.extractKernel(label); err != nil {
+		return assets, err
 	}
 
-	return BootAssets{
+	if err := b.extractInitrd(label); err != nil {
+		return assets, err
+	}
+
+	assets = BootAssets{
 		KernelPath: b.kernelTempPath,
 		InitrdPath: b.initrdTempPath,
-	}, nil
+	}
+
+	return assets, nil
 }
 
 // Close the bootloader.
@@ -153,10 +167,60 @@ func (b *BootLoader) openFilesystem() error {
 	return nil
 }
 
-func (b *BootLoader) extractKernel() error {
-	r, err := b.bootFs.Open(filepath.Join("default", constants.KernelAsset))
+func (b *BootLoader) findLabel() (label string, err error) {
+	// Parse the syslinux.cfg first, for backwards compatibility.
+	var cfg *vfat.File
+
+	if cfg, err = b.bootFs.Open("/syslinux/syslinux.cfg"); err != nil {
+		return label, fmt.Errorf("failed to open syslinux.cfg: %w", err)
+	}
+
+	buf := new(bytes.Buffer)
+	if _, err = buf.ReadFrom(cfg); err != nil {
+		return label, err
+	}
+
+	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
+	matches := re.FindSubmatch(buf.Bytes())
+
+	if len(matches) != 2 {
+		return label, fmt.Errorf("expected 2 matches, got %d", len(matches))
+	}
+
+	label = string(matches[1])
+
+	// Parse the ADV to support the new upgrade strategy.
+	// This can become the default once v0.3 is deprecated.
+
+	f, err := b.bootFs.Open("/syslinux/ldlinux.sys")
 	if err != nil {
-		return fmt.Errorf("error opening kernel asset: %w", err)
+		if errors.Is(err, os.ErrNotExist) {
+			return label, nil
+		}
+
+		return label, fmt.Errorf("failed to open ldlinux.sys: %w", err)
+	}
+
+	var adv syslinux.ADV
+
+	if adv, err = syslinux.NewADV(f); err != nil {
+		return label, err
+	}
+
+	l, ok := adv.ReadTag(syslinux.AdvUpgrade)
+	if ok {
+		label = l
+	}
+
+	return label, nil
+}
+
+func (b *BootLoader) extractKernel(label string) error {
+	path := filepath.Join("/", label, constants.KernelAsset)
+
+	r, err := b.bootFs.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open kernel asset %q: %w", path, err)
 	}
 
 	kernelR, err := vmlinuz.Decompress(bufio.NewReader(r))
@@ -182,10 +246,12 @@ func (b *BootLoader) extractKernel() error {
 	return nil
 }
 
-func (b *BootLoader) extractInitrd() error {
-	r, err := b.bootFs.Open(filepath.Join("default", constants.InitramfsAsset))
+func (b *BootLoader) extractInitrd(label string) error {
+	path := filepath.Join("/", label, constants.InitramfsAsset)
+
+	r, err := b.bootFs.Open(path)
 	if err != nil {
-		return fmt.Errorf("error opening initrd: %w", err)
+		return fmt.Errorf("failed to open initrd %q: %w", path, err)
 	}
 
 	tempF, err := ioutil.TempFile("", "talos")

@@ -16,6 +16,7 @@ osctl upgrade [flags]
 ```
   -h, --help           help for upgrade
   -i, --image string   the container image to use for performing the install
+  -p, --preserve       preserve data
 ```
 
 ### Options inherited from parent commands

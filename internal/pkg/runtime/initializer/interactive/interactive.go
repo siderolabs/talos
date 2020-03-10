@@ -70,7 +70,7 @@ func (i *Interactive) Initialize(r runtime.Runtime) (err error) {
 
 	var installer *pkg.Installer
 
-	installer, err = pkg.NewInstaller(cmdline, r.Config().Machine().Install())
+	installer, err = pkg.NewInstaller(cmdline, runtime.Boot, r.Config().Machine().Install())
 	if err != nil {
 		return err
 	}

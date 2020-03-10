@@ -24,6 +24,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
 
+	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -32,8 +33,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -338,9 +339,30 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		return nil, err
 	}
 
-	metadata, err := metadata.Open()
+	p, err := platform.CurrentPlatform()
 	if err != nil {
 		return nil, err
+	}
+
+	var upgraded bool
+
+	if p.Mode() != runtime.Container {
+		var f *os.File
+
+		if f, err = os.Open(constants.SyslinuxLdlinux); err != nil {
+			return nil, err
+		}
+
+		// nolint: errcheck
+		defer f.Close()
+
+		var adv syslinux.ADV
+
+		if adv, err = syslinux.NewADV(f); err != nil {
+			return nil, err
+		}
+
+		_, upgraded = adv.ReadTag(syslinux.AdvUpgrade)
 	}
 
 	ips, err := net.IPAddrs()
@@ -394,7 +416,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		if ok {
 			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
 
-			existing := config.Machine().Type() == machine.TypeControlPlane || metadata.Upgraded
+			existing := config.Machine().Type() == machine.TypeControlPlane || upgraded
 			if existing {
 				blackListArgs.Set("initial-cluster-state", "existing")
 

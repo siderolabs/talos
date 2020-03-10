@@ -154,6 +154,8 @@ func main() {
 
 	flag := unix.LINUX_REBOOT_CMD_RESTART
 
+	runShutdownOnImmediateReboot := true
+
 	for !immediateReboot {
 		switch e := <-init.Channel(); e.Type {
 		case event.Shutdown:
@@ -178,6 +180,7 @@ func main() {
 			}
 
 			immediateReboot = true
+			runShutdownOnImmediateReboot = false
 		case event.Reset:
 			var (
 				req *machineapi.ResetRequest
@@ -202,9 +205,11 @@ func main() {
 		}
 	}
 
-	if err := seq.Shutdown(); err != nil {
-		log.Println(err)
-		panic(fmt.Errorf("shutdown failed: %w", err))
+	if runShutdownOnImmediateReboot {
+		if err := seq.Shutdown(); err != nil {
+			log.Println(err)
+			panic(fmt.Errorf("shutdown failed: %w", err))
+		}
 	}
 
 	sync()

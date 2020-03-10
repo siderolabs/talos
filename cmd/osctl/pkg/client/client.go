@@ -387,10 +387,13 @@ func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-ch
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
 // interface
-func (c *Client) Upgrade(ctx context.Context, image string, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
+func (c *Client) Upgrade(ctx context.Context, image string, preserve bool, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
 	resp, err = c.MachineClient.Upgrade(
 		ctx,
-		&machineapi.UpgradeRequest{Image: image},
+		&machineapi.UpgradeRequest{
+			Image:    image,
+			Preserve: preserve,
+		},
 		callOptions...,
 	)
 

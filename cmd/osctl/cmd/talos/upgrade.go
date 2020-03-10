@@ -20,7 +20,10 @@ import (
 	"github.com/talos-systems/talos/pkg/cli"
 )
 
-var upgradeImage string
+var (
+	upgradeImage string
+	preserve     bool
+)
 
 // upgradeCmd represents the processes command
 var upgradeCmd = &cobra.Command{
@@ -35,6 +38,7 @@ var upgradeCmd = &cobra.Command{
 
 func init() {
 	upgradeCmd.Flags().StringVarP(&upgradeImage, "image", "i", "", "the container image to use for performing the install")
+	upgradeCmd.Flags().BoolVarP(&preserve, "preserve", "p", false, "preserve data")
 	addCommand(upgradeCmd)
 }
 
@@ -44,7 +48,7 @@ func upgrade() error {
 
 		// TODO: See if we can validate version and prevent starting upgrades to
 		// an unknown version
-		resp, err := c.Upgrade(ctx, upgradeImage, grpc.Peer(&remotePeer))
+		resp, err := c.Upgrade(ctx, upgradeImage, preserve, grpc.Peer(&remotePeer))
 		if err != nil {
 			if resp == nil {
 				return fmt.Errorf("error performing upgrade: %s", err)

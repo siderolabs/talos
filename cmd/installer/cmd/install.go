@@ -69,7 +69,7 @@ func runInstallCmd() (err error) {
 			},
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineInstall: &v1alpha1.InstallConfig{
-					InstallForce:           true,
+					InstallForce:           options.Force,
 					InstallBootloader:      options.Bootloader,
 					InstallDisk:            options.Disk,
 					InstallExtraKernelArgs: options.ExtraKernelArgs,

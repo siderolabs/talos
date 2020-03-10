@@ -5,9 +5,13 @@
 package services
 
 import (
+	"context"
+	"time"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -31,7 +35,7 @@ func (task *StartServices) standard(r runtime.Runtime) (err error) {
 
 	system.Services(r.Config()).StartAll()
 
-	return nil
+	return task.wait(r)
 }
 
 func (task *StartServices) loadSystemServices(r runtime.Runtime) {
@@ -80,4 +84,21 @@ func (task *StartServices) loadKubernetesServices(r runtime.Runtime) {
 			&services.Bootkube{},
 		)
 	}
+}
+
+func (task *StartServices) wait(r runtime.Runtime) (err error) {
+	svcs := system.Services(r.Config()).List()
+
+	all := []conditions.Condition{}
+
+	for _, svc := range svcs {
+		cond := system.WaitForService(system.StateEventUp, svc.AsProto().GetId())
+		all = append(all, cond)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+
+	defer cancel()
+
+	return conditions.WaitForAll(all...).Wait(ctx)
 }

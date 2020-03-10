@@ -12,9 +12,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"text/template"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/talos/pkg/constants"
 
 	"golang.org/x/sys/unix"
 )
@@ -54,6 +57,35 @@ type Label struct {
 // Syslinux represents the syslinux bootloader.
 type Syslinux struct{}
 
+// Labels parses the syslinux config and returns the current active label, and
+// what should be the next label.
+func Labels() (current string, next string, err error) {
+	var b []byte
+
+	if b, err = ioutil.ReadFile(constants.SyslinuxConfig); err != nil {
+		return "", "", err
+	}
+
+	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
+	matches := re.FindSubmatch(b)
+
+	if len(matches) != 2 {
+		return "", "", fmt.Errorf("expected 2 matches, got %d", len(matches))
+	}
+
+	current = string(matches[1])
+	switch current {
+	case constants.BootA:
+		next = constants.BootB
+	case constants.BootB:
+		next = constants.BootA
+	default:
+		return "", "", fmt.Errorf("unknown syslinux label: %q", current)
+	}
+
+	return current, next, err
+}
+
 // Prepare implements the Bootloader interface. It works by writing
 // gptmbr.bin to a block device.
 func Prepare(dev string) (err error) {
@@ -79,7 +111,9 @@ func Prepare(dev string) (err error) {
 
 // Install implements the Bootloader interface. It sets up syslinux with the
 // specified kernel parameters.
-func Install(base string, config interface{}) (err error) {
+//
+// nolint: gocyclo
+func Install(base, label string, config interface{}, sequence runtime.Sequence, bootPartitionFound bool) (err error) {
 	syslinuxcfg, ok := config.(*Cfg)
 	if !ok {
 		return errors.New("expected a syslinux config")
@@ -110,6 +144,60 @@ func Install(base string, config interface{}) (err error) {
 		return err
 	}
 
+	err = WriteAllSyslinuxCfgs(base, syslinuxcfg)
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(filepath.Join(base, "syslinux", "syslinux.cfg"))
+
+	if sequence == runtime.Upgrade && bootPartitionFound {
+		if _, err = cmd.Run("extlinux", "--update", dir); err != nil {
+			return fmt.Errorf("failed to update extlinux: %w", err)
+		}
+
+		if _, err = cmd.Run("extlinux", "--once="+label, dir); err != nil {
+			return fmt.Errorf("failed to set label for next boot: %w", err)
+		}
+	} else {
+		_, err = cmd.Run("extlinux", "--install", dir)
+		if err != nil {
+			return fmt.Errorf("failed to install extlinux: %w", err)
+		}
+	}
+
+	if sequence == runtime.Upgrade {
+		var f *os.File
+
+		if f, err = os.OpenFile(constants.SyslinuxLdlinux, os.O_RDWR, 0700); err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer f.Close()
+
+		var adv ADV
+
+		if adv, err = NewADV(f); err != nil {
+			return err
+		}
+
+		if ok := adv.SetTag(AdvUpgrade, label); !ok {
+			return fmt.Errorf("failed to set upgrade tag: %q", label)
+		}
+
+		if _, err = f.Write(adv); err != nil {
+			return err
+		}
+
+		log.Println("set upgrade tag in ADV")
+	}
+
+	return nil
+}
+
+// WriteAllSyslinuxCfgs writes legacy and EFI syslinux configs to disk.
+func WriteAllSyslinuxCfgs(base string, syslinuxcfg *Cfg) (err error) {
 	paths := []string{filepath.Join(base, "syslinux", "syslinux.cfg"), filepath.Join(base, "EFI", "syslinux", "syslinux.cfg")}
 	for _, path := range paths {
 		if err = WriteSyslinuxCfg(base, path, syslinuxcfg); err != nil {
@@ -117,14 +205,10 @@ func Install(base string, config interface{}) (err error) {
 		}
 	}
 
-	if _, err = cmd.Run("extlinux", "--install", filepath.Dir(paths[0])); err != nil {
-		return fmt.Errorf("failed to install extlinux: %w", err)
-	}
-
 	return nil
 }
 
-// WriteSyslinuxCfg write syslinux.cfg to disk.
+// WriteSyslinuxCfg writes a syslinux config to disk.
 func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 	b := []byte{}
 	wr := bytes.NewBuffer(b)
