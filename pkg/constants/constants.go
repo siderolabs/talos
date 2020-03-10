@@ -293,8 +293,17 @@ const (
 	// initialized.
 	InitializedKey = "initialized"
 
-	// MetadataFile is the name of the file that contains a node's metadata.
-	MetadataFile = "metadata.yaml"
+	// BootA is a syslinux label.
+	BootA = "boot-a"
+
+	// BootB is a syslinux label.
+	BootB = "boot-b"
+
+	// SyslinuxConfig is the path to the Syslinux config.
+	SyslinuxConfig = "/boot/syslinux/syslinux.cfg"
+
+	// SyslinuxLdlinux is the path to ldlinux.sys.
+	SyslinuxLdlinux = "/boot/syslinux/ldlinux.sys"
 )
 
 // See https://linux.die.net/man/3/klogctl

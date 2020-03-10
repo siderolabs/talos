@@ -22,9 +22,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/signal"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/sysctls"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase/upgrade"
-	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -66,8 +66,8 @@ func (d *Sequencer) Boot() error {
 			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
-			"mount /boot as ro",
-			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel, mount.WithReadOnly(true)),
+			"mount /boot",
+			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel),
 		),
 		phase.NewPhase(
 			"config",
@@ -125,24 +125,8 @@ func (d *Sequencer) Boot() error {
 			rootfs.NewVarDirectoriesTask(),
 		),
 		phase.NewPhase(
-			"unmount /boot",
-			rootfs.NewUnmountSystemDisksTask(constants.BootPartitionLabel),
-		),
-		phase.NewPhase(
-			"mount /boot as rw",
-			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel),
-		),
-		phase.NewPhase(
 			"save config",
 			configtask.NewSaveConfigTask(),
-		),
-		phase.NewPhase(
-			"unmount /boot",
-			rootfs.NewUnmountSystemDisksTask(constants.BootPartitionLabel),
-		),
-		phase.NewPhase(
-			"mount /boot as ro",
-			rootfs.NewMountSystemDisksTask(constants.BootPartitionLabel, mount.WithReadOnly(true)),
 		),
 		phase.NewPhase(
 			"mount extra disks",
@@ -163,19 +147,31 @@ func (d *Sequencer) Boot() error {
 			"post startup tasks",
 			services.NewLabelNodeAsMasterTask(),
 		),
+		phase.NewPhase(
+			"update bootloader",
+			rootfs.NewSyslinuxTask(),
+		),
 	)
 
 	return phaserunner.Run()
 }
 
 // Shutdown implements the Sequencer interface.
-func (d *Sequencer) Shutdown() error {
-	config, err := config.NewFromFile(constants.ConfigPath)
+func (d *Sequencer) Shutdown() (err error) {
+	var dev *probe.ProbedBlockDevice
+
+	dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
 	if err != nil {
 		return err
 	}
 
-	phaserunner, err := phase.NewRunner(config, runtime.Shutdown)
+	devname := dev.Device().Name()
+
+	if err = dev.Close(); err != nil {
+		return err
+	}
+
+	phaserunner, err := phase.NewRunner(nil, runtime.Shutdown)
 	if err != nil {
 		return err
 	}
@@ -183,7 +179,21 @@ func (d *Sequencer) Shutdown() error {
 	phaserunner.Add(
 		phase.NewPhase(
 			"stop services",
-			services.NewStopServicesTask(false),
+			services.NewStopServicesTask(),
+		),
+		phase.NewPhase(
+			"unmount system disk submounts",
+			rootfs.NewUnmountOverlayTask(),
+			rootfs.NewUnmountPodMountsTask(),
+		),
+		phase.NewPhase(
+			"unmount system disks",
+			rootfs.NewUnmountSystemDisksTask(constants.BootPartitionLabel),
+			rootfs.NewUnmountSystemDisksTask(constants.EphemeralPartitionLabel),
+		),
+		phase.NewPhase(
+			"unmount system disk bind mounts",
+			rootfs.NewUnmountSystemDiskBindMountsTask(devname),
 		),
 	)
 
@@ -211,6 +221,11 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 
 	devname := dev.Device().Name()
 
+	// TODO(andrewrynhard): This should be more dynamic. If we ever change the
+	// partition scheme there is the chance that 2 is not the correct parition to
+	// check.
+	partname := util.PartName(dev.Device().Name(), 2)
+
 	if err := dev.Close(); err != nil {
 		return err
 	}
@@ -222,7 +237,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		),
 		phase.NewPhase(
 			"handle control plane requirements",
-			upgrade.NewLeaveEtcdTask(),
+			upgrade.NewLeaveEtcdTask(req.GetPreserve()),
 		),
 		phase.NewPhase(
 			"remove all pods",
@@ -230,7 +245,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		),
 		phase.NewPhase(
 			"stop services",
-			services.NewStopServicesTask(true),
+			services.NewStopServicesTask("containerd", "udevd"),
 		),
 		phase.NewPhase(
 			"unmount system disk submounts",
@@ -238,7 +253,8 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 			rootfs.NewUnmountPodMountsTask(),
 		),
 		phase.NewPhase(
-			"unmount system disk",
+			"unmount system disks",
+			rootfs.NewUnmountSystemDisksTask(constants.BootPartitionLabel),
 			rootfs.NewUnmountSystemDisksTask(constants.EphemeralPartitionLabel),
 		),
 		phase.NewPhase(
@@ -247,15 +263,15 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		),
 		phase.NewPhase(
 			"verify system disk not in use",
-			disk.NewVerifyDiskAvailabilityTask(devname),
-		),
-		phase.NewPhase(
-			"reset system disk",
-			disk.NewResetSystemDiskTask(devname),
+			disk.NewVerifyDiskAvailabilityTask(partname),
 		),
 		phase.NewPhase(
 			"upgrade",
 			upgrade.NewUpgradeTask(devname, req),
+		),
+		phase.NewPhase(
+			"stop all services",
+			services.NewStopServicesTask(),
 		),
 	)
 
@@ -295,7 +311,7 @@ func (d *Sequencer) Reset(req *machineapi.ResetRequest) error {
 			),
 			phase.NewPhase(
 				"handle control plane requirements",
-				upgrade.NewLeaveEtcdTask(),
+				upgrade.NewLeaveEtcdTask(false),
 			),
 			phase.NewPhase(
 				"remove all pods",
@@ -306,8 +322,8 @@ func (d *Sequencer) Reset(req *machineapi.ResetRequest) error {
 
 	phaserunner.Add(
 		phase.NewPhase(
-			"stop services",
-			services.NewStopServicesTask(true),
+			"stop all services",
+			services.NewStopServicesTask(),
 		),
 		phase.NewPhase(
 			"unmount system disk submounts",

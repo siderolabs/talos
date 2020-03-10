@@ -5,8 +5,10 @@
 package rootfs
 
 import (
+	"fmt"
+
+	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
@@ -29,9 +31,18 @@ func (task *CheckInstall) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *CheckInstall) standard(r runtime.Runtime) (err error) {
-	_, err = metadata.Open()
+	var (
+		current string
+		next    string
+	)
+
+	current, next, err = syslinux.Labels()
 	if err != nil {
 		return err
+	}
+
+	if current == "" && next == "" {
+		return fmt.Errorf("syslinux.cfg is not configured")
 	}
 
 	return err

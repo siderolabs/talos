@@ -17,15 +17,17 @@ import (
 // Upgrade represents the task for stop all containerd tasks in the
 // k8s.io namespace.
 type Upgrade struct {
-	disk  string
-	image string
+	disk     string
+	image    string
+	preserve bool
 }
 
 // NewUpgradeTask initializes and returns an Services task.
 func NewUpgradeTask(devname string, req *machineapi.UpgradeRequest) phase.Task {
 	return &Upgrade{
-		disk:  devname,
-		image: req.Image,
+		disk:     devname,
+		image:    req.Image,
+		preserve: req.Preserve,
 	}
 }
 
@@ -46,7 +48,7 @@ func (task *Upgrade) standard(r runtime.Runtime) (err error) {
 	}
 
 	// We pull the installer image when we receive an upgrade request. No need to re-pull inside of installer container
-	if err = install.RunInstallerContainer(r, install.WithImagePull(false)); err != nil {
+	if err = install.RunInstallerContainer(r, install.WithImagePull(false), install.WithPreserve(task.preserve)); err != nil {
 		return err
 	}
 

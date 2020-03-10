@@ -8,9 +8,18 @@ package install
 type Option func(o *Options) error
 
 // WithImagePull disables pulling the installer image during an install
-func WithImagePull(shouldPull bool) Option {
+func WithImagePull(b bool) Option {
 	return func(o *Options) error {
-		o.ImagePull = shouldPull
+		o.ImagePull = b
+
+		return nil
+	}
+}
+
+// WithPreserve disables pulling the installer image during an install
+func WithPreserve(b bool) Option {
+	return func(o *Options) error {
+		o.Preserve = b
 
 		return nil
 	}
@@ -19,11 +28,13 @@ func WithImagePull(shouldPull bool) Option {
 // Options describes generate parameters.
 type Options struct {
 	ImagePull bool
+	Preserve  bool
 }
 
 // DefaultInstallOptions returns default options.
 func DefaultInstallOptions() Options {
 	return Options{
 		ImagePull: true,
+		Preserve:  false,
 	}
 }

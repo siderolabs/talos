@@ -6,7 +6,6 @@ package pkg
 
 import (
 	"log"
-	"path/filepath"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -23,12 +22,12 @@ type InstallOptions struct {
 	ExtraKernelArgs []string
 	Bootloader      bool
 	Upgrade         bool
+	Force           bool
 }
 
 // Install installs Talos.
 func Install(p runtime.Platform, config runtime.Configurator, sequence runtime.Sequence, opts *InstallOptions) (err error) {
 	cmdline := procfs.NewCmdline("")
-	cmdline.Append("initrd", filepath.Join("/", "default", constants.InitramfsAsset))
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 	cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
 
@@ -42,7 +41,7 @@ func Install(p runtime.Platform, config runtime.Configurator, sequence runtime.S
 
 	cmdline.AppendDefaults()
 
-	i, err := NewInstaller(cmdline, config.Machine().Install())
+	i, err := NewInstaller(cmdline, sequence, config.Machine().Install())
 	if err != nil {
 		return err
 	}

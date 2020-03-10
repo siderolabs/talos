@@ -343,7 +343,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 	nodeCtx := talosclient.WithNodes(suite.ctx, node.PrivateIP.String())
 
-	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage)
+	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, false)
 	suite.Require().NoError(err)
 
 	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)

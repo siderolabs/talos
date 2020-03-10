@@ -8,7 +8,6 @@ import (
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
-	"github.com/talos-systems/talos/internal/pkg/metadata"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/initializer"
 )
@@ -53,13 +52,6 @@ func (task *Platform) runtime(r runtime.Runtime) (err error) {
 	sans := make([]string, 0, len(addrs))
 	for _, addr := range addrs {
 		sans = append(sans, addr.String())
-	}
-
-	if r.Platform().Mode() == runtime.Container {
-		m := metadata.NewMetadata(r.Sequence())
-		if err = m.Save(); err != nil {
-			return err
-		}
 	}
 
 	r.Config().Machine().Security().SetCertSANs(sans)

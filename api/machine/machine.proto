@@ -73,7 +73,9 @@ message ShutdownResponse {
 // rpc upgrade
 message UpgradeRequest {
   string image = 1;
+  bool preserve = 2;
 }
+
 message Upgrade {
   common.Metadata metadata = 1;
   string ack = 2;

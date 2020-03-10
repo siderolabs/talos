@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -79,6 +80,7 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		"--platform=" + r.Platform().Name(),
 		"--config=" + *config,
 		"--upgrade=" + upgrade,
+		"--force=" + strconv.FormatBool(!options.Preserve),
 	}
 
 	for _, arg := range r.Config().Machine().Install().ExtraKernelArgs() {

@@ -70,7 +70,7 @@ func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpo
 
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
-func ValidateForUpgrade() error {
+func ValidateForUpgrade(preserve bool) error {
 	config, err := config.NewFromFile(constants.ConfigPath)
 	if err != nil {
 		return err
@@ -90,8 +90,10 @@ func ValidateForUpgrade() error {
 			return err
 		}
 
-		if len(resp.Members) == 1 {
-			return fmt.Errorf("only 1 etcd member found. assuming this is not an HA setup and refusing to upgrade")
+		if !preserve {
+			if len(resp.Members) == 1 {
+				return fmt.Errorf("only 1 etcd member found. assuming this is not an HA setup and refusing to upgrade")
+			}
 		}
 
 		for _, member := range resp.Members {

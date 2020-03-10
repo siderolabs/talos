@@ -19,11 +19,13 @@ import (
 )
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
-type LeaveEtcd struct{}
+type LeaveEtcd struct {
+	preserve bool
+}
 
 // NewLeaveEtcdTask initializes and returns a LeaveEtcd task.
-func NewLeaveEtcdTask() phase.Task {
-	return &LeaveEtcd{}
+func NewLeaveEtcdTask(preserve bool) phase.Task {
+	return &LeaveEtcd{preserve: preserve}
 }
 
 // TaskFunc returns the runtime function.
@@ -34,6 +36,10 @@ func (task *LeaveEtcd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 // nolint: gocyclo
 func (task *LeaveEtcd) standard(r runtime.Runtime) (err error) {
 	if r.Config().Machine().Type() == machine.TypeWorker {
+		return nil
+	}
+
+	if task.preserve {
 		return nil
 	}
 

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
@@ -52,19 +53,21 @@ type Asset struct {
 }
 
 // NewManifest initializes and returns a Manifest.
-func NewManifest(install machine.Install) (manifest *Manifest, err error) {
+func NewManifest(label string, sequence runtime.Sequence, install machine.Install) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Targets: map[string][]*Target{},
 	}
 
 	// Verify that the target device(s) can satisify the requested options.
 
-	if err = VerifyDataDevice(install); err != nil {
-		return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
-	}
+	if sequence != runtime.Upgrade {
+		if err = VerifyDataDevice(install); err != nil {
+			return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
+		}
 
-	if err = VerifyBootDevice(install); err != nil {
-		return nil, fmt.Errorf("failed to prepare boot partition: %w", err)
+		if err = VerifyBootDevice(install); err != nil {
+			return nil, fmt.Errorf("failed to prepare boot partition: %w", err)
+		}
 	}
 
 	// Initialize any slices we need. Note that a boot paritition is not
@@ -85,11 +88,11 @@ func NewManifest(install machine.Install) (manifest *Manifest, err error) {
 			Assets: []*Asset{
 				{
 					Source:      constants.KernelAssetPath,
-					Destination: filepath.Join(constants.BootMountPoint, "default", constants.KernelAsset),
+					Destination: filepath.Join(constants.BootMountPoint, label, constants.KernelAsset),
 				},
 				{
 					Source:      constants.InitramfsAssetPath,
-					Destination: filepath.Join(constants.BootMountPoint, "default", constants.InitramfsAsset),
+					Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
 				},
 			},
 		}

@@ -47,7 +47,7 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 			continue
 		}
 
-		if err = tail.SeekLines(f, 1000); err != nil {
+		if err = tail.SeekLines(f, 5000); err != nil {
 			fmt.Fprintf(out, "error seeking to the tail: %s\n", err)
 		}
 
