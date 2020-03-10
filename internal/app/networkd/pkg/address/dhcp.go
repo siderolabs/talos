@@ -128,19 +128,18 @@ func (d *DHCP) Resolvers() []net.IP {
 }
 
 // Hostname returns the hostname from the DHCP offer.
-func (d *DHCP) Hostname() string {
-	// If we received a domain name, append it to the truncated hostname to form the FQDN
-	if d.Ack.DomainName() != "" {
-		shortHostname := strings.Split(d.Ack.HostName(), ".")[0]
-
-		return fmt.Sprintf("%s.%s", shortHostname, d.Ack.DomainName())
-	}
-
+func (d *DHCP) Hostname() (hostname string) {
 	if d.Ack.HostName() == "" {
-		return fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(d.Address().IP.String(), ".", "-"))
+		hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(d.Address().IP.String(), ".", "-"))
+	} else {
+		hostname = d.Ack.HostName()
 	}
 
-	return d.Ack.HostName()
+	if d.Ack.DomainName() != "" {
+		hostname = fmt.Sprintf("%s.%s", strings.Split(hostname, ".")[0], d.Ack.DomainName())
+	}
+
+	return hostname
 }
 
 // discover handles the actual DHCP conversation.

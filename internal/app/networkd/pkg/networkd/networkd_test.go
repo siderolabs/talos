@@ -124,7 +124,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	hostname, _, addr, err = nwd.decideHostname()
 	suite.Require().NoError(err)
 	suite.Assert().Equal("evenbetterdadjokes", hostname)
-	suite.Assert().Equal(addr, net.ParseIP("192.168.0.11"))
+	suite.Assert().Equal(addr.String(), "192.168.0.11")
 
 	// DHCP without OptionHostNAme
 	nwd, err = New(dhcpConfigFile())
