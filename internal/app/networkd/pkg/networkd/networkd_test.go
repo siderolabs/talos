@@ -126,7 +126,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal("evenbetterdadjokes", hostname)
 	suite.Assert().Equal(addr.String(), "192.168.0.11")
 
-	// DHCP without OptionHostNAme
+	// DHCP without OptionHostName
 	nwd, err = New(dhcpConfigFile())
 	suite.Require().NoError(err)
 
@@ -144,6 +144,24 @@ func (suite *NetworkdSuite) TestHostname() {
 	hostname, _, addr, err = nwd.decideHostname()
 	suite.Require().NoError(err)
 	suite.Assert().Equal("talos-192-168-0-11", hostname)
+	suite.Assert().Equal(addr, net.ParseIP("192.168.0.11"))
+
+	// DHCP without OptionHostname and with OptionDomainName
+	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
+		&address.DHCP{
+			Ack: &dhcpv4.DHCPv4{
+				YourIPAddr: net.ParseIP("192.168.0.11"),
+				Options: dhcpv4.Options{
+					uint8(dhcpv4.OptionDomainName): []byte("domain.tld"),
+				},
+			},
+		},
+	}
+
+	hostname, domainname, addr, err = nwd.decideHostname()
+	suite.Require().NoError(err)
+	suite.Assert().Equal("talos-192-168-0-11", hostname)
+	suite.Assert().Equal("domain.tld", domainname)
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.11"))
 }
 
