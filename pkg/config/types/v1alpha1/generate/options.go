@@ -70,6 +70,15 @@ func WithRegistryMirror(host string, endpoints ...string) GenOption {
 	}
 }
 
+// WithDNSDomain specifies domain name to use in Talos cluster.
+func WithDNSDomain(dnsDomain string) GenOption {
+	return func(o *GenOptions) error {
+		o.DNSDomain = dnsDomain
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -78,6 +87,7 @@ type GenOptions struct {
 	AdditionalSubjectAltNames []string
 	NetworkConfig             *v1alpha1.NetworkConfig
 	RegistryMirrors           map[string]machine.RegistryMirrorConfig
+	DNSDomain                 string
 }
 
 // DefaultGenOptions returns default options.

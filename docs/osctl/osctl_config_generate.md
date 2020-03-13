@@ -15,6 +15,7 @@ osctl config generate <cluster name> https://<load balancer IP or DNS name> [fla
 
 ```
       --additional-sans strings     additional Subject-Alt-Names for the APIServer certificate
+      --dns-domain string           the dns domain to use for cluster (default "cluster.local")
   -h, --help                        help for generate
       --install-disk string         the disk to install to (default "/dev/sda")
       --install-image string        the image used to perform an installation (default "docker.io/autonomy/installer:latest")

@@ -41,6 +41,7 @@ type Network interface {
 	CNI() CNI
 	PodCIDR() string
 	ServiceCIDR() string
+	DNSDomain() string
 }
 
 // CNI defines the requirements for a config that pertains to Kubernetes

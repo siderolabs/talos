@@ -340,6 +340,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		BootstrapTokenID:           config.Cluster().Token().ID(),
 		BootstrapTokenSecret:       config.Cluster().Token().Secret(),
 		AESCBCEncryptionSecret:     config.Cluster().AESCBCEncryptionSecret(),
+		ClusterDomain:              config.Cluster().Network().DNSDomain(),
 	}
 
 	as, err := asset.NewDefaultAssets(conf)

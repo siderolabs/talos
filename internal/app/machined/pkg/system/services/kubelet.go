@@ -237,7 +237,7 @@ func (k *Kubelet) HealthSettings(runtime.Configurator) *health.Settings {
 	return &settings
 }
 
-func newKubeletConfiguration(clusterDNS []string) *kubeletconfig.KubeletConfiguration {
+func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconfig.KubeletConfiguration {
 	f := false
 	t := true
 
@@ -265,7 +265,7 @@ func newKubeletConfiguration(clusterDNS []string) *kubeletconfig.KubeletConfigur
 		Authorization: kubeletconfig.KubeletAuthorization{
 			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
 		},
-		ClusterDomain:       "cluster.local",
+		ClusterDomain:       dnsDomain,
 		ClusterDNS:          clusterDNS,
 		SerializeImagePulls: &f,
 		FailSwapOn:          &f,
@@ -314,7 +314,7 @@ func writeKubeletConfig(config runtime.Configurator) error {
 		dnsServiceIPs = append(dnsServiceIPs, dnsIP.String())
 	}
 
-	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs)
+	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs, config.Cluster().Network().DNSDomain())
 
 	serializer := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,

@@ -313,7 +313,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		ControlPlaneEndpoint:      endpoint,
 		PodNet:                    []string{podNet},
 		ServiceNet:                []string{serviceNet},
-		ServiceDomain:             "cluster.local",
+		ServiceDomain:             options.DNSDomain,
 		ClusterName:               clustername,
 		KubernetesVersion:         kubernetesVersion,
 		Secrets:                   kubeadmTokens,
