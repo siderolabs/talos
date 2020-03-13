@@ -286,6 +286,9 @@ const (
 	// DefaultServiceCIDR is the default service CIDR block.
 	DefaultServiceCIDR = "10.96.0.0/12"
 
+	// DefaultDNSDomain is the default DNS domain.
+	DefaultDNSDomain = "cluster.local"
+
 	// InitializedKey is the key used to indicate if the cluster has been
 	// initialized.
 	InitializedKey = "initialized"

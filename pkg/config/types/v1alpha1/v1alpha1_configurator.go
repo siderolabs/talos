@@ -376,6 +376,15 @@ func (c *ClusterConfig) Network() cluster.Network {
 	return c
 }
 
+// DNSDomain implements the Configurator interface.
+func (c *ClusterConfig) DNSDomain() string {
+	if c.ClusterNetwork == nil {
+		return constants.DefaultDNSDomain
+	}
+
+	return c.ClusterNetwork.DNSDomain
+}
+
 // CNI implements the Configurator interface.
 func (c *ClusterConfig) CNI() cluster.CNI {
 	switch {

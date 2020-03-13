@@ -26,6 +26,7 @@ import (
 
 var (
 	configVersion     string
+	dnsDomain         string
 	kubernetesVersion string
 	installDisk       string
 	installImage      string
@@ -222,6 +223,7 @@ func genV1Alpha1Config(args []string) error {
 					generate.WithInstallDisk(installDisk),
 					generate.WithInstallImage(installImage),
 					generate.WithAdditionalSubjectAltNames(additionalSANs),
+					generate.WithDNSDomain(dnsDomain),
 				),
 			},
 		),
@@ -288,6 +290,7 @@ func init() {
 	configGenerateCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
 	configGenerateCmd.Flags().StringVar(&installImage, "install-image", defaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation") // nolint: lll
 	configGenerateCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
+	configGenerateCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	configGenerateCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	configGenerateCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	configGenerateCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
