@@ -6,6 +6,7 @@ package networkd
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strings"
 
@@ -31,7 +32,7 @@ func buildOptions(device machine.Device, hostname string) (name string, opts []n
 	// Configure Addressing
 	switch {
 	case device.CIDR != "":
-		s := &address.Static{Device: &device}
+		s := &address.Static{CIDR: device.CIDR, RouteList: device.Routes, Mtu: device.MTU}
 
 		// Set a default for the hostname to ensure we always have a valid
 		// ip + hostname pair
@@ -43,9 +44,31 @@ func buildOptions(device machine.Device, hostname string) (name string, opts []n
 		}
 
 		opts = append(opts, nic.WithAddressing(s))
-	default:
+	case device.DHCP:
 		d := &address.DHCP{}
 		opts = append(opts, nic.WithAddressing(d))
+	default:
+		// Allow master interface without any addressing if VLANs exist
+		if len(device.Vlans) > 0 {
+			log.Printf("no addressing for master device %s", device.Interface)
+
+			opts = append(opts, nic.WithNoAddressing())
+		} else {
+			d := &address.DHCP{}
+			opts = append(opts, nic.WithAddressing(d))
+		}
+	}
+
+	// Configure Vlan interfaces
+	for _, vlan := range device.Vlans {
+		opts = append(opts, nic.WithVlan(vlan.ID))
+		if vlan.CIDR != "" {
+			opts = append(opts, nic.WithVlanCIDR(vlan.ID, vlan.CIDR, vlan.Routes))
+		}
+
+		if vlan.DHCP {
+			opts = append(opts, nic.WithVlanDhcp(vlan.ID))
+		}
 	}
 
 	// Configure Bonding
@@ -263,7 +286,7 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 		opts = append(opts, nic.WithName(link.Name))
 	}
 
-	s := &address.Static{Device: device, NameServers: resolvers, FQDN: hostname, NetIf: link}
+	s := &address.Static{Mtu: device.MTU, NameServers: resolvers, FQDN: hostname, NetIf: link, CIDR: device.CIDR, RouteList: device.Routes}
 	opts = append(opts, nic.WithAddressing(s))
 
 	return link.Name, opts

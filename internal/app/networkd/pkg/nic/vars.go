@@ -303,3 +303,20 @@ func FailOverMACByName(f string) (fo FailOverMAC, err error) {
 
 	return fo, err
 }
+
+const (
+	IFLA_VLAN_UNSPEC = iota
+	IFLA_VLAN_ID
+	IFLA_VLAN_FLAGS
+	IFLA_VLAN_EGRESS_QOS
+	IFLA_VLAN_INGRESS_QOS
+	IFLA_VLAN_PROTOCOL
+	IFLA_VLAN_MAX = IFLA_VLAN_PROTOCOL
+)
+
+// VlanProtocol possible values
+const (
+	VLAN_PROTOCOL_UNKNOWN = 0
+	VLAN_PROTOCOL_8021Q   = 0x8100
+	VLAN_PROTOCOL_8021AD  = 0x88A8
+)

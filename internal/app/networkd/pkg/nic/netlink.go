@@ -13,19 +13,28 @@ import (
 )
 
 // createLink creates an interface
-func (n *NetworkInterface) createLink() error {
-	var info *rtnetlink.LinkInfo
-
-	if n.Bonded {
-		info = &rtnetlink.LinkInfo{Kind: "bond"}
-	}
-
+func (n *NetworkInterface) createLink(name string, info *rtnetlink.LinkInfo) error {
 	err := n.rtConn.Link.New(&rtnetlink.LinkMessage{
 		Family: unix.AF_UNSPEC,
 		Type:   0,
 		Attributes: &rtnetlink.LinkAttributes{
-			Name: n.Name,
+			Name: name,
 			Info: info,
+		},
+	})
+
+	return err
+}
+
+// createLink creates an interface
+func (n *NetworkInterface) createSubLink(name string, info *rtnetlink.LinkInfo, master *uint32) error {
+	err := n.rtConn.Link.New(&rtnetlink.LinkMessage{
+		Family: unix.AF_UNSPEC,
+		Type:   0,
+		Attributes: &rtnetlink.LinkAttributes{
+			Name: name,
+			Info: info,
+			Type: *master,
 		},
 	})
 

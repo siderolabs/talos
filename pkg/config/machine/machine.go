@@ -98,6 +98,7 @@ type Device struct {
 	CIDR      string  `yaml:"cidr"`
 	Routes    []Route `yaml:"routes"`
 	Bond      *Bond   `yaml:"bond"`
+	Vlans     []*Vlan `yaml:"vlans"`
 	MTU       int     `yaml:"mtu"`
 	DHCP      bool    `yaml:"dhcp"`
 	Ignore    bool    `yaml:"ignore"`
@@ -133,6 +134,14 @@ type Bond struct {
 	ADActorSysPrio  uint16   `yaml:"adActorSysPrio"`
 	ADUserPortKey   uint16   `yaml:"adUserPortKey"`
 	PeerNotifyDelay uint32   `yaml:"peerNotifyDelay"`
+}
+
+// Vlan represents vlan settings for a device
+type Vlan struct {
+	CIDR   string  `ỳaml:"cidr"`
+	Routes []Route `yaml:"routes"`
+	DHCP   bool    `yaml:"dhcp"`
+	ID     uint16  `yaml:"vlanId"`
 }
 
 // Route represents a network route.

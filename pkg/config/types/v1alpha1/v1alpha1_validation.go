@@ -149,7 +149,7 @@ func CheckDeviceAddressing(d machine.Device) error {
 	}
 
 	// test for neither dhcp nor cidr specified
-	if !d.DHCP && d.CIDR == "" {
+	if !d.DHCP && d.CIDR == "" && len(d.Vlans) == 0 {
 		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
 	}
 
