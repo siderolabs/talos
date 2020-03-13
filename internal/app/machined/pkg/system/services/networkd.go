@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -123,7 +124,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (n *Networkd) HealthFunc(runtime.Configurator) health.Check {
+func (n *Networkd) HealthFunc(cfg runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		var (
 			conn      *grpc.ClientConn
@@ -159,7 +160,13 @@ func (n *Networkd) HealthFunc(runtime.Configurator) health.Check {
 			return nil
 		}
 
-		return errors.New("networkd is unhealthy")
+		msg := fmt.Sprintf("networkd is unhealthy: %s", hcResp.Messages[0].Status.String())
+
+		if cfg.Debug() {
+			log.Printf("DEBUG: %s", msg)
+		}
+
+		return errors.New(msg)
 	}
 }
 
