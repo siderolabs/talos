@@ -23,7 +23,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -128,10 +127,8 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		if strings.HasPrefix(device.Name, "lo") {
 			netconf[device.Name] = append(netconf[device.Name], nic.WithAddressing(
 				&address.Static{
-					Device: &machine.Device{
-						CIDR: "127.0.0.1/8",
-						MTU:  nic.MaximumMTU,
-					},
+					CIDR: "127.0.0.1/8",
+					Mtu:  nic.MaximumMTU,
 				},
 			))
 		}
@@ -385,11 +382,19 @@ func (n *Networkd) configureLinks(bonded bool) error {
 					return fmt.Errorf("error creating nic %q: %w", netif.Name, err)
 				}
 
+				if err := netif.CreateSub(); err != nil {
+					return fmt.Errorf("error creating sub interface nic %q: %w", netif.Name, err)
+				}
+
 				if err := netif.Configure(); err != nil {
 					return fmt.Errorf("error configuring nic %q: %w", netif.Name, err)
 				}
 
 				if err := netif.Addressing(); err != nil {
+					return fmt.Errorf("error configuring addressing %q: %w", netif.Name, err)
+				}
+
+				if err := netif.AddressingSub(); err != nil {
 					return fmt.Errorf("error configuring addressing %q: %w", netif.Name, err)
 				}
 

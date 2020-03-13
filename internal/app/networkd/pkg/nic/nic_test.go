@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 type NicSuite struct {
@@ -103,5 +104,24 @@ func (suite *NicSuite) TestBond() {
 		mynic, err := New(test...)
 		suite.Require().NoError(err)
 		suite.Assert().True(mynic.Bonded)
+	}
+}
+
+func (suite *NicSuite) TestVlan() {
+	testSettings := [][]Option{
+		{
+			WithName("eth0"),
+			WithVlan(100),
+		},
+		{
+			WithName("eth0"),
+			WithVlan(100),
+			WithVlanCIDR(100, "172.21.10.101/28", []machine.Route{}),
+		},
+	}
+	for _, test := range testSettings {
+		mynic, err := New(test...)
+		suite.Require().NoError(err)
+		suite.Assert().True(len(mynic.Vlans) > 0)
 	}
 }

@@ -16,8 +16,10 @@ import (
 
 // Static implements the Addressing interface
 type Static struct {
-	Device      *machine.Device
+	CIDR        string
+	Mtu         int
 	FQDN        string
+	RouteList   []machine.Route
 	NetIf       *net.Interface
 	NameServers []net.IP
 }
@@ -37,7 +39,7 @@ func (s *Static) Name() string {
 // Address returns the IP address
 func (s *Static) Address() *net.IPNet {
 	// nolint: errcheck
-	ip, ipn, _ := net.ParseCIDR(s.Device.CIDR)
+	ip, ipn, _ := net.ParseCIDR(s.CIDR)
 	ipn.IP = ip
 
 	return ipn
@@ -46,13 +48,13 @@ func (s *Static) Address() *net.IPNet {
 // Mask returns the netmask.
 func (s *Static) Mask() net.IPMask {
 	// nolint: errcheck
-	_, ipnet, _ := net.ParseCIDR(s.Device.CIDR)
+	_, ipnet, _ := net.ParseCIDR(s.CIDR)
 	return ipnet.Mask
 }
 
 // MTU returns the specified MTU.
 func (s *Static) MTU() uint32 {
-	mtu := uint32(s.Device.MTU)
+	mtu := uint32(s.Mtu)
 	if mtu == 0 {
 		mtu = uint32(s.NetIf.MTU)
 	}
@@ -83,7 +85,7 @@ func (s *Static) Scope() uint8 {
 // Routes aggregates the specified routes for a given device configuration
 // TODO: do we need to be explicit on route vs gateway?
 func (s *Static) Routes() (routes []*Route) {
-	for _, route := range s.Device.Routes {
+	for _, route := range s.RouteList {
 		// nolint: errcheck
 		_, ipnet, _ := net.ParseCIDR(route.Network)
 

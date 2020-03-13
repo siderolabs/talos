@@ -47,3 +47,12 @@ func WithAddressing(a address.Addressing) Option {
 		return err
 	}
 }
+
+// WithNoAddressing defines how the addressing for a given interface
+// should be configured
+func WithNoAddressing() Option {
+	return func(n *NetworkInterface) (err error) {
+		n.AddressMethod = []address.Addressing{}
+		return err
+	}
+}
