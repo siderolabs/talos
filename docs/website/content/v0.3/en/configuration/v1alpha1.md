@@ -72,6 +72,19 @@ Valid Values:
 
 - ``v1alpha1``
 
+#### debug
+
+Enable verbose logging.
+
+Type: `bool`
+
+Valid Values:
+
+- `true`
+- `yes`
+- `false`
+- `no`
+
 #### persist
 
 Indicates whether to pull the machine config upon every boot.
