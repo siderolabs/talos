@@ -24,6 +24,14 @@ type Config struct {
 	//     - "`v1alpha1`"
 	ConfigVersion string `yaml:"version"`
 	//   description: |
+	//     Enable verbose logging.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	ConfigDebug bool `yaml:"debug"`
+	//   description: |
 	//     Indicates whether to pull the machine config upon every boot.
 	//   values:
 	//     - true

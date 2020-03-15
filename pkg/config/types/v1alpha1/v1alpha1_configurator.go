@@ -34,7 +34,7 @@ func (c *Config) Version() string {
 
 // Debug implements the Configurator interface.
 func (c *Config) Debug() bool {
-	return false
+	return c.ConfigDebug
 }
 
 // Persist implements the Configurator interface.
