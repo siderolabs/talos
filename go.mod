@@ -22,14 +22,14 @@ require (
 	github.com/containerd/ttrpc v0.0.0-20191028202541-4f1b8fe65a5c // indirect
 	github.com/containerd/typeurl v0.0.0-20190911142611-5eb25027c9fd
 	github.com/containernetworking/cni v0.7.2-0.20190807151350-8c6c47d1c7fc
-	github.com/containernetworking/plugins v0.8.2
+	github.com/containernetworking/plugins v0.8.5
 	github.com/coreos/etcd v3.3.18+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/dustin/go-humanize v1.0.0
-	github.com/firecracker-microvm/firecracker-go-sdk v0.20.1-0.20200203221942-7dce86a91e4f
+	github.com/firecracker-microvm/firecracker-go-sdk v0.21.0
 	github.com/fullsailor/pkcs7 v0.0.0-20180613152042-8306686428a5
 	github.com/gizak/termui/v3 v3.0.0
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
