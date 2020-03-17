@@ -71,18 +71,17 @@ func recovery() {
 	// If panic is set in the kernel flags, we'll hang instead of rebooting.
 	// But we still allow users to hit CTRL+ALT+DEL to try and restart when they're ready.
 	// Listening for these signals also keep us from deadlocking the goroutine.
-	if p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First(); p != nil {
-		if *p == "0" {
+	if r := recover(); r != nil {
+		log.Printf("recovered from: %+v\n", r)
+
+		p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First()
+		if p != nil && *p == "0" {
 			log.Printf("panic=0 kernel flag found. sleeping forever")
 
 			exitSignal := make(chan os.Signal, 1)
 			signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 			<-exitSignal
 		}
-	}
-
-	if r := recover(); r != nil {
-		log.Printf("recovered from: %+v\n", r)
 
 		for i := 10; i >= 0; i-- {
 			log.Printf("rebooting in %d seconds\n", i)
