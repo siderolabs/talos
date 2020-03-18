@@ -38,6 +38,8 @@ jobs:
           DRONE_BUILD_URL=$(curl -s $STATUS_URL | jq -r '[.[] | select(.context == "continuous-integration/drone/pr")][0].target_url')
           DRONE_BUILD_NUM=${DRONE_BUILD_URL##*/}
 
+          env
+
           docker run -e "DRONE_SERVER=$DRONE_SERVER" -e "DRONE_TOKEN=$DRONE_TOKEN" drone/cli:1.2.1 build restart $GITHUB_REPOSITORY $DRONE_BUILD_NUM
         env:
           GITHUB_EVENT_PATH: $GITHUB_EVENT_PATH
