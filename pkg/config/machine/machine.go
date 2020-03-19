@@ -6,9 +6,10 @@ package machine
 
 import (
 	"crypto/tls"
-	stdx509 "crypto/x509"
 	"fmt"
 	"os"
+
+	stdx509 "crypto/x509"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 

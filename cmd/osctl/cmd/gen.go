@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +12,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	stdlibx509 "crypto/x509"
 
 	"github.com/spf13/cobra"
 

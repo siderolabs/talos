@@ -15,7 +15,7 @@ RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.23.6
 RUN cd $(mktemp -d) \
     && go mod init tmp \
-    && go get mvdan.cc/gofumpt/gofumports \
+    && go get mvdan.cc/gofumpt/gofumports@aaa7156f4122b1055c466e26e77812fa32bac1d9 \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/docgen

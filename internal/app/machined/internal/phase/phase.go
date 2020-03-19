@@ -8,8 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	goruntime "runtime"
 	"time"
+
+	goruntime "runtime"
 
 	"github.com/hashicorp/go-multierror"
 

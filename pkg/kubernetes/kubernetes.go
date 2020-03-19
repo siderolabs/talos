@@ -5,7 +5,6 @@
 package kubernetes
 
 import (
-	stdlibx509 "crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -14,6 +13,8 @@ import (
 	"net/url"
 	"sync"
 	"time"
+
+	stdlibx509 "crypto/x509"
 
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"

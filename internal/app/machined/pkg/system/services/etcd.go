@@ -6,16 +6,17 @@ package services
 
 import (
 	"context"
-	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	stdlibnet "net"
 	"os"
 	"strings"
 	"time"
+
+	stdlibx509 "crypto/x509"
+	stdlibnet "net"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
