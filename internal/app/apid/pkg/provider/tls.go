@@ -6,8 +6,9 @@
 package provider
 
 import (
-	stdlibtls "crypto/tls"
 	"fmt"
+
+	stdlibtls "crypto/tls"
 	stdlibnet "net"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
