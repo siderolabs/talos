@@ -79,6 +79,15 @@ func WithDNSDomain(dnsDomain string) GenOption {
 	}
 }
 
+// WithDebug enables verbose logging to console for all services.
+func WithDebug(enable bool) GenOption {
+	return func(o *GenOptions) error {
+		o.Debug = enable
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -88,6 +97,7 @@ type GenOptions struct {
 	NetworkConfig             *v1alpha1.NetworkConfig
 	RegistryMirrors           map[string]machine.RegistryMirrorConfig
 	DNSDomain                 string
+	Debug                     bool
 }
 
 // DefaultGenOptions returns default options.

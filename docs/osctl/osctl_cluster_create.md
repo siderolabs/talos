@@ -37,6 +37,7 @@ osctl cluster create [flags]
       --wait                        wait for the cluster to be ready before returning
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
       --with-bootloader-emulation   enable bootloader emulation to load kernel and initramfs from disk image
+      --with-debug                  enable debug in Talos config to send service logs to the console
       --workers int                 the number of workers to create (default 1)
 ```
 

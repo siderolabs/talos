@@ -12,7 +12,10 @@ import (
 )
 
 func workerUd(in *Input) (*v1alpha1.Config, error) {
-	config := &v1alpha1.Config{ConfigVersion: "v1alpha1"}
+	config := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		ConfigDebug:   in.Debug,
+	}
 
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "worker",
