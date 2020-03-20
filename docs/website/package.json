@@ -13,23 +13,23 @@
     "clean": "rm -rf node_modules .nuxt dist routes.json ./static/*.menu.*.json ./static/*.sections.*.json"
   },
   "dependencies": {
-    "axios": "^0.19.0",
-    "front-matter": "^3.0.2",
+    "axios": "^0.19.2",
+    "front-matter": "^3.1.0",
     "marked": "^0.7.0",
-    "nuxt": "^2.10.2",
+    "nuxt": "^2.12.0",
     "nuxt-webfontloader": "^1.1.0",
-    "prismjs": "^1.17.1"
+    "prismjs": "^1.19.0"
   },
   "devDependencies": {
     "@nuxtjs/eslint-config": "^1.0.1",
     "@nuxtjs/eslint-module": "^1.0.0",
-    "@nuxtjs/google-analytics": "^2.2.2",
-    "@nuxtjs/tailwindcss": "^1.2.0",
-    "babel-eslint": "^10.0.1",
-    "eslint": "^6.7.2",
+    "@nuxtjs/google-analytics": "^2.2.3",
+    "@nuxtjs/tailwindcss": "^1.4.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.8.0",
     "eslint-config-prettier": "^4.1.0",
-    "eslint-plugin-nuxt": "^0.5.0",
-    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-nuxt": "^0.5.2",
+    "eslint-plugin-prettier": "^3.1.2",
     "node-watch": "^0.6.3",
     "prettier": "^1.19.1",
     "tailwindcss-grid": "^1.2.1",
