@@ -39,6 +39,7 @@ var (
 	nodeVmlinuxPath         string
 	nodeInitramfsPath       string
 	bootloaderEmulation     bool
+	configDebug             bool
 	networkCIDR             string
 	networkMTU              int
 	nameservers             []string
@@ -162,6 +163,7 @@ func create(ctx context.Context) (err error) {
 	} else {
 		genOptions := []generate.GenOption{
 			generate.WithInstallImage(nodeInstallImage),
+			generate.WithDebug(configDebug),
 		}
 
 		for _, registryMirror := range registryMirrors {
@@ -316,6 +318,7 @@ func init() {
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
 	createCmd.Flags().BoolVar(&bootloaderEmulation, "with-bootloader-emulation", false, "enable bootloader emulation to load kernel and initramfs from disk image")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
+	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
 	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the docker bridge network")
 	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
 	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use (VM only)")

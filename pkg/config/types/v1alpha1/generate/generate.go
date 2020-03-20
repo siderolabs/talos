@@ -58,6 +58,8 @@ func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 }
 
 // Input holds info about certs, ips, and node type.
+//
+//nolint: maligned
 type Input struct {
 	Certs *Certs
 
@@ -86,6 +88,8 @@ type Input struct {
 	NetworkConfig *v1alpha1.NetworkConfig
 
 	RegistryMirrors map[string]machine.RegistryMirrorConfig
+
+	Debug bool
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
@@ -324,6 +328,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		InstallImage:              options.InstallImage,
 		NetworkConfig:             options.NetworkConfig,
 		RegistryMirrors:           options.RegistryMirrors,
+		Debug:                     options.Debug,
 	}
 
 	return input, nil
