@@ -50,9 +50,11 @@
 
 <script>
 export default {
-  head: {
-    bodyAttrs: {
-      class: 'kind-section section-docs'
+  head() {
+    return {
+      bodyAttrs: {
+        class: 'kind-section section-docs'
+      }
     }
   }
 }
