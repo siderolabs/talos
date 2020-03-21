@@ -1,3 +1,49 @@
+# [v0.4.0-alpha.7](https://github.com/talos-system/talos/compare/v0.4.0-alpha.6...v0.4.0-alpha.7) (2020-03-21)
+
+### Bug Fixes
+
+- add debug option to v1alpha1 config ([be6e328](https://github.com/talos-system/talos/commit/be6e3288fa3abd06b75c4692c67ade0fd09cbfae))
+- ensure CA cert generation respects the hour flag ([856386a](https://github.com/talos-system/talos/commit/856386a788e9ce646c53eeba18b23a0fb4fcca87)), closes [#1911](https://github.com/talos-system/talos/issues/1911)
+- ensure hostname is never empty ([9b47c04](https://github.com/talos-systems/talos/commit/9b47c049ef1aa563cd14bd03cc25179840d18a0b))
+- ensure printing of panic message ([4d5c7e4](https://github.com/talos-system/talos/commit/4d5c7e482ce09a42917af496244d2b9c38b7adf0))
+- respect dns domain from machine config ([2f4ccfd](https://github.com/talos-system/talos/commit/2f4ccfda9a4d9aab9a63bef06996df71950b9824))
+- skip links without a carrier ([b669874](https://github.com/talos-system/talos/commit/b6698747bc71c7acfb19d7c8f54a5bbd9cd6ddbf))
+
+### Features
+
+- add debug logs to networkd health check ([02bb05b](https://github.com/talos-system/talos/commit/02bb05b058b7509d5c1c6832fe99722f16be96ab))
+- add function for mounting a specific system disk partition ([1a68840](https://github.com/talos-system/talos/commit/1a68840eb45c18a5c1a72a20625bce06bf762c5c))
+- add support for `--with-debug` to osctl cluster create ([564e9e3](https://github.com/talos-system/talos/commit/564e9e3c000449032e35010d3dfa9813f5dd1e32))
+- allow for persistence of config data ([12bfd8d](https://github.com/talos-system/talos/commit/12bfd8dd94418c66d80b59c1534b634e21b140f3))
+- generate kubeconfig on the fly on request ([bbe2c53](https://github.com/talos-system/talos/commit/bbe2c53d295522a6bce467ff0b716020143ec5b3))
+- make admin kubeconfig cert lifetime configurable ([34cec9b](https://github.com/talos-system/talos/commit/34cec9bbfb034bf82f7b7fe7961e7c6da1f38060)), closes [#1906](https://github.com/talos-system/talos/issues/1906)
+- rename osctl to talosctl ([5dbc26c](https://github.com/talos-system/talos/commit/5dbc26c7a30c22f47e04b39544d194e95878273a))
+- respect panic kernel flag ([853ce16](https://github.com/talos-system/talos/commit/853ce16df467b2df9e17b21c08403995f8cda87b))
+- split `osctl` commands into Talos API and cluster management ([0babc39](https://github.com/talos-system/talos/commit/0babc3965329d99231bcfad25c2cc74e10c78e4e))
+- split routerd from apid ([a068acf](https://github.com/talos-system/talos/commit/a068acfbe463f520991c8901fab5a3e809e843e3))
+- update talos base packages ([1cbbf9c](https://github.com/talos-system/talos/commit/1cbbf9cd5af471d516e15a8f2b86fdb7dc72bae7))
+- upgrade Go to version 1.14.1 ([a1350aa](https://github.com/talos-system/talos/commit/a1350aa819077680fed5e11bd7b9c4e40f1293ed)), closes [#1934](https://github.com/talos-system/talos/issues/1934) [talos-systems/pkgs#106](https://github.com/talos-systems/pkgs/issues/106) [talos-systems/tools#90](https://github.com/talos-systems/tools/issues/90)
+
+### BREAKING CHANGES
+
+- This PR fixes a bug where we were only passing `cluster.local` to the
+  kubelet configuration. It will also pull in a new version of the
+  bootkube fork to ensure that custom domains got propogated down to the
+  API Server certs, as well as the CoreDNS configuration for a cluster.
+
+  Existing users should be aware that, if they were previously trying to
+  use this option in machine configs, that an upgrade will may break
+  their cluster. It will update a kubelet flag with the new domain, but
+  CoreDNS and API Server certs will not change since bootkube has already
+  run. One option may be to change these values manually inside the
+  Kubernetes cluster. However, it may prove easier to rebuild the cluster
+  if necessary.
+
+  Additionally, this PR also exposes a flag to `osctl config generate`
+  to allow tweaking this domain value as well.
+
+  Signed-off-by: Spencer Smith <robertspencersmith@gmail.com>
+
 # [v0.4.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.5...v0.4.0-alpha.6) (2020-02-27)
 
 ### Bug Fixes
