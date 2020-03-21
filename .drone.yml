@@ -3458,6 +3458,7 @@ steps:
     - _out/installer.tar
     - _out/talosctl-darwin-amd64
     - _out/talosctl-linux-amd64
+    - _out/talosctl-linux-arm64
     - _out/vmware.ova
     - _out/vmlinux
     - _out/vmlinuz
@@ -3572,6 +3573,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: de88d1e74755b71883afb67e12dea17205b75e9ec462837f035257292ffbe805
+hmac: 16c7e32ef2ca8687136040290ea9f3e1b74c54d3ec103c908fc1cea2d38858c0
 
 ...
