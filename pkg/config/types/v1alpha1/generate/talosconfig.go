@@ -7,7 +7,7 @@ package generate
 import (
 	"encoding/base64"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client/config"
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
 )
 
 // Talosconfig returns the talos admin Talos config.

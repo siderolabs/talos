@@ -24,7 +24,7 @@ function usage {
   echo "Commands:"
   echo -e "\up\t\spin up QEMU/KVM nodes on the talos0 bridge"
   echo -e "\down\t\tear down the QEMU/KVM nodes"
-  echo -e "\workspace\t\run and enter a docker container ready for osctl and kubectl use"
+  echo -e "\workspace\t\run and enter a docker container ready for talosctl and kubectl use"
 }
 
 NODES=(control-plane-1 control-plane-2 control-plane-3 worker-1)
@@ -54,7 +54,7 @@ function up {
     cp $PWD/../../../${ARTIFACTS}/initramfs.xz ./matchbox/assets/
     cp $PWD/../../../${ARTIFACTS}/vmlinuz ./matchbox/assets/
     cd ./matchbox/assets
-    $PWD/../../../../../${ARTIFACTS}/osctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
+    $PWD/../../../../../${ARTIFACTS}/talosctl-linux-amd64 config generate --install-image ${INSTALLER} integration-test https://kubernetes.talos.dev:6443
     yq w -i init.yaml machine.install.extraKernelArgs[+] 'console=ttyS0'
     yq w -i init.yaml cluster.network.cni.name 'custom'
     yq w -i init.yaml cluster.network.cni.urls[+] "${CNI_URL}"
@@ -81,7 +81,7 @@ function down {
 }
 
 function workspace {
-  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../${ARTIFACTS}/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.1
+  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../${ARTIFACTS}/talosctl-linux-amd64:/bin/talosctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.1
 }
 
 main $@

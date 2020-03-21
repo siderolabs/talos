@@ -29,7 +29,7 @@ type LaunchConfig struct {
 
 // Launch a control process around firecracker VM manager.
 //
-// This function is invoked from 'osctl firecracker-launch' hidden command
+// This function is invoked from 'talosctl firecracker-launch' hidden command
 // and wraps starting, controlling and restarting 'firecracker' VM process.
 //
 // Launch restarts VM forever until control process is stopped itself with a signal.

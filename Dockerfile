@@ -215,33 +215,33 @@ RUN printf "FROM scratch\nCOPY ./routerd /routerd\nENTRYPOINT [\"/routerd\"]" > 
 RUN --security=insecure img build --tag ${USERNAME}/routerd:${TAG} --output type=docker,dest=/routerd.tar --no-console  .
 
 
-# The osctl targets build the osctl binaries.
+# The talosctl targets build the talosctl binaries.
 
-FROM base AS osctl-linux-build
+FROM base AS talosctl-linux-build
 ARG SHA
 ARG TAG
 ARG ARTIFACTS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
-WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /osctl-linux-amd64
-RUN chmod +x /osctl-linux-amd64
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+WORKDIR /src/cmd/talosctl
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-amd64
+RUN chmod +x /talosctl-linux-amd64
 
-FROM scratch AS osctl-linux
-COPY --from=osctl-linux-build /osctl-linux-amd64 /osctl-linux-amd64
+FROM scratch AS talosctl-linux
+COPY --from=talosctl-linux-build /talosctl-linux-amd64 /talosctl-linux-amd64
 
-FROM base AS osctl-darwin-build
+FROM base AS talosctl-darwin-build
 ARG SHA
 ARG TAG
 ARG ARTIFACTS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
-WORKDIR /src/cmd/osctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /osctl-darwin-amd64
-RUN chmod +x /osctl-darwin-amd64
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+WORKDIR /src/cmd/talosctl
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-darwin-amd64
+RUN chmod +x /talosctl-darwin-amd64
 
-FROM scratch AS osctl-darwin
-COPY --from=osctl-darwin-build /osctl-darwin-amd64 /osctl-darwin-amd64
+FROM scratch AS talosctl-darwin
+COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 
 # The kernel target is the linux kernel.
 
@@ -343,7 +343,7 @@ COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=rootfs /usr/lib/syslinux/ /usr/lib/syslinux
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=installer-build /installer /bin/installer
-RUN ln -s /bin/installer /bin/osctl
+RUN ln -s /bin/installer /bin/talosctl
 ARG TAG
 ENV VERSION ${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
@@ -421,7 +421,7 @@ FROM base AS integration-test-provision-linux-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 ARG ARTIFACTS
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
     -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
@@ -460,10 +460,10 @@ RUN markdownlint --rules /node_modules/sentences-per-line/index.js .
 
 FROM base AS docs-build
 RUN go generate ./pkg/config/types/v1alpha1
-COPY --from=osctl-linux /osctl-linux-amd64 /bin/osctl
-RUN mkdir -p /docs/osctl \
-    && env HOME=/home/user TAG=latest /bin/osctl docs /docs/osctl
+COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
+RUN mkdir -p /docs/talosctl \
+    && env HOME=/home/user TAG=latest /bin/talosctl docs /docs/talosctl
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.3/en/configuration/v1alpha1.md
-COPY --from=docs-build /docs/osctl/* /docs/osctl/
+COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.4/en/configuration/v1alpha1.md
+COPY --from=docs-build /docs/talosctl/* /docs/talosctl/

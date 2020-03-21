@@ -23,7 +23,7 @@ type ClusterRequest struct {
 	KernelPath    string
 	InitramfsPath string
 
-	// Path to osctl executable to re-execute itself as needed.
+	// Path to talosctl executable to re-execute itself as needed.
 	SelfExecutable string
 
 	// Path to root of state directory (~/.talos/clusters by default).

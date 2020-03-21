@@ -53,7 +53,7 @@ Append the following to `/etc/hosts`:
 172.28.1.13 worker-1.talos.dev
 ```
 
-##### Setup `osctl` and `kubectl`
+##### Setup `talosctl` and `kubectl`
 
 ```bash
 export TALOSCONFIG=$PWD/matchbox/assets/talosconfig
@@ -61,8 +61,8 @@ export KUBECONFIG=$PWD/matchbox/assets/kubeconfig
 ```
 
 ```bash
-osctl config endpoint 172.28.1.10
-osctl kubeconfig ./matchbox/assets/kubeconfig
+talosctl config endpoint 172.28.1.10
+talosctl kubeconfig ./matchbox/assets/kubeconfig
 ```
 
 #### From a Container
@@ -72,14 +72,14 @@ osctl kubeconfig ./matchbox/assets/kubeconfig
 ```
 
 ```bash
-osctl config endpoint 172.28.1.10
-osctl kubeconfig .
+talosctl config endpoint 172.28.1.10
+talosctl kubeconfig .
 ```
 
 #### Verify Connectivity
 
 ```bash
-osctl services
+talosctl services
 kubectl get nodes
 ```
 

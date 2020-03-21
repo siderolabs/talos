@@ -190,8 +190,8 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 // Default pipeline.
 
-local osctl_linux = Step("osctl-linux", depends_on=[setup_ci]);
-local osctl_darwin = Step("osctl-darwin", depends_on=[setup_ci]);
+local osctl_linux = Step("talosctl-linux", depends_on=[setup_ci]);
+local osctl_darwin = Step("talosctl-darwin", depends_on=[setup_ci]);
 local docs = Step("docs", depends_on=[osctl_linux]);
 local kernel = Step('kernel', depends_on=[setup_ci]);
 local initramfs = Step("initramfs", depends_on=[setup_ci]);
@@ -426,8 +426,8 @@ local release = {
       '_out/gcp.tar.gz',
       '_out/initramfs.xz',
       '_out/installer.tar',
-      '_out/osctl-darwin-amd64',
-      '_out/osctl-linux-amd64',
+      '_out/talosctl-darwin-amd64',
+      '_out/talosctl-linux-amd64',
       '_out/vmware.ova',
       '_out/vmlinux',
       '_out/vmlinuz',

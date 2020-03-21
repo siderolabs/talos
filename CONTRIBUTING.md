@@ -55,11 +55,11 @@ make ci
 
 In the `Makefile` there are a variety of targets, the most common are:
 
-* `kernel` creates the `vmlinuz` Linux kernel executable.
-* `initamfs` creates the `initramfs.xz` initial RAMdisk filesystem.
-* `image-vanilla` creates the `image.raw` file that can be used as a image volume for VMs.
-* `osctl-linux-amd64` and `osctl-darwin-amd64` make the `osctl` CLI tool for Linux & OSX respectively.
-* `rootfs` creates an archive of the root filesystem preloaded with all the components needed to launch Talos & Kubernetes.
+- `kernel` creates the `vmlinuz` Linux kernel executable.
+- `initamfs` creates the `initramfs.xz` initial RAMdisk filesystem.
+- `image-vanilla` creates the `image.raw` file that can be used as a image volume for VMs.
+- `talosctl-linux-amd64` and `talosctl-darwin-amd64` make the `talosctl` CLI tool for Linux & OSX respectively.
+- `rootfs` creates an archive of the root filesystem preloaded with all the components needed to launch Talos & Kubernetes.
 
 # Buildkit
 

@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
