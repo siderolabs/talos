@@ -4,7 +4,7 @@
 
 // +build integration
 
-// Package cli provides CLI (osctl) integration tests for Talos
+// Package cli provides CLI (talosctl) integration tests for Talos
 package cli
 
 import "github.com/stretchr/testify/suite"

@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	talosclient "github.com/talos-systems/talos/cmd/osctl/pkg/client"
-	"github.com/talos-systems/talos/cmd/osctl/pkg/mgmt/helpers"
+	talosclient "github.com/talos-systems/talos/cmd/talosctl/pkg/client"
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"

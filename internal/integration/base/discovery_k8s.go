@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 )
 
 func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error) {

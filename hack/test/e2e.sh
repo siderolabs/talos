@@ -31,7 +31,7 @@ export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
 export NUM_NODES=6
 
-# default values, overridden by osctl cluster create tests
+# default values, overridden by talosctl cluster create tests
 PROVISIONER=
 CLUSTER_NAME=
 

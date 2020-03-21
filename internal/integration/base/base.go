@@ -23,7 +23,7 @@ type TalosSuite struct {
 	TalosConfig string
 	// Version is the (expected) version of Talos tests are running against
 	Version string
-	// OsctlPath is path to osctl binary
+	// OsctlPath is path to talosctl binary
 	OsctlPath string
 
 	discoveredNodes []string

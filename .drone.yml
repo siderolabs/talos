@@ -49,11 +49,11 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: osctl-linux
+- name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-linux
+  - make talosctl-linux
   volumes:
   - name: dockersock
     path: /var/run
@@ -68,11 +68,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: osctl-darwin
+- name: talosctl-darwin
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-darwin
+  - make talosctl-darwin
   volumes:
   - name: dockersock
     path: /var/run
@@ -104,7 +104,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - osctl-linux
+  - talosctl-linux
 
 - name: kernel
   pull: always
@@ -469,7 +469,7 @@ steps:
     path: /tmp
   depends_on:
   - talos
-  - osctl-linux
+  - talosctl-linux
 
 - name: e2e-firecracker
   pull: always
@@ -492,7 +492,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -517,7 +517,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -669,11 +669,11 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: osctl-linux
+- name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-linux
+  - make talosctl-linux
   volumes:
   - name: dockersock
     path: /var/run
@@ -688,11 +688,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: osctl-darwin
+- name: talosctl-darwin
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-darwin
+  - make talosctl-darwin
   volumes:
   - name: dockersock
     path: /var/run
@@ -724,7 +724,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - osctl-linux
+  - talosctl-linux
 
 - name: kernel
   pull: always
@@ -1089,7 +1089,7 @@ steps:
     path: /tmp
   depends_on:
   - talos
-  - osctl-linux
+  - talosctl-linux
 
 - name: e2e-firecracker
   pull: always
@@ -1112,7 +1112,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -1137,7 +1137,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -1381,11 +1381,11 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: osctl-linux
+- name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-linux
+  - make talosctl-linux
   volumes:
   - name: dockersock
     path: /var/run
@@ -1400,11 +1400,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: osctl-darwin
+- name: talosctl-darwin
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-darwin
+  - make talosctl-darwin
   volumes:
   - name: dockersock
     path: /var/run
@@ -1436,7 +1436,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - osctl-linux
+  - talosctl-linux
 
 - name: kernel
   pull: always
@@ -1801,7 +1801,7 @@ steps:
     path: /tmp
   depends_on:
   - talos
-  - osctl-linux
+  - talosctl-linux
 
 - name: e2e-firecracker
   pull: always
@@ -1824,7 +1824,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -1849,7 +1849,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -2123,11 +2123,11 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: osctl-linux
+- name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-linux
+  - make talosctl-linux
   volumes:
   - name: dockersock
     path: /var/run
@@ -2142,11 +2142,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: osctl-darwin
+- name: talosctl-darwin
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-darwin
+  - make talosctl-darwin
   volumes:
   - name: dockersock
     path: /var/run
@@ -2178,7 +2178,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - osctl-linux
+  - talosctl-linux
 
 - name: kernel
   pull: always
@@ -2543,7 +2543,7 @@ steps:
     path: /tmp
   depends_on:
   - talos
-  - osctl-linux
+  - talosctl-linux
 
 - name: e2e-firecracker
   pull: always
@@ -2566,7 +2566,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -2591,7 +2591,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -2865,11 +2865,11 @@ steps:
   - name: tmp
     path: /tmp
 
-- name: osctl-linux
+- name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-linux
+  - make talosctl-linux
   volumes:
   - name: dockersock
     path: /var/run
@@ -2884,11 +2884,11 @@ steps:
   depends_on:
   - setup-ci
 
-- name: osctl-darwin
+- name: talosctl-darwin
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make osctl-darwin
+  - make talosctl-darwin
   volumes:
   - name: dockersock
     path: /var/run
@@ -2920,7 +2920,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - osctl-linux
+  - talosctl-linux
 
 - name: kernel
   pull: always
@@ -3285,7 +3285,7 @@ steps:
     path: /tmp
   depends_on:
   - talos
-  - osctl-linux
+  - talosctl-linux
 
 - name: e2e-firecracker
   pull: always
@@ -3308,7 +3308,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -3333,7 +3333,7 @@ steps:
     path: /tmp
   depends_on:
   - initramfs
-  - osctl-linux
+  - talosctl-linux
   - kernel
   - push-local
 
@@ -3456,8 +3456,8 @@ steps:
     - _out/gcp.tar.gz
     - _out/initramfs.xz
     - _out/installer.tar
-    - _out/osctl-darwin-amd64
-    - _out/osctl-linux-amd64
+    - _out/talosctl-darwin-amd64
+    - _out/talosctl-linux-amd64
     - _out/vmware.ova
     - _out/vmlinux
     - _out/vmlinuz
@@ -3572,6 +3572,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 0ee401dcb1d7b3fcdf17392c436730a6031e265543436865a68b95c7560e63df
+hmac: de88d1e74755b71883afb67e12dea17205b75e9ec462837f035257292ffbe805
 
 ...

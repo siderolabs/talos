@@ -5,11 +5,11 @@
 /*
 Package v1alpha1 configuration file contains all the options available for configuring a machine.
 
-We can generate the files using `osctl`.
+We can generate the files using `talosctl`.
 This configuration is enough to get started in most cases, however it can be customized as needed.
 
 ```bash
-osctl config generate --version v1alpha1 <cluster name> <cluster endpoint>
+talosctl config generate --version v1alpha1 <cluster name> <cluster endpoint>
 ````
 
 This will generate a machine config for each node type, and a talosconfig.

@@ -124,7 +124,7 @@ issues:
     - ^ST1000 # ST1000: package comment should be of the form "Package services ..." (stylecheck)
 
   exclude-rules:
-    - path: cmd/osctl/cmd
+    - path: cmd/talosctl/cmd
       linters:
         - dupl
     - path: internal/app/machined/internal/phase

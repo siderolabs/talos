@@ -37,7 +37,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	_, err := os.Stat(state.statePath)
 	if err == nil {
 		return nil, fmt.Errorf(
-			"state directory %q already exists, is the cluster %q already running? remove cluster state with osctl cluster destroy",
+			"state directory %q already exists, is the cluster %q already running? remove cluster state with talosctl cluster destroy",
 			state.statePath,
 			request.Name,
 		)

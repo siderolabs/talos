@@ -10,7 +10,7 @@ ARTIFACTS := _out
 TOOLS ?= autonomy/tools:v0.1.0-3-g84e76d6
 GO_VERSION ?= 1.14
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
-OSCTL_DEFAULT_TARGET := osctl-$(OPERATING_SYSTEM)
+OSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.17.1/bin/$(OPERATING_SYSTEM)/amd64/kubectl
@@ -37,7 +37,7 @@ COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 
-all: initramfs kernel installer osctl talos
+all: initramfs kernel installer talosctl talos
 
 # Help Menu
 
@@ -106,8 +106,8 @@ generate: ## Generates source code from protobuf definitions.
 	@$(MAKE) local-$@ DEST=./
 
 .PHONY: docs
-docs: ## Generates the documentation for machine config, and osctl.
-	@rm -rf docs/osctl/*
+docs: ## Generates the documentation for machine config, and talosctl.
+	@rm -rf docs/talosctl/*
 	@$(MAKE) local-$@ DEST=./
 
 # Local Artifacts
@@ -132,10 +132,10 @@ talos: ## Builds the Talos container image and outputs it to the artifact direct
 	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
 	@docker load < $(ARTIFACTS)/container.tar
 
-osctl-%:
+talosctl-%:
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
 
-osctl: $(OSCTL_DEFAULT_TARGET) ## Builds the osctl binary for the local machine.
+talosctl: $(OSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/out --privileged autonomy/installer:$(TAG) image --platform $*

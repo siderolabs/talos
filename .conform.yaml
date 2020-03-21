@@ -29,7 +29,7 @@ policies:
           - machined
           - networkd
           - ntpd
-          - osctl
+          - talosctl
           - osd
           - rootfs
           - tools

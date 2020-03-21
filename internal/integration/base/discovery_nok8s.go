@@ -6,7 +6,7 @@
 
 package base
 
-import "github.com/talos-systems/talos/cmd/osctl/pkg/client"
+import "github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 
 func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error) {
 	return nil, nil

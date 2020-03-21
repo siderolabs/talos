@@ -39,14 +39,14 @@ func (cliSuite *CLISuite) DiscoverNodes() []string {
 }
 
 func (cliSuite *CLISuite) buildOsctlCmd(args []string) *exec.Cmd {
-	// TODO: add support for calling `osctl config endpoint` before running osctl
+	// TODO: add support for calling `talosctl config endpoint` before running talosctl
 
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
 
 	return exec.Command(cliSuite.OsctlPath, args...)
 }
 
-// RunOsctl runs osctl binary with the options provided
+// RunOsctl runs talosctl binary with the options provided
 func (cliSuite *CLISuite) RunOsctl(args []string, options ...RunOption) {
 	Run(&cliSuite.Suite, cliSuite.buildOsctlCmd(args), options...)
 }

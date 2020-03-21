@@ -8,7 +8,7 @@ package check
 import (
 	"context"
 
-	"github.com/talos-systems/talos/cmd/osctl/pkg/client"
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
