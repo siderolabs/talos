@@ -3459,6 +3459,7 @@ steps:
     - _out/talosctl-darwin-amd64
     - _out/talosctl-linux-amd64
     - _out/talosctl-linux-arm64
+    - _out/talosctl-linux-armv7
     - _out/vmware.ova
     - _out/vmlinux
     - _out/vmlinuz
@@ -3573,6 +3574,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 16c7e32ef2ca8687136040290ea9f3e1b74c54d3ec103c908fc1cea2d38858c0
+hmac: ce26e0c326108f56e6e30eb0094e42e74746851b92ed37ea95a6afff16648cfb
 
 ...
