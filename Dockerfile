@@ -237,9 +237,20 @@ WORKDIR /src/cmd/talosctl
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
 
+FROM base AS talosctl-linux-armv7-build
+ARG SHA
+ARG TAG
+ARG ARTIFACTS
+ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+WORKDIR /src/cmd/talosctl
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm GOARM=7  go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-armv7
+RUN chmod +x /talosctl-linux-armv7
+
 FROM scratch AS talosctl-linux
 COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd64
 COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
+COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
 
 FROM base AS talosctl-darwin-build
 ARG SHA

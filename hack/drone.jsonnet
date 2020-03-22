@@ -429,6 +429,7 @@ local release = {
       '_out/talosctl-darwin-amd64',
       '_out/talosctl-linux-amd64',
       '_out/talosctl-linux-arm64',
+      '_out/talosctl-linux-armv7',
       '_out/vmware.ova',
       '_out/vmlinux',
       '_out/vmlinuz',
