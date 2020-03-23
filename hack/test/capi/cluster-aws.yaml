@@ -58,7 +58,7 @@ spec:
     kind: AWSMachine
     name: talos-e2e-{{TAG}}-aws-controlplane-0
     namespace: default
-  version: 1.17.1
+  version: 1.17.3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: AWSMachine
@@ -107,7 +107,7 @@ spec:
     kind: AWSMachine
     name: talos-e2e-{{TAG}}-aws-controlplane-1
     namespace: default
-  version: 1.17.1
+  version: 1.17.3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: AWSMachine
@@ -156,7 +156,7 @@ spec:
     kind: AWSMachine
     name: talos-e2e-{{TAG}}-aws-controlplane-2
     namespace: default
-  version: 1.17.1
+  version: 1.17.3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: AWSMachine
@@ -218,7 +218,7 @@ spec:
         kind: AWSMachineTemplate
         name: talos-e2e-{{TAG}}-aws-workers
         namespace: default
-      version: 1.17.1
+      version: 1.17.3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: AWSMachineTemplate
