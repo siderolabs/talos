@@ -193,12 +193,12 @@ func (r *Registrator) Check(ctx context.Context, in *empty.Empty) (reply *health
 		}
 
 		// Verify neighbor state
-		switch neighbor.State {
-		case unix.NUD_REACHABLE:
+		switch {
+		case neighbor.State&unix.NUD_REACHABLE == unix.NUD_REACHABLE:
 			fallthrough
-		case unix.NUD_STALE:
+		case neighbor.State&unix.NUD_STALE == unix.NUD_STALE:
 			fallthrough
-		case unix.NUD_DELAY:
+		case neighbor.State&unix.NUD_DELAY == unix.NUD_DELAY:
 			reply.Messages[0].Status = healthapi.HealthCheck_SERVING
 			return reply, nil
 		}
