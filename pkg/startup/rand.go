@@ -5,11 +5,11 @@
 package startup
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math/rand"
 
 	cryptorand "crypto/rand"
-	"encoding/binary"
-	"math/rand"
 )
 
 // RandSeed default math/rand PRNG.

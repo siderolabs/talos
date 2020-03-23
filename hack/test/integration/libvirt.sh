@@ -81,7 +81,7 @@ function down {
 }
 
 function workspace {
-  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../${ARTIFACTS}/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.1
+  docker run --rm -it -v $PWD:/workspace -v $PWD/../../../${ARTIFACTS}/osctl-linux-amd64:/bin/osctl:ro --network talos --dns 172.28.1.1 -w /workspace/matchbox/assets -e TALOSCONFIG='/workspace/matchbox/assets/talosconfig' -e KUBECONFIG='/workspace/matchbox/assets/kubeconfig' --entrypoint /bin/bash k8s.gcr.io/hyperkube:v1.17.3
 }
 
 main $@
