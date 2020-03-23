@@ -79,10 +79,9 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
-	k8s.io/api v0.17.2
-	k8s.io/apiextensions-apiserver v0.17.2 // indirect
-	k8s.io/apimachinery v0.17.2
-	k8s.io/client-go v0.17.2
-	k8s.io/cri-api v0.0.0-20191121183020-775aa3c1cf73
-	k8s.io/kubelet v0.17.0
+	k8s.io/api v0.17.3
+	k8s.io/apimachinery v0.17.3
+	k8s.io/client-go v0.17.3
+	k8s.io/cri-api v0.17.3
+	k8s.io/kubelet v0.17.3
 )
