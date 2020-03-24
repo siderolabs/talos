@@ -255,12 +255,13 @@ Examples:
 
 ```yaml
 install:
-  disk:
+  disk: /dev/sda
   extraKernelArgs:
-  image:
-  bootloader:
-  wipe:
-  force:
+    - option=value
+  image: docker.io/autonomy/installer:latest
+  bootloader: true
+  wipe: false
+  force: false
 
 ```
 
