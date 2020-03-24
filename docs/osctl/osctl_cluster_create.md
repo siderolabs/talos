@@ -20,7 +20,7 @@ osctl cluster create [flags]
   -h, --help                        help for create
       --image string                the image to use (default "docker.io/autonomy/talos:latest")
       --init-node-as-endpoint       use init node as endpoint instead of any load balancer endpoint
-      --kubernetes-version string   desired kubernetes version to run (default "1.17.1")
+      --kubernetes-version string   desired kubernetes version to run (default "1.17.3")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
       --mtu int                     MTU of the docker bridge network (default 1500)
