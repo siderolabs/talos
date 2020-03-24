@@ -79,3 +79,22 @@ machine:
         - eth0
         - eth1
 ```
+
+### VLANs
+
+To setup vlans on a specific device use an array of VLANs to add.
+The master device may be configured without addressing by setting dhcp to false.
+
+```yaml
+machine:
+  network:
+    interfaces:
+    - interface: eth0
+      dhcp: false
+      vlans:
+      - vlanId: 100
+        cidr: "192.168.2.10/28"
+        routes:
+        - network: 0.0.0.0/0
+          gateway: 192.168.2.1
+```
