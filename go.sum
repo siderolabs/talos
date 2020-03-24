@@ -547,8 +547,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0TYG7HtkIgExQo+2RdLuwRft63jn2HWj8=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/bootkube v0.14.1-0.20200319175557-2bd6f456a124 h1:u4qEgc01PKGgZ7i+1ldl2A7a9jkEv6vhk0q4xNvbXX0=
-github.com/talos-systems/bootkube v0.14.1-0.20200319175557-2bd6f456a124/go.mod h1:zLrZfPQ49k0O6x6QN0pDSJn9iD0EMyj6J+5x1vqJSFw=
+github.com/talos-systems/bootkube v0.14.1-0.20200324223153-e241467eea2f h1:aGu3W1MeLaZyOfmlrDltyP/UgLLmXtwUQ9QjxzpcNRE=
+github.com/talos-systems/bootkube v0.14.1-0.20200324223153-e241467eea2f/go.mod h1:zLrZfPQ49k0O6x6QN0pDSJn9iD0EMyj6J+5x1vqJSFw=
 github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45 h1:FND/LgzFHTBdJBOeZVzdO6B47kxQZvSIzb9AMIXYotg=
 github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
 github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee h1:9i0ZFsjZ0wY8UUn/tk2MQshLBC0PNFJe3+84AUqzzyw=
@@ -851,8 +851,6 @@ k8s.io/code-generator v0.17.0/go.mod h1:DVmfPQgxQENqDIzVR2ddLXMH34qeszkKSdH/N+s+
 k8s.io/component-base v0.17.0/go.mod h1:rKuRAokNMY2nn2A6LP/MiwpoaMRHpfRnrPaUJJj1Yoc=
 k8s.io/cri-api v0.17.3 h1:jvjVvBqgZq3WcaPq07n0h5h9eCnIaR4dhKyHSoZG8Y8=
 k8s.io/cri-api v0.17.3/go.mod h1:X1sbHmuXhwaHs9xxYffLqJogVsnI+f6cPRcgPel7ywM=
-k8s.io/cri-api v0.17.4 h1:0L8aJVzYi/h2aZ5dLGB+xPCrr9RZY8qxqbxMdyBZcZU=
-k8s.io/cri-api v0.17.4/go.mod h1:X1sbHmuXhwaHs9xxYffLqJogVsnI+f6cPRcgPel7ywM=
 k8s.io/gengo v0.0.0-20190128074634-0689ccc1d7d6/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/gengo v0.0.0-20190822140433-26a664648505/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/klog v0.0.0-20181102134211-b9b56d5dfc92/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
