@@ -6,6 +6,7 @@ package provision
 
 import (
 	"context"
+	"io"
 
 	"k8s.io/client-go/kubernetes"
 
@@ -21,6 +22,9 @@ type ClusterAccess interface {
 
 	// K8sClient returns Kubernetes client.
 	K8sClient(context.Context) (*kubernetes.Clientset, error)
+
+	// CrashDump essential info for debugging from Talos node.
+	CrashDump(context.Context, io.Writer)
 
 	// Close shuts down all the clients.
 	Close() error

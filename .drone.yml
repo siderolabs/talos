@@ -496,11 +496,11 @@ steps:
   - kernel
   - push-local
 
-- name: provision-tests
+- name: provision-tests-prepare
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make provision-tests
+  - make provision-tests-prepare
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -520,6 +520,50 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+
+- name: provision-tests-track-0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-0
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
+
+- name: provision-tests-track-1
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-1
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
 
 - name: push
   pull: always
@@ -1116,11 +1160,11 @@ steps:
   - kernel
   - push-local
 
-- name: provision-tests
+- name: provision-tests-prepare
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make provision-tests
+  - make provision-tests-prepare
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -1140,6 +1184,50 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+
+- name: provision-tests-track-0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-0
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
+
+- name: provision-tests-track-1
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-1
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
 
 - name: push
   pull: always
@@ -1828,11 +1916,11 @@ steps:
   - kernel
   - push-local
 
-- name: provision-tests
+- name: provision-tests-prepare
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make provision-tests
+  - make provision-tests-prepare
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -1852,6 +1940,50 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+
+- name: provision-tests-track-0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-0
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
+
+- name: provision-tests-track-1
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-1
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
 
 - name: push
   pull: always
@@ -2570,11 +2702,11 @@ steps:
   - kernel
   - push-local
 
-- name: provision-tests
+- name: provision-tests-prepare
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make provision-tests
+  - make provision-tests-prepare
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -2594,6 +2726,50 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+
+- name: provision-tests-track-0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-0
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
+
+- name: provision-tests-track-1
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-1
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
 
 - name: push
   pull: always
@@ -3312,11 +3488,11 @@ steps:
   - kernel
   - push-local
 
-- name: provision-tests
+- name: provision-tests-prepare
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make provision-tests
+  - make provision-tests-prepare
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
@@ -3336,6 +3512,50 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+
+- name: provision-tests-track-0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-0
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
+
+- name: provision-tests-track-1
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-1
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - provision-tests-prepare
 
 - name: push
   pull: always
@@ -3574,6 +3794,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: ce26e0c326108f56e6e30eb0094e42e74746851b92ed37ea95a6afff16648cfb
+hmac: 0faf410cbb2e500b5fc1957aa894c6cd8064b8b2bf9ef22f1802501c167ac1a5
 
 ...

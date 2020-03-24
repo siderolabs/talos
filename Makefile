@@ -17,7 +17,7 @@ KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.17.3
 SONOBUOY_VERSION ?= 0.17.1
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
-RELEASES ?= v0.3.2 v0.4.0-alpha.5
+RELEASES ?= v0.3.2 v0.4.0-alpha.7
 
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
@@ -200,11 +200,20 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy
 
-provision-tests: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
+provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
+
+provision-tests: provision-tests-prepare
 	@$(MAKE) hack-test-$@ \
 		TAG=$(TAG) \
 		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
+
+provision-tests-track-%:
+	@$(MAKE) hack-test-provision-tests \
+		TAG=$(TAG) \
+		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
+		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 \
+		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*"
 
 # Assets for releases
 

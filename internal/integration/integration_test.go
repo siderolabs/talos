@@ -37,7 +37,7 @@ var (
 	endpoint        string
 	k8sEndpoint     string
 	expectedVersion string
-	osctlPath       string
+	talosctlPath    string
 	provisionerName string
 	clusterName     string
 	stateDir        string
@@ -76,12 +76,12 @@ func TestIntegration(t *testing.T) {
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
-				Endpoint:    endpoint,
-				K8sEndpoint: k8sEndpoint,
-				Cluster:     cluster,
-				TalosConfig: talosConfig,
-				Version:     expectedVersion,
-				OsctlPath:   osctlPath,
+				Endpoint:     endpoint,
+				K8sEndpoint:  k8sEndpoint,
+				Cluster:      cluster,
+				TalosConfig:  talosConfig,
+				Version:      expectedVersion,
+				TalosctlPath: talosctlPath,
 			})
 		}
 
@@ -124,7 +124,7 @@ func init() {
 	flag.StringVar(&stateDir, "talos.state", defaultStateDir, "directory path to store cluster state")
 	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
-	flag.StringVar(&osctlPath, "talos.osctlpath", "talosctl", "The path to 'talosctl' binary")
+	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")
