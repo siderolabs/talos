@@ -134,12 +134,13 @@ type MachineConfig struct {
 	//   examples:
 	//     - |
 	//       install:
-	//         disk:
+	//         disk: /dev/sda
 	//         extraKernelArgs:
-	//         image:
-	//         bootloader:
-	//         wipe:
-	//         force:
+	//           - option=value
+	//         image: docker.io/autonomy/installer:latest
+	//         bootloader: true
+	//         wipe: false
+	//         force: false
 	MachineInstall *InstallConfig `yaml:"install,omitempty"`
 	//   description: |
 	//     Allows the addition of user specified files.
