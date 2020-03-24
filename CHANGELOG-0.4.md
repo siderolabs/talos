@@ -1,3 +1,18 @@
+# [v0.4.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.7...v0.4.0-alpha.8) (2020-03-24)
+
+### Bug Fixes
+
+- update k8s to 1.17.3 ([3485ea9](https://github.com/talos-systems/talos/commit/3485ea9f0968821396e663793b35bc3ec519aee6))
+- update rtnetlink checks for bit masks ([5342701](https://github.com/talos-systems/talos/commit/5342701f9370188f790cc002a6b8b2e23c69eda0))
+
+### Features
+
+- add usb storage support ([69e2ebb](https://github.com/talos-systems/talos/commit/69e2ebbb15e91bfcf96e0cf9182203512a76832d))
+- build talosctl for ARM v7 ([c6581fa](https://github.com/talos-systems/talos/commit/c6581fabac551b0c3c42e26d66d124d817d51cf4))
+- build talosctl for ARM64 ([43662e4](https://github.com/talos-systems/talos/commit/43662e4a24757eb657c06afe32e1c87253ef5ff3))
+- initial work for supporting vlans ([0824e50](https://github.com/talos-systems/talos/commit/0824e500b29c9cd304d474857b1e55b294503799))
+- update bootkube ([eba80b4](https://github.com/talos-systems/talos/commit/eba80b453f8aa8268b9a95bca94e90bfc16de46f))
+
 # [v0.4.0-alpha.7](https://github.com/talos-system/talos/compare/v0.4.0-alpha.6...v0.4.0-alpha.7) (2020-03-21)
 
 ### Bug Fixes
