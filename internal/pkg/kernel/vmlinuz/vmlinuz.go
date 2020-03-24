@@ -24,15 +24,15 @@ var bzImageMagic = []struct {
 	reader decompressFunc
 }{
 	{
-		magic: []byte("\037\213\010"),
-		reader: func(r io.Reader) (io.ReadCloser, error) {
-			return gzip.NewReader(r)
-		},
-	},
-	{
 		magic: []byte("\3757zXZ\000"),
 		reader: func(r io.Reader) (io.ReadCloser, error) {
 			return xz.NewReader(r)
+		},
+	},
+	{
+		magic: []byte("\037\213\010"),
+		reader: func(r io.Reader) (io.ReadCloser, error) {
+			return gzip.NewReader(r)
 		},
 	},
 	{
