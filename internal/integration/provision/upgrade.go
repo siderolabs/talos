@@ -51,11 +51,13 @@ type upgradeSpec struct {
 
 	MasterNodes int
 	WorkerNodes int
+
+	UpgradePreserve bool
 }
 
 const (
 	talos03Version = "v0.3.2-1-g71ac6696"
-	talos04Version = "v0.4.0-alpha.5-19-g8913d9df"
+	talos04Version = "v0.4.0-alpha.7"
 )
 
 var (
@@ -73,7 +75,7 @@ func trimVersion(version string) string {
 	return regexp.MustCompile(`(-\d+-g[0-9a-f]+)$`).ReplaceAllString(version, "")
 }
 
-// upgradeZeroThreeToZeroFour upgrades Talos 0.3.x to Talos 0.4.x.
+// upgradeZeroThreeToCurrent upgrades Talos 0.3.x to Talos 0.4.x.
 func upgradeZeroThreeToZeroFour() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", talos03Version, talos04Version),
@@ -109,12 +111,33 @@ func upgradeZeroFourToCurrent() upgradeSpec {
 	}
 }
 
+// upgradeSingeNodePreserve upgrade Talos 0.4.x to the current version of Talos for single-node cluster with preserve.
+func upgradeSingeNodePreserve() upgradeSpec {
+	return upgradeSpec{
+		ShortName: fmt.Sprintf("preserve-%s-%s", talos04Version, DefaultSettings.CurrentVersion),
+
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
+		SourceVersion:        talos04Version,
+
+		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		TargetVersion:        DefaultSettings.CurrentVersion,
+
+		MasterNodes:     1,
+		WorkerNodes:     0,
+		UpgradePreserve: true,
+	}
+}
+
 type UpgradeSuite struct {
 	suite.Suite
 	base.TalosSuite
 
 	specGen func() upgradeSpec
 	spec    upgradeSpec
+
+	track int
 
 	provisioner provision.Provisioner
 
@@ -150,6 +173,10 @@ func (suite *UpgradeSuite) TearDownSuite() {
 		// for failed tests, produce crash dump for easier debugging,
 		// as cluster is going to be torn down below
 		suite.provisioner.CrashDump(suite.ctx, suite.Cluster, os.Stderr)
+
+		if suite.clusterAccess != nil {
+			suite.clusterAccess.CrashDump(suite.ctx, os.Stderr)
+		}
 	}
 
 	if suite.clusterAccess != nil {
@@ -220,7 +247,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		KernelPath:    suite.spec.SourceKernelPath,
 		InitramfsPath: suite.spec.SourceInitramfsPath,
 
-		SelfExecutable: suite.OsctlPath,
+		SelfExecutable: suite.TalosctlPath,
 		StateDirectory: suite.stateDir,
 	}
 
@@ -343,7 +370,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 	nodeCtx := talosclient.WithNodes(suite.ctx, node.PrivateIP.String())
 
-	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, false)
+	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve)
 	suite.Require().NoError(err)
 
 	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
@@ -403,12 +430,14 @@ func (suite *UpgradeSuite) SuiteName() string {
 		suite.spec = suite.specGen()
 	}
 
-	return fmt.Sprintf("provision.UpgradeSuite.%s", suite.spec.ShortName)
+	return fmt.Sprintf("provision.UpgradeSuite.%s-TR%d", suite.spec.ShortName, suite.track)
 }
 
 func init() {
 	allSuites = append(allSuites,
-		&UpgradeSuite{specGen: upgradeZeroThreeToZeroFour},
-		&UpgradeSuite{specGen: upgradeZeroFourToCurrent},
+		&UpgradeSuite{specGen: upgradeZeroThreeToZeroFour, track: 0},
+		&UpgradeSuite{specGen: upgradeZeroFourToCurrent, track: 1},
+		// TODO: enable once flaky test is debugged:
+		// &UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
 	)
 }

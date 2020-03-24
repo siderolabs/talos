@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/squashfs"
 	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // nolint: gocyclo
@@ -43,6 +44,8 @@ func run() (err error) {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("booting Talos %s", version.Tag)
 
 	// Mount the rootfs.
 	log.Println("mounting the rootfs")

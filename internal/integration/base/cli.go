@@ -43,7 +43,7 @@ func (cliSuite *CLISuite) buildOsctlCmd(args []string) *exec.Cmd {
 
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
 
-	return exec.Command(cliSuite.OsctlPath, args...)
+	return exec.Command(cliSuite.TalosctlPath, args...)
 }
 
 // RunOsctl runs talosctl binary with the options provided
