@@ -1,11 +1,24 @@
-# [](https://github.com/andrewrynhard/talos/compare/v0.3.1...v) (2020-01-28)
+# [v0.3.3](https://github.com/talos-systems/talos/compare/v0.3.2...v0.3.3) (2020-03-24)
 
 
 ### Bug Fixes
 
-* parse correctly kernel command line missing DNS config ([9933f75](https://github.com/andrewrynhard/talos/commit/9933f7574a55c3fadcaeadeb41ae66d0ab41ccdd))
-* re-enable control plane flags ([a4a1229](https://github.com/andrewrynhard/talos/commit/a4a12296ef71d64b5a40189db27067864ae71fe5)), closes [#1523](https://github.com/andrewrynhard/talos/issues/1523)
-* retry system disk busy check ([c9cef6d](https://github.com/andrewrynhard/talos/commit/c9cef6dd57c27004ab76f17c62ba006bc1a9f079))
+* don't proxy gRPC unix connections ([a31607d](https://github.com/talos-systems/talos/commit/a31607d30f52f38996d7883ff9b62427a44113c9))
+* follow symlinks ([3d4bbc0](https://github.com/talos-systems/talos/commit/3d4bbc08937662cf649bd4718449f7e5ae44ba14))
+* ignore link-local and other non routable addresses ([71ac669](https://github.com/talos-systems/talos/commit/71ac6696541ffe61f6f75601b91e46b3fc56b0dc))
+* implement kubelet extra mounts ([f0c97e1](https://github.com/talos-systems/talos/commit/f0c97e105111de5a70b8c11cb66fb1d5a1506e5f))
+* update k8s to 1.17.3 ([f804da7](https://github.com/talos-systems/talos/commit/f804da791aa40a4e49423adcaa9840d3604fea87))
+
+
+
+# [v0.3.2](https://github.com/talos-systems/talos/compare/v0.3.1...v0.3.2) (2020-01-28)
+
+
+### Bug Fixes
+
+* parse correctly kernel command line missing DNS config ([9933f75](https://github.com/talos-systems/talos/commit/9933f7574a55c3fadcaeadeb41ae66d0ab41ccdd))
+* re-enable control plane flags ([a4a1229](https://github.com/talos-systems/talos/commit/a4a12296ef71d64b5a40189db27067864ae71fe5)), closes [#1523](https://github.com/talos-systems/talos/issues/1523)
+* retry system disk busy check ([c9cef6d](https://github.com/talos-systems/talos/commit/c9cef6dd57c27004ab76f17c62ba006bc1a9f079))
 
 
 
