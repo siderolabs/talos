@@ -28,7 +28,6 @@ function create_cluster {
     --memory 2048 \
     --cpus 2.0 \
     --cidr 172.20.0.0/24 \
-    --wait \
     --install-image ${REGISTRY:-docker.io}/autonomy/installer:${INSTALLER_TAG} \
     ${FIRECRACKER_FLAGS}
 }

@@ -25,7 +25,6 @@ function create_cluster {
     --mtu 1500 \
     --memory 2048 \
     --cpus 4.0 \
-    --wait \
     --endpoint "${ENDPOINT}"
 }
 
