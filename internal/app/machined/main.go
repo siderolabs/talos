@@ -7,17 +7,20 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"time"
 
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
 	"github.com/talos-systems/talos/internal/pkg/event"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
@@ -34,6 +37,10 @@ type EventBusObserver struct {
 func recovery() {
 	if r := recover(); r != nil {
 		log.Printf("recovered from: %+v\n", r)
+
+		if err := revert(); err != nil {
+			log.Printf("failed to revert upgrade: %v", err)
+		}
 
 		for i := 10; i >= 0; i-- {
 			log.Printf("rebooting in %d seconds\n", i)
@@ -95,6 +102,59 @@ func init() {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
+}
+
+func revert() (err error) {
+	f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0700)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+
+		return err
+	}
+
+	// nolint: errcheck
+	defer f.Close()
+
+	adv, err := syslinux.NewADV(f)
+	if err != nil {
+		return err
+	}
+
+	label, ok := adv.ReadTag(syslinux.AdvUpgrade)
+	if !ok {
+		return nil
+	}
+
+	log.Printf("reverting default boot to %q", label)
+
+	var b []byte
+
+	if b, err = ioutil.ReadFile(syslinux.SyslinuxConfig); err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
+	matches := re.FindSubmatch(b)
+
+	if len(matches) != 2 {
+		return fmt.Errorf("expected 2 matches, got %d", len(matches))
+	}
+
+	b = re.ReplaceAll(b, []byte(fmt.Sprintf("DEFAULT %s", label)))
+
+	if err = ioutil.WriteFile(syslinux.SyslinuxConfig, b, 0600); err != nil {
+		return err
+	}
+
+	adv.DeleteTag(syslinux.AdvUpgrade)
+
+	if _, err = f.Write(adv); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // nolint: gocyclo

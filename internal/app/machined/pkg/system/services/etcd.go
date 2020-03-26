@@ -349,7 +349,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 	if p.Mode() != runtime.Container {
 		var f *os.File
 
-		if f, err = os.Open(constants.SyslinuxLdlinux); err != nil {
+		if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
 			return nil, err
 		}
 

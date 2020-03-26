@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,7 +15,6 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/kernel/vmlinuz"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
@@ -188,29 +186,6 @@ func (b *BootLoader) findLabel() (label string, err error) {
 	}
 
 	label = string(matches[1])
-
-	// Parse the ADV to support the new upgrade strategy.
-	// This can become the default once v0.3 is deprecated.
-
-	f, err := b.bootFs.Open("/syslinux/ldlinux.sys")
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return label, nil
-		}
-
-		return label, fmt.Errorf("failed to open ldlinux.sys: %w", err)
-	}
-
-	var adv syslinux.ADV
-
-	if adv, err = syslinux.NewADV(f); err != nil {
-		return label, err
-	}
-
-	l, ok := adv.ReadTag(syslinux.AdvUpgrade)
-	if ok {
-		label = l
-	}
 
 	return label, nil
 }
