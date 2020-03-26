@@ -67,23 +67,22 @@ func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install ma
 		if err = unix.Mount(dev.Path, "/boot", dev.SuperBlock.Type(), 0, ""); err != nil {
 			return nil, fmt.Errorf("failed to mount /boot: %w", err)
 		}
+	}
 
-		i.Current, i.Next, err = syslinux.Labels()
-		if err != nil {
-			return nil, err
-		}
+	i.Current, i.Next, err = syslinux.Labels()
+	if err != nil {
+		return nil, err
+	}
 
-		i.manifest, err = manifest.NewManifest(i.Next, sequence, install)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create installation manifest: %w", err)
-		}
-	} else {
-		i.Current = constants.BootA
+	label := i.Current
 
-		i.manifest, err = manifest.NewManifest(i.Current, sequence, install)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create installation manifest: %w", err)
-		}
+	if sequence == runtime.Upgrade && i.bootPartitionFound {
+		label = i.Next
+	}
+
+	i.manifest, err = manifest.NewManifest(label, sequence, install)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create installation manifest: %w", err)
 	}
 
 	return i, nil
@@ -197,31 +196,31 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 			},
 		}
 
-		if err = syslinux.Install(filepath.Join(constants.BootMountPoint), i.Current, syslinuxcfg, sequence, i.bootPartitionFound); err != nil {
+		if err = syslinux.Install("", syslinuxcfg, sequence, i.bootPartitionFound); err != nil {
 			return err
 		}
 	} else {
 		i.cmdline.Append("initrd", filepath.Join("/", i.Next, constants.InitramfsAsset))
 
 		syslinuxcfg := &syslinux.Cfg{
-			Default: i.Current,
+			Default: i.Next,
 			Labels: []*syslinux.Label{
-				{
-					Root:   i.Current,
-					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
-					Append: procfs.ProcCmdline().String(),
-				},
 				{
 					Root:   i.Next,
 					Initrd: filepath.Join("/", i.Next, constants.InitramfsAsset),
 					Kernel: filepath.Join("/", i.Next, constants.KernelAsset),
 					Append: i.cmdline.String(),
 				},
+				{
+					Root:   i.Current,
+					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
+					Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
+					Append: procfs.ProcCmdline().String(),
+				},
 			},
 		}
 
-		if err = syslinux.Install(filepath.Join(constants.BootMountPoint), i.Next, syslinuxcfg, sequence, i.bootPartitionFound); err != nil {
+		if err = syslinux.Install(i.Current, syslinuxcfg, sequence, i.bootPartitionFound); err != nil {
 			return err
 		}
 	}

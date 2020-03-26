@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,7 +24,9 @@ import (
 )
 
 const syslinuxCfgTpl = `DEFAULT {{ .Default }}
-  SAY Talos
+PROMPT 1
+TIMEOUT 50
+
 {{- range .Labels }}
 INCLUDE /{{ .Root }}/include.cfg
 {{- end }}`
@@ -33,12 +36,6 @@ const syslinuxLabelTpl = `LABEL {{ .Root }}
   INITRD {{ .Initrd }}
   APPEND {{ .Append }}
 `
-
-const (
-	gptmbrbin   = "/usr/lib/syslinux/gptmbr.bin"
-	syslinuxefi = "/usr/lib/syslinux/syslinux.efi"
-	ldlinuxe64  = "/usr/lib/syslinux/ldlinux.e64"
-)
 
 // Cfg reprsents the syslinux.cfg file.
 type Cfg struct {
@@ -56,35 +53,6 @@ type Label struct {
 
 // Syslinux represents the syslinux bootloader.
 type Syslinux struct{}
-
-// Labels parses the syslinux config and returns the current active label, and
-// what should be the next label.
-func Labels() (current string, next string, err error) {
-	var b []byte
-
-	if b, err = ioutil.ReadFile(constants.SyslinuxConfig); err != nil {
-		return "", "", err
-	}
-
-	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
-	matches := re.FindSubmatch(b)
-
-	if len(matches) != 2 {
-		return "", "", fmt.Errorf("expected 2 matches, got %d", len(matches))
-	}
-
-	current = string(matches[1])
-	switch current {
-	case constants.BootA:
-		next = constants.BootB
-	case constants.BootB:
-		next = constants.BootA
-	default:
-		return "", "", fmt.Errorf("unknown syslinux label: %q", current)
-	}
-
-	return current, next, err
-}
 
 // Prepare implements the Bootloader interface. It works by writing
 // gptmbr.bin to a block device.
@@ -113,94 +81,36 @@ func Prepare(dev string) (err error) {
 // specified kernel parameters.
 //
 // nolint: gocyclo
-func Install(base, label string, config interface{}, sequence runtime.Sequence, bootPartitionFound bool) (err error) {
+func Install(fallback string, config interface{}, sequence runtime.Sequence, bootPartitionFound bool) (err error) {
 	syslinuxcfg, ok := config.(*Cfg)
 	if !ok {
 		return errors.New("expected a syslinux config")
 	}
 
-	efiDir := filepath.Join(base, "EFI", "BOOT")
-	if err = os.MkdirAll(efiDir, 0700); err != nil {
+	if err = writeCfg(constants.BootMountPoint, SyslinuxConfig, syslinuxcfg); err != nil {
 		return err
 	}
-
-	input, err := ioutil.ReadFile(syslinuxefi)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(efiDir+"/BOOTX64.EFI", input, 0600)
-	if err != nil {
-		return err
-	}
-
-	input, err = ioutil.ReadFile(ldlinuxe64)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(efiDir+"/ldlinux.e64", input, 0600)
-	if err != nil {
-		return err
-	}
-
-	err = WriteAllSyslinuxCfgs(base, syslinuxcfg)
-	if err != nil {
-		return err
-	}
-
-	dir := filepath.Dir(filepath.Join(base, "syslinux", "syslinux.cfg"))
 
 	if sequence == runtime.Upgrade && bootPartitionFound {
-		if _, err = cmd.Run("extlinux", "--update", dir); err != nil {
-			return fmt.Errorf("failed to update extlinux: %w", err)
-		}
+		log.Println("updating syslinux")
 
-		if _, err = cmd.Run("extlinux", "--once="+label, dir); err != nil {
-			return fmt.Errorf("failed to set label for next boot: %w", err)
+		if err = update(); err != nil {
+			return err
 		}
 	} else {
-		_, err = cmd.Run("extlinux", "--install", dir)
-		if err != nil {
-			return fmt.Errorf("failed to install extlinux: %w", err)
+		log.Println("installing syslinux")
+
+		if err = install(); err != nil {
+			return err
 		}
+	}
+
+	if err = writeUEFIFiles(); err != nil {
+		return err
 	}
 
 	if sequence == runtime.Upgrade {
-		var f *os.File
-
-		if f, err = os.OpenFile(constants.SyslinuxLdlinux, os.O_RDWR, 0700); err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer f.Close()
-
-		var adv ADV
-
-		if adv, err = NewADV(f); err != nil {
-			return err
-		}
-
-		if ok := adv.SetTag(AdvUpgrade, label); !ok {
-			return fmt.Errorf("failed to set upgrade tag: %q", label)
-		}
-
-		if _, err = f.Write(adv); err != nil {
-			return err
-		}
-
-		log.Println("set upgrade tag in ADV")
-	}
-
-	return nil
-}
-
-// WriteAllSyslinuxCfgs writes legacy and EFI syslinux configs to disk.
-func WriteAllSyslinuxCfgs(base string, syslinuxcfg *Cfg) (err error) {
-	paths := []string{filepath.Join(base, "syslinux", "syslinux.cfg"), filepath.Join(base, "EFI", "syslinux", "syslinux.cfg")}
-	for _, path := range paths {
-		if err = WriteSyslinuxCfg(base, path, syslinuxcfg); err != nil {
+		if err = setADV(SyslinuxLdlinux, fallback); err != nil {
 			return err
 		}
 	}
@@ -208,8 +118,42 @@ func WriteAllSyslinuxCfgs(base string, syslinuxcfg *Cfg) (err error) {
 	return nil
 }
 
-// WriteSyslinuxCfg writes a syslinux config to disk.
-func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
+// Labels parses the syslinux config and returns the current active label, and
+// what should be the next label.
+func Labels() (current string, next string, err error) {
+	var b []byte
+
+	if b, err = ioutil.ReadFile(SyslinuxConfig); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			current = BootA
+
+			return current, "", nil
+		}
+
+		return "", "", err
+	}
+
+	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
+	matches := re.FindSubmatch(b)
+
+	if len(matches) != 2 {
+		return "", "", fmt.Errorf("expected 2 matches, got %d", len(matches))
+	}
+
+	current = string(matches[1])
+	switch current {
+	case BootA:
+		next = BootB
+	case BootB:
+		next = BootA
+	default:
+		return "", "", fmt.Errorf("unknown syslinux label: %q", current)
+	}
+
+	return current, next, err
+}
+
+func writeCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 	b := []byte{}
 	wr := bytes.NewBuffer(b)
 	t := template.Must(template.New("syslinux").Parse(syslinuxCfgTpl))
@@ -244,12 +188,109 @@ func WriteSyslinuxCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 			return err
 		}
 
-		log.Printf("writing syslinux label %s to disk", label.Root)
+		log.Printf("writing syslinux label %q to disk", label.Root)
 
 		if err = ioutil.WriteFile(filepath.Join(dir, "include.cfg"), wr.Bytes(), 0600); err != nil {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func copyFile(src, dst string) error {
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("%q is not a regular file", src)
+	}
+
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	// nolint: errcheck
+	defer s.Close()
+
+	d, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+
+	// nolint: errcheck
+	defer d.Close()
+
+	_, err = io.Copy(d, s)
+
+	return err
+}
+
+func writeUEFIFiles() (err error) {
+	dir := filepath.Join(constants.BootMountPoint, "EFI", "BOOT")
+
+	if err = os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+
+	for src, dest := range map[string]string{syslinuxefi: filepath.Join(dir, "BOOTX64.EFI"), ldlinuxe64: filepath.Join(dir, "ldlinux.e64")} {
+		if err = copyFile(src, dest); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func install() (err error) {
+	_, err = cmd.Run("extlinux", "--install", filepath.Dir(SyslinuxConfig))
+	if err != nil {
+		return fmt.Errorf("failed to install syslinux: %w", err)
+	}
+
+	return nil
+}
+
+func update() (err error) {
+	if _, err = cmd.Run("extlinux", "--update", filepath.Dir(SyslinuxConfig)); err != nil {
+		return fmt.Errorf("failed to update syslinux: %w", err)
+	}
+
+	return nil
+}
+
+func setADV(ldlinux, fallback string) (err error) {
+	if fallback == "" {
+		return nil
+	}
+
+	var f *os.File
+
+	if f, err = os.OpenFile(ldlinux, os.O_RDWR, 0700); err != nil {
+		return err
+	}
+
+	// nolint: errcheck
+	defer f.Close()
+
+	var adv ADV
+
+	if adv, err = NewADV(f); err != nil {
+		return err
+	}
+
+	if ok := adv.SetTag(AdvUpgrade, fallback); !ok {
+		return fmt.Errorf("failed to set upgrade tag: %q", fallback)
+	}
+
+	if _, err = f.Write(adv); err != nil {
+		return err
+	}
+
+	log.Printf("set fallback to %q", fallback)
 
 	return nil
 }

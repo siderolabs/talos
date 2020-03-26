@@ -292,18 +292,6 @@ const (
 	// InitializedKey is the key used to indicate if the cluster has been
 	// initialized.
 	InitializedKey = "initialized"
-
-	// BootA is a syslinux label.
-	BootA = "boot-a"
-
-	// BootB is a syslinux label.
-	BootB = "boot-b"
-
-	// SyslinuxConfig is the path to the Syslinux config.
-	SyslinuxConfig = "/boot/syslinux/syslinux.cfg"
-
-	// SyslinuxLdlinux is the path to ldlinux.sys.
-	SyslinuxLdlinux = "/boot/syslinux/ldlinux.sys"
 )
 
 // See https://linux.die.net/man/3/klogctl
