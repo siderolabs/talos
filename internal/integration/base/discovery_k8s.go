@@ -46,7 +46,7 @@ func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error
 		return nil, err
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

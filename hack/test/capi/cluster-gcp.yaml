@@ -56,7 +56,7 @@ spec:
     kind: GCPMachine
     name: talos-e2e-{{TAG}}-gcp-controlplane-0
     namespace: default
-  version: 1.17.3
+  version: 1.18.0
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: GCPMachine
@@ -102,7 +102,7 @@ spec:
     kind: GCPMachine
     name: talos-e2e-{{TAG}}-gcp-controlplane-1
     namespace: default
-  version: 1.17.3
+  version: 1.18.0
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: GCPMachine
@@ -148,7 +148,7 @@ spec:
     kind: GCPMachine
     name: talos-e2e-{{TAG}}-gcp-controlplane-2
     namespace: default
-  version: 1.17.3
+  version: 1.18.0
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: GCPMachine
@@ -206,7 +206,7 @@ spec:
         kind: GCPMachineTemplate
         name: talos-e2e-{{TAG}}-gcp-workers
         namespace: default
-      version: 1.17.3
+      version: 1.18.0
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha2
 kind: GCPMachineTemplate

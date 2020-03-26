@@ -4,7 +4,7 @@ go 1.13
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
-	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20200324223153-e241467eea2f
+	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20200326170323-428f80a4248c
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 
@@ -49,7 +49,6 @@ require (
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
 	github.com/mdlayher/netlink v0.0.0-20191009155606-de872b0d824b
 	github.com/mdlayher/raw v0.0.0-20190606144222-a54781e5f38f // indirect
-	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.8.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -68,7 +67,7 @@ require (
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
-	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
+	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200107162124-548cf772de50
@@ -79,9 +78,9 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
-	k8s.io/api v0.17.3
-	k8s.io/apimachinery v0.17.3
-	k8s.io/client-go v0.17.3
-	k8s.io/cri-api v0.17.3
-	k8s.io/kubelet v0.17.3
+	k8s.io/api v0.18.0
+	k8s.io/apimachinery v0.18.0
+	k8s.io/client-go v0.18.0
+	k8s.io/cri-api v0.18.0
+	k8s.io/kubelet v0.18.0
 )

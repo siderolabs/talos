@@ -31,7 +31,7 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster provision.Cluster
 		expectedNodes = append(expectedNodes, node.PrivateIP.String())
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster provision.Cluster
 		}
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster provision.ClusterAcc
 		return err
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func K8sPodReadyAssertion(ctx context.Context, cluster provision.ClusterAccess, 
 		return err
 	}
 
-	pods, err := clientset.CoreV1().Pods(namespace).List(metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
