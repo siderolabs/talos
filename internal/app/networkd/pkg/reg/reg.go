@@ -156,52 +156,13 @@ func toCIDR(family uint8, prefix net.IP, prefixLen int) string {
 }
 
 // Check implements the Health api and provides visibilty into the state of networkd.
-// We determine networkd health based on neighbor (arp table) entries.
-// Under normal operating circumstances, there should be a steady state of reachable neighbor entries.
-// If we get in a situation where all of our neighbor entries are stale, then we're in trouble.
 func (r *Registrator) Check(ctx context.Context, in *empty.Empty) (reply *healthapi.HealthCheckResponse, err error) {
-	// Set initial state to unknown
 	reply = &healthapi.HealthCheckResponse{
 		Messages: []*healthapi.HealthCheck{
 			{
-				Status: healthapi.HealthCheck_UNKNOWN,
+				Status: healthapi.HealthCheck_SERVING,
 			},
 		},
-	}
-
-	var neighbors []rtnetlink.NeighMessage
-
-	neighbors, err = r.Conn.Neigh.List()
-	if err != nil {
-		return reply, err
-	}
-
-	// After getting a list of neighbors we can upgrade to not serving
-	reply.Messages[0].Status = healthapi.HealthCheck_NOT_SERVING
-
-	// Find at least one neighbor in a reachable state
-	for _, neighbor := range neighbors {
-		// Verify neighbor is associated with a link
-		// managed by networkd ( skip cni links )
-		link, err := r.Conn.Link.Get(neighbor.Index)
-		if err != nil {
-			continue
-		}
-
-		if _, ok := r.Networkd.Interfaces[link.Attributes.Name]; !ok {
-			continue
-		}
-
-		// Verify neighbor state
-		switch {
-		case neighbor.State&unix.NUD_REACHABLE == unix.NUD_REACHABLE:
-			fallthrough
-		case neighbor.State&unix.NUD_STALE == unix.NUD_STALE:
-			fallthrough
-		case neighbor.State&unix.NUD_DELAY == unix.NUD_DELAY:
-			reply.Messages[0].Status = healthapi.HealthCheck_SERVING
-			return reply, nil
-		}
 	}
 
 	return reply, nil
