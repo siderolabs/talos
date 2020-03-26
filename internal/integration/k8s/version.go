@@ -7,6 +7,7 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,7 @@ func (suite *VersionSuite) TestExpectedVersion() {
 	checkKernelVersion := suite.Capabilities().RunsTalosKernel
 
 	// verify each node (kubelet version, Talos version, etc.)
-	nodes, err := suite.Clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := suite.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	suite.Require().NoError(err)
 
 	expectedTalosVersion := fmt.Sprintf("Talos (%s)", suite.Version)

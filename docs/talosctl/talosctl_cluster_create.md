@@ -27,7 +27,7 @@ talosctl cluster create [flags]
       --initrd-path string          the uncompressed kernel image to use (default "_out/initramfs.xz")
   -i, --input-dir string            location of pre-generated config files
       --install-image string        the installer image to use (default "docker.io/autonomy/installer:latest")
-      --kubernetes-version string   desired kubernetes version to run (default "1.17.3")
+      --kubernetes-version string   desired kubernetes version to run (default "1.18.0")
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
       --mtu int                     MTU of the docker bridge network (default 1500)
