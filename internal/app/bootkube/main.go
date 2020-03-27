@@ -2,31 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package bootkube
+package main
 
 import (
-	"context"
-	"io"
+	"flag"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
+	"github.com/kubernetes-sigs/bootkube/pkg/util"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// Service wraps bootkube.
-type Service struct{}
-
-// NewService creates new Service.
-func NewService() *Service {
-	return &Service{}
-}
-
-// Main is the entrypoint for bootkube.
-func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWriter io.Writer) error {
+func run() error {
 	defaultRequiredPods := []string{
 		"kube-system/pod-checkpointer",
 		"kube-system/kube-apiserver",
@@ -66,4 +57,26 @@ func (s *Service) Main(ctx context.Context, config runtime.Configurator, logWrit
 	}()
 
 	return bk.Run()
+}
+
+func main() {
+	configPath := flag.String("config", "", "the path to the config")
+
+	flag.Parse()
+	util.InitLogs()
+
+	defer util.FlushLogs()
+
+	config, err := config.NewFromFile(*configPath)
+	if err != nil {
+		log.Fatalf("failed to create config from file: %v", err)
+	}
+
+	if err := generateAssets(config); err != nil {
+		log.Fatalf("error generating assets: %s", err)
+	}
+
+	if err := run(); err != nil {
+		log.Fatalf("bootkube failed: %s", err)
+	}
 }
