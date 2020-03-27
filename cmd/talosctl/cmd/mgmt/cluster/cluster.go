@@ -21,9 +21,9 @@ var Cmd = &cobra.Command{
 }
 
 var (
-	provisioner string
-	stateDir    string
-	clusterName string
+	provisionerName string
+	stateDir        string
+	clusterName     string
 )
 
 func init() {
@@ -32,7 +32,7 @@ func init() {
 		defaultStateDir = filepath.Join(defaultStateDir, "clusters")
 	}
 
-	Cmd.PersistentFlags().StringVar(&provisioner, "provisioner", "docker", "Talos cluster provisioner to use")
+	Cmd.PersistentFlags().StringVar(&provisionerName, "provisioner", "docker", "Talos cluster provisioner to use")
 	Cmd.PersistentFlags().StringVar(&stateDir, "state", defaultStateDir, "directory path to store cluster state")
 	Cmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 }

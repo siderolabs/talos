@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -23,13 +24,18 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
+type portMap struct {
+	exposedPorts nat.PortSet
+	portBindings nat.PortMap
+}
+
+func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, options *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
-			nodeInfo, err := p.createNode(ctx, clusterReq, nodeReq)
+			nodeInfo, err := p.createNode(ctx, clusterReq, nodeReq, options)
 			errCh <- err
 
 			if err == nil {
@@ -56,7 +62,7 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 }
 
 //nolint: gocyclo
-func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
+func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, options *provision.Options) (provision.NodeInfo, error) {
 	cfg, err := nodeReq.Config.String()
 	if err != nil {
 		return provision.NodeInfo{}, err
@@ -105,39 +111,22 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 	switch nodeReq.Config.Machine().Type() {
 	case machine.TypeInit:
-		var apidPort nat.Port
+		portsToOpen := []string{"50000:50000/tcp", "6443:6443/tcp"}
 
-		apidPort, err = nat.NewPort("tcp", "50000")
+		if len(options.DockerPorts) > 0 {
+			portsToOpen = append(portsToOpen, options.DockerPorts...)
+		}
+
+		var generatedPortMap portMap
+
+		generatedPortMap, err = genPortMap(portsToOpen)
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}
 
-		var apiServerPort nat.Port
+		containerConfig.ExposedPorts = generatedPortMap.exposedPorts
 
-		apiServerPort, err = nat.NewPort("tcp", "6443")
-		if err != nil {
-			return provision.NodeInfo{}, err
-		}
-
-		containerConfig.ExposedPorts = nat.PortSet{
-			apidPort:      struct{}{},
-			apiServerPort: struct{}{},
-		}
-
-		hostConfig.PortBindings = nat.PortMap{
-			apidPort: []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "50000",
-				},
-			},
-			apiServerPort: []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "6443",
-				},
-			},
-		}
+		hostConfig.PortBindings = generatedPortMap.portBindings
 
 		fallthrough
 	case machine.TypeControlPlane:
@@ -215,4 +204,38 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 	}
 
 	return multiErr.ErrorOrNil()
+}
+
+func genPortMap(portList []string) (portMap, error) {
+	portSetRet := nat.PortSet{}
+	portMapRet := nat.PortMap{}
+
+	for _, port := range portList {
+		explodedPortAndProtocol := strings.Split(port, "/")
+
+		if len(explodedPortAndProtocol) != 2 {
+			return portMap{}, errors.New("incorrect format for exposed port/protocols")
+		}
+
+		explodedPort := strings.Split(explodedPortAndProtocol[0], ":")
+
+		if len(explodedPort) != 2 {
+			return portMap{}, errors.New("incorrect format for exposed ports")
+		}
+
+		natPort, err := nat.NewPort(explodedPortAndProtocol[1], explodedPort[1])
+		if err != nil {
+			return portMap{}, err
+		}
+
+		portSetRet[natPort] = struct{}{}
+		portMapRet[natPort] = []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: explodedPort[0],
+			},
+		}
+	}
+
+	return portMap{portSetRet, portMapRet}, nil
 }

@@ -39,7 +39,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating master nodes")
 
-	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.MasterNodes()); err != nil {
+	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.MasterNodes(), &options); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +47,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	var workerNodeInfo []provision.NodeInfo
 
-	if workerNodeInfo, err = p.createNodes(ctx, request, request.Nodes.WorkerNodes()); err != nil {
+	if workerNodeInfo, err = p.createNodes(ctx, request, request.Nodes.WorkerNodes(), &options); err != nil {
 		return nil, err
 	}
 

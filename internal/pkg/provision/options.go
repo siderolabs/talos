@@ -60,6 +60,15 @@ func WithBootladerEmulation() Option {
 	}
 }
 
+// WithDockerPorts allows docker provisioner to expose ports on workers
+func WithDockerPorts(ports []string) Option {
+	return func(o *Options) error {
+		o.DockerPorts = ports
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
@@ -69,6 +78,9 @@ type Options struct {
 
 	// Enable bootloader by booting from disk image assets.
 	BootloaderEmulation bool
+
+	// Expose ports to worker machines in docker provisioner
+	DockerPorts []string
 }
 
 // DefaultOptions returns default options.

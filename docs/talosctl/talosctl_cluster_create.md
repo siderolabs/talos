@@ -21,6 +21,7 @@ talosctl cluster create [flags]
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
       --disk int                    the limit on disk size in MB (each VM) (default 4096)
       --endpoint string             use endpoint instead of provider defaults
+  -p, --exposed-ports string        Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
   -h, --help                        help for create
       --image string                the image to use (default "docker.io/autonomy/talos:latest")
       --init-node-as-endpoint       use init node as endpoint instead of any load balancer endpoint
