@@ -8,6 +8,7 @@ package cli
 
 import (
 	"regexp"
+	"testing"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -25,6 +26,10 @@ func (suite *RestartSuite) SuiteName() string {
 
 // TestSystem restarts system containerd process.
 func (suite *RestartSuite) TestSystem() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
 	suite.RunOsctl([]string{"restart", "trustd"},
 		base.StdoutEmpty())
 
@@ -35,6 +40,10 @@ func (suite *RestartSuite) TestSystem() {
 
 // TestKubernetes restarts K8s container.
 func (suite *RestartSuite) TestK8s() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
 	suite.RunOsctl([]string{"restart", "-k", "kubelet"},
 		base.StdoutEmpty())
 

@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
@@ -31,6 +32,10 @@ func (suite *RebootSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *RebootSuite) SetupTest() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
 	// make sure we abort at some point in time, but give enough room for reboots
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
 }
