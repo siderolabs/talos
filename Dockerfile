@@ -215,6 +215,25 @@ RUN printf "FROM scratch\nCOPY ./routerd /routerd\nENTRYPOINT [\"/routerd\"]" > 
 RUN --security=insecure img build --tag ${USERNAME}/routerd:${TAG} --output type=docker,dest=/routerd.tar --no-console  .
 
 
+# The bootkube target builds the bootkube image.
+
+FROM base AS bootkube-build
+ARG SHA
+ARG TAG
+ARG VERSION_PKG="github.com/talos-systems/talos/internal/pkg/version"
+WORKDIR /src/internal/app/bootkube
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /bootkube
+RUN chmod +x /bootkube
+
+FROM base AS bootkube-image
+ARG TAG
+ARG USERNAME
+COPY --from=bootkube-build /bootkube /scratch/bootkube
+WORKDIR /scratch
+RUN printf "FROM scratch\nCOPY ./bootkube /bootkube\nENTRYPOINT [\"/bootkube\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/bootkube:${TAG} --output type=docker,dest=/bootkube.tar --no-console  .
+
+
 # The talosctl targets build the talosctl binaries.
 
 FROM base AS talosctl-linux-amd64-build
@@ -293,6 +312,7 @@ COPY --from=docker.io/autonomy/kmod:00d8397 /usr/lib/libkmod.* /rootfs/lib
 COPY --from=docker.io/autonomy/kernel:00d8397 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
+COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
 COPY --from=ntpd-image /ntpd.tar /rootfs/usr/images/
 COPY --from=osd-image /osd.tar /rootfs/usr/images/
 COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
