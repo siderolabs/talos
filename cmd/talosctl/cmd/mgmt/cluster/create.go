@@ -56,6 +56,7 @@ var (
 	cniBinPath              []string
 	cniConfDir              string
 	cniCacheDir             string
+	ports                   string
 )
 
 // createCmd represents the cluster up command
@@ -119,7 +120,7 @@ func create(ctx context.Context) (err error) {
 		}
 	}
 
-	provisioner, err := providers.Factory(ctx, provisioner)
+	provisioner, err := providers.Factory(ctx, provisionerName)
 	if err != nil {
 		return err
 	}
@@ -153,6 +154,15 @@ func create(ctx context.Context) (err error) {
 
 	provisionOptions := []provision.Option{}
 	configBundleOpts := []config.BundleOption{}
+
+	if ports != "" {
+		if provisionerName != "docker" {
+			return fmt.Errorf("exposed-ports flag only supported with docker provisioner")
+		}
+
+		portList := strings.Split(ports, ",")
+		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
+	}
 
 	if bootloaderEmulation {
 		provisionOptions = append(provisionOptions, provision.WithBootladerEmulation())
@@ -336,5 +346,11 @@ func init() {
 	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries")
 	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path")
 	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path")
+	createCmd.Flags().StringVarP(&ports,
+		"exposed-ports",
+		"p",
+		"",
+		"Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)",
+	)
 	Cmd.AddCommand(createCmd)
 }

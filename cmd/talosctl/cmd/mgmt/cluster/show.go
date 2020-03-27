@@ -30,7 +30,7 @@ var showCmd = &cobra.Command{
 }
 
 func show(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, provisioner)
+	provisioner, err := providers.Factory(ctx, provisionerName)
 	if err != nil {
 		return err
 	}
