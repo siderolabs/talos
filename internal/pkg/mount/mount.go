@@ -5,6 +5,7 @@
 package mount
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path"
@@ -31,6 +32,17 @@ func mountRetry(f RetryFunc, p *Point) (err error) {
 			switch err {
 			case unix.EBUSY:
 				return retry.ExpectedError(err)
+			case unix.EINVAL:
+				isMounted, checkErr := p.IsMounted()
+				if checkErr != nil {
+					return retry.ExpectedError(checkErr)
+				}
+
+				if !isMounted {
+					return nil
+				}
+
+				return retry.UnexpectedError(err)
 			default:
 				return retry.UnexpectedError(err)
 			}
@@ -149,6 +161,33 @@ func (p *Point) Unmount() (err error) {
 	}
 
 	return nil
+}
+
+// IsMounted checks whether mount point is active under /proc/mounts
+func (p *Point) IsMounted() (bool, error) {
+	f, err := os.Open("/proc/mounts")
+	if err != nil {
+		return false, err
+	}
+
+	defer f.Close() //nolint: errcheck
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+
+		if len(fields) < 2 {
+			continue
+		}
+
+		mountpoint := fields[1]
+
+		if mountpoint == p.target {
+			return true, nil
+		}
+	}
+
+	return false, scanner.Err()
 }
 
 // Move moves a mountpoint to a new location with a prefix.
