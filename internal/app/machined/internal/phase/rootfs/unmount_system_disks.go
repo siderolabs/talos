@@ -5,6 +5,8 @@
 package rootfs
 
 import (
+	"fmt"
+
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
@@ -50,7 +52,7 @@ func (task *UnmountSystemDisks) standard(r runtime.Runtime) (err error) {
 
 	m := manager.NewManager(mountpoints)
 	if err = m.UnmountAll(); err != nil {
-		return err
+		return fmt.Errorf("error unmounting %q partition: %w", task.devlabel, err)
 	}
 
 	return nil
