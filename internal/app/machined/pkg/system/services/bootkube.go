@@ -57,6 +57,8 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 
 		if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
 			if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
+				log.Println("no key found, assuming cluster needs to be bootstrapped")
+
 				// no key set yet, treat as not provisioned yet
 				return nil
 			}
@@ -66,10 +68,14 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 
 		if len(resp.Kvs) == 0 {
 			// no key/values in the range, treat as not provisioned yet
+			log.Printf("response for key %q is empty, assuming cluster needs to be bootstrapped", constants.InitializedKey)
+
 			return nil
 		}
 
 		if string(resp.Kvs[0].Value) == "true" {
+			log.Println("cluster is already bootstrapped")
+
 			b.provisioned = true
 		}
 

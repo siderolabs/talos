@@ -17,7 +17,7 @@ KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.18.0
 SONOBUOY_VERSION ?= 0.17.1
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
-RELEASES ?= v0.3.2 v0.4.0-alpha.7
+RELEASES ?= v0.3.2 v0.4.0-alpha.8
 
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64

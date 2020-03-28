@@ -57,7 +57,7 @@ type upgradeSpec struct {
 
 const (
 	talos03Version = "v0.3.2-1-g71ac6696"
-	talos04Version = "v0.4.0-alpha.7"
+	talos04Version = "v0.4.0-alpha.8-9-g3b189c8c"
 )
 
 var (
