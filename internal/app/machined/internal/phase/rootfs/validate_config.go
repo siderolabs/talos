@@ -5,6 +5,12 @@
 package rootfs
 
 import (
+	"io/ioutil"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
@@ -23,5 +29,26 @@ func (task *ValidateConfig) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *ValidateConfig) standard(r runtime.Runtime) (err error) {
+	file := "/sys/module/usb_storage/parameters/delay_use"
+
+	_, err = os.Stat(file)
+	if os.IsNotExist(err) {
+		return r.Config().Validate(r.Platform().Mode())
+	}
+
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+
+	val := strings.TrimSuffix(string(b), "\n")
+
+	i, err := strconv.Atoi(val)
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(time.Duration(i) * time.Second)
+
 	return r.Config().Validate(r.Platform().Mode())
 }
