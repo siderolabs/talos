@@ -11,7 +11,7 @@ import (
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
-func workerUd(in *Input) (*v1alpha1.Config, error) {
+func workerUd(in *Input2) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   in.Debug,
@@ -19,35 +19,35 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "worker",
-		MachineToken:    in.TrustdInfo.Token,
-		MachineCertSANs: in.AdditionalMachineCertSANs,
+		MachineToken:    in.Cluster.TrustdInfo.Token,
+		MachineCertSANs: in.Node.AdditionalMachineCertSANs,
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
-		MachineNetwork:  in.NetworkConfig,
+		MachineNetwork:  in.Node.NetworkConfig,
 		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:       in.InstallDisk,
-			InstallImage:      in.InstallImage,
+			InstallDisk:       in.Node.InstallDisk,
+			InstallImage:      in.Node.InstallImage,
 			InstallBootloader: true,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
-			RegistryMirrors: in.RegistryMirrors,
+			RegistryMirrors: in.Cluster.RegistryMirrors,
 		},
 	}
 
-	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
+	controlPlaneURL, err := url.Parse(in.Cluster.ControlPlaneEndpoint)
 	if err != nil {
 		return config, err
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
-		BootstrapToken: in.Secrets.BootstrapToken,
+		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Cluster.Certs.K8s.Crt},
+		BootstrapToken: in.Cluster.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-			DNSDomain:     in.ServiceDomain,
-			PodSubnet:     in.PodNet,
-			ServiceSubnet: in.ServiceNet,
+			DNSDomain:     in.Cluster.ServiceDomain,
+			PodSubnet:     in.Cluster.PodNet,
+			ServiceSubnet: in.Cluster.ServiceNet,
 		},
 	}
 

@@ -26,6 +26,11 @@ type Content struct {
 	data []byte
 }
 
+// MachineConfigs is an array of machine configs
+type MachineConfigs struct {
+	MachineConfigs map[string]v1alpha1.MachineConfig `yaml:"machineConfigs"`
+}
+
 // NewConfigBundle returns a new bundle
 // nolint: gocyclo
 func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
@@ -84,9 +89,9 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 	// Handle generating net-new configs
 	fmt.Println("generating PKI and tokens")
 
-	var input *generate.Input
+	var input *generate.Input2
 
-	input, err := generate.NewInput(
+	input, err := generate.NewInput2(
 		options.InputOptions.ClusterName,
 		options.InputOptions.Endpoint,
 		options.InputOptions.KubeVersion,
@@ -96,10 +101,11 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		return bundle, err
 	}
 
+	// generate base configs per node type
 	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		var generatedConfig *v1alpha1.Config
 
-		generatedConfig, err = generate.Config(configType, input)
+		generatedConfig, err = generate.BaseConfig(configType, input)
 		if err != nil {
 			return bundle, err
 		}
@@ -114,6 +120,63 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 	}
 
+	/////////// TODO: MOVE THIS LOGIC /////////////
+
+	// generate host configs
+	configsFile := "C:\\Users\\dave.CABITO\\go\\src\\dave93cab\\talos\\template\\MachineConfigs.yaml"
+
+	// read configs
+	data, err := ioutil.ReadFile(configsFile)
+	if err != nil {
+		return bundle, err
+		// return fmt.Errorf("could not read file: %w", configsFile)
+	}
+
+	// unmarshall as array of machine configs
+	machineConfigs := MachineConfigs{}
+
+	err = yaml.Unmarshal([]byte(data), &machineConfigs)
+	if err != nil {
+		return bundle, err
+		// return fmt.Errorf("could not parse machine config yaml")
+	}
+
+	bundle.HostCfgs = make(map[string]*v1alpha1.Config)
+
+	for machineID, hostConfig := range machineConfigs.MachineConfigs {
+
+		// choose base config to modify
+		var config v1alpha1.Config
+		switch hostConfig.MachineType {
+		case "init":
+			config = *bundle.InitCfg
+		case "controlplane":
+			config = *bundle.ControlPlaneCfg
+		case "join":
+			config = *bundle.JoinCfg
+		default:
+			return bundle, err
+			// return fmt.Errorf("invalid machine type %s for machine %s", hostConfig.MachineType, machineID)
+		}
+
+		// overwrite with
+		if hostConfig.MachineNetwork != nil {
+			config.MachineConfig.MachineNetwork = hostConfig.MachineNetwork
+		}
+		if hostConfig.MachineInstall != nil {
+			config.MachineConfig.MachineInstall = hostConfig.MachineInstall
+		}
+		if hostConfig.MachineCertSANs != nil {
+			config.MachineConfig.MachineCertSANs = hostConfig.MachineCertSANs
+		}
+		if hostConfig.MachineKubelet != nil {
+			config.MachineConfig.MachineKubelet = hostConfig.MachineKubelet
+		}
+
+		bundle.HostCfgs[machineID] = &config
+	}
+
+	// generate talos config
 	bundle.TalosCfg, err = generate.Talosconfig(input, options.InputOptions.GenOptions...)
 	if err != nil {
 		return bundle, err

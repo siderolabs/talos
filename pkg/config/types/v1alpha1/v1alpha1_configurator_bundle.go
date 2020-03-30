@@ -15,6 +15,7 @@ type ConfigBundle struct {
 	InitCfg         *Config
 	ControlPlaneCfg *Config
 	JoinCfg         *Config
+	HostCfgs        map[string]*Config
 	TalosCfg        *config.Config
 }
 
@@ -36,4 +37,9 @@ func (c *ConfigBundle) Join() runtime.Configurator {
 // TalosConfig implements the ConfiguratorBundle interface.
 func (c *ConfigBundle) TalosConfig() *config.Config {
 	return c.TalosCfg
+}
+
+// Hosts returns host-specific configurations.
+func (c *ConfigBundle) Hosts() map[string]*Config {
+	return c.HostCfgs
 }

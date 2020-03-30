@@ -104,6 +104,7 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
+	// create base configs
 	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		name := strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
@@ -129,6 +130,23 @@ func genV1Alpha1Config(args []string) error {
 		}
 
 		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0644); err != nil {
+			return err
+		}
+
+		fmt.Printf("created %s\n", fullFilePath)
+	}
+
+	// create host configs
+	for machinedID, config := range configBundle.HostCfgs {
+		name := fmt.Sprintf("%s-%s.yaml", strings.ToLower(config.MachineConfig.MachineType), strings.ToLower(machinedID))
+		fullFilePath := filepath.Join(outputDir, name)
+
+		configString, err := config.Bytes()
+		if err != nil {
+			return err
+		}
+
+		if err = ioutil.WriteFile(fullFilePath, []byte(string(configString)), 0644); err != nil {
 			return err
 		}
 

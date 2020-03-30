@@ -11,7 +11,7 @@ import (
 )
 
 // Talosconfig returns the talos admin Talos config.
-func Talosconfig(in *Input, opts ...GenOption) (*config.Config, error) {
+func Talosconfig(in *Input2, opts ...GenOption) (*config.Config, error) {
 	options := DefaultGenOptions()
 
 	for _, opt := range opts {
@@ -21,13 +21,13 @@ func Talosconfig(in *Input, opts ...GenOption) (*config.Config, error) {
 	}
 
 	return &config.Config{
-		Context: in.ClusterName,
+		Context: in.Cluster.ClusterName,
 		Contexts: map[string]*config.Context{
-			in.ClusterName: {
+			in.Cluster.ClusterName: {
 				Endpoints: options.EndpointList,
-				CA:        base64.StdEncoding.EncodeToString(in.Certs.OS.Crt),
-				Crt:       base64.StdEncoding.EncodeToString(in.Certs.Admin.Crt),
-				Key:       base64.StdEncoding.EncodeToString(in.Certs.Admin.Key),
+				CA:        base64.StdEncoding.EncodeToString(in.Cluster.Certs.OS.Crt),
+				Crt:       base64.StdEncoding.EncodeToString(in.Cluster.Certs.Admin.Crt),
+				Key:       base64.StdEncoding.EncodeToString(in.Cluster.Certs.Admin.Key),
 			},
 		},
 	}, nil

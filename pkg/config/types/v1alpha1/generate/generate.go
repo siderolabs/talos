@@ -36,7 +36,30 @@ const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
-func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
+func Config(t machine.Type, in *Input2) (c *v1alpha1.Config, err error) {
+	switch t {
+	case machine.TypeInit:
+		if c, err = initUd(in); err != nil {
+			return c, err
+		}
+	case machine.TypeControlPlane:
+		if c, err = controlPlaneUd(in); err != nil {
+			return c, err
+		}
+	case machine.TypeWorker:
+		if c, err = workerUd(in); err != nil {
+			return c, err
+		}
+	default:
+		return c, errors.New("failed to determine config type to generate")
+	}
+
+	return c, nil
+}
+
+// BaseConfig returns the talos base config for a given node type.
+// nolint: gocyclo
+func BaseConfig(t machine.Type, in *Input2) (c *v1alpha1.Config, err error) {
 	switch t {
 	case machine.TypeInit:
 		if c, err = initUd(in); err != nil {
@@ -89,7 +112,58 @@ type Input struct {
 
 	RegistryMirrors map[string]machine.RegistryMirrorConfig
 
+	HostConfigs []string
+
 	Debug bool
+}
+
+// Input2 holds info about ips, network, install etc that may be customized per node.
+//
+//nolint: maligned
+type Input2 struct {
+	Cluster ClusterInput
+	Node    NodeInput
+	Debug   bool
+}
+
+// NodeInput holds info about ips, network, install etc that may be customized per node.
+//
+//nolint: maligned
+type NodeInput struct {
+	InstallDisk  string
+	InstallImage string
+
+	AdditionalMachineCertSANs []string
+	NetworkConfig             *v1alpha1.NetworkConfig
+}
+
+// ClusterInput holds holds cluster config, certs, ips etc. common to all nodes
+//
+//nolint: maligned
+type ClusterInput struct {
+	Certs *Certs
+
+	// ControlplaneEndpoint is the canonical address of the kubernetes control
+	// plane.  It can be a DNS name, the IP address of a load balancer, or
+	// (default) the IP address of the first master node.  It is NOT
+	// multi-valued.  It may optionally specify the port.
+	ControlPlaneEndpoint string
+
+	AdditionalSubjectAltNames []string
+
+	ClusterName       string
+	ServiceDomain     string
+	PodNet            []string
+	ServiceNet        []string
+	KubernetesVersion string
+	Secrets           *Secrets
+	TrustdInfo        *TrustdInfo
+
+	ExternalEtcd bool
+
+	RegistryMirrors map[string]machine.RegistryMirrorConfig
+
+	HostConfigs []string
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
@@ -123,6 +197,41 @@ func (i *Input) GetAPIServerSANs() []string {
 	}
 
 	list = append(list, i.AdditionalSubjectAltNames...)
+
+	return list
+}
+
+// GetAPIServerEndpoint2 returns the formatted host:port of the API server endpoint
+func (i *Input2) GetAPIServerEndpoint2(port string) string {
+	if port == "" {
+		return tnet.FormatAddress(i.Cluster.ControlPlaneEndpoint)
+	}
+
+	return net.JoinHostPort(i.Cluster.ControlPlaneEndpoint, port)
+}
+
+// GetControlPlaneEndpoint2 returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP
+func (i *Input2) GetControlPlaneEndpoint2() string {
+	if i == nil || i.Cluster.ControlPlaneEndpoint == "" {
+		panic("cannot GetControlPlaneEndpoint without any Master IPs")
+	}
+
+	return i.Cluster.ControlPlaneEndpoint
+}
+
+// GetAPIServerSANs2 returns the formatted list of Subject Alt Name addresses for the API Server
+func (i *Input2) GetAPIServerSANs2() []string {
+	list := []string{}
+
+	endpointURL, err := url.Parse(i.Cluster.ControlPlaneEndpoint)
+	if err == nil {
+		host, _, err := net.SplitHostPort(endpointURL.Host)
+		if err == nil {
+			list = append(list, host)
+		}
+	}
+
+	list = append(list, i.Cluster.AdditionalSubjectAltNames...)
 
 	return list
 }
@@ -209,6 +318,132 @@ func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEnc
 	}
 
 	return x509.NewCertficateAndKey(caCrt, caKey, opts...)
+}
+
+// NewInput2 ...
+func NewInput2(clustername string, endpoint string, kubernetesVersion string, opts ...GenOption) (input *Input2, err error) {
+	options := DefaultGenOptions()
+
+	for _, opt := range opts {
+		if err = opt(&options); err != nil {
+			return nil, err
+		}
+	}
+
+	var loopback, podNet, serviceNet string
+
+	if tnet.IsIPv6(net.ParseIP(endpoint)) {
+		loopback = "::1"
+		podNet = DefaultIPv6PodNet
+		serviceNet = DefaultIPv6ServiceNet
+	} else {
+		loopback = "127.0.0.1"
+		podNet = DefaultIPv4PodNet
+		serviceNet = DefaultIPv4ServiceNet
+	}
+
+	// Gen trustd token strings
+	kubeadmBootstrapToken, err := genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
+	if err != nil {
+		return nil, err
+	}
+
+	// Gen trustd token strings
+	trustdToken, err := genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeadmTokens := &Secrets{
+		BootstrapToken:         kubeadmBootstrapToken,
+		AESCBCEncryptionSecret: aescbcEncryptionSecret,
+	}
+
+	trustdInfo := &TrustdInfo{
+		Token: trustdToken,
+	}
+
+	etcdCA, err := NewEtcdCA()
+	if err != nil {
+		return nil, err
+	}
+
+	kubernetesCA, err := NewKubernetesCA()
+	if err != nil {
+		return nil, err
+	}
+
+	talosCA, err := NewTalosCA()
+	if err != nil {
+		return nil, err
+	}
+
+	admin, err := NewAdminCertificateAndKey(talosCA.CrtPEM, talosCA.KeyPEM, loopback)
+	if err != nil {
+		return nil, err
+	}
+
+	certs := &Certs{
+		Admin: admin,
+		Etcd: &x509.PEMEncodedCertificateAndKey{
+			Crt: etcdCA.CrtPEM,
+			Key: etcdCA.KeyPEM,
+		},
+		K8s: &x509.PEMEncodedCertificateAndKey{
+			Crt: kubernetesCA.CrtPEM,
+			Key: kubernetesCA.KeyPEM,
+		},
+		OS: &x509.PEMEncodedCertificateAndKey{
+			Crt: talosCA.CrtPEM,
+			Key: talosCA.KeyPEM,
+		},
+	}
+
+	var additionalSubjectAltNames []string
+
+	var additionalMachineCertSANs []string
+
+	if len(options.EndpointList) > 0 {
+		additionalSubjectAltNames = options.EndpointList
+		additionalMachineCertSANs = options.EndpointList
+	}
+
+	additionalSubjectAltNames = append(additionalSubjectAltNames, options.AdditionalSubjectAltNames...)
+
+	if options.NetworkConfig == nil {
+		options.NetworkConfig = &v1alpha1.NetworkConfig{}
+	}
+
+	input = &Input2{
+		Debug: options.Debug,
+		Cluster: ClusterInput{
+			Certs:                     certs,
+			ControlPlaneEndpoint:      endpoint,
+			PodNet:                    []string{podNet},
+			ServiceNet:                []string{serviceNet},
+			ServiceDomain:             options.DNSDomain,
+			ClusterName:               clustername,
+			KubernetesVersion:         kubernetesVersion,
+			Secrets:                   kubeadmTokens,
+			TrustdInfo:                trustdInfo,
+			AdditionalSubjectAltNames: additionalSubjectAltNames,
+			RegistryMirrors:           options.RegistryMirrors,
+			HostConfigs:               options.HostConfigs,
+		},
+		Node: NodeInput{
+			AdditionalMachineCertSANs: additionalMachineCertSANs,
+			InstallDisk:               options.InstallDisk,
+			InstallImage:              options.InstallImage,
+			NetworkConfig:             options.NetworkConfig,
+		},
+	}
+
+	return input, nil
 }
 
 // NewInput generates the sensitive data required to generate all config
@@ -329,6 +564,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		NetworkConfig:             options.NetworkConfig,
 		RegistryMirrors:           options.RegistryMirrors,
 		Debug:                     options.Debug,
+		HostConfigs:               options.HostConfigs,
 	}
 
 	return input, nil

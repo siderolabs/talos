@@ -10,7 +10,7 @@ import (
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
-func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
+func controlPlaneUd(in *Input2) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   in.Debug,
@@ -18,41 +18,41 @@ func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
 
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "controlplane",
-		MachineToken:    in.TrustdInfo.Token,
-		MachineCA:       in.Certs.OS,
-		MachineCertSANs: in.AdditionalMachineCertSANs,
+		MachineToken:    in.Cluster.TrustdInfo.Token,
+		MachineCA:       in.Cluster.Certs.OS,
+		MachineCertSANs: in.Node.AdditionalMachineCertSANs,
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
-		MachineNetwork:  in.NetworkConfig,
+		MachineNetwork:  in.Node.NetworkConfig,
 		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:       in.InstallDisk,
-			InstallImage:      in.InstallImage,
+			InstallDisk:       in.Node.InstallDisk,
+			InstallImage:      in.Node.InstallImage,
 			InstallBootloader: true,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
-			RegistryMirrors: in.RegistryMirrors,
+			RegistryMirrors: in.Cluster.RegistryMirrors,
 		},
 	}
 
-	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
+	controlPlaneURL, err := url.Parse(in.Cluster.ControlPlaneEndpoint)
 	if err != nil {
 		return config, err
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		BootstrapToken: in.Secrets.BootstrapToken,
+		BootstrapToken: in.Cluster.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		EtcdConfig: &v1alpha1.EtcdConfig{
-			RootCA: in.Certs.Etcd,
+			RootCA: in.Cluster.Certs.Etcd,
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-			DNSDomain:     in.ServiceDomain,
-			PodSubnet:     in.PodNet,
-			ServiceSubnet: in.ServiceNet,
+			DNSDomain:     in.Cluster.ServiceDomain,
+			PodSubnet:     in.Cluster.PodNet,
+			ServiceSubnet: in.Cluster.ServiceNet,
 		},
-		ClusterCA:                     in.Certs.K8s,
-		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
+		ClusterCA:                     in.Cluster.Certs.K8s,
+		ClusterAESCBCEncryptionSecret: in.Cluster.Secrets.AESCBCEncryptionSecret,
 	}
 
 	config.MachineConfig = machine

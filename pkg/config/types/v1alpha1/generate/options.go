@@ -88,6 +88,15 @@ func WithDebug(enable bool) GenOption {
 	}
 }
 
+// WithHostConfigs adds host-specific configuration for generating node configs
+func WithHostConfigs(configs []string) GenOption {
+	return func(o *GenOptions) error {
+		o.HostConfigs = configs
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -98,6 +107,7 @@ type GenOptions struct {
 	RegistryMirrors           map[string]machine.RegistryMirrorConfig
 	DNSDomain                 string
 	Debug                     bool
+	HostConfigs               []string
 }
 
 // DefaultGenOptions returns default options.
