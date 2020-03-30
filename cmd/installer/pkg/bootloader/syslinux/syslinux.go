@@ -263,10 +263,6 @@ func update() (err error) {
 }
 
 func setADV(ldlinux, fallback string) (err error) {
-	if fallback == "" {
-		return nil
-	}
-
 	var f *os.File
 
 	if f, err = os.OpenFile(ldlinux, os.O_RDWR, 0700); err != nil {

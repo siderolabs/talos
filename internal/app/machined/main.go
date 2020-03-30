@@ -127,6 +127,10 @@ func revert() (err error) {
 		return nil
 	}
 
+	if label == "" {
+		return nil
+	}
+
 	log.Printf("reverting default boot to %q", label)
 
 	var b []byte
