@@ -31,17 +31,17 @@ func (suite *GenerateSuite) SetupSuite() {
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeInit, suite.input)
+	_, err := genv1alpha1.Config(machine.TypeInit, suite.input, nil)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeControlPlane, suite.input)
+	_, err := genv1alpha1.Config(machine.TypeControlPlane, suite.input, nil)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeWorker, suite.input)
+	_, err := genv1alpha1.Config(machine.TypeWorker, suite.input, nil)
 	suite.Require().NoError(err)
 }
 

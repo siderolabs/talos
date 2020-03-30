@@ -36,18 +36,18 @@ const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
-func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
+func Config(t machine.Type, in *Input, hostConfig *v1alpha1.MachineConfig) (c *v1alpha1.Config, err error) {
 	switch t {
 	case machine.TypeInit:
-		if c, err = initUd(in); err != nil {
+		if c, err = initUd(in, hostConfig); err != nil {
 			return c, err
 		}
 	case machine.TypeControlPlane:
-		if c, err = controlPlaneUd(in); err != nil {
+		if c, err = controlPlaneUd(in, hostConfig); err != nil {
 			return c, err
 		}
 	case machine.TypeWorker:
-		if c, err = workerUd(in); err != nil {
+		if c, err = workerUd(in, hostConfig); err != nil {
 			return c, err
 		}
 	default:
@@ -90,6 +90,57 @@ type Input struct {
 	RegistryMirrors map[string]machine.RegistryMirrorConfig
 
 	Debug bool
+}
+
+// mergedHostMachineConfig contains fields overrideable in machine config overrideable with host settings
+type mergedHostMachineConfig struct {
+	machineNetwork  *v1alpha1.NetworkConfig
+	machineInstall  *v1alpha1.InstallConfig
+	machineCertSANs []string
+	machineKubelet  *v1alpha1.KubeletConfig
+}
+
+func mergeHostMachineConfig(in *Input, hostConfig *v1alpha1.MachineConfig) *mergedHostMachineConfig {
+
+	merged := &mergedHostMachineConfig{
+		machineNetwork: in.NetworkConfig,
+		machineInstall: &v1alpha1.InstallConfig{
+			InstallDisk:       in.InstallDisk,
+			InstallImage:      in.InstallImage,
+			InstallBootloader: true,
+		},
+		machineCertSANs: in.AdditionalMachineCertSANs,
+		machineKubelet:  &v1alpha1.KubeletConfig{},
+	}
+
+	if hostConfig == nil {
+		return merged
+	}
+
+	if hostConfig.MachineNetwork != nil {
+		merged.machineNetwork = hostConfig.MachineNetwork
+	}
+
+	if hostConfig.MachineInstall != nil {
+		merged.machineInstall = &v1alpha1.InstallConfig{
+			InstallDisk:            hostConfig.MachineInstall.InstallDisk,
+			InstallImage:           in.InstallImage, // keep installer-specified installer image
+			InstallExtraKernelArgs: hostConfig.MachineInstall.InstallExtraKernelArgs,
+			InstallBootloader:      hostConfig.MachineInstall.InstallBootloader,
+			InstallWipe:            hostConfig.MachineInstall.InstallWipe,
+			InstallForce:           hostConfig.MachineInstall.InstallForce,
+		}
+	}
+
+	if hostConfig.MachineCertSANs != nil {
+		merged.machineCertSANs = hostConfig.MachineCertSANs
+	}
+
+	if hostConfig.MachineKubelet != nil {
+		merged.machineKubelet = hostConfig.MachineKubelet
+	}
+
+	return merged
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint

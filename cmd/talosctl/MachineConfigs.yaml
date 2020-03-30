@@ -1,0 +1,85 @@
+hostConfigs:
+  master-1:
+    type: init
+    network:
+      hostname: master-1
+      interfaces:
+        - interface: eth0
+          cidr: 192.168.0.101/24
+          routes:
+            - network: 0.0.0.0/0
+              gateway: 192.168.0.1
+          dhcp: false
+      nameservers:
+        - 1.1.1.1
+        - 8.8.8.8      
+  master-2:
+    type: controlplane
+    network:
+      hostname: master-2
+      interfaces:
+        - interface: eth0
+          cidr: 192.168.0.102/24
+          routes:
+            - network: 0.0.0.0/0
+              gateway: 192.168.0.1
+          dhcp: false
+      nameservers:
+        - 1.1.1.1
+        - 8.8.8.8
+  master-3:
+    type: controlplane
+    network:
+      hostname: master-3
+      interfaces:
+        - interface: eth0
+          cidr: 192.168.0.103/24
+          routes:
+            - network: 0.0.0.0/0
+              gateway: 192.168.0.1
+          dhcp: false
+      nameservers:
+        - 1.1.1.1
+        - 8.8.8.8
+  worker-1:
+    type: join
+    network:
+      hostname: worker-1
+      interfaces:
+        - interface: eth0
+          cidr: 192.168.0.201/24
+          routes:
+            - network: 0.0.0.0/0
+              gateway: 192.168.0.1
+          dhcp: false
+      nameservers:
+        - 1.1.1.1
+        - 8.8.8.8 
+  worker-2:
+    type: join
+    network:
+      hostname: worker-2
+      interfaces:
+        - interface: eth0
+          cidr: 192.168.0.202/24
+          routes:
+            - network: 0.0.0.0/0
+              gateway: 192.168.0.1
+          dhcp: false
+      nameservers:
+        - 1.1.1.1
+        - 8.8.8.8
+  worker-3:
+    type: join
+    network:
+      hostname: worker-3
+      interfaces:
+        - interface: eth0
+          cidr: 192.168.0.203/24
+          routes:
+            - network: 0.0.0.0/0
+              gateway: 192.168.0.1
+          dhcp: false
+      nameservers:
+        - 1.1.1.1
+        - 8.8.8.8                

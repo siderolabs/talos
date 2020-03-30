@@ -31,6 +31,7 @@ var (
 	installImage      string
 	outputDir         string
 	registryMirrors   []string
+	hostConfigsFile   string
 )
 
 // genConfigCmd represents the gen config command.
@@ -85,7 +86,7 @@ func genV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
 	}
 
-	configBundle, err := config.NewConfigBundle(
+	bundleOptions, err := config.NewBundleOptions(
 		config.WithInputOptions(
 			&config.InputOptions{
 				ClusterName: args[0],
@@ -101,9 +102,20 @@ func genV1Alpha1Config(args []string) error {
 		),
 	)
 	if err != nil {
+		return fmt.Errorf("failed to create bundle options: %w", err)
+	}
+
+	input, err := config.NewGeneratorInput(bundleOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create generator input: %w", err)
+	}
+
+	configBundle, err := config.NewConfigBundle(bundleOptions, input)
+	if err != nil {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
+	// create base configs
 	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		name := strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
@@ -135,6 +147,31 @@ func genV1Alpha1Config(args []string) error {
 		fmt.Printf("created %s\n", fullFilePath)
 	}
 
+	// create host configs
+	if hostConfigsFile != "" {
+		hostConfigs, err := CreateHostConfigs(hostConfigsFile, input)
+		if err != nil {
+			return fmt.Errorf("host configs - %w", err)
+		}
+
+		// create host configs
+		for machinedID, config := range hostConfigs {
+			name := fmt.Sprintf("%s-%s.yaml", strings.ToLower(config.MachineConfig.MachineType), strings.ToLower(machinedID))
+			fullFilePath := filepath.Join(outputDir, name)
+
+			configString, err := config.Bytes()
+			if err != nil {
+				return err
+			}
+
+			if err = ioutil.WriteFile(fullFilePath, []byte(string(configString)), 0644); err != nil {
+				return err
+			}
+
+			fmt.Printf("created %s\n", fullFilePath)
+		}
+	}
+
 	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later
 	configBundle.TalosConfig().Contexts[args[0]].Endpoints = []string{"127.0.0.1"}
 
@@ -164,4 +201,5 @@ func init() {
 	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
+	genConfigCmd.Flags().StringVar(&hostConfigsFile, "host-configs", "", "path to host-specific configs file")
 }

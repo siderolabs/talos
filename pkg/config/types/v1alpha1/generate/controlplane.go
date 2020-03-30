@@ -10,24 +10,24 @@ import (
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
-func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
+func controlPlaneUd(in *Input, hostConfig *v1alpha1.MachineConfig) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   in.Debug,
 	}
 
+	// merge host overrides if provided
+	merged := mergeHostMachineConfig(in, hostConfig)
+
+	// populate configs
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "controlplane",
 		MachineToken:    in.TrustdInfo.Token,
 		MachineCA:       in.Certs.OS,
-		MachineCertSANs: in.AdditionalMachineCertSANs,
-		MachineKubelet:  &v1alpha1.KubeletConfig{},
-		MachineNetwork:  in.NetworkConfig,
-		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:       in.InstallDisk,
-			InstallImage:      in.InstallImage,
-			InstallBootloader: true,
-		},
+		MachineCertSANs: merged.machineCertSANs,
+		MachineKubelet:  merged.machineKubelet,
+		MachineNetwork:  merged.machineNetwork,
+		MachineInstall:  merged.machineInstall,
 		MachineRegistries: v1alpha1.RegistriesConfig{
 			RegistryMirrors: in.RegistryMirrors,
 		},

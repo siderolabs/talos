@@ -26,18 +26,40 @@ type Content struct {
 	data []byte
 }
 
-// NewConfigBundle returns a new bundle
-// nolint: gocyclo
-func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
+func NewBundleOptions(opts ...BundleOption) (BundleOptions, error) {
 	options := DefaultBundleOptions()
 
 	for _, opt := range opts {
 		if err := opt(&options); err != nil {
-			return nil, err
+			return options, err
 		}
 	}
 
-	bundle := &v1alpha1.ConfigBundle{}
+	return options, nil
+}
+
+func NewGeneratorInput(options BundleOptions) (*generate.Input, error) {
+
+	var input *generate.Input
+
+	input, err := generate.NewInput(
+		options.InputOptions.ClusterName,
+		options.InputOptions.Endpoint,
+		options.InputOptions.KubeVersion,
+		options.InputOptions.GenOptions...,
+	)
+	if err != nil {
+		return input, err
+	}
+
+	return input, nil
+}
+
+// NewConfigBundle returns a new bundle
+// nolint: gocyclo
+func NewConfigBundle(options BundleOptions, input *generate.Input) (bundle *v1alpha1.ConfigBundle, err error) {
+
+	bundle = &v1alpha1.ConfigBundle{}
 
 	// Configs already exist, we'll pull them in.
 	if options.ExistingConfigs != "" {
@@ -84,22 +106,10 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 	// Handle generating net-new configs
 	fmt.Println("generating PKI and tokens")
 
-	var input *generate.Input
-
-	input, err := generate.NewInput(
-		options.InputOptions.ClusterName,
-		options.InputOptions.Endpoint,
-		options.InputOptions.KubeVersion,
-		options.InputOptions.GenOptions...,
-	)
-	if err != nil {
-		return bundle, err
-	}
-
 	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		var generatedConfig *v1alpha1.Config
 
-		generatedConfig, err = generate.Config(configType, input)
+		generatedConfig, err = generate.Config(configType, input, nil)
 		if err != nil {
 			return bundle, err
 		}

@@ -219,7 +219,17 @@ func create(ctx context.Context) (err error) {
 		)
 	}
 
-	configBundle, err := config.NewConfigBundle(configBundleOpts...)
+	bundleOptions, err := config.NewBundleOptions(configBundleOpts...)
+	if err != nil {
+		return fmt.Errorf("failed to create bundle options: %w", err)
+	}
+
+	input, err := config.NewGeneratorInput(bundleOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create generator input: %w", err)
+	}
+
+	configBundle, err := config.NewConfigBundle(bundleOptions, input)
 	if err != nil {
 		return err
 	}
