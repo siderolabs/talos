@@ -104,6 +104,7 @@ func init() {
 	}
 }
 
+// nolint: gogcylo
 func revert() (err error) {
 	f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0700)
 	if err != nil {
@@ -128,6 +129,12 @@ func revert() (err error) {
 	}
 
 	if label == "" {
+		adv.DeleteTag(syslinux.AdvUpgrade)
+
+		if _, err = f.Write(adv); err != nil {
+			return err
+		}
+
 		return nil
 	}
 
