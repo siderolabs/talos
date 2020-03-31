@@ -146,6 +146,7 @@ func (d *Sequencer) Boot() error {
 		phase.NewPhase(
 			"post startup tasks",
 			services.NewLabelNodeAsMasterTask(),
+			kubernetes.NewUncordonTask(),
 		),
 		phase.NewPhase(
 			"update bootloader",
