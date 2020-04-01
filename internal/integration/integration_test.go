@@ -16,7 +16,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
 	"github.com/talos-systems/talos/internal/integration/api"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/integration/cli"
@@ -24,6 +23,7 @@ import (
 	provision_test "github.com/talos-systems/talos/internal/integration/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
+	"github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/version"
 )
 

@@ -16,7 +16,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	clientconfig "github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
@@ -24,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cli"
+	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"

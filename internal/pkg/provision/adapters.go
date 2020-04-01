@@ -10,7 +10,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
+	"github.com/talos-systems/talos/pkg/client"
 )
 
 // ClusterAccess extends Cluster interface to provide clients to the cluster.

@@ -15,9 +15,9 @@ import (
 	"google.golang.org/grpc/peer"
 
 	osapi "github.com/talos-systems/talos/api/os"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/client"
 )
 
 var verbose bool

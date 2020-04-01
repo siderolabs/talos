@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	clientconfig "github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/cli"
+	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 )
 
 var (

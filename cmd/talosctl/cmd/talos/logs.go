@@ -19,9 +19,9 @@ import (
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 

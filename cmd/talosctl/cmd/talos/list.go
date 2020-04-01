@@ -18,8 +18,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/talos-systems/talos/pkg/client"
 )
 
 const sixMonths = 6 * time.Hour * 24 * 30

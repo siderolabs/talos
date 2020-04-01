@@ -26,7 +26,7 @@ import (
 	networkapi "github.com/talos-systems/talos/api/network"
 	osapi "github.com/talos-systems/talos/api/os"
 	timeapi "github.com/talos-systems/talos/api/time"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/net"
 )
 

@@ -8,8 +8,8 @@ package check
 import (
 	"context"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/pkg/client"
 )
 
 // ApidReadyAssertion checks whether apid is responsive on all the nodes.

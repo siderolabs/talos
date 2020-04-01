@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	talosclient "github.com/talos-systems/talos/cmd/talosctl/pkg/client"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/pkg/provision"
@@ -29,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
+	talosclient "github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
