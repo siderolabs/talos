@@ -247,7 +247,7 @@ func (n *Networkd) Hostname() (err error) {
 		return err
 	}
 
-	if err = writeHosts(hostname, address); err != nil {
+	if err = writeHosts(hostname, address, n.Config); err != nil {
 		return err
 	}
 

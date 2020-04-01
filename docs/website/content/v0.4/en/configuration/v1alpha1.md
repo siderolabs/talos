@@ -722,6 +722,23 @@ Defaults to `1.1.1.1` and `8.8.8.8`
 
 Type: `array`
 
+#### extraHostEntries
+
+Allows for extra entries to be added to /etc/hosts file
+
+Type: `array`
+
+Examples:
+
+```yaml
+extraHostEntries:
+  - ip: 192.168.1.100
+    aliases:
+      - test
+      - test.domain.tld
+
+```
+
 ---
 
 ### InstallConfig
