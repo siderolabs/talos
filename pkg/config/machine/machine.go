@@ -90,6 +90,13 @@ type Network interface {
 	SetHostname(string)
 	Resolvers() []string
 	Devices() []Device
+	ExtraHosts() []ExtraHost
+}
+
+// ExtraHost represents a host entry in /etc/hosts
+type ExtraHost struct {
+	IP      string   `yaml:"ip"`
+	Aliases []string `yaml:"aliases"`
 }
 
 // Device represents a network interface.

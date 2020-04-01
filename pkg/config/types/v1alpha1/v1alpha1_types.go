@@ -430,6 +430,16 @@ type NetworkConfig struct {
 	//     Used to statically set the nameservers for the host.
 	//     Defaults to `1.1.1.1` and `8.8.8.8`
 	NameServers []string `yaml:"nameservers,omitempty"`
+	//   description: |
+	//     Allows for extra entries to be added to /etc/hosts file
+	//   examples:
+	//     - |
+	//       extraHostEntries:
+	//         - ip: 192.168.1.100
+	//           aliases:
+	//             - test
+	//             - test.domain.tld
+	ExtraHostEntries []machine.ExtraHost `yaml:"extraHostEntries,omitempty"`
 }
 
 // InstallConfig represents the installation options for preparing a node.

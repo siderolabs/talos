@@ -477,6 +477,11 @@ func (n *NetworkConfig) Resolvers() []string {
 	return n.NameServers
 }
 
+// ExtraHosts implements the Configurator interface.
+func (n *NetworkConfig) ExtraHosts() []machine.ExtraHost {
+	return n.ExtraHostEntries
+}
+
 // Servers implements the Configurator interface.
 func (t *TimeConfig) Servers() []string {
 	return t.TimeServers

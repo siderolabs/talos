@@ -16,6 +16,8 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config/machine"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
@@ -105,17 +107,31 @@ const hostsTemplate = `
 ::1             localhost ip6-localhost ip6-loopback
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
+
+{{ with .ExtraHosts }}
+{{ range . }}
+{{ .IP }} {{ range .Aliases }}{{.}} {{ end }}
+{{ end }} 
+{{ end }}
 `
 
-func writeHosts(hostname string, address net.IP) (err error) {
+func writeHosts(hostname string, address net.IP, config runtime.Configurator) (err error) {
+	extraHosts := []machine.ExtraHost{}
+
+	if config != nil {
+		extraHosts = config.Machine().Network().ExtraHosts()
+	}
+
 	data := struct {
-		IP       string
-		Hostname string
-		Alias    string
+		IP         string
+		Hostname   string
+		Alias      string
+		ExtraHosts []machine.ExtraHost
 	}{
-		IP:       address.String(),
-		Hostname: hostname,
-		Alias:    strings.Split(hostname, ".")[0],
+		IP:         address.String(),
+		Hostname:   hostname,
+		Alias:      strings.Split(hostname, ".")[0],
+		ExtraHosts: extraHosts,
 	}
 
 	var tmpl *template.Template
