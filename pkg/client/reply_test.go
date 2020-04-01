@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
+	"github.com/talos-systems/talos/pkg/client"
 )
 
 func TestFilterMessages(t *testing.T) {

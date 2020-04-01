@@ -8,8 +8,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/client/config"
 )
 
 // Option controls Provisioner.

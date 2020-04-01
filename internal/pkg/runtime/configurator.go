@@ -5,7 +5,7 @@
 package runtime
 
 import (
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
