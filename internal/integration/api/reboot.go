@@ -59,7 +59,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 
 		func(node string) {
 			// timeout for single node reboot
-			ctx, ctxCancel := context.WithTimeout(suite.ctx, 5*time.Minute)
+			ctx, ctxCancel := context.WithTimeout(suite.ctx, 10*time.Minute)
 			defer ctxCancel()
 
 			nodeCtx := client.WithNodes(ctx, node)
@@ -72,7 +72,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 
 			var uptimeAfter float64
 
-			suite.Require().NoError(retry.Constant(3 * time.Minute).Retry(func() error {
+			suite.Require().NoError(retry.Constant(10 * time.Minute).Retry(func() error {
 				uptimeAfter, err = suite.ReadUptime(nodeCtx)
 				if err != nil {
 					// API might be unresponsive during reboot
@@ -147,7 +147,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
-				return retry.Constant(3 * time.Minute).Retry(func() error {
+				return retry.Constant(10 * time.Minute).Retry(func() error {
 					uptimeAfter, err := suite.ReadUptime(nodeCtx)
 					if err != nil {
 						// API might be unresponsive during reboot
