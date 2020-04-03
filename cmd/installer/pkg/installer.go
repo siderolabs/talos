@@ -235,31 +235,33 @@ func zero(manifest *manifest.Manifest) (err error) {
 		return err
 	}
 
+	defer zero.Close() //nolint: errcheck
+
 	for dev := range manifest.Targets {
-		var f *os.File
+		if err = func(dev string) error {
+			var f *os.File
 
-		if f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice); err != nil {
-			return err
-		}
+			if f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice); err != nil {
+				return err
+			}
 
-		var size uint64
+			defer f.Close() //nolint: errcheck
 
-		if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
-			return fmt.Errorf("failed to got block device size: %v", ret)
-		}
+			var size uint64
 
-		if _, err = io.CopyN(f, zero, int64(size)); err != nil {
-			return err
-		}
+			if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
+				return fmt.Errorf("failed to got block device size: %v", ret)
+			}
 
-		if err = f.Close(); err != nil {
+			if _, err = io.CopyN(f, zero, int64(size)); err != nil {
+				return err
+			}
+
+			return f.Close()
+		}(dev); err != nil {
 			return err
 		}
 	}
 
-	if err = zero.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return zero.Close()
 }
