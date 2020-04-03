@@ -88,6 +88,8 @@ func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
 					return fmt.Errorf("error opening %s: %w", r.Path, err)
 				}
 
+				defer tarball.Close() //nolint: errcheck
+
 				imgs, err := client.Import(ctx, tarball, r.Options...)
 				if err != nil {
 					return fmt.Errorf("error importing %s: %w", r.Path, err)
