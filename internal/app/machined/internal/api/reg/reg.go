@@ -583,12 +583,12 @@ func (r *Registrator) Read(in *machineapi.ReadRequest, srv machineapi.MachineSer
 			return err
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
+		defer f.Close() //nolint: errcheck
 
+		ctx, cancel := context.WithCancel(srv.Context())
 		defer cancel()
 
 		chunker := stream.NewChunker(f)
-
 		chunkCh := chunker.Read(ctx)
 
 		for data := range chunkCh {

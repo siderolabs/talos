@@ -78,6 +78,7 @@ func (c *Container) GetLogChunker(follow bool, tailLines int) (chunker.Chunker, 
 		if tailLines >= 0 {
 			err = tail.SeekLines(f, tailLines)
 			if err != nil {
+				f.Close() //nolint: errcheck
 				return nil, nil, fmt.Errorf("error tailing log: %w", err)
 			}
 		}

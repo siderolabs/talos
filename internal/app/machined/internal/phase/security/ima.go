@@ -66,6 +66,8 @@ func (task *IMA) runtime(r runtime.Runtime) (err error) {
 		return err
 	}
 
+	defer f.Close() //nolint: errcheck
+
 	for _, line := range rules {
 		if _, err = f.WriteString(line + "\n"); err != nil {
 			return fmt.Errorf("rule %q is invalid", err)
