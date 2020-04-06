@@ -160,6 +160,7 @@ func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
+		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 	}
