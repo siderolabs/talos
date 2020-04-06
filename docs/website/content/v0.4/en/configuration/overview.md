@@ -1,5 +1,5 @@
 ---
-title: 'Configuration'
+title: 'Configuration Overview'
 ---
 
 In this section, we will step through the configuration of a Talos based Kubernetes cluster.

@@ -1,14 +1,14 @@
 <template>
   <article class="max-w-3xl pt-1 pb-4 pl-6 pr-6 mx-auto c-rich-text">
-    <h1 class="page-heading">{{ doc.title }}</h1>
-    <div class="my-0">
+    <div class="flex">
+      <h2 class="page-heading flex-grow">{{ doc.title }}</h2>
       <a
         :href="
           'https://github.com/talos-systems/talos/edit/master/docs/website/content/' +
             $store.getters['sidebar/getActiveDocPath'] +
             '.md'
         "
-        class="no-underline font-normal text-sm"
+        class="no-underline font-normal text-sm self-center"
         ><img
           src="/images/Git-Icon-Black.png"
           height="14px"

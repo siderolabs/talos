@@ -2,16 +2,14 @@
   <div>
     <div id="content" class="content mb-4 section-docs">
       <div class="flex justify-between">
-        <div class="c-rich-text">
-          <h3>Documentation</h3>
-        </div>
+        <div class="c-rich-text"></div>
         <DocumentationDropdown></DocumentationDropdown>
       </div>
       <div class="flex flex-wrap">
-        <div class="md:w-1/4 mt-1">
+        <div class="md:w-1/5 mt-1">
           <Sidebar></Sidebar>
         </div>
-        <div class="md:w-3/4 mt-1">
+        <div class="md:w-4/5 mt-1">
           <Content></Content>
         </div>
       </div>
@@ -37,7 +35,8 @@ export default {
     return {
       bodyAttrs: {
         class: 'kind-section section-docs'
-      }
+      },
+      title: 'Talos Documentation'
     }
   },
 

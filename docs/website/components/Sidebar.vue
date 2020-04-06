@@ -1,37 +1,41 @@
 <template>
-  <div class="sidenav sticky pt-4 pb-4">
-    <ul class="mt-8">
-      <li
-        v-for="entry in $store.state.sidebar.menu"
-        :key="entry.title"
-        @click="selected = entry.title"
-        class="py-2"
-      >
-        <a
-          :href="'#' + entry.path"
-          @click="handleClick(entry)"
-          class="sidebar-category"
-        >
-          <span class="relative">{{ entry.title }}</span>
-        </a>
-        <ul class="py-0 pl-4">
-          <li v-for="item in entry.items" :key="item.path" class="ml-0">
-            <a
-              :href="'#' + item.path"
+  <div class="sidenav sticky py-4">
+    <div class="sidebar-heading mb-4">Documentation</div>
+    <ul>
+      <li v-for="entry in $store.state.sidebar.menu" :key="entry.title">
+        <span class="sidebar-category pt-4">{{ entry.title }}</span>
+        <ul class="pt-1 pb-2">
+          <li
+            v-for="item in entry.items"
+            :key="item.path"
+            class="sidebar-item my-2"
+          >
+            <div v-if="item.children" class="ml-4 pt-2 sidebar-subcategory">
+              {{ item.title }}
+            </div>
+
+            <router-link
+              v-else
               @click="handleClick(item)"
-              class="sidebar-item"
+              :to="'#' + item.path"
+              class="block ml-2"
             >
-              <span class="relative">{{ item.title }}</span>
-            </a>
-            <ul class="py-0 pl-4">
-              <li v-for="child in item.children" :key="child.path" class="ml-0">
-                <a
-                  :href="'#' + child.path"
+              <span class="p-2">{{ item.title }}</span>
+            </router-link>
+
+            <ul v-if="item.children" class="sidebar-children ml-4 mt-2">
+              <li
+                v-for="child in item.children"
+                :key="child.path"
+                class="sidebar-item my-2"
+              >
+                <router-link
+                  :to="'#' + child.path"
                   @click="handleClick(child)"
-                  class="sidebar-child"
+                  class="block m-1"
                 >
-                  <span class="relative">{{ child.title }}</span>
-                </a>
+                  <span class="p-2">{{ child.title }}</span>
+                </router-link>
               </li>
             </ul>
           </li>
@@ -46,10 +50,10 @@ export default {
   name: 'Sidebar',
 
   data() {
-    return {
-      selected: undefined
-    }
+    return {}
   },
+
+  computed: {},
 
   methods: {
     handleClick(item) {
@@ -62,34 +66,30 @@ export default {
 <style>
 .sidenav {
   top: 7%;
-  overflow-x: hidden;
+  @apply font-sans tracking-wide;
 }
 
-a.sidebar-category {
-  @apply font-brand text-gray-600 relative block text-lg font-bold tracking-wide;
+.sidebar-heading {
+  @apply font-headings text-gray-800 relative block text-2xl;
 }
 
-a.sidebar-category:hover {
-  @apply text-gray-900;
+.sidebar-category {
+  @apply text-gray-500 text-base font-bold uppercase;
 }
 
-a.sidebar-item {
-  @apply font-brand text-gray-600 relative block text-base tracking-wide;
+.sidebar-item {
+  @apply text-gray-700 text-base text-sm;
 }
 
-a.sidebar-item:hover {
-  @apply text-gray-900;
+.sidebar-subcategory {
+  @apply uppercase text-gray-500 font-bold;
 }
 
-a.sidebar-child {
-  @apply font-brand text-gray-600 relative block text-xs tracking-wide;
-}
-
-a.sidebar-child:hover {
-  @apply text-gray-900;
-}
-
-a.active {
+a:hover {
   @apply text-gray-900 font-bold;
+}
+
+.nuxt-link-active {
+  @apply bg-primary-color-100 rounded-md text-gray-800;
 }
 </style>
