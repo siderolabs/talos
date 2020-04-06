@@ -5,6 +5,9 @@
 package services
 
 import (
+	"context"
+	"time"
+
 	"github.com/talos-systems/talos/internal/app/machined/internal/phase"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
@@ -25,7 +28,12 @@ func (task *StartSystemContainerd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 }
 
 func (task *StartSystemContainerd) standard(r runtime.Runtime) (err error) {
-	system.Services(r.Config()).LoadAndStart(&services.SystemContainerd{})
+	svc := &services.SystemContainerd{}
 
-	return nil
+	system.Services(r.Config()).LoadAndStart(svc)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	return system.WaitForService(system.StateEventUp, svc.ID(r.Config())).Wait(ctx)
 }
