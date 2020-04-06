@@ -1,5 +1,5 @@
 ---
-title: Metal
+title: Deploying Talos on Bare Metal
 ---
 
 In this section we will show how you can setup Talos in bare-metal environments.
