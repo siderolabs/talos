@@ -162,6 +162,9 @@ lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdo
 lint: ## Runs linters on go, protobuf, and markdown file types.
 	@$(MAKE) lint-go lint-protobuf lint-markdown
 
+check-dirty: ## Verifies that source tree is not dirty
+	@case "$(TAG)" in *-dirty) echo "Source tree is dirty"; exit 1 ;; esac
+
 # Tests
 
 .PHONY: unit-tests

@@ -3,6 +3,7 @@
 // (e.g. builds, E2E testing, conformance testing, releases). Each pipeline
 // after the default builds on a previous pipeline.
 // Generate with `drone jsonnet --source ./hack/drone.jsonnet --stream --format`
+// Sign with `drone sign talos-systems/talos --save`
 
 local build_container = 'autonomy/build-container:latest';
 local local_registry = 'registry.ci.svc:5000';
@@ -190,18 +191,20 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 // Default pipeline.
 
-local osctl_linux = Step("talosctl-linux", depends_on=[setup_ci]);
-local osctl_darwin = Step("talosctl-darwin", depends_on=[setup_ci]);
-local docs = Step("docs", depends_on=[osctl_linux]);
-local kernel = Step('kernel', depends_on=[setup_ci]);
-local initramfs = Step("initramfs", depends_on=[setup_ci]);
+local docs = Step("docs", depends_on=[setup_ci]);
+local generate = Step("generate", depends_on=[setup_ci]);
+local check_dirty = Step("check-dirty", depends_on=[docs, generate]);
+local osctl_linux = Step("talosctl-linux", depends_on=[check_dirty]);
+local osctl_darwin = Step("talosctl-darwin", depends_on=[check_dirty]);
+local kernel = Step('kernel', depends_on=[check_dirty]);
+local initramfs = Step("initramfs", depends_on=[check_dirty]);
 local installer = Step("installer", depends_on=[initramfs]);
 local talos = Step("talos", depends_on=[initramfs]);
 local installer_local = Step("installer-local",  depends_on=[installer], target="installer", environment={"REGISTRY": local_registry});
 local talos_local = Step("talos-local",  depends_on=[talos], target="talos", environment={"REGISTRY": local_registry});
-local golint = Step("lint-go", depends_on=[setup_ci]);
-local protobuflint = Step("lint-protobuf", depends_on=[setup_ci]);
-local markdownlint = Step("lint-markdown", depends_on=[setup_ci]);
+local golint = Step("lint-go", depends_on=[check_dirty]);
+local markdownlint = Step("lint-markdown", depends_on=[check_dirty]);
+local protobuflint = Step("lint-protobuf", depends_on=[check_dirty]);
 local image_aws = Step("image-aws", depends_on=[installer]);
 local image_azure = Step("image-azure", depends_on=[installer]);
 local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
@@ -277,9 +280,11 @@ local push_latest = {
 
 local default_steps = [
   setup_ci,
+  docs,
+  generate,
+  check_dirty,
   osctl_linux,
   osctl_darwin,
-  docs,
   kernel,
   initramfs,
   installer,
@@ -287,8 +292,8 @@ local default_steps = [
   talos,
   talos_local,
   golint,
-  protobuflint,
   markdownlint,
+  protobuflint,
   image_aws,
   image_azure,
   image_digital_ocean,
