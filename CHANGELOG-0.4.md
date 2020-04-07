@@ -1,3 +1,16 @@
+# [v0.4.0-beta.1](https://github.com/talos-systems/talos/compare/v0.4.0-beta.0...v0.4.0-beta.1) (2020-04-07)
+
+### Bug Fixes
+
+- add bnx2 and bnx2x firmware ([980685d](https://github.com/talos-systems/talos/commit/980685d688234dc8d1761ea746d5e6888f9de891))
+- make sure Close() is called on every path ([bb8e156](https://github.com/talos-systems/talos/commit/bb8e15689608062d92efcfaa8063128c3c568db0))
+- mount TLS certs into bootkube container ([79cc0cf](https://github.com/talos-systems/talos/commit/79cc0cf5194f3e13fbc56e962c6af0b0059afc8c))
+- wait for `system-containerd` to become healthy before proceeding ([5773811](https://github.com/talos-systems/talos/commit/577381196efaf8663b30df60cf2e2c74cd2d455c))
+
+### Features
+
+- upgrade Linux to v5.5.15 ([45218e5](https://github.com/talos-systems/talos/commit/45218e5029dab4a7aaafb5c0a1706e1787a000eb))
+
 # [v0.4.0-beta.0](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.8...v0.4.0-beta.0) (2020-04-03)
 
 ### Bug Fixes
