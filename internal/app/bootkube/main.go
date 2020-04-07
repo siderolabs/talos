@@ -7,11 +7,16 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 	"github.com/kubernetes-sigs/bootkube/pkg/util"
+	"golang.org/x/net/http/httpproxy"
 
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -79,4 +84,29 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatalf("bootkube failed: %s", err)
 	}
+}
+
+func init() {
+	// Explicitly set the default http client transport
+	// to work around our fun proxy.Do once bug.
+	// This is the http.DefaultTransport with the Proxy
+	// func overridden so that the environment variables
+	// with be reread/initialized each time the http call
+	// is made.
+	http.DefaultClient.Transport = &http.Transport{
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
+		},
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
 }
