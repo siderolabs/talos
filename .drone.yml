@@ -49,6 +49,64 @@ steps:
   - name: tmp
     path: /tmp
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: generate
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make generate
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: check-dirty
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make check-dirty
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - docs
+  - generate
+
 - name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -66,7 +124,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: talosctl-darwin
   pull: always
@@ -85,26 +143,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: docs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make docs
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - talosctl-linux
+  - check-dirty
 
 - name: kernel
   pull: always
@@ -123,7 +162,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: initramfs
   pull: always
@@ -142,7 +181,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: installer
   pull: always
@@ -241,26 +280,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: lint-protobuf
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make lint-protobuf
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: lint-markdown
   pull: always
@@ -279,7 +299,26 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
+
+- name: lint-protobuf
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-protobuf
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - check-dirty
 
 - name: image-aws
   pull: always
@@ -713,6 +752,64 @@ steps:
   - name: tmp
     path: /tmp
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: generate
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make generate
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: check-dirty
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make check-dirty
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - docs
+  - generate
+
 - name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -730,7 +827,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: talosctl-darwin
   pull: always
@@ -749,26 +846,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: docs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make docs
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - talosctl-linux
+  - check-dirty
 
 - name: kernel
   pull: always
@@ -787,7 +865,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: initramfs
   pull: always
@@ -806,7 +884,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: installer
   pull: always
@@ -905,26 +983,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: lint-protobuf
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make lint-protobuf
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: lint-markdown
   pull: always
@@ -943,7 +1002,26 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
+
+- name: lint-protobuf
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-protobuf
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - check-dirty
 
 - name: image-aws
   pull: always
@@ -1469,6 +1547,64 @@ steps:
   - name: tmp
     path: /tmp
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: generate
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make generate
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: check-dirty
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make check-dirty
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - docs
+  - generate
+
 - name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -1486,7 +1622,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: talosctl-darwin
   pull: always
@@ -1505,26 +1641,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: docs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make docs
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - talosctl-linux
+  - check-dirty
 
 - name: kernel
   pull: always
@@ -1543,7 +1660,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: initramfs
   pull: always
@@ -1562,7 +1679,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: installer
   pull: always
@@ -1661,26 +1778,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: lint-protobuf
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make lint-protobuf
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: lint-markdown
   pull: always
@@ -1699,7 +1797,26 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
+
+- name: lint-protobuf
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-protobuf
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - check-dirty
 
 - name: image-aws
   pull: always
@@ -2255,6 +2372,64 @@ steps:
   - name: tmp
     path: /tmp
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: generate
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make generate
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: check-dirty
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make check-dirty
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - docs
+  - generate
+
 - name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -2272,7 +2447,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: talosctl-darwin
   pull: always
@@ -2291,26 +2466,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: docs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make docs
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - talosctl-linux
+  - check-dirty
 
 - name: kernel
   pull: always
@@ -2329,7 +2485,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: initramfs
   pull: always
@@ -2348,7 +2504,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: installer
   pull: always
@@ -2447,26 +2603,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: lint-protobuf
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make lint-protobuf
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: lint-markdown
   pull: always
@@ -2485,7 +2622,26 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
+
+- name: lint-protobuf
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-protobuf
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - check-dirty
 
 - name: image-aws
   pull: always
@@ -3041,6 +3197,64 @@ steps:
   - name: tmp
     path: /tmp
 
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: generate
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make generate
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - setup-ci
+
+- name: check-dirty
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make check-dirty
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - docs
+  - generate
+
 - name: talosctl-linux
   pull: always
   image: autonomy/build-container:latest
@@ -3058,7 +3272,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: talosctl-darwin
   pull: always
@@ -3077,26 +3291,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: docs
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make docs
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - talosctl-linux
+  - check-dirty
 
 - name: kernel
   pull: always
@@ -3115,7 +3310,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: initramfs
   pull: always
@@ -3134,7 +3329,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: installer
   pull: always
@@ -3233,26 +3428,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
-
-- name: lint-protobuf
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make lint-protobuf
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - setup-ci
+  - check-dirty
 
 - name: lint-markdown
   pull: always
@@ -3271,7 +3447,26 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - setup-ci
+  - check-dirty
+
+- name: lint-protobuf
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-protobuf
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - check-dirty
 
 - name: image-aws
   pull: always
@@ -3794,6 +3989,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 0faf410cbb2e500b5fc1957aa894c6cd8064b8b2bf9ef22f1802501c167ac1a5
+hmac: 963c1f5e9294c377ec08a13e8bdfe62405a503f683889048a309ab4c90bf257e
 
 ...
