@@ -287,31 +287,31 @@ COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:5530775 /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:5530775 /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:3f07008 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:3f07008 /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:5530775 / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:5530775 / /rootfs
-COPY --from=docker.io/autonomy/containerd:5530775 / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:5530775 / /rootfs
-COPY --from=docker.io/autonomy/eudev:5530775 / /rootfs
-COPY --from=docker.io/autonomy/iptables:5530775 / /rootfs
-COPY --from=docker.io/autonomy/libressl:5530775 / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:5530775 / /rootfs
-COPY --from=docker.io/autonomy/linux-firmware:5530775 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=docker.io/autonomy/linux-firmware:5530775 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
-COPY --from=docker.io/autonomy/musl:5530775 / /rootfs
-COPY --from=docker.io/autonomy/runc:5530775 / /rootfs
-COPY --from=docker.io/autonomy/socat:5530775 / /rootfs
-COPY --from=docker.io/autonomy/syslinux:5530775 / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:5530775 / /rootfs
-COPY --from=docker.io/autonomy/util-linux:5530775 /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:5530775 /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:5530775 /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:5530775 /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/containerd:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/eudev:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/iptables:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/libressl:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/linux-firmware:3f07008 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
+COPY --from=docker.io/autonomy/linux-firmware:3f07008 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=docker.io/autonomy/musl:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/runc:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/socat:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/syslinux:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:3f07008 / /rootfs
+COPY --from=docker.io/autonomy/util-linux:3f07008 /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:3f07008 /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:3f07008 /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:3f07008 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
