@@ -597,6 +597,21 @@ extraManifests:
 
 ```
 
+#### extraManifestHeaders
+
+A map of key value pairs that will be added while fetching the ExtraManifests.
+
+Type: `map`
+
+Examples:
+
+```yaml
+extraManifestHeaders:
+  Token: "1234567"
+  X-ExtraInfo: info
+
+```
+
 #### adminKubeconfig
 
 Settings for admin kubeconfig generation.

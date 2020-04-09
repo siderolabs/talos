@@ -234,13 +234,13 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	// If "custom" is the CNI, we expect the user to supply one or more urls that point to CNI yamls
 	if config.Cluster().Network().CNI().Name() == constants.CustomCNI {
-		if err = fetchManifests(config.Cluster().Network().CNI().URLs()); err != nil {
+		if err = fetchManifests(config.Cluster().Network().CNI().URLs(), map[string]string{}); err != nil {
 			return err
 		}
 	}
 
 	if len(config.Cluster().ExtraManifestURLs()) > 0 {
-		if err = fetchManifests(config.Cluster().ExtraManifestURLs()); err != nil {
+		if err = fetchManifests(config.Cluster().ExtraManifestURLs(), config.Cluster().ExtraManifestHeaderMap()); err != nil {
 			return err
 		}
 	}
@@ -265,7 +265,7 @@ func altNamesFromURLs(urls []string) *tlsutil.AltNames {
 }
 
 // fetchManifests will lay down manifests in the provided urls to the bootkube assets directory
-func fetchManifests(urls []string) error {
+func fetchManifests(urls []string, headers map[string]string) error {
 	ctx := context.Background()
 
 	var result *multierror.Error
@@ -284,6 +284,12 @@ func fetchManifests(urls []string) error {
 		httpGetter := &getter.HttpGetter{
 			Netrc:  false,
 			Client: http.DefaultClient,
+		}
+
+		httpGetter.Header = make(http.Header)
+
+		for k, v := range headers {
+			httpGetter.Header.Add(k, v)
 		}
 
 		getter.Getters["http"] = httpGetter
