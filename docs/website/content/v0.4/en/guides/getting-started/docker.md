@@ -1,5 +1,5 @@
 ---
-title: Getting Started
+title: Docker
 ---
 
 In this guide we will create a Kubernetes cluster in Docker, using a containerized version of Talos.
@@ -19,7 +19,7 @@ The follow are requirements for running Talos in Docker:
 Creating a local cluster is as simple as:
 
 ```bash
-talosctl cluster create
+talosctl cluster create --wait
 ```
 
 Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
