@@ -110,6 +110,8 @@ func (r *Registrator) Shutdown(ctx context.Context, in *empty.Empty) (reply *mac
 
 // Upgrade initiates an upgrade.
 func (r *Registrator) Upgrade(ctx context.Context, in *machineapi.UpgradeRequest) (data *machineapi.UpgradeResponse, err error) {
+	log.Printf("validating %q", in.GetImage())
+
 	if err = pullAndValidateInstallerImage(ctx, r.config.Machine().Registries(), in.GetImage()); err != nil {
 		return nil, err
 	}
@@ -643,7 +645,7 @@ func pullAndValidateInstallerImage(ctx context.Context, config machinecfg.Regist
 	//nolint: errcheck
 	defer container.Delete(containerdctx, containerd.WithSnapshotCleanup)
 
-	task, err := container.NewTask(containerdctx, cio.NewCreator(cio.WithStdio))
+	task, err := container.NewTask(containerdctx, cio.NullIO)
 	if err != nil {
 		return err
 	}
