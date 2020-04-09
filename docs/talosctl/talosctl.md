@@ -24,8 +24,10 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl config](talosctl_config.md)	 - Manage the client configuration
 * [talosctl containers](talosctl_containers.md)	 - List containers
 * [talosctl copy](talosctl_copy.md)	 - Copy data out from the node
+* [talosctl crashdump](talosctl_crashdump.md)	 - Dump debug information about the cluster
 * [talosctl dmesg](talosctl_dmesg.md)	 - Retrieve kernel logs
 * [talosctl gen](talosctl_gen.md)	 - Generate CAs, certificates, and private keys
+* [talosctl health](talosctl_health.md)	 - Check cluster health
 * [talosctl interfaces](talosctl_interfaces.md)	 - List network interfaces
 * [talosctl kubeconfig](talosctl_kubeconfig.md)	 - Download the admin kubeconfig from the node
 * [talosctl list](talosctl_list.md)	 - Retrieve a directory listing

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package access
+package cluster
 
 import (
 	"context"
@@ -16,15 +16,23 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// CrashDump produces debug information to help with debugging failures.
-func (a *adapter) CrashDump(ctx context.Context, out io.Writer) {
-	cli, err := a.Client()
+// APICrashDumper collects crash dump via Talos API.
+type APICrashDumper struct {
+	ClientProvider
+	Info
+}
+
+// CrashDump produces information to help with debugging.
+//
+// CrashDump implements CrashDumper interface.
+func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
+	cli, err := s.Client()
 	if err != nil {
 		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
 		return
 	}
 
-	for _, node := range a.Info().Nodes {
+	for _, node := range s.Nodes() {
 		func(node string) {
 			nodeCtx, nodeCtxCancel := context.WithTimeout(client.WithNodes(ctx, node), 30*time.Second)
 			defer nodeCtxCancel()
@@ -66,6 +74,6 @@ func (a *adapter) CrashDump(ctx context.Context, out io.Writer) {
 					r.Close() //nolint: errcheck
 				}
 			}
-		}(node.PrivateIP.String())
+		}(node)
 	}
 }

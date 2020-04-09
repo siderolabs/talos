@@ -14,9 +14,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
-	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"

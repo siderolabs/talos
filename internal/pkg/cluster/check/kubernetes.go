@@ -14,22 +14,18 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
-func K8sAllNodesReportedAssertion(ctx context.Context, cluster provision.ClusterAccess) error {
+func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	expectedNodes := make([]string, 0, len(cluster.Info().Nodes))
-
-	for _, node := range cluster.Info().Nodes {
-		expectedNodes = append(expectedNodes, node.PrivateIP.String())
-	}
+	expectedNodes := cluster.Nodes()
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -59,19 +55,13 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster provision.Cluster
 // K8sFullControlPlaneAssertion checks whether all the master nodes are k8s master nodes.
 //
 //nolint: gocyclo
-func K8sFullControlPlaneAssertion(ctx context.Context, cluster provision.ClusterAccess) error {
+func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	var expectedNodes []string
-
-	for _, node := range cluster.Info().Nodes {
-		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
-			expectedNodes = append(expectedNodes, node.PrivateIP.String())
-		}
-	}
+	expectedNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -106,7 +96,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster provision.Cluster
 }
 
 // K8sAllNodesReadyAssertion checks whether all the nodes are Ready.
-func K8sAllNodesReadyAssertion(ctx context.Context, cluster provision.ClusterAccess) error {
+func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return err
@@ -138,7 +128,7 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster provision.ClusterAcc
 }
 
 // K8sPodReadyAssertion checks whether all the nodes are Ready.
-func K8sPodReadyAssertion(ctx context.Context, cluster provision.ClusterAccess, namespace, labelSelector string) error {
+func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return err

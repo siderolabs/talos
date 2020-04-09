@@ -23,9 +23,9 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
-	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	talosclient "github.com/talos-systems/talos/pkg/client"
@@ -143,7 +143,7 @@ type UpgradeSuite struct {
 
 	configBundle *v1alpha1.ConfigBundle
 
-	clusterAccess provision.ClusterAccess
+	clusterAccess *access.Adapter
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc

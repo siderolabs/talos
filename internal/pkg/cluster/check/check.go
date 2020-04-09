@@ -9,14 +9,21 @@ import (
 	"context"
 	"time"
 
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
 const updateInterval = 100 * time.Millisecond
 
+// ClusterInfo is interface requires by checks.
+type ClusterInfo interface {
+	cluster.ClientProvider
+	cluster.K8sProvider
+	cluster.Info
+}
+
 // ClusterCheck implements a function which returns condition based on ClusterAccess.
-type ClusterCheck func(provision.ClusterAccess) conditions.Condition
+type ClusterCheck func(ClusterInfo) conditions.Condition
 
 // Reporter presents wait progress.
 //
@@ -29,7 +36,7 @@ type Reporter interface {
 //
 // Context ctx might have a timeout set to limit overall wait time.
 // Each check might define its own timeout.
-func Wait(ctx context.Context, cluster provision.ClusterAccess, checks []ClusterCheck, reporter Reporter) error {
+func Wait(ctx context.Context, cluster ClusterInfo, checks []ClusterCheck, reporter Reporter) error {
 	for _, check := range checks {
 		select {
 		case <-ctx.Done():
