@@ -5,7 +5,17 @@
     "items": [
       {
         "title": "Getting Started",
-        "path": "v0.4/en/guides/getting-started"
+        "path": "v0.4/en/guides/getting-started",
+        "children": [
+          {
+            "title": "Docker",
+            "path": "v0.4/en/guides/getting-started/docker"
+          },
+          {
+            "title": "Firecracker",
+            "path": "v0.4/en/guides/getting-started/firecracker"
+          }
+        ]
       },
       {
         "title": "Cloud",
