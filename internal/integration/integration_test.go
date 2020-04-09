@@ -60,7 +60,7 @@ func TestIntegration(t *testing.T) {
 
 		provisioner, err = providers.Factory(ctx, provisionerName)
 		if err != nil {
-			t.Error("error iniitalizing provisioner", err)
+			t.Error("error initializing provisioner", err)
 		}
 
 		defer provisioner.Close() //nolint: errcheck

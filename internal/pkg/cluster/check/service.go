@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/config/machine"
 )
@@ -17,27 +16,20 @@ import (
 // ServiceStateAssertion checks whether service reached some specified state.
 //
 //nolint: gocyclo
-func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess, service string, states ...string) error {
+func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service string, states ...string) error {
 	cli, err := cluster.Client()
 	if err != nil {
 		return err
 	}
 
 	// perform check against "init" node
-	var initNode string
+	initNodes := cluster.NodesByType(machine.TypeInit)
 
-	for _, node := range cluster.Info().Nodes {
-		if node.Type == machine.TypeInit {
-			initNode = node.PrivateIP.String()
-			break
-		}
+	if len(initNodes) != 1 {
+		return fmt.Errorf("init node not found, len(initNodes) = %d", len(initNodes))
 	}
 
-	if initNode == "" {
-		return fmt.Errorf("init node not discovered")
-	}
-
-	nodeCtx := client.WithNodes(ctx, initNode)
+	nodeCtx := client.WithNodes(ctx, initNodes[0])
 
 	servicesInfo, err := cli.ServiceInfo(nodeCtx, service)
 	if err != nil {
@@ -73,7 +65,7 @@ func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess,
 
 // ServiceHealthAssertion checks whether service reached some specified state.
 //nolint: gocyclo
-func ServiceHealthAssertion(ctx context.Context, cluster provision.ClusterAccess, service string, setters ...Option) error {
+func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service string, setters ...Option) error {
 	opts := DefaultOptions()
 
 	for _, setter := range setters {
@@ -87,20 +79,14 @@ func ServiceHealthAssertion(ctx context.Context, cluster provision.ClusterAccess
 		return err
 	}
 
-	nodes := make([]string, 0, len(cluster.Info().Nodes))
+	var nodes []string
 
-	for _, node := range cluster.Info().Nodes {
-		if len(opts.Types) > 0 {
-			for _, t := range opts.Types {
-				if node.Type == t {
-					nodes = append(nodes, node.PrivateIP.String())
-				}
-			}
-
-			continue
+	if len(opts.Types) > 0 {
+		for _, t := range opts.Types {
+			nodes = append(nodes, cluster.NodesByType(t)...)
 		}
-
-		nodes = append(nodes, node.PrivateIP.String())
+	} else {
+		nodes = cluster.Nodes()
 	}
 
 	count := len(nodes)

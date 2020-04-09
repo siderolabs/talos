@@ -5,23 +5,47 @@
 package access
 
 import (
-	"context"
-	"fmt"
-	"strings"
-	"time"
-
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
+// Adapter provides cluster access via provision.Cluster.
+type Adapter struct {
+	cluster.ConfigClientProvider
+	cluster.KubernetesClient
+	cluster.APICrashDumper
+	cluster.Info
+}
+
+type infoWrapper struct {
+	clusterInfo provision.ClusterInfo
+}
+
+func (wrapper *infoWrapper) Nodes() []string {
+	nodes := make([]string, len(wrapper.clusterInfo.Nodes))
+
+	for i := range nodes {
+		nodes[i] = wrapper.clusterInfo.Nodes[i].PrivateIP.String()
+	}
+
+	return nodes
+}
+
+func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
+	var nodes []string
+
+	for _, node := range wrapper.clusterInfo.Nodes {
+		if node.Type == t {
+			nodes = append(nodes, node.PrivateIP.String())
+		}
+	}
+
+	return nodes
+}
+
 // NewAdapter returns ClusterAccess object from Cluster.
-func NewAdapter(cluster provision.Cluster, opts ...provision.Option) provision.ClusterAccess {
+func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapter {
 	options := provision.DefaultOptions()
 
 	for _, opt := range opts {
@@ -30,112 +54,21 @@ func NewAdapter(cluster provision.Cluster, opts ...provision.Option) provision.C
 		}
 	}
 
-	adapter := &adapter{
-		Cluster: cluster,
-		clients: make(map[string]*client.Client),
-		options: &options,
+	configProvider := cluster.ConfigClientProvider{
+		DefaultClient: options.TalosClient,
+		TalosConfig:   options.TalosConfig,
 	}
 
-	if options.TalosClient != nil {
-		// inject default client if provided
-		adapter.clients[""] = options.TalosClient
+	return &Adapter{
+		ConfigClientProvider: configProvider,
+		KubernetesClient: cluster.KubernetesClient{
+			ClientProvider: &configProvider,
+			ForceEndpoint:  options.ForceEndpoint,
+		},
+		APICrashDumper: cluster.APICrashDumper{
+			ClientProvider: &configProvider,
+			Info:           &infoWrapper{clusterInfo: clusterInfo.Info()},
+		},
+		Info: &infoWrapper{clusterInfo: clusterInfo.Info()},
 	}
-
-	return adapter
-}
-
-type adapter struct {
-	provision.Cluster
-
-	clients   map[string]*client.Client
-	clientset *kubernetes.Clientset
-	options   *provision.Options
-}
-
-func (a *adapter) Client(endpoints ...string) (*client.Client, error) {
-	key := strings.Join(endpoints, ",")
-
-	if cli := a.clients[key]; cli != nil {
-		return cli, nil
-	}
-
-	configContext, creds, err := client.NewClientContextAndCredentialsFromParsedConfig(a.options.TalosConfig, "")
-	if err != nil {
-		return nil, err
-	}
-
-	if len(endpoints) == 0 {
-		endpoints = configContext.Endpoints
-	}
-
-	tlsconfig, err := tls.New(
-		tls.WithKeypair(creds.Crt),
-		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(creds.CA),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := client.NewClient(tlsconfig, endpoints, constants.ApidPort)
-	if err == nil {
-		a.clients[key] = client
-	}
-
-	return client, err
-}
-
-func (a *adapter) K8sClient(ctx context.Context) (*kubernetes.Clientset, error) {
-	if a.clientset != nil {
-		return a.clientset, nil
-	}
-
-	client, err := a.Client()
-	if err != nil {
-		return nil, err
-	}
-
-	kubeconfig, err := client.Kubeconfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
-		return clientcmd.Load(kubeconfig)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// patch timeout
-	config.Timeout = time.Minute
-
-	if a.options.ForceEndpoint != "" {
-		config.Host = fmt.Sprintf("%s:%d", a.options.ForceEndpoint, 6443)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err == nil {
-		a.clientset = clientset
-	}
-
-	return clientset, err
-}
-
-func (a *adapter) Close() error {
-	for _, cli := range a.clients {
-		if cli == a.options.TalosClient {
-			// this client was provided, don't close it
-			continue
-		}
-
-		if err := cli.Close(); err != nil {
-			return err
-		}
-	}
-
-	a.clients = nil
-	a.clientset = nil
-
-	return nil
 }

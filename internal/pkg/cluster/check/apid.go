@@ -8,24 +8,17 @@ package check
 import (
 	"context"
 
-	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/client"
 )
 
 // ApidReadyAssertion checks whether apid is responsive on all the nodes.
-func ApidReadyAssertion(ctx context.Context, cluster provision.ClusterAccess) error {
+func ApidReadyAssertion(ctx context.Context, cluster ClusterInfo) error {
 	cli, err := cluster.Client()
 	if err != nil {
 		return err
 	}
 
-	nodes := make([]string, 0, len(cluster.Info().Nodes))
-
-	for _, node := range cluster.Info().Nodes {
-		nodes = append(nodes, node.PrivateIP.String())
-	}
-
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	nodesCtx := client.WithNodes(ctx, cluster.Nodes()...)
 
 	_, err = cli.Version(nodesCtx)
 
