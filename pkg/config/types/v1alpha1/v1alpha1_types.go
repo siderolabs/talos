@@ -343,6 +343,14 @@ type ClusterConfig struct {
 	//         - "https://www.mysweethttpserver.com/manifest2.yaml"
 	ExtraManifests []string `yaml:"extraManifests,omitempty"`
 	//   description: |
+	//     A map of key value pairs that will be added while fetching the ExtraManifests.
+	//   examples:
+	//     - |
+	//       extraManifestHeaders:
+	//         Token: "1234567"
+	//         X-ExtraInfo: info
+	ExtraManifestHeaders map[string]string `yaml:"extraManifestHeaders,omitempty"`
+	//   description: |
 	//     Settings for admin kubeconfig generation.
 	//     Certificate lifetime can be configured.
 	//   examples:
