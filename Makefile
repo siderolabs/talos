@@ -7,7 +7,7 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= autonomy/tools:v0.1.0-3-g84e76d6
+TOOLS ?= autonomy/tools:v0.1.0-4-gac40795
 GO_VERSION ?= 1.14
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
