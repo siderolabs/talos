@@ -429,6 +429,11 @@ func (c *ClusterConfig) ExtraManifestURLs() []string {
 	return c.ExtraManifests
 }
 
+// ExtraManifestHeaderMap implements the Configurator interface.
+func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
+	return c.ExtraManifestHeaders
+}
+
 // PodCheckpointer implements the Configurator interface.
 func (c *ClusterConfig) PodCheckpointer() cluster.PodCheckpointer {
 	if c.PodCheckpointerConfig == nil {

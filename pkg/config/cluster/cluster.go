@@ -32,6 +32,7 @@ type Cluster interface {
 	PodCheckpointer() PodCheckpointer
 	CoreDNS() CoreDNS
 	ExtraManifestURLs() []string
+	ExtraManifestHeaderMap() map[string]string
 	AdminKubeconfig() AdminKubeconfig
 }
 
