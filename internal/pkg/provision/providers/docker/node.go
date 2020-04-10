@@ -36,11 +36,11 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
 			nodeInfo, err := p.createNode(ctx, clusterReq, nodeReq, options)
-			errCh <- err
-
 			if err == nil {
 				nodeCh <- nodeInfo
 			}
+
+			errCh <- err
 		}(nodeReq)
 	}
 
