@@ -1,0 +1,26 @@
+---
+name: Conformance
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: |
+          git fetch origin +refs/heads/master:refs/heads/master
+      - name: Conform
+        uses: talos-systems/conform@v0.1.0-alpha.17
+        with:
+          args: enforce --summary=github
+          token: ${{ secrets.BOT_TOKEN }}
