@@ -1,12 +1,18 @@
 policies:
   - type: commit
     spec:
-      headerLength: 89
       dco: true
       gpg: false
-      imperative: true
+      spellcheck:
+        locale: US
       maximumOfOneCommit: true
-      requireCommitBody: true
+      header:
+        length: 89
+        imperative: true
+        case: lower
+        invalidLastCharacters: .
+      body:
+        required: true
       conventional:
         types:
           - chore
@@ -16,30 +22,20 @@ policies:
           - style
           - test
         scopes:
-          - ami
           - apid
-          - ci
-          - conformance
-          - gpt
-          - hack
-          - image
-          - init
-          - initramfs
-          - kernel
           - machined
           - networkd
           - ntpd
-          - talosctl
           - osd
-          - rootfs
-          - tools
           - trustd
+          - routerd
+          - talosctl
+          - kernel
           - '*'
   - type: license
     spec:
       skipPaths:
         - .git/
-        - .buildkit/
       includeSuffixes:
         - .go
       excludeSuffixes:

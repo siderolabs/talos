@@ -15,14 +15,6 @@ platform:
   arch: amd64
 
 steps:
-- name: ok-to-test
-  image: autonomy/build-container:latest
-  commands:
-  - curl --request GET "https://api.github.com/repos/$DRONE_REPO/issues/$DRONE_PULL_REQUEST" | jq -e '.labels[]|select(.name == "ok-to-test")'
-  when:
-    event:
-    - pull_request
-
 - name: setup-ci
   image: autonomy/build-container:latest
   commands:
@@ -3989,6 +3981,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 963c1f5e9294c377ec08a13e8bdfe62405a503f683889048a309ab4c90bf257e
+hmac: 28c6eccbd80b6a1203d1acb05a3e1812ba6536df88839431f0c77e16e8fc496e
 
 ...
