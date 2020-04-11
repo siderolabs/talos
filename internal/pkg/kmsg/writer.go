@@ -19,7 +19,7 @@ type Writer struct {
 	KmsgWriter io.Writer
 }
 
-// Writer implements io.Writer interface.
+// Write implements io.Writer interface.
 func (w *Writer) Write(p []byte) (n int, err error) {
 	// split writes by `\n`, and limit each line to MaxLineLength
 	for len(p) > 0 {

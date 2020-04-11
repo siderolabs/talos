@@ -104,7 +104,7 @@ func init() {
 	}
 }
 
-// nolint: gogcylo
+// nolint: gocyclo
 func revert() (err error) {
 	f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0700)
 	if err != nil {

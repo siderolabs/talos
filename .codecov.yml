@@ -7,5 +7,4 @@ coverage:
         base: auto
     patch: off
 
-comment:
-  require_changes: yes
+comment: false
