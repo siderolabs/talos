@@ -17,22 +17,22 @@ import (
 	"google.golang.org/grpc"
 
 	timeapi "github.com/talos-systems/talos/api/time"
-	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
 
-type NtpdSuite struct {
+type TimedSuite struct {
 	suite.Suite
 }
 
-func TestNtpdSuite(t *testing.T) {
+func TestTimedSuite(t *testing.T) {
 	// Hide all our state transition messages
 	// log.SetOutput(ioutil.Discard)
-	suite.Run(t, new(NtpdSuite))
+	suite.Run(t, new(TimedSuite))
 }
 
-func (suite *NtpdSuite) TestTime() {
+func (suite *TimedSuite) TestTime() {
 	testServer := "time.cloudflare.com"
 	// Create ntp client
 	n, err := ntp.NewNTPClient(ntp.WithServer(testServer))
@@ -41,7 +41,7 @@ func (suite *NtpdSuite) TestTime() {
 	// Create gRPC server
 	api := NewRegistrator(n)
 	server := factory.NewServer(api)
-	listener, err := fakeNtpdRPC()
+	listener, err := fakeTimedRPC()
 	suite.Assert().NoError(err)
 
 	defer server.Stop()
@@ -65,7 +65,7 @@ func (suite *NtpdSuite) TestTime() {
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 
-func (suite *NtpdSuite) TestTimeCheck() {
+func (suite *TimedSuite) TestTimeCheck() {
 	testServer := "time.cloudflare.com"
 	// Create ntp client with bogus server
 	// so we can check that we explicitly check the time of the
@@ -76,7 +76,7 @@ func (suite *NtpdSuite) TestTimeCheck() {
 	// Create gRPC server
 	api := NewRegistrator(n)
 	server := factory.NewServer(api)
-	listener, err := fakeNtpdRPC()
+	listener, err := fakeTimedRPC()
 	suite.Assert().NoError(err)
 
 	defer server.Stop()
@@ -100,8 +100,8 @@ func (suite *NtpdSuite) TestTimeCheck() {
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 
-func fakeNtpdRPC() (net.Listener, error) {
-	tmpfile, err := ioutil.TempFile("", "ntpd")
+func fakeTimedRPC() (net.Listener, error) {
+	tmpfile, err := ioutil.TempFile("", "timed")
 	if err != nil {
 		return nil, err
 	}

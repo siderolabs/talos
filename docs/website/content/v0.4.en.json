@@ -134,8 +134,8 @@
         "path": "v0.4/en/components/networkd"
       },
       {
-        "title": "ntpd",
-        "path": "v0.4/en/components/ntpd"
+        "title": "timed",
+        "path": "v0.4/en/components/timed"
       },
       {
         "title": "osd",

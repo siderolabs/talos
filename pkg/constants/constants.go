@@ -219,7 +219,7 @@ const (
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 
 	// TimeSocketPath is the path to file socket of time API.
-	TimeSocketPath = SystemRunPath + "/ntpd/ntpd.sock"
+	TimeSocketPath = SystemRunPath + "/timed/timed.sock"
 
 	// NetworkSocketPath is the path to file socket of network API.
 	NetworkSocketPath = SystemRunPath + "/networkd/networkd.sock"

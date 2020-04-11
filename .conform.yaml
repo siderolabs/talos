@@ -25,7 +25,8 @@ policies:
           - apid
           - machined
           - networkd
-          - ntpd
+          - timed
+          - talosctl
           - osd
           - trustd
           - routerd

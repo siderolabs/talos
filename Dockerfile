@@ -106,23 +106,23 @@ RUN chmod +x /machined
 FROM scratch AS machined
 COPY --from=machined-build /machined /machined
 
-# The ntpd target builds the ntpd image.
+# The timed target builds the timed image.
 
-FROM base AS ntpd-build
+FROM base AS timed-build
 ARG SHA
 ARG TAG
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-WORKDIR /src/internal/app/ntpd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /ntpd
-RUN chmod +x /ntpd
+WORKDIR /src/internal/app/timed
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /timed
+RUN chmod +x /timed
 
-FROM base AS ntpd-image
+FROM base AS timed-image
 ARG TAG
 ARG USERNAME
-COPY --from=ntpd-build /ntpd /scratch/ntpd
+COPY --from=timed-build /timed /scratch/timed
 WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./ntpd /ntpd\nENTRYPOINT [\"/ntpd\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/ntpd:${TAG} --output type=docker,dest=/ntpd.tar --no-console  .
+RUN printf "FROM scratch\nCOPY ./timed /timed\nENTRYPOINT [\"/timed\"]" > Dockerfile
+RUN --security=insecure img build --tag ${USERNAME}/timed:${TAG} --output type=docker,dest=/timed.tar --no-console  .
 
 # The apid target builds the api image.
 
@@ -315,7 +315,7 @@ COPY --from=docker.io/autonomy/kernel:a5eeee0 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
-COPY --from=ntpd-image /ntpd.tar /rootfs/usr/images/
+COPY --from=timed-image /timed.tar /rootfs/usr/images/
 COPY --from=osd-image /osd.tar /rootfs/usr/images/
 COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
 COPY --from=networkd-image /networkd.tar /rootfs/usr/images/
