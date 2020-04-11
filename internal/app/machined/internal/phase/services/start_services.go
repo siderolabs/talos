@@ -54,7 +54,7 @@ func (task *StartServices) loadSystemServices(r runtime.Runtime) {
 		// udevd-trigger is causing stalls/unresponsive stuff when running in local mode
 		// TODO: investigate root cause, but workaround for now is to skip it in container mode
 		svcs.Load(
-			&services.NTPd{},
+			&services.Timed{},
 			&services.Udevd{},
 			&services.UdevdTrigger{},
 		)

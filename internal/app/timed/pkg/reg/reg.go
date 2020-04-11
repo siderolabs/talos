@@ -13,19 +13,19 @@ import (
 	"google.golang.org/grpc"
 
 	timeapi "github.com/talos-systems/talos/api/time"
-	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
 // timeapi.Init interfaces.
 type Registrator struct {
-	Ntpd *ntp.NTP
+	Timed *ntp.NTP
 }
 
 // NewRegistrator builds new Registrator instance
 func NewRegistrator(n *ntp.NTP) *Registrator {
 	return &Registrator{
-		Ntpd: n,
+		Timed: n,
 	}
 }
 
@@ -38,12 +38,12 @@ func (r *Registrator) Register(s *grpc.Server) {
 func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeResponse, err error) {
 	reply = &timeapi.TimeResponse{}
 
-	rt, err := r.Ntpd.Query()
+	rt, err := r.Timed.Query()
 	if err != nil {
 		return reply, err
 	}
 
-	return genProtobufTimeResponse(r.Ntpd.GetTime(), rt.Time, r.Ntpd.Server)
+	return genProtobufTimeResponse(r.Timed.GetTime(), rt.Time, r.Timed.Server)
 }
 
 // TimeCheck issues a query to the specified ntp server and displays the results

@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 )
 
-func TestNTPdInterfaces(t *testing.T) {
-	assert.Implements(t, (*system.APIStartableService)(nil), new(services.NTPd))
-	assert.Implements(t, (*system.APIRestartableService)(nil), new(services.NTPd))
+func TestTimedInterfaces(t *testing.T) {
+	assert.Implements(t, (*system.APIStartableService)(nil), new(services.Timed))
+	assert.Implements(t, (*system.APIRestartableService)(nil), new(services.Timed))
 }

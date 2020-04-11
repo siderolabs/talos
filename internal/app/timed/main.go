@@ -8,8 +8,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/talos-systems/talos/internal/app/ntpd/pkg/ntp"
-	"github.com/talos-systems/talos/internal/app/ntpd/pkg/reg"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
@@ -62,7 +62,7 @@ func main() {
 		log.Fatalf("failed to create ntp client: %v", err)
 	}
 
-	log.Println("Starting ntpd")
+	log.Println("Starting timed")
 
 	errch := make(chan error)
 

@@ -26,48 +26,48 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// NTPd implements the Service interface. It serves as the concrete type with
+// Timed implements the Service interface. It serves as the concrete type with
 // the required methods.
-type NTPd struct{}
+type Timed struct{}
 
 // ID implements the Service interface.
-func (n *NTPd) ID(config runtime.Configurator) string {
-	return "ntpd"
+func (n *Timed) ID(config runtime.Configurator) string {
+	return "timed"
 }
 
 // PreFunc implements the Service interface.
-func (n *NTPd) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (n *Timed) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/ntpd.tar",
+		Path: "/usr/images/timed.tar",
 		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/ntpd"),
+			containerdapi.WithIndexName("talos/timed"),
 		},
 	})
 }
 
 // PostFunc implements the Service interface.
-func (n *NTPd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (n *Timed) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (n *NTPd) Condition(config runtime.Configurator) conditions.Condition {
+func (n *Timed) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (n *NTPd) DependsOn(config runtime.Configurator) []string {
+func (n *Timed) DependsOn(config runtime.Configurator) []string {
 	return []string{"containerd", "networkd"}
 }
 
-func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
-	image := "talos/ntpd"
+func (n *Timed) Runner(config runtime.Configurator) (runner.Runner, error) {
+	image := "talos/timed"
 
 	args := runner.Args{
 		ID:          n.ID(config),
-		ProcessArgs: []string{"/ntpd", "--config=" + constants.ConfigPath},
+		ProcessArgs: []string{"/timed", "--config=" + constants.ConfigPath},
 	}
 
 	// Ensure socket dir exists
@@ -105,11 +105,11 @@ func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (n *NTPd) APIStartAllowed(config runtime.Configurator) bool {
+func (n *Timed) APIStartAllowed(config runtime.Configurator) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (n *NTPd) APIRestartAllowed(config runtime.Configurator) bool {
+func (n *Timed) APIRestartAllowed(config runtime.Configurator) bool {
 	return true
 }
