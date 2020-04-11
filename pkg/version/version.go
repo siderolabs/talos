@@ -71,5 +71,5 @@ func printLong(v *machineapi.VersionInfo) {
 
 // PrintShortVersion prints the tag and SHA.
 func PrintShortVersion() {
-	fmt.Println(fmt.Sprintf("%s %s-%s", Name, Tag, SHA))
+	fmt.Printf("%s %s-%s\n", Name, Tag, SHA)
 }
