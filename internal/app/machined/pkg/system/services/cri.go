@@ -23,37 +23,37 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// Containerd implements the Service interface. It serves as the concrete type with
+// CRI implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Containerd struct{}
+type CRI struct{}
 
 // ID implements the Service interface.
-func (c *Containerd) ID(config runtime.Configurator) string {
-	return "containerd"
+func (c *CRI) ID(config runtime.Configurator) string {
+	return "cri"
 }
 
 // PreFunc implements the Service interface.
-func (c *Containerd) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (c *CRI) PreFunc(ctx context.Context, config runtime.Configurator) error {
 	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
-func (c *Containerd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (c *CRI) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Containerd) Condition(config runtime.Configurator) conditions.Condition {
+func (c *CRI) Condition(config runtime.Configurator) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Containerd) DependsOn(config runtime.Configurator) []string {
+func (c *CRI) DependsOn(config runtime.Configurator) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *Containerd) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (c *CRI) Runner(config runtime.Configurator) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
 		ID: c.ID(config),
@@ -81,7 +81,7 @@ func (c *Containerd) Runner(config runtime.Configurator) (runner.Runner, error) 
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (c *Containerd) HealthFunc(runtime.Configurator) health.Check {
+func (c *CRI) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		client, err := containerd.New(constants.ContainerdAddress)
 		if err != nil {
@@ -104,6 +104,6 @@ func (c *Containerd) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (c *Containerd) HealthSettings(runtime.Configurator) *health.Settings {
+func (c *CRI) HealthSettings(runtime.Configurator) *health.Settings {
 	return &health.DefaultSettings
 }

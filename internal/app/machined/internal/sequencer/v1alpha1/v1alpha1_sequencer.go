@@ -104,8 +104,8 @@ func (d *Sequencer) Boot() error {
 			network.NewInitialNetworkSetupTask(),
 		),
 		phase.NewPhase(
-			"start system-containerd",
-			services.NewStartSystemContainerdTask(),
+			"start containerd",
+			services.NewStartContainerdTask(),
 		),
 		phase.NewPhase(
 			"platform tasks",
@@ -245,7 +245,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 		),
 		phase.NewPhase(
 			"stop services",
-			services.NewStopServicesTask("containerd", "udevd"),
+			services.NewStopServicesTask("cri", "udevd"),
 		),
 		phase.NewPhase(
 			"unmount system disk submounts",

@@ -59,7 +59,7 @@ func (n *NTPd) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *NTPd) DependsOn(config runtime.Configurator) []string {
-	return []string{"system-containerd", "networkd"}
+	return []string{"containerd", "networkd"}
 }
 
 func (n *NTPd) Runner(config runtime.Configurator) (runner.Runner, error) {

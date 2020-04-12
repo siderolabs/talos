@@ -14,5 +14,5 @@ import (
 )
 
 func TestContainerdInterfaces(t *testing.T) {
-	assert.Implements(t, (*system.HealthcheckedService)(nil), new(services.Containerd))
+	assert.Implements(t, (*system.HealthcheckedService)(nil), new(services.CRI))
 }
