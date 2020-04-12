@@ -25,7 +25,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
@@ -63,11 +62,7 @@ func (o *OSD) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *OSD) DependsOn(config runtime.Configurator) []string {
-	if config.Machine().Type() == machine.TypeWorker {
-		return []string{"system-containerd", "containerd"}
-	}
-
-	return []string{"system-containerd", "containerd"}
+	return []string{"containerd", "cri"}
 }
 
 func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {

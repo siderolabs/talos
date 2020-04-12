@@ -43,7 +43,7 @@ func (task *StartServices) loadSystemServices(r runtime.Runtime) {
 	// Start the services common to all nodes.
 	svcs.Load(
 		&services.MachinedAPI{},
-		&services.Containerd{},
+		&services.CRI{},
 		&services.APID{},
 		&services.OSD{},
 		&services.Networkd{},

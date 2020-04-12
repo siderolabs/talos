@@ -14,21 +14,21 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
-// StartSystemContainerd represents the task to start system containerd.
-type StartSystemContainerd struct{}
+// StartContainerd represents the task to start system containerd.
+type StartContainerd struct{}
 
-// NewStartSystemContainerdTask initializes and returns an Services task.
-func NewStartSystemContainerdTask() phase.Task {
-	return &StartSystemContainerd{}
+// NewStartContainerdTask initializes and returns an Services task.
+func NewStartContainerdTask() phase.Task {
+	return &StartContainerd{}
 }
 
 // TaskFunc returns the runtime function.
-func (task *StartSystemContainerd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
+func (task *StartContainerd) TaskFunc(mode runtime.Mode) phase.TaskFunc {
 	return task.standard
 }
 
-func (task *StartSystemContainerd) standard(r runtime.Runtime) (err error) {
-	svc := &services.SystemContainerd{}
+func (task *StartContainerd) standard(r runtime.Runtime) (err error) {
+	svc := &services.Containerd{}
 
 	system.Services(r.Config()).LoadAndStart(svc)
 

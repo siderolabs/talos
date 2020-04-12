@@ -67,7 +67,7 @@ func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(config runtime.Configurator) []string {
-	return []string{"system-containerd", "containerd"}
+	return []string{"containerd", "cri"}
 }
 
 func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
