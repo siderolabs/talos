@@ -10,7 +10,6 @@
       "slab_nomerge",
       "slub_debug=P",
       "pti=on",
-      "random.trust_cpu=on",
       "ima_template=ima-ng",
       "ima_appraise=fix",
       "ima_hash=sha512",
