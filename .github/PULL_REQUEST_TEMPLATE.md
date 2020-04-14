@@ -4,15 +4,12 @@
 ## Note to the Contributor
 
 We encourage contributors to go through a proposal process to discuss major changes.
-Before your PR is allowed to run through CI, the maintainers of Talos will first have to accept the PR.
-One of our maintainers will comment on your PR with `/accepted`.
+Before your PR is allowed to run through CI, the maintainers of Talos will first have to approve the PR.
 -->
 
 ## What? (description)
 
 ## Why? (reasoning)
-
-## Logs (if applicable)
 
 ## Acceptance
 
