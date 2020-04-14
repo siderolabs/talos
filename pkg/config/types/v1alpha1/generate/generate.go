@@ -89,7 +89,8 @@ type Input struct {
 
 	RegistryMirrors map[string]machine.RegistryMirrorConfig
 
-	Debug bool
+	Debug   bool
+	Persist bool
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
@@ -329,6 +330,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		NetworkConfig:             options.NetworkConfig,
 		RegistryMirrors:           options.RegistryMirrors,
 		Debug:                     options.Debug,
+		Persist:                   options.Persist,
 	}
 
 	return input, nil
