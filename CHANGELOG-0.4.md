@@ -1,228 +1,417 @@
-# [v0.4.0-beta.1](https://github.com/talos-systems/talos/compare/v0.4.0-beta.0...v0.4.0-beta.1) (2020-04-07)
+<a name="v0.4.0-rc.0"></a>
 
-### Bug Fixes
+## [v0.4.0-rc.0](https://github.com/talos-systems/talos/compare/v0.4.0-beta.1...v0.4.0-rc.0) (2020-04-14)
 
-- add bnx2 and bnx2x firmware ([980685d](https://github.com/talos-systems/talos/commit/980685d688234dc8d1761ea746d5e6888f9de891))
-- make sure Close() is called on every path ([bb8e156](https://github.com/talos-systems/talos/commit/bb8e15689608062d92efcfaa8063128c3c568db0))
-- mount TLS certs into bootkube container ([79cc0cf](https://github.com/talos-systems/talos/commit/79cc0cf5194f3e13fbc56e962c6af0b0059afc8c))
-- wait for `system-containerd` to become healthy before proceeding ([5773811](https://github.com/talos-systems/talos/commit/577381196efaf8663b30df60cf2e2c74cd2d455c))
+### Chore
 
-### Features
+- update pkgs tag to v0.2.0
+- address random CI nits
 
-- upgrade Linux to v5.5.15 ([45218e5](https://github.com/talos-systems/talos/commit/45218e5029dab4a7aaafb5c0a1706e1787a000eb))
+### Feat
 
-# [v0.4.0-beta.0](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.8...v0.4.0-beta.0) (2020-04-03)
+- upgrade Go to 1.14.2
 
-### Bug Fixes
+### Fix
 
-- delete tag on revert with empty label ([83d0851](https://github.com/talos-systems/talos/commit/83d08515632c2df9f26258c772eee25668b075aa))
-- don't use ARP table for networkd health check ([c144484](https://github.com/talos-systems/talos/commit/c144484a4420b397518b906ff0e1e0c363371ca9))
-- ignore EINVAL on unmounting when mount point isn't mounted ([f18b573](https://github.com/talos-systems/talos/commit/f18b5737d8149ab186806c31f8180d8047b29c00))
-- make upgrades work with UEFI ([6fe5fed](https://github.com/talos-systems/talos/commit/6fe5fed6f933039937aeb9ec715210ca44b68a0a))
-- move empty label check ([47327ec](https://github.com/talos-systems/talos/commit/47327eca0986ff707ba06d78edd4c442c921dcee))
-- wait for USB storage ([6629fcf](https://github.com/talos-systems/talos/commit/6629fcf74882c0746605a763d710fb54fa5d46e1))
+- resolve race condition in createNodes
+- add hpsa drivers
 
-### Features
+### Refactor
 
-- add BNX drivers ([675a0ee](https://github.com/talos-systems/talos/commit/675a0eea0e0ed80b39a14323f9bb974079dd50e4))
-- allow for exposing ports on docker clusters ([b84d5e2](https://github.com/talos-systems/talos/commit/b84d5e2660ae51623fc15e346e5ed33a4b405842))
-- introduce ability to specify extra hosts in /etc/hosts ([38609bf](https://github.com/talos-systems/talos/commit/38609bf58131c86713937943416ec1d96e4f36ac))
-- make `--wait` default option to `talosctl cluster create` ([104af43](https://github.com/talos-systems/talos/commit/104af4380e60dac09f701c3788d3d0c22057f748))
-- move bootkube out as full service ([2294a65](https://github.com/talos-systems/talos/commit/2294a65972f2a18d32554c6aa871a317401728c7))
-- upgrade kubernetes to 1.18 ([3a4eaee](https://github.com/talos-systems/talos/commit/3a4eaeeef06434c698d40ceed39f442106dd6cec))
+- don't log installer verification
 
-# [v0.4.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.7...v0.4.0-alpha.8) (2020-03-24)
+### Test
 
-### Bug Fixes
+- serialize `docs` step execution
+- update versions used for upgrade tests
 
-- update k8s to 1.17.3 ([3485ea9](https://github.com/talos-systems/talos/commit/3485ea9f0968821396e663793b35bc3ec519aee6))
-- update rtnetlink checks for bit masks ([5342701](https://github.com/talos-systems/talos/commit/5342701f9370188f790cc002a6b8b2e23c69eda0))
+<a name="v0.4.0-beta.1"></a>
 
-### Features
+## [v0.4.0-beta.1](https://github.com/talos-systems/talos/compare/v0.4.0-beta.0...v0.4.0-beta.1) (2020-04-07)
 
-- add usb storage support ([69e2ebb](https://github.com/talos-systems/talos/commit/69e2ebbb15e91bfcf96e0cf9182203512a76832d))
-- build talosctl for ARM v7 ([c6581fa](https://github.com/talos-systems/talos/commit/c6581fabac551b0c3c42e26d66d124d817d51cf4))
-- build talosctl for ARM64 ([43662e4](https://github.com/talos-systems/talos/commit/43662e4a24757eb657c06afe32e1c87253ef5ff3))
-- initial work for supporting vlans ([0824e50](https://github.com/talos-systems/talos/commit/0824e500b29c9cd304d474857b1e55b294503799))
-- update bootkube ([eba80b4](https://github.com/talos-systems/talos/commit/eba80b453f8aa8268b9a95bca94e90bfc16de46f))
+### Chore
 
-# [v0.4.0-alpha.7](https://github.com/talos-system/talos/compare/v0.4.0-alpha.6...v0.4.0-alpha.7) (2020-03-21)
+- prepare release v0.4.0-beta.1
+- update sonobuoy to v0.18.0
+- update timeout values for e2e tests
 
-### Bug Fixes
+### Feat
 
-- add debug option to v1alpha1 config ([be6e328](https://github.com/talos-system/talos/commit/be6e3288fa3abd06b75c4692c67ade0fd09cbfae))
-- ensure CA cert generation respects the hour flag ([856386a](https://github.com/talos-system/talos/commit/856386a788e9ce646c53eeba18b23a0fb4fcca87)), closes [#1911](https://github.com/talos-system/talos/issues/1911)
-- ensure hostname is never empty ([9b47c04](https://github.com/talos-systems/talos/commit/9b47c049ef1aa563cd14bd03cc25179840d18a0b))
-- ensure printing of panic message ([4d5c7e4](https://github.com/talos-system/talos/commit/4d5c7e482ce09a42917af496244d2b9c38b7adf0))
-- respect dns domain from machine config ([2f4ccfd](https://github.com/talos-system/talos/commit/2f4ccfda9a4d9aab9a63bef06996df71950b9824))
-- skip links without a carrier ([b669874](https://github.com/talos-system/talos/commit/b6698747bc71c7acfb19d7c8f54a5bbd9cd6ddbf))
+- upgrade Linux to v5.5.15
 
-### Features
+### Fix
 
-- add debug logs to networkd health check ([02bb05b](https://github.com/talos-system/talos/commit/02bb05b058b7509d5c1c6832fe99722f16be96ab))
-- add function for mounting a specific system disk partition ([1a68840](https://github.com/talos-system/talos/commit/1a68840eb45c18a5c1a72a20625bce06bf762c5c))
-- add support for `--with-debug` to osctl cluster create ([564e9e3](https://github.com/talos-system/talos/commit/564e9e3c000449032e35010d3dfa9813f5dd1e32))
-- allow for persistence of config data ([12bfd8d](https://github.com/talos-system/talos/commit/12bfd8dd94418c66d80b59c1534b634e21b140f3))
-- generate kubeconfig on the fly on request ([bbe2c53](https://github.com/talos-system/talos/commit/bbe2c53d295522a6bce467ff0b716020143ec5b3))
-- make admin kubeconfig cert lifetime configurable ([34cec9b](https://github.com/talos-system/talos/commit/34cec9bbfb034bf82f7b7fe7961e7c6da1f38060)), closes [#1906](https://github.com/talos-system/talos/issues/1906)
-- rename osctl to talosctl ([5dbc26c](https://github.com/talos-system/talos/commit/5dbc26c7a30c22f47e04b39544d194e95878273a))
-- respect panic kernel flag ([853ce16](https://github.com/talos-system/talos/commit/853ce16df467b2df9e17b21c08403995f8cda87b))
-- split `osctl` commands into Talos API and cluster management ([0babc39](https://github.com/talos-system/talos/commit/0babc3965329d99231bcfad25c2cc74e10c78e4e))
-- split routerd from apid ([a068acf](https://github.com/talos-system/talos/commit/a068acfbe463f520991c8901fab5a3e809e843e3))
-- update talos base packages ([1cbbf9c](https://github.com/talos-system/talos/commit/1cbbf9cd5af471d516e15a8f2b86fdb7dc72bae7))
-- upgrade Go to version 1.14.1 ([a1350aa](https://github.com/talos-system/talos/commit/a1350aa819077680fed5e11bd7b9c4e40f1293ed)), closes [#1934](https://github.com/talos-system/talos/issues/1934) [talos-systems/pkgs#106](https://github.com/talos-systems/pkgs/issues/106) [talos-systems/tools#90](https://github.com/talos-systems/tools/issues/90)
+- add bnx2 and bnx2x firmware
+- wait for `system-containerd` to become healthy before proceeding
+- mount TLS certs into bootkube container
+- make sure Close() is called on every path
 
-### BREAKING CHANGES
+<a name="v0.4.0-beta.0"></a>
 
-- This PR fixes a bug where we were only passing `cluster.local` to the
-  kubelet configuration. It will also pull in a new version of the
-  bootkube fork to ensure that custom domains got propogated down to the
-  API Server certs, as well as the CoreDNS configuration for a cluster.
+## [v0.4.0-beta.0](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.8...v0.4.0-beta.0) (2020-04-03)
 
-  Existing users should be aware that, if they were previously trying to
-  use this option in machine configs, that an upgrade will may break
-  their cluster. It will update a kubelet flag with the new domain, but
-  CoreDNS and API Server certs will not change since bootkube has already
-  run. One option may be to change these values manually inside the
-  Kubernetes cluster. However, it may prove easier to rebuild the cluster
-  if necessary.
+### Chore
 
-  Additionally, this PR also exposes a flag to `osctl config generate`
-  to allow tweaking this domain value as well.
+- prepare release v0.4.0-beta.0
 
-  Signed-off-by: Spencer Smith <robertspencersmith@gmail.com>
+### Docs
 
-# [v0.4.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.5...v0.4.0-alpha.6) (2020-02-27)
+- Add example of a VLAN configured device.
 
-### Bug Fixes
+### Feat
 
-- add reboot flag to reset command ([8a3a76f](https://github.com/talos-systems/talos/commit/8a3a76f73e1b31e464299415ffdb0672ab45083c))
-- allow kublet to handle multiple service CIDRs ([16594a8](https://github.com/talos-systems/talos/commit/16594a83a8bd6f92f622c155387a193f3551cc4f)), closes [#1888](https://github.com/talos-systems/talos/issues/1888)
-- default reboot flag to false ([9cf217d](https://github.com/talos-systems/talos/commit/9cf217d2c125a5cc5a2ad670a97c3302fb325feb))
-- ensre proxy is used when fetching additional manifests for bootkube ([f0f5cca](https://github.com/talos-systems/talos/commit/f0f5cca30b73d2676a88c2c83647c38709387bb4))
-- fix reset command ([8092362](https://github.com/talos-systems/talos/commit/8092362098a6f30b5ff8b8b7d0301b85af918867))
-- PodCIDR, ServiceCIDR should be comma sets ([1a71753](https://github.com/talos-systems/talos/commit/1a7175353e473dc07ccfd2b7679cdc26ee6d0ffd)), closes [/kubernetes.io/docs/concepts/services-networking/dual-stack/#enable-ipv4-ipv6](https://github.com//kubernetes.io/docs/concepts/services-networking/dual-stack//issues/enable-ipv4-ipv6) [#1883](https://github.com/talos-systems/talos/issues/1883)
-- refresh proxy settings from environment in image resolver ([cafd33a](https://github.com/talos-systems/talos/commit/cafd33acd84ae0b90b2a086c45cbbe599327cc1e)), closes [#1901](https://github.com/talos-systems/talos/issues/1901) [#1680](https://github.com/talos-systems/talos/issues/1680) [#1690](https://github.com/talos-systems/talos/issues/1690)
-- stop firecracker launcher on signal ([afea21b](https://github.com/talos-systems/talos/commit/afea21bc5aacc2f01339361403a2633981c755c8))
-- unmount bind mounts for system (fixes upgrade stuck on disk busy) ([8913d9d](https://github.com/talos-systems/talos/commit/8913d9df7afde1468030f206277581baff031551))
-- validate install disk ([5b50456](https://github.com/talos-systems/talos/commit/5b50456c051f692c10f7bf687f494c451965a13a))
+- add BNX drivers
+- introduce ability to specify extra hosts in /etc/hosts
+- allow for exposing ports on docker clusters
+- move bootkube out as full service
+- upgrade kubernetes to 1.18
+- make `--wait` default option to `talosctl cluster create`
 
-### Features
+### Fix
 
-- add reboot flag to reset API ([fe7847e](https://github.com/talos-systems/talos/commit/fe7847e0b8982c725299ee892dbe745c7fc9ed6d))
-- support proxy in docker buildx ([08b1a78](https://github.com/talos-systems/talos/commit/08b1a782cd40a470606a00842ab6091b601c6c91))
-- support sending machine info ([63ca83a](https://github.com/talos-systems/talos/commit/63ca83a02ca037d6bb6eb117c4187757552332ba))
+- delete tag on revert with empty label
+- move empty label check
+- wait for USB storage
+- ignore EINVAL on unmounting when mount point isn't mounted
+- make upgrades work with UEFI
+- don't use ARP table for networkd health check
 
-# [v0.4.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.4...v0.4.0-alpha.5) (2020-02-15)
+### Refactor
 
-### Bug Fixes
+- move Talos client package to `pkg/`
+- include partition label when unmount fails
 
-- do not add empty netconf ([5f34859](https://github.com/talos-systems/talos/commit/5f3485979ad206813d41d708cbfe628ffc696020)), closes [#1869](https://github.com/talos-systems/talos/issues/1869)
-- don't proxy gRPC unix connections ([fcaed8b](https://github.com/talos-systems/talos/commit/fcaed8b0dd27f582a7f81b516f938a6eb2701349))
+### Test
 
-### Features
+- mark long tests as !short
 
-- implement registry mirror & config for image pull ([e1779ac](https://github.com/talos-systems/talos/commit/e1779ac77cd942d23fde1374ddebd04242de05db))
+<a name="v0.4.0-alpha.8"></a>
 
-# [v0.4.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.3...v0.4.0-alpha.4) (2020-02-04)
+## [v0.4.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.7...v0.4.0-alpha.8) (2020-03-24)
 
-### Bug Fixes
+### Chore
 
-- bind etcd to IPv6 if available ([dbf408e](https://github.com/talos-systems/talos/commit/dbf408ea58bec8b6f10bbbd9d47dc1c0e42d320e)), closes [#1842](https://github.com/talos-systems/talos/issues/1842) [#1843](https://github.com/talos-systems/talos/issues/1843)
-- **networkd:** fix ticker leak ([4593c4f](https://github.com/talos-systems/talos/commit/4593c4f7270ef62186c7b1b5593eee244ca43bda))
-- follow symlinks ([f567f8c](https://github.com/talos-systems/talos/commit/f567f8c84d4248328d0c972102e37d9d810be6f7))
-- implement kubelet extra mounts ([6d1a2f7](https://github.com/talos-systems/talos/commit/6d1a2f7b6d415bf5e017c733dc5025a7adb096f2))
+- prepare release v0.4.0-alpha.8
+- update upgrade tests for new version, split into two tracks
+- run npm audit fix
 
-### Features
+### Docs
 
-- **networkd:** Add health api ([88df1b5](https://github.com/talos-systems/talos/commit/88df1b50b81d1b27428971f345ee9d72b7e23a93))
-- **networkd:** Make healthcheck perform a check ([e911353](https://github.com/talos-systems/talos/commit/e9113537f909cee7d96d49fc7d96934d69841dce))
+- add bare-metal install example yaml
 
-# [v0.4.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.2...v0.4.0-alpha.3) (2020-01-28)
+### Feat
 
-### Bug Fixes
+- update bootkube
+- add usb storage support
+- initial work for supporting vlans
+- build talosctl for ARM v7
+- build talosctl for ARM64
 
-- correctly split lines with /dev/kmsg output ([1edc08a](https://github.com/talos-systems/talos/commit/1edc08aa245225161d85ee6d9e536bd840558769))
-- install sequence stuck on event bus ([565c747](https://github.com/talos-systems/talos/commit/565c7475826c0ce651202c551e8b4d64451eb3a4))
-- leave etcd after draining node ([e7749d2](https://github.com/talos-systems/talos/commit/e7749d2e8fce4cd435efcb36b06f228e907af268))
-- parse correctly kernel command line missing DNS config ([cebd88f](https://github.com/talos-systems/talos/commit/cebd88f77c312c3886a023881f2aa6d89e0228b9))
-- re-enable control plane flags ([aabd46e](https://github.com/talos-systems/talos/commit/aabd46e65103bc26870c67217ffbfbe135925c1c)), closes [#1523](https://github.com/talos-systems/talos/issues/1523)
-- retry system disk busy check ([e495e29](https://github.com/talos-systems/talos/commit/e495e293080ccd7093cf15cbcf97cd19fce166a7))
+### Fix
 
-### Features
+- update k8s to 1.17.3
+- update rtnetlink checks for bit masks
 
-- allow ability to customize containerd ([e0181c8](https://github.com/talos-systems/talos/commit/e0181c85eb32c64f3acd07340cb09d46b669820b)), closes [#1718](https://github.com/talos-systems/talos/issues/1718)
-- allow for bootkube images to be customized ([67e50f6](https://github.com/talos-systems/talos/commit/67e50f6f50bd3d1b7a67cefe5688eb31c7befce5))
-- update kernel ([4f39907](https://github.com/talos-systems/talos/commit/4f39907b6e6cdda3d3309b7e882f1275f74dcfb9))
+<a name="v0.4.0-alpha.7"></a>
 
-# [v0.4.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (2020-01-21)
+## [v0.4.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.6...v0.4.0-alpha.7) (2020-03-20)
 
-### Bug Fixes
+### Chore
 
-- block when handling bus event ([5b5d171](https://github.com/talos-systems/talos/commit/5b5d171c07eecc9d85076eea609dd7ef1f277d6b))
-- stop race condition between kubelet and networkd ([28782c2](https://github.com/talos-systems/talos/commit/28782c2d46d7cd98a79072e8a4987495b3e62ae6))
-- update networkd permissions ([aac899f](https://github.com/talos-systems/talos/commit/aac899f23d5135a079f2cf5119a5b2ffe4945ae4))
-- **networkd:** Fix incorrect resolver settings ([9321868](https://github.com/talos-systems/talos/commit/93218687ec1a2a3116911d66a45d200461b02b02))
-- **networkd:** Set hostname properly for dhcp when no hostname option is returned ([3dff2b2](https://github.com/talos-systems/talos/commit/3dff2b234d24392b81d2cb42dbd73006fd89d9cc))
-- add Close func in remote generator ([0e47df0](https://github.com/talos-systems/talos/commit/0e47df01c9e7e32d50ccc6d891ce9b17cfdf53dc))
-- check for installer image before proceeding with upgrade ([5e8cab4](https://github.com/talos-systems/talos/commit/5e8cab4dd54923907cd4dc1266063d6962f498ec))
-- Ensure assets directory does not exist ([5f14dd3](https://github.com/talos-systems/talos/commit/5f14dd3246fe4384d5a88e224bf6735d2e541446))
-- raise default NOFILE limit ([33777da](https://github.com/talos-systems/talos/commit/33777da05dc24a2044d5710eb838921b467e450d))
-- refuse to upgrade if single master ([7719a67](https://github.com/talos-systems/talos/commit/7719a6783405db010df22d9da2f0b3265f0e6cf8)), closes [#1770](https://github.com/talos-systems/talos/issues/1770)
-- set kube-dns labels ([5cac4f5](https://github.com/talos-systems/talos/commit/5cac4f5f39b9e30deaab0b61d181ec9b74bc26db))
-- shutdown on button/power ACPI event ([825d821](https://github.com/talos-systems/talos/commit/825d8215106275bcd3a871e0176cf0f1ff028872))
-- Update bootkube to include node ready check ([9566690](https://github.com/talos-systems/talos/commit/95666900a760b619c7a0d49a1e503dda6a2f4f98))
-- update kernel version constant ([cb93646](https://github.com/talos-systems/talos/commit/cb93646c078951fa667611735d29718a80c0f949))
+- prepare release v0.4.0-alpha.7
+- fix formatting of imports
+- update Firecracker Go SDK to the official release
+- cleanup assets dir after bootkube is done
+- improve handling of etcd responses in bootkube pre-func
+- add service state to postfunc
 
-### Features
+### Docs
 
-- add a basic architectural diagram and a call to action ([d6f5ff3](https://github.com/talos-systems/talos/commit/d6f5ff34148ce7914510fc89c666e49583689bc5))
-- allow additional manifests to be provided to bootkube ([4b81907](https://github.com/talos-systems/talos/commit/4b81907bd36351b6119ee8ec418bd486de79fa4a))
-- upgrade kubernetes version to 1.17.1 ([60260c8](https://github.com/talos-systems/talos/commit/60260c85d119e3e39b26111aaba66f6132f455d3))
-- upgrade Linux to v5.4.10 ([7edd969](https://github.com/talos-systems/talos/commit/7edd96947a33a39e12ab2ffe2dc4c4712dbf9a03))
-- upgrade Linux to v5.4.11 ([e66ac62](https://github.com/talos-systems/talos/commit/e66ac62877eb4637dd030de78ca1bd15f06a992a))
+- update the website generator's npm packages
 
-# [v0.4.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.0...v0.4.0-alpha.1) (2020-01-09)
+### Feat
 
-### Bug Fixes
+- rename osctl to talosctl
+- add support for `--with-debug` to osctl cluster create
+- split `osctl` commands into Talos API and cluster management
+- upgrade Go to version 1.14.1
+- update talos base packages
+- add debug logs to networkd health check
+- respect panic kernel flag
+- allow for persistence of config data
+- split routerd from apid
+- make admin kubeconfig cert lifetime configurable
+- add function for mounting a specific system disk partition
+- generate kubeconfig on the fly on request
 
-- make the CNI URL error better ([7fb8289](https://github.com/talos-systems/talos/commit/7fb8289a223984937ee74f9241c57bc088de81d6))
+### Fix
 
-### Features
+- respect dns domain from machine config
+- ensure printing of panic message
+- add debug option to v1alpha1 config
+- skip links without a carrier
+- ensure hostname is never empty
+- ensure CA cert generation respects the hour flag
 
-- enable DynamicKubeletConfiguration ([79878c1](https://github.com/talos-systems/talos/commit/79878c1d8d56fa9823806789f30d8b9166a15f8d))
-- support configurable docker-based clusters ([75d9f7b](https://github.com/talos-systems/talos/commit/75d9f7b454cb956ac3659347884c20ffac2c4021))
-- Upgrade bootkube ([0742e52](https://github.com/talos-systems/talos/commit/0742e5245a393f15f916f891ddf07c9fb8d256fc))
-- upgrade linux to v5.4.8 ([4242acd](https://github.com/talos-systems/talos/commit/4242acd085a573b8d117f779a87e3c5bf375434a))
+### Refactor
 
-# [v0.4.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.3.0-beta.0...v0.4.0-alpha.0) (2020-01-01)
+- perform upgrade upon reboot
 
-### Bug Fixes
+### Test
 
-- don't log `token` metadata field in grpc request log ([f1a7f86](https://github.com/talos-systems/talos/commit/f1a7f8670370bbbe604591bbf58508f69455f4e4))
-- extend list of kmsg facilities ([a490e3c](https://github.com/talos-systems/talos/commit/a490e3c7ea27fc67d64f66181346e2dad1fa9dc2))
-- fail on muliple nodes for commands which don't support it ([f3dff87](https://github.com/talos-systems/talos/commit/f3dff87957fa8e0a47c4cd05dd99e0fad3dd8287)), closes [#1663](https://github.com/talos-systems/talos/issues/1663)
-- fix error format ([2a449ae](https://github.com/talos-systems/talos/commit/2a449aea2ffb7234a28536d4a3105e8b22f93d38))
-- fix output formats ([0fae1bc](https://github.com/talos-systems/talos/commit/0fae1bc92d0511bb93e08bb0aa0d3d49fad4f1ff))
-- issues discovered by lgtm tool ([de35b4d](https://github.com/talos-systems/talos/commit/de35b4d5af8c610749a0b04c768a064b844d6ab4))
-- Reset default http client to work around proxyEnv ([48b5da4](https://github.com/talos-systems/talos/commit/48b5da4e87349b153fc5b42669696576c7f50409))
-- set the correct kernel args for VMware ([815aa99](https://github.com/talos-systems/talos/commit/815aa99cc4ff319afb8a3633a0b17b67475a1210))
-- use specified kubelet and etcd images ([dce12c2](https://github.com/talos-systems/talos/commit/dce12c2c3cbfaf5b7fc21ffca70222bc4042cdb2))
-- use the correct mf file name ([3f6a2cb](https://github.com/talos-systems/talos/commit/3f6a2cb7f7f8ee85ad153b4d5c396263d564a327))
-- **machined:** Add additional defaults for http transport ([f722adb](https://github.com/talos-systems/talos/commit/f722adb865c8c62a6e510d4db9db785a5d815ac6)), closes [#1680](https://github.com/talos-systems/talos/issues/1680)
-- update `osctl list` to report node name ([53f1cda](https://github.com/talos-systems/talos/commit/53f1cda715d774dc52d270d7b9f6445dfbf719db))
-- use dash for default talos cluster name in docker ([47ae014](https://github.com/talos-systems/talos/commit/47ae0148a2632d9002ee71dd81225ba0d22719ca))
-- use the correct TLD for the container version label ([93ba252](https://github.com/talos-systems/talos/commit/93ba252e428661d11d678e6c78fe581884b32111))
-- **networkd:** Check for IFF_RUNNING on link up ([64a7eeb](https://github.com/talos-systems/talos/commit/64a7eeb0e1965bcacded86ffa8ab78aafa874e8e))
-- **networkd:** Make better route scoping decisions ([da88d7b](https://github.com/talos-systems/talos/commit/da88d7bcb37c29e00b31cf76a9a69da073e8c337))
+- add test for empty hostname option
+- add 'reset' integration test for Reset() API
 
-### Features
+### BREAKING CHANGE
 
-- add installer command to installer container ([5a7eb63](https://github.com/talos-systems/talos/commit/5a7eb631b20940a0590f192e7c73c34f27cb9f86))
-- add support for tailing logs ([6e05dd7](https://github.com/talos-systems/talos/commit/6e05dd70c4051e3837ac4b9c7aa583260b2125f0)), closes [#1564](https://github.com/talos-systems/talos/issues/1564)
-- add support for tftp download ([31baa14](https://github.com/talos-systems/talos/commit/31baa14e36177072d8d6eff2d68469f31147f78c))
-- humanize timestamp and size in `osctl list` output ([c24ce2f](https://github.com/talos-systems/talos/commit/c24ce2fd5f6f9bf25f209ea21e9997dc85b285d4)), closes [#1565](https://github.com/talos-systems/talos/issues/1565)
-- implement streaming mode of dmesg, parse messages ([1fbf407](https://github.com/talos-systems/talos/commit/1fbf40796f5c40704c2b9aa6e8499a26916fae68)), closes [#1563](https://github.com/talos-systems/talos/issues/1563)
-- osctl bash/zsh completion support ([4c18f21](https://github.com/talos-systems/talos/commit/4c18f21088139a22197ab87123d027050764cc79)), closes [#1500](https://github.com/talos-systems/talos/issues/1500)
-- support specifying CIDR for docker network ([dc8aab6](https://github.com/talos-systems/talos/commit/dc8aab632d042ebe86480d5558c44f05f56d8a6e))
-- upgrade Linux to v5.4.5 ([907f87d](https://github.com/talos-systems/talos/commit/907f87d8e0f814b822efeaddfab907b5692f275b))
+This PR fixes a bug where we were only passing `cluster.local` to the
+kubelet configuration. It will also pull in a new version of the
+bootkube fork to ensure that custom domains got propogated down to the
+API Server certs, as well as the CoreDNS configuration for a cluster.
+
+Existing users should be aware that, if they were previously trying to
+use this option in machine configs, that an upgrade will may break
+their cluster. It will update a kubelet flag with the new domain, but
+CoreDNS and API Server certs will not change since bootkube has already
+run. One option may be to change these values manually inside the
+Kubernetes cluster. However, it may prove easier to rebuild the cluster
+if necessary.
+
+Additionally, this PR also exposes a flag to `osctl config generate`
+to allow tweaking this domain value as well.
+
+<a name="v0.4.0-alpha.6"></a>
+
+## [v0.4.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.5...v0.4.0-alpha.6) (2020-02-27)
+
+### Chore
+
+- prepare release v0.4.0-alpha.6
+- update pkgs & tools for Go 1.14
+- fix small misprint
+- push installer & talos images to the CI registry on every build
+- move golangci-lint.yaml to .golangci.yml
+- remove KubernetesVersion from provision request
+
+### Feat
+
+- support proxy in docker buildx
+- support sending machine info
+- add reboot flag to reset API
+
+### Fix
+
+- ensre proxy is used when fetching additional manifests for bootkube
+- unmount bind mounts for system (fixes upgrade stuck on disk busy)
+- refresh proxy settings from environment in image resolver
+- default reboot flag to false
+- add reboot flag to reset command
+- stop firecracker launcher on signal
+- fix reset command
+- allow kublet to handle multiple service CIDRs
+- validate install disk
+- PodCIDR, ServiceCIDR should be comma sets
+
+### Refactor
+
+- use go-procfs
+
+### Test
+
+- enable upgrade tests 0.4.x -> latest
+- implement new class of tests: provision tests (upgrades)
+- fix `RebootAllNodes` test to reboot all nodes in one call
+- implement RebootAllNodes test
+
+<a name="v0.4.0-alpha.5"></a>
+
+## [v0.4.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.4...v0.4.0-alpha.5) (2020-02-15)
+
+### Chore
+
+- prepare release v0.4.0-alpha.5
+- build app container images skipping export to host
+- update pkgs
+- support bootloader emulation in firecracker provisioner
+- implement loadbalancer for firecracker provisioner
+
+### Feat
+
+- implement registry mirror & config for image pull
+
+### Fix
+
+- don't proxy gRPC unix connections
+- do not add empty netconf
+
+<a name="v0.4.0-alpha.4"></a>
+
+## [v0.4.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.3...v0.4.0-alpha.4) (2020-02-04)
+
+### Chore
+
+- remove Firecracker bridge interface in osctl cluster destroy
+- sign .drone.yml
+- only run ok-to-test when PR
+- support slash commands in drone
+- get correct drone status in github actions
+- use upstream version of Firecracker Go SDK
+- update golangci-lint-1.23.3
+- use common method to pull etcd image
+- prepare release v0.4.0-alpha.4
+- implement reboot test
+- enable slash commands in github PRs
+- update bootkube
+- update capi-upstream
+- provide provisioned cluster info to integration test
+- update bootkube fork
+- rework firecracker code around upstream Go SDK + PRs
+- **networkd:** Report on errors during interface configuration
+
+### Docs
+
+- add a link to the Talos Systems company site to the OSS site's header
+- remove invalid field from docs
+- **apid:** Add apid docs
+
+### Feat
+
+- **networkd:** Make healthcheck perform a check
+- **networkd:** Add health api
+
+### Fix
+
+- bind etcd to IPv6 if available
+- follow symlinks
+- implement kubelet extra mounts
+- **networkd:** fix ticker leak
+
+### Test
+
+- skip reboot tests
+
+<a name="v0.4.0-alpha.3"></a>
+
+## [v0.4.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.2...v0.4.0-alpha.3) (2020-01-27)
+
+### Chore
+
+- prepare release v0.4.0-alpha.3
+- refactor E2E scripts
+- fix CI
+- Clean up generated path for protoc
+- use firecracker in basic-integration
+- update bootkube config to include cluster name
+
+### Docs
+
+- fix machined component
+- update metal section
+- remove pre-release from v0.3 docs
+
+### Feat
+
+- update kernel
+- allow ability to customize containerd
+- allow for bootkube images to be customized
+
+### Fix
+
+- parse correctly kernel command line missing DNS config
+- retry system disk busy check
+- correctly split lines with /dev/kmsg output
+- re-enable control plane flags
+- leave etcd after draining node
+- install sequence stuck on event bus
+
+### Refactor
+
+- use tls.Config as client credentials
+
+### Test
+
+- firecracker provisioner fixes, implement cluster destroy
+
+<a name="v0.4.0-alpha.2"></a>
+
+## [v0.4.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (2020-01-20)
+
+### Chore
+
+- prepare release v0.4.0-alpha.2
+- use v0.1.0 tools and pkgs
+- run sonobuoy in quick mode
+- validate installer image before upgrade
+- bump tools/pkgs for Go 1.13.6
+- remove test-framework
+- log ignored ACPI events
+- fix E2E script
+- publish boot.tar.gz
+- allow docgen to ignore a struct
+
+### Docs
+
+- add missing docs
+- reorganize components sidebar and add ntpd
+
+### Feat
+
+- upgrade kubernetes version to 1.17.1
+- allow additional manifests to be provided to bootkube
+- upgrade Linux to v5.4.11
+- upgrade Linux to v5.4.10
+- add a basic architectural diagram and a call to action
+
+### Fix
+
+- block when handling bus event
+- stop race condition between kubelet and networkd
+- update networkd permissions
+- check for installer image before proceeding with upgrade
+- set kube-dns labels
+- Update bootkube to include node ready check
+- Ensure assets directory does not exist
+- add Close func in remote generator
+- refuse to upgrade if single master
+- update kernel version constant
+- shutdown on button/power ACPI event
+- raise default NOFILE limit
+- **networkd:** Set hostname properly for dhcp when no hostname option is returned
+- **networkd:** Fix incorrect resolver settings
+
+### Refactor
+
+- use ConfiguratorBundle interface for config generate
+- unify generate type and machine type
+- use an interface for config data
+- use config struct instead of string
+
+### Test
+
+- provision Talos clusters via Firecracker VMs
+
+<a name="v0.4.0-alpha.1"></a>
+
+## [v0.4.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.4.0-alpha.0...v0.4.0-alpha.1) (2020-01-08)
+
+### Chore
+
+- prepare release v0.4.0-alpha.1
+- disable iso artifact publication
+- update all target in Makefile
+- allow re-use of docker network for local clusters
+- fix release dependency
+- fix push events
+- push latest tag on tag events
+- use the correct condition for latest and edge pushes
+
+### Feat
+
+- enable DynamicKubeletConfiguration
+- Upgrade bootkube
+- support configurable docker-based clusters
+- upgrade linux to v5.4.8
+
+### Fix
+
+- make the CNI URL error better
