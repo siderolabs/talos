@@ -15,6 +15,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   in.Debug,
+		ConfigPersist: in.Persist,
 	}
 
 	machine := &v1alpha1.MachineConfig{

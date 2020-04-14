@@ -43,7 +43,9 @@ func (p *provisioner) Close() error {
 
 // GenOptions provides a list of additional config generate options.
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
-	return nil
+	return []generate.GenOption{
+		generate.WithPersist(false),
+	}
 }
 
 // GetLoadBalancers returns internal/external loadbalancer endpoints.

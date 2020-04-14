@@ -88,6 +88,15 @@ func WithDebug(enable bool) GenOption {
 	}
 }
 
+// WithPersist enables persistence of machine config across reboots.
+func WithPersist(enable bool) GenOption {
+	return func(o *GenOptions) error {
+		o.Persist = enable
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -98,9 +107,12 @@ type GenOptions struct {
 	RegistryMirrors           map[string]machine.RegistryMirrorConfig
 	DNSDomain                 string
 	Debug                     bool
+	Persist                   bool
 }
 
 // DefaultGenOptions returns default options.
 func DefaultGenOptions() GenOptions {
-	return GenOptions{}
+	return GenOptions{
+		Persist: true,
+	}
 }
