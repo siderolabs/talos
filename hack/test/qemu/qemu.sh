@@ -39,6 +39,6 @@ qemu-system-x86_64 \
     -device virtio-net,netdev=talos \
     -nographic \
     -serial mon:stdio \
-    -append "talos.platform=metal page_poison=1 slub_debug=P slab_nomerge pti=on random.trust_cpu=on printk.devkmsg=on earlyprintk=serial,tty0,keep console=tty0 talos.config=${MACHINE_CONFIG}" \
+    -append "talos.platform=metal page_poison=1 slub_debug=P slab_nomerge pti=on printk.devkmsg=on earlyprintk=serial,tty0,keep console=tty0 talos.config=${MACHINE_CONFIG}" \
     -kernel ${KERNEL} \
     -initrd ${INITRD}
