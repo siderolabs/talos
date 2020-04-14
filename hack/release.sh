@@ -3,12 +3,14 @@
 set -e
 
 function changelog {
-  if [ $# -ne 1 ]; then
-    echo 1>&2 "Usage: $0 changelog <file>"
+  if [ "$#" -eq 1 ]; then
+    git-chglog --output CHANGELOG.md -c ./hack/chglog/config.yml --tag-filter-pattern "^${1}" "${1}-alpha.1.."
+  elif [ "$#" -eq 0 ]; then
+    git-chglog --output CHANGELOG.md -c ./hack/chglog/config.yml
+  else
+    echo 1>&2 "Usage: $0 changelog [tag]"
     exit 1
   fi
-
-  conventional-changelog -p angular -i $1 -s
 }
 
 function cherry-pick {
