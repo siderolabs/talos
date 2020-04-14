@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
@@ -156,8 +155,8 @@ func genV1Alpha1Config(args []string) error {
 
 func init() {
 	genCmd.AddCommand(genConfigCmd)
-	genConfigCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
-	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation") // nolint: lll
+	genConfigCmd.Flags().StringVar(&installDisk, "install-disk", "", "the disk to install to")
+	genConfigCmd.Flags().StringVar(&installImage, "install-image", "", "the image used to perform an installation") // nolint: lll
 	genConfigCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")

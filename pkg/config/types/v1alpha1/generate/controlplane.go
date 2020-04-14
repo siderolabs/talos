@@ -24,9 +24,8 @@ func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
 		MachineKubelet:  &v1alpha1.KubeletConfig{},
 		MachineNetwork:  in.NetworkConfig,
 		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:       in.InstallDisk,
-			InstallImage:      in.InstallImage,
-			InstallBootloader: true,
+			InstallDisk:  in.InstallDisk,
+			InstallImage: in.InstallImage,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
 			RegistryMirrors: in.RegistryMirrors,

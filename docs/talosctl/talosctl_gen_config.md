@@ -17,8 +17,8 @@ talosctl gen config <cluster name> https://<load balancer IP or DNS name> [flags
       --additional-sans strings     additional Subject-Alt-Names for the APIServer certificate
       --dns-domain string           the dns domain to use for cluster (default "cluster.local")
   -h, --help                        help for config
-      --install-disk string         the disk to install to (default "/dev/sda")
-      --install-image string        the image used to perform an installation (default "docker.io/autonomy/installer:latest")
+      --install-disk string         the disk to install to
+      --install-image string        the image used to perform an installation
       --kubernetes-version string   desired kubernetes version to run (default "1.18.0")
   -o, --output-dir string           destination to output generated files
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>

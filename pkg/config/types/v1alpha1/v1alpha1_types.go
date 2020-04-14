@@ -487,7 +487,7 @@ type InstallConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	InstallWipe bool `yaml:"wipe"`
+	InstallWipe bool `yaml:"wipe,omitempty"`
 	//   description: |
 	//     Indicates if filesystems should be forcefully created.
 	//   values:
@@ -495,7 +495,7 @@ type InstallConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	InstallForce bool `yaml:"force"`
+	InstallForce bool `yaml:"force,omitempty"`
 }
 
 // TimeConfig represents the options for configuring time on a node.
