@@ -35,12 +35,12 @@ func (m *Manager) MountAll() (err error) {
 		// Repair the disk's partition table.
 		if mountpoint.Resize {
 			if err = mountpoint.ResizePartition(); err != nil {
-				return fmt.Errorf("resize: %w", err)
+				return fmt.Errorf("error resizing %q: %w", iter.Value().Source(), err)
 			}
 		}
 
 		if err = mountpoint.Mount(); err != nil {
-			return fmt.Errorf("mount: %w", err)
+			return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
 		}
 
 		// Grow the filesystem to the maximum allowed size.
