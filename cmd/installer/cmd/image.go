@@ -66,8 +66,8 @@ func runImageCmd() (err error) {
 	defer func() {
 		log.Println("detaching loopback device")
 
-		if err = pkg.Lodetach(options.Disk); err != nil {
-			log.Println(err)
+		if e := pkg.Lodetach(options.Disk); e != nil {
+			log.Println(e)
 		}
 	}()
 

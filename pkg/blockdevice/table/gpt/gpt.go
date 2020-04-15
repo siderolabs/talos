@@ -283,12 +283,16 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 		start = previous.(*partition.Partition).LastLBA + 1
 	}
 
-	end = start + size/gpt.lba.LogicalBlockSize
+	if opts.MaximumSize {
+		end = gpt.header.LastUsableLBA
+	} else {
+		end = start + size/gpt.lba.LogicalBlockSize
 
-	if end > gpt.header.LastUsableLBA {
-		// TODO(andrewrynhard): This calculation is wrong, fix it.
-		available := (gpt.header.LastUsableLBA - start) * gpt.lba.LogicalBlockSize
-		return nil, fmt.Errorf("requested partition size %d is too big, largest available is %d", size, available)
+		if end > gpt.header.LastUsableLBA {
+			// Convert the total available LBAs to units of bytes.
+			available := (gpt.header.LastUsableLBA - start) * gpt.lba.LogicalBlockSize
+			return nil, fmt.Errorf("requested partition size %d, available is %d (%d too many bytes)", size, available, size-available)
+		}
 	}
 
 	uuid, err := uuid.NewUUID()

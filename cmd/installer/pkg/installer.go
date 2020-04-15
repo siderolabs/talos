@@ -111,8 +111,8 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 		// look for mountpoints across all target devices
 		for dev := range i.manifest.Targets {
 			var mp *mount.Points
-			mp, err = owned.MountPointsForDevice(dev)
 
+			mp, err = owned.MountPointsForDevice(dev)
 			if err != nil {
 				return err
 			}
