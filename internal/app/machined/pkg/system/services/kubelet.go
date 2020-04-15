@@ -249,7 +249,6 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		StaticPodPath:      "/etc/kubernetes/manifests",
 		Address:            "0.0.0.0",
 		Port:               10250,
-		ReadOnlyPort:       10255, // TODO(andrewrynhard): Disable this.
 		RotateCertificates: true,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
