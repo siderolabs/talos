@@ -10,9 +10,10 @@ import (
 
 // Options is the functional options struct.
 type Options struct {
-	Type  uuid.UUID
-	Name  string
-	Flags uint64
+	Type        uuid.UUID
+	Name        string
+	MaximumSize bool
+	Flags       uint64
 }
 
 // Option is the functional option func.
@@ -32,6 +33,13 @@ func WithPartitionType(id string) Option {
 func WithPartitionName(o string) Option {
 	return func(args *Options) {
 		args.Name = o
+	}
+}
+
+// WithMaximumSize indicates if the partition should be created with the maximum size possible.
+func WithMaximumSize(o bool) Option {
+	return func(args *Options) {
+		args.MaximumSize = o
 	}
 }
 
