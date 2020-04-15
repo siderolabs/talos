@@ -22,11 +22,6 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-const (
-	// DefaultSizeBootDevice is the default size of the boot partition.
-	DefaultSizeBootDevice = 512 * 1000 * 1000
-)
-
 // Manifest represents the instructions for preparing all block devices
 // for an installation.
 type Manifest struct {
@@ -101,7 +96,7 @@ func NewManifest(label string, sequence runtime.Sequence, install machine.Instal
 	ephemeralTarget := &Target{
 		Device: install.Disk(),
 		Label:  constants.EphemeralPartitionLabel,
-		Size:   16 * 1024 * 1024,
+		Size:   0,
 		Force:  true,
 		Test:   false,
 	}
@@ -166,7 +161,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	case constants.EphemeralPartitionLabel:
 		// Ephemeral Partition
 		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
-		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label))
+		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithMaximumSize(true))
 	default:
 		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
 		opts = append(opts, partition.WithPartitionType(typeID))
