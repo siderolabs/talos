@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
 	"strings"
 	"sync"
 
@@ -280,9 +281,19 @@ func (n *Networkd) decideHostname() (hostname string, domainname string, address
 	address = net.ParseIP("127.0.1.1")
 	hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(address.String(), ".", "-"))
 
+	// Sort interface names alphabetically so we can ensure parsing order
+	interfaceNames := make([]string, 0, len(n.Interfaces))
+	for intName := range n.Interfaces {
+		interfaceNames = append(interfaceNames, intName)
+	}
+
+	sort.Strings(interfaceNames)
+
 	// Loop through address responses and use the first hostname
 	// and address response.
-	for _, iface := range n.Interfaces {
+	for _, intName := range interfaceNames {
+		iface := n.Interfaces[intName]
+
 		// Skip loopback interface because it will always have
 		// a hardcoded hostname of `talos-ip`
 		if iface.Link != nil && iface.Link.Flags&net.FlagLoopback != 0 {
