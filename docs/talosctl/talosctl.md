@@ -29,7 +29,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl interfaces](talosctl_interfaces.md)	 - List network interfaces
 * [talosctl kubeconfig](talosctl_kubeconfig.md)	 - Download the admin kubeconfig from the node
 * [talosctl list](talosctl_list.md)	 - Retrieve a directory listing
-* [talosctl logs](talosctl_logs.md)	 - Retrieve logs for a process or container
+* [talosctl logs](talosctl_logs.md)	 - Retrieve logs for a service
 * [talosctl memory](talosctl_memory.md)	 - Show memory usage
 * [talosctl mounts](talosctl_mounts.md)	 - List mounts
 * [talosctl processes](talosctl_processes.md)	 - List running processes

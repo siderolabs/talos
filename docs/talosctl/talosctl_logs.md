@@ -1,14 +1,14 @@
 <!-- markdownlint-disable -->
 ## talosctl logs
 
-Retrieve logs for a process or container
+Retrieve logs for a service
 
 ### Synopsis
 
-Retrieve logs for a process or container
+Retrieve logs for a service
 
 ```
-talosctl logs <id> [flags]
+talosctl logs <service name> [flags]
 ```
 
 ### Options
