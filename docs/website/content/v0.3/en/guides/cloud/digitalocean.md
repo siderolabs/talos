@@ -53,7 +53,7 @@ Save it, as we will need it in the next step.
 Using the DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines:
 
 ```bash
-$ osctl config generate talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>
+$ osctl config generate talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>:<port>
 created init.yaml
 created controlplane.yaml
 created join.yaml

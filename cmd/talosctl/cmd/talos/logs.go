@@ -32,8 +32,8 @@ var (
 
 // logsCmd represents the logs command
 var logsCmd = &cobra.Command{
-	Use:   "logs <id>",
-	Short: "Retrieve logs for a process or container",
+	Use:   "logs <service name>",
+	Short: "Retrieve logs for a service",
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

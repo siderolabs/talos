@@ -23,14 +23,12 @@ Prior to starting, it is important to have the following infrastructure in place
 Using the DNS name or name of the loadbalancer used in the prereq steps, generate the base configuration files for the Talos machines:
 
 ```bash
-$ talosctl gen config talos-k8s-vmware-tutorial https://<load balancer IP or DNS>
+$ talosctl gen config talos-k8s-vmware-tutorial https://<load balancer IP or DNS>:<port>
 created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
 ```
-
-> Note: If you are using a DNS record, you will want to specify the port for the API Server (`tcp/6443`)
 
 ```bash
 $ talosctl gen config talos-k8s-vmware-tutorial https://<DNS name>:6443
