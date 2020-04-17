@@ -1,3 +1,15 @@
+# [v0.4.0](https://github.com/talos-systems/talos/compare/v0.4.0-rc.0...v0.4.0) (2020-04-17)
+
+### Bug Fixes
+
+- ensure ordering of interfaces when deciding hostname ([ec695ac](https://github.com/talos-systems/talos/commit/ec695ac7c4b46ed2d37602860f30ee416c948419))
+- set ephemeral partition to max size ([df4fd65](https://github.com/talos-systems/talos/commit/df4fd6572298a64bae9adda5b43f0b3fa3f8c3c2))
+
+### Features
+
+- add extra headers to fetch of extraManifests ([c78e937](https://github.com/talos-systems/talos/commit/c78e93779b335afc04b0a8b69adcff6b4e0ff350))
+- disable kubelet ro port ([3f49871](https://github.com/talos-systems/talos/commit/3f4987165eccd94a6c206efd82102a8fae8dcf23))
+
 <a name="v0.4.0-rc.0"></a>
 
 ## [v0.4.0-rc.0](https://github.com/talos-systems/talos/compare/v0.4.0-beta.1...v0.4.0-rc.0) (2020-04-14)
