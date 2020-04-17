@@ -46,6 +46,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make docs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -65,6 +70,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make generate
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -84,6 +94,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make check-dirty
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -104,6 +119,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-linux
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -123,6 +143,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-darwin
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -142,6 +167,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make kernel
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -161,6 +191,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make initramfs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -180,6 +215,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make installer
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -201,6 +241,11 @@ steps:
   - make installer
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -220,6 +265,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talos
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -241,6 +291,11 @@ steps:
   - make talos
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -260,6 +315,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-go
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -279,6 +339,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-markdown
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -298,6 +363,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-protobuf
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -317,6 +387,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-aws
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -336,6 +411,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-azure
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -355,6 +435,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-digital-ocean
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -374,6 +459,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -393,6 +483,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-vmware
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -412,6 +507,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -431,6 +531,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -467,6 +572,11 @@ steps:
   environment:
     DOCKER_LOGIN_ENABLED: false
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -487,6 +597,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -510,6 +625,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -535,6 +655,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -560,6 +685,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -582,6 +712,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -749,6 +884,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make docs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -768,6 +908,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make generate
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -787,6 +932,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make check-dirty
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -807,6 +957,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-linux
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -826,6 +981,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-darwin
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -845,6 +1005,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make kernel
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -864,6 +1029,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make initramfs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -883,6 +1053,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make installer
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -904,6 +1079,11 @@ steps:
   - make installer
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -923,6 +1103,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talos
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -944,6 +1129,11 @@ steps:
   - make talos
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -963,6 +1153,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-go
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -982,6 +1177,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-markdown
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1001,6 +1201,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-protobuf
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1020,6 +1225,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-aws
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1039,6 +1249,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-azure
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1058,6 +1273,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-digital-ocean
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1077,6 +1297,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1096,6 +1321,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-vmware
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1115,6 +1345,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1134,6 +1369,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1170,6 +1410,11 @@ steps:
   environment:
     DOCKER_LOGIN_ENABLED: false
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1190,6 +1435,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1213,6 +1463,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1238,6 +1493,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1263,6 +1523,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1285,6 +1550,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1378,6 +1648,11 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1411,6 +1686,11 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1443,6 +1723,11 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1544,6 +1829,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make docs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1563,6 +1853,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make generate
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1582,6 +1877,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make check-dirty
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1602,6 +1902,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-linux
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1621,6 +1926,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-darwin
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1640,6 +1950,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make kernel
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1659,6 +1974,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make initramfs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1678,6 +1998,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make installer
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1699,6 +2024,11 @@ steps:
   - make installer
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1718,6 +2048,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talos
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1739,6 +2074,11 @@ steps:
   - make talos
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1758,6 +2098,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-go
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1777,6 +2122,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-markdown
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1796,6 +2146,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-protobuf
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1815,6 +2170,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-aws
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1834,6 +2194,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-azure
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1853,6 +2218,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-digital-ocean
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1872,6 +2242,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1891,6 +2266,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-vmware
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1910,6 +2290,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1929,6 +2314,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1965,6 +2355,11 @@ steps:
   environment:
     DOCKER_LOGIN_ENABLED: false
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -1985,6 +2380,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2008,6 +2408,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2033,6 +2438,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2058,6 +2468,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2080,6 +2495,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2173,6 +2593,11 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2207,6 +2632,11 @@ steps:
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
     SONOBUOY_MODE: certified-conformance
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2240,6 +2670,11 @@ steps:
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
     SONOBUOY_MODE: certified-conformance
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2369,6 +2804,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make docs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2388,6 +2828,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make generate
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2407,6 +2852,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make check-dirty
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2427,6 +2877,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-linux
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2446,6 +2901,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-darwin
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2465,6 +2925,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make kernel
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2484,6 +2949,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make initramfs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2503,6 +2973,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make installer
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2524,6 +2999,11 @@ steps:
   - make installer
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2543,6 +3023,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talos
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2564,6 +3049,11 @@ steps:
   - make talos
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2583,6 +3073,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-go
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2602,6 +3097,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-markdown
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2621,6 +3121,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-protobuf
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2640,6 +3145,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-aws
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2659,6 +3169,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-azure
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2678,6 +3193,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-digital-ocean
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2697,6 +3217,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2716,6 +3241,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-vmware
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2735,6 +3265,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2754,6 +3289,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2790,6 +3330,11 @@ steps:
   environment:
     DOCKER_LOGIN_ENABLED: false
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2810,6 +3355,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2833,6 +3383,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2858,6 +3413,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2883,6 +3443,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2905,6 +3470,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -2998,6 +3568,11 @@ steps:
       from_secret: gce_svc_acct
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3032,6 +3607,11 @@ steps:
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
     SONOBUOY_MODE: certified-conformance
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3065,6 +3645,11 @@ steps:
     PACKET_AUTH_TOKEN:
       from_secret: packet_auth_token
     SONOBUOY_MODE: certified-conformance
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3194,6 +3779,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make docs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3213,6 +3803,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make generate
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3232,6 +3827,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make check-dirty
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3252,6 +3852,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-linux
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3271,6 +3876,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talosctl-darwin
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3290,6 +3900,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make kernel
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3309,6 +3924,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make initramfs
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3328,6 +3948,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make installer
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3349,6 +3974,11 @@ steps:
   - make installer
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3368,6 +3998,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make talos
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3389,6 +4024,11 @@ steps:
   - make talos
   environment:
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3408,6 +4048,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-go
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3427,6 +4072,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-markdown
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3446,6 +4096,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make lint-protobuf
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3465,6 +4120,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-aws
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3484,6 +4144,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-azure
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3503,6 +4168,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-digital-ocean
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3522,6 +4192,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-gcp
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3541,6 +4216,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make image-vmware
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3560,6 +4240,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3579,6 +4264,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make unit-tests-race
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3615,6 +4305,11 @@ steps:
   environment:
     DOCKER_LOGIN_ENABLED: false
     REGISTRY: registry.ci.svc:5000
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3635,6 +4330,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3658,6 +4358,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3683,6 +4388,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3708,6 +4418,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3730,6 +4445,11 @@ steps:
   environment:
     REGISTRY: registry.ci.svc:5000
   privileged: true
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3810,6 +4530,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make iso
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3830,6 +4555,11 @@ steps:
   image: autonomy/build-container:latest
   commands:
   - make boot
+  resources:
+    limits:
+      memory: 16GiB
+    requests:
+      memory: 16GiB
   volumes:
   - name: dockersock
     path: /var/run
@@ -3981,6 +4711,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: c08d82c031f77c8d7a9632194bfcc277540be93583e4ac1d4cf6af24fa12d7c4
+hmac: ac778201044e26011f277662e1d0a36969b003c0c445f8f3a73f3f2a81243bb9
 
 ...

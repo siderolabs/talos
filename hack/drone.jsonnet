@@ -146,6 +146,14 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
   name: name,
   image: if image == '' then build_container else image,
   pull: "always",
+  resources: {
+    limits: {
+      memory: "16GiB",
+    },
+    requests: {
+      memory: "16GiB",
+    },
+  },
   commands: [make],
   privileged: privileged,
   environment: common_env_vars + environment,
