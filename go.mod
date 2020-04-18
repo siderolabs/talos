@@ -4,7 +4,6 @@ go 1.13
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
-	github.com/kubernetes-sigs/bootkube => github.com/talos-systems/bootkube v0.14.1-0.20200326170323-428f80a4248c
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 
@@ -44,7 +43,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20190814082028-393ae75a101b
 	github.com/jsimonetti/rtnetlink v0.0.0-20191223084007-1b9462860ac0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kubernetes-sigs/bootkube v0.14.1-0.20190731222813-f0fc1bdb404d
+	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200421144856-831deff0541a
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
 	github.com/mdlayher/netlink v0.0.0-20191009155606-de872b0d824b
@@ -61,6 +60,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
+	github.com/talos-systems/bootkube-plugin v0.0.0-20200418011639-b642f0b2921d
 	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee
 	github.com/talos-systems/grpc-proxy v0.2.0
@@ -78,9 +78,9 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
-	k8s.io/api v0.18.0
-	k8s.io/apimachinery v0.18.0
-	k8s.io/client-go v0.18.0
+	k8s.io/api v0.18.2
+	k8s.io/apimachinery v0.18.2
+	k8s.io/client-go v0.18.2
 	k8s.io/cri-api v0.18.0
 	k8s.io/kubelet v0.18.0
 )
