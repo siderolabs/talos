@@ -20,70 +20,13 @@ import (
 
 	"github.com/hashicorp/go-getter"
 	"github.com/hashicorp/go-multierror"
-	"github.com/kubernetes-sigs/bootkube/pkg/asset"
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
+	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
-
-// DefaultPodSecurityPolicy is the default PSP.
-var DefaultPodSecurityPolicy = []byte(`---
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: psp:privileged
-rules:
-- apiGroups: ['policy']
-  resources: ['podsecuritypolicies']
-  verbs:     ['use']
-  resourceNames:
-  - privileged
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: psp:privileged
-roleRef:
-  kind: ClusterRole
-  name: psp:privileged
-  apiGroup: rbac.authorization.k8s.io
-subjects:
-# Authorize all service accounts in a namespace:
-- kind: Group
-  apiGroup: rbac.authorization.k8s.io
-  name: system:serviceaccounts
-# Authorize all authenticated users in a namespace:
-- kind: Group
-  apiGroup: rbac.authorization.k8s.io
-  name: system:authenticated
----
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: privileged
-spec:
-  fsGroup:
-    rule: RunAsAny
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
-  allowedCapabilities:
-  - '*'
-  hostPID: true
-  hostIPC: true
-  hostNetwork: true
-  hostPorts:
-  - min: 1
-    max: 65536
-`)
 
 // nolint: gocyclo
 func generateAssets(config runtime.Configurator) (err error) {
@@ -219,16 +162,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		ClusterDomain:              config.Cluster().Network().DNSDomain(),
 	}
 
-	as, err := asset.NewDefaultAssets(conf)
-	if err != nil {
-		return fmt.Errorf("failed to create list of assets: %w", err)
-	}
-
-	if err = as.WriteFiles(constants.AssetsDirectory); err != nil {
-		return err
-	}
-
-	if err = ioutil.WriteFile(filepath.Join(constants.AssetsDirectory, "manifests", "psp.yaml"), DefaultPodSecurityPolicy, 0600); err != nil {
+	if err = asset.Render(constants.AssetsDirectory, conf); err != nil {
 		return err
 	}
 

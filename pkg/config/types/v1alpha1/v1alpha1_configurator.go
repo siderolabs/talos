@@ -12,8 +12,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/kubernetes-sigs/bootkube/pkg/asset"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
 	criplugin "github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/config/cluster"
