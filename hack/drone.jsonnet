@@ -124,6 +124,8 @@ local setup_ci = {
     'git fetch --tags',
     'apk add coreutils',
     'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
+    'find /root/.kube',
+    'env',
     'docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
     'docker buildx inspect --bootstrap',
     'make ./_out/sonobuoy',
@@ -156,11 +158,12 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
 local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
-  local node = { 'node-role.kubernetes.io/ci': '' },
-
   kind: 'pipeline',
+  type: 'kubernetes',
   name: name,
-  node: node,
+  node_selector: {
+    'node-role.kubernetes.io/ci': ''
+  },
   services: [
     if with_docker then docker,
   ],
