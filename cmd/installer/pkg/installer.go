@@ -132,7 +132,7 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 		defer m.UnmountAll()
 	}
 
-	if sequence == runtime.Upgrade && i.install.Force() {
+	if sequence == runtime.Upgrade && i.bootPartitionFound && i.install.Force() {
 		for dev, targets := range i.manifest.Targets {
 			var bd *blockdevice.BlockDevice
 
