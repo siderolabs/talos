@@ -6,6 +6,8 @@
 package xfs
 
 import (
+	"fmt"
+
 	"github.com/talos-systems/talos/pkg/cmd"
 )
 
@@ -19,6 +21,10 @@ func GrowFS(partname string) error {
 
 // MakeFS creates a XFS filesystem on the specified partition.
 func MakeFS(partname string, setters ...Option) error {
+	if partname == "" {
+		return fmt.Errorf("missing path to disk")
+	}
+
 	opts := NewDefaultOptions(setters...)
 
 	// The ftype=1 naming option is required by overlayfs.
