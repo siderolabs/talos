@@ -24,6 +24,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/blockdevice/table"
+	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -143,7 +145,21 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 			// nolint: errcheck
 			defer bd.Close()
 
+			var pt table.PartitionTable
+
+			pt, err = bd.PartitionTable(true)
+			if err != nil {
+				return err
+			}
+
 			for _, target := range targets {
+				for _, part := range pt.Partitions() {
+					switch target.Label {
+					case constants.BootPartitionLabel, constants.EphemeralPartitionLabel:
+						target.PartitionName = util.PartPath(target.Device, int(part.No()))
+					}
+				}
+
 				if target.Label == constants.BootPartitionLabel {
 					continue
 				}
