@@ -31,7 +31,7 @@ function commit {
     exit 1
   fi
 
-  git commit -s -m "chore: prepare release $1" -m "This is the official $1 release."
+  git commit -s -m "release($1): prepare release" -m "This is the official $1 release."
 }
 
 if declare -f "$1" > /dev/null

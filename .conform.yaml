@@ -21,6 +21,7 @@ policies:
           - refactor
           - style
           - test
+          - release
         scopes:
           - apid
           - machined
@@ -32,6 +33,7 @@ policies:
           - routerd
           - talosctl
           - kernel
+          - ^v0.5
           - '*'
   - type: license
     spec:
