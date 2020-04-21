@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/containerd/containerd"
@@ -15,10 +16,12 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -109,7 +112,18 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		return err
 	}
 
-	t, err := container.NewTask(ctx, cio.LogFile("/dev/kmsg"))
+	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
+	}
+	// nolint: errcheck
+	defer f.Close()
+
+	w := &kmsg.Writer{KmsgWriter: f}
+
+	creator := cio.NewCreator(cio.WithStreams(nil, w, w))
+
+	t, err := container.NewTask(ctx, creator)
 	if err != nil {
 		return err
 	}
