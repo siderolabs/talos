@@ -1,4 +1,77 @@
 
+<a name="v0.5.0-alpha.1"></a>
+## [v0.5.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.4.0...v0.5.0-alpha.1) (2020-04-21)
+
+### Chore
+
+* add bug report issue template
+* use a single CHANGELOG
+* remove random.trust_cpu references
+* update pkgs tag to v0.2.0
+* address random CI nits
+* prepare release v0.5.0-alpha.0
+* add PR template for contributors
+* update sonobuoy to v0.18.0
+* update timeout values for e2e tests
+
+### Docs
+
+* improve CLI menu and metal docs
+* default to v0.4
+* add firecracker documentation
+* sidebar improvements and content organization
+
+### Feat
+
+* disable kubelet ro port
+* make machine config persist by default
+* add extra headers to fetch of extraManifests
+* upgrade Go to 1.14.2
+* upgrade Linux to v5.5.15
+
+### Fix
+
+* prevent formatting the ephemeral partition twice
+* set ephemeral partition to max size
+* ensure ordering of interfaces when deciding hostname
+* resolve race condition in createNodes
+* add hpsa drivers
+* add bnx2 and bnx2x firmware
+* wait for `system-containerd` to become healthy before proceeding
+* mount TLS certs into bootkube container
+* make sure Close() is called on every path
+
+### Refactor
+
+* use upstream bootkube
+* rename ntpd to timed
+* rename system-containerd and containerd services
+* don't log installer verification
+
+### Test
+
+* update versions used for upgrade tests
+* serialize `docs` step execution
+
+
+<a name="v0.4.0"></a>
+## [v0.4.0](https://github.com/talos-systems/talos/compare/v0.4.0-rc.0...v0.4.0) (2020-04-20)
+
+### Chore
+
+* prepare release v0.4.0
+
+### Feat
+
+* disable kubelet ro port
+* add extra headers to fetch of extraManifests
+
+### Fix
+
+* set ephemeral partition to max size
+* ensure ordering of interfaces when deciding hostname
+
+
 <a name="v0.4.0-rc.0"></a>
 ## [v0.4.0-rc.0](https://github.com/talos-systems/talos/compare/v0.5.0-alpha.0...v0.4.0-rc.0) (2020-04-14)
 
