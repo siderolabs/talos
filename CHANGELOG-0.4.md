@@ -1,3 +1,10 @@
+# [v0.4.1](https://github.com/talos-systems/talos/compare/v0.4.0...v0.4.1) (2020-04-21)
+
+### Bug Fixes
+
+- pass dev path to mkfs ([1e15438](https://github.com/talos-systems/talos/commit/1e1543821ba16f6ecce9693441d09899cfdddbe7))
+- prevent formatting the ephemeral partition twice ([88d3bb8](https://github.com/talos-systems/talos/commit/88d3bb8af42eb4201bc1d4b365b950458a3d2496))
+
 # [v0.4.0](https://github.com/talos-systems/talos/compare/v0.4.0-rc.0...v0.4.0) (2020-04-17)
 
 ### Bug Fixes
