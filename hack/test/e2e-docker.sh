@@ -4,20 +4,12 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
-case "${CI:-false}" in
-  true)
-    ENDPOINT="docker"
-    ;;
-  *)
-    ENDPOINT="127.0.0.1"
-    ;;
-esac
-
 PROVISIONER=docker
 CLUSTER_NAME=e2e-${PROVISIONER}
+ENDPOINT=${ENDPOINT-127.0.0.1}
 
 function create_cluster {
-  "${OSCTL}" cluster create \
+  "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
     --image "${IMAGE}" \
@@ -25,7 +17,7 @@ function create_cluster {
     --mtu 1500 \
     --memory 2048 \
     --cpus 4.0 \
-    --endpoint "${ENDPOINT}"
+    --endpoint "127.0.0.1"
 }
 
 create_cluster

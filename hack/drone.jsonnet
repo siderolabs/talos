@@ -156,11 +156,9 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
 local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
-  local node = { 'node-role.kubernetes.io/ci': '' },
-
   kind: 'pipeline',
+  type: 'kubernetes',
   name: name,
-  node: node,
   services: [
     if with_docker then docker,
   ],

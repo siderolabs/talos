@@ -8,6 +8,7 @@ get:
 
 ---
 kind: pipeline
+type: kubernetes
 name: default
 
 platform:
@@ -697,9 +698,6 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   cron:
     exclude:
@@ -711,6 +709,7 @@ trigger:
 
 ---
 kind: pipeline
+type: kubernetes
 name: e2e
 
 platform:
@@ -1497,15 +1496,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   target:
   - e2e
 
 ---
 kind: pipeline
+type: kubernetes
 name: conformance
 
 platform:
@@ -2322,15 +2319,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   target:
   - conformance
 
 ---
 kind: pipeline
+type: kubernetes
 name: nightly
 
 platform:
@@ -3147,15 +3142,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   cron:
   - nightly
 
 ---
 kind: pipeline
+type: kubernetes
 name: release
 
 platform:
@@ -3922,15 +3915,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   event:
   - tag
 
 ---
 kind: pipeline
+type: kubernetes
 name: notify
 
 platform:
@@ -3964,9 +3955,6 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   status:
   - success
@@ -3981,6 +3969,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: c08d82c031f77c8d7a9632194bfcc277540be93583e4ac1d4cf6af24fa12d7c4
+hmac: 75e38be995fe5b0c1700a07725bb340b9e982d822a404a94f2039d12c0efe6c3
 
 ...

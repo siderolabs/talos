@@ -10,7 +10,7 @@ ARTIFACTS := _out
 TOOLS ?= autonomy/tools:v0.1.0-4-gac40795
 GO_VERSION ?= 1.14
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
-OSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
+TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/$(OPERATING_SYSTEM)/amd64/kubectl
@@ -135,7 +135,7 @@ talos: ## Builds the Talos container image and outputs it to the artifact direct
 talosctl-%:
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
 
-talosctl: $(OSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
+talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/out --privileged autonomy/installer:$(TAG) image --platform $*
@@ -198,7 +198,7 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		SHA=$(SHA) \
 		IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(TAG) \
 		ARTIFACTS=$(ARTIFACTS) \
-		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
+		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy
@@ -208,13 +208,13 @@ provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVI
 provision-tests: provision-tests-prepare
 	@$(MAKE) hack-test-$@ \
 		TAG=$(TAG) \
-		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
+		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 
 provision-tests-track-%:
 	@$(MAKE) hack-test-provision-tests \
 		TAG=$(TAG) \
-		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
+		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*"
 

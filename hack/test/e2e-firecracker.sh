@@ -20,7 +20,7 @@ case "${REGISTRY:-false}" in
 esac
 
 function create_cluster {
-  "${OSCTL}" cluster create \
+  "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
     --masters=3 \
