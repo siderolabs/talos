@@ -281,6 +281,29 @@ func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 	return c.ExtraArgsConfig
 }
 
+// Proxy implements the Configurator interface
+func (c *ClusterConfig) Proxy() runtime.Proxy {
+	if c.ProxyConfig == nil {
+		return &ProxyConfig{}
+	}
+
+	return c.ProxyConfig
+}
+
+// Mode implements the Proxy interface
+func (p *ProxyConfig) Mode() string {
+	if p.ModeConfig == "" {
+		return "iptables"
+	}
+
+	return p.ModeConfig
+}
+
+// ExtraArgs implements the Proxy interface.
+func (p *ProxyConfig) ExtraArgs() map[string]string {
+	return p.ExtraArgsConfig
+}
+
 // Scheduler implements the Configurator interface.
 func (c *ClusterConfig) Scheduler() runtime.Scheduler {
 	if c.SchedulerConfig == nil {
