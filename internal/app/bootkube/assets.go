@@ -17,6 +17,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-getter"
 	"github.com/hashicorp/go-multierror"
@@ -92,14 +93,14 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return err
 	}
 
-	_, podCIDR, err := net.ParseCIDR(config.Cluster().Network().PodCIDR())
+	podCIDRs, err := splitCIDRs(config.Cluster().Network().PodCIDR())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to process Pod CIDRs: %w", err)
 	}
 
-	_, serviceCIDR, err := net.ParseCIDR(config.Cluster().Network().ServiceCIDR())
+	serviceCIDRs, err := splitCIDRs(config.Cluster().Network().ServiceCIDR())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to process Service CIDRs: %w", err)
 	}
 
 	urls := []string{config.Cluster().Endpoint().Hostname()}
@@ -116,14 +117,14 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return fmt.Errorf("failed to parse Kubernetes key: %w", err)
 	}
 
-	apiServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 1)
+	apiServiceIPs, err := nthIPInCIDRSet(serviceCIDRs, 1)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to calculate API service IP: %w", err)
 	}
 
-	dnsServiceIP, err := tnet.NthIPInNetwork(serviceCIDR, 10)
+	dnsServiceIPs, err := nthIPInCIDRSet(serviceCIDRs, 10)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to calculate DNS service IP: %w", err)
 	}
 
 	images := asset.DefaultImages
@@ -138,6 +139,8 @@ func generateAssets(config runtime.Configurator) (err error) {
 		ClusterName:                config.Cluster().Name(),
 		APIServerExtraArgs:         config.Cluster().APIServer().ExtraArgs(),
 		ControllerManagerExtraArgs: config.Cluster().ControllerManager().ExtraArgs(),
+		ProxyMode:                  config.Cluster().Proxy().Mode(),
+		ProxyExtraArgs:             config.Cluster().Proxy().ExtraArgs(),
 		SchedulerExtraArgs:         config.Cluster().Scheduler().ExtraArgs(),
 		CACert:                     k8sCA,
 		CAPrivKey:                  k8sKey,
@@ -148,10 +151,10 @@ func generateAssets(config runtime.Configurator) (err error) {
 		EtcdUseTLS:                 true,
 		ControlPlaneEndpoint:       config.Cluster().Endpoint(),
 		LocalAPIServerPort:         config.Cluster().LocalAPIServerPort(),
-		APIServiceIP:               apiServiceIP,
-		DNSServiceIP:               dnsServiceIP,
-		PodCIDR:                    podCIDR,
-		ServiceCIDR:                serviceCIDR,
+		APIServiceIPs:              apiServiceIPs,
+		DNSServiceIPs:              dnsServiceIPs,
+		PodCIDRs:                   podCIDRs,
+		ServiceCIDRs:               serviceCIDRs,
 		NetworkProvider:            config.Cluster().Network().CNI().Name(),
 		AltNames:                   altNames,
 		Images:                     images,
@@ -248,4 +251,30 @@ func fetchManifests(urls []string, headers map[string]string) error {
 	}
 
 	return result.ErrorOrNil()
+}
+
+func splitCIDRs(cidrList string) (out []*net.IPNet, err error) {
+	for _, podCIDR := range strings.Split(cidrList, ",") {
+		_, cidr, err := net.ParseCIDR(podCIDR)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %q as a CIDR: %w", podCIDR, err)
+		}
+
+		out = append(out, cidr)
+	}
+
+	return out, nil
+}
+
+func nthIPInCIDRSet(cidrList []*net.IPNet, offset int) (out []net.IP, err error) {
+	for _, cidr := range cidrList {
+		ip, err := tnet.NthIPInNetwork(cidr, offset)
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate offset %d from CIDR %q: %w", offset, cidr, err)
+		}
+
+		out = append(out, ip)
+	}
+
+	return out, nil
 }

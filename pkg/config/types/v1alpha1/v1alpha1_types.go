@@ -301,6 +301,15 @@ type ClusterConfig struct {
 	//           key: value
 	ControllerManagerConfig *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
 	//   description: |
+	//     Kube-proxy server-specific configuration options
+	//   examples:
+	//     - |
+	//       proxy:
+	//         mode: ipvs
+	//         extraArgs:
+	//           key: value
+	ProxyConfig *ProxyConfig `yaml:"proxy,omitempty"`
+	//   description: |
 	//     Scheduler server specific configuration options.
 	//   examples:
 	//     - |
@@ -605,6 +614,17 @@ type ControllerManagerConfig struct {
 	Image string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
+	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+}
+
+// ProxyConfig represents the kube proxy configuration values
+type ProxyConfig struct {
+	//   description: |
+	//     proxy mode of kube-proxy.
+	//     By default, this is 'iptables'.
+	ModeConfig string `yaml:"mode,omitempty"`
+	//   description: |
+	//     Extra arguments to supply to kube-proxy.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 

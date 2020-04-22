@@ -520,6 +520,22 @@ controllerManager:
 
 ```
 
+#### proxy
+
+Kube-proxy server-specific configuration options
+
+Type: `ProxyConfig`
+
+Examples:
+
+```yaml
+proxy:
+  mode: ipvs
+  extraArgs:
+    key: value
+
+```
+
 #### scheduler
 
 Scheduler server specific configuration options.
@@ -964,6 +980,23 @@ Type: `string`
 #### extraArgs
 
 Extra arguments to supply to the controller manager.
+
+Type: `map`
+
+---
+
+### ProxyConfig
+
+#### mode
+
+proxy mode of kube-proxy.
+By default, this is 'iptables'.
+
+Type: `string`
+
+#### extraArgs
+
+Extra arguments to supply to kube-proxy.
 
 Type: `map`
 

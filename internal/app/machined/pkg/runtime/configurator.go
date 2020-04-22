@@ -337,6 +337,7 @@ type ClusterConfig interface {
 	Name() string
 	APIServer() APIServer
 	ControllerManager() ControllerManager
+	Proxy() Proxy
 	Scheduler() Scheduler
 	Endpoint() *url.URL
 	Token() Token
@@ -380,6 +381,17 @@ type APIServer interface {
 // ControllerManager defines the requirements for a config that pertains to controller manager related
 // options.
 type ControllerManager interface {
+	ExtraArgs() map[string]string
+}
+
+// Proxy defines the requirements for a config that pertains to the kube-proxy
+// options.
+type Proxy interface {
+
+	// Mode indicates the proxy mode for kube-proxy.  By default, this is `iptables`.  Other options include `ipvs`.
+	Mode() string
+
+	// ExtraArgs describe an additional set of arguments to be supplied to the execution of `kube-proxy`
 	ExtraArgs() map[string]string
 }
 
