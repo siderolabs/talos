@@ -50,6 +50,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			CertSANs: certSANs,
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
+		ProxyConfig:             &v1alpha1.ProxyConfig{},
 		SchedulerConfig:         &v1alpha1.SchedulerConfig{},
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,
