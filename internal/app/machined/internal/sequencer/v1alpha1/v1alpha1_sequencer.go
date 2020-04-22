@@ -224,7 +224,7 @@ func (d *Sequencer) Upgrade(req *machineapi.UpgradeRequest) error {
 	// TODO(andrewrynhard): This should be more dynamic. If we ever change the
 	// partition scheme there is the chance that 2 is not the correct parition to
 	// check.
-	partname := util.PartName(dev.Device().Name(), 2)
+	partname := util.PartPath(dev.Device().Name(), 2)
 
 	if err := dev.Close(); err != nil {
 		return err
