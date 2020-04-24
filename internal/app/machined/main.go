@@ -19,74 +19,19 @@ import (
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
-	"github.com/talos-systems/talos/internal/app/machined/internal/sequencer"
-	"github.com/talos-systems/talos/internal/pkg/event"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/proc/reaper"
-	"github.com/talos-systems/talos/pkg/startup"
+	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
-// EventBusObserver is used to subscribe to the event bus.
-type EventBusObserver struct {
-	*event.Embeddable
-}
-
-func recovery() {
-	if r := recover(); r != nil {
-		log.Printf("recovered from: %+v\n", r)
-
-		if err := revert(); err != nil {
-			log.Printf("failed to revert upgrade: %v", err)
-		}
-
-		for i := 10; i >= 0; i-- {
-			log.Printf("rebooting in %d seconds\n", i)
-			time.Sleep(1 * time.Second)
-		}
-
-		if unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART) == nil {
-			select {}
-		}
-	}
-}
-
-// See http://man7.org/linux/man-pages/man2/reboot.2.html.
-func sync() {
-	syncdone := make(chan struct{})
-
-	go func() {
-		defer close(syncdone)
-		unix.Sync()
-	}()
-
-	log.Printf("waiting for sync...")
-
-	for i := 29; i >= 0; i-- {
-		select {
-		case <-syncdone:
-			log.Printf("sync done")
-			return
-		case <-time.After(time.Second):
-		}
-
-		if i != 0 {
-			log.Printf("waiting %d more seconds for sync to finish", i)
-		}
-	}
-
-	log.Printf("sync hasn't completed in time, aborting...")
-}
-
 func init() {
-	// Explicitly set the default http client transport
-	// to work around our fun proxy.Do once bug.
-	// This is the http.DefaultTransport with the Proxy
-	// func overridden so that the environment variables
-	// with be reread/initialized each time the http call
-	// is made.
+	// Explicitly set the default http client transport to work around proxy.Do
+	// once. This is the http.DefaultTransport with the Proxy func overridden so
+	// that the environment variables with be reread/initialized each time the
+	// http call is made.
 	http.DefaultClient.Transport = &http.Transport{
 		Proxy: func(req *http.Request) (*url.URL, error) {
 			return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
@@ -101,6 +46,25 @@ func init() {
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+	}
+}
+
+func reboot(err error) {
+	log.Print(err)
+
+	if err := revert(); err != nil {
+		log.Printf("failed to revert upgrade: %v", err)
+	}
+
+	for i := 10; i >= 0; i-- {
+		log.Printf("rebooting in %d seconds\n", i)
+		time.Sleep(1 * time.Second)
+	}
+
+	v1alpha1runtime.SyncNonVolatileStorageBuffers()
+
+	if unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART) == nil {
+		select {}
 	}
 }
 
@@ -170,127 +134,56 @@ func revert() (err error) {
 
 // nolint: gocyclo
 func main() {
-	var err error
-
-	// This is main entrypoint into machined execution, control is passed here
-	// from init after switch root.
-	//
-	// When machined terminates either on normal shutdown (reboot, poweroff), or
-	// due to panic, control goes through recovery() and reboot() functions
-	// below, which finalize node state - sync buffers, initiate poweroff or
-	// reboot. Also on shutdown, other deferred function are called, for example
-	// services are gracefully shutdown.
-
-	// On any return from init.main(), initiate host reboot or shutdown handle
-	// any panics in the main goroutine, and proceed to reboot() above
-	defer recovery()
-
-	// Subscribe to events.
-	init := EventBusObserver{&event.Embeddable{}}
-	defer close(init.Channel())
-
-	event.Bus().Register(init)
-
-	defer event.Bus().Unregister(init)
-
-	// Initialize process reaper.
-	reaper.Run()
-	defer reaper.Shutdown()
-
-	// Ensure rng is seeded.
-	if err = startup.RandSeed(); err != nil {
-		panic(err)
+	// Initialize the controller without a config.
+	c, err := v1alpha1runtime.NewController(nil)
+	if err != nil {
+		reboot(err)
 	}
 
-	// Set the PATH env var.
-	if err = os.Setenv("PATH", constants.PATH); err != nil {
-		panic(errors.New("error setting PATH"))
+	// Start event listeners.
+	go func() {
+		if err = c.ListenForEvents(); err != nil {
+			log.Printf("WARNING: signals and ACPI events will be ignored: %+v", err)
+		}
+	}()
+
+	// Initialize the machine.
+	if err = c.Run(runtime.SequenceInitialize, nil); err != nil {
+		reboot(err)
 	}
 
-	immediateReboot := false
+	// Reset the controller with a config. This MUST happen before running any
+	// other sequences.
+	c, err = v1alpha1runtime.NewController(c.Runtime().State().Config())
+	if err != nil {
+		reboot(err)
+	}
+
+	// Start the API server.
+	go func() {
+		server := &v1alpha1server.Server{
+			Controller: c,
+		}
+
+		if err = factory.ListenAndServe(server, factory.Network("unix"), factory.SocketPath(universe.MachineSocketPath)); err != nil {
+			reboot(err)
+		}
+	}()
+
+	// Perform an installation if required.
+	if c.Runtime().Platform().Mode() != runtime.ModeContainer {
+		if !c.Runtime().State().Installed() {
+			if err = c.Run(runtime.SequenceInstall, nil); err != nil {
+				reboot(err)
+			}
+		}
+	}
 
 	// Boot the machine.
-	seq := sequencer.New(sequencer.V1Alpha1)
-
-	if err := seq.Boot(); err != nil {
-		if errors.Is(err, runtime.ErrReboot) {
-			immediateReboot = true
-		} else {
-			log.Println(err)
-			panic(fmt.Errorf("boot failed: %w", err))
-		}
+	if err = c.Run(runtime.SequenceBoot, nil); err != nil {
+		reboot(err)
 	}
 
-	// Wait for an event.
-
-	flag := unix.LINUX_REBOOT_CMD_RESTART
-
-	runShutdownOnImmediateReboot := true
-
-	for !immediateReboot {
-		switch e := <-init.Channel(); e.Type {
-		case event.Shutdown:
-			flag = unix.LINUX_REBOOT_CMD_POWER_OFF
-			fallthrough
-		case event.Reboot:
-			immediateReboot = true
-		case event.Upgrade:
-			var (
-				req *machineapi.UpgradeRequest
-				ok  bool
-			)
-
-			if req, ok = e.Data.(*machineapi.UpgradeRequest); !ok {
-				log.Println("cannot perform upgrade, unexpected data type")
-				continue
-			}
-
-			if err := seq.Upgrade(req); err != nil {
-				log.Println(err)
-				panic(fmt.Errorf("upgrade failed: %w", err))
-			}
-
-			immediateReboot = true
-			runShutdownOnImmediateReboot = false
-		case event.Reset:
-			var (
-				req *machineapi.ResetRequest
-				ok  bool
-			)
-
-			if req, ok = e.Data.(*machineapi.ResetRequest); !ok {
-				log.Println("cannot perform reset, unexpected data type")
-				continue
-			}
-
-			if err := seq.Reset(req); err != nil {
-				log.Println(err)
-				panic(fmt.Errorf("reset failed: %w", err))
-			}
-
-			if !req.GetReboot() {
-				flag = unix.LINUX_REBOOT_CMD_POWER_OFF
-			}
-
-			immediateReboot = true
-		}
-	}
-
-	if runShutdownOnImmediateReboot {
-		if err := seq.Shutdown(); err != nil {
-			log.Println(err)
-			panic(fmt.Errorf("shutdown failed: %w", err))
-		}
-	}
-
-	sync()
-
-	if err := unix.Reboot(flag); err != nil {
-		log.Println(err)
-		panic(err)
-	}
-
-	// Prevent a kernel panic.
-
+	// Wait forever.
 	select {}
 }

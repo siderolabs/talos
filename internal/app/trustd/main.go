@@ -15,12 +15,12 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/startup"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var configPath *string
@@ -89,7 +89,7 @@ func main() {
 
 	err = factory.ListenAndServe(
 		&reg.Registrator{Config: config},
-		factory.Port(constants.TrustdPort),
+		factory.Port(universe.TrustdPort),
 		factory.WithDefaultLog(),
 		factory.WithUnaryInterceptor(creds.UnaryInterceptor()),
 		factory.ServerOptions(

@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // CertificateProvider describes an interface by which TLS certificates may be managed.
@@ -85,7 +85,7 @@ func (p *embeddableCertificateProvider) UpdateCertificates(ca []byte, cert *tls.
 }
 
 func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err error) {
-	nextRenewal := constants.DefaultCertificateValidityDuration
+	nextRenewal := universe.DefaultCertificateValidityDuration
 
 	for ctx.Err() == nil {
 		// nolint: errcheck
@@ -108,8 +108,8 @@ func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err 
 
 		log.Println("next renewal in", nextRenewal)
 
-		if nextRenewal > constants.DefaultCertificateValidityDuration {
-			nextRenewal = constants.DefaultCertificateValidityDuration
+		if nextRenewal > universe.DefaultCertificateValidityDuration {
+			nextRenewal = universe.DefaultCertificateValidityDuration
 		}
 
 		select {

@@ -11,15 +11,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Manifest represents the instructions for preparing all block devices
@@ -48,14 +47,14 @@ type Asset struct {
 }
 
 // NewManifest initializes and returns a Manifest.
-func NewManifest(label string, sequence runtime.Sequence, install machine.Install) (manifest *Manifest, err error) {
+func NewManifest(label string, sequence runtime.Sequence, install runtime.Install) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Targets: map[string][]*Target{},
 	}
 
 	// Verify that the target device(s) can satisify the requested options.
 
-	if sequence != runtime.Upgrade {
+	if sequence != runtime.SequenceUpgrade {
 		if err = VerifyDataDevice(install); err != nil {
 			return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
 		}
@@ -76,18 +75,18 @@ func NewManifest(label string, sequence runtime.Sequence, install machine.Instal
 	if install.WithBootloader() {
 		bootTarget = &Target{
 			Device: install.Disk(),
-			Label:  constants.BootPartitionLabel,
+			Label:  universe.BootPartitionLabel,
 			Size:   512 * 1024 * 1024,
 			Force:  true,
 			Test:   false,
 			Assets: []*Asset{
 				{
-					Source:      constants.KernelAssetPath,
-					Destination: filepath.Join(constants.BootMountPoint, label, constants.KernelAsset),
+					Source:      universe.KernelAssetPath,
+					Destination: filepath.Join(universe.BootMountPoint, label, universe.KernelAsset),
 				},
 				{
-					Source:      constants.InitramfsAssetPath,
-					Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
+					Source:      universe.InitramfsAssetPath,
+					Destination: filepath.Join(universe.BootMountPoint, label, universe.InitramfsAsset),
 				},
 			},
 		}
@@ -95,7 +94,7 @@ func NewManifest(label string, sequence runtime.Sequence, install machine.Instal
 
 	ephemeralTarget := &Target{
 		Device: install.Disk(),
-		Label:  constants.EphemeralPartitionLabel,
+		Label:  universe.EphemeralPartitionLabel,
 		Size:   0,
 		Force:  true,
 		Test:   false,
@@ -154,11 +153,11 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	opts := []interface{}{}
 
 	switch t.Label {
-	case constants.BootPartitionLabel:
+	case universe.BootPartitionLabel:
 		// EFI System Partition
 		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
-	case constants.EphemeralPartitionLabel:
+	case universe.EphemeralPartitionLabel:
 		// Ephemeral Partition
 		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithMaximumSize(true))
@@ -183,7 +182,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 
 // Format creates a filesystem on the device/partition.
 func (t *Target) Format() error {
-	if t.Label == constants.BootPartitionLabel {
+	if t.Label == universe.BootPartitionLabel {
 		log.Printf("formatting partition %q - %q as %q\n", t.PartitionName, t.Label, "fat")
 		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
 	}

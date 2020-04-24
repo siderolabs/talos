@@ -22,20 +22,19 @@ import (
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	talosclient "github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 type upgradeSpec struct {
@@ -80,12 +79,12 @@ func upgradeZeroThreeToZeroFour() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", talos03Version, talos04Version),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos03Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos03Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos03Version),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos03Version), universe.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos03Version), universe.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", universe.DefaultInstallerImageRepository, talos03Version),
 		SourceVersion:        talos03Version,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
+		TargetInstallerImage: fmt.Sprintf("%s:%s", universe.DefaultInstallerImageRepository, talos04Version),
 		TargetVersion:        talos04Version,
 
 		MasterNodes: DefaultSettings.MasterNodes,
@@ -98,12 +97,12 @@ func upgradeZeroFourToCurrent() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", talos04Version, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), universe.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), universe.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", universe.DefaultInstallerImageRepository, talos04Version),
 		SourceVersion:        talos04Version,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, universe.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
@@ -116,12 +115,12 @@ func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("preserve-%s-%s", talos04Version, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), universe.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), universe.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", universe.DefaultInstallerImageRepository, talos04Version),
 		SourceVersion:        talos04Version,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, universe.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 
 		MasterNodes:     1,
@@ -266,7 +265,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		&config.InputOptions{
 			ClusterName: clusterName,
 			Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
-			KubeVersion: constants.DefaultKubernetesVersion, // TODO: should be upgradeable
+			KubeVersion: universe.DefaultKubernetesVersion, // TODO: should be upgradeable
 			GenOptions: append(
 				genOptions,
 				generate.WithEndpointList([]string{defaultExternalLB}),
@@ -408,14 +407,14 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// upgrade master nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
+		if node.Type == runtime.MachineTypeInit || node.Type == runtime.MachineTypeControlPlane {
 			suite.upgradeNode(client, node)
 		}
 	}
 
 	// upgrade worker nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeWorker {
+		if node.Type == runtime.MachineTypeJoin {
 			suite.upgradeNode(client, node)
 		}
 	}

@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // CertificateAuthority represents a CA.
@@ -162,7 +162,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 		DNSNames:           []string{},
 		Bits:               4096,
 		RSA:                false,
-		NotAfter:           time.Now().Add(constants.DefaultCertificateValidityDuration),
+		NotAfter:           time.Now().Add(universe.DefaultCertificateValidityDuration),
 	}
 
 	for _, setter := range setters {

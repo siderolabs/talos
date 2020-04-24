@@ -15,7 +15,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // ImportRequest represents an image import request.
@@ -49,7 +49,7 @@ func NewImporter(namespace string, options ...ImporterOption) *Importer {
 	importer := &Importer{
 		namespace: namespace,
 		options: importerOptions{
-			containerdAddress: constants.ContainerdAddress,
+			containerdAddress: universe.ContainerdAddress,
 		},
 	}
 

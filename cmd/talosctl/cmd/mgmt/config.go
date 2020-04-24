@@ -16,10 +16,10 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var (
@@ -107,24 +107,24 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
-	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+	for _, t := range []runtime.MachineType{runtime.MachineTypeInit, runtime.MachineTypeControlPlane, runtime.MachineTypeJoin} {
 		name := strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
 
 		var configString string
 
 		switch t {
-		case machine.TypeInit:
+		case runtime.MachineTypeInit:
 			configString, err = configBundle.Init().String()
 			if err != nil {
 				return err
 			}
-		case machine.TypeControlPlane:
+		case runtime.MachineTypeControlPlane:
 			configString, err = configBundle.ControlPlane().String()
 			if err != nil {
 				return err
 			}
-		case machine.TypeWorker:
+		case runtime.MachineTypeJoin:
 			configString, err = configBundle.Join().String()
 			if err != nil {
 				return err
@@ -160,11 +160,11 @@ func genV1Alpha1Config(args []string) error {
 func init() {
 	genCmd.AddCommand(genConfigCmd)
 	genConfigCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
-	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation") // nolint: lll
+	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(universe.DefaultInstallerImageRepository), "the image used to perform an installation") // nolint: lll
 	genConfigCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
-	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", universe.DefaultKubernetesVersion, "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 }

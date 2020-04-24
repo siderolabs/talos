@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 type inspector struct {
@@ -49,7 +49,7 @@ func NewInspector(ctx context.Context, namespace string, options ...Option) (ctr
 	var err error
 
 	opt := inspectorOptions{
-		containerdAddress: constants.ContainerdAddress,
+		containerdAddress: universe.ContainerdAddress,
 	}
 
 	for _, o := range options {

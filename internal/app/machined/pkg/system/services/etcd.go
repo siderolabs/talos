@@ -24,7 +24,9 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -33,14 +35,11 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Etcd implements the Service interface. It serves as the concrete type with
@@ -54,7 +53,7 @@ func (e *Etcd) ID(config runtime.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
-	if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
+	if err = os.MkdirAll(universe.EtcdDataPath, 0755); err != nil {
 		return err
 	}
 
@@ -62,7 +61,7 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
-	client, err := containerdapi.New(constants.ContainerdAddress)
+	client, err := containerdapi.New(universe.ContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -71,7 +70,7 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 
 	// Pull the image and unpack it.
 
-	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+	containerdctx := namespaces.WithNamespace(ctx, universe.SystemContainerdNamespace)
 	if _, err = image.Pull(containerdctx, config.Machine().Registries(), client, config.Cluster().Etcd().Image()); err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", config.Cluster().Etcd().Image(), err)
 	}
@@ -108,8 +107,8 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: constants.EtcdDataPath, Source: constants.EtcdDataPath, Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: universe.EtcdPKIPath, Source: universe.EtcdPKIPath, Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: universe.EtcdDataPath, Source: universe.EtcdDataPath, Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
@@ -120,7 +119,7 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		config.Debug(),
 		&args,
-		runner.WithNamespace(constants.SystemContainerdNamespace),
+		runner.WithNamespace(universe.SystemContainerdNamespace),
 		runner.WithContainerImage(config.Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -151,15 +150,15 @@ func (e *Etcd) HealthSettings(runtime.Configurator) *health.Settings {
 
 // nolint: gocyclo
 func generatePKI(config runtime.Configurator) (err error) {
-	if err = os.MkdirAll(constants.EtcdPKIPath, 0644); err != nil {
+	if err = os.MkdirAll(universe.EtcdPKIPath, 0644); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
+	if err = ioutil.WriteFile(universe.KubernetesEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
 		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
+	if err = ioutil.WriteFile(universe.KubernetesEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
@@ -248,11 +247,11 @@ func generatePKI(config runtime.Configurator) (err error) {
 		return fmt.Errorf("failled to create peer certificate: %w", err)
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0500); err != nil {
+	if err := ioutil.WriteFile(universe.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0500); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peer.X509CertificatePEM, 0500); err != nil {
+	if err := ioutil.WriteFile(universe.KubernetesEtcdPeerCert, peer.X509CertificatePEM, 0500); err != nil {
 		return err
 	}
 
@@ -346,7 +345,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 
 	var upgraded bool
 
-	if p.Mode() != runtime.Container {
+	if p.Mode() != runtime.ModeContainer {
 		var f *os.File
 
 		if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
@@ -381,16 +380,16 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 
 	blackListArgs := argsbuilder.Args{
 		"name":                  hostname,
-		"data-dir":              constants.EtcdDataPath,
+		"data-dir":              universe.EtcdDataPath,
 		"listen-peer-urls":      "https://" + listenAddress + ":2380",
 		"listen-client-urls":    "https://" + listenAddress + ":2379",
-		"cert-file":             constants.KubernetesEtcdPeerCert,
-		"key-file":              constants.KubernetesEtcdPeerKey,
-		"trusted-ca-file":       constants.KubernetesEtcdCACert,
+		"cert-file":             universe.KubernetesEtcdPeerCert,
+		"key-file":              universe.KubernetesEtcdPeerKey,
+		"trusted-ca-file":       universe.KubernetesEtcdCACert,
 		"peer-client-cert-auth": "true",
-		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
-		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+		"peer-cert-file":        universe.KubernetesEtcdPeerCert,
+		"peer-trusted-ca-file":  universe.KubernetesEtcdCACert,
+		"peer-key-file":         universe.KubernetesEtcdPeerKey,
 	}
 
 	extraArgs := argsbuilder.Args(config.Cluster().Etcd().ExtraArgs())
@@ -408,7 +407,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 	// If the initial cluster isn't explicitly defined, we need to discover any
 	// existing members.
 	if !extraArgs.Contains("initial-cluster") {
-		ok, err := IsDirEmpty(constants.EtcdDataPath)
+		ok, err := IsDirEmpty(universe.EtcdDataPath)
 		if err != nil {
 			return nil, err
 		}
@@ -416,7 +415,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		if ok {
 			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
 
-			existing := config.Machine().Type() == machine.TypeControlPlane || upgraded
+			existing := config.Machine().Type() == runtime.MachineTypeControlPlane || upgraded
 			if existing {
 				blackListArgs.Set("initial-cluster-state", "existing")
 

@@ -1,0 +1,90 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package vmware
+
+import (
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"net"
+
+	"github.com/vmware/vmw-guestinfo/rpcvmx"
+	"github.com/vmware/vmw-guestinfo/vmcheck"
+
+	"github.com/talos-systems/go-procfs/procfs"
+
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/universe"
+)
+
+// VMware is the concrete type that implements the platform.Platform interface.
+type VMware struct{}
+
+// Name implements the platform.Platform interface.
+func (v *VMware) Name() string {
+	return "vmware"
+}
+
+// Configuration implements the platform.Platform interface.
+func (v *VMware) Configuration() ([]byte, error) {
+	var option *string
+	if option = procfs.ProcCmdline().Get(universe.KernelParamConfig).First(); option == nil {
+		return nil, fmt.Errorf("no config option was found")
+	}
+
+	if *option == universe.ConfigGuestInfo {
+		ok, err := vmcheck.IsVirtualWorld()
+		if err != nil {
+			return nil, err
+		}
+
+		if !ok {
+			return nil, errors.New("not a virtual world")
+		}
+
+		config := rpcvmx.NewConfig()
+
+		val, err := config.String(universe.VMwareGuestInfoConfigKey, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get guestinfo.%s: %w", universe.VMwareGuestInfoConfigKey, err)
+		}
+
+		if val == "" {
+			return nil, fmt.Errorf("config is required, no value found for guestinfo.%s: %w", universe.VMwareGuestInfoConfigKey, err)
+		}
+
+		b, err := base64.StdEncoding.DecodeString(val)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode guestinfo.%s: %w", universe.VMwareGuestInfoConfigKey, err)
+		}
+
+		return b, nil
+	}
+
+	return nil, nil
+}
+
+// Hostname implements the platform.Platform interface.
+func (v *VMware) Hostname() (hostname []byte, err error) {
+	return nil, nil
+}
+
+// Mode implements the platform.Platform interface.
+func (v *VMware) Mode() runtime.Mode {
+	return runtime.ModeCloud
+}
+
+// ExternalIPs implements the runtime.Platform interface.
+func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
+	return addrs, err
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (v *VMware) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("tty0"),
+		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
+	}
+}

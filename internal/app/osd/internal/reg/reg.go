@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	"github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/prometheus/procfs"
 	"google.golang.org/grpc"
@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -283,15 +283,15 @@ func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *os
 func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {
 	switch driver {
 	case common.ContainerDriver_CRI:
-		if namespace != criconstants.K8sContainerdNamespace {
+		if namespace != constants.K8sContainerdNamespace {
 			return nil, errors.New("CRI inspector is supported only for K8s namespace")
 		}
 
 		return cri.NewInspector(ctx)
 	case common.ContainerDriver_CONTAINERD:
-		addr := constants.ContainerdAddress
-		if namespace == constants.SystemContainerdNamespace {
-			addr = constants.SystemContainerdAddress
+		addr := universe.ContainerdAddress
+		if namespace == universe.SystemContainerdNamespace {
+			addr = universe.SystemContainerdAddress
 		}
 
 		return containerd.NewInspector(ctx, namespace, containerd.WithContainerdAddress(addr))

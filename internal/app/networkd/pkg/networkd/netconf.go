@@ -12,19 +12,19 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // buildOptions translates the supplied config to nic.Option used for
 // configuring the interface.
 // nolint: gocyclo
-func buildOptions(device machine.Device, hostname string) (name string, opts []nic.Option, err error) {
+func buildOptions(device runtime.Device, hostname string) (name string, opts []nic.Option, err error) {
 	opts = append(opts, nic.WithName(device.Interface))
 
-	if device.Ignore || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface) {
+	if device.Ignore || procfs.ProcCmdline().Get(universe.KernelParamNetworkInterfaceIgnore).Contains(device.Interface) {
 		opts = append(opts, nic.WithIgnore())
 		return device.Interface, opts, err
 	}
@@ -209,7 +209,7 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 	}
 
 	var (
-		device    = &machine.Device{}
+		device    = &runtime.Device{}
 		hostname  string
 		link      *net.Interface
 		resolvers = []net.IP{}
@@ -224,7 +224,7 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 		// case 1:
 		// Gateway
 		case 2:
-			device.Routes = []machine.Route{
+			device.Routes = []runtime.Route{
 				{
 					Network: "0.0.0.0/0",
 					Gateway: field,

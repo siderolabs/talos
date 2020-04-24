@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // GetTalosDirectory returns path to Talos directory (~/.talos).
@@ -23,7 +23,7 @@ func GetTalosDirectory() (string, error) {
 
 // GetDefaultPath returns default path to Talos config.
 func GetDefaultPath() (string, error) {
-	if path, ok := os.LookupEnv(constants.TalosConfigEnvVar); ok {
+	if path, ok := os.LookupEnv(universe.TalosConfigEnvVar); ok {
 		return path, nil
 	}
 

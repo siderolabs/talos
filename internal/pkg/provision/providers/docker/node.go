@@ -19,9 +19,9 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 type portMap struct {
@@ -110,7 +110,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	// Mutate the container configurations based on the node type.
 
 	switch nodeReq.Config.Machine().Type() {
-	case machine.TypeInit:
+	case runtime.MachineTypeInit:
 		portsToOpen := []string{"50000:50000/tcp", "6443:6443/tcp"}
 
 		if len(options.DockerPorts) > 0 {
@@ -129,8 +129,8 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		hostConfig.PortBindings = generatedPortMap.portBindings
 
 		fallthrough
-	case machine.TypeControlPlane:
-		containerConfig.Volumes[constants.EtcdDataPath] = struct{}{}
+	case runtime.MachineTypeControlPlane:
+		containerConfig.Volumes[universe.EtcdDataPath] = struct{}{}
 
 		if nodeReq.IP == nil {
 			return provision.NodeInfo{}, errors.New("an IP address must be provided when creating a master node")

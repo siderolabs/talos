@@ -13,20 +13,20 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // NewClient initializes and returns an etcd client configured to talk to
 // a local endpoint.
 func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubernetesEtcdPeerCert,
-		KeyFile:       constants.KubernetesEtcdPeerKey,
-		TrustedCAFile: constants.KubernetesEtcdCACert,
+		CertFile:      universe.KubernetesEtcdPeerCert,
+		KeyFile:       universe.KubernetesEtcdPeerKey,
+		TrustedCAFile: universe.KubernetesEtcdCACert,
 	}
 
 	tlsConfig, err := tlsInfo.ClientConfig()
@@ -71,12 +71,12 @@ func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpo
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
 func ValidateForUpgrade(preserve bool) error {
-	config, err := config.NewFromFile(constants.ConfigPath)
+	config, err := config.NewFromFile(universe.ConfigPath)
 	if err != nil {
 		return err
 	}
 
-	if config.Machine().Type() != machine.TypeWorker {
+	if config.Machine().Type() != runtime.MachineTypeJoin {
 		client, err := NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
 		if err != nil {
 			return err

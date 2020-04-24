@@ -12,9 +12,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client/config"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
@@ -46,7 +45,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		// Pull existing machine configs of each type
-		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+		for _, configType := range []runtime.MachineType{runtime.MachineTypeInit, runtime.MachineTypeControlPlane, runtime.MachineTypeJoin} {
 			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
 				return bundle, err
@@ -58,11 +57,11 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 			}
 
 			switch configType {
-			case machine.TypeInit:
+			case runtime.MachineTypeInit:
 				bundle.InitCfg = unmarshalledConfig
-			case machine.TypeControlPlane:
+			case runtime.MachineTypeControlPlane:
 				bundle.ControlPlaneCfg = unmarshalledConfig
-			case machine.TypeWorker:
+			case runtime.MachineTypeJoin:
 				bundle.JoinCfg = unmarshalledConfig
 			}
 		}
@@ -96,7 +95,7 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		return bundle, err
 	}
 
-	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+	for _, configType := range []runtime.MachineType{runtime.MachineTypeInit, runtime.MachineTypeControlPlane, runtime.MachineTypeJoin} {
 		var generatedConfig *v1alpha1.Config
 
 		generatedConfig, err = generate.Config(configType, input)
@@ -105,11 +104,11 @@ func NewConfigBundle(opts ...BundleOption) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		switch configType {
-		case machine.TypeInit:
+		case runtime.MachineTypeInit:
 			bundle.InitCfg = generatedConfig
-		case machine.TypeControlPlane:
+		case runtime.MachineTypeControlPlane:
 			bundle.ControlPlaneCfg = generatedConfig
-		case machine.TypeWorker:
+		case runtime.MachineTypeJoin:
 			bundle.JoinCfg = generatedConfig
 		}
 	}

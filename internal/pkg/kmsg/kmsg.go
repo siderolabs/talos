@@ -14,7 +14,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Setup configures the log package to write to the kernel ring buffer via
@@ -28,11 +28,11 @@ func Setup(prefix string, withLogFile bool) error {
 	var writer io.Writer = &Writer{KmsgWriter: kmsg}
 
 	if withLogFile {
-		if err := os.MkdirAll(constants.DefaultLogPath, 0700); err != nil {
+		if err := os.MkdirAll(universe.DefaultLogPath, 0700); err != nil {
 			return err
 		}
 
-		logPath := filepath.Join(constants.DefaultLogPath, "machined.log")
+		logPath := filepath.Join(universe.DefaultLogPath, "machined.log")
 
 		f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {

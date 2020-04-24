@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 const diskImageSectorSize = 512
@@ -191,7 +191,7 @@ func (b *BootLoader) findLabel() (label string, err error) {
 }
 
 func (b *BootLoader) extractKernel(label string) error {
-	path := filepath.Join("/", label, constants.KernelAsset)
+	path := filepath.Join("/", label, universe.KernelAsset)
 
 	r, err := b.bootFs.Open(path)
 	if err != nil {
@@ -222,7 +222,7 @@ func (b *BootLoader) extractKernel(label string) error {
 }
 
 func (b *BootLoader) extractInitrd(label string) error {
-	path := filepath.Join("/", label, constants.InitramfsAsset)
+	path := filepath.Join("/", label, universe.InitramfsAsset)
 
 	r, err := b.bootFs.Open(path)
 	if err != nil {

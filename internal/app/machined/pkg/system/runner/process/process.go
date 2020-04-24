@@ -16,8 +16,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	processlogger "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // processRunner is a runner.Runner that runs a process on the host.
@@ -80,7 +80,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 	cmd = exec.Command(p.args.ProcessArgs[0], p.args.ProcessArgs[1:]...)
 
 	// Set the environment for the service.
-	cmd.Env = append([]string{fmt.Sprintf("PATH=%s", constants.PATH)}, p.opts.Env...)
+	cmd.Env = append([]string{fmt.Sprintf("PATH=%s", universe.PATH)}, p.opts.Env...)
 
 	// Setup logging.
 	w, err := processlogger.New(p.args.ID, p.opts.LogPath)

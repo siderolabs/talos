@@ -17,17 +17,16 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // APID implements the Service interface. It serves as the concrete type with
@@ -41,7 +40,7 @@ func (o *APID) ID(config runtime.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (o *APID) PreFunc(ctx context.Context, config runtime.Configurator) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	importer := containerd.NewImporter(universe.SystemContainerdNamespace, containerd.WithContainerdAddress(universe.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/apid.tar",
@@ -58,8 +57,8 @@ func (o *APID) PostFunc(config runtime.Configurator, state events.ServiceState) 
 
 // Condition implements the Service interface.
 func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
-	if config.Machine().Type() == machine.TypeWorker {
-		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
+	if config.Machine().Type() == runtime.MachineTypeJoin {
+		return conditions.WaitForFileToExist(universe.KubeletKubeconfig)
 	}
 
 	return nil
@@ -67,7 +66,7 @@ func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "cri"}
+	return []string{"containerd", "networkd"}
 }
 
 func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
@@ -75,7 +74,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	endpoints := []string{"127.0.0.1"}
 
-	if config.Machine().Type() == machine.TypeWorker {
+	if config.Machine().Type() == runtime.MachineTypeJoin {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
 		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {
@@ -101,7 +100,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 		ID: o.ID(config),
 		ProcessArgs: []string{
 			"/apid",
-			"--config=" + constants.ConfigPath,
+			"--config=" + universe.ConfigPath,
 			"--endpoints=" + strings.Join(endpoints, ","),
 		},
 	}
@@ -109,8 +108,8 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: filepath.Dir(constants.RouterdSocketPath), Source: filepath.Dir(constants.RouterdSocketPath), Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: universe.ConfigPath, Source: universe.ConfigPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: filepath.Dir(universe.RouterdSocketPath), Source: filepath.Dir(universe.RouterdSocketPath), Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}
@@ -132,7 +131,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		config.Debug(),
 		&args,
-		runner.WithContainerdAddress(constants.SystemContainerdAddress),
+		runner.WithContainerdAddress(universe.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -149,7 +148,7 @@ func (o *APID) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
 
-		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.ApidPort))
+		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", universe.ApidPort))
 		if err != nil {
 			return err
 		}

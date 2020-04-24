@@ -10,26 +10,26 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 type mockConfig struct {
-	mirrors map[string]machine.RegistryMirrorConfig
-	config  map[string]machine.RegistryConfig
+	mirrors map[string]runtime.RegistryMirrorConfig
+	config  map[string]runtime.RegistryConfig
 }
 
-func (c *mockConfig) Mirrors() map[string]machine.RegistryMirrorConfig {
+func (c *mockConfig) Mirrors() map[string]runtime.RegistryMirrorConfig {
 	return c.mirrors
 }
 
-func (c *mockConfig) Config() map[string]machine.RegistryConfig {
+func (c *mockConfig) Config() map[string]runtime.RegistryConfig {
 	return c.config
 }
 
-func (c *mockConfig) ExtraFiles() ([]machine.File, error) {
+func (c *mockConfig) ExtraFiles() ([]runtime.File, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -39,20 +39,20 @@ type ConfigSuite struct {
 
 func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 	cfg := &mockConfig{
-		mirrors: map[string]machine.RegistryMirrorConfig{
+		mirrors: map[string]runtime.RegistryMirrorConfig{
 			"docker.io": {
 				Endpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
 			},
 		},
-		config: map[string]machine.RegistryConfig{
+		config: map[string]runtime.RegistryConfig{
 			"some.host:123": {
-				Auth: &machine.RegistryAuthConfig{
+				Auth: &runtime.RegistryAuthConfig{
 					Username:      "root",
 					Password:      "secret",
 					Auth:          "auth",
 					IdentityToken: "token",
 				},
-				TLS: &machine.RegistryTLSConfig{
+				TLS: &runtime.RegistryTLSConfig{
 					InsecureSkipVerify: true,
 					CA:                 []byte("cacert"),
 					ClientIdentity: &x509.PEMEncodedCertificateAndKey{
@@ -66,7 +66,7 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 
 	files, err := containerd.GenerateRegistriesConfig(cfg)
 	suite.Require().NoError(err)
-	suite.Assert().Equal([]machine.File{
+	suite.Assert().Equal([]runtime.File{
 		{
 			Content:     `cacert`,
 			Permissions: 0600,
@@ -106,7 +106,7 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
             key_file = "/etc/cri/client/some.host:123.key"
 `,
 			Permissions: 0644,
-			Path:        constants.CRIContainerdConfig,
+			Path:        universe.CRIContainerdConfig,
 			Op:          "append",
 		},
 	}, files)

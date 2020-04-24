@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // VersionSuite verifies Talos version
@@ -32,7 +32,7 @@ func (suite *VersionSuite) TestExpectedVersion() {
 	apiServerVersion, err := suite.DiscoveryClient.ServerVersion()
 	suite.Require().NoError(err)
 
-	expectedApiServerVersion := fmt.Sprintf("v%s", constants.DefaultKubernetesVersion)
+	expectedApiServerVersion := fmt.Sprintf("v%s", universe.DefaultKubernetesVersion)
 	suite.Assert().Equal(expectedApiServerVersion, apiServerVersion.GitVersion)
 
 	checkKernelVersion := suite.Capabilities().RunsTalosKernel
@@ -42,9 +42,9 @@ func (suite *VersionSuite) TestExpectedVersion() {
 	suite.Require().NoError(err)
 
 	expectedTalosVersion := fmt.Sprintf("Talos (%s)", suite.Version)
-	expectedContainerRuntimeVersion := fmt.Sprintf("containerd://%s", constants.DefaultContainerdVersion)
-	expectedKubeletVersion := fmt.Sprintf("v%s", constants.DefaultKubernetesVersion)
-	expectedKernelVersion := constants.DefaultKernelVersion
+	expectedContainerRuntimeVersion := fmt.Sprintf("containerd://%s", universe.DefaultContainerdVersion)
+	expectedKubeletVersion := fmt.Sprintf("v%s", universe.DefaultKubernetesVersion)
+	expectedKernelVersion := universe.DefaultKernelVersion
 
 	for _, node := range nodes.Items {
 		suite.Assert().Equal(expectedTalosVersion, node.Status.NodeInfo.OSImage)

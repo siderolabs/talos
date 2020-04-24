@@ -22,15 +22,15 @@ import (
 	"google.golang.org/grpc"
 
 	healthapi "github.com/talos-systems/talos/api/health"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Networkd implements the Service interface. It serves as the concrete type with
@@ -44,7 +44,7 @@ func (n *Networkd) ID(config runtime.Configurator) string {
 
 // PreFunc implements the Service interface.
 func (n *Networkd) PreFunc(ctx context.Context, config runtime.Configurator) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	importer := containerd.NewImporter(universe.SystemContainerdNamespace, containerd.WithContainerdAddress(universe.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/networkd.tar",
@@ -76,20 +76,20 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 		ID: n.ID(config),
 		ProcessArgs: []string{
 			"/networkd",
-			"--config=" + constants.ConfigPath,
+			"--config=" + universe.ConfigPath,
 		},
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.NetworkSocketPath), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(universe.NetworkSocketPath), 0750); err != nil {
 		return nil, err
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: universe.ConfigPath, Source: universe.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: filepath.Dir(constants.NetworkSocketPath), Source: filepath.Dir(constants.NetworkSocketPath), Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(universe.NetworkSocketPath), Source: filepath.Dir(universe.NetworkSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
@@ -105,7 +105,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		config.Debug(),
 		&args,
-		runner.WithContainerdAddress(constants.SystemContainerdAddress),
+		runner.WithContainerdAddress(universe.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -134,7 +134,7 @@ func (n *Networkd) HealthFunc(cfg runtime.Configurator) health.Check {
 		)
 
 		conn, err = grpc.Dial(
-			fmt.Sprintf("%s://%s", "unix", constants.NetworkSocketPath),
+			fmt.Sprintf("%s://%s", "unix", universe.NetworkSocketPath),
 			grpc.WithInsecure(),
 			grpc.WithContextDialer(dialer.DialUnix()),
 		)

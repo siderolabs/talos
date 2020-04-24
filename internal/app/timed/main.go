@@ -11,9 +11,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // https://access.redhat.com/solutions/39194
@@ -74,7 +74,7 @@ func main() {
 		errch <- factory.ListenAndServe(
 			reg.NewRegistrator(n),
 			factory.Network("unix"),
-			factory.SocketPath(constants.TimeSocketPath),
+			factory.SocketPath(universe.TimeSocketPath),
 			factory.WithDefaultLog(),
 		)
 	}()

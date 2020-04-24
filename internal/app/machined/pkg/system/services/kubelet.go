@@ -21,14 +21,14 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	criconstants "github.com/containerd/cri/pkg/constants"
+	"github.com/containerd/cri/pkg/constants"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
-	internalcni "github.com/talos-systems/talos/internal/app/machined/internal/cni"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -36,10 +36,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
-	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
@@ -90,15 +89,15 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubeletBootstrapKubeconfig, buf.Bytes(), 0600); err != nil {
+	if err := ioutil.WriteFile(universe.KubeletBootstrapKubeconfig, buf.Bytes(), 0600); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(constants.KubernetesCACert), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(universe.KubernetesCACert), 0700); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesCACert, config.Cluster().CA().Crt, 0500); err != nil {
+	if err := ioutil.WriteFile(universe.KubernetesCACert, config.Cluster().CA().Crt, 0500); err != nil {
 		return err
 	}
 
@@ -106,7 +105,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 		return err
 	}
 
-	client, err := containerdapi.New(constants.ContainerdAddress)
+	client, err := containerdapi.New(universe.ContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -136,7 +135,7 @@ func (k *Kubelet) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "networkd"}
+	return []string{"cri", "networkd"}
 }
 
 // Runner implements the Service interface.
@@ -159,20 +158,13 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
 	}
-
-	// Add in the additional CNI mounts.
-	cniMounts, err := internalcni.Mounts(config)
-	if err != nil {
-		return nil, err
-	}
-
-	mounts = append(mounts, cniMounts...)
 
 	// Add extra mounts.
 	// TODO(andrewrynhard): We should verify that the mount source is
@@ -188,7 +180,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		config.Debug(),
 		&args,
-		runner.WithNamespace(criconstants.K8sContainerdNamespace),
+		runner.WithNamespace(constants.K8sContainerdNamespace),
 		runner.WithContainerImage(config.Machine().Kubelet().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -252,7 +244,7 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		RotateCertificates: true,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
-				ClientCAFile: constants.KubernetesCACert,
+				ClientCAFile: universe.KubernetesCACert,
 			},
 			Webhook: kubeletconfig.KubeletWebhookAuthentication{
 				Enabled: &t,
@@ -274,10 +266,10 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 // nolint: gocyclo
 func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 	blackListArgs := argsbuilder.Args{
-		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
-		"kubeconfig":                 constants.KubeletKubeconfig,
+		"bootstrap-kubeconfig":       universe.KubeletBootstrapKubeconfig,
+		"kubeconfig":                 universe.KubeletKubeconfig,
 		"container-runtime":          "remote",
-		"container-runtime-endpoint": "unix://" + constants.ContainerdAddress,
+		"container-runtime-endpoint": "unix://" + universe.ContainerdAddress,
 		"config":                     "/etc/kubernetes/kubelet.yaml",
 		"dynamic-config-dir":         "/etc/kubernetes/kubelet",
 

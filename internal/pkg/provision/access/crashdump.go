@@ -13,7 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // CrashDump produces debug information to help with debugging failures.
@@ -39,7 +39,7 @@ func (a *adapter) CrashDump(ctx context.Context, out io.Writer) {
 
 			for _, msg := range services.Messages {
 				for _, svc := range msg.Services {
-					stream, err := cli.Logs(nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, svc.Id, false, 100)
+					stream, err := cli.Logs(nodeCtx, universe.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, svc.Id, false, 100)
 					if err != nil {
 						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
 						continue

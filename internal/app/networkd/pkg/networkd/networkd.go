@@ -20,11 +20,11 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Set up default nameservers
@@ -260,7 +260,7 @@ func (n *Networkd) Hostname() (err error) {
 	}
 
 	// Skip hostname/domainname setting when running in container mode
-	if p.Mode() == runtime.Container {
+	if p.Mode() == runtime.ModeContainer {
 		return nil
 	}
 
@@ -328,7 +328,7 @@ func (n *Networkd) decideHostname() (hostname string, domainname string, address
 	}
 
 	// Kernel
-	if kHostname := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); kHostname != nil {
+	if kHostname := procfs.ProcCmdline().Get(universe.KernelParamHostname).First(); kHostname != nil {
 		hostname = *kHostname
 	}
 

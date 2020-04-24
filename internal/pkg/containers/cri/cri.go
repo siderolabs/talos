@@ -16,7 +16,7 @@ import (
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 type inspector struct {
@@ -43,7 +43,7 @@ func NewInspector(ctx context.Context, options ...Option) (ctrs.Inspector, error
 	var err error
 
 	opt := inspectorOptions{
-		criEndpoint: "unix:" + constants.ContainerdAddress,
+		criEndpoint: "unix:" + universe.ContainerdAddress,
 	}
 
 	for _, o := range options {

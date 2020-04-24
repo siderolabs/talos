@@ -17,12 +17,12 @@ import (
 	apidbackend "github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
 	"github.com/talos-systems/talos/pkg/startup"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var (
@@ -65,7 +65,7 @@ func main() {
 	}
 
 	backendFactory := apidbackend.NewAPIDFactory(clientTLSConfig)
-	localBackend := backend.NewLocal("routerd", constants.RouterdSocketPath)
+	localBackend := backend.NewLocal("routerd", universe.RouterdSocketPath)
 
 	router := director.NewRouter(backendFactory.Get, localBackend)
 
@@ -86,7 +86,7 @@ func main() {
 
 	err = factory.ListenAndServe(
 		router,
-		factory.Port(constants.ApidPort),
+		factory.Port(universe.ApidPort),
 		factory.WithDefaultLog(),
 		factory.ServerOptions(
 			grpc.Creds(

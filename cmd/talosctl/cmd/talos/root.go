@@ -12,8 +12,8 @@ import (
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var (
@@ -62,7 +62,7 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 			return err
 		}
 
-		c, err := client.NewClient(tlsconfig, configEndpoints, constants.ApidPort)
+		c, err := client.NewClient(tlsconfig, configEndpoints, universe.ApidPort)
 		if err != nil {
 			return fmt.Errorf("error constructing client: %w", err)
 		}

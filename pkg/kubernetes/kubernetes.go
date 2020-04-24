@@ -28,9 +28,9 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Client represents a set of helper methods for interacting with the
@@ -43,7 +43,7 @@ type Client struct {
 func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 	var config *restclient.Config
 
-	config, err = clientcmd.BuildConfigFromFlags("", constants.KubeletKubeconfig)
+	config, err = clientcmd.BuildConfigFromFlags("", universe.KubeletKubeconfig)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 		return fmt.Errorf("failed to marshal unmodified node %q into JSON: %w", n.Name, err)
 	}
 
-	n.Labels[constants.LabelNodeRoleMaster] = ""
+	n.Labels[universe.LabelNodeRoleMaster] = ""
 
 	newData, err := json.Marshal(n)
 	if err != nil {

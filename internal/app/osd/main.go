@@ -8,9 +8,9 @@ import (
 	"log"
 
 	"github.com/talos-systems/talos/internal/app/osd/internal/reg"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 func init() {
@@ -25,7 +25,7 @@ func main() {
 	log.Fatalf("%+v", factory.ListenAndServe(
 		&reg.Registrator{},
 		factory.Network("unix"),
-		factory.SocketPath(constants.OSSocketPath),
+		factory.SocketPath(universe.OSSocketPath),
 		factory.WithDefaultLog(),
 	),
 	)

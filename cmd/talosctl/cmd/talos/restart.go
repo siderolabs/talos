@@ -8,12 +8,12 @@ import (
 	"context"
 	"fmt"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	"github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // restartCmd represents the restart command
@@ -26,9 +26,9 @@ var restartCmd = &cobra.Command{
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var namespace string
 			if kubernetes {
-				namespace = criconstants.K8sContainerdNamespace
+				namespace = constants.K8sContainerdNamespace
 			} else {
-				namespace = constants.SystemContainerdNamespace
+				namespace = universe.SystemContainerdNamespace
 			}
 			driver := common.ContainerDriver_CONTAINERD
 			if useCRI {

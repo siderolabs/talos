@@ -16,25 +16,22 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/cmd/installer/pkg/manifest"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Installer represents the installer logic. It serves as the entrypoint to all
 // installation methods.
 type Installer struct {
 	cmdline  *procfs.Cmdline
-	install  machine.Install
+	install  runtime.Install
 	manifest *manifest.Manifest
 	Current  string
 	Next     string
@@ -45,7 +42,7 @@ type Installer struct {
 // NewInstaller initializes and returns an Installer.
 //
 // nolint: gocyclo
-func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install machine.Install) (i *Installer, err error) {
+func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install runtime.Install) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
 		install: install,
@@ -53,15 +50,15 @@ func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install ma
 
 	var dev *probe.ProbedBlockDevice
 
-	if dev, err = probe.GetDevWithFileSystemLabel(constants.BootPartitionLabel); err != nil {
+	if dev, err = probe.GetDevWithFileSystemLabel(universe.BootPartitionLabel); err != nil {
 		i.bootPartitionFound = false
 
-		log.Printf("WARNING: failed to find %s: %v", constants.BootPartitionLabel, err)
+		log.Printf("WARNING: failed to find %s: %v", universe.BootPartitionLabel, err)
 	} else {
 		i.bootPartitionFound = true
 	}
 
-	if sequence == runtime.Upgrade && i.bootPartitionFound {
+	if sequence == runtime.SequenceUpgrade && i.bootPartitionFound {
 		if err = os.MkdirAll("/boot", 0777); err != nil {
 			return nil, err
 		}
@@ -78,7 +75,7 @@ func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install ma
 
 	label := i.Current
 
-	if sequence == runtime.Upgrade && i.bootPartitionFound {
+	if sequence == runtime.SequenceUpgrade && i.bootPartitionFound {
 		label = i.Next
 	}
 
@@ -95,7 +92,7 @@ func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install ma
 //
 // nolint: gocyclo
 func (i *Installer) Install(sequence runtime.Sequence) (err error) {
-	if sequence != runtime.Upgrade || !i.bootPartitionFound {
+	if sequence != runtime.SequenceUpgrade || !i.bootPartitionFound {
 		if i.install.Zero() {
 			if err = zero(i.manifest); err != nil {
 				return fmt.Errorf("failed to wipe device(s): %w", err)
@@ -114,7 +111,7 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 		for dev := range i.manifest.Targets {
 			var mp *mount.Points
 
-			mp, err = owned.MountPointsForDevice(dev)
+			mp, err = mount.SystemMountPointsForDevice(dev)
 			if err != nil {
 				return err
 			}
@@ -125,16 +122,15 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 			}
 		}
 
-		m := manager.NewManager(mountpoints)
-		if err = m.MountAll(); err != nil {
+		if err = mount.Mount(mountpoints); err != nil {
 			return err
 		}
 
 		// nolint: errcheck
-		defer m.UnmountAll()
+		defer mount.Unmount(mountpoints)
 	}
 
-	if sequence == runtime.Upgrade && i.bootPartitionFound && i.install.Force() {
+	if sequence == runtime.SequenceUpgrade && i.bootPartitionFound && i.install.Force() {
 		for dev, targets := range i.manifest.Targets {
 			var bd *blockdevice.BlockDevice
 
@@ -155,12 +151,12 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 			for _, target := range targets {
 				for _, part := range pt.Partitions() {
 					switch target.Label {
-					case constants.BootPartitionLabel, constants.EphemeralPartitionLabel:
+					case universe.BootPartitionLabel, universe.EphemeralPartitionLabel:
 						target.PartitionName = util.PartPath(target.Device, int(part.No()))
 					}
 				}
 
-				if target.Label == constants.BootPartitionLabel {
+				if target.Label == universe.BootPartitionLabel {
 					continue
 				}
 
@@ -176,11 +172,11 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 	for _, targets := range i.manifest.Targets {
 		for _, target := range targets {
 			switch target.Label {
-			case constants.BootPartitionLabel:
+			case universe.BootPartitionLabel:
 				if err = syslinux.Prepare(target.Device); err != nil {
 					return err
 				}
-			case constants.EphemeralPartitionLabel:
+			case universe.EphemeralPartitionLabel:
 				continue
 			}
 
@@ -197,16 +193,16 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 		return nil
 	}
 
-	if sequence != runtime.Upgrade || !i.bootPartitionFound {
-		i.cmdline.Append("initrd", filepath.Join("/", i.Current, constants.InitramfsAsset))
+	if sequence != runtime.SequenceUpgrade || !i.bootPartitionFound {
+		i.cmdline.Append("initrd", filepath.Join("/", i.Current, universe.InitramfsAsset))
 
 		syslinuxcfg := &syslinux.Cfg{
 			Default: i.Current,
 			Labels: []*syslinux.Label{
 				{
 					Root:   i.Current,
-					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
+					Initrd: filepath.Join("/", i.Current, universe.InitramfsAsset),
+					Kernel: filepath.Join("/", i.Current, universe.KernelAsset),
 					Append: i.cmdline.String(),
 				},
 			},
@@ -216,21 +212,21 @@ func (i *Installer) Install(sequence runtime.Sequence) (err error) {
 			return err
 		}
 	} else {
-		i.cmdline.Append("initrd", filepath.Join("/", i.Next, constants.InitramfsAsset))
+		i.cmdline.Append("initrd", filepath.Join("/", i.Next, universe.InitramfsAsset))
 
 		syslinuxcfg := &syslinux.Cfg{
 			Default: i.Next,
 			Labels: []*syslinux.Label{
 				{
 					Root:   i.Next,
-					Initrd: filepath.Join("/", i.Next, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Next, constants.KernelAsset),
+					Initrd: filepath.Join("/", i.Next, universe.InitramfsAsset),
+					Kernel: filepath.Join("/", i.Next, universe.KernelAsset),
 					Append: i.cmdline.String(),
 				},
 				{
 					Root:   i.Current,
-					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
+					Initrd: filepath.Join("/", i.Current, universe.InitramfsAsset),
+					Kernel: filepath.Join("/", i.Current, universe.KernelAsset),
 					Append: procfs.ProcCmdline().String(),
 				},
 			},

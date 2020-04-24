@@ -19,12 +19,83 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // RetryFunc defines the requirements for retrying a mount point operation.
 type RetryFunc func(*Point) error
+
+// Mount mounts the device(s).
+func Mount(mountpoints *Points) (err error) {
+	iter := mountpoints.Iter()
+
+	//  Mount the device(s).
+
+	for iter.Next() {
+		mountpoint := iter.Value()
+		// Repair the disk's partition table.
+		if mountpoint.Resize {
+			if err = mountpoint.ResizePartition(); err != nil {
+				return fmt.Errorf("error resizing %q: %w", iter.Value().Source(), err)
+			}
+		}
+
+		if err = mountpoint.Mount(); err != nil {
+			return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
+		}
+
+		// Grow the filesystem to the maximum allowed size.
+		if mountpoint.Resize {
+			if err = mountpoint.GrowFilesystem(); err != nil {
+				return fmt.Errorf("grow: %w", err)
+			}
+		}
+	}
+
+	if iter.Err() != nil {
+		return iter.Err()
+	}
+
+	return nil
+}
+
+// Unmount unmounts the device(s).
+func Unmount(mountpoints *Points) (err error) {
+	iter := mountpoints.IterRev()
+	for iter.Next() {
+		mountpoint := iter.Value()
+		if err = mountpoint.Unmount(); err != nil {
+			return fmt.Errorf("unmount: %w", err)
+		}
+	}
+
+	if iter.Err() != nil {
+		return iter.Err()
+	}
+
+	return nil
+}
+
+// Move moves the device(s).
+// TODO(andrewrynhard): We need to skip calling the move method on mountpoints
+// that are a child of another mountpoint. The kernel will handle moving the
+// child mountpoints for us.
+func Move(mountpoints *Points, prefix string) (err error) {
+	iter := mountpoints.Iter()
+	for iter.Next() {
+		mountpoint := iter.Value()
+		if err = mountpoint.Move(prefix); err != nil {
+			return fmt.Errorf("move: %w", err)
+		}
+	}
+
+	if iter.Err() != nil {
+		return iter.Err()
+	}
+
+	return nil
+}
 
 func mountRetry(f RetryFunc, p *Point) (err error) {
 	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
@@ -228,7 +299,7 @@ func (p *Point) ResizePartition() (err error) {
 	}
 
 	for _, partition := range pt.Partitions() {
-		if partition.(*gptpartition.Partition).Name == constants.EphemeralPartitionLabel {
+		if partition.(*gptpartition.Partition).Name == universe.EphemeralPartitionLabel {
 			if err := pt.Resize(partition); err != nil {
 				return err
 			}
@@ -267,8 +338,8 @@ func share(p *Point) error {
 func overlay(p *Point) error {
 	parts := strings.Split(p.target, "/")
 	prefix := strings.Join(parts[1:], "-")
-	diff := fmt.Sprintf(filepath.Join(constants.SystemVarPath, "%s-diff"), prefix)
-	workdir := fmt.Sprintf(filepath.Join(constants.SystemVarPath, "%s-workdir"), prefix)
+	diff := fmt.Sprintf(filepath.Join(universe.SystemVarPath, "%s-diff"), prefix)
+	workdir := fmt.Sprintf(filepath.Join(universe.SystemVarPath, "%s-workdir"), prefix)
 
 	for _, target := range []string{diff, workdir} {
 		if err := ensureDirectory(target); err != nil {

@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // LogsSuite verifies Logs API
@@ -56,7 +56,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 	for _, svc := range servicesReply.Messages[0].Services {
 		logsStream, err := suite.Client.Logs(
 			suite.ctx,
-			constants.SystemContainerdNamespace,
+			universe.SystemContainerdNamespace,
 			common.ContainerDriver_CONTAINERD,
 			svc.Id,
 			false,
@@ -81,7 +81,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 
 // TestTail verifies that log tail might be requested.
 func (suite *LogsSuite) TestTail() {
-	// invoke machined-api enough times to generate
+	// invoke machined enough times to generate
 	// some logs
 	for i := 0; i < 20; i++ {
 		_, err := suite.Client.Version(suite.ctx)
@@ -91,9 +91,9 @@ func (suite *LogsSuite) TestTail() {
 	for _, tailLines := range []int32{0, 1, 10} {
 		logsStream, err := suite.Client.Logs(
 			suite.ctx,
-			constants.SystemContainerdNamespace,
+			universe.SystemContainerdNamespace,
 			common.ContainerDriver_CONTAINERD,
-			"machined-api",
+			"machined",
 			false,
 			tailLines,
 		)
@@ -123,7 +123,7 @@ func (suite *LogsSuite) TestTail() {
 func (suite *LogsSuite) TestServiceNotFound() {
 	logsStream, err := suite.Client.Logs(
 		suite.ctx,
-		constants.SystemContainerdNamespace,
+		universe.SystemContainerdNamespace,
 		common.ContainerDriver_CONTAINERD,
 		"nosuchservice",
 		false,
@@ -159,14 +159,14 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		// invoke osd enough times to generate
 		// some logs
 		for i := int32(0); i < tailLines; i++ {
-			_, err := suite.Client.Stats(suite.ctx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
+			_, err := suite.Client.Stats(suite.ctx, universe.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
 			suite.Require().NoError(err)
 		}
 	}
 
 	logsStream, err := suite.Client.Logs(
 		suite.ctx,
-		constants.SystemContainerdNamespace,
+		universe.SystemContainerdNamespace,
 		common.ContainerDriver_CONTAINERD,
 		"osd",
 		true,
@@ -221,7 +221,7 @@ DrainLoop:
 	}
 
 	// invoke osd API
-	_, err = suite.Client.Stats(suite.ctx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
+	_, err = suite.Client.Stats(suite.ctx, universe.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
 	suite.Require().NoError(err)
 
 	// there should be a line in the logs

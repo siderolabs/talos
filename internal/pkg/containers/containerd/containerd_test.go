@@ -25,7 +25,7 @@ import (
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	ctrd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 const (
@@ -94,7 +94,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 			"--address", suite.containerdAddress,
 			"--state", stateDir,
 			"--root", rootDir,
-			"--config", constants.CRIContainerdConfig,
+			"--config", universe.CRIContainerdConfig,
 		},
 	}
 
@@ -102,7 +102,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		false,
 		args,
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
+		runner.WithEnv([]string{"PATH=/bin:" + universe.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)

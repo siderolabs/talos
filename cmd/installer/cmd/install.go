@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	machineconfig "github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
@@ -78,9 +78,9 @@ func runInstallCmd() (err error) {
 		}
 	}
 
-	sequence := runtime.None
+	sequence := runtime.SequenceNoop
 	if options.Upgrade {
-		sequence = runtime.Upgrade
+		sequence = runtime.SequenceUpgrade
 	}
 
 	if err = pkg.Install(p, config, sequence, options); err != nil {

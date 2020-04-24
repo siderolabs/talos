@@ -13,7 +13,7 @@ import (
 	"github.com/containerd/containerd/oci"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Runner describes the requirements for running a process.
@@ -60,10 +60,10 @@ type Option func(*Options)
 func DefaultOptions() *Options {
 	return &Options{
 		Env:                     []string{},
-		Namespace:               constants.SystemContainerdNamespace,
-		LogPath:                 constants.DefaultLogPath,
+		Namespace:               universe.SystemContainerdNamespace,
+		LogPath:                 universe.DefaultLogPath,
 		GracefulShutdownTimeout: 10 * time.Second,
-		ContainerdAddress:       constants.ContainerdAddress,
+		ContainerdAddress:       universe.ContainerdAddress,
 	}
 }
 

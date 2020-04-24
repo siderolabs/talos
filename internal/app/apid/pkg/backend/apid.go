@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // APID backend performs proxying to another apid instance.
@@ -74,7 +74,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 	var err error
 	a.conn, err = grpc.DialContext(
 		ctx,
-		fmt.Sprintf("%s:%d", a.target, constants.ApidPort),
+		fmt.Sprintf("%s:%d", a.target, universe.ApidPort),
 		grpc.WithTransportCredentials(a.creds),
 		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
 	)

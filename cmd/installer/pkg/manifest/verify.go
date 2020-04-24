@@ -8,13 +8,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/config/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // VerifyDataDevice verifies the supplied data device options.
-func VerifyDataDevice(install machine.Install) (err error) {
+func VerifyDataDevice(install runtime.Install) (err error) {
 	if install.Disk() == "" {
 		return errors.New("missing disk")
 	}
@@ -23,7 +23,7 @@ func VerifyDataDevice(install machine.Install) (err error) {
 		return nil
 	}
 
-	if err = VerifyDiskAvailability(install.Disk(), constants.EphemeralPartitionLabel); err != nil {
+	if err = VerifyDiskAvailability(install.Disk(), universe.EphemeralPartitionLabel); err != nil {
 		return fmt.Errorf("failed to verify disk availability: %w", err)
 	}
 
@@ -31,7 +31,7 @@ func VerifyDataDevice(install machine.Install) (err error) {
 }
 
 // VerifyBootDevice verifies the supplied boot device options.
-func VerifyBootDevice(install machine.Install) (err error) {
+func VerifyBootDevice(install runtime.Install) (err error) {
 	if !install.WithBootloader() {
 		return nil
 	}
@@ -40,7 +40,7 @@ func VerifyBootDevice(install machine.Install) (err error) {
 		return nil
 	}
 
-	if err = VerifyDiskAvailability(install.Disk(), constants.BootPartitionLabel); err != nil {
+	if err = VerifyDiskAvailability(install.Disk(), universe.BootPartitionLabel); err != nil {
 		return fmt.Errorf("failed to verify disk availability: %w", err)
 	}
 

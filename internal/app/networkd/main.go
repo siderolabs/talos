@@ -11,8 +11,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var configPath *string
@@ -49,7 +49,7 @@ func main() {
 	log.Fatalf("%+v", factory.ListenAndServe(
 		reg.NewRegistrator(nwd),
 		factory.Network("unix"),
-		factory.SocketPath(constants.NetworkSocketPath),
+		factory.SocketPath(universe.NetworkSocketPath),
 		factory.WithDefaultLog(),
 	),
 	)

@@ -13,14 +13,14 @@ import (
 	"github.com/containerd/containerd/defaults"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // CRI implements the Service interface. It serves as the concrete type with
@@ -49,7 +49,7 @@ func (c *CRI) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (c *CRI) DependsOn(config runtime.Configurator) []string {
-	return nil
+	return []string{"networkd"}
 }
 
 // Runner implements the Service interface.
@@ -60,9 +60,9 @@ func (c *CRI) Runner(config runtime.Configurator) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/bin/containerd",
 			"--address",
-			constants.ContainerdAddress,
+			universe.ContainerdAddress,
 			"--config",
-			constants.CRIContainerdConfig,
+			universe.CRIContainerdConfig,
 		},
 	}
 
@@ -83,7 +83,7 @@ func (c *CRI) Runner(config runtime.Configurator) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface
 func (c *CRI) HealthFunc(runtime.Configurator) health.Check {
 	return func(ctx context.Context) error {
-		client, err := containerd.New(constants.ContainerdAddress)
+		client, err := containerd.New(universe.ContainerdAddress)
 		if err != nil {
 			return err
 		}

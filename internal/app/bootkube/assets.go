@@ -23,26 +23,26 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	tnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // nolint: gocyclo
 func generateAssets(config runtime.Configurator) (err error) {
-	if err = os.MkdirAll(constants.ManifestsDirectory, 0644); err != nil {
+	if err = os.MkdirAll(universe.ManifestsDirectory, 0644); err != nil {
 		return err
 	}
 
 	// Ensure assets directory does not exist / is left over from a failed install
-	if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
+	if err = os.RemoveAll(universe.AssetsDirectory); err != nil {
 		// Ignore if the directory does not exist
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
 
-	peerCrt, err := ioutil.ReadFile(constants.KubernetesEtcdPeerCert)
+	peerCrt, err := ioutil.ReadFile(universe.KubernetesEtcdPeerCert)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return fmt.Errorf("failed to parse client certificate: %w", err)
 	}
 
-	caCrt, err := ioutil.ReadFile(constants.KubernetesEtcdCACert)
+	caCrt, err := ioutil.ReadFile(universe.KubernetesEtcdCACert)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func generateAssets(config runtime.Configurator) (err error) {
 		return fmt.Errorf("failed to parse etcd CA certificate: %w", err)
 	}
 
-	peerKey, err := ioutil.ReadFile(constants.KubernetesEtcdPeerKey)
+	peerKey, err := ioutil.ReadFile(universe.KubernetesEtcdPeerKey)
 	if err != nil {
 		return err
 	}
@@ -162,12 +162,12 @@ func generateAssets(config runtime.Configurator) (err error) {
 		ClusterDomain:              config.Cluster().Network().DNSDomain(),
 	}
 
-	if err = asset.Render(constants.AssetsDirectory, conf); err != nil {
+	if err = asset.Render(universe.AssetsDirectory, conf); err != nil {
 		return err
 	}
 
 	// If "custom" is the CNI, we expect the user to supply one or more urls that point to CNI yamls
-	if config.Cluster().Network().CNI().Name() == constants.CustomCNI {
+	if config.Cluster().Network().CNI().Name() == universe.CustomCNI {
 		if err = fetchManifests(config.Cluster().Network().CNI().URLs(), map[string]string{}); err != nil {
 			return err
 		}
@@ -235,7 +235,7 @@ func fetchManifests(urls []string, headers map[string]string) error {
 		client := &getter.Client{
 			Ctx:     ctx,
 			Src:     url,
-			Dst:     filepath.Join(constants.AssetsDirectory, "manifests", "zzz-talos", fileName),
+			Dst:     filepath.Join(universe.AssetsDirectory, "manifests", "zzz-talos", fileName),
 			Pwd:     pwd,
 			Mode:    getter.ClientModeFile,
 			Options: []getter.ClientOption{},

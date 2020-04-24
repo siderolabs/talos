@@ -9,8 +9,8 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/universe"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -28,8 +28,8 @@ type InstallOptions struct {
 // Install installs Talos.
 func Install(p runtime.Platform, config runtime.Configurator, sequence runtime.Sequence, opts *InstallOptions) (err error) {
 	cmdline := procfs.NewCmdline("")
-	cmdline.Append(constants.KernelParamPlatform, p.Name())
-	cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
+	cmdline.Append(universe.KernelParamPlatform, p.Name())
+	cmdline.Append(universe.KernelParamConfig, opts.ConfigSource)
 
 	if err = cmdline.AppendAll(p.KernelArgs().Strings()); err != nil {
 		return err

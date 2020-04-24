@@ -14,7 +14,7 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/util"
 
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 func run() error {
@@ -26,8 +26,8 @@ func run() error {
 	}
 
 	cfg := bootkube.Config{
-		AssetDir:        constants.AssetsDirectory,
-		PodManifestPath: constants.ManifestsDirectory,
+		AssetDir:        universe.AssetsDirectory,
+		PodManifestPath: universe.ManifestsDirectory,
 		Strict:          true,
 		RequiredPods:    defaultRequiredPods,
 	}
@@ -38,15 +38,15 @@ func run() error {
 	}
 
 	defer func() {
-		if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
-			log.Printf("failed to cleanup bootkube assets dir %s", constants.AssetsDirectory)
+		if err = os.RemoveAll(universe.AssetsDirectory); err != nil {
+			log.Printf("failed to cleanup bootkube assets dir %s", universe.AssetsDirectory)
 		}
 
-		bootstrapWildcard := filepath.Join(constants.ManifestsDirectory, "bootstrap-*")
+		bootstrapWildcard := filepath.Join(universe.ManifestsDirectory, "bootstrap-*")
 
 		bootstrapFiles, err := filepath.Glob(bootstrapWildcard)
 		if err != nil {
-			log.Printf("error finding bootstrap files in manifests dir %s", constants.ManifestsDirectory)
+			log.Printf("error finding bootstrap files in manifests dir %s", universe.ManifestsDirectory)
 		}
 
 		for _, bootstrapFile := range bootstrapFiles {

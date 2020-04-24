@@ -20,15 +20,15 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // RunInstallerContainer performs an installation via the installer container.
 //nolint: gocyclo
-func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
+func RunInstallerContainer(r runtime.Runtime, seq runtime.Sequence, opts ...Option) error {
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
@@ -37,9 +37,9 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		}
 	}
 
-	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
+	ctx := namespaces.WithNamespace(context.Background(), universe.SystemContainerdNamespace)
 
-	client, err := containerd.New(constants.SystemContainerdAddress)
+	client, err := containerd.New(universe.SystemContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -67,12 +67,12 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
 	var config *string
-	if config = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
+	if config = procfs.ProcCmdline().Get(universe.KernelParamConfig).First(); config == nil {
 		return fmt.Errorf("no config option was found")
 	}
 
 	upgrade := "false"
-	if r.Sequence() == runtime.Upgrade {
+	if seq == runtime.SequenceUpgrade {
 		upgrade = "true"
 	}
 

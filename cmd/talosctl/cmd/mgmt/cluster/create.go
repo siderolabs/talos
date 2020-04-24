@@ -17,17 +17,17 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/check"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cli"
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var (
@@ -322,10 +322,10 @@ func init() {
 	}
 
 	createCmd.Flags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
-	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(constants.DefaultTalosImageRepository), "the image to use")
-	createCmd.Flags().StringVar(&nodeInstallImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the installer image to use")
-	createCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(constants.KernelUncompressedAsset), "the uncompressed kernel image to use")
-	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
+	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(universe.DefaultTalosImageRepository), "the image to use")
+	createCmd.Flags().StringVar(&nodeInstallImage, "install-image", helpers.DefaultImage(universe.DefaultInstallerImageRepository), "the installer image to use")
+	createCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(universe.KernelUncompressedAsset), "the uncompressed kernel image to use")
+	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(universe.InitramfsAsset), "the uncompressed kernel image to use")
 	createCmd.Flags().BoolVar(&bootloaderEmulation, "with-bootloader-emulation", false, "enable bootloader emulation to load kernel and initramfs from disk image")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
@@ -341,7 +341,7 @@ func init() {
 	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
 	createCmd.Flags().BoolVar(&forceInitNodeAsEndpoint, "init-node-as-endpoint", false, "use init node as endpoint instead of any load balancer endpoint")
 	createCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
-	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", universe.DefaultKubernetesVersion, "desired kubernetes version to run")
 	createCmd.Flags().StringVarP(&inputDir, "input-dir", "i", "", "location of pre-generated config files")
 	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries")
 	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path")

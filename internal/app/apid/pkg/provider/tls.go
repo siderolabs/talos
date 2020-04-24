@@ -11,10 +11,10 @@ import (
 	stdlibtls "crypto/tls"
 	stdlibnet "net"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // TLSConfig provides client & server TLS configs for apid.
@@ -47,7 +47,7 @@ func NewTLSConfig(config runtime.Configurator, endpoints []string) (*TLSConfig, 
 	tlsConfig.certificateProvider, err = tls.NewRemoteRenewingFileCertificateProvider(
 		config.Machine().Security().Token(),
 		endpoints,
-		constants.TrustdPort,
+		universe.TrustdPort,
 		dnsNames,
 		ips,
 	)

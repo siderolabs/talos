@@ -16,8 +16,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // NewAdapter returns ClusterAccess object from Cluster.
@@ -77,7 +77,7 @@ func (a *adapter) Client(endpoints ...string) (*client.Client, error) {
 		return nil, err
 	}
 
-	client, err := client.NewClient(tlsconfig, endpoints, constants.ApidPort)
+	client, err := client.NewClient(tlsconfig, endpoints, universe.ApidPort)
 	if err == nil {
 		a.clients[key] = client
 	}

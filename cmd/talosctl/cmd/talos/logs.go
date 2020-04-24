@@ -12,7 +12,7 @@ import (
 	"os"
 	"sync"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	"github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,7 +22,7 @@ import (
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 var (
@@ -40,9 +40,9 @@ var logsCmd = &cobra.Command{
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var namespace string
 			if kubernetes {
-				namespace = criconstants.K8sContainerdNamespace
+				namespace = constants.K8sContainerdNamespace
 			} else {
-				namespace = constants.SystemContainerdNamespace
+				namespace = universe.SystemContainerdNamespace
 			}
 
 			driver := common.ContainerDriver_CONTAINERD

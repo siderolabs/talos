@@ -18,24 +18,21 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/pseudo"
-	"github.com/talos-systems/talos/internal/pkg/mount/manager/squashfs"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
 // nolint: gocyclo
 func run() (err error) {
 	// Mount the pseudo devices.
-	mountpoints, err := pseudo.MountPoints()
+	pseudo, err := mount.PseudoMountPoints()
 	if err != nil {
 		return err
 	}
 
-	pseudo := manager.NewManager(mountpoints)
-	if err = pseudo.MountAll(); err != nil {
+	if err = mount.Mount(pseudo); err != nil {
 		return err
 	}
 
@@ -50,20 +47,19 @@ func run() (err error) {
 	// Mount the rootfs.
 	log.Println("mounting the rootfs")
 
-	mountpoints, err = squashfs.MountPoints(constants.NewRoot)
+	squashfs, err := mount.SquashfsMountPoints(universe.NewRoot)
 	if err != nil {
 		return err
 	}
 
-	squashfs := manager.NewManager(mountpoints)
-	if err = squashfs.MountAll(); err != nil {
+	if err = mount.Mount(squashfs); err != nil {
 		return err
 	}
 
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
-	if err = switchroot.Switch(constants.NewRoot, pseudo); err != nil {
+	if err = switchroot.Switch(universe.NewRoot, pseudo); err != nil {
 		return err
 	}
 
@@ -77,7 +73,7 @@ func recovery() {
 	if r := recover(); r != nil {
 		log.Printf("recovered from: %+v\n", r)
 
-		p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First()
+		p := procfs.ProcCmdline().Get(universe.KernelParamPanic).First()
 		if p != nil && *p == "0" {
 			log.Printf("panic=0 kernel flag found. sleeping forever")
 

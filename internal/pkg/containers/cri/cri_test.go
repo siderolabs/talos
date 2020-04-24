@@ -23,7 +23,7 @@ import (
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 const (
@@ -75,7 +75,7 @@ func (suite *CRISuite) SetupSuite() {
 			"--address", suite.containerdAddress,
 			"--state", stateDir,
 			"--root", rootDir,
-			"--config", constants.CRIContainerdConfig,
+			"--config", universe.CRIContainerdConfig,
 		},
 	}
 
@@ -83,7 +83,7 @@ func (suite *CRISuite) SetupSuite() {
 		false,
 		args,
 		runner.WithLogPath(suite.tmpDir),
-		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
+		runner.WithEnv([]string{"PATH=/bin:" + universe.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)

@@ -17,14 +17,14 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/universe"
 )
 
 // Bootkube implements the Service interface. It serves as the concrete type with
@@ -55,7 +55,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 15*time.Second)
 		defer attemptCtxCancel()
 
-		if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
+		if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), universe.InitializedKey); err != nil {
 			if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
 				// no key set yet, treat as not provisioned yet
 				return nil
@@ -84,7 +84,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 		return nil
 	}
 
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	importer := containerd.NewImporter(universe.SystemContainerdNamespace, containerd.WithContainerdAddress(universe.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/bootkube.tar",
@@ -111,7 +111,7 @@ func (b *Bootkube) PostFunc(config runtime.Configurator, state events.ServiceSta
 
 	err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
 		ctx := clientv3.WithRequireLeader(context.Background())
-		if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
+		if _, err = client.Put(ctx, universe.InitializedKey, "true"); err != nil {
 			return retry.ExpectedError(err)
 		}
 
@@ -149,7 +149,7 @@ func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 		ID: b.ID(config),
 		ProcessArgs: []string{
 			"/bootkube",
-			"--config=" + constants.ConfigPath,
+			"--config=" + universe.ConfigPath,
 		},
 	}
 
@@ -161,14 +161,14 @@ func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: universe.ConfigPath, Source: universe.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 	}
 
 	return containerd.NewRunner(
 		config.Debug(),
 		&args,
-		runner.WithContainerdAddress(constants.SystemContainerdAddress),
+		runner.WithContainerdAddress(universe.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
