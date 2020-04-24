@@ -4,13 +4,13 @@
 
 package check
 
-import "github.com/talos-systems/talos/pkg/config/machine"
+import "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 
 // Option represents functional option.
 type Option func(o *Options) error
 
 // WithNodeTypes sets the node types for a check.
-func WithNodeTypes(t ...machine.Type) Option {
+func WithNodeTypes(t ...runtime.MachineType) Option {
 	return func(o *Options) error {
 		o.Types = t
 
@@ -20,7 +20,7 @@ func WithNodeTypes(t ...machine.Type) Option {
 
 // Options describes ClusterCheck parameters.
 type Options struct {
-	Types []machine.Type
+	Types []runtime.MachineType
 }
 
 // DefaultOptions returns the default options.

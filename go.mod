@@ -45,8 +45,8 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200421144856-831deff0541a
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
-	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
-	github.com/mdlayher/netlink v0.0.0-20191009155606-de872b0d824b
+	github.com/mdlayher/genetlink v1.0.0
+	github.com/mdlayher/netlink v1.0.0
 	github.com/mdlayher/raw v0.0.0-20190606144222-a54781e5f38f // indirect
 	github.com/onsi/gomega v1.8.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect

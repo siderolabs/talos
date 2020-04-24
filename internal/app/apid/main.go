@@ -17,7 +17,7 @@ import (
 	apidbackend "github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"

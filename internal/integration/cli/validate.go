@@ -47,7 +47,7 @@ func (suite *ValidateSuite) TestValidate() {
 	suite.RunOsctl([]string{"gen", "config", "foobar", "https://10.0.0.1"})
 
 	for _, configFile := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
-		for _, mode := range []string{"Cloud", "Container", "Interactive", "Metal"} {
+		for _, mode := range []string{"cloud", "container", "metal"} {
 			suite.RunOsctl([]string{"validate", "-m", mode, "-c", configFile})
 		}
 	}
