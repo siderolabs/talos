@@ -7,7 +7,7 @@ package provision
 import (
 	"net"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 // Cluster describes the provisioned Cluster.
@@ -40,7 +40,7 @@ type NetworkInfo struct {
 type NodeInfo struct {
 	ID   string
 	Name string
-	Type machine.Type
+	Type runtime.MachineType
 
 	// Share of CPUs, in 1e-9 fractions
 	NanoCPUs int64

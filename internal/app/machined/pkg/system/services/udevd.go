@@ -8,12 +8,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cmd"
 )
 
@@ -22,12 +22,12 @@ import (
 type Udevd struct{}
 
 // ID implements the Service interface.
-func (c *Udevd) ID(config runtime.Configurator) string {
+func (c *Udevd) ID(r runtime.Runtime) string {
 	return "udevd"
 }
 
 // PreFunc implements the Service interface.
-func (c *Udevd) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (c *Udevd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	_, err := cmd.Run(
 		"/sbin/udevadm",
 		"hwdb",
@@ -38,25 +38,25 @@ func (c *Udevd) PreFunc(ctx context.Context, config runtime.Configurator) error 
 }
 
 // PostFunc implements the Service interface.
-func (c *Udevd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (c *Udevd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *Udevd) Condition(config runtime.Configurator) conditions.Condition {
+func (c *Udevd) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *Udevd) DependsOn(config runtime.Configurator) []string {
+func (c *Udevd) DependsOn(r runtime.Runtime) []string {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (c *Udevd) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
-		ID: c.ID(config),
+		ID: c.ID(r),
 		ProcessArgs: []string{
 			"/sbin/udevd",
 			"--resolve-names=never",
@@ -65,12 +65,12 @@ func (c *Udevd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(process.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		args,
 		runner.WithEnv(env),
 	),

@@ -13,13 +13,13 @@ import (
 	"github.com/containerd/containerd/defaults"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -28,35 +28,35 @@ import (
 type CRI struct{}
 
 // ID implements the Service interface.
-func (c *CRI) ID(config runtime.Configurator) string {
+func (c *CRI) ID(r runtime.Runtime) string {
 	return "cri"
 }
 
 // PreFunc implements the Service interface.
-func (c *CRI) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (c *CRI) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
 }
 
 // PostFunc implements the Service interface.
-func (c *CRI) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (c *CRI) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *CRI) Condition(config runtime.Configurator) conditions.Condition {
+func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *CRI) DependsOn(config runtime.Configurator) []string {
-	return nil
+func (c *CRI) DependsOn(r runtime.Runtime) []string {
+	return []string{"networkd"}
 }
 
 // Runner implements the Service interface.
-func (c *CRI) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
-		ID: c.ID(config),
+		ID: c.ID(r),
 		ProcessArgs: []string{
 			"/bin/containerd",
 			"--address",
@@ -67,12 +67,12 @@ func (c *CRI) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(process.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		args,
 		runner.WithEnv(env),
 	),
@@ -81,7 +81,7 @@ func (c *CRI) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (c *CRI) HealthFunc(runtime.Configurator) health.Check {
+func (c *CRI) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		client, err := containerd.New(constants.ContainerdAddress)
 		if err != nil {
@@ -104,6 +104,6 @@ func (c *CRI) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (c *CRI) HealthSettings(runtime.Configurator) *health.Settings {
+func (c *CRI) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

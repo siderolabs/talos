@@ -22,13 +22,13 @@ import (
 	"google.golang.org/grpc"
 
 	healthapi "github.com/talos-systems/talos/api/health"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
@@ -38,12 +38,12 @@ import (
 type Networkd struct{}
 
 // ID implements the Service interface.
-func (n *Networkd) ID(config runtime.Configurator) string {
+func (n *Networkd) ID(r runtime.Runtime) string {
 	return "networkd"
 }
 
 // PreFunc implements the Service interface.
-func (n *Networkd) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (n *Networkd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -55,25 +55,25 @@ func (n *Networkd) PreFunc(ctx context.Context, config runtime.Configurator) err
 }
 
 // PostFunc implements the Service interface.
-func (n *Networkd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (n *Networkd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (n *Networkd) Condition(config runtime.Configurator) conditions.Condition {
+func (n *Networkd) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (n *Networkd) DependsOn(config runtime.Configurator) []string {
+func (n *Networkd) DependsOn(r runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
-func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/networkd"
 
 	args := runner.Args{
-		ID: n.ID(config),
+		ID: n.ID(r),
 		ProcessArgs: []string{
 			"/networkd",
 			"--config=" + constants.ConfigPath,
@@ -93,7 +93,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
@@ -103,7 +103,7 @@ func (n *Networkd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -171,6 +171,6 @@ func (n *Networkd) HealthFunc(cfg runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (n *Networkd) HealthSettings(runtime.Configurator) *health.Settings {
+func (n *Networkd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

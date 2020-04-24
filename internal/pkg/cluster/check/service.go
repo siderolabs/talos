@@ -9,8 +9,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // ServiceStateAssertion checks whether service reached some specified state.
@@ -23,7 +23,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 	}
 
 	// perform check against "init" node
-	initNodes := cluster.NodesByType(machine.TypeInit)
+	initNodes := cluster.NodesByType(runtime.MachineTypeInit)
 
 	if len(initNodes) != 1 {
 		return fmt.Errorf("init node not found, len(initNodes) = %d", len(initNodes))

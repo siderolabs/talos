@@ -22,15 +22,14 @@ import (
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	talosclient "github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -57,7 +56,7 @@ type upgradeSpec struct {
 
 const (
 	talos03Version = "v0.3.3"
-	talos04Version = "v0.4.0-beta.1"
+	talos04Version = "v0.4.1"
 )
 
 var (
@@ -408,14 +407,14 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// upgrade master nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
+		if node.Type == runtime.MachineTypeInit || node.Type == runtime.MachineTypeControlPlane {
 			suite.upgradeNode(client, node)
 		}
 	}
 
 	// upgrade worker nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeWorker {
+		if node.Type == runtime.MachineTypeJoin {
 			suite.upgradeNode(client, node)
 		}
 	}

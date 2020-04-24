@@ -11,9 +11,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
@@ -171,7 +170,7 @@ func sampleConfigFile() runtime.Configurator {
 			MachineNetwork: &v1alpha1.NetworkConfig{
 				NameServers:     []string{"1.2.3.4", "2.3.4.5"},
 				NetworkHostname: "myhostname",
-				NetworkInterfaces: []machine.Device{
+				NetworkInterfaces: []runtime.Device{
 					{
 						Interface: "eth0",
 						CIDR:      "192.168.0.10/24",
@@ -180,7 +179,7 @@ func sampleConfigFile() runtime.Configurator {
 					{
 						Interface: "bond0",
 						CIDR:      "192.168.0.10/24",
-						Bond: &machine.Bond{
+						Bond: &runtime.Bond{
 							Interfaces: []string{"lo"},
 							Mode:       "balance-rr",
 						},
@@ -195,7 +194,7 @@ func dhcpConfigFile() runtime.Configurator {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []machine.Device{
+				NetworkInterfaces: []runtime.Device{
 					{
 						Interface: "eth0",
 					},

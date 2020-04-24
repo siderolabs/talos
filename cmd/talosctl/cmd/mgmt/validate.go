@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/config"
 )
@@ -31,7 +31,7 @@ var validateCmd = &cobra.Command{
 			return err
 		}
 
-		mode, err := runtime.ModeFromString(validateModeArg)
+		mode, err := runtime.ParseMode(validateModeArg)
 		if err != nil {
 			return err
 		}

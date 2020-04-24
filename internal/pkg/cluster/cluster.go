@@ -11,8 +11,8 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // ClientProvider builds Talos client by endpoint.
@@ -41,5 +41,5 @@ type Info interface {
 	// Nodes returns list of all node endpoints (IPs).
 	Nodes() []string
 	// NodesByType return list of node endpoints by type.
-	NodesByType(machine.Type) []string
+	NodesByType(runtime.MachineType) []string
 }

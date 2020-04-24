@@ -12,11 +12,11 @@ import (
 	"time"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // WaitConditionCheckInterval is time between checking for wait condition
@@ -29,7 +29,7 @@ var WaitConditionCheckInterval = time.Second
 type ServiceRunner struct {
 	mu sync.Mutex
 
-	config  runtime.Configurator
+	runtime runtime.Runtime
 	service Service
 	id      string
 
@@ -46,13 +46,13 @@ type ServiceRunner struct {
 }
 
 // NewServiceRunner creates new ServiceRunner around Service instance
-func NewServiceRunner(service Service, config runtime.Configurator) *ServiceRunner {
+func NewServiceRunner(service Service, runtime runtime.Runtime) *ServiceRunner {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	return &ServiceRunner{
 		service:          service,
-		config:           config,
-		id:               service.ID(config),
+		runtime:          runtime,
+		id:               service.ID(runtime),
 		state:            events.StateInitialized,
 		stateSubscribers: make(map[StateEvent][]chan<- struct{}),
 		ctx:              ctx,
@@ -181,9 +181,9 @@ func (svcrunner *ServiceRunner) Start() {
 	ctx := svcrunner.ctx
 	svcrunner.ctxMu.Unlock()
 
-	condition := svcrunner.service.Condition(svcrunner.config)
+	condition := svcrunner.service.Condition(svcrunner.runtime)
 
-	dependencies := svcrunner.service.DependsOn(svcrunner.config)
+	dependencies := svcrunner.service.DependsOn(svcrunner.runtime)
 	if len(dependencies) > 0 {
 		serviceConditions := make([]conditions.Condition, len(dependencies))
 		for i := range dependencies {
@@ -208,14 +208,14 @@ func (svcrunner *ServiceRunner) Start() {
 
 	svcrunner.UpdateState(events.StatePreparing, "Running pre state")
 
-	if err := svcrunner.service.PreFunc(ctx, svcrunner.config); err != nil {
+	if err := svcrunner.service.PreFunc(ctx, svcrunner.runtime); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
 		return
 	}
 
 	svcrunner.UpdateState(events.StatePreparing, "Creating service runner")
 
-	runnr, err := svcrunner.service.Runner(svcrunner.config)
+	runnr, err := svcrunner.service.Runner(svcrunner.runtime)
 	if err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to create runner: %v", err)
 		return
@@ -235,7 +235,7 @@ func (svcrunner *ServiceRunner) Start() {
 	// PostFunc passes in the state so that we can take actions that depend on the outcome of the run
 	state := svcrunner.GetState()
 
-	if err := svcrunner.service.PostFunc(svcrunner.config, state); err != nil {
+	if err := svcrunner.service.PostFunc(svcrunner.runtime, state); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run post stage: %v", err)
 		return
 	}
@@ -271,7 +271,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 			defer healthWg.Done()
 
 			// nolint: errcheck
-			health.Run(ctx, healthSvc.HealthSettings(svcrunner.config), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.config))
+			health.Run(ctx, healthSvc.HealthSettings(svcrunner.runtime), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.runtime))
 		}()
 
 		notifyCh := make(chan health.StateChange, 2)

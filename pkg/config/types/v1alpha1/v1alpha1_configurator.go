@@ -15,9 +15,8 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	criplugin "github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
-	"github.com/talos-systems/talos/pkg/config/cluster"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
@@ -43,12 +42,12 @@ func (c *Config) Persist() bool {
 }
 
 // Machine implements the Configurator interface.
-func (c *Config) Machine() machine.Machine {
+func (c *Config) Machine() runtime.MachineConfig {
 	return c.MachineConfig
 }
 
 // Cluster implements the Configurator interface.
-func (c *Config) Cluster() cluster.Cluster {
+func (c *Config) Cluster() runtime.ClusterConfig {
 	return c.ClusterConfig
 }
 
@@ -73,7 +72,7 @@ func (c *Config) Bytes() ([]byte, error) {
 }
 
 // Install implements the Configurator interface.
-func (m *MachineConfig) Install() machine.Install {
+func (m *MachineConfig) Install() runtime.Install {
 	if m.MachineInstall == nil {
 		return &InstallConfig{}
 	}
@@ -82,17 +81,17 @@ func (m *MachineConfig) Install() machine.Install {
 }
 
 // Security implements the Configurator interface.
-func (m *MachineConfig) Security() machine.Security {
+func (m *MachineConfig) Security() runtime.Security {
 	return m
 }
 
 // Disks implements the Configurator interface.
-func (m *MachineConfig) Disks() []machine.Disk {
+func (m *MachineConfig) Disks() []runtime.Disk {
 	return m.MachineDisks
 }
 
 // Network implements the Configurator interface.
-func (m *MachineConfig) Network() machine.Network {
+func (m *MachineConfig) Network() runtime.MachineNetwork {
 	if m.MachineNetwork == nil {
 		return &NetworkConfig{}
 	}
@@ -101,7 +100,7 @@ func (m *MachineConfig) Network() machine.Network {
 }
 
 // Time implements the Configurator interface.
-func (m *MachineConfig) Time() machine.Time {
+func (m *MachineConfig) Time() runtime.Time {
 	if m.MachineTime == nil {
 		return &TimeConfig{}
 	}
@@ -110,31 +109,31 @@ func (m *MachineConfig) Time() machine.Time {
 }
 
 // Kubelet implements the Configurator interface.
-func (m *MachineConfig) Kubelet() machine.Kubelet {
+func (m *MachineConfig) Kubelet() runtime.Kubelet {
 	return m.MachineKubelet
 }
 
 // Env implements the Configurator interface.
-func (m *MachineConfig) Env() machine.Env {
+func (m *MachineConfig) Env() runtime.Env {
 	return m.MachineEnv
 }
 
 // Files implements the Configurator interface.
-func (m *MachineConfig) Files() ([]machine.File, error) {
+func (m *MachineConfig) Files() ([]runtime.File, error) {
 	files, err := m.Registries().ExtraFiles()
 
 	return append(files, m.MachineFiles...), err
 }
 
 // Type implements the Configurator interface.
-func (m *MachineConfig) Type() machine.Type {
+func (m *MachineConfig) Type() runtime.MachineType {
 	switch m.MachineType {
 	case "init":
-		return machine.TypeInit
+		return runtime.MachineTypeInit
 	case "controlplane":
-		return machine.TypeControlPlane
+		return runtime.MachineTypeControlPlane
 	default:
-		return machine.TypeWorker
+		return runtime.MachineTypeJoin
 	}
 }
 
@@ -173,7 +172,7 @@ func (m *MachineConfig) SetCertSANs(sans []string) {
 }
 
 // Registries implements the Configurator interface.
-func (m *MachineConfig) Registries() machine.Registries {
+func (m *MachineConfig) Registries() runtime.Registries {
 	return &m.MachineRegistries
 }
 
@@ -250,12 +249,12 @@ func (c *ClusterConfig) AESCBCEncryptionSecret() string {
 }
 
 // Config implements the Configurator interface.
-func (c *ClusterConfig) Config(t machine.Type) (string, error) {
+func (c *ClusterConfig) Config(t runtime.MachineType) (string, error) {
 	return "", nil
 }
 
 // APIServer implements the Configurator interface.
-func (c *ClusterConfig) APIServer() cluster.APIServer {
+func (c *ClusterConfig) APIServer() runtime.APIServer {
 	if c.APIServerConfig == nil {
 		return &APIServerConfig{}
 	}
@@ -269,7 +268,7 @@ func (a *APIServerConfig) ExtraArgs() map[string]string {
 }
 
 // ControllerManager implements the Configurator interface.
-func (c *ClusterConfig) ControllerManager() cluster.ControllerManager {
+func (c *ClusterConfig) ControllerManager() runtime.ControllerManager {
 	if c.ControllerManagerConfig == nil {
 		return &ControllerManagerConfig{}
 	}
@@ -283,7 +282,7 @@ func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 }
 
 // Scheduler implements the Configurator interface.
-func (c *ClusterConfig) Scheduler() cluster.Scheduler {
+func (c *ClusterConfig) Scheduler() runtime.Scheduler {
 	if c.SchedulerConfig == nil {
 		return &SchedulerConfig{}
 	}
@@ -292,7 +291,7 @@ func (c *ClusterConfig) Scheduler() cluster.Scheduler {
 }
 
 // AdminKubeconfig implements the Configurator interface.
-func (c *ClusterConfig) AdminKubeconfig() cluster.AdminKubeconfig {
+func (c *ClusterConfig) AdminKubeconfig() runtime.AdminKubeconfig {
 	return c.AdminKubeconfigConfig
 }
 
@@ -302,7 +301,7 @@ func (s *SchedulerConfig) ExtraArgs() map[string]string {
 }
 
 // Etcd implements the Configurator interface.
-func (c *ClusterConfig) Etcd() cluster.Etcd {
+func (c *ClusterConfig) Etcd() runtime.Etcd {
 	return c.EtcdConfig
 }
 
@@ -332,22 +331,22 @@ func (e *EtcdConfig) ExtraArgs() map[string]string {
 }
 
 // Mirrors implements the Registries interface.
-func (r *RegistriesConfig) Mirrors() map[string]machine.RegistryMirrorConfig {
+func (r *RegistriesConfig) Mirrors() map[string]runtime.RegistryMirrorConfig {
 	return r.RegistryMirrors
 }
 
 // Config implements the Registries interface.
-func (r *RegistriesConfig) Config() map[string]machine.RegistryConfig {
+func (r *RegistriesConfig) Config() map[string]runtime.RegistryConfig {
 	return r.RegistryConfig
 }
 
 // ExtraFiles implements the Registries interface.
-func (r *RegistriesConfig) ExtraFiles() ([]machine.File, error) {
+func (r *RegistriesConfig) ExtraFiles() ([]runtime.File, error) {
 	return criplugin.GenerateRegistriesConfig(r)
 }
 
 // Token implements the Configurator interface.
-func (c *ClusterConfig) Token() cluster.Token {
+func (c *ClusterConfig) Token() runtime.Token {
 	return c
 }
 
@@ -372,7 +371,7 @@ func (c *ClusterConfig) Secret() string {
 }
 
 // Network implements the Configurator interface.
-func (c *ClusterConfig) Network() cluster.Network {
+func (c *ClusterConfig) Network() runtime.ClusterNetwork {
 	return c
 }
 
@@ -386,7 +385,7 @@ func (c *ClusterConfig) DNSDomain() string {
 }
 
 // CNI implements the Configurator interface.
-func (c *ClusterConfig) CNI() cluster.CNI {
+func (c *ClusterConfig) CNI() runtime.CNI {
 	switch {
 	case c.ClusterNetwork == nil:
 		fallthrough
@@ -435,7 +434,7 @@ func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 }
 
 // PodCheckpointer implements the Configurator interface.
-func (c *ClusterConfig) PodCheckpointer() cluster.PodCheckpointer {
+func (c *ClusterConfig) PodCheckpointer() runtime.PodCheckpointer {
 	if c.PodCheckpointerConfig == nil {
 		return &PodCheckpointer{}
 	}
@@ -444,7 +443,7 @@ func (c *ClusterConfig) PodCheckpointer() cluster.PodCheckpointer {
 }
 
 // CoreDNS implements the Configurator interface.
-func (c *ClusterConfig) CoreDNS() cluster.CoreDNS {
+func (c *ClusterConfig) CoreDNS() runtime.CoreDNS {
 	if c.CoreDNSConfig == nil {
 		return &CoreDNS{}
 	}
@@ -473,7 +472,7 @@ func (n *NetworkConfig) SetHostname(hostname string) {
 }
 
 // Devices implements the Configurator interface.
-func (n *NetworkConfig) Devices() []machine.Device {
+func (n *NetworkConfig) Devices() []runtime.Device {
 	return n.NetworkInterfaces
 }
 
@@ -483,7 +482,7 @@ func (n *NetworkConfig) Resolvers() []string {
 }
 
 // ExtraHosts implements the Configurator interface.
-func (n *NetworkConfig) ExtraHosts() []machine.ExtraHost {
+func (n *NetworkConfig) ExtraHosts() []runtime.ExtraHost {
 	return n.ExtraHostEntries
 }
 

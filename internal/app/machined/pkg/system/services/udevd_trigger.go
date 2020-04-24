@@ -9,12 +9,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 )
 
 // UdevdTrigger implements the Service interface. It serves as the concrete type with
@@ -22,35 +22,35 @@ import (
 type UdevdTrigger struct{}
 
 // ID implements the Service interface.
-func (c *UdevdTrigger) ID(config runtime.Configurator) string {
+func (c *UdevdTrigger) ID(r runtime.Runtime) string {
 	return "udevd-trigger"
 }
 
 // PreFunc implements the Service interface.
-func (c *UdevdTrigger) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (c *UdevdTrigger) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (c *UdevdTrigger) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (c *UdevdTrigger) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (c *UdevdTrigger) Condition(config runtime.Configurator) conditions.Condition {
+func (c *UdevdTrigger) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (c *UdevdTrigger) DependsOn(config runtime.Configurator) []string {
+func (c *UdevdTrigger) DependsOn(r runtime.Runtime) []string {
 	return []string{"udevd"}
 }
 
 // Runner implements the Service interface.
-func (c *UdevdTrigger) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (c *UdevdTrigger) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
 	args := &runner.Args{
-		ID: c.ID(config),
+		ID: c.ID(r),
 		ProcessArgs: []string{
 			"/sbin/udevadm",
 			"trigger",
@@ -58,12 +58,12 @@ func (c *UdevdTrigger) Runner(config runtime.Configurator) (runner.Runner, error
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(process.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		args,
 		runner.WithEnv(env),
 	),
@@ -72,16 +72,16 @@ func (c *UdevdTrigger) Runner(config runtime.Configurator) (runner.Runner, error
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (c *UdevdTrigger) APIStartAllowed(config runtime.Configurator) bool {
+func (c *UdevdTrigger) APIStartAllowed(r runtime.Runtime) bool {
 	return true
 }
 
 // APIStopAllowed implements the APIStoppableService interface.
-func (c *UdevdTrigger) APIStopAllowed(config runtime.Configurator) bool {
+func (c *UdevdTrigger) APIStopAllowed(r runtime.Runtime) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (c *UdevdTrigger) APIRestartAllowed(config runtime.Configurator) bool {
+func (c *UdevdTrigger) APIRestartAllowed(r runtime.Runtime) bool {
 	return true
 }
