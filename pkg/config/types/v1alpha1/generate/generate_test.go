@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -31,17 +31,17 @@ func (suite *GenerateSuite) SetupSuite() {
 }
 
 func (suite *GenerateSuite) TestGenerateInitSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeInit, suite.input)
+	_, err := genv1alpha1.Config(runtime.MachineTypeInit, suite.input)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeControlPlane, suite.input)
+	_, err := genv1alpha1.Config(runtime.MachineTypeControlPlane, suite.input)
 	suite.Require().NoError(err)
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
-	_, err := genv1alpha1.Config(machine.TypeWorker, suite.input)
+	_, err := genv1alpha1.Config(runtime.MachineTypeJoin, suite.input)
 	suite.Require().NoError(err)
 }
 

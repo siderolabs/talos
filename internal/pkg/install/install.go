@@ -20,15 +20,15 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // RunInstallerContainer performs an installation via the installer container.
 //nolint: gocyclo
-func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
+func RunInstallerContainer(r runtime.Runtime, seq runtime.Sequence, opts ...Option) error {
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
@@ -44,11 +44,11 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		return err
 	}
 
-	log.Printf("pulling installer container image: %q", r.Config().Machine().Install().Image())
-
 	var img containerd.Image
 
 	if options.ImagePull {
+		log.Printf("pulling %q", r.Config().Machine().Install().Image())
+
 		img, err = image.Pull(ctx, r.Config().Machine().Registries(), client, r.Config().Machine().Install().Image())
 		if err != nil {
 			return err
@@ -72,7 +72,7 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 	}
 
 	upgrade := "false"
-	if r.Sequence() == runtime.Upgrade {
+	if seq == runtime.SequenceUpgrade {
 		upgrade = "true"
 	}
 
@@ -101,6 +101,7 @@ func RunInstallerContainer(r runtime.Runtime, opts ...Option) error {
 		oci.WithParentCgroupDevices,
 		oci.WithPrivileged,
 	}
+
 	containerOpts := []containerd.NewContainerOpts{
 		containerd.WithImage(img),
 		containerd.WithNewSnapshot("upgrade", img),
