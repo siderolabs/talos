@@ -14,8 +14,8 @@ import (
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/cmd/installer/pkg/ova"
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -95,7 +95,7 @@ func runImageCmd() (err error) {
 		}
 	}
 
-	if err = pkg.Install(p, config, runtime.None, options); err != nil {
+	if err = pkg.Install(p, config, runtime.Noop, options); err != nil {
 		return err
 	}
 

@@ -11,14 +11,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -48,7 +47,7 @@ type Asset struct {
 }
 
 // NewManifest initializes and returns a Manifest.
-func NewManifest(label string, sequence runtime.Sequence, install machine.Install) (manifest *Manifest, err error) {
+func NewManifest(label string, sequence runtime.Sequence, install runtime.Install) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Targets: map[string][]*Target{},
 	}
