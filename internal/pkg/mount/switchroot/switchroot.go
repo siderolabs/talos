@@ -11,16 +11,16 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/mount/manager"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 )
 
 // Switch moves the rootfs to a specified directory. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
 // nolint: gocyclo
-func Switch(prefix string, virtual *manager.Manager) (err error) {
-	log.Println("moving virtual devices to the new rootfs")
+func Switch(prefix string, mountpoints *mount.Points) (err error) {
+	log.Println("moving mounts to the new rootfs")
 
-	if err = virtual.MoveAll(prefix); err != nil {
+	if err = mount.Move(mountpoints, prefix); err != nil {
 		return err
 	}
 

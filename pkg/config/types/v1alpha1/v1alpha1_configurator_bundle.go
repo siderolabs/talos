@@ -5,7 +5,7 @@
 package v1alpha1
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client/config"
 )
 
