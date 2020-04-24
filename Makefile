@@ -17,7 +17,7 @@ KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.18.0
 SONOBUOY_VERSION ?= 0.18.0
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
-RELEASES ?= v0.3.3 v0.4.0-beta.1
+RELEASES ?= v0.3.3 v0.4.1
 
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
@@ -154,7 +154,7 @@ boot: ## Creates a compressed tarball that includes vmlinuz and initramfs.xz. No
 
 .PHONY: fmt
 fmt: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports && cd - && gofumports -w -local github.com/talos-systems/talos ."
+	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports@aaa7156f4122b1055c466e26e77812fa32bac1d9 && cd - && gofumports -w -local github.com/talos-systems/talos ."
 
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
 	@$(MAKE) target-lint-$*

@@ -8,8 +8,8 @@ package firecracker
 import (
 	"context"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
@@ -42,7 +42,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		generate.WithInstallDisk("/dev/vda"),
 		generate.WithNetworkConfig(&v1alpha1.NetworkConfig{
 			NameServers: nameservers,
-			NetworkInterfaces: []machine.Device{
+			NetworkInterfaces: []runtime.Device{
 				{
 					Interface: "eth0",
 					CIDR:      "169.254.128.128/32", // link-local IP just to trigger the static networkd config

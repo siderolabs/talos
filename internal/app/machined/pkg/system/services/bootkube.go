@@ -17,12 +17,12 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
@@ -34,12 +34,12 @@ type Bootkube struct {
 }
 
 // ID implements the Service interface.
-func (b *Bootkube) ID(config runtime.Configurator) string {
+func (b *Bootkube) ID(r runtime.Runtime) string {
 	return "bootkube"
 }
 
 // PreFunc implements the Service interface.
-func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
+func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, config runtime.Configurator) (er
 }
 
 // PostFunc implements the Service interface.
-func (b *Bootkube) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	if state != events.StateFinished {
 		log.Println("bootkube run did not complete successfully. skipping etcd update")
 		return nil
@@ -127,17 +127,17 @@ func (b *Bootkube) PostFunc(config runtime.Configurator, state events.ServiceSta
 }
 
 // DependsOn implements the Service interface.
-func (b *Bootkube) DependsOn(config runtime.Configurator) []string {
+func (b *Bootkube) DependsOn(r runtime.Runtime) []string {
 	return []string{"etcd"}
 }
 
 // Condition implements the Service interface.
-func (b *Bootkube) Condition(config runtime.Configurator) conditions.Condition {
+func (b *Bootkube) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // Runner implements the Service interface.
-func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (b *Bootkube) Runner(r runtime.Runtime) (runner.Runner, error) {
 	if b.provisioned {
 		return nil, nil
 	}
@@ -146,7 +146,7 @@ func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: b.ID(config),
+		ID: b.ID(r),
 		ProcessArgs: []string{
 			"/bootkube",
 			"--config=" + constants.ConfigPath,
@@ -154,7 +154,7 @@ func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
@@ -166,7 +166,7 @@ func (b *Bootkube) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	return containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),

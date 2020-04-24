@@ -9,8 +9,8 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
@@ -55,7 +55,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 	}
 
 	for _, node := range nodes {
-		t, err := machine.ParseType(node.Labels["talos.type"])
+		t, err := runtime.ParseMachineType(node.Labels["talos.type"])
 		if err != nil {
 			return nil, err
 		}

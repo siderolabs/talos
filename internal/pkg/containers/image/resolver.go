@@ -17,22 +17,22 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"golang.org/x/net/http/httpproxy"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 // NewResolver builds registry resolver based on Talos configuration.
-func NewResolver(config machine.Registries) remotes.Resolver {
+func NewResolver(reg runtime.Registries) remotes.Resolver {
 	return docker.NewResolver(docker.ResolverOptions{
-		Hosts: RegistryHosts(config),
+		Hosts: RegistryHosts(reg),
 	})
 }
 
 // RegistryHosts returns host configuration per registry.
-func RegistryHosts(config machine.Registries) docker.RegistryHosts {
+func RegistryHosts(reg runtime.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost
 
-		endpoints, err := RegistryEndpoints(config, host)
+		endpoints, err := RegistryEndpoints(reg, host)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ func RegistryHosts(config machine.Registries) docker.RegistryHosts {
 			transport := newTransport()
 			client := &http.Client{Transport: transport}
 
-			registryConfig := config.Config()[u.Host]
+			registryConfig := reg.Config()[u.Host]
 
 			if u.Scheme != "https" && registryConfig.TLS != nil {
 				return nil, fmt.Errorf("TLS config specified for non-HTTPS registry: %q", u.Host)
@@ -83,16 +83,16 @@ func RegistryHosts(config machine.Registries) docker.RegistryHosts {
 	}
 }
 
-// RegistryEndpoints returns registry endpoints per host using config.
-func RegistryEndpoints(config machine.Registries, host string) ([]string, error) {
+// RegistryEndpoints returns registry endpoints per host using reg.
+func RegistryEndpoints(reg runtime.Registries, host string) ([]string, error) {
 	var endpoints []string
 
-	if hostConfig, ok := config.Mirrors()[host]; ok {
+	if hostConfig, ok := reg.Mirrors()[host]; ok {
 		endpoints = hostConfig.Endpoints
 	}
 
 	if endpoints == nil {
-		if catchAllConfig, ok := config.Mirrors()["*"]; ok {
+		if catchAllConfig, ok := reg.Mirrors()["*"]; ok {
 			endpoints = catchAllConfig.Endpoints
 		}
 	}
@@ -111,7 +111,7 @@ func RegistryEndpoints(config machine.Registries, host string) ([]string, error)
 }
 
 // PrepareAuth returns authentication info in the format expected by containerd.
-func PrepareAuth(auth *machine.RegistryAuthConfig, host, expectedHost string) (string, string, error) {
+func PrepareAuth(auth *runtime.RegistryAuthConfig, host, expectedHost string) (string, string, error) {
 	if auth == nil {
 		return "", "", nil
 	}

@@ -11,7 +11,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/config/cluster"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
@@ -37,7 +37,7 @@ current-context: admin@{{ .Cluster }}
 `
 
 // GenerateAdmin generates admin kubeconfig for the cluster.
-func GenerateAdmin(config cluster.Cluster, out io.Writer) error {
+func GenerateAdmin(config runtime.ClusterConfig, out io.Writer) error {
 	tpl, err := template.New("kubeconfig").Parse(adminKubeConfigTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing kubeconfig template: %w", err)

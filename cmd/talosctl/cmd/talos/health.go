@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 type clusterNodes struct {
@@ -26,13 +26,13 @@ func (cluster *clusterNodes) Nodes() []string {
 	return append([]string{cluster.InitNode}, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
 }
 
-func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
+func (cluster *clusterNodes) NodesByType(t runtime.MachineType) []string {
 	switch t {
-	case machine.TypeInit:
+	case runtime.MachineTypeInit:
 		return []string{cluster.InitNode}
-	case machine.TypeControlPlane:
+	case runtime.MachineTypeControlPlane:
 		return cluster.ControlPlaneNodes
-	case machine.TypeWorker:
+	case runtime.MachineTypeJoin:
 		return cluster.WorkerNodes
 	default:
 		panic("unsupported machine type")

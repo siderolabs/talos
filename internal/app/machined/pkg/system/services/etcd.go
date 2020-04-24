@@ -24,7 +24,9 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -33,10 +35,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/net"
@@ -48,17 +47,17 @@ import (
 type Etcd struct{}
 
 // ID implements the Service interface.
-func (e *Etcd) ID(config runtime.Configurator) string {
+func (e *Etcd) ID(r runtime.Runtime) string {
 	return "etcd"
 }
 
 // PreFunc implements the Service interface.
-func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err error) {
+func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
 		return err
 	}
 
-	if err = generatePKI(config); err != nil {
+	if err = generatePKI(r); err != nil {
 		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
@@ -72,38 +71,38 @@ func (e *Etcd) PreFunc(ctx context.Context, config runtime.Configurator) (err er
 	// Pull the image and unpack it.
 
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-	if _, err = image.Pull(containerdctx, config.Machine().Registries(), client, config.Cluster().Etcd().Image()); err != nil {
-		return fmt.Errorf("failed to pull image %q: %w", config.Cluster().Etcd().Image(), err)
+	if _, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image()); err != nil {
+		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
 
 	return nil
 }
 
 // PostFunc implements the Service interface.
-func (e *Etcd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (e *Etcd) Condition(config runtime.Configurator) conditions.Condition {
+func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (e *Etcd) DependsOn(config runtime.Configurator) []string {
+func (e *Etcd) DependsOn(r runtime.Runtime) []string {
 	return []string{"containerd", "networkd"}
 }
 
 // Runner implements the Service interface.
-func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
-	a, err := e.args(config)
+func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
+	a, err := e.args(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID:          e.ID(config),
+		ID:          e.ID(r),
 		ProcessArgs: append([]string{"/usr/local/bin/etcd"}, a...),
 	}
 
@@ -113,15 +112,15 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithNamespace(constants.SystemContainerdNamespace),
-		runner.WithContainerImage(config.Cluster().Etcd().Image()),
+		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithHostNamespace(specs.NetworkNamespace),
@@ -133,7 +132,7 @@ func (e *Etcd) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (e *Etcd) HealthFunc(runtime.Configurator) health.Check {
+func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
 		if err != nil {
@@ -145,21 +144,21 @@ func (e *Etcd) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (e *Etcd) HealthSettings(runtime.Configurator) *health.Settings {
+func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }
 
 // nolint: gocyclo
-func generatePKI(config runtime.Configurator) (err error) {
+func generatePKI(r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0644); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, config.Cluster().Etcd().CA().Crt, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0500); err != nil {
 		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, config.Cluster().Etcd().CA().Key, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0500); err != nil {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
@@ -223,7 +222,7 @@ func generatePKI(config runtime.Configurator) (err error) {
 		return fmt.Errorf("failled to parse certificate request: %w", err)
 	}
 
-	caPemBlock, _ := pem.Decode(config.Cluster().Etcd().CA().Crt)
+	caPemBlock, _ := pem.Decode(r.Config().Cluster().Etcd().CA().Crt)
 	if caPemBlock == nil {
 		return errors.New("failed to decode ca cert pem")
 	}
@@ -233,7 +232,7 @@ func generatePKI(config runtime.Configurator) (err error) {
 		return fmt.Errorf("failed to parse CA: %w", err)
 	}
 
-	caKeyPemBlock, _ := pem.Decode(config.Cluster().Etcd().CA().Key)
+	caKeyPemBlock, _ := pem.Decode(r.Config().Cluster().Etcd().CA().Key)
 	if caKeyPemBlock == nil {
 		return errors.New("failed to decode ca key pem")
 	}
@@ -259,8 +258,8 @@ func generatePKI(config runtime.Configurator) (err error) {
 	return nil
 }
 
-func addMember(config runtime.Configurator, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
-	client, err := etcd.NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
+func addMember(r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -292,7 +291,7 @@ func addMember(config runtime.Configurator, addrs []string, name string) (*clien
 	return list, add.Member.ID, nil
 }
 
-func buildInitialCluster(config runtime.Configurator, name, ip string) (initial string, err error) {
+func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, err error) {
 	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
 		var (
 			peerAddrs = []string{"https://" + ip + ":2380"}
@@ -300,7 +299,7 @@ func buildInitialCluster(config runtime.Configurator, name, ip string) (initial 
 			id        uint64
 		)
 
-		resp, id, err = addMember(config, peerAddrs, name)
+		resp, id, err = addMember(r, peerAddrs, name)
 		if err != nil {
 			// TODO(andrewrynhard): We should check the error type here and
 			// handle the specific error accordingly.
@@ -333,7 +332,7 @@ func buildInitialCluster(config runtime.Configurator, name, ip string) (initial 
 }
 
 // nolint: gocyclo
-func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
+func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -346,7 +345,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 
 	var upgraded bool
 
-	if p.Mode() != runtime.Container {
+	if p.Mode() != runtime.ModeContainer {
 		var f *os.File
 
 		if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
@@ -393,7 +392,7 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		"peer-key-file":         constants.KubernetesEtcdPeerKey,
 	}
 
-	extraArgs := argsbuilder.Args(config.Cluster().Etcd().ExtraArgs())
+	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
 
 	for k := range blackListArgs {
 		if extraArgs.Contains(k) {
@@ -416,11 +415,11 @@ func (e *Etcd) args(config runtime.Configurator) ([]string, error) {
 		if ok {
 			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
 
-			existing := config.Machine().Type() == machine.TypeControlPlane || upgraded
+			existing := r.Config().Machine().Type() == runtime.MachineTypeControlPlane || upgraded
 			if existing {
 				blackListArgs.Set("initial-cluster-state", "existing")
 
-				initialCluster, err = buildInitialCluster(config, hostname, ips[0].String())
+				initialCluster, err = buildInitialCluster(r, hostname, ips[0].String())
 				if err != nil {
 					return nil, err
 				}

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/retry"
 
 	"github.com/containerd/containerd"
@@ -17,8 +17,8 @@ import (
 
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
-func Pull(ctx context.Context, config machine.Registries, client *containerd.Client, ref string) (img containerd.Image, err error) {
-	resolver := NewResolver(config)
+func Pull(ctx context.Context, reg runtime.Registries, client *containerd.Client, ref string) (img containerd.Image, err error) {
+	resolver := NewResolver(reg)
 
 	err = retry.Exponential(1*time.Minute, retry.WithUnits(1*time.Second)).Retry(func() error {
 		if img, err = client.Pull(ctx, ref, containerd.WithPullUnpack, containerd.WithResolver(resolver)); err != nil {

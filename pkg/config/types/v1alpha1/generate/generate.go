@@ -15,8 +15,8 @@ import (
 
 	stdlibx509 "crypto/x509"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cis"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
@@ -36,17 +36,17 @@ const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
-func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
+func Config(t runtime.MachineType, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
-	case machine.TypeInit:
+	case runtime.MachineTypeInit:
 		if c, err = initUd(in); err != nil {
 			return c, err
 		}
-	case machine.TypeControlPlane:
+	case runtime.MachineTypeControlPlane:
 		if c, err = controlPlaneUd(in); err != nil {
 			return c, err
 		}
-	case machine.TypeWorker:
+	case runtime.MachineTypeJoin:
 		if c, err = workerUd(in); err != nil {
 			return c, err
 		}
@@ -87,7 +87,7 @@ type Input struct {
 
 	NetworkConfig *v1alpha1.NetworkConfig
 
-	RegistryMirrors map[string]machine.RegistryMirrorConfig
+	RegistryMirrors map[string]runtime.RegistryMirrorConfig
 
 	Debug   bool
 	Persist bool

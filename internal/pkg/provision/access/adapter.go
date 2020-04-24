@@ -5,9 +5,9 @@
 package access
 
 import (
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Adapter provides cluster access via provision.Cluster.
@@ -32,7 +32,7 @@ func (wrapper *infoWrapper) Nodes() []string {
 	return nodes
 }
 
-func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
+func (wrapper *infoWrapper) NodesByType(t runtime.MachineType) []string {
 	var nodes []string
 
 	for _, node := range wrapper.clusterInfo.Nodes {

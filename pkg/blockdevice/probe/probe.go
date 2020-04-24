@@ -222,5 +222,5 @@ func filterByLabel(probed []*ProbedBlockDevice, value string) (probe *ProbedBloc
 		}
 	}
 
-	return nil, fmt.Errorf("no device found with label %s", value)
+	return nil, os.ErrNotExist
 }

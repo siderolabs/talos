@@ -81,7 +81,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 
 // TestTail verifies that log tail might be requested.
 func (suite *LogsSuite) TestTail() {
-	// invoke machined-api enough times to generate
+	// invoke machined enough times to generate
 	// some logs
 	for i := 0; i < 20; i++ {
 		_, err := suite.Client.Version(suite.ctx)
@@ -93,7 +93,7 @@ func (suite *LogsSuite) TestTail() {
 			suite.ctx,
 			constants.SystemContainerdNamespace,
 			common.ContainerDriver_CONTAINERD,
-			"machined-api",
+			"apid",
 			false,
 			tailLines,
 		)
