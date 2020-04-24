@@ -36,7 +36,7 @@ func (suite *LogsSuite) TestTailLogs() {
 		suite.RunOsctl([]string{"version"})
 	}
 
-	suite.RunOsctl([]string{"logs", "machined-api", "--tail", "5"},
+	suite.RunOsctl([]string{"logs", "apid", "--tail", "5"},
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Count(stdout, "\n")
 			if lines != 5 {

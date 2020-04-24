@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 type NicSuite struct {
@@ -116,7 +116,7 @@ func (suite *NicSuite) TestVlan() {
 		{
 			WithName("eth0"),
 			WithVlan(100),
-			WithVlanCIDR(100, "172.21.10.101/28", []machine.Route{}),
+			WithVlanCIDR(100, "172.21.10.101/28", []runtime.Route{}),
 		},
 	}
 	for _, test := range testSettings {

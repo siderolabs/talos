@@ -5,17 +5,11 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
-	"strings"
-
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
-	machineconfig "github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/cmd/installer/pkg/install"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 )
 
 // installCmd represents the install command
@@ -39,51 +33,18 @@ func init() {
 }
 
 func runInstallCmd() (err error) {
-	var config runtime.Configurator
+	seq := runtime.SequenceInstall
 
-	p, err := platform.CurrentPlatform()
-	if err == nil {
-		if !strings.EqualFold(p.Name(), options.Platform) {
-			return fmt.Errorf("platform mismatch (%s != %s)", p.Name(), options.Platform)
-		}
-
-		var b []byte
-
-		b, err = p.Configuration()
-		if err != nil {
-			return err
-		}
-
-		config, err = machineconfig.NewFromBytes(b)
-		if err != nil {
-			return err
-		}
-	}
-
-	if config == nil {
-		log.Printf("failed to source config from platform; falling back to defaults")
-
-		config = &v1alpha1.Config{
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{},
-			},
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineInstall: &v1alpha1.InstallConfig{
-					InstallForce:           options.Force,
-					InstallBootloader:      options.Bootloader,
-					InstallDisk:            options.Disk,
-					InstallExtraKernelArgs: options.ExtraKernelArgs,
-				},
-			},
-		}
-	}
-
-	sequence := runtime.None
 	if options.Upgrade {
-		sequence = runtime.Upgrade
+		seq = runtime.SequenceUpgrade
 	}
 
-	if err = pkg.Install(p, config, sequence, options); err != nil {
+	p, err := platform.NewPlatform(options.Platform)
+	if err != nil {
+		return err
+	}
+
+	if err = install.Install(p, seq, options); err != nil {
 		return err
 	}
 
