@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -18,13 +19,13 @@ import (
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
@@ -62,7 +63,7 @@ func (o *OSD) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *OSD) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "cri"}
+	return []string{"containerd", "networkd"}
 }
 
 func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
@@ -86,7 +87,7 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: path.Dir(constants.ContainerdAddress), Source: path.Dir(constants.ContainerdAddress), Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.DefaultLogPath, Source: constants.DefaultLogPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.SystemRunPath, Source: constants.SystemRunPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.OSSocketPath), Source: filepath.Dir(constants.OSSocketPath), Options: []string{"rbind", "rw"}},

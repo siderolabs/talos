@@ -14,8 +14,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
@@ -68,7 +68,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster provision.Cluster
 	var expectedNodes []string
 
 	for _, node := range cluster.Info().Nodes {
-		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
+		if node.Type == runtime.MachineTypeBootstrap || node.Type == runtime.MachineTypeControlPlane {
 			expectedNodes = append(expectedNodes, node.PrivateIP.String())
 		}
 	}

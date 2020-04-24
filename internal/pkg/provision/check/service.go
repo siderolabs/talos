@@ -9,9 +9,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // ServiceStateAssertion checks whether service reached some specified state.
@@ -27,7 +27,7 @@ func ServiceStateAssertion(ctx context.Context, cluster provision.ClusterAccess,
 	var initNode string
 
 	for _, node := range cluster.Info().Nodes {
-		if node.Type == machine.TypeInit {
+		if node.Type == runtime.MachineTypeBootstrap {
 			initNode = node.PrivateIP.String()
 			break
 		}

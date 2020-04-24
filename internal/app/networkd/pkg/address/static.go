@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 // Static implements the Addressing interface
@@ -19,7 +19,7 @@ type Static struct {
 	CIDR        string
 	Mtu         int
 	FQDN        string
-	RouteList   []machine.Route
+	RouteList   []runtime.Route
 	NetIf       *net.Interface
 	NameServers []net.IP
 }

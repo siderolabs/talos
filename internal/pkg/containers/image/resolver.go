@@ -17,18 +17,18 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"golang.org/x/net/http/httpproxy"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 // NewResolver builds registry resolver based on Talos configuration.
-func NewResolver(config machine.Registries) remotes.Resolver {
+func NewResolver(config runtime.Registries) remotes.Resolver {
 	return docker.NewResolver(docker.ResolverOptions{
 		Hosts: RegistryHosts(config),
 	})
 }
 
 // RegistryHosts returns host configuration per registry.
-func RegistryHosts(config machine.Registries) docker.RegistryHosts {
+func RegistryHosts(config runtime.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost
 
@@ -84,7 +84,7 @@ func RegistryHosts(config machine.Registries) docker.RegistryHosts {
 }
 
 // RegistryEndpoints returns registry endpoints per host using config.
-func RegistryEndpoints(config machine.Registries, host string) ([]string, error) {
+func RegistryEndpoints(config runtime.Registries, host string) ([]string, error) {
 	var endpoints []string
 
 	if hostConfig, ok := config.Mirrors()[host]; ok {
@@ -111,7 +111,7 @@ func RegistryEndpoints(config machine.Registries, host string) ([]string, error)
 }
 
 // PrepareAuth returns authentication info in the format expected by containerd.
-func PrepareAuth(auth *machine.RegistryAuthConfig, host, expectedHost string) (string, string, error) {
+func PrepareAuth(auth *runtime.RegistryAuthConfig, host, expectedHost string) (string, string, error) {
 	if auth == nil {
 		return "", "", nil
 	}

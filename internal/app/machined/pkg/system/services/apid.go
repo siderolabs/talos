@@ -17,14 +17,13 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -58,7 +57,7 @@ func (o *APID) PostFunc(config runtime.Configurator, state events.ServiceState) 
 
 // Condition implements the Service interface.
 func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
-	if config.Machine().Type() == machine.TypeWorker {
+	if config.Machine().Type() == runtime.MachineTypeWorker {
 		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
 
@@ -67,7 +66,7 @@ func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "cri"}
+	return []string{"containerd", "networkd"}
 }
 
 func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
@@ -75,7 +74,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	endpoints := []string{"127.0.0.1"}
 
-	if config.Machine().Type() == machine.TypeWorker {
+	if config.Machine().Type() == runtime.MachineTypeWorker {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
 		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {

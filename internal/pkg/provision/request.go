@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 // ClusterRequest is the root object describing cluster to be provisioned.
@@ -65,7 +64,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 	found := false
 
 	for i := range reqs {
-		if reqs[i].Config.Machine().Type() == machine.TypeInit {
+		if reqs[i].Config.Machine().Type() == runtime.MachineTypeBootstrap {
 			if found {
 				err = fmt.Errorf("duplicate init node in requests")
 				return
@@ -86,7 +85,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 // MasterNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 	for i := range reqs {
-		if reqs[i].Config.Machine().Type() == machine.TypeInit || reqs[i].Config.Machine().Type() == machine.TypeControlPlane {
+		if reqs[i].Config.Machine().Type() == runtime.MachineTypeBootstrap || reqs[i].Config.Machine().Type() == runtime.MachineTypeControlPlane {
 			nodes = append(nodes, reqs[i])
 		}
 	}
@@ -97,7 +96,7 @@ func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 // WorkerNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 	for i := range reqs {
-		if reqs[i].Config.Machine().Type() == machine.TypeWorker {
+		if reqs[i].Config.Machine().Type() == runtime.MachineTypeWorker {
 			nodes = append(nodes, reqs[i])
 		}
 	}

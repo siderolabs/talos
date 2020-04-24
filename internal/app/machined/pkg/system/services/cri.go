@@ -13,13 +13,13 @@ import (
 	"github.com/containerd/containerd/defaults"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -49,7 +49,7 @@ func (c *CRI) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (c *CRI) DependsOn(config runtime.Configurator) []string {
-	return nil
+	return []string{"networkd"}
 }
 
 // Runner implements the Service interface.
