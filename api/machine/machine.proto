@@ -27,14 +27,6 @@ service MachineService {
   rpc ServiceStop(ServiceStopRequest) returns (ServiceStopResponse);
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownResponse);
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
-
-  rpc Start(StartRequest) returns (StartResponse) {
-    option deprecated = true;
-  };
-  rpc Stop(StopRequest) returns (StopResponse) {
-    option deprecated = true;
-  };
-
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
 }
 

@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
+	"github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/cmd/installer/pkg/ova"
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/runtime/platform"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/pkg/cmd"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -71,20 +71,6 @@ func runImageCmd() (err error) {
 		}
 	}()
 
-	config := &v1alpha1.Config{
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{},
-		},
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineInstall: &v1alpha1.InstallConfig{
-				InstallForce:           true,
-				InstallBootloader:      options.Bootloader,
-				InstallDisk:            options.Disk,
-				InstallExtraKernelArgs: options.ExtraKernelArgs,
-			},
-		},
-	}
-
 	if options.ConfigSource == "" {
 		switch p.Name() {
 		case "aws", "azure", "digital-ocean", "gcp":
@@ -95,7 +81,7 @@ func runImageCmd() (err error) {
 		}
 	}
 
-	if err = pkg.Install(p, config, runtime.None, options); err != nil {
+	if err = install.Install(p, runtime.SequenceNoop, options); err != nil {
 		return err
 	}
 

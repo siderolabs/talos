@@ -10,8 +10,8 @@ import (
 
 	"github.com/mdlayher/netlink"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // Vlan contins interface related parameters to a VLAN device
@@ -59,7 +59,7 @@ func WithVlanDhcp(id uint16) Option {
 }
 
 // WithVlanCIDR defines if the interface have static CIDRs added
-func WithVlanCIDR(id uint16, cidr string, routeList []machine.Route) Option {
+func WithVlanCIDR(id uint16, cidr string, routeList []runtime.Route) Option {
 	return func(n *NetworkInterface) (err error) {
 		for _, vlan := range n.Vlans {
 			if vlan.ID == id {
