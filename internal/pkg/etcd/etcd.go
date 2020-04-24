@@ -13,8 +13,8 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -76,7 +76,7 @@ func ValidateForUpgrade(preserve bool) error {
 		return err
 	}
 
-	if config.Machine().Type() != machine.TypeWorker {
+	if config.Machine().Type() != runtime.MachineTypeWorker {
 		client, err := NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
 		if err != nil {
 			return err

@@ -14,13 +14,13 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -57,7 +57,7 @@ func (t *Trustd) Condition(config runtime.Configurator) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (t *Trustd) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd"}
+	return []string{"containerd", "networkd"}
 }
 
 func (t *Trustd) Runner(config runtime.Configurator) (runner.Runner, error) {

@@ -16,17 +16,16 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg/bootloader/syslinux"
 	"github.com/talos-systems/talos/cmd/installer/pkg/manifest"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager"
 	"github.com/talos-systems/talos/internal/pkg/mount/manager/owned"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -34,7 +33,7 @@ import (
 // installation methods.
 type Installer struct {
 	cmdline  *procfs.Cmdline
-	install  machine.Install
+	install  runtime.Install
 	manifest *manifest.Manifest
 	Current  string
 	Next     string
@@ -45,7 +44,7 @@ type Installer struct {
 // NewInstaller initializes and returns an Installer.
 //
 // nolint: gocyclo
-func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install machine.Install) (i *Installer, err error) {
+func NewInstaller(cmdline *procfs.Cmdline, sequence runtime.Sequence, install runtime.Install) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
 		install: install,
