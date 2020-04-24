@@ -14,10 +14,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
@@ -93,7 +93,7 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 
 	if v.Messages[0].Platform != nil {
 		switch v.Messages[0].Platform.Mode {
-		case runtime.Container.String():
+		case runtime.ModeContainer.String():
 		default:
 			caps.RunsTalosKernel = true
 			caps.SupportsReboot = true

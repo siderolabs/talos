@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
-	internalcni "github.com/talos-systems/talos/internal/app/machined/internal/cni"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -36,7 +36,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
@@ -64,22 +63,22 @@ contexts:
 type Kubelet struct{}
 
 // ID implements the Service interface.
-func (k *Kubelet) ID(config runtime.Configurator) string {
+func (k *Kubelet) ID(r runtime.Runtime) string {
 	return "kubelet"
 }
 
 // PreFunc implements the Service interface.
-func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	cfg := struct {
 		Server               string
 		CACert               string
 		BootstrapTokenID     string
 		BootstrapTokenSecret string
 	}{
-		Server:               config.Cluster().Endpoint().String(),
-		CACert:               base64.StdEncoding.EncodeToString(config.Cluster().CA().Crt),
-		BootstrapTokenID:     config.Cluster().Token().ID(),
-		BootstrapTokenSecret: config.Cluster().Token().Secret(),
+		Server:               r.Config().Cluster().Endpoint().String(),
+		CACert:               base64.StdEncoding.EncodeToString(r.Config().Cluster().CA().Crt),
+		BootstrapTokenID:     r.Config().Cluster().Token().ID(),
+		BootstrapTokenSecret: r.Config().Cluster().Token().Secret(),
 	}
 
 	templ := template.Must(template.New("tmpl").Parse(string(kubeletKubeConfigTemplate)))
@@ -98,11 +97,11 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesCACert, config.Cluster().CA().Crt, 0500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesCACert, r.Config().Cluster().CA().Crt, 0500); err != nil {
 		return err
 	}
 
-	if err := writeKubeletConfig(config); err != nil {
+	if err := writeKubeletConfig(r); err != nil {
 		return err
 	}
 
@@ -116,7 +115,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
 
-	_, err = image.Pull(containerdctx, config.Machine().Registries(), client, config.Machine().Kubelet().Image())
+	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Machine().Kubelet().Image())
 	if err != nil {
 		return err
 	}
@@ -125,30 +124,30 @@ func (k *Kubelet) PreFunc(ctx context.Context, config runtime.Configurator) erro
 }
 
 // PostFunc implements the Service interface.
-func (k *Kubelet) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (k *Kubelet) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (k *Kubelet) Condition(config runtime.Configurator) conditions.Condition {
+func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (k *Kubelet) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "networkd"}
+func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
+	return []string{"cri", "networkd"}
 }
 
 // Runner implements the Service interface.
-func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
-	a, err := k.args(config)
+func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
+	a, err := k.args(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID:          k.ID(config),
+		ID:          k.ID(r),
 		ProcessArgs: append([]string{"/hyperkube", "kubelet"}, a...),
 	}
 	// Set the required kubelet mounts.
@@ -159,6 +158,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
@@ -166,30 +166,22 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},
 	}
 
-	// Add in the additional CNI mounts.
-	cniMounts, err := internalcni.Mounts(config)
-	if err != nil {
-		return nil, err
-	}
-
-	mounts = append(mounts, cniMounts...)
-
 	// Add extra mounts.
 	// TODO(andrewrynhard): We should verify that the mount source is
 	// whitelisted. There is the potential that a user can expose
 	// sensitive information.
-	mounts = append(mounts, config.Machine().Kubelet().ExtraMounts()...)
+	mounts = append(mounts, r.Config().Machine().Kubelet().ExtraMounts()...)
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithNamespace(criconstants.K8sContainerdNamespace),
-		runner.WithContainerImage(config.Machine().Kubelet().Image()),
+		runner.WithContainerImage(r.Config().Machine().Kubelet().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
@@ -205,7 +197,7 @@ func (k *Kubelet) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (k *Kubelet) HealthFunc(runtime.Configurator) health.Check {
+func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		req, err := http.NewRequest("GET", "http://127.0.0.1:10248/healthz", nil)
 		if err != nil {
@@ -230,7 +222,7 @@ func (k *Kubelet) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (k *Kubelet) HealthSettings(runtime.Configurator) *health.Settings {
+func (k *Kubelet) HealthSettings(runtime.Runtime) *health.Settings {
 	settings := health.DefaultSettings
 	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup
 
@@ -272,7 +264,7 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 }
 
 // nolint: gocyclo
-func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
+func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 	blackListArgs := argsbuilder.Args{
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 		"kubeconfig":                 constants.KubeletKubeconfig,
@@ -285,7 +277,7 @@ func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 		"cni-conf-dir": cni.DefaultNetDir,
 	}
 
-	extraArgs := argsbuilder.Args(config.Machine().Kubelet().ExtraArgs())
+	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
 	for k := range blackListArgs {
 		if extraArgs.Contains(k) {
@@ -296,10 +288,10 @@ func (k *Kubelet) args(config runtime.Configurator) ([]string, error) {
 	return blackListArgs.Merge(extraArgs).Args(), nil
 }
 
-func writeKubeletConfig(config runtime.Configurator) error {
+func writeKubeletConfig(r runtime.Runtime) error {
 	dnsServiceIPs := []string{}
 
-	for _, cidr := range strings.Split(config.Cluster().Network().ServiceCIDR(), ",") {
+	for _, cidr := range strings.Split(r.Config().Cluster().Network().ServiceCIDR(), ",") {
 		_, svcCIDR, err := net.ParseCIDR(cidr)
 		if err != nil {
 			return fmt.Errorf("failed to parse service CIDR %s: %v", cidr, err)
@@ -313,7 +305,7 @@ func writeKubeletConfig(config runtime.Configurator) error {
 		dnsServiceIPs = append(dnsServiceIPs, dnsIP.String())
 	}
 
-	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs, config.Cluster().Network().DNSDomain())
+	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs, r.Config().Cluster().Network().DNSDomain())
 
 	serializer := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,

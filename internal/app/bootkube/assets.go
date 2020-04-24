@@ -23,7 +23,7 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
-	"github.com/talos-systems/talos/internal/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )

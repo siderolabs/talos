@@ -17,12 +17,12 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/syndtr/gocapability/capability"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -31,12 +31,12 @@ import (
 type Timed struct{}
 
 // ID implements the Service interface.
-func (n *Timed) ID(config runtime.Configurator) string {
+func (n *Timed) ID(r runtime.Runtime) string {
 	return "timed"
 }
 
 // PreFunc implements the Service interface.
-func (n *Timed) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (n *Timed) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -48,25 +48,25 @@ func (n *Timed) PreFunc(ctx context.Context, config runtime.Configurator) error 
 }
 
 // PostFunc implements the Service interface.
-func (n *Timed) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (n *Timed) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (n *Timed) Condition(config runtime.Configurator) conditions.Condition {
+func (n *Timed) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (n *Timed) DependsOn(config runtime.Configurator) []string {
+func (n *Timed) DependsOn(r runtime.Runtime) []string {
 	return []string{"containerd", "networkd"}
 }
 
-func (n *Timed) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/timed"
 
 	args := runner.Args{
-		ID:          n.ID(config),
+		ID:          n.ID(r),
 		ProcessArgs: []string{"/timed", "--config=" + constants.ConfigPath},
 	}
 
@@ -81,12 +81,12 @@ func (n *Timed) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -105,11 +105,11 @@ func (n *Timed) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // APIStartAllowed implements the APIStartableService interface.
-func (n *Timed) APIStartAllowed(config runtime.Configurator) bool {
+func (n *Timed) APIStartAllowed(r runtime.Runtime) bool {
 	return true
 }
 
 // APIRestartAllowed implements the APIRestartableService interface.
-func (n *Timed) APIRestartAllowed(config runtime.Configurator) bool {
+func (n *Timed) APIRestartAllowed(r runtime.Runtime) bool {
 	return true
 }

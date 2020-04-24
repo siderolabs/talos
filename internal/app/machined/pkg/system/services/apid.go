@@ -17,14 +17,13 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -35,12 +34,12 @@ import (
 type APID struct{}
 
 // ID implements the Service interface.
-func (o *APID) ID(config runtime.Configurator) string {
+func (o *APID) ID(r runtime.Runtime) string {
 	return "apid"
 }
 
 // PreFunc implements the Service interface.
-func (o *APID) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -52,13 +51,13 @@ func (o *APID) PreFunc(ctx context.Context, config runtime.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (o *APID) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
-	if config.Machine().Type() == machine.TypeWorker {
+func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
+	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
 		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
 
@@ -66,16 +65,16 @@ func (o *APID) Condition(config runtime.Configurator) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (o *APID) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "cri"}
+func (o *APID) DependsOn(r runtime.Runtime) []string {
+	return []string{"containerd", "networkd"}
 }
 
-func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/apid"
 
 	endpoints := []string{"127.0.0.1"}
 
-	if config.Machine().Type() == machine.TypeWorker {
+	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
 		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {
@@ -98,7 +97,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: o.ID(config),
+		ID: o.ID(r),
 		ProcessArgs: []string{
 			"/apid",
 			"--config=" + constants.ConfigPath,
@@ -115,7 +114,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	env := []string{}
 
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		switch strings.ToLower(key) {
 		// explicitly exclude proxy variables from apid since this will
 		// negatively impact grpc connections.
@@ -130,7 +129,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -145,7 +144,7 @@ func (o *APID) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (o *APID) HealthFunc(runtime.Configurator) health.Check {
+func (o *APID) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
 
@@ -159,6 +158,6 @@ func (o *APID) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (o *APID) HealthSettings(runtime.Configurator) *health.Settings {
+func (o *APID) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

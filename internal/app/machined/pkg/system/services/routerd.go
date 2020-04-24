@@ -17,13 +17,13 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
@@ -33,12 +33,12 @@ import (
 type Routerd struct{}
 
 // ID implements the Service interface.
-func (o *Routerd) ID(config runtime.Configurator) string {
+func (o *Routerd) ID(r runtime.Runtime) string {
 	return "routerd"
 }
 
 // PreFunc implements the Service interface.
-func (o *Routerd) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (o *Routerd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -50,26 +50,26 @@ func (o *Routerd) PreFunc(ctx context.Context, config runtime.Configurator) erro
 }
 
 // PostFunc implements the Service interface.
-func (o *Routerd) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (o *Routerd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (o *Routerd) Condition(config runtime.Configurator) conditions.Condition {
+func (o *Routerd) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (o *Routerd) DependsOn(config runtime.Configurator) []string {
+func (o *Routerd) DependsOn(r runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
-func (o *Routerd) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (o *Routerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/routerd"
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: o.ID(config),
+		ID: o.ID(r),
 		ProcessArgs: []string{
 			"/routerd",
 		},
@@ -89,7 +89,7 @@ func (o *Routerd) Runner(config runtime.Configurator) (runner.Runner, error) {
 
 	env := []string{}
 
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		switch strings.ToLower(key) {
 		// explicitly exclude proxy variables from routerd since this will
 		// negatively impact grpc connections.
@@ -104,7 +104,7 @@ func (o *Routerd) Runner(config runtime.Configurator) (runner.Runner, error) {
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -118,7 +118,7 @@ func (o *Routerd) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (o *Routerd) HealthFunc(runtime.Configurator) health.Check {
+func (o *Routerd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		conn, err := grpc.Dial(
 			fmt.Sprintf("%s://%s", "unix", constants.RouterdSocketPath),
@@ -134,6 +134,6 @@ func (o *Routerd) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (o *Routerd) HealthSettings(runtime.Configurator) *health.Settings {
+func (o *Routerd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

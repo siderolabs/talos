@@ -9,8 +9,8 @@ package cli
 import (
 	"regexp"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/config/machine"
 )
 
 // CrashdumpSuite verifies crashdump command
@@ -32,11 +32,11 @@ func (suite *CrashdumpSuite) TestRun() {
 	args := []string{}
 	for _, node := range suite.Cluster.Info().Nodes {
 		switch node.Type {
-		case machine.TypeInit:
+		case runtime.MachineTypeInit:
 			args = append(args, "--init-node", node.PrivateIP.String())
-		case machine.TypeControlPlane:
+		case runtime.MachineTypeControlPlane:
 			args = append(args, "--control-plane-nodes", node.PrivateIP.String())
-		case machine.TypeWorker:
+		case runtime.MachineTypeJoin:
 			args = append(args, "--worker-nodes", node.PrivateIP.String())
 		}
 	}

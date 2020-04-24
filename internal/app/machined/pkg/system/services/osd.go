@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -18,13 +19,13 @@ import (
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/internal/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
@@ -34,12 +35,12 @@ import (
 type OSD struct{}
 
 // ID implements the Service interface.
-func (o *OSD) ID(config runtime.Configurator) string {
+func (o *OSD) ID(r runtime.Runtime) string {
 	return "osd"
 }
 
 // PreFunc implements the Service interface.
-func (o *OSD) PreFunc(ctx context.Context, config runtime.Configurator) error {
+func (o *OSD) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
 
 	return importer.Import(&containerd.ImportRequest{
@@ -51,26 +52,26 @@ func (o *OSD) PreFunc(ctx context.Context, config runtime.Configurator) error {
 }
 
 // PostFunc implements the Service interface.
-func (o *OSD) PostFunc(config runtime.Configurator, state events.ServiceState) (err error) {
+func (o *OSD) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
 	return nil
 }
 
 // Condition implements the Service interface.
-func (o *OSD) Condition(config runtime.Configurator) conditions.Condition {
+func (o *OSD) Condition(r runtime.Runtime) conditions.Condition {
 	return nil
 }
 
 // DependsOn implements the Service interface.
-func (o *OSD) DependsOn(config runtime.Configurator) []string {
-	return []string{"containerd", "cri"}
+func (o *OSD) DependsOn(r runtime.Runtime) []string {
+	return []string{"containerd", "networkd"}
 }
 
-func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
+func (o *OSD) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/osd"
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: o.ID(config),
+		ID: o.ID(r),
 		ProcessArgs: []string{
 			"/osd",
 		},
@@ -86,19 +87,19 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: constants.ContainerdAddress, Source: constants.ContainerdAddress, Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: path.Dir(constants.ContainerdAddress), Source: path.Dir(constants.ContainerdAddress), Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.DefaultLogPath, Source: constants.DefaultLogPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.SystemRunPath, Source: constants.SystemRunPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.OSSocketPath), Source: filepath.Dir(constants.OSSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}
-	for key, val := range config.Machine().Env() {
+	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
 	return restart.New(containerd.NewRunner(
-		config.Debug(),
+		r.Config().Debug(),
 		&args,
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -120,7 +121,7 @@ func (o *OSD) Runner(config runtime.Configurator) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (o *OSD) HealthFunc(runtime.Configurator) health.Check {
+func (o *OSD) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		conn, err := grpc.Dial(
 			fmt.Sprintf("%s://%s", "unix", constants.OSSocketPath),
@@ -136,6 +137,6 @@ func (o *OSD) HealthFunc(runtime.Configurator) health.Check {
 }
 
 // HealthSettings implements the HealthcheckedService interface
-func (o *OSD) HealthSettings(runtime.Configurator) *health.Settings {
+func (o *OSD) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

@@ -12,7 +12,7 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/pkg/config/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
@@ -128,7 +128,7 @@ type MachineConfig struct {
 	//           partitions:
 	//             - size: 10000000000
 	//               mountpoint: /var/lib/extra
-	MachineDisks []machine.Disk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
+	MachineDisks []runtime.Disk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
 	//     Used to provide instructions for bare-metal installations.
 	//   examples:
@@ -157,7 +157,7 @@ type MachineConfig struct {
 	//           permissions: 0666
 	//           path: /tmp/file.txt
 	//           op: append
-	MachineFiles []machine.File `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
+	MachineFiles []runtime.File `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
 	//   description: |
 	//     The `env` field allows for the addition of environment variables to a machine.
 	//     All environment variables are set on the machine in addition to every service.
@@ -180,7 +180,7 @@ type MachineConfig struct {
 	//     - |
 	//       env:
 	//         https_proxy: http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/
-	MachineEnv machine.Env `yaml:"env,omitempty"`
+	MachineEnv runtime.Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Used to configure the machine's time settings.
 	//   examples:
@@ -433,7 +433,7 @@ type NetworkConfig struct {
 	//     This parameter is optional.
 	//
 	//     Routes can be repeated and includes a `Network` and `Gateway` field.
-	NetworkInterfaces []machine.Device `yaml:"interfaces,omitempty"`
+	NetworkInterfaces []runtime.Device `yaml:"interfaces,omitempty"`
 	//   description: |
 	//     Used to statically set the nameservers for the host.
 	//     Defaults to `1.1.1.1` and `8.8.8.8`
@@ -447,7 +447,7 @@ type NetworkConfig struct {
 	//           aliases:
 	//             - test
 	//             - test.domain.tld
-	ExtraHostEntries []machine.ExtraHost `yaml:"extraHostEntries,omitempty"`
+	ExtraHostEntries []runtime.ExtraHost `yaml:"extraHostEntries,omitempty"`
 }
 
 // InstallConfig represents the installation options for preparing a node.
@@ -518,14 +518,14 @@ type RegistriesConfig struct {
 	//     Registry name is the first segment of image identifier, with 'docker.io'
 	//     being default one.
 	//     Name '*' catches any registry names not specified explicitly.
-	RegistryMirrors map[string]machine.RegistryMirrorConfig `yaml:"mirrors,omitempty"`
+	RegistryMirrors map[string]runtime.RegistryMirrorConfig `yaml:"mirrors,omitempty"`
 	//   description: |
 	//     Specifies TLS & auth configuration for HTTPS image registries.
 	//     Mutual TLS can be enabled with 'clientIdentity' option.
 	//
 	//     TLS configuration can be skipped if registry has trusted
 	//     server certificate.
-	RegistryConfig map[string]machine.RegistryConfig `yaml:"config,omitempty"`
+	RegistryConfig map[string]runtime.RegistryConfig `yaml:"config,omitempty"`
 }
 
 // PodCheckpointer represents the pod-checkpointer config values
