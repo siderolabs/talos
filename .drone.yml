@@ -201,6 +201,7 @@ steps:
   commands:
   - make installer
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -241,6 +242,7 @@ steps:
   commands:
   - make talos
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -460,34 +462,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: push-local
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push
-  environment:
-    DOCKER_LOGIN_ENABLED: false
-    REGISTRY: registry.ci.svc:5000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer-local
-  - talos-local
-
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
     path: /var/run
@@ -526,7 +507,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-prepare
   pull: always
@@ -551,7 +531,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-track-0
   pull: always
@@ -902,6 +881,7 @@ steps:
   commands:
   - make installer
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -942,6 +922,7 @@ steps:
   commands:
   - make talos
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -1161,34 +1142,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: push-local
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push
-  environment:
-    DOCKER_LOGIN_ENABLED: false
-    REGISTRY: registry.ci.svc:5000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer-local
-  - talos-local
-
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
     path: /var/run
@@ -1227,7 +1187,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-prepare
   pull: always
@@ -1252,7 +1211,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-track-0
   pull: always
@@ -1695,6 +1653,7 @@ steps:
   commands:
   - make installer
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -1735,6 +1694,7 @@ steps:
   commands:
   - make talos
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -1954,34 +1914,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: push-local
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push
-  environment:
-    DOCKER_LOGIN_ENABLED: false
-    REGISTRY: registry.ci.svc:5000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer-local
-  - talos-local
-
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
     path: /var/run
@@ -2020,7 +1959,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-prepare
   pull: always
@@ -2045,7 +1983,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-track-0
   pull: always
@@ -2518,6 +2455,7 @@ steps:
   commands:
   - make installer
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -2558,6 +2496,7 @@ steps:
   commands:
   - make talos
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -2777,34 +2716,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: push-local
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push
-  environment:
-    DOCKER_LOGIN_ENABLED: false
-    REGISTRY: registry.ci.svc:5000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer-local
-  - talos-local
-
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
     path: /var/run
@@ -2843,7 +2761,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-prepare
   pull: always
@@ -2868,7 +2785,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-track-0
   pull: always
@@ -3341,6 +3257,7 @@ steps:
   commands:
   - make installer
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -3381,6 +3298,7 @@ steps:
   commands:
   - make talos
   environment:
+    PUSH: true
     REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
@@ -3600,34 +3518,13 @@ steps:
   depends_on:
   - unit-tests
 
-- name: push-local
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make push
-  environment:
-    DOCKER_LOGIN_ENABLED: false
-    REGISTRY: registry.ci.svc:5000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - installer-local
-  - talos-local
-
 - name: e2e-docker
   pull: always
   image: autonomy/build-container:latest
   commands:
   - make e2e-docker
+  environment:
+    REGISTRY: registry.ci.svc:5000
   volumes:
   - name: dockersock
     path: /var/run
@@ -3666,7 +3563,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-prepare
   pull: always
@@ -3691,7 +3587,6 @@ steps:
   - initramfs
   - talosctl-linux
   - kernel
-  - push-local
 
 - name: provision-tests-track-0
   pull: always
@@ -3969,6 +3864,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 75e38be995fe5b0c1700a07725bb340b9e982d822a404a94f2039d12c0efe6c3
+hmac: 982c93f5024bef00d7cfc0fd9731f2335b7bc41d9aa407cc9e52a687a47c73a3
 
 ...

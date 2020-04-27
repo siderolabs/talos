@@ -93,8 +93,7 @@ local-%: ## Builds the specified target defined in the Dockerfile using the loca
 	@$(MAKE) target-$* TARGET_ARGS="--output=type=local,dest=$(DEST) $(TARGET_ARGS)"
 
 docker-%: ## Builds the specified target defined in the Dockerfile using the docker output type. The build result will be output to the specified local destination.
-	@mkdir -p $(DEST)
-	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
+	@$(MAKE) target-$* TARGET_ARGS="--tag $(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
 
 hack-test-%: ## Runs the specied script in ./hack/test with well known environment variables.
 	@./hack/test/$*.sh
@@ -124,13 +123,10 @@ initramfs: ## Builds the compressed initramfs and outputs it to the artifact dir
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the artifact directory.
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
-	@docker load < $(ARTIFACTS)/$@.tar
 
 .PHONY: talos
 talos: ## Builds the Talos container image and outputs it to the artifact directory.
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
-	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
-	@docker load < $(ARTIFACTS)/container.tar
 
 talosctl-%:
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)

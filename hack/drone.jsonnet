@@ -181,8 +181,8 @@ local kernel = Step('kernel', depends_on=[check_dirty]);
 local initramfs = Step("initramfs", depends_on=[check_dirty]);
 local installer = Step("installer", depends_on=[initramfs]);
 local talos = Step("talos", depends_on=[initramfs]);
-local installer_local = Step("installer-local",  depends_on=[installer], target="installer", environment={"REGISTRY": local_registry});
-local talos_local = Step("talos-local",  depends_on=[talos], target="talos", environment={"REGISTRY": local_registry});
+local installer_local = Step("installer-local",  depends_on=[installer], target="installer", environment={"REGISTRY": local_registry, "PUSH": "true"});
+local talos_local = Step("talos-local",  depends_on=[talos], target="talos", environment={"REGISTRY": local_registry, "PUSH": "true"});
 local golint = Step("lint-go", depends_on=[check_dirty]);
 local markdownlint = Step("lint-markdown", depends_on=[check_dirty]);
 local protobuflint = Step("lint-protobuf", depends_on=[check_dirty]);
@@ -191,12 +191,11 @@ local image_azure = Step("image-azure", depends_on=[image_aws]);
 local image_digital_ocean = Step("image-digital-ocean", depends_on=[image_azure]);
 local image_gcp = Step("image-gcp", depends_on=[image_digital_ocean]);
 local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
-local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
-local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux]);
-local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
-local provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
+local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux], environment={"REGISTRY": local_registry});
+local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel], environment={"REGISTRY": local_registry});
+local provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel], environment={"REGISTRY": local_registry});
 local provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry});
 local provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry});
 
@@ -283,7 +282,6 @@ local default_steps = [
   unit_tests,
   unit_tests_race,
   coverage,
-  push_local,
   e2e_docker,
   e2e_firecracker,
   provision_tests_prepare,
