@@ -3,7 +3,7 @@
 First of all, thank you!
 We value your time and interest in making Talos a successful open source project.
 
-## What can I do to help?
+## What We Need
 
 There are a number of ways you can help!
 We are in need of both technical and non-technical contributions.
@@ -31,14 +31,12 @@ EOF
 chmod +x .git/hooks/commit-msg
 ```
 
-In addition, all commits should be signed by the committer using `git commit -s` which should produce a commit
-message with `Signed-off-by: Your Name <your@email>`. It is not necessary to cryptographically sign commits
-with GPG.
+In addition, all commits should be signed by the committer using `git commit -s`, which should produce a commit message with `Signed-off-by: Your Name <your@email>`.
+It is not necessary to cryptographically sign commits with GPG.
 
 ### Pull Requests
 
-To avoid multiples CI runs, please ensure that you are running a full build before submitting your PR, and
-branches should be squashed to a single commit.
+To avoid multiples CI runs, please ensure that you are running a full build before submitting your PR, and branches should be squashed to a single commit.
 
 ## Developing
 
@@ -51,7 +49,7 @@ GO111MODULE=on go get
 make ci
 ```
 
-# Make Targets
+## Make Targets
 
 In the `Makefile` there are a variety of targets, the most common are:
 
@@ -61,11 +59,10 @@ In the `Makefile` there are a variety of targets, the most common are:
 - `talosctl-linux-amd64` and `talosctl-darwin-amd64` make the `talosctl` CLI tool for Linux & OSX respectively.
 - `rootfs` creates an archive of the root filesystem preloaded with all the components needed to launch Talos & Kubernetes.
 
-# Buildkit
+## Buildkit
 
 Talos uses Moby [buildkit](https://github.com/moby/buildkit) for concurrent and cache-efficient builds.
-By default, a buildkit service is started locally, but if you want to offload the builds to another server,
-you can start a buildkit service with the following command:
+By default, a buildkit service is started locally, but if you want to offload the builds to another server, you can start a buildkit service with the following command:
 
 ```bash
 docker run --detach --privileged --restart always --publish 1234:1234 moby/buildkit --addr tcp://0.0.0.0:1234
