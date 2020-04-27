@@ -493,12 +493,14 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 # The markdownlint target performs linting on Markdown files.
 
 FROM node:8.16.1-alpine AS lint-markdown
-RUN npm install -g markdownlint-cli
-RUN npm i sentences-per-line
+RUN npm i -g markdownlint-cli
+RUN npm i -g textlint
+RUN npm i -g textlint-rule-one-sentence-per-line
 WORKDIR /src
 COPY .markdownlint.json .
-COPY docs .
-RUN markdownlint --rules /node_modules/sentences-per-line/index.js .
+COPY . .
+RUN markdownlint --ignore "**/node_modules/**" --ignore '**/hack/chglog/**' .
+RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/docs/talosctl/*' | xargs textlint --rule one-sentence-per-line --stdin-filename
 
 # The docs target generates documentation.
 

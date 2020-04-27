@@ -3,7 +3,6 @@
 !cmd
 !docs
 !hack
-!_out/images/*.tar
 !internal
 !pkg
 !vendor
@@ -13,3 +12,5 @@
 !go.mod
 !go.sum
 !prototool.yaml
+!README.md
+!CONTRIBUTING.md

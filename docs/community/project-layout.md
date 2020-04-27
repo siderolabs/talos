@@ -1,8 +1,7 @@
 # Project Layout Standards
 
 In this document we will cover our official layout standards.
-You will find that the project is a monolithic repository that contains
-everything required to build and run Talos.
+You will find that the project is a monolithic repository that contains everything required to build and run Talos.
 
 ```bash
 $ tree .
@@ -27,8 +26,7 @@ $ tree .
 
 ## Internal Applications
 
-Talos is comprised of applications designed to handle the various domains of
-an operating system.
+Talos is comprised of applications designed to handle the various domains of an operating system.
 The following requirements must be adhered to by an `app`:
 
 - anything ran as a service, that is maintained by us, should live under `internal/app`
@@ -36,8 +34,7 @@ The following requirements must be adhered to by an `app`:
 
 ## Internal Packages
 
-There are a number of packages we will need to maintain that are strongly
-coupled with Talos business logic.
+There are a number of packages we will need to maintain that are strongly coupled with Talos business logic.
 These package should be housed within the `internal/pkg` directory.
 The criteria for deciding if a package should be housed here are as follows:
 
@@ -46,16 +43,14 @@ The criteria for deciding if a package should be housed here are as follows:
 
 ## Public Packages
 
-In building higher level abstractions, we should strive to create generic,
-general use packages that can be used independent of Talos.
+In building higher level abstractions, we should strive to create generic, general use packages that can be used independent of Talos.
 The following rules apply to public packages:
 
 - a `pkg` should _never_ contain `internal` code
 
 ### Graduation Criteria
 
-In deciding if a package should be moved to an external repository, the
-following should be taken into consideration:
+In deciding if a package should be moved to an external repository, the following should be taken into consideration:
 
 - are there requests for exposing the package?
 - are there people willing to maintain the package?
