@@ -135,3 +135,156 @@ sudo talosctl cluster destroy --provisioner firecracker
 ```
 
 > Note: In that case that the host machine is rebooted before destroying the cluster, you may need to manually remove `~/.talos/clusters/talos-default`.
+
+## Manual Clean Up
+
+The `talosctl cluster destroy` command depends heavily on the clusters state
+directory. It contains all related information of the cluster. The PIDs and
+network associated with the cluster nodes.
+
+If you happened to have deleted the state folder by mistake or you would like to cleanup
+the environment, here are the steps how to do it manually:
+
+### Stopping VMs
+
+Find the process of `firecracker --api-sock` execute:
+
+```
+$ ps -elf | grep '[f]irecracker --api-sock'
+```
+
+To stop the VMs manually, execute:
+
+```
+$ sudo kill -s SIGTERM <PID>
+```
+
+Example output, where VMs are running with PIDs **158065** and **158216**
+
+```
+$ ps -elf | grep '[f]irecracker --api-sock'
+4 S root      158065  157615 44  80   0 - 264152 -     07:54 ?        00:34:25 firecracker --api-sock /root/.talos/clusters/k8s/k8s-master-1.sock
+4 S root      158216  157617 18  80   0 - 264152 -     07:55 ?        00:14:47 firecracker --api-sock /root/.talos/clusters/k8s/k8s-worker-1.sock
+$ sudo kill -s SIGTERM 158065
+$ sudo kill -s SIGTERM 158216
+```
+
+### Remove VMs
+
+Find the process of `talosctl firecracker-launch` execute:
+
+```
+$ ps -elf | grep 'talosctl firecracker-launch'
+```
+
+To remove the VMs manually, execute:
+
+```
+$ sudo kill -s SIGTERM <PID>
+```
+
+Example output, where VMs are running with PIDs **157615** and **157617**
+
+```
+$ ps -elf | grep '[t]alosctl firecracker-launch'
+0 S root      157615    2835  0  80   0 - 184934 -     07:53 ?        00:00:00 talosctl firecracker-launch
+0 S root      157617    2835  0  80   0 - 185062 -     07:53 ?        00:00:00 talosctl firecracker-launch
+$ sudo kill -s SIGTERM 157615
+$ sudo kill -s SIGTERM 157617
+```
+
+### Remove load balancer
+
+Find the process of `talosctl loadbalancer-launch` execute:
+
+```
+$ ps -elf | grep 'talosctl loadbalancer-launch'
+```
+
+To remove the LB manually, execute:
+
+```
+$ sudo kill -s SIGTERM <PID>
+```
+
+Example output, where loadbalancer is running with PID **157609**
+
+```
+$ ps -elf | grep '[t]alosctl loadbalancer-launch'
+4 S root      157609    2835  0  80   0 - 184998 -     07:53 ?        00:00:07 talosctl loadbalancer-launch --loadbalancer-addr 10.5.0.1 --loadbalancer-upstreams 10.5.0.2
+$ sudo kill -s SIGTERM 157609
+```
+
+### Remove network
+
+This is more tricky part as if you have already deleted the state folder.
+If you didn't then it is written in the `state.yaml` in the
+`/root/.talos/clusters/<cluster-name>` directory.
+
+```
+# cat /root/.talos/clusters/<cluster-name>/state.yaml | grep bridgename
+bridgename: talos<uuid>
+```
+
+If you only had one cluster, then it will be the interface with name
+`talos<uuid>`
+
+```
+46: talos<uuid>: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether a6:72:f4:0a:d3:9c brd ff:ff:ff:ff:ff:ff                                
+    inet 10.5.0.1/24 brd 10.5.0.255 scope global talos17c13299              
+       valid_lft forever preferred_lft forever                                        
+    inet6 fe80::a472:f4ff:fe0a:d39c/64 scope link              
+       valid_lft forever preferred_lft forever    
+```
+
+To remove this interface:
+
+```
+# ip link del talos<uuid>
+```
+
+### Remove state directory
+
+To remove the state directory execute:
+
+```
+$ sudo rm -Rf /root/.talos/clusters/<cluster-name>
+```
+
+## Troubleshooting
+
+### Logs
+
+Inspect logs directory
+
+```
+$ sudo cat /root/.talos/clusters/<cluster-name>/*.log
+```
+Logs are saved under `<cluster-name>-<role>-<node-id>.log`
+
+For example in case of **k8s** cluster name:
+
+```
+$ sudo ls -la /root/.talos/clusters/k8s | grep log
+-rw-r--r--. 1 root root      69415 Apr 26 20:58 k8s-master-1.log
+-rw-r--r--. 1 root root      68345 Apr 26 20:58 k8s-worker-1.log
+-rw-r--r--. 1 root root      24621 Apr 26 20:59 lb.log
+```
+
+Inspect logs during the installation
+
+```
+$ sudo su -
+# tail -f /root/.talos/clusters/<cluster-name>/*.log
+```
+
+## Post-installation
+
+After executing these steps and you should be able to use `kubectl`
+
+```
+$ sudo talosctl kubeconfig .
+$ mv kubeconfig $HOME/.kube/config 
+$ sudo chown $USER:$USER $HOME/.kube/config
+```
