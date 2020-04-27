@@ -15,6 +15,73 @@ In this guide we will create a Kubernetes cluster using Firecracker.
 - `/etc/cni/conf.d` directory should exist
 - `/var/run/netns` directory should exist
 
+## Installation
+
+### How to get firecracker (v0.21.0 or higher)
+
+You can download `firecracker` binary via
+https://github.com/firecracker-microvm/firecracker/releases
+
+```
+$ curl https://github.com/firecracker-microvm/firecracker/releases/download/<version>/firecracker-<version>-<arch> -L -o firecracker
+```
+
+For example version `v0.21.1` for `linux` platform:
+
+```
+$ curl https://github.com/firecracker-microvm/firecracker/releases/download/v0.21.1/firecracker-v0.21.1-x86_64 -L -o firecracker
+$ sudo cp firecracker /usr/local/bin
+$ sudo chmod +x /usr/local/bin/firecracker
+```
+
+### Install talosctl
+
+You can download `talosctl` and all required binaries via
+https://github.com/talos-systems/talos/releases
+
+```
+$ curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
+```
+
+For example version `v0.4.1` for `linux` platform:
+
+```
+$ curl https://github.com/talos-systems/talos/releases/download/v0.4.1/talosctl-linux-amd64 -L -o talosctl
+$ sudo cp talosctl /usr/local/bin
+$ sudo chmod +x /usr/local/bin/talosctl
+```
+
+### Install bridge and firewall required CNI plugins
+
+You can download standard CNI required plugins via
+https://github.com/containernetworking/plugins/releases
+
+```
+$ curl https://github.com/containernetworking/plugins/releases/download/<version>/cni-plugins-<platform>-<arch>-<version>tgz -L -o cni-plugins-<platform>-<arch>-<version>.tgz
+```
+
+For example version `v0.8.5` for `linux` platform:
+
+```
+$ curl https://github.com/containernetworking/plugins/releases/download/v0.8.5/cni-plugins-linux-amd64-v0.8.5.tgz -L -o cni-plugins-linux-amd64-v0.8.5.tgz
+$ mkdir cni-plugins-linux
+$ tar -xf cni-plugins-linux-amd64-v0.8.5.tgz -C cni-plugins-linux
+$ sudo mkdir -p /opt/cni/bin
+$ sudo cp cni-plugins-linux/{bridge,firewall} /opt/cni/bin
+```
+
+### Install tc-redirect-tap CNI plugin
+
+You should install CNI plugin from the Firecracker Go SDK repository 
+https://github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni
+
+```
+$ go get -d github.com/firecracker-microvm/firecracker-go-sdk
+$ cd $GOPATH/src/github.com/firecracker-microvm/firecracker-go-sdk/cni
+$ make all
+$ sudo cp tc-redirect-tap /opt/cni/bin
+```
+
 ## Create the Cluster
 
 ```bash
