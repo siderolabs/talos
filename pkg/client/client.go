@@ -251,6 +251,12 @@ func (c *Client) Reboot(ctx context.Context) (err error) {
 	return
 }
 
+// Recover implements the proto.OSClient interface.
+func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_Source) (err error) {
+	_, err = c.MachineClient.Recover(ctx, &machineapi.RecoverRequest{Source: source})
+	return
+}
+
 // Shutdown implements the proto.OSClient interface.
 func (c *Client) Shutdown(ctx context.Context) (err error) {
 	_, err = c.MachineClient.Shutdown(ctx, &empty.Empty{})
