@@ -9,13 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -30,6 +31,8 @@ import (
 // Bootkube implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Bootkube struct {
+	Recover bool
+
 	provisioned bool
 }
 
@@ -40,48 +43,50 @@ func (b *Bootkube) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
-	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
-	if err != nil {
-		return err
-	}
+	if !b.Recover {
+		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
+		if err != nil {
+			return err
+		}
 
-	// nolint: errcheck
-	defer client.Close()
+		// nolint: errcheck
+		defer client.Close()
 
-	err = retry.Exponential(3*time.Minute, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
-		var resp *clientv3.GetResponse
+		err = retry.Exponential(3*time.Minute, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+			var resp *clientv3.GetResponse
 
-		// limit single attempt to 15 seconds to allow for 12 attempts at least
-		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 15*time.Second)
-		defer attemptCtxCancel()
+			// limit single attempt to 15 seconds to allow for 12 attempts at least
+			attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 15*time.Second)
+			defer attemptCtxCancel()
 
-		if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
-			if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
-				// no key set yet, treat as not provisioned yet
+			if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
+				if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
+					// no key set yet, treat as not provisioned yet
+					return nil
+				}
+
+				return retry.ExpectedError(err)
+			}
+
+			if len(resp.Kvs) == 0 {
+				// no key/values in the range, treat as not provisioned yet
 				return nil
 			}
 
-			return retry.ExpectedError(err)
+			if string(resp.Kvs[0].Value) == "true" {
+				b.provisioned = true
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return fmt.Errorf("error querying cluster provisioned state in etcd: %w", err)
 		}
 
-		if len(resp.Kvs) == 0 {
-			// no key/values in the range, treat as not provisioned yet
+		if b.provisioned {
 			return nil
 		}
-
-		if string(resp.Kvs[0].Value) == "true" {
-			b.provisioned = true
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("error querying cluster provisioned state in etcd: %w", err)
-	}
-
-	if b.provisioned {
-		return nil
 	}
 
 	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
@@ -150,6 +155,7 @@ func (b *Bootkube) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/bootkube",
 			"--config=" + constants.ConfigPath,
+			"--strict=" + strconv.FormatBool(!b.Recover),
 		},
 	}
 

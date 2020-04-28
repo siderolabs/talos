@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 )
 
@@ -81,6 +82,37 @@ func (s *singleton) Load(services ...Service) []string {
 	}
 
 	return ids
+}
+
+// Reload adds service to the list of services managed by the runner.
+//
+// Reload returns service IDs for each of the services.
+func (s *singleton) Reload(services ...Service) []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.terminating {
+		return nil
+	}
+
+	ids := make([]string, 0, len(services))
+
+	for _, service := range services {
+		id := service.ID(s.runtime)
+		ids = append(ids, id)
+
+		if svc, exists := s.state[id]; exists {
+			switch svc.GetState() {
+			case events.StateFailed, events.StateFinished, events.StateSkipped:
+				svcrunner := NewServiceRunner(service, s.runtime)
+				s.state[id] = svcrunner
+
+				return ids
+			}
+		}
+	}
+
+	return nil
 }
 
 // Start will invoke the service's Pre, Condition, and Type funcs. If the any
@@ -151,6 +183,15 @@ func (s *singleton) StartAll() {
 // LoadAndStart combines Load and Start into single call.
 func (s *singleton) LoadAndStart(services ...Service) {
 	err := s.Start(s.Load(services...)...)
+	if err != nil {
+		// should never happen
+		panic(err)
+	}
+}
+
+// ReloadAndStart combines Reload and Start into single call.
+func (s *singleton) ReloadAndStart(services ...Service) {
+	err := s.Start(s.Reload(services...)...)
 	if err != nil {
 		// should never happen
 		panic(err)

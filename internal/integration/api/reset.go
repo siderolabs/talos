@@ -86,14 +86,18 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 			var uptimeAfter float64
 
+			start := time.Now()
+
 			suite.Require().NoError(retry.Constant(3 * time.Minute).Retry(func() error {
+				since := time.Since(start)
+
 				uptimeAfter, err = suite.ReadUptime(nodeCtx)
 				if err != nil {
 					// API might be unresponsive during reboot
 					return retry.ExpectedError(err)
 				}
 
-				if uptimeAfter >= uptimeBefore {
+				if uptimeAfter >= uptimeBefore+since.Seconds() {
 					// uptime should go down after Reset, as it reboots the node
 					return retry.ExpectedError(fmt.Errorf("uptime didn't go down: before %f, after %f", uptimeBefore, uptimeAfter))
 				}
