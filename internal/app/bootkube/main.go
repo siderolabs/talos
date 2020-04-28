@@ -17,6 +17,20 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
+var (
+	configPath *string
+	strict     *bool
+)
+
+func init() {
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+
+	configPath = flag.String("config", "", "the path to the config")
+	strict = flag.Bool("strict", true, "require all manifests to cleanly apply")
+
+	flag.Parse()
+}
+
 func run() error {
 	defaultRequiredPods := []string{
 		"kube-system/pod-checkpointer",
@@ -28,7 +42,7 @@ func run() error {
 	cfg := bootkube.Config{
 		AssetDir:        constants.AssetsDirectory,
 		PodManifestPath: constants.ManifestsDirectory,
-		Strict:          true,
+		Strict:          *strict,
 		RequiredPods:    defaultRequiredPods,
 	}
 
@@ -60,9 +74,6 @@ func run() error {
 }
 
 func main() {
-	configPath := flag.String("config", "", "the path to the config")
-
-	flag.Parse()
 	util.InitLogs()
 
 	defer util.FlushLogs()
