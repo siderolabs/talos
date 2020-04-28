@@ -82,6 +82,7 @@ func (apiSuite *APISuite) DiscoverNodes() []string {
 type Capabilities struct {
 	RunsTalosKernel bool
 	SupportsReboot  bool
+	SupportsRecover bool
 }
 
 // Capabilities returns a set of capabilities to skip tests for different environments.
@@ -97,6 +98,7 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 		default:
 			caps.RunsTalosKernel = true
 			caps.SupportsReboot = true
+			caps.SupportsRecover = true
 		}
 	}
 

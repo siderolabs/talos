@@ -47,7 +47,7 @@ func DefaultClusterChecks() []ClusterCheck {
 		},
 		// wait for HA k8s control plane
 		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("all master nodes to be part of k8s control plane", func(ctx context.Context) error {
+			return conditions.PollingCondition("all control plane components to be ready", func(ctx context.Context) error {
 				return K8sFullControlPlaneAssertion(ctx, cluster)
 			}, 2*time.Minute, 5*time.Second)
 		},

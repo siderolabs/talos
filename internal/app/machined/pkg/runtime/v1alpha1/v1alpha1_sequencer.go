@@ -206,6 +206,15 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	return phases
 }
 
+// Recover is the recover sequence.
+func (*Sequencer) Recover(r runtime.Runtime, in *machine.RecoverRequest) []runtime.Phase {
+	phases := PhaseList{}
+
+	phases = phases.Append(Recover)
+
+	return phases
+}
+
 // Reset is the reset sequence.
 func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.Phase {
 	phases := PhaseList{}
