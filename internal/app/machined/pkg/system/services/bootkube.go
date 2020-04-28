@@ -13,9 +13,9 @@ import (
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"

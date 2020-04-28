@@ -4,6 +4,7 @@ go 1.13
 
 replace (
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200421144856-831deff0541a => github.com/andrewrynhard/bootkube v0.14.1-0.20200428224855-30952480448e
 	github.com/opencontainers/runtime-spec v1.0.1 => github.com/opencontainers/runtime-spec v0.1.2-0.20180301181910-fa4b36aa9c99
 )
 
@@ -22,7 +23,7 @@ require (
 	github.com/containerd/typeurl v0.0.0-20190911142611-5eb25027c9fd
 	github.com/containernetworking/cni v0.7.2-0.20190807151350-8c6c47d1c7fc
 	github.com/containernetworking/plugins v0.8.5
-	github.com/coreos/etcd v3.3.18+incompatible
+	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
@@ -70,7 +71,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200107162124-548cf772de50
+	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 	golang.org/x/text v0.3.2
 	google.golang.org/grpc v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124

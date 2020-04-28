@@ -76,9 +76,13 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 		return runtime.ErrUndefinedRuntime
 	}
 
-	// Allow only one sequence to run at a time.
-	if c.TryLock() {
-		return runtime.ErrLocked
+	// Allow only one sequence to run at a time, with the exception of the
+	// recover sequence. The recover sequence needs to run regardless of the
+	// machine's state.
+	if seq != runtime.SequenceRecover {
+		if c.TryLock() {
+			return runtime.ErrLocked
+		}
 	}
 
 	defer c.Unlock()
@@ -238,6 +242,7 @@ func (c *Controller) runTask(n int, f runtime.TaskSetupFunc, seq runtime.Sequenc
 	return nil
 }
 
+// nolint: gocyclo
 func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.Phase, error) {
 	var phases []runtime.Phase
 
@@ -252,6 +257,17 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 		phases = c.s.Shutdown(c.r)
 	case runtime.SequenceReboot:
 		phases = c.s.Reboot(c.r)
+	case runtime.SequenceRecover:
+		var (
+			in *machine.RecoverRequest
+			ok bool
+		)
+
+		if in, ok = data.(*machine.RecoverRequest); !ok {
+			return nil, runtime.ErrInvalidSequenceData
+		}
+
+		phases = c.s.Recover(c.r, in)
 	case runtime.SequenceUpgrade:
 		var (
 			in *machine.UpgradeRequest

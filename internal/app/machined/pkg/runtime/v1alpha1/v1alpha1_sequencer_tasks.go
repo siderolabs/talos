@@ -27,6 +27,7 @@ import (
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
+	"github.com/kubernetes-sigs/bootkube/pkg/recovery"
 	"github.com/talos-systems/talos/api/machine"
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
@@ -1453,5 +1454,46 @@ func Install(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 		logger.Println("install successful")
 
 		return nil
+	}
+}
+
+// Recover attempts to recover the control plane.
+func Recover(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		var (
+			in *machine.RecoverRequest
+			ok bool
+		)
+
+		if in, ok = data.(*machine.RecoverRequest); !ok {
+			return runtime.ErrInvalidSequenceData
+		}
+
+		var backend recovery.Backend
+
+		switch in.Source {
+		case machine.RecoverRequest_ETCD:
+			client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
+			if err != nil {
+				return err
+			}
+
+			backend = recovery.NewEtcdBackend(client, "/registry")
+
+		case machine.RecoverRequest_API:
+			backend, err = recovery.NewAPIServerBackend("/etc/kubernetes/recovery.yaml")
+			if err != nil {
+				return err
+			}
+		}
+
+		as, err := recovery.Recover(context.Background(), backend, "/etc/kubernetes/recovery.yaml")
+		if err != nil {
+			return err
+		}
+
+		os.MkdirAll("/etc/kubernetes/recovery", 0600)
+
+		return as.WriteFiles("/etc/kubernetes/recovery")
 	}
 }

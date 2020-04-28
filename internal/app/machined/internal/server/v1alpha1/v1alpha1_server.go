@@ -181,6 +181,32 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	return reply, nil
 }
 
+// Recover recovers the control plane.
+//
+// nolint: dupl
+func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply *machine.RecoverResponse, err error) {
+	log.Printf("recover request received")
+
+	go func() {
+		if err := s.Controller.Run(runtime.SequenceRecover, in); err != nil {
+			log.Println("recover failed:", err)
+
+			if err != runtime.ErrLocked {
+				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				s.server.GracefulStop()
+			}
+		}
+	}()
+
+	reply = &machine.RecoverResponse{
+		Messages: []*machine.Recover{
+			{},
+		},
+	}
+
+	return reply, nil
+}
+
 // ServiceList returns list of the registered services and their status
 func (s *Server) ServiceList(ctx context.Context, in *empty.Empty) (result *machine.ServiceListResponse, err error) {
 	services := system.Services(s.Controller.Runtime()).List()
