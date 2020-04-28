@@ -37,6 +37,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl processes](talosctl_processes.md)	 - List running processes
 * [talosctl read](talosctl_read.md)	 - Read a file on the machine
 * [talosctl reboot](talosctl_reboot.md)	 - Reboot a node
+* [talosctl recover](talosctl_recover.md)	 - Recover a control plane
 * [talosctl reset](talosctl_reset.md)	 - Reset a node
 * [talosctl restart](talosctl_restart.md)	 - Restart a process
 * [talosctl routes](talosctl_routes.md)	 - List network routes
