@@ -28,6 +28,8 @@ const (
 	SequenceReset
 	// SequenceReboot is the reboot sequence.
 	SequenceReboot
+	// SequenceRecover is the recover sequence.
+	SequenceRecover
 	// SequenceNoop is the noop sequence.
 	SequenceNoop
 )
@@ -40,15 +42,18 @@ const (
 	upgrade    = "upgrade"
 	reset      = "reset"
 	reboot     = "reboot"
+	recover    = "recover"
 	noop       = "noop"
 )
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{boot, initialize, install, shutdown, upgrade, reset, reboot, noop}[s]
+	return [...]string{boot, initialize, install, shutdown, upgrade, reset, reboot, recover, noop}[s]
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.
+//
+// nolint: gocyclo
 func ParseSequence(s string) (seq Sequence, err error) {
 	switch s {
 	case boot:
@@ -65,6 +70,8 @@ func ParseSequence(s string) (seq Sequence, err error) {
 		seq = SequenceReset
 	case reboot:
 		seq = SequenceReboot
+	case recover:
+		seq = SequenceRecover
 	case noop:
 		seq = SequenceNoop
 	default:
@@ -81,6 +88,7 @@ type Sequencer interface {
 	Initialize(Runtime) []Phase
 	Install(Runtime) []Phase
 	Reboot(Runtime) []Phase
+	Recover(Runtime, *machine.RecoverRequest) []Phase
 	Reset(Runtime, *machine.ResetRequest) []Phase
 	Shutdown(Runtime) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase

@@ -88,11 +88,36 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 	sort.Strings(expectedNodes)
 	sort.Strings(actualNodes)
 
-	if reflect.DeepEqual(expectedNodes, actualNodes) {
-		return nil
+	if !reflect.DeepEqual(expectedNodes, actualNodes) {
+		return fmt.Errorf("expected %v nodes, but got %v nodes", expectedNodes, actualNodes)
 	}
 
-	return fmt.Errorf("expected %v nodes, but got %v nodes", expectedNodes, actualNodes)
+	// NB: We run the control plane check after node readiness check in order to
+	// ensure that all control plane nodes have been labeled with the master
+	// label.
+
+	daemonsets, err := clientset.AppsV1().DaemonSets("kube-system").List(ctx, metav1.ListOptions{
+		LabelSelector: "k8s-app in (kube-scheduler,kube-controller-manager)",
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, ds := range daemonsets.Items {
+		if ds.Status.CurrentNumberScheduled != ds.Status.DesiredNumberScheduled {
+			return fmt.Errorf("expected current number scheduled for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, ds.Status.CurrentNumberScheduled)
+		}
+
+		if ds.Status.NumberAvailable != ds.Status.DesiredNumberScheduled {
+			return fmt.Errorf("expected number available for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, ds.Status.NumberAvailable)
+		}
+
+		if ds.Status.NumberReady != ds.Status.DesiredNumberScheduled {
+			return fmt.Errorf("expected number ready for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, ds.Status.NumberReady)
+		}
+	}
+
+	return nil
 }
 
 // K8sAllNodesReadyAssertion checks whether all the nodes are Ready.
