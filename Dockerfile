@@ -484,11 +484,13 @@ RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config .golan
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
-# The protolint target performs linting on Markdown files.
+# The protolint target performs linting on protobuf files.
 
 FROM base AS lint-protobuf
-COPY prototool.yaml /src
-RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include .
+WORKDIR /src/api
+COPY api .
+COPY prototool.yaml .
+RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
 
 # The markdownlint target performs linting on Markdown files.
 
