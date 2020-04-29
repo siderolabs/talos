@@ -14,6 +14,8 @@ OSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+CLUSTERCTL_VERSION ?= 0.3.5
+CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
 SONOBUOY_VERSION ?= 0.18.0
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
@@ -191,7 +193,12 @@ $(ARTIFACTS)/kubectl:
 	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
 	@chmod +x $(ARTIFACTS)/kubectl
 
-e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobuoy $(ARTIFACTS)/kubectl ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+$(ARTIFACTS)/clusterctl:
+	@mkdir -p $(ARTIFACTS)
+	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
+	@chmod +x $(ARTIFACTS)/clusterctl
+
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobuoy $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
 		PLATFORM=$* \
 		TAG=$(TAG) \
@@ -201,7 +208,9 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		OSCTL=$(PWD)/$(ARTIFACTS)/$(OSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
-		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy
+		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy \
+		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl
+
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 
