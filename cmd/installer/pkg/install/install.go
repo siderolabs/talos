@@ -93,8 +93,6 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 
 	if dev, err = probe.GetDevWithFileSystemLabel(constants.BootPartitionLabel); err != nil {
 		i.bootPartitionFound = false
-
-		log.Printf("WARNING: failed to find %s: %v", constants.BootPartitionLabel, err)
 	} else {
 		i.bootPartitionFound = true
 	}
