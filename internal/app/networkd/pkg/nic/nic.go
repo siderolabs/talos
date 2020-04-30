@@ -366,10 +366,15 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 		if net.IPv4zero.Equal(gw) {
 			gw = nil
 		}
+		src := method.Address()
+		// if destination is the ipv6 route,and gateway is LL do not pass a src address to set the default geteway
+		if net.IPv6zero.Equal(r.Dest.IP) && gw.IsLinkLocalUnicast() {
+			src = nil
+		}
 
-		// Any errors here would be non-fatal, so we'll just ignore them
-		//nolint: errcheck
-		n.rtnlConn.RouteAddSrc(method.Link(), *r.Dest, method.Address(), gw)
+		if err := n.rtnlConn.RouteAddSrc(method.Link(), *r.Dest, src, gw); err != nil {
+			log.Println("failed to configure route: " + err.Error())
+		}
 	}
 
 	return nil
