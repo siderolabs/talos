@@ -176,6 +176,24 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	return phases
 }
 
+// Bootstrap is the bootstrap sequence. This primary goal if this sequence is
+// to bootstrap the cluster.
+func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
+	phases := PhaseList{}
+
+	phases = phases.Append(
+		BootstrapEtcd,
+	).Append(
+		BootstrapKubernetes,
+	).Append(
+		StopEtcd,
+	).Append(
+		StartEtcd,
+	)
+
+	return phases
+}
+
 // Reboot is the reboot sequence.
 func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}

@@ -603,7 +603,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) runtime.TaskExecut
 		case runtime.MachineTypeInit:
 			svcs.Load(
 				&services.Trustd{},
-				&services.Etcd{},
+				&services.Etcd{Bootstrap: true},
 				&services.Bootkube{},
 			)
 		case runtime.MachineTypeControlPlane:
@@ -1538,9 +1538,79 @@ func Recover(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 			}
 		}
 
+		return nil
+	}
+}
+
+// BootstrapEtcd represents the task for bootstrapping etcd.
+func BootstrapEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		if err = system.Services(r).Stop(ctx, "etcd"); err != nil {
+			return fmt.Errorf("failed to stop etcd: %w", err)
+		}
+
+		// Since etcd has already attempted to start, we must delete the data. If
+		// we don't, then an initial cluster state of "new" will fail.
+		dir, err := os.Open(constants.EtcdDataPath)
+		if err != nil {
+			return err
+		}
+
+		files, err := dir.Readdir(0)
+		if err != nil {
+			return err
+		}
+
+		for _, file := range files {
+			fullPath := filepath.Join(constants.EtcdDataPath, file.Name())
+
+			if err = os.RemoveAll(fullPath); err != nil {
+				return fmt.Errorf("failed to remove %q: %w", file.Name(), err)
+			}
+		}
+
+		svc := &services.Etcd{Bootstrap: true}
+
+		system.Services(r).ReloadAndStart(svc)
+
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
+	}
+}
+
+// StopEtcd represents the task for stopping etcd.
+func StopEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return system.Services(r).Stop(ctx, "etcd")
+	}
+}
+
+// StartEtcd represents the task for starting etcd.
+func StartEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Etcd{}
+
+		system.Services(r).ReloadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
+	}
+}
+
+// BootstrapKubernetes represents the task for bootstrapping Kubernetes.
+func BootstrapKubernetes(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Bootkube{}
+
+		system.Services(r).LoadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventDown, svc.ID(r)).Wait(ctx)
 	}
 }
