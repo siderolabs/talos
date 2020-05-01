@@ -91,6 +91,36 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 	return reply, nil
 }
 
+// Bootstrap implements the machine.MachineServer interface.
+//
+// nolint: dupl
+func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
+	log.Printf("bootstrap via API received")
+
+	if s.Controller.Runtime().Config().Machine().Type() == runtime.MachineTypeJoin {
+		return nil, fmt.Errorf("bootstrap can only be performed on a control plane node")
+	}
+
+	go func() {
+		if err := s.Controller.Run(runtime.SequenceBootstrap, in); err != nil {
+			log.Println("bootstrap failed:", err)
+
+			if err != runtime.ErrLocked {
+				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				s.server.GracefulStop()
+			}
+		}
+	}()
+
+	reply = &machine.BootstrapResponse{
+		Messages: []*machine.Bootstrap{
+			{},
+		},
+	}
+
+	return reply, nil
+}
+
 // Shutdown implements the machine.MachineServer interface.
 //
 // nolint: dupl

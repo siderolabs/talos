@@ -20,6 +20,7 @@ service MachineService {
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
+  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
@@ -32,12 +33,15 @@ service MachineService {
 
 // rpc reboot
 // The reboot message containing the reboot status.
-message Reboot {
-  common.Metadata metadata = 1;
-}
-message RebootResponse {
-  repeated Reboot messages = 1;
-}
+message Reboot { common.Metadata metadata = 1; }
+message RebootResponse { repeated Reboot messages = 1; }
+
+// rpc bootstrap
+message BootstrapRequest {}
+
+// The bootstrap message containing the bootstrap status.
+message Bootstrap { common.Metadata metadata = 1; }
+message BootstrapResponse { repeated Bootstrap messages = 1; }
 
 // rpc reset
 message ResetRequest {
@@ -46,21 +50,13 @@ message ResetRequest {
 }
 
 // The reset message containing the restart status.
-message Reset {
-  common.Metadata metadata = 1;
-}
-message ResetResponse {
-  repeated Reset messages = 1;
-}
+message Reset { common.Metadata metadata = 1; }
+message ResetResponse { repeated Reset messages = 1; }
 
 // rpc shutdown
 // The messages message containing the shutdown status.
-message Shutdown {
-  common.Metadata metadata = 1;
-}
-message ShutdownResponse {
-  repeated Shutdown messages = 1;
-}
+message Shutdown { common.Metadata metadata = 1; }
+message ShutdownResponse { repeated Shutdown messages = 1; }
 
 // rpc upgrade
 message UpgradeRequest {
@@ -72,18 +68,14 @@ message Upgrade {
   common.Metadata metadata = 1;
   string ack = 2;
 }
-message UpgradeResponse {
-  repeated Upgrade messages = 1;
-}
+message UpgradeResponse { repeated Upgrade messages = 1; }
 
 // rpc servicelist
 message ServiceList {
   common.Metadata metadata = 1;
   repeated ServiceInfo services = 2;
 }
-message ServiceListResponse {
-  repeated ServiceList messages = 1;
-}
+message ServiceListResponse { repeated ServiceList messages = 1; }
 
 message ServiceInfo {
   string id = 1;
@@ -92,9 +84,7 @@ message ServiceInfo {
   ServiceHealth health = 4;
 }
 
-message ServiceEvents {
-  repeated ServiceEvent events = 1;
-}
+message ServiceEvents { repeated ServiceEvent events = 1; }
 
 message ServiceEvent {
   string msg = 1;
@@ -110,41 +100,29 @@ message ServiceHealth {
 }
 
 // rpc servicestart
-message ServiceStartRequest {
-  string id = 1;
-}
+message ServiceStartRequest { string id = 1; }
 
 message ServiceStart {
   common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceStartResponse {
-  repeated ServiceStart messages = 1;
-}
+message ServiceStartResponse { repeated ServiceStart messages = 1; }
 
-message ServiceStopRequest {
-  string id = 1;
-}
+message ServiceStopRequest { string id = 1; }
 
 message ServiceStop {
   common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceStopResponse {
-  repeated ServiceStop messages = 1;
-}
+message ServiceStopResponse { repeated ServiceStop messages = 1; }
 
-message ServiceRestartRequest {
-  string id = 1;
-}
+message ServiceRestartRequest { string id = 1; }
 
 message ServiceRestart {
   common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceRestartResponse {
-  repeated ServiceRestart messages = 1;
-}
+message ServiceRestartResponse { repeated ServiceRestart messages = 1; }
 
 message StartRequest {
   option deprecated = true;
@@ -213,9 +191,7 @@ message Mounts {
   common.Metadata metadata = 1;
   repeated MountStat stats = 2;
 }
-message MountsResponse {
-  repeated Mounts messages = 1;
-}
+message MountsResponse { repeated Mounts messages = 1; }
 
 // The messages message containing the requested processes.
 message MountStat {
@@ -231,9 +207,7 @@ message Version {
   PlatformInfo platform = 3;
 }
 
-message VersionResponse {
-  repeated Version messages = 1;
-}
+message VersionResponse { repeated Version messages = 1; }
 
 message VersionInfo {
   string tag = 1;
@@ -260,6 +234,4 @@ message LogsRequest {
   int32 tail_lines = 5;
 }
 
-message ReadRequest {
-  string path = 1;
-}
+message ReadRequest { string path = 1; }

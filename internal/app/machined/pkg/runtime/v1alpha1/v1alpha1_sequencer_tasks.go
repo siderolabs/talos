@@ -1455,3 +1455,17 @@ func Install(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 		return nil
 	}
 }
+
+// Bootstrap represents the task for bootstrapping the cluster.
+func Bootstrap(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Bootkube{}
+
+		system.Services(r).LoadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
+	}
+}
