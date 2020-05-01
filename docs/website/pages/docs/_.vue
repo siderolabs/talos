@@ -68,10 +68,6 @@ export default {
     store.commit('sidebar/setVersion', version)
     store.commit('sidebar/setSections', sections)
     store.commit('sidebar/setMenu', menu)
-    // The initial state does not have an active doc set, so we set the default
-    // to the first element in the menu.
-    const defaultActiveDoc = menu[0].path
-    store.commit('sidebar/setActiveDocPath', defaultActiveDoc)
   }
 }
 </script>
