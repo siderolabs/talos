@@ -176,6 +176,23 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	return phases
 }
 
+// Bootstrap is the bootstrap sequence. This primary goal if this sequence is
+// to bootstrap Etcd and Kubernetes.
+func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
+	phases := PhaseList{}
+
+	phases = phases.Append(
+		BootstrapEtcd,
+	).Append(
+		BootstrapKubernetes,
+		LabelNodeAsMaster,
+	).Append(
+		SetInitStatus,
+	)
+
+	return phases
+}
+
 // Reboot is the reboot sequence.
 func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}

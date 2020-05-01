@@ -77,11 +77,13 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 	}
 
 	// Allow only one sequence to run at a time.
-	if c.TryLock() {
-		return runtime.ErrLocked
-	}
+	if seq != runtime.SequenceBootstrap {
+		if c.TryLock() {
+			return runtime.ErrLocked
+		}
 
-	defer c.Unlock()
+		defer c.Unlock()
+	}
 
 	phases, err := c.phases(seq, data)
 	if err != nil {
@@ -245,6 +247,8 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	switch seq {
 	case runtime.SequenceBoot:
 		phases = c.s.Boot(c.r)
+	case runtime.SequenceBootstrap:
+		phases = c.s.Bootstrap(c.r)
 	case runtime.SequenceInitialize:
 		phases = c.s.Initialize(c.r)
 	case runtime.SequenceInstall:
@@ -286,6 +290,8 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 		}
 
 		phases = c.s.Reset(c.r, in)
+	default:
+		return nil, fmt.Errorf("sequence not implemented: %q", seq)
 	}
 
 	return phases, nil
