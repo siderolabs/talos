@@ -85,6 +85,7 @@ func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, messag
 
 	isUp := svcrunner.inStateLocked(StateEventUp)
 	isDown := svcrunner.inStateLocked(StateEventDown)
+	isFinished := svcrunner.inStateLocked(StateEventFinished)
 	svcrunner.mu.Unlock()
 
 	if isUp {
@@ -93,6 +94,10 @@ func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, messag
 
 	if isDown {
 		svcrunner.notifyEvent(StateEventDown)
+	}
+
+	if isFinished {
+		svcrunner.notifyEvent(StateEventFinished)
 	}
 }
 
@@ -421,6 +426,12 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 		default:
 			return false
 		}
+	case StateEventFinished:
+		if svcrunner.state == events.StateFinished {
+			return true
+		}
+
+		return false
 	default:
 		panic("unsupported event")
 	}

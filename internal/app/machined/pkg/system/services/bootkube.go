@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -101,33 +100,6 @@ func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 // PostFunc implements the Service interface.
 func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
-	if state != events.StateFinished {
-		log.Println("bootkube run did not complete successfully. skipping etcd update")
-		return nil
-	}
-
-	client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
-	if err != nil {
-		return err
-	}
-
-	// nolint: errcheck
-	defer client.Close()
-
-	err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
-		ctx := clientv3.WithRequireLeader(context.Background())
-		if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
-			return retry.ExpectedError(err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to put state into etcd: %w", err)
-	}
-
-	log.Println("updated initialization status in etcd")
-
 	return nil
 }
 
