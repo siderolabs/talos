@@ -36,6 +36,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
@@ -603,7 +604,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) runtime.TaskExecut
 		case runtime.MachineTypeInit:
 			svcs.Load(
 				&services.Trustd{},
-				&services.Etcd{},
+				&services.Etcd{Bootstrap: true},
 				&services.Bootkube{},
 			)
 		case runtime.MachineTypeControlPlane:
@@ -1538,9 +1539,122 @@ func Recover(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 			}
 		}
 
+		return nil
+	}
+}
+
+// BootstrapEtcd represents the task for bootstrapping etcd.
+func BootstrapEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		if err = system.Services(r).Stop(ctx, "etcd"); err != nil {
+			return fmt.Errorf("failed to stop etcd: %w", err)
+		}
+
+		// This is hack. We need to fake a finished state so that we can get the
+		// wait in the boot sequence to unblock.
+		for _, svc := range system.Services(r).List() {
+			if svc.AsProto().GetId() == "etcd" {
+				svc.UpdateState(events.StateFinished, "Bootstrap requested")
+
+				break
+			}
+		}
+
+		// Since etcd has already attempted to start, we must delete the data. If
+		// we don't, then an initial cluster state of "new" will fail.
+		dir, err := os.Open(constants.EtcdDataPath)
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer dir.Close()
+
+		files, err := dir.Readdir(0)
+		if err != nil {
+			return err
+		}
+
+		for _, file := range files {
+			fullPath := filepath.Join(constants.EtcdDataPath, file.Name())
+
+			if err = os.RemoveAll(fullPath); err != nil {
+				return fmt.Errorf("failed to remove %q: %w", file.Name(), err)
+			}
+		}
+
+		svc := &services.Etcd{Bootstrap: true}
+
+		system.Services(r).ReloadAndStart(svc)
+
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
+	}
+}
+
+// StopEtcd represents the task for stopping etcd.
+func StopEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return system.Services(r).Stop(ctx, "etcd")
+	}
+}
+
+// StartEtcd represents the task for starting etcd.
+func StartEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Etcd{}
+
+		system.Services(r).ReloadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
+	}
+}
+
+// BootstrapKubernetes represents the task for bootstrapping Kubernetes.
+func BootstrapKubernetes(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Bootkube{}
+
+		system.Services(r).LoadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)
+	}
+}
+
+// SetInitStatus represents the task for setting the initialization status
+// in etcd.
+func SetInitStatus(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer client.Close()
+
+		err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+			ctx := clientv3.WithRequireLeader(context.Background())
+			if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to put state into etcd: %w", err)
+		}
+
+		logger.Println("updated initialization status in etcd")
+
+		return nil
 	}
 }

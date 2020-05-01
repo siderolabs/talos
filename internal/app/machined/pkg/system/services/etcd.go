@@ -44,7 +44,11 @@ import (
 
 // Etcd implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Etcd struct{}
+type Etcd struct {
+	Bootstrap bool
+
+	args []string
+}
 
 // ID implements the Service interface.
 func (e *Etcd) ID(r runtime.Runtime) string {
@@ -53,29 +57,16 @@ func (e *Etcd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
-	if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
+	errCh := make(chan error, 1)
+
+	go e.setup(ctx, r, errCh)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errCh:
 		return err
 	}
-
-	if err = generatePKI(r); err != nil {
-		return fmt.Errorf("failed to generate etcd PKI: %w", err)
-	}
-
-	client, err := containerdapi.New(constants.ContainerdAddress)
-	if err != nil {
-		return err
-	}
-	// nolint: errcheck
-	defer client.Close()
-
-	// Pull the image and unpack it.
-
-	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-	if _, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image()); err != nil {
-		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
-	}
-
-	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -95,15 +86,10 @@ func (e *Etcd) DependsOn(r runtime.Runtime) []string {
 
 // Runner implements the Service interface.
 func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
-	a, err := e.args(r)
-	if err != nil {
-		return nil, err
-	}
-
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          e.ID(r),
-		ProcessArgs: append([]string{"/usr/local/bin/etcd"}, a...),
+		ProcessArgs: append([]string{"/usr/local/bin/etcd"}, e.args...),
 	}
 
 	mounts := []specs.Mount{
@@ -331,16 +317,16 @@ func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, er
 	return initial, nil
 }
 
-// nolint: gocyclo
-func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
+// // nolint: gocyclo
+func (e *Etcd) argsForInit(r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	p, err := platform.CurrentPlatform()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var upgraded bool
@@ -349,7 +335,7 @@ func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 		var f *os.File
 
 		if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
-			return nil, err
+			return err
 		}
 
 		// nolint: errcheck
@@ -358,7 +344,7 @@ func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 		var adv syslinux.ADV
 
 		if adv, err = syslinux.NewADV(f); err != nil {
-			return nil, err
+			return err
 		}
 
 		_, upgraded = adv.ReadTag(syslinux.AdvUpgrade)
@@ -366,11 +352,11 @@ func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 
 	ips, err := net.IPAddrs()
 	if err != nil {
-		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
+		return fmt.Errorf("failed to discover IP addresses: %w", err)
 	}
 
 	if len(ips) == 0 {
-		return nil, errors.New("failed to discover local IP")
+		return errors.New("failed to discover local IP")
 	}
 
 	listenAddress := "0.0.0.0"
@@ -396,7 +382,7 @@ func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 
 	for k := range blackListArgs {
 		if extraArgs.Contains(k) {
-			return nil, argsbuilder.NewBlacklistError(k)
+			return argsbuilder.NewBlacklistError(k)
 		}
 	}
 
@@ -409,19 +395,18 @@ func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 	if !extraArgs.Contains("initial-cluster") {
 		ok, err := IsDirEmpty(constants.EtcdDataPath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if ok {
 			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
 
-			existing := r.Config().Machine().Type() == runtime.MachineTypeControlPlane || upgraded
-			if existing {
+			if upgraded {
 				blackListArgs.Set("initial-cluster-state", "existing")
 
 				initialCluster, err = buildInitialCluster(r, hostname, ips[0].String())
 				if err != nil {
-					return nil, err
+					return err
 				}
 			}
 
@@ -439,7 +424,143 @@ func (e *Etcd) args(r runtime.Runtime) ([]string, error) {
 		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", ips[0].String()))
 	}
 
-	return blackListArgs.Merge(extraArgs).Args(), nil
+	e.args = blackListArgs.Merge(extraArgs).Args()
+
+	return nil
+}
+
+func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
+	var err error
+
+	if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
+		errCh <- err
+
+		return
+	}
+
+	if err = generatePKI(r); err != nil {
+		errCh <- fmt.Errorf("failed to generate etcd PKI: %w", err)
+
+		return
+	}
+
+	client, err := containerdapi.New(constants.ContainerdAddress)
+	if err != nil {
+		errCh <- err
+
+		return
+	}
+	// nolint: errcheck
+	defer client.Close()
+
+	// Pull the image and unpack it.
+	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+	if _, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image()); err != nil {
+		errCh <- fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
+	}
+
+	switch r.Config().Machine().Type() {
+	case runtime.MachineTypeInit:
+		err = e.argsForInit(r)
+		if err != nil {
+			errCh <- err
+		}
+	case runtime.MachineTypeControlPlane:
+		err = e.argsForControlPlane(r)
+		if err != nil {
+			errCh <- err
+		}
+	}
+
+	errCh <- nil
+}
+
+// nolint: gocyclo
+func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	ips, err := net.IPAddrs()
+	if err != nil {
+		return fmt.Errorf("failed to discover IP addresses: %w", err)
+	}
+
+	if len(ips) == 0 {
+		return errors.New("failed to discover local IP")
+	}
+
+	listenAddress := "0.0.0.0"
+	if net.IsIPv6(ips...) {
+		listenAddress = "[::]"
+	}
+
+	blackListArgs := argsbuilder.Args{
+		"name":                  hostname,
+		"data-dir":              constants.EtcdDataPath,
+		"listen-peer-urls":      "https://" + listenAddress + ":2380",
+		"listen-client-urls":    "https://" + listenAddress + ":2379",
+		"cert-file":             constants.KubernetesEtcdPeerCert,
+		"key-file":              constants.KubernetesEtcdPeerKey,
+		"trusted-ca-file":       constants.KubernetesEtcdCACert,
+		"peer-client-cert-auth": "true",
+		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
+		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
+		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+	}
+
+	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
+
+	for k := range blackListArgs {
+		if extraArgs.Contains(k) {
+			return argsbuilder.NewBlacklistError(k)
+		}
+	}
+
+	ok, err := IsDirEmpty(constants.EtcdDataPath)
+	if err != nil {
+		return err
+	}
+
+	// The only time that we need to build the initial cluster args, is when we
+	// don't have any data.
+	if ok {
+		if !extraArgs.Contains("initial-cluster-state") {
+			if e.Bootstrap {
+				blackListArgs.Set("initial-cluster-state", "new")
+			} else {
+				blackListArgs.Set("initial-cluster-state", "existing")
+			}
+		}
+
+		if !extraArgs.Contains("initial-cluster") {
+			var initialCluster string
+
+			if e.Bootstrap {
+				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
+			} else {
+				initialCluster, err = buildInitialCluster(r, hostname, ips[0].String())
+				if err != nil {
+					return err
+				}
+			}
+
+			blackListArgs.Set("initial-cluster", initialCluster)
+		}
+
+		if !extraArgs.Contains("initial-advertise-peer-urls") {
+			blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", ips[0].String()))
+		}
+	}
+
+	if !extraArgs.Contains("advertise-client-urls") {
+		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", ips[0].String()))
+	}
+
+	e.args = blackListArgs.Merge(extraArgs).Args()
+
+	return nil
 }
 
 // IsDirEmpty checks if a directory is empty or not.

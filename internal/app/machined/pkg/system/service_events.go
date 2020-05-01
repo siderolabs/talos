@@ -16,8 +16,9 @@ type StateEvent string
 
 // Service event list
 const (
-	StateEventUp   = StateEvent("up")
-	StateEventDown = StateEvent("down")
+	StateEventUp       = StateEvent("up")
+	StateEventDown     = StateEvent("down")
+	StateEventFinished = StateEvent("finished")
 )
 
 type serviceCondition struct {
