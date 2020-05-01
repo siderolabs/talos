@@ -13,15 +13,9 @@
             <div v-if="item.children" class="ml-4 pt-2 sidebar-subcategory">
               {{ item.title }}
             </div>
-
-            <router-link
-              v-else
-              @click="handleClick(item)"
-              :to="'#' + item.path"
-              class="block ml-2"
-            >
+            <nuxt-link v-else :to="'#' + item.path" class="block ml-2">
               <span class="p-2">{{ item.title }}</span>
-            </router-link>
+            </nuxt-link>
 
             <ul v-if="item.children" class="sidebar-children ml-4 mt-2">
               <li
@@ -29,13 +23,9 @@
                 :key="child.path"
                 class="sidebar-item my-2"
               >
-                <router-link
-                  :to="'#' + child.path"
-                  @click="handleClick(child)"
-                  class="block m-1"
-                >
+                <nuxt-link :to="'#' + child.path" class="block m-1">
                   <span class="p-2">{{ child.title }}</span>
-                </router-link>
+                </nuxt-link>
               </li>
             </ul>
           </li>
@@ -47,19 +37,7 @@
 
 <script>
 export default {
-  name: 'Sidebar',
-
-  data() {
-    return {}
-  },
-
-  computed: {},
-
-  methods: {
-    handleClick(item) {
-      this.$store.commit('sidebar/setActiveDocPath', item.path)
-    }
-  }
+  name: 'Sidebar'
 }
 </script>
 
