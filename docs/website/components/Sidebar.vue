@@ -13,7 +13,7 @@
             <div v-if="item.children" class="ml-4 pt-2 sidebar-subcategory">
               {{ item.title }}
             </div>
-            <nuxt-link v-else :to="'#' + item.path" class="block ml-2">
+            <nuxt-link v-else :to="'/docs/' + item.path" class="block ml-2">
               <span class="p-2">{{ item.title }}</span>
             </nuxt-link>
 
@@ -23,7 +23,7 @@
                 :key="child.path"
                 class="sidebar-item my-2"
               >
-                <nuxt-link :to="'#' + child.path" class="block m-1">
+                <nuxt-link :to="'/docs/' + child.path" class="block m-1">
                   <span class="p-2">{{ child.title }}</span>
                 </nuxt-link>
               </li>

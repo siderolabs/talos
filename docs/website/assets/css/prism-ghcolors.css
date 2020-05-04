@@ -45,7 +45,7 @@ pre[class*="language-"] {
 	margin: .5em 0;
 	overflow: auto;
 	border: 1px solid #dddddd;
-	background-color: white;
+  background-color: #f4f5f6;
 }
 
 /* Inline code */
