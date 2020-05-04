@@ -33,7 +33,7 @@ export default {
   data() {
     return {
       options: [
-        //        { version: 'v0.5', url: '/docs/v0.5', prerelease: true },
+        { version: 'v0.5', url: '/docs/v0.5', prerelease: true },
         { version: 'v0.4', url: '/docs/v0.4', prerelease: false },
         { version: 'v0.3', url: '/docs/v0.3', prerelease: false }
       ]

@@ -4,17 +4,12 @@ const path = require('path')
 const fs = require('fs-extra')
 const glob = require('glob')
 const config = require('./docgen.config')
-const marked = require('marked')
-const prism = require('prismjs')
-const loadLanguages = require('prismjs/components/')
-
-marked.setOptions({
-  highlight(code, lang) {
-    loadLanguages([lang])
-
-    return prism.highlight(code, prism.languages[lang], lang)
-  }
-})
+const prism = require('markdown-it-prism')
+const md = require('markdown-it')({ html: true, typographer: true })
+  .use(require('markdown-it-anchor'), {
+    permalink: true
+  })
+  .use(prism, {})
 
 const args = process.argv
   .slice(2)
@@ -191,11 +186,12 @@ const Docgen = {
 
     const frontmatterContent = frontmatter(content)
 
-    const title = marked(frontmatterContent.attributes.title || '')
+    const title = md
+      .render(frontmatterContent.attributes.title || '')
       .replace('<p>', '')
       .replace('</p>\n', '')
 
-    const markdownContent = marked(frontmatterContent.body)
+    const markdownContent = md.render(frontmatterContent.body)
 
     // contentFilePath = /my_absolute_file/content/content-delivery/en/topics/introduction.md
 

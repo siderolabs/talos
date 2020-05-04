@@ -24,27 +24,34 @@ export default {
   computed: {
     doc() {
       const sections = this.$store.state.sidebar.sections
-      let activeDocPath = ''
 
-      // if there's an #anchor specified, go there
-      if (this.$route.hash) {
-        activeDocPath = this.$route.hash.substring(1)
-      } else {
-        // otherwise go to the first item in the menu
-        activeDocPath = this.$store.state.sidebar.menu[0].path
+      // this is a hack to avoid breaking old (v0.3 and v0.4 only) deep links using '#' that look like:
+      //   /docs/v0.5/en/guides/cloud/digitalocean#creating-a-cluster-via-the-cli
+      // At 0.5, the # changed to a real path separator (/) and anchors ('#') are reserved for
+      // deep links to particular headings within the markdown file.
+      if (
+        this.$route.hash.startsWith('#v0.3') ||
+        this.$route.hash.startsWith('#v0.4')
+      ) {
+        return sections[this.$route.hash.substring(1)]
       }
-      return sections[activeDocPath]
+
+      if (sections[this.$route.params.pathMatch])
+        return sections[this.$route.params.pathMatch]
+      else return sections[this.$store.state.sidebar.menu[0].path]
     },
     gitPath() {
-      let path =
+      const path =
         'https://github.com/talos-systems/talos/edit/master/docs/website/content/'
 
-      if (this.$route.hash) {
-        path += this.$route.hash.substring(1)
-      } else {
-        path += this.$store.state.sidebar.menu[0].path + '/index'
-      }
-      return path + '.md'
+      return path + this.$route.params.pathMatch + '.md'
+    }
+  },
+
+  mounted() {
+    // if we hit the top-level, redirect to the first page in the doc set
+    if (!this.$route.params.pathMatch.includes('/')) {
+      this.$router.replace('/docs/' + this.$store.state.sidebar.menu[0].path)
     }
   }
 }

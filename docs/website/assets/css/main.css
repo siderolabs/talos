@@ -29,12 +29,16 @@ body {
 }
 
 .c-rich-text a {
-  @apply text-gray-600;
+  color: #1a76c1;
   font-weight: 400;
 }
 
 .c-rich-text a:hover {
   @apply text-gray-900 no-underline;
+}
+
+.c-rich-text ul {
+  @apply mb-4 list-outside pl-8
 }
 
 pre {
@@ -48,7 +52,6 @@ pre {
 }
 
 code {
-  background: #f4f5f6;
   border-style: none;
   border-width: 0.5px;
   border-radius: 5px;
@@ -86,6 +89,31 @@ p a:hover {
 }
 .section-docs .page-heading {
   @apply mb-1;
+}
+
+.header-anchor {
+  @apply text-sm hidden align-top;
+}
+
+h2:hover > a.header-anchor, h3:hover > a.header-anchor, h4:hover > a.header-anchor {
+  @apply inline;
+}
+
+/*
+  This hack is from https://css-tricks.com/hash-tag-links-padding/.
+  Usually when you click on an anchor link, the page content is scrolled
+  up so that the anchor link is at the top of the screen. But since we
+  have a sticky header, we have to add a "fake" 100px to the header, so that
+  the scroll lands with the header visible. 🤷‍♂️
+*/
+
+h1::before, h2::before, h3::before {
+  display: block;
+  content: " ";
+  margin-top: -100px;
+  height: 100px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .teal-cta-button {
