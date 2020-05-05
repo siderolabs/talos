@@ -76,6 +76,7 @@ export default {
   },
 
   generate: {
+    fallback: true,
     routes(callback) {
       let generatedRoutes = []
       routes.forEach((route) => {
