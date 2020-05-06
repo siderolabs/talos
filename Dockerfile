@@ -495,9 +495,9 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 # The markdownlint target performs linting on Markdown files.
 
 FROM node:8.16.1-alpine AS lint-markdown
-RUN npm i -g markdownlint-cli
-RUN npm i -g textlint
-RUN npm i -g textlint-rule-one-sentence-per-line
+RUN npm i -g markdownlint-cli@0.22.0
+RUN npm i -g textlint@11.6.3
+RUN npm i -g textlint-rule-one-sentence-per-line@1.0.2
 WORKDIR /src
 COPY .markdownlint.json .
 COPY . .
