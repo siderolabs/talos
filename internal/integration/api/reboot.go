@@ -151,12 +151,12 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 					uptimeAfter, err := suite.ReadUptime(nodeCtx)
 					if err != nil {
 						// API might be unresponsive during reboot
-						return retry.ExpectedError(err)
+						return retry.ExpectedError(fmt.Errorf("error reading uptime for node %q: %w", node, err))
 					}
 
 					if uptimeAfter >= uptimeBefore {
 						// uptime should go down after reboot
-						return retry.ExpectedError(fmt.Errorf("uptime didn't go down: before %f, after %f", uptimeBefore, uptimeAfter))
+						return retry.ExpectedError(fmt.Errorf("uptime didn't go down for node %q: before %f, after %f", node, uptimeBefore, uptimeAfter))
 					}
 
 					return nil
