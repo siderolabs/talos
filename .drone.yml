@@ -508,6 +508,7 @@ steps:
   commands:
   - make e2e-firecracker
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -558,6 +559,7 @@ steps:
   commands:
   - make provision-tests-track-0
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -580,6 +582,7 @@ steps:
   commands:
   - make provision-tests-track-1
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -1211,6 +1214,7 @@ steps:
   commands:
   - make e2e-firecracker
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -1261,6 +1265,7 @@ steps:
   commands:
   - make provision-tests-track-0
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -1283,6 +1288,7 @@ steps:
   commands:
   - make provision-tests-track-1
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -2006,6 +2012,7 @@ steps:
   commands:
   - make e2e-firecracker
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -2056,6 +2063,7 @@ steps:
   commands:
   - make provision-tests-track-0
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -2078,6 +2086,7 @@ steps:
   commands:
   - make provision-tests-track-1
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -2831,6 +2840,7 @@ steps:
   commands:
   - make e2e-firecracker
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -2881,6 +2891,7 @@ steps:
   commands:
   - make provision-tests-track-0
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -2903,6 +2914,7 @@ steps:
   commands:
   - make provision-tests-track-1
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -3656,6 +3668,7 @@ steps:
   commands:
   - make e2e-firecracker
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -3706,6 +3719,7 @@ steps:
   commands:
   - make provision-tests-track-0
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -3728,6 +3742,7 @@ steps:
   commands:
   - make provision-tests-track-1
   environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
     REGISTRY: registry.ci.svc:5000
   privileged: true
   volumes:
@@ -3981,6 +3996,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: c08d82c031f77c8d7a9632194bfcc277540be93583e4ac1d4cf6af24fa12d7c4
+hmac: 0652e53d9c3353bcbc4882c9e020f29d9aac1951480fcea2b2eecb89528a17a7
 
 ...

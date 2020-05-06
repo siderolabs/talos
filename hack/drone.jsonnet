@@ -197,10 +197,10 @@ local push_local = Step("push-local", depends_on=[installer_local, talos_local],
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
 local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux]);
-local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
+local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
-local provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry});
-local provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry});
+local provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 
 local coverage = {
   name: 'coverage',
