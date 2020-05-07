@@ -574,6 +574,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -597,6 +598,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -1280,6 +1282,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -1303,6 +1306,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -2078,6 +2082,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -2101,6 +2106,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -2906,6 +2912,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -2929,6 +2936,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -3734,6 +3742,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -3757,6 +3766,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
+  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -3996,6 +4006,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 0652e53d9c3353bcbc4882c9e020f29d9aac1951480fcea2b2eecb89528a17a7
+hmac: 84e019b528d088bc8729dd2f80210758af8be586990b4405eed53a5f8e6886d9
 
 ...
