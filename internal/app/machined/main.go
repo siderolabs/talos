@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -143,7 +144,19 @@ func main() {
 			Controller: c,
 		}
 
-		e := factory.ListenAndServe(server, factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))
+		f, e := os.OpenFile(filepath.Join(constants.SystemRunPath, "log", "machined.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if e != nil {
+			handle(e)
+		}
+		// nolint: errcheck
+		defer f.Close()
+
+		e = factory.ListenAndServe(
+			server,
+			factory.Network("unix"),
+			factory.SocketPath(constants.MachineSocketPath),
+			factory.WithLog("machined ", f),
+		)
 
 		handle(e)
 	}()
