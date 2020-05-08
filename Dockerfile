@@ -3,8 +3,11 @@
 # Meta args applied to stage base names.
 
 ARG TOOLS
+ARG IMPORTVET
 
 # The tools target provides base toolchain for the build.
+
+FROM $IMPORTVET as importvet
 
 FROM $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
@@ -22,6 +25,7 @@ COPY ./hack/docgen /go/src/github.com/talos-systems/docgen
 RUN cd /go/src/github.com/talos-systems/docgen \
     && go build . \
     && mv docgen /toolchain/go/bin/
+COPY --from=importvet /importvet /toolchain/go/bin/importvet
 
 # The build target creates a container that will be used to build Talos source
 # code.
@@ -468,7 +472,8 @@ COPY --from=integration-test-provision-linux-build /src/integration.test /integr
 FROM base AS lint-go
 COPY .golangci.yml .
 ENV GOGC=50
-RUN --mount=type=cache,target=/.cache/go-build golangci-lint run --config .golangci.yml
+RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache/golangci-lint golangci-lint run --config .golangci.yml
+RUN --mount=type=cache,target=/.cache/go-build importvet ./...
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 

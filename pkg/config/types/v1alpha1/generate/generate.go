@@ -15,7 +15,7 @@ import (
 
 	stdlibx509 "crypto/x509"
 
-	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/config/internal/cis"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
