@@ -21,9 +21,9 @@ import (
 
 // goroutineRunner is a runner.Runner that runs a service in a goroutine
 type goroutineRunner struct {
-	main   FuncMain
-	id     string
-	config runtime.Configurator
+	main    FuncMain
+	id      string
+	runtime runtime.Runtime
 
 	opts *runner.Options
 
@@ -36,24 +36,24 @@ type goroutineRunner struct {
 // FuncMain is a entrypoint into the service.
 //
 // Service should abort and return when ctx is canceled
-type FuncMain func(ctx context.Context, config runtime.Configurator, logOutput io.Writer) error
+type FuncMain func(ctx context.Context, r runtime.Runtime, logOutput io.Writer) error
 
 // NewRunner creates runner.Runner that runs a service as goroutine
-func NewRunner(config runtime.Configurator, id string, main FuncMain, setters ...runner.Option) runner.Runner {
-	r := &goroutineRunner{
-		id:     id,
-		config: config,
-		main:   main,
-		opts:   runner.DefaultOptions(),
+func NewRunner(r runtime.Runtime, id string, main FuncMain, setters ...runner.Option) runner.Runner {
+	run := &goroutineRunner{
+		id:      id,
+		runtime: r,
+		main:    main,
+		opts:    runner.DefaultOptions(),
 	}
 
-	r.ctx, r.ctxCancel = context.WithCancel(context.Background())
+	run.ctx, run.ctxCancel = context.WithCancel(context.Background())
 
 	for _, setter := range setters {
-		setter(r.opts)
+		setter(run.opts)
 	}
 
-	return r
+	return run
 }
 
 // Open implements the Runner interface.
@@ -91,13 +91,13 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	defer w.Close()
 
 	var writer io.Writer
-	if r.config.Debug() {
+	if r.runtime.Config().Debug() {
 		writer = io.MultiWriter(w, os.Stdout)
 	} else {
 		writer = w
 	}
 
-	err = r.main(r.ctx, r.config, writer)
+	err = r.main(r.ctx, r.runtime, writer)
 	if err == context.Canceled {
 		// clear error if service was aborted
 		err = nil

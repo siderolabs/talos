@@ -76,7 +76,8 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 			log.Println("reboot failed:", err)
 
 			if err != runtime.ErrLocked {
-				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
 				s.server.GracefulStop()
 			}
 		}
@@ -106,7 +107,8 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 			log.Println("bootstrap failed:", err)
 
 			if err != runtime.ErrLocked {
-				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
 				s.server.GracefulStop()
 			}
 		}
@@ -132,7 +134,8 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 			log.Println("shutdown failed:", err)
 
 			if err != runtime.ErrLocked {
-				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
 				s.server.GracefulStop()
 			}
 		}
@@ -168,7 +171,8 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			log.Println("upgrade failed:", err)
 
 			if err != runtime.ErrLocked {
-				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
 				s.server.GracefulStop()
 			}
 		}
@@ -196,7 +200,8 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 			log.Println("reset failed:", err)
 
 			if err != runtime.ErrLocked {
-				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
 				s.server.GracefulStop()
 			}
 		}
@@ -226,7 +231,8 @@ func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply
 			log.Println("recover failed:", err)
 
 			if err != runtime.ErrLocked {
-				// NB: Stopping the gRPC server will trigger machined's reboot mechanism.
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
 				s.server.GracefulStop()
 			}
 		}
