@@ -1,6 +1,9 @@
 <template>
-  <div class="dropdown inline-block">
-    <button class="font-semibold py-2 pl-4 rounded inline-flex items-center">
+  <div>
+    <button
+      @click.prevent="active = !active"
+      class="font-semibold my-2 rounded inline-flex items-center"
+    >
       <span class="mr-1">{{ $store.state.sidebar.version }}</span>
       <svg
         id="dropdown-caret"
@@ -13,13 +16,12 @@
         />
       </svg>
     </button>
-    <ul class="dropdown-menu absolute pt-1 w-full shadow-md">
-      <li v-for="option in options" :key="option.version" class="">
-        <a
-          :href="option.url"
-          @click="handleClick(option)"
+    <ul v-show="active" class="pt-1 mb-4 w-full shadow-md">
+      <li v-for="option in options" :key="option.version">
+        <nuxt-link
+          :to="option.url"
           class="rounded-t py-2 px-4 block whitespace-no-wrap"
-          >{{ version(option) }}</a
+          >{{ version(option) }}</nuxt-link
         >
       </li>
     </ul>
@@ -36,15 +38,12 @@ export default {
         { version: 'v0.5', url: '/docs/v0.5', prerelease: true },
         { version: 'v0.4', url: '/docs/v0.4', prerelease: false },
         { version: 'v0.3', url: '/docs/v0.3', prerelease: false }
-      ]
+      ],
+      active: false
     }
   },
 
   methods: {
-    handleClick(option) {
-      this.$store.commit('sidebar/setVersion', option.version)
-    },
-
     version(option) {
       if (option.prerelease) {
         return `${option.version} (pre-release)`

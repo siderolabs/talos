@@ -1,6 +1,6 @@
 <template>
   <header id="header">
-    <div class="flex flex-wrap w-4/5 mx-auto">
+    <div :class="{ 'w-4/5': narrowLogo }" class="flex flex-wrap mx-auto">
       <div class="flex py-2">
         <Logo></Logo>
       </div>
@@ -35,11 +35,18 @@ import EnterpriseLink from '~/components/EnterpriseLink.vue'
 
 export default {
   name: 'Header',
+
   components: {
     Logo,
     ProjectDropdown,
     CommunityDropdown,
     EnterpriseLink
+  },
+  props: {
+    narrowLogo: {
+      default: true,
+      type: Boolean
+    }
   }
 }
 </script>

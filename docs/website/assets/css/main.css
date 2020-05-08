@@ -24,13 +24,8 @@ body {
   @apply flex flex-col min-h-screen;
 }
 
-.content {
-  flex: 1;
-}
-
 .c-rich-text a {
   color: #1a76c1;
-  font-weight: 400;
 }
 
 .c-rich-text a:hover {
@@ -38,7 +33,11 @@ body {
 }
 
 .c-rich-text ul {
-  @apply mb-4 list-outside pl-8
+  @apply mb-4 list-outside pl-8;
+}
+
+.c-rich-text ol {
+  @apply list-outside pl-4;
 }
 
 pre {
@@ -83,14 +82,6 @@ p a:hover {
   color: #12283a;
 }
 
-.kind-section #content,
-.section-docs #content {
-  @apply max-w-6xl mx-auto px-6;
-}
-.section-docs .page-heading {
-  @apply mb-1;
-}
-
 .header-anchor {
   @apply text-sm hidden align-top;
 }
@@ -107,7 +98,7 @@ h2:hover > a.header-anchor, h3:hover > a.header-anchor, h4:hover > a.header-anch
   the scroll lands with the header visible. 🤷‍♂️
 */
 
-h1::before, h2::before, h3::before {
+h1::before, h2::before, h3::before, h4::before {
   display: block;
   content: " ";
   margin-top: -100px;

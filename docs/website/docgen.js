@@ -5,6 +5,7 @@ const fs = require('fs-extra')
 const glob = require('glob')
 const config = require('./docgen.config')
 const prism = require('markdown-it-prism')
+const mdToc = require('markdown-toc')
 const md = require('markdown-it')({ html: true, typographer: true })
   .use(require('markdown-it-anchor'), {
     permalink: true
@@ -192,7 +193,7 @@ const Docgen = {
       .replace('</p>\n', '')
 
     const markdownContent = md.render(frontmatterContent.body)
-
+    const toc = md.render(mdToc(frontmatterContent.body).content)
     // contentFilePath = /my_absolute_file/content/content-delivery/en/topics/introduction.md
 
     // contentPath = content-delivery/en/topics/introduction
@@ -220,7 +221,8 @@ const Docgen = {
       version: version, // content-delivery
       title: title, // title from frontmatter
       attributes: frontmatterContent.attributes, // all attributes from frontmatter
-      content: markdownContent // Markdown Content for left part of method section already as HTML
+      content: markdownContent, // Markdown Content for left part of method section already as HTML
+      toc: toc // table of contents
     }
 
     // check if version already exists in sections object
