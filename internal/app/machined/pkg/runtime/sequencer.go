@@ -99,3 +99,14 @@ type Sequencer interface {
 	Shutdown(Runtime) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 }
+
+// EventSequenceStart represents the sequence start event.
+type EventSequenceStart struct {
+	Sequence Sequence
+}
+
+// EventFatalSequencerError represents a fatal sequencer error.
+type EventFatalSequencerError struct {
+	Error    error
+	Sequence Sequence
+}

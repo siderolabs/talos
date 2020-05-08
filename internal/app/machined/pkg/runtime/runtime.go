@@ -9,4 +9,5 @@ type Runtime interface {
 	Config() Configurator
 	SetConfig([]byte) error
 	State() State
+	Events() EventStream
 }
