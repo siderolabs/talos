@@ -16,6 +16,8 @@ type Sequence int
 const (
 	// SequenceBoot is the boot sequence.
 	SequenceBoot Sequence = iota
+	// SequenceBootstrap is the boot sequence.
+	SequenceBootstrap
 	// SequenceInitialize is the initialize sequence.
 	SequenceInitialize
 	// SequenceInstall is the install sequence.
@@ -36,6 +38,7 @@ const (
 
 const (
 	boot       = "boot"
+	bootstrap  = "bootstrap"
 	initialize = "initialize"
 	install    = "install"
 	shutdown   = "shutdown"
@@ -48,7 +51,7 @@ const (
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{boot, initialize, install, shutdown, upgrade, reset, reboot, recover, noop}[s]
+	return [...]string{boot, bootstrap, initialize, install, shutdown, upgrade, reset, reboot, recover, noop}[s]
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.
@@ -58,6 +61,8 @@ func ParseSequence(s string) (seq Sequence, err error) {
 	switch s {
 	case boot:
 		seq = SequenceBoot
+	case bootstrap:
+		seq = SequenceBootstrap
 	case initialize:
 		seq = SequenceInitialize
 	case install:
@@ -85,6 +90,7 @@ func ParseSequence(s string) (seq Sequence, err error) {
 // management of the operating system.
 type Sequencer interface {
 	Boot(Runtime) []Phase
+	Bootstrap(Runtime) []Phase
 	Initialize(Runtime) []Phase
 	Install(Runtime) []Phase
 	Reboot(Runtime) []Phase

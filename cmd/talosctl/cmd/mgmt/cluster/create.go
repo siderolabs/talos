@@ -57,6 +57,7 @@ var (
 	cniConfDir              string
 	cniCacheDir             string
 	ports                   string
+	withInitNode            bool
 )
 
 // createCmd represents the cluster up command
@@ -231,10 +232,14 @@ func create(ctx context.Context) (err error) {
 	for i := 0; i < masters; i++ {
 		var cfg runtime.Configurator
 
-		if i == 0 {
-			cfg = configBundle.Init()
+		if withInitNode {
+			if i == 0 {
+				cfg = configBundle.Init()
+			} else {
+				cfg = configBundle.ControlPlane()
+			}
 		} else {
-			cfg = configBundle.ControlPlane()
+			cfg = configBundle.ControlPlaneCfg
 		}
 
 		request.Nodes = append(request.Nodes,
@@ -352,5 +357,6 @@ func init() {
 		"",
 		"Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)",
 	)
+	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", true, "create the cluster with an init node")
 	Cmd.AddCommand(createCmd)
 }

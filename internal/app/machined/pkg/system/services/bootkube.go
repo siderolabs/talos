@@ -100,7 +100,13 @@ func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 }
 
 // PostFunc implements the Service interface.
+//
+// This is temorary and should be removed once we remove the init node type.
 func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if r.Config().Machine().Type() != runtime.MachineTypeInit {
+		return nil
+	}
+
 	if state != events.StateFinished {
 		log.Println("bootkube run did not complete successfully. skipping etcd update")
 		return nil

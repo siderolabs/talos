@@ -257,6 +257,12 @@ func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_S
 	return
 }
 
+// Bootstrap implements the proto.OSClient interface.
+func (c *Client) Bootstrap(ctx context.Context) (err error) {
+	_, err = c.MachineClient.Bootstrap(ctx, &machineapi.BootstrapRequest{})
+	return
+}
+
 // Shutdown implements the proto.OSClient interface.
 func (c *Client) Shutdown(ctx context.Context) (err error) {
 	_, err = c.MachineClient.Shutdown(ctx, &empty.Empty{})

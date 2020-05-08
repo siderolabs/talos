@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	systemlog "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
@@ -143,7 +144,17 @@ func main() {
 			Controller: c,
 		}
 
-		e := factory.ListenAndServe(server, factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))
+		l, e := systemlog.New("machined", constants.DefaultLogPath)
+		if e != nil {
+			handle(e)
+		}
+
+		e = factory.ListenAndServe(
+			server,
+			factory.Network("unix"),
+			factory.SocketPath(constants.MachineSocketPath),
+			factory.WithLog("machined ", l),
+		)
 
 		handle(e)
 	}()

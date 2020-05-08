@@ -39,6 +39,7 @@ talosctl cluster create [flags]
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
       --with-bootloader-emulation   enable bootloader emulation to load kernel and initramfs from disk image
       --with-debug                  enable debug in Talos config to send service logs to the console
+      --with-init-node              create the cluster with an init node (default true)
       --workers int                 the number of workers to create (default 1)
 ```
 
