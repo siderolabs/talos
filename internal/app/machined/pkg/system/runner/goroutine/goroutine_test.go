@@ -19,10 +19,11 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	v1alpha1cfg "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -31,12 +32,24 @@ func MockEventSink(state events.ServiceState, message string, args ...interface{
 
 type GoroutineSuite struct {
 	suite.Suite
+	r runtime.Runtime
 
 	tmpDir string
 }
 
 func (suite *GoroutineSuite) SetupSuite() {
 	var err error
+
+	s, err := v1alpha1.NewState()
+	suite.Assert().NoError(err)
+
+	cfg := &v1alpha1cfg.Config{}
+
+	e := v1alpha1.NewEvents(100)
+
+	r := v1alpha1.NewRuntime(cfg, s, e)
+
+	suite.r = r
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
@@ -47,8 +60,8 @@ func (suite *GoroutineSuite) TearDownSuite() {
 }
 
 func (suite *GoroutineSuite) TestRunSuccess() {
-	r := goroutine.NewRunner(&v1alpha1.Config{}, "testsuccess",
-		func(context.Context, runtime.Configurator, io.Writer) error {
+	r := goroutine.NewRunner(suite.r, "testsuccess",
+		func(context.Context, runtime.Runtime, io.Writer) error {
 			return nil
 		}, runner.WithLogPath(suite.tmpDir))
 
@@ -62,8 +75,8 @@ func (suite *GoroutineSuite) TestRunSuccess() {
 }
 
 func (suite *GoroutineSuite) TestRunFail() {
-	r := goroutine.NewRunner(&v1alpha1.Config{}, "testfail",
-		func(context.Context, runtime.Configurator, io.Writer) error {
+	r := goroutine.NewRunner(suite.r, "testfail",
+		func(context.Context, runtime.Runtime, io.Writer) error {
 			return errors.New("service failed")
 		}, runner.WithLogPath(suite.tmpDir))
 
@@ -77,8 +90,8 @@ func (suite *GoroutineSuite) TestRunFail() {
 }
 
 func (suite *GoroutineSuite) TestRunPanic() {
-	r := goroutine.NewRunner(&v1alpha1.Config{}, "testpanic",
-		func(context.Context, runtime.Configurator, io.Writer) error {
+	r := goroutine.NewRunner(suite.r, "testpanic",
+		func(context.Context, runtime.Runtime, io.Writer) error {
 			panic("service panic")
 		}, runner.WithLogPath(suite.tmpDir))
 
@@ -94,8 +107,8 @@ func (suite *GoroutineSuite) TestRunPanic() {
 }
 
 func (suite *GoroutineSuite) TestStop() {
-	r := goroutine.NewRunner(&v1alpha1.Config{}, "teststop",
-		func(ctx context.Context, data runtime.Configurator, logger io.Writer) error {
+	r := goroutine.NewRunner(suite.r, "teststop",
+		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {
 			<-ctx.Done()
 
 			return ctx.Err()
@@ -124,8 +137,8 @@ func (suite *GoroutineSuite) TestStop() {
 }
 
 func (suite *GoroutineSuite) TestRunLogs() {
-	r := goroutine.NewRunner(&v1alpha1.Config{}, "logtest",
-		func(ctx context.Context, data runtime.Configurator, logger io.Writer) error {
+	r := goroutine.NewRunner(suite.r, "logtest",
+		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {
 			// nolint: errcheck
 			_, _ = logger.Write([]byte("Test 1\nTest 2\n"))
 			return nil
