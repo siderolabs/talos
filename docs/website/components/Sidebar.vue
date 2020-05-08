@@ -1,6 +1,10 @@
 <template>
-  <div class="sidenav sticky py-4">
-    <div class="sidebar-heading mb-4">Documentation</div>
+  <nav id="sidenav" class="sidenav">
+    <div class="sidebar-heading">
+      Documentation
+    </div>
+    <DocumentationDropdown class="mb-4"></DocumentationDropdown>
+
     <ul>
       <li v-for="entry in $store.state.sidebar.menu" :key="entry.title">
         <span class="sidebar-category pt-4">{{ entry.title }}</span>
@@ -21,7 +25,7 @@
               <li
                 v-for="child in item.children"
                 :key="child.path"
-                class="sidebar-item my-2"
+                class="sidebar-item my-1"
               >
                 <nuxt-link :to="'/docs/' + child.path" class="block m-1">
                   <span class="p-2">{{ child.title }}</span>
@@ -32,19 +36,32 @@
         </ul>
       </li>
     </ul>
-  </div>
+  </nav>
 </template>
 
 <script>
+import DocumentationDropdown from '~/components/DocumentationDropdown.vue'
+
 export default {
-  name: 'Sidebar'
+  name: 'Sidebar',
+  components: {
+    DocumentationDropdown
+  }
 }
 </script>
 
 <style>
 .sidenav {
-  top: 7%;
-  @apply font-sans tracking-wide;
+  @apply font-sans tracking-wide bg-white;
+}
+
+.sidenav::before {
+  display: block;
+  content: ' ';
+  margin-top: -100px;
+  height: 100px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .sidebar-heading {
@@ -56,7 +73,7 @@ export default {
 }
 
 .sidebar-item {
-  @apply text-gray-700 text-base text-sm;
+  @apply text-gray-700 text-sm;
 }
 
 .sidebar-subcategory {

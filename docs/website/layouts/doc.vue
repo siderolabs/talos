@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col min-h-screen">
-    <Header :narrowLogo="true"></Header>
+    <Header :narrowLogo="false"></Header>
     <main role="main" class="content">
       <nuxt />
     </main>
