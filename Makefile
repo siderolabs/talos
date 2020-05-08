@@ -10,6 +10,7 @@ ARTIFACTS := _out
 TOOLS ?= autonomy/tools:v0.2.0-8-g7e14b0a
 GO_VERSION ?= 1.14
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
+IMPORTVET ?= autonomy/importvet:f6b07d9
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
@@ -37,6 +38,7 @@ COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
+COMMON_ARGS += --build-arg=IMPORTVET=$(IMPORTVET)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
