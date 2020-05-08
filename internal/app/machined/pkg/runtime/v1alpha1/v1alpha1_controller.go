@@ -59,8 +59,10 @@ func NewController(b []byte) (*Controller, error) {
 		}
 	}
 
+	e := NewEvents(100)
+
 	ctlr := &Controller{
-		r: NewRuntime(cfg, s),
+		r: NewRuntime(cfg, s, e),
 		s: NewSequencer(),
 	}
 
@@ -76,9 +78,15 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 		return runtime.ErrUndefinedRuntime
 	}
 
-	// Allow only one sequence to run at a time.
+	// Allow only one sequence to run at a time with the exception of the
+	// bootstrap sequence.
 	if seq != runtime.SequenceBootstrap {
 		if c.TryLock() {
+			c.Runtime().Events().Publish(&machine.ErrorEvent{
+				Code:    0,
+				Message: fmt.Sprintf("%s sequence not started: %s", seq.String(), runtime.ErrLocked.Error()),
+			})
+
 			return runtime.ErrLocked
 		}
 
@@ -90,7 +98,17 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 		return err
 	}
 
-	return c.run(seq, phases, data)
+	err = c.run(seq, phases, data)
+	if err != nil {
+		c.Runtime().Events().Publish(&machine.ErrorEvent{
+			Code:    0,
+			Message: fmt.Sprintf("%s sequence failed: %s", seq.String(), err.Error()),
+		})
+
+		return err
+	}
+
+	return nil
 }
 
 // Runtime implements the controller interface.
@@ -165,6 +183,16 @@ func (c *Controller) Unlock() bool {
 }
 
 func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
+	c.Runtime().Events().Publish(&machine.SequenceEvent{
+		Sequence: seq.String(),
+		Action:   machine.SequenceEvent_START,
+	})
+
+	defer c.Runtime().Events().Publish(&machine.SequenceEvent{
+		Sequence: seq.String(),
+		Action:   machine.SequenceEvent_STOP,
+	})
+
 	start := time.Now()
 
 	log.Printf("%s sequence: %d phase(s)", seq.String(), len(phases))
@@ -197,6 +225,14 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 }
 
 func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data interface{}) error {
+	c.Runtime().Events().Publish(&machine.PhaseEvent{
+		Action: machine.PhaseEvent_START,
+	})
+
+	defer c.Runtime().Events().Publish(&machine.PhaseEvent{
+		Action: machine.PhaseEvent_START,
+	})
+
 	var eg errgroup.Group
 
 	for number, task := range phase {
@@ -227,6 +263,14 @@ func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data in
 }
 
 func (c *Controller) runTask(n int, f runtime.TaskSetupFunc, seq runtime.Sequence, data interface{}) error {
+	c.Runtime().Events().Publish(&machine.TaskEvent{
+		Action: machine.TaskEvent_START,
+	})
+
+	defer c.Runtime().Events().Publish(&machine.TaskEvent{
+		Action: machine.TaskEvent_STOP,
+	})
+
 	logger := &log.Logger{}
 
 	if err := kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %d:", n), true); err != nil {

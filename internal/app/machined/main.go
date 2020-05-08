@@ -110,7 +110,7 @@ func main() {
 	reaper.Run()
 	defer reaper.Shutdown()
 
-	// Ensure rng is seeded.
+	// Ensure RNG is seeded.
 	if err := startup.RandSeed(); err != nil {
 		handle(err)
 	}
@@ -126,21 +126,23 @@ func main() {
 		handle(err)
 	}
 
-	// Initialize the machine.
-	if err = c.Run(runtime.SequenceInitialize, nil); err != nil {
-		handle(err)
-	}
-
-	// Start event listeners.
+	// Start signal and ACPI listeners.
 	go func() {
 		if e := c.ListenForEvents(); e != nil {
 			log.Printf("WARNING: signals and ACPI events will be ignored: %+v", e)
 		}
 	}()
 
+	// Initialize the machine.
+	if err = c.Run(runtime.SequenceInitialize, nil); err != nil {
+		handle(err)
+	}
+
 	// Start the API server.
+	// NB: This MUST be started AFTER the initialize sequence since the system
+	// directories are setup then.
 	go func() {
-		server := &v1alpha1server.Server{
+		s := &v1alpha1server.Server{
 			Controller: c,
 		}
 
@@ -150,7 +152,7 @@ func main() {
 		}
 
 		e = factory.ListenAndServe(
-			server,
+			s,
 			factory.Network("unix"),
 			factory.SocketPath(constants.MachineSocketPath),
 			factory.WithLog("machined ", l),
@@ -169,6 +171,5 @@ func main() {
 		handle(err)
 	}
 
-	// Wait forever.
 	select {}
 }

@@ -673,6 +673,31 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 	}
 }
 
+// Events streams runtime events.
+func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
+	errCh := make(chan error)
+
+	s.Controller.Runtime().Events().Watch(func(events <-chan machine.Event) {
+		errCh <- func() error {
+			for {
+				select {
+				case <-l.Context().Done():
+					return l.Context().Err()
+				case event := <-events:
+					err := l.Send(&machine.EventsResponse{
+						Event: &event,
+					})
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}()
+	})
+
+	return <-errCh
+}
+
 func pullAndValidateInstallerImage(ctx context.Context, reg runtime.Registries, ref string) error {
 	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)

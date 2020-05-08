@@ -738,3 +738,8 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 
 	return pr, errCh, stream.CloseSend()
 }
+
+// Events implements the proto.OSClient interface.
+func (c *Client) Events(ctx context.Context, callOptions ...grpc.CallOption) (stream machineapi.MachineService_EventsClient, err error) {
+	return c.MachineClient.Events(ctx, &machineapi.EventsRequest{}, callOptions...)
+}
