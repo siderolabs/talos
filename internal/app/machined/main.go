@@ -6,6 +6,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -18,15 +19,16 @@ import (
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/talos-systems/go-procfs/procfs"
 
-	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
+	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
-	systemlog "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/startup"
 )
@@ -138,38 +140,38 @@ func main() {
 		handle(err)
 	}
 
-	// Start the API server.
-	// NB: This MUST be started AFTER the initialize sequence since the system
-	// directories are setup then.
-	go func() {
-		s := &v1alpha1server.Server{
-			Controller: c,
-		}
-
-		l, e := systemlog.New("machined", constants.DefaultLogPath)
-		if e != nil {
-			handle(e)
-		}
-
-		e = factory.ListenAndServe(
-			s,
-			factory.Network("unix"),
-			factory.SocketPath(constants.MachineSocketPath),
-			factory.WithLog("machined ", l),
-		)
-
-		handle(e)
-	}()
-
 	// Perform an installation if required.
 	if err = c.Run(runtime.SequenceInstall, nil); err != nil {
 		handle(err)
 	}
 
+	// Start the machine API.
+	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
+
 	// Boot the machine.
 	if err = c.Run(runtime.SequenceBoot, nil); err != nil {
 		handle(err)
 	}
+
+	// Watch and handle runtime events.
+	c.Runtime().Events().Watch(func(events <-chan machine.Event) {
+		for {
+			for event := range events {
+				if event.Data.TypeUrl == "talos/runtime/"+proto.MessageName(&machine.SequenceEvent{}) {
+					msg := &machine.SequenceEvent{}
+
+					if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
+						log.Printf("failed to unmarshal message: %v", err)
+						continue
+					}
+
+					if msg.Error != nil {
+						handle(fmt.Errorf("fatal sequencer error in %q sequence: %v", msg.GetSequence(), msg.GetError().String()))
+					}
+				}
+			}
+		}
+	})
 
 	select {}
 }
