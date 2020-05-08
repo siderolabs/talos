@@ -99,3 +99,12 @@ type Sequencer interface {
 	Shutdown(Runtime) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 }
+
+type EventSequenceStart struct {
+	Sequence Sequence
+}
+
+type EventFatalSequencerError struct {
+	Error    error
+	Sequence Sequence
+}

@@ -59,8 +59,10 @@ func NewController(b []byte) (*Controller, error) {
 		}
 	}
 
+	e := NewEvents()
+
 	ctlr := &Controller{
-		r: NewRuntime(cfg, s),
+		r: NewRuntime(cfg, s, e),
 		s: NewSequencer(),
 	}
 
@@ -76,7 +78,8 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 		return runtime.ErrUndefinedRuntime
 	}
 
-	// Allow only one sequence to run at a time.
+	// Allow only one sequence to run at a time with the exception of the
+	// bootstrap sequence.
 	if seq != runtime.SequenceBootstrap {
 		if c.TryLock() {
 			return runtime.ErrLocked
@@ -90,7 +93,20 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 		return err
 	}
 
-	return c.run(seq, phases, data)
+	err = c.run(seq, phases, data)
+
+	if err != nil {
+		c.Runtime().Events().Publish(runtime.Event{
+			Data: runtime.EventFatalSequencerError{
+				Error:    err,
+				Sequence: seq,
+			},
+		})
+
+		return err
+	}
+
+	return nil
 }
 
 // Runtime implements the controller interface.
@@ -165,6 +181,12 @@ func (c *Controller) Unlock() bool {
 }
 
 func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
+	c.Runtime().Events().Publish(runtime.Event{
+		Data: runtime.EventSequenceStart{
+			Sequence: seq,
+		},
+	})
+
 	start := time.Now()
 
 	log.Printf("%s sequence: %d phase(s)", seq.String(), len(phases))

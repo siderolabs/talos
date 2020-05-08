@@ -49,7 +49,6 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -1229,14 +1228,6 @@ func Upgrade(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 		devname := r.State().Machine().Disk().BlockDevice.Device().Name()
 
 		logger.Printf("performing upgrade via %q", in.GetImage())
-
-		c := r.Config()
-		if cfg, ok := c.(*v1alpha1.Config); ok {
-			cfg.MachineConfig.MachineInstall.InstallDisk = devname
-			cfg.MachineConfig.MachineInstall.InstallImage = in.GetImage()
-
-			r = NewRuntime(runtime.Configurator(cfg), r.State())
-		}
 
 		// We pull the installer image when we receive an upgrade request. No need
 		// to pull it again.

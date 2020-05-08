@@ -4,10 +4,20 @@
 
 package runtime
 
-// Runtime defines the runtime parameters.
-type Runtime interface {
-	Config() Configurator
-	SetConfig([]byte) error
-	State() State
-	Events() EventStream
+type Event struct {
+	Data interface{}
+}
+
+type Watcher interface {
+	Watch(func(<-chan Event))
+}
+
+type Publisher interface {
+	Publish(Event)
+}
+
+// EventStream
+type EventStream interface {
+	Watcher
+	Publisher
 }
