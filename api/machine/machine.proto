@@ -7,6 +7,7 @@ option java_multiple_files = true;
 option java_outer_classname = "MachineApi";
 option java_package = "com.machine.api";
 
+import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "common/common.proto";
@@ -14,6 +15,7 @@ import "common/common.proto";
 // The machine service definition.
 service MachineService {
   rpc Copy(CopyRequest) returns (stream common.Data);
+  rpc Events(EventsRequest) returns (stream EventsResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
   rpc Logs(LogsRequest) returns (stream common.Data);
@@ -43,6 +45,26 @@ message BootstrapRequest {}
 // The bootstrap message containing the bootstrap status.
 message Bootstrap { common.Metadata metadata = 1; }
 message BootstrapResponse { repeated Bootstrap messages = 1; }
+
+// rpc events
+message SequenceEvent {
+  string sequence = 1;
+  enum Type {
+    START = 0;
+    STOP = 1;
+  }
+  Type type = 2;
+}
+
+message EventsRequest {}
+
+message Event {
+  common.Metadata metadata = 1;
+  google.protobuf.Any data = 2;
+  string error = 3;
+}
+
+message EventsResponse { Event event = 1; }
 
 // rpc reset
 message ResetRequest {
