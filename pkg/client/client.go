@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -21,12 +22,15 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
+
 	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	networkapi "github.com/talos-systems/talos/api/network"
 	osapi "github.com/talos-systems/talos/api/os"
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/net"
 )
 
@@ -40,14 +44,164 @@ type Credentials struct {
 // Client implements the proto.OSClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
+	options       *Options
 	conn          *grpc.ClientConn
-	client        osapi.OSServiceClient
+	OSClient      osapi.OSServiceClient
 	MachineClient machineapi.MachineServiceClient
 	TimeClient    timeapi.TimeServiceClient
 	NetworkClient networkapi.NetworkServiceClient
 }
 
+func (c *Client) resolveConfigContext() error {
+	var ok bool
+
+	if c.options.configContext != nil {
+		return nil
+	}
+
+	if c.options.config == nil {
+		if err := WithDefaultConfig()(c.options); err != nil {
+			return fmt.Errorf("failed to load default config: %w", err)
+		}
+	}
+
+	if c.options.contextOverrideSet {
+		c.options.configContext, ok = c.options.config.Contexts[c.options.contextOverride]
+		if !ok {
+			return fmt.Errorf("context %q not found in config", c.options.contextOverride)
+		}
+
+		return nil
+	}
+
+	c.options.configContext, ok = c.options.config.Contexts[c.options.config.Context]
+	if !ok {
+		return fmt.Errorf("default context %q not found in config", c.options.config.Context)
+	}
+
+	return nil
+}
+
+func (c *Client) getEndpoints() []string {
+	if len(c.options.endpointsOverride) > 0 {
+		return c.options.endpointsOverride
+	}
+
+	if c.options.config != nil {
+		return c.options.configContext.Endpoints
+	}
+
+	return nil
+}
+
+// New returns a new Client.
+func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
+	c = new(Client)
+
+	c.options = new(Options)
+
+	for _, opt := range opts {
+		if err = opt(c.options); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = c.resolveConfigContext(); err != nil {
+		return nil, fmt.Errorf("failed to resolve configuration context: %w", err)
+	}
+
+	if len(c.getEndpoints()) < 1 {
+		return nil, errors.New("failed to determine endpoints")
+	}
+
+	c.conn, err = c.getConn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client connection: %w", err)
+	}
+
+	c.OSClient = osapi.NewOSServiceClient(c.conn)
+	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
+	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
+	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
+
+	return c, nil
+}
+
+func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	endpoints := c.getEndpoints()
+
+	// NB: we use the `dns` scheme here in order to handle fancier situations
+	// when there is a single endpoint.
+	// Such possibilities include SRV records, multiple IPs from A and/or AAAA
+	// records, and descriptive TXT records which include things like load
+	// balancer specs.
+	target := fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoints[0]), constants.ApidPort)
+
+	// If we are given more than one endpoint, we need to use our custom list resolver
+	if len(endpoints) > 1 {
+		target = fmt.Sprintf("%s:///%s", talosListResolverScheme, strings.Join(endpoints, ","))
+	}
+
+	// Add TLS credentials to gRPC DialOptions
+	tlsConfig := c.options.tlsConfig
+	if tlsConfig == nil {
+		creds, err := CredentialsFromConfigContext(c.options.configContext)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire credentials: %w", err)
+		}
+
+		tlsConfig, err = grpctls.New(
+			grpctls.WithKeypair(creds.Crt),
+			grpctls.WithClientAuthType(grpctls.Mutual),
+			grpctls.WithCACertPEM(creds.CA),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct TLS credentials: %w", err)
+		}
+	}
+
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+	}
+
+	dialOpts = append(dialOpts, c.options.grpcDialOptions...)
+
+	dialOpts = append(dialOpts, opts...)
+
+	return grpc.DialContext(ctx, target, dialOpts...)
+}
+
+// CredentialsFromConfigContext constructs the client Credentials from the given configuration Context.
+func CredentialsFromConfigContext(context *config.Context) (*Credentials, error) {
+	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding CA: %w", err)
+	}
+
+	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding certificate: %w", err)
+	}
+
+	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding key: %w", err)
+	}
+
+	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not load client key pair: %s", err)
+	}
+
+	return &Credentials{
+		CA:  caBytes,
+		Crt: crt,
+	}, nil
+}
+
 // NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
+//
+// Deprecated: use Option-based methods for client creation.
 func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *config.Context, creds *Credentials, err error) {
 	c, err := config.Open(p)
 	if err != nil {
@@ -60,6 +214,8 @@ func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *co
 }
 
 // NewClientContextAndCredentialsFromParsedConfig initializes Credentials from parsed configuration.
+//
+// Deprecated: use Option-based methods for client creation.
 func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string) (context *config.Context, creds *Credentials, err error) {
 	if ctx != "" {
 		c.Context = ctx
@@ -74,35 +230,17 @@ func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string
 		return nil, nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
 	}
 
-	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
+	creds, err = CredentialsFromConfigContext(context)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding CA: %w", err)
-	}
-
-	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding certificate: %w", err)
-	}
-
-	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding key: %w", err)
-	}
-
-	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not load client key pair: %s", err)
-	}
-
-	creds = &Credentials{
-		CA:  caBytes,
-		Crt: crt,
+		return nil, nil, fmt.Errorf("failed to extract credentials from context: %w", err)
 	}
 
 	return context, creds, nil
 }
 
 // NewClient initializes a Client.
+//
+// Deprecated: use client.NewFromConfigContext() instead
 func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialOption) (c *Client, err error) {
 	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
 
@@ -116,7 +254,7 @@ func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialO
 		return
 	}
 
-	c.client = osapi.NewOSServiceClient(c.conn)
+	c.OSClient = osapi.NewOSServiceClient(c.conn)
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
@@ -195,7 +333,7 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 
 // Stats implements the proto.OSClient interface.
 func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *osapi.StatsResponse, err error) {
-	resp, err = c.client.Stats(
+	resp, err = c.OSClient.Stats(
 		ctx, &osapi.StatsRequest{
 			Namespace: namespace,
 			Driver:    driver,
@@ -212,7 +350,7 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver common.Cont
 
 // Containers implements the proto.OSClient interface.
 func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *osapi.ContainersResponse, err error) {
-	resp, err = c.client.Containers(
+	resp, err = c.OSClient.Containers(
 		ctx,
 		&osapi.ContainersRequest{
 			Namespace: namespace,
@@ -230,7 +368,7 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 
 // Restart implements the proto.OSClient interface.
 func (c *Client) Restart(ctx context.Context, namespace string, driver common.ContainerDriver, id string, callOptions ...grpc.CallOption) (err error) {
-	_, err = c.client.Restart(ctx, &osapi.RestartRequest{
+	_, err = c.OSClient.Restart(ctx, &osapi.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
 		Driver:    driver,
@@ -271,7 +409,7 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 
 // Dmesg implements the proto.OSClient interface.
 func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (osapi.OSService_DmesgClient, error) {
-	return c.client.Dmesg(ctx, &osapi.DmesgRequest{
+	return c.OSClient.Dmesg(ctx, &osapi.DmesgRequest{
 		Follow: follow,
 		Tail:   tail,
 	})
@@ -337,7 +475,7 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 
 // Processes implements the proto.OSClient interface.
 func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *osapi.ProcessesResponse, err error) {
-	resp, err = c.client.Processes(
+	resp, err = c.OSClient.Processes(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
@@ -352,7 +490,7 @@ func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) 
 
 // Memory implements the proto.OSClient interface.
 func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (resp *osapi.MemoryResponse, err error) {
-	resp, err = c.client.Memory(
+	resp, err = c.OSClient.Memory(
 		ctx,
 		&empty.Empty{},
 		callOptions...,

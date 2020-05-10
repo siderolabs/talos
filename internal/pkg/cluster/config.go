@@ -5,12 +5,11 @@
 package cluster
 
 import (
+	"context"
 	"strings"
 
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/client/config"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
 )
 
 // ConfigClientProvider builds Talos client from client config.
@@ -45,30 +44,15 @@ func (c *ConfigClientProvider) Client(endpoints ...string) (*client.Client, erro
 		return c.DefaultClient, nil
 	}
 
-	configContext, creds, err := client.NewClientContextAndCredentialsFromParsedConfig(c.TalosConfig, "")
-	if err != nil {
-		return nil, err
+	opts := []client.OptionFunc{
+		client.WithConfig(c.TalosConfig),
 	}
 
-	if len(endpoints) == 0 {
-		endpoints = configContext.Endpoints
+	if len(endpoints) > 0 {
+		opts = append(opts, client.WithEndpoints(endpoints...))
 	}
 
-	tlsconfig, err := tls.New(
-		tls.WithKeypair(creds.Crt),
-		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(creds.CA),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := client.NewClient(tlsconfig, endpoints, constants.ApidPort)
-	if err == nil {
-		c.clients[key] = client
-	}
-
-	return client, err
+	return client.New(context.TODO(), opts...)
 }
 
 // Close all the client connections.
