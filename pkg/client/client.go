@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -21,12 +22,15 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
+
 	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	networkapi "github.com/talos-systems/talos/api/network"
 	osapi "github.com/talos-systems/talos/api/os"
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/net"
 )
 
@@ -40,11 +44,97 @@ type Credentials struct {
 // Client implements the proto.OSClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
+	config        *config.Context
 	conn          *grpc.ClientConn
 	client        osapi.OSServiceClient
 	MachineClient machineapi.MachineServiceClient
 	TimeClient    timeapi.TimeServiceClient
 	NetworkClient networkapi.NetworkServiceClient
+}
+
+// NewFromConfigContext returns a new Client from the provided configuration context
+func NewFromConfigContext(ctx context.Context, cfg *config.Context, opts ...grpc.DialOption) (c *Client, err error) {
+	if cfg == nil {
+		return nil, errors.New("config context is required")
+	}
+
+	if len(cfg.Endpoints) < 1 {
+		return nil, errors.New("no endpoints defined")
+	}
+
+	c = &Client{
+		config: cfg,
+	}
+
+	c.conn, err = c.getConn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client connection: %w", err)
+	}
+
+	c.client = osapi.NewOSServiceClient(c.conn)
+	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
+	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
+	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
+
+	return c, nil
+}
+
+func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	target := fmt.Sprintf("dns:///%s:%d", net.FormatAddress(c.config.Endpoints[0]), constants.ApidPort)
+
+	// If we are given more than one endpoint, we need to use our custom list resolver
+	if len(c.config.Endpoints) > 1 {
+		target = fmt.Sprintf("%s:///%s", talosListResolverScheme, strings.Join(c.config.Endpoints, ","))
+	}
+
+	// Add TLS credentials to gRPC DialOptions
+	{
+		creds, err := CredentialsFromConfigContext(c.config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire credentials: %w", err)
+		}
+
+		tlsconfig, err := grpctls.New(
+			grpctls.WithKeypair(creds.Crt),
+			grpctls.WithClientAuthType(grpctls.Mutual),
+			grpctls.WithCACertPEM(creds.CA),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct TLS credentials: %w", err)
+		}
+
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsconfig)))
+	}
+
+	return grpc.DialContext(ctx, target, opts...)
+}
+
+// CredentialsFromConfigContext constructs the client Credentials from the given configuration Context.
+func CredentialsFromConfigContext(context *config.Context) (*Credentials, error) {
+	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding CA: %w", err)
+	}
+
+	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding certificate: %w", err)
+	}
+
+	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding key: %w", err)
+	}
+
+	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not load client key pair: %s", err)
+	}
+
+	return &Credentials{
+		CA:  caBytes,
+		Crt: crt,
+	}, nil
 }
 
 // NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
@@ -74,35 +164,17 @@ func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string
 		return nil, nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
 	}
 
-	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
+	creds, err = CredentialsFromConfigContext(context)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding CA: %w", err)
-	}
-
-	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding certificate: %w", err)
-	}
-
-	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding key: %w", err)
-	}
-
-	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not load client key pair: %s", err)
-	}
-
-	creds = &Credentials{
-		CA:  caBytes,
-		Crt: crt,
+		return nil, nil, fmt.Errorf("failed to extract credentials from context: %w", err)
 	}
 
 	return context, creds, nil
 }
 
 // NewClient initializes a Client.
+//
+// Deprecated: use client.NewFromConfigContext() instead
 func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialOption) (c *Client, err error) {
 	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
 
