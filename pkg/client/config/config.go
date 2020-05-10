@@ -24,6 +24,20 @@ func (c *Config) upgrade() {
 	}
 }
 
+// GetContext returns the given configuration context or the default if none is
+// selected.
+func (c *Config) GetContext(name string) *Context {
+	if name == "" {
+		name = c.Context
+	}
+
+	if context, ok := c.Contexts[name]; ok {
+		return context
+	}
+
+	return nil
+}
+
 // Context represents the set of credentials required to talk to a target.
 type Context struct {
 	DeprecatedTarget string   `yaml:"target,omitempty"` // Field deprecated in favor of Endpoints
