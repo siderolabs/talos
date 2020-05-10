@@ -19,8 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/client/config"
 )
 
 // APISuite is a base suite for API tests
@@ -33,24 +32,18 @@ type APISuite struct {
 
 // SetupSuite initializes Talos API client
 func (apiSuite *APISuite) SetupSuite() {
-	configContext, creds, err := client.NewClientContextAndCredentialsFromConfig(apiSuite.TalosConfig, "")
+	cfg, err := config.Open(apiSuite.TalosConfig)
 	apiSuite.Require().NoError(err)
 
-	endpoints := configContext.Endpoints
+	opts := []client.OptionFunc{
+		client.WithConfig(cfg),
+	}
+
 	if apiSuite.Endpoint != "" {
-		endpoints = []string{apiSuite.Endpoint}
+		opts = append(opts, client.WithEndpoints(apiSuite.Endpoint))
 	}
 
-	tlsconfig, err := tls.New(
-		tls.WithKeypair(creds.Crt),
-		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(creds.CA),
-	)
-	if err != nil {
-		apiSuite.Require().NoError(err)
-	}
-
-	apiSuite.Client, err = client.NewClient(tlsconfig, endpoints, constants.ApidPort)
+	apiSuite.Client, err = client.New(context.TODO(), opts...)
 	apiSuite.Require().NoError(err)
 }
 
