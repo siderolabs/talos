@@ -12,8 +12,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/client/config"
 )
 
 var (
@@ -32,37 +31,32 @@ var (
 // WithClient wraps common code to initialize Talos client and provide cancellable context.
 func WithClient(action func(context.Context, *client.Client) error) error {
 	return cli.WithContext(context.Background(), func(ctx context.Context) error {
-		configContext, creds, err := client.NewClientContextAndCredentialsFromConfig(Talosconfig, Cmdcontext)
+		cfg, err := config.Open(Talosconfig)
 		if err != nil {
-			return fmt.Errorf("error getting client credentials: %w", err)
+			return fmt.Errorf("failed to open config file %q: %w", Talosconfig, err)
 		}
 
-		configEndpoints := configContext.Endpoints
+		configContext := cfg.GetContext(Cmdcontext)
+		if configContext == nil {
+			return fmt.Errorf("context %q does not exist in config file %q: %w", Cmdcontext, Talosconfig, err)
+		}
+
+		opts := []client.Option{
+			client.WithConfigContext(configContext),
+		}
 
 		if len(Endpoints) > 0 {
 			// override endpoints from command-line flags
-			configEndpoints = Endpoints
+			opts = append(opts, client.WithEndpoints(Endpoints...))
 		}
 
-		targetNodes := configContext.Nodes
-
-		if len(Nodes) > 0 {
-			targetNodes = Nodes
+		if len(Nodes) < 1 {
+			Nodes = configContext.Nodes
 		}
 
-		// Update context with grpc metadata for proxy/relay requests
-		ctx = client.WithNodes(ctx, targetNodes...)
+		ctx = client.WithNodes(ctx, Nodes...)
 
-		tlsconfig, err := tls.New(
-			tls.WithKeypair(creds.Crt),
-			tls.WithClientAuthType(tls.Mutual),
-			tls.WithCACertPEM(creds.CA),
-		)
-		if err != nil {
-			return err
-		}
-
-		c, err := client.NewClient(tlsconfig, configEndpoints, constants.ApidPort)
+		c, err := client.New(ctx, opts...)
 		if err != nil {
 			return fmt.Errorf("error constructing client: %w", err)
 		}

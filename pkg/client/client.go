@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -21,12 +22,15 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
+
 	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	networkapi "github.com/talos-systems/talos/api/network"
 	osapi "github.com/talos-systems/talos/api/os"
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/net"
 )
 
@@ -40,14 +44,192 @@ type Credentials struct {
 // Client implements the proto.OSClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
-	conn          *grpc.ClientConn
-	client        osapi.OSServiceClient
-	MachineClient machineapi.MachineServiceClient
-	TimeClient    timeapi.TimeServiceClient
-	NetworkClient networkapi.NetworkServiceClient
+	endpointsOverride []string
+	config            *config.Context
+	tlsConfig         *tls.Config
+	grpcDialOptions   []grpc.DialOption
+	conn              *grpc.ClientConn
+	client            osapi.OSServiceClient
+	MachineClient     machineapi.MachineServiceClient
+	TimeClient        timeapi.TimeServiceClient
+	NetworkClient     networkapi.NetworkServiceClient
+}
+
+// Option sets an option for the creation of the Client
+type Option func(*Client) error
+
+// WithConfigContext configures the Client with the configuration context provided.
+func WithConfigContext(cfg *config.Context) Option {
+	return func(c *Client) error {
+		c.config = cfg
+		return nil
+	}
+}
+
+// WithGRPCDialOptions adds the given grpc.DialOptions to a Client.
+func WithGRPCDialOptions(opts ...grpc.DialOption) Option {
+	return func(c *Client) error {
+		c.grpcDialOptions = append(c.grpcDialOptions, opts...)
+		return nil
+	}
+}
+
+// WithTLSConfig overrides the default TLS configuration with the one provided.
+func WithTLSConfig(tlsConfig *tls.Config) Option {
+	return func(c *Client) error {
+		c.tlsConfig = tlsConfig
+		return nil
+	}
+}
+
+// WithEndpoints overrides the default endpoints with the provided list.
+func WithEndpoints(endpoints ...string) Option {
+	return func(c *Client) error {
+		c.endpointsOverride = endpoints
+		return nil
+	}
+}
+
+func withDefaultConfig() Option {
+	return func(c *Client) (err error) {
+		defaultConfigPath, err := config.GetDefaultPath()
+		if err != nil {
+			return fmt.Errorf("no client configuration provided and no default path found: %w", err)
+		}
+
+		return WithConfigContextFromFile(defaultConfigPath, "")(c)
+	}
+}
+
+// WithConfigContextFromFile creates a Client with its configuration extracted from the given file in the given context.
+// Supplying an empty context will return the default context contained within the configuration file.
+func WithConfigContextFromFile(fn, context string) Option {
+	return func(c *Client) (err error) {
+		fullConfig, err := config.Open(fn)
+		if err != nil {
+			return fmt.Errorf("failed to read config from %q: %w", fn, err)
+		}
+
+		cfgContext := fullConfig.GetContext(context)
+		if cfgContext == nil {
+			return fmt.Errorf("context %q not found in config file %q", context, fn)
+		}
+
+		return WithConfigContext(cfgContext)(c)
+	}
+}
+
+func (c *Client) getEndpoints() []string {
+	if len(c.endpointsOverride) > 0 {
+		return c.endpointsOverride
+	}
+
+	if c.config != nil {
+		return c.config.Endpoints
+	}
+
+	return nil
+}
+
+// New returns a new Client.
+func New(ctx context.Context, opts ...Option) (c *Client, err error) {
+	c = new(Client)
+
+	for _, opt := range opts {
+		if err = opt(c); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(c.getEndpoints()) < 1 {
+		if err = withDefaultConfig()(c); err != nil {
+			return nil, fmt.Errorf("failed to load default config: %w", err)
+		}
+	}
+
+	c.conn, err = c.getConn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client connection: %w", err)
+	}
+
+	c.client = osapi.NewOSServiceClient(c.conn)
+	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
+	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
+	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
+
+	return c, nil
+}
+
+func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	endpoints := c.getEndpoints()
+
+	target := fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoints[0]), constants.ApidPort)
+
+	// If we are given more than one endpoint, we need to use our custom list resolver
+	if len(endpoints) > 1 {
+		target = fmt.Sprintf("%s:///%s", talosListResolverScheme, strings.Join(c.config.Endpoints, ","))
+	}
+
+	// Add TLS credentials to gRPC DialOptions
+	tlsConfig := c.tlsConfig
+	if tlsConfig == nil {
+		creds, err := CredentialsFromConfigContext(c.config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire credentials: %w", err)
+		}
+
+		tlsConfig, err = grpctls.New(
+			grpctls.WithKeypair(creds.Crt),
+			grpctls.WithClientAuthType(grpctls.Mutual),
+			grpctls.WithCACertPEM(creds.CA),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct TLS credentials: %w", err)
+		}
+	}
+
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+	}
+
+	dialOpts = append(dialOpts, c.grpcDialOptions...)
+
+	dialOpts = append(dialOpts, opts...)
+
+	return grpc.DialContext(ctx, target, dialOpts...)
+}
+
+// CredentialsFromConfigContext constructs the client Credentials from the given configuration Context.
+func CredentialsFromConfigContext(context *config.Context) (*Credentials, error) {
+	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding CA: %w", err)
+	}
+
+	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding certificate: %w", err)
+	}
+
+	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding key: %w", err)
+	}
+
+	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not load client key pair: %s", err)
+	}
+
+	return &Credentials{
+		CA:  caBytes,
+		Crt: crt,
+	}, nil
 }
 
 // NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
+//
+// Deprecated: use Option-based methods for client creation.
 func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *config.Context, creds *Credentials, err error) {
 	c, err := config.Open(p)
 	if err != nil {
@@ -60,6 +242,8 @@ func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *co
 }
 
 // NewClientContextAndCredentialsFromParsedConfig initializes Credentials from parsed configuration.
+//
+// Deprecated: use Option-based methods for client creation.
 func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string) (context *config.Context, creds *Credentials, err error) {
 	if ctx != "" {
 		c.Context = ctx
@@ -74,35 +258,17 @@ func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string
 		return nil, nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
 	}
 
-	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
+	creds, err = CredentialsFromConfigContext(context)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding CA: %w", err)
-	}
-
-	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding certificate: %w", err)
-	}
-
-	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding key: %w", err)
-	}
-
-	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not load client key pair: %s", err)
-	}
-
-	creds = &Credentials{
-		CA:  caBytes,
-		Crt: crt,
+		return nil, nil, fmt.Errorf("failed to extract credentials from context: %w", err)
 	}
 
 	return context, creds, nil
 }
 
 // NewClient initializes a Client.
+//
+// Deprecated: use client.NewFromConfigContext() instead
 func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialOption) (c *Client, err error) {
 	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
 
