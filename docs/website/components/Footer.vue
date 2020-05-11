@@ -14,7 +14,7 @@
         </div>
         <div class="text-center">
           <a class="inline-block no-underline color-inherit" href="/">
-            © 2019 Talos Systems, Inc.
+            © 2020 Talos Systems, Inc.
           </a>
         </div>
       </div>
