@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"unsafe"
@@ -36,6 +37,7 @@ type Options struct {
 	Upgrade         bool
 	Force           bool
 	Zero            bool
+	Save            bool
 }
 
 // Install installs Talos.
@@ -272,6 +274,38 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		}
 
 		if err = syslinux.Install(i.Current, syslinuxcfg, seq, i.bootPartitionFound); err != nil {
+			return err
+		}
+	}
+
+	if i.options.Save {
+		u, err := url.Parse(i.options.ConfigSource)
+		if err != nil {
+			return err
+		}
+
+		if u.Scheme != "file" {
+			return fmt.Errorf("file:// scheme must be used with the save option, have %s", u.Scheme)
+		}
+
+		src, err := os.Open(u.Path)
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer src.Close()
+
+		dst, err := os.OpenFile(constants.ConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer dst.Close()
+
+		_, err = io.Copy(dst, src)
+		if err != nil {
 			return err
 		}
 	}

@@ -61,6 +61,10 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		return b, err
 	}
 
+	if u.Scheme == "file" {
+		return ioutil.ReadFile(u.Path)
+	}
+
 	dlOpts := downloadDefaults()
 
 	for _, opt := range opts {
