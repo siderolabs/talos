@@ -13,6 +13,7 @@
     "clean": "rm -rf node_modules .nuxt dist routes.json ./static/*.menu.*.json ./static/*.sections.*.json"
   },
   "dependencies": {
+    "@nuxtjs/sitemap": "^2.3.0",
     "axios": "^0.19.2",
     "front-matter": "^3.1.0",
     "markdown-it": "^10.0.0",
