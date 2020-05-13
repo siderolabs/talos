@@ -94,6 +94,7 @@ sw.*
 routes.json
 /static/*.menu.*
 /static/*.sections.*
+/static/_redirects
 
 # Custom
 

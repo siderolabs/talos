@@ -49,7 +49,8 @@ export default {
       {
         id: 'UA-141692582-2'
       }
-    ]
+    ],
+    ['@nuxtjs/sitemap', { hostname: 'https://www.talos.dev/' }]
   ],
 
   /*
