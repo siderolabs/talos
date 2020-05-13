@@ -34,6 +34,8 @@ var eventsCmd = &cobra.Command{
 				return fmt.Errorf("error fetching events: %s", err)
 			}
 
+			defaultNode := helpers.RemotePeer(stream.Context())
+
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			fmt.Fprintln(w, "NODE\tEVENT\tMESSAGE")
 
@@ -44,47 +46,47 @@ var eventsCmd = &cobra.Command{
 						return nil
 					}
 
-					return err
+					return fmt.Errorf("failed to watch events: %w", err)
 				}
-
-				defaultNode := helpers.RemotePeer(stream.Context())
 
 				node := defaultNode
 
-				if resp.Event.Metadata != nil {
-					node = resp.Event.Metadata.Hostname
-				}
+				for _, event := range resp.Messages {
+					if event.Metadata != nil {
+						node = event.Metadata.Hostname
+					}
 
-				typeURL := resp.GetEvent().GetData().GetTypeUrl()
+					typeURL := event.GetData().GetTypeUrl()
 
-				format := "%s\t%s\t%s\n"
+					format := "%s\t%s\t%s\n"
 
-				var args []interface{}
+					var args []interface{}
 
-				switch resp.GetEvent().GetData().GetTypeUrl() {
-				case "talos/runtime/" + proto.MessageName(&machine.SequenceEvent{}):
-					msg := &machine.SequenceEvent{}
+					switch event.GetData().GetTypeUrl() {
+					case "talos/runtime/" + proto.MessageName(&machine.SequenceEvent{}):
+						msg := &machine.SequenceEvent{}
 
-					if err = proto.Unmarshal(resp.GetEvent().GetData().GetValue(), msg); err != nil {
-						log.Printf("failed to unmarshal message: %v", err)
+						if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
+							log.Printf("failed to unmarshal message: %v", err)
+							continue
+						}
+
+						if msg.Error != nil {
+							args = []interface{}{msg.GetSequence() + " error:" + " " + msg.GetError().GetMessage()}
+						} else {
+							args = []interface{}{msg.GetSequence() + " " + msg.GetAction().String()}
+						}
+					default:
+						// We haven't implemented the handling of this event yet.
 						continue
 					}
 
-					if msg.Error != nil {
-						args = []interface{}{msg.GetSequence() + " error:" + " " + msg.GetError().GetMessage()}
-					} else {
-						args = []interface{}{msg.GetSequence() + " " + msg.GetAction().String()}
-					}
-				default:
-					// We haven't implemented the handling of this event yet.
-					continue
+					args = append([]interface{}{node, typeURL}, args...)
+					fmt.Fprintf(w, format, args...)
+
+					// nolint: errcheck
+					w.Flush()
 				}
-
-				args = append([]interface{}{node, typeURL}, args...)
-				fmt.Fprintf(w, format, args...)
-
-				// nolint: errcheck
-				w.Flush()
 			}
 		})
 	},
