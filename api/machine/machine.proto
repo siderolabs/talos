@@ -83,7 +83,7 @@ message Event {
   google.protobuf.Any data = 2;
 }
 
-message EventsResponse { Event event = 1; }
+message EventsResponse { repeated Event messages = 1; }
 
 // rpc reset
 message ResetRequest {
