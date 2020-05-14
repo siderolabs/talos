@@ -20,14 +20,13 @@ import (
 type Events struct {
 	subscribers []chan machine.Event
 
-	*sync.Mutex
+	sync.Mutex
 }
 
 // NewEvents initializes and returns the v1alpha1 runtime event stream.
 func NewEvents(n int) *Events {
 	e := &Events{
 		subscribers: make([]chan machine.Event, 0, n),
-		Mutex:       &sync.Mutex{},
 	}
 
 	return e
@@ -38,8 +37,8 @@ func (e *Events) Watch(f runtime.WatchFunc) {
 	ch := e.add()
 
 	go func() {
-		defer e.delete(ch)
 		defer close(ch)
+		defer e.delete(ch)
 
 		f(ch)
 	}()
@@ -67,7 +66,12 @@ func (e *Events) Publish(msg proto.Message) {
 	defer e.Unlock()
 
 	for _, sub := range e.subscribers {
-		sub <- event
+		// drop the event if some subscriber is stuck
+		// dropping is bad, but better than blocking event propagation
+		select {
+		case sub <- event:
+		default:
+		}
 	}
 }
 
