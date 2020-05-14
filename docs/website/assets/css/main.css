@@ -40,6 +40,10 @@ body {
   @apply list-outside pl-4;
 }
 
+.c-rich-text img {
+  @apply m-8;
+}
+
 pre {
   background: #f4f5f6;
   border-style: solid;
