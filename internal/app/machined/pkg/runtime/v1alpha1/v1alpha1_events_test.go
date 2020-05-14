@@ -32,7 +32,6 @@ func TestNewEvents(t *testing.T) {
 			},
 			want: &Events{
 				subscribers: make([]chan machine.Event, 0, 100),
-				Mutex:       &sync.Mutex{},
 			},
 		},
 	}
@@ -62,7 +61,6 @@ func BenchmarkWatch(b *testing.B) {
 func TestEvents_Watch(t *testing.T) {
 	type fields struct {
 		subscribers []chan machine.Event
-		Mutex       *sync.Mutex
 	}
 
 	tests := []struct {
@@ -75,7 +73,6 @@ func TestEvents_Watch(t *testing.T) {
 			count: 10,
 			fields: fields{
 				subscribers: make([]chan machine.Event, 0, 100),
-				Mutex:       &sync.Mutex{},
 			},
 		},
 	}
@@ -84,7 +81,6 @@ func TestEvents_Watch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Events{
 				subscribers: tt.fields.subscribers,
-				Mutex:       tt.fields.Mutex,
 			}
 
 			var wg sync.WaitGroup
@@ -145,7 +141,6 @@ func TestEvents_Publish(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Events{
 				subscribers: tt.fields.subscribers,
-				Mutex:       tt.fields.Mutex,
 			}
 
 			var wg sync.WaitGroup
