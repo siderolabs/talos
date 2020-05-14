@@ -2,9 +2,17 @@
 title: Deploying Talos on Bare Metal
 ---
 
-In this section we will show how you can setup Talos in bare-metal environments.
+In this section we will show how you can set up Talos in bare-metal environments.
+Any tool that can provision ISO install images to a target system can be used to deploy Talos.
+We have some documented Talos working with several of them here:
 
-## Kernel Parameters
+- [Arges](arges/) is a new project by Talos Systems designed to provide Talos users with a robust and reliable way to build and manage bare metal Talos-based Kubernetes clusters.
+Arges uses Cluster-API for a consistent experience, and supports cloud platforms as well as bare metal.
+- [Matchbox](matchbox/) from Red Hat/CoreOS is a service that matches machines to profiles to PXE boot, and can be used to provision Talos clusters.
+
+## Generic Information
+
+### Kernel Parameters
 
 The following is a list of kernel parameters you will need to set:
 
