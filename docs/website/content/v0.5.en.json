@@ -50,6 +50,7 @@
         "path": "v0.5/en/guides/metal",
         "children": [
           { "title": "Overview", "path": "v0.5/en/guides/metal/overview" },
+          { "title": "Arges", "path": "v0.5/en/guides/metal/arges"},
           { "title": "Matchbox", "path": "v0.5/en/guides/metal/matchbox" }
         ]
       }
