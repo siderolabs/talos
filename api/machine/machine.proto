@@ -15,7 +15,7 @@ import "common/common.proto";
 // The machine service definition.
 service MachineService {
   rpc Copy(CopyRequest) returns (stream common.Data);
-  rpc Events(EventsRequest) returns (stream EventsResponse);
+  rpc Events(EventsRequest) returns (stream Event);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
   rpc Logs(LogsRequest) returns (stream common.Data);
@@ -82,8 +82,6 @@ message Event {
   common.Metadata metadata = 1;
   google.protobuf.Any data = 2;
 }
-
-message EventsResponse { repeated Event messages = 1; }
 
 // rpc reset
 message ResetRequest {

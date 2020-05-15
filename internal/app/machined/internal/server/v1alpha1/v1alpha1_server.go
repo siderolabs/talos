@@ -684,9 +684,7 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 				case <-l.Context().Done():
 					return l.Context().Err()
 				case event := <-events:
-					err := l.Send(&machine.EventsResponse{
-						Messages: []*machine.Event{&event},
-					})
+					err := l.Send(&event)
 					if err != nil {
 						return err
 					}
