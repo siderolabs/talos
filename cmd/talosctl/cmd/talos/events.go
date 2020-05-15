@@ -40,7 +40,7 @@ var eventsCmd = &cobra.Command{
 			fmt.Fprintln(w, "NODE\tEVENT\tMESSAGE")
 
 			for {
-				resp, err := stream.Recv()
+				event, err := stream.Recv()
 				if err != nil {
 					if err == io.EOF || status.Code(err) == codes.Canceled {
 						return nil
@@ -51,42 +51,40 @@ var eventsCmd = &cobra.Command{
 
 				node := defaultNode
 
-				for _, event := range resp.Messages {
-					if event.Metadata != nil {
-						node = event.Metadata.Hostname
-					}
+				if event.Metadata != nil {
+					node = event.Metadata.Hostname
+				}
 
-					typeURL := event.GetData().GetTypeUrl()
+				typeURL := event.GetData().GetTypeUrl()
 
-					format := "%s\t%s\t%s\n"
+				format := "%s\t%s\t%s\n"
 
-					var args []interface{}
+				var args []interface{}
 
-					switch event.GetData().GetTypeUrl() {
-					case "talos/runtime/" + proto.MessageName(&machine.SequenceEvent{}):
-						msg := &machine.SequenceEvent{}
+				switch event.GetData().GetTypeUrl() {
+				case "talos/runtime/" + proto.MessageName(&machine.SequenceEvent{}):
+					msg := &machine.SequenceEvent{}
 
-						if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
-							log.Printf("failed to unmarshal message: %v", err)
-							continue
-						}
-
-						if msg.Error != nil {
-							args = []interface{}{msg.GetSequence() + " error:" + " " + msg.GetError().GetMessage()}
-						} else {
-							args = []interface{}{msg.GetSequence() + " " + msg.GetAction().String()}
-						}
-					default:
-						// We haven't implemented the handling of this event yet.
+					if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
+						log.Printf("failed to unmarshal message: %v", err)
 						continue
 					}
 
-					args = append([]interface{}{node, typeURL}, args...)
-					fmt.Fprintf(w, format, args...)
-
-					// nolint: errcheck
-					w.Flush()
+					if msg.Error != nil {
+						args = []interface{}{msg.GetSequence() + " error:" + " " + msg.GetError().GetMessage()}
+					} else {
+						args = []interface{}{msg.GetSequence() + " " + msg.GetAction().String()}
+					}
+				default:
+					// We haven't implemented the handling of this event yet.
+					continue
 				}
+
+				args = append([]interface{}{node, typeURL}, args...)
+				fmt.Fprintf(w, format, args...)
+
+				// nolint: errcheck
+				w.Flush()
 			}
 		})
 	},
