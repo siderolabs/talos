@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -18,29 +19,88 @@ import (
 
 // Events represents the runtime event stream.
 type Events struct {
-	subscribers []chan machine.Event
+	// stream is used as ring buffer of events
+	stream []machine.Event
 
-	sync.Mutex
+	// writePos is the index in streams for the next write (publish)
+	writePos int
+
+	// gen tracks number of wraparounds in stream
+	gen int64
+
+	// cap is capacity of streams
+	cap int
+
+	// mutext protects access to writePos, gen and stream
+	mu sync.Mutex
+	c  *sync.Cond
 }
 
 // NewEvents initializes and returns the v1alpha1 runtime event stream.
-func NewEvents(n int) *Events {
+func NewEvents(cap int) *Events {
 	e := &Events{
-		subscribers: make([]chan machine.Event, 0, n),
+		stream: make([]machine.Event, cap),
+		cap:    cap,
 	}
+
+	e.c = sync.NewCond(&e.mu)
 
 	return e
 }
 
 // Watch implements the Events interface.
 func (e *Events) Watch(f runtime.WatchFunc) {
-	ch := e.add()
+	ctx, ctxCancel := context.WithCancel(context.Background())
+
+	ch := make(chan machine.Event)
+
+	go func() {
+		defer ctxCancel()
+
+		f(ch)
+	}()
+
+	e.mu.Lock()
+	pos := e.writePos
+	gen := e.gen
+	e.mu.Unlock()
 
 	go func() {
 		defer close(ch)
-		defer e.delete(ch)
 
-		f(ch)
+		for {
+			e.mu.Lock()
+			for pos == e.writePos {
+				e.c.Wait()
+
+				select {
+				case <-ctx.Done():
+					e.mu.Unlock()
+					return
+				default:
+				}
+			}
+
+			if e.gen > gen && pos < e.writePos {
+				// buffer overrun, there's no way to signal error in this case,
+				// so for now just return
+				e.mu.Unlock()
+				return
+			}
+
+			event := e.stream[pos]
+			pos = (pos + 1) % e.cap
+			if pos == 0 {
+				gen = e.gen
+			}
+			e.mu.Unlock()
+
+			select {
+			case ch <- event:
+			case <-ctx.Done():
+				return
+			}
+		}
 	}()
 }
 
@@ -62,40 +122,14 @@ func (e *Events) Publish(msg proto.Message) {
 		},
 	}
 
-	e.Lock()
-	defer e.Unlock()
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
-	for _, sub := range e.subscribers {
-		// drop the event if some subscriber is stuck
-		// dropping is bad, but better than blocking event propagation
-		select {
-		case sub <- event:
-		default:
-		}
+	e.stream[e.writePos] = event
+	e.writePos = (e.writePos + 1) % e.cap
+	if e.writePos == 0 {
+		e.gen++
 	}
-}
 
-func (e *Events) add() chan machine.Event {
-	e.Lock()
-	defer e.Unlock()
-
-	ch := make(chan machine.Event, 100)
-
-	e.subscribers = append(e.subscribers, ch)
-
-	return ch
-}
-
-func (e *Events) delete(ch chan machine.Event) {
-	e.Lock()
-	defer e.Unlock()
-
-	for i, sub := range e.subscribers {
-		if sub == ch {
-			l := len(e.subscribers)
-			e.subscribers[i] = e.subscribers[l-1]
-			e.subscribers[l-1] = nil
-			e.subscribers = e.subscribers[:l-1]
-		}
-	}
+	e.c.Broadcast()
 }
