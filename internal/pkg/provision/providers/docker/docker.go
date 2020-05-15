@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/client"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
@@ -43,9 +44,24 @@ func (p *provisioner) Close() error {
 
 // GenOptions provides a list of additional config generate options.
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
-	return []generate.GenOption{
+	ret := []generate.GenOption{
 		generate.WithPersist(false),
 	}
+
+	if len(networkReq.Nameservers) > 0 {
+		nameservers := make([]string, len(networkReq.Nameservers))
+		for i := range nameservers {
+			nameservers[i] = networkReq.Nameservers[i].String()
+		}
+
+		ret = append(ret, generate.WithNetworkConfig(
+			&v1alpha1.NetworkConfig{
+				NameServers: nameservers,
+			}),
+		)
+	}
+
+	return ret
 }
 
 // GetLoadBalancers returns internal/external loadbalancer endpoints.
