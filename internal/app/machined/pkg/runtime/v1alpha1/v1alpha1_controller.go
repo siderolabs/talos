@@ -60,7 +60,8 @@ func NewController(b []byte) (*Controller, error) {
 		}
 	}
 
-	e := NewEvents(100)
+	// TODO: this should be streaming capacity and probably some constant
+	e := NewEvents(1000)
 
 	ctlr := &Controller{
 		r: NewRuntime(cfg, s, e),

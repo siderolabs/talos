@@ -6,189 +6,159 @@
 package v1alpha1
 
 import (
-	"reflect"
+	"context"
+	"fmt"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
+	"golang.org/x/time/rate"
 
 	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
-func TestNewEvents(t *testing.T) {
-	type args struct {
-		n int
-	}
-
+func TestEvents_Publish(t *testing.T) {
 	tests := []struct {
-		name string
-		args args
-		want *Events
+		name     string
+		cap      int
+		watchers int
+		messages int
 	}{
 		{
-			name: "success",
-			args: args{
-				n: 100,
-			},
-			want: &Events{
-				subscribers: make([]chan machine.Event, 0, 100),
-			},
+			name:     "nowatchers",
+			cap:      100,
+			watchers: 0,
+			messages: 100,
+		},
+		{
+			name:     "onemessage",
+			cap:      100,
+			watchers: 10,
+			messages: 1,
+		},
+		{
+			name:     "manymessages_singlewatcher",
+			cap:      100,
+			watchers: 1,
+			messages: 50,
+		},
+		{
+			name:     "manymessages_manywatchers",
+			cap:      100,
+			watchers: 20,
+			messages: 50,
+		},
+		{
+			name:     "manymessages_overcap",
+			cap:      10,
+			watchers: 5,
+			messages: 200,
+		},
+		{
+			name:     "megamessages_overcap",
+			cap:      1000,
+			watchers: 1,
+			messages: 2000,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewEvents(tt.args.n); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewEvents() = %v, want %v", got, tt.want)
+			e := NewEvents(tt.cap)
+
+			var wg sync.WaitGroup
+			wg.Add(tt.watchers)
+
+			got := uint32(0)
+
+			for i := 0; i < tt.watchers; i++ {
+				e.Watch(func(events <-chan runtime.Event) {
+					defer wg.Done()
+
+					for j := 0; j < tt.messages; j++ {
+						event := <-events
+
+						seq, err := strconv.Atoi(event.Payload.(*machine.SequenceEvent).Sequence) //nolint: errcheck
+						if err != nil {
+							t.Fatalf("failed to convert sequence to number: %s", err)
+						}
+
+						if seq != j {
+							t.Fatalf("unexpected sequence: %d != %d", seq, j)
+						}
+
+						atomic.AddUint32(&got, 1)
+					}
+				})
+			}
+
+			l := rate.NewLimiter(1000, tt.cap/2)
+
+			for i := 0; i < tt.messages; i++ {
+				_ = l.Wait(context.Background()) //nolint: errcheck
+
+				e.Publish(&machine.SequenceEvent{
+					Sequence: strconv.Itoa(i),
+				})
+			}
+
+			wg.Wait()
+
+			if got != uint32(tt.messages*tt.watchers) {
+				t.Errorf("Watch() = got %v, want %v", got, tt.messages*tt.watchers)
 			}
 		})
 	}
 }
 
 func BenchmarkWatch(b *testing.B) {
-	e := NewEvents(b.N)
+	e := NewEvents(100)
 
 	var wg sync.WaitGroup
 
 	wg.Add(b.N)
 
 	for i := 0; i < b.N; i++ {
-		e.Watch(func(events <-chan machine.Event) { wg.Done() })
+		e.Watch(func(events <-chan runtime.Event) { wg.Done() })
 	}
 
 	wg.Wait()
 }
 
-func TestEvents_Watch(t *testing.T) {
-	type fields struct {
-		subscribers []chan machine.Event
-	}
-
-	tests := []struct {
-		name   string
-		count  int
-		fields fields
-	}{
-		{
-			name:  "success",
-			count: 10,
-			fields: fields{
-				subscribers: make([]chan machine.Event, 0, 100),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := &Events{
-				subscribers: tt.fields.subscribers,
-			}
+func BenchmarkPublish(bb *testing.B) {
+	for _, watchers := range []int{0, 1, 10} {
+		bb.Run(fmt.Sprintf("Watchers-%d", watchers), func(b *testing.B) {
+			e := NewEvents(10000)
 
 			var wg sync.WaitGroup
-			wg.Add(tt.count)
 
-			for i := 0; i < tt.count; i++ {
-				e.Watch(func(events <-chan machine.Event) { wg.Done() })
-			}
+			watchers := 10
 
-			wg.Wait()
+			wg.Add(watchers)
 
-			// We need to lock here to prevent a race condition when checking the
-			// number of subscribers.
-			e.Lock()
-			defer e.Unlock()
+			for j := 0; j < watchers; j++ {
+				e.Watch(func(events <-chan runtime.Event) {
+					defer wg.Done()
 
-			// We can only check if the number of subscribers decreases because there
-			// is a race condition between the tear down of subscriber and the above
-			// lock. In other words, there is a chance that the number of subscribers
-			// is not zero.
-			if len(e.subscribers) > tt.count {
-				t.Errorf("Watch() = got %v subscribers, expected to be < %v", len(e.subscribers), tt.count)
-			}
-		})
-	}
-}
-
-func TestEvents_Publish(t *testing.T) {
-	type fields struct {
-		subscribers []chan machine.Event
-		Mutex       *sync.Mutex
-	}
-
-	type args struct {
-		event proto.Message
-	}
-
-	tests := []struct {
-		name   string
-		count  int
-		fields fields
-		args   args
-	}{
-		{
-			name:  "success",
-			count: 10,
-			fields: fields{
-				subscribers: make([]chan machine.Event, 0, 100),
-				Mutex:       &sync.Mutex{},
-			},
-			args: args{
-				event: &machine.SequenceEvent{},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := &Events{
-				subscribers: tt.fields.subscribers,
-			}
-
-			var wg sync.WaitGroup
-			wg.Add(tt.count)
-
-			mu := &sync.Mutex{}
-
-			got := 0
-
-			for i := 0; i < tt.count; i++ {
-				e.Watch(func(events <-chan machine.Event) {
-					<-events
-
-					mu.Lock()
-					got++
-					mu.Unlock()
-
-					wg.Done()
+					for i := 0; i < b.N; i++ {
+						if _, ok := <-events; !ok {
+							return
+						}
+					}
 				})
 			}
 
-			e.Publish(tt.args.event)
+			ev := machine.SequenceEvent{}
+
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				e.Publish(&ev)
+			}
 
 			wg.Wait()
-
-			if got != tt.count {
-				t.Errorf("Watch() = got %v, want %v", got, tt.count)
-			}
 		})
 	}
-}
-
-func BenchmarkPublish(b *testing.B) {
-	e := NewEvents(b.N)
-
-	var wg sync.WaitGroup
-
-	wg.Add(b.N)
-
-	for i := 0; i < b.N; i++ {
-		e.Watch(func(events <-chan machine.Event) {
-			<-events
-
-			wg.Done()
-		})
-	}
-
-	e.Publish(&machine.SequenceEvent{})
-
-	wg.Wait()
 }

@@ -19,7 +19,6 @@ import (
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/api/machine"
@@ -154,17 +153,10 @@ func main() {
 	}
 
 	// Watch and handle runtime events.
-	c.Runtime().Events().Watch(func(events <-chan machine.Event) {
+	c.Runtime().Events().Watch(func(events <-chan runtime.Event) {
 		for {
 			for event := range events {
-				if event.Data.TypeUrl == "talos/runtime/"+proto.MessageName(&machine.SequenceEvent{}) {
-					msg := &machine.SequenceEvent{}
-
-					if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
-						log.Printf("failed to unmarshal message: %v", err)
-						continue
-					}
-
+				if msg, ok := event.Payload.(*machine.SequenceEvent); ok {
 					if msg.Error != nil {
 						handle(fmt.Errorf("fatal sequencer error in %q sequence: %v", msg.GetSequence(), msg.GetError().String()))
 					}
