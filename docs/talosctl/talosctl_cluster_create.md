@@ -32,7 +32,7 @@ talosctl cluster create [flags]
       --masters int                 the number of masters to create (default 1)
       --memory int                  the limit on memory usage in MB (each container) (default 1024)
       --mtu int                     MTU of the docker bridge network (default 1500)
-      --nameservers strings         list of nameservers to use (VM only) (default [8.8.8.8,1.1.1.1])
+      --nameservers strings         list of nameservers to use (default [8.8.8.8,1.1.1.1])
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
       --vmlinux-path string         the uncompressed kernel image to use (default "_out/vmlinux")
       --wait                        wait for the cluster to be ready before returning (default true)
