@@ -683,15 +683,19 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
 	errCh := make(chan error)
 
-	s.Controller.Runtime().Events().Watch(func(events <-chan machine.Event) {
+	s.Controller.Runtime().Events().Watch(func(events <-chan runtime.Event) {
 		errCh <- func() error {
 			for {
 				select {
 				case <-l.Context().Done():
 					return l.Context().Err()
 				case event := <-events:
-					err := l.Send(&event)
+					msg, err := event.ToMachineEvent()
 					if err != nil {
+						return err
+					}
+
+					if err = l.Send(msg); err != nil {
 						return err
 					}
 				}
