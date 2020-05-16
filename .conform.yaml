@@ -33,7 +33,7 @@ policies:
           - routerd
           - talosctl
           - kernel
-          - ^v0.5
+          - ^v0.6
           - '*'
   - type: license
     spec:
