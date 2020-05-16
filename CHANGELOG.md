@@ -1,3 +1,23 @@
+<a name="v0.5.0-beta.1"></a>
+
+## [v0.5.0-beta.1](https://github.com/talos-systems/talos/compare/v0.5.0-beta.0...v0.5.0-beta.1) (2020-05-18)
+
+### Chore
+
+- fix nits in the events code
+
+### Fix
+
+- wrap etcd address URLs with formatting
+- run machined API as a service
+- respect nameservers when using docker cluster
+- update Events API response type to match proxying conventions
+- register event service with router
+
+### Release
+
+- **v0.5.0-beta.1:** prepare release
+
 <a name="v0.5.0-beta.0"></a>
 
 ## [v0.5.0-beta.0](https://github.com/talos-systems/talos/compare/v0.5.0-alpha.2...v0.5.0-beta.0) (2020-05-13)
@@ -11,6 +31,7 @@
 
 ### Docs
 
+- add a sitemap and Netlify redirects
 - adjust docs layouts and add tables of contents
 - update copyright date
 - backport intro text to 0.3 and 0.4 docs
@@ -37,6 +58,10 @@
 ### Refactor
 
 - remove warning about missing boot partition
+
+### Release
+
+- **v0.5.0-beta.0:** prepare release
 
 ### Test
 
