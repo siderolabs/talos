@@ -280,7 +280,7 @@ func addMember(r runtime.Runtime, addrs []string, name string) (*clientv3.Member
 func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, err error) {
 	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
 		var (
-			peerAddrs = []string{"https://" + ip + ":2380"}
+			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
 			id        uint64
 		)
@@ -350,25 +350,17 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 		_, upgraded = adv.ReadTag(syslinux.AdvUpgrade)
 	}
 
-	ips, err := net.IPAddrs()
+	primaryAddr, listenAddress, err := primaryAndListenAddresses()
 	if err != nil {
-		return fmt.Errorf("failed to discover IP addresses: %w", err)
+		return fmt.Errorf("failed to calculate etcd addresses: %w", err)
 	}
 
-	if len(ips) == 0 {
-		return errors.New("failed to discover local IP")
-	}
-
-	listenAddress := "0.0.0.0"
-	if net.IsIPv6(ips...) {
-		listenAddress = "[::]"
-	}
-
+	// TODO(scm): see issue #2121 and description below in argsForControlPlane.
 	blackListArgs := argsbuilder.Args{
 		"name":                  hostname,
 		"data-dir":              constants.EtcdDataPath,
-		"listen-peer-urls":      "https://" + listenAddress + ":2380",
-		"listen-client-urls":    "https://" + listenAddress + ":2379",
+		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
+		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
 		"cert-file":             constants.KubernetesEtcdPeerCert,
 		"key-file":              constants.KubernetesEtcdPeerKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,
@@ -399,12 +391,12 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 		}
 
 		if ok {
-			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
+			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
 
 			if upgraded {
 				blackListArgs.Set("initial-cluster-state", "existing")
 
-				initialCluster, err = buildInitialCluster(r, hostname, ips[0].String())
+				initialCluster, err = buildInitialCluster(r, hostname, primaryAddr)
 				if err != nil {
 					return err
 				}
@@ -417,11 +409,11 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 	}
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
-		blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", ips[0].String()))
+		blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
-		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", ips[0].String()))
+		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
 	}
 
 	e.args = blackListArgs.Merge(extraArgs).Args()
@@ -478,25 +470,21 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 		return err
 	}
 
-	ips, err := net.IPAddrs()
+	// TODO(scm):  With the current setup, the listen (bind) address is
+	// essentially hard-coded because we need to calculate it before we process
+	// extraArgs (which may contain special overrides from the user.
+	// This needs to be refactored to allow greater binding flexibility.
+	// Issue #2121.
+	primaryAddr, listenAddress, err := primaryAndListenAddresses()
 	if err != nil {
-		return fmt.Errorf("failed to discover IP addresses: %w", err)
-	}
-
-	if len(ips) == 0 {
-		return errors.New("failed to discover local IP")
-	}
-
-	listenAddress := "0.0.0.0"
-	if net.IsIPv6(ips...) {
-		listenAddress = "[::]"
+		return fmt.Errorf("failed to calculate etcd addresses: %w", err)
 	}
 
 	blackListArgs := argsbuilder.Args{
 		"name":                  hostname,
 		"data-dir":              constants.EtcdDataPath,
-		"listen-peer-urls":      "https://" + listenAddress + ":2380",
-		"listen-client-urls":    "https://" + listenAddress + ":2379",
+		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
+		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
 		"cert-file":             constants.KubernetesEtcdPeerCert,
 		"key-file":              constants.KubernetesEtcdPeerKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,
@@ -534,11 +522,11 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 			var initialCluster string
 
 			if e.Bootstrap {
-				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, ips[0].String())
+				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
 			} else {
-				initialCluster, err = buildInitialCluster(r, hostname, ips[0].String())
+				initialCluster, err = buildInitialCluster(r, hostname, primaryAddr)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to build initial etcd cluster: %w", err)
 				}
 			}
 
@@ -546,12 +534,12 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 		}
 
 		if !extraArgs.Contains("initial-advertise-peer-urls") {
-			blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", ips[0].String()))
+			blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
 		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
-		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", ips[0].String()))
+		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
 	}
 
 	e.args = blackListArgs.Merge(extraArgs).Args()
@@ -574,4 +562,31 @@ func IsDirEmpty(name string) (bool, error) {
 	}
 
 	return false, err
+}
+
+// primaryAndListenAddresses calculates the primary (advertised) and listen (bind) addresses for etcd.
+func primaryAndListenAddresses() (primary string, listen string, err error) {
+	ips, err := net.IPAddrs()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to discover interface IP addresses: %w", err)
+	}
+
+	if len(ips) == 0 {
+		return "", "", errors.New("no valid unicast IP addresses on any interface")
+	}
+
+	// NOTE: we will later likely want to expose the primary IP selection to the
+	// user or build it with greater flexibility.  For now, this maintains
+	// previous behavior.
+	primary = ips[0].String()
+
+	// Regardless of primary selected IP, we should be liberal with our listen
+	// address, for maximum compatibility.  Again, this should probably be
+	// exposed later for greater control.
+	listen = "0.0.0.0"
+	if net.IsIPv6(ips...) {
+		listen = "::"
+	}
+
+	return primary, listen, nil
 }
