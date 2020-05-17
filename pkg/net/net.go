@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// IPAddrs finds and returns a list of non-loopback IPv4 addresses of the
+// IPAddrs finds and returns a list of non-loopback IP addresses of the
 // current machine.
 func IPAddrs() (ips []net.IP, err error) {
 	ips = []net.IP{}
@@ -24,8 +24,8 @@ func IPAddrs() (ips []net.IP, err error) {
 	}
 
 	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && ipnet.IP.IsGlobalUnicast() {
-			if ipnet.IP.To4() != nil {
+		if ipnet, ok := a.(*net.IPNet); ok {
+			if ipnet.IP.IsGlobalUnicast() && !ipnet.IP.IsLinkLocalUnicast() {
 				ips = append(ips, ipnet.IP)
 			}
 		}
@@ -36,6 +36,8 @@ func IPAddrs() (ips []net.IP, err error) {
 
 // FormatAddress checks that the address has a consistent format.
 func FormatAddress(addr string) string {
+	addr = strings.Trim(addr, "[]")
+
 	if ip := net.ParseIP(addr); ip != nil {
 		// If this is an IPv6 address, encapsulate it in brackets
 		if ip.To4() == nil {
