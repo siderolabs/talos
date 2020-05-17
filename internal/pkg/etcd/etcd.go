@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
+	"github.com/talos-systems/talos/pkg/net"
 )
 
 // NewClient initializes and returns an etcd client configured to talk to
@@ -62,7 +63,7 @@ func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpo
 
 	// Etcd expects host:port format.
 	for i := 0; i < len(endpoints); i++ {
-		endpoints[i] += ":2379"
+		endpoints[i] = net.FormatAddress(endpoints[i]) + ":2379"
 	}
 
 	return NewClient(endpoints)
