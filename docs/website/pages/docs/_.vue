@@ -96,7 +96,7 @@ export default {
     store.commit('sidebar/setMenu', menu)
   },
 
-  mounted() {
+  created() {
     // if we hit the top-level, redirect to the first page in the doc set
     if (!this.$route.params.pathMatch.includes('/')) {
       this.$router.replace('/docs/' + this.$store.state.sidebar.menu[0].path)

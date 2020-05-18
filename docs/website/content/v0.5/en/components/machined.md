@@ -11,11 +11,11 @@ To that extent, `machined` is relatively static in that it does not allow for ar
 Only the services necessary to run Kubernetes and manage the node are available.
 This includes:
 
-- [containerd](containerd)
-- [kubeadm](kubeadm)
+- <router-link to="./containerd">containerd</router-link>
+- <router-link to="./kubeadm">kubeadm</router-link>
 - [kubelet](https://kubernetes.io/docs/concepts/overview/components/)
-- [networkd](networkd)
-- [timed](timed)
-- [osd](osd)
-- [trustd](trustd)
-- [udevd](udevd)
+- <router-link to="./networkd">networkd</router-link>
+- <router-link to="./timed">timed</router-link>
+- <router-link to="./osd">osd</router-link>
+- <router-link to="./trustd">trustd</router-link>
+- <router-link to="./udevd">udevd</router-link>
