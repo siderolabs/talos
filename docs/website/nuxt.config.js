@@ -68,7 +68,7 @@ export default {
   /*
    ** Nuxt.js modules
    */
-  modules: ['nuxt-webfontloader'],
+  modules: ['nuxt-webfontloader', 'nuxt-interpolation'],
 
   webfontloader: {
     google: {

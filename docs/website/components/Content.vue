@@ -7,7 +7,7 @@
       ></GitHubLink>
     </div>
 
-    <div v-html="doc.content" class="border-t pt-4"></div>
+    <div v-interpolation v-html="doc.content" class="border-t pt-4"></div>
   </article>
 </template>
 
