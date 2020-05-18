@@ -55,8 +55,8 @@ type upgradeSpec struct {
 }
 
 const (
-	talos03Version = "v0.3.3"
 	talos04Version = "v0.4.1"
+	talos05Version = "v0.5.0-beta.1"
 )
 
 var (
@@ -74,33 +74,33 @@ func trimVersion(version string) string {
 	return regexp.MustCompile(`(-\d+-g[0-9a-f]+)$`).ReplaceAllString(version, "")
 }
 
-// upgradeZeroThreeToCurrent upgrades Talos 0.3.x to Talos 0.4.x.
-func upgradeZeroThreeToZeroFour() upgradeSpec {
+// upgradeBetweenTwoLastReleases upgrades between two last releases of Talos
+func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", talos03Version, talos04Version),
+		ShortName: fmt.Sprintf("%s-%s", talos04Version, talos05Version),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos03Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos03Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos03Version),
-		SourceVersion:        talos03Version,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
+		SourceVersion:        talos04Version,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
-		TargetVersion:        talos04Version,
+		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos05Version),
+		TargetVersion:        talos05Version,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
 	}
 }
 
-// upgradeZeroFourToCurrent upgrade Talos 0.4.x to the current version of Talos.
-func upgradeZeroFourToCurrent() upgradeSpec {
+// upgradeLastReleaseToCurrent upgrades last release to the current version of Talos.
+func upgradeLastReleaseToCurrent() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", talos04Version, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("%s-%s", talos05Version, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
-		SourceVersion:        talos04Version,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos05Version), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos05Version), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos05Version),
+		SourceVersion:        talos05Version,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
@@ -110,7 +110,7 @@ func upgradeZeroFourToCurrent() upgradeSpec {
 	}
 }
 
-// upgradeSingeNodePreserve upgrade Talos 0.4.x to the current version of Talos for single-node cluster with preserve.
+// upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
 func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("preserve-%s-%s", talos04Version, DefaultSettings.CurrentVersion),
@@ -118,7 +118,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
-		SourceVersion:        talos04Version,
+		SourceVersion:        talos05Version,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
@@ -235,11 +235,6 @@ func (suite *UpgradeSuite) setupCluster() {
 				BinPath:  defaultCNIBinPath,
 				ConfDir:  defaultCNIConfDir,
 				CacheDir: defaultCNICacheDir,
-			},
-			LoadBalancer: provision.LoadBalancerConfig{
-				// as we're upgrading from older versions of Talos,
-				// disable LB to all apid nodes
-				LimitApidOnlyInitNode: true,
 			},
 		},
 
@@ -434,8 +429,8 @@ func (suite *UpgradeSuite) SuiteName() string {
 
 func init() {
 	allSuites = append(allSuites,
-		&UpgradeSuite{specGen: upgradeZeroThreeToZeroFour, track: 0},
-		&UpgradeSuite{specGen: upgradeZeroFourToCurrent, track: 1},
+		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
+		&UpgradeSuite{specGen: upgradeLastReleaseToCurrent, track: 1},
 		// TODO: enable once flaky test is debugged:
 		// &UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
 	)

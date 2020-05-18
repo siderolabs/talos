@@ -19,7 +19,7 @@ CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/downlo
 SONOBUOY_VERSION ?= 0.18.0
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
-RELEASES ?= v0.3.3 v0.4.1
+RELEASES ?= v0.4.1 v0.5.0-beta.1
 
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
