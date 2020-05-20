@@ -1578,7 +1578,7 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecution
 
 		system.Services(r).ReloadAndStart(svc)
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
