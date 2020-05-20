@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/peer"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -79,7 +78,7 @@ func serviceList(ctx context.Context, c *client.Client) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tSERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
 
-	defaultNode := helpers.AddrFromPeer(&remotePeer)
+	defaultNode := client.AddrFromPeer(&remotePeer)
 
 	for _, msg := range resp.Messages {
 		for _, s := range msg.Services {
@@ -112,7 +111,7 @@ func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
-	defaultNode := helpers.AddrFromPeer(&remotePeer)
+	defaultNode := client.AddrFromPeer(&remotePeer)
 
 	for _, s := range services {
 		node := defaultNode
@@ -163,7 +162,7 @@ func serviceStart(ctx context.Context, c *client.Client, id string) error {
 		cli.Warning("%s", err)
 	}
 
-	defaultNode := helpers.AddrFromPeer(&remotePeer)
+	defaultNode := client.AddrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
@@ -193,7 +192,7 @@ func serviceStop(ctx context.Context, c *client.Client, id string) error {
 		cli.Warning("%s", err)
 	}
 
-	defaultNode := helpers.AddrFromPeer(&remotePeer)
+	defaultNode := client.AddrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
@@ -223,7 +222,7 @@ func serviceRestart(ctx context.Context, c *client.Client, id string) error {
 		cli.Warning("%s", err)
 	}
 
-	defaultNode := helpers.AddrFromPeer(&remotePeer)
+	defaultNode := client.AddrFromPeer(&remotePeer)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")

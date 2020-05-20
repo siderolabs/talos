@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/version"
@@ -54,7 +53,7 @@ var versionCmd = &cobra.Command{
 				cli.Warning("%s", err)
 			}
 
-			defaultNode := helpers.AddrFromPeer(&remotePeer)
+			defaultNode := client.AddrFromPeer(&remotePeer)
 
 			for _, msg := range resp.Messages {
 				node := defaultNode

@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/client"
 )
 
@@ -33,7 +32,7 @@ var dmesgCmd = &cobra.Command{
 				return fmt.Errorf("error getting dmesg: %w", err)
 			}
 
-			defaultNode := helpers.RemotePeer(stream.Context())
+			defaultNode := client.RemotePeer(stream.Context())
 
 			for {
 				resp, err := stream.Recv()

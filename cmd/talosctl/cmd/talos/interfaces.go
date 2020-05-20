@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/peer"
 
 	networkapi "github.com/talos-systems/talos/api/network"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -48,7 +47,7 @@ func intersRender(remotePeer *peer.Peer, resp *networkapi.InterfacesResponse) er
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tINDEX\tNAME\tMAC\tMTU\tADDRESS")
 
-	defaultNode := helpers.AddrFromPeer(remotePeer)
+	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
 		node := defaultNode

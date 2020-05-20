@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/peer"
 
 	osapi "github.com/talos-systems/talos/api/os"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -184,7 +183,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 		return output, nil
 	}
 
-	defaultNode := helpers.AddrFromPeer(&remotePeer)
+	defaultNode := client.AddrFromPeer(&remotePeer)
 
 	s := []string{}
 
