@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/client"
 )
 
@@ -55,7 +54,7 @@ var lsCmd = &cobra.Command{
 				return fmt.Errorf("error fetching logs: %s", err)
 			}
 
-			defaultNode := helpers.RemotePeer(stream.Context())
+			defaultNode := client.RemotePeer(stream.Context())
 
 			if !long {
 				w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)

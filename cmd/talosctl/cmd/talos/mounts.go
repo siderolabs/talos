@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/peer"
 
 	machineapi "github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -50,7 +49,7 @@ func mountsRender(remotePeer *peer.Peer, resp *machineapi.MountsResponse) error 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
 
-	defaultNode := helpers.AddrFromPeer(remotePeer)
+	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
 		for _, r := range msg.Stats {

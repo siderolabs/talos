@@ -19,7 +19,6 @@ import (
 
 	"github.com/talos-systems/talos/api/common"
 	osapi "github.com/talos-systems/talos/api/os"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -65,7 +64,7 @@ func statsRender(remotePeer *peer.Peer, resp *osapi.StatsResponse) error {
 
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
 
-	defaultNode := helpers.AddrFromPeer(remotePeer)
+	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
 		resp := msg

@@ -689,7 +689,11 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 				select {
 				case <-l.Context().Done():
 					return l.Context().Err()
-				case event := <-events:
+				case event, ok := <-events:
+					if !ok {
+						return nil
+					}
+
 					msg, err := event.ToMachineEvent()
 					if err != nil {
 						return err

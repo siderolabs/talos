@@ -19,7 +19,6 @@ import (
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -55,7 +54,7 @@ var logsCmd = &cobra.Command{
 				return fmt.Errorf("error fetching logs: %s", err)
 			}
 
-			defaultNode := helpers.RemotePeer(stream.Context())
+			defaultNode := client.RemotePeer(stream.Context())
 
 			respCh, errCh := newLineSlicer(stream)
 

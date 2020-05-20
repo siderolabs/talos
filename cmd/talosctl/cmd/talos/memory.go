@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/peer"
 
 	osapi "github.com/talos-systems/talos/api/os"
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -55,7 +54,7 @@ func briefRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tTOTAL\tUSED\tFREE\tSHARED\tBUFFERS\tCACHE\tAVAILABLE")
 
-	defaultNode := helpers.AddrFromPeer(remotePeer)
+	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
 		node := defaultNode
@@ -81,7 +80,7 @@ func briefRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
 }
 
 func verboseRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
-	defaultNode := helpers.AddrFromPeer(remotePeer)
+	defaultNode := client.AddrFromPeer(remotePeer)
 
 	// Dump as /proc/meminfo
 	for _, msg := range resp.Messages {
