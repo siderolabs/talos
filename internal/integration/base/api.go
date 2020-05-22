@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -115,7 +116,12 @@ func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
 //
 // Context provided might have specific node attached for API call.
 func (apiSuite *APISuite) ReadUptime(ctx context.Context) (float64, error) {
-	reader, errCh, err := apiSuite.Client.Read(ctx, "/proc/uptime")
+	// set up a short timeout around uptime read calls to work around
+	// cases when rebooted node doesn't answer for a long time on requests
+	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer reqCtxCancel()
+
+	reader, errCh, err := apiSuite.Client.Read(reqCtx, "/proc/uptime")
 	if err != nil {
 		return 0, err
 	}
