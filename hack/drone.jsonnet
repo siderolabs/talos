@@ -195,7 +195,7 @@ local image_gcp = Step("image-gcp", depends_on=[image_digital_ocean]);
 local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
-local unit_tests_race = Step("unit-tests-race", depends_on=[golint]);
+local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux]);
 local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});

@@ -443,7 +443,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint-go
+  - initramfs
 
 - name: coverage
   image: alpine:3.10
@@ -1151,7 +1151,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint-go
+  - initramfs
 
 - name: coverage
   image: alpine:3.10
@@ -1951,7 +1951,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint-go
+  - initramfs
 
 - name: coverage
   image: alpine:3.10
@@ -2781,7 +2781,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint-go
+  - initramfs
 
 - name: coverage
   image: alpine:3.10
@@ -3611,7 +3611,7 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - lint-go
+  - initramfs
 
 - name: coverage
   image: alpine:3.10
@@ -4006,6 +4006,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 84e019b528d088bc8729dd2f80210758af8be586990b4405eed53a5f8e6886d9
+hmac: 507e1e1344e87b9c073e3f212b076b15655bea11ba86c9f4f781079547c8aeee
 
 ...
