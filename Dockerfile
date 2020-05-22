@@ -3,7 +3,6 @@
 # Meta args applied to stage base names.
 
 ARG TOOLS
-ARG GO_VERSION
 
 # The tools target provides base toolchain for the build.
 
@@ -287,31 +286,31 @@ COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:v0.2.0-3-g6ac7962 /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:v0.2.0-3-g6ac7962 /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:v0.2.0-5-ge515e41 /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:v0.2.0-5-ge515e41 /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/containerd:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/eudev:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/iptables:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/libressl:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-3-g6ac7962 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-3-g6ac7962 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
-COPY --from=docker.io/autonomy/musl:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/runc:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/socat:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/syslinux:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:v0.2.0-3-g6ac7962 / /rootfs
-COPY --from=docker.io/autonomy/util-linux:v0.2.0-3-g6ac7962 /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:v0.2.0-3-g6ac7962 /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:v0.2.0-3-g6ac7962 /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:v0.2.0-3-g6ac7962 /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/containerd:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/eudev:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/iptables:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/libressl:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-5-ge515e41 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-5-ge515e41 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=docker.io/autonomy/musl:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/runc:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/socat:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/syslinux:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:v0.2.0-5-ge515e41 / /rootfs
+COPY --from=docker.io/autonomy/util-linux:v0.2.0-5-ge515e41 /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:v0.2.0-5-ge515e41 /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:v0.2.0-5-ge515e41 /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:v0.2.0-5-ge515e41 /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
@@ -425,13 +424,12 @@ COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
 # The unit-tests-race target performs tests with race detector.
 
-FROM golang:${GO_VERSION} AS unit-tests-race
-COPY --from=base /src /src
-COPY --from=base /go/pkg/mod /go/pkg/mod
-WORKDIR /src
-ENV GO111MODULE on
+FROM base AS unit-tests-race
+RUN unlink /etc/ssl
+COPY --from=rootfs / /
+COPY hack/golang/test.sh /bin
 ARG TESTPKGS
-RUN --mount=type=cache,target=/root/.cache/go-build go test -v -count 1 -race ${TESTPKGS}
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache/go-build /bin/test.sh --race ${TESTPKGS}
 
 # The integration-test target builds integration test binary.
 

@@ -2,9 +2,17 @@
 
 set -e
 
+# Set up common test environment variables
+export PLATFORM=container
+
 perform_tests() {
   echo "Performing tests on $1"
   go test -v -covermode=atomic -coverprofile=coverage.txt -count 1 "$1"
+}
+
+perform_race_tests() {
+  echo "Performing race tests on $1"
+  CGO_ENABLED=1 go test -v -race -count 1 "$1"
 }
 
 perform_short_tests() {
@@ -13,6 +21,10 @@ perform_short_tests() {
 }
 
 case $1 in
+  --race)
+  shift
+  perform_race_tests "${1:-./...}"
+  ;;
   --short)
   shift
   perform_short_tests "${1:-./...}"

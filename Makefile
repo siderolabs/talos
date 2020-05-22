@@ -7,7 +7,7 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= autonomy/tools:v0.1.0-4-gac40795
+TOOLS ?= autonomy/tools:v0.2.0-1-g418e800
 GO_VERSION ?= 1.14
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 OSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -32,7 +32,6 @@ COMMON_ARGS += --push=$(PUSH)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
-COMMON_ARGS += --build-arg=GO_VERSION=$(GO_VERSION)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
@@ -175,7 +174,7 @@ unit-tests: ## Performs unit tests.
 
 .PHONY: unit-tests-race
 unit-tests-race: ## Performs unit tests with race detection enabled.
-	@$(MAKE) target-$@
+	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure"
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS)
