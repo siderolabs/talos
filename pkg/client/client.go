@@ -599,6 +599,12 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 	filtered, err = FilterMessages(resp, err)
 	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint: errcheck
 
+	// FilterMessages might remove responses if they actually contain errors,
+	// errors will be merged into `resp`.
+	if resp == nil {
+		return
+	}
+
 	for _, resp := range resp.Messages {
 		for _, svc := range resp.Services {
 			if svc.Id == id {
