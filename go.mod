@@ -12,7 +12,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
-	github.com/beevik/ntp v0.2.0
+	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v0.0.0-20191125132625-80b32e3c75c9
 	github.com/containerd/containerd v1.3.2
 	github.com/containerd/continuity v0.0.0-20191127005431-f65d91d395eb // indirect

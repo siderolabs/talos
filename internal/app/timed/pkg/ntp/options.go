@@ -23,9 +23,9 @@ func defaultOptions() *NTP {
 	// defaults for minpoll + maxpoll
 	// http://www.ntp.org/ntpfaq/NTP-s-algo.htm#AEN2082
 	return &NTP{
-		Server:  "pool.ntp.org",
-		MaxPoll: MaxAllowablePoll * time.Second,
-		MinPoll: 64 * time.Second,
+		Server:  "ru.pool.ntp.org",
+		MaxPoll: 20 * time.Second,
+		MinPoll: 10 * time.Second,
 	}
 }
 

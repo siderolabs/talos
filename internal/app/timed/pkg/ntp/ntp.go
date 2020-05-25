@@ -110,7 +110,29 @@ func setTime(adjustedTime time.Time) error {
 	return syscall.Settimeofday(&timeval)
 }
 
+const (
+	// max time drift to compensate via adjtimex()
+	adjustTimeLimit = 128 * time.Millisecond
+
+	// from linux/timex.h
+	adjOffset = 0x0001
+	adjNano   = 0x2000
+)
+
 // adjustTime adds an offset to the current time.
 func adjustTime(offset time.Duration) error {
-	return setTime(time.Now().Add(offset))
+	if offset < -adjustTimeLimit || offset > adjustTimeLimit {
+		return setTime(time.Now().Add(offset))
+	}
+
+	log.Printf("adjusting time by %s", offset)
+
+	state, err := syscall.Adjtimex(&syscall.Timex{
+		Modes:  adjOffset | adjNano,
+		Offset: int64(offset / time.Nanosecond),
+	})
+
+	log.Printf("state: %d", state)
+
+	return err
 }
