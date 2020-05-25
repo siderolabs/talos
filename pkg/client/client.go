@@ -592,7 +592,7 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 	)
 
 	if err != nil {
-		return
+		return services, err
 	}
 
 	var filtered interface{}
@@ -602,7 +602,7 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 	// FilterMessages might remove responses if they actually contain errors,
 	// errors will be merged into `resp`.
 	if resp == nil {
-		return
+		return services, err
 	}
 
 	for _, resp := range resp.Messages {
@@ -616,7 +616,7 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 		}
 	}
 
-	return
+	return services, err
 }
 
 // ServiceStart starts a service.
