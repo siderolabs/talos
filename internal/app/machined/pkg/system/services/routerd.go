@@ -120,7 +120,8 @@ func (o *Routerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface
 func (o *Routerd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
-		conn, err := grpc.Dial(
+		conn, err := grpc.DialContext(
+			ctx,
 			fmt.Sprintf("%s://%s", "unix", constants.RouterdSocketPath),
 			grpc.WithInsecure(),
 			grpc.WithContextDialer(dialer.DialUnix()),

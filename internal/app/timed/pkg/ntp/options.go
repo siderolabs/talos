@@ -17,6 +17,8 @@ const (
 	MaxAllowablePoll = 1024
 	// MinAllowablePoll is the minimum time allowed for a client to query a time server
 	MinAllowablePoll = 4
+	// AdjustTimeLimit is a maximum time drift to compensate via adjtimex()
+	AdjustTimeLimit = 128 * time.Millisecond
 )
 
 func defaultOptions() *NTP {

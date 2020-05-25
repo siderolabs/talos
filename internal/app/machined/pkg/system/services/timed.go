@@ -7,6 +7,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,16 +15,21 @@ import (
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
+	"github.com/golang/protobuf/ptypes/empty"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/syndtr/gocapability/capability"
+	"google.golang.org/grpc"
 
+	healthapi "github.com/talos-systems/talos/api/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/dialer"
 )
 
 // Timed implements the Service interface. It serves as the concrete type with
@@ -112,4 +118,51 @@ func (n *Timed) APIStartAllowed(r runtime.Runtime) bool {
 // APIRestartAllowed implements the APIRestartableService interface.
 func (n *Timed) APIRestartAllowed(r runtime.Runtime) bool {
 	return true
+}
+
+// HealthFunc implements the HealthcheckedService interface
+func (n *Timed) HealthFunc(runtime.Runtime) health.Check {
+	return func(ctx context.Context) error {
+		var (
+			conn      *grpc.ClientConn
+			err       error
+			hcResp    *healthapi.HealthCheckResponse
+			readyResp *healthapi.ReadyCheckResponse
+		)
+
+		conn, err = grpc.DialContext(
+			ctx,
+			fmt.Sprintf("%s://%s", "unix", constants.TimeSocketPath),
+			grpc.WithInsecure(),
+			grpc.WithContextDialer(dialer.DialUnix()),
+		)
+		if err != nil {
+			return err
+		}
+		defer conn.Close() //nolint: errcheck
+
+		nClient := healthapi.NewHealthClient(conn)
+		if readyResp, err = nClient.Ready(ctx, &empty.Empty{}); err != nil {
+			return err
+		}
+
+		if readyResp.Messages[0].Status != healthapi.ReadyCheck_READY {
+			return errors.New("timed is not ready")
+		}
+
+		if hcResp, err = nClient.Check(ctx, &empty.Empty{}); err != nil {
+			return err
+		}
+
+		if hcResp.Messages[0].Status == healthapi.HealthCheck_SERVING {
+			return nil
+		}
+
+		return fmt.Errorf("timed is unhealthy: %s", hcResp.Messages[0].Status.String())
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface
+func (n *Timed) HealthSettings(runtime.Runtime) *health.Settings {
+	return &health.DefaultSettings
 }

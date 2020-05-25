@@ -124,7 +124,7 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface
-func (n *Networkd) HealthFunc(cfg runtime.Configurator) health.Check {
+func (n *Networkd) HealthFunc(r runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		var (
 			conn      *grpc.ClientConn
@@ -133,7 +133,8 @@ func (n *Networkd) HealthFunc(cfg runtime.Configurator) health.Check {
 			readyResp *healthapi.ReadyCheckResponse
 		)
 
-		conn, err = grpc.Dial(
+		conn, err = grpc.DialContext(
+			ctx,
 			fmt.Sprintf("%s://%s", "unix", constants.NetworkSocketPath),
 			grpc.WithInsecure(),
 			grpc.WithContextDialer(dialer.DialUnix()),
@@ -162,7 +163,7 @@ func (n *Networkd) HealthFunc(cfg runtime.Configurator) health.Check {
 
 		msg := fmt.Sprintf("networkd is unhealthy: %s", hcResp.Messages[0].Status.String())
 
-		if cfg.Debug() {
+		if r.Config().Debug() {
 			log.Printf("DEBUG: %s", msg)
 		}
 
