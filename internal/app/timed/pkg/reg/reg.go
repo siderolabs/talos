@@ -6,12 +6,14 @@ package reg
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 
+	healthapi "github.com/talos-systems/talos/api/health"
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 )
@@ -32,6 +34,7 @@ func NewRegistrator(n *ntp.NTP) *Registrator {
 // Register implements the factory.Registrator interface.
 func (r *Registrator) Register(s *grpc.Server) {
 	timeapi.RegisterTimeServiceServer(s, r)
+	healthapi.RegisterHealthServer(s, r)
 }
 
 // Time issues a query to the configured ntp server and displays the results
@@ -87,4 +90,63 @@ func genProtobufTimeResponse(local, remote time.Time, server string) (*timeapi.T
 	}
 
 	return resp, nil
+}
+
+// Check implements the Health api and provides visibilty into the state of timed.
+func (r *Registrator) Check(ctx context.Context, in *empty.Empty) (reply *healthapi.HealthCheckResponse, err error) {
+	reply = &healthapi.HealthCheckResponse{
+		Messages: []*healthapi.HealthCheck{
+			{
+				Status: healthapi.HealthCheck_SERVING,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// Watch implements the Health api and provides visibilty into the state of networkd.
+// Ready signifies the daemon (api) is healthy and ready to serve requests.
+func (r *Registrator) Watch(in *healthapi.HealthWatchRequest, srv healthapi.Health_WatchServer) error {
+	if in == nil {
+		return fmt.Errorf("an input interval is required")
+	}
+
+	ticker := time.NewTicker(time.Duration(in.IntervalSeconds) * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-srv.Context().Done():
+			return srv.Context().Err()
+		case <-ticker.C:
+			resp, err := r.Check(srv.Context(), &empty.Empty{})
+			if err != nil {
+				return err
+			}
+
+			if err := srv.Send(resp); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+// Ready implements the Health api and provides visibility to the state of timed.
+// Ready signifies the initial time sync finished successfully.
+// Not Ready signifies that the initial time sync still needs to happen.
+func (r *Registrator) Ready(ctx context.Context, in *empty.Empty) (reply *healthapi.ReadyCheckResponse, err error) {
+	rdy := &healthapi.ReadyCheck{Status: healthapi.ReadyCheck_NOT_READY}
+
+	if r.Timed.Ready() {
+		rdy.Status = healthapi.ReadyCheck_READY
+	}
+
+	reply = &healthapi.ReadyCheckResponse{
+		Messages: []*healthapi.ReadyCheck{
+			rdy,
+		},
+	}
+
+	return reply, nil
 }

@@ -62,7 +62,7 @@ func main() {
 		log.Fatalf("failed to create ntp client: %v", err)
 	}
 
-	log.Println("Starting timed")
+	log.Println("starting timed")
 
 	errch := make(chan error)
 

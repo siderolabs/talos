@@ -5,15 +5,18 @@
 package ntp
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"math/rand"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/beevik/ntp"
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/talos-systems/talos/internal/app/timed/pkg/timex"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -22,6 +25,8 @@ type NTP struct {
 	Server  string
 	MinPoll time.Duration
 	MaxPoll time.Duration
+
+	ready uint32
 }
 
 // NewNTPClient instantiates a new ntp client for the
@@ -35,6 +40,11 @@ func NewNTPClient(opts ...Option) (*NTP, error) {
 	}
 
 	return ntp, result.ErrorOrNil()
+}
+
+// Ready checks whether initial time sync has already happened.
+func (n *NTP) Ready() bool {
+	return atomic.LoadUint32(&n.ready) > 0
 }
 
 // Daemon runs the control loop for query and set time
@@ -98,6 +108,8 @@ func (n *NTP) QueryAndSetTime() (err error) {
 		return fmt.Errorf("failed to set time, %s", err)
 	}
 
+	atomic.StoreUint32(&n.ready, 1)
+
 	return
 }
 
@@ -112,5 +124,26 @@ func setTime(adjustedTime time.Time) error {
 
 // adjustTime adds an offset to the current time.
 func adjustTime(offset time.Duration) error {
-	return setTime(time.Now().Add(offset))
+	if offset < -AdjustTimeLimit || offset > AdjustTimeLimit {
+		return setTime(time.Now().Add(offset))
+	}
+
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, "adjusting time by %s", offset)
+
+	state, err := timex.Adjtimex(&syscall.Timex{
+		Modes:  timex.ADJ_OFFSET | timex.ADJ_NANO,
+		Offset: int64(offset / time.Nanosecond),
+	})
+
+	fmt.Fprintf(&buf, ", state %s", state)
+
+	if err != nil {
+		fmt.Println(&buf, ", error was %s", err)
+	}
+
+	log.Println(buf.String())
+
+	return err
 }
