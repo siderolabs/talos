@@ -61,4 +61,6 @@ See [Contributing](CONTRIBUTING.md) for our guidelines.
 
 ## License
 
-[![license](https://img.shields.io/github/license/talos-systems/talos.svg?style=flat-square)](https://github.com/talos-systems/talos/blob/master/LICENSE)
+<a href="https://github.com/talos-systems/talos/blob/master/LICENSE">
+  <img alt="GitHub" src="https://img.shields.io/github/license/talos-systems/talos?style=flat-square">
+</a>
