@@ -135,7 +135,7 @@ func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
-	return []string{"cri", "networkd"}
+	return []string{"cri", "networkd", "timed"}
 }
 
 // Runner implements the Service interface.
