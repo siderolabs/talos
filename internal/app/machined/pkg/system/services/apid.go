@@ -66,7 +66,7 @@ func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd", "networkd"}
+	return []string{"containerd", "networkd", "timed"}
 }
 
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {

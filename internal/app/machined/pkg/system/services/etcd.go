@@ -81,7 +81,7 @@ func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (e *Etcd) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd", "networkd"}
+	return []string{"containerd", "networkd", "timed"}
 }
 
 // Runner implements the Service interface.
