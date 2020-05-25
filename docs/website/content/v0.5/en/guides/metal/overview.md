@@ -12,6 +12,12 @@ Arges uses Cluster-API for a consistent experience, and supports cloud platforms
 
 ## Generic Information
 
+### High level overview
+
+Below is a image to visualize the process of bootstrapping nodes.
+
+<img src="/images/metal-overview.png" width="950">
+
 ### Kernel Parameters
 
 The following is a list of kernel parameters you will need to set:
