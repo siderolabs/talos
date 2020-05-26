@@ -1,3 +1,7 @@
+<a name="v0.5.0"></a>
+
+## [v0.5.0](https://github.com/talos-systems/talos/compare/v0.5.0-beta.1...v0.5.0) (2020-05-26)
+
 <a name="v0.5.0-beta.1"></a>
 
 ## [v0.5.0-beta.1](https://github.com/talos-systems/talos/compare/v0.5.0-beta.0...v0.5.0-beta.1) (2020-05-18)
