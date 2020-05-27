@@ -27,7 +27,7 @@
             </p>
             <div class="flex-1 text-center pb-4 m-0">
               <a
-                href="https://www.talos.dev/docs/v0.4/#v0.4/en/guides/getting-started/docker"
+                href="https://www.talos.dev/docs/v0.5/en/guides/getting-started/intro"
               >
                 <button class="teal-cta-button">
                   Try it now
