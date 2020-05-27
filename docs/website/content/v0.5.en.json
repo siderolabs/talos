@@ -13,6 +13,10 @@
             "path": "v0.5/en/guides/getting-started/intro"
           },
           {
+            "title": "Talosctl",
+            "path": "v0.5/en/guides/getting-started/talosctl"
+          },
+          {
             "title": "How to Get Help",
             "path": "v0.5/en/guides/getting-started/help"
           }
