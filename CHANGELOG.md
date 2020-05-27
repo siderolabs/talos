@@ -1,65 +1,36 @@
+<a name="v0.6.0-alpha.1"></a>
 
-<a name="v0.6.0-alpha.0"></a>
-## [v0.6.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.5.0-beta.0...v0.6.0-alpha.0) (2020-05-16)
-
-### Chore
-
-* fix nits in the events code
-
-### Fix
-
-* run machined API as a service
-* respect nameservers when using docker cluster
-* update Events API response type to match proxying conventions
-* register event service with router
-
-
-<a name="v0.5.0-beta.0"></a>
-## [v0.5.0-beta.0](https://github.com/talos-systems/talos/compare/v0.5.0-alpha.2...v0.5.0-beta.0) (2020-05-13)
+## [v0.6.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.0...v0.6.0-alpha.1) (2020-05-27)
 
 ### Chore
 
-* serialize firecracker e2e tests
-* pin markdown linting libraries
-* use clusterctl and v1alpha3 providers for tests
-* fix prototool lint
+- fix markdown lint
+- upgrade Go to 1.14.3 and use toolchain for race detector
+- replace underlying event implementation with single slice
 
 ### Docs
 
-* add a sitemap and Netlify redirects
-* adjust docs layouts and add tables of contents
-* update copyright date
-* backport intro text to 0.3 and 0.4 docs
-* fix netlify deep linking for 0.5 docs by generating fallback routes
-* add 0.5 pre-release docs, add linkable anchors, other fixes
+- make v0.5 docs the default
+- fix markdown
+- add metal overview diagram
+- fix broken links in components pages (fixes [#2117](https://github.com/talos-systems/talos/issues/2117))
+- add some information about Arges and expand the bare metal section a bit
+- overview of talos components
 
 ### Feat
 
-* add events API
-* add support for file scheme
-* enable rpfilter
-* add bootstrap API
-* add recovery API
-* allow dual-stack support with bootkube wrapper
+- add LVM2
+- implement simplified client method to consume events
+- upgrade Linux to v5.6.13
 
 ### Fix
 
-* refactor client creation API
-* update kernel package
-* write machined RPC logs to file
-* clean up docs page scripts in preparation for 0.5 docs
-* ipv6 static default gateway not set if gateway is a LL unicast address
-
-### Refactor
-
-* remove warning about missing boot partition
-
-### Release
-
-* **v0.5.0-beta.0:** prepare release
+- prevent panic on nil pointer in ServiceInfo method
+- bump service wait to ten minutes
+- allow all seccomp profile names
+- wrap etcd address URLs with formatting
 
 ### Test
 
-* add node name to error messages in RebootAllNodes
-* stabilize tests by bumping timeouts
-
+- improve reboot/reset test resiliency against request timeouts
+- update Talos versions for upgrade tests
