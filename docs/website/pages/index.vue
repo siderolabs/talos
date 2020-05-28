@@ -140,7 +140,7 @@
           <h2 class="text-center">Hardened</h2>
           <div>
             <p>Talos is hardened by design and configuration:</p>
-            <ul class="ml-8">
+            <ul>
               <li>
                 Built with the
                 <a
@@ -195,7 +195,7 @@
       </div>
     </div>
 
-    <div class="pb-8">
+    <div class="flex pb-8 justify-center">
       <a
         href="https://landscape.cncf.io/category=certified-kubernetes-installer&format=card-mode&grouping=category"
         target="_blank"
