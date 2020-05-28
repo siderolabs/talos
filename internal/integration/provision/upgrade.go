@@ -55,8 +55,8 @@ type upgradeSpec struct {
 }
 
 const (
-	talos04Version = "v0.4.1"
-	talos05Version = "v0.5.0-beta.1"
+	stableVersion = "v0.5.0"
+	nextVersion   = "v0.6.0-alpha.1"
 )
 
 var (
@@ -77,15 +77,15 @@ func trimVersion(version string) string {
 // upgradeBetweenTwoLastReleases upgrades between two last releases of Talos
 func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", talos04Version, talos05Version),
+		ShortName: fmt.Sprintf("%s-%s", stableVersion, nextVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
-		SourceVersion:        talos04Version,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
+		SourceVersion:        stableVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos05Version),
-		TargetVersion:        talos05Version,
+		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
+		TargetVersion:        nextVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -95,12 +95,12 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 // upgradeLastReleaseToCurrent upgrades last release to the current version of Talos.
 func upgradeLastReleaseToCurrent() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", talos05Version, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("%s-%s", nextVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos05Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos05Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos05Version),
-		SourceVersion:        talos05Version,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
+		SourceVersion:        nextVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
@@ -113,12 +113,12 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 // upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
 func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("preserve-%s-%s", talos04Version, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("preserve-%s-%s", stableVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(talos04Version), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, talos04Version),
-		SourceVersion:        talos05Version,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
+		SourceVersion:        nextVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
