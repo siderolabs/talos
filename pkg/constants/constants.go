@@ -159,7 +159,7 @@ const (
 	// PodCheckpointerImage is the enforced pod checkpointer for bootkube to use
 	// TODO(andrewrynhard): This is a hack workaround for now. Update this once
 	// there is an official image.
-	PodCheckpointerImage = "docker.io/autonomy/pod-checkpointer:51fba9528e96d3be488562574c288b2fb82a1e3b"
+	PodCheckpointerImage = "docker.io/andrewrynhard/checkpoint:arm64"
 
 	// LabelNodeRoleMaster is the node label required by a control plane node.
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
