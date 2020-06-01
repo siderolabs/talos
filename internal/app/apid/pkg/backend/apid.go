@@ -7,8 +7,9 @@ package backend
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
+
+	stdlibnet "net"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/talos-systems/grpc-proxy/proxy"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/net"
 )
 
 // APID backend performs proxying to another apid instance.
@@ -34,8 +36,8 @@ type APID struct {
 // NewAPID creates new instance of APID backend
 func NewAPID(target string, creds credentials.TransportCredentials) (*APID, error) {
 	// perform very basic validation on target
-	if target == "" || strings.Contains(target, ":") {
-		return nil, fmt.Errorf("invalid target %q", target)
+	if stdlibnet.ParseIP(target) == nil {
+		return nil, fmt.Errorf("invalid target IP %q", target)
 	}
 
 	return &APID{
@@ -74,7 +76,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 	var err error
 	a.conn, err = grpc.DialContext(
 		ctx,
-		fmt.Sprintf("%s:%d", a.target, constants.ApidPort),
+		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
 		grpc.WithTransportCredentials(a.creds),
 		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
 	)
