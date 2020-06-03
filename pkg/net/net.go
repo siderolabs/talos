@@ -50,6 +50,36 @@ func FormatAddress(addr string) string {
 	return addr
 }
 
+// AddressContainsPort checks to see if the supplied address contains both an address and a port.
+// This will not catch every possible permutation, but it is a best-effort routine suitable for prechecking human-interactive parameters.
+func AddressContainsPort(addr string) bool {
+	pieces := strings.Split(addr, ":")
+
+	if len(pieces) < 2 {
+		return false
+	}
+
+	if ip := net.ParseIP(strings.Trim(addr, "[]")); ip != nil {
+		return false
+	}
+
+	// Check to see if it parses as an IP _without_ the last (presumed) `:port`
+	trimmedAddr := strings.TrimSuffix(addr, ":"+pieces[len(pieces)-1])
+
+	if ip := net.ParseIP(strings.Trim(trimmedAddr, "[]")); ip != nil {
+		// We appear to have a valid IP followed by `:port`
+		return true
+	}
+
+	if len(pieces) > 2 {
+		// No idea what this is, but it doesn't appear to be addr:port
+		return false
+	}
+
+	// Looks like it is host:port
+	return true
+}
+
 // NthIPInNetwork takes an IPNet and returns the nth IP in it.
 func NthIPInNetwork(network *net.IPNet, n int) (net.IP, error) {
 	ip := network.IP
