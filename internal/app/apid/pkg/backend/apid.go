@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"sync"
 
-	stdlibnet "net"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
@@ -35,9 +33,9 @@ type APID struct {
 
 // NewAPID creates new instance of APID backend
 func NewAPID(target string, creds credentials.TransportCredentials) (*APID, error) {
-	// perform very basic validation on target
-	if stdlibnet.ParseIP(target) == nil {
-		return nil, fmt.Errorf("invalid target IP %q", target)
+	// perform very basic validation on target, trying to weed out empty addresses or addresses with the port appended
+	if target == "" || net.AddressContainsPort(target) {
+		return nil, fmt.Errorf("invalid target %q", target)
 	}
 
 	return &APID{
