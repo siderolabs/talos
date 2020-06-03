@@ -19,6 +19,21 @@ func TestEmpty(t *testing.T) {
 	// for this package
 }
 
+func TestAddressContainsPort(t *testing.T) {
+	assert.Equal(t, AddressContainsPort("192.168.1.1:9021"), true)
+	assert.Equal(t, AddressContainsPort("node0:10001"), true)
+	assert.Equal(t, AddressContainsPort("node0.testdomain.io:10001"), true)
+	assert.Equal(t, AddressContainsPort("[2001:db8::1]:64321"), true)
+	assert.Equal(t, AddressContainsPort("[2001:db8:3:4:5:6:7:1]:64321"), true)
+
+	assert.Equal(t, AddressContainsPort("[2001:db8:3:4:5:6:7:1:bad]:64321"), false)
+	assert.Equal(t, AddressContainsPort("2001:db8:0::2000"), false)
+	assert.Equal(t, AddressContainsPort("::1"), false)
+	assert.Equal(t, AddressContainsPort("127.0.0.1"), false)
+	assert.Equal(t, AddressContainsPort("node0"), false)
+	assert.Equal(t, AddressContainsPort("node0.testdomain.io"), false)
+}
+
 func TestFormatAddress(t *testing.T) {
 	assert.Equal(t, FormatAddress("2001:db8::1"), "[2001:db8::1]")
 	assert.Equal(t, FormatAddress("[2001:db8::1]"), "[2001:db8::1]")
