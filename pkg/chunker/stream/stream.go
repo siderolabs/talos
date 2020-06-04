@@ -31,6 +31,8 @@ func Size(s int) Option {
 type Stream struct {
 	source  Source
 	options *Options
+
+	ctx context.Context
 }
 
 // Source is an interface describing the source of a Stream.
@@ -39,7 +41,7 @@ type Source interface {
 }
 
 // NewChunker initializes a Chunker with default values.
-func NewChunker(source Source, setters ...Option) chunker.Chunker {
+func NewChunker(ctx context.Context, source Source, setters ...Option) chunker.Chunker {
 	opts := &Options{
 		Size: 1024,
 	}
@@ -51,11 +53,12 @@ func NewChunker(source Source, setters ...Option) chunker.Chunker {
 	return &Stream{
 		source,
 		opts,
+		ctx,
 	}
 }
 
 // Read implements ChunkReader.
-func (c *Stream) Read(ctx context.Context) <-chan []byte {
+func (c *Stream) Read() <-chan []byte {
 	// Create a buffered channel of length 1.
 	ch := make(chan []byte, 1)
 
@@ -68,7 +71,7 @@ func (c *Stream) Read(ctx context.Context) <-chan []byte {
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-c.ctx.Done():
 				return
 			default:
 			}
@@ -88,7 +91,7 @@ func (c *Stream) Read(ctx context.Context) <-chan []byte {
 				copy(b, buf[:n])
 
 				select {
-				case <-ctx.Done():
+				case <-c.ctx.Done():
 					return
 				case ch <- b:
 				}

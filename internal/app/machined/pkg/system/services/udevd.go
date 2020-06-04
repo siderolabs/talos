@@ -72,6 +72,7 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	return restart.New(process.NewRunner(
 		r.Config().Debug(),
 		args,
+		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv(env),
 	),
 		restart.WithType(restart.Forever),

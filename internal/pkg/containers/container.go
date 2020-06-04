@@ -5,6 +5,7 @@
 package containers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -67,7 +68,7 @@ func (c *Container) Kill(signal syscall.Signal) error {
 }
 
 // GetLogChunker returns chunker for container log file
-func (c *Container) GetLogChunker(follow bool, tailLines int) (chunker.Chunker, io.Closer, error) {
+func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines int) (chunker.Chunker, io.Closer, error) {
 	logFile := c.GetLogFile()
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_RDONLY, 0)
@@ -88,7 +89,7 @@ func (c *Container) GetLogChunker(follow bool, tailLines int) (chunker.Chunker, 
 			chunkerOptions = append(chunkerOptions, file.WithFollow())
 		}
 
-		return file.NewChunker(f, chunkerOptions...), f, nil
+		return file.NewChunker(ctx, f, chunkerOptions...), f, nil
 	}
 
 	filename, err := c.GetProcessStderr()
@@ -105,5 +106,5 @@ func (c *Container) GetLogChunker(follow bool, tailLines int) (chunker.Chunker, 
 		return nil, nil, err
 	}
 
-	return stream.NewChunker(f), f, nil
+	return stream.NewChunker(ctx, f), f, nil
 }

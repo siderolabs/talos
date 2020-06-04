@@ -12,6 +12,8 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -33,6 +35,8 @@ type Args struct {
 
 // Options is the functional options struct.
 type Options struct {
+	// LoggingManager provides service log handling.
+	LoggingManager runtime.LoggingManager
 	// Env describes the service's environment variables. Elements should be in
 	// the format <key=<value>
 	Env []string
@@ -46,8 +50,6 @@ type Options struct {
 	ContainerImage string
 	// Namespace is the containerd namespace.
 	Namespace string
-	// LogPath is the root path to store logs
-	LogPath string
 	// GracefulShutdownTimeout is the time to wait for process to exit after SIGTERM
 	// before sending SIGKILL
 	GracefulShutdownTimeout time.Duration
@@ -59,9 +61,9 @@ type Option func(*Options)
 // DefaultOptions describes the default options to a runner.
 func DefaultOptions() *Options {
 	return &Options{
+		LoggingManager:          logging.NewNullLoggingManager(),
 		Env:                     []string{},
 		Namespace:               constants.SystemContainerdNamespace,
-		LogPath:                 constants.DefaultLogPath,
 		GracefulShutdownTimeout: 10 * time.Second,
 		ContainerdAddress:       constants.ContainerdAddress,
 	}
@@ -109,10 +111,10 @@ func WithOCISpecOpts(o ...oci.SpecOpts) Option {
 	}
 }
 
-// WithLogPath sets the log path root
-func WithLogPath(path string) Option {
+// WithLoggingManager sets the LoggingManager option.
+func WithLoggingManager(manager runtime.LoggingManager) Option {
 	return func(args *Options) {
-		args.LogPath = path
+		args.LoggingManager = manager
 	}
 }
 

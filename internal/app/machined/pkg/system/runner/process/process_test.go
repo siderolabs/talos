@@ -17,6 +17,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
@@ -33,6 +35,8 @@ type ProcessSuite struct {
 
 	tmpDir    string
 	runReaper bool
+
+	loggingManager runtime.LoggingManager
 }
 
 func (suite *ProcessSuite) SetupSuite() {
@@ -40,6 +44,8 @@ func (suite *ProcessSuite) SetupSuite() {
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
 	if suite.runReaper {
 		reaper.Run()
@@ -58,7 +64,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "test",
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
-	}, runner.WithLogPath(suite.tmpDir))
+	}, runner.WithLoggingManager(suite.loggingManager))
 
 	suite.Assert().NoError(r.Open(context.Background()))
 
@@ -73,7 +79,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "logtest",
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
-	}, runner.WithLogPath(suite.tmpDir))
+	}, runner.WithLoggingManager(suite.loggingManager))
 
 	suite.Assert().NoError(r.Open(context.Background()))
 
@@ -101,7 +107,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	r := restart.New(process.NewRunner(false, &runner.Args{
 		ID:          "restarter",
 		ProcessArgs: []string{"/bin/sh", "-c", "echo \"ran\"; test -f " + testFile},
-	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
+	}, runner.WithLoggingManager(suite.loggingManager)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 
 	suite.Assert().NoError(r.Open(context.Background()))
 
@@ -154,7 +160,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	r := restart.New(process.NewRunner(false, &runner.Args{
 		ID:          "endless",
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile},
-	}, runner.WithLogPath(suite.tmpDir)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
+	}, runner.WithLoggingManager(suite.loggingManager)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
 
 	suite.Assert().NoError(r.Open(context.Background()))
 
@@ -197,7 +203,7 @@ func (suite *ProcessSuite) TestStopSigKill() {
 		ID:          "nokill",
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
 	)
 

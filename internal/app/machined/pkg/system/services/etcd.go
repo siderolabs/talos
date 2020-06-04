@@ -105,6 +105,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
 		runner.WithEnv(env),

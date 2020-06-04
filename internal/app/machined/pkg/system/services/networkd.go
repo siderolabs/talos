@@ -105,6 +105,7 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),

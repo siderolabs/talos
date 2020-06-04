@@ -40,10 +40,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
-	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
-	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
@@ -374,8 +372,8 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 		errCh <- archiver.TarGz(ctx, path, pw)
 	}()
 
-	chunker := stream.NewChunker(pr)
-	chunkCh := chunker.Read(ctx)
+	chunker := stream.NewChunker(ctx, pr)
+	chunkCh := chunker.Read()
 
 	for data := range chunkCh {
 		err := obj.SendMsg(&common.Data{Bytes: data})
@@ -593,30 +591,27 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 
 	switch {
 	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
-		filename := filepath.Join(constants.DefaultLogPath, filepath.Base(req.Id)+".log")
+		var options []runtime.LogOption
 
-		var file *os.File
+		if req.Follow {
+			options = append(options, runtime.WithFollow())
+		}
 
-		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
+		if req.TailLines >= 0 {
+			options = append(options, runtime.WithTailLines(int(req.TailLines)))
+		}
+
+		var logR io.ReadCloser
+
+		logR, err = s.Controller.Runtime().Logging().ServiceLog(req.Id).Reader(options...)
 		if err != nil {
 			return
 		}
+
 		// nolint: errcheck
-		defer file.Close()
+		defer logR.Close()
 
-		if req.TailLines >= 0 {
-			err = tail.SeekLines(file, int(req.TailLines))
-			if err != nil {
-				return fmt.Errorf("error tailing log: %w", err)
-			}
-		}
-
-		options := []filechunker.Option{}
-		if req.Follow {
-			options = append(options, filechunker.WithFollow())
-		}
-
-		chunk = filechunker.NewChunker(file, options...)
+		chunk = stream.NewChunker(l.Context(), logR)
 	default:
 		var file io.Closer
 
@@ -627,7 +622,7 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 		defer file.Close()
 	}
 
-	for data := range chunk.Read(l.Context()) {
+	for data := range chunk.Read() {
 		if err = l.Send(&common.Data{Bytes: data}); err != nil {
 			return
 		}
@@ -653,7 +648,7 @@ func k8slogs(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io
 		return nil, nil, fmt.Errorf("container %q not found", req.Id)
 	}
 
-	return container.GetLogChunker(req.Follow, int(req.TailLines))
+	return container.GetLogChunker(ctx, req.Follow, int(req.TailLines))
 }
 
 func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {
@@ -695,8 +690,8 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 		ctx, cancel := context.WithCancel(srv.Context())
 		defer cancel()
 
-		chunker := stream.NewChunker(f)
-		chunkCh := chunker.Read(ctx)
+		chunker := stream.NewChunker(ctx, f)
+		chunkCh := chunker.Read()
 
 		for data := range chunkCh {
 			err := srv.SendMsg(&common.Data{Bytes: data})
