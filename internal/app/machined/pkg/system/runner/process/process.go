@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	processlogger "github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
@@ -76,21 +75,21 @@ func (p *processRunner) Close() error {
 	return nil
 }
 
-func (p *processRunner) build() (cmd *exec.Cmd, err error) {
+func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) {
 	cmd = exec.Command(p.args.ProcessArgs[0], p.args.ProcessArgs[1:]...)
 
 	// Set the environment for the service.
 	cmd.Env = append([]string{fmt.Sprintf("PATH=%s", constants.PATH)}, p.opts.Env...)
 
 	// Setup logging.
-	w, err := processlogger.New(p.args.ID, p.opts.LogPath)
+	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
 	if err != nil {
 		err = fmt.Errorf("service log handler: %w", err)
 		return
 	}
 
 	var writer io.Writer
-	if p.debug {
+	if p.debug { // TODO: wrap it into LoggingManager
 		writer = io.MultiWriter(w, os.Stdout)
 	} else {
 		writer = w
@@ -99,14 +98,16 @@ func (p *processRunner) build() (cmd *exec.Cmd, err error) {
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 
-	return cmd, nil
+	return cmd, w, nil
 }
 
 func (p *processRunner) run(eventSink events.Recorder) error {
-	cmd, err := p.build()
+	cmd, logCloser, err := p.build()
 	if err != nil {
 		return fmt.Errorf("error building command: %w", err)
 	}
+
+	defer logCloser.Close() //nolint: errcheck
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
 
@@ -154,7 +155,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	// wait for process to terminate
 	<-waitCh
 
-	return nil
+	return logCloser.Close()
 }
 
 func (p *processRunner) String() string {

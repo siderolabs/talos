@@ -48,12 +48,12 @@ func collectChunks(chunksCh <-chan []byte) <-chan []byte {
 }
 
 func (suite *StreamChunkerSuite) TestStreaming() {
-	chunker := stream.NewChunker(suite.reader)
-
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	chunksCh := chunker.Read(ctx)
+	chunker := stream.NewChunker(ctx, suite.reader)
+
+	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
 	// nolint: errcheck
@@ -74,12 +74,12 @@ func (suite *StreamChunkerSuite) TestStreaming() {
 }
 
 func (suite *StreamChunkerSuite) TestStreamingSmallBuf() {
-	chunker := stream.NewChunker(suite.reader, stream.Size(1))
-
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	chunksCh := chunker.Read(ctx)
+	chunker := stream.NewChunker(ctx, suite.reader, stream.Size(1))
+
+	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
 	// nolint: errcheck
@@ -100,12 +100,12 @@ func (suite *StreamChunkerSuite) TestStreamingSmallBuf() {
 }
 
 func (suite *StreamChunkerSuite) TestStreamingCancel() {
-	chunker := stream.NewChunker(suite.reader)
-
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	chunksCh := chunker.Read(ctx)
+	chunker := stream.NewChunker(ctx, suite.reader)
+
+	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
 	// nolint: errcheck

@@ -10,4 +10,5 @@ type Runtime interface {
 	SetConfig([]byte) error
 	State() State
 	Events() EventStream
+	Logging() LoggingManager
 }
