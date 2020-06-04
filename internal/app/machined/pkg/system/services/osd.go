@@ -88,7 +88,6 @@ func (o *OSD) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: path.Dir(constants.ContainerdAddress), Source: path.Dir(constants.ContainerdAddress), Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.DefaultLogPath, Source: constants.DefaultLogPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.SystemRunPath, Source: constants.SystemRunPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.OSSocketPath), Source: filepath.Dir(constants.OSSocketPath), Options: []string{"rbind", "rw"}},
 	}
@@ -101,6 +100,7 @@ func (o *OSD) Runner(r runtime.Runtime) (runner.Runner, error) {
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
 		runner.WithEnv(env),

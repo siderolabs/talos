@@ -7,8 +7,8 @@ package containerd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -118,13 +118,24 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 
 	var (
 		task containerd.Task
+		logW io.WriteCloser
 		err  error
 	)
 
-	creator := cio.LogFile(c.logPath())
-	if c.debug {
-		creator = cio.NewCreator(cio.WithStreams(os.Stdin, os.Stdout, os.Stderr))
+	logW, err = c.opts.LoggingManager.ServiceLog(c.args.ID).Writer()
+	if err != nil {
+		return fmt.Errorf("error creating log: %w", err)
 	}
+
+	defer logW.Close() //nolint: errcheck
+
+	var w io.Writer = logW
+
+	if c.debug {
+		w = io.MultiWriter(w, os.Stdout)
+	}
+
+	creator := cio.NewCreator(cio.WithStreams(nil, w, w))
 
 	// Create the task and start it.
 	task, err = c.container.NewTask(c.ctx, creator)
@@ -177,7 +188,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 
 	<-statusC
 
-	return nil
+	return logW.Close()
 }
 
 // Stop implements runner.Runner interface
@@ -214,10 +225,6 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 	specOpts = append(specOpts, c.opts.OCISpecOpts...)
 
 	return specOpts
-}
-
-func (c *containerdRunner) logPath() string {
-	return filepath.Join(c.opts.LogPath, c.args.ID+".log")
 }
 
 func (c *containerdRunner) String() string {

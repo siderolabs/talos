@@ -20,6 +20,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -41,6 +43,8 @@ type ContainerdSuite struct {
 	suite.Suite
 
 	tmpDir string
+
+	loggingManager runtime.LoggingManager
 
 	containerdNamespace string
 	containerdRunner    runner.Runner
@@ -81,6 +85,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
+	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
+
 	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
 	suite.Require().NoError(os.Mkdir(stateDir, 0777))
 	suite.Require().NoError(os.Mkdir(rootDir, 0777))
@@ -101,7 +107,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.containerdRunner = process.NewRunner(
 		false,
 		args,
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
@@ -186,7 +192,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 		ID:          suite.containerID + "1",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerOpts(containerd.WithContainerLabels(map[string]string{
@@ -202,7 +208,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 		ID:          suite.containerID + "2",
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerOpts(containerd.WithContainerLabels(map[string]string{
@@ -222,7 +228,7 @@ func (suite *ContainerdSuite) TestPodsNonK8s() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -287,7 +293,7 @@ func (suite *ContainerdSuite) TestContainerNonK8s() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "sleep 3600"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),

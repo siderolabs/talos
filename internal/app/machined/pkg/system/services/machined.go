@@ -85,5 +85,5 @@ func (m *Machined) DependsOn(r runtime.Runtime) []string {
 func (m *Machined) Runner(r runtime.Runtime) (runner.Runner, error) {
 	svc := &machinedService{m.Controller}
 
-	return goroutine.NewRunner(r, "machined", svc.Main), nil
+	return goroutine.NewRunner(r, "machined", svc.Main, runner.WithLoggingManager(r.Logging())), nil
 }

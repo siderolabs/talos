@@ -15,7 +15,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/log"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 )
 
@@ -80,9 +79,9 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 		}
 	}()
 
-	var w *log.Log
+	var w io.WriteCloser
 
-	w, err = log.New(r.id, r.opts.LogPath)
+	w, err = r.opts.LoggingManager.ServiceLog(r.id).Writer()
 	if err != nil {
 		err = fmt.Errorf("service log handler: %w", err)
 		return
