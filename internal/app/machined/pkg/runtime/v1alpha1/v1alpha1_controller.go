@@ -22,9 +22,11 @@ import (
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Controller represents the controller responsible for managing the execution
@@ -63,8 +65,10 @@ func NewController(b []byte) (*Controller, error) {
 	// TODO: this should be streaming capacity and probably some constant
 	e := NewEvents(1000)
 
+	l := logging.NewFileLoggingManager(constants.DefaultLogPath)
+
 	ctlr := &Controller{
-		r: NewRuntime(cfg, s, e),
+		r: NewRuntime(cfg, s, e, l),
 		s: NewSequencer(),
 	}
 

@@ -16,14 +16,16 @@ type Runtime struct {
 	c runtime.Configurator
 	s runtime.State
 	e runtime.EventStream
+	l runtime.LoggingManager
 }
 
 // NewRuntime initializes and returns the v1alpha1 runtime.
-func NewRuntime(c runtime.Configurator, s runtime.State, e runtime.EventStream) *Runtime {
+func NewRuntime(c runtime.Configurator, s runtime.State, e runtime.EventStream, l runtime.LoggingManager) *Runtime {
 	return &Runtime{
 		c: c,
 		s: s,
 		e: e,
+		l: l,
 	}
 }
 
@@ -52,4 +54,9 @@ func (r *Runtime) State() runtime.State {
 // Events implements the Runtime interface.
 func (r *Runtime) Events() runtime.EventStream {
 	return r.e
+}
+
+// Logging implements the Runtime interface.
+func (r *Runtime) Logging() runtime.LoggingManager {
+	return r.l
 }

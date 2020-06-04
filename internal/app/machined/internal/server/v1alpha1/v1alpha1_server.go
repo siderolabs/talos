@@ -39,10 +39,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
-	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
-	filechunker "github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
@@ -561,30 +559,27 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 
 	switch {
 	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
-		filename := filepath.Join(constants.DefaultLogPath, filepath.Base(req.Id)+".log")
+		var options []runtime.LogOption
 
-		var file *os.File
+		if req.Follow {
+			options = append(options, runtime.WithFollow())
+		}
 
-		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
+		if req.TailLines >= 0 {
+			options = append(options, runtime.WithTailLines(int(req.TailLines)))
+		}
+
+		var logR io.ReadCloser
+
+		logR, err = s.Controller.Runtime().Logging().ServiceLog(req.Id).Reader(options...)
 		if err != nil {
 			return
 		}
+
 		// nolint: errcheck
-		defer file.Close()
+		defer logR.Close()
 
-		if req.TailLines >= 0 {
-			err = tail.SeekLines(file, int(req.TailLines))
-			if err != nil {
-				return fmt.Errorf("error tailing log: %w", err)
-			}
-		}
-
-		options := []filechunker.Option{}
-		if req.Follow {
-			options = append(options, filechunker.WithFollow())
-		}
-
-		chunk = filechunker.NewChunker(file, options...)
+		chunk = stream.NewChunker(logR)
 	default:
 		var file io.Closer
 

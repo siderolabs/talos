@@ -24,6 +24,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -45,6 +47,8 @@ type ContainerdSuite struct {
 
 	tmpDir string
 
+	loggingManager runtime.LoggingManager
+
 	containerdNamespace string
 	containerdRunner    runner.Runner
 	containerdWg        sync.WaitGroup
@@ -62,6 +66,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
+
+	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
 	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
 	suite.Require().NoError(os.Mkdir(stateDir, 0777))
@@ -83,7 +89,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.containerdRunner = process.NewRunner(
 		false,
 		args,
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
@@ -138,7 +144,7 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -158,7 +164,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -187,7 +193,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 1"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -199,7 +205,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -218,7 +224,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
@@ -254,7 +260,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile + " && echo ok || (echo fail; false)"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithOCISpecOpts(
@@ -326,7 +332,7 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},
 	},
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithNamespace(suite.containerdNamespace),
 		runner.WithContainerImage(busyboxImage),
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),

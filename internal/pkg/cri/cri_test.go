@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
@@ -72,7 +73,7 @@ func (suite *CRISuite) SetupSuite() {
 	suite.containerdRunner = process.NewRunner(
 		false,
 		args,
-		runner.WithLogPath(suite.tmpDir),
+		runner.WithLoggingManager(logging.NewFileLoggingManager(suite.tmpDir)),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
