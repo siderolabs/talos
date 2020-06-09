@@ -14,6 +14,7 @@ import "common/common.proto";
 
 // The machine service definition.
 service MachineService {
+  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
@@ -22,7 +23,7 @@ service MachineService {
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
-  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+  rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
   rpc Recover(RecoverRequest) returns (RecoverResponse);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
@@ -290,3 +291,9 @@ message LogsRequest {
 }
 
 message ReadRequest { string path = 1; }
+
+// rpc rollback
+message RollbackRequest {}
+
+message Rollback { common.Metadata metadata = 1; }
+message RollbackResponse { repeated Rollback messages = 1; }
