@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
@@ -85,6 +86,37 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 
 	reply = &machine.RebootResponse{
 		Messages: []*machine.Reboot{
+			{},
+		},
+	}
+
+	return reply, nil
+}
+
+// Rollback implements the machine.MachineServer interface.
+//
+// nolint: dupl
+func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (reply *machine.RollbackResponse, err error) {
+	log.Printf("rollback via API received")
+
+	if err := syslinux.Revert(); err != nil {
+		return nil, fmt.Errorf("failed to revert bootloader: %v", err)
+	}
+
+	go func() {
+		if err := s.Controller.Run(runtime.SequenceReboot, in, runtime.WithForce()); err != nil {
+			log.Println("reboot failed:", err)
+
+			if err != runtime.ErrLocked {
+				// NB: We stop the gRPC server since a failed sequence triggers a
+				// reboot.
+				s.server.GracefulStop()
+			}
+		}
+	}()
+
+	reply = &machine.RollbackResponse{
+		Messages: []*machine.Rollback{
 			{},
 		},
 	}
