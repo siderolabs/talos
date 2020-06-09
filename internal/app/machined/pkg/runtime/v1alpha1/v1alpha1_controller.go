@@ -80,9 +80,12 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 		return runtime.ErrUndefinedRuntime
 	}
 
-	// Allow only one sequence to run at a time with the exception of the
-	// bootstrap sequence.
-	if seq != runtime.SequenceBootstrap {
+	// Allow only one sequence to run at a time with the exception of bootstrap
+	// and reset sequences.
+	switch seq {
+	case runtime.SequenceBootstrap, runtime.SequenceReset:
+		// Do not attempt to lock.
+	default:
 		if c.TryLock() {
 			c.Runtime().Events().Publish(&machine.SequenceEvent{
 				Sequence: seq.String(),
