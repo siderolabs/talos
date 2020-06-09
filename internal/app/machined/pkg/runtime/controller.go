@@ -20,10 +20,32 @@ type TaskExecutionFunc func(context.Context, *log.Logger, Runtime) error
 // Phase represents a collection of tasks to be performed concurrently.
 type Phase []TaskSetupFunc
 
+// ControllerOptions represents the options for a controller.
+type ControllerOptions struct {
+	Force bool
+}
+
+// ControllerOption represents an option setter.
+type ControllerOption func(o *ControllerOptions) error
+
+// WithForce sets the force option to true.
+func WithForce() ControllerOption {
+	return func(o *ControllerOptions) error {
+		o.Force = true
+
+		return nil
+	}
+}
+
+// DefaultControllerOptions returns the default controller options.
+func DefaultControllerOptions() ControllerOptions {
+	return ControllerOptions{}
+}
+
 // Controller represents the controller responsible for managing the execution
 // of sequences.
 type Controller interface {
 	Runtime() Runtime
 	Sequencer() Sequencer
-	Run(Sequence, interface{}) error
+	Run(Sequence, interface{}, ...ControllerOption) error
 }

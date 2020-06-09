@@ -73,11 +73,19 @@ func NewController(b []byte) (*Controller, error) {
 
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
-func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
+func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runtime.ControllerOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
 	// on the runtime.
 	if c.r == nil {
 		return runtime.ErrUndefinedRuntime
+	}
+
+	opts := runtime.DefaultControllerOptions()
+
+	for _, f := range setters {
+		if err := f(&opts); err != nil {
+			return err
+		}
 	}
 
 	// Allow only one sequence to run at a time with the exception of bootstrap
@@ -86,6 +94,10 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}) error {
 	case runtime.SequenceBootstrap, runtime.SequenceReset:
 		// Do not attempt to lock.
 	default:
+		if opts.Force {
+			break
+		}
+
 		if c.TryLock() {
 			c.Runtime().Events().Publish(&machine.SequenceEvent{
 				Sequence: seq.String(),
