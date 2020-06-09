@@ -118,6 +118,7 @@ func Launch() error {
 			cmd := firecracker.VMCommandBuilder{}.
 				WithBin("firecracker").
 				WithSocketPath(config.FirecrackerConfig.SocketPath).
+				WithArgs([]string{"--seccomp-level", "0"}).
 				WithStdin(os.Stdin).
 				WithStdout(os.Stdout).
 				WithStderr(os.Stderr).
