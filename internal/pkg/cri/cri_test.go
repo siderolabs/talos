@@ -80,8 +80,8 @@ func (suite *CRISuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer func() { suite.Require().NoError(suite.containerdRunner.Close()) }()
-		suite.Require().NoError(suite.containerdRunner.Run(MockEventSink))
+		defer suite.containerdRunner.Close()      //nolint: errcheck
+		suite.containerdRunner.Run(MockEventSink) //nolint: errcheck
 	}()
 
 	suite.client, err = cri.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
