@@ -7,7 +7,10 @@ In this guide we will create a Kubernetes cluster using Firecracker.
 ## Requirements
 
 - Linux
-- a kernel with KVM enabled (`/dev/kvm` must exist)
+- a kernel with
+  - KVM enabled (`/dev/kvm` must exist)
+  - `CONFIG_NET_SCH_NETEM` enabled
+  - `CONFIG_NET_SCH_INGRESS` enabled
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
 - [firecracker](https://github.com/firecracker-microvm/firecracker/releases) (v0.21.0 or higher)
 - `bridge`, and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [Firecracker Go SDK](https://github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni) installed to `/opt/cni/bin`
