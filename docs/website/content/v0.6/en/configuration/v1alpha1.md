@@ -649,14 +649,14 @@ adminKubeconfig:
 
 #### image
 
-The `image` field is an optional reference to an alternative hyperkube image.
+The `image` field is an optional reference to an alternative kubelet image.
 
 Type: `string`
 
 Examples:
 
 ```yaml
-image: docker.io/<org>/hyperkube:latest
+image: docker.io/<org>/kubelet:latest
 ```
 
 #### extraArgs
@@ -986,6 +986,12 @@ Type: `map`
 ---
 
 ### ProxyConfig
+
+#### image
+
+The container image used in the kube-proxy manifest.
+
+Type: `string`
 
 #### mode
 

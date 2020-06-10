@@ -148,7 +148,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          k.ID(r),
-		ProcessArgs: append([]string{"/hyperkube", "kubelet"}, a...),
+		ProcessArgs: append([]string{"/usr/local/bin/kubelet"}, a...),
 	}
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{

@@ -375,18 +375,21 @@ type CNI interface {
 // APIServer defines the requirements for a config that pertains to apiserver related
 // options.
 type APIServer interface {
+	Image() string
 	ExtraArgs() map[string]string
 }
 
 // ControllerManager defines the requirements for a config that pertains to controller manager related
 // options.
 type ControllerManager interface {
+	Image() string
 	ExtraArgs() map[string]string
 }
 
 // Proxy defines the requirements for a config that pertains to the kube-proxy
 // options.
 type Proxy interface {
+	Image() string
 
 	// Mode indicates the proxy mode for kube-proxy.  By default, this is `iptables`.  Other options include `ipvs`.
 	Mode() string
@@ -398,6 +401,7 @@ type Proxy interface {
 // Scheduler defines the requirements for a config that pertains to scheduler related
 // options.
 type Scheduler interface {
+	Image() string
 	ExtraArgs() map[string]string
 }
 

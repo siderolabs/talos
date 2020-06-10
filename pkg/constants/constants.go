@@ -139,10 +139,22 @@ const (
 	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.18.3"
+	DefaultKubernetesVersion = "1.19.0-beta.1"
 
-	// KubernetesImage is the enforced hyperkube image to use for the control plane.
-	KubernetesImage = "k8s.gcr.io/hyperkube"
+	// KubeletImage is the enforced kubelet image to use.
+	KubeletImage = "docker.io/autonomy/kubelet"
+
+	// KubeProxyImage is the enforced kube-proxy image to use for the control plane.
+	KubeProxyImage = "k8s.gcr.io/kube-proxy"
+
+	// KubernetesAPIServerImage is the enforced apiserver image to use for the control plane.
+	KubernetesAPIServerImage = "k8s.gcr.io/kube-apiserver"
+
+	// KubernetesControllerManagerImage is the enforced controllermanager image to use for the control plane.
+	KubernetesControllerManagerImage = "k8s.gcr.io/kube-controller-manager"
+
+	// KubernetesSchedulerImage is the enforced scheduler image to use for the control plane.
+	KubernetesSchedulerImage = "k8s.gcr.io/kube-scheduler"
 
 	// PodCheckpointerImage is the enforced pod checkpointer for bootkube to use
 	// TODO(andrewrynhard): This is a hack workaround for now. Update this once
