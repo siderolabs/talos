@@ -95,7 +95,7 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runt
 	// Allow only one sequence to run at a time with the exception of bootstrap
 	// and reset sequences.
 	switch seq {
-	case runtime.SequenceBootstrap, runtime.SequenceReset:
+	case runtime.SequenceBootstrap, runtime.SequenceReset, runtime.SequenceRecover:
 		// Do not attempt to lock.
 	default:
 		if opts.Force {
