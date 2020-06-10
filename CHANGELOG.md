@@ -1,3 +1,41 @@
+<a name="v0.6.0-alpha.2"></a>
+
+## [v0.6.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.1...v0.6.0-alpha.2) (2020-06-10)
+
+### Chore
+
+- update provision test versions
+
+### Docs
+
+- add v0.6 docs
+- add kernel options to firecracker reqs
+- remove repeated component in the Arges architecture image
+- add talosctl docs document
+- fix a few minor styling issues
+
+### Feat
+
+- update kubernetes to 1.19.0-beta.1
+- update k8s and sonobuoy versions
+- add rollback API
+- allow reset API at all times
+- adjust time properly in timed via adjtime()
+
+### Fix
+
+- allow node names
+- make services depend on timed
+- correctly handle IPv6 address in apid
+
+### Refactor
+
+- implement LoggingManager as central log flow processor
+
+### Test
+
+- fix race in some tests caused by `SetT`
+
 <a name="v0.6.0-alpha.1"></a>
 
 ## [v0.6.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.0...v0.6.0-alpha.1) (2020-05-27)
@@ -29,6 +67,10 @@
 - bump service wait to ten minutes
 - allow all seccomp profile names
 - wrap etcd address URLs with formatting
+
+### Release
+
+- **v0.6.0-alpha.1:** prepare release
 
 ### Test
 
