@@ -102,12 +102,17 @@ function run_talos_integration_test_docker {
 }
 
 function run_kubernetes_integration_test {
-  ${SONOBUOY} run \
+  timeout=$(($(date +%s) + ${TIMEOUT}))
+  until ${SONOBUOY} run \
     --kubeconfig ${KUBECONFIG} \
     --wait \
     --skip-preflight \
     --plugin e2e \
-    --mode ${SONOBUOY_MODE}
+    --mode ${SONOBUOY_MODE}; do
+    [[ $(date +%s) -gt $timeout ]] && exit 1
+    echo "attempting to run sonobuoy"
+    sleep 10
+  done  
   ${SONOBUOY} status --kubeconfig ${KUBECONFIG} --json | jq . | tee ${TMP}/sonobuoy-status.json
   if [ $(cat ${TMP}/sonobuoy-status.json | jq -r '.plugins[] | select(.plugin == "e2e") | ."result-status"') != 'passed' ]; then exit 1; fi
 }

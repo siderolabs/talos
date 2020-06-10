@@ -34,7 +34,7 @@ machine:
     force: false
 cluster:
   controlPlane:
-    version: 1.18.0
+    version: 1.18.3
     endpoint: https://1.2.3.4
   clusterName: example
   network:
