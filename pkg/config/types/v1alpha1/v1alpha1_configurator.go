@@ -181,7 +181,7 @@ func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage
 
 	if image == "" {
-		image = fmt.Sprintf("%s:v%s", constants.KubernetesImage, constants.DefaultKubernetesVersion)
+		image = fmt.Sprintf("%s:v%s", constants.KubeletImage, constants.DefaultKubernetesVersion)
 	}
 
 	return image
@@ -262,6 +262,17 @@ func (c *ClusterConfig) APIServer() runtime.APIServer {
 	return c.APIServerConfig
 }
 
+// Image implements the Configurator interface.
+func (a *APIServerConfig) Image() string {
+	image := a.ContainerImage
+
+	if image == "" {
+		image = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, constants.DefaultKubernetesVersion)
+	}
+
+	return image
+}
+
 // ExtraArgs implements the Configurator interface.
 func (a *APIServerConfig) ExtraArgs() map[string]string {
 	return a.ExtraArgsConfig
@@ -276,6 +287,17 @@ func (c *ClusterConfig) ControllerManager() runtime.ControllerManager {
 	return c.ControllerManagerConfig
 }
 
+// Image implements the Configurator interface.
+func (c *ControllerManagerConfig) Image() string {
+	image := c.ContainerImage
+
+	if image == "" {
+		image = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, constants.DefaultKubernetesVersion)
+	}
+
+	return image
+}
+
 // ExtraArgs implements the Configurator interface.
 func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 	return c.ExtraArgsConfig
@@ -288,6 +310,17 @@ func (c *ClusterConfig) Proxy() runtime.Proxy {
 	}
 
 	return c.ProxyConfig
+}
+
+// Image implements the Configurator interface.
+func (p *ProxyConfig) Image() string {
+	image := p.ContainerImage
+
+	if image == "" {
+		image = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, constants.DefaultKubernetesVersion)
+	}
+
+	return image
 }
 
 // Mode implements the Proxy interface
@@ -316,6 +349,17 @@ func (c *ClusterConfig) Scheduler() runtime.Scheduler {
 // AdminKubeconfig implements the Configurator interface.
 func (c *ClusterConfig) AdminKubeconfig() runtime.AdminKubeconfig {
 	return c.AdminKubeconfigConfig
+}
+
+// Image implements the Configurator interface.
+func (s *SchedulerConfig) Image() string {
+	image := s.ContainerImage
+
+	if image == "" {
+		image = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, constants.DefaultKubernetesVersion)
+	}
+
+	return image
 }
 
 // ExtraArgs implements the Configurator interface.

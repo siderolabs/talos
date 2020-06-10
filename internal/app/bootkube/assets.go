@@ -129,7 +129,12 @@ func generateAssets(config runtime.Configurator) (err error) {
 
 	images := asset.DefaultImages
 
-	images.Hyperkube = config.Machine().Kubelet().Image()
+	// Override all kube-related images with default val or specified image locations
+	images.Kubelet = config.Machine().Kubelet().Image()
+	images.KubeAPIServer = config.Cluster().APIServer().Image()
+	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
+	images.KubeProxy = config.Cluster().Proxy().Image()
+	images.KubeScheduler = config.Cluster().Scheduler().Image()
 
 	// Allow for overriding by users via config data
 	images.CoreDNS = config.Cluster().CoreDNS().Image()

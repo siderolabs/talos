@@ -64,8 +64,6 @@ github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a h1:idn718Q4
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/aws/aws-sdk-go v1.15.78 h1:LaXy6lWR0YK7LKyuU0QWy2ws/LWTPfYV/UgfiBu4tvY=
 github.com/aws/aws-sdk-go v1.15.78/go.mod h1:E3/ieXAlvM0XWO57iftYVDLLvQ824smPP3ATZkfNZeM=
-github.com/beevik/ntp v0.2.0 h1:sGsd+kAXzT0bfVfzJfce04g+dSRfrs+tbQW8lweuYgw=
-github.com/beevik/ntp v0.2.0/go.mod h1:hIHWr+l3+/clUnF44zdK+CWW7fO8dR5cIylAQ76NRpg=
 github.com/beevik/ntp v0.3.0 h1:xzVrPrE4ziasFXgBVBZJDP0Wg/KpMwk2KHJ4Ba8GrDw=
 github.com/beevik/ntp v0.3.0/go.mod h1:hIHWr+l3+/clUnF44zdK+CWW7fO8dR5cIylAQ76NRpg=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
@@ -591,8 +589,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0TYG7HtkIgExQo+2RdLuwRft63jn2HWj8=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/bootkube-plugin v0.0.0-20200519033942-ab0adee11223 h1:v6OI87wTYiz7qnomVpsMXQWbiDGakHnsiCdQzUssqcY=
-github.com/talos-systems/bootkube-plugin v0.0.0-20200519033942-ab0adee11223/go.mod h1:AbdJAgHK5rJNDPUN3msPTfQJSR9b4DKb5xNN07uG8/Y=
+github.com/talos-systems/bootkube-plugin v0.0.0-20200610162424-78d7183391b6 h1:hNCyhdSCIQyCLGb7dje9kGQqIwaf4+2XyFjZAdzZ9hY=
+github.com/talos-systems/bootkube-plugin v0.0.0-20200610162424-78d7183391b6/go.mod h1:AbdJAgHK5rJNDPUN3msPTfQJSR9b4DKb5xNN07uG8/Y=
 github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45 h1:FND/LgzFHTBdJBOeZVzdO6B47kxQZvSIzb9AMIXYotg=
 github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
 github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee h1:9i0ZFsjZ0wY8UUn/tk2MQshLBC0PNFJe3+84AUqzzyw=

@@ -372,9 +372,9 @@ type ClusterConfig struct {
 // KubeletConfig reperesents the kubelet config values
 type KubeletConfig struct {
 	//   description: |
-	//     The `image` field is an optional reference to an alternative hyperkube image.
+	//     The `image` field is an optional reference to an alternative kubelet image.
 	//   examples:
-	//     - "image: docker.io/<org>/hyperkube:latest"
+	//     - "image: docker.io/<org>/kubelet:latest"
 	KubeletImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     The `extraArgs` field is used to provide additional flags to the kubelet.
@@ -598,7 +598,7 @@ type ControlPlaneConfig struct {
 type APIServerConfig struct {
 	//   description: |
 	//     The container image used in the API server manifest.
-	Image string `yaml:"image,omitempty"`
+	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the API server.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
@@ -611,7 +611,7 @@ type APIServerConfig struct {
 type ControllerManagerConfig struct {
 	//   description: |
 	//     The container image used in the controller manager manifest.
-	Image string `yaml:"image,omitempty"`
+	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
@@ -619,6 +619,9 @@ type ControllerManagerConfig struct {
 
 // ProxyConfig represents the kube proxy configuration values
 type ProxyConfig struct {
+	//   description: |
+	//     The container image used in the kube-proxy manifest.
+	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     proxy mode of kube-proxy.
 	//     By default, this is 'iptables'.
@@ -632,7 +635,7 @@ type ProxyConfig struct {
 type SchedulerConfig struct {
 	//   description: |
 	//     The container image used in the scheduler manifest.
-	Image string `yaml:"image,omitempty"`
+	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the scheduler.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
