@@ -286,32 +286,32 @@ COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:v0.2.0-6-gb634c6a /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:v0.2.0-6-gb634c6a /boot/vmlinux /vmlinux
+COPY --from=docker.io/autonomy/kernel:v0.2.0-9-g908b75b /boot/vmlinuz /vmlinuz
+COPY --from=docker.io/autonomy/kernel:v0.2.0-9-g908b75b /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/containerd:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/eudev:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/iptables:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/libressl:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-6-gb634c6a /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-6-gb634c6a /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
-COPY --from=docker.io/autonomy/lvm2:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/musl:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/runc:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/socat:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/syslinux:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:v0.2.0-6-gb634c6a / /rootfs
-COPY --from=docker.io/autonomy/util-linux:v0.2.0-6-gb634c6a /lib/libblkid.* /rootfs/lib
-COPY --from=docker.io/autonomy/util-linux:v0.2.0-6-gb634c6a /lib/libuuid.* /rootfs/lib
-COPY --from=docker.io/autonomy/kmod:v0.2.0-6-gb634c6a /usr/lib/libkmod.* /rootfs/lib
-COPY --from=docker.io/autonomy/kernel:v0.2.0-6-gb634c6a /lib/modules /rootfs/lib/modules
+COPY --from=docker.io/autonomy/fhs:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/ca-certificates:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/containerd:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/dosfstools:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/eudev:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/iptables:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/libressl:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/libseccomp:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-9-g908b75b /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0-9-g908b75b /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=docker.io/autonomy/lvm2:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/musl:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/runc:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/socat:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/syslinux:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/xfsprogs:v0.2.0-9-g908b75b / /rootfs
+COPY --from=docker.io/autonomy/util-linux:v0.2.0-9-g908b75b /lib/libblkid.* /rootfs/lib
+COPY --from=docker.io/autonomy/util-linux:v0.2.0-9-g908b75b /lib/libuuid.* /rootfs/lib
+COPY --from=docker.io/autonomy/kmod:v0.2.0-9-g908b75b /usr/lib/libkmod.* /rootfs/lib
+COPY --from=docker.io/autonomy/kernel:v0.2.0-9-g908b75b /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
