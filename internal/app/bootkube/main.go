@@ -52,6 +52,13 @@ func run() error {
 	}
 
 	defer func() {
+		// We want to cleanup the manifests directory only if bootkube fails.
+		if err != nil {
+			if err = os.RemoveAll(constants.ManifestsDirectory); err != nil {
+				log.Printf("failed to cleanup manifests dir %s", constants.ManifestsDirectory)
+			}
+		}
+
 		if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
 			log.Printf("failed to cleanup bootkube assets dir %s", constants.AssetsDirectory)
 		}
