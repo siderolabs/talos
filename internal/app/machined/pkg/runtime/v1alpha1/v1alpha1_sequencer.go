@@ -163,6 +163,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		WriteUserFiles,
 		WriteUserSysctls,
+	).AppendWhen(
+		r.State().Platform().Mode() != runtime.ModeContainer,
+		ActivateLogicalVolumes,
 	).Append(
 		StartAllServices,
 	).AppendWhen(

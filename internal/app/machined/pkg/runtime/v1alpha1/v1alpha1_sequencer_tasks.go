@@ -48,6 +48,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
+	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -1624,6 +1625,17 @@ func SetInitStatus(seq runtime.Sequence, data interface{}) runtime.TaskExecution
 		}
 
 		logger.Println("updated initialization status in etcd")
+
+		return nil
+	}
+}
+
+// ActivateLogicalVolumes represents the task for activating logical volumes.
+func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		if _, err = cmd.Run("/sbin/lvm", "vgchange", "-ay"); err != nil {
+			return fmt.Errorf("failed to activate logical volumes: %w", err)
+		}
 
 		return nil
 	}
