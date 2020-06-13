@@ -116,4 +116,6 @@ type NodeRequest struct {
 	Memory int64
 	// Disk (volume) size in bytes, if applicable
 	DiskSize int64
+	// Ports
+	Ports []string
 }

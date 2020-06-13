@@ -24,13 +24,13 @@ func (suite *ReadSuite) SuiteName() string {
 
 // TestSuccess runs comand with success.
 func (suite *ReadSuite) TestSuccess() {
-	suite.RunOsctl([]string{"read", "/etc/os-release"},
+	suite.RunCLI([]string{"read", "/etc/os-release"},
 		base.StdoutShouldMatch(regexp.MustCompile(`ID=talos`)))
 }
 
 // TestMultiNodeFail verifies that command fails with multiple nodes.
 func (suite *ReadSuite) TestMultiNodeFail() {
-	suite.RunOsctl([]string{"read", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "/etc/os-release"},
+	suite.RunCLI([]string{"read", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "/etc/os-release"},
 		base.ShouldFail(),
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),

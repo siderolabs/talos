@@ -17,7 +17,7 @@ PROVISIONER=docker
 CLUSTER_NAME=e2e-${PROVISIONER}
 
 function create_cluster {
-  "${OSCTL}" cluster create \
+  "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
     --image "${IMAGE}" \
@@ -25,7 +25,8 @@ function create_cluster {
     --mtu 1500 \
     --memory 2048 \
     --cpus 4.0 \
-    --endpoint "${ENDPOINT}"
+    --endpoint "${ENDPOINT}" \
+    --with-init-node=false
 }
 
 create_cluster

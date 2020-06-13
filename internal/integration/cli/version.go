@@ -24,7 +24,7 @@ func (suite *VersionSuite) SuiteName() string {
 
 // TestExpectedVersionMaster verifies master node version matches expected
 func (suite *VersionSuite) TestExpectedVersionMaster() {
-	suite.RunOsctl([]string{"version"},
+	suite.RunCLI([]string{"version"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
 		base.StdoutShouldMatch(regexp.MustCompile(`Server:\n(\s*NODE:[^\n]+\n)?\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
 	)
@@ -32,14 +32,14 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 
 // TestShortVersion verifies short version output.
 func (suite *VersionSuite) TestShortVersion() {
-	suite.RunOsctl([]string{"version", "--short"},
+	suite.RunCLI([]string{"version", "--short"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client\s*`+regexp.QuoteMeta(suite.Version))),
 	)
 }
 
 // TestClientVersion verifies only client version output.
 func (suite *VersionSuite) TestClient() {
-	suite.RunOsctl([]string{"version", "--client"},
+	suite.RunCLI([]string{"version", "--client"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
 		base.StdoutShouldNotMatch(regexp.MustCompile(`Server`)),
 	)

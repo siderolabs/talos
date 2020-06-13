@@ -8,10 +8,14 @@ package check
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
 )
+
+// ErrServiceNotFound is an error that indicates that a service was not found.
+var ErrServiceNotFound = fmt.Errorf("service not found")
 
 // ServiceStateAssertion checks whether service reached some specified state.
 //
@@ -22,14 +26,27 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 		return err
 	}
 
-	// perform check against "init" node
-	initNodes := cluster.NodesByType(runtime.MachineTypeInit)
+	var node string
 
-	if len(initNodes) != 1 {
-		return fmt.Errorf("init node not found, len(initNodes) = %d", len(initNodes))
+	switch {
+	case len(cluster.NodesByType(runtime.MachineTypeInit)) > 0:
+		nodes := cluster.NodesByType(runtime.MachineTypeInit)
+		if len(nodes) != 1 {
+			return fmt.Errorf("expected 1 init node, got %d", len(nodes))
+		}
+
+		node = nodes[0]
+	case len(cluster.NodesByType(runtime.MachineTypeControlPlane)) > 0:
+		nodes := cluster.NodesByType(runtime.MachineTypeControlPlane)
+
+		sort.Strings(nodes)
+
+		node = nodes[0]
+	default:
+		return fmt.Errorf("no bootstrap node found")
 	}
 
-	nodeCtx := client.WithNodes(ctx, initNodes[0])
+	nodeCtx := client.WithNodes(ctx, node)
 
 	servicesInfo, err := cli.ServiceInfo(nodeCtx, service)
 	if err != nil {
@@ -57,7 +74,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 	}
 
 	if !serviceOk {
-		return fmt.Errorf("service %q not found", service)
+		return ErrServiceNotFound
 	}
 
 	return nil
