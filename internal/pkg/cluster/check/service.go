@@ -22,14 +22,13 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 		return err
 	}
 
-	// perform check against "init" node
-	initNodes := cluster.NodesByType(runtime.MachineTypeInit)
+	nodes := cluster.NodesByType(runtime.MachineTypeControlPlane)
 
-	if len(initNodes) != 1 {
-		return fmt.Errorf("init node not found, len(initNodes) = %d", len(initNodes))
+	if len(nodes) == 0 {
+		return fmt.Errorf("no control plane nodes found")
 	}
 
-	nodeCtx := client.WithNodes(ctx, initNodes[0])
+	nodeCtx := client.WithNodes(ctx, nodes[0])
 
 	servicesInfo, err := cli.ServiceInfo(nodeCtx, service)
 	if err != nil {
