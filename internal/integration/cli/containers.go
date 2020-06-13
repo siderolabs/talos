@@ -24,23 +24,23 @@ func (suite *ContainersSuite) SuiteName() string {
 
 // TestContainerd inspects containers via containerd driver.
 func (suite *ContainersSuite) TestContainerd() {
-	suite.RunOsctl([]string{"containers"},
+	suite.RunCLI([]string{"containers"},
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`talos/osd`)),
 	)
-	suite.RunOsctl([]string{"containers", "-k"},
+	suite.RunCLI([]string{"containers", "-k"},
 		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),
 	)
 }
 
 // TestCRI inspects containers via CRI driver.
 func (suite *ContainersSuite) TestCRI() {
-	suite.RunOsctl([]string{"containers", "-c"},
+	suite.RunCLI([]string{"containers", "-c"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunOsctl([]string{"containers", "-ck"},
+	suite.RunCLI([]string{"containers", "-ck"},
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 	)
 }

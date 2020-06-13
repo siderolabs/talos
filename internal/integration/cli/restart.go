@@ -30,7 +30,7 @@ func (suite *RestartSuite) TestSystem() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	suite.RunOsctl([]string{"restart", "trustd"},
+	suite.RunCLI([]string{"restart", "trustd"},
 		base.StdoutEmpty())
 
 	time.Sleep(50 * time.Millisecond)
@@ -44,7 +44,7 @@ func (suite *RestartSuite) TestK8s() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	suite.RunOsctl([]string{"restart", "-k", "kubelet"},
+	suite.RunCLI([]string{"restart", "-k", "kubelet"},
 		base.StdoutEmpty())
 
 	time.Sleep(50 * time.Millisecond)

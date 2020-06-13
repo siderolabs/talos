@@ -24,7 +24,7 @@ func (suite *InterfacesSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *InterfacesSuite) TestSuccess() {
-	suite.RunOsctl([]string{"interfaces"},
+	suite.RunCLI([]string{"interfaces"},
 		base.StdoutShouldMatch(regexp.MustCompile(`lo`)))
 }
 

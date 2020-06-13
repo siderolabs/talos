@@ -109,9 +109,8 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 	// Mutate the container configurations based on the node type.
 
-	switch nodeReq.Config.Machine().Type() {
-	case runtime.MachineTypeInit:
-		portsToOpen := []string{"50000:50000/tcp", "6443:6443/tcp"}
+	if nodeReq.Config.Machine().Type() == runtime.MachineTypeControlPlane {
+		portsToOpen := nodeReq.Ports
 
 		if len(options.DockerPorts) > 0 {
 			portsToOpen = append(portsToOpen, options.DockerPorts...)
@@ -128,8 +127,6 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 		hostConfig.PortBindings = generatedPortMap.portBindings
 
-		fallthrough
-	case runtime.MachineTypeControlPlane:
 		containerConfig.Volumes[constants.EtcdDataPath] = struct{}{}
 
 		if nodeReq.IP == nil {

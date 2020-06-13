@@ -24,7 +24,7 @@ func (suite *ServicesSuite) SuiteName() string {
 
 // TestList verifies service list.
 func (suite *ServicesSuite) TestList() {
-	suite.RunOsctl([]string{"services"},
+	suite.RunCLI([]string{"services"},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`osd`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
@@ -33,13 +33,13 @@ func (suite *ServicesSuite) TestList() {
 
 // TestStatus verifies service status.
 func (suite *ServicesSuite) TestStatus() {
-	suite.RunOsctl([]string{"service", "apid"},
+	suite.RunCLI([]string{"service", "apid"},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`\[Running\]`)),
 	)
 
-	suite.RunOsctl([]string{"service", "osd", "status"},
+	suite.RunCLI([]string{"service", "osd", "status"},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`osd`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`\[Running\]`)),

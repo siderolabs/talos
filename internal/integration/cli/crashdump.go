@@ -41,7 +41,7 @@ func (suite *CrashdumpSuite) TestRun() {
 		}
 	}
 
-	suite.RunOsctl(append([]string{"crashdump"}, args...),
+	suite.RunCLI(append([]string{"crashdump"}, args...),
 		base.StdoutShouldMatch(regexp.MustCompile(`> containerd`)),
 	)
 }
