@@ -32,7 +32,7 @@ func (suite *KubeconfigSuite) TestDirectory() {
 
 	defer os.RemoveAll(tempDir) //nolint: errcheck
 
-	suite.RunOsctl([]string{"kubeconfig", tempDir},
+	suite.RunCLI([]string{"kubeconfig", tempDir},
 		base.StdoutEmpty())
 
 	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
@@ -54,7 +54,7 @@ func (suite *KubeconfigSuite) TestCwd() {
 
 	suite.Require().NoError(os.Chdir(tempDir))
 
-	suite.RunOsctl([]string{"kubeconfig"},
+	suite.RunCLI([]string{"kubeconfig"},
 		base.StdoutEmpty())
 
 	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
@@ -62,7 +62,7 @@ func (suite *KubeconfigSuite) TestCwd() {
 
 // TestMultiNodeFail verifies that command fails with multiple nodes.
 func (suite *KubeconfigSuite) TestMultiNodeFail() {
-	suite.RunOsctl([]string{"kubeconfig", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},
 		base.ShouldFail(),
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),

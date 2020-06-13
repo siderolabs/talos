@@ -26,17 +26,17 @@ func (suite *LogsSuite) SuiteName() string {
 
 // TestServiceLogs verifies that logs are displayed.
 func (suite *LogsSuite) TestServiceLogs() {
-	suite.RunOsctl([]string{"logs", "kubelet"}) // default checks for stdout not empty
+	suite.RunCLI([]string{"logs", "kubelet"}) // default checks for stdout not empty
 }
 
 // TestTailLogs verifies that logs can be displayed with tail lines.
 func (suite *LogsSuite) TestTailLogs() {
 	// run some machined API calls to produce enough log lines
 	for i := 0; i < 10; i++ {
-		suite.RunOsctl([]string{"version"})
+		suite.RunCLI([]string{"version"})
 	}
 
-	suite.RunOsctl([]string{"logs", "apid", "--tail", "5"},
+	suite.RunCLI([]string{"logs", "apid", "--tail", "5"},
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Count(stdout, "\n")
 			if lines != 5 {
@@ -49,7 +49,7 @@ func (suite *LogsSuite) TestTailLogs() {
 
 // TestServiceNotFound verifies that logs displays an error if service is not found.
 func (suite *LogsSuite) TestServiceNotFound() {
-	suite.RunOsctl([]string{"logs", "servicenotfound"},
+	suite.RunCLI([]string{"logs", "servicenotfound"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),

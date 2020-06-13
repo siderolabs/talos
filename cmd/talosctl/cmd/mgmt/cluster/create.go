@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -23,11 +24,13 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/client"
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 var (
@@ -239,7 +242,7 @@ func create(ctx context.Context) (err error) {
 				cfg = configBundle.ControlPlane()
 			}
 		} else {
-			cfg = configBundle.ControlPlaneCfg
+			cfg = configBundle.ControlPlane()
 		}
 
 		request.Nodes = append(request.Nodes,
@@ -275,6 +278,47 @@ func create(ctx context.Context) (err error) {
 		return err
 	}
 
+	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
+	defer clusterAccess.Close() //nolint: errcheck
+
+	if !withInitNode {
+		cli, err := clusterAccess.Client()
+		if err != nil {
+			return retry.UnexpectedError(err)
+		}
+
+		nodes := clusterAccess.NodesByType(runtime.MachineTypeControlPlane)
+		if len(nodes) == 0 {
+			return fmt.Errorf("expected at least 1 control plane node, got %d", len(nodes))
+		}
+
+		sort.Strings(nodes)
+
+		node := nodes[0]
+
+		nodeCtx := client.WithNodes(ctx, node)
+
+		fmt.Println("waiting for API")
+
+		err = retry.Constant(5*time.Minute, retry.WithUnits(500*time.Millisecond)).Retry(func() error {
+			if _, err = cli.Version(nodeCtx); err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("bootstrapping cluster")
+
+		if err = cli.Bootstrap(nodeCtx); err != nil {
+			return err
+		}
+	}
+
 	if !clusterWait {
 		return nil
 	}
@@ -282,9 +326,6 @@ func create(ctx context.Context) (err error) {
 	// Run cluster readiness checks
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 	defer checkCtxCancel()
-
-	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
-	defer clusterAccess.Close() //nolint: errcheck
 
 	return check.Wait(checkCtx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter())
 }

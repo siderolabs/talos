@@ -24,7 +24,7 @@ func (suite *MountsSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *MountsSuite) TestSuccess() {
-	suite.RunOsctl([]string{"mounts"},
+	suite.RunCLI([]string{"mounts"},
 		base.StdoutShouldMatch(regexp.MustCompile(`FILESYSTEM`)))
 }
 

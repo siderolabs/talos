@@ -8,6 +8,7 @@ package cli
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -31,14 +32,45 @@ func (suite *HealthSuite) TestRun() {
 	}
 
 	args := []string{}
+
+	bootstrapAPIIsUsed := true
+
 	for _, node := range suite.Cluster.Info().Nodes {
-		switch node.Type {
-		case runtime.MachineTypeInit:
-			args = append(args, "--init-node", node.PrivateIP.String())
-		case runtime.MachineTypeControlPlane:
-			args = append(args, "--control-plane-nodes", node.PrivateIP.String())
-		case runtime.MachineTypeJoin:
-			args = append(args, "--worker-nodes", node.PrivateIP.String())
+		if node.Type == runtime.MachineTypeInit {
+			bootstrapAPIIsUsed = false
+		}
+	}
+
+	if bootstrapAPIIsUsed {
+		nodes := []string{}
+
+		for _, node := range suite.Cluster.Info().Nodes {
+			switch node.Type {
+			case runtime.MachineTypeControlPlane:
+				nodes = append(nodes, node.PrivateIP.String())
+			case runtime.MachineTypeJoin:
+				args = append(args, "--worker-nodes", node.PrivateIP.String())
+			}
+		}
+
+		sort.Strings(nodes)
+
+		if len(nodes) > 0 {
+			args = append(args, "--init-node", nodes[0])
+		}
+		if len(nodes) > 1 {
+			args = append(args, "--control-plane-nodes", strings.Join(nodes[1:], ","))
+		}
+	} else {
+		for _, node := range suite.Cluster.Info().Nodes {
+			switch node.Type {
+			case runtime.MachineTypeInit:
+				args = append(args, "--init-node", node.PrivateIP.String())
+			case runtime.MachineTypeControlPlane:
+				args = append(args, "--control-plane-nodes", node.PrivateIP.String())
+			case runtime.MachineTypeJoin:
+				args = append(args, "--worker-nodes", node.PrivateIP.String())
+			}
 		}
 	}
 
@@ -46,7 +78,7 @@ func (suite *HealthSuite) TestRun() {
 		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
 	}
 
-	suite.RunOsctl(append([]string{"health"}, args...),
+	suite.RunCLI(append([]string{"health"}, args...),
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
