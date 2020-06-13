@@ -20,7 +20,7 @@ case "${REGISTRY:-false}" in
 esac
 
 function create_cluster {
-  "${OSCTL}" cluster create \
+  "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
     --masters=3 \
@@ -29,6 +29,7 @@ function create_cluster {
     --cpus 2.0 \
     --cidr 172.20.0.0/24 \
     --install-image ${REGISTRY:-docker.io}/autonomy/installer:${INSTALLER_TAG} \
+    --with-init-node=false \
     ${FIRECRACKER_FLAGS}
 }
 

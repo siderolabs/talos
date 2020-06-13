@@ -24,7 +24,7 @@ func (suite *ProcessesSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *ProcessesSuite) TestSuccess() {
-	suite.RunOsctl([]string{"processes"},
+	suite.RunCLI([]string{"processes"},
 		base.StdoutShouldMatch(regexp.MustCompile(`PID`)))
 }
 

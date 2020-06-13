@@ -24,11 +24,11 @@ func (suite *StatsSuite) SuiteName() string {
 
 // TestContainerd inspects stats via containerd driver.
 func (suite *StatsSuite) TestContainerd() {
-	suite.RunOsctl([]string{"stats"},
+	suite.RunCLI([]string{"stats"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`osd`)),
 	)
-	suite.RunOsctl([]string{"stats", "-k"},
+	suite.RunCLI([]string{"stats", "-k"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`k8s.io`)),
@@ -37,12 +37,12 @@ func (suite *StatsSuite) TestContainerd() {
 
 // TestCRI inspects stats via CRI driver.
 func (suite *StatsSuite) TestCRI() {
-	suite.RunOsctl([]string{"stats", "-c"},
+	suite.RunCLI([]string{"stats", "-c"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunOsctl([]string{"stats", "-ck"},
+	suite.RunCLI([]string{"stats", "-ck"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`k8s.io`)),

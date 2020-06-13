@@ -16,4 +16,4 @@ if [ "${INTEGRATION_TEST_RUN:-undefined}" != "undefined" ]; then
   INTEGRATION_TEST_FLAGS="${INTEGRATION_TEST_FLAGS} -test.run ${INTEGRATION_TEST_RUN}"
 fi
 
-"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${OSCTL}" -talos.provision.mem 2048 -talos.provision.cpu 2 ${INTEGRATION_TEST_FLAGS}
+"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mem 2048 -talos.provision.cpu 2 ${INTEGRATION_TEST_FLAGS}

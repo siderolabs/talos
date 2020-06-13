@@ -38,7 +38,7 @@ func (cliSuite *CLISuite) DiscoverNodes() []string {
 	return nil
 }
 
-func (cliSuite *CLISuite) buildOsctlCmd(args []string) *exec.Cmd {
+func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 	// TODO: add support for calling `talosctl config endpoint` before running talosctl
 
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
@@ -46,14 +46,14 @@ func (cliSuite *CLISuite) buildOsctlCmd(args []string) *exec.Cmd {
 	return exec.Command(cliSuite.TalosctlPath, args...)
 }
 
-// RunOsctl runs talosctl binary with the options provided
-func (cliSuite *CLISuite) RunOsctl(args []string, options ...RunOption) {
-	Run(&cliSuite.Suite, cliSuite.buildOsctlCmd(args), options...)
+// RunCLI runs talosctl binary with the options provided
+func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) {
+	Run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
 }
 
 func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
 	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
-		stdout, _, err := RunAndWait(&cliSuite.Suite, cliSuite.buildOsctlCmd(args))
+		stdout, _, err := RunAndWait(&cliSuite.Suite, cliSuite.buildCLICmd(args))
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}

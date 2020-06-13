@@ -24,13 +24,13 @@ func (suite *MemorySuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *MemorySuite) TestSuccess() {
-	suite.RunOsctl([]string{"memory"},
+	suite.RunCLI([]string{"memory"},
 		base.StdoutShouldMatch(regexp.MustCompile(`FREE`)))
 }
 
 // TestVerbose verifies verbose mode.
 func (suite *MemorySuite) TestVerbose() {
-	suite.RunOsctl([]string{"memory", "-v"},
+	suite.RunCLI([]string{"memory", "-v"},
 		base.StdoutShouldMatch(regexp.MustCompile(`MemFree: \d+ kB`)))
 }
 

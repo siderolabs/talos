@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -23,11 +24,13 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/client"
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 var (
@@ -208,7 +211,6 @@ func create(ctx context.Context) (err error) {
 		}
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
-
 		configBundleOpts = append(configBundleOpts,
 			config.WithInputOptions(
 				&config.InputOptions{
@@ -232,6 +234,18 @@ func create(ctx context.Context) (err error) {
 	for i := 0; i < masters; i++ {
 		var cfg runtime.Configurator
 
+		nodeReq := provision.NodeRequest{
+			Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
+			IP:       ips[i],
+			Memory:   memory,
+			NanoCPUs: nanoCPUs,
+			DiskSize: diskSize,
+		}
+
+		if i == 0 {
+			nodeReq.Ports = []string{"50000:50000/tcp", "6443:6443/tcp"}
+		}
+
 		if withInitNode {
 			if i == 0 {
 				cfg = configBundle.Init()
@@ -239,18 +253,12 @@ func create(ctx context.Context) (err error) {
 				cfg = configBundle.ControlPlane()
 			}
 		} else {
-			cfg = configBundle.ControlPlaneCfg
+			cfg = configBundle.ControlPlane()
 		}
 
-		request.Nodes = append(request.Nodes,
-			provision.NodeRequest{
-				Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
-				IP:       ips[i],
-				Memory:   memory,
-				NanoCPUs: nanoCPUs,
-				DiskSize: diskSize,
-				Config:   cfg,
-			})
+		nodeReq.Config = cfg
+
+		request.Nodes = append(request.Nodes, nodeReq)
 	}
 
 	for i := 1; i <= workers; i++ {
@@ -275,6 +283,53 @@ func create(ctx context.Context) (err error) {
 		return err
 	}
 
+	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
+	defer clusterAccess.Close() //nolint: errcheck
+
+	if !withInitNode {
+		cli, err := clusterAccess.Client()
+		if err != nil {
+			return retry.UnexpectedError(err)
+		}
+
+		nodes := clusterAccess.NodesByType(runtime.MachineTypeControlPlane)
+		if len(nodes) == 0 {
+			return fmt.Errorf("expected at least 1 control plane node, got %d", len(nodes))
+		}
+
+		sort.Strings(nodes)
+
+		node := nodes[0]
+
+		nodeCtx := client.WithNodes(ctx, node)
+
+		fmt.Println("waiting for API")
+
+		err = retry.Constant(5*time.Minute, retry.WithUnits(500*time.Millisecond)).Retry(func() error {
+			retryCtx, cancel := context.WithTimeout(nodeCtx, 500*time.Millisecond)
+			defer cancel()
+
+			if _, err = cli.Version(retryCtx); err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("bootstrapping cluster")
+
+		bootstrapCtx, cancel := context.WithTimeout(nodeCtx, 30*time.Second)
+		defer cancel()
+
+		if err = cli.Bootstrap(bootstrapCtx); err != nil {
+			return err
+		}
+	}
+
 	if !clusterWait {
 		return nil
 	}
@@ -282,9 +337,6 @@ func create(ctx context.Context) (err error) {
 	// Run cluster readiness checks
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 	defer checkCtxCancel()
-
-	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
-	defer clusterAccess.Close() //nolint: errcheck
 
 	return check.Wait(checkCtx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter())
 }

@@ -32,7 +32,7 @@ func (suite *CopySuite) TestSuccess() {
 
 	defer os.RemoveAll(tempDir) //nolint: errcheck
 
-	suite.RunOsctl([]string{"copy", "/etc/os-release", tempDir},
+	suite.RunCLI([]string{"copy", "/etc/os-release", tempDir},
 		base.StdoutEmpty())
 
 	_, err = os.Stat(filepath.Join(tempDir, "os-release"))
@@ -41,7 +41,7 @@ func (suite *CopySuite) TestSuccess() {
 
 // TestMultiNodeFail verifies that command fails with multiple nodes.
 func (suite *CopySuite) TestMultiNodeFail() {
-	suite.RunOsctl([]string{"copy", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "/etc/os-release", "."},
+	suite.RunCLI([]string{"copy", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "/etc/os-release", "."},
 		base.ShouldFail(),
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),

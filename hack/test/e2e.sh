@@ -5,7 +5,7 @@
 #  - TAG
 #  - SHA
 #  - ARTIFACTS
-#  - OSCTL
+#  - TALOSCTL
 #  - INTEGRATION_TEST
 #  - KUBECTL
 #  - SONOBUOY
@@ -59,7 +59,7 @@ function create_cluster_capi {
     [[ $(date +%s) -gt $timeout ]] && exit 1
     sleep 10
   done
-  ${OSCTL} config endpoint "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0)"
+  ${TALOSCTL} config endpoint "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0)"
 
   # Wait for the kubeconfig from capi master-0
   timeout=$(($(date +%s) + ${TIMEOUT}))
@@ -94,11 +94,11 @@ function create_cluster_capi {
 }
 
 function run_talos_integration_test {
-  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${OSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
+  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
 }
 
 function run_talos_integration_test_docker {
-  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${OSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
+  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
 }
 
 function run_kubernetes_integration_test {
@@ -112,7 +112,7 @@ function run_kubernetes_integration_test {
     [[ $(date +%s) -gt $timeout ]] && exit 1
     echo "attempting to run sonobuoy"
     sleep 10
-  done  
+  done
   ${SONOBUOY} status --kubeconfig ${KUBECONFIG} --json | jq . | tee ${TMP}/sonobuoy-status.json
   if [ $(cat ${TMP}/sonobuoy-status.json | jq -r '.plugins[] | select(.plugin == "e2e") | ."result-status"') != 'passed' ]; then exit 1; fi
 }
@@ -130,12 +130,12 @@ function run_worker_cis_benchmark {
 }
 
 function get_kubeconfig {
-  "${OSCTL}" kubeconfig "${TMP}"
+  "${TALOSCTL}" kubeconfig "${TMP}"
 }
 
 function dump_cluster_state {
   nodes=$(${KUBECTL} get nodes -o jsonpath="{.items[*].status.addresses[?(@.type == 'InternalIP')].address}" | tr [:space:] ',')
-  "${OSCTL}" -n ${nodes} services
+  "${TALOSCTL}" -n ${nodes} services
   ${KUBECTL} get nodes -o wide
   ${KUBECTL} get pods --all-namespaces -o wide
 }
