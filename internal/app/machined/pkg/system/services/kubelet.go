@@ -135,6 +135,10 @@ func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
+	if r.State().Platform().Mode() == runtime.ModeContainer {
+		return []string{"cri", "networkd"}
+	}
+
 	return []string{"cri", "networkd", "timed"}
 }
 
