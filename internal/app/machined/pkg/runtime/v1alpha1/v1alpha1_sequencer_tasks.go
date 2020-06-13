@@ -585,9 +585,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) runtime.TaskExecut
 			&services.Routerd{},
 			&services.Networkd{},
 			&services.OSD{},
-			&services.Timed{},
-			&services.Udevd{},
-			&services.UdevdTrigger{},
 			&services.CRI{},
 			&services.Kubelet{},
 		)
