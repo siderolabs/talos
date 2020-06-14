@@ -398,6 +398,12 @@ func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_S
 	return
 }
 
+// Rollback implements the proto.OSClient interface.
+func (c *Client) Rollback(ctx context.Context) (err error) {
+	_, err = c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})
+	return
+}
+
 // Bootstrap implements the proto.OSClient interface.
 func (c *Client) Bootstrap(ctx context.Context) (err error) {
 	_, err = c.MachineClient.Bootstrap(ctx, &machineapi.BootstrapRequest{})

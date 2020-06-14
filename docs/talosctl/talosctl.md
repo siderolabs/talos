@@ -42,6 +42,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl recover](talosctl_recover.md)	 - Recover a control plane
 * [talosctl reset](talosctl_reset.md)	 - Reset a node
 * [talosctl restart](talosctl_restart.md)	 - Restart a process
+* [talosctl rollback](talosctl_rollback.md)	 - Rollback a node to the previous installation
 * [talosctl routes](talosctl_routes.md)	 - List network routes
 * [talosctl service](talosctl_service.md)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](talosctl_shutdown.md)	 - Shutdown a node
