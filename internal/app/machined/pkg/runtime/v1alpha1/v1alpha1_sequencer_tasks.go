@@ -594,6 +594,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) runtime.TaskExecut
 				&services.Timed{},
 				&services.Udevd{},
 				&services.UdevdTrigger{},
+				&services.Iscsid{},
 			)
 		}
 
