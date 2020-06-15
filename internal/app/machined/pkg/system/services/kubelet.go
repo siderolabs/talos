@@ -172,7 +172,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	// Add extra mounts.
 	// TODO(andrewrynhard): We should verify that the mount source is
-	// whitelisted. There is the potential that a user can expose
+	// allowlisted. There is the potential that a user can expose
 	// sensitive information.
 	mounts = append(mounts, r.Config().Machine().Kubelet().ExtraMounts()...)
 
@@ -270,7 +270,7 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 
 // nolint: gocyclo
 func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
-	blackListArgs := argsbuilder.Args{
+	denyListArgs := argsbuilder.Args{
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 		"kubeconfig":                 constants.KubeletKubeconfig,
 		"container-runtime":          "remote",
@@ -284,13 +284,13 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
-	for k := range blackListArgs {
+	for k := range denyListArgs {
 		if extraArgs.Contains(k) {
-			return nil, argsbuilder.NewBlacklistError(k)
+			return nil, argsbuilder.NewDenylistError(k)
 		}
 	}
 
-	return blackListArgs.Merge(extraArgs).Args(), nil
+	return denyListArgs.Merge(extraArgs).Args(), nil
 }
 
 func writeKubeletConfig(r runtime.Runtime) error {

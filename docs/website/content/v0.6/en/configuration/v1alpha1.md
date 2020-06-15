@@ -1051,7 +1051,7 @@ ca:
 #### extraArgs
 
 Extra arguments to supply to etcd.
-Note that the following args are blacklisted:
+Note that the following args are not allowed:
 
 - `name`
 - `data-dir`

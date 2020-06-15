@@ -361,7 +361,7 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 	}
 
 	// TODO(scm): see issue #2121 and description below in argsForControlPlane.
-	blackListArgs := argsbuilder.Args{
+	denyListArgs := argsbuilder.Args{
 		"name":                  hostname,
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
@@ -377,14 +377,14 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
 
-	for k := range blackListArgs {
+	for k := range denyListArgs {
 		if extraArgs.Contains(k) {
-			return argsbuilder.NewBlacklistError(k)
+			return argsbuilder.NewDenylistError(k)
 		}
 	}
 
 	if !extraArgs.Contains("initial-cluster-state") {
-		blackListArgs.Set("initial-cluster-state", "new")
+		denyListArgs.Set("initial-cluster-state", "new")
 	}
 
 	// If the initial cluster isn't explicitly defined, we need to discover any
@@ -399,7 +399,7 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
 
 			if upgraded {
-				blackListArgs.Set("initial-cluster-state", "existing")
+				denyListArgs.Set("initial-cluster-state", "existing")
 
 				initialCluster, err = buildInitialCluster(r, hostname, primaryAddr)
 				if err != nil {
@@ -407,21 +407,21 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 				}
 			}
 
-			blackListArgs.Set("initial-cluster", initialCluster)
+			denyListArgs.Set("initial-cluster", initialCluster)
 		} else {
-			blackListArgs.Set("initial-cluster-state", "existing")
+			denyListArgs.Set("initial-cluster-state", "existing")
 		}
 	}
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
-		blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
+		denyListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
-		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
+		denyListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
 	}
 
-	e.args = blackListArgs.Merge(extraArgs).Args()
+	e.args = denyListArgs.Merge(extraArgs).Args()
 
 	return nil
 }
@@ -485,7 +485,7 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 		return fmt.Errorf("failed to calculate etcd addresses: %w", err)
 	}
 
-	blackListArgs := argsbuilder.Args{
+	denyListArgs := argsbuilder.Args{
 		"name":                  hostname,
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
@@ -501,9 +501,9 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
 
-	for k := range blackListArgs {
+	for k := range denyListArgs {
 		if extraArgs.Contains(k) {
-			return argsbuilder.NewBlacklistError(k)
+			return argsbuilder.NewDenylistError(k)
 		}
 	}
 
@@ -517,9 +517,9 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 	if ok {
 		if !extraArgs.Contains("initial-cluster-state") {
 			if e.Bootstrap {
-				blackListArgs.Set("initial-cluster-state", "new")
+				denyListArgs.Set("initial-cluster-state", "new")
 			} else {
-				blackListArgs.Set("initial-cluster-state", "existing")
+				denyListArgs.Set("initial-cluster-state", "existing")
 			}
 		}
 
@@ -535,19 +535,19 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 				}
 			}
 
-			blackListArgs.Set("initial-cluster", initialCluster)
+			denyListArgs.Set("initial-cluster", initialCluster)
 		}
 
 		if !extraArgs.Contains("initial-advertise-peer-urls") {
-			blackListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
+			denyListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
 		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
-		blackListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
+		denyListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
 	}
 
-	e.args = blackListArgs.Merge(extraArgs).Args()
+	e.args = denyListArgs.Merge(extraArgs).Args()
 
 	return nil
 }

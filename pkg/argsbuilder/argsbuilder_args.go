@@ -54,18 +54,18 @@ func (a Args) Contains(k Key) bool {
 	return ok
 }
 
-// BlackListError represents an error indicating that an argument was supplied
+// DenyListError represents an error indicating that an argument was supplied
 // that is not allowed.
-type BlackListError struct {
+type DenyListError struct {
 	s string
 }
 
-// NewBlacklistError returns a BlackListError.
-func NewBlacklistError(s string) error {
-	return &BlackListError{s}
+// NewDenylistError returns a DenyListError.
+func NewDenylistError(s string) error {
+	return &DenyListError{s}
 }
 
 // Error implements the Error interface.
-func (b *BlackListError) Error() string {
+func (b *DenyListError) Error() string {
 	return fmt.Sprintf("extra arg %q is not allowed", b.s)
 }
