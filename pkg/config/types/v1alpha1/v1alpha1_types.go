@@ -657,7 +657,7 @@ type EtcdConfig struct {
 	RootCA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 	//   description: |
 	//     Extra arguments to supply to etcd.
-	//     Note that the following args are blacklisted:
+	//     Note that the following args are not allowed:
 	//
 	//     - `name`
 	//     - `data-dir`
