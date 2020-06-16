@@ -97,7 +97,7 @@ BUILDKIT_HOST=tcp://192.168.1.50:1234 make initramfs
 ### Docker for mac
 
 To enable building buildX on Docker for Mac you need to enable the experimental features in the docker app.
-To enable this go to: Docker -> prefrences -> Command Line -> "Enable experimental features" should be toggled on.
+To enable this go to: Docker -> preferences -> Command Line -> "Enable experimental features" should be toggled on.
 
 ## VScode extensions
 
