@@ -45,6 +45,7 @@ type NetworkInterface struct {
 	Name          string
 	Type          int
 	Ignore        bool
+	Dummy         bool
 	Bonded        bool
 	MTU           uint32
 	Link          *net.Interface
@@ -122,6 +123,10 @@ func (n *NetworkInterface) Create() error {
 
 	if n.Bonded {
 		info = &rtnetlink.LinkInfo{Kind: "bond"}
+	}
+
+	if n.Dummy {
+		info = &rtnetlink.LinkInfo{Kind: "dummy"}
 	}
 
 	if err = n.createLink(n.Name, info); err != nil {
