@@ -7,6 +7,7 @@ package digitalocean
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 
@@ -35,6 +36,8 @@ func (d *DigitalOcean) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (d *DigitalOcean) Configuration() ([]byte, error) {
+	log.Printf("fetching machine config from: %q", DigitalOceanUserDataEndpoint)
+
 	return download.Download(DigitalOceanUserDataEndpoint)
 }
 

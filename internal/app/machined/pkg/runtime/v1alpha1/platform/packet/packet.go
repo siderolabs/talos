@@ -5,6 +5,7 @@
 package packet
 
 import (
+	"log"
 	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
@@ -28,6 +29,8 @@ func (p *Packet) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (p *Packet) Configuration() ([]byte, error) {
+	log.Printf("fetching machine config from: %q", PacketUserDataEndpoint)
+
 	return download.Download(PacketUserDataEndpoint)
 }
 

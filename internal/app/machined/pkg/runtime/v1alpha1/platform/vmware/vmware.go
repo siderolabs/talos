@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
@@ -35,6 +36,8 @@ func (v *VMware) Configuration() ([]byte, error) {
 	}
 
 	if *option == constants.ConfigGuestInfo {
+		log.Printf("fetching machine config from: guestinfo key %q", constants.VMwareGuestInfoConfigKey)
+
 		ok, err := vmcheck.IsVirtualWorld()
 		if err != nil {
 			return nil, err

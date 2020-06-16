@@ -7,6 +7,7 @@ package container
 import (
 	"encoding/base64"
 	"errors"
+	"log"
 	"net"
 	"os"
 
@@ -25,6 +26,8 @@ func (c *Container) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (c *Container) Configuration() ([]byte, error) {
+	log.Printf("fetching machine config from: USERDATA environment variable")
+
 	s, ok := os.LookupEnv("USERDATA")
 	if !ok {
 		return nil, errors.New("missing USERDATA environment variable")
