@@ -97,7 +97,16 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (reply *machine.RollbackResponse, err error) {
 	log.Printf("rollback via API received")
 
-	if err := syslinux.Revert(); err != nil {
+	_, next, err := syslinux.Labels()
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = os.Stat(filepath.Join(constants.BootMountPoint, next)); errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("cannot rollback to %q, label does not exist", next)
+	}
+
+	if err := syslinux.RevertTo(next); err != nil {
 		return nil, fmt.Errorf("failed to revert bootloader: %v", err)
 	}
 

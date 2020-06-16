@@ -153,6 +153,34 @@ func Labels() (current string, next string, err error) {
 	return current, next, err
 }
 
+// RevertTo reverts the default syslinx label to the previous installation.
+//
+// nolint: gocyclo
+func RevertTo(label string) (err error) {
+	log.Printf("reverting default boot to %q", label)
+
+	var b []byte
+
+	if b, err = ioutil.ReadFile(SyslinuxConfig); err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
+	matches := re.FindSubmatch(b)
+
+	if len(matches) != 2 {
+		return fmt.Errorf("expected 2 matches, got %d", len(matches))
+	}
+
+	b = re.ReplaceAll(b, []byte(fmt.Sprintf("DEFAULT %s", label)))
+
+	if err = ioutil.WriteFile(SyslinuxConfig, b, 0600); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Revert reverts the default syslinx label to the previous installation.
 //
 // nolint: gocyclo
@@ -189,24 +217,7 @@ func Revert() (err error) {
 		return nil
 	}
 
-	log.Printf("reverting default boot to %q", label)
-
-	var b []byte
-
-	if b, err = ioutil.ReadFile(SyslinuxConfig); err != nil {
-		return err
-	}
-
-	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
-	matches := re.FindSubmatch(b)
-
-	if len(matches) != 2 {
-		return fmt.Errorf("expected 2 matches, got %d", len(matches))
-	}
-
-	b = re.ReplaceAll(b, []byte(fmt.Sprintf("DEFAULT %s", label)))
-
-	if err = ioutil.WriteFile(SyslinuxConfig, b, 0600); err != nil {
+	if err = RevertTo(label); err != nil {
 		return err
 	}
 
