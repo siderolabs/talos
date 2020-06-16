@@ -46,7 +46,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/blockdevice"
+	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/config"
@@ -561,7 +562,7 @@ func SetUserEnvVars(seq runtime.Sequence, data interface{}) runtime.TaskExecutio
 	}
 }
 
-// StartContainerd represents the task to start the system services.
+// StartContainerd represents the task to start containerd.
 func StartContainerd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		svc := &services.Containerd{}
@@ -572,6 +573,35 @@ func StartContainerd(seq runtime.Sequence, data interface{}) runtime.TaskExecuti
 		defer cancel()
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
+	}
+}
+
+// StartUdevd represents the task to start udevd.
+func StartUdevd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Udevd{}
+
+		system.Services(r).LoadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		if err = system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
+			return err
+		}
+
+		if _, err = cmd.Run("/sbin/udevadm", "trigger"); err != nil {
+			return err
+		}
+
+		// This ensures that `udevd` finishes processing kernel events, triggered by
+		// `udevd trigger`, to prevent a race condition when a user specifies a path
+		// under `/dev/disk/*` in any disk definitions.
+		if _, err = cmd.Run("/sbin/udevadm", "settle"); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }
 
@@ -592,8 +622,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) runtime.TaskExecut
 		if r.State().Platform().Mode() != runtime.ModeContainer {
 			svcs.Load(
 				&services.Timed{},
-				&services.Udevd{},
-				&services.UdevdTrigger{},
 			)
 		}
 
@@ -737,6 +765,28 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 	}
 
 	for _, disk := range r.Config().Machine().Disks() {
+		var bd *blockdevice.BlockDevice
+
+		bd, err = blockdevice.Open(disk.Device, blockdevice.WithNewGPT(false))
+		if err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer bd.Close()
+
+		var pt table.PartitionTable
+
+		pt, err = bd.PartitionTable(true)
+		if err != nil {
+			return err
+		}
+
+		if len(pt.Partitions()) > 0 {
+			logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device)
+			continue
+		}
+
 		if m.Targets[disk.Device] == nil {
 			m.Targets[disk.Device] = []*installer.Target{}
 		}
@@ -753,25 +803,6 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 		}
 	}
 
-	probed, err := probe.All()
-	if err != nil {
-		return err
-	}
-
-	// TODO(andrewrynhard): This is disgusting, but it works. We should revisit
-	// this at a later time.
-	for _, p := range probed {
-		for _, disk := range r.Config().Machine().Disks() {
-			for i := range disk.Partitions {
-				partname := util.PartPath(disk.Device, i+1)
-				if p.Path == partname {
-					logger.Printf(("found existing partitions for %q"), disk.Device)
-					return nil
-				}
-			}
-		}
-	}
-
 	if err = m.ExecuteManifest(); err != nil {
 		return err
 	}
@@ -782,9 +813,21 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 func mountDisks(r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
-	for _, extra := range r.Config().Machine().Disks() {
-		for i, part := range extra.Partitions {
-			partname := util.PartPath(extra.Device, i+1)
+	for _, disk := range r.Config().Machine().Disks() {
+		for i, part := range disk.Partitions {
+			var partname string
+
+			partname, err = util.PartPath(disk.Device, i+1)
+			if err != nil {
+				return err
+			}
+
+			if _, err = os.Stat(part.MountPoint); errors.Is(err, os.ErrNotExist) {
+				if err = os.MkdirAll(part.MountPoint, 0700); err != nil {
+					return err
+				}
+			}
+
 			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint, "xfs", unix.MS_NOATIME, ""))
 		}
 	}
@@ -1161,7 +1204,10 @@ func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) runtime.Task
 		// TODO(andrewrynhard): This should be more dynamic. If we ever change the
 		// partition scheme there is the chance that 2 is not the correct parition to
 		// check.
-		partname := util.PartPath(devname, 2)
+		partname, err := util.PartPath(devname, 2)
+		if err != nil {
+			return err
+		}
 
 		if _, err = os.Stat(partname); errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("ephemeral partition not found: %w", err)

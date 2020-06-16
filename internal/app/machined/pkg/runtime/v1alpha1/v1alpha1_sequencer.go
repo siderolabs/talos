@@ -159,6 +159,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		MountOverlayFilesystems,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
+		StartUdevd,
+	).AppendWhen(
+		r.State().Platform().Mode() != runtime.ModeContainer,
 		MountUserDisks,
 	).Append(
 		WriteUserFiles,

@@ -164,7 +164,10 @@ func probe(devpath string) (devpaths []string) {
 	name := filepath.Base(devpath)
 
 	for _, p := range pt.Partitions() {
-		partpath := util.PartPath(name, int(p.No()))
+		partpath, err := util.PartPath(name, int(p.No()))
+		if err != nil {
+			return devpaths
+		}
 
 		// nolint: errcheck
 		if sb, _ := FileSystem(partpath); sb != nil {

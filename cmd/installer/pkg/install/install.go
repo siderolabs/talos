@@ -193,7 +193,10 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 				for _, part := range pt.Partitions() {
 					switch target.Label {
 					case constants.BootPartitionLabel, constants.EphemeralPartitionLabel:
-						target.PartitionName = util.PartPath(target.Device, int(part.No()))
+						target.PartitionName, err = util.PartPath(target.Device, int(part.No()))
+						if err != nil {
+							return err
+						}
 					}
 				}
 
