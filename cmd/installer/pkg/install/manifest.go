@@ -176,7 +176,10 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		return err
 	}
 
-	t.PartitionName = util.PartPath(t.Device, int(part.No()))
+	t.PartitionName, err = util.PartPath(t.Device, int(part.No()))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -184,11 +187,11 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 // Format creates a filesystem on the device/partition.
 func (t *Target) Format() error {
 	if t.Label == constants.BootPartitionLabel {
-		log.Printf("formatting partition %q - %q as %q\n", t.PartitionName, t.Label, "fat")
+		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "fat", t.Label)
 		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
 	}
 
-	log.Printf("formatting partition %q - %q as %q\n", t.PartitionName, t.Label, "xfs")
+	log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
 	opts := []xfs.Option{xfs.WithForce(t.Force)}
 
 	if t.Label != "" {

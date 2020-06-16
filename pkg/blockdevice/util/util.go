@@ -6,6 +6,7 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -77,7 +78,25 @@ func PartName(d string, n int) string {
 	return partname
 }
 
-// PartPath returns the full path to a parition name.
-func PartPath(d string, n int) string {
-	return filepath.Join("/dev", PartName(d, n))
+// PartPath returns the canonical path to a partition name (e.g. /dev/sda).
+func PartPath(d string, n int) (string, error) {
+	switch {
+	case strings.HasPrefix(d, "/dev/disk/by-id"):
+		name, err := os.Readlink(d)
+		if err != nil {
+			return "", err
+		}
+
+		return filepath.Join("/dev", PartName(filepath.Base(name), n)), nil
+	case strings.HasPrefix(d, "/dev/disk/by-label"):
+		fallthrough
+	case strings.HasPrefix(d, "/dev/disk/by-partlabel"):
+		fallthrough
+	case strings.HasPrefix(d, "/dev/disk/by-partuuid"):
+		fallthrough
+	case strings.HasPrefix(d, "/dev/disk/by-uuid"):
+		return "", fmt.Errorf("disk name is already a partition")
+	default:
+		return filepath.Join("/dev", PartName(d, n)), nil
+	}
 }
