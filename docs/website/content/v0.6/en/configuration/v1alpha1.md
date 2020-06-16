@@ -737,6 +737,11 @@ The following DHCP options are supported:
 `ignore` is used to exclude a specific interface from configuration.
 This parameter is optional.
 
+##### machine.network.interfaces.dummy
+
+`dummy` is used to specify that this interface should be a virtual-only, dummy interface.
+This parameter is optional.
+
 ##### machine.network.interfaces.routes
 
 `routes` is used to specify static routes that may be necessary.

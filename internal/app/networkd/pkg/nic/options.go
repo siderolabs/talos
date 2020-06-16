@@ -23,6 +23,14 @@ func defaultOptions() *NetworkInterface {
 	}
 }
 
+// WithDummy indicates that the interface should be a virtual, dummy interface.
+func WithDummy() Option {
+	return func(n *NetworkInterface) (err error) {
+		n.Dummy = true
+		return
+	}
+}
+
 // WithIgnore indicates that the interface should not be processed by talos.
 func WithIgnore() Option {
 	return func(n *NetworkInterface) (err error) {

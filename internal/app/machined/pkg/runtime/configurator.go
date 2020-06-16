@@ -152,6 +152,7 @@ type Device struct {
 	MTU       int     `yaml:"mtu"`
 	DHCP      bool    `yaml:"dhcp"`
 	Ignore    bool    `yaml:"ignore"`
+	Dummy     bool    `yaml:"dummy"`
 }
 
 // Bond contains the various options for configuring a

@@ -71,6 +71,11 @@ func buildOptions(device runtime.Device, hostname string) (name string, opts []n
 		}
 	}
 
+	// Handle dummy interface
+	if device.Dummy {
+		opts = append(opts, nic.WithDummy())
+	}
+
 	// Configure Bonding
 	if device.Bond == nil {
 		return device.Interface, opts, err
