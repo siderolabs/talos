@@ -19,3 +19,57 @@ There are two options:
 
 - [Run a Docker-based local cluster](/docs/v0.5/en/guides/local/docker) on your Linux or Mac workstation
 - [Run a Firecracker micro-VM-based](/docs/v0.5/en/guides/local/firecracker) cluster on your Linux workstation
+
+### System requirements
+
+Talos itself is a low resource OS, but since Talos goal is to run Kubernetes you need to have atleast the following hardware requirements:
+
+#### Minimum requirements
+
+<table class="table-auto">
+  <thead>
+    <tr>
+      <th class="px-4 py-2">Role</th>
+      <th class="px-4 py-2">Memory</th>
+      <th class="px-4 py-2">Cores</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="border px-4 py-2">Init/Control Plane</td>
+      <td class="border px-4 py-2">2GB</td>
+      <td class="border px-4 py-2">2</td>
+    </tr>
+    <tr class="bg-gray-100">
+      <td class="border px-4 py-2">Worker</td>
+      <td class="border px-4 py-2">1GB</td>
+      <td class="border px-4 py-2">1</td>
+    </tr>
+  </tbody>
+</table>
+
+#### Recommended
+
+<table class="table-auto">
+  <thead>
+    <tr>
+      <th class="px-4 py-2">Role</th>
+      <th class="px-4 py-2">Memory</th>
+      <th class="px-4 py-2">Cores</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="border px-4 py-2">Init/Control Plane</td>
+      <td class="border px-4 py-2">4GB</td>
+      <td class="border px-4 py-2">4</td>
+    </tr>
+    <tr class="bg-gray-100">
+      <td class="border px-4 py-2">Worker</td>
+      <td class="border px-4 py-2">2GB</td>
+      <td class="border px-4 py-2">2</td>
+    </tr>
+  </tbody>
+</table>
+
+These requirements are similair to that of kubernetes.
