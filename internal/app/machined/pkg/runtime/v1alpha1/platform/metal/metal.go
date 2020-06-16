@@ -44,6 +44,8 @@ func (m *Metal) Configuration() ([]byte, error) {
 		return nil, fmt.Errorf("no config option was found")
 	}
 
+	log.Printf("fetching machine config from: %q", *option)
+
 	u, err := url.Parse(*option)
 	if err != nil {
 		return nil, err

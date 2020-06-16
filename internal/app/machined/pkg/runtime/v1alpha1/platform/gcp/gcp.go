@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 
@@ -36,6 +37,8 @@ func (g *GCP) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (g *GCP) Configuration() ([]byte, error) {
+	log.Printf("fetching machine config from: %q", GCUserDataEndpoint)
+
 	return download.Download(GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 

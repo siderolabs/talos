@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 
@@ -41,6 +42,8 @@ func (a *Azure) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (a *Azure) Configuration() ([]byte, error) {
+	log.Printf("fetching machine config from: %q", AzureUserDataEndpoint)
+
 	if err := linuxAgent(); err != nil {
 		return nil, err
 	}

@@ -124,6 +124,8 @@ func (a *AWS) Name() string {
 
 // Configuration implements the runtime.Platform interface.
 func (a *AWS) Configuration() ([]byte, error) {
+	log.Printf("fetching machine config from: %q", AWSUserDataEndpoint)
+
 	return download.Download(AWSUserDataEndpoint)
 }
 
