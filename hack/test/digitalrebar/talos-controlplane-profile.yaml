@@ -1,0 +1,15 @@
+Validated: true
+Available: true
+Errors: []
+ReadOnly: false
+Meta:
+  color: "black"
+  icon: "tags"
+  title: "Talos-controlplane"
+Endpoint: ""
+Bundle: ""
+Name: "talos-controlplane"
+Description: "Talos controlplane"
+Documentation: ""
+Params:
+  talos/role: "controlplane"

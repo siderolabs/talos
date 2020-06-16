@@ -1,0 +1,23 @@
+Validated: true
+Available: true
+Errors: []
+ReadOnly: false
+Meta:
+  color: "yellow"
+  icon: "spinner"
+  title: "talos"
+Endpoint: ""
+Bundle: ""
+Name: "Talos"
+Description: "Talos"
+Documentation: ""
+Templates: []
+RequiredParams:
+  - "talos/role"
+OptionalParams: []
+Params: {}
+BootEnv: "talos-0.6"
+Tasks: []
+Profiles: []
+Reboot: false
+RunnerWait: true
