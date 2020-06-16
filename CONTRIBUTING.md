@@ -37,6 +37,26 @@ It is not necessary to cryptographically sign commits with GPG.
 ### Pull Requests
 
 To avoid multiples CI runs, please ensure that you are running a full build before submitting your PR, and branches should be squashed to a single commit.
+To run some local tests you can use the included Makefile in this repo.
+For example to run the conformance tests:
+
+```bash
+$ make conformance
+docker run --rm -it -v /Users/user/projects/talos:/src -w /src docker.io/autonomy/conform:v0.1.0-alpha.19
+POLICY         CHECK                        STATUS        MESSAGE
+commit         Header Length                PASS          <none>
+commit         Imperative Mood              PASS          <none>
+commit         Header Case                  PASS          <none>
+commit         Header Last Character        PASS          <none>
+commit         DCO                          PASS          <none>
+commit         Conventional Commit          PASS          <none>
+commit         Spellcheck                   PASS          <none>
+commit         Number of Commits            PASS          <none>
+commit         Commit Body                  PASS          <none>
+license        File Header                  PASS          <none>
+```
+
+Make sure all tests pass before creating a PR.
 
 ## Developing
 
@@ -73,3 +93,16 @@ Then using the `BUILDKIT_HOST` environment variable before running any `make` ta
 ```bash
 BUILDKIT_HOST=tcp://192.168.1.50:1234 make initramfs
 ```
+
+### Docker for mac
+
+To enable building buildX on Docker for Mac you need to enable the experimental features in the docker app.
+To enable this go to: Docker -> prefrences -> Command Line -> "Enable experimental features" should be toggled on.
+
+## VScode extensions
+
+Visual studio code is a editor which is widely used, and has some neat features to make your life easier.
+Below is a list of extensions that can help while developing for Talos.
+
+- [Markdown lint](https://marketplace.visualstudio.com/items/DavidAnson.vscode-markdownlint)
+- [Golang support](https://marketplace.visualstudio.com/items?itemName=golang.Go)
