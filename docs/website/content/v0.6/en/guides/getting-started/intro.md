@@ -22,7 +22,7 @@ There are two options:
 
 ### System requirements
 
-Talos itself is a low resource OS, but since Talos goal is to run Kubernetes you need to have atleast the following hardware requirements:
+Talos itself is a low resource OS, but since Talos goal is to run Kubernetes you need to have at least the following hardware requirements:
 
 #### Minimum requirements
 
@@ -72,4 +72,4 @@ Talos itself is a low resource OS, but since Talos goal is to run Kubernetes you
   </tbody>
 </table>
 
-These requirements are similair to that of kubernetes.
+These requirements are similar to that of kubernetes.
