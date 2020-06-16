@@ -1,0 +1,15 @@
+Validated: true
+Available: true
+Errors: []
+ReadOnly: false
+Meta:
+  color: "black"
+  icon: "tags"
+  title: "Talos-worker"
+Endpoint: ""
+Bundle: ""
+Name: "talos-worker"
+Description: "Talos worker"
+Documentation: ""
+Params:
+  talos/role: "worker"

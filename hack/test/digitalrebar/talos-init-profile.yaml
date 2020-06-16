@@ -1,0 +1,15 @@
+Validated: true
+Available: true
+Errors: []
+ReadOnly: false
+Meta:
+  color: "black"
+  icon: "tags"
+  title: "Talos-init"
+Endpoint: ""
+Bundle: ""
+Name: "talos-init"
+Description: "Talos init"
+Documentation: ""
+Params:
+  talos/role: "init"

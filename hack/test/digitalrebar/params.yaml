@@ -1,0 +1,16 @@
+Validated: true
+Available: true
+Errors: []
+ReadOnly: false
+Meta:
+  color: "black"
+  icon: "tags"
+  title: "Talos role"
+Endpoint: ""
+Bundle: ""
+Name: "talos/role"
+Description: "Role of node"
+Documentation: ""
+Secure: false
+Schema:
+  type: "string"

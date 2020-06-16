@@ -1,0 +1,15 @@
+Validated: true
+Available: true
+Errors: []
+ReadOnly: false
+Meta:
+  color: "Yellow"
+  icon: "linux"
+  title: "Talos"
+Endpoint: ""
+Bundle: ""
+Name: "Talos"
+Description: "Talos"
+Documentation: ""
+Stages:
+  - "Talos"
