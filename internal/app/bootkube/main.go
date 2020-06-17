@@ -51,9 +51,11 @@ func run() error {
 		return err
 	}
 
+	failed := true
+
 	defer func() {
 		// We want to cleanup the manifests directory only if bootkube fails.
-		if err != nil {
+		if failed {
 			if err = os.RemoveAll(constants.ManifestsDirectory); err != nil {
 				log.Printf("failed to cleanup manifests dir %s", constants.ManifestsDirectory)
 			}
@@ -65,19 +67,27 @@ func run() error {
 
 		bootstrapWildcard := filepath.Join(constants.ManifestsDirectory, "bootstrap-*")
 
-		bootstrapFiles, err := filepath.Glob(bootstrapWildcard)
+		var bootstrapFiles []string
+
+		bootstrapFiles, err = filepath.Glob(bootstrapWildcard)
 		if err != nil {
 			log.Printf("error finding bootstrap files in manifests dir %s", constants.ManifestsDirectory)
 		}
 
 		for _, bootstrapFile := range bootstrapFiles {
-			if err := os.Remove(bootstrapFile); err != nil {
+			if err = os.Remove(bootstrapFile); err != nil {
 				log.Printf("error deleting bootstrap file in manifests dir : %s", err)
 			}
 		}
 	}()
 
-	return bk.Run()
+	if err = bk.Run(); err != nil {
+		return err
+	}
+
+	failed = false
+
+	return nil
 }
 
 func main() {
