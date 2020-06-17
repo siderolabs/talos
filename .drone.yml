@@ -574,7 +574,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -598,7 +597,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -1282,7 +1280,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -1306,7 +1303,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -2082,7 +2078,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -2106,7 +2101,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -2912,7 +2906,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -2936,7 +2929,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -3742,7 +3734,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: provision-tests-track-1
@@ -3766,7 +3757,6 @@ steps:
   - name: tmp
     path: /tmp
   depends_on:
-  - e2e-firecracker
   - provision-tests-prepare
 
 - name: push
@@ -4003,9 +3993,5 @@ depends_on:
 - conformance
 - nightly
 - release
-
----
-kind: signature
-hmac: 507e1e1344e87b9c073e3f212b076b15655bea11ba86c9f4f781079547c8aeee
 
 ...
