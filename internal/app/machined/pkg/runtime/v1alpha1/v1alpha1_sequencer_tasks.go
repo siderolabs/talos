@@ -767,7 +767,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 	for _, disk := range r.Config().Machine().Disks() {
 		var bd *blockdevice.BlockDevice
 
-		bd, err = blockdevice.Open(disk.Device, blockdevice.WithNewGPT(false))
+		bd, err = blockdevice.Open(disk.Device)
 		if err != nil {
 			return err
 		}
@@ -777,14 +777,23 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 
 		var pt table.PartitionTable
 
-		pt, err = bd.PartitionTable(true)
+		pt, err = bd.PartitionTable()
 		if err != nil {
-			return err
+			if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+				return err
+			}
 		}
 
-		if len(pt.Partitions()) > 0 {
-			logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device)
-			continue
+		// Partitions will be created/recreated if either of the following
+		//  conditions are true:
+		// - a partition table exists AND there are no partitions
+		// - a partition table does not exist
+
+		if pt != nil {
+			if len(pt.Partitions()) > 0 {
+				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device)
+				continue
+			}
 		}
 
 		if m.Targets[disk.Device] == nil {

@@ -2,12 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package blockdevice provides a library for working with block devices.
 package blockdevice
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"syscall"
@@ -96,13 +94,9 @@ func (bd *BlockDevice) Close() error {
 }
 
 // PartitionTable returns the block device partition table.
-func (bd *BlockDevice) PartitionTable(read bool) (table.PartitionTable, error) {
+func (bd *BlockDevice) PartitionTable() (table.PartitionTable, error) {
 	if bd.table == nil {
-		return nil, errors.New("missing partition table")
-	}
-
-	if !read {
-		return bd.table, nil
+		return nil, ErrMissingPartitionTable
 	}
 
 	return bd.table, bd.table.Read()
@@ -169,7 +163,7 @@ func (bd *BlockDevice) Size() (uint64, error) {
 func (bd *BlockDevice) Reset() (err error) {
 	var pt table.PartitionTable
 
-	if pt, err = bd.PartitionTable(true); err != nil {
+	if pt, err = bd.PartitionTable(); err != nil {
 		return err
 	}
 
