@@ -1,3 +1,28 @@
+<a name="v0.6.0-alpha.3"></a>
+
+## [v0.6.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.2...v0.6.0-alpha.3) (2020-06-17)
+
+### Chore
+
+- run provision tests in parallel
+- use neutral terminology
+
+### Feat
+
+- add rollback command
+- add open-iscsi
+- update linux kernel (with 32 bit support) and talos pkgs for v0.6
+- allow recovery at all times
+
+### Fix
+
+- detect if partition table is missing
+- revert default boot properly
+- allow for using /dev/disk/\* symlinks
+- skip services when in container mode
+- activate logical volumes
+- update LVM2
+
 <a name="v0.6.0-alpha.2"></a>
 
 ## [v0.6.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.1...v0.6.0-alpha.2) (2020-06-10)
@@ -31,6 +56,10 @@
 ### Refactor
 
 - implement LoggingManager as central log flow processor
+
+### Release
+
+- **v0.6.0-alpha.2:** prepare release
 
 ### Test
 
