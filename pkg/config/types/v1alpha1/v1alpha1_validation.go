@@ -98,9 +98,11 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		}
 	}
 
-	for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
-		if err := ValidateNetworkDevices(device, CheckDeviceInterface, CheckDeviceAddressing); err != nil {
-			result = multierror.Append(result, err)
+	if c.MachineConfig.MachineNetwork != nil {
+		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+			if err := ValidateNetworkDevices(device, CheckDeviceInterface, CheckDeviceAddressing); err != nil {
+				result = multierror.Append(result, err)
+			}
 		}
 	}
 
