@@ -147,7 +147,7 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 
 	var pt table.PartitionTable
 
-	if pt, err = bd.PartitionTable(true); err != nil {
+	if pt, err = bd.PartitionTable(); err != nil {
 		return err
 	}
 

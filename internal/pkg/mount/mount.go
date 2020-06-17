@@ -289,7 +289,7 @@ func (p *Point) ResizePartition() (err error) {
 	// nolint: errcheck
 	defer bd.Close()
 
-	pt, err := bd.PartitionTable(true)
+	pt, err := bd.PartitionTable()
 	if err != nil {
 		return err
 	}

@@ -155,7 +155,7 @@ func probe(devpath string) (devpaths []string) {
 	// A partition table was not found, and we have already checked for
 	// a file system on the block device. Let's check if the block device
 	// has partitions.
-	pt, err := bd.PartitionTable(true)
+	pt, err := bd.PartitionTable()
 	if err != nil {
 		return devpaths
 	}

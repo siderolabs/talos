@@ -184,7 +184,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 
 			var pt table.PartitionTable
 
-			pt, err = bd.PartitionTable(true)
+			pt, err = bd.PartitionTable()
 			if err != nil {
 				return err
 			}
