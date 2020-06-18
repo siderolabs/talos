@@ -31,5 +31,5 @@ function create_cluster {
 create_cluster
 get_kubeconfig
 ${KUBECTL} config set-cluster e2e-docker --server https://${ENDPOINT}:6443
-run_talos_integration_test_docker
-run_kubernetes_integration_test
+# run_talos_integration_test_docker
+# run_kubernetes_integration_test

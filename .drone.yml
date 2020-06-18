@@ -502,103 +502,6 @@ steps:
   - talos
   - talosctl-linux
 
-- name: e2e-firecracker
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-firecracker
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-prepare
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-prepare
-  environment:
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-track-0
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-0
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
-- name: provision-tests-track-1
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-1
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -628,7 +531,6 @@ steps:
       - cron
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -658,7 +560,6 @@ steps:
     - push
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 services:
 - name: docker
@@ -1208,103 +1109,6 @@ steps:
   - talos
   - talosctl-linux
 
-- name: e2e-firecracker
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-firecracker
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-prepare
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-prepare
-  environment:
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-track-0
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-0
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
-- name: provision-tests-track-1
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-1
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -1334,7 +1138,6 @@ steps:
       - cron
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -1364,7 +1167,6 @@ steps:
     - push
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: e2e-capi
   pull: always
@@ -1378,6 +1180,8 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -1397,7 +1201,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: e2e-aws
   pull: always
@@ -1411,6 +1214,42 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - e2e-capi
+
+- name: e2e-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-azure
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -1443,6 +1282,8 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -2006,103 +1847,6 @@ steps:
   - talos
   - talosctl-linux
 
-- name: e2e-firecracker
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-firecracker
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-prepare
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-prepare
-  environment:
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-track-0
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-0
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
-- name: provision-tests-track-1
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-1
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -2132,7 +1876,6 @@ steps:
       - cron
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -2162,7 +1905,6 @@ steps:
     - push
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: e2e-capi
   pull: always
@@ -2176,6 +1918,8 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -2195,7 +1939,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: e2e-aws
   pull: always
@@ -2209,6 +1952,43 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+    SONOBUOY_MODE: certified-conformance
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - e2e-capi
+
+- name: e2e-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-azure
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -2242,6 +2022,8 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -2834,103 +2616,6 @@ steps:
   - talos
   - talosctl-linux
 
-- name: e2e-firecracker
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-firecracker
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-prepare
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-prepare
-  environment:
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-track-0
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-0
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
-- name: provision-tests-track-1
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-1
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -2960,7 +2645,6 @@ steps:
       - cron
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -2990,7 +2674,6 @@ steps:
     - push
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: e2e-capi
   pull: always
@@ -3004,6 +2687,8 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -3023,7 +2708,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: e2e-aws
   pull: always
@@ -3037,6 +2721,43 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
+    AZURE_SVC_ACCT:
+      from_secret: azure_svc_acct
+    GCE_SVC_ACCT:
+      from_secret: gce_svc_acct
+    PACKET_AUTH_TOKEN:
+      from_secret: packet_auth_token
+    SONOBUOY_MODE: certified-conformance
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - e2e-capi
+
+- name: e2e-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-azure
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+    AWS_SVC_ACCT:
+      from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -3070,6 +2791,8 @@ steps:
       from_secret: aws_secret_access_key
     AWS_SVC_ACCT:
       from_secret: aws_svc_acct
+    AZURE_DUMMY_SSH_PUB:
+      from_secret: azure_dummy_ssh_pub
     AZURE_SVC_ACCT:
       from_secret: azure_svc_acct
     GCE_SVC_ACCT:
@@ -3662,103 +3385,6 @@ steps:
   - talos
   - talosctl-linux
 
-- name: e2e-firecracker
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-firecracker
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-prepare
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-prepare
-  environment:
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - initramfs
-  - talosctl-linux
-  - kernel
-  - push-local
-
-- name: provision-tests-track-0
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-0
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
-- name: provision-tests-track-1
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make provision-tests-track-1
-  environment:
-    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
-    REGISTRY: registry.ci.svc:5000
-  privileged: true
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - provision-tests-prepare
-
 - name: push
   pull: always
   image: autonomy/build-container:latest
@@ -3788,7 +3414,6 @@ steps:
       - cron
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: push-latest
   pull: always
@@ -3818,7 +3443,6 @@ steps:
     - push
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: iso
   pull: always
@@ -3838,7 +3462,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: boot
   pull: always
@@ -3858,7 +3481,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker
-  - e2e-firecracker
 
 - name: release
   image: plugins/github-release
@@ -3996,6 +3618,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 722ef6b119253cdde1524774206507d86a4d236d4b984cb6789650b9e6a78a6c
+hmac: aec3983fe6e53c383cb4182e387a5b37b40c93b21487bd2263b149f866a416f8
 
 ...
