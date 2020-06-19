@@ -65,7 +65,12 @@ func SetupLogger(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFu
 			return nil
 		}
 
-		if err = kmsg.Setup("[talos]", true); err != nil {
+		machinedLog, err := r.Logging().ServiceLog("machined").Writer()
+		if err != nil {
+			return err
+		}
+
+		if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {
 			return fmt.Errorf("failed to setup logging: %w", err)
 		}
 

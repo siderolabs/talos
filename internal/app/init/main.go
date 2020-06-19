@@ -37,7 +37,7 @@ func run() (err error) {
 	}
 
 	// Setup logging to /dev/kmsg.
-	err = kmsg.Setup("[talos] [initramfs]", false)
+	err = kmsg.SetupLogger(nil, "[talos] [initramfs]", nil)
 	if err != nil {
 		return err
 	}

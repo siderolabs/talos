@@ -26,7 +26,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // Controller represents the controller responsible for managing the execution
@@ -65,7 +64,7 @@ func NewController(b []byte) (*Controller, error) {
 	// TODO: this should be streaming capacity and probably some constant
 	e := NewEvents(1000)
 
-	l := logging.NewFileLoggingManager(constants.DefaultLogPath)
+	l := logging.NewCircularBufferLoggingManager()
 
 	ctlr := &Controller{
 		r: NewRuntime(cfg, s, e, l),
@@ -302,7 +301,14 @@ func (c *Controller) runTask(n int, f runtime.TaskSetupFunc, seq runtime.Sequenc
 
 	logger := &log.Logger{}
 
-	if err := kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %d:", n), true); err != nil {
+	machinedLog, err := c.Runtime().Logging().ServiceLog("machined").Writer()
+	if err != nil {
+		return err
+	}
+
+	defer machinedLog.Close() //nolint: errcheck
+
+	if err := kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %d:", n), machinedLog); err != nil {
 		return err
 	}
 
