@@ -136,7 +136,7 @@ func (suite *LogsSuite) TestServiceNotFound() {
 	_, err = logsStream.Recv()
 	suite.Require().Error(err)
 
-	suite.Require().Regexp(`.+nosuchservice\.log: no such file or directory$`, err.Error())
+	suite.Require().Regexp(`.+log "nosuchservice" was not registered$`, err.Error())
 }
 
 // TestStreaming verifies that logs are streamed in real-time
