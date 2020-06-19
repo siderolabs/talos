@@ -32,15 +32,16 @@ var allSuites []suite.TestingSuite
 
 // Flag values
 var (
-	failFast        bool
-	talosConfig     string
-	endpoint        string
-	k8sEndpoint     string
-	expectedVersion string
-	talosctlPath    string
-	provisionerName string
-	clusterName     string
-	stateDir        string
+	failFast         bool
+	crashdumpEnabled bool
+	talosConfig      string
+	endpoint         string
+	k8sEndpoint      string
+	expectedVersion  string
+	talosctlPath     string
+	provisionerName  string
+	clusterName      string
+	stateDir         string
 )
 
 func TestIntegration(t *testing.T) {
@@ -100,7 +101,7 @@ func TestIntegration(t *testing.T) {
 		}
 	}
 
-	if t.Failed() && cluster != nil && provisioner != nil {
+	if t.Failed() && crashdumpEnabled && cluster != nil && provisioner != nil {
 		// if provisioner & cluster are available,
 		// debugging failed test is easier with crashdump
 		provisioner.CrashDump(context.Background(), cluster, os.Stderr)
@@ -116,6 +117,7 @@ func init() {
 	}
 
 	flag.BoolVar(&failFast, "talos.failfast", false, "fail the test run on the first failed test")
+	flag.BoolVar(&crashdumpEnabled, "talos.crashdump", true, "print crashdump on test failure (only if provisioner is enabled)")
 
 	flag.StringVar(&talosConfig, "talos.config", defaultTalosConfig, "The path to the Talos configuration file")
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")

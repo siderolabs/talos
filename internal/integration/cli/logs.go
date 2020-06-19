@@ -53,7 +53,7 @@ func (suite *LogsSuite) TestServiceNotFound() {
 		base.ShouldFail(),
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile("error getting logs: .*servicenotfound.log: no such file or directory")),
+		base.StderrShouldMatch(regexp.MustCompile(`error getting logs:.+ log "servicenotfound" was not registered`)),
 	)
 }
 
