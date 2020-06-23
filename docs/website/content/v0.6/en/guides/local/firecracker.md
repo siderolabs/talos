@@ -54,7 +54,7 @@ sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
 
-### Install bridge and firewall required CNI plugins
+### Install bridge, firewall and static required CNI plugins
 
 You can download standard CNI required plugins via
 [github.com/containernetworking/plugins/releases](https://github.com/containernetworking/plugins/releases)
@@ -70,7 +70,7 @@ curl https://github.com/containernetworking/plugins/releases/download/v0.8.5/cni
 mkdir cni-plugins-linux
 tar -xf cni-plugins-linux-amd64-v0.8.5.tgz -C cni-plugins-linux
 sudo mkdir -p /opt/cni/bin
-sudo cp cni-plugins-linux/{bridge,firewall} /opt/cni/bin
+sudo cp cni-plugins-linux/{bridge,firewall,static} /opt/cni/bin
 ```
 
 ### Install tc-redirect-tap CNI plugin
