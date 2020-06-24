@@ -31,6 +31,10 @@
           {
             "title": "Firecracker",
             "path": "v0.6/en/guides/local/firecracker"
+          },
+          {
+            "title": "Registry Cache",
+            "path": "v0.6/en/guides/local/registry-cache"
           }
         ]
       },
