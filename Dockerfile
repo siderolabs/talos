@@ -11,7 +11,7 @@ ENV PATH /toolchain/bin:/toolchain/go/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.24.0
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.27.0
 RUN cd $(mktemp -d) \
     && go mod init tmp \
     && go get mvdan.cc/gofumpt/gofumports@aaa7156f4122b1055c466e26e77812fa32bac1d9 \
