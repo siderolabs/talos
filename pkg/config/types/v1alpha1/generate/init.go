@@ -5,9 +5,11 @@
 package generate
 
 import (
+	"fmt"
 	"net/url"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 func initUd(in *Input) (*v1alpha1.Config, error) {
@@ -18,8 +20,10 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 	}
 
 	machine := &v1alpha1.MachineConfig{
-		MachineType:     "init",
-		MachineKubelet:  &v1alpha1.KubeletConfig{},
+		MachineType: "init",
+		MachineKubelet: &v1alpha1.KubeletConfig{
+			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
+		},
 		MachineNetwork:  in.NetworkConfig,
 		MachineCA:       in.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
@@ -47,11 +51,18 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
-			CertSANs: certSANs,
+			CertSANs:       certSANs,
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
-		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
-		ProxyConfig:             &v1alpha1.ProxyConfig{},
-		SchedulerConfig:         &v1alpha1.SchedulerConfig{},
+		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),
+		},
+		ProxyConfig: &v1alpha1.ProxyConfig{
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion), in.KubernetesVersion),
+		},
+		SchedulerConfig: &v1alpha1.SchedulerConfig{
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion), in.KubernetesVersion),
+		},
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,
 		},

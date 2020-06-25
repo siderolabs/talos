@@ -5,9 +5,11 @@
 package generate
 
 import (
+	"fmt"
 	"net/url"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
@@ -22,8 +24,10 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		MachineType:     "worker",
 		MachineToken:    in.TrustdInfo.Token,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
-		MachineKubelet:  &v1alpha1.KubeletConfig{},
-		MachineNetwork:  in.NetworkConfig,
+		MachineKubelet: &v1alpha1.KubeletConfig{
+			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
+		},
+		MachineNetwork: in.NetworkConfig,
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:       in.InstallDisk,
 			InstallImage:      in.InstallImage,
