@@ -182,6 +182,10 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 			// nolint: errcheck
 			defer bd.Close()
 
+			if err = bd.RereadPartitionTable(); err != nil {
+				return fmt.Errorf("failed to re-read partition table on %q: %w", dev, err)
+			}
+
 			var pt table.PartitionTable
 
 			pt, err = bd.PartitionTable()

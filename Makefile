@@ -139,13 +139,13 @@ talosctl-%:
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
-	@docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/out --privileged autonomy/installer:$(TAG) image --platform $*
+	@docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/out --privileged $(USERNAME)/installer:$(TAG) image --platform $*
 
 images: image-aws image-azure image-digital-ocean image-gcp image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, and VMware).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.
-	@docker run --rm -i -v $(PWD)/$(ARTIFACTS):/out autonomy/installer:$(TAG) iso
+	@docker run --rm -i -v $(PWD)/$(ARTIFACTS):/out $(USERNAME)/installer:$(TAG) iso
 
 .PHONY: boot
 boot: ## Creates a compressed tarball that includes vmlinuz and initramfs.xz. Note that these files must already be present in the artifacts directory.
