@@ -260,7 +260,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		&config.InputOptions{
 			ClusterName: clusterName,
 			Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
-			KubeVersion: constants.DefaultKubernetesVersion, // TODO: should be upgradeable
+			KubeVersion: "", // keep empty so that default version is used per Talos version
 			GenOptions: append(
 				genOptions,
 				generate.WithEndpointList([]string{defaultExternalLB}),
