@@ -195,11 +195,8 @@ local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
-local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux], extra_volumes=[volumes.tmp.step]);
-local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
-local provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
+local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"});
 
 local coverage = {
   name: 'coverage',
@@ -287,9 +284,6 @@ local default_steps = [
   push_local,
   e2e_docker,
   e2e_firecracker,
-  provision_tests_prepare,
-  provision_tests_track_0,
-  provision_tests_track_1,
   push,
   push_latest,
 ];
@@ -309,6 +303,31 @@ local default_trigger = {
 };
 
 local default_pipeline = Pipeline('default', default_steps) + default_trigger;
+
+// Full integration pipeline.
+
+local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[e2e_firecracker], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[e2e_firecracker, push_local], environment={"REGISTRY": local_registry});
+local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+
+
+local integration_steps = default_steps + [
+  integration_firecracker,
+  integration_provision_tests_prepare,
+  integration_provision_tests_track_0,
+  integration_provision_tests_track_1,
+];
+
+local integration_trigger = {
+  trigger: {
+    target: {
+      include: ['integration'],
+    },
+  },
+};
+
+local integration_pipeline = Pipeline('integration', integration_steps) + integration_trigger;
 
 // E2E pipeline.
 
@@ -496,6 +515,7 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
 [
   secret,
   default_pipeline,
+  integration_pipeline,
   e2e_pipeline,
   conformance_pipeline,
   nightly_pipeline,

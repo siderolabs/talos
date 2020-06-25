@@ -94,11 +94,29 @@ function create_cluster_capi {
 }
 
 function run_talos_integration_test {
-  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
+  case "${SHORT_INTEGRATION_TEST:-no}" in
+    yes|true|y)
+      TEST_SHORT="-test.short"
+      ;;
+    *)
+      TEST_SHORT=""
+      ;;
+    esac
+
+  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
 }
 
 function run_talos_integration_test_docker {
-  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}"
+  case "${SHORT_INTEGRATION_TEST:-no}" in
+    yes|true|y)
+      TEST_SHORT="-test.short"
+      ;;
+    *)
+      TEST_SHORT=""
+      ;;
+    esac
+
+  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
 }
 
 function run_kubernetes_integration_test {
