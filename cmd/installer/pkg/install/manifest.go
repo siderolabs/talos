@@ -130,6 +130,10 @@ func (m *Manifest) ExecuteManifest() (err error) {
 			}
 		}
 
+		if err = bd.RereadPartitionTable(); err != nil {
+			return fmt.Errorf("failed to re-read partition table on %q: %w", dev, err)
+		}
+
 		for _, target := range targets {
 			if err = target.Format(); err != nil {
 				return fmt.Errorf("failed to format device: %w", err)
