@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
@@ -19,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // Manifest represents the instructions for preparing all block devices
@@ -130,8 +133,28 @@ func (m *Manifest) ExecuteManifest() (err error) {
 			}
 		}
 
+		if err = bd.RereadPartitionTable(); err != nil {
+			log.Printf("failed to re-read partition table on %q: %s, ignoring error...", dev, err)
+		}
+
 		for _, target := range targets {
-			if err = target.Format(); err != nil {
+			target := target
+
+			err = retry.Constant(time.Minute, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+				e := target.Format()
+				if e != nil {
+					if strings.Contains(e.Error(), "No such file or directory") {
+						// workaround problem with partition device not being visible immediately after partitioning
+						return retry.ExpectedError(e)
+					}
+
+					return retry.UnexpectedError(e)
+				}
+
+				return nil
+			})
+
+			if err != nil {
 				return fmt.Errorf("failed to format device: %w", err)
 			}
 		}
