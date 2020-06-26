@@ -64,23 +64,11 @@ local volumes = {
     },
   },
 
-  tmp: {
-    pipeline: {
-      name: 'tmp',
-      temp: {},
-    },
-    step: {
-      name: $.tmp.pipeline.name,
-      path: '/tmp',
-    },
-  },
-
   ForStep(): [
     self.dockersock.step,
     self.docker.step,
     self.kube.step,
     self.dev.step,
-    self.tmp.step,
   ],
 
   ForPipeline(): [
@@ -88,7 +76,6 @@ local volumes = {
     self.docker.pipeline,
     self.kube.pipeline,
     self.dev.pipeline,
-    self.tmp.pipeline,
   ],
 };
 
