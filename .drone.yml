@@ -38,8 +38,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 - name: docs
   pull: always
@@ -55,8 +53,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -74,8 +70,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -93,8 +87,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - docs
   - generate
@@ -113,8 +105,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -132,8 +122,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -151,8 +139,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -170,8 +156,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -189,8 +173,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -210,8 +192,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -229,8 +209,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -250,8 +228,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
 
@@ -269,8 +245,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -288,8 +262,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -307,8 +279,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -326,8 +296,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -345,8 +313,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-aws
 
@@ -364,8 +330,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-azure
 
@@ -383,8 +347,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-digital-ocean
 
@@ -402,8 +364,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-gcp
 
@@ -421,8 +381,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -440,8 +398,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -476,8 +432,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer-local
   - talos-local
@@ -496,8 +450,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -520,8 +472,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -545,8 +495,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -571,8 +519,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -594,8 +540,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -618,8 +562,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     event:
       exclude:
@@ -649,8 +591,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - master
@@ -684,8 +624,6 @@ services:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 volumes:
 - name: dockersock
@@ -697,8 +635,6 @@ volumes:
 - name: dev
   host:
     path: /dev
-- name: tmp
-  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -744,8 +680,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 - name: docs
   pull: always
@@ -761,8 +695,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -780,8 +712,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -799,8 +729,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - docs
   - generate
@@ -819,8 +747,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -838,8 +764,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -857,8 +781,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -876,8 +798,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -895,8 +815,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -916,8 +834,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -935,8 +851,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -956,8 +870,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
 
@@ -975,8 +887,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -994,8 +904,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1013,8 +921,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1032,8 +938,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -1051,8 +955,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-aws
 
@@ -1070,8 +972,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-azure
 
@@ -1089,8 +989,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-digital-ocean
 
@@ -1108,8 +1006,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-gcp
 
@@ -1127,8 +1023,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -1146,8 +1040,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -1182,8 +1074,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer-local
   - talos-local
@@ -1202,8 +1092,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -1226,8 +1114,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -1251,8 +1137,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -1277,8 +1161,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -1300,8 +1182,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -1324,8 +1204,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     event:
       exclude:
@@ -1355,8 +1233,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - master
@@ -1393,8 +1269,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -1426,8 +1300,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -1458,8 +1330,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -1487,8 +1357,6 @@ services:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 volumes:
 - name: dockersock
@@ -1500,8 +1368,6 @@ volumes:
 - name: dev
   host:
     path: /dev
-- name: tmp
-  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1542,8 +1408,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 - name: docs
   pull: always
@@ -1559,8 +1423,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -1578,8 +1440,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -1597,8 +1457,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - docs
   - generate
@@ -1617,8 +1475,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1636,8 +1492,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1655,8 +1509,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1674,8 +1526,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1693,8 +1543,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -1714,8 +1562,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -1733,8 +1579,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -1754,8 +1598,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
 
@@ -1773,8 +1615,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1792,8 +1632,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1811,8 +1649,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -1830,8 +1666,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -1849,8 +1683,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-aws
 
@@ -1868,8 +1700,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-azure
 
@@ -1887,8 +1717,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-digital-ocean
 
@@ -1906,8 +1734,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-gcp
 
@@ -1925,8 +1751,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -1944,8 +1768,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -1980,8 +1802,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer-local
   - talos-local
@@ -2000,8 +1820,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -2024,8 +1842,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -2049,8 +1865,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -2075,8 +1889,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -2098,8 +1910,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -2122,8 +1932,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     event:
       exclude:
@@ -2153,8 +1961,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - master
@@ -2191,8 +1997,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -2225,8 +2029,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -2258,8 +2060,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -2282,8 +2082,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     cron:
     - nightly
@@ -2315,8 +2113,6 @@ services:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 volumes:
 - name: dockersock
@@ -2328,8 +2124,6 @@ volumes:
 - name: dev
   host:
     path: /dev
-- name: tmp
-  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -2370,8 +2164,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 - name: docs
   pull: always
@@ -2387,8 +2179,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -2406,8 +2196,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -2425,8 +2213,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - docs
   - generate
@@ -2445,8 +2231,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2464,8 +2248,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2483,8 +2265,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2502,8 +2282,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2521,8 +2299,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -2542,8 +2318,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -2561,8 +2335,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -2582,8 +2354,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
 
@@ -2601,8 +2371,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2620,8 +2388,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2639,8 +2405,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -2658,8 +2422,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -2677,8 +2439,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-aws
 
@@ -2696,8 +2456,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-azure
 
@@ -2715,8 +2473,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-digital-ocean
 
@@ -2734,8 +2490,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-gcp
 
@@ -2753,8 +2507,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -2772,8 +2524,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -2808,8 +2558,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer-local
   - talos-local
@@ -2828,8 +2576,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -2852,8 +2598,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -2877,8 +2621,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -2903,8 +2645,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -2926,8 +2666,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -2950,8 +2688,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     event:
       exclude:
@@ -2981,8 +2717,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - master
@@ -3019,8 +2753,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -3053,8 +2785,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -3086,8 +2816,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -3110,8 +2838,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     cron:
     - nightly
@@ -3143,8 +2869,6 @@ services:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 volumes:
 - name: dockersock
@@ -3156,8 +2880,6 @@ volumes:
 - name: dev
   host:
     path: /dev
-- name: tmp
-  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -3198,8 +2920,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 - name: docs
   pull: always
@@ -3215,8 +2935,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -3234,8 +2952,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - setup-ci
 
@@ -3253,8 +2969,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - docs
   - generate
@@ -3273,8 +2987,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3292,8 +3004,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3311,8 +3021,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3330,8 +3038,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3349,8 +3055,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -3370,8 +3074,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -3389,8 +3091,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -3410,8 +3110,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
 
@@ -3429,8 +3127,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3448,8 +3144,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3467,8 +3161,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - check-dirty
 
@@ -3486,8 +3178,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer
 
@@ -3505,8 +3195,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-aws
 
@@ -3524,8 +3212,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-azure
 
@@ -3543,8 +3229,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-digital-ocean
 
@@ -3562,8 +3246,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - image-gcp
 
@@ -3581,8 +3263,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -3600,8 +3280,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
 
@@ -3636,8 +3314,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - installer-local
   - talos-local
@@ -3656,8 +3332,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -3680,8 +3354,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -3705,8 +3377,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - initramfs
   - talosctl-linux
@@ -3731,8 +3401,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -3754,8 +3422,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - provision-tests-prepare
 
@@ -3778,8 +3444,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     event:
       exclude:
@@ -3809,8 +3473,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - master
@@ -3834,8 +3496,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -3854,8 +3514,6 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -3921,8 +3579,6 @@ services:
     path: /root/.kube
   - name: dev
     path: /dev
-  - name: tmp
-    path: /tmp
 
 volumes:
 - name: dockersock
@@ -3934,8 +3590,6 @@ volumes:
 - name: dev
   host:
     path: /dev
-- name: tmp
-  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -3976,8 +3630,6 @@ volumes:
 - name: dev
   host:
     path: /dev
-- name: tmp
-  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -3996,6 +3648,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 722ef6b119253cdde1524774206507d86a4d236d4b984cb6789650b9e6a78a6c
+hmac: 51204d9f2533da985ecf8c0d4db2583135d8ca8e3d697804d9550e576d4b92db
 
 ...
