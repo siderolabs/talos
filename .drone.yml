@@ -450,6 +450,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -635,6 +637,8 @@ volumes:
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1092,6 +1096,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -1269,6 +1275,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -1300,6 +1308,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -1330,6 +1340,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -1368,6 +1380,8 @@ volumes:
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -1820,6 +1834,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -1997,6 +2013,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -2029,6 +2047,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -2060,6 +2080,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -2124,6 +2146,8 @@ volumes:
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -2576,6 +2600,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -2753,6 +2779,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-docker
   - e2e-firecracker
@@ -2785,6 +2813,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -2816,6 +2846,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - e2e-capi
 
@@ -2880,6 +2912,8 @@ volumes:
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -3332,6 +3366,8 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  - name: tmp
+    path: /tmp
   depends_on:
   - talos
   - talosctl-linux
@@ -3590,6 +3626,8 @@ volumes:
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -3630,6 +3668,8 @@ volumes:
 - name: dev
   host:
     path: /dev
+- name: tmp
+  temp: {}
 
 node:
   node-role.kubernetes.io/ci: ""
@@ -3648,6 +3688,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 51204d9f2533da985ecf8c0d4db2583135d8ca8e3d697804d9550e576d4b92db
+hmac: 6a529eb40de8eeef648acf90225c7c895204517314d9cd79c936251373719834
 
 ...
