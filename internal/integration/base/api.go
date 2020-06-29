@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // APISuite is a base suite for API tests
@@ -115,7 +116,7 @@ func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
 // ReadUptime reads node uptime.
 //
 // Context provided might have specific node attached for API call.
-func (apiSuite *APISuite) ReadUptime(ctx context.Context) (float64, error) {
+func (apiSuite *APISuite) ReadUptime(ctx context.Context) (time.Duration, error) {
 	// set up a short timeout around uptime read calls to work around
 	// cases when rebooted node doesn't answer for a long time on requests
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
@@ -150,7 +151,60 @@ func (apiSuite *APISuite) ReadUptime(ctx context.Context) (float64, error) {
 		}
 	}
 
-	return uptime, reader.Close()
+	return time.Duration(uptime * float64(time.Second)), reader.Close()
+}
+
+// AssertRebooted verifies that node got rebooted as result of running some API call.
+//
+// Verification happens via reading uptime of the node.
+func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, rebootFunc func(nodeCtx context.Context) error, timeout time.Duration) {
+	// offset to account for uptime measuremenet inaccuracy
+	const offset = 2 * time.Second
+
+	// timeout for single node Reset
+	ctx, ctxCancel := context.WithTimeout(ctx, timeout)
+	defer ctxCancel()
+
+	nodeCtx := client.WithNodes(ctx, node)
+
+	// read uptime before Reset
+	uptimeBefore, err := apiSuite.ReadUptime(nodeCtx)
+	apiSuite.Require().NoError(err)
+
+	apiSuite.Assert().NoError(rebootFunc(nodeCtx))
+
+	// capture current time when API returns
+	rebootTimestamp := time.Now()
+
+	var uptimeAfter time.Duration
+
+	apiSuite.Require().NoError(retry.Constant(timeout).Retry(func() error {
+		requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, 5*time.Second)
+		defer requestCtxCancel()
+
+		elapsed := time.Since(rebootTimestamp) - offset
+
+		uptimeAfter, err = apiSuite.ReadUptime(requestCtx)
+		if err != nil {
+			// API might be unresponsive during reboot
+			return retry.ExpectedError(err)
+		}
+
+		// uptime of the node before it actually reboots still goes up linearly
+		// so we can safely add elapsed time here
+		if uptimeAfter >= uptimeBefore+elapsed {
+			// uptime should go down after reboot
+			return retry.ExpectedError(fmt.Errorf("uptime didn't go down: before %s + %s, after %s", uptimeBefore, elapsed, uptimeAfter))
+		}
+
+		return nil
+	}))
+
+	if apiSuite.Cluster != nil {
+		// without cluster state we can't do deep checks, but basic reboot test still works
+		// NB: using `ctx` here to have client talking to init node by default
+		apiSuite.AssertClusterHealthy(ctx)
+	}
 }
 
 // TearDownSuite closes Talos API client
