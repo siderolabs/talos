@@ -8,14 +8,11 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 type ResetSuite struct {
@@ -70,43 +67,13 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 		suite.T().Log("Resetting node", node)
 
-		func(node string) {
-			// timeout for single node Reset
-			ctx, ctxCancel := context.WithTimeout(suite.ctx, 5*time.Minute)
-			defer ctxCancel()
-
-			nodeCtx := client.WithNodes(ctx, node)
-
-			// read uptime before Reset
-			uptimeBefore, err := suite.ReadUptime(nodeCtx)
-			suite.Require().NoError(err)
-
+		// uptime should go down after Reset, as it reboots the node
+		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
-			suite.Assert().NoError(suite.Client.Reset(nodeCtx, true, true))
+			return suite.Client.Reset(nodeCtx, true, true)
+		}, 10*time.Minute)
 
-			var uptimeAfter float64
-
-			suite.Require().NoError(retry.Constant(10 * time.Minute).Retry(func() error {
-				uptimeAfter, err = suite.ReadUptime(nodeCtx)
-				if err != nil {
-					// API might be unresponsive during reboot
-					return retry.ExpectedError(err)
-				}
-
-				if uptimeAfter >= uptimeBefore {
-					// uptime should go down after Reset, as it reboots the node
-					return retry.ExpectedError(fmt.Errorf("uptime didn't go down: before %f, after %f", uptimeBefore, uptimeAfter))
-				}
-
-				return nil
-			}))
-
-			// TODO: there is no good way to assert that node was reset and disk contents were really wiped
-
-			// NB: using `ctx` here to have client talking to init node by default
-			suite.AssertClusterHealthy(ctx)
-		}(node)
-
+		// TODO: there is no good way to assert that node was reset and disk contents were really wiped
 	}
 }
 
