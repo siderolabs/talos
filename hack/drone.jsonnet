@@ -64,6 +64,17 @@ local volumes = {
     },
   },
 
+  tmp: {
+    pipeline: {
+      name: 'tmp',
+      temp: {},
+    },
+    step: {
+      name: $.tmp.pipeline.name,
+      path: '/tmp',
+    },
+  },
+
   ForStep(): [
     self.dockersock.step,
     self.docker.step,
@@ -76,6 +87,7 @@ local volumes = {
     self.docker.pipeline,
     self.kube.pipeline,
     self.dev.pipeline,
+    self.tmp.pipeline,
   ],
 };
 
@@ -125,7 +137,7 @@ local setup_ci = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, image='', target='', privileged=false, depends_on=[], environment={}) = {
+local Step(name, image='', target='', privileged=false, depends_on=[], environment={}, extra_volumes=[]) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
 
   local common_env_vars = {},
@@ -136,7 +148,7 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
   commands: [make],
   privileged: privileged,
   environment: common_env_vars + environment,
-  volumes: volumes.ForStep(),
+  volumes: volumes.ForStep() + extra_volumes,
   depends_on: [x.name for x in depends_on],
 };
 
@@ -183,7 +195,7 @@ local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
-local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux]);
+local e2e_docker = Step("e2e-docker", depends_on=[talos, osctl_linux], extra_volumes=[volumes.tmp.step]);
 local e2e_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
 local provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
@@ -310,10 +322,10 @@ local creds_env_vars = {
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker, e2e_firecracker], environment=creds_env_vars);
-local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars);
-local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars);
-local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars);
+local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker, e2e_firecracker], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
+local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
+local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
+local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
 
 local e2e_steps = default_steps + [
   e2e_capi,
@@ -333,9 +345,9 @@ local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
-local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
-local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
-local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
+local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"}, extra_volumes=[volumes.tmp.step]);
+local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"}, extra_volumes=[volumes.tmp.step]);
+local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"}, extra_volumes=[volumes.tmp.step]);
 
 local push_edge = {
   name: 'push-edge',
