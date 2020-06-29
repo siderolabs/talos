@@ -1,3 +1,50 @@
+<a name="v0.6.0-alpha.4"></a>
+
+## [v0.6.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.3...v0.6.0-alpha.4) (2020-06-30)
+
+### Chore
+
+- enable nolintlint linter
+- bring back tmp volume shared from e2e-docker to CAPI steps
+- stop mounting /tmp for the build pipeline
+- upgrade golangci-lint to 1.27
+- output where we are pulling configs for each platform
+- update kernel to support CONFIG_CRYPTO_USER_API_HASH
+- sign the drone file
+
+### Docs
+
+- add local registry cache documentation
+- update firecracker with one more CNI plugin
+- specs added
+- specs added
+- extend contribution doc
+- extend contribution doc
+
+### Feat
+
+- implement circular buffer for system logs
+- allow ability to create dummy nics
+
+### Fix
+
+- use kubernetes version in config generator
+- make installer re-read partition table before formatting
+- attempt to pull machine config from mounted disk in azure
+- isolate kubelet /run directory
+- check if machine networking is nil
+- detect failed bootkube run properly
+- delete manifests dir on bootkube failure
+
+### Release
+
+- **v0.6.0-alpha.4:** prepare release
+
+### Test
+
+- fix and improve reboot/reset tests
+- default to using the bootstrap API
+
 <a name="v0.6.0-alpha.3"></a>
 
 ## [v0.6.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.2...v0.6.0-alpha.3) (2020-06-17)
@@ -22,6 +69,10 @@
 - skip services when in container mode
 - activate logical volumes
 - update LVM2
+
+### Release
+
+- **v0.6.0-alpha.3:** prepare release
 
 <a name="v0.6.0-alpha.2"></a>
 
