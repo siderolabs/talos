@@ -31,5 +31,5 @@ type Addressing interface {
 	Valid() bool
 }
 
-// Route is a representation of a network route
+// Route is a representation of a network route.
 type Route = dhcpv4.Route

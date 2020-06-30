@@ -24,7 +24,7 @@ type Registrator struct {
 	Timed *ntp.NTP
 }
 
-// NewRegistrator builds new Registrator instance
+// NewRegistrator builds new Registrator instance.
 func NewRegistrator(n *ntp.NTP) *Registrator {
 	return &Registrator{
 		Timed: n,
@@ -37,7 +37,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 	healthapi.RegisterHealthServer(s, r)
 }
 
-// Time issues a query to the configured ntp server and displays the results
+// Time issues a query to the configured ntp server and displays the results.
 func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeResponse, err error) {
 	reply = &timeapi.TimeResponse{}
 
@@ -49,7 +49,7 @@ func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi
 	return genProtobufTimeResponse(r.Timed.GetTime(), rt.Time, r.Timed.Server)
 }
 
-// TimeCheck issues a query to the specified ntp server and displays the results
+// TimeCheck issues a query to the specified ntp server and displays the results.
 func (r *Registrator) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (reply *timeapi.TimeResponse, err error) {
 	reply = &timeapi.TimeResponse{}
 

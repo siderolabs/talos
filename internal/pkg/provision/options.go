@@ -60,7 +60,7 @@ func WithBootladerEmulation() Option {
 	}
 }
 
-// WithDockerPorts allows docker provisioner to expose ports on workers
+// WithDockerPorts allows docker provisioner to expose ports on workers.
 func WithDockerPorts(ports []string) Option {
 	return func(o *Options) error {
 		o.DockerPorts = ports

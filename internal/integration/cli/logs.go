@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// LogsSuite verifies logs command
+// LogsSuite verifies logs command.
 type LogsSuite struct {
 	base.CLISuite
 }

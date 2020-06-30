@@ -11,7 +11,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
-// TalosSuite defines most common settings for integration test suites
+// TalosSuite defines most common settings for integration test suites.
 type TalosSuite struct {
 	// Endpoint to use to connect, if not set config is used
 	Endpoint string
@@ -44,17 +44,17 @@ func (talosSuite *TalosSuite) DiscoverNodes() []string {
 	return talosSuite.discoveredNodes
 }
 
-// ConfiguredSuite expects config to be set before running
+// ConfiguredSuite expects config to be set before running.
 type ConfiguredSuite interface {
 	SetConfig(config TalosSuite)
 }
 
-// SetConfig implements ConfiguredSuite
+// SetConfig implements ConfiguredSuite.
 func (suite *TalosSuite) SetConfig(config TalosSuite) {
 	*suite = config
 }
 
-// NamedSuite interface provides names for test suites
+// NamedSuite interface provides names for test suites.
 type NamedSuite interface {
 	SuiteName() string
 }

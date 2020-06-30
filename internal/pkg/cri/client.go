@@ -23,10 +23,10 @@ type Client struct {
 }
 
 // maxMsgSize use 16MB as the default message size limit.
-// grpc library default is 4MB
+// grpc library default is 4MB.
 const maxMsgSize = 1024 * 1024 * 16
 
-// NewClient builds CRI client
+// NewClient builds CRI client.
 func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
 	defer cancel()
@@ -50,7 +50,7 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 	}, nil
 }
 
-// Close connection
+// Close connection.
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

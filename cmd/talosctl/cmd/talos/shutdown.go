@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// shutdownCmd represents the shutdown command
+// shutdownCmd represents the shutdown command.
 var shutdownCmd = &cobra.Command{
 	Use:   "shutdown",
 	Short: "Shutdown a node",

@@ -104,7 +104,7 @@ func (c *Client) ContainerStats(ctx context.Context, containerID string) (*runti
 	return resp.GetStats(), nil
 }
 
-// ListContainerStats returns stats for all the containers matching the filter
+// ListContainerStats returns stats for all the containers matching the filter.
 func (c *Client) ListContainerStats(ctx context.Context, filter *runtimeapi.ContainerStatsFilter) ([]*runtimeapi.ContainerStats, error) {
 	resp, err := c.runtimeClient.ListContainerStats(ctx, &runtimeapi.ListContainerStatsRequest{
 		Filter: filter,

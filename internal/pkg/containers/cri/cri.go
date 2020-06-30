@@ -28,17 +28,17 @@ type inspectorOptions struct {
 	criEndpoint string
 }
 
-// Option configures containerd Inspector
+// Option configures containerd Inspector.
 type Option func(*inspectorOptions)
 
-// WithCRIEndpoint configures CRI endpoint to use
+// WithCRIEndpoint configures CRI endpoint to use.
 func WithCRIEndpoint(endpoint string) Option {
 	return func(o *inspectorOptions) {
 		o.criEndpoint = endpoint
 	}
 }
 
-// NewInspector builds new Inspector instance for CRI
+// NewInspector builds new Inspector instance for CRI.
 func NewInspector(ctx context.Context, options ...Option) (ctrs.Inspector, error) {
 	var err error
 
@@ -62,12 +62,12 @@ func NewInspector(ctx context.Context, options ...Option) (ctrs.Inspector, error
 	return &i, nil
 }
 
-// Close frees associated resources
+// Close frees associated resources.
 func (i *inspector) Close() error {
 	return i.client.Close()
 }
 
-// Images returns a hash of image digest -> name
+// Images returns a hash of image digest -> name.
 func (i *inspector) Images() (map[string]string, error) {
 	images, err := i.client.ListImages(i.ctx, &runtimeapi.ImageFilter{})
 	if err != nil {
@@ -104,7 +104,7 @@ func parseContainerDisplay(id string) (namespace string, pod string, name string
 
 // Container returns info about a single container.
 //
-// If container is not found, Container returns nil
+// If container is not found, Container returns nil.
 func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	namespace, pod, name := parseContainerDisplay(id)
 	if pod == "" {
@@ -330,13 +330,13 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	return result, nil
 }
 
-// GetProcessStderr returns process stderr
+// GetProcessStderr returns process stderr.
 func (i *inspector) GetProcessStderr(id string) (string, error) {
 	// CRI doesn't seem to have an easy way to do that
 	return "", nil
 }
 
-// Kill sends signal to container task
+// Kill sends signal to container task.
 func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
 	if isPodSandbox {
 		return i.client.StopPodSandbox(i.ctx, id)

@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// routesCmd represents the net routes command
+// routesCmd represents the net routes command.
 var routesCmd = &cobra.Command{
 	Use:   "routes",
 	Short: "List network routes",

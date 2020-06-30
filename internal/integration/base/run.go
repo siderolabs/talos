@@ -141,7 +141,7 @@ func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 	return &stdout, &stderr, err
 }
 
-// Run executes command and asserts on its exit status/output
+// Run executes command and asserts on its exit status/output.
 func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 	var opts runOptions
 

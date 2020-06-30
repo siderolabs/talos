@@ -31,7 +31,7 @@ var (
 	watchProcesses bool
 )
 
-// processesCmd represents the processes command
+// processesCmd represents the processes command.
 var processesCmd = &cobra.Command{
 	Use:     "processes",
 	Aliases: []string{"p"},
@@ -158,7 +158,7 @@ func (s *procSorter) Less(i, j int) bool {
 	return s.by(s.procs[i], s.procs[j])
 }
 
-// Sort Methods
+// Sort Methods.
 var rss = func(p1, p2 *osapi.ProcessInfo) bool {
 	// Reverse sort ( Descending )
 	return p1.ResidentMemory > p2.ResidentMemory

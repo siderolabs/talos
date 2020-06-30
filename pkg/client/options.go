@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client/config"
 )
 
-// Options contains the set of client configuration options
+// Options contains the set of client configuration options.
 type Options struct {
 	endpointsOverride []string
 	config            *config.Config
@@ -25,7 +25,7 @@ type Options struct {
 	contextOverrideSet bool
 }
 
-// OptionFunc sets an option for the creation of the Client
+// OptionFunc sets an option for the creation of the Client.
 type OptionFunc func(*Options) error
 
 // WithConfig configures the Client with the configuration provided.

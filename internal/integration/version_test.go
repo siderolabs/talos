@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// VersionSuite
+// VersionSuite.
 type VersionSuite struct {
 	suite.Suite
 	base.TalosSuite

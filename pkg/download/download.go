@@ -22,7 +22,7 @@ type downloadOptions struct {
 	Format  string
 }
 
-// Option configures the download options
+// Option configures the download options.
 type Option func(*downloadOptions)
 
 func downloadDefaults() *downloadOptions {
@@ -33,7 +33,7 @@ func downloadDefaults() *downloadOptions {
 
 // WithFormat specifies the source format. This ultimately will be a yaml
 // but may be represented in different formats. For example, the config
-// may be base64 encoded
+// may be base64 encoded.
 func WithFormat(format string) Option {
 	return func(d *downloadOptions) {
 		switch format {
@@ -46,7 +46,7 @@ func WithFormat(format string) Option {
 }
 
 // WithHeaders specifies any http headers that are needed for downloading
-// the config
+// the config.
 func WithHeaders(headers map[string]string) Option {
 	return func(d *downloadOptions) {
 		d.Headers = headers

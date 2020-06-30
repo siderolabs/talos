@@ -35,5 +35,5 @@ func Stop(ch chan<- ProcessInfo) {
 	hunter.Stop(ch)
 }
 
-// Singleton instance of zombieHunter
+// Singleton instance of zombieHunter.
 var hunter = &zombieHunter{}

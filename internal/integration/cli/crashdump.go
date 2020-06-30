@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// CrashdumpSuite verifies crashdump command
+// CrashdumpSuite verifies crashdump command.
 type CrashdumpSuite struct {
 	base.CLISuite
 }

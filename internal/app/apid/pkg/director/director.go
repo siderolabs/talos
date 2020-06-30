@@ -16,17 +16,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Router wraps grpc-proxy StreamDirector
+// Router wraps grpc-proxy StreamDirector.
 type Router struct {
 	localBackend         proxy.Backend
 	remoteBackendFactory RemoteBackendFactory
 	streamedMatchers     []*regexp.Regexp
 }
 
-// RemoteBackendFactory provides backend generation by address (target)
+// RemoteBackendFactory provides backend generation by address (target).
 type RemoteBackendFactory func(target string) (proxy.Backend, error)
 
-// NewRouter builds new Router
+// NewRouter builds new Router.
 func NewRouter(backendFactory RemoteBackendFactory, localBackend proxy.Backend) *Router {
 	return &Router{
 		localBackend:         localBackend,
@@ -40,7 +40,7 @@ func NewRouter(backendFactory RemoteBackendFactory, localBackend proxy.Backend) 
 func (r *Router) Register(srv *grpc.Server) {
 }
 
-// Director implements proxy.StreamDirector function
+// Director implements proxy.StreamDirector function.
 func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mode, []proxy.Backend, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

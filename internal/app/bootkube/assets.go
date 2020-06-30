@@ -206,7 +206,7 @@ func altNamesFromURLs(urls []string) *tlsutil.AltNames {
 	return &an
 }
 
-// fetchManifests will lay down manifests in the provided urls to the bootkube assets directory
+// fetchManifests will lay down manifests in the provided urls to the bootkube assets directory.
 func fetchManifests(urls []string, headers map[string]string) error {
 	ctx := context.Background()
 

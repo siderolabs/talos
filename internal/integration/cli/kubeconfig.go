@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// KubeconfigSuite verifies dmesg command
+// KubeconfigSuite verifies dmesg command.
 type KubeconfigSuite struct {
 	base.CLISuite
 }

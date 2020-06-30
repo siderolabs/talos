@@ -33,14 +33,14 @@ var (
 	rsa          bool
 )
 
-// genCmd represents the gen command
+// genCmd represents the gen command.
 var genCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate CAs, certificates, and private keys",
 	Long:  ``,
 }
 
-// caCmd represents the gen ca command
+// caCmd represents the gen ca command.
 var caCmd = &cobra.Command{
 	Use:   "ca",
 	Short: "Generates a self-signed X.509 certificate authority",
@@ -75,7 +75,7 @@ var caCmd = &cobra.Command{
 	},
 }
 
-// keyCmd represents the gen key command
+// keyCmd represents the gen key command.
 var keyCmd = &cobra.Command{
 	Use:   "key",
 	Short: "Generates an Ed25519 private key",
@@ -95,7 +95,7 @@ var keyCmd = &cobra.Command{
 	},
 }
 
-// csrCmd represents the gen csr command
+// csrCmd represents the gen csr command.
 var csrCmd = &cobra.Command{
 	Use:   "csr",
 	Short: "Generates a CSR using an Ed25519 private key",
@@ -141,7 +141,7 @@ var csrCmd = &cobra.Command{
 	},
 }
 
-// crtCmd represents the gen crt command
+// crtCmd represents the gen crt command.
 var crtCmd = &cobra.Command{
 	Use:   "crt",
 	Short: "Generates an X.509 Ed25519 certificate",
@@ -206,7 +206,7 @@ var crtCmd = &cobra.Command{
 	},
 }
 
-// keypairCmd represents the gen keypair command
+// keypairCmd represents the gen keypair command.
 var keypairCmd = &cobra.Command{
 	Use:   "keypair",
 	Short: "Generates an X.509 Ed25519 key pair",

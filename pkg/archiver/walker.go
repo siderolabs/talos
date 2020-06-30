@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// FileItem is unit of work for archive
+// FileItem is unit of work for archive.
 type FileItem struct {
 	FullPath string
 	RelPath  string
@@ -37,7 +37,7 @@ func WithSkipRoot() WalkerOption {
 
 // WithMaxRecurseDepth controls maximum recursion depth while walking file tree.
 //
-// Value of -1 disables depth control
+// Value of -1 disables depth control.
 func WithMaxRecurseDepth(maxDepth int) WalkerOption {
 	return func(o *walkerOptions) {
 		o.maxRecurseDepth = maxDepth
@@ -118,7 +118,7 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 	return ch, nil
 }
 
-// OSPathSeparator is the string version of the os.PathSeparator
+// OSPathSeparator is the string version of the os.PathSeparator.
 const OSPathSeparator = string(os.PathSeparator)
 
 func atMaxDepth(max int, root, cur string) bool {

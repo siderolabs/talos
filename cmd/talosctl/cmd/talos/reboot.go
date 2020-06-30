@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// rebootCmd represents the reboot command
+// rebootCmd represents the reboot command.
 var rebootCmd = &cobra.Command{
 	Use:   "reboot",
 	Short: "Reboot a node",

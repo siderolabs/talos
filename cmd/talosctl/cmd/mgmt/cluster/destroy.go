@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/cli"
 )
 
-// destroyCmd represents the cluster destroy command
+// destroyCmd represents the cluster destroy command.
 var destroyCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "Destroys a local docker-based or firecracker-based kubernetes cluster",

@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// DHCP implements the Addressing interface
+// DHCP implements the Addressing interface.
 type DHCP struct {
 	Ack   *dhcpv4.DHCPv4
 	NetIf *net.Interface
@@ -33,7 +33,7 @@ func (d *DHCP) Name() string {
 }
 
 // Link returns the underlying net.Interface that this address
-// method is configured for
+// method is configured for.
 func (d *DHCP) Link() *net.Interface {
 	return d.NetIf
 }
@@ -81,7 +81,7 @@ func (d *DHCP) TTL() time.Duration {
 	return d.Ack.IPAddressLeaseTime(time.Minute * 30)
 }
 
-// Family qualifies the address as ipv4 or ipv6
+// Family qualifies the address as ipv4 or ipv6.
 func (d *DHCP) Family() int {
 	if d.Ack.YourIPAddr.To4() != nil {
 		return unix.AF_INET
@@ -90,7 +90,7 @@ func (d *DHCP) Family() int {
 	return unix.AF_INET6
 }
 
-// Scope sets the address scope
+// Scope sets the address scope.
 func (d *DHCP) Scope() uint8 {
 	return unix.RT_SCOPE_UNIVERSE
 }

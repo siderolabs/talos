@@ -22,16 +22,16 @@ import (
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
-// DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes
+// DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes.
 const DefaultIPv4PodNet = "10.244.0.0/16"
 
-// DefaultIPv4ServiceNet is the network to be used for kubernetes Services when using IPv4-based master nodes
+// DefaultIPv4ServiceNet is the network to be used for kubernetes Services when using IPv4-based master nodes.
 const DefaultIPv4ServiceNet = "10.96.0.0/12"
 
-// DefaultIPv6PodNet is the network to be used for kubernetes Pods when using IPv6-based master nodes
+// DefaultIPv6PodNet is the network to be used for kubernetes Pods when using IPv6-based master nodes.
 const DefaultIPv6PodNet = "fc00:db8:10::/56"
 
-// DefaultIPv6ServiceNet is the network to be used for kubernetes Services when using IPv6-based master nodes
+// DefaultIPv6ServiceNet is the network to be used for kubernetes Services when using IPv6-based master nodes.
 const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 // Config returns the talos config for a given node type.
@@ -93,7 +93,7 @@ type Input struct {
 	Persist bool
 }
 
-// GetAPIServerEndpoint returns the formatted host:port of the API server endpoint
+// GetAPIServerEndpoint returns the formatted host:port of the API server endpoint.
 func (i *Input) GetAPIServerEndpoint(port string) string {
 	if port == "" {
 		return tnet.FormatAddress(i.ControlPlaneEndpoint)
@@ -102,7 +102,7 @@ func (i *Input) GetAPIServerEndpoint(port string) string {
 	return net.JoinHostPort(i.ControlPlaneEndpoint, port)
 }
 
-// GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP
+// GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP.
 func (i *Input) GetControlPlaneEndpoint() string {
 	if i == nil || i.ControlPlaneEndpoint == "" {
 		panic("cannot GetControlPlaneEndpoint without any Master IPs")
@@ -111,7 +111,7 @@ func (i *Input) GetControlPlaneEndpoint() string {
 	return i.ControlPlaneEndpoint
 }
 
-// GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server
+// GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server.
 func (i *Input) GetAPIServerSANs() []string {
 	list := []string{}
 
@@ -337,7 +337,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 }
 
 // randBytes returns a random string consisting of the characters in
-// validBootstrapTokenChars, with the length customized by the parameter
+// validBootstrapTokenChars, with the length customized by the parameter.
 func randBytes(length int) (string, error) {
 	// validBootstrapTokenChars defines the characters a bootstrap token can consist of
 	const validBootstrapTokenChars = "0123456789abcdefghijklmnopqrstuvwxyz"
@@ -373,7 +373,7 @@ func randBytes(length int) (string, error) {
 }
 
 // genToken will generate a token of the format abc.123 (like kubeadm/trustd), where the length of the first string (before the dot)
-// and length of the second string (after dot) are specified as inputs
+// and length of the second string (after dot) are specified as inputs.
 func genToken(lenFirst int, lenSecond int) (string, error) {
 	var err error
 

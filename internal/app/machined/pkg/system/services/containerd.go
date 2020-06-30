@@ -78,7 +78,7 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (c *Containerd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		client, err := containerd.New(constants.SystemContainerdAddress)
@@ -101,7 +101,7 @@ func (c *Containerd) HealthFunc(runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (c *Containerd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

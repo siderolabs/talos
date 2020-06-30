@@ -18,7 +18,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// cpCmd represents the cp command
+// cpCmd represents the cp command.
 var cpCmd = &cobra.Command{
 	Use:     "copy <src-path> -|<local-path>",
 	Aliases: []string{"cp"},

@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// ContainersSuite verifies dmesg command
+// ContainersSuite verifies dmesg command.
 type ContainersSuite struct {
 	base.CLISuite
 }

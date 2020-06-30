@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// CopySuite verifies dmesg command
+// CopySuite verifies dmesg command.
 type CopySuite struct {
 	base.CLISuite
 }

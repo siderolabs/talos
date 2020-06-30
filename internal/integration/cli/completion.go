@@ -10,7 +10,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// CompletionSuite verifies dmesg command
+// CompletionSuite verifies dmesg command.
 type CompletionSuite struct {
 	base.CLISuite
 }

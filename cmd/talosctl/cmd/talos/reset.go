@@ -18,7 +18,7 @@ var (
 	reboot   bool
 )
 
-// resetCmd represents the reset command
+// resetCmd represents the reset command.
 var resetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset a node",

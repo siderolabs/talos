@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// bootstrapCmd represents the bootstrap command
+// bootstrapCmd represents the bootstrap command.
 var bootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap the cluster",

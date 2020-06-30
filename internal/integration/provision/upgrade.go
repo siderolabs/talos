@@ -74,7 +74,7 @@ func trimVersion(version string) string {
 	return regexp.MustCompile(`(-\d+-g[0-9a-f]+)$`).ReplaceAllString(version, "")
 }
 
-// upgradeBetweenTwoLastReleases upgrades between two last releases of Talos
+// upgradeBetweenTwoLastReleases upgrades between two last releases of Talos.
 func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", stableVersion, nextVersion),
@@ -197,7 +197,7 @@ func (suite *UpgradeSuite) TearDownSuite() {
 	}
 }
 
-// setupCluster provisions source clusters and waits for health
+// setupCluster provisions source clusters and waits for health.
 func (suite *UpgradeSuite) setupCluster() {
 	shortNameHash := sha256.Sum256([]byte(suite.spec.ShortName))
 	clusterName := fmt.Sprintf("upgrade.%x", shortNameHash[:8])
@@ -309,7 +309,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.waitForClusterHealth()
 }
 
-// waitForClusterHealth asserts cluster health after any change
+// waitForClusterHealth asserts cluster health after any change.
 func (suite *UpgradeSuite) waitForClusterHealth() {
 	checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 10*time.Minute)
 	defer checkCtxCancel()

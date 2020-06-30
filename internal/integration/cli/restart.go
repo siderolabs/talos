@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// RestartSuite verifies dmesg command
+// RestartSuite verifies dmesg command.
 type RestartSuite struct {
 	base.CLISuite
 }

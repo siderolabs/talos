@@ -31,7 +31,7 @@ type Service interface {
 	DependsOn(runtime.Runtime) []string
 }
 
-// HealthcheckedService is a service which provides health check
+// HealthcheckedService is a service which provides health check.
 type HealthcheckedService interface {
 	// HealtFunc provides function that checks health of the service
 	HealthFunc(runtime.Runtime) health.Check
@@ -39,17 +39,17 @@ type HealthcheckedService interface {
 	HealthSettings(runtime.Runtime) *health.Settings
 }
 
-// APIStartableService is a service which allows to be started via API
+// APIStartableService is a service which allows to be started via API.
 type APIStartableService interface {
 	APIStartAllowed(runtime.Runtime) bool
 }
 
-// APIStoppableService is a service which allows to be stopped via API
+// APIStoppableService is a service which allows to be stopped via API.
 type APIStoppableService interface {
 	APIStopAllowed(runtime.Runtime) bool
 }
 
-// APIRestartableService is a service which allows to be restarted via API
+// APIRestartableService is a service which allows to be restarted via API.
 type APIRestartableService interface {
 	APIRestartAllowed(runtime.Runtime) bool
 }

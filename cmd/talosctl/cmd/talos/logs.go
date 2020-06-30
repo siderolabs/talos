@@ -29,7 +29,7 @@ var (
 	tailLines int32
 )
 
-// logsCmd represents the logs command
+// logsCmd represents the logs command.
 var logsCmd = &cobra.Command{
 	Use:   "logs <service name>",
 	Short: "Retrieve logs for a service",

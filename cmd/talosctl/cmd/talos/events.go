@@ -16,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// eventsCmd represents the events command
+// eventsCmd represents the events command.
 var eventsCmd = &cobra.Command{
 	Use:   "events",
 	Short: "Stream runtime events",

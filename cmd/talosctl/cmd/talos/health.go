@@ -45,7 +45,7 @@ var (
 	forceEndpoint      string
 )
 
-// healthCmd represents the health command
+// healthCmd represents the health command.
 var healthCmd = &cobra.Command{
 	Use:   "health",
 	Short: "Check cluster health",

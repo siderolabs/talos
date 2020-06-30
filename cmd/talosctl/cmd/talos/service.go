@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// serviceCmd represents the service command
+// serviceCmd represents the service command.
 var serviceCmd = &cobra.Command{
 	Use:     "service [<id> [start|stop|restart|status]]",
 	Aliases: []string{"services"},

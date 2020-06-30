@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// Fatalf prints formatted message to stderr and aborts execution
+// Fatalf prints formatted message to stderr and aborts execution.
 func Fatalf(message string, args ...interface{}) {
 	if !strings.HasSuffix(message, "\n") {
 		message += "\n"
@@ -20,7 +20,7 @@ func Fatalf(message string, args ...interface{}) {
 	os.Exit(1)
 }
 
-// Warning prints formatted message to stderr
+// Warning prints formatted message to stderr.
 func Warning(message string, args ...interface{}) {
 	if !strings.HasSuffix(message, "\n") {
 		message += "\n"

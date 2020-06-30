@@ -29,7 +29,7 @@ type processRunner struct {
 	stopped chan struct{}
 }
 
-// NewRunner creates runner.Runner that runs a process on the host
+// NewRunner creates runner.Runner that runs a process on the host.
 func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &processRunner{
 		args:    args,
@@ -58,7 +58,7 @@ func (p *processRunner) Run(eventSink events.Recorder) error {
 	return p.run(eventSink)
 }
 
-// Stop implements the Runner interface
+// Stop implements the Runner interface.
 func (p *processRunner) Stop() error {
 	close(p.stop)
 

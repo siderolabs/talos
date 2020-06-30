@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// statsCmd represents the processes command
+// statsCmd represents the processes command.
 var statsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "Get processes stats",

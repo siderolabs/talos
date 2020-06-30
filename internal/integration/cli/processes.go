@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// ProcessesSuite verifies dmesg command
+// ProcessesSuite verifies dmesg command.
 type ProcessesSuite struct {
 	base.CLISuite
 }

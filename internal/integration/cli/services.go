@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// ServicesSuite verifies dmesg command
+// ServicesSuite verifies dmesg command.
 type ServicesSuite struct {
 	base.CLISuite
 }

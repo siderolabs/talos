@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// MountsSuite verifies dmesg command
+// MountsSuite verifies dmesg command.
 type MountsSuite struct {
 	base.CLISuite
 }

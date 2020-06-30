@@ -21,7 +21,7 @@ var (
 	etcdString      = strings.ToLower(machine.RecoverRequest_ETCD.String())
 )
 
-// recoverCmd represents the recover command
+// recoverCmd represents the recover command.
 var recoverCmd = &cobra.Command{
 	Use:   "recover",
 	Short: "Recover a control plane",

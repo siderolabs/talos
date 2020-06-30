@@ -24,7 +24,7 @@ var (
 	preserve     bool
 )
 
-// upgradeCmd represents the processes command
+// upgradeCmd represents the processes command.
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade Talos on the target node",

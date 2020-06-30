@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
-// MaxStderrLen is maximum length of stderr output captured for error message
+// MaxStderrLen is maximum length of stderr output captured for error message.
 const MaxStderrLen = 4096
 
 // Run executes a command.

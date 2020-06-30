@@ -23,7 +23,7 @@ type machinedService struct {
 	c runtime.Controller
 }
 
-// Main is an entrypoint the the API service
+// Main is an entrypoint the the API service.
 func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter io.Writer) error {
 	// Start the API server.
 	server := factory.NewServer(

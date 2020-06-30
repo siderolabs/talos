@@ -19,7 +19,7 @@ var (
 	validateModeArg   string
 )
 
-// validateCmd reads in a userData file and attempts to parse it
+// validateCmd reads in a userData file and attempts to parse it.
 var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate config",

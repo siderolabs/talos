@@ -15,7 +15,7 @@ type Settings struct {
 	Timeout      time.Duration
 }
 
-// DefaultSettings provides some default health check settings
+// DefaultSettings provides some default health check settings.
 var DefaultSettings = Settings{
 	InitialDelay: time.Second,
 	Period:       5 * time.Second,

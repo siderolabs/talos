@@ -11,10 +11,10 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 )
 
-// StateEvent is a service event (e.g. 'up', 'down')
+// StateEvent is a service event (e.g. 'up', 'down').
 type StateEvent string
 
-// Service event list
+// Service event list.
 const (
 	StateEventUp       = StateEvent("up")
 	StateEventDown     = StateEvent("down")
@@ -52,7 +52,7 @@ func (sc *serviceCondition) String() string {
 	return fmt.Sprintf("service %q to be %q", sc.service, string(sc.event))
 }
 
-// WaitForService waits for service to reach some state event
+// WaitForService waits for service to reach some state event.
 func WaitForService(event StateEvent, service string) conditions.Condition {
 	return &serviceCondition{event, service}
 }

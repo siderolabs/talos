@@ -314,7 +314,7 @@ const (
 	IFLA_VLAN_MAX = IFLA_VLAN_PROTOCOL
 )
 
-// VlanProtocol possible values
+// VlanProtocol possible values.
 const (
 	VLAN_PROTOCOL_UNKNOWN = 0
 	VLAN_PROTOCOL_8021Q   = 0x8100

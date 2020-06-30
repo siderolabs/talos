@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// GenSuite verifies dmesg command
+// GenSuite verifies dmesg command.
 type GenSuite struct {
 	base.CLISuite
 

@@ -6,7 +6,7 @@ package mgmt
 
 import "github.com/spf13/cobra"
 
-// Commands is a list of commands published by the package
+// Commands is a list of commands published by the package.
 var Commands []*cobra.Command
 
 func addCommand(cmd *cobra.Command) {

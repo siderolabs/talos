@@ -16,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client/config"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:               "talosctl",
 	Short:             "A CLI for out-of-band management of Kubernetes nodes created by Talos",

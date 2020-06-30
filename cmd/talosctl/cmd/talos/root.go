@@ -20,7 +20,7 @@ var (
 	useCRI     bool
 )
 
-// Common options set on root command
+// Common options set on root command.
 var (
 	Talosconfig string
 	Endpoints   []string
@@ -75,7 +75,7 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 	})
 }
 
-// Commands is a list of commands published by the package
+// Commands is a list of commands published by the package.
 var Commands []*cobra.Command
 
 func addCommand(cmd *cobra.Command) {

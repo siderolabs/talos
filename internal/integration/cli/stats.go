@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// StatsSuite verifies dmesg command
+// StatsSuite verifies dmesg command.
 type StatsSuite struct {
 	base.CLISuite
 }

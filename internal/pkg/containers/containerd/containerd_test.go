@@ -63,7 +63,7 @@ type ContainerdSuite struct {
 // WithAnnotations appends or replaces the annotations on the spec with the
 // provided annotations
 //
-// TODO: taken from containerd/oci > 1.2.6
+// TODO: taken from containerd/oci > 1.2.6.
 func WithAnnotations(annotations map[string]string) oci.SpecOpts {
 	return func(_ context.Context, _ oci.Client, _ *containerdcntrs.Container, s *oci.Spec) error {
 		if s.Annotations == nil {

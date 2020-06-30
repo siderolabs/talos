@@ -23,10 +23,10 @@ const (
 	ServerOnly
 )
 
-// ConfigOptionFunc describes a configuration option function for the TLS config
+// ConfigOptionFunc describes a configuration option function for the TLS config.
 type ConfigOptionFunc func(*tls.Config) error
 
-// WithClientAuthType declares the server's policy regardling TLS Client Authentication
+// WithClientAuthType declares the server's policy regardling TLS Client Authentication.
 func WithClientAuthType(t Type) func(*tls.Config) error {
 	return func(cfg *tls.Config) error {
 		switch t {
@@ -122,7 +122,7 @@ func defaultConfig() *tls.Config {
 	}
 }
 
-// New returns a new TLS Configuration modified by any provided configuration options
+// New returns a new TLS Configuration modified by any provided configuration options.
 func New(opts ...ConfigOptionFunc) (cfg *tls.Config, err error) {
 	cfg = defaultConfig()
 

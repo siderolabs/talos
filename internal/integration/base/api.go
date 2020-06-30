@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-// APISuite is a base suite for API tests
+// APISuite is a base suite for API tests.
 type APISuite struct {
 	suite.Suite
 	TalosSuite
@@ -32,7 +32,7 @@ type APISuite struct {
 	Client *client.Client
 }
 
-// SetupSuite initializes Talos API client
+// SetupSuite initializes Talos API client.
 func (apiSuite *APISuite) SetupSuite() {
 	cfg, err := config.Open(apiSuite.TalosConfig)
 	apiSuite.Require().NoError(err)
@@ -207,7 +207,7 @@ func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, reboo
 	}
 }
 
-// TearDownSuite closes Talos API client
+// TearDownSuite closes Talos API client.
 func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {
 		apiSuite.Assert().NoError(apiSuite.Client.Close())

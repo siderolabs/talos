@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/cli"
 )
 
-// completionCmd represents the completion command
+// completionCmd represents the completion command.
 var completionCmd = &cobra.Command{
 	Use:   "completion SHELL",
 	Short: "Output shell completion code for the specified shell (bash or zsh)",

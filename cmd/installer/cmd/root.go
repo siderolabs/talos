@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "installer",
 	Short: "",

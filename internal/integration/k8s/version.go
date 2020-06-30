@@ -16,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// VersionSuite verifies Talos version
+// VersionSuite verifies Talos version.
 type VersionSuite struct {
 	base.K8sSuite
 }
@@ -26,7 +26,7 @@ func (suite *VersionSuite) SuiteName() string {
 	return "k8s.VersionSuite"
 }
 
-// TestExpectedVersion verifies that node versions matches expected
+// TestExpectedVersion verifies that node versions matches expected.
 func (suite *VersionSuite) TestExpectedVersion() {
 	// verify k8s version (api server)
 	apiServerVersion, err := suite.DiscoveryClient.ServerVersion()

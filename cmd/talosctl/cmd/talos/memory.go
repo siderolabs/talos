@@ -21,7 +21,7 @@ import (
 
 var verbose bool
 
-// memoryCmd represents the processes command
+// memoryCmd represents the processes command.
 var memoryCmd = &cobra.Command{
 	Use:     "memory",
 	Aliases: []string{"m"},

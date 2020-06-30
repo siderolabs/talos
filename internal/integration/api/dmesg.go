@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// DmesgSuite verifies Dmesg API
+// DmesgSuite verifies Dmesg API.
 type DmesgSuite struct {
 	base.APISuite
 
@@ -41,7 +41,7 @@ func (suite *DmesgSuite) TearDownTest() {
 	suite.ctxCancel()
 }
 
-// TestNodeHasDmesg verifies that default node has dmesg
+// TestNodeHasDmesg verifies that default node has dmesg.
 func (suite *DmesgSuite) TestNodeHasDmesg() {
 	dmesgStream, err := suite.Client.Dmesg(
 		suite.ctx,
@@ -62,7 +62,7 @@ func (suite *DmesgSuite) TestNodeHasDmesg() {
 	suite.Require().Greater(n, int64(1024))
 }
 
-// TestStreaming verifies that logs are streamed in real-time
+// TestStreaming verifies that logs are streamed in real-time.
 func (suite *DmesgSuite) TestStreaming() {
 	dmesgStream, err := suite.Client.Dmesg(
 		suite.ctx,
@@ -115,7 +115,7 @@ DrainLoop:
 	suite.Assert().Greater(logCount, 10)
 }
 
-// TestClusterHasDmesg verifies that all the cluster nodes have dmesg
+// TestClusterHasDmesg verifies that all the cluster nodes have dmesg.
 func (suite *DmesgSuite) TestClusterHasDmesg() {
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)

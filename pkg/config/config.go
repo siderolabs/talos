@@ -136,7 +136,7 @@ func newConfig(c Content) (config runtime.Configurator, err error) {
 	}
 }
 
-// NewFromFile will take a filepath and attempt to parse a config file from it
+// NewFromFile will take a filepath and attempt to parse a config file from it.
 func NewFromFile(filepath string) (runtime.Configurator, error) {
 	content, err := fromFile(filepath)
 	if err != nil {
@@ -146,7 +146,7 @@ func NewFromFile(filepath string) (runtime.Configurator, error) {
 	return newConfig(content)
 }
 
-// NewFromBytes will take a byteslice and attempt to parse a config file from it
+// NewFromBytes will take a byteslice and attempt to parse a config file from it.
 func NewFromBytes(in []byte) (runtime.Configurator, error) {
 	content, err := fromBytes(in)
 	if err != nil {

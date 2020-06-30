@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 )
 
-// installCmd represents the install command
+// installCmd represents the install command.
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "",

@@ -31,7 +31,7 @@ type APID struct {
 	conn *grpc.ClientConn
 }
 
-// NewAPID creates new instance of APID backend
+// NewAPID creates new instance of APID backend.
 func NewAPID(target string, creds credentials.TransportCredentials) (*APID, error) {
 	// perform very basic validation on target, trying to weed out empty addresses or addresses with the port appended
 	if target == "" || net.AddressContainsPort(target) {
