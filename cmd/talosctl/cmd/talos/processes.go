@@ -72,7 +72,6 @@ func init() {
 	addCommand(processesCmd)
 }
 
-// nolint: gocyclo
 func processesUI(ctx context.Context, c *client.Client) {
 	l := widgets.NewParagraph()
 	l.Border = false

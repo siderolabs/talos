@@ -24,7 +24,6 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-// nolint: gocyclo
 func run() (err error) {
 	// Mount the pseudo devices.
 	pseudo, err := mount.PseudoMountPoints()

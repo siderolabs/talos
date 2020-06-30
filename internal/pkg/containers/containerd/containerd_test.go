@@ -78,7 +78,6 @@ func WithAnnotations(annotations map[string]string) oci.SpecOpts {
 	}
 }
 
-// nolint: dupl
 func (suite *ContainerdSuite) SetupSuite() {
 	var err error
 

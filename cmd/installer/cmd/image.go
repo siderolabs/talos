@@ -62,7 +62,6 @@ func runImageCmd() (err error) {
 		return err
 	}
 
-	// nolint: errcheck
 	defer func() {
 		log.Println("detaching loopback device")
 
@@ -92,7 +91,7 @@ func runImageCmd() (err error) {
 	return nil
 }
 
-//nolint: gocyclo,interfacer
+//nolint: gocyclo
 func finalize(platform runtime.Platform, img string) (err error) {
 	dir := filepath.Dir(img)
 
