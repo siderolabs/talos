@@ -3,10 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //nolint: scopelint
-package util
+package util_test
 
 import (
 	"testing"
+
+	"github.com/talos-systems/talos/pkg/blockdevice/util"
 )
 
 func Test_PartNo(t *testing.T) {
@@ -115,7 +117,7 @@ func Test_PartNo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// nolint: errcheck
-			if got, _ := PartNo(tt.args.devname); got != tt.want {
+			if got, _ := util.PartNo(tt.args.devname); got != tt.want {
 				t.Errorf("PartNo() = %v, want %v", got, tt.want)
 			}
 		})
@@ -194,7 +196,7 @@ func Test_DevnameFromPartname(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// nolint: errcheck
-			if got, _ := DevnameFromPartname(tt.args.devname); got != tt.want {
+			if got, _ := util.DevnameFromPartname(tt.args.devname); got != tt.want {
 				t.Errorf("DevnameFromPartname() = %v, want %v", got, tt.want)
 			}
 		})

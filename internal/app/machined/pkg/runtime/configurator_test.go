@@ -2,33 +2,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,scopelint
-package runtime
+// nolint: scopelint,dupl
+package runtime_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 func TestMachineType_String(t *testing.T) {
 	tests := []struct {
 		name string
-		t    MachineType
+		t    runtime.MachineType
 		want string
 	}{
 		{
 			name: "init",
-			t:    MachineTypeInit,
+			t:    runtime.MachineTypeInit,
 			want: "init",
 		},
 		{
 			name: "controlplane",
-			t:    MachineTypeControlPlane,
+			t:    runtime.MachineTypeControlPlane,
 			want: "controlplane",
 		},
 		{
 			name: "join",
-			t:    MachineTypeJoin,
+			t:    runtime.MachineTypeJoin,
 			want: "join",
 		},
 	}
@@ -50,25 +52,25 @@ func TestParseMachineType(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    MachineType
+		want    runtime.MachineType
 		wantErr bool
 	}{
 		{
 			name:    "init",
 			args:    args{"init"},
-			want:    MachineTypeInit,
+			want:    runtime.MachineTypeInit,
 			wantErr: false,
 		},
 		{
 			name:    "controlplane",
 			args:    args{"controlplane"},
-			want:    MachineTypeControlPlane,
+			want:    runtime.MachineTypeControlPlane,
 			wantErr: false,
 		},
 		{
 			name:    "join",
 			args:    args{"join"},
-			want:    MachineTypeJoin,
+			want:    runtime.MachineTypeJoin,
 			wantErr: false,
 		},
 		{
@@ -81,7 +83,7 @@ func TestParseMachineType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseMachineType(tt.args.t)
+			got, err := runtime.ParseMachineType(tt.args.t)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseMachineType() error = %v, wantErr %v", err, tt.wantErr)
 				return

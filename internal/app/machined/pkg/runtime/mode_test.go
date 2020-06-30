@@ -2,33 +2,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,scopelint
-package runtime
+// nolint: scopelint,dupl
+package runtime_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
 func TestMode_String(t *testing.T) {
 	tests := []struct {
 		name string
-		m    Mode
+		m    runtime.Mode
 		want string
 	}{
 		{
 			name: "cloud",
-			m:    ModeCloud,
+			m:    runtime.ModeCloud,
 			want: "cloud",
 		},
 		{
 			name: "container",
-			m:    ModeContainer,
+			m:    runtime.ModeContainer,
 			want: "container",
 		},
 		{
 			name: "metal",
-			m:    ModeMetal,
+			m:    runtime.ModeMetal,
 			want: "metal",
 		},
 	}
@@ -50,25 +52,25 @@ func TestParseMode(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		wantM   Mode
+		wantM   runtime.Mode
 		wantErr bool
 	}{
 		{
 			name:    "cloud",
 			args:    args{"cloud"},
-			wantM:   ModeCloud,
+			wantM:   runtime.ModeCloud,
 			wantErr: false,
 		},
 		{
 			name:    "container",
 			args:    args{"container"},
-			wantM:   ModeContainer,
+			wantM:   runtime.ModeContainer,
 			wantErr: false,
 		},
 		{
 			name:    "metal",
 			args:    args{"metal"},
-			wantM:   ModeMetal,
+			wantM:   runtime.ModeMetal,
 			wantErr: false,
 		},
 		{
@@ -81,7 +83,7 @@ func TestParseMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotM, err := ParseMode(tt.args.s)
+			gotM, err := runtime.ParseMode(tt.args.s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseMode() error = %v, wantErr %v", err, tt.wantErr)
 				return
