@@ -515,6 +515,17 @@ COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
 RUN mkdir -p /docs/talosctl \
     && env HOME=/home/user TAG=latest /bin/talosctl docs /docs/talosctl
 
+FROM pseudomuto/protoc-gen-doc as proto-docs-build
+COPY --from=generate-build /api /protos
+RUN protoc -I/protos/common --doc_out=/tmp --doc_opt=markdown,common.md /protos/common/*.proto
+RUN protoc -I/protos -I/protos/common -I/protos/health --doc_out=/tmp --doc_opt=markdown,health.md /protos/health/*.proto
+RUN protoc -I/protos -I/protos/common -I/protos/machine --doc_out=/tmp --doc_opt=markdown,machine.md /protos/machine/*.proto
+RUN protoc -I/protos -I/protos/common -I/protos/network --doc_out=/tmp --doc_opt=markdown,network.md /protos/network/*.proto
+RUN protoc -I/protos -I/protos/common -I/protos/os --doc_out=/tmp --doc_opt=markdown,os.md /protos/os/*.proto
+RUN protoc -I/protos -I/protos/common -I/protos/security --doc_out=/tmp --doc_opt=markdown,security.md /protos/security/*.proto
+RUN protoc -I/protos -I/protos/common -I/protos/time --doc_out=/tmp --doc_opt=markdown,time.md /protos/time/*.proto
+
 FROM scratch AS docs
 COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.6/en/configuration/v1alpha1.md
+COPY --from=proto-docs-build /tmp/*.md /docs/website/content/v0.6/en/api/common.md
 COPY --from=docs-build /docs/talosctl/* /docs/talosctl/
