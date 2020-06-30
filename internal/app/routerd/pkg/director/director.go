@@ -17,12 +17,12 @@ import (
 	"github.com/talos-systems/grpc-proxy/proxy"
 )
 
-// Router wraps grpc-proxy StreamDirector
+// Router wraps grpc-proxy StreamDirector.
 type Router struct {
 	localBackends map[string]proxy.Backend
 }
 
-// NewRouter builds new Router
+// NewRouter builds new Router.
 func NewRouter() *Router {
 	return &Router{
 		localBackends: map[string]proxy.Backend{},
@@ -35,7 +35,7 @@ func NewRouter() *Router {
 func (r *Router) Register(srv *grpc.Server) {
 }
 
-// Director implements proxy.StreamDirector function
+// Director implements proxy.StreamDirector function.
 func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mode, []proxy.Backend, error) {
 	parts := strings.SplitN(fullMethodName, "/", 3)
 	serviceName := parts[1]

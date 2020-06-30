@@ -22,7 +22,7 @@ var (
 	shortVersion bool
 )
 
-// versionCmd represents the version command
+// versionCmd represents the version command.
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Prints the version",

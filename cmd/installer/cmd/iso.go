@@ -23,7 +23,7 @@ LABEL ISO
   INITRD /initramfs.xz
   APPEND page_poison=1 slab_nomerge slub_debug=P pti=on consoleblank=0 console=tty0 talos.platform=iso`)
 
-// isoCmd represents the iso command
+// isoCmd represents the iso command.
 var isoCmd = &cobra.Command{
 	Use:   "iso",
 	Short: "",

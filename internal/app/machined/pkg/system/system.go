@@ -198,7 +198,7 @@ func (s *singleton) ReloadAndStart(services ...Service) {
 	}
 }
 
-// Shutdown all the services
+// Shutdown all the services.
 func (s *singleton) Shutdown() {
 	s.mu.Lock()
 	if s.terminating {
@@ -254,7 +254,7 @@ func (s *singleton) Shutdown() {
 	s.wg.Wait()
 }
 
-// List returns snapshot of ServiceRunner instances
+// List returns snapshot of ServiceRunner instances.
 func (s *singleton) List() (result []*ServiceRunner) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -329,7 +329,7 @@ func (s *singleton) IsRunning(id string) (Service, bool, error) {
 	return runner.service, running, nil
 }
 
-// APIStart processes service start request from the API
+// APIStart processes service start request from the API.
 func (s *singleton) APIStart(ctx context.Context, id string) error {
 	service, running, err := s.IsRunning(id)
 	if err != nil {
@@ -348,7 +348,7 @@ func (s *singleton) APIStart(ctx context.Context, id string) error {
 	return fmt.Errorf("service %q doesn't support start operation via API", id)
 }
 
-// APIStop processes services stop request from the API
+// APIStop processes services stop request from the API.
 func (s *singleton) APIStop(ctx context.Context, id string) error {
 	service, running, err := s.IsRunning(id)
 	if err != nil {
@@ -367,7 +367,7 @@ func (s *singleton) APIStop(ctx context.Context, id string) error {
 	return fmt.Errorf("service %q doesn't support stop operation via API", id)
 }
 
-// APIRestart processes services restart request from the API
+// APIRestart processes services restart request from the API.
 func (s *singleton) APIRestart(ctx context.Context, id string) error {
 	service, running, err := s.IsRunning(id)
 	if err != nil {

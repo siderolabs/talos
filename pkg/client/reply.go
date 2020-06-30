@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-// NodeError is RPC error from some node
+// NodeError is RPC error from some node.
 type NodeError struct {
 	Node string
 	Err  string

@@ -47,7 +47,7 @@ type Config struct {
 	ClusterConfig *ClusterConfig `yaml:"cluster"`
 }
 
-// MachineConfig reperesents the machine-specific config values
+// MachineConfig reperesents the machine-specific config values.
 type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
@@ -235,7 +235,7 @@ type MachineConfig struct {
 	MachineRegistries RegistriesConfig `yaml:"registries,omitempty"`
 }
 
-// ClusterConfig reperesents the cluster-wide config values
+// ClusterConfig reperesents the cluster-wide config values.
 type ClusterConfig struct {
 	//   description: |
 	//     Provides control plane specific configuration options.
@@ -369,7 +369,7 @@ type ClusterConfig struct {
 	AdminKubeconfigConfig AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 }
 
-// KubeletConfig reperesents the kubelet config values
+// KubeletConfig reperesents the kubelet config values.
 type KubeletConfig struct {
 	//   description: |
 	//     The `image` field is an optional reference to an alternative kubelet image.
@@ -542,14 +542,14 @@ type RegistriesConfig struct {
 	RegistryConfig map[string]runtime.RegistryConfig `yaml:"config,omitempty"`
 }
 
-// PodCheckpointer represents the pod-checkpointer config values
+// PodCheckpointer represents the pod-checkpointer config values.
 type PodCheckpointer struct {
 	//   description: |
 	//     The `image` field is an override to the default pod-checkpointer image.
 	PodCheckpointerImage string `yaml:"image,omitempty"`
 }
 
-// CoreDNS represents the coredns config values
+// CoreDNS represents the coredns config values.
 type CoreDNS struct {
 	//   description: |
 	//     The `image` field is an override to the default coredns image.
@@ -622,7 +622,7 @@ type ControllerManagerConfig struct {
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
-// ProxyConfig represents the kube proxy configuration values
+// ProxyConfig represents the kube proxy configuration values.
 type ProxyConfig struct {
 	//   description: |
 	//     The container image used in the kube-proxy manifest.
@@ -722,7 +722,7 @@ type ClusterNetworkConfig struct {
 	ServiceSubnet []string `yaml:"serviceSubnets"`
 }
 
-// CNIConfig contains the info about which CNI we'll deploy
+// CNIConfig contains the info about which CNI we'll deploy.
 type CNIConfig struct {
 	//   description: |
 	//     Name of CNI to use.

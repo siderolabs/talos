@@ -34,17 +34,17 @@ type inspectorOptions struct {
 	containerdAddress string
 }
 
-// Option configures containerd Inspector
+// Option configures containerd Inspector.
 type Option func(*inspectorOptions)
 
-// WithContainerdAddress configures containerd address to use
+// WithContainerdAddress configures containerd address to use.
 func WithContainerdAddress(address string) Option {
 	return func(o *inspectorOptions) {
 		o.containerdAddress = address
 	}
 }
 
-// NewInspector builds new Inspector instance in specified namespace
+// NewInspector builds new Inspector instance in specified namespace.
 func NewInspector(ctx context.Context, namespace string, options ...Option) (ctrs.Inspector, error) {
 	var err error
 
@@ -68,12 +68,12 @@ func NewInspector(ctx context.Context, namespace string, options ...Option) (ctr
 	return &i, nil
 }
 
-// Close frees associated resources
+// Close frees associated resources.
 func (i *inspector) Close() error {
 	return i.client.Close()
 }
 
-// Images returns a hash of image digest -> name
+// Images returns a hash of image digest -> name.
 func (i *inspector) Images() (map[string]string, error) {
 	images, err := i.client.ListImages(i.nsctx, "")
 	if err != nil {
@@ -373,7 +373,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	return pods, multiErr.ErrorOrNil()
 }
 
-// GetProcessStderr returns process stderr
+// GetProcessStderr returns process stderr.
 func (i *inspector) GetProcessStderr(id string) (string, error) {
 	task, err := i.client.TaskService().Get(i.nsctx, &tasks.GetRequest{ContainerID: id})
 	if err != nil {
@@ -383,7 +383,7 @@ func (i *inspector) GetProcessStderr(id string) (string, error) {
 	return task.Process.Stderr, nil
 }
 
-// Kill sends signal to container task
+// Kill sends signal to container task.
 func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
 	_, err := i.client.TaskService().Kill(i.nsctx, &tasks.KillRequest{ContainerID: id, Signal: uint32(signal)})
 	return err

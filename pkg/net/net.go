@@ -152,7 +152,7 @@ func DomainName() (domainname string, err error) {
 }
 
 // IsIPv6 indicates whether any IP address within the provided set is an IPv6
-// address
+// address.
 func IsIPv6(addrs ...net.IP) bool {
 	for _, a := range addrs {
 		if a == nil || a.IsLoopback() || a.IsUnspecified() {

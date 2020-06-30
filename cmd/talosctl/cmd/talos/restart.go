@@ -16,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// restartCmd represents the restart command
+// restartCmd represents the restart command.
 var restartCmd = &cobra.Command{
 	Use:   "restart <id>",
 	Short: "Restart a process",

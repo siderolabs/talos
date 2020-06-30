@@ -216,7 +216,7 @@ func (r *Registrator) Dmesg(req *osapi.DmesgRequest, srv osapi.OSService_DmesgSe
 	}
 }
 
-// Processes implements the osapi.OSDServer interface
+// Processes implements the osapi.OSDServer interface.
 func (r *Registrator) Processes(ctx context.Context, in *empty.Empty) (reply *osapi.ProcessesResponse, err error) {
 	procs, err := procfs.AllProcs()
 	if err != nil {

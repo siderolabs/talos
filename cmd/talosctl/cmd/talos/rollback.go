@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// rollbackCmd represents the rollback command
+// rollbackCmd represents the rollback command.
 var rollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Rollback a node to the previous installation",

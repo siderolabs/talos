@@ -13,20 +13,20 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 )
 
-// Status of the healthcheck
+// Status of the healthcheck.
 type Status struct {
 	Healthy     *bool
 	LastChange  time.Time
 	LastMessage string
 }
 
-// StateChange is used to notify about status changes
+// StateChange is used to notify about status changes.
 type StateChange struct {
 	Old Status
 	New Status
 }
 
-// State provides proper locking around health state
+// State provides proper locking around health state.
 type State struct {
 	sync.Mutex
 
@@ -34,7 +34,7 @@ type State struct {
 	subscribers []chan<- StateChange
 }
 
-// Update health status (locked)
+// Update health status (locked).
 func (state *State) Update(healthy bool, message string) {
 	state.Lock()
 
@@ -68,7 +68,7 @@ func (state *State) Update(healthy bool, message string) {
 	}
 }
 
-// Subscribe for the notifications on state changes
+// Subscribe for the notifications on state changes.
 func (state *State) Subscribe(ch chan<- StateChange) {
 	state.Lock()
 	defer state.Unlock()
@@ -76,7 +76,7 @@ func (state *State) Subscribe(ch chan<- StateChange) {
 	state.subscribers = append(state.subscribers, ch)
 }
 
-// Unsubscribe from state changes
+// Unsubscribe from state changes.
 func (state *State) Unsubscribe(ch chan<- StateChange) {
 	state.Lock()
 	defer state.Unlock()
@@ -92,7 +92,7 @@ func (state *State) Unsubscribe(ch chan<- StateChange) {
 	}
 }
 
-// Init health status (locked)
+// Init health status (locked).
 func (state *State) Init() {
 	state.Lock()
 	defer state.Unlock()
@@ -102,7 +102,7 @@ func (state *State) Init() {
 	state.status.Healthy = nil
 }
 
-// Get returns health status (locked)
+// Get returns health status (locked).
 func (state *State) Get() Status {
 	state.Lock()
 	defer state.Unlock()
@@ -110,7 +110,7 @@ func (state *State) Get() Status {
 	return state.status
 }
 
-// AsProto returns protobuf-ready health state
+// AsProto returns protobuf-ready health state.
 func (state *State) AsProto() *machineapi.ServiceHealth {
 	status := state.Get()
 

@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// crashdumpCmd represents the crashdump command
+// crashdumpCmd represents the crashdump command.
 var crashdumpCmd = &cobra.Command{
 	Use:   "crashdump",
 	Short: "Dump debug information about the cluster",

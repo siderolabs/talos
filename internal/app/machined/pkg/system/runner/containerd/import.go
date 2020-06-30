@@ -24,7 +24,7 @@ type ImportRequest struct {
 	Options []containerd.ImportOpt
 }
 
-// Importer implements image import
+// Importer implements image import.
 type Importer struct {
 	namespace string
 	options   importerOptions
@@ -34,17 +34,17 @@ type importerOptions struct {
 	containerdAddress string
 }
 
-// ImporterOption configures containerd Inspector
+// ImporterOption configures containerd Inspector.
 type ImporterOption func(*importerOptions)
 
-// WithContainerdAddress configures containerd address to use
+// WithContainerdAddress configures containerd address to use.
 func WithContainerdAddress(address string) ImporterOption {
 	return func(o *importerOptions) {
 		o.containerdAddress = address
 	}
 }
 
-// NewImporter builds new Importer
+// NewImporter builds new Importer.
 func NewImporter(namespace string, options ...ImporterOption) *Importer {
 	importer := &Importer{
 		namespace: namespace,

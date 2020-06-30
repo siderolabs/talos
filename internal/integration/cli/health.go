@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// HealthSuite verifies health command
+// HealthSuite verifies health command.
 type HealthSuite struct {
 	base.CLISuite
 }

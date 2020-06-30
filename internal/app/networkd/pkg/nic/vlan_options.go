@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 )
 
-// Vlan contins interface related parameters to a VLAN device
+// Vlan contins interface related parameters to a VLAN device.
 type Vlan struct {
 	Parent        string
 	ID            uint16
@@ -23,7 +23,7 @@ type Vlan struct {
 	AddressMethod []address.Addressing
 }
 
-// WithVlan defines the VLAN id to use
+// WithVlan defines the VLAN id to use.
 func WithVlan(id uint16) Option {
 	return func(n *NetworkInterface) (err error) {
 		for _, vlan := range n.Vlans {
@@ -44,7 +44,7 @@ func WithVlan(id uint16) Option {
 	}
 }
 
-// WithVlanDhcp sets a VLAN device with DHCP
+// WithVlanDhcp sets a VLAN device with DHCP.
 func WithVlanDhcp(id uint16) Option {
 	return func(n *NetworkInterface) (err error) {
 		for _, vlan := range n.Vlans {
@@ -58,7 +58,7 @@ func WithVlanDhcp(id uint16) Option {
 	}
 }
 
-// WithVlanCIDR defines if the interface have static CIDRs added
+// WithVlanCIDR defines if the interface have static CIDRs added.
 func WithVlanCIDR(id uint16, cidr string, routeList []runtime.Route) Option {
 	return func(n *NetworkInterface) (err error) {
 		for _, vlan := range n.Vlans {

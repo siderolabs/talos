@@ -4,7 +4,7 @@
 
 package containers
 
-// Pod presents information about a pod, including a list of containers
+// Pod presents information about a pod, including a list of containers.
 type Pod struct {
 	Name    string
 	Sandbox string

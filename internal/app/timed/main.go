@@ -17,7 +17,7 @@ import (
 )
 
 // https://access.redhat.com/solutions/39194
-// Using the above as reference for setting min/max
+// Using the above as reference for setting min/max.
 const (
 	// TODO: Once we get naming sorted we need to apply
 	// for a project specific address
@@ -36,7 +36,7 @@ func init() {
 }
 
 // New instantiates a new ntp instance against a given server
-// If no servers are specified, the default will be used
+// If no servers are specified, the default will be used.
 func main() {
 	if err := startup.RandSeed(); err != nil {
 		log.Fatalf("startup: %v", err)

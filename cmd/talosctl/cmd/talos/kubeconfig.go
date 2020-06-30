@@ -19,7 +19,7 @@ import (
 
 var force bool
 
-// kubeconfigCmd represents the kubeconfig command
+// kubeconfigCmd represents the kubeconfig command.
 var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",

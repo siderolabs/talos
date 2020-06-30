@@ -144,7 +144,7 @@ func (n *NetworkInterface) Create() error {
 	return nil
 }
 
-// CreateSub create VLAN devices that belongs to a master device
+// CreateSub create VLAN devices that belongs to a master device.
 func (n *NetworkInterface) CreateSub() error {
 	var info *rtnetlink.LinkInfo
 

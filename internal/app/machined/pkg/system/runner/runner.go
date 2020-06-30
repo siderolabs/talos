@@ -118,7 +118,7 @@ func WithLoggingManager(manager runtime.LoggingManager) Option {
 	}
 }
 
-// WithGracefulShutdownTimeout sets the timeout for the task to terminate before sending SIGKILL
+// WithGracefulShutdownTimeout sets the timeout for the task to terminate before sending SIGKILL.
 func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 	return func(args *Options) {
 		args.GracefulShutdownTimeout = timeout

@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
-// Static implements the Addressing interface
+// Static implements the Addressing interface.
 type Static struct {
 	CIDR        string
 	Mtu         int
@@ -36,7 +36,7 @@ func (s *Static) Name() string {
 	return "static"
 }
 
-// Address returns the IP address
+// Address returns the IP address.
 func (s *Static) Address() *net.IPNet {
 	// nolint: errcheck
 	ip, ipn, _ := net.ParseCIDR(s.CIDR)
@@ -68,7 +68,7 @@ func (s *Static) TTL() time.Duration {
 	return 0
 }
 
-// Family qualifies the address as ipv4 or ipv6
+// Family qualifies the address as ipv4 or ipv6.
 func (s *Static) Family() int {
 	if s.Address().IP.To4() != nil {
 		return unix.AF_INET
@@ -77,7 +77,7 @@ func (s *Static) Family() int {
 	return unix.AF_INET6
 }
 
-// Scope sets the address scope
+// Scope sets the address scope.
 func (s *Static) Scope() uint8 {
 	return unix.RT_SCOPE_UNIVERSE
 }
@@ -95,18 +95,18 @@ func (s *Static) Routes() (routes []*Route) {
 	return routes
 }
 
-// Resolvers returns the DNS resolvers
+// Resolvers returns the DNS resolvers.
 func (s *Static) Resolvers() []net.IP {
 	return s.NameServers
 }
 
-// Hostname returns the hostname
+// Hostname returns the hostname.
 func (s *Static) Hostname() string {
 	return s.FQDN
 }
 
 // Link returns the underlying net.Interface that this address
-// method is configured for
+// method is configured for.
 func (s Static) Link() *net.Interface {
 	return s.NetIf
 }

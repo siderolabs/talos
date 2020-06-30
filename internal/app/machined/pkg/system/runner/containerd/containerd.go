@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 )
 
-// containerdRunner is a runner.Runner that runs container in containerd
+// containerdRunner is a runner.Runner that runs container in containerd.
 type containerdRunner struct {
 	args  *runner.Args
 	opts  *runner.Options
@@ -35,7 +35,7 @@ type containerdRunner struct {
 	container containerd.Container
 }
 
-// NewRunner creates runner.Runner that runs a container in containerd
+// NewRunner creates runner.Runner that runs a container in containerd.
 func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &containerdRunner{
 		args:    args,
@@ -94,7 +94,7 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 	return nil
 }
 
-// Close implements runner.Runner interface
+// Close implements runner.Runner interface.
 func (c *containerdRunner) Close() error {
 	if c.container != nil {
 		err := c.container.Delete(c.ctx, containerd.WithSnapshotCleanup)
@@ -191,7 +191,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	return logW.Close()
 }
 
-// Stop implements runner.Runner interface
+// Stop implements runner.Runner interface.
 func (c *containerdRunner) Stop() error {
 	close(c.stop)
 

@@ -23,7 +23,7 @@ import (
 
 var outputArg string
 
-// imageCmd represents the image command
+// imageCmd represents the image command.
 var imageCmd = &cobra.Command{
 	Use:   "image",
 	Short: "",

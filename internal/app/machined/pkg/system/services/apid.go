@@ -148,7 +148,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (o *APID) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		var d net.Dialer
@@ -162,7 +162,7 @@ func (o *APID) HealthFunc(runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (o *APID) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

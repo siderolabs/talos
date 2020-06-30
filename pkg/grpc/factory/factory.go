@@ -94,7 +94,7 @@ func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) Option {
 	}
 }
 
-// WithLog sets up request logging to specified destination
+// WithLog sets up request logging to specified destination.
 func WithLog(prefix string, w io.Writer) Option {
 	return func(args *Options) {
 		args.LogPrefix = prefix
@@ -102,7 +102,7 @@ func WithLog(prefix string, w io.Writer) Option {
 	}
 }
 
-// WithDefaultLog sets up request logging to default destination
+// WithDefaultLog sets up request logging to default destination.
 func WithDefaultLog() Option {
 	return func(args *Options) {
 		args.LogDestination = log.Writer()
@@ -146,7 +146,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 	return opts
 }
 
-// NewServer builds grpc server and binds it to the Registrator
+// NewServer builds grpc server and binds it to the Registrator.
 func NewServer(r Registrator, setters ...Option) *grpc.Server {
 	opts := NewDefaultOptions(setters...)
 
@@ -156,7 +156,7 @@ func NewServer(r Registrator, setters ...Option) *grpc.Server {
 	return server
 }
 
-// NewListener builds listener for grpc server
+// NewListener builds listener for grpc server.
 func NewListener(setters ...Option) (net.Listener, error) {
 	opts := NewDefaultOptions(setters...)
 

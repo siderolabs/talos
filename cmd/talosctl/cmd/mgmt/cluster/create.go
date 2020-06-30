@@ -63,7 +63,7 @@ var (
 	withInitNode            bool
 )
 
-// createCmd represents the cluster up command
+// createCmd represents the cluster up command.
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Creates a local docker-based or firecracker-based kubernetes cluster",

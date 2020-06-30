@@ -16,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-// VersionSuite verifies version API
+// VersionSuite verifies version API.
 type VersionSuite struct {
 	base.APISuite
 
@@ -40,7 +40,7 @@ func (suite *VersionSuite) TearDownTest() {
 	suite.ctxCancel()
 }
 
-// TestExpectedVersionMaster verifies master node version matches expected
+// TestExpectedVersionMaster verifies master node version matches expected.
 func (suite *VersionSuite) TestExpectedVersionMaster() {
 	v, err := suite.Client.Version(suite.ctx)
 	suite.Require().NoError(err)
@@ -48,7 +48,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 	suite.Assert().Equal(suite.Version, v.Messages[0].Version.Tag)
 }
 
-// TestSameVersionCluster verifies that all the nodes are on the same version
+// TestSameVersionCluster verifies that all the nodes are on the same version.
 func (suite *VersionSuite) TestSameVersionCluster() {
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)

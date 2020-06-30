@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// config structures to generate TOML containerd CRI plugin config
+// config structures to generate TOML containerd CRI plugin config.
 type mirror struct {
 	Endpoints []string `toml:"endpoint"`
 }

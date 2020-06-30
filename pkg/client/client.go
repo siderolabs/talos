@@ -243,7 +243,7 @@ func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string
 
 // NewClient initializes a Client.
 //
-// Deprecated: use client.NewFromConfigContext() instead
+// Deprecated: use client.NewFromConfigContext() instead.
 func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialOption) (c *Client, err error) {
 	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
 
@@ -265,7 +265,7 @@ func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialO
 	return c, nil
 }
 
-// Close shuts down client protocol
+// Close shuts down client protocol.
 func (c *Client) Close() error {
 	return c.conn.Close()
 }
@@ -532,7 +532,7 @@ func (c *Client) LS(ctx context.Context, req machineapi.ListRequest) (stream mac
 	return c.MachineClient.List(ctx, &req)
 }
 
-// Copy implements the proto.OSClient interface
+// Copy implements the proto.OSClient interface.
 func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
 	stream, err := c.MachineClient.Copy(ctx, &machineapi.CopyRequest{
 		RootPath: rootPath,
@@ -545,7 +545,7 @@ func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-ch
 }
 
 // Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
-// interface
+// interface.
 func (c *Client) Upgrade(ctx context.Context, image string, preserve bool, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
 	resp, err = c.MachineClient.Upgrade(
 		ctx,
@@ -563,7 +563,7 @@ func (c *Client) Upgrade(ctx context.Context, image string, preserve bool, callO
 	return
 }
 
-// ServiceList returns list of services with their state
+// ServiceList returns list of services with their state.
 func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ServiceListResponse, err error) {
 	resp, err = c.MachineClient.ServiceList(
 		ctx,
@@ -578,7 +578,7 @@ func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption
 	return
 }
 
-// ServiceInfo provides info about a service and node metadata
+// ServiceInfo provides info about a service and node metadata.
 type ServiceInfo struct {
 	Metadata *common.Metadata
 	Service  *machineapi.ServiceInfo
@@ -587,7 +587,7 @@ type ServiceInfo struct {
 // ServiceInfo returns info about a single service
 //
 // This is implemented via service list API, as we don't have many services
-// If service with given id is not registered, function returns nil
+// If service with given id is not registered, function returns nil.
 func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc.CallOption) (services []ServiceInfo, err error) {
 	var resp *machineapi.ServiceListResponse
 
@@ -670,7 +670,7 @@ func (c *Client) ServiceRestart(ctx context.Context, id string, callOptions ...g
 	return
 }
 
-// Time returns the time
+// Time returns the time.
 func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (resp *timeapi.TimeResponse, err error) {
 	resp, err = c.TimeClient.Time(
 		ctx,
@@ -685,7 +685,7 @@ func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (resp
 	return
 }
 
-// TimeCheck returns the time compared to the specified ntp server
+// TimeCheck returns the time compared to the specified ntp server.
 func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...grpc.CallOption) (resp *timeapi.TimeResponse, err error) {
 	resp, err = c.TimeClient.TimeCheck(
 		ctx,

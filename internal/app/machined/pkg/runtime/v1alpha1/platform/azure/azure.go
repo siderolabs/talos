@@ -43,7 +43,7 @@ const (
 // Azure is the concrete type that implements the platform.Platform interface.
 type Azure struct{}
 
-// ovfXML is a simple struct to help us fish custom data out from the ovf-env.xml file
+// ovfXML is a simple struct to help us fish custom data out from the ovf-env.xml file.
 type ovfXML struct {
 	XMLName    xml.Name `xml:"Environment"`
 	CustomData string   `xml:"ProvisioningSection>LinuxProvisioningConfigurationSet>CustomData"`
@@ -190,7 +190,7 @@ func (a *Azure) KernelArgs() procfs.Parameters {
 	}
 }
 
-// configFromCD handles looking for devices and trying to mount/fetch xml to get the userdata
+// configFromCD handles looking for devices and trying to mount/fetch xml to get the userdata.
 func (a *Azure) configFromCD() ([]byte, error) {
 	devList, err := ioutil.ReadDir("/dev")
 	if err != nil {

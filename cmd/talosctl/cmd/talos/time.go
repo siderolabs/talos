@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// timeCmd represents the time command
+// timeCmd represents the time command.
 var timeCmd = &cobra.Command{
 	Use:   "time [--check server]",
 	Short: "Gets current server time",

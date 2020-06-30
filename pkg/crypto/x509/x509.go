@@ -572,7 +572,7 @@ func (p *PEMEncodedCertificateAndKey) UnmarshalYAML(unmarshal func(interface{}) 
 // MarshalYAML implements the yaml.Marshaler interface for
 // PEMEncodedCertificateAndKey. It is expected that the Crt and Key are a base64
 // encoded string in the YAML file. This function encodes the byte slices into
-// strings
+// strings.
 func (p *PEMEncodedCertificateAndKey) MarshalYAML() (interface{}, error) {
 	var aux struct {
 		Crt string `yaml:"crt"`

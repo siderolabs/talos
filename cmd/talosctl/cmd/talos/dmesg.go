@@ -19,7 +19,7 @@ import (
 
 var dmesgTail bool
 
-// dmesgCmd represents the dmesg command
+// dmesgCmd represents the dmesg command.
 var dmesgCmd = &cobra.Command{
 	Use:   "dmesg",
 	Short: "Retrieve kernel logs",

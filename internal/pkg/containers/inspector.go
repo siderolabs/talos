@@ -6,7 +6,7 @@ package containers
 
 import "syscall"
 
-// Inspector gather information about pods & containers
+// Inspector gather information about pods & containers.
 type Inspector interface {
 	// Pods collects information about running pods & containers.
 	Pods() ([]*Pod, error)

@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// CGroupMountPoints returns the cgroup mount points
+// CGroupMountPoints returns the cgroup mount points.
 func CGroupMountPoints() (mountpoints *Points, err error) {
 	base := "/sys/fs/cgroup"
 	cgroups := NewMountPoints()

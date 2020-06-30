@@ -100,7 +100,7 @@ func (zh *zombieHunter) run() {
 	}
 }
 
-// reapLoop processes all the known zombies at the moment
+// reapLoop processes all the known zombies at the moment.
 func (zh *zombieHunter) reapLoop() {
 	for {
 		var (
@@ -131,7 +131,7 @@ func (zh *zombieHunter) reapLoop() {
 	}
 }
 
-// send notification about reaped zombie to all listeners
+// send notification about reaped zombie to all listeners.
 func (zh *zombieHunter) send(pid int, wstatus syscall.WaitStatus) {
 	zh.mu.Lock()
 

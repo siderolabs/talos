@@ -20,7 +20,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// LogsSuite verifies Logs API
+// LogsSuite verifies Logs API.
 type LogsSuite struct {
 	base.APISuite
 
@@ -44,7 +44,7 @@ func (suite *LogsSuite) TearDownTest() {
 	suite.ctxCancel()
 }
 
-// TestServicesHaveLogs verifies that each service has logs
+// TestServicesHaveLogs verifies that each service has logs.
 func (suite *LogsSuite) TestServicesHaveLogs() {
 	servicesReply, err := suite.Client.ServiceList(suite.ctx)
 	suite.Require().NoError(err)
@@ -119,7 +119,7 @@ func (suite *LogsSuite) TestTail() {
 
 // TODO: TestContainersHaveLogs (CRI, containerd)
 
-// TestServiceNotFound verifies error if service name is not found
+// TestServiceNotFound verifies error if service name is not found.
 func (suite *LogsSuite) TestServiceNotFound() {
 	logsStream, err := suite.Client.Logs(
 		suite.ctx,
@@ -139,17 +139,17 @@ func (suite *LogsSuite) TestServiceNotFound() {
 	suite.Require().Regexp(`.+log "nosuchservice" was not registered$`, err.Error())
 }
 
-// TestStreaming verifies that logs are streamed in real-time
+// TestStreaming verifies that logs are streamed in real-time.
 func (suite *LogsSuite) TestStreaming() {
 	suite.testStreaming(-1)
 }
 
-// TestTailStreaming3 verifies tail + streaming
+// TestTailStreaming3 verifies tail + streaming.
 func (suite *LogsSuite) TestTailStreaming3() {
 	suite.testStreaming(3)
 }
 
-// TestTailStreaming0 verifies tail + streaming
+// TestTailStreaming0 verifies tail + streaming.
 func (suite *LogsSuite) TestTailStreaming0() {
 	suite.testStreaming(0)
 }

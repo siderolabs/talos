@@ -22,10 +22,10 @@ import (
 // WaitConditionCheckInterval is time between checking for wait condition
 // description changes.
 //
-// Exposed here for unit-tests to override
+// Exposed here for unit-tests to override.
 var WaitConditionCheckInterval = time.Second
 
-// ServiceRunner wraps the state of the service (running, stopped, ...)
+// ServiceRunner wraps the state of the service (running, stopped, ...).
 type ServiceRunner struct {
 	mu sync.Mutex
 
@@ -45,7 +45,7 @@ type ServiceRunner struct {
 	ctxCancel context.CancelFunc
 }
 
-// NewServiceRunner creates new ServiceRunner around Service instance
+// NewServiceRunner creates new ServiceRunner around Service instance.
 func NewServiceRunner(service Service, runtime runtime.Runtime) *ServiceRunner {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -60,7 +60,7 @@ func NewServiceRunner(service Service, runtime runtime.Runtime) *ServiceRunner {
 	}
 }
 
-// GetState implements events.Recorder
+// GetState implements events.Recorder.
 func (svcrunner *ServiceRunner) GetState() events.ServiceState {
 	svcrunner.mu.Lock()
 	defer svcrunner.mu.Unlock()
@@ -68,7 +68,7 @@ func (svcrunner *ServiceRunner) GetState() events.ServiceState {
 	return svcrunner.state
 }
 
-// UpdateState implements events.Recorder
+// UpdateState implements events.Recorder.
 func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, message string, args ...interface{}) {
 	svcrunner.mu.Lock()
 
@@ -134,7 +134,7 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	}
 }
 
-// GetEventHistory returns history of events for this service
+// GetEventHistory returns history of events for this service.
 func (svcrunner *ServiceRunner) GetEventHistory(count int) []events.ServiceEvent {
 	svcrunner.mu.Lock()
 	defer svcrunner.mu.Unlock()
@@ -324,14 +324,14 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 
 // Shutdown initiates shutdown of the service runner
 //
-// Shutdown completes when Start() returns
+// Shutdown completes when Start() returns.
 func (svcrunner *ServiceRunner) Shutdown() {
 	svcrunner.ctxMu.Lock()
 	defer svcrunner.ctxMu.Unlock()
 	svcrunner.ctxCancel()
 }
 
-// AsProto returns protobuf struct with the state of the service runner
+// AsProto returns protobuf struct with the state of the service runner.
 func (svcrunner *ServiceRunner) AsProto() *machineapi.ServiceInfo {
 	svcrunner.mu.Lock()
 	defer svcrunner.mu.Unlock()

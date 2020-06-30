@@ -18,7 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 )
 
-// goroutineRunner is a runner.Runner that runs a service in a goroutine
+// goroutineRunner is a runner.Runner that runs a service in a goroutine.
 type goroutineRunner struct {
 	main    FuncMain
 	id      string
@@ -34,10 +34,10 @@ type goroutineRunner struct {
 
 // FuncMain is a entrypoint into the service.
 //
-// Service should abort and return when ctx is canceled
+// Service should abort and return when ctx is canceled.
 type FuncMain func(ctx context.Context, r runtime.Runtime, logOutput io.Writer) error
 
-// NewRunner creates runner.Runner that runs a service as goroutine
+// NewRunner creates runner.Runner that runs a service as goroutine.
 func NewRunner(r runtime.Runtime, id string, main FuncMain, setters ...runner.Option) runner.Runner {
 	run := &goroutineRunner{
 		id:      id,
@@ -105,7 +105,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	return err
 }
 
-// Stop implements the Runner interface
+// Stop implements the Runner interface.
 func (r *goroutineRunner) Stop() error {
 	r.ctxCancel()
 

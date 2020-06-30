@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-// CLISuite is a base suite for CLI tests
+// CLISuite is a base suite for CLI tests.
 type CLISuite struct {
 	suite.Suite
 	TalosSuite
@@ -46,7 +46,7 @@ func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 	return exec.Command(cliSuite.TalosctlPath, args...)
 }
 
-// RunCLI runs talosctl binary with the options provided
+// RunCLI runs talosctl binary with the options provided.
 func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) {
 	Run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
 }

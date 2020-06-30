@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// VersionSuite verifies version command
+// VersionSuite verifies version command.
 type VersionSuite struct {
 	base.CLISuite
 }
@@ -22,7 +22,7 @@ func (suite *VersionSuite) SuiteName() string {
 	return "cli.VersionSuite"
 }
 
-// TestExpectedVersionMaster verifies master node version matches expected
+// TestExpectedVersionMaster verifies master node version matches expected.
 func (suite *VersionSuite) TestExpectedVersionMaster() {
 	suite.RunCLI([]string{"version"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),

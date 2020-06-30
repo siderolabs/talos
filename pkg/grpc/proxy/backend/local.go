@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Local implements local backend (proxying one2one to local service)
+// Local implements local backend (proxying one2one to local service).
 type Local struct {
 	name       string
 	socketPath string
@@ -22,7 +22,7 @@ type Local struct {
 	conn *grpc.ClientConn
 }
 
-// NewLocal builds new Local backend
+// NewLocal builds new Local backend.
 func NewLocal(name, socketPath string) *Local {
 	return &Local{
 		name:       name,

@@ -21,7 +21,7 @@ type restarter struct {
 	stopped chan struct{}
 }
 
-// New wraps runner.Runner with restart policy
+// New wraps runner.Runner with restart policy.
 func New(wrapRunner runner.Runner, opts ...Option) runner.Runner {
 	r := &restarter{
 		wrappedRunner: wrapRunner,
@@ -88,14 +88,14 @@ func WithType(o Type) Option {
 	}
 }
 
-// WithRestartInterval sets the interval between restarts of the failed task
+// WithRestartInterval sets the interval between restarts of the failed task.
 func WithRestartInterval(interval time.Duration) Option {
 	return func(args *Options) {
 		args.RestartInterval = interval
 	}
 }
 
-// Open implements the Runner interface
+// Open implements the Runner interface.
 func (r *restarter) Open(ctx context.Context) error {
 	return r.wrappedRunner.Open(ctx)
 }
@@ -154,7 +154,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 	}
 }
 
-// Stop implements the Runner interface
+// Stop implements the Runner interface.
 func (r *restarter) Stop() error {
 	close(r.stop)
 
@@ -163,12 +163,12 @@ func (r *restarter) Stop() error {
 	return nil
 }
 
-// Close implements the Runner interface
+// Close implements the Runner interface.
 func (r *restarter) Close() error {
 	return r.wrappedRunner.Close()
 }
 
-// String implements the Runner interface
+// String implements the Runner interface.
 func (r *restarter) String() string {
 	return fmt.Sprintf("Restart(%s, %s)", r.opts.Type, r.wrappedRunner)
 }

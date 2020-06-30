@@ -120,7 +120,7 @@ func (o *OSD) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (o *OSD) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		conn, err := grpc.DialContext(
@@ -137,7 +137,7 @@ func (o *OSD) HealthFunc(runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (o *OSD) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

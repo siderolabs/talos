@@ -76,7 +76,7 @@ func (t MachineType) String() string {
 	return [...]string{machineTypeInit, machineTypeControlPlane, machineTypeJoin}[t]
 }
 
-// ParseMachineType parses string constant as Type
+// ParseMachineType parses string constant as Type.
 func ParseMachineType(t string) (MachineType, error) {
 	switch t {
 	case machineTypeInit:
@@ -136,7 +136,7 @@ type MachineNetwork interface {
 	ExtraHosts() []ExtraHost
 }
 
-// ExtraHost represents a host entry in /etc/hosts
+// ExtraHost represents a host entry in /etc/hosts.
 type ExtraHost struct {
 	IP      string   `yaml:"ip"`
 	Aliases []string `yaml:"aliases"`
@@ -187,7 +187,7 @@ type Bond struct {
 	PeerNotifyDelay uint32   `yaml:"peerNotifyDelay"`
 }
 
-// Vlan represents vlan settings for a device
+// Vlan represents vlan settings for a device.
 type Vlan struct {
 	CIDR   string  `ỳaml:"cidr"`
 	Routes []Route `yaml:"routes"`

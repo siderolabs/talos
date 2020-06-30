@@ -27,10 +27,10 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-// Accumulated list of all the suites to run
+// Accumulated list of all the suites to run.
 var allSuites []suite.TestingSuite
 
-// Flag values
+// Flag values.
 var (
 	failFast         bool
 	crashdumpEnabled bool

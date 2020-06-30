@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Option allows for the configuration of the ntp client
+// Option allows for the configuration of the ntp client.
 type Option func(*NTP) error
 
 const (
@@ -31,7 +31,7 @@ func defaultOptions() *NTP {
 	}
 }
 
-// WithServer configures the ntp client to use the specified server
+// WithServer configures the ntp client to use the specified server.
 func WithServer(o string) Option {
 	return func(n *NTP) (err error) {
 		n.Server = o
@@ -39,7 +39,7 @@ func WithServer(o string) Option {
 	}
 }
 
-// WithMaxPoll configures the ntp client MaxPoll interval
+// WithMaxPoll configures the ntp client MaxPoll interval.
 func WithMaxPoll(o int) Option {
 	return func(n *NTP) (err error) {
 		// TODO: Add in constraints around min/max values from NTP doc.
@@ -53,7 +53,7 @@ func WithMaxPoll(o int) Option {
 	}
 }
 
-// WithMinPoll configures the ntp client MinPoll interval
+// WithMinPoll configures the ntp client MinPoll interval.
 func WithMinPoll(o int) Option {
 	return func(n *NTP) (err error) {
 		if o < MinAllowablePoll {

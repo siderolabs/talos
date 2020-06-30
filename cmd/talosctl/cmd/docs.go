@@ -18,7 +18,7 @@ func filePrepender(filename string) string {
 
 func linkHandler(s string) string { return s }
 
-// docsCmd represents the docs command
+// docsCmd represents the docs command.
 var docsCmd = &cobra.Command{
 	Use:    "docs <output>",
 	Short:  "Generate documentation for the CLI",

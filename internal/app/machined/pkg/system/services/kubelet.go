@@ -206,7 +206,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		req, err := http.NewRequest("GET", "http://127.0.0.1:10248/healthz", nil)
@@ -231,7 +231,7 @@ func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (k *Kubelet) HealthSettings(runtime.Runtime) *health.Settings {
 	settings := health.DefaultSettings
 	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup

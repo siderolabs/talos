@@ -22,7 +22,7 @@ type Middleware struct {
 	logger *log.Logger
 }
 
-// NewMiddleware creates new logging middleware
+// NewMiddleware creates new logging middleware.
 func NewMiddleware(logger *log.Logger) *Middleware {
 	return &Middleware{
 		logger: logger,
@@ -59,7 +59,7 @@ func ExtractMetadata(ctx context.Context) string {
 	return strings.Join(pairs, ";")
 }
 
-// UnaryInterceptor returns grpc UnaryServerInterceptor
+// UnaryInterceptor returns grpc UnaryServerInterceptor.
 func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		startTime := time.Now()
@@ -80,7 +80,7 @@ func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-// StreamInterceptor returns grpc StreamServerInterceptor
+// StreamInterceptor returns grpc StreamServerInterceptor.
 func (m *Middleware) StreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		startTime := time.Now()

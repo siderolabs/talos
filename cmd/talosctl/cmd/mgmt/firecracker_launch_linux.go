@@ -10,7 +10,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
 )
 
-// firecrackerLaunchCmd represents the firecracker-launch command
+// firecrackerLaunchCmd represents the firecracker-launch command.
 var firecrackerLaunchCmd = &cobra.Command{
 	Use:    "firecracker-launch",
 	Short:  "Internal command used by Firecracker provisioner",

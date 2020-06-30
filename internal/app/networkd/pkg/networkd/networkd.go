@@ -27,7 +27,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// Set up default nameservers
+// Set up default nameservers.
 const (
 	DefaultPrimaryResolver   = "1.1.1.1"
 	DefaultSecondaryResolver = "8.8.8.8"
@@ -241,7 +241,7 @@ func (n *Networkd) Reset() {
 // 2. Kernel arg
 // 3. Platform
 // 4. DHCP
-// 5. Default with the format: talos-<ip addr>
+// 5. Default with the format: talos-<ip addr>.
 func (n *Networkd) Hostname() (err error) {
 	hostname, domainname, address, err := n.decideHostname()
 	if err != nil {

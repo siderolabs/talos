@@ -30,7 +30,7 @@ var (
 	humanizeFlag   bool
 )
 
-// lsCmd represents the ls command
+// lsCmd represents the ls command.
 var lsCmd = &cobra.Command{
 	Use:     "list [path]",
 	Aliases: []string{"ls"},

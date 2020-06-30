@@ -124,7 +124,7 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (n *Networkd) HealthFunc(r runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		var (
@@ -172,7 +172,7 @@ func (n *Networkd) HealthFunc(r runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (n *Networkd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 )
 
-// Container presents information about a container
+// Container presents information about a container.
 type Container struct {
 	Inspector Inspector
 
@@ -38,18 +38,18 @@ type Container struct {
 	IsPodSandbox bool // real container or just pod sandbox
 }
 
-// ContainerMetrics represents container cgroup stats
+// ContainerMetrics represents container cgroup stats.
 type ContainerMetrics struct {
 	MemoryUsage uint64
 	CPUUsage    uint64
 }
 
-// GetProcessStderr returns process stderr
+// GetProcessStderr returns process stderr.
 func (c *Container) GetProcessStderr() (string, error) {
 	return c.Inspector.GetProcessStderr(c.ID)
 }
 
-// GetLogFile returns path to log file, k8s-style
+// GetLogFile returns path to log file, k8s-style.
 func (c *Container) GetLogFile() string {
 	if c.LogPath != "" {
 		return c.LogPath
@@ -62,12 +62,12 @@ func (c *Container) GetLogFile() string {
 	return filepath.Join(c.Sandbox, c.Name, c.RestartCount+".log")
 }
 
-// Kill sends signal to container task
+// Kill sends signal to container task.
 func (c *Container) Kill(signal syscall.Signal) error {
 	return c.Inspector.Kill(c.ID, c.IsPodSandbox, signal)
 }
 
-// GetLogChunker returns chunker for container log file
+// GetLogChunker returns chunker for container log file.
 func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines int) (chunker.Chunker, io.Closer, error) {
 	logFile := c.GetLogFile()
 	if logFile != "" {

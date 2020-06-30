@@ -115,7 +115,6 @@ linters:
     - testpackage # TODO: fix & enable me
     - goerr113
     - nestif
-    - godot # TODO: fix & enable me
   disable-all: false
   fast: false
 

@@ -11,7 +11,7 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
-// PullImage pulls container image
+// PullImage pulls container image.
 func (c *Client) PullImage(ctx context.Context, image *runtimeapi.ImageSpec, sandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
 	resp, err := c.imagesClient.PullImage(ctx, &runtimeapi.PullImageRequest{
 		Image:         image,
@@ -24,7 +24,7 @@ func (c *Client) PullImage(ctx context.Context, image *runtimeapi.ImageSpec, san
 	return resp.ImageRef, nil
 }
 
-// ListImages lists available images
+// ListImages lists available images.
 func (c *Client) ListImages(ctx context.Context, filter *runtimeapi.ImageFilter) ([]*runtimeapi.Image, error) {
 	resp, err := c.imagesClient.ListImages(ctx, &runtimeapi.ListImagesRequest{
 		Filter: filter,

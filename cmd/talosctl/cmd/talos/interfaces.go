@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// interfacesCmd represents the net interfaces command
+// interfacesCmd represents the net interfaces command.
 var interfacesCmd = &cobra.Command{
 	Use:   "interfaces",
 	Short: "List network interfaces",

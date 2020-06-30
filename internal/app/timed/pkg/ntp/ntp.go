@@ -20,7 +20,7 @@ import (
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
-// NTP contains a server address
+// NTP contains a server address.
 type NTP struct {
 	Server  string
 	MinPoll time.Duration

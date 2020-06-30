@@ -9,7 +9,7 @@ import "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 // BundleOption controls config options specific to config bundle generation.
 type BundleOption func(o *BundleOptions) error
 
-// InputOptions holds necessary params for generating an input
+// InputOptions holds necessary params for generating an input.
 type InputOptions struct {
 	ClusterName string
 	Endpoint    string
@@ -28,7 +28,7 @@ func DefaultBundleOptions() BundleOptions {
 	return BundleOptions{}
 }
 
-// WithExistingConfigs sets the path to existing config files
+// WithExistingConfigs sets the path to existing config files.
 func WithExistingConfigs(configPath string) BundleOption {
 	return func(o *BundleOptions) error {
 		o.ExistingConfigs = configPath
@@ -36,7 +36,7 @@ func WithExistingConfigs(configPath string) BundleOption {
 	}
 }
 
-// WithInputOptions allows passing in of various params for net-new input generation
+// WithInputOptions allows passing in of various params for net-new input generation.
 func WithInputOptions(inputOpts *InputOptions) BundleOption {
 	return func(o *BundleOptions) error {
 		o.InputOptions = inputOpts

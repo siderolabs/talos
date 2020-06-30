@@ -234,7 +234,7 @@ func (p *Point) Unmount() (err error) {
 	return nil
 }
 
-// IsMounted checks whether mount point is active under /proc/mounts
+// IsMounted checks whether mount point is active under /proc/mounts.
 func (p *Point) IsMounted() (bool, error) {
 	f, err := os.Open("/proc/mounts")
 	if err != nil {

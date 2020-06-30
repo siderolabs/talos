@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
-// readCmd represents the read command
+// readCmd represents the read command.
 var readCmd = &cobra.Command{
 	Use:   "read <path>",
 	Short: "Read a file on the machine",

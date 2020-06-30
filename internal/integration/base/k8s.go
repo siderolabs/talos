@@ -16,7 +16,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-// K8sSuite is a base suite for K8s tests
+// K8sSuite is a base suite for K8s tests.
 type K8sSuite struct {
 	APISuite
 
@@ -24,7 +24,7 @@ type K8sSuite struct {
 	DiscoveryClient *discovery.DiscoveryClient
 }
 
-// SetupSuite initializes Kubernetes client
+// SetupSuite initializes Kubernetes client.
 func (k8sSuite *K8sSuite) SetupSuite() {
 	k8sSuite.APISuite.SetupSuite()
 

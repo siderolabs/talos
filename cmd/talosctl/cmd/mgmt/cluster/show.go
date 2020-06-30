@@ -18,7 +18,7 @@ import (
 	"github.com/talos-systems/talos/pkg/cli"
 )
 
-// showCmd represents the cluster show command
+// showCmd represents the cluster show command.
 var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Shows info about a local provisioned kubernetes cluster",

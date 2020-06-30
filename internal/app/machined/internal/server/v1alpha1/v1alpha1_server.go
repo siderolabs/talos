@@ -47,7 +47,7 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-// OSPathSeparator is the string version of the os.PathSeparator
+// OSPathSeparator is the string version of the os.PathSeparator.
 const OSPathSeparator = string(os.PathSeparator)
 
 // Server implements the gRPC service server.
@@ -286,7 +286,7 @@ func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply
 	return reply, nil
 }
 
-// ServiceList returns list of the registered services and their status
+// ServiceList returns list of the registered services and their status.
 func (s *Server) ServiceList(ctx context.Context, in *empty.Empty) (result *machine.ServiceListResponse, err error) {
 	services := system.Services(s.Controller.Runtime()).List()
 
@@ -359,7 +359,7 @@ func (s *Server) ServiceRestart(ctx context.Context, in *machine.ServiceRestartR
 	return reply, err
 }
 
-// Copy implements the machine.MachineServer interface and copies data out of Talos node
+// Copy implements the machine.MachineServer interface and copies data out of Talos node.
 func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyServer) error {
 	path := req.RootPath
 	path = filepath.Clean(path)

@@ -318,7 +318,7 @@ const (
 	SYSLOG_ACTION_READ_ALL = 3
 )
 
-// Containerd
+// Containerd.
 const (
 	ContainerdAddress = defaults.DefaultAddress
 )

@@ -13,7 +13,7 @@ import (
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 )
 
-// Cmd represents the cluster command
+// Cmd represents the cluster command.
 var Cmd = &cobra.Command{
 	Use:   "cluster",
 	Short: "A collection of commands for managing local docker-based or firecracker-based clusters",

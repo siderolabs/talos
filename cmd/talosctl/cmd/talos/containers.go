@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// containersCmd represents the processes command
+// containersCmd represents the processes command.
 var containersCmd = &cobra.Command{
 	Use:     "containers",
 	Aliases: []string{"c"},

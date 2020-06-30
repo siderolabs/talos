@@ -81,7 +81,7 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (c *CRI) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		client, err := containerd.New(constants.ContainerdAddress)
@@ -104,7 +104,7 @@ func (c *CRI) HealthFunc(runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (c *CRI) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }

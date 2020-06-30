@@ -303,7 +303,7 @@ func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 	return c.ExtraArgsConfig
 }
 
-// Proxy implements the Configurator interface
+// Proxy implements the Configurator interface.
 func (c *ClusterConfig) Proxy() runtime.Proxy {
 	if c.ProxyConfig == nil {
 		return &ProxyConfig{}
@@ -323,7 +323,7 @@ func (p *ProxyConfig) Image() string {
 	return image
 }
 
-// Mode implements the Proxy interface
+// Mode implements the Proxy interface.
 func (p *ProxyConfig) Mode() string {
 	if p.ModeConfig == "" {
 		return "iptables"

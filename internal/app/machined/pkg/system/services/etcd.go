@@ -122,7 +122,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
-// HealthFunc implements the HealthcheckedService interface
+// HealthFunc implements the HealthcheckedService interface.
 func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
@@ -134,7 +134,7 @@ func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 	}
 }
 
-// HealthSettings implements the HealthcheckedService interface
+// HealthSettings implements the HealthcheckedService interface.
 func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
 }
@@ -322,7 +322,7 @@ func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, er
 	return initial, nil
 }
 
-// // nolint: gocyclo
+// // nolint: gocyclo.
 func (e *Etcd) argsForInit(r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {

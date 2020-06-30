@@ -48,7 +48,7 @@ func WithName(o string) Option {
 }
 
 // WithAddressing defines how the addressing for a given interface
-// should be configured
+// should be configured.
 func WithAddressing(a address.Addressing) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.AddressMethod = append(n.AddressMethod, a)
@@ -57,7 +57,7 @@ func WithAddressing(a address.Addressing) Option {
 }
 
 // WithNoAddressing defines how the addressing for a given interface
-// should be configured
+// should be configured.
 func WithNoAddressing() Option {
 	return func(n *NetworkInterface) (err error) {
 		n.AddressMethod = []address.Addressing{}

@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// DmesgSuite verifies dmesg command
+// DmesgSuite verifies dmesg command.
 type DmesgSuite struct {
 	base.CLISuite
 }
@@ -29,7 +29,7 @@ func (suite *DmesgSuite) TestHasOutput() {
 	suite.RunCLI([]string{"dmesg"}) // default checks for stdout not empty
 }
 
-// TestClusterHasOutput verifies that each node in the cluster has some output
+// TestClusterHasOutput verifies that each node in the cluster has some output.
 func (suite *DmesgSuite) TestClusterHasOutput() {
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)

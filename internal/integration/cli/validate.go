@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
-// ValidateSuite verifies dmesg command
+// ValidateSuite verifies dmesg command.
 type ValidateSuite struct {
 	base.CLISuite
 
