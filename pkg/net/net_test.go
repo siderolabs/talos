@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package net
+package net_test
 
 import (
 	"net"
@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
+
+	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
 func TestEmpty(t *testing.T) {
@@ -20,25 +22,25 @@ func TestEmpty(t *testing.T) {
 }
 
 func TestAddressContainsPort(t *testing.T) {
-	assert.Equal(t, AddressContainsPort("192.168.1.1:9021"), true)
-	assert.Equal(t, AddressContainsPort("node0:10001"), true)
-	assert.Equal(t, AddressContainsPort("node0.testdomain.io:10001"), true)
-	assert.Equal(t, AddressContainsPort("[2001:db8::1]:64321"), true)
-	assert.Equal(t, AddressContainsPort("[2001:db8:3:4:5:6:7:1]:64321"), true)
+	assert.Equal(t, talosnet.AddressContainsPort("192.168.1.1:9021"), true)
+	assert.Equal(t, talosnet.AddressContainsPort("node0:10001"), true)
+	assert.Equal(t, talosnet.AddressContainsPort("node0.testdomain.io:10001"), true)
+	assert.Equal(t, talosnet.AddressContainsPort("[2001:db8::1]:64321"), true)
+	assert.Equal(t, talosnet.AddressContainsPort("[2001:db8:3:4:5:6:7:1]:64321"), true)
 
-	assert.Equal(t, AddressContainsPort("[2001:db8:3:4:5:6:7:1:bad]:64321"), false)
-	assert.Equal(t, AddressContainsPort("2001:db8:0::2000"), false)
-	assert.Equal(t, AddressContainsPort("::1"), false)
-	assert.Equal(t, AddressContainsPort("127.0.0.1"), false)
-	assert.Equal(t, AddressContainsPort("node0"), false)
-	assert.Equal(t, AddressContainsPort("node0.testdomain.io"), false)
+	assert.Equal(t, talosnet.AddressContainsPort("[2001:db8:3:4:5:6:7:1:bad]:64321"), false)
+	assert.Equal(t, talosnet.AddressContainsPort("2001:db8:0::2000"), false)
+	assert.Equal(t, talosnet.AddressContainsPort("::1"), false)
+	assert.Equal(t, talosnet.AddressContainsPort("127.0.0.1"), false)
+	assert.Equal(t, talosnet.AddressContainsPort("node0"), false)
+	assert.Equal(t, talosnet.AddressContainsPort("node0.testdomain.io"), false)
 }
 
 func TestFormatAddress(t *testing.T) {
-	assert.Equal(t, FormatAddress("2001:db8::1"), "[2001:db8::1]")
-	assert.Equal(t, FormatAddress("[2001:db8::1]"), "[2001:db8::1]")
-	assert.Equal(t, FormatAddress("192.168.1.1"), "192.168.1.1")
-	assert.Equal(t, FormatAddress("alpha.beta.gamma.com"), "alpha.beta.gamma.com")
+	assert.Equal(t, talosnet.FormatAddress("2001:db8::1"), "[2001:db8::1]")
+	assert.Equal(t, talosnet.FormatAddress("[2001:db8::1]"), "[2001:db8::1]")
+	assert.Equal(t, talosnet.FormatAddress("192.168.1.1"), "192.168.1.1")
+	assert.Equal(t, talosnet.FormatAddress("alpha.beta.gamma.com"), "alpha.beta.gamma.com")
 }
 
 // nolint: scopelint
@@ -100,7 +102,7 @@ func TestNthIPInNetwork(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NthIPInNetwork(tt.args.network, tt.args.n)
+			got, err := talosnet.NthIPInNetwork(tt.args.network, tt.args.n)
 			if err != nil {
 				t.Errorf("%w", err)
 			}

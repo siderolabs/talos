@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package ntp
+package ntp_test
 
 import (
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
@@ -24,7 +25,7 @@ func TestNtpSuite(t *testing.T) {
 func (suite *NtpSuite) TestQuery() {
 	testServer := "time.cloudflare.com"
 	// Create ntp client
-	n, err := NewNTPClient(WithServer(testServer))
+	n, err := ntp.NewNTPClient(ntp.WithServer(testServer))
 	suite.Assert().NoError(err)
 
 	_, err = n.Query()
@@ -42,8 +43,8 @@ func (suite *NtpSuite) TestNtpConfig() {
 			server = conf.Machine().Time().Servers()[0]
 		}
 
-		n, err := NewNTPClient(
-			WithServer(server),
+		n, err := ntp.NewNTPClient(
+			ntp.WithServer(server),
 		)
 		suite.Assert().NoError(err)
 		suite.Assert().Equal(server, n.Server)

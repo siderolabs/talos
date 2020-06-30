@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package cmd
+package cmd_test
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
@@ -99,7 +100,7 @@ func (suite *CmdSuite) TestRun() {
 	for _, t := range tests {
 		println(t.name)
 
-		_, err := Run(t.args.name, t.args.args...)
+		_, err := cmd.Run(t.args.name, t.args.args...)
 
 		if t.wantErr {
 			suite.Assert().Error(err)

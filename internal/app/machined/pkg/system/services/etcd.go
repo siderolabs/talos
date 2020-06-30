@@ -322,7 +322,7 @@ func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, er
 	return initial, nil
 }
 
-// // nolint: gocyclo.
+// nolint: gocyclo
 func (e *Etcd) argsForInit(r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {

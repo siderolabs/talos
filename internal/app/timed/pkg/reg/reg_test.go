@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package reg
+package reg_test
 
 import (
 	"context"
@@ -18,6 +18,7 @@ import (
 
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
@@ -39,7 +40,7 @@ func (suite *TimedSuite) TestTime() {
 	suite.Assert().NoError(err)
 
 	// Create gRPC server
-	api := NewRegistrator(n)
+	api := reg.NewRegistrator(n)
 	server := factory.NewServer(api)
 	listener, err := fakeTimedRPC()
 	suite.Assert().NoError(err)
@@ -74,7 +75,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 	suite.Assert().NoError(err)
 
 	// Create gRPC server
-	api := NewRegistrator(n)
+	api := reg.NewRegistrator(n)
 	server := factory.NewServer(api)
 	listener, err := fakeTimedRPC()
 	suite.Assert().NoError(err)

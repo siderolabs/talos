@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package nic
+package nic_test
 
 import (
 	"testing"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 )
 
 type NicSuite struct {
@@ -22,105 +23,105 @@ func TestNicSuite(t *testing.T) {
 }
 
 func (suite *NicSuite) TestIgnoreNic() {
-	mynic, err := New(WithName("yolo"), WithIgnore())
+	mynic, err := nic.New(nic.WithName("yolo"), nic.WithIgnore())
 
 	suite.Require().NoError(err)
 	suite.Assert().True(mynic.IsIgnored())
 }
 
 func (suite *NicSuite) TestNoName() {
-	_, err := New()
+	_, err := nic.New()
 	suite.Require().Error(err)
 }
 
 func (suite *NicSuite) TestBond() {
-	testSettings := [][]Option{
+	testSettings := [][]nic.Option{
 		{
-			WithName("yolobond"),
-			WithBond(true),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("balance-xor"),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("balance-xor"),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("802.3ad"),
-			WithHashPolicy("layer3+4"),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("802.3ad"),
+			nic.WithHashPolicy("layer3+4"),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("balance-tlb"),
-			WithHashPolicy("encap3+4"),
-			WithLACPRate("fast"),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("balance-tlb"),
+			nic.WithHashPolicy("encap3+4"),
+			nic.WithLACPRate("fast"),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("balance-alb"),
-			WithHashPolicy("encap2+3"),
-			WithLACPRate("slow"),
-			WithUpDelay(200),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("balance-alb"),
+			nic.WithHashPolicy("encap2+3"),
+			nic.WithLACPRate("slow"),
+			nic.WithUpDelay(200),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("broadcast"),
-			WithHashPolicy("layer2+3"),
-			WithLACPRate("fast"),
-			WithUpDelay(300),
-			WithDownDelay(400),
-			WithMIIMon(500),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("broadcast"),
+			nic.WithHashPolicy("layer2+3"),
+			nic.WithLACPRate("fast"),
+			nic.WithUpDelay(300),
+			nic.WithDownDelay(400),
+			nic.WithMIIMon(500),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("balance-rr"),
-			WithHashPolicy("layer2"),
-			WithLACPRate("slow"),
-			WithUpDelay(300),
-			WithDownDelay(400),
-			WithMIIMon(500),
-			WithSubInterface("lo", "lo"),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("balance-rr"),
+			nic.WithHashPolicy("layer2"),
+			nic.WithLACPRate("slow"),
+			nic.WithUpDelay(300),
+			nic.WithDownDelay(400),
+			nic.WithMIIMon(500),
+			nic.WithSubInterface("lo", "lo"),
 		},
 		{
-			WithName("yolobond"),
-			WithBond(true),
-			WithBondMode("active-backup"),
-			WithHashPolicy("layer2"),
-			WithLACPRate("slow"),
-			WithUpDelay(300),
-			WithDownDelay(400),
-			WithMIIMon(500),
-			WithSubInterface("lo", "lo"),
-			WithAddressing(&address.Static{}),
+			nic.WithName("yolobond"),
+			nic.WithBond(true),
+			nic.WithBondMode("active-backup"),
+			nic.WithHashPolicy("layer2"),
+			nic.WithLACPRate("slow"),
+			nic.WithUpDelay(300),
+			nic.WithDownDelay(400),
+			nic.WithMIIMon(500),
+			nic.WithSubInterface("lo", "lo"),
+			nic.WithAddressing(&address.Static{}),
 		},
 	}
 
 	for _, test := range testSettings {
-		mynic, err := New(test...)
+		mynic, err := nic.New(test...)
 		suite.Require().NoError(err)
 		suite.Assert().True(mynic.Bonded)
 	}
 }
 
 func (suite *NicSuite) TestVlan() {
-	testSettings := [][]Option{
+	testSettings := [][]nic.Option{
 		{
-			WithName("eth0"),
-			WithVlan(100),
+			nic.WithName("eth0"),
+			nic.WithVlan(100),
 		},
 		{
-			WithName("eth0"),
-			WithVlan(100),
-			WithVlanCIDR(100, "172.21.10.101/28", []runtime.Route{}),
+			nic.WithName("eth0"),
+			nic.WithVlan(100),
+			nic.WithVlanCIDR(100, "172.21.10.101/28", []runtime.Route{}),
 		},
 	}
 	for _, test := range testSettings {
-		mynic, err := New(test...)
+		mynic, err := nic.New(test...)
 		suite.Require().NoError(err)
 		suite.Assert().True(len(mynic.Vlans) > 0)
 	}
