@@ -80,7 +80,7 @@ func TestEvents_Publish(t *testing.T) {
 					for j := 0; j < tt.messages; j++ {
 						event := <-events
 
-						seq, err := strconv.Atoi(event.Payload.(*machine.SequenceEvent).Sequence) //nolint: errcheck
+						seq, err := strconv.Atoi(event.Payload.(*machine.SequenceEvent).Sequence)
 						if err != nil {
 							t.Fatalf("failed to convert sequence to number: %s", err)
 						}

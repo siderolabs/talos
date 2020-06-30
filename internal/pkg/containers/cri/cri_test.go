@@ -37,7 +37,6 @@ const (
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
 }
 
-// nolint: maligned
 type CRISuite struct {
 	suite.Suite
 
@@ -56,7 +55,6 @@ type CRISuite struct {
 	pods []string
 }
 
-// nolint: dupl
 func (suite *CRISuite) SetupSuite() {
 	var err error
 

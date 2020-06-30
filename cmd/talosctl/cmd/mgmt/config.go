@@ -160,7 +160,7 @@ func genV1Alpha1Config(args []string) error {
 func init() {
 	genCmd.AddCommand(genConfigCmd)
 	genConfigCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
-	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation") // nolint: lll
+	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation")
 	genConfigCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")

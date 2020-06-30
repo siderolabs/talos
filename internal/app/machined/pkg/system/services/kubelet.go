@@ -273,7 +273,6 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 	}
 }
 
-// nolint: gocyclo
 func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 	denyListArgs := argsbuilder.Args{
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,

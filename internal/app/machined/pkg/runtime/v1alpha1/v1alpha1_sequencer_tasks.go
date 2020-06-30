@@ -361,7 +361,6 @@ func createBindMount(src, dst string) (err error) {
 		return err
 	}
 
-	// nolint: errcheck
 	if err = f.Close(); err != nil {
 		return err
 	}

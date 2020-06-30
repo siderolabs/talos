@@ -132,7 +132,7 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Equal("https", registryHosts[0].Scheme)
 	suite.Assert().Equal("registry-1.docker.io", registryHosts[0].Host)
 	suite.Assert().Equal("/v2", registryHosts[0].Path)
-	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig) //nolint: errcheck
+	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig)
 
 	cfg := &mockConfig{
 		mirrors: map[string]runtime.RegistryMirrorConfig{
@@ -148,11 +148,11 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Equal("http", registryHosts[0].Scheme)
 	suite.Assert().Equal("127.0.0.1:5000", registryHosts[0].Host)
 	suite.Assert().Equal("/docker.io", registryHosts[0].Path)
-	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig) //nolint: errcheck
+	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig)
 	suite.Assert().Equal("https", registryHosts[1].Scheme)
 	suite.Assert().Equal("some.host", registryHosts[1].Host)
 	suite.Assert().Equal("/v2", registryHosts[1].Path)
-	suite.Assert().Nil(registryHosts[1].Client.Transport.(*http.Transport).TLSClientConfig) //nolint: errcheck
+	suite.Assert().Nil(registryHosts[1].Client.Transport.(*http.Transport).TLSClientConfig)
 
 	cfg = &mockConfig{
 		mirrors: map[string]runtime.RegistryMirrorConfig{
@@ -181,7 +181,7 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Equal("some.host:123", registryHosts[0].Host)
 	suite.Assert().Equal("/v2", registryHosts[0].Path)
 
-	tlsClientConfig := registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig //nolint: errcheck
+	tlsClientConfig := registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig
 	suite.Require().NotNil(tlsClientConfig)
 	suite.Require().NotNil(tlsClientConfig.RootCAs)
 	suite.Require().Empty(tlsClientConfig.Certificates)

@@ -74,7 +74,6 @@ func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequ
 	return nodesInfo, multiErr.ErrorOrNil()
 }
 
-//nolint: gocyclo
 func (p *provisioner) createNode(state *state, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	socketPath := filepath.Join(state.statePath, fmt.Sprintf("%s.sock", nodeReq.Name))
 	pidPath := filepath.Join(state.statePath, fmt.Sprintf("%s.pid", nodeReq.Name))

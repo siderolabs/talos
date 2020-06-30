@@ -49,7 +49,6 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 	return newPlatform(platform)
 }
 
-// nolint: gocyclo
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "aws":

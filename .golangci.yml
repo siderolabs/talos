@@ -112,7 +112,6 @@ linters:
     - godox
     - gocognit
     - gomnd
-    - nolintlint # TODO: fix & enable me
     - testpackage # TODO: fix & enable me
     - goerr113
     - nestif
