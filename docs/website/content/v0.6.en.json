@@ -103,6 +103,40 @@
     ]
   },
   {
+    "title": "API",
+    "path": "v0.6/en/api",
+    "items": [
+      {
+        "title": "common",
+        "path": "v0.6/en/api/common"
+      },
+      {
+        "title": "health",
+        "path": "v0.6/en/api/health"
+      },
+      {
+        "title": "machine",
+        "path": "v0.6/en/api/machine"
+      },
+      {
+        "title": "network",
+        "path": "v0.6/en/api/network"
+      },
+      {
+        "title": "os",
+        "path": "v0.6/en/api/os"
+      },
+      {
+        "title": "security",
+        "path": "v0.6/en/api/security"
+      },
+      {
+        "title": "time",
+        "path": "v0.6/en/api/time"
+      }
+    ]
+  },
+  {
     "title": "Troubleshooting",
     "path": "v0.6/en/troubleshooting",
     "items": [
