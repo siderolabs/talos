@@ -137,7 +137,7 @@ local setup_ci = {
 // encourage alignment between this file and the Makefile, and gives us a
 // standardized structure that should make things easier to reason about if we
 // know that each step is essentially a Makefile target.
-local Step(name, image='', target='', privileged=false, depends_on=[], environment={}, extra_volumes=[]) = {
+local Step(name, image='', target='', privileged=false, depends_on=[], environment={}, extra_volumes=[], when={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
 
   local common_env_vars = {},
@@ -150,6 +150,7 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
   environment: common_env_vars + environment,
   volumes: volumes.ForStep() + extra_volumes,
   depends_on: [x.name for x in depends_on],
+  when: when,
 };
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
@@ -194,9 +195,9 @@ local image_gcp = Step("image-gcp", depends_on=[image_digital_ocean]);
 local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
-local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
+local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
-local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"});
+local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
   name: 'coverage',
@@ -306,8 +307,8 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[e2e_firecracker], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[e2e_firecracker, push_local], environment={"REGISTRY": local_registry});
+local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-firecracker", privileged=true, depends_on=[integration_firecracker], environment={
@@ -348,7 +349,7 @@ local creds_env_vars = {
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker, e2e_firecracker], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
+local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
 local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
 local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
 local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
@@ -505,17 +506,7 @@ local notify_trigger = {
   },
 };
 
-local notify_depends_on = {
-  depends_on: [
-    default_pipeline.name,
-    e2e_pipeline.name,
-    conformance_pipeline.name,
-    nightly_pipeline.name,
-    release_pipeline.name,
-  ],
-};
-
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, integration_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
 
 // Final configuration file definition.
 

@@ -1,3 +1,6 @@
+codecov:
+  require_ci_to_pass: false
+
 coverage:
   status:
     project:
@@ -5,6 +8,7 @@ coverage:
         target: 26%
         threshold: 0.5%
         base: auto
+        if_ci_failed: success
     patch: off
 
 comment: false
