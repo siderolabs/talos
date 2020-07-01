@@ -83,6 +83,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 			"/var/lib/kubelet":    {},
 			"/etc/cni":            {},
 			"/run":                {},
+			"/system":             {},
 		},
 	}
 

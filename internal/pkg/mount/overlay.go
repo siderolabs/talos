@@ -9,7 +9,7 @@ import (
 )
 
 // OverlayMountPoints returns the mountpoints required to boot the system.
-// These moiuntpoints are used as overlays on top of the read only rootfs.
+// These mountpoints are used as overlays on top of the read only rootfs.
 func OverlayMountPoints() (mountpoints *Points, err error) {
 	mountpoints = NewMountPoints()
 

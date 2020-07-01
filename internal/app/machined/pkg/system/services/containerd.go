@@ -7,6 +7,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/containerd/containerd"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -58,8 +59,8 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/bin/containerd",
 			"--address", constants.SystemContainerdAddress,
-			"--state", "/run/system/containerd",
-			"--root", "/run/system/lib/containerd",
+			"--state", filepath.Join(constants.SystemRunPath, "containerd"),
+			"--root", filepath.Join(constants.SystemVarPath, "lib", "containerd"),
 		},
 	}
 

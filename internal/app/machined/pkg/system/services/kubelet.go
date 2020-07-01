@@ -105,10 +105,6 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	if err := os.MkdirAll("/run/kubelet", 0700); err != nil {
-		return err
-	}
-
 	client, err := containerdapi.New(constants.ContainerdAddress)
 	if err != nil {
 		return err
@@ -168,8 +164,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: "/run", Source: "/run/kubelet", Options: []string{"rbind", "rprivate", "rw"}},
-		{Type: "bind", Destination: "/run/containerd", Source: "/run/containerd", Options: []string{"rbind", "rprivate", "ro"}},
+		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"rbind", "rshared", "rw"}},

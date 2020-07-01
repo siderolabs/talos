@@ -263,13 +263,21 @@ const (
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = 24 * time.Hour
 
-	// SystemVarPath is the path to write runtime system related files and
-	// directories.
-	SystemVarPath = "/var/system"
-
-	// SystemRunPath is the path to write temporary runtime system related files
+	// SystemPath is the path to write temporary runtime system related files
 	// and directories.
-	SystemRunPath = "/run/system"
+	SystemPath = "/system"
+
+	// SystemOverlaysPath is the path where overlay mounts are created.
+	SystemOverlaysPath = "/var/system/overlays"
+
+	// SystemRunPath is the path to the system run directory.
+	SystemRunPath = SystemPath + "/run"
+
+	// SystemVarPath is the path to the system var directory.
+	SystemVarPath = SystemPath + "/var"
+
+	// SystemEtcPath is the path to the system etc directory.
+	SystemEtcPath = SystemPath + "/etc"
 
 	// DefaultInstallerImageName is the default container image name for
 	// the installer.
@@ -282,9 +290,6 @@ const (
 	// DefaultTalosImageRepository is the default container repository for
 	// the talos image.
 	DefaultTalosImageRepository = "docker.io/autonomy/talos"
-
-	// DefaultLogPath is the default path to the log storage directory.
-	DefaultLogPath = SystemRunPath + "/log"
 
 	// DefaultCNI is the default CNI.
 	DefaultCNI = "flannel"

@@ -15,6 +15,7 @@ func PseudoMountPoints() (mountpoints *Points, err error) {
 	pseudo.Set("proc", NewMountPoint("proc", "/proc", "proc", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""))
 	pseudo.Set("sys", NewMountPoint("sysfs", "/sys", "sysfs", 0, ""))
 	pseudo.Set("run", NewMountPoint("tmpfs", "/run", "tmpfs", 0, ""))
+	pseudo.Set("system", NewMountPoint("tmpfs", "/system", "tmpfs", 0, ""))
 	pseudo.Set("tmp", NewMountPoint("tmpfs", "/tmp", "tmpfs", 0, ""))
 
 	return pseudo, nil
