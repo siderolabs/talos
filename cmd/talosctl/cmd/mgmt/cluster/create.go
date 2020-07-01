@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
@@ -61,6 +62,7 @@ var (
 	cniCacheDir             string
 	ports                   string
 	withInitNode            bool
+	customCNIUrl            string
 )
 
 // createCmd represents the cluster up command.
@@ -190,6 +192,13 @@ func create(ctx context.Context) (err error) {
 		}
 
 		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
+
+		if customCNIUrl != "" {
+			genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
+				CNIName: "custom",
+				CNIUrls: []string{customCNIUrl},
+			}))
+		}
 
 		defaultInternalLB, defaultExternalLB := provisioner.GetLoadBalancers(request.Network)
 
@@ -400,9 +409,9 @@ func init() {
 	createCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
 	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	createCmd.Flags().StringVarP(&inputDir, "input-dir", "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries")
-	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path")
-	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path")
+	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries (firecracker only)")
+	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path (firecracker only)")
+	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path (firecracker only)")
 	createCmd.Flags().StringVarP(&ports,
 		"exposed-ports",
 		"p",
@@ -410,5 +419,6 @@ func init() {
 		"Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)",
 	)
 	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", true, "create the cluster with an init node")
+	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
 	Cmd.AddCommand(createCmd)
 }

@@ -70,6 +70,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			DNSDomain:     in.ServiceDomain,
 			PodSubnet:     in.PodNet,
 			ServiceSubnet: in.ServiceNet,
+			CNI:           in.CNIConfig,
 		},
 		ClusterCA:                     in.Certs.K8s,
 		BootstrapToken:                in.Secrets.BootstrapToken,

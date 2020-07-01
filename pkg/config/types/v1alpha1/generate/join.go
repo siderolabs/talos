@@ -53,6 +53,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 			DNSDomain:     in.ServiceDomain,
 			PodSubnet:     in.PodNet,
 			ServiceSubnet: in.ServiceNet,
+			CNI:           in.CNIConfig,
 		},
 	}
 

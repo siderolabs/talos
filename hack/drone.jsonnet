@@ -310,6 +310,12 @@ local integration_firecracker = Step("e2e-firecracker", privileged=true, depends
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[e2e_firecracker, push_local], environment={"REGISTRY": local_registry});
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-firecracker", privileged=true, depends_on=[integration_firecracker], environment={
+        "REGISTRY": local_registry,
+        "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000",
+        "SHORT_INTEGRATION_TEST": "yes",
+        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml",
+});
 
 
 local integration_steps = default_steps + [
@@ -317,6 +323,7 @@ local integration_steps = default_steps + [
   integration_provision_tests_prepare,
   integration_provision_tests_track_0,
   integration_provision_tests_track_1,
+  integration_cilium,
 ];
 
 local integration_trigger = {

@@ -97,6 +97,15 @@ func WithPersist(enable bool) GenOption {
 	}
 }
 
+// WithClusterCNIConfig specifies custom cluster CNI config.
+func WithClusterCNIConfig(config *v1alpha1.CNIConfig) GenOption {
+	return func(o *GenOptions) error {
+		o.CNIConfig = config
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -104,6 +113,7 @@ type GenOptions struct {
 	InstallImage              string
 	AdditionalSubjectAltNames []string
 	NetworkConfig             *v1alpha1.NetworkConfig
+	CNIConfig                 *v1alpha1.CNIConfig
 	RegistryMirrors           map[string]runtime.RegistryMirrorConfig
 	DNSDomain                 string
 	Debug                     bool

@@ -9,6 +9,8 @@
 #  - INTEGRATION_TEST
 #  - KUBECTL
 #  - SONOBUOY
+#  - SHORT_INTEGRATION_TEST
+#  - CUSTOM_CNI_URL
 
 set -eoux pipefail
 
