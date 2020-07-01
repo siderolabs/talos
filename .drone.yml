@@ -1208,6 +1208,29 @@ steps:
   depends_on:
   - provision-tests-prepare
 
+- name: e2e-cilium-1.8.0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-firecracker
+  environment:
+    CUSTOM_CNI_URL: https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
+    REGISTRY: registry.ci.svc:5000
+    SHORT_INTEGRATION_TEST: yes
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - e2e-firecracker
+
 services:
 - name: docker
   image: docker:19.03-dind
@@ -4041,6 +4064,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: ce1d68338273d02fe0ba0d575cdd37a69f78b37e40290ab383c6bd29ca2781d0
+hmac: 6be7dc693eaca8b4e5278a5004ddb9e83d1f9fc6a3c84e92dbf5ce039848bc7c
 
 ...

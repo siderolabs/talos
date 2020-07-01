@@ -15,10 +15,11 @@ talosctl cluster create [flags]
 
 ```
       --cidr string                 CIDR of the docker bridge network (default "10.5.0.0/24")
-      --cni-bin-path strings        search path for CNI binaries (default [/opt/cni/bin])
-      --cni-cache-dir string        CNI cache directory path (default "/var/lib/cni")
-      --cni-conf-dir string         CNI config directory path (default "/etc/cni/conf.d")
+      --cni-bin-path strings        search path for CNI binaries (firecracker only) (default [/opt/cni/bin])
+      --cni-cache-dir string        CNI cache directory path (firecracker only) (default "/var/lib/cni")
+      --cni-conf-dir string         CNI config directory path (firecracker only) (default "/etc/cni/conf.d")
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
+      --custom-cni-url string       install custom CNI from the URL (Talos cluster)
       --disk int                    the limit on disk size in MB (each VM) (default 4096)
       --endpoint string             use endpoint instead of provider defaults
   -p, --exposed-ports string        Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)

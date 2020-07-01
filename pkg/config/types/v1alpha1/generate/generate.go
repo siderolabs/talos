@@ -86,6 +86,7 @@ type Input struct {
 	InstallImage string
 
 	NetworkConfig *v1alpha1.NetworkConfig
+	CNIConfig     *v1alpha1.CNIConfig
 
 	RegistryMirrors map[string]runtime.RegistryMirrorConfig
 
@@ -328,6 +329,7 @@ func NewInput(clustername string, endpoint string, kubernetesVersion string, opt
 		InstallDisk:               options.InstallDisk,
 		InstallImage:              options.InstallImage,
 		NetworkConfig:             options.NetworkConfig,
+		CNIConfig:                 options.CNIConfig,
 		RegistryMirrors:           options.RegistryMirrors,
 		Debug:                     options.Debug,
 		Persist:                   options.Persist,

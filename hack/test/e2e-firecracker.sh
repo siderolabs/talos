@@ -19,6 +19,15 @@ case "${REGISTRY:-false}" in
     ;;
 esac
 
+case "${CUSTOM_CNI_URL:-false}" in
+  false)
+    CUSTOM_CNI_FLAG=
+    ;;
+  *)
+    CUSTOM_CNI_FLAG="--custom-cni-url=${CUSTOM_CNI_URL}"
+    ;;
+esac
+
 function create_cluster {
   "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
@@ -30,7 +39,8 @@ function create_cluster {
     --cidr 172.20.0.0/24 \
     --install-image ${REGISTRY:-docker.io}/autonomy/installer:${INSTALLER_TAG} \
     --with-init-node=false \
-    ${FIRECRACKER_FLAGS}
+    ${FIRECRACKER_FLAGS} \
+    ${CUSTOM_CNI_FLAG}
 }
 
 create_cluster
