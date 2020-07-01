@@ -399,7 +399,7 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - initramfs
+  - unit-tests
 
 - name: coverage
   image: alpine:3.10
@@ -477,6 +477,9 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  when:
+    event:
+    - pull_request
   depends_on:
   - initramfs
   - talosctl-linux
@@ -983,7 +986,7 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - initramfs
+  - unit-tests
 
 - name: coverage
   image: alpine:3.10
@@ -1061,6 +1064,9 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  when:
+    event:
+    - pull_request
   depends_on:
   - initramfs
   - talosctl-linux
@@ -1143,7 +1149,10 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - e2e-firecracker-short
+  - initramfs
+  - talosctl-linux
+  - kernel
+  - push-local
 
 - name: provision-tests-prepare
   pull: always
@@ -1163,7 +1172,9 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - e2e-firecracker-short
+  - initramfs
+  - talosctl-linux
+  - kernel
   - push-local
 
 - name: provision-tests-track-0
@@ -1669,7 +1680,7 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - initramfs
+  - unit-tests
 
 - name: coverage
   image: alpine:3.10
@@ -1747,6 +1758,9 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  when:
+    event:
+    - pull_request
   depends_on:
   - initramfs
   - talosctl-linux
@@ -1841,7 +1855,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker-short
-  - e2e-firecracker-short
 
 - name: e2e-aws
   pull: always
@@ -2345,7 +2358,7 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - initramfs
+  - unit-tests
 
 - name: coverage
   image: alpine:3.10
@@ -2423,6 +2436,9 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  when:
+    event:
+    - pull_request
   depends_on:
   - initramfs
   - talosctl-linux
@@ -2517,7 +2533,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker-short
-  - e2e-firecracker-short
 
 - name: e2e-aws
   pull: always
@@ -3049,7 +3064,7 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - initramfs
+  - unit-tests
 
 - name: coverage
   image: alpine:3.10
@@ -3127,6 +3142,9 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  when:
+    event:
+    - pull_request
   depends_on:
   - initramfs
   - talosctl-linux
@@ -3221,7 +3239,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker-short
-  - e2e-firecracker-short
 
 - name: e2e-aws
   pull: always
@@ -3753,7 +3770,7 @@ steps:
   - name: dev
     path: /dev
   depends_on:
-  - initramfs
+  - unit-tests
 
 - name: coverage
   image: alpine:3.10
@@ -3831,6 +3848,9 @@ steps:
     path: /root/.kube
   - name: dev
     path: /dev
+  when:
+    event:
+    - pull_request
   depends_on:
   - initramfs
   - talosctl-linux
@@ -4064,6 +4084,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 6be7dc693eaca8b4e5278a5004ddb9e83d1f9fc6a3c84e92dbf5ce039848bc7c
+hmac: 747d73dcbf906fc24f5241fe05286fcc3d7ae3fc6c1608510959d4f240101e3b
 
 ...
