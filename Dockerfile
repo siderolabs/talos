@@ -332,7 +332,7 @@ COPY hack/containerd.toml /rootfs/etc/cri/containerd.toml
 RUN touch /rootfs/etc/resolv.conf
 RUN touch /rootfs/etc/hosts
 RUN touch /rootfs/etc/os-release
-RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt}
+RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni,usr/libexec/kubernetes}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates

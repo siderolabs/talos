@@ -96,8 +96,8 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) runtime.Tas
 // SetupSystemDirectory represents the SetupSystemDirectory task.
 func SetupSystemDirectory(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{"etc", "log"} {
-			if err = os.MkdirAll(filepath.Join(constants.SystemRunPath, p), 0700); err != nil {
+		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath} {
+			if err = os.MkdirAll(p, 0700); err != nil {
 				return err
 			}
 		}
@@ -297,18 +297,18 @@ BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 
 // Hosts creates a persistent and writable /etc/hosts file.
 func Hosts() (err error) {
-	return createBindMount("/run/system/etc/hosts", "/etc/hosts")
+	return createBindMount(filepath.Join(constants.SystemEtcPath, "hosts"), "/etc/hosts")
 }
 
 // ResolvConf creates a persistent and writable /etc/resolv.conf file.
 func ResolvConf() (err error) {
-	return createBindMount("/run/system/etc/resolv.conf", "/etc/resolv.conf")
+	return createBindMount(filepath.Join(constants.SystemEtcPath, "resolv.conf"), "/etc/resolv.conf")
 }
 
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
 // node's OS Image field is reported by the node from /etc/os-release.
 func OSRelease() (err error) {
-	if err = createBindMount("/run/system/etc/os-release", "/etc/os-release"); err != nil {
+	if err = createBindMount(filepath.Join(constants.SystemEtcPath, "os-release"), "/etc/os-release"); err != nil {
 		return err
 	}
 
@@ -348,7 +348,7 @@ func OSRelease() (err error) {
 		return err
 	}
 
-	return ioutil.WriteFile("/run/system/etc/os-release", writer.Bytes(), 0644)
+	return ioutil.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), writer.Bytes(), 0644)
 }
 
 // createBindMount creates a common way to create a writable source file with a
