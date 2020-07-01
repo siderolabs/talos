@@ -1289,6 +1289,700 @@ trigger:
 
 ---
 kind: pipeline
+name: integration-nightly
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: setup-ci
+  image: autonomy/build-container:latest
+  commands:
+  - git fetch --tags
+  - apk add coreutils
+  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
+  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - docker buildx inspect --bootstrap
+  - make ./_out/sonobuoy
+  - make ./_out/kubectl
+  environment:
+    BUILDX_KUBECONFIG:
+      from_secret: kubeconfig
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
+- name: docs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make docs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - setup-ci
+
+- name: generate
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make generate
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - setup-ci
+
+- name: check-dirty
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make check-dirty
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - docs
+  - generate
+
+- name: talosctl-linux
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talosctl-linux
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: talosctl-darwin
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talosctl-darwin
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: kernel
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make kernel
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: initramfs
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make initramfs
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: installer
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - initramfs
+
+- name: installer-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make installer
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - installer
+
+- name: talos
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - initramfs
+
+- name: talos-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make talos
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - talos
+
+- name: lint-go
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-go
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: lint-markdown
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-markdown
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: lint-protobuf
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make lint-protobuf
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - check-dirty
+
+- name: image-aws
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make image-aws
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - installer
+
+- name: image-azure
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make image-azure
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - image-aws
+
+- name: image-digital-ocean
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make image-digital-ocean
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - image-azure
+
+- name: image-gcp
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make image-gcp
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - image-digital-ocean
+
+- name: image-vmware
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make image-vmware
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - image-gcp
+
+- name: unit-tests
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make unit-tests
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - initramfs
+
+- name: unit-tests-race
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make unit-tests-race
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - unit-tests
+
+- name: coverage
+  image: alpine:3.10
+  commands:
+  - apk --no-cache add bash curl git
+  - bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"
+  environment:
+    CODECOV_TOKEN:
+      from_secret: codecov_token
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - unit-tests
+
+- name: push-local
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_LOGIN_ENABLED: false
+    REGISTRY: registry.ci.svc:5000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - installer-local
+  - talos-local
+
+- name: e2e-docker-short
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-docker
+  environment:
+    SHORT_INTEGRATION_TEST: yes
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  - name: tmp
+    path: /tmp
+  depends_on:
+  - talos
+  - talosctl-linux
+
+- name: e2e-firecracker-short
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-firecracker
+  environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
+    REGISTRY: registry.ci.svc:5000
+    SHORT_INTEGRATION_TEST: yes
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - initramfs
+  - talosctl-linux
+  - kernel
+  - push-local
+
+- name: push
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  when:
+    event:
+      exclude:
+      - pull_request
+      - promote
+      - cron
+  depends_on:
+  - e2e-docker-short
+  - e2e-firecracker-short
+
+- name: push-latest
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make push-latest
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  when:
+    branch:
+    - master
+    event:
+    - push
+  depends_on:
+  - e2e-docker-short
+  - e2e-firecracker-short
+
+- name: e2e-firecracker
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-firecracker
+  environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - initramfs
+  - talosctl-linux
+  - kernel
+  - push-local
+
+- name: provision-tests-prepare
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-prepare
+  environment:
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - initramfs
+  - talosctl-linux
+  - kernel
+  - push-local
+
+- name: provision-tests-track-0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-0
+  environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - provision-tests-prepare
+
+- name: provision-tests-track-1
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make provision-tests-track-1
+  environment:
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
+    REGISTRY: registry.ci.svc:5000
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - provision-tests-prepare
+
+- name: e2e-cilium-1.8.0
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make e2e-firecracker
+  environment:
+    CUSTOM_CNI_URL: https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml
+    FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS: 2000
+    REGISTRY: registry.ci.svc:5000
+    SHORT_INTEGRATION_TEST: yes
+  privileged: true
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+  depends_on:
+  - e2e-firecracker
+
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker/buildx
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
+volumes:
+- name: dockersock
+  temp: {}
+- name: docker
+  temp: {}
+- name: kube
+  temp: {}
+- name: dev
+  host:
+    path: /dev
+- name: tmp
+  temp: {}
+
+node:
+  node-role.kubernetes.io/ci: ""
+
+trigger:
+  cron:
+  - nightly
+
+---
+kind: pipeline
 name: e2e
 
 platform:
@@ -4079,12 +4773,13 @@ depends_on:
 - default
 - e2e
 - integration
+- integration-nightly
 - conformance
 - nightly
 - release
 
 ---
 kind: signature
-hmac: ecee32cc330a94218c52faa57c47bb0efb70de2cfdf541d4adbf2e57b74b44b1
+hmac: 4833cef8cdd32a7199ec74d255990472a59d6deebb22111a6787bc4690f00d8f
 
 ...
