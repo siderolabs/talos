@@ -78,7 +78,12 @@ func TestEvents_Publish(t *testing.T) {
 					defer wg.Done()
 
 					for j := 0; j < tt.messages; j++ {
-						event := <-events
+						event, ok := <-events
+
+						if !ok {
+							// on buffer overrun Watch() closes the channel
+							t.Fatalf("buffer overrun")
+						}
 
 						seq, err := strconv.Atoi(event.Payload.(*machine.SequenceEvent).Sequence)
 						if err != nil {
@@ -94,7 +99,7 @@ func TestEvents_Publish(t *testing.T) {
 				})
 			}
 
-			l := rate.NewLimiter(1000, tt.cap/2)
+			l := rate.NewLimiter(500, tt.cap/2)
 
 			for i := 0; i < tt.messages; i++ {
 				_ = l.Wait(context.Background()) //nolint: errcheck
