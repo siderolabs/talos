@@ -85,7 +85,7 @@ func (suite *CircularSuite) TestStreamingReadWriter() {
 
 		p := data
 
-		r := rate.NewLimiter(500000, 1000)
+		r := rate.NewLimiter(300_000, 1000)
 
 		for i := 0; i < len(data); {
 			l := 100 + rand.Intn(100)
@@ -176,7 +176,7 @@ func (suite *CircularSuite) TestStreamingMultipleReaders() {
 
 	p := data
 
-	r := rate.NewLimiter(500000, 1000)
+	r := rate.NewLimiter(300_000, 1000)
 
 	for i := 0; i < len(data); {
 		l := 256
