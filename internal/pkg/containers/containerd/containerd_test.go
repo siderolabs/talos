@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/containerd/containerd"
-	containerdcntrs "github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/google/uuid"
@@ -58,24 +57,6 @@ type ContainerdSuite struct {
 
 	containerRunners []runner.Runner
 	containersWg     sync.WaitGroup
-}
-
-// WithAnnotations appends or replaces the annotations on the spec with the
-// provided annotations
-//
-// TODO: taken from containerd/oci > 1.2.6.
-func WithAnnotations(annotations map[string]string) oci.SpecOpts {
-	return func(_ context.Context, _ oci.Client, _ *containerdcntrs.Container, s *oci.Spec) error {
-		if s.Annotations == nil {
-			s.Annotations = make(map[string]string)
-		}
-
-		for k, v := range annotations {
-			s.Annotations[k] = v
-		}
-
-		return nil
-	}
 }
 
 func (suite *ContainerdSuite) SetupSuite() {
@@ -198,7 +179,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 			"io.kubernetes.pod.name":      "fun",
 			"io.kubernetes.pod.namespace": "ns1",
 		})),
-		runner.WithOCISpecOpts(WithAnnotations(map[string]string{
+		runner.WithOCISpecOpts(oci.WithAnnotations(map[string]string{
 			"io.kubernetes.cri.sandbox-log-directory": "sandbox",
 			"io.kubernetes.cri.sandbox-id":            "c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f",
 		})),
@@ -215,7 +196,7 @@ func (suite *ContainerdSuite) runK8sContainers() {
 			"io.kubernetes.pod.namespace":  "ns1",
 			"io.kubernetes.container.name": "run",
 		})),
-		runner.WithOCISpecOpts(WithAnnotations(map[string]string{
+		runner.WithOCISpecOpts(oci.WithAnnotations(map[string]string{
 			"io.kubernetes.cri.sandbox-id": "c888d69b73b5b444c2b0bd70da28c3da102b0aeb327f3a297626e2558def327f",
 		})),
 		runner.WithContainerdAddress(suite.containerdAddress),
