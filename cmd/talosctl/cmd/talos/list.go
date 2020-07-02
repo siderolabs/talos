@@ -45,7 +45,7 @@ var lsCmd = &cobra.Command{
 				rootDir = args[0]
 			}
 
-			stream, err := c.LS(ctx, machineapi.ListRequest{
+			stream, err := c.LS(ctx, &machineapi.ListRequest{
 				Root:           rootDir,
 				Recurse:        recurse,
 				RecursionDepth: recursionDepth,

@@ -10,12 +10,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
