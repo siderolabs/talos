@@ -88,6 +88,8 @@ func (svcrunner *ServiceRunner) UpdateState(newstate events.ServiceState, messag
 	isFinished := svcrunner.inStateLocked(StateEventFinished)
 	svcrunner.mu.Unlock()
 
+	svcrunner.runtime.Events().Publish(event.AsEventProto(svcrunner.id))
+
 	if isUp {
 		svcrunner.notifyEvent(StateEventUp)
 	}

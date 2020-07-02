@@ -77,6 +77,22 @@ message TaskEvent {
   Action action = 2;
 }
 
+message ServiceStateEvent {
+  string service = 1;
+  enum Action {
+    INITIALIZED = 0;
+    PREPARING = 1;
+    WAITING = 2;
+    RUNNING = 3;
+    STOPPING = 4;
+    FINISHED = 5;
+    FAILED = 6;
+    SKIPPED = 7;
+  };
+  Action action = 2;
+  string message = 3;
+};
+
 message EventsRequest {}
 
 message Event {
