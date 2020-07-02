@@ -9,11 +9,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/protowire"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -143,8 +144,15 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 	)
 
 	// decode protobuf embedded header
-	typ, n1 := proto.DecodeVarint(resp)
-	_, n2 := proto.DecodeVarint(resp[n1:]) // length
+
+	typ, n1 := protowire.ConsumeVarint(resp)
+	if n1 < 0 {
+		return nil, protowire.ParseError(n1)
+	}
+	_, n2 := protowire.ConsumeVarint(resp[n1:]) // length
+	if n2 < 0 {
+		return nil, protowire.ParseError(n2)
+	}
 
 	if typ != (metadataField<<3)|metadataType {
 		return nil, fmt.Errorf("unexpected message format: %d", typ)
@@ -157,7 +165,7 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 	// cut off embedded message header
 	resp = resp[n1+n2:]
 	// build new embedded message header
-	prefix := append(proto.EncodeVarint((metadataField<<3)|metadataType), proto.EncodeVarint(uint64(len(resp)+len(payload)))...)
+	prefix := append(protowire.AppendVarint(nil, (metadataField<<3)|metadataType), protowire.AppendVarint(nil, uint64(len(resp)+len(payload)))...)
 	resp = append(prefix, resp...)
 
 	return append(resp, payload...), err
