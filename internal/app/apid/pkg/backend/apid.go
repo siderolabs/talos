@@ -166,7 +166,7 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 	// cut off embedded message header
 	resp = resp[n1+n2:]
 	// build new embedded message header
-	prefix := append(protowire.AppendVarint(nil, (metadataField<<3)|metadataType), protowire.AppendVarint(nil, uint64(len(resp)+len(payload)))...)
+	prefix := protowire.AppendVarint(protowire.AppendVarint(nil, (metadataField<<3)|metadataType)), uint64(len(resp)+len(payload)))
 	resp = append(prefix, resp...)
 
 	return append(resp, payload...), err
