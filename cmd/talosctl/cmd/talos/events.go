@@ -53,6 +53,8 @@ var eventsCmd = &cobra.Command{
 						} else {
 							args = []interface{}{msg.GetSequence() + " " + msg.GetAction().String()}
 						}
+					case *machine.ServiceStateEvent:
+						args = []interface{}{fmt.Sprintf("%s [%s]: %s", msg.GetService(), msg.GetAction(), msg.GetMessage())}
 					default:
 						// We haven't implemented the handling of this event yet.
 						continue

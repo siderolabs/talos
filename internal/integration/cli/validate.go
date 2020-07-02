@@ -7,6 +7,7 @@
 package cli
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -47,8 +48,10 @@ func (suite *ValidateSuite) TestValidate() {
 	suite.RunCLI([]string{"gen", "config", "foobar", "https://10.0.0.1"})
 
 	for _, configFile := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
-		for _, mode := range []string{"cloud", "container", "metal"} {
-			suite.RunCLI([]string{"validate", "-m", mode, "-c", configFile})
+		for _, mode := range []string{"cloud", "container"} {
+			suite.Run(fmt.Sprintf("%s-%s", configFile, mode), func() {
+				suite.RunCLI([]string{"validate", "-m", mode, "-c", configFile})
+			})
 		}
 	}
 }
