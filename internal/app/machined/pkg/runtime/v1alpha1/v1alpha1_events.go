@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
@@ -171,7 +171,9 @@ func (e *Events) Publish(msg proto.Message) {
 	event := runtime.Event{
 		// In the future, we can publish `talos/runtime`, and
 		// `talos/plugin/<plugin>` (or something along those lines) events.
-		TypeURL: fmt.Sprintf("talos/runtime/%s", proto.MessageName(msg)),
+		// TypeURL: fmt.Sprintf("talos/runtime/%s", protoreflect.MessageDescriptor.FullName(msg)),
+
+		TypeURL: fmt.Sprintf("talos/runtime/%s", msg.ProtoReflect().Descriptor().FullName()),
 		Payload: msg,
 	}
 

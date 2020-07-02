@@ -5,8 +5,8 @@
 package runtime
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/api/machine"
 )
