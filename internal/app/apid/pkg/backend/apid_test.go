@@ -10,7 +10,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/grpc-proxy/proxy"
