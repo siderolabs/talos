@@ -47,6 +47,7 @@ var (
 	networkCIDR             string
 	networkMTU              int
 	nameservers             []string
+	dnsDomain               string
 	workers                 int
 	masters                 int
 	clusterCpus             string
@@ -180,6 +181,7 @@ func create(ctx context.Context) (err error) {
 		genOptions := []generate.GenOption{
 			generate.WithInstallImage(nodeInstallImage),
 			generate.WithDebug(configDebug),
+			generate.WithDNSDomain(dnsDomain),
 		}
 
 		for _, registryMirror := range registryMirrors {
@@ -420,5 +422,6 @@ func init() {
 	)
 	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", true, "create the cluster with an init node")
 	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
+	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	Cmd.AddCommand(createCmd)
 }
