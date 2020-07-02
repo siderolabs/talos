@@ -21,6 +21,7 @@ talosctl cluster create [flags]
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
       --custom-cni-url string       install custom CNI from the URL (Talos cluster)
       --disk int                    the limit on disk size in MB (each VM) (default 4096)
+      --dns-domain string           the dns domain to use for cluster (default "cluster.local")
       --endpoint string             use endpoint instead of provider defaults
   -p, --exposed-ports string        Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
   -h, --help                        help for create
