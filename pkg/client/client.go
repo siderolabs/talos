@@ -18,12 +18,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
 
@@ -528,8 +528,8 @@ func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (re
 }
 
 // LS implements the proto.OSClient interface.
-func (c *Client) LS(ctx context.Context, req machineapi.ListRequest) (stream machineapi.MachineService_ListClient, err error) {
-	return c.MachineClient.List(ctx, &req)
+func (c *Client) LS(ctx context.Context, req *machineapi.ListRequest) (stream machineapi.MachineService_ListClient, err error) {
+	return c.MachineClient.List(ctx, req)
 }
 
 // Copy implements the proto.OSClient interface.
@@ -806,8 +806,10 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event)) 
 
 		var msg proto.Message
 
+		seqEvent := &machineapi.SequenceEvent{}
+
 		switch typeURL {
-		case "talos/runtime/" + proto.MessageName(&machineapi.SequenceEvent{}):
+		case "talos/runtime/" + string(seqEvent.ProtoReflect().Descriptor().FullName()):
 			msg = &machineapi.SequenceEvent{}
 
 			if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
