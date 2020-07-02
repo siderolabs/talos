@@ -60,6 +60,15 @@ type ServiceEvent struct {
 	Timestamp time.Time
 }
 
+// AsProto returns protobuf representation of respective machined event.
+func (event *ServiceEvent) AsProto(service string) *machineapi.ServiceStateEvent {
+	return &machineapi.ServiceStateEvent{
+		Service: service,
+		Action:  machineapi.ServiceStateEvent_Action(event.State),
+		Message: event.Message,
+	}
+}
+
 // ServiceEvents is a fixed length history of events.
 type ServiceEvents struct {
 	events    []ServiceEvent

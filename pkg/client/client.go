@@ -806,18 +806,23 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event)) 
 
 		var msg proto.Message
 
-		seqEvent := &machineapi.SequenceEvent{}
-
-		switch typeURL {
-		case "talos/runtime/" + string(seqEvent.ProtoReflect().Descriptor().FullName()):
-			msg = &machineapi.SequenceEvent{}
-
-			if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
-				log.Printf("failed to unmarshal message: %v", err) // TODO: this should be fixed to return errors
-				continue
+		for _, eventType := range []proto.Message{
+			&machineapi.SequenceEvent{},
+			&machineapi.ServiceStateEvent{},
+		} {
+			if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
+				msg = eventType
+				break
 			}
-		default:
+		}
+
+		if msg == nil {
 			// We haven't implemented the handling of this event yet.
+			continue
+		}
+
+		if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
+			log.Printf("failed to unmarshal message: %v", err) // TODO: this should be fixed to return errors
 			continue
 		}
 
