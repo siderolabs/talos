@@ -26,6 +26,7 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
+	"github.com/rs/xid"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -716,10 +717,31 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 }
 
 // Events streams runtime events.
+//
+//nolint: gocyclo
 func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
 	errCh := make(chan error)
 
-	s.Controller.Runtime().Events().Watch(func(events <-chan runtime.Event) {
+	var opts []runtime.WatchOptionFunc
+
+	if req.TailEvents != 0 {
+		opts = append(opts, runtime.WithTailEvents(int(req.TailEvents)))
+	}
+
+	if req.TailId != "" {
+		tailID, err := xid.FromString(req.TailId)
+		if err != nil {
+			return fmt.Errorf("error parsing tail_id: %w", err)
+		}
+
+		opts = append(opts, runtime.WithTailID(tailID))
+	}
+
+	if req.TailSeconds != 0 {
+		opts = append(opts, runtime.WithTailDuration(time.Duration(req.TailSeconds)*time.Second))
+	}
+
+	if err := s.Controller.Runtime().Events().Watch(func(events <-chan runtime.Event) {
 		errCh <- func() error {
 			for {
 				select {
@@ -741,7 +763,9 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 				}
 			}
 		}()
-	})
+	}, opts...); err != nil {
+		return err
+	}
 
 	return <-errCh
 }

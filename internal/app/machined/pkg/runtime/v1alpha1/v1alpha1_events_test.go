@@ -12,7 +12,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/time/rate"
 
 	"github.com/talos-systems/talos/api/machine"
@@ -66,7 +68,7 @@ func TestEvents_Publish(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := NewEvents(tt.cap)
+			e := NewEvents(tt.cap, tt.cap/10)
 
 			var wg sync.WaitGroup
 			wg.Add(tt.watchers)
@@ -74,7 +76,7 @@ func TestEvents_Publish(t *testing.T) {
 			got := uint32(0)
 
 			for i := 0; i < tt.watchers; i++ {
-				e.Watch(func(events <-chan runtime.Event) {
+				if err := e.Watch(func(events <-chan runtime.Event) {
 					defer wg.Done()
 
 					for j := 0; j < tt.messages; j++ {
@@ -96,7 +98,9 @@ func TestEvents_Publish(t *testing.T) {
 
 						atomic.AddUint32(&got, 1)
 					}
-				})
+				}); err != nil {
+					t.Errorf("Watch error %s", err)
+				}
 			}
 
 			l := rate.NewLimiter(500, tt.cap/2)
@@ -118,15 +122,143 @@ func TestEvents_Publish(t *testing.T) {
 	}
 }
 
+func receive(t *testing.T, e runtime.Watcher, n int, opts ...runtime.WatchOptionFunc) (result []runtime.Event) {
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	if err := e.Watch(func(events <-chan runtime.Event) {
+		defer wg.Done()
+
+		for j := 0; j < n; j++ {
+			event, ok := <-events
+			if !ok {
+				t.Fatalf("Watch: chanel closed")
+			}
+
+			result = append(result, event)
+		}
+
+		select {
+		case _, ok := <-events:
+			if ok {
+				t.Fatal("received extra events")
+			} else {
+				t.Fatalf("Watch: chanel closed")
+			}
+		case <-time.After(50 * time.Millisecond):
+		}
+	}, opts...); err != nil {
+		t.Fatalf("Watch() error %s", err)
+	}
+
+	wg.Wait()
+
+	return result
+}
+
+func extractSeq(t *testing.T, events []runtime.Event) (result []int) {
+	for _, event := range events {
+		seq, err := strconv.Atoi(event.Payload.(*machine.SequenceEvent).Sequence)
+		if err != nil {
+			t.Fatalf("failed to convert sequence to number: %s", err)
+		}
+
+		result = append(result, seq)
+	}
+
+	return result
+}
+
+func gen(k, l int) (result []int) {
+	for j := k; j < l; j++ {
+		result = append(result, j)
+	}
+
+	return
+}
+
+func TestEvents_WatchOptionsTailEvents(t *testing.T) {
+	e := NewEvents(100, 10)
+
+	for i := 0; i < 200; i++ {
+		e.Publish(&machine.SequenceEvent{
+			Sequence: strconv.Itoa(i),
+		})
+	}
+
+	assert.Equal(t, []int(nil), extractSeq(t, receive(t, e, 0)))
+	assert.Equal(t, gen(199, 200), extractSeq(t, receive(t, e, 1, runtime.WithTailEvents(1))))
+	assert.Equal(t, gen(195, 200), extractSeq(t, receive(t, e, 5, runtime.WithTailEvents(5))))
+	assert.Equal(t, gen(111, 200), extractSeq(t, receive(t, e, 89, runtime.WithTailEvents(89))))
+	assert.Equal(t, gen(110, 200), extractSeq(t, receive(t, e, 90, runtime.WithTailEvents(90))))
+	assert.Equal(t, gen(110, 200), extractSeq(t, receive(t, e, 90, runtime.WithTailEvents(91))))   // can't tail more than cap-gap
+	assert.Equal(t, gen(110, 200), extractSeq(t, receive(t, e, 90, runtime.WithTailEvents(1000)))) // can't tail more than cap-gap
+	assert.Equal(t, gen(110, 200), extractSeq(t, receive(t, e, 90, runtime.WithTailEvents(-1))))   // tail all events
+
+	e = NewEvents(100, 10)
+
+	for i := 0; i < 30; i++ {
+		e.Publish(&machine.SequenceEvent{
+			Sequence: strconv.Itoa(i),
+		})
+	}
+
+	assert.Equal(t, []int(nil), extractSeq(t, receive(t, e, 0)))
+	assert.Equal(t, gen(29, 30), extractSeq(t, receive(t, e, 1, runtime.WithTailEvents(1))))
+	assert.Equal(t, gen(28, 30), extractSeq(t, receive(t, e, 2, runtime.WithTailEvents(2))))
+	assert.Equal(t, gen(25, 30), extractSeq(t, receive(t, e, 5, runtime.WithTailEvents(5))))
+	assert.Equal(t, gen(0, 30), extractSeq(t, receive(t, e, 30, runtime.WithTailEvents(40))))
+}
+
+func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
+	e := NewEvents(100, 10)
+
+	for i := 0; i < 20; i++ {
+		e.Publish(&machine.SequenceEvent{
+			Sequence: strconv.Itoa(i),
+		})
+	}
+
+	// sleep to get time gap between two series of events
+	time.Sleep(3 * time.Second)
+
+	for i := 20; i < 30; i++ {
+		e.Publish(&machine.SequenceEvent{
+			Sequence: strconv.Itoa(i),
+		})
+	}
+
+	assert.Equal(t, []int(nil), extractSeq(t, receive(t, e, 0, runtime.WithTailDuration(0))))
+	assert.Equal(t, gen(20, 30), extractSeq(t, receive(t, e, 10, runtime.WithTailDuration(2*time.Second))))
+	assert.Equal(t, gen(0, 30), extractSeq(t, receive(t, e, 30, runtime.WithTailDuration(10*time.Second))))
+}
+
+func TestEvents_WatchOptionsTailID(t *testing.T) {
+	e := NewEvents(100, 10)
+
+	for i := 0; i < 20; i++ {
+		e.Publish(&machine.SequenceEvent{
+			Sequence: strconv.Itoa(i),
+		})
+	}
+
+	events := receive(t, e, 20, runtime.WithTailEvents(-1))
+
+	for i, event := range events {
+		assert.Equal(t, gen(i+1, 20), extractSeq(t, receive(t, e, 20-i-1, runtime.WithTailID(event.ID))))
+	}
+}
+
 func BenchmarkWatch(b *testing.B) {
-	e := NewEvents(100)
+	e := NewEvents(100, 10)
 
 	var wg sync.WaitGroup
 
 	wg.Add(b.N)
 
 	for i := 0; i < b.N; i++ {
-		e.Watch(func(events <-chan runtime.Event) { wg.Done() })
+		_ = e.Watch(func(events <-chan runtime.Event) { wg.Done() }) //nolint: errcheck
 	}
 
 	wg.Wait()
@@ -135,7 +267,7 @@ func BenchmarkWatch(b *testing.B) {
 func BenchmarkPublish(bb *testing.B) {
 	for _, watchers := range []int{0, 1, 10} {
 		bb.Run(fmt.Sprintf("Watchers-%d", watchers), func(b *testing.B) {
-			e := NewEvents(10000)
+			e := NewEvents(10000, 10)
 
 			var wg sync.WaitGroup
 
@@ -144,7 +276,7 @@ func BenchmarkPublish(bb *testing.B) {
 			wg.Add(watchers)
 
 			for j := 0; j < watchers; j++ {
-				e.Watch(func(events <-chan runtime.Event) {
+				_ = e.Watch(func(events <-chan runtime.Event) { //nolint: errcheck
 					defer wg.Done()
 
 					for i := 0; i < b.N; i++ {

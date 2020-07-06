@@ -33,7 +33,6 @@ require (
 	github.com/gizak/termui/v3 v3.0.0
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.3.0 // indirect
-	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
@@ -54,6 +53,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.0.8
+	github.com/rs/xid v1.2.1
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
 	github.com/spf13/cobra v0.0.5

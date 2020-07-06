@@ -7,8 +7,11 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
+	"time"
 
+	"github.com/rs/xid"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -23,20 +26,15 @@ import (
 // To explain the internals, let's call `Publish()` method 'Publisher' (there might be
 // multiple callers for it), and each `Watch()` handler as 'Consumer'.
 //
-// For Publisher, `Events` keeps `e.writePos` and `e.gen`, `e.writePos` is index into
-// `e.stream` to write the next event to. After the write `e.writePos` is incremented.
-// As `e.writePos` goes above capacity-1, it wraps around  to zero and `e.gen` is incremented.
+// For Publisher, `Events` keeps `e.writePos`, `e.writePos` is write offset into `e.stream`.
+// Offset `e.writePos` is always incremeneted, real write index is `e.writePos % e.cap`
 //
-// So at any time `0 <= e.writePos < e.cap`, but `e.gen` indicates how many times `e.stream` slice
-// was overwritten.
-//
-// Each Consumer captures initial position it starts consumption from as `pos` and `gen` which are
-// local to each Consumers, as Consumers are free to work on their own pace. Following diagram shows
+// Each Consumer captures initial position it starts consumption from as `pos` which is
+// local to each Consumer, as Consumers are free to work on their own pace. Following diagram shows
 // Publisher and three Consumers:
 //
 //                                                 Consumer 3                         Consumer 2
-//                                                 pos = 9                            pos = 16
-//                                                 gen = 1                            gen = 1
+//                                                 pos = 27                           pos = 34
 //  e.stream []Event                               |                                  |
 //                                                 |                                  |
 //  +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
@@ -45,23 +43,21 @@ import (
 //                                       |                                  |
 //                                       |                                  |
 //                                       Consumer 1                         Publisher
-//                                       pos = 7                            e.writePos = 14
-//                                       gen = 2                            e.gen = 2
+//                                       pos = 43                           e.writePos = 50
 //
-// Capacity of Events in this diagram is 18, Publisher published already 14 + 2 * 18 = 40 events, so it
-// already overwrote `e.stream` twice fully (e.gen = 2).
+// Capacity of Events in this diagram is 18, Publisher published already 50 events, so it
+// already overwrote `e.stream` twice fully.
 //
-// Consumer1 is trying to keep up with the publisher, it's on the same `gen`, and it has 14-7 = 7 events
-// to catch up.
+// Consumer1 is trying to keep up with the publisher, it has 14-7 = 7 events to catch up.
 //
-// Consumer2 is on `gen` 1, so it is reading events which were published before the Publisher did last
-// wraparound for `e.writePos` at `e.gen == 1`. Consumer 2 has a lot of events to catch up, but as it stays
+// Consumer2 is reading events published by Publisher before last wraparound, it has
+// 50-34 = 16 events to catch up. Consumer 2 has a lot of events to catch up, but as it stays
 // on track, it can still do that.
 //
-// Consumer3 is doing bad - it's on `gen` 1, but Publisher already overwrote this element while going on `gen` 2,
-// so Consumer3 is handling incorrect data, it should error out.
+// Consumer3 is doing bad: 50-27 = 23 > 18 (capacity), so its read position has already been
+// overwritten, it can't read consistent data,  soit should error out.
 //
-// Synchronization: at the moment single mutex protects `e.stream`, `e.writePos` and `e.gen`, consumers keep their
+// Synchronization: at the moment single mutex protects `e.stream`  and `e.writePos`, consumers keep their
 // position as local variable, so it doesn't require synchronization. If Consumer catches up with Publisher,
 // it sleeps on condition variable to be woken up by Publisher on next publish.
 type Events struct {
@@ -69,24 +65,35 @@ type Events struct {
 	stream []runtime.Event
 
 	// writePos is the index in streams for the next write (publish)
-	writePos int
+	//
+	// writePos gets always incremented, real position in slice is (writePos % cap)
+	writePos int64
 
-	// gen tracks number of wraparounds in stream
-	gen int64
-
-	// cap is capacity of streams
+	// cap is a capacity of the stream
 	cap int
+	// gap is a safety gap between consumers and publishers
+	gap int
 
-	// mutext protects access to writePos, gen and stream
+	// mutext protects access to writePos and stream
 	mu sync.Mutex
 	c  *sync.Cond
 }
 
 // NewEvents initializes and returns the v1alpha1 runtime event stream.
-func NewEvents(cap int) *Events {
+//
+// Argument cap is a maximum event stream capacity (available event history).
+// Argument gap is a safety gap to separate consumer from the publisher.
+// Maximum available event history is (cap-gap).
+func NewEvents(cap, gap int) *Events {
 	e := &Events{
 		stream: make([]runtime.Event, cap),
 		cap:    cap,
+		gap:    gap,
+	}
+
+	if gap >= cap {
+		// we should never reach this, but if we do, panic so that we know.
+		panic("NewEvents: gap >= cap")
 	}
 
 	e.c = sync.NewCond(&e.mu)
@@ -97,7 +104,15 @@ func NewEvents(cap int) *Events {
 // Watch implements the Events interface.
 //
 //nolint: gocyclo
-func (e *Events) Watch(f runtime.WatchFunc) {
+func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) error {
+	var opts runtime.WatchOptions
+
+	for _, o := range opt {
+		if err := o(&opts); err != nil {
+			return err
+		}
+	}
+
 	// context is used to abort the loop when WatchFunc exits
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -109,11 +124,45 @@ func (e *Events) Watch(f runtime.WatchFunc) {
 		f(ch)
 	}()
 
-	// capture initial consumer position/gen, consumer starts consuming from the next
-	// event to be published
 	e.mu.Lock()
+
+	// capture initial consumer position: by default, consumer starts consuming from the next
+	// event to be published
 	pos := e.writePos
-	gen := e.gen
+	minPos := e.writePos - int64(e.cap-e.gap)
+
+	if minPos < 0 {
+		minPos = 0
+	}
+
+	// calculate initial position based on options
+	switch {
+	case opts.TailEvents != 0:
+		if opts.TailEvents < 0 {
+			pos = minPos
+		} else {
+			pos -= int64(opts.TailEvents)
+
+			if pos < minPos {
+				pos = minPos
+			}
+		}
+	case !opts.TailID.IsNil():
+		pos = minPos + int64(sort.Search(int(pos-minPos), func(i int) bool {
+			event := e.stream[(minPos+int64(i))%int64(e.cap)]
+
+			return event.ID.Compare(opts.TailID) > 0
+		}))
+	case opts.TailDuration != 0:
+		timestamp := time.Now().Add(-opts.TailDuration)
+
+		pos = minPos + int64(sort.Search(int(pos-minPos), func(i int) bool {
+			event := e.stream[(minPos+int64(i))%int64(e.cap)]
+
+			return event.ID.Time().After(timestamp)
+		}))
+	}
+
 	e.mu.Unlock()
 
 	go func() {
@@ -134,25 +183,15 @@ func (e *Events) Watch(f runtime.WatchFunc) {
 				}
 			}
 
-			if e.gen > gen+1 || (e.gen > gen && pos < e.writePos) {
+			if e.writePos-pos >= int64(e.cap) {
 				// buffer overrun, there's no way to signal error in this case,
 				// so for now just return
-				//
-				// why buffer overrun?
-				//  if gen is 2 generations behind of e.gen, buffer was overwritten anyways
-				//  if gen is 1 generation behind of e.gen, buffer was overwritten if consumer
-				//    is behind the publisher.
 				e.mu.Unlock()
 				return
 			}
 
-			event := e.stream[pos]
-			pos = (pos + 1) % e.cap
-
-			if pos == 0 {
-				// consumer wraps around e.cap-1, so increment gen
-				gen++
-			}
+			event := e.stream[pos%int64(e.cap)]
+			pos++
 
 			e.mu.Unlock()
 
@@ -164,6 +203,8 @@ func (e *Events) Watch(f runtime.WatchFunc) {
 			}
 		}
 	}()
+
+	return nil
 }
 
 // Publish implements the Events interface.
@@ -175,18 +216,14 @@ func (e *Events) Publish(msg proto.Message) {
 
 		TypeURL: fmt.Sprintf("talos/runtime/%s", msg.ProtoReflect().Descriptor().FullName()),
 		Payload: msg,
+		ID:      xid.New(),
 	}
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.stream[e.writePos] = event
-	e.writePos = (e.writePos + 1) % e.cap
-
-	if e.writePos == 0 {
-		// wraparound around e.cap-1, increment generation
-		e.gen++
-	}
+	e.stream[e.writePos%int64(e.cap)] = event
+	e.writePos++
 
 	e.c.Broadcast()
 }
