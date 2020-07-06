@@ -99,6 +99,51 @@ func (suite *EventsSuite) TestServiceEvents() {
 	suite.Require().NoError(checkExpectedActions())
 }
 
+// TestEventsWatch verifies events watch API.
+func (suite *EventsSuite) TestEventsWatch() {
+	ctx, ctxCancel := context.WithTimeout(suite.ctx, 30*time.Second)
+	defer ctxCancel()
+
+	receiveEvents := func(opts ...client.EventsOptionFunc) []client.Event {
+		result := []client.Event{}
+
+		watchCtx, watchCtxCancel := context.WithCancel(ctx)
+		defer watchCtxCancel()
+
+		suite.Assert().NoError(suite.Client.EventsWatch(watchCtx, func(ch <-chan client.Event) {
+			defer watchCtxCancel()
+
+			for {
+				select {
+				case event, ok := <-ch:
+					if !ok {
+						return
+					}
+
+					result = append(result, event)
+				case <-time.After(100 * time.Millisecond):
+					return
+				}
+			}
+		}, opts...))
+
+		return result
+	}
+
+	allEvents := receiveEvents(client.WithTailEvents(-1))
+	suite.Require().Greater(len(allEvents), 20)
+
+	suite.Assert().Len(receiveEvents(), 0)
+	suite.Assert().Len(receiveEvents(client.WithTailEvents(5)), 5)
+	suite.Assert().Len(receiveEvents(client.WithTailEvents(20)), 20)
+
+	// pick some ID of 15th event in the past; API should return at least 14 events
+	// (as check excludes that event with picked ID)
+	id := allEvents[len(allEvents)-15].ID
+	eventsSinceID := receiveEvents(client.WithTailID(id))
+	suite.Require().GreaterOrEqual(len(eventsSinceID), 14) //  there might some new events since allEvents, but at least 15 should be received
+}
+
 func init() {
 	allSuites = append(allSuites, new(EventsSuite))
 }

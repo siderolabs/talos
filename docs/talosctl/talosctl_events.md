@@ -14,7 +14,10 @@ talosctl events [flags]
 ### Options
 
 ```
-  -h, --help   help for events
+      --duration duration   show events for the past duration interval (one second resolution, default is to show no history)
+  -h, --help                help for events
+      --since string        show events after the specified event ID (default is to show no history)
+      --tail int32          show specified number of past events (use -1 to show full history, default is to show no history)
 ```
 
 ### Options inherited from parent commands

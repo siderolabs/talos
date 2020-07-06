@@ -153,7 +153,7 @@ func main() {
 	}
 
 	// Watch and handle runtime events.
-	c.Runtime().Events().Watch(func(events <-chan runtime.Event) {
+	_ = c.Runtime().Events().Watch(func(events <-chan runtime.Event) { //nolint: errcheck
 		for {
 			for event := range events {
 				if msg, ok := event.Payload.(*machine.SequenceEvent); ok {
