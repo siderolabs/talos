@@ -62,7 +62,7 @@ func NewController(b []byte) (*Controller, error) {
 	}
 
 	// TODO: this should be streaming capacity and probably some constant
-	e := NewEvents(1000)
+	e := NewEvents(1000, 10)
 
 	l := logging.NewCircularBufferLoggingManager()
 

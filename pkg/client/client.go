@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package client provides Talos API client.
 package client
 
 import (
@@ -14,16 +15,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"strings"
-	"sync"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
 
@@ -752,94 +750,4 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 	}()
 
 	return pr, errCh, stream.CloseSend()
-}
-
-// Events implements the proto.OSClient interface.
-func (c *Client) Events(ctx context.Context) (stream machineapi.MachineService_EventsClient, err error) {
-	return c.MachineClient.Events(ctx, &machineapi.EventsRequest{})
-}
-
-// Event as received from the API.
-type Event struct {
-	Node    string
-	TypeURL string
-	Payload proto.Message
-}
-
-// EventsWatch wraps Events by providing more simple interface.
-//
-//nolint: gocyclo
-func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event)) error {
-	stream, err := c.Events(ctx)
-	if err != nil {
-		return fmt.Errorf("error fetching events: %s", err)
-	}
-
-	defaultNode := RemotePeer(stream.Context())
-
-	var wg sync.WaitGroup
-
-	defer wg.Wait()
-
-	ch := make(chan Event)
-	defer close(ch)
-
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		watchFunc(ch)
-	}()
-
-	for {
-		event, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF || status.Code(err) == codes.Canceled {
-				return nil
-			}
-
-			return fmt.Errorf("failed to watch events: %w", err)
-		}
-
-		typeURL := event.GetData().GetTypeUrl()
-
-		var msg proto.Message
-
-		for _, eventType := range []proto.Message{
-			&machineapi.SequenceEvent{},
-			&machineapi.ServiceStateEvent{},
-		} {
-			if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
-				msg = eventType
-				break
-			}
-		}
-
-		if msg == nil {
-			// We haven't implemented the handling of this event yet.
-			continue
-		}
-
-		if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
-			log.Printf("failed to unmarshal message: %v", err) // TODO: this should be fixed to return errors
-			continue
-		}
-
-		ev := Event{
-			Node:    defaultNode,
-			TypeURL: typeURL,
-			Payload: msg,
-		}
-
-		if event.Metadata != nil {
-			ev.Node = event.Metadata.Hostname
-		}
-
-		select {
-		case ch <- ev:
-		case <-ctx.Done():
-			return nil
-		}
-	}
 }
