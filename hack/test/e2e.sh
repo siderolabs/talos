@@ -130,7 +130,8 @@ function run_kubernetes_integration_test {
     --plugin e2e \
     --mode ${SONOBUOY_MODE}; do
     [[ $(date +%s) -gt $timeout ]] && exit 1
-    echo "attempting to run sonobuoy"
+    echo "re-attempting to run sonobuoy"
+    ${SONOBUOY} delete --all
     sleep 10
   done
   ${SONOBUOY} status --kubeconfig ${KUBECONFIG} --json | jq . | tee ${TMP}/sonobuoy-status.json
