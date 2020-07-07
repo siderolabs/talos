@@ -224,7 +224,10 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 	start := time.Now()
 
 	log.Printf("%s sequence: %d phase(s)", seq.String(), len(phases))
-	defer log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
+
+	defer func() {
+		log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
+	}()
 
 	var (
 		number int
@@ -277,7 +280,10 @@ func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data in
 			progress := fmt.Sprintf("%d/%d", number, len(phase))
 
 			log.Printf("task %s: starting", progress)
-			defer log.Printf("task %s: done, %s", progress, time.Since(start))
+
+			defer func() {
+				log.Printf("task %s: done, %s", progress, time.Since(start))
+			}()
 
 			if err := c.runTask(number, task, seq, data); err != nil {
 				return fmt.Errorf("task %s: failed, %w", progress, err)
