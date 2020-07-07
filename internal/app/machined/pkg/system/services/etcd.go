@@ -249,8 +249,8 @@ func generatePKI(r runtime.Runtime) (err error) {
 	return nil
 }
 
-func addMember(r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
-	client, err := etcd.NewClientFromControlPlaneIPs(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -258,7 +258,7 @@ func addMember(r runtime.Runtime, addrs []string, name string) (*clientv3.Member
 	// nolint: errcheck
 	defer client.Close()
 
-	list, err := client.MemberList(context.Background())
+	list, err := client.MemberList(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -269,12 +269,12 @@ func addMember(r runtime.Runtime, addrs []string, name string) (*clientv3.Member
 		}
 	}
 
-	add, err := client.MemberAdd(context.Background(), addrs)
+	add, err := client.MemberAdd(ctx, addrs)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	list, err = client.MemberList(context.Background())
+	list, err = client.MemberList(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -282,15 +282,18 @@ func addMember(r runtime.Runtime, addrs []string, name string) (*clientv3.Member
 	return list, add.Member.ID, nil
 }
 
-func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, err error) {
-	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
+func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, err error) {
+	err = retry.Constant(3*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
 		var (
 			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
 			id        uint64
 		)
 
-		resp, id, err = addMember(r, peerAddrs, name)
+		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer attemptCtxCancel()
+
+		resp, id, err = addMember(attemptCtx, r, peerAddrs, name)
 		if err != nil {
 			// TODO(andrewrynhard): We should check the error type here and
 			// handle the specific error accordingly.
@@ -323,7 +326,7 @@ func buildInitialCluster(r runtime.Runtime, name, ip string) (initial string, er
 }
 
 // nolint: gocyclo
-func (e *Etcd) argsForInit(r runtime.Runtime) error {
+func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return err
@@ -401,7 +404,7 @@ func (e *Etcd) argsForInit(r runtime.Runtime) error {
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", "existing")
 
-				initialCluster, err = buildInitialCluster(r, hostname, primaryAddr)
+				initialCluster, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
 					return err
 				}
@@ -453,12 +456,12 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 
 		switch r.Config().Machine().Type() {
 		case runtime.MachineTypeInit:
-			err = e.argsForInit(r)
+			err = e.argsForInit(ctx, r)
 			if err != nil {
 				return err
 			}
 		case runtime.MachineTypeControlPlane:
-			err = e.argsForControlPlane(r)
+			err = e.argsForControlPlane(ctx, r)
 			if err != nil {
 				return err
 			}
@@ -469,7 +472,7 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 }
 
 // nolint: gocyclo
-func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
+func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return err
@@ -529,7 +532,7 @@ func (e *Etcd) argsForControlPlane(r runtime.Runtime) error {
 			if e.Bootstrap {
 				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
 			} else {
-				initialCluster, err = buildInitialCluster(r, hostname, primaryAddr)
+				initialCluster, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
 					return fmt.Errorf("failed to build initial etcd cluster: %w", err)
 				}

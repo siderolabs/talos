@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
@@ -52,15 +53,23 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
+	initNodeAddress := ""
+	for _, node := range suite.Cluster.Info().Nodes {
+		if node.Type == runtime.MachineTypeInit {
+			initNodeAddress = node.PrivateIP.String()
+			break
+		}
+	}
+
 	nodes := suite.DiscoverNodes()
 	suite.Require().NotEmpty(nodes)
 
 	sort.Strings(nodes)
 
-	for i, node := range nodes {
-		if i == 0 {
-			// first node should be init node, due to bug with etcd cluster build for init node
-			// and Reset(), skip resetting first node
+	for _, node := range nodes {
+		if node == initNodeAddress {
+			// due to the bug with etcd cluster build for the init node after Reset(), skip resetting first node
+			// there's no problem if bootstrap API was used, so this check only protects legacy init nodes
 			suite.T().Log("Skipping init node", node, "due to known issue with etcd")
 			continue
 		}

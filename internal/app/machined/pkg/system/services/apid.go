@@ -81,13 +81,16 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
-		err := retry.Constant(10*time.Minute, opts...).Retry(func() error {
+		err := retry.Constant(4*time.Minute, opts...).Retry(func() error {
+			ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer ctxCancel()
+
 			h, err := kubernetes.NewClientFromKubeletKubeconfig()
 			if err != nil {
 				return retry.ExpectedError(fmt.Errorf("failed to create client: %w", err))
 			}
 
-			endpoints, err = h.MasterIPs()
+			endpoints, err = h.MasterIPs(ctx)
 			if err != nil {
 				return retry.ExpectedError(err)
 			}

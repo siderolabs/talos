@@ -1111,7 +1111,7 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc
 			return err
 		}
 
-		client, err := etcd.NewClientFromControlPlaneIPs(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 		if err != nil {
 			return err
 		}
@@ -1119,7 +1119,7 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc
 		// nolint: errcheck
 		defer client.Close()
 
-		resp, err := client.MemberList(context.Background())
+		resp, err := client.MemberList(ctx)
 		if err != nil {
 			return err
 		}
@@ -1138,12 +1138,12 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc
 
 		logger.Println("leaving etcd cluster")
 
-		_, err = client.MemberRemove(context.Background(), *id)
+		_, err = client.MemberRemove(ctx, *id)
 		if err != nil {
 			return err
 		}
 
-		if err = system.Services(nil).Stop(context.Background(), "etcd"); err != nil {
+		if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
 			return err
 		}
 

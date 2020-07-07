@@ -48,6 +48,10 @@ func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 		return nil, err
 	}
 
+	if config.Timeout == 0 {
+		config.Timeout = 30 * time.Second
+	}
+
 	var clientset *kubernetes.Clientset
 
 	clientset, err = kubernetes.NewForConfig(config)
@@ -83,6 +87,7 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 	config := &restclient.Config{
 		Host:            endpoint.String(),
 		TLSClientConfig: tlsClientConfig,
+		Timeout:         30 * time.Second,
 	}
 
 	var clientset *kubernetes.Clientset
@@ -139,8 +144,8 @@ func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *u
 }
 
 // MasterIPs cordons and drains a node in one call.
-func (h *Client) MasterIPs() (addrs []string, err error) {
-	endpoints, err := h.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", metav1.GetOptions{})
+func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
+	endpoints, err := h.CoreV1().Endpoints("default").Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

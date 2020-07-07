@@ -49,7 +49,7 @@ func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
-func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *clientv3.Client, err error) {
+func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *clientv3.Client, err error) {
 	h, err := kubernetes.NewTemporaryClientFromPKI(creds, endpoint)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func NewClientFromControlPlaneIPs(creds *x509.PEMEncodedCertificateAndKey, endpo
 
 	var endpoints []string
 
-	if endpoints, err = h.MasterIPs(); err != nil {
+	if endpoints, err = h.MasterIPs(ctx); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func ValidateForUpgrade(preserve bool) error {
 	}
 
 	if config.Machine().Type() != runtime.MachineTypeJoin {
-		client, err := NewClientFromControlPlaneIPs(config.Cluster().CA(), config.Cluster().Endpoint())
+		client, err := NewClientFromControlPlaneIPs(context.TODO(), config.Cluster().CA(), config.Cluster().Endpoint())
 		if err != nil {
 			return err
 		}
