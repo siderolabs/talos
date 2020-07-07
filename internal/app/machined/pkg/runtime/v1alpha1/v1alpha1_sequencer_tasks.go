@@ -1111,7 +1111,7 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc
 			return err
 		}
 
-		client, err := etcd.NewClientFromControlPlaneIPs(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 		if err != nil {
 			return err
 		}
@@ -1119,7 +1119,7 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc
 		// nolint: errcheck
 		defer client.Close()
 
-		resp, err := client.MemberList(context.Background())
+		resp, err := client.MemberList(ctx)
 		if err != nil {
 			return err
 		}
@@ -1138,12 +1138,12 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc
 
 		logger.Println("leaving etcd cluster")
 
-		_, err = client.MemberRemove(context.Background(), *id)
+		_, err = client.MemberRemove(ctx, *id)
 		if err != nil {
 			return err
 		}
 
-		if err = system.Services(nil).Stop(context.Background(), "etcd"); err != nil {
+		if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
 			return err
 		}
 
@@ -1573,18 +1573,15 @@ func Recover(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 
 		svc := &services.Bootkube{Recover: true}
 
-		if r.Config().Machine().Type() == runtime.MachineTypeControlPlane {
-			system.Services(r).LoadAndStart(svc)
-		} else {
-			loaded := system.Services(r).Reload(svc)
+		// unload bootkube (if any instance ran before)
+		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
+			return err
+		}
 
-			if len(loaded) == 0 {
-				return fmt.Errorf("bootkube service is already running")
-			}
+		system.Services(r).Load(svc)
 
-			if err = system.Services(r).Start(svc.ID(r)); err != nil {
-				return fmt.Errorf("failed to start bootkube: %w", err)
-			}
+		if err = system.Services(r).Start(svc.ID(r)); err != nil {
+			return fmt.Errorf("failed to start bootkube: %w", err)
 		}
 
 		return nil
@@ -1633,7 +1630,15 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) runtime.TaskExecution
 
 		svc := &services.Etcd{Bootstrap: true}
 
-		system.Services(r).ReloadAndStart(svc)
+		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
+			return err
+		}
+
+		system.Services(r).Load(svc)
+
+		if err = system.Services(r).Start(svc.ID(r)); err != nil {
+			return fmt.Errorf("error starting etcd in bootstrap mode: %w", err)
+		}
 
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()

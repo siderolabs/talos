@@ -97,7 +97,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 	// label.
 
 	daemonsets, err := clientset.AppsV1().DaemonSets("kube-system").List(ctx, metav1.ListOptions{
-		LabelSelector: "k8s-app in (kube-scheduler,kube-controller-manager)",
+		LabelSelector: "k8s-app in (kube-apiserver,kube-scheduler,kube-controller-manager)",
 	})
 	if err != nil {
 		return err
@@ -114,6 +114,35 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 
 		if ds.Status.NumberReady != ds.Status.DesiredNumberScheduled {
 			return fmt.Errorf("expected number ready for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, ds.Status.NumberReady)
+		}
+
+		// list pods to verify that daemonset status is updated properly
+		pods, err := clientset.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("k8s-app = %s", ds.Labels["k8s-app"]),
+		})
+		if err != nil {
+			return fmt.Errorf("error listing pods for daemonset %s: %w", ds.GetName(), err)
+		}
+
+		if int32(len(pods.Items)) != ds.Status.DesiredNumberScheduled {
+			return fmt.Errorf("expected number of pods for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, len(pods.Items))
+		}
+
+		var notReadyPods []string
+
+		for _, pod := range pods.Items {
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == v1.PodReady {
+					if cond.Status != v1.ConditionTrue {
+						notReadyPods = append(notReadyPods, pod.Name)
+						break
+					}
+				}
+			}
+		}
+
+		if len(notReadyPods) > 0 {
+			return fmt.Errorf("some pods are not ready for %s: %v", ds.GetName(), notReadyPods)
 		}
 	}
 
@@ -152,7 +181,7 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider)
 	return fmt.Errorf("some nodes are not ready: %v", notReadyNodes)
 }
 
-// K8sPodReadyAssertion checks whether all the nodes are Ready.
+// K8sPodReadyAssertion checks whether all the pods are Ready.
 func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {

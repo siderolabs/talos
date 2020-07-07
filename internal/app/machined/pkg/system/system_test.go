@@ -22,9 +22,12 @@ func (suite *SystemServicesSuite) TestStartShutdown() {
 	system.Services(nil).LoadAndStart(
 		&MockService{name: "containerd"},
 		&MockService{name: "trustd", dependencies: []string{"containerd"}},
-		&MockService{name: "osd", dependencies: []string{"containerd", "osd"}},
+		&MockService{name: "osd", dependencies: []string{"containerd", "trustd"}},
 	)
 	time.Sleep(10 * time.Millisecond)
+
+	suite.Require().NoError(system.Services(nil).Unload(context.Background(), "trustd", "notrunning"))
+
 	system.Services(nil).Shutdown()
 }
 
