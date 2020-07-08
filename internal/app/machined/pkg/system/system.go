@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 )
 
@@ -84,32 +83,34 @@ func (s *singleton) Load(services ...Service) []string {
 	return ids
 }
 
-// Reload adds service to the list of services managed by the runner.
+// Unload stops the service and removes it from the list of running services.
 //
-// Reload returns service IDs for each of the services.
-func (s *singleton) Reload(services ...Service) []string {
+// It is not an error to unload a service which was already removed or stopped.
+func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if s.terminating {
+		s.mu.Unlock()
 		return nil
 	}
 
-	ids := make([]string, 0, len(services))
+	servicesToRemove := []string{}
 
-	for _, service := range services {
-		id := service.ID(s.runtime)
-		ids = append(ids, id)
-
-		if svc, exists := s.state[id]; exists {
-			switch svc.GetState() {
-			case events.StateFailed, events.StateFinished, events.StateSkipped:
-				svcrunner := NewServiceRunner(service, s.runtime)
-				s.state[id] = svcrunner
-
-				return ids
-			}
+	for _, id := range serviceIDs {
+		if _, exists := s.state[id]; exists {
+			servicesToRemove = append(servicesToRemove, id)
 		}
+	}
+	s.mu.Unlock()
+
+	if err := s.Stop(ctx, servicesToRemove...); err != nil {
+		return fmt.Errorf("error stopping services %v: %w", servicesToRemove, err)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, id := range servicesToRemove {
+		delete(s.state, id)
 	}
 
 	return nil
@@ -183,15 +184,6 @@ func (s *singleton) StartAll() {
 // LoadAndStart combines Load and Start into single call.
 func (s *singleton) LoadAndStart(services ...Service) {
 	err := s.Start(s.Load(services...)...)
-	if err != nil {
-		// should never happen
-		panic(err)
-	}
-}
-
-// ReloadAndStart combines Reload and Start into single call.
-func (s *singleton) ReloadAndStart(services ...Service) {
-	err := s.Start(s.Reload(services...)...)
 	if err != nil {
 		// should never happen
 		panic(err)
