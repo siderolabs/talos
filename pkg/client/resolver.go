@@ -6,6 +6,7 @@ package client
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 
 	"google.golang.org/grpc/resolver"
@@ -28,7 +29,10 @@ func (b *talosListResolverBuilder) Build(target resolver.Target, cc resolver.Cli
 		target: target,
 		cc:     cc,
 	}
-	r.start()
+
+	if err := r.start(); err != nil {
+		return nil, err
+	}
 
 	return r, nil
 }
@@ -43,7 +47,7 @@ type talosListResolver struct {
 	cc     resolver.ClientConn
 }
 
-func (r *talosListResolver) start() {
+func (r *talosListResolver) start() error {
 	var addrs []resolver.Address // nolint: prealloc
 
 	for _, a := range strings.Split(r.target.Endpoint, ",") {
@@ -53,9 +57,29 @@ func (r *talosListResolver) start() {
 		})
 	}
 
-	r.cc.UpdateState(resolver.State{
-		Addresses: addrs,
+	// shuffle the list in case client does just one request
+	rand.Shuffle(len(addrs), func(i, j int) {
+		addrs[i], addrs[j] = addrs[j], addrs[i]
 	})
+
+	serviceConfigJSON := `{
+		"loadBalancingConfig": [{
+			"round_robin": {}
+		}]
+	}`
+
+	parsedServiceConfig := r.cc.ParseServiceConfig(serviceConfigJSON)
+
+	if parsedServiceConfig.Err != nil {
+		return parsedServiceConfig.Err
+	}
+
+	r.cc.UpdateState(resolver.State{
+		Addresses:     addrs,
+		ServiceConfig: parsedServiceConfig,
+	})
+
+	return nil
 }
 
 // ResolveNow implements resolver.Resolver.

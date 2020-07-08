@@ -9,6 +9,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/talos-systems/talos/api/machine"
@@ -22,6 +23,8 @@ type EventsSuite struct {
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
+
+	nodeCtx context.Context
 }
 
 // SuiteName ...
@@ -32,7 +35,13 @@ func (suite *EventsSuite) SuiteName() string {
 // SetupTest ...
 func (suite *EventsSuite) SetupTest() {
 	// make sure API calls have timeout
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
+
+	nodes := suite.DiscoverNodes()
+	suite.Require().NotEmpty(nodes)
+	node := nodes[rand.Intn(len(nodes))]
+
+	suite.nodeCtx = client.WithNodes(suite.ctx, node)
 }
 
 // TearDownTest ...
@@ -44,10 +53,7 @@ func (suite *EventsSuite) TearDownTest() {
 func (suite *EventsSuite) TestServiceEvents() {
 	const service = "timed" // any restartable service should work
 
-	ctx, ctxCancel := context.WithTimeout(suite.ctx, 30*time.Second)
-	defer ctxCancel()
-
-	svcInfo, err := suite.Client.ServiceInfo(ctx, service)
+	svcInfo, err := suite.Client.ServiceInfo(suite.nodeCtx, service)
 	suite.Require().NoError(err)
 
 	if len(svcInfo) == 0 { // service is not registered (e.g. docker)
@@ -73,8 +79,8 @@ func (suite *EventsSuite) TestServiceEvents() {
 	}
 
 	go func() {
-		suite.Assert().NoError(suite.Client.EventsWatch(ctx, func(ch <-chan client.Event) {
-			defer ctxCancel()
+		suite.Assert().NoError(suite.Client.EventsWatch(suite.nodeCtx, func(ch <-chan client.Event) {
+			defer suite.ctxCancel()
 
 			for event := range ch {
 				if msg, ok := event.Payload.(*machine.ServiceStateEvent); ok && msg.GetService() == service {
@@ -91,23 +97,20 @@ func (suite *EventsSuite) TestServiceEvents() {
 	// wait for event watcher to start
 	time.Sleep(200 * time.Millisecond)
 
-	_, err = suite.Client.ServiceRestart(ctx, service)
+	_, err = suite.Client.ServiceRestart(suite.nodeCtx, service)
 	suite.Assert().NoError(err)
 
-	<-ctx.Done()
+	<-suite.ctx.Done()
 
 	suite.Require().NoError(checkExpectedActions())
 }
 
 // TestEventsWatch verifies events watch API.
 func (suite *EventsSuite) TestEventsWatch() {
-	ctx, ctxCancel := context.WithTimeout(suite.ctx, 30*time.Second)
-	defer ctxCancel()
-
 	receiveEvents := func(opts ...client.EventsOptionFunc) []client.Event {
 		result := []client.Event{}
 
-		watchCtx, watchCtxCancel := context.WithCancel(ctx)
+		watchCtx, watchCtxCancel := context.WithCancel(suite.nodeCtx)
 		defer watchCtxCancel()
 
 		suite.Assert().NoError(suite.Client.EventsWatch(watchCtx, func(ch <-chan client.Event) {

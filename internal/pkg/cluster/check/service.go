@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -26,58 +28,42 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 		return err
 	}
 
-	var node string
+	// by default, we check all control plane nodes. if some nodes don't have that service running,
+	// it won't be returned in the response
+	nodes := append(cluster.NodesByType(runtime.MachineTypeInit), cluster.NodesByType(runtime.MachineTypeControlPlane)...)
+	nodesCtx := client.WithNodes(ctx, nodes...)
 
-	switch {
-	case len(cluster.NodesByType(runtime.MachineTypeInit)) > 0:
-		nodes := cluster.NodesByType(runtime.MachineTypeInit)
-		if len(nodes) != 1 {
-			return fmt.Errorf("expected 1 init node, got %d", len(nodes))
-		}
-
-		node = nodes[0]
-	case len(cluster.NodesByType(runtime.MachineTypeControlPlane)) > 0:
-		nodes := cluster.NodesByType(runtime.MachineTypeControlPlane)
-
-		sort.Strings(nodes)
-
-		node = nodes[0]
-	default:
-		return fmt.Errorf("no bootstrap node found")
-	}
-
-	nodeCtx := client.WithNodes(ctx, node)
-
-	servicesInfo, err := cli.ServiceInfo(nodeCtx, service)
+	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
 	if err != nil {
 		return err
 	}
 
-	serviceOk := false
+	if len(servicesInfo) == 0 {
+		return ErrServiceNotFound
+	}
 
 	acceptedStates := map[string]struct{}{}
 	for _, state := range states {
 		acceptedStates[state] = struct{}{}
 	}
 
+	var multiErr *multierror.Error
+
 	for _, serviceInfo := range servicesInfo {
+		node := serviceInfo.Metadata.GetHostname()
+
 		if len(serviceInfo.Service.Events.Events) == 0 {
-			return fmt.Errorf("no events recorded yet for service %q", service)
+			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: no events recorded yet for service %q", node, service))
+			continue
 		}
 
 		lastEvent := serviceInfo.Service.Events.Events[len(serviceInfo.Service.Events.Events)-1]
 		if _, ok := acceptedStates[lastEvent.State]; !ok {
-			return fmt.Errorf("service %q not in expected state %q: current state [%s] %s", service, states, lastEvent.State, lastEvent.Msg)
+			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: service %q not in expected state %q: current state [%s] %s", node, service, states, lastEvent.State, lastEvent.Msg))
 		}
-
-		serviceOk = true
 	}
 
-	if !serviceOk {
-		return ErrServiceNotFound
-	}
-
-	return nil
+	return multiErr.ErrorOrNil()
 }
 
 // ServiceHealthAssertion checks whether service reached some specified state.
@@ -119,20 +105,32 @@ func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service st
 		return fmt.Errorf("expected a response with %d node(s), got %d", count, len(servicesInfo))
 	}
 
+	var multiErr *multierror.Error
+
+	// sort service info list so that errors returned are consistent
+	sort.Slice(servicesInfo, func(i, j int) bool {
+		return servicesInfo[i].Metadata.GetHostname() < servicesInfo[j].Metadata.GetHostname()
+	})
+
 	for _, serviceInfo := range servicesInfo {
+		node := serviceInfo.Metadata.GetHostname()
+
 		if len(serviceInfo.Service.Events.Events) == 0 {
-			return fmt.Errorf("no events recorded yet for service %q", service)
+			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: no events recorded yet for service %q", node, service))
+			continue
 		}
 
 		lastEvent := serviceInfo.Service.Events.Events[len(serviceInfo.Service.Events.Events)-1]
 		if lastEvent.State != "Running" {
-			return fmt.Errorf("service %q not in expected state %q: current state [%s] %s", service, "Running", lastEvent.State, lastEvent.Msg)
+			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: service %q not in expected state %q: current state [%s] %s", node, service, "Running", lastEvent.State, lastEvent.Msg))
+			continue
 		}
 
 		if !serviceInfo.Service.GetHealth().GetHealthy() {
-			return fmt.Errorf("service is not healthy: %s", service)
+			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: service is not healthy: %s", node, service))
+			continue
 		}
 	}
 
-	return nil
+	return multiErr.ErrorOrNil()
 }
