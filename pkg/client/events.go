@@ -73,6 +73,10 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 		return fmt.Errorf("error fetching events: %s", err)
 	}
 
+	if err = stream.CloseSend(); err != nil {
+		return err
+	}
+
 	defaultNode := RemotePeer(stream.Context())
 
 	var wg sync.WaitGroup

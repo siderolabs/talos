@@ -12,6 +12,7 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"time"
 
 	"github.com/talos-systems/talos/api/common"
@@ -26,6 +27,8 @@ type LogsSuite struct {
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
+
+	nodeCtx context.Context
 }
 
 // SuiteName ...
@@ -37,6 +40,12 @@ func (suite *LogsSuite) SuiteName() string {
 func (suite *LogsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
+
+	nodes := suite.DiscoverNodes()
+	suite.Require().NotEmpty(nodes)
+	node := nodes[rand.Intn(len(nodes))]
+
+	suite.nodeCtx = client.WithNodes(suite.ctx, node)
 }
 
 // TearDownTest ...
@@ -46,7 +55,7 @@ func (suite *LogsSuite) TearDownTest() {
 
 // TestServicesHaveLogs verifies that each service has logs.
 func (suite *LogsSuite) TestServicesHaveLogs() {
-	servicesReply, err := suite.Client.ServiceList(suite.ctx)
+	servicesReply, err := suite.Client.ServiceList(suite.nodeCtx)
 	suite.Require().NoError(err)
 
 	suite.Require().Len(servicesReply.Messages, 1)
@@ -55,7 +64,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 
 	for _, svc := range servicesReply.Messages[0].Services {
 		logsStream, err := suite.Client.Logs(
-			suite.ctx,
+			suite.nodeCtx,
 			constants.SystemContainerdNamespace,
 			common.ContainerDriver_CONTAINERD,
 			svc.Id,
@@ -84,13 +93,13 @@ func (suite *LogsSuite) TestTail() {
 	// invoke machined enough times to generate
 	// some logs
 	for i := 0; i < 20; i++ {
-		_, err := suite.Client.Version(suite.ctx)
+		_, err := suite.Client.Version(suite.nodeCtx)
 		suite.Require().NoError(err)
 	}
 
 	for _, tailLines := range []int32{0, 1, 10} {
 		logsStream, err := suite.Client.Logs(
-			suite.ctx,
+			suite.nodeCtx,
 			constants.SystemContainerdNamespace,
 			common.ContainerDriver_CONTAINERD,
 			"apid",
@@ -122,7 +131,7 @@ func (suite *LogsSuite) TestTail() {
 // TestServiceNotFound verifies error if service name is not found.
 func (suite *LogsSuite) TestServiceNotFound() {
 	logsStream, err := suite.Client.Logs(
-		suite.ctx,
+		suite.nodeCtx,
 		constants.SystemContainerdNamespace,
 		common.ContainerDriver_CONTAINERD,
 		"nosuchservice",
@@ -133,10 +142,10 @@ func (suite *LogsSuite) TestServiceNotFound() {
 
 	suite.Require().NoError(logsStream.CloseSend())
 
-	_, err = logsStream.Recv()
-	suite.Require().Error(err)
+	msg, err := logsStream.Recv()
+	suite.Require().NoError(err)
 
-	suite.Require().Regexp(`.+log "nosuchservice" was not registered$`, err.Error())
+	suite.Require().Regexp(`.+log "nosuchservice" was not registered$`, msg.Metadata.Error)
 }
 
 // TestStreaming verifies that logs are streamed in real-time.
@@ -159,13 +168,13 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		// invoke osd enough times to generate
 		// some logs
 		for i := int32(0); i < tailLines; i++ {
-			_, err := suite.Client.Stats(suite.ctx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
+			_, err := suite.Client.Stats(suite.nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
 			suite.Require().NoError(err)
 		}
 	}
 
 	logsStream, err := suite.Client.Logs(
-		suite.ctx,
+		suite.nodeCtx,
 		constants.SystemContainerdNamespace,
 		common.ContainerDriver_CONTAINERD,
 		"osd",
@@ -221,7 +230,7 @@ DrainLoop:
 	}
 
 	// invoke osd API
-	_, err = suite.Client.Stats(suite.ctx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
+	_, err = suite.Client.Stats(suite.nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
 	suite.Require().NoError(err)
 
 	// there should be a line in the logs

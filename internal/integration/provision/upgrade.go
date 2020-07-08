@@ -245,7 +245,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		StateDirectory: suite.stateDir,
 	}
 
-	defaultInternalLB, defaultExternalLB := suite.provisioner.GetLoadBalancers(request.Network)
+	defaultInternalLB, _ := suite.provisioner.GetLoadBalancers(request.Network)
 
 	genOptions := suite.provisioner.GenOptions(request.Network)
 
@@ -256,6 +256,11 @@ func (suite *UpgradeSuite) setupCluster() {
 		genOptions = append(genOptions, generate.WithRegistryMirror(parts[0], parts[1]))
 	}
 
+	masterEndpoints := make([]string, suite.spec.MasterNodes)
+	for i := range masterEndpoints {
+		masterEndpoints[i] = ips[i].String()
+	}
+
 	suite.configBundle, err = config.NewConfigBundle(config.WithInputOptions(
 		&config.InputOptions{
 			ClusterName: clusterName,
@@ -263,7 +268,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			KubeVersion: "", // keep empty so that default version is used per Talos version
 			GenOptions: append(
 				genOptions,
-				generate.WithEndpointList([]string{defaultExternalLB}),
+				generate.WithEndpointList(masterEndpoints),
 				generate.WithInstallImage(suite.spec.SourceInstallerImage),
 			),
 		}))

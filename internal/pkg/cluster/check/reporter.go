@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 )
@@ -21,7 +22,7 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 	line := fmt.Sprintf("waiting for %s", condition)
 
 	if line != wr.lastLine {
-		fmt.Fprintln(wr.w, line)
+		fmt.Fprintln(wr.w, strings.TrimSpace(line))
 		wr.lastLine = line
 	}
 }

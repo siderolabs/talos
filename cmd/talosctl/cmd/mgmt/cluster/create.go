@@ -202,7 +202,7 @@ func create(ctx context.Context) (err error) {
 			}))
 		}
 
-		defaultInternalLB, defaultExternalLB := provisioner.GetLoadBalancers(request.Network)
+		defaultInternalLB, _ := provisioner.GetLoadBalancers(request.Network)
 
 		if defaultInternalLB == "" {
 			// provisioner doesn't provide internal LB, so use first master node
@@ -218,7 +218,10 @@ func create(ctx context.Context) (err error) {
 		case forceInitNodeAsEndpoint:
 			endpointList = []string{ips[0].String()}
 		default:
-			endpointList = []string{defaultExternalLB}
+			// use control plane nodes as endpoints, client-side load-balancing
+			for i := 0; i < masters; i++ {
+				endpointList = append(endpointList, ips[i].String())
+			}
 		}
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
