@@ -13,7 +13,7 @@ In this guide we will create a Kubernetes cluster using Firecracker.
   - `CONFIG_NET_SCH_INGRESS` enabled
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
 - [firecracker](https://github.com/firecracker-microvm/firecracker/releases) (v0.21.0 or higher)
-- `bridge`, and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [Firecracker Go SDK](https://github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni) installed to `/opt/cni/bin`
+- `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin`
 - iptables
 - `/etc/cni/conf.d` directory should exist
 - `/var/run/netns` directory should exist
@@ -75,13 +75,23 @@ sudo cp cni-plugins-linux/{bridge,firewall,static} /opt/cni/bin
 
 ### Install tc-redirect-tap CNI plugin
 
-You should install CNI plugin from the Firecracker Go SDK repository [github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni](https://github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni)
+You should install CNI plugin from the `tc-redirect-tap` repository [github.com/awslabs/tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap)
 
 ```bash
-go get -d github.com/firecracker-microvm/firecracker-go-sdk
-cd $GOPATH/src/github.com/firecracker-microvm/firecracker-go-sdk/cni
+go get -d github.com/awslabs/tc-redirect-tap/cmd/tc-redirect-tap
+cd $GOPATH/src/github.com/awslabs/tc-redirect-tap
 make all
 sudo cp tc-redirect-tap /opt/cni/bin
+```
+
+> Note: if `$GOPATH` is not set, it defaults to `~/go`.
+
+## Build Talos kernel and initramfs
+
+Firecracker provisioner depends on Talos kernel and initramfs:
+
+```bash
+make kernel initramfs
 ```
 
 ## Create the Cluster
