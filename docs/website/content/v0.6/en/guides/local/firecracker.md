@@ -13,7 +13,7 @@ In this guide we will create a Kubernetes cluster using Firecracker.
   - `CONFIG_NET_SCH_INGRESS` enabled
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
 - [firecracker](https://github.com/firecracker-microvm/firecracker/releases) (v0.21.0 or higher)
-- `bridge`, and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [Firecracker Go SDK](https://github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni) installed to `/opt/cni/bin`
+- `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin`
 - iptables
 - `/etc/cni/conf.d` directory should exist
 - `/var/run/netns` directory should exist
@@ -46,10 +46,10 @@ You can download `talosctl` and all required binaries via
 curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v0.4.1` for `linux` platform:
+For example version `v0.6.0` for `linux` platform:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/v0.4.1/talosctl-linux-amd64 -L -o talosctl
+curl https://github.com/talos-systems/talos/releases/download/v0.6.0/talosctl-linux-amd64 -L -o talosctl
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
@@ -75,13 +75,33 @@ sudo cp cni-plugins-linux/{bridge,firewall,static} /opt/cni/bin
 
 ### Install tc-redirect-tap CNI plugin
 
-You should install CNI plugin from the Firecracker Go SDK repository [github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni](https://github.com/firecracker-microvm/firecracker-go-sdk/tree/master/cni)
+You should install CNI plugin from the `tc-redirect-tap` repository [github.com/awslabs/tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap)
 
 ```bash
-go get -d github.com/firecracker-microvm/firecracker-go-sdk
-cd $GOPATH/src/github.com/firecracker-microvm/firecracker-go-sdk/cni
+go get -d github.com/awslabs/tc-redirect-tap/cmd/tc-redirect-tap
+cd $GOPATH/src/github.com/awslabs/tc-redirect-tap
 make all
 sudo cp tc-redirect-tap /opt/cni/bin
+```
+
+> Note: if `$GOPATH` is not set, it defaults to `~/go`.
+
+## Install Talos kernel and initramfs
+
+Firecracker provisioner depends on Talos uncompressed kernel (`vmlinux`) and initramfs (`initramfs.xz`).
+These files can be downloaded from the Talos release:
+
+```bash
+mkdir -p _out/
+curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinux -L -o _out/vmlinux
+curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs.xz -L -o _out/initramfs.xz
+```
+
+For example version `v0.6.0`:
+
+```bash
+curl https://github.com/talos-systems/talos/releases/download/v0.6.0/vmlinux -L -o _out/vmlinux
+curl https://github.com/talos-systems/talos/releases/download/v0.6.0/initramfs.xz -L -o _out/initramfs.xz
 ```
 
 ## Create the Cluster
