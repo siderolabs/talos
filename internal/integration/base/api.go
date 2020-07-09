@@ -110,7 +110,7 @@ func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
 	clusterAccess := access.NewAdapter(apiSuite.Cluster, provision.WithTalosClient(apiSuite.Client))
 	defer clusterAccess.Close() //nolint: errcheck
 
-	apiSuite.Require().NoError(check.Wait(ctx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
+	apiSuite.Require().NoError(check.Wait(ctx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter()))
 }
 
 // ReadUptime reads node uptime.

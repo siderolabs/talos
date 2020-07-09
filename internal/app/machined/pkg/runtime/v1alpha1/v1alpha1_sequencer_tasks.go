@@ -1080,6 +1080,8 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) runtime
 
 // CordonAndDrainNode represents the task for stop all containerd tasks in the
 // k8s.io namespace.
+//
+//nolint: dupl
 func CordonAndDrainNode(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var hostname string
@@ -1095,6 +1097,33 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) runtime.TaskExec
 		}
 
 		if err = kubeHelper.CordonAndDrain(hostname); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+// UncordonNode represents the task for mark node as scheduling enabled.
+//
+// This action undoes the CordonAndDrainNode task.
+//
+//nolint: dupl
+func UncordonNode(seq runtime.Sequence, data interface{}) runtime.TaskExecutionFunc {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		var hostname string
+
+		if hostname, err = os.Hostname(); err != nil {
+			return err
+		}
+
+		var kubeHelper *kubernetes.Client
+
+		if kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig(); err != nil {
+			return err
+		}
+
+		if err = kubeHelper.Uncordon(hostname); err != nil {
 			return err
 		}
 

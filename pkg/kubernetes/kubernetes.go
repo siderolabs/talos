@@ -211,6 +211,11 @@ func (h *Client) CordonAndDrain(node string) (err error) {
 	return h.Drain(node)
 }
 
+const (
+	talosCordonedAnnotationName  = "talos.dev/cordoned"
+	talosCordonedAnnotationValue = "true"
+)
+
 // Cordon marks a node as unschedulable.
 func (h *Client) Cordon(name string) error {
 	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
@@ -223,6 +228,7 @@ func (h *Client) Cordon(name string) error {
 			return nil
 		}
 
+		node.ObjectMeta.Annotations[talosCordonedAnnotationName] = talosCordonedAnnotationValue
 		node.Spec.Unschedulable = true
 
 		if _, err := h.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
@@ -246,8 +252,15 @@ func (h *Client) Uncordon(name string) error {
 			return retry.UnexpectedError(err)
 		}
 
+		if node.ObjectMeta.Annotations[talosCordonedAnnotationName] != talosCordonedAnnotationValue {
+			// not cordoned by Talos, skip it
+			return nil
+		}
+
 		if node.Spec.Unschedulable {
 			node.Spec.Unschedulable = false
+			delete(node.ObjectMeta.Annotations, talosCordonedAnnotationName)
+
 			if _, err := h.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
 				return retry.ExpectedError(err)
 			}

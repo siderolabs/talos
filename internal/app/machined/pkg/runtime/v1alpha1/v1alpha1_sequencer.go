@@ -174,6 +174,8 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).AppendWhen(
 		r.Config().Machine().Type() != runtime.MachineTypeJoin,
 		LabelNodeAsMaster,
+	).Append(
+		UncordonNode,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		UpdateBootloader,

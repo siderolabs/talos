@@ -181,6 +181,34 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider)
 	return fmt.Errorf("some nodes are not ready: %v", notReadyNodes)
 }
 
+// K8sAllNodesSchedulableAssertion checks whether all the nodes are schedulable (not cordoned).
+func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sProvider) error {
+	clientset, err := cluster.K8sClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	var notSchedulableNodes []string
+
+	for _, node := range nodes.Items {
+		if node.Spec.Unschedulable {
+			notSchedulableNodes = append(notSchedulableNodes, node.Name)
+			break
+		}
+	}
+
+	if len(notSchedulableNodes) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("some nodes are not schedulable: %v", notSchedulableNodes)
+}
+
 // K8sPodReadyAssertion checks whether all the pods are Ready.
 func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
