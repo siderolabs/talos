@@ -37,6 +37,7 @@ func TestPhaseList_Append(t *testing.T) {
 	t.Skip("temporarily disabling until reflect.DeepEqual responds as expected")
 
 	type args struct {
+		name  string
 		tasks []runtime.TaskSetupFunc
 	}
 
@@ -50,15 +51,16 @@ func TestPhaseList_Append(t *testing.T) {
 			name: "test",
 			p:    PhaseList{},
 			args: args{
+				name:  "mount",
 				tasks: []runtime.TaskSetupFunc{MountBootPartition},
 			},
-			want: PhaseList{[]runtime.TaskSetupFunc{MountBootPartition}},
+			want: PhaseList{runtime.Phase{Name: "mount", Tasks: []runtime.TaskSetupFunc{MountBootPartition}}},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.p = tt.p.Append(tt.args.tasks...); !reflect.DeepEqual(tt.p, tt.want) {
+			if tt.p = tt.p.Append(tt.args.name, tt.args.tasks...); !reflect.DeepEqual(tt.p, tt.want) {
 				t.Errorf("PhaseList.Append() = %v, want %v", tt.p, tt.want)
 			}
 		})
@@ -70,6 +72,7 @@ func TestPhaseList_AppendWhen(t *testing.T) {
 
 	type args struct {
 		when  bool
+		name  string
 		tasks []runtime.TaskSetupFunc
 	}
 
@@ -84,9 +87,10 @@ func TestPhaseList_AppendWhen(t *testing.T) {
 			p:    PhaseList{},
 			args: args{
 				when:  true,
+				name:  "mount",
 				tasks: []runtime.TaskSetupFunc{MountBootPartition},
 			},
-			want: PhaseList{[]runtime.TaskSetupFunc{MountBootPartition}},
+			want: PhaseList{runtime.Phase{Name: "mount", Tasks: []runtime.TaskSetupFunc{MountBootPartition}}},
 		},
 		{
 			name: "false",
@@ -101,7 +105,7 @@ func TestPhaseList_AppendWhen(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.p = tt.p.AppendWhen(tt.args.when, tt.args.tasks...); !reflect.DeepEqual(tt.p, tt.want) {
+			if tt.p = tt.p.AppendWhen(tt.args.when, tt.args.name, tt.args.tasks...); !reflect.DeepEqual(tt.p, tt.want) {
 				t.Errorf("PhaseList.AppendWhen() = %v, want %v", tt.p, tt.want)
 			}
 		})

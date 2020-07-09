@@ -243,13 +243,13 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 
 		progress := fmt.Sprintf("%d/%d", number, len(phases))
 
-		log.Printf("phase %s: %d tasks(s)", progress, len(phase))
+		log.Printf("phase %s (%s): %d tasks(s)", phase.Name, progress, len(phase.Tasks))
 
 		if err = c.runPhase(phase, seq, data); err != nil {
 			return fmt.Errorf("error running phase %d in %s sequence: %w", number, seq.String(), err)
 		}
 
-		log.Printf("phase %s: done, %s", progress, time.Since(start))
+		log.Printf("phase %s (%s): done, %s", phase.Name, progress, time.Since(start))
 	}
 
 	return nil
@@ -257,16 +257,18 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 
 func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data interface{}) error {
 	c.Runtime().Events().Publish(&machine.PhaseEvent{
+		Phase:  phase.Name,
 		Action: machine.PhaseEvent_START,
 	})
 
 	defer c.Runtime().Events().Publish(&machine.PhaseEvent{
+		Phase:  phase.Name,
 		Action: machine.PhaseEvent_START,
 	})
 
 	var eg errgroup.Group
 
-	for number, task := range phase {
+	for number, task := range phase.Tasks {
 		// Make the task number human friendly.
 		number := number
 
@@ -275,17 +277,9 @@ func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data in
 		task := task
 
 		eg.Go(func() error {
-			start := time.Now()
+			progress := fmt.Sprintf("%d/%d", number, len(phase.Tasks))
 
-			progress := fmt.Sprintf("%d/%d", number, len(phase))
-
-			log.Printf("task %s: starting", progress)
-
-			defer func() {
-				log.Printf("task %s: done, %s", progress, time.Since(start))
-			}()
-
-			if err := c.runTask(number, task, seq, data); err != nil {
+			if err := c.runTask(progress, task, seq, data); err != nil {
 				return fmt.Errorf("task %s: failed, %w", progress, err)
 			}
 
@@ -296,12 +290,27 @@ func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data in
 	return eg.Wait()
 }
 
-func (c *Controller) runTask(n int, f runtime.TaskSetupFunc, seq runtime.Sequence, data interface{}) error {
+func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runtime.Sequence, data interface{}) error {
+	task, taskName := f(seq, data)
+	if task == nil {
+		return nil
+	}
+
+	start := time.Now()
+
 	c.Runtime().Events().Publish(&machine.TaskEvent{
+		Task:   taskName,
 		Action: machine.TaskEvent_START,
 	})
 
+	log.Printf("task %s (%s): starting", taskName, progress)
+
+	defer func() {
+		log.Printf("task %s (%s): done, %s", taskName, progress, time.Since(start))
+	}()
+
 	defer c.Runtime().Events().Publish(&machine.TaskEvent{
+		Task:   taskName,
 		Action: machine.TaskEvent_STOP,
 	})
 
@@ -314,15 +323,11 @@ func (c *Controller) runTask(n int, f runtime.TaskSetupFunc, seq runtime.Sequenc
 
 	defer machinedLog.Close() //nolint: errcheck
 
-	if err := kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %d:", n), machinedLog); err != nil {
+	if err := kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %s (%s):", taskName, progress), machinedLog); err != nil {
 		return err
 	}
 
-	if task := f(seq, data); task != nil {
-		return task(context.TODO(), logger, c.r)
-	}
-
-	return nil
+	return task(context.TODO(), logger, c.r)
 }
 
 // nolint: gocyclo

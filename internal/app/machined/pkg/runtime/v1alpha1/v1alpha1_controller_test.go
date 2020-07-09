@@ -7,6 +7,7 @@ package v1alpha1
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -322,7 +323,7 @@ func TestController_runTask(t *testing.T) {
 				s:         tt.fields.s,
 				semaphore: tt.fields.semaphore,
 			}
-			if err := c.runTask(tt.args.n, tt.args.f, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
+			if err := c.runTask(strconv.Itoa(tt.args.n), tt.args.f, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("Controller.runTask() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
