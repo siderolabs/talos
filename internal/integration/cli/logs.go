@@ -8,6 +8,7 @@ package cli
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strings"
 
@@ -31,12 +32,17 @@ func (suite *LogsSuite) TestServiceLogs() {
 
 // TestTailLogs verifies that logs can be displayed with tail lines.
 func (suite *LogsSuite) TestTailLogs() {
+	nodes := suite.DiscoverNodes()
+	suite.Require().NotEmpty(nodes)
+
+	node := nodes[rand.Intn(len(nodes))]
+
 	// run some machined API calls to produce enough log lines
 	for i := 0; i < 10; i++ {
-		suite.RunCLI([]string{"version"})
+		suite.RunCLI([]string{"-n", node, "version"})
 	}
 
-	suite.RunCLI([]string{"logs", "apid", "--tail", "5"},
+	suite.RunCLI([]string{"logs", "apid", "-n", node, "--tail", "5"},
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Count(stdout, "\n")
 			if lines != 5 {

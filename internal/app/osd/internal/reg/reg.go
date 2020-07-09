@@ -158,7 +158,11 @@ func (r *Registrator) Restart(ctx context.Context, in *osapi.RestartRequest) (*o
 		return nil, err
 	}
 
-	return &osapi.RestartResponse{}, nil
+	return &osapi.RestartResponse{
+		Messages: []*osapi.Restart{
+			{},
+		},
+	}, nil
 }
 
 // Dmesg implements the osapi.OSDServer interface.
