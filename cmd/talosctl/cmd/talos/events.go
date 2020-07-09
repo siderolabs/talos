@@ -75,6 +75,10 @@ var eventsCmd = &cobra.Command{
 						} else {
 							args = append(args, msg.GetAction().String())
 						}
+					case *machine.PhaseEvent:
+						args = []interface{}{msg.GetPhase(), msg.GetAction().String()}
+					case *machine.TaskEvent:
+						args = []interface{}{msg.GetTask(), msg.GetAction().String()}
 					case *machine.ServiceStateEvent:
 						args = []interface{}{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
 					default:

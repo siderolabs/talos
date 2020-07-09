@@ -11,14 +11,17 @@ import (
 
 // TaskSetupFunc defines the function that a task will execute for a specific runtime
 // mode.
-type TaskSetupFunc func(seq Sequence, data interface{}) TaskExecutionFunc
+type TaskSetupFunc func(seq Sequence, data interface{}) (TaskExecutionFunc, string)
 
 // TaskExecutionFunc defines the function that a task will execute for a specific runtime
 // mode.
 type TaskExecutionFunc func(context.Context, *log.Logger, Runtime) error
 
 // Phase represents a collection of tasks to be performed concurrently.
-type Phase []TaskSetupFunc
+type Phase struct {
+	Name  string
+	Tasks []TaskSetupFunc
+}
 
 // ControllerOptions represents the options for a controller.
 type ControllerOptions struct {
