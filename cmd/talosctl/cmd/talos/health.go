@@ -75,7 +75,7 @@ var healthCmd = &cobra.Command{
 			checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 			defer checkCtxCancel()
 
-			return check.Wait(checkCtx, &state, check.DefaultClusterChecks(), check.StderrReporter())
+			return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
 		})
 	},
 }

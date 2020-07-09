@@ -352,7 +352,7 @@ func create(ctx context.Context) (err error) {
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 	defer checkCtxCancel()
 
-	return check.Wait(checkCtx, clusterAccess, check.DefaultClusterChecks(), check.StderrReporter())
+	return check.Wait(checkCtx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
 }
 
 func saveConfig(cluster provision.Cluster, talosConfigObj *clientconfig.Config) (err error) {

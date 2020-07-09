@@ -75,3 +75,17 @@ func DefaultClusterChecks() []ClusterCheck {
 		},
 	}
 }
+
+// ExtraClusterChecks returns a set of additional Talos cluster readiness checks which work only for newer versions of Talos.
+//
+// ExtraClusterChecks can't be used reliably in upgrade tests, as older versions might not pass the checks.
+func ExtraClusterChecks() []ClusterCheck {
+	return []ClusterCheck{
+		// wait for all the nodes to be schedulable
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all k8s nodes to report schedulable", func(ctx context.Context) error {
+				return K8sAllNodesSchedulableAssertion(ctx, cluster)
+			}, 2*time.Minute, 5*time.Second)
+		},
+	}
+}
