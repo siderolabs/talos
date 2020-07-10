@@ -24,6 +24,7 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -38,6 +39,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/kubernetes"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
@@ -220,6 +222,31 @@ func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("expected HTTP status OK, got %s", resp.Status)
+		}
+
+		var hostname string
+
+		if hostname, err = os.Hostname(); err != nil {
+			return err
+		}
+
+		var kubeHelper *kubernetes.Client
+
+		if kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig(); err != nil {
+			return err
+		}
+
+		node, err := kubeHelper.CoreV1().Nodes().Get(ctx, hostname, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, cond := range node.Status.Conditions {
+			if cond.Type == corev1.NodeReady {
+				if cond.Status != corev1.ConditionTrue {
+					return fmt.Errorf("node not ready")
+				}
+			}
 		}
 
 		return nil
