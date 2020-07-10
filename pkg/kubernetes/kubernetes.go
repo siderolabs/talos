@@ -202,6 +202,29 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 	return nil
 }
 
+// WaitUntilReady waits for a node to be ready.
+func (h *Client) WaitUntilReady(name string) error {
+	return retry.Exponential(3*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
+		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 30*time.Second)
+		defer attemptCtxCancel()
+
+		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
+		if err != nil {
+			return retry.UnexpectedError(err)
+		}
+
+		for _, cond := range node.Status.Conditions {
+			if cond.Type == corev1.NodeReady {
+				if cond.Status != corev1.ConditionTrue {
+					return retry.ExpectedError(fmt.Errorf("node not ready"))
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 // CordonAndDrain cordons and drains a node in one call.
 func (h *Client) CordonAndDrain(node string) (err error) {
 	if err = h.Cordon(node); err != nil {
@@ -247,7 +270,10 @@ func (h *Client) Cordon(name string) error {
 // Uncordon marks a node as schedulable.
 func (h *Client) Uncordon(name string) error {
 	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		node, err := h.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 10*time.Second)
+		defer attemptCtxCancel()
+
+		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}
@@ -261,7 +287,7 @@ func (h *Client) Uncordon(name string) error {
 			node.Spec.Unschedulable = false
 			delete(node.ObjectMeta.Annotations, talosCordonedAnnotationName)
 
-			if _, err := h.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
+			if _, err := h.CoreV1().Nodes().Update(attemptCtx, node, metav1.UpdateOptions{}); err != nil {
 				return retry.ExpectedError(err)
 			}
 		}
