@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
@@ -35,9 +37,11 @@ func (suite *KubeconfigSuite) TestDirectory() {
 	suite.RunCLI([]string{"kubeconfig", tempDir},
 		base.StdoutEmpty())
 
-	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
+	path := filepath.Join(tempDir, "kubeconfig")
+	suite.Require().FileExists(path)
 
-	// TODO: launch kubectl with config to verify it
+	_, err := clientcmd.LoadFromFile(path)
+	suite.Require().NoError(err)
 }
 
 // TestCwd generates kubeconfig in cwd.
@@ -67,6 +71,26 @@ func (suite *KubeconfigSuite) TestMultiNodeFail() {
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`is not supported with multiple nodes`)))
+}
+
+// TestMerge test merge config into existing kubeconfig
+func (suite *KubeconfigSuite) TestMerge() {
+	tempDir, err := ioutil.TempDir("", "talos")
+	suite.Require().NoError(err)
+
+	defer os.RemoveAll(tempDir) //nolint: errcheck
+
+	path := filepath.Join(tempDir, "config")
+
+	suite.RunCLI([]string{"kubeconfig", path, "-m"},
+		base.StdoutEmpty())
+	suite.RunCLI([]string{"kubeconfig", path, "-m"},
+		base.StdoutEmpty())
+
+	config, err := clientcmd.LoadFromFile(path)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal(len(config.Contexts), 2)
 }
 
 func init() {

@@ -51,12 +51,13 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc90 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
+	github.com/particledecay/kconf v1.8.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.0.8
 	github.com/rs/xid v1.2.1
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/bootkube-plugin v0.0.0-20200610162424-78d7183391b6
@@ -67,12 +68,13 @@ require (
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728
 	go.etcd.io/etcd v3.3.13+incompatible
-	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
+	golang.org/x/tools v0.0.0-20200710042808-f1c4188a97a1 // indirect
 	google.golang.org/grpc v1.27.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
