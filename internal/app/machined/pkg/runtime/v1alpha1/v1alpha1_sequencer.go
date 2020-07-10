@@ -97,11 +97,8 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"unmountBoot",
 			UnmountBootPartition,
 		).Append(
-			"resetNetwork",
-			ResetNetwork,
-		).Append(
 			"setupNetwork",
-			SetupDiscoveryNetwork,
+			SetupNetwork,
 		)
 	}
 

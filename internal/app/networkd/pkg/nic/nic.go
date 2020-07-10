@@ -247,6 +247,10 @@ func (n *NetworkInterface) waitForLinkToBeUp(linkDev *net.Interface) error {
 			return retry.ExpectedError(fmt.Errorf("link is not ready %s", n.Link.Name))
 		}
 
+		if link.Attributes.OperationalState&rtnetlink.OperStateUp != rtnetlink.OperStateUp && link.Attributes.OperationalState&rtnetlink.OperStateUnknown != rtnetlink.OperStateUnknown {
+			return retry.ExpectedError(fmt.Errorf("link %q operational state is not up or unknown: %d", n.Link.Name, link.Attributes.OperationalState))
+		}
+
 		return nil
 	})
 

@@ -537,10 +537,10 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 	}, "validateConfig"
 }
 
-// ResetNetwork resets the network.
+// SetupNetwork resets the network and sets it up based on the configuration.
 //
 // nolint: gocyclo
-func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetupNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		nwd, err := networkd.New(r.Config())
 		if err != nil {
@@ -549,8 +549,8 @@ func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		nwd.Reset()
 
-		return nil
-	}, "resetNetwork"
+		return nwd.Configure()
+	}, "setupNetwork"
 }
 
 // SetUserEnvVars represents the SetUserEnvVars task.

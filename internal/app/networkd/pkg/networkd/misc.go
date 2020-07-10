@@ -11,21 +11,28 @@ import (
 	"log"
 	"net"
 	"strings"
+	"sync"
 	"text/template"
+	"time"
 
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/rtnl"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	talosnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/retry"
 )
 
-// filterInterfaces filters network links by name so we only mange links
+// filterInterfaces filters network links by name so we only manage links
 // we need to.
 //
 // nolint: gocyclo
 func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err error) {
-	var conn *rtnetlink.Conn
+	var (
+		conn     *rtnetlink.Conn
+		rtnlConn *rtnl.Conn
+	)
 
 	for _, iface := range interfaces {
 		switch {
@@ -48,27 +55,76 @@ func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err
 	// nolint: errcheck
 	defer conn.Close()
 
-	n := 0 // nolint: wsl
-	for _, iface := range filtered {
-		link, err := conn.Link.Get(uint32(iface.Index))
-		if err != nil {
-			log.Printf("error getting link %q", iface.Name)
+	rtnlConn = &rtnl.Conn{Conn: conn}
 
-			continue
+	var wg sync.WaitGroup
+
+	filteredCh := make(chan net.Interface)
+
+	for _, iface := range filtered {
+		iface := iface
+
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			if err := checkCarrier(conn, rtnlConn, iface); err != nil {
+				log.Printf("%s", err)
+			} else {
+				log.Printf("link %q has carrier signal", iface.Name)
+
+				filteredCh <- iface
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(filteredCh)
+	}()
+
+	filtered = filtered[:0]
+
+	for iface := range filteredCh {
+		filtered = append(filtered, iface)
+	}
+
+	return filtered, nil
+}
+
+func checkCarrier(conn *rtnetlink.Conn, rtnlConn *rtnl.Conn, iface net.Interface) error {
+	link, err := conn.Link.Get(uint32(iface.Index))
+	if err != nil {
+		return fmt.Errorf("error getting link %q: %w", iface.Name, err)
+	}
+
+	if link.Flags&unix.IFF_UP != unix.IFF_UP {
+		if err = rtnlConn.LinkUp(&iface); err != nil {
+			return fmt.Errorf("error bringing up link %q up: %s", iface.Name, err)
 		}
 
-		if link.Flags&unix.IFF_UP == unix.IFF_UP && !(link.Flags&unix.IFF_RUNNING == unix.IFF_RUNNING) {
-			log.Printf("no carrier for link %q", iface.Name)
-		} else {
-			log.Printf("link %q has carrier signal", iface.Name)
-			filtered[n] = iface
-			n++
+		if err = retry.Constant(10*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
+			link, err = conn.Link.Get(uint32(iface.Index))
+			if err != nil {
+				return retry.UnexpectedError(err)
+			}
+
+			if link.Flags&unix.IFF_UP != unix.IFF_UP {
+				return retry.ExpectedError(fmt.Errorf("link is not up %s", iface.Name))
+			}
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error waiting for link %q to be up: %s", iface.Name, err)
 		}
 	}
 
-	filtered = filtered[:n]
+	if link.Attributes.OperationalState != rtnetlink.OperStateUp && link.Attributes.OperationalState != rtnetlink.OperStateUnknown {
+		return fmt.Errorf("no carrier for link %q", iface.Name)
+	}
 
-	return filtered, nil
+	return nil
 }
 
 // writeResolvConf generates a /etc/resolv.conf with the specified nameservers.
