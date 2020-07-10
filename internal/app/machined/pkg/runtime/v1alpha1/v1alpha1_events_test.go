@@ -79,6 +79,8 @@ func TestEvents_Publish(t *testing.T) {
 				if err := e.Watch(func(events <-chan runtime.Event) {
 					defer wg.Done()
 
+					l := rate.NewLimiter(500, tt.cap*8/10)
+
 					for j := 0; j < tt.messages; j++ {
 						event, ok := <-events
 
@@ -97,6 +99,8 @@ func TestEvents_Publish(t *testing.T) {
 						}
 
 						atomic.AddUint32(&got, 1)
+
+						_ = l.Wait(context.Background()) //nolint: errcheck
 					}
 				}); err != nil {
 					t.Errorf("Watch error %s", err)
