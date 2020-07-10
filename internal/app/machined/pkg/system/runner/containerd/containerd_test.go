@@ -179,6 +179,11 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		suite.Assert().NoError(r.Run(MockEventSink))
 		// calling stop when Run has finished is no-op
 		suite.Assert().NoError(r.Stop())
+
+		if i == 0 {
+			// wait a bit to let containerd clean up the state
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 }
 
