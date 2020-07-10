@@ -20,7 +20,6 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/mdlayher/netlink"
-	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/go-procfs/procfs"
@@ -239,12 +238,8 @@ func (n *NetworkInterface) waitForLinkToBeUp(linkDev *net.Interface) error {
 			return retry.UnexpectedError(err)
 		}
 
-		if link.Flags&unix.IFF_UP != unix.IFF_UP {
+		if link.Attributes.OperationalState != rtnetlink.OperStateUp && link.Attributes.OperationalState != rtnetlink.OperStateUnknown {
 			return retry.ExpectedError(fmt.Errorf("link is not up %s", n.Link.Name))
-		}
-
-		if link.Flags&unix.IFF_RUNNING != unix.IFF_RUNNING {
-			return retry.ExpectedError(fmt.Errorf("link is not ready %s", n.Link.Name))
 		}
 
 		return nil
