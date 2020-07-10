@@ -7,6 +7,7 @@ Download the admin kubeconfig from the node
 
 Download the admin kubeconfig from the node.
 Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.
+If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.
 
 ```
 talosctl kubeconfig [local-path] [flags]
@@ -17,6 +18,7 @@ talosctl kubeconfig [local-path] [flags]
 ```
   -f, --force   Force overwrite of kubeconfig if already present
   -h, --help    help for kubeconfig
+  -m, --merge   Merge with existing kubeconfig
 ```
 
 ### Options inherited from parent commands
