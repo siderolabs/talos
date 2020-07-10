@@ -39,6 +39,7 @@ function create_cluster {
     --cidr 172.20.0.0/24 \
     --install-image ${REGISTRY:-docker.io}/autonomy/installer:${INSTALLER_TAG} \
     --with-init-node=false \
+    --crashdump \
     ${FIRECRACKER_FLAGS} \
     ${CUSTOM_CNI_FLAG}
 }

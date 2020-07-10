@@ -64,6 +64,7 @@ var (
 	ports                   string
 	withInitNode            bool
 	customCNIUrl            string
+	crashdumpOnFailure      bool
 )
 
 // createCmd represents the cluster up command.
@@ -300,6 +301,18 @@ func create(ctx context.Context) (err error) {
 	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
 	defer clusterAccess.Close() //nolint: errcheck
 
+	if err = postCreate(ctx, clusterAccess); err != nil {
+		if crashdumpOnFailure {
+			provisioner.CrashDump(ctx, cluster, os.Stderr)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 	if !withInitNode {
 		cli, err := clusterAccess.Client()
 		if err != nil {
@@ -426,5 +439,6 @@ func init() {
 	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", true, "create the cluster with an init node")
 	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
 	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
+	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
 	Cmd.AddCommand(createCmd)
 }
