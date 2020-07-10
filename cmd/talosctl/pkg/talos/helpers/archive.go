@@ -9,11 +9,50 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/talos-systems/talos/pkg/safepath"
 )
+
+// ExtractFileFromTarGz reads a single file data from an archive.
+func ExtractFileFromTarGz(filename string, r io.ReadCloser) ([]byte, error) {
+	defer r.Close() //nolint:errcheck
+
+	zr, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing gzip: %w", err)
+	}
+
+	tr := tar.NewReader(zr)
+
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+
+		hdrPath := safepath.CleanPath(hdr.Name)
+		if hdrPath == "" {
+			return nil, fmt.Errorf("empty tar header path")
+		}
+
+		if hdrPath == filename {
+			if hdr.Typeflag == tar.TypeDir || hdr.Typeflag == tar.TypeSymlink {
+				return nil, fmt.Errorf("%s is not a file", filename)
+			}
+
+			return ioutil.ReadAll(tr)
+		}
+	}
+
+	return nil, fmt.Errorf("couldn't find file %s in the archive", filename)
+}
 
 // ExtractTarGz extracts .tar.gz archive from r into filesystem under localPath.
 //

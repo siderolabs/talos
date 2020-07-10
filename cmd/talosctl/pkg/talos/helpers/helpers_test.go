@@ -4,11 +4,37 @@
 
 package helpers_test
 
-import "testing"
+import (
+	"os"
+	"testing"
 
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
+	yaml "gopkg.in/yaml.v2"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
+)
+
+type cfg struct {
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+}
+
+func TestExtractFileFromTarGz(t *testing.T) {
+	file, err := os.Open("./testdata/archive.tar.gz")
+	assert.NoError(t, err)
+
+	data, err := helpers.ExtractFileFromTarGz("kubeconfig", file)
+	assert.NoError(t, err)
+
+	// just some primitive sanity check that yaml file inside was not corrupted somehow
+	var c cfg
+	err = yaml.Unmarshal(data, &c)
+	assert.NoError(t, err)
+
+	assert.Equal(t, c.APIVersion, "v1")
+	assert.Equal(t, c.Kind, "Config")
+
+	_, err = helpers.ExtractFileFromTarGz("void", file)
+	assert.Error(t, err)
 }
