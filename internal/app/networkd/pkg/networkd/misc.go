@@ -14,13 +14,12 @@ import (
 	"text/template"
 
 	"github.com/jsimonetti/rtnetlink"
-	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
-// filterInterfaces filters network links by name so we only mange links
+// filterInterfaces filters network links by name so we only manage links
 // we need to.
 //
 // nolint: gocyclo
@@ -57,7 +56,7 @@ func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err
 			continue
 		}
 
-		if link.Flags&unix.IFF_UP == unix.IFF_UP && !(link.Flags&unix.IFF_RUNNING == unix.IFF_RUNNING) {
+		if link.Attributes.OperationalState != rtnetlink.OperStateUp && link.Attributes.OperationalState != rtnetlink.OperStateUnknown {
 			log.Printf("no carrier for link %q", iface.Name)
 		} else {
 			log.Printf("link %q has carrier signal", iface.Name)
