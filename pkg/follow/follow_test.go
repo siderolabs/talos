@@ -59,15 +59,20 @@ func (suite *FollowSuite) TearDownSuite() {
 	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
-func (suite *FollowSuite) readAll(ctx context.Context, expectedError string) <-chan []byte {
+//nolint: unparam
+func (suite *FollowSuite) readAll(ctx context.Context, expectedError string, sizeHint int, timeout time.Duration) <-chan []byte {
 	combinedCh := make(chan []byte)
 
+	ctx, ctxCancel := context.WithTimeout(ctx, timeout)
 	suite.r = follow.NewReader(ctx, suite.reader)
 
 	go func() {
+		defer ctxCancel()
 		defer suite.r.Close() //nolint: errcheck
 
-		contents, err := ioutil.ReadAll(suite.r)
+		contents := make([]byte, sizeHint)
+
+		n, err := io.ReadFull(suite.r, contents)
 
 		if expectedError == "" {
 			suite.Assert().NoError(err)
@@ -75,24 +80,27 @@ func (suite *FollowSuite) readAll(ctx context.Context, expectedError string) <-c
 			suite.Assert().EqualError(err, expectedError)
 		}
 
-		combinedCh <- contents
+		combinedCh <- contents[:n]
 	}()
 
 	return combinedCh
 }
 
-func (suite *FollowSuite) smallReadAll(ctx context.Context) <-chan []byte {
+func (suite *FollowSuite) smallReadAll(ctx context.Context, sizeHint int, timeout time.Duration) <-chan []byte {
 	combinedCh := make(chan []byte)
 
+	ctx, ctxCancel := context.WithTimeout(ctx, timeout)
+	suite.r = follow.NewReader(ctx, suite.reader)
+
 	go func() {
-		suite.r = follow.NewReader(ctx, suite.reader)
+		defer ctxCancel()
 		defer suite.r.Close() //nolint: errcheck
 
 		buf := make([]byte, 1)
 
 		var output bytes.Buffer
 
-		_, err := io.CopyBuffer(&output, suite.r, buf)
+		_, err := io.CopyBuffer(&output, io.LimitReader(suite.r, int64(sizeHint)), buf)
 
 		suite.Assert().NoError(err)
 
@@ -106,7 +114,7 @@ func (suite *FollowSuite) TestStreaming() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	combinedCh := suite.readAll(ctx, "")
+	combinedCh := suite.readAll(ctx, "", 15, time.Second)
 
 	// nolint: errcheck
 	suite.writer.WriteString("abc")
@@ -119,9 +127,6 @@ func (suite *FollowSuite) TestStreaming() {
 	suite.writer.WriteString("jkl")
 	// nolint: errcheck
 	suite.writer.WriteString("mno")
-	time.Sleep(50 * time.Millisecond)
-
-	ctxCancel()
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
 }
@@ -130,7 +135,7 @@ func (suite *FollowSuite) TestStreamingClose() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	combinedCh := suite.readAll(ctx, "")
+	combinedCh := suite.readAll(ctx, "", 15, time.Second)
 
 	// nolint: errcheck
 	suite.writer.WriteString("abc")
@@ -143,7 +148,7 @@ func (suite *FollowSuite) TestStreamingClose() {
 	suite.writer.WriteString("jkl")
 	// nolint: errcheck
 	suite.writer.WriteString("mno")
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
 
 	suite.Require().NoError(suite.r.Close())
 
@@ -159,7 +164,7 @@ func (suite *FollowSuite) TestStreamingWithSomeHead() {
 	// nolint: errcheck
 	suite.writer.WriteString("def")
 
-	combinedCh := suite.readAll(ctx, "")
+	combinedCh := suite.readAll(ctx, "", 15, time.Second)
 
 	// nolint: errcheck
 	suite.writer.WriteString("ghi")
@@ -169,9 +174,6 @@ func (suite *FollowSuite) TestStreamingWithSomeHead() {
 	time.Sleep(50 * time.Millisecond)
 	// nolint: errcheck
 	suite.writer.WriteString("mno")
-	time.Sleep(50 * time.Millisecond)
-
-	ctxCancel()
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
 }
@@ -180,7 +182,7 @@ func (suite *FollowSuite) TestStreamingSmallBuffer() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	combinedCh := suite.smallReadAll(ctx)
+	combinedCh := suite.smallReadAll(ctx, 15, time.Second)
 
 	// nolint: errcheck
 	suite.writer.WriteString("abc")
@@ -198,10 +200,6 @@ func (suite *FollowSuite) TestStreamingSmallBuffer() {
 	_, err := os.Create(filepath.Join(suite.tmpDir, "x.log"))
 	suite.Require().NoError(err)
 
-	time.Sleep(50 * time.Millisecond)
-
-	ctxCancel()
-
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
 }
 
@@ -209,7 +207,8 @@ func (suite *FollowSuite) TestDeleted() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	combinedCh := suite.readAll(ctx, "file was removed while watching")
+	// pass sizeHint as 15+1 to make code read beyond the end and encounter file removed
+	combinedCh := suite.readAll(ctx, "file was removed while watching", 16, time.Second)
 
 	// nolint: errcheck
 	suite.writer.WriteString("abc")
@@ -217,12 +216,11 @@ func (suite *FollowSuite) TestDeleted() {
 	suite.writer.WriteString("def")
 	// nolint: errcheck
 	suite.writer.WriteString("ghi")
-	time.Sleep(50 * time.Millisecond)
 	// nolint: errcheck
 	suite.writer.WriteString("jkl")
 	// nolint: errcheck
 	suite.writer.WriteString("mno")
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
 
 	// chunker should terminate when file is removed
 	suite.Require().NoError(os.Remove(suite.writer.Name()))
