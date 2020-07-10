@@ -26,7 +26,8 @@ function create_cluster {
     --memory 2048 \
     --cpus 4.0 \
     --endpoint "${ENDPOINT}" \
-    --with-init-node=false
+    --with-init-node=false \
+    --crashdump
 }
 
 create_cluster

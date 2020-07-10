@@ -19,6 +19,7 @@ talosctl cluster create [flags]
       --cni-cache-dir string        CNI cache directory path (firecracker only) (default "/var/lib/cni")
       --cni-conf-dir string         CNI config directory path (firecracker only) (default "/etc/cni/conf.d")
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
+      --crashdump                   print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string       install custom CNI from the URL (Talos cluster)
       --disk int                    the limit on disk size in MB (each VM) (default 4096)
       --dns-domain string           the dns domain to use for cluster (default "cluster.local")
