@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -79,6 +80,7 @@ func main() {
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/Read",
 		"/os.OSService/Dmesg",
+		"/cluster.ClusterService/HealthCheck",
 	} {
 		router.RegisterStreamedRegex("^" + regexp.QuoteMeta(methodName) + "$")
 	}
@@ -86,23 +88,45 @@ func main() {
 	// register future pattern: method should have suffix "Stream"
 	router.RegisterStreamedRegex("Stream$")
 
-	err = factory.ListenAndServe(
-		router,
-		factory.Port(constants.ApidPort),
-		factory.WithDefaultLog(),
-		factory.ServerOptions(
-			grpc.Creds(
-				credentials.NewTLS(serverTLSConfig),
+	var errGroup errgroup.Group
+
+	errGroup.Go(func() error {
+		return factory.ListenAndServe(
+			router,
+			factory.Port(constants.ApidPort),
+			factory.WithDefaultLog(),
+			factory.ServerOptions(
+				grpc.Creds(
+					credentials.NewTLS(serverTLSConfig),
+				),
+				grpc.CustomCodec(proxy.Codec()),
+				grpc.UnknownServiceHandler(
+					proxy.TransparentHandler(
+						router.Director,
+						proxy.WithStreamedDetector(router.StreamedDetector),
+					)),
 			),
-			grpc.CustomCodec(proxy.Codec()),
-			grpc.UnknownServiceHandler(
-				proxy.TransparentHandler(
-					router.Director,
-					proxy.WithStreamedDetector(router.StreamedDetector),
-				)),
-		),
-	)
-	if err != nil {
+		)
+	})
+
+	errGroup.Go(func() error {
+		return factory.ListenAndServe(
+			router,
+			factory.Network("unix"),
+			factory.SocketPath(constants.APISocketPath),
+			factory.WithDefaultLog(),
+			factory.ServerOptions(
+				grpc.CustomCodec(proxy.Codec()),
+				grpc.UnknownServiceHandler(
+					proxy.TransparentHandler(
+						router.Director,
+						proxy.WithStreamedDetector(router.StreamedDetector),
+					)),
+			),
+		)
+	})
+
+	if err := errGroup.Wait(); err != nil {
 		log.Fatalf("listen: %v", err)
 	}
 }

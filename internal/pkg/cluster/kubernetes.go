@@ -12,6 +12,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	k8s "github.com/talos-systems/talos/pkg/kubernetes"
 )
 
 // KubernetesClient provides Kubernetes client built via Talos API Kubeconfig.
@@ -22,7 +24,8 @@ type KubernetesClient struct {
 	// ForceEndpoint overrides default Kubernetes API endpoint.
 	ForceEndpoint string
 
-	clientset *kubernetes.Clientset
+	KubeHelper *k8s.Client
+	clientset  *kubernetes.Clientset
 }
 
 // K8sClient builds Kubernetes client via Talos Kubeconfig API.
@@ -57,10 +60,11 @@ func (k *KubernetesClient) K8sClient(ctx context.Context) (*kubernetes.Clientset
 		config.Host = fmt.Sprintf("%s:%d", k.ForceEndpoint, 6443)
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err == nil {
-		k.clientset = clientset
+	if k.KubeHelper, err = k8s.NewForConfig(config); err != nil {
+		return nil, err
 	}
 
-	return clientset, err
+	k.clientset = k.KubeHelper.Clientset
+
+	return k.clientset, nil
 }
