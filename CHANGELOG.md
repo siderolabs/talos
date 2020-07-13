@@ -1,3 +1,63 @@
+<a name="v0.6.0-alpha.5"></a>
+
+## [v0.6.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.4...v0.6.0-alpha.5) (2020-07-13)
+
+### Chore
+
+- update meeting links
+- wait for resource deletion in sonobuoy
+- cleanup sonobuoy after failed attempts
+- enable 'testpackage' linter
+- make default pipeline run shorter integration test
+- enable godot linter
+
+### Docs
+
+- update firecracker for new home of tc-redirect-tap plugin
+- digital rebar docs
+
+### Feat
+
+- add names to tasks and phases
+- merge mode in talosctl kubeconfig
+- print crash dump in `talosctl cluster create` on failure
+- uncordon nodes automatically on boot
+- add round-robin LB policy to Talos client by default
+- implement API access to event history
+- implement service events
+- upgrade runc to v1.0.0-rc90
+- upgrade Linux to v5.7.7
+- upgrade containerd to v1.3.6
+- add /system directory
+
+### Fix
+
+- improve node uncordon tasks
+- update the control plane cluster health check
+- update timeouts on service startup to match boot timeout
+- implement Unload() for services to make sure bootkube runs always
+- print correct sequence/task duration
+- provide default DNS domain to talosctl cluster create
+- report the correct containerd version
+
+### Refactor
+
+- merge osd into machined
+
+### Test
+
+- workaround famous flaky Containerd.RunTwice test
+- update events test with more flow control
+- update tests for `pkg/follow` to be less time-dependent
+- update init node check in reset API tests
+- fix cli tests after load-balancing got enabled
+- fix sonobuoy delete
+- resolve old TODO item
+- run integration pipeline nightly
+- stabilize race unit-tests (circular, events)
+- run `e2e-firecracker-short` for default pipeline only
+- add short integration test with custom CNI
+
 <a name="v0.6.0-alpha.4"></a>
 
 ## [v0.6.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.3...v0.6.0-alpha.4) (2020-06-30)
