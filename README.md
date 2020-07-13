@@ -40,7 +40,7 @@ We hold two weekly meetings targeted for different audiences.
 ### Office Hours
 
 - When: Mondays at 17:00 UTC.
-- Where: [zoom](https://zoom.us/j/3595189922).
+- Where: [Google Meet](https://meet.google.com/day-pxhv-zky).
 
 ### Maintainers and Contributors
 
@@ -48,7 +48,7 @@ When attending this meeting, please add yourself to the [meeting notes](https://
 If you would like to discuss a specific topic, we encourage you to add it to the agenda.
 
 - When: Thursdays at 17:00 UTC.
-- Where: [zoom](https://zoom.us/j/3595189922).
+- Where: [Google Meet](https://meet.google.com/fdr-xxvb-eva).
 
 You can subscribe to these meetings by joining the community forum above.
 
