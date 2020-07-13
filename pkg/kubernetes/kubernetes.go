@@ -143,7 +143,7 @@ func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *u
 	return h, nil
 }
 
-// MasterIPs cordons and drains a node in one call.
+// MasterIPs returns a list of control plane endpoints (IP addresses).
 func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 	endpoints, err := h.CoreV1().Endpoints("default").Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
@@ -155,6 +155,30 @@ func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 	for _, endpoint := range endpoints.Subsets {
 		for _, addr := range endpoint.Addresses {
 			addrs = append(addrs, addr.IP)
+		}
+	}
+
+	return addrs, nil
+}
+
+// WorkerIPs returns list of worker nodes IP addresses.
+func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
+	resp, err := h.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	addrs = []string{}
+
+	for _, node := range resp.Items {
+		if _, ok := node.Labels[constants.LabelNodeRoleMaster]; ok {
+			continue
+		}
+
+		for _, nodeAddress := range node.Status.Addresses {
+			if nodeAddress.Type == corev1.NodeInternalIP {
+				addrs = append(addrs, nodeAddress.Address)
+			}
 		}
 	}
 

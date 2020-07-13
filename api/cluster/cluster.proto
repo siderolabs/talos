@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package cluster;
+
+option go_package = "github.com/talos-systems/talos/api/cluster";
+option java_multiple_files = true;
+option java_outer_classname = "ClusterApi";
+option java_package = "com.cluster.api";
+
+import "google/protobuf/duration.proto";
+import "common/common.proto";
+
+// The cluster service definition.
+service ClusterService {
+  rpc HealthCheck(HealthCheckRequest) returns (stream HealthCheckProgress);
+}
+
+message HealthCheckRequest {
+    google.protobuf.Duration wait_timeout = 1;
+    ClusterInfo cluster_info = 2;
+}
+
+message ClusterInfo {
+  repeated string control_plane_nodes  = 1;
+  repeated string worker_nodes = 2;
+  string force_endpoint = 3;
+}
+
+message HealthCheckProgress {
+  common.Metadata metadata = 1;
+  string message = 2;
+}

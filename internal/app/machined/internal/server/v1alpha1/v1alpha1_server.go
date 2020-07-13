@@ -32,6 +32,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/api/cluster"
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
 	osapi "github.com/talos-systems/talos/api/os"
@@ -68,6 +69,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	machine.RegisterMachineServiceServer(obj, s)
 	osapi.RegisterOSServiceServer(obj, &osdServer{Server: s}) //nolint: staticcheck
+	cluster.RegisterClusterServiceServer(obj, s)
 }
 
 // Reboot implements the machine.MachineServer interface.
