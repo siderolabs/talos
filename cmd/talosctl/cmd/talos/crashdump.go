@@ -14,6 +14,10 @@ import (
 	"github.com/talos-systems/talos/pkg/client"
 )
 
+var crashdumpCmdFlags struct {
+	clusterState clusterNodes
+}
+
 // crashdumpCmd represents the crashdump command.
 var crashdumpCmd = &cobra.Command{
 	Use:   "crashdump",
@@ -29,7 +33,7 @@ var crashdumpCmd = &cobra.Command{
 
 			worker := cluster.APICrashDumper{
 				ClientProvider: clientProvider,
-				Info:           &clusterState,
+				Info:           &crashdumpCmdFlags.clusterState,
 			}
 
 			worker.CrashDump(ctx, os.Stdout)
@@ -41,7 +45,7 @@ var crashdumpCmd = &cobra.Command{
 
 func init() {
 	addCommand(crashdumpCmd)
-	crashdumpCmd.Flags().StringVar(&clusterState.InitNode, "init-node", "", "specify IPs of init node")
-	crashdumpCmd.Flags().StringSliceVar(&clusterState.ControlPlaneNodes, "control-plane-nodes", nil, "specify IPs of control plane nodes")
-	crashdumpCmd.Flags().StringSliceVar(&clusterState.WorkerNodes, "worker-nodes", nil, "specify IPs of worker nodes")
+	crashdumpCmd.Flags().StringVar(&crashdumpCmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
+	crashdumpCmd.Flags().StringSliceVar(&crashdumpCmdFlags.clusterState.ControlPlaneNodes, "control-plane-nodes", nil, "specify IPs of control plane nodes")
+	crashdumpCmd.Flags().StringSliceVar(&crashdumpCmdFlags.clusterState.WorkerNodes, "worker-nodes", nil, "specify IPs of worker nodes")
 }

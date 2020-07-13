@@ -52,6 +52,8 @@ COPY ./api/network/network.proto /api/network/network.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
 COPY ./api/os/os.proto /api/os/os.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api os/os.proto
+COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api cluster/cluster.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
@@ -63,6 +65,7 @@ COPY --from=generate-build /api/security/security.pb.go /api/security/
 COPY --from=generate-build /api/machine/machine.pb.go /api/machine/
 COPY --from=generate-build /api/time/time.pb.go /api/time/
 COPY --from=generate-build /api/network/network.pb.go /api/network/
+COPY --from=generate-build /api/cluster/cluster.pb.go /api/cluster/
 
 # The base target provides a container that can be used to build all Talos
 # assets.

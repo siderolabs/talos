@@ -227,6 +227,9 @@ const (
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 
+	// APISocketPath is the path to file socket of apid.
+	APISocketPath = SystemRunPath + "/apid/apid.sock"
+
 	// MachineSocketPath is the path to file socket of machine API.
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 

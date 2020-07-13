@@ -25,13 +25,13 @@ func (suite *HealthSuite) SuiteName() string {
 	return "cli.HealthSuite"
 }
 
-// TestRun does successful health check run.
-func (suite *HealthSuite) TestRun() {
+// TestClientSide does successful health check run from client-side.
+func (suite *HealthSuite) TestClientSide() {
 	if suite.Cluster == nil {
 		suite.T().Skip("Cluster is not available, skipping test")
 	}
 
-	args := []string{}
+	args := []string{"--server=false"}
 
 	bootstrapAPIIsUsed := true
 
@@ -80,6 +80,15 @@ func (suite *HealthSuite) TestRun() {
 	}
 
 	suite.RunCLI(append([]string{"health"}, args...),
+		base.StderrNotEmpty(),
+		base.StdoutEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
+	)
+}
+
+// TestServerSide does successful health check run from server-side.
+func (suite *HealthSuite) TestServerSide() {
+	suite.RunCLI([]string{"health"},
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),

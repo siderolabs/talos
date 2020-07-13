@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -73,10 +74,18 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 	return []string{"containerd", "networkd", "timed"}
 }
 
+// Runner implements the Service interface.
+//
+//nolint: gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/apid"
 
 	endpoints := []string{"127.0.0.1"}
+
+	// Ensure socket dir exists
+	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0750); err != nil {
+		return nil, err
+	}
 
 	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
@@ -117,6 +126,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.RouterdSocketPath), Source: filepath.Dir(constants.RouterdSocketPath), Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	env := []string{}

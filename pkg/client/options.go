@@ -23,6 +23,8 @@ type Options struct {
 
 	contextOverride    string
 	contextOverrideSet bool
+
+	unixSocketPath string
 }
 
 // OptionFunc sets an option for the creation of the Client.
@@ -104,6 +106,19 @@ func WithConfigFromFile(fn string) OptionFunc {
 		}
 
 		o.config = cfg
+
+		return nil
+	}
+}
+
+// WithUnixSocket creates a Client which connects to apid over local file socket.
+//
+// This option disables config parsing and TLS.
+//
+// Connection over unix socket is only used within the Talos node.
+func WithUnixSocket(path string) OptionFunc {
+	return func(o *Options) error {
+		o.unixSocketPath = path
 
 		return nil
 	}

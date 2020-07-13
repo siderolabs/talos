@@ -16,15 +16,18 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
 
+	clusterapi "github.com/talos-systems/talos/api/cluster"
 	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	networkapi "github.com/talos-systems/talos/api/network"
@@ -49,10 +52,15 @@ type Client struct {
 	MachineClient machineapi.MachineServiceClient
 	TimeClient    timeapi.TimeServiceClient
 	NetworkClient networkapi.NetworkServiceClient
+	ClusterClient clusterapi.ClusterServiceClient
 }
 
 func (c *Client) resolveConfigContext() error {
 	var ok bool
+
+	if c.options.unixSocketPath != "" {
+		return nil
+	}
 
 	if c.options.configContext != nil {
 		return nil
@@ -82,6 +90,10 @@ func (c *Client) resolveConfigContext() error {
 }
 
 func (c *Client) getEndpoints() []string {
+	if c.options.unixSocketPath != "" {
+		return []string{c.options.unixSocketPath}
+	}
+
 	if len(c.options.endpointsOverride) > 0 {
 		return c.options.endpointsOverride
 	}
@@ -121,6 +133,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
+	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 
 	return c, nil
 }
@@ -128,38 +141,46 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	endpoints := c.getEndpoints()
 
-	// NB: we use the `dns` scheme here in order to handle fancier situations
-	// when there is a single endpoint.
-	// Such possibilities include SRV records, multiple IPs from A and/or AAAA
-	// records, and descriptive TXT records which include things like load
-	// balancer specs.
-	target := fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoints[0]), constants.ApidPort)
+	var target string
 
-	// If we are given more than one endpoint, we need to use our custom list resolver
-	if len(endpoints) > 1 {
+	switch {
+	case c.options.unixSocketPath != "":
+		target = fmt.Sprintf("unix:///%s", c.options.unixSocketPath)
+	case len(endpoints) > 1:
 		target = fmt.Sprintf("%s:///%s", talosListResolverScheme, strings.Join(endpoints, ","))
+	default:
+		// NB: we use the `dns` scheme here in order to handle fancier situations
+		// when there is a single endpoint.
+		// Such possibilities include SRV records, multiple IPs from A and/or AAAA
+		// records, and descriptive TXT records which include things like load
+		// balancer specs.
+		target = fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoints[0]), constants.ApidPort)
 	}
 
-	// Add TLS credentials to gRPC DialOptions
-	tlsConfig := c.options.tlsConfig
-	if tlsConfig == nil {
-		creds, err := CredentialsFromConfigContext(c.options.configContext)
-		if err != nil {
-			return nil, fmt.Errorf("failed to acquire credentials: %w", err)
+	dialOpts := []grpc.DialOption(nil)
+
+	if c.options.unixSocketPath == "" {
+		// Add TLS credentials to gRPC DialOptions
+		tlsConfig := c.options.tlsConfig
+		if tlsConfig == nil {
+			creds, err := CredentialsFromConfigContext(c.options.configContext)
+			if err != nil {
+				return nil, fmt.Errorf("failed to acquire credentials: %w", err)
+			}
+
+			tlsConfig, err = grpctls.New(
+				grpctls.WithKeypair(creds.Crt),
+				grpctls.WithClientAuthType(grpctls.Mutual),
+				grpctls.WithCACertPEM(creds.CA),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to construct TLS credentials: %w", err)
+			}
 		}
 
-		tlsConfig, err = grpctls.New(
-			grpctls.WithKeypair(creds.Crt),
-			grpctls.WithClientAuthType(grpctls.Mutual),
-			grpctls.WithCACertPEM(creds.CA),
+		dialOpts = append(dialOpts,
+			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to construct TLS credentials: %w", err)
-		}
-	}
-
-	dialOpts := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 	}
 
 	dialOpts = append(dialOpts, c.options.grpcDialOptions...)
@@ -255,6 +276,7 @@ func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialO
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
+	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 
 	return c, nil
 }
@@ -702,6 +724,14 @@ func (c *Client) Read(ctx context.Context, path string) (io.ReadCloser, <-chan e
 	}
 
 	return ReadStream(stream)
+}
+
+// ClusterHealthCheck runs a Talos cluster health check.
+func (c *Client) ClusterHealthCheck(ctx context.Context, waitTimeout time.Duration, clusterInfo *clusterapi.ClusterInfo) (clusterapi.ClusterService_HealthCheckClient, error) {
+	return c.ClusterClient.HealthCheck(ctx, &clusterapi.HealthCheckRequest{
+		WaitTimeout: durationpb.New(waitTimeout),
+		ClusterInfo: clusterInfo,
+	})
 }
 
 // MachineStream is a common interface for streams returned by streaming APIs.
