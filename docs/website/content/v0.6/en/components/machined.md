@@ -16,6 +16,5 @@ This includes:
 - [kubelet](https://kubernetes.io/docs/concepts/overview/components/)
 - [networkd](networkd)
 - [timed](timed)
-- [osd](osd)
 - [trustd](trustd)
 - [udevd](udevd)

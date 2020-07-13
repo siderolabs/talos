@@ -369,9 +369,9 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 func (suite *ContainerdSuite) TestImportSuccess() {
 	reqs := []*containerdrunner.ImportRequest{
 		{
-			Path: "/usr/images/osd.tar",
+			Path: "/usr/images/timed.tar",
 			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/osd"),
+				containerd.WithIndexName("testtalos/timed"),
 			},
 		},
 		{
@@ -386,7 +386,7 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
-	for _, imageName := range []string{"testtalos/osd", "testtalos/trustd"} {
+	for _, imageName := range []string{"testtalos/timed", "testtalos/trustd"} {
 		image, err := suite.client.ImageService().Get(ctx, imageName)
 		suite.Require().NoError(err)
 		suite.Require().Equal(imageName, image.Name)
@@ -396,9 +396,9 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 func (suite *ContainerdSuite) TestImportFail() {
 	reqs := []*containerdrunner.ImportRequest{
 		{
-			Path: "/usr/images/osd.tar",
+			Path: "/usr/images/timed.tar",
 			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/osd2"),
+				containerd.WithIndexName("testtalos/timed2"),
 			},
 		},
 		{

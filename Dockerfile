@@ -42,8 +42,6 @@ COPY ./api/common/common.proto /api/common/common.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api common/common.proto
 COPY ./api/health/health.proto /api/health/health.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api health/health.proto
-COPY ./api/os/os.proto /api/os/os.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api os/os.proto
 COPY ./api/security/security.proto /api/security/security.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api security/security.proto
 COPY ./api/machine/machine.proto /api/machine/machine.proto
@@ -52,6 +50,8 @@ COPY ./api/time/time.proto /api/time/time.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
+COPY ./api/os/os.proto /api/os/os.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api os/os.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
@@ -140,24 +140,6 @@ COPY --from=apid-build /apid /scratch/apid
 WORKDIR /scratch
 RUN printf "FROM scratch\nCOPY ./apid /apid\nENTRYPOINT [\"/apid\"]" > Dockerfile
 RUN --security=insecure img build --tag ${USERNAME}/apid:${TAG} --output type=docker,dest=/apid.tar --no-console  .
-
-# The osd target builds the osd image.
-
-FROM base AS osd-build
-ARG SHA
-ARG TAG
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-WORKDIR /src/internal/app/osd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /osd
-RUN chmod +x /osd
-
-FROM base AS osd-image
-ARG TAG
-ARG USERNAME
-COPY --from=osd-build /osd /scratch/osd
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./osd /osd\nENTRYPOINT [\"/osd\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/osd:${TAG} --output type=docker,dest=/osd.tar --no-console  .
 
 # The trustd target builds the trustd image.
 
@@ -320,7 +302,6 @@ COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
 COPY --from=timed-image /timed.tar /rootfs/usr/images/
-COPY --from=osd-image /osd.tar /rootfs/usr/images/
 COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
 COPY --from=networkd-image /networkd.tar /rootfs/usr/images/
 COPY --from=routerd-image /routerd.tar /rootfs/usr/images/

@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	osapi "github.com/talos-systems/talos/api/os"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -128,9 +128,9 @@ func processesUI(ctx context.Context, c *client.Client) {
 	}
 }
 
-type by func(p1, p2 *osapi.ProcessInfo) bool
+type by func(p1, p2 *machineapi.ProcessInfo) bool
 
-func (b by) sort(procs []*osapi.ProcessInfo) {
+func (b by) sort(procs []*machineapi.ProcessInfo) {
 	ps := &procSorter{
 		procs: procs,
 		by:    b, // The Sort method's receiver is the function (closure) that defines the sort order.
@@ -139,8 +139,8 @@ func (b by) sort(procs []*osapi.ProcessInfo) {
 }
 
 type procSorter struct {
-	procs []*osapi.ProcessInfo
-	by    func(p1, p2 *osapi.ProcessInfo) bool // Closure used in the Less method.
+	procs []*machineapi.ProcessInfo
+	by    func(p1, p2 *machineapi.ProcessInfo) bool // Closure used in the Less method.
 }
 
 // Len is part of sort.Interface.
@@ -159,12 +159,12 @@ func (s *procSorter) Less(i, j int) bool {
 }
 
 // Sort Methods.
-var rss = func(p1, p2 *osapi.ProcessInfo) bool {
+var rss = func(p1, p2 *machineapi.ProcessInfo) bool {
 	// Reverse sort ( Descending )
 	return p1.ResidentMemory > p2.ResidentMemory
 }
 
-var cpu = func(p1, p2 *osapi.ProcessInfo) bool {
+var cpu = func(p1, p2 *machineapi.ProcessInfo) bool {
 	// Reverse sort ( Descending )
 	return p1.CpuTime > p2.CpuTime
 }

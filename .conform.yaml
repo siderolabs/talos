@@ -28,7 +28,6 @@ policies:
           - networkd
           - timed
           - talosctl
-          - osd
           - trustd
           - routerd
           - talosctl

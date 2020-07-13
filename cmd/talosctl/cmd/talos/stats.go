@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/api/common"
-	osapi "github.com/talos-systems/talos/api/os"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -59,7 +59,7 @@ var statsCmd = &cobra.Command{
 	},
 }
 
-func statsRender(remotePeer *peer.Peer, resp *osapi.StatsResponse) error {
+func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")

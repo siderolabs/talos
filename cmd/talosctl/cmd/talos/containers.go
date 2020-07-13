@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/api/common"
-	osapi "github.com/talos-systems/talos/api/os"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -60,7 +60,7 @@ var containersCmd = &cobra.Command{
 	},
 }
 
-func containerRender(remotePeer *peer.Peer, resp *osapi.ContainersResponse) error {
+func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 
