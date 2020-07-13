@@ -165,7 +165,7 @@ func (suite *LogsSuite) TestTailStreaming0() {
 
 func (suite *LogsSuite) testStreaming(tailLines int32) {
 	if tailLines >= 0 {
-		// invoke osd enough times to generate
+		// invoke machined enough times to generate
 		// some logs
 		for i := int32(0); i < tailLines; i++ {
 			_, err := suite.Client.Stats(suite.nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
@@ -177,7 +177,7 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		suite.nodeCtx,
 		constants.SystemContainerdNamespace,
 		common.ContainerDriver_CONTAINERD,
-		"osd",
+		"machined",
 		true,
 		tailLines,
 	)
@@ -229,7 +229,7 @@ DrainLoop:
 		suite.Assert().InDelta(tailLines, linesDrained, 1)
 	}
 
-	// invoke osd API
+	// invoke machined API
 	_, err = suite.Client.Stats(suite.nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
 	suite.Require().NoError(err)
 

@@ -28,8 +28,9 @@ func main() {
 	router := director.NewRouter()
 
 	// TODO: this should be dynamic based on plugin registration
-	router.RegisterLocalBackend("os.OSService", backend.NewLocal("osd", constants.OSSocketPath))
-	router.RegisterLocalBackend("machine.MachineService", backend.NewLocal("machined", constants.MachineSocketPath))
+	machinedBackend := backend.NewLocal("machined", constants.MachineSocketPath)
+	router.RegisterLocalBackend("os.OSService", machinedBackend)
+	router.RegisterLocalBackend("machine.MachineService", machinedBackend)
 	router.RegisterLocalBackend("time.TimeService", backend.NewLocal("timed", constants.TimeSocketPath))
 	router.RegisterLocalBackend("network.NetworkService", backend.NewLocal("networkd", constants.NetworkSocketPath))
 

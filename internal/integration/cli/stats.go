@@ -26,7 +26,7 @@ func (suite *StatsSuite) SuiteName() string {
 func (suite *StatsSuite) TestContainerd() {
 	suite.RunCLI([]string{"stats"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`osd`)),
+		base.StdoutShouldMatch(regexp.MustCompile(`routerd`)),
 	)
 	suite.RunCLI([]string{"stats", "-k"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),

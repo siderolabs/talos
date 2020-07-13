@@ -26,7 +26,7 @@ func (suite *ContainersSuite) SuiteName() string {
 func (suite *ContainersSuite) TestContainerd() {
 	suite.RunCLI([]string{"containers"},
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`talos/osd`)),
+		base.StdoutShouldMatch(regexp.MustCompile(`talos/routerd`)),
 	)
 	suite.RunCLI([]string{"containers", "-k"},
 		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),

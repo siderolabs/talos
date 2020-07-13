@@ -2,7 +2,7 @@
 title: 'talosctl'
 ---
 
-`talosctl` CLI is the client to the [osd](/components/osd) service running on every node.
+`talosctl` CLI is the client to the [apid](/components/apid) service running on every node.
 `talosctl` should provide enough functionality to be a replacement for typical interactive shell operations.
 With it you can do things like:
 

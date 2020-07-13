@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -26,12 +27,14 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/hashicorp/go-multierror"
+	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
+	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
@@ -40,6 +43,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
@@ -63,6 +67,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
 	machine.RegisterMachineServiceServer(obj, s)
+	osapi.RegisterOSServiceServer(obj, &osdServer{Server: s}) //nolint: staticcheck
 }
 
 // Reboot implements the machine.MachineServer interface.
@@ -462,7 +467,7 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 	return nil
 }
 
-// Mounts implements the machine.OSDServer interface.
+// Mounts implements the machine.MachineServer interface.
 func (s *Server) Mounts(ctx context.Context, in *empty.Empty) (reply *machine.MountsResponse, err error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
@@ -553,7 +558,7 @@ func (s *Server) Version(ctx context.Context, in *empty.Empty) (reply *machine.V
 	}, nil
 }
 
-// Kubeconfig implements the osapi.OSDServer interface.
+// Kubeconfig implements the machine.MachineServer interface.
 func (s *Server) Kubeconfig(empty *empty.Empty, obj machine.MachineService_KubeconfigServer) error {
 	var b bytes.Buffer
 
@@ -838,4 +843,326 @@ func pullAndValidateInstallerImage(ctx context.Context, reg runtime.Registries, 
 	}
 
 	return nil
+}
+
+// Containers implements the machine.MachineServer interface.
+func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) (reply *machine.ContainersResponse, err error) {
+	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
+	if err != nil {
+		return nil, err
+	}
+	// nolint: errcheck
+	defer inspector.Close()
+
+	pods, err := inspector.Pods()
+	if err != nil {
+		// fatal error
+		if pods == nil {
+			return nil, err
+		}
+		// TODO: only some failed, need to handle it better via client
+		log.Println(err.Error())
+	}
+
+	containers := []*machine.ContainerInfo{}
+
+	for _, pod := range pods {
+		for _, container := range pod.Containers {
+			container := &machine.ContainerInfo{
+				Namespace: in.Namespace,
+				Id:        container.Display,
+				PodId:     pod.Name,
+				Name:      container.Name,
+				Image:     container.Image,
+				Pid:       container.Pid,
+				Status:    container.Status,
+			}
+			containers = append(containers, container)
+		}
+	}
+
+	reply = &machine.ContainersResponse{
+		Messages: []*machine.Container{
+			{
+				Containers: containers,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// Stats implements the machine.MachineServer interface.
+// nolint: gocyclo
+func (s *Server) Stats(ctx context.Context, in *machine.StatsRequest) (reply *machine.StatsResponse, err error) {
+	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
+	if err != nil {
+		return nil, err
+	}
+	// nolint: errcheck
+	defer inspector.Close()
+
+	pods, err := inspector.Pods()
+	if err != nil {
+		// fatal error
+		if pods == nil {
+			return nil, err
+		}
+		// TODO: only some failed, need to handle it better via client
+		log.Println(err.Error())
+	}
+
+	stats := []*machine.Stat{}
+
+	for _, pod := range pods {
+		for _, container := range pod.Containers {
+			if container.Metrics == nil {
+				continue
+			}
+
+			stat := &machine.Stat{
+				Namespace:   in.Namespace,
+				Id:          container.Display,
+				PodId:       pod.Name,
+				Name:        container.Name,
+				MemoryUsage: container.Metrics.MemoryUsage,
+				CpuUsage:    container.Metrics.CPUUsage,
+			}
+
+			stats = append(stats, stat)
+		}
+	}
+
+	reply = &machine.StatsResponse{
+		Messages: []*machine.Stats{
+			{
+				Stats: stats,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// Restart implements the machine.MachineServer interface.
+func (s *Server) Restart(ctx context.Context, in *machine.RestartRequest) (*machine.RestartResponse, error) {
+	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
+	if err != nil {
+		return nil, err
+	}
+	// nolint: errcheck
+	defer inspector.Close()
+
+	container, err := inspector.Container(in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if container == nil {
+		return nil, fmt.Errorf("container %q not found", in.Id)
+	}
+
+	err = container.Kill(syscall.SIGTERM)
+	if err != nil {
+		return nil, err
+	}
+
+	return &machine.RestartResponse{
+		Messages: []*machine.Restart{
+			{},
+		},
+	}, nil
+}
+
+// Dmesg implements the machine.MachineServer interface.
+//
+//nolint: gocyclo
+func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_DmesgServer) error {
+	ctx := srv.Context()
+
+	var options []kmsg.Option
+
+	if req.Follow {
+		options = append(options, kmsg.Follow())
+	}
+
+	if req.Tail {
+		options = append(options, kmsg.FromTail())
+	}
+
+	reader, err := kmsg.NewReader(options...)
+	if err != nil {
+		return fmt.Errorf("error opening /dev/kmsg reader: %w", err)
+	}
+	defer reader.Close() //nolint: errcheck
+
+	ch := reader.Scan(ctx)
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err = reader.Close(); err != nil {
+				return err
+			}
+		case packet, ok := <-ch:
+			if !ok {
+				return nil
+			}
+
+			if packet.Err != nil {
+				err = srv.Send(&common.Data{
+					Metadata: &common.Metadata{
+						Error: packet.Err.Error(),
+					},
+				})
+			} else {
+				msg := packet.Message
+				err = srv.Send(&common.Data{
+					Bytes: []byte(fmt.Sprintf("%s: %7s: [%s]: %s", msg.Facility, msg.Priority, msg.Timestamp.Format(time.RFC3339Nano), msg.Message)),
+				})
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+}
+
+// Processes implements the machine.MachineServer interface.
+func (s *Server) Processes(ctx context.Context, in *empty.Empty) (reply *machine.ProcessesResponse, err error) {
+	procs, err := procfs.AllProcs()
+	if err != nil {
+		return nil, err
+	}
+
+	processes := make([]*machine.ProcessInfo, 0, len(procs))
+
+	var (
+		command    string
+		executable string
+		args       []string
+		stats      procfs.ProcStat
+	)
+
+	for _, proc := range procs {
+		command, err = proc.Comm()
+		if err != nil {
+			return nil, err
+		}
+
+		executable, err = proc.Executable()
+		if err != nil {
+			return nil, err
+		}
+
+		args, err = proc.CmdLine()
+		if err != nil {
+			return nil, err
+		}
+
+		stats, err = proc.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		p := &machine.ProcessInfo{
+			Pid:            int32(proc.PID),
+			Ppid:           int32(stats.PPID),
+			State:          stats.State,
+			Threads:        int32(stats.NumThreads),
+			CpuTime:        stats.CPUTime(),
+			VirtualMemory:  uint64(stats.VirtualMemory()),
+			ResidentMemory: uint64(stats.ResidentMemory()),
+			Command:        command,
+			Executable:     executable,
+			Args:           strings.Join(args, " "),
+		}
+
+		processes = append(processes, p)
+	}
+
+	reply = &machine.ProcessesResponse{
+		Messages: []*machine.Process{
+			{
+				Processes: processes,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// Memory implements the machine.MachineServer interface.
+func (s *Server) Memory(ctx context.Context, in *empty.Empty) (reply *machine.MemoryResponse, err error) {
+	proc, err := procfs.NewDefaultFS()
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := proc.Meminfo()
+	if err != nil {
+		return nil, err
+	}
+
+	meminfo := &machine.MemInfo{
+		Memtotal:          info.MemTotal,
+		Memfree:           info.MemFree,
+		Memavailable:      info.MemAvailable,
+		Buffers:           info.Buffers,
+		Cached:            info.Cached,
+		Swapcached:        info.SwapCached,
+		Active:            info.Active,
+		Inactive:          info.Inactive,
+		Activeanon:        info.ActiveAnon,
+		Inactiveanon:      info.InactiveAnon,
+		Activefile:        info.ActiveFile,
+		Inactivefile:      info.InactiveFile,
+		Unevictable:       info.Unevictable,
+		Mlocked:           info.Mlocked,
+		Swaptotal:         info.SwapTotal,
+		Swapfree:          info.SwapFree,
+		Dirty:             info.Dirty,
+		Writeback:         info.Writeback,
+		Anonpages:         info.AnonPages,
+		Mapped:            info.Mapped,
+		Shmem:             info.Shmem,
+		Slab:              info.Slab,
+		Sreclaimable:      info.SReclaimable,
+		Sunreclaim:        info.SUnreclaim,
+		Kernelstack:       info.KernelStack,
+		Pagetables:        info.PageTables,
+		Nfsunstable:       info.NFSUnstable,
+		Bounce:            info.Bounce,
+		Writebacktmp:      info.WritebackTmp,
+		Commitlimit:       info.CommitLimit,
+		Committedas:       info.CommittedAS,
+		Vmalloctotal:      info.VmallocTotal,
+		Vmallocused:       info.VmallocUsed,
+		Vmallocchunk:      info.VmallocChunk,
+		Hardwarecorrupted: info.HardwareCorrupted,
+		Anonhugepages:     info.AnonHugePages,
+		Shmemhugepages:    info.ShmemHugePages,
+		Shmempmdmapped:    info.ShmemPmdMapped,
+		Cmatotal:          info.CmaTotal,
+		Cmafree:           info.CmaFree,
+		Hugepagestotal:    info.HugePagesTotal,
+		Hugepagesfree:     info.HugePagesFree,
+		Hugepagesrsvd:     info.HugePagesRsvd,
+		Hugepagessurp:     info.HugePagesSurp,
+		Hugepagesize:      info.Hugepagesize,
+		Directmap4K:       info.DirectMap4k,
+		Directmap2M:       info.DirectMap2M,
+		Directmap1G:       info.DirectMap1G,
+	}
+
+	reply = &machine.MemoryResponse{
+		Messages: []*machine.Memory{
+			{
+				Meminfo: meminfo,
+			},
+		},
+	}
+
+	return reply, err
 }

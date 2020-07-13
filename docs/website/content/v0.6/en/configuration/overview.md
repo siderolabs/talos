@@ -5,7 +5,7 @@ title: 'Configuration Overview'
 In this section, we will step through the configuration of a Talos based Kubernetes cluster.
 There are three major components we will configure:
 
-- `osd` and `talosctl`
+- `apid` and `talosctl`
 - the master nodes
 - the worker nodes
 

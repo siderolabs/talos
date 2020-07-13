@@ -80,11 +80,11 @@ az network vnet create \
 # Create network security group
 az network nsg create -g $GROUP -n talos-sg
 
-# Client -> OSD
+# Client -> apid
 az network nsg rule create \
   -g $GROUP \
   --nsg-name talos-sg \
-  -n osd \
+  -n apid \
   --priority 1001 \
   --destination-port-ranges 50000 \
   --direction inbound

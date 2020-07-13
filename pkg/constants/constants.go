@@ -236,9 +236,6 @@ const (
 	// NetworkSocketPath is the path to file socket of network API.
 	NetworkSocketPath = SystemRunPath + "/networkd/networkd.sock"
 
-	// OSSocketPath is the path to file socket of os API.
-	OSSocketPath = SystemRunPath + "/osd/osd.sock"
-
 	// RouterdSocketPath is the path to file socket of router API.
 	RouterdSocketPath = SystemRunPath + "/routerd/routerd.sock"
 

@@ -28,7 +28,6 @@ import (
 	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
 	networkapi "github.com/talos-systems/talos/api/network"
-	osapi "github.com/talos-systems/talos/api/os"
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -47,7 +46,6 @@ type Credentials struct {
 type Client struct {
 	options       *Options
 	conn          *grpc.ClientConn
-	OSClient      osapi.OSServiceClient
 	MachineClient machineapi.MachineServiceClient
 	TimeClient    timeapi.TimeServiceClient
 	NetworkClient networkapi.NetworkServiceClient
@@ -120,7 +118,6 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 		return nil, fmt.Errorf("failed to create client connection: %w", err)
 	}
 
-	c.OSClient = osapi.NewOSServiceClient(c.conn)
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
@@ -255,7 +252,6 @@ func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialO
 		return
 	}
 
-	c.OSClient = osapi.NewOSServiceClient(c.conn)
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
@@ -333,9 +329,9 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 }
 
 // Stats implements the proto.OSClient interface.
-func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *osapi.StatsResponse, err error) {
-	resp, err = c.OSClient.Stats(
-		ctx, &osapi.StatsRequest{
+func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *machineapi.StatsResponse, err error) {
+	resp, err = c.MachineClient.Stats(
+		ctx, &machineapi.StatsRequest{
 			Namespace: namespace,
 			Driver:    driver,
 		},
@@ -344,16 +340,16 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver common.Cont
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*osapi.StatsResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.StatsResponse) //nolint: errcheck
 
 	return
 }
 
 // Containers implements the proto.OSClient interface.
-func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *osapi.ContainersResponse, err error) {
-	resp, err = c.OSClient.Containers(
+func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *machineapi.ContainersResponse, err error) {
+	resp, err = c.MachineClient.Containers(
 		ctx,
-		&osapi.ContainersRequest{
+		&machineapi.ContainersRequest{
 			Namespace: namespace,
 			Driver:    driver,
 		},
@@ -362,14 +358,14 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*osapi.ContainersResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ContainersResponse) //nolint: errcheck
 
 	return
 }
 
 // Restart implements the proto.OSClient interface.
 func (c *Client) Restart(ctx context.Context, namespace string, driver common.ContainerDriver, id string, callOptions ...grpc.CallOption) (err error) {
-	_, err = c.OSClient.Restart(ctx, &osapi.RestartRequest{
+	_, err = c.MachineClient.Restart(ctx, &machineapi.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
 		Driver:    driver,
@@ -415,8 +411,8 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 }
 
 // Dmesg implements the proto.OSClient interface.
-func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (osapi.OSService_DmesgClient, error) {
-	return c.OSClient.Dmesg(ctx, &osapi.DmesgRequest{
+func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (machineapi.MachineService_DmesgClient, error) {
+	return c.MachineClient.Dmesg(ctx, &machineapi.DmesgRequest{
 		Follow: follow,
 		Tail:   tail,
 	})
@@ -481,8 +477,8 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 }
 
 // Processes implements the proto.OSClient interface.
-func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *osapi.ProcessesResponse, err error) {
-	resp, err = c.OSClient.Processes(
+func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ProcessesResponse, err error) {
+	resp, err = c.MachineClient.Processes(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
@@ -490,14 +486,14 @@ func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) 
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*osapi.ProcessesResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ProcessesResponse) //nolint: errcheck
 
 	return
 }
 
 // Memory implements the proto.OSClient interface.
-func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (resp *osapi.MemoryResponse, err error) {
-	resp, err = c.OSClient.Memory(
+func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.MemoryResponse, err error) {
+	resp, err = c.MachineClient.Memory(
 		ctx,
 		&empty.Empty{},
 		callOptions...,
@@ -505,7 +501,7 @@ func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (re
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*osapi.MemoryResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.MemoryResponse) //nolint: errcheck
 
 	return
 }

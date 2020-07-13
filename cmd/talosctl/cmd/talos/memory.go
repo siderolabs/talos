@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	osapi "github.com/talos-systems/talos/api/os"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -50,7 +50,7 @@ var memoryCmd = &cobra.Command{
 	},
 }
 
-func briefRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
+func briefRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tTOTAL\tUSED\tFREE\tSHARED\tBUFFERS\tCACHE\tAVAILABLE")
 
@@ -79,7 +79,7 @@ func briefRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
 	return w.Flush()
 }
 
-func verboseRender(remotePeer *peer.Peer, resp *osapi.MemoryResponse) error {
+func verboseRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) error {
 	defaultNode := client.AddrFromPeer(remotePeer)
 
 	// Dump as /proc/meminfo

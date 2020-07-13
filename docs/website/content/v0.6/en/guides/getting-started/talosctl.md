@@ -104,7 +104,6 @@ NODE          SERVICE             STATE      HEALTH   LAST CHANGE     LAST EVENT
 192.168.2.44   machined-api        Running    ?        192h7m48s ago   Service started as goroutine
 192.168.2.44   networkd            Running    OK       192h7m11s ago   Health check successful
 192.168.2.44   ntpd                Running    ?        192h7m10s ago   Started task ntpd (PID 4144) for container ntpd
-192.168.2.44   osd                 Running    OK       192h7m45s ago   Health check successful
 192.168.2.44   routerd             Running    OK       192h7m46s ago   Started task routerd (PID 3907) for container routerd
 192.168.2.44   system-containerd   Running    OK       192h7m48s ago   Health check successful
 192.168.2.44   trustd              Running    OK       192h7m45s ago   Health check successful
@@ -125,7 +124,6 @@ NODE          NAMESPACE   ID         IMAGE            PID    STATUS
 192.168.2.44   system      apid       talos/apid       4021   RUNNING
 192.168.2.44   system      networkd   talos/networkd   3893   RUNNING
 192.168.2.44   system      ntpd       talos/ntpd       4144   RUNNING
-192.168.2.44   system      osd        talos/osd        4086   RUNNING
 192.168.2.44   system      routerd    talos/routerd    3907   RUNNING
 192.168.2.44   system      trustd     talos/trustd     4010   RUNNING
 ```

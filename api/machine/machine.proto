@@ -15,14 +15,19 @@ import "common/common.proto";
 // The machine service definition.
 service MachineService {
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+  rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
+  rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
   rpc Logs(LogsRequest) returns (stream common.Data);
+  rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
+  rpc Processes(google.protobuf.Empty) returns (ProcessesResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
+  rpc Restart(RestartRequest) returns (RestartResponse);
   rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
   rpc Recover(RecoverRequest) returns (RecoverResponse);
@@ -31,6 +36,7 @@ service MachineService {
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
   rpc ServiceStop(ServiceStopRequest) returns (ServiceStopResponse);
   rpc Shutdown(google.protobuf.Empty) returns (ShutdownResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
 }
@@ -318,3 +324,158 @@ message RollbackRequest {}
 
 message Rollback { common.Metadata metadata = 1; }
 message RollbackResponse { repeated Rollback messages = 1; }
+
+// rpc Containers
+
+message ContainersRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 2;
+}
+
+// The messages message containing the requested containers.
+message ContainerInfo {
+  string namespace = 1;
+  string id = 2;
+  string image = 3;
+  uint32 pid = 4;
+  string status = 5;
+  string pod_id = 6;
+  string name = 7;
+}
+
+// The messages message containing the requested containers.
+message Container {
+  common.Metadata metadata = 1;
+  repeated ContainerInfo containers = 2;
+}
+
+message ContainersResponse { repeated Container messages = 1; }
+
+// dmesg
+message DmesgRequest {
+  bool follow = 1;
+  bool tail = 2;
+}
+
+// rpc processes
+message ProcessesRequest {}
+
+message ProcessesResponse { repeated Process messages = 1; }
+
+message Process {
+  common.Metadata metadata = 1;
+  repeated ProcessInfo processes = 2;
+}
+
+message ProcessInfo {
+  int32 pid = 1;
+  int32 ppid = 2;
+  string state = 3;
+  int32 threads = 4;
+  double cpu_time = 5;
+  uint64 virtual_memory = 6;
+  uint64 resident_memory = 7;
+  string command = 8;
+  string executable = 9;
+  string args = 10;
+}
+
+// rpc restart
+// The request message containing the process to restart.
+message RestartRequest {
+  string namespace = 1;
+  string id = 2;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 3;
+}
+
+message Restart { common.Metadata metadata = 1; }
+
+// The messages message containing the restart status.
+message RestartResponse { repeated Restart messages = 1; }
+
+// rpc stats
+
+// The request message containing the containerd namespace.
+message StatsRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 2;
+}
+
+// The messages message containing the requested stats.
+message Stats {
+  common.Metadata metadata = 1;
+  repeated Stat stats = 2;
+}
+
+message StatsResponse { repeated Stats messages = 1; }
+
+// The messages message containing the requested stat.
+message Stat {
+  string namespace = 1;
+  string id = 2;
+  uint64 memory_usage = 4;
+  uint64 cpu_usage = 5;
+  string pod_id = 6;
+  string name = 7;
+}
+
+message Memory {
+  common.Metadata metadata = 1;
+  MemInfo meminfo = 2;
+}
+
+message MemoryResponse { repeated Memory messages = 1; }
+
+message MemInfo {
+  uint64 memtotal = 1;
+  uint64 memfree = 2;
+  uint64 memavailable = 3;
+  uint64 buffers = 4;
+  uint64 cached = 5;
+  uint64 swapcached = 6;
+  uint64 active = 7;
+  uint64 inactive = 8;
+  uint64 activeanon = 9;
+  uint64 inactiveanon = 10;
+  uint64 activefile = 11;
+  uint64 inactivefile = 12;
+  uint64 unevictable = 13;
+  uint64 mlocked = 14;
+  uint64 swaptotal = 15;
+  uint64 swapfree = 16;
+  uint64 dirty = 17;
+  uint64 writeback = 18;
+  uint64 anonpages = 19;
+  uint64 mapped = 20;
+  uint64 shmem = 21;
+  uint64 slab = 22;
+  uint64 sreclaimable = 23;
+  uint64 sunreclaim = 24;
+  uint64 kernelstack = 25;
+  uint64 pagetables = 26;
+  uint64 nfsunstable = 27;
+  uint64 bounce = 28;
+  uint64 writebacktmp = 29;
+  uint64 commitlimit = 30;
+  uint64 committedas = 31;
+  uint64 vmalloctotal = 32;
+  uint64 vmallocused = 33;
+  uint64 vmallocchunk = 34;
+  uint64 hardwarecorrupted = 35;
+  uint64 anonhugepages = 36;
+  uint64 shmemhugepages = 37;
+  uint64 shmempmdmapped = 38;
+  uint64 cmatotal = 39;
+  uint64 cmafree = 40;
+  uint64 hugepagestotal = 41;
+  uint64 hugepagesfree = 42;
+  uint64 hugepagesrsvd = 43;
+  uint64 hugepagessurp = 44;
+  uint64 hugepagesize = 45;
+  uint64 directmap4k = 46;
+  uint64 directmap2m = 47;
+  uint64 directmap1g = 48;
+}
