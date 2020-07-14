@@ -1048,24 +1048,25 @@ func (s *Server) Processes(ctx context.Context, in *empty.Empty) (reply *machine
 	)
 
 	for _, proc := range procs {
+		// due to race condition, reading process info might fail if process has already terminated
 		command, err = proc.Comm()
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		executable, err = proc.Executable()
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		args, err = proc.CmdLine()
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		stats, err = proc.Stat()
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		p := &machine.ProcessInfo{
