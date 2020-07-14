@@ -139,7 +139,7 @@ const (
 	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.19.0-beta.1"
+	DefaultKubernetesVersion = "1.19.0-rc.0"
 
 	// KubeletImage is the enforced kubelet image to use.
 	KubeletImage = "docker.io/autonomy/kubelet"
