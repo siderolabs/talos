@@ -53,7 +53,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
 	github.com/particledecay/kconf v1.8.0
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/prometheus/procfs v0.0.8
+	github.com/prometheus/procfs v0.0.11
 	github.com/rs/xid v1.2.1
 	github.com/ryanuber/columnize v2.1.0+incompatible
 	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
@@ -72,7 +72,7 @@ require (
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
-	golang.org/x/text v0.3.2
+	golang.org/x/text v0.3.3
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/tools v0.0.0-20200710042808-f1c4188a97a1 // indirect
 	google.golang.org/grpc v1.27.0
@@ -82,9 +82,9 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
-	k8s.io/api v0.18.2
-	k8s.io/apimachinery v0.18.2
-	k8s.io/client-go v0.18.2
-	k8s.io/cri-api v0.18.0
-	k8s.io/kubelet v0.18.0
+	k8s.io/api v0.19.0-rc.0
+	k8s.io/apimachinery v0.19.0-rc.0
+	k8s.io/client-go v0.19.0-rc.0
+	k8s.io/cri-api v0.19.0-rc.0
+	k8s.io/kubelet v0.19.0-rc.0
 )
