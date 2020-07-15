@@ -243,6 +243,8 @@ done
   az vm create \
     --name talos-worker-0 \
     --image talos \
+    --vnet-name talos-vnet \
+    --subnet talos-subnet \
     --custom-data ./join.yaml \
     -g $GROUP \
     --admin-username talos \
