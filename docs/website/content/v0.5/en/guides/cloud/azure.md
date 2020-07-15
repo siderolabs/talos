@@ -2,6 +2,9 @@
 title: 'Azure'
 ---
 
+**Note: Azure support is broken in v0.5.x of Talos.**
+**Please use v0.6.x instead.**
+
 ## Creating a Cluster via the CLI
 
 In this guide we will create an HA Kubernetes cluster with 1 worker node.
@@ -243,6 +246,8 @@ done
   az vm create \
     --name talos-worker-0 \
     --image talos \
+    --vnet-name talos-vnet \
+    --subnet talos-subnet \
     --custom-data ./join.yaml \
     -g $GROUP \
     --admin-username talos \
