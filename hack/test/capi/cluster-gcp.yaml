@@ -4,7 +4,6 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
   name: talos-e2e-{{TAG}}-gcp
-  namespace: default
 spec:
   clusterNetwork:
     pods:
@@ -14,157 +13,48 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: GCPCluster
     name: talos-e2e-{{TAG}}-gcp
-    namespace: default
+  controlPlaneRef:
+    kind: TalosControlPlane
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    name: talos-e2e-{{TAG}}-gcp-controlplane
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: GCPCluster
 metadata:
   name: talos-e2e-{{TAG}}-gcp
-  namespace: default
 spec:
   project: talos-testbed
   region: us-central1
 ---
-## Controlplane 0 configs
-
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: TalosConfig
-metadata:
-  name: talos-e2e-{{TAG}}-gcp-controlplane-0
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
-spec:
-  generateType: init
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Machine
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
-    cluster.x-k8s.io/control-plane: 'true'
-  name: talos-e2e-{{TAG}}-gcp-controlplane-0
-  namespace: default
-spec:
-  failureDomain: "us-central1-a"
-  clusterName: talos-e2e-{{TAG}}-gcp
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-      kind: TalosConfig
-      name: talos-e2e-{{TAG}}-gcp-controlplane-0
-      namespace: default
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: GCPMachine
-    name: talos-e2e-{{TAG}}-gcp-controlplane-0
-    namespace: default
-  version: 1.18.3
----
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: GCPMachine
+kind: GCPMachineTemplate
 metadata:
-  name: talos-e2e-{{TAG}}-gcp-controlplane-0
-  namespace: default
+  name: talos-e2e-{{TAG}}-gcp-controlplane
 spec:
-  instanceType: n1-standard-4
-  image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
-  serviceAccounts: {}
-  publicIP: true
-  rootDeviceSize: 150
+  template:
+    spec:
+      instanceType: n1-standard-4
+      image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
+      serviceAccounts: {}
+      publicIP: true
+      rootDeviceSize: 150
 ---
-## Controlplane 1 configs
-
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: TalosConfig
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: TalosControlPlane
 metadata:
-  name: talos-e2e-{{TAG}}-gcp-controlplane-1
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
+  name: talos-e2e-{{TAG}}-gcp-controlplane
 spec:
-  generateType: controlplane
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Machine
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
-    cluster.x-k8s.io/control-plane: 'true'
-  name: talos-e2e-{{TAG}}-gcp-controlplane-1
-  namespace: default
-spec:
-  failureDomain: "us-central1-a"
-  clusterName: talos-e2e-{{TAG}}-gcp
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-      kind: TalosConfig
-      name: talos-e2e-{{TAG}}-gcp-controlplane-1
-      namespace: default
-  infrastructureRef:
+  version: v1.18.3
+  replicas: 3
+  infrastructureTemplate:
+    kind: GCPMachineTemplate
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: GCPMachine
-    name: talos-e2e-{{TAG}}-gcp-controlplane-1
-    namespace: default
-  version: 1.18.3
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: GCPMachine
-metadata:
-  name: talos-e2e-{{TAG}}-gcp-controlplane-1
-  namespace: default
-spec:
-  instanceType: n1-standard-4
-  image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
-  serviceAccounts: {}
-  publicIP: true
-  rootDeviceSize: 150
----
-## Controlplane 2 configs
-
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: TalosConfig
-metadata:
-  name: talos-e2e-{{TAG}}-gcp-controlplane-2
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
-spec:
-  generateType: controlplane
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Machine
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-gcp
-    cluster.x-k8s.io/control-plane: 'true'
-  name: talos-e2e-{{TAG}}-gcp-controlplane-2
-  namespace: default
-spec:
-  failureDomain: "us-central1-a"
-  clusterName: talos-e2e-{{TAG}}-gcp
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-      kind: TalosConfig
-      name: talos-e2e-{{TAG}}-gcp-controlplane-2
-      namespace: default
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: GCPMachine
-    name: talos-e2e-{{TAG}}-gcp-controlplane-2
-    namespace: default
-  version: 1.18.3
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: GCPMachine
-metadata:
-  name: talos-e2e-{{TAG}}-gcp-controlplane-2
-  namespace: default
-spec:
-  instanceType: n1-standard-4
-  image: projects/talos-testbed/global/images/talos-e2e-{{TAG}}
-  serviceAccounts: {}
-  publicIP: true
-  rootDeviceSize: 150
+    name: talos-e2e-{{TAG}}-gcp-controlplane
+  controlPlaneConfig:
+    init:
+      generateType: init
+    controlplane:
+      generateType: controlplane
 ---
 ## Worker deployment configs
 
