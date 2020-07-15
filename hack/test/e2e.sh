@@ -47,23 +47,33 @@ function create_cluster_capi {
 
   ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig apply -f ${TMP}/cluster.yaml
 
+  # Wait for first controlplane machine to have a name
+  timeout=$(($(date +%s) + ${TIMEOUT}))
+  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -l cluster.x-k8s.io/control-plane --all-namespaces -o json | jq -re '.items[0].metadata.name | select (.!=null)')" ]; do
+    [[ $(date +%s) -gt $timeout ]] && exit 1
+    sleep 10
+    ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -l cluster.x-k8s.io/control-plane --all-namespaces
+  done
+
+  export FIRST_CP_NODE=$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -l cluster.x-k8s.io/control-plane="" --all-namespaces -o json | jq -r '.items[0].metadata.name')
+
   # Wait for talosconfig in cm then dump it out
   timeout=$(($(date +%s) + ${TIMEOUT}))
-  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get talosconfig ${NAME_PREFIX}-controlplane-0 -o jsonpath='{.status.talosConfig}')" ]; do
+  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get talosconfig ${FIRST_CP_NODE} -o jsonpath='{.status.talosConfig}')" ]; do
     [[ $(date +%s) -gt $timeout ]] && exit 1
     sleep 10
   done
-  ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get talosconfig ${NAME_PREFIX}-controlplane-0 -o jsonpath='{.status.talosConfig}' > ${TALOSCONFIG}
+  ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get talosconfig ${FIRST_CP_NODE} -o jsonpath='{.status.talosConfig}' > ${TALOSCONFIG}
 
-  # Wait until we have an IP for master 0
+  # Wait until we have an IP for first controlplane node
   timeout=$(($(date +%s) + ${TIMEOUT}))
-  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0)" ]; do
+  until [ -n "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${FIRST_CP_NODE})" ]; do
     [[ $(date +%s) -gt $timeout ]] && exit 1
     sleep 10
   done
-  ${TALOSCTL} config endpoint "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0)"
+  ${TALOSCTL} config endpoint "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${FIRST_CP_NODE})"
 
-  # Wait for the kubeconfig from capi master-0
+  # Wait for the kubeconfig from first cp node
   timeout=$(($(date +%s) + ${TIMEOUT}))
   until get_kubeconfig; do
     [[ $(date +%s) -gt $timeout ]] && exit 1
