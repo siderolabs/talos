@@ -4,7 +4,6 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
   name: talos-e2e-{{TAG}}-aws
-  namespace: default
 spec:
   clusterNetwork:
     pods:
@@ -14,13 +13,15 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: AWSCluster
     name: talos-e2e-{{TAG}}-aws
-    namespace: default
+  controlPlaneRef:
+    kind: TalosControlPlane
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    name: talos-e2e-{{TAG}}-aws-controlplane
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: AWSCluster
 metadata:
   name: talos-e2e-{{TAG}}-aws
-  namespace: default
 spec:
   region: '{{REGION}}'
   sshKeyName: talos-e2e
@@ -28,164 +29,45 @@ spec:
     vpc:
       id: 'vpc-ff5c5687'
 ---
-## Controlplane 0 configs
+## Control plane configs
 
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: TalosConfig
-metadata:
-  name: talos-e2e-{{TAG}}-aws-controlplane-0
-  namespace: default
-spec:
-  generateType: init
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Machine
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
-    cluster.x-k8s.io/control-plane: 'true'
-  name: talos-e2e-{{TAG}}-aws-controlplane-0
-  namespace: default
-spec:
-  clusterName: talos-e2e-{{TAG}}-aws
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-      kind: TalosConfig
-      name: talos-e2e-{{TAG}}-aws-controlplane-0
-      namespace: default
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: AWSMachine
-    name: talos-e2e-{{TAG}}-aws-controlplane-0
-    namespace: default
-  version: 1.18.3
----
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: AWSMachine
+kind: AWSMachineTemplate
 metadata:
-  name: talos-e2e-{{TAG}}-aws-controlplane-0
-  namespace: default
+  name: talos-e2e-{{TAG}}-aws-controlplane
 spec:
-  cloudInit:
-    insecureSkipSecretsManager: true
-  instanceType: m5.xlarge
-  rootVolume:
-    size: 150
-  sshKeyName: talos-e2e
-  ami:
-    id: '{{AMI}}'
-  subnet:
-    id: 'subnet-c4e9b3a0'
-  additionalSecurityGroups:
-    - id: 'sg-ebe8e59f'
-  publicIP: true
+  template:
+    spec:
+      cloudInit:
+        insecureSkipSecretsManager: true
+      instanceType: m5.xlarge
+      rootVolume:
+        size: 150
+      sshKeyName: talos-e2e
+      ami:
+        id: '{{AMI}}'
+      subnet:
+        id: 'subnet-c4e9b3a0'
+      additionalSecurityGroups:
+        - id: 'sg-ebe8e59f'
+      publicIP: true
 ---
-## Controlplane 1 configs
-
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: TalosConfig
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: TalosControlPlane
 metadata:
-  name: talos-e2e-{{TAG}}-aws-controlplane-1
-  namespace: default
+  name: talos-e2e-{{TAG}}-aws-controlplane
 spec:
-  generateType: controlplane
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Machine
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
-    cluster.x-k8s.io/control-plane: 'true'
-  name: talos-e2e-{{TAG}}-aws-controlplane-1
-  namespace: default
-spec:
-  clusterName: talos-e2e-{{TAG}}-aws
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-      kind: TalosConfig
-      name: talos-e2e-{{TAG}}-aws-controlplane-1
-      namespace: default
-  infrastructureRef:
+  version: v1.18.3
+  replicas: 3
+  infrastructureTemplate:
+    kind: AWSMachineTemplate
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: AWSMachine
-    name: talos-e2e-{{TAG}}-aws-controlplane-1
-    namespace: default
-  version: 1.18.3
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: AWSMachine
-metadata:
-  name: talos-e2e-{{TAG}}-aws-controlplane-1
-  namespace: default
-spec:
-  cloudInit:
-    insecureSkipSecretsManager: true
-  instanceType: m5.xlarge
-  rootVolume:
-    size: 150
-  sshKeyName: talos-e2e
-  ami:
-    id: '{{AMI}}'
-  subnet:
-    id: 'subnet-c4e9b3a0'
-  additionalSecurityGroups:
-    - id: 'sg-ebe8e59f'
-  publicIP: true
----
-## Controlplane 2 configs
-
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: TalosConfig
-metadata:
-  name: talos-e2e-{{TAG}}-aws-controlplane-2
-  namespace: default
-spec:
-  generateType: controlplane
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Machine
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
-    cluster.x-k8s.io/control-plane: 'true'
-  name: talos-e2e-{{TAG}}-aws-controlplane-2
-  namespace: default
-spec:
-  clusterName: talos-e2e-{{TAG}}-aws
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-      kind: TalosConfig
-      name: talos-e2e-{{TAG}}-aws-controlplane-2
-      namespace: default
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: AWSMachine
-    name: talos-e2e-{{TAG}}-aws-controlplane-2
-    namespace: default
-  version: 1.18.3
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: AWSMachine
-metadata:
-  name: talos-e2e-{{TAG}}-aws-controlplane-2
-  namespace: default
-spec:
-  cloudInit:
-    insecureSkipSecretsManager: true
-  instanceType: m5.xlarge
-  rootVolume:
-    size: 150
-  sshKeyName: talos-e2e
-  ami:
-    id: '{{AMI}}'
-  subnet:
-    id: 'subnet-c4e9b3a0'
-  additionalSecurityGroups:
-    - id: 'sg-ebe8e59f'
-  publicIP: true
+    name: talos-e2e-{{TAG}}-aws-controlplane
+  controlPlaneConfig:
+    init:
+      generateType: init
+    controlplane:
+      generateType: controlplane
 ---
 ## Worker deployment configs
 
@@ -206,7 +88,6 @@ metadata:
     cluster.x-k8s.io/cluster-name: talos-e2e-{{TAG}}-aws
     nodepool: nodepool-0
   name: talos-e2e-{{TAG}}-aws-workers
-  namespace: default
 spec:
   clusterName: talos-e2e-{{TAG}}-aws
   replicas: 3
@@ -226,19 +107,16 @@ spec:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: TalosConfigTemplate
           name: talos-e2e-{{TAG}}-aws-workers
-          namespace: default
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: AWSMachineTemplate
         name: talos-e2e-{{TAG}}-aws-workers
-        namespace: default
       version: 1.18.3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: AWSMachineTemplate
 metadata:
   name: talos-e2e-{{TAG}}-aws-workers
-  namespace: default
 spec:
   template:
     spec:
