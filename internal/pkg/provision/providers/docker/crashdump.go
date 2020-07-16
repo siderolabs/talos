@@ -24,7 +24,7 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 	}
 
 	for _, container := range containers {
-		name := container.Names[0][:1]
+		name := container.Names[0][1:]
 		fmt.Fprintf(out, "%s\n%s\n\n", name, strings.Repeat("=", len(name)))
 
 		logs, err := p.client.ContainerLogs(ctx, container.ID, types.ContainerLogsOptions{
