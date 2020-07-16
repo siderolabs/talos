@@ -206,11 +206,11 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 	log.Printf("validating %q", in.GetImage())
 
 	if err = pullAndValidateInstallerImage(ctx, s.Controller.Runtime().Config().Machine().Registries(), in.GetImage()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
 	if err = etcd.ValidateForUpgrade(in.GetPreserve()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
 	}
 
 	go func() {
