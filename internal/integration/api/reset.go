@@ -40,7 +40,9 @@ func (suite *ResetSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *ResetSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestResetNodeByNode Resets cluster node by node, waiting for health between Resets.

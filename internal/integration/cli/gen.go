@@ -38,8 +38,13 @@ func (suite *GenSuite) SetupTest() {
 }
 
 func (suite *GenSuite) TearDownTest() {
-	suite.Require().NoError(os.Chdir(suite.savedCwd))
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
+	if suite.savedCwd != "" {
+		suite.Require().NoError(os.Chdir(suite.savedCwd))
+	}
+
+	if suite.tmpDir != "" {
+		suite.Require().NoError(os.RemoveAll(suite.tmpDir))
+	}
 }
 
 // TestCA ...

@@ -44,7 +44,9 @@ func (suite *RecoverSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *RecoverSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestRecoverControlPlane removes the control plane components and attempts to recover them with the recover API.
