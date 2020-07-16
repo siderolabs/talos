@@ -141,15 +141,15 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 
 // nolint: gocyclo
 func generatePKI(r runtime.Runtime) (err error) {
-	if err = os.MkdirAll(constants.EtcdPKIPath, 0644); err != nil {
+	if err = os.MkdirAll(constants.EtcdPKIPath, 0o644); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o500); err != nil {
 		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o500); err != nil {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
@@ -238,11 +238,11 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return fmt.Errorf("failled to create peer certificate: %w", err)
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0o500); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peer.X509CertificatePEM, 0500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peer.X509CertificatePEM, 0o500); err != nil {
 		return err
 	}
 
@@ -433,7 +433,7 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 	errCh <- func() error {
 		var err error
 
-		if err = os.MkdirAll(constants.EtcdDataPath, 0755); err != nil {
+		if err = os.MkdirAll(constants.EtcdDataPath, 0o755); err != nil {
 			return err
 		}
 
@@ -454,7 +454,7 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 			return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 		}
 
-		switch r.Config().Machine().Type() {
+		switch r.Config().Machine().Type() { //nolint: exhaustive
 		case runtime.MachineTypeInit:
 			err = e.argsForInit(ctx, r)
 			if err != nil {
@@ -465,6 +465,8 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 			if err != nil {
 				return err
 			}
+		default:
+			return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
 		}
 
 		return nil
@@ -573,7 +575,7 @@ func IsDirEmpty(name string) (bool, error) {
 }
 
 // primaryAndListenAddresses calculates the primary (advertised) and listen (bind) addresses for etcd.
-func primaryAndListenAddresses() (primary string, listen string, err error) {
+func primaryAndListenAddresses() (primary, listen string, err error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return "", "", fmt.Errorf("failed to discover interface IP addresses: %w", err)

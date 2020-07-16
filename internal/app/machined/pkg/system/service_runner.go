@@ -410,7 +410,7 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 		// up when:
 		//   a) either skipped or already finished
 		//   b) or running and healthy (if supports health checks)
-		switch svcrunner.state {
+		switch svcrunner.state { //nolint: exhaustive
 		case events.StateSkipped, events.StateFinished:
 			return true
 		case events.StateRunning:
@@ -424,7 +424,7 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 		}
 	case StateEventDown:
 		// down when in any of the terminal states
-		switch svcrunner.state {
+		switch svcrunner.state { //nolint: exhaustive
 		case events.StateFailed, events.StateFinished, events.StateSkipped:
 			return true
 		default:

@@ -148,7 +148,7 @@ func (r *Reader) notify() {
 				continue
 			}
 
-			switch event.Op {
+			switch event.Op { //nolint: exhaustive
 			case fsnotify.Write:
 				// non-blocking send, we need to keep processing fsnotify events
 				// at least signal message is in r.notifyCh which will allow Read to wake up

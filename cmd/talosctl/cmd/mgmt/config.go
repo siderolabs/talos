@@ -131,7 +131,7 @@ func genV1Alpha1Config(args []string) error {
 			}
 		}
 
-		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0644); err != nil {
+		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
 			return err
 		}
 
@@ -148,7 +148,7 @@ func genV1Alpha1Config(args []string) error {
 
 	fullFilePath := filepath.Join(outputDir, "talosconfig")
 
-	if err = ioutil.WriteFile(fullFilePath, data, 0644); err != nil {
+	if err = ioutil.WriteFile(fullFilePath, data, 0o644); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 

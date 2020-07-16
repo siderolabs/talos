@@ -60,7 +60,7 @@ func (handler *fileLogHandler) Writer() (io.WriteCloser, error) {
 		return nil, err
 	}
 
-	return os.OpenFile(handler.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+	return os.OpenFile(handler.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o666)
 }
 
 // Reader implements runtime.LogHandler interface.

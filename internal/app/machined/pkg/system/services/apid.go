@@ -83,7 +83,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	endpoints := []string{"127.0.0.1"}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
 		return nil, err
 	}
 

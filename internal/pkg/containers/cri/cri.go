@@ -85,7 +85,7 @@ func (i *inspector) Images() (map[string]string, error) {
 	return result, nil
 }
 
-func parseContainerDisplay(id string) (namespace string, pod string, name string) {
+func parseContainerDisplay(id string) (namespace, pod, name string) {
 	slashIdx := strings.Index(id, "/")
 	if slashIdx > 0 {
 		namespace, pod = id[:slashIdx], id[slashIdx+1:]

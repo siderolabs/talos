@@ -5,12 +5,14 @@
 package gcp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -60,7 +62,10 @@ func (g *GCP) ExternalIPs() (addrs []net.IP, err error) {
 		resp *http.Response
 	)
 
-	if req, err = http.NewRequest("GET", GCExternalIPEndpoint, nil); err != nil {
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	if req, err = http.NewRequestWithContext(ctx, "GET", GCExternalIPEndpoint, nil); err != nil {
 		return
 	}
 

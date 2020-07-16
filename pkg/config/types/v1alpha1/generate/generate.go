@@ -216,7 +216,7 @@ func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEnc
 // NewInput generates the sensitive data required to generate all config
 // types.
 // nolint: dupl,gocyclo
-func NewInput(clustername string, endpoint string, kubernetesVersion string, opts ...GenOption) (input *Input, err error) {
+func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption) (input *Input, err error) {
 	options := DefaultGenOptions()
 
 	for _, opt := range opts {
@@ -376,7 +376,7 @@ func randBytes(length int) (string, error) {
 
 // genToken will generate a token of the format abc.123 (like kubeadm/trustd), where the length of the first string (before the dot)
 // and length of the second string (after dot) are specified as inputs.
-func genToken(lenFirst int, lenSecond int) (string, error) {
+func genToken(lenFirst, lenSecond int) (string, error) {
 	var err error
 
 	tokenTemp := make([]string, 2)
@@ -395,7 +395,7 @@ func genToken(lenFirst int, lenSecond int) (string, error) {
 }
 
 // emptyIf returns empty string if the 2nd argument is empty string, otherwise returns the first argumewnt.
-func emptyIf(str string, check string) string {
+func emptyIf(str, check string) string {
 	if check == "" {
 		return ""
 	}

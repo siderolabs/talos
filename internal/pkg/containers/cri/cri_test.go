@@ -62,8 +62,8 @@ func (suite *CRISuite) SetupSuite() {
 	suite.Require().NoError(err)
 
 	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
-	suite.Require().NoError(os.Mkdir(stateDir, 0777))
-	suite.Require().NoError(os.Mkdir(rootDir, 0777))
+	suite.Require().NoError(os.Mkdir(stateDir, 0o777))
+	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
 	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
 

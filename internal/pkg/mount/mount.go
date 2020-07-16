@@ -145,7 +145,7 @@ type Points struct {
 }
 
 // NewMountPoint initializes and returns a Point struct.
-func NewMountPoint(source string, target string, fstype string, flags uintptr, data string, setters ...Option) *Point {
+func NewMountPoint(source, target, fstype string, flags uintptr, data string, setters ...Option) *Point {
 	opts := NewDefaultOptions(setters...)
 
 	return &Point{

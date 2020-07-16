@@ -88,7 +88,7 @@ func ExtractTarGz(localPath string, r io.ReadCloser) error {
 		switch hdr.Typeflag {
 		case tar.TypeDir:
 			mode := hdr.FileInfo().Mode()
-			mode |= 0700 // make rwx for the owner
+			mode |= 0o700 // make rwx for the owner
 
 			if err = os.Mkdir(path, mode); err != nil {
 				return fmt.Errorf("error creating directory %q mode %s: %w", path, mode, err)

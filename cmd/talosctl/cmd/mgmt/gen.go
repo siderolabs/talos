@@ -59,15 +59,15 @@ var caCmd = &cobra.Command{
 			return fmt.Errorf("error generating CA: %w", err)
 		}
 
-		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing CA certificate: %w", err)
 		}
 
-		if err := ioutil.WriteFile(organization+".sha256", []byte(x509.Hash(ca.Crt)), 0600); err != nil {
+		if err := ioutil.WriteFile(organization+".sha256", []byte(x509.Hash(ca.Crt)), 0o600); err != nil {
 			return fmt.Errorf("error writing certificate hash: %w", err)
 		}
 
-		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %w", err)
 		}
 
@@ -87,7 +87,7 @@ var keyCmd = &cobra.Command{
 			return fmt.Errorf("error generating key: %w", err)
 		}
 
-		if err := ioutil.WriteFile(name+".key", key.PrivateKeyPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(name+".key", key.PrivateKeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %w", err)
 		}
 
@@ -133,7 +133,7 @@ var csrCmd = &cobra.Command{
 			return fmt.Errorf("error generating CSR: %s", err)
 		}
 
-		if err := ioutil.WriteFile(strings.TrimSuffix(key, path.Ext(key))+".csr", csr.X509CertificateRequestPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(strings.TrimSuffix(key, path.Ext(key))+".csr", csr.X509CertificateRequestPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing CSR: %s", err)
 		}
 
@@ -198,7 +198,7 @@ var crtCmd = &cobra.Command{
 			return fmt.Errorf("error signing certificate: %s", err)
 		}
 
-		if err = ioutil.WriteFile(name+".crt", signedCrt.X509CertificatePEM, 0600); err != nil {
+		if err = ioutil.WriteFile(name+".crt", signedCrt.X509CertificatePEM, 0o600); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
 
@@ -229,10 +229,10 @@ var keypairCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("error generating CA: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(organization+".crt", ca.CrtPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
-		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0600); err != nil {
+		if err := ioutil.WriteFile(organization+".key", ca.KeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %s", err)
 		}
 

@@ -33,7 +33,7 @@ func (lba *LogicalBlockAddresser) Make(size uint64) []byte {
 }
 
 // Copy copies from src to dst in the specified range.
-func (lba *LogicalBlockAddresser) Copy(dst []byte, src []byte, rng Range) (int, error) {
+func (lba *LogicalBlockAddresser) Copy(dst, src []byte, rng Range) (int, error) {
 	return 0, fmt.Errorf("not implemented")
 }
 

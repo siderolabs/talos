@@ -114,7 +114,7 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 		return err
 	}
 
-	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
+	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0o666)
 	if err != nil {
 		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}

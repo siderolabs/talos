@@ -5,6 +5,7 @@
 package aws
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/fullsailor/pkcs7"
 
@@ -59,7 +61,15 @@ type AWS struct{}
 // against the appropriate AWS public certificate. See
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-identity-documents.html
 func IsEC2() (b bool) {
-	resp, err := http.Get(AWSPKCS7Endpoint)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, AWSPKCS7Endpoint, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
 	}
@@ -136,9 +146,17 @@ func (a *AWS) Mode() runtime.Mode {
 
 // Hostname implements the runtime.Platform interface.
 func (a *AWS) Hostname() (hostname []byte, err error) {
-	resp, err := http.Get(AWSHostnameEndpoint)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, AWSHostnameEndpoint, nil)
 	if err != nil {
-		return
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
 	// nolint: errcheck
 	defer resp.Body.Close()
@@ -158,7 +176,10 @@ func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
 		resp *http.Response
 	)
 
-	if req, err = http.NewRequest("GET", AWSExternalIPEndpoint, nil); err != nil {
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	if req, err = http.NewRequestWithContext(ctx, "GET", AWSExternalIPEndpoint, nil); err != nil {
 		return
 	}
 

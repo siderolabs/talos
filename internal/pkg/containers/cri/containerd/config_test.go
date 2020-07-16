@@ -69,19 +69,19 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 	suite.Assert().Equal([]runtime.File{
 		{
 			Content:     `cacert`,
-			Permissions: 0600,
+			Permissions: 0o600,
 			Path:        "/etc/cri/ca/some.host:123.crt",
 			Op:          "create",
 		},
 		{
 			Content:     `clientcert`,
-			Permissions: 0600,
+			Permissions: 0o600,
 			Path:        "/etc/cri/client/some.host:123.crt",
 			Op:          "create",
 		},
 		{
 			Content:     `clientkey`,
-			Permissions: 0600,
+			Permissions: 0o600,
 			Path:        "/etc/cri/client/some.host:123.key",
 			Op:          "create",
 		},
@@ -105,7 +105,7 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
             cert_file = "/etc/cri/client/some.host:123.crt"
             key_file = "/etc/cri/client/some.host:123.key"
 `,
-			Permissions: 0644,
+			Permissions: 0o644,
 			Path:        constants.CRIContainerdConfig,
 			Op:          "append",
 		},

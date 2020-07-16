@@ -89,15 +89,15 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubeletBootstrapKubeconfig, buf.Bytes(), 0600); err != nil {
+	if err := ioutil.WriteFile(constants.KubeletBootstrapKubeconfig, buf.Bytes(), 0o600); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(constants.KubernetesCACert), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.KubernetesCACert), 0o700); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesCACert, r.Config().Cluster().CA().Crt, 0500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesCACert, r.Config().Cluster().CA().Crt, 0o500); err != nil {
 		return err
 	}
 
@@ -328,7 +328,7 @@ func writeKubeletConfig(r runtime.Runtime) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0600); err != nil {
+	if err := ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600); err != nil {
 		return err
 	}
 

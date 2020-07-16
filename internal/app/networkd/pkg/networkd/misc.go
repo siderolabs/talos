@@ -97,7 +97,7 @@ func writeResolvConf(resolvers []string) (err error) {
 
 	log.Println("writing resolvconf")
 
-	return ioutil.WriteFile("/etc/resolv.conf", []byte(resolvconf.String()), 0644)
+	return ioutil.WriteFile("/etc/resolv.conf", []byte(resolvconf.String()), 0o644)
 }
 
 const hostsTemplate = `
@@ -149,5 +149,5 @@ func writeHosts(hostname string, address net.IP, config runtime.Configurator) (e
 		return err
 	}
 
-	return ioutil.WriteFile("/etc/hosts", writer.Bytes(), 0644)
+	return ioutil.WriteFile("/etc/hosts", writer.Bytes(), 0o644)
 }

@@ -77,7 +77,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.TimeSocketPath), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.TimeSocketPath), 0o750); err != nil {
 		return nil, err
 	}
 

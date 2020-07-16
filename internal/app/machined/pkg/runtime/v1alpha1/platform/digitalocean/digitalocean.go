@@ -5,11 +5,13 @@
 package digitalocean
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -48,9 +50,17 @@ func (d *DigitalOcean) Mode() runtime.Mode {
 
 // Hostname implements the platform.Platform interface.
 func (d *DigitalOcean) Hostname() (hostname []byte, err error) {
-	resp, err := http.Get(DigitalOceanHostnameEndpoint)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, DigitalOceanHostnameEndpoint, nil)
 	if err != nil {
-		return
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
 	// nolint: errcheck
 	defer resp.Body.Close()
@@ -70,7 +80,10 @@ func (d *DigitalOcean) ExternalIPs() (addrs []net.IP, err error) {
 		resp *http.Response
 	)
 
-	if req, err = http.NewRequest("GET", DigitalOceanExternalIPEndpoint, nil); err != nil {
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	if req, err = http.NewRequestWithContext(ctx, "GET", DigitalOceanExternalIPEndpoint, nil); err != nil {
 		return
 	}
 

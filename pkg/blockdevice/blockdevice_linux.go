@@ -129,7 +129,7 @@ func (bd *BlockDevice) RereadPartitionTable() error {
 		if _, _, ret = unix.Syscall(unix.SYS_IOCTL, bd.f.Fd(), unix.BLKRRPART, 0); ret == 0 {
 			return nil
 		}
-		switch ret {
+		switch ret { //nolint: exhaustive
 		case syscall.EBUSY:
 			return retry.ExpectedError(err)
 		default:

@@ -81,7 +81,7 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.NetworkSocketPath), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.NetworkSocketPath), 0o750); err != nil {
 		return nil, err
 	}
 

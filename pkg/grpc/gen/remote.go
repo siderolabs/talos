@@ -96,7 +96,7 @@ func (g *RemoteGenerator) Close() error {
 	return g.conn.Close()
 }
 
-func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca []byte, crt []byte, err error) {
+func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca, crt []byte, err error) {
 	timeout := time.NewTimer(time.Minute * 5)
 	defer timeout.Stop()
 

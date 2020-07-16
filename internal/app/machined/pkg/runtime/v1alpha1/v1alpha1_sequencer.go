@@ -44,7 +44,7 @@ func (p PhaseList) AppendWhen(when bool, name string, tasks ...runtime.TaskSetup
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() {
+	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"systemRequirements",
@@ -112,7 +112,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() {
+	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
@@ -252,7 +252,7 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() {
+	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"stopEverything",
@@ -298,7 +298,7 @@ func (*Sequencer) Recover(r runtime.Runtime, in *machine.RecoverRequest) []runti
 func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() {
+	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"stopEverything",
@@ -350,7 +350,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.P
 func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() {
+	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"stopEverything",
@@ -387,7 +387,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() {
+	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:

@@ -148,7 +148,7 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 		},
 	}
 
-	logFile, err := os.OpenFile(filepath.Join(state.statePath, fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	logFile, err := os.OpenFile(filepath.Join(state.statePath, fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}

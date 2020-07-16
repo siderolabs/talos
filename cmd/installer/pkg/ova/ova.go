@@ -176,11 +176,11 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 	// nolint: errcheck
 	defer os.RemoveAll(dir)
 
-	if err = ioutil.WriteFile(filepath.Join(dir, name+".mf"), []byte(mf), 0666); err != nil {
+	if err = ioutil.WriteFile(filepath.Join(dir, name+".mf"), []byte(mf), 0o666); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(dir, name+".ovf"), []byte(ovf), 0666); err != nil {
+	if err = ioutil.WriteFile(filepath.Join(dir, name+".ovf"), []byte(ovf), 0o666); err != nil {
 		return err
 	}
 

@@ -5,6 +5,7 @@
 package azure
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
@@ -16,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
@@ -89,7 +91,10 @@ func (a *Azure) Hostname() (hostname []byte, err error) {
 		resp *http.Response
 	)
 
-	req, err = http.NewRequest("GET", AzureHostnameEndpoint, nil)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	req, err = http.NewRequestWithContext(ctx, "GET", AzureHostnameEndpoint, nil)
 	if err != nil {
 		return
 	}
@@ -126,7 +131,10 @@ func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
 		resp *http.Response
 	)
 
-	if req, err = http.NewRequest("GET", AzureInterfacesEndpoint, nil); err != nil {
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	if req, err = http.NewRequestWithContext(ctx, "GET", AzureInterfacesEndpoint, nil); err != nil {
 		return
 	}
 
