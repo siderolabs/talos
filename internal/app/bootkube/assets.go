@@ -31,7 +31,7 @@ import (
 
 // nolint: gocyclo
 func generateAssets(config runtime.Configurator) (err error) {
-	if err = os.MkdirAll(constants.ManifestsDirectory, 0644); err != nil {
+	if err = os.MkdirAll(constants.ManifestsDirectory, 0o644); err != nil {
 		return err
 	}
 

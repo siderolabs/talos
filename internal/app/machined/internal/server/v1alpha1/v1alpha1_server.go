@@ -580,7 +580,7 @@ func (s *Server) Kubeconfig(empty *empty.Empty, obj machine.MachineService_Kubec
 		Name:     "kubeconfig",
 		Size:     int64(b.Len()),
 		ModTime:  time.Now(),
-		Mode:     0600,
+		Mode:     0o600,
 	})
 	if err != nil {
 		return err

@@ -95,7 +95,7 @@ func GenerateRegistriesConfig(input runtime.Registries) ([]runtime.File, error) 
 
 				extraFiles = append(extraFiles, runtime.File{
 					Content:     string(hostConfig.TLS.CA),
-					Permissions: 0600,
+					Permissions: 0o600,
 					Path:        path,
 					Op:          "create",
 				})
@@ -108,7 +108,7 @@ func GenerateRegistriesConfig(input runtime.Registries) ([]runtime.File, error) 
 
 				extraFiles = append(extraFiles, runtime.File{
 					Content:     string(hostConfig.TLS.ClientIdentity.Crt),
-					Permissions: 0600,
+					Permissions: 0o600,
 					Path:        path,
 					Op:          "create",
 				})
@@ -121,7 +121,7 @@ func GenerateRegistriesConfig(input runtime.Registries) ([]runtime.File, error) 
 
 				extraFiles = append(extraFiles, runtime.File{
 					Content:     string(hostConfig.TLS.ClientIdentity.Key),
-					Permissions: 0600,
+					Permissions: 0o600,
 					Path:        path,
 					Op:          "create",
 				})
@@ -146,7 +146,7 @@ func GenerateRegistriesConfig(input runtime.Registries) ([]runtime.File, error) 
 	// configuration pieces for CRI plugin
 	return append(extraFiles, runtime.File{
 		Content:     buf.String(),
-		Permissions: 0644,
+		Permissions: 0o644,
 		Path:        constants.CRIContainerdConfig,
 		Op:          "append",
 	}), nil

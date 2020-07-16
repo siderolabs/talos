@@ -69,8 +69,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
 	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
-	suite.Require().NoError(os.Mkdir(stateDir, 0777))
-	suite.Require().NoError(os.Mkdir(rootDir, 0777))
+	suite.Require().NoError(os.Mkdir(stateDir, 0o777))
+	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
 	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
 
@@ -254,7 +254,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 
 func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	testDir := filepath.Join(suite.tmpDir, "test")
-	suite.Assert().NoError(os.Mkdir(testDir, 0770))
+	suite.Assert().NoError(os.Mkdir(testDir, 0o770))
 
 	testFile := filepath.Join(testDir, "talos-test")
 	// nolint: errcheck

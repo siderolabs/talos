@@ -100,7 +100,7 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 	}
 
 	if seq == runtime.SequenceUpgrade && i.bootPartitionFound {
-		if err = os.MkdirAll("/boot", 0777); err != nil {
+		if err = os.MkdirAll("/boot", 0o777); err != nil {
 			return nil, err
 		}
 
@@ -299,7 +299,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		// nolint: errcheck
 		defer src.Close()
 
-		dst, err := os.OpenFile(constants.ConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		dst, err := os.OpenFile(constants.ConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o600)
 		if err != nil {
 			return err
 		}

@@ -276,7 +276,7 @@ func (n *Networkd) Hostname() (err error) {
 }
 
 // nolint: gocyclo
-func (n *Networkd) decideHostname() (hostname string, domainname string, address net.IP, err error) {
+func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP, err error) {
 	// Set hostname to default
 	address = net.ParseIP("127.0.1.1")
 	hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(address.String(), ".", "-"))

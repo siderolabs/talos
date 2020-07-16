@@ -93,7 +93,7 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runt
 
 	// Allow only one sequence to run at a time with the exception of bootstrap
 	// and reset sequences.
-	switch seq {
+	switch seq { //nolint: exhaustive
 	case runtime.SequenceBootstrap, runtime.SequenceReset, runtime.SequenceRecover:
 		// Do not attempt to lock.
 	default:
@@ -380,6 +380,7 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 		}
 
 		phases = c.s.Reset(c.r, in)
+	case runtime.SequenceNoop:
 	default:
 		return nil, fmt.Errorf("sequence not implemented: %q", seq)
 	}

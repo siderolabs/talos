@@ -120,7 +120,7 @@ func Install(fallback string, config interface{}, sequence runtime.Sequence, boo
 
 // Labels parses the syslinux config and returns the current active label, and
 // what should be the next label.
-func Labels() (current string, next string, err error) {
+func Labels() (current, next string, err error) {
 	var b []byte
 
 	if b, err = ioutil.ReadFile(SyslinuxConfig); err != nil {
@@ -174,7 +174,7 @@ func RevertTo(label string) (err error) {
 
 	b = re.ReplaceAll(b, []byte(fmt.Sprintf("DEFAULT %s", label)))
 
-	if err = ioutil.WriteFile(SyslinuxConfig, b, 0600); err != nil {
+	if err = ioutil.WriteFile(SyslinuxConfig, b, 0o600); err != nil {
 		return err
 	}
 
@@ -185,7 +185,7 @@ func RevertTo(label string) (err error) {
 //
 // nolint: gocyclo
 func Revert() (err error) {
-	f, err := os.OpenFile(SyslinuxLdlinux, os.O_RDWR, 0700)
+	f, err := os.OpenFile(SyslinuxLdlinux, os.O_RDWR, 0o700)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
@@ -246,7 +246,7 @@ func writeCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 
 	log.Printf("writing %s to disk", path)
 
-	if err = ioutil.WriteFile(path, wr.Bytes(), 0600); err != nil {
+	if err = ioutil.WriteFile(path, wr.Bytes(), 0o600); err != nil {
 		return err
 	}
 
@@ -267,7 +267,7 @@ func writeCfg(base, path string, syslinuxcfg *Cfg) (err error) {
 
 		log.Printf("writing syslinux label %q to disk", label.Root)
 
-		if err = ioutil.WriteFile(filepath.Join(dir, "include.cfg"), wr.Bytes(), 0600); err != nil {
+		if err = ioutil.WriteFile(filepath.Join(dir, "include.cfg"), wr.Bytes(), 0o600); err != nil {
 			return err
 		}
 	}
@@ -309,7 +309,7 @@ func copyFile(src, dst string) error {
 func writeUEFIFiles() (err error) {
 	dir := filepath.Join(constants.BootMountPoint, "EFI", "BOOT")
 
-	if err = os.MkdirAll(dir, 0700); err != nil {
+	if err = os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
 
@@ -342,7 +342,7 @@ func update() (err error) {
 func setADV(ldlinux, fallback string) (err error) {
 	var f *os.File
 
-	if f, err = os.OpenFile(ldlinux, os.O_RDWR, 0700); err != nil {
+	if f, err = os.OpenFile(ldlinux, os.O_RDWR, 0o700); err != nil {
 		return err
 	}
 

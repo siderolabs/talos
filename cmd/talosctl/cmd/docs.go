@@ -28,7 +28,7 @@ var docsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		out := args[0]
 
-		if err := os.MkdirAll(out, 0777); err != nil {
+		if err := os.MkdirAll(out, 0o777); err != nil {
 			return fmt.Errorf("failed to create output directory %q", out)
 		}
 

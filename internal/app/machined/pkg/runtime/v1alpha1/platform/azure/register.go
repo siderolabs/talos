@@ -6,10 +6,12 @@ package azure
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // This should provide the bare minimum to trigger a node in ready condition to allow
@@ -31,7 +33,10 @@ func goalState() (gs *GoalState, err error) {
 		return gs, nil
 	}
 
-	req, err := http.NewRequest("GET", u.String(), nil)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return gs, err
 	}
@@ -101,7 +106,10 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 		resp *http.Response
 	)
 
-	req, err = http.NewRequest("POST", u.String(), b)
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
+	req, err = http.NewRequestWithContext(ctx, "POST", u.String(), b)
 	if err != nil {
 		return err
 	}

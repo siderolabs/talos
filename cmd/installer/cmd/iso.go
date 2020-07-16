@@ -44,7 +44,7 @@ func runISOCmd() error {
 	for _, dir := range []string{"/mnt/isolinux", "/mnt/usr/install"} {
 		log.Printf("creating %s", dir)
 
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
 	}
@@ -67,7 +67,7 @@ func runISOCmd() error {
 			// nolint: errcheck
 			defer from.Close()
 
-			to, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0666)
+			to, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0o666)
 			if err != nil {
 				return err
 			}
@@ -83,7 +83,7 @@ func runISOCmd() error {
 
 	log.Println("creating isolinux.cfg")
 
-	if err := ioutil.WriteFile("/mnt/isolinux/isolinux.cfg", isolinuxCfg, 0666); err != nil {
+	if err := ioutil.WriteFile("/mnt/isolinux/isolinux.cfg", isolinuxCfg, 0o666); err != nil {
 		return err
 	}
 
@@ -106,7 +106,7 @@ func runISOCmd() error {
 	// nolint: errcheck
 	defer from.Close()
 
-	to, err := os.OpenFile(filepath.Join(outputArg, "talos.iso"), os.O_RDWR|os.O_CREATE, 0666)
+	to, err := os.OpenFile(filepath.Join(outputArg, "talos.iso"), os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -97,7 +97,7 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 func SetupSystemDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath} {
-			if err = os.MkdirAll(p, 0700); err != nil {
+			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
 		}
@@ -269,7 +269,7 @@ func WriteIMAPolicy(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			return fmt.Errorf("policy file does not exist: %w", err)
 		}
 
-		f, err := os.OpenFile("/sys/kernel/security/ima/policy", os.O_APPEND|os.O_WRONLY, 0644)
+		f, err := os.OpenFile("/sys/kernel/security/ima/policy", os.O_APPEND|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}
@@ -348,7 +348,7 @@ func OSRelease() (err error) {
 		return err
 	}
 
-	return ioutil.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), writer.Bytes(), 0644)
+	return ioutil.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), writer.Bytes(), 0o644)
 }
 
 // createBindMount creates a common way to create a writable source file with a
@@ -357,7 +357,7 @@ func OSRelease() (err error) {
 func createBindMount(src, dst string) (err error) {
 	var f *os.File
 
-	if f, err = os.OpenFile(src, os.O_WRONLY|os.O_CREATE, 0644); err != nil {
+	if f, err = os.OpenFile(src, os.O_WRONLY|os.O_CREATE, 0o644); err != nil {
 		return err
 	}
 
@@ -493,7 +493,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return err
 		}
 
-		return ioutil.WriteFile(constants.ConfigPath, b, 0600)
+		return ioutil.WriteFile(constants.ConfigPath, b, 0o600)
 	}, "saveConfig"
 }
 
@@ -640,6 +640,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 				&services.Trustd{},
 				&services.Etcd{},
 			)
+		case runtime.MachineTypeJoin:
 		}
 
 		system.Services(r).StartAll()
@@ -740,7 +741,7 @@ func SetupSharedFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 func SetupVarDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		for _, p := range []string{"/var/log/pods", "/var/lib/kubelet", "/var/run/lock"} {
-			if err = os.MkdirAll(p, 0700); err != nil {
+			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
 		}
@@ -835,7 +836,7 @@ func mountDisks(r runtime.Runtime) (err error) {
 			}
 
 			if _, err = os.Stat(part.MountPoint); errors.Is(err, os.ErrNotExist) {
-				if err = os.MkdirAll(part.MountPoint, 0700); err != nil {
+				if err = os.MkdirAll(part.MountPoint, 0o700); err != nil {
 					return err
 				}
 			}
@@ -1160,7 +1161,10 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 
 		for _, member := range resp.Members {
 			if member.Name == hostname {
+				member := member
 				id = &member.ID
+
+				break
 			}
 		}
 
@@ -1371,7 +1375,7 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 // UpdateBootloader represents the UpdateBootloader task.
 func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0700)
+		f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0o700)
 		if err != nil {
 			return err
 		}
@@ -1563,7 +1567,7 @@ func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			return err
 		}
 
-		if err = ioutil.WriteFile(kubeconfigPath, b.Bytes(), 0600); err != nil {
+		if err = ioutil.WriteFile(kubeconfigPath, b.Bytes(), 0o600); err != nil {
 			return fmt.Errorf("failed to create recovery kubeconfig: %w", err)
 		}
 
@@ -1595,7 +1599,7 @@ func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			return err
 		}
 
-		if err = os.MkdirAll(constants.AssetsDirectory, 0600); err != nil {
+		if err = os.MkdirAll(constants.AssetsDirectory, 0o600); err != nil {
 			return err
 		}
 

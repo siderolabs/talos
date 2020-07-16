@@ -18,7 +18,7 @@ type SystemProperty struct {
 
 // WriteSystemProperty writes a value to a key under /proc/sys.
 func WriteSystemProperty(prop *SystemProperty) error {
-	return ioutil.WriteFile(prop.Path(), []byte(prop.Value), 0644)
+	return ioutil.WriteFile(prop.Path(), []byte(prop.Value), 0o644)
 }
 
 // ReadSystemProperty reads a value from a key under /proc/sys.

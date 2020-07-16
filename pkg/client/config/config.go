@@ -81,11 +81,11 @@ func (c *Config) Save(p string) (err error) {
 		return
 	}
 
-	if err = os.MkdirAll(filepath.Dir(p), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(p), 0o700); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(p, configBytes, 0600); err != nil {
+	if err = ioutil.WriteFile(p, configBytes, 0o600); err != nil {
 		return
 	}
 

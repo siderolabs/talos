@@ -179,7 +179,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 		}
 
 		// Make any dirs on the path to the listening socket.
-		if err := os.MkdirAll(filepath.Dir(address), 0700); err != nil {
+		if err := os.MkdirAll(filepath.Dir(address), 0o700); err != nil {
 			return nil, fmt.Errorf("error creating containing directory for the file socket; %w", err)
 		}
 	case "tcp":

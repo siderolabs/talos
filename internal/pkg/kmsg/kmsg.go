@@ -23,7 +23,7 @@ import (
 //
 // If extraWriter is not nil, logs will be copied to it as well.
 func SetupLogger(logger *log.Logger, prefix string, extraWriter io.Writer) error {
-	kmsg, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
+	kmsg, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0o666)
 	if err != nil {
 		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}

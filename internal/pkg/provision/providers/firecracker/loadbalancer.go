@@ -25,7 +25,7 @@ const (
 func (p *provisioner) createLoadBalancer(state *state, clusterReq provision.ClusterRequest) error {
 	pidPath := filepath.Join(state.statePath, lbPid)
 
-	logFile, err := os.OpenFile(filepath.Join(state.statePath, lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	logFile, err := os.OpenFile(filepath.Join(state.statePath, lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		return err
 	}

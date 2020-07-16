@@ -221,7 +221,7 @@ func CredentialsFromConfigContext(context *config.Context) (*Credentials, error)
 // NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
 //
 // Deprecated: use Option-based methods for client creation.
-func NewClientContextAndCredentialsFromConfig(p string, ctx string) (context *config.Context, creds *Credentials, err error) {
+func NewClientContextAndCredentialsFromConfig(p, ctx string) (context *config.Context, creds *Credentials, err error) {
 	c, err := config.Open(p)
 	if err != nil {
 		return

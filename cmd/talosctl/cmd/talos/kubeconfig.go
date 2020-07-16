@@ -112,7 +112,7 @@ func extractAndMerge(args []string, r io.ReadCloser) error {
 
 	// base file does not exist, dump config as is
 	if _, err = os.Stat(localPath); os.IsNotExist(err) {
-		err = os.MkdirAll(filepath.Dir(localPath), 0755)
+		err = os.MkdirAll(filepath.Dir(localPath), 0o755)
 		if err != nil {
 			return err
 		}

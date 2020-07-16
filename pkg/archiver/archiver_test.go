@@ -28,31 +28,31 @@ var filesFixture = []struct {
 }{
 	{
 		Path:     "/etc/hostname",
-		Mode:     0644,
+		Mode:     0o644,
 		Contents: []byte("localhost"),
 	},
 	{
 		Path:     "/etc/certs/ca.crt",
-		Mode:     0600,
+		Mode:     0o600,
 		Contents: []byte("-- CA PEM CERT -- VERY SECRET"),
 	},
 	{
 		Path: "/dev/random",
-		Mode: 0600 | os.ModeCharDevice,
+		Mode: 0o600 | os.ModeCharDevice,
 	},
 	{
 		Path:     "/usr/bin/cp",
-		Mode:     0755,
+		Mode:     0o755,
 		Contents: []byte("ELF EXECUTABLE IIRC"),
 	},
 	{
 		Path:     "/usr/bin/mv",
-		Mode:     0644 | os.ModeSymlink,
+		Mode:     0o644 | os.ModeSymlink,
 		Contents: []byte("/usr/bin/cp"),
 	},
 	{
 		Path:     "/lib/dynalib.so",
-		Mode:     0644,
+		Mode:     0o644,
 		Contents: []byte("SOME LIBRARY OUT THERE"),
 		Size:     20 * 1024,
 	},
@@ -65,7 +65,7 @@ func (suite *CommonSuite) SetupSuite() {
 	suite.Require().NoError(err)
 
 	for _, file := range filesFixture {
-		suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tmpDir, filepath.Dir(file.Path)), 0777))
+		suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tmpDir, filepath.Dir(file.Path)), 0o777))
 
 		if file.Mode&os.ModeSymlink != 0 {
 			suite.Require().NoError(os.Symlink(string(file.Contents), filepath.Join(suite.tmpDir, file.Path)))

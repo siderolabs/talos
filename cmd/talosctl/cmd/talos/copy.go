@@ -72,7 +72,7 @@ captures ownership and permission bits.`,
 				if !os.IsNotExist(err) {
 					return fmt.Errorf("failed to stat local path: %w", err)
 				}
-				if err = os.MkdirAll(localPath, 0777); err != nil {
+				if err = os.MkdirAll(localPath, 0o777); err != nil {
 					return fmt.Errorf("error creating local path %q: %w", localPath, err)
 				}
 			}

@@ -79,7 +79,7 @@ func (suite *WalkerSuite) TestIterationFile() {
 
 func (suite *WalkerSuite) TestIterationSymlink() {
 	original := filepath.Join(suite.tmpDir, "original")
-	err := os.Mkdir(original, 0755)
+	err := os.Mkdir(original, 0o755)
 	suite.Require().NoError(err)
 
 	newname := filepath.Join(suite.tmpDir, "new")
@@ -88,7 +88,7 @@ func (suite *WalkerSuite) TestIterationSymlink() {
 	err = os.Symlink("original", newname)
 	suite.Require().NoError(err)
 
-	err = ioutil.WriteFile(filepath.Join(original, "original.txt"), []byte{}, 0666)
+	err = ioutil.WriteFile(filepath.Join(original, "original.txt"), []byte{}, 0o666)
 	suite.Require().NoError(err)
 
 	ch, err := archiver.Walker(context.Background(), newname)
