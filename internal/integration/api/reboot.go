@@ -42,7 +42,9 @@ func (suite *RebootSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *RebootSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestRebootNodeByNode reboots cluster node by node, waiting for health between reboots.

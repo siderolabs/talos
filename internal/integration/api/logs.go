@@ -50,7 +50,9 @@ func (suite *LogsSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *LogsSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestServicesHaveLogs verifies that each service has logs.

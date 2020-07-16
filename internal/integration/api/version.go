@@ -37,7 +37,9 @@ func (suite *VersionSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *VersionSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestExpectedVersionMaster verifies master node version matches expected.

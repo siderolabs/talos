@@ -38,7 +38,9 @@ func (suite *DmesgSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *DmesgSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestNodeHasDmesg verifies that default node has dmesg.

@@ -46,7 +46,9 @@ func (suite *EventsSuite) SetupTest() {
 
 // TearDownTest ...
 func (suite *EventsSuite) TearDownTest() {
-	suite.ctxCancel()
+	if suite.ctxCancel != nil {
+		suite.ctxCancel()
+	}
 }
 
 // TestServiceEvents verifies that service restart generates events.

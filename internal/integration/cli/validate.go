@@ -39,8 +39,13 @@ func (suite *ValidateSuite) SetupTest() {
 }
 
 func (suite *ValidateSuite) TearDownTest() {
-	suite.Require().NoError(os.Chdir(suite.savedCwd))
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
+	if suite.savedCwd != "" {
+		suite.Require().NoError(os.Chdir(suite.savedCwd))
+	}
+
+	if suite.tmpDir != "" {
+		suite.Require().NoError(os.RemoveAll(suite.tmpDir))
+	}
 }
 
 // TestValidate generates config and validates it for all the modes.
