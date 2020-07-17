@@ -48,6 +48,15 @@ func WithInstallImage(imageRef string) GenOption {
 	}
 }
 
+// WithInstallExtraKernelArgs specifies extra kernel arguments to pass to the installer.
+func WithInstallExtraKernelArgs(args []string) GenOption {
+	return func(o *GenOptions) error {
+		o.InstallExtraKernelArgs = args
+
+		return nil
+	}
+}
+
 // WithNetworkConfig allows to pass network config to be used.
 func WithNetworkConfig(network *v1alpha1.NetworkConfig) GenOption {
 	return func(o *GenOptions) error {
@@ -111,6 +120,7 @@ type GenOptions struct {
 	EndpointList              []string
 	InstallDisk               string
 	InstallImage              string
+	InstallExtraKernelArgs    []string
 	AdditionalSubjectAltNames []string
 	NetworkConfig             *v1alpha1.NetworkConfig
 	CNIConfig                 *v1alpha1.CNIConfig

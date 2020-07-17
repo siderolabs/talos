@@ -44,6 +44,18 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 
 	return []generate.GenOption{
 		generate.WithInstallDisk("/dev/vda"),
+		generate.WithInstallExtraKernelArgs([]string{
+			"console=ttyS0",
+			// reboot configuration
+			"reboot=k",
+			"panic=1",
+			// disable stuff we don't need
+			"pci=off",
+			"acpi=off",
+			"i8042.noaux=",
+			// Talos-specific
+			"talos.platform=metal",
+		}),
 		generate.WithNetworkConfig(&v1alpha1.NetworkConfig{
 			NameServers: nameservers,
 			NetworkInterfaces: []runtime.Device{

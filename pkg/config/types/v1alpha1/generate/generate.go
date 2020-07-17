@@ -82,8 +82,9 @@ type Input struct {
 
 	ExternalEtcd bool
 
-	InstallDisk  string
-	InstallImage string
+	InstallDisk            string
+	InstallImage           string
+	InstallExtraKernelArgs []string
 
 	NetworkConfig *v1alpha1.NetworkConfig
 	CNIConfig     *v1alpha1.CNIConfig
@@ -328,6 +329,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 		AdditionalMachineCertSANs: additionalMachineCertSANs,
 		InstallDisk:               options.InstallDisk,
 		InstallImage:              options.InstallImage,
+		InstallExtraKernelArgs:    options.InstallExtraKernelArgs,
 		NetworkConfig:             options.NetworkConfig,
 		CNIConfig:                 options.CNIConfig,
 		RegistryMirrors:           options.RegistryMirrors,
