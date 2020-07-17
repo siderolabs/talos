@@ -29,9 +29,10 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.TrustdInfo.Token,
 		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:       in.InstallDisk,
-			InstallImage:      in.InstallImage,
-			InstallBootloader: true,
+			InstallDisk:            in.InstallDisk,
+			InstallImage:           in.InstallImage,
+			InstallBootloader:      true,
+			InstallExtraKernelArgs: in.InstallExtraKernelArgs,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
 			RegistryMirrors: in.RegistryMirrors,
