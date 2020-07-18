@@ -7,12 +7,10 @@ package firecracker
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
 // Create Talos cluster as a set of firecracker micro-VMs.
@@ -27,28 +25,17 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
-	state := &state{
-		ProvisionerName: "firecracker",
-		statePath:       filepath.Join(request.StateDirectory, request.Name),
-	}
+	statePath := filepath.Join(request.StateDirectory, request.Name)
 
-	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", state.statePath)
+	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)
 
-	_, err := os.Stat(state.statePath)
-	if err == nil {
-		return nil, fmt.Errorf(
-			"state directory %q already exists, is the cluster %q already running? remove cluster state with talosctl cluster destroy",
-			state.statePath,
-			request.Name,
-		)
-	}
-
-	if !os.IsNotExist(err) {
-		return nil, fmt.Errorf("error checking state directory: %w", err)
-	}
-
-	if err = os.MkdirAll(state.statePath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating state directory: %w", err)
+	state, err := vm.NewState(
+		statePath,
+		p.Name,
+		request.Name,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
@@ -92,17 +79,10 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		Nodes: nodeInfo,
 	}
 
-	// save state
-	stateFile, err := os.Create(filepath.Join(state.statePath, stateFileName))
+	err = state.Save()
 	if err != nil {
 		return nil, err
 	}
 
-	defer stateFile.Close() //nolint: errcheck
-
-	if err = yaml.NewEncoder(stateFile).Encode(&state); err != nil {
-		return nil, fmt.Errorf("error marshaling state: %w", err)
-	}
-
-	return state, stateFile.Close()
+	return state, nil
 }

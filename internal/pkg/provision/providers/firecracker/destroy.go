@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
 // Destroy Talos cluster as set of Firecracker VMs.
@@ -28,7 +29,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	state, ok := cluster.(*state)
+	state, ok := cluster.(*vm.State)
 	if !ok {
 		return fmt.Errorf("error inspecting firecracker state, %#+v", cluster)
 	}

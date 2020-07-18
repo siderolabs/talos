@@ -9,12 +9,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
 const (
@@ -22,10 +22,10 @@ const (
 	lbLog = "lb.log"
 )
 
-func (p *provisioner) createLoadBalancer(state *state, clusterReq provision.ClusterRequest) error {
-	pidPath := filepath.Join(state.statePath, lbPid)
+func (p *provisioner) createLoadBalancer(state *vm.State, clusterReq provision.ClusterRequest) error {
+	pidPath := state.GetRelativePath(lbPid)
 
-	logFile, err := os.OpenFile(filepath.Join(state.statePath, lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
+	logFile, err := os.OpenFile(state.GetRelativePath(lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		return err
 	}
@@ -67,8 +67,8 @@ func (p *provisioner) createLoadBalancer(state *state, clusterReq provision.Clus
 	return nil
 }
 
-func (p *provisioner) destroyLoadBalancer(state *state) error {
-	pidPath := filepath.Join(state.statePath, lbPid)
+func (p *provisioner) destroyLoadBalancer(state *vm.State) error {
+	pidPath := state.GetRelativePath(lbPid)
 
 	return stopProcessByPidfile(pidPath)
 }
