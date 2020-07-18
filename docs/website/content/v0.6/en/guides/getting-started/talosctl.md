@@ -9,10 +9,8 @@ This guide gives you some hands on examples, and some more context when working 
 
 To get going with `talosctl` you need to download the latest release from Github [here](https://github.com/talos-systems/talos/releases).
 
-> This might be an older release when you're reading this guide, always check for the latest version.
-
 ```bash
-wget https://github.com/talos-systems/talos/releases/download/v0.4.1/talosctl-linux-amd64
+https://github.com/talos-systems/talos/releases/download/latest/talosctl-darwin-amd64
 chmod +x talosctl-linux-amd64
 mv talosctl-linux-amd64 /usr/local/bin/talosctl
 ```
