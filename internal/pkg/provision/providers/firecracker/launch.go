@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/firecracker-microvm/firecracker-go-sdk"
+	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker/inmemhttp"
+	"github.com/talos-systems/talos/internal/pkg/inmemhttp"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.
