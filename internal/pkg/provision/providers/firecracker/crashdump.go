@@ -13,12 +13,13 @@ import (
 	"strings"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 	"github.com/talos-systems/talos/internal/pkg/tail"
 )
 
 // CrashDump produces debug information to help with debugging failures.
 func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, out io.Writer) {
-	state, ok := cluster.(*state)
+	state, ok := cluster.(*vm.State)
 	if !ok {
 		fmt.Fprintf(out, "error inspecting firecracker state, %#+v\n", cluster)
 		return

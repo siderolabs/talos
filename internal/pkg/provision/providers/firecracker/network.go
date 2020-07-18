@@ -20,10 +20,11 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
-func (p *provisioner) createNetwork(ctx context.Context, state *state, network provision.NetworkRequest) error {
+func (p *provisioner) createNetwork(ctx context.Context, state *vm.State, network provision.NetworkRequest) error {
 	// build bridge interface name by taking part of checksum of the network name
 	// so that interface name is defined by network name, and different networks have
 	// different bridge interfaces
@@ -111,14 +112,14 @@ func (p *provisioner) createNetwork(ctx context.Context, state *state, network p
 		return fmt.Errorf("error templating VM CNI config: %w", err)
 	}
 
-	if state.vmCNIConfig, err = libcni.ConfListFromBytes(buf.Bytes()); err != nil {
+	if state.VMCNIConfig, err = libcni.ConfListFromBytes(buf.Bytes()); err != nil {
 		return fmt.Errorf("error parsing VM CNI config: %w", err)
 	}
 
 	return nil
 }
 
-func (p *provisioner) destroyNetwork(state *state) error {
+func (p *provisioner) destroyNetwork(state *vm.State) error {
 	// destroy bridge interface by name to clean up
 	iface, err := net.InterfaceByName(state.BridgeName)
 	if err != nil {

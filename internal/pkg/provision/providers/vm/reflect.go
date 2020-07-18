@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package firecracker
+package vm
 
 import (
 	"context"
@@ -10,12 +10,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 )
 
-func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
+// Reflect decode state file.
+func (p *Provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
 	statePath := filepath.Join(stateDirectory, clusterName)
 
 	st, err := os.Stat(statePath)
@@ -38,13 +39,13 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 
 	defer stateFile.Close() //nolint: errcheck
 
-	state := &state{}
+	state := &State{}
 
 	if err = yaml.NewDecoder(stateFile).Decode(state); err != nil {
 		return nil, fmt.Errorf("error unmarshalling state file: %w", err)
 	}
 
-	if state.ProvisionerName != "firecracker" {
+	if state.ProvisionerName != p.Name {
 		return nil, fmt.Errorf("cluster %q was created with different provisioner %q", clusterName, state.ProvisionerName)
 	}
 

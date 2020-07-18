@@ -11,22 +11,22 @@ import (
 	"math"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"syscall"
 
-	"github.com/firecracker-microvm/firecracker-go-sdk"
+	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) createDisk(state *state, nodeReq provision.NodeRequest) (diskPath string, err error) {
-	diskPath = filepath.Join(state.statePath, fmt.Sprintf("%s.disk", nodeReq.Name))
+func (p *provisioner) createDisk(state *vm.State, nodeReq provision.NodeRequest) (diskPath string, err error) {
+	diskPath = state.GetRelativePath(fmt.Sprintf("%s.disk", nodeReq.Name))
 
 	var diskF *os.File
 
@@ -42,7 +42,7 @@ func (p *provisioner) createDisk(state *state, nodeReq provision.NodeRequest) (d
 	return
 }
 
-func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
@@ -74,9 +74,9 @@ func (p *provisioner) createNodes(state *state, clusterReq provision.ClusterRequ
 	return nodesInfo, multiErr.ErrorOrNil()
 }
 
-func (p *provisioner) createNode(state *state, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
-	socketPath := filepath.Join(state.statePath, fmt.Sprintf("%s.sock", nodeReq.Name))
-	pidPath := filepath.Join(state.statePath, fmt.Sprintf("%s.pid", nodeReq.Name))
+func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
+	socketPath := state.GetRelativePath(fmt.Sprintf("%s.sock", nodeReq.Name))
+	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
 	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
 	if vcpuCount < 2 {
@@ -128,7 +128,7 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 					BinPath:       clusterReq.Network.CNI.BinPath,
 					ConfDir:       clusterReq.Network.CNI.ConfDir,
 					CacheDir:      clusterReq.Network.CNI.CacheDir,
-					NetworkConfig: state.vmCNIConfig,
+					NetworkConfig: state.VMCNIConfig,
 					Args: [][2]string{
 						{"IP", fmt.Sprintf("%s/%d", nodeReq.IP, ones)},
 						{"GATEWAY", clusterReq.Network.GatewayAddr.String()},
@@ -148,7 +148,7 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 		},
 	}
 
-	logFile, err := os.OpenFile(filepath.Join(state.statePath, fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
+	logFile, err := os.OpenFile(state.GetRelativePath(fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -167,7 +167,7 @@ func (p *provisioner) createNode(state *state, clusterReq provision.ClusterReque
 		BootloaderEmulation: opts.BootloaderEmulation,
 	}
 
-	launchConfigFile, err := os.Create(filepath.Join(state.statePath, fmt.Sprintf("%s.config", nodeReq.Name)))
+	launchConfigFile, err := os.Create(state.GetRelativePath(fmt.Sprintf("%s.config", nodeReq.Name)))
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}

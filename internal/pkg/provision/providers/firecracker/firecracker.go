@@ -10,18 +10,22 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
-const stateFileName = "state.yaml"
-
 type provisioner struct {
+	vm.Provisioner
 }
 
 // NewProvisioner initializes docker provisioner.
 func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
-	p := &provisioner{}
+	p := &provisioner{
+		vm.Provisioner{
+			Name: "firecracker",
+		},
+	}
 
 	return p, nil
 }
