@@ -9,12 +9,9 @@ This guide gives you some hands on examples, and some more context when working 
 
 To get going with `talosctl` you need to download the latest release from Github [here](https://github.com/talos-systems/talos/releases).
 
-> This might be an older release when you're reading this guide, always check for the latest version.
-
 ```bash
-wget https://github.com/talos-systems/talos/releases/download/v0.4.1/talosctl-linux-amd64
-chmod +x talosctl-linux-amd64
-mv talosctl-linux-amd64 /usr/local/bin/talosctl
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/download/latest/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+chmod +x /usr/local/bin/talosctl
 ```
 
 Now, test if it's working by running:
@@ -162,7 +159,7 @@ NODE          NAMESPACE   ID                                                    
 #### Logs
 
 Retrieving logs is also done through `talosctl`.
-Using the previous commands to look up containers, we can use the *ID* to get the logs from a specific container.
+Using the previous commands to look up containers, we can use the _ID_ to get the logs from a specific container.
 
 ```bash
 $ talosctl logs apid
@@ -173,7 +170,7 @@ $ talosctl logs apid
 .....
 ```
 
-> To get kubernetes logs, you need to specify the `-k` parameter and the *ID*
+> To get kubernetes logs, you need to specify the `-k` parameter and the _ID_
 
 #### Copy Files
 
