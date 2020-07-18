@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker/inmemhttp"
+	"github.com/talos-systems/talos/internal/pkg/inmemhttp"
 )
 
 func TestServer(t *testing.T) {
