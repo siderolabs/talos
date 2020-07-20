@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package firecracker
+package vm
 
 import (
 	"bytes"
@@ -20,14 +20,13 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
-func (p *provisioner) createNetwork(ctx context.Context, state *vm.State, network provision.NetworkRequest) error {
-	// build bridge interface name by taking part of checksum of the network name
-	// so that interface name is defined by network name, and different networks have
-	// different bridge interfaces
+// CreateNetwork build bridge interface name by taking part of checksum of the network name
+// so that interface name is defined by network name, and different networks have
+// different bridge interfaces.
+func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest) error {
 	networkNameHash := sha256.Sum256([]byte(network.Name))
 	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
 
@@ -119,8 +118,8 @@ func (p *provisioner) createNetwork(ctx context.Context, state *vm.State, networ
 	return nil
 }
 
-func (p *provisioner) destroyNetwork(state *vm.State) error {
-	// destroy bridge interface by name to clean up
+// DestroyNetwork destroy bridge interface by name to clean up.
+func (p *Provisioner) DestroyNetwork(state *State) error {
 	iface, err := net.InterfaceByName(state.BridgeName)
 	if err != nil {
 		return fmt.Errorf("error looking up bridge interface %q: %w", state.BridgeName, err)

@@ -36,13 +36,13 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	fmt.Fprintln(options.LogWriter, "removing load balancer")
 
-	if err := p.destroyLoadBalancer(state); err != nil {
+	if err := p.DestroyLoadBalancer(state); err != nil {
 		return fmt.Errorf("error stopping loadbalancer: %w", err)
 	}
 
 	fmt.Fprintln(options.LogWriter, "removing network")
 
-	if err := p.destroyNetwork(state); err != nil {
+	if err := p.DestroyNetwork(state); err != nil {
 		return err
 	}
 

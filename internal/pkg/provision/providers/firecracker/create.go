@@ -40,13 +40,13 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
 
-	if err = p.createNetwork(ctx, state, request.Network); err != nil {
+	if err = p.CreateNetwork(ctx, state, request.Network); err != nil {
 		return nil, fmt.Errorf("unable to provision CNI network: %w", err)
 	}
 
 	fmt.Fprintln(options.LogWriter, "creating load balancer")
 
-	if err = p.createLoadBalancer(state, request); err != nil {
+	if err = p.CreateLoadBalancer(state, request); err != nil {
 		return nil, fmt.Errorf("error creating loadbalancer: %w", err)
 	}
 
