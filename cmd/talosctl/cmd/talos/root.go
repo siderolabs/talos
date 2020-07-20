@@ -28,8 +28,10 @@ var (
 	Cmdcontext  string
 )
 
-// WithClient wraps common code to initialize Talos client and provide cancellable context.
-func WithClient(action func(context.Context, *client.Client) error) error {
+// WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
+//
+// WithClientNoNodes doesn't set any node information on request context.
+func WithClientNoNodes(action func(context.Context, *client.Client) error) error {
 	return cli.WithContext(context.Background(), func(ctx context.Context) error {
 		cfg, err := config.Open(Talosconfig)
 		if err != nil {
@@ -49,27 +51,34 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 			opts = append(opts, client.WithEndpoints(Endpoints...))
 		}
 
-		if len(Nodes) < 1 {
-			// Load nodes from config, if present
-			if Cmdcontext == "" {
-				Cmdcontext = cfg.Context
-			}
-			configContext, ok := cfg.Contexts[Cmdcontext]
-			if !ok {
-				return fmt.Errorf("failed to locate context %q in config", Cmdcontext)
-			}
-
-			Nodes = configContext.Nodes
-		}
-
-		ctx = client.WithNodes(ctx, Nodes...)
-
 		c, err := client.New(ctx, opts...)
 		if err != nil {
 			return fmt.Errorf("error constructing client: %w", err)
 		}
 		// nolint: errcheck
 		defer c.Close()
+
+		return action(ctx, c)
+	})
+}
+
+// WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
+func WithClient(action func(context.Context, *client.Client) error) error {
+	return WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
+		if len(Nodes) < 1 {
+			configContext := c.GetConfigContext()
+			if configContext == nil {
+				return fmt.Errorf("failed to resolve config context")
+			}
+
+			Nodes = configContext.Nodes
+		}
+
+		if len(Nodes) < 1 {
+			return fmt.Errorf("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
+		}
+
+		ctx = client.WithNodes(ctx, Nodes...)
 
 		return action(ctx, c)
 	})

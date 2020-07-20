@@ -6,8 +6,11 @@
 
 package base
 
-import "github.com/talos-systems/talos/pkg/client"
+import (
+	"github.com/talos-systems/talos/internal/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/client"
+)
 
-func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error) {
+func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {
 	return nil, nil
 }

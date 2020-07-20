@@ -61,7 +61,10 @@ function create_cluster_capi {
     [[ $(date +%s) -gt $timeout ]] && exit 1
     sleep 10
   done
-  ${TALOSCTL} config endpoint "$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0)"
+
+  MASTER_IP=$(${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig get machine -o go-template --template='{{range .status.addresses}}{{if eq .type "ExternalIP"}}{{.address}}{{end}}{{end}}' ${NAME_PREFIX}-controlplane-0)
+  "${TALOSCTL}" config endpoint "${MASTER_IP}"
+  "${TALOSCTL}" config node "${MASTER_IP}"
 
   # Wait for the kubeconfig from capi master-0
   timeout=$(($(date +%s) + ${TIMEOUT}))

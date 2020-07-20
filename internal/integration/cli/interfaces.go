@@ -24,7 +24,7 @@ func (suite *InterfacesSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *InterfacesSuite) TestSuccess() {
-	suite.RunCLI([]string{"interfaces"},
+	suite.RunCLI([]string{"interfaces", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`lo`)))
 }
 

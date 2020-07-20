@@ -8,12 +8,15 @@ package base
 
 import (
 	"fmt"
+	"math/rand"
 	"os/exec"
 	"regexp"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -26,7 +29,7 @@ type CLISuite struct {
 // DiscoverNodes provides list of Talos nodes in the cluster.
 //
 // As there's no way to provide this functionality via Talos CLI, it relies on cluster info.
-func (cliSuite *CLISuite) DiscoverNodes() []string {
+func (cliSuite *CLISuite) DiscoverNodes() cluster.Info {
 	discoveredNodes := cliSuite.TalosSuite.DiscoverNodes()
 	if discoveredNodes != nil {
 		return discoveredNodes
@@ -36,6 +39,25 @@ func (cliSuite *CLISuite) DiscoverNodes() []string {
 	cliSuite.T().Skip("no nodes were discovered")
 
 	return nil
+}
+
+// RandomNode returns a random node of the specified type (or any type if no types are specified).
+func (cliSuite *CLISuite) RandomDiscoveredNode(types ...runtime.MachineType) string {
+	nodeInfo := cliSuite.DiscoverNodes()
+
+	var nodes []string
+
+	if len(types) == 0 {
+		nodes = nodeInfo.Nodes()
+	} else {
+		for _, t := range types {
+			nodes = append(nodes, nodeInfo.NodesByType(t)...)
+		}
+	}
+
+	cliSuite.Require().NotEmpty(nodes)
+
+	return nodes[rand.Intn(len(nodes))]
 }
 
 func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {

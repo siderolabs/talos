@@ -89,6 +89,11 @@ func (c *Client) resolveConfigContext() error {
 	return nil
 }
 
+// GetConfigContext returns resolved config context.
+func (c *Client) GetConfigContext() *config.Context {
+	return c.options.configContext
+}
+
 func (c *Client) getEndpoints() []string {
 	if c.options.unixSocketPath != "" {
 		return []string{c.options.unixSocketPath}

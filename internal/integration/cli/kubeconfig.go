@@ -14,6 +14,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
@@ -34,7 +35,7 @@ func (suite *KubeconfigSuite) TestDirectory() {
 
 	defer os.RemoveAll(tempDir) //nolint: errcheck
 
-	suite.RunCLI([]string{"kubeconfig", tempDir},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane), tempDir},
 		base.StdoutEmpty())
 
 	path := filepath.Join(tempDir, "kubeconfig")
@@ -58,7 +59,7 @@ func (suite *KubeconfigSuite) TestCwd() {
 
 	suite.Require().NoError(os.Chdir(tempDir))
 
-	suite.RunCLI([]string{"kubeconfig"},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane)},
 		base.StdoutEmpty())
 
 	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
@@ -82,9 +83,9 @@ func (suite *KubeconfigSuite) TestMerge() {
 
 	path := filepath.Join(tempDir, "config")
 
-	suite.RunCLI([]string{"kubeconfig", path, "-m"},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane), path, "-m"},
 		base.StdoutEmpty())
-	suite.RunCLI([]string{"kubeconfig", path, "-m"})
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane), path, "-m"})
 
 	config, err := clientcmd.LoadFromFile(path)
 	suite.Require().NoError(err)

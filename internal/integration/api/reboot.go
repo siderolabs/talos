@@ -53,7 +53,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 		suite.T().Skip("cluster doesn't support reboots")
 	}
 
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes().Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	for _, node := range nodes {
@@ -74,7 +74,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 	// offset to account for uptime measuremenet inaccuracy
 	const offset = 2 * time.Second
 
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes().Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	errCh := make(chan error, len(nodes))
