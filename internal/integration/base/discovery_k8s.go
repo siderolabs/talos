@@ -16,10 +16,35 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
-func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error) {
+type infoWrapper struct {
+	masterNodes []string
+	workerNodes []string
+}
+
+func (wrapper *infoWrapper) Nodes() []string {
+	return append(wrapper.masterNodes, wrapper.workerNodes...)
+}
+
+func (wrapper *infoWrapper) NodesByType(t runtime.MachineType) []string {
+	switch t {
+	case runtime.MachineTypeInit:
+		return nil
+	case runtime.MachineTypeControlPlane:
+		return wrapper.masterNodes
+	case runtime.MachineTypeJoin:
+		return wrapper.workerNodes
+	default:
+		panic("unreachable")
+	}
+}
+
+func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {
 	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
 	defer ctxCancel()
 
@@ -51,13 +76,26 @@ func discoverNodesK8s(client *client.Client, suite *TalosSuite) ([]string, error
 		return nil, err
 	}
 
-	var result []string
+	result := &infoWrapper{}
 
 	for _, node := range nodes.Items {
+		var address string
+
 		for _, nodeAddress := range node.Status.Addresses {
 			if nodeAddress.Type == v1.NodeInternalIP {
-				result = append(result, nodeAddress.Address)
+				address = nodeAddress.Address
+				break
 			}
+		}
+
+		if address == "" {
+			continue
+		}
+
+		if _, ok := node.Labels[constants.LabelNodeRoleMaster]; ok {
+			result.masterNodes = append(result.masterNodes, address)
+		} else {
+			result.workerNodes = append(result.workerNodes, address)
 		}
 	}
 

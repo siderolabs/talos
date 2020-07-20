@@ -7,11 +7,11 @@
 package cli
 
 import (
-	"math/rand"
 	"regexp"
 	"testing"
 	"time"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 )
 
@@ -31,11 +31,8 @@ func (suite *RestartSuite) TestSystem() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-
 	// trustd only runs on control plane nodes
-	node := nodes[0]
+	node := suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane)
 
 	suite.RunCLI([]string{"restart", "-n", node, "trustd"},
 		base.StdoutEmpty())
@@ -51,10 +48,7 @@ func (suite *RestartSuite) TestK8s() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-
-	node := nodes[rand.Intn(len(nodes))]
+	node := suite.RandomDiscoveredNode()
 
 	suite.RunCLI([]string{"restart", "-n", node, "-k", "kubelet"},
 		base.StdoutEmpty())

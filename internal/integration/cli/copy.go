@@ -32,7 +32,7 @@ func (suite *CopySuite) TestSuccess() {
 
 	defer os.RemoveAll(tempDir) //nolint: errcheck
 
-	suite.RunCLI([]string{"copy", "/etc/os-release", tempDir},
+	suite.RunCLI([]string{"copy", "--nodes", suite.RandomDiscoveredNode(), "/etc/os-release", tempDir},
 		base.StdoutEmpty())
 
 	_, err = os.Stat(filepath.Join(tempDir, "os-release"))

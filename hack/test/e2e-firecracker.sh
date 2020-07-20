@@ -42,6 +42,8 @@ function create_cluster {
     --crashdump \
     ${FIRECRACKER_FLAGS} \
     ${CUSTOM_CNI_FLAG}
+
+  "${TALOSCTL}" config node 172.20.0.2
 }
 
 create_cluster

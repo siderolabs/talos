@@ -11,11 +11,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
@@ -54,7 +56,7 @@ func (apiSuite *APISuite) SetupSuite() {
 // As there's no way to provide this functionality via Talos API, it works the following way:
 // 1. If there's a provided cluster info, it's used.
 // 2. If integration test was compiled with k8s support, k8s is used.
-func (apiSuite *APISuite) DiscoverNodes() []string {
+func (apiSuite *APISuite) DiscoverNodes() cluster.Info {
 	discoveredNodes := apiSuite.TalosSuite.DiscoverNodes()
 	if discoveredNodes != nil {
 		return discoveredNodes
@@ -71,6 +73,25 @@ func (apiSuite *APISuite) DiscoverNodes() []string {
 	}
 
 	return apiSuite.discoveredNodes
+}
+
+// RandomNode returns a random node of the specified type (or any type if no types are specified).
+func (apiSuite *APISuite) RandomDiscoveredNode(types ...runtime.MachineType) string {
+	nodeInfo := apiSuite.DiscoverNodes()
+
+	var nodes []string
+
+	if len(types) == 0 {
+		nodes = nodeInfo.Nodes()
+	} else {
+		for _, t := range types {
+			nodes = append(nodes, nodeInfo.NodesByType(t)...)
+		}
+	}
+
+	apiSuite.Require().NotEmpty(nodes)
+
+	return nodes[rand.Intn(len(nodes))]
 }
 
 // Capabilities describes current cluster allowed actions.

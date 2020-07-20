@@ -8,7 +8,9 @@
 package base
 
 import (
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/internal/pkg/provision/access"
 )
 
 // TalosSuite defines most common settings for integration test suites.
@@ -26,18 +28,16 @@ type TalosSuite struct {
 	// TalosctlPath is path to talosctl binary
 	TalosctlPath string
 
-	discoveredNodes []string
+	discoveredNodes cluster.Info
 }
 
 // DiscoverNodes provides basic functionality to discover cluster nodes via test settings.
 //
 // This method is overridden in specific suites to allow for specific discovery.
-func (talosSuite *TalosSuite) DiscoverNodes() []string {
+func (talosSuite *TalosSuite) DiscoverNodes() cluster.Info {
 	if talosSuite.discoveredNodes == nil {
 		if talosSuite.Cluster != nil {
-			for _, node := range talosSuite.Cluster.Info().Nodes {
-				talosSuite.discoveredNodes = append(talosSuite.discoveredNodes, node.PrivateIP.String())
-			}
+			talosSuite.discoveredNodes = access.NewAdapter(talosSuite.Cluster).Info
 		}
 	}
 

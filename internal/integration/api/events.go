@@ -9,7 +9,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/talos-systems/talos/api/machine"
@@ -37,11 +36,7 @@ func (suite *EventsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
 
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-	node := nodes[rand.Intn(len(nodes))]
-
-	suite.nodeCtx = client.WithNodes(suite.ctx, node)
+	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNode())
 }
 
 // TearDownTest ...

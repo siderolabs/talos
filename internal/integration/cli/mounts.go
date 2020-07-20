@@ -24,7 +24,7 @@ func (suite *MountsSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *MountsSuite) TestSuccess() {
-	suite.RunCLI([]string{"mounts"},
+	suite.RunCLI([]string{"mounts", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`FILESYSTEM`)))
 }
 

@@ -60,13 +60,11 @@ var healthCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if healthCmdFlags.runOnServer {
-				return healthOnServer(ctx, c)
-			}
+		if healthCmdFlags.runOnServer {
+			return WithClient(healthOnServer)
+		}
 
-			return healthOnClient(ctx, c)
-		})
+		return WithClientNoNodes(healthOnClient)
 	},
 }
 

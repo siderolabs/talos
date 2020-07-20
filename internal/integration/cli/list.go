@@ -24,7 +24,7 @@ func (suite *ListSuite) SuiteName() string {
 
 // TestSuccess runs comand with success.
 func (suite *ListSuite) TestSuccess() {
-	suite.RunCLI([]string{"list", "/etc"},
+	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNode(), "/etc"},
 		base.StdoutShouldMatch(regexp.MustCompile(`os-release`)))
 }
 

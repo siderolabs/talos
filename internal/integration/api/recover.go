@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/client"
 )
@@ -81,7 +82,7 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 
 	suite.Assert().NoError(eg.Wait())
 
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes().NodesByType(runtime.MachineTypeControlPlane)
 	suite.Require().NotEmpty(nodes)
 
 	sort.Strings(nodes)

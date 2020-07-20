@@ -28,6 +28,8 @@ function create_cluster {
     --endpoint "${ENDPOINT}" \
     --with-init-node=false \
     --crashdump
+
+  "${TALOSCTL}" config node 10.5.0.2
 }
 
 create_cluster
