@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"code.cloudfoundry.org/bytefmt"
+	"github.com/dustin/go-humanize"
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/ryanuber/columnize"
@@ -218,7 +218,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 			s = append(s,
 				fmt.Sprintf("%12s | %6d | %1s | %4d | %8.2f | %7s | %7s | %s",
-					node, p.Pid, p.State, p.Threads, p.CpuTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), args))
+					node, p.Pid, p.State, p.Threads, p.CpuTime, humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory), args))
 		}
 	}
 

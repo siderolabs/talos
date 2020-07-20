@@ -5,7 +5,6 @@ go 1.13
 replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 
 require (
-	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
