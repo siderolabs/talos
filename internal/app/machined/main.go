@@ -21,6 +21,7 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
@@ -158,6 +159,11 @@ func main() {
 			for event := range events {
 				if msg, ok := event.Payload.(*machine.SequenceEvent); ok {
 					if msg.Error != nil {
+						if msg.Error.GetCode() == common.Code_LOCKED {
+							// ignore sequence lock errors, they're not fatal
+							continue
+						}
+
 						handle(fmt.Errorf("fatal sequencer error in %q sequence: %v", msg.GetSequence(), msg.GetError().String()))
 					}
 				}
