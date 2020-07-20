@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package firecracker
+package vm
 
 import (
 	"errors"
@@ -11,7 +11,8 @@ import (
 	"syscall"
 )
 
-func stopProcessByPidfile(pidPath string) error {
+// StopProcessByPidfile send SIGTERM to pid from pidfile.
+func StopProcessByPidfile(pidPath string) error {
 	pidFile, err := os.Open(pidPath)
 	if err != nil {
 		if os.IsNotExist(err) {

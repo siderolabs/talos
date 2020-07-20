@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package firecracker
+package vm
 
 import (
 	"fmt"
@@ -14,7 +14,6 @@ import (
 	"syscall"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
 const (
@@ -22,7 +21,8 @@ const (
 	lbLog = "lb.log"
 )
 
-func (p *provisioner) createLoadBalancer(state *vm.State, clusterReq provision.ClusterRequest) error {
+// CreateLoadBalancer creates load balancer.
+func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.ClusterRequest) error {
 	pidPath := state.GetRelativePath(lbPid)
 
 	logFile, err := os.OpenFile(state.GetRelativePath(lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -67,8 +67,9 @@ func (p *provisioner) createLoadBalancer(state *vm.State, clusterReq provision.C
 	return nil
 }
 
-func (p *provisioner) destroyLoadBalancer(state *vm.State) error {
+// DestroyLoadBalancer destoys load balancer.
+func (p *Provisioner) DestroyLoadBalancer(state *State) error {
 	pidPath := state.GetRelativePath(lbPid)
 
-	return stopProcessByPidfile(pidPath)
+	return StopProcessByPidfile(pidPath)
 }
