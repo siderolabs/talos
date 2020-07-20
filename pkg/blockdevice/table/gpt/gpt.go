@@ -285,6 +285,10 @@ func (gpt *GPT) Add(size uint64, setters ...interface{}) (table.Partition, error
 
 	if opts.MaximumSize {
 		end = gpt.header.LastUsableLBA
+
+		if end <= start {
+			return nil, fmt.Errorf("requested partition with maximum size, but no space available")
+		}
 	} else {
 		end = start + size/gpt.lba.LogicalBlockSize
 
