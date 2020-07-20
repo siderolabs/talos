@@ -7,6 +7,7 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -223,17 +224,21 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 
 	start := time.Now()
 
-	log.Printf("%s sequence: %d phase(s)", seq.String(), len(phases))
-
-	defer func() {
-		log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
-	}()
-
 	var (
 		number int
 		phase  runtime.Phase
 		err    error
 	)
+
+	log.Printf("%s sequence: %d phase(s)", seq.String(), len(phases))
+
+	defer func() {
+		if err != nil {
+			log.Printf("%s sequence: failed: %s", seq.String(), err)
+		}
+
+		log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
+	}()
 
 	for number, phase = range phases {
 		// Make the phase number human friendly.
@@ -246,6 +251,8 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 		log.Printf("phase %s (%s): %d tasks(s)", phase.Name, progress, len(phase.Tasks))
 
 		if err = c.runPhase(phase, seq, data); err != nil {
+			log.Printf("phase %s (%s): failed: %s", phase.Name, progress, err)
+
 			return fmt.Errorf("error running phase %d in %s sequence: %w", number, seq.String(), err)
 		}
 
@@ -303,9 +310,15 @@ func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runti
 		Action: machine.TaskEvent_START,
 	})
 
+	var err error
+
 	log.Printf("task %s (%s): starting", taskName, progress)
 
 	defer func() {
+		if err != nil {
+			log.Printf("task %s (%s): failed: %s", taskName, progress, err)
+		}
+
 		log.Printf("task %s (%s): done, %s", taskName, progress, time.Since(start))
 	}()
 
@@ -316,18 +329,22 @@ func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runti
 
 	logger := &log.Logger{}
 
-	machinedLog, err := c.Runtime().Logging().ServiceLog("machined").Writer()
+	var machinedLog io.WriteCloser
+
+	machinedLog, err = c.Runtime().Logging().ServiceLog("machined").Writer()
 	if err != nil {
 		return err
 	}
 
 	defer machinedLog.Close() //nolint: errcheck
 
-	if err := kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %s (%s):", taskName, progress), machinedLog); err != nil {
+	if err = kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %s (%s):", taskName, progress), machinedLog); err != nil {
 		return err
 	}
 
-	return task(context.TODO(), logger, c.r)
+	err = task(context.TODO(), logger, c.r)
+
+	return err
 }
 
 // nolint: gocyclo
