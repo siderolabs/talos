@@ -121,13 +121,15 @@ type MachineConfig struct {
 	//     Used to partition, format and mount additional disks.
 	//     Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
 	//     Note that the partitioning and formating is done only once, if and only if no existing  partitions are found.
+	//     If `size:` is omitted, the partition is sized to occupy full disk.
 	//   examples:
 	//     - |
 	//       disks:
 	//         - device: /dev/sdb
 	//           partitions:
-	//             - size: 10000000000
-	//               mountpoint: /var/lib/extra
+	//             - mountpoint: /var/lib/extra
+	//               size: 10000000000
+	//
 	MachineDisks []runtime.Disk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
 	//     Used to provide instructions for bare-metal installations.

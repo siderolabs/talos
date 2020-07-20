@@ -106,6 +106,16 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		}
 	}
 
+	if c.MachineConfig.MachineDisks != nil {
+		for _, disk := range c.MachineConfig.MachineDisks {
+			for i, pt := range disk.Partitions {
+				if pt.Size == 0 && i != len(disk.Partitions)-1 {
+					result = multierror.Append(result, fmt.Errorf("partition for disk %q is set to occupy full disk, but it's not the last partition in the list", disk.Device))
+				}
+			}
+		}
+	}
+
 	return result.ErrorOrNil()
 }
 

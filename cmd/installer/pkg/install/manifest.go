@@ -188,6 +188,10 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 	default:
 		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
 		opts = append(opts, partition.WithPartitionType(typeID))
+
+		if t.Size == 0 {
+			opts = append(opts, partition.WithMaximumSize(true))
+		}
 	}
 
 	part, err := pt.Add(uint64(t.Size), opts...)
