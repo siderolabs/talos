@@ -106,7 +106,7 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runt
 				Sequence: seq.String(),
 				Action:   machine.SequenceEvent_NOOP,
 				Error: &common.Error{
-					Code:    common.Code_FATAL,
+					Code:    common.Code_LOCKED,
 					Message: fmt.Sprintf("sequence not started: %s", runtime.ErrLocked.Error()),
 				},
 			})
