@@ -16,33 +16,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/constants"
 )
-
-type infoWrapper struct {
-	masterNodes []string
-	workerNodes []string
-}
-
-func (wrapper *infoWrapper) Nodes() []string {
-	return append(wrapper.masterNodes, wrapper.workerNodes...)
-}
-
-func (wrapper *infoWrapper) NodesByType(t runtime.MachineType) []string {
-	switch t {
-	case runtime.MachineTypeInit:
-		return nil
-	case runtime.MachineTypeControlPlane:
-		return wrapper.masterNodes
-	case runtime.MachineTypeJoin:
-		return wrapper.workerNodes
-	default:
-		panic("unreachable")
-	}
-}
 
 func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {
 	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
