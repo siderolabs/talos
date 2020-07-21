@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package firecracker
+package qemu
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
-// Destroy Talos cluster as set of Firecracker VMs.
+// Destroy Talos cluster as set of qemu VMs.
 func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
 	options := provision.DefaultOptions()
 
@@ -32,6 +32,12 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 	state, ok := cluster.(*vm.State)
 	if !ok {
 		return fmt.Errorf("error inspecting firecracker state, %#+v", cluster)
+	}
+
+	fmt.Fprintln(options.LogWriter, "removing dhcpd")
+
+	if err := p.DestroyDHCPd(state); err != nil {
+		return fmt.Errorf("error stopping dhcpd: %w", err)
 	}
 
 	fmt.Fprintln(options.LogWriter, "removing load balancer")

@@ -6,22 +6,20 @@ package firecracker
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"net"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 
-	"github.com/talos-systems/talos/internal/pkg/inmemhttp"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.
 type LaunchConfig struct {
-	GatewayAddr         string
+	GatewayAddr         net.IP
 	Config              string
 	BootloaderEmulation bool
 	FirecrackerConfig   firecracker.Config
@@ -44,33 +42,16 @@ type LaunchConfig struct {
 func Launch() error {
 	var config LaunchConfig
 
-	d := json.NewDecoder(os.Stdin)
-
-	if err := d.Decode(&config); err != nil {
-		return fmt.Errorf("error decoding config from stdin: %w", err)
-	}
-
-	if d.More() {
-		return fmt.Errorf("extra unexpected input on stdin")
-	}
-
-	if err := os.Stdin.Close(); err != nil {
+	if err := vm.ReadConfig(&config); err != nil {
 		return err
 	}
 
-	signal.Ignore(syscall.SIGHUP)
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+	c := vm.ConfigureSignals()
 
 	ctx := context.Background()
 
-	httpServer, err := inmemhttp.NewServer(fmt.Sprintf("%s:0", config.GatewayAddr))
+	httpServer, err := vm.NewConfigServer(config.GatewayAddr, []byte(config.Config))
 	if err != nil {
-		return fmt.Errorf("error launching in-memory HTTP server: %w", err)
-	}
-
-	if err = httpServer.AddFile("config.yaml", []byte(config.Config)); err != nil {
 		return err
 	}
 
