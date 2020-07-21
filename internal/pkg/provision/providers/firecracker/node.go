@@ -25,23 +25,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) createDisk(state *vm.State, nodeReq provision.NodeRequest) (diskPath string, err error) {
-	diskPath = state.GetRelativePath(fmt.Sprintf("%s.disk", nodeReq.Name))
-
-	var diskF *os.File
-
-	diskF, err = os.Create(diskPath)
-	if err != nil {
-		return
-	}
-
-	defer diskF.Close() //nolint: errcheck
-
-	err = diskF.Truncate(nodeReq.DiskSize)
-
-	return
-}
-
 func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
@@ -85,7 +68,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	memSize := nodeReq.Memory / 1024 / 1024
 
-	diskPath, err := p.createDisk(state, nodeReq)
+	diskPath, err := p.CreateDisk(state, nodeReq)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -113,7 +96,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	cfg := firecracker.Config{
 		SocketPath:      socketPath,
-		KernelImagePath: clusterReq.KernelPath,
+		KernelImagePath: clusterReq.UncompressedKernelPath,
 		KernelArgs:      cmdline.String(),
 		InitrdPath:      clusterReq.InitramfsPath,
 		ForwardSignals:  []os.Signal{}, // don't forward any signals
@@ -213,28 +196,4 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	}
 
 	return nodeInfo, nil
-}
-
-func (p *provisioner) destroyNodes(cluster provision.ClusterInfo, options *provision.Options) error {
-	errCh := make(chan error)
-
-	for _, node := range cluster.Nodes {
-		go func(node provision.NodeInfo) {
-			fmt.Fprintln(options.LogWriter, "stopping VM", node.Name)
-
-			errCh <- p.destroyNode(node)
-		}(node)
-	}
-
-	var multiErr *multierror.Error
-
-	for range cluster.Nodes {
-		multiErr = multierror.Append(multiErr, <-errCh)
-	}
-
-	return multiErr.ErrorOrNil()
-}
-
-func (p *provisioner) destroyNode(node provision.NodeInfo) error {
-	return vm.StopProcessByPidfile(node.ID) // node.ID stores PID path for control process
 }
