@@ -39,6 +39,7 @@ var (
 	k8sEndpoint      string
 	expectedVersion  string
 	talosctlPath     string
+	kubectlPath      string
 	provisionerName  string
 	clusterName      string
 	stateDir         string
@@ -83,6 +84,7 @@ func TestIntegration(t *testing.T) {
 				TalosConfig:  talosConfig,
 				Version:      expectedVersion,
 				TalosctlPath: talosctlPath,
+				KubectlPath:  kubectlPath,
 			})
 		}
 
@@ -127,6 +129,7 @@ func init() {
 	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
 	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
+	flag.StringVar(&kubectlPath, "talos.kubectlpath", "kubectl", "The path to 'kubectl' binary")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")

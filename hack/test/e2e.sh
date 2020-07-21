@@ -110,7 +110,7 @@ function run_talos_integration_test {
       ;;
     esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
+  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
 }
 
 function run_talos_integration_test_docker {
@@ -123,7 +123,7 @@ function run_talos_integration_test_docker {
       ;;
     esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.k8sendpoint 127.0.0.1:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
+  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.k8sendpoint 127.0.0.1:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
 }
 
 function run_kubernetes_integration_test {

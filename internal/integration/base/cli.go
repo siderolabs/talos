@@ -8,15 +8,20 @@ package base
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -31,6 +36,11 @@ type CLISuite struct {
 // As there's no way to provide this functionality via Talos CLI, it relies on cluster info.
 func (cliSuite *CLISuite) DiscoverNodes() cluster.Info {
 	discoveredNodes := cliSuite.TalosSuite.DiscoverNodes()
+	if discoveredNodes != nil {
+		return discoveredNodes
+	}
+
+	discoveredNodes = cliSuite.discoverKubectl()
 	if discoveredNodes != nil {
 		return discoveredNodes
 	}
@@ -58,6 +68,30 @@ func (cliSuite *CLISuite) RandomDiscoveredNode(types ...runtime.MachineType) str
 	cliSuite.Require().NotEmpty(nodes)
 
 	return nodes[rand.Intn(len(nodes))]
+}
+
+func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
+	// pull down kubeconfig into temporary directory
+	tempDir, err := ioutil.TempDir("", "talos")
+	cliSuite.Require().NoError(err)
+
+	defer os.RemoveAll(tempDir) //nolint: errcheck
+
+	// rely on `nodes:` being set in talosconfig
+	cliSuite.RunCLI([]string{"kubeconfig", tempDir}, StdoutEmpty())
+
+	masterNodes, err := cmd.Run(cliSuite.KubectlPath, "--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
+		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", "--selector=node-role.kubernetes.io/master")
+	cliSuite.Require().NoError(err)
+
+	workerNodes, err := cmd.Run(cliSuite.KubectlPath, "--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
+		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", "--selector=!node-role.kubernetes.io/master")
+	cliSuite.Require().NoError(err)
+
+	return &infoWrapper{
+		masterNodes: strings.Fields(strings.TrimSpace(masterNodes)),
+		workerNodes: strings.Fields(strings.TrimSpace(workerNodes)),
+	}
 }
 
 func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
