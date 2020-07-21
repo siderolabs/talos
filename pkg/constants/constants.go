@@ -174,10 +174,10 @@ const (
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
 
 	// DefaultEtcdVersion is the default target version of etcd.
-	DefaultEtcdVersion = "3.3.15-0"
+	DefaultEtcdVersion = "v3.3.22"
 
 	// EtcdImage is the reposistory for the etcd image.
-	EtcdImage = "k8s.gcr.io/etcd"
+	EtcdImage = "gcr.io/etcd-development/etcd"
 
 	// EtcdPKIPath is the path to the etcd PKI directory.
 	EtcdPKIPath = DefaultCertificatesDir + "/etcd"

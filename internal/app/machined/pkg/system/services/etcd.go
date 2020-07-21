@@ -111,6 +111,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
+		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -441,7 +442,7 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 			return fmt.Errorf("failed to generate etcd PKI: %w", err)
 		}
 
-		client, err := containerdapi.New(constants.ContainerdAddress)
+		client, err := containerdapi.New(constants.SystemContainerdAddress)
 		if err != nil {
 			return err
 		}

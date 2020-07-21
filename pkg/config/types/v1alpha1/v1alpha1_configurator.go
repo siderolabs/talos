@@ -7,6 +7,7 @@ package v1alpha1
 import (
 	"fmt"
 	"net/url"
+	goruntime "runtime"
 	"strings"
 	"time"
 
@@ -375,9 +376,14 @@ func (c *ClusterConfig) Etcd() runtime.Etcd {
 // Image implements the Configurator interface.
 func (e *EtcdConfig) Image() string {
 	image := e.ContainerImage
+	suffix := ""
+
+	if goruntime.GOARCH == "arm64" {
+		suffix = "-arm64"
+	}
 
 	if image == "" {
-		image = fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
+		image = fmt.Sprintf("%s:%s%s", constants.EtcdImage, constants.DefaultEtcdVersion, suffix)
 	}
 
 	return image
