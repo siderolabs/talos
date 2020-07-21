@@ -19,6 +19,8 @@ func Factory(ctx context.Context, name string) (provision.Provisioner, error) {
 		return docker.NewProvisioner(ctx)
 	case "firecracker":
 		return newFirecracker(ctx)
+	case "qemu":
+		return newQemu(ctx)
 	default:
 		return nil, fmt.Errorf("unsupported provisioner %q", name)
 	}

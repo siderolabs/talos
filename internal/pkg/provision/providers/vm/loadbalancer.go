@@ -67,5 +67,5 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 func (p *Provisioner) DestroyLoadBalancer(state *State) error {
 	pidPath := state.GetRelativePath(lbPid)
 
-	return StopProcessByPidfile(pidPath)
+	return stopProcessByPidfile(pidPath)
 }
