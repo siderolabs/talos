@@ -10,6 +10,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/docker"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/qemu"
 )
 
 // Factory instantiates provision provider by name.
@@ -19,6 +20,8 @@ func Factory(ctx context.Context, name string) (provision.Provisioner, error) {
 		return docker.NewProvisioner(ctx)
 	case "firecracker":
 		return newFirecracker(ctx)
+	case "qemu":
+		return qemu.NewProvisioner(ctx)
 	default:
 		return nil, fmt.Errorf("unsupported provisioner %q", name)
 	}

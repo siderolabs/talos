@@ -11,8 +11,7 @@ import (
 	"syscall"
 )
 
-// StopProcessByPidfile send SIGTERM to pid from pidfile.
-func StopProcessByPidfile(pidPath string) error {
+func stopProcessByPidfile(pidPath string) error {
 	pidFile, err := os.Open(pidPath)
 	if err != nil {
 		if os.IsNotExist(err) {

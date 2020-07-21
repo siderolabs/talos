@@ -41,6 +41,7 @@ var (
 	registryMirrors         []string
 	kubernetesVersion       string
 	nodeVmlinuxPath         string
+	nodeVmlinuzPath         string
 	nodeInitramfsPath       string
 	bootloaderEmulation     bool
 	configDebug             bool
@@ -152,9 +153,10 @@ func create(ctx context.Context) (err error) {
 			},
 		},
 
-		Image:         nodeImage,
-		KernelPath:    nodeVmlinuxPath,
-		InitramfsPath: nodeInitramfsPath,
+		Image:                  nodeImage,
+		UncompressedKernelPath: nodeVmlinuxPath,
+		CompressedKernelPath:   nodeVmlinuzPath,
+		InitramfsPath:          nodeInitramfsPath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: stateDir,
@@ -409,6 +411,7 @@ func init() {
 	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(constants.DefaultTalosImageRepository), "the image to use")
 	createCmd.Flags().StringVar(&nodeInstallImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the installer image to use")
 	createCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(constants.KernelUncompressedAsset), "the uncompressed kernel image to use")
+	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAsset), "the compressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
 	createCmd.Flags().BoolVar(&bootloaderEmulation, "with-bootloader-emulation", false, "enable bootloader emulation to load kernel and initramfs from disk image")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")

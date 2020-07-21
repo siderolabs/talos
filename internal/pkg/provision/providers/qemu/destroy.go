@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package firecracker
+package qemu
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
-// Destroy Talos cluster as set of Firecracker VMs.
+// Destroy Talos cluster as set of qemu VMs.
 func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
 	options := provision.DefaultOptions()
 
