@@ -41,7 +41,6 @@ require (
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.1.0
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
-	github.com/onsi/gomega v1.10.1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc90 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
