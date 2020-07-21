@@ -2,8 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package firecracker implements Provisioner via Firecracker VMs.
-package firecracker
+package qemu
 
 import (
 	"context"
@@ -19,11 +18,11 @@ type provisioner struct {
 	vm.Provisioner
 }
 
-// NewProvisioner initializes firecracker provisioner.
+// NewProvisioner initializes qemu provisioner.
 func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 	p := &provisioner{
 		vm.Provisioner{
-			Name: "firecracker",
+			Name: "qemu",
 		},
 	}
 
