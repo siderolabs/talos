@@ -55,8 +55,8 @@ type upgradeSpec struct {
 }
 
 const (
-	stableVersion = "v0.5.0"
-	nextVersion   = "v0.6.0-alpha.1"
+	stableVersion = "v0.5.1"
+	nextVersion   = "v0.6.0-alpha.6"
 )
 
 var (
@@ -113,11 +113,11 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 // upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
 func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("preserve-%s-%s", stableVersion, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("preserve-%s-%s", nextVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelUncompressedAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelUncompressedAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
 		SourceVersion:        nextVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
@@ -436,7 +436,6 @@ func init() {
 	allSuites = append(allSuites,
 		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
 		&UpgradeSuite{specGen: upgradeLastReleaseToCurrent, track: 1},
-		// TODO: enable once flaky test is debugged:
-		// &UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
+		&UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
 	)
 }
