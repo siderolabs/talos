@@ -35,7 +35,7 @@ func DefaultClusterChecks() []ClusterCheck {
 				}
 
 				return nil
-			}, 5*time.Minute, 5*time.Second)
+			}, 10*time.Minute, 5*time.Second)
 		},
 		// wait for apid to be ready on all the nodes
 		func(cluster ClusterInfo) conditions.Condition {

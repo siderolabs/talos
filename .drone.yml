@@ -485,6 +485,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -1072,6 +1073,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -1766,6 +1768,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -2460,6 +2463,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -3138,6 +3142,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -3844,6 +3849,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -4550,6 +4556,7 @@ steps:
   - talosctl-linux
   - kernel
   - push-local
+  - e2e-docker-short
 
 - name: push
   pull: always
@@ -4780,6 +4787,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 4833cef8cdd32a7199ec74d255990472a59d6deebb22111a6787bc4690f00d8f
+hmac: a92868c9a5a2ed2415607410382fd478f368a1776375506d1dc8784fe7001b13
 
 ...
