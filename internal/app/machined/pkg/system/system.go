@@ -301,6 +301,16 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	return conditions.WaitForAll(conds...).Wait(ctx)
 }
 
+// IsLoaded checks whether service is registered.
+func (s *singleton) IsLoaded(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, exists := s.state[id]
+
+	return exists
+}
+
 // IsRunning checks service status (started/stopped).
 //
 // It doesn't check if service runner was started or not, just pure

@@ -215,6 +215,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.Config().Machine().Type() != runtime.MachineTypeJoin,
 		"labelMaster",
 		LabelNodeAsMaster,
+	).Append(
+		"waitForBootstrap",
+		WaitForBootkube,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"uncordon",

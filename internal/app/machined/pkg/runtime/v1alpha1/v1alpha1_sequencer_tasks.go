@@ -1104,6 +1104,26 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 	}, "cordonAndDrainNode"
 }
 
+// WaitForBootkube represents the task to wait for the bootkube service to finish.
+//
+// This task does nothing if bootkube service is not running.
+func WaitForBootkube(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svcs := system.Services(r)
+
+		if !svcs.IsLoaded("bootkube") {
+			logger.Printf("'bootkube' not registered, skipping")
+
+			return nil
+		}
+
+		ctx, ctxCancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer ctxCancel()
+
+		return system.WaitForService(system.StateEventDown, "bootkube").Wait(ctx)
+	}, "waitForBootkube"
+}
+
 // UncordonNode represents the task for mark node as scheduling enabled.
 //
 // This action undoes the CordonAndDrainNode task.
