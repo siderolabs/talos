@@ -56,7 +56,7 @@ type upgradeSpec struct {
 
 const (
 	stableVersion = "v0.5.0"
-	nextVersion   = "v0.6.0-alpha.1"
+	nextVersion   = "v0.6.0-alpha.5"
 )
 
 var (
@@ -118,7 +118,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelUncompressedAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
-		SourceVersion:        nextVersion,
+		SourceVersion:        stableVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,

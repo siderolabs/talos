@@ -20,7 +20,7 @@ CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/downlo
 SONOBUOY_VERSION ?= 0.18.2
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= ./...
-RELEASES ?= v0.5.0 v0.6.0-alpha.1
+RELEASES ?= v0.5.0 v0.6.0-alpha.5
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
