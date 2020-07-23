@@ -297,11 +297,17 @@ const (
 	// CustomCNI is the string to use custom CNI.
 	CustomCNI = "custom"
 
-	// DefaultPodCIDR is the default pod CIDR block.
-	DefaultPodCIDR = "10.244.0.0/16"
+	// DefaultIPv4PodNet is the IPv4 network to be used for kubernetes Pods.
+	DefaultIPv4PodNet = "10.245.0.0/16"
 
-	// DefaultServiceCIDR is the default service CIDR block.
-	DefaultServiceCIDR = "10.96.0.0/12"
+	// DefaultIPv4ServiceNet is the IPv4 network to be used for kubernetes Services.
+	DefaultIPv4ServiceNet = "10.112.0.0/12"
+
+	// DefaultIPv6PodNet is the IPv6 network to be used for kubernetes Pods.
+	DefaultIPv6PodNet = "fc00:db8:10::/56"
+
+	// DefaultIPv6ServiceNet is the IPv6 network to be used for kubernetes Services.
+	DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 	// DefaultDNSDomain is the default DNS domain.
 	DefaultDNSDomain = "cluster.local"

@@ -18,21 +18,10 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cis"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
-
-// DefaultIPv4PodNet is the network to be used for kubernetes Pods when using IPv4-based master nodes.
-const DefaultIPv4PodNet = "10.244.0.0/16"
-
-// DefaultIPv4ServiceNet is the network to be used for kubernetes Services when using IPv4-based master nodes.
-const DefaultIPv4ServiceNet = "10.96.0.0/12"
-
-// DefaultIPv6PodNet is the network to be used for kubernetes Pods when using IPv6-based master nodes.
-const DefaultIPv6PodNet = "fc00:db8:10::/56"
-
-// DefaultIPv6ServiceNet is the network to be used for kubernetes Services when using IPv6-based master nodes.
-const DefaultIPv6ServiceNet = "fc00:db8:20::/112"
 
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
@@ -230,12 +219,12 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 
 	if tnet.IsIPv6(net.ParseIP(endpoint)) {
 		loopback = "::1"
-		podNet = DefaultIPv6PodNet
-		serviceNet = DefaultIPv6ServiceNet
+		podNet = constants.DefaultIPv6PodNet
+		serviceNet = constants.DefaultIPv6ServiceNet
 	} else {
 		loopback = "127.0.0.1"
-		podNet = DefaultIPv4PodNet
-		serviceNet = DefaultIPv4ServiceNet
+		podNet = constants.DefaultIPv4PodNet
+		serviceNet = constants.DefaultIPv4ServiceNet
 	}
 
 	// Gen trustd token strings

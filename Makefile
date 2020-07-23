@@ -42,6 +42,8 @@ COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 
+CI_ARGS ?=
+
 all: initramfs kernel installer talosctl talos
 
 # Help Menu
@@ -92,7 +94,8 @@ target-%: ## Builds the specified target defined in the Dockerfile. The build re
 	@$(BUILD) \
 		--target=$* \
 		$(COMMON_ARGS) \
-		$(TARGET_ARGS) .
+		$(TARGET_ARGS) \
+		$(CI_ARGS) .
 
 local-%: ## Builds the specified target defined in the Dockerfile using the local output type. The build result will be output to the specified local destination.
 	@$(MAKE) target-$* TARGET_ARGS="--output=type=local,dest=$(DEST) $(TARGET_ARGS)"
@@ -168,7 +171,7 @@ lint: ## Runs linters on go, protobuf, and markdown file types.
 	@$(MAKE) lint-go lint-protobuf lint-markdown
 
 check-dirty: ## Verifies that source tree is not dirty
-	@case "$(TAG)" in *-dirty) echo "Source tree is dirty"; exit 1 ;; esac
+	@case "$(TAG)" in *-dirty) echo "Source tree is dirty"; git status; exit 1 ;; esac
 
 # Tests
 
@@ -207,6 +210,7 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		TAG=$(TAG) \
 		SHA=$(SHA) \
 		IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(TAG) \
+		INSTALLER_IMAGE=$(REGISTRY_AND_USERNAME)/installer:$(TAG) \
 		ARTIFACTS=$(ARTIFACTS) \
 		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \

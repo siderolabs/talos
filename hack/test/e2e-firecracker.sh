@@ -7,11 +7,14 @@ source ./hack/test/e2e.sh
 PROVISIONER=firecracker
 CLUSTER_NAME=e2e-${PROVISIONER}
 
-case "${REGISTRY:-false}" in
-  registry.ci.svc:5000)
-    REGISTRY_ADDR=`python -c "import socket; print socket.gethostbyname('registry.ci.svc')"`
+case "${CI:-false}" in
+  true)
+    REGISTRY="127.0.0.1:5000"
+    REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
     FIRECRACKER_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 --with-bootloader-emulation"
     INSTALLER_TAG="${TAG}"
+    docker tag ${INSTALLER_IMAGE} 127.0.0.1:5000/autonomy/installer:"${TAG}"
+    docker push 127.0.0.1:5000/autonomy/installer:"${TAG}"
     ;;
   *)
     FIRECRACKER_FLAGS=
@@ -44,6 +47,10 @@ function create_cluster {
     ${CUSTOM_CNI_FLAG}
 
   "${TALOSCTL}" config node 172.20.0.2
+}
+
+function destroy_cluster() {
+  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}"
 }
 
 create_cluster
