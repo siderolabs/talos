@@ -142,7 +142,7 @@ func CheckDeviceInterface(d runtime.Device) error {
 	var result *multierror.Error
 
 	if d.Interface == "" {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.interface", "", ErrRequiredSection))
+		result = multierror.Append(result, fmt.Errorf("[%s]: %w", "networking.os.device.interface", ErrRequiredSection))
 	}
 
 	return result.ErrorOrNil()
@@ -156,18 +156,18 @@ func CheckDeviceAddressing(d runtime.Device) error {
 
 	// Test for both dhcp and cidr specified
 	if d.DHCP && d.CIDR != "" {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.Interface, ErrBadAddressing))
 	}
 
 	// test for neither dhcp nor cidr specified
 	if !d.DHCP && d.CIDR == "" && len(d.Vlans) == 0 {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", "", ErrBadAddressing))
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.Interface, ErrBadAddressing))
 	}
 
 	// ensure cidr is a valid address
 	if d.CIDR != "" {
 		if _, _, err := net.ParseCIDR(d.CIDR); err != nil {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", "", err))
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", d.Interface, err))
 		}
 	}
 
