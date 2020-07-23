@@ -1,13 +1,6 @@
 ---
-kind: secret
-name: kubeconfig
-
-get:
-  path: buildx
-  name: kubeconfig
-
----
 kind: pipeline
+type: kubernetes
 name: default
 
 platform:
@@ -20,20 +13,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -48,7 +39,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -65,7 +56,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -82,7 +73,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -100,7 +91,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -117,7 +108,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -134,7 +125,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -151,7 +142,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -168,7 +159,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -187,7 +178,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -204,7 +195,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -223,7 +214,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -240,7 +231,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -257,7 +248,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -274,7 +265,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -291,7 +282,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -308,7 +299,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -325,7 +316,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -342,7 +333,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -359,7 +350,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -376,7 +367,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -393,7 +384,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -427,7 +418,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -440,14 +431,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -472,7 +463,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -500,7 +491,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -529,7 +520,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -543,34 +534,10 @@ steps:
   - e2e-docker-short
   - e2e-firecracker-short
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -580,9 +547,6 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
-
-node:
-  node-role.kubernetes.io/ci: ""
 
 trigger:
   cron:
@@ -595,6 +559,7 @@ trigger:
 
 ---
 kind: pipeline
+type: kubernetes
 name: integration
 
 platform:
@@ -607,20 +572,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -635,7 +598,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -652,7 +615,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -669,7 +632,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -687,7 +650,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -704,7 +667,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -721,7 +684,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -738,7 +701,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -755,7 +718,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -774,7 +737,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -791,7 +754,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -810,7 +773,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -827,7 +790,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -844,7 +807,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -861,7 +824,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -878,7 +841,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -895,7 +858,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -912,7 +875,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -929,7 +892,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -946,7 +909,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -963,7 +926,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -980,7 +943,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1014,7 +977,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1027,14 +990,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1059,7 +1022,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1087,7 +1050,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1116,7 +1079,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1143,7 +1106,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1166,7 +1129,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1190,7 +1153,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1211,7 +1174,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1234,7 +1197,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1242,34 +1205,10 @@ steps:
   depends_on:
   - e2e-firecracker
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -1280,15 +1219,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   target:
   - integration
 
 ---
 kind: pipeline
+type: kubernetes
 name: integration-nightly
 
 platform:
@@ -1301,20 +1238,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1329,7 +1264,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1346,7 +1281,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1363,7 +1298,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1381,7 +1316,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1398,7 +1333,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1415,7 +1350,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1432,7 +1367,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1449,7 +1384,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1468,7 +1403,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1485,7 +1420,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1504,7 +1439,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1521,7 +1456,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1538,7 +1473,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1555,7 +1490,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1572,7 +1507,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1589,7 +1524,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1606,7 +1541,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1623,7 +1558,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1640,7 +1575,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1657,7 +1592,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1674,7 +1609,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1708,7 +1643,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1721,14 +1656,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1753,7 +1688,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1781,7 +1716,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1810,7 +1745,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1837,7 +1772,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1860,7 +1795,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1884,7 +1819,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1905,7 +1840,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1928,7 +1863,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -1936,34 +1871,10 @@ steps:
   depends_on:
   - e2e-firecracker
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -1974,15 +1885,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   cron:
   - nightly
 
 ---
 kind: pipeline
+type: kubernetes
 name: e2e
 
 platform:
@@ -1995,20 +1904,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2023,7 +1930,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2040,7 +1947,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2057,7 +1964,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2075,7 +1982,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2092,7 +1999,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2109,7 +2016,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2126,7 +2033,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2143,7 +2050,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2162,7 +2069,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2179,7 +2086,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2198,7 +2105,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2215,7 +2122,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2232,7 +2139,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2249,7 +2156,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2266,7 +2173,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2283,7 +2190,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2300,7 +2207,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2317,7 +2224,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2334,7 +2241,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2351,7 +2258,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2368,7 +2275,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2402,7 +2309,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2415,14 +2322,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2447,7 +2354,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2475,7 +2382,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2504,7 +2411,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2540,7 +2447,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2572,7 +2479,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2604,7 +2511,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2614,34 +2521,10 @@ steps:
   depends_on:
   - e2e-capi
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -2652,15 +2535,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   target:
   - e2e
 
 ---
 kind: pipeline
+type: kubernetes
 name: conformance
 
 platform:
@@ -2673,20 +2554,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2701,7 +2580,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2718,7 +2597,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2735,7 +2614,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2753,7 +2632,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2770,7 +2649,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2787,7 +2666,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2804,7 +2683,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2821,7 +2700,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2840,7 +2719,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2857,7 +2736,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2876,7 +2755,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2893,7 +2772,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2910,7 +2789,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2927,7 +2806,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2944,7 +2823,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2961,7 +2840,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2978,7 +2857,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -2995,7 +2874,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3012,7 +2891,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3029,7 +2908,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3046,7 +2925,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3080,7 +2959,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3093,14 +2972,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3125,7 +3004,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3153,7 +3032,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3182,7 +3061,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3218,7 +3097,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3227,39 +3106,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker-short
-
-- name: e2e-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-aws
-  environment:
-    AWS_ACCESS_KEY_ID:
-      from_secret: aws_access_key_id
-    AWS_SECRET_ACCESS_KEY:
-      from_secret: aws_secret_access_key
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-    SONOBUOY_MODE: certified-conformance
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - e2e-capi
 
 - name: e2e-gcp
   pull: always
@@ -3284,7 +3130,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3308,7 +3154,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3320,34 +3166,10 @@ steps:
   - e2e-aws
   - e2e-gcp
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -3358,15 +3180,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   target:
   - conformance
 
 ---
 kind: pipeline
+type: kubernetes
 name: nightly
 
 platform:
@@ -3379,20 +3199,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3407,7 +3225,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3424,7 +3242,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3441,7 +3259,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3459,7 +3277,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3476,7 +3294,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3493,7 +3311,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3510,7 +3328,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3527,7 +3345,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3546,7 +3364,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3563,7 +3381,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3582,7 +3400,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3599,7 +3417,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3616,7 +3434,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3633,7 +3451,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3650,7 +3468,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3667,7 +3485,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3684,7 +3502,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3701,7 +3519,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3718,7 +3536,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3735,7 +3553,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3752,7 +3570,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3786,7 +3604,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3799,14 +3617,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3831,7 +3649,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3859,7 +3677,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3888,7 +3706,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3924,7 +3742,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -3933,39 +3751,6 @@ steps:
     path: /tmp
   depends_on:
   - e2e-docker-short
-
-- name: e2e-aws
-  pull: always
-  image: autonomy/build-container:latest
-  commands:
-  - make e2e-aws
-  environment:
-    AWS_ACCESS_KEY_ID:
-      from_secret: aws_access_key_id
-    AWS_SECRET_ACCESS_KEY:
-      from_secret: aws_secret_access_key
-    AWS_SVC_ACCT:
-      from_secret: aws_svc_acct
-    AZURE_SVC_ACCT:
-      from_secret: azure_svc_acct
-    GCE_SVC_ACCT:
-      from_secret: gce_svc_acct
-    PACKET_AUTH_TOKEN:
-      from_secret: packet_auth_token
-    SONOBUOY_MODE: certified-conformance
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-  - name: tmp
-    path: /tmp
-  depends_on:
-  - e2e-capi
 
 - name: e2e-gcp
   pull: always
@@ -3990,7 +3775,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4014,7 +3799,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4026,34 +3811,10 @@ steps:
   - e2e-aws
   - e2e-gcp
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -4064,15 +3825,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   cron:
   - nightly
 
 ---
 kind: pipeline
+type: kubernetes
 name: release
 
 platform:
@@ -4085,20 +3844,18 @@ steps:
   commands:
   - git fetch --tags
   - apk add coreutils
-  - echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config
-  - docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use
+  - curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx
+  - install-ci-key
+  - docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use
   - docker buildx inspect --bootstrap
   - make ./_out/sonobuoy
   - make ./_out/kubectl
-  environment:
-    BUILDX_KUBECONFIG:
-      from_secret: kubeconfig
   privileged: true
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4113,7 +3870,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4130,7 +3887,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4147,7 +3904,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4165,7 +3922,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4182,7 +3939,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4199,7 +3956,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4216,7 +3973,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4233,7 +3990,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4252,7 +4009,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4269,7 +4026,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4288,7 +4045,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4305,7 +4062,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4322,7 +4079,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4339,7 +4096,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4356,7 +4113,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4373,7 +4130,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4390,7 +4147,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4407,7 +4164,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4424,7 +4181,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4441,7 +4198,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4458,7 +4215,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4492,7 +4249,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4505,14 +4262,14 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make e2e-docker
+  - make help
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4537,7 +4294,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4565,7 +4322,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4594,7 +4351,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4617,7 +4374,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4635,7 +4392,7 @@ steps:
   - name: dockersock
     path: /var/run
   - name: docker
-    path: /root/.docker/buildx
+    path: /root/.docker
   - name: kube
     path: /root/.kube
   - name: dev
@@ -4681,34 +4438,10 @@ steps:
   - image-aws
   - push
 
-services:
-- name: docker
-  image: docker:19.03-dind
-  entrypoint:
-  - dockerd
-  command:
-  - --dns=8.8.8.8
-  - --dns=8.8.4.4
-  - --mtu=1500
-  - --log-level=error
-  - --insecure-registry=registry.ci.svc:5000
-  privileged: true
-  ports:
-  - 6443
-  - 50000
-  volumes:
-  - name: dockersock
-    path: /var/run
-  - name: docker
-    path: /root/.docker/buildx
-  - name: kube
-    path: /root/.kube
-  - name: dev
-    path: /dev
-
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -4719,15 +4452,13 @@ volumes:
 - name: tmp
   temp: {}
 
-node:
-  node-role.kubernetes.io/ci: ""
-
 trigger:
   event:
   - tag
 
 ---
 kind: pipeline
+type: kubernetes
 name: notify
 
 platform:
@@ -4747,10 +4478,10 @@ steps:
     webhook:
       from_secret: slack_webhook
 
-services:
 volumes:
 - name: dockersock
-  temp: {}
+  host:
+    path: /var/ci-docker
 - name: docker
   temp: {}
 - name: kube
@@ -4760,9 +4491,6 @@ volumes:
     path: /dev
 - name: tmp
   temp: {}
-
-node:
-  node-role.kubernetes.io/ci: ""
 
 trigger:
   status:
@@ -4780,6 +4508,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 4833cef8cdd32a7199ec74d255990472a59d6deebb22111a6787bc4690f00d8f
+hmac: afb121297a2881eb9b7538c7ca8637d19c799efdadc638f7f396b57cc5ee7278
 
 ...

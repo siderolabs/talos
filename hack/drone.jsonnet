@@ -8,20 +8,13 @@
 local build_container = 'autonomy/build-container:latest';
 local local_registry = 'registry.ci.svc:5000';
 
-local secret = {
-  kind: 'secret',
-  name: 'kubeconfig',
-  get: {
-    path: 'buildx',
-    name: 'kubeconfig'
-  },
-};
-
 local volumes = {
   dockersock: {
     pipeline: {
       name: 'dockersock',
-      temp: {},
+      host: {
+        path: '/var/ci-docker',
+      },
     },
     step: {
       name: $.dockersock.pipeline.name,
@@ -36,7 +29,7 @@ local volumes = {
     },
     step: {
       name: $.docker.pipeline.name,
-      path: '/root/.docker/buildx',
+      path: '/root/.docker',
     },
   },
 
@@ -116,14 +109,12 @@ local setup_ci = {
   name: 'setup-ci',
   image: 'autonomy/build-container:latest',
   privileged: true,
-  environment: {
-    BUILDX_KUBECONFIG: { from_secret: secret.name },
-  },
   commands: [
     'git fetch --tags',
     'apk add coreutils',
-    'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
-    'docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
+    'curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx',
+    'install-ci-key',
+    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use',
     'docker buildx inspect --bootstrap',
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
@@ -156,14 +147,15 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
 local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
-  local node = { 'node-role.kubernetes.io/ci': '' },
+  // local node = { 'node-role.kubernetes.io/ci': '' },
 
   kind: 'pipeline',
+  type: 'kubernetes',
   name: name,
-  node: node,
-  services: [
-    if with_docker then docker,
-  ],
+  // node: node,
+  // services: [
+  //   if with_docker then docker,
+  // ],
   [ if disable_clone then 'clone']: {
     disable: true,
   },
@@ -196,7 +188,7 @@ local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
+local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="help", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
 local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
@@ -406,7 +398,7 @@ local push_edge = {
 
 local conformance_steps = default_steps + [
   e2e_capi,
-  conformance_aws,
+  // conformance_aws,
   conformance_gcp,
   push_edge,
 ];
@@ -521,7 +513,6 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
 // Final configuration file definition.
 
 [
-  secret,
   default_pipeline,
   integration_pipeline,
   integration_nightly_pipeline,
