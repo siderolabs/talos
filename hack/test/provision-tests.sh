@@ -2,9 +2,10 @@
 
 set -eou pipefail
 
-case "${REGISTRY:-false}" in
-  registry.ci.svc:5000)
-    REGISTRY_ADDR=`python -c "import socket; print socket.gethostbyname('registry.ci.svc')"`
+case "${CI:-false}" in
+  true)
+    REGISTRY="127.0.0.1:5000"
+    REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
     INTEGRATION_TEST_FLAGS="-talos.provision.registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 -talos.provision.target-installer-registry=${REGISTRY}"
     ;;
   *)

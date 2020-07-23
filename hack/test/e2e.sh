@@ -11,6 +11,8 @@
 #  - SONOBUOY
 #  - SHORT_INTEGRATION_TEST
 #  - CUSTOM_CNI_URL
+#  - IMAGE
+#  - INSTALLER_IMAGE
 
 set -eoux pipefail
 
@@ -121,7 +123,7 @@ function run_talos_integration_test_docker {
       ;;
     esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.k8sendpoint ${ENDPOINT}:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
+  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.k8sendpoint 127.0.0.1:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_SHORT}"
 }
 
 function run_kubernetes_integration_test {
