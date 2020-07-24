@@ -665,8 +665,8 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 // StopServicesForUpgrade represents the StopServicesForUpgrade task.
 func StopServicesForUpgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, service := range []string{"cri", "udevd"} {
-			if err = system.Services(nil).Stop(context.Background(), service); err != nil {
+		for _, service := range []string{"kubelet", "cri", "udevd"} {
+			if err = system.Services(nil).Stop(ctx, service); err != nil {
 				return err
 			}
 		}
