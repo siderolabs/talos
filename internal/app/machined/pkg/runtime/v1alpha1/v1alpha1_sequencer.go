@@ -398,7 +398,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runti
 			!in.GetPreserve() && (r.Config().Machine().Type() != runtime.MachineTypeJoin),
 			"leave",
 			LeaveEtcd,
-		).Append(
+		).AppendWhen(
+			!in.GetPreserve(),
 			"cleanup",
 			RemoveAllPods,
 		).Append(
