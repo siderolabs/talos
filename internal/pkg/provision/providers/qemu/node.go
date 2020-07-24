@@ -19,6 +19,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 
 	"github.com/talos-systems/go-procfs/procfs"
 )
@@ -54,15 +55,21 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("reboot", "k")
 	cmdline.Append("panic", "1")
 
-	// disable stuff we don't need
-	cmdline.Append("pci", "off")
-	cmdline.Append("acpi", "off")
-	cmdline.Append("i8042.noaux", "")
+	// network
+	cmdline.Append("ip", fmt.Sprintf("%s::%s:%s:%s:%s:off", nodeReq.IP, clusterReq.Network.GatewayAddr, "255.255.255.0", nodeReq.Name, "eth0"))
 
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
 	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
 	cmdline.Append("talos.hostname", nodeReq.Name)
+
+	// TODO: this is a hack, need to do proper setup with DHCP later on
+	nodeReq.Config.(*v1alpha1.Config).MachineConfig.MachineInstall.InstallExtraKernelArgs = cmdline.Parameters.Strings()
+
+	nodeConfig, err := nodeReq.Config.String()
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
 
 	launchConfig := LaunchConfig{
 		QemuExecutable:  "qemu-system-x86_64",
@@ -72,6 +79,12 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		KernelImagePath: clusterReq.CompressedKernelPath,
 		KernelArgs:      cmdline.String(),
 		InitrdPath:      clusterReq.InitramfsPath,
+		Config:          nodeConfig,
+		NetworkConfig:   state.VMCNIConfig,
+		CNI:             clusterReq.Network.CNI,
+		CIDR:            clusterReq.Network.CIDR,
+		IP:              nodeReq.IP,
+		GatewayAddr:     clusterReq.Network.GatewayAddr,
 	}
 
 	launchConfigFile, err := os.Create(state.GetRelativePath(fmt.Sprintf("%s.config", nodeReq.Name)))
