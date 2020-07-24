@@ -32,6 +32,8 @@ case "${CUSTOM_CNI_URL:-false}" in
 esac
 
 function create_cluster {
+  build_registry_mirrors
+
   "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
@@ -43,6 +45,7 @@ function create_cluster {
     --install-image ${REGISTRY:-docker.io}/autonomy/installer:${INSTALLER_TAG} \
     --with-init-node=false \
     --crashdump \
+    ${REGISTRY_MIRROR_FLAGS} \
     ${FIRECRACKER_FLAGS} \
     ${CUSTOM_CNI_FLAG}
 
