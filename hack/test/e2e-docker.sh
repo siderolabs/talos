@@ -8,6 +8,8 @@ PROVISIONER=docker
 CLUSTER_NAME=e2e-${PROVISIONER}
 
 function create_cluster {
+  build_registry_mirrors
+
   "${TALOSCTL}" cluster create \
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
@@ -19,6 +21,7 @@ function create_cluster {
     --with-init-node=false \
     --docker-host-ip=127.0.0.1 \
     --endpoint=127.0.0.1 \
+    ${REGISTRY_MIRROR_FLAGS} \
     --crashdump
 
   "${TALOSCTL}" config node 10.5.0.2

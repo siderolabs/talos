@@ -166,3 +166,18 @@ function dump_cluster_state {
   ${KUBECTL} get nodes -o wide
   ${KUBECTL} get pods --all-namespaces -o wide
 }
+
+function build_registry_mirrors {
+  if [[ "${CI:-false}" == "true" ]]; then
+    REGISTRY_MIRROR_FLAGS=
+
+    for registry in docker.io k8s.gcr.io quay.io gcr.io; do
+      local service="registry-${registry//./-}.ci.svc"
+      local addr=`python -c "import socket; print socket.gethostbyname('${service}')"`
+
+      REGISTRY_MIRROR_FLAGS="${REGISTRY_MIRROR_FLAGS} --registry-mirror ${registry}=http://${addr}:5000"
+    done
+  else
+    REGISTRY_MIRROR_FLAGS=
+  fi
+}
