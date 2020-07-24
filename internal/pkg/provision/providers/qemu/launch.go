@@ -29,6 +29,9 @@ import (
 
 // LaunchConfig is passed in to the Launch function over stdin.
 type LaunchConfig struct {
+	StatePath string
+
+	// VM options
 	DiskPath        string
 	VCPUCount       int64
 	MemSize         int64
@@ -36,12 +39,19 @@ type LaunchConfig struct {
 	KernelImagePath string
 	InitrdPath      string
 	KernelArgs      string
-	Config          string
-	NetworkConfig   *libcni.NetworkConfigList
-	CNI             provision.CNIConfig
-	IP              net.IP
-	CIDR            net.IPNet
-	GatewayAddr     net.IP
+
+	// Talos config
+	Config string
+
+	// Network
+	NetworkConfig *libcni.NetworkConfigList
+	CNI           provision.CNIConfig
+	IP            net.IP
+	CIDR          net.IPNet
+	Hostname      string
+	GatewayAddr   net.IP
+	MTU           int
+	Nameservers   []net.IP
 
 	// filled by CNI invocation
 	tapName string
@@ -117,6 +127,19 @@ func withCNI(config *LaunchConfig, f func(config *LaunchConfig) error) error {
 	config.tapName = tapIface.Name
 	config.vmMAC = vmIface.Mac
 	config.ns = ns
+
+	// dump node IP/mac/hostname for dhcp
+	if err = vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
+		IP:          config.IP,
+		Netmask:     config.CIDR.Mask,
+		MAC:         vmIface.Mac,
+		Hostname:    config.Hostname,
+		Gateway:     config.GatewayAddr,
+		MTU:         config.MTU,
+		Nameservers: config.Nameservers,
+	}); err != nil {
+		return err
+	}
 
 	return f(config)
 }
@@ -235,9 +258,11 @@ func Launch() error {
 	// patch kernel args
 	config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServer.GetAddr()))
 
-	for {
-		if err := withCNI(&config, launchVM); err != nil {
-			return err
+	return withCNI(&config, func(config *LaunchConfig) error {
+		for {
+			if err := launchVM(config); err != nil {
+				return err
+			}
 		}
-	}
+	})
 }

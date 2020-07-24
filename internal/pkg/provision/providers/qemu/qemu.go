@@ -7,10 +7,8 @@ package qemu
 import (
 	"context"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
 
@@ -48,22 +46,8 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 			// reboot configuration
 			"reboot=k",
 			"panic=1",
-			// disable stuff we don't need
-			"pci=off",
-			"acpi=off",
-			"i8042.noaux=",
 			// Talos-specific
 			"talos.platform=metal",
-		}),
-		generate.WithNetworkConfig(&v1alpha1.NetworkConfig{
-			NameServers: nameservers,
-			NetworkInterfaces: []runtime.Device{
-				{
-					Interface: "eth0",
-					CIDR:      "169.254.128.128/32", // link-local IP just to trigger the static networkd config
-					MTU:       networkReq.MTU,
-				},
-			},
 		}),
 	}
 }

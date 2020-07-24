@@ -19,11 +19,11 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 
 	"github.com/talos-systems/go-procfs/procfs"
 )
 
+//nolint: gocyclo
 func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
@@ -55,16 +55,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("reboot", "k")
 	cmdline.Append("panic", "1")
 
-	// network
-	cmdline.Append("ip", fmt.Sprintf("%s::%s:%s:%s:%s:off", nodeReq.IP, clusterReq.Network.GatewayAddr, "255.255.255.0", nodeReq.Name, "eth0"))
-
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
 	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
-	cmdline.Append("talos.hostname", nodeReq.Name)
-
-	// TODO: this is a hack, need to do proper setup with DHCP later on
-	nodeReq.Config.(*v1alpha1.Config).MachineConfig.MachineInstall.InstallExtraKernelArgs = cmdline.Parameters.Strings()
 
 	nodeConfig, err := nodeReq.Config.String()
 	if err != nil {
@@ -84,7 +77,15 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		CNI:             clusterReq.Network.CNI,
 		CIDR:            clusterReq.Network.CIDR,
 		IP:              nodeReq.IP,
+		Hostname:        nodeReq.Name,
 		GatewayAddr:     clusterReq.Network.GatewayAddr,
+		MTU:             clusterReq.Network.MTU,
+		Nameservers:     clusterReq.Network.Nameservers,
+	}
+
+	launchConfig.StatePath, err = state.StatePath()
+	if err != nil {
+		return provision.NodeInfo{}, err
 	}
 
 	launchConfigFile, err := os.Create(state.GetRelativePath(fmt.Sprintf("%s.config", nodeReq.Name)))
