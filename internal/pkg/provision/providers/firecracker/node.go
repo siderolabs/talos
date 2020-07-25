@@ -146,7 +146,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	launchConfig := LaunchConfig{
 		FirecrackerConfig:   cfg,
 		Config:              nodeConfig,
-		GatewayAddr:         clusterReq.Network.GatewayAddr.String(),
+		GatewayAddr:         clusterReq.Network.GatewayAddr,
 		BootloaderEmulation: opts.BootloaderEmulation,
 	}
 

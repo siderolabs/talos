@@ -7,19 +7,19 @@ package firecracker
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
 
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 
-	"github.com/talos-systems/talos/internal/pkg/inmemhttp"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.
 type LaunchConfig struct {
-	GatewayAddr         string
+	GatewayAddr         net.IP
 	Config              string
 	BootloaderEmulation bool
 	FirecrackerConfig   firecracker.Config
@@ -50,12 +50,8 @@ func Launch() error {
 
 	ctx := context.Background()
 
-	httpServer, err := inmemhttp.NewServer(fmt.Sprintf("%s:0", config.GatewayAddr))
+	httpServer, err := vm.NewConfigServer(config.GatewayAddr, []byte(config.Config))
 	if err != nil {
-		return fmt.Errorf("error launching in-memory HTTP server: %w", err)
-	}
-
-	if err = httpServer.AddFile("config.yaml", []byte(config.Config)); err != nil {
 		return err
 	}
 

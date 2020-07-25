@@ -22,7 +22,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/talos-systems/talos/internal/pkg/cniutils"
-	"github.com/talos-systems/talos/internal/pkg/inmemhttp"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
 )
@@ -64,7 +63,7 @@ type LaunchConfig struct {
 
 // withCNI creates network namespace, launches CNI and passes control to the next function
 // filling config with netNS and interface details.
-func withCNI(config *LaunchConfig, f func(config *LaunchConfig) error) error {
+func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchConfig) error) error {
 	// random ID for the CNI, maps to single VM
 	containerID := uuid.New().String()
 
@@ -91,8 +90,6 @@ func withCNI(config *LaunchConfig, f func(config *LaunchConfig) error) error {
 			{"GATEWAY", config.GatewayAddr.String()},
 		},
 	}
-
-	ctx := context.Background()
 
 	// attempt to clean up network in case it was deployed previously
 	err = cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf)
@@ -237,28 +234,26 @@ func launchVM(config *LaunchConfig) error {
 func Launch() error {
 	var config LaunchConfig
 
+	ctx := context.Background()
+
 	if err := vm.ReadConfig(&config); err != nil {
 		return err
 	}
 
 	config.c = vm.ConfigureSignals()
 
-	httpServer, err := inmemhttp.NewServer(fmt.Sprintf("%s:0", config.GatewayAddr))
+	httpServer, err := vm.NewConfigServer(config.GatewayAddr, []byte(config.Config))
 	if err != nil {
-		return fmt.Errorf("error launching in-memory HTTP server: %w", err)
-	}
-
-	if err = httpServer.AddFile("config.yaml", []byte(config.Config)); err != nil {
 		return err
 	}
 
 	httpServer.Serve()
-	defer httpServer.Shutdown(context.Background()) //nolint: errcheck
+	defer httpServer.Shutdown(ctx) //nolint: errcheck
 
 	// patch kernel args
 	config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServer.GetAddr()))
 
-	return withCNI(&config, func(config *LaunchConfig) error {
+	return withCNI(ctx, &config, func(config *LaunchConfig) error {
 		for {
 			if err := launchVM(config); err != nil {
 				return err

@@ -7,9 +7,12 @@ package vm
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/talos-systems/talos/internal/pkg/inmemhttp"
 )
 
 // ReadConfig loads configuration from stdin.
@@ -38,4 +41,18 @@ func ConfigureSignals() chan os.Signal {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	return c
+}
+
+// NewConfigServer creates new inmemhttp.Server and mounts config file into it.
+func NewConfigServer(gatewayAddr net.IP, config []byte) (inmemhttp.Server, error) {
+	httpServer, err := inmemhttp.NewServer(fmt.Sprintf("%s:0", gatewayAddr))
+	if err != nil {
+		return nil, fmt.Errorf("error launching in-memory HTTP server: %w", err)
+	}
+
+	if err = httpServer.AddFile("config.yaml", config); err != nil {
+		return nil, err
+	}
+
+	return httpServer, nil
 }
