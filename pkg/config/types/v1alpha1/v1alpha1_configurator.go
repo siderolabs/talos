@@ -478,7 +478,7 @@ func (c *ClusterConfig) PodCIDR() string {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.PodSubnet) == 0:
-		return constants.DefaultPodCIDR
+		return constants.DefaultIPv4PodNet
 	}
 
 	return strings.Join(c.ClusterNetwork.PodSubnet, ",")
@@ -490,7 +490,7 @@ func (c *ClusterConfig) ServiceCIDR() string {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.ServiceSubnet) == 0:
-		return constants.DefaultServiceCIDR
+		return constants.DefaultIPv4ServiceNet
 	}
 
 	return strings.Join(c.ClusterNetwork.ServiceSubnet, ",")
