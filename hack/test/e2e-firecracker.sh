@@ -7,9 +7,10 @@ source ./hack/test/e2e.sh
 PROVISIONER=firecracker
 CLUSTER_NAME=e2e-${PROVISIONER}
 
-case "${REGISTRY:-false}" in
-  registry.ci.svc:5000)
-    REGISTRY_ADDR=`python -c "import socket; print socket.gethostbyname('registry.ci.svc')"`
+case "${CI:-false}" in
+  true)
+    REGISTRY="127.0.0.1:5000"
+    REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
     FIRECRACKER_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 --with-bootloader-emulation"
     INSTALLER_TAG="${TAG}"
     ;;
@@ -46,7 +47,12 @@ function create_cluster {
   "${TALOSCTL}" config node 172.20.0.2
 }
 
+function destroy_cluster() {
+  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}"
+}
+
 create_cluster
 get_kubeconfig
 run_talos_integration_test
 run_kubernetes_integration_test
+destroy_cluster
