@@ -13,7 +13,7 @@ local volumes = {
     pipeline: {
       name: 'dockersock',
       host: {
-        path: '/var/ci-docker',
+        path: '/var/run',
       },
     },
     step: {
@@ -147,15 +147,12 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
 local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
-  // local node = { 'node-role.kubernetes.io/ci': '' },
-
   kind: 'pipeline',
   type: 'kubernetes',
   name: name,
-  // node: node,
-  // services: [
-  //   if with_docker then docker,
-  // ],
+  services: [
+    if with_docker then docker,
+  ],
   [ if disable_clone then 'clone']: {
     disable: true,
   },
@@ -188,7 +185,7 @@ local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="help", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
+local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
 local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
