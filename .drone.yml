@@ -431,7 +431,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -534,10 +534,35 @@ steps:
   - e2e-docker-short
   - e2e-firecracker-short
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -990,7 +1015,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -1205,10 +1230,35 @@ steps:
   depends_on:
   - e2e-firecracker
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -1656,7 +1706,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -1871,10 +1921,35 @@ steps:
   depends_on:
   - e2e-firecracker
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -2322,7 +2397,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -2521,10 +2596,35 @@ steps:
   depends_on:
   - e2e-capi
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -2972,7 +3072,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -3166,10 +3266,35 @@ steps:
   - e2e-aws
   - e2e-gcp
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -3617,7 +3742,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -3811,10 +3936,35 @@ steps:
   - e2e-aws
   - e2e-gcp
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -4262,7 +4412,7 @@ steps:
   pull: always
   image: autonomy/build-container:latest
   commands:
-  - make help
+  - make e2e-docker
   environment:
     SHORT_INTEGRATION_TEST: yes
   volumes:
@@ -4438,10 +4588,35 @@ steps:
   - image-aws
   - push
 
+services:
+- name: docker
+  image: docker:19.03-dind
+  entrypoint:
+  - dockerd
+  command:
+  - --dns=8.8.8.8
+  - --dns=8.8.4.4
+  - --mtu=1500
+  - --log-level=error
+  - --insecure-registry=registry.ci.svc:5000
+  privileged: true
+  ports:
+  - 6443
+  - 50000
+  volumes:
+  - name: dockersock
+    path: /var/run
+  - name: docker
+    path: /root/.docker
+  - name: kube
+    path: /root/.kube
+  - name: dev
+    path: /dev
+
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -4478,10 +4653,11 @@ steps:
     webhook:
       from_secret: slack_webhook
 
+services:
 volumes:
 - name: dockersock
   host:
-    path: /var/ci-docker
+    path: /var/run
 - name: docker
   temp: {}
 - name: kube
@@ -4508,6 +4684,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: afb121297a2881eb9b7538c7ca8637d19c799efdadc638f7f396b57cc5ee7278
+hmac: 15fa91ea26a9331bb9d6d3b9051e6901fb21e964d300cac53995b33c26d0ac16
 
 ...
