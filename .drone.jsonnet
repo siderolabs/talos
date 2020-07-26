@@ -6,15 +6,12 @@
 // Sign with `drone sign talos-systems/talos --save`
 
 local build_container = 'autonomy/build-container:latest';
-local local_registry = 'registry.ci.svc:5000';
 
 local volumes = {
   dockersock: {
     pipeline: {
       name: 'dockersock',
-      host: {
-        path: '/var/run',
-      },
+      temp: {},
     },
     step: {
       name: $.dockersock.pipeline.name,
@@ -68,11 +65,25 @@ local volumes = {
     },
   },
 
+  cache: {
+    pipeline: {
+      name: 'cache',
+      host: {
+        path: '/tmp',
+      },
+    },
+    step: {
+      name: $.cache.pipeline.name,
+      path: '/tmp/cache',
+    },
+  },
+
   ForStep(): [
     self.dockersock.step,
     self.docker.step,
     self.kube.step,
     self.dev.step,
+    self.cache.step,
   ],
 
   ForPipeline(): [
@@ -81,6 +92,7 @@ local volumes = {
     self.kube.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,
+    self.cache.pipeline,
   ],
 };
 
@@ -95,12 +107,14 @@ local docker = {
     '--dns=8.8.4.4',
     '--mtu=1500',
     '--log-level=error',
-    '--insecure-registry=' + local_registry,
+    '--insecure-registry=127.0.0.1:5000',
   ],
-  ports: [
-    6443,
-    50000,
-  ],
+  resources: {
+    limits: {
+      cpu: '24000',
+      memory: '48GiB',
+    },
+  },
   volumes: volumes.ForStep(),
 };
 
@@ -110,14 +124,15 @@ local setup_ci = {
   image: 'autonomy/build-container:latest',
   privileged: true,
   commands: [
-    'git fetch --tags',
+    'sleep 5', // Give docker enough time to start.
     'apk add coreutils',
-    'curl --create-dirs -Lo /root/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 /root/.docker/cli-plugins/docker-buildx',
-    'install-ci-key',
-    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talos --use',
+    'curl --create-dirs -Lo ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64 && chmod 755 ~/.docker/cli-plugins/docker-buildx',
+    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name local --use',
     'docker buildx inspect --bootstrap',
+    'docker run -d -p 5000:5000 --restart=always --name registry registry:2',
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
+    'git fetch --tags',
   ],
   volumes: volumes.ForStep(),
 };
@@ -131,7 +146,9 @@ local setup_ci = {
 local Step(name, image='', target='', privileged=false, depends_on=[], environment={}, extra_volumes=[], when={}) = {
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
 
-  local common_env_vars = {},
+  local common_env_vars = {
+    // "CI_ARGS": "--cache-to=type=local,dest=/tmp/cache --cache-from=type=local,src=/tmp/cache"
+  },
 
   name: name,
   image: if image == '' then build_container else image,
@@ -146,10 +163,19 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
-local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
+local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false, type='kubernetes') = {
   kind: 'pipeline',
-  type: 'kubernetes',
+  type: type,
   name: name,
+  [if type == 'digitalocean' then 'token']: {
+    from_secret: 'digitalocean_token'
+  },
+  // See https://slugs.do-api.dev/.
+  [if type == 'digitalocean' then 'server']: {
+    image: 'ubuntu-20-04-x64',
+    size: 'c-32',
+    region: 'nyc3',
+  },
   services: [
     if with_docker then docker,
   ],
@@ -166,14 +192,14 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 local docs = Step("docs", depends_on=[setup_ci]);
 local generate = Step("generate", depends_on=[setup_ci]);
 local check_dirty = Step("check-dirty", depends_on=[docs, generate]);
-local osctl_linux = Step("talosctl-linux", depends_on=[check_dirty]);
-local osctl_darwin = Step("talosctl-darwin", depends_on=[check_dirty]);
+local talosctl_linux = Step("talosctl-linux", depends_on=[check_dirty]);
+local talosctl_darwin = Step("talosctl-darwin", depends_on=[check_dirty]);
 local kernel = Step('kernel', depends_on=[check_dirty]);
 local initramfs = Step("initramfs", depends_on=[check_dirty]);
 local installer = Step("installer", depends_on=[initramfs]);
 local talos = Step("talos", depends_on=[initramfs]);
-local installer_local = Step("installer-local",  depends_on=[installer], target="installer", environment={"REGISTRY": local_registry});
-local talos_local = Step("talos-local",  depends_on=[talos], target="talos", environment={"REGISTRY": local_registry});
+local installer_local = Step("installer-local",  depends_on=[installer], target="installer");
+local talos_local = Step("talos-local",  depends_on=[talos], target="talos");
 local golint = Step("lint-go", depends_on=[check_dirty]);
 local markdownlint = Step("lint-markdown", depends_on=[check_dirty]);
 local protobuflint = Step("lint-protobuf", depends_on=[check_dirty]);
@@ -182,11 +208,11 @@ local image_azure = Step("image-azure", depends_on=[image_aws]);
 local image_digital_ocean = Step("image-digital-ocean", depends_on=[image_azure]);
 local image_gcp = Step("image-gcp", depends_on=[image_digital_ocean]);
 local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
-local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"REGISTRY": local_registry, "DOCKER_LOGIN_ENABLED": "false"} );
+local push_local = Step("push-local", depends_on=[installer_local, talos_local], target="push", environment={"DOCKER_LOGIN_ENABLED": "false"} );
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
-local unit_tests_race = Step("unit-tests-race", depends_on=[unit_tests]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[talos, osctl_linux], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
-local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
+local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
+local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[initramfs, talosctl_linux, kernel, push_local], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
   name: 'coverage',
@@ -201,7 +227,7 @@ local coverage = {
   when: {
     event: ['pull_request'],
   },
-  depends_on: [unit_tests.name],
+  depends_on: [unit_tests.name, unit_tests_race.name],
 };
 
 local push = {
@@ -252,8 +278,8 @@ local default_steps = [
   docs,
   generate,
   check_dirty,
-  osctl_linux,
-  osctl_darwin,
+  talosctl_linux,
+  talosctl_darwin,
   kernel,
   initramfs,
   installer,
@@ -268,9 +294,9 @@ local default_steps = [
   image_digital_ocean,
   image_gcp,
   image_vmware,
-  unit_tests,
-  unit_tests_race,
-  coverage,
+  // unit_tests,
+  // unit_tests_race,
+  // coverage,
   push_local,
   e2e_docker,
   e2e_firecracker,
@@ -296,12 +322,11 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, osctl_linux, kernel, push_local], environment={"REGISTRY": local_registry});
-local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry, "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, push_local], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, push_local]);
+local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-firecracker", privileged=true, depends_on=[integration_firecracker], environment={
-        "REGISTRY": local_registry,
         "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000",
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml",
@@ -395,7 +420,7 @@ local push_edge = {
 
 local conformance_steps = default_steps + [
   e2e_capi,
-  // conformance_aws,
+  conformance_aws,
   conformance_gcp,
   push_edge,
 ];
@@ -517,5 +542,5 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
   conformance_pipeline,
   nightly_pipeline,
   release_pipeline,
-  notify_pipeline,
+  // notify_pipeline,
 ]
