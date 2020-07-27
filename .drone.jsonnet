@@ -21,7 +21,9 @@ local volumes = {
   dockersock: {
     pipeline: {
       name: 'dockersock',
-      temp: {},
+      host: {
+        path: '/var/ci-docker'
+      }
     },
     step: {
       name: $.dockersock.pipeline.name,
@@ -78,14 +80,12 @@ local volumes = {
   ForStep(): [
     self.dockersock.step,
     self.docker.step,
-    self.kube.step,
     self.dev.step,
   ],
 
   ForPipeline(): [
     self.dockersock.pipeline,
     self.docker.pipeline,
-    self.kube.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,
   ],
@@ -123,7 +123,7 @@ local setup_ci = {
     'git fetch --tags',
     'apk add coreutils',
     'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
-    'docker buildx create --driver kubernetes --driver-opt replicas=2 --driver-opt namespace=ci --driver-opt image=moby/buildkit:v0.6.2 --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
+    'docker buildx create --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
     'docker buildx inspect --bootstrap',
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
@@ -155,7 +155,7 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
 // using and existing pipeline as a base.
-local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=false) = {
+local Pipeline(name, steps=[], depends_on=[], with_docker=false, disable_clone=false, type='kubernetes') = {
   local node = { 'node-role.kubernetes.io/ci': '' },
 
   kind: 'pipeline',
@@ -168,6 +168,7 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
     disable: true,
   },
   steps: steps,
+  type: type,
   volumes: volumes.ForPipeline(),
   depends_on: [x.name for x in depends_on],
 };
@@ -283,10 +284,6 @@ local default_steps = [
   unit_tests_race,
   coverage,
   push_local,
-  e2e_docker,
-  e2e_firecracker,
-  push,
-  push_latest,
 ];
 
 local default_trigger = {
@@ -523,11 +520,11 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
 [
   secret,
   default_pipeline,
-  integration_pipeline,
-  integration_nightly_pipeline,
-  e2e_pipeline,
-  conformance_pipeline,
-  nightly_pipeline,
-  release_pipeline,
+//  integration_pipeline,
+//  integration_nightly_pipeline,
+//  e2e_pipeline,
+//  conformance_pipeline,
+//  nightly_pipeline,
+//  release_pipeline,
   notify_pipeline,
 ]
