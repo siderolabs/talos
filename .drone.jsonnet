@@ -19,6 +19,19 @@ local volumes = {
     },
   },
 
+  outerdockersock: {
+    pipeline: {
+      name: 'outerdockersock',
+      host: {
+        path: '/var/ci-docker'
+      },
+    },
+    step: {
+      name: $.outerdockersock.pipeline.name,
+      path: '/var/outer-run',
+    },
+  },
+
   docker: {
     pipeline: {
       name: 'docker',
@@ -80,6 +93,7 @@ local volumes = {
 
   ForStep(): [
     self.dockersock.step,
+    self.outerdockersock.step,
     self.docker.step,
     self.kube.step,
     self.dev.step,
@@ -88,6 +102,7 @@ local volumes = {
 
   ForPipeline(): [
     self.dockersock.pipeline,
+    self.outerdockersock.pipeline,
     self.docker.pipeline,
     self.kube.pipeline,
     self.dev.pipeline,
@@ -129,7 +144,7 @@ local setup_ci = {
   commands: [
     'sleep 5', // Give docker enough time to start.
     'apk add coreutils',
-    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name local --use',
+    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name local --use unix:///var/outer-run/docker.sock',
     'docker buildx inspect --bootstrap',
     'docker run -d -p 5000:5000 --restart=always --name registry registry:2',
     'make ./_out/sonobuoy',
