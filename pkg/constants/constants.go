@@ -298,10 +298,10 @@ const (
 	CustomCNI = "custom"
 
 	// DefaultIPv4PodNet is the IPv4 network to be used for kubernetes Pods.
-	DefaultIPv4PodNet = "10.245.0.0/16"
+	DefaultIPv4PodNet = "10.244.0.0/16"
 
 	// DefaultIPv4ServiceNet is the IPv4 network to be used for kubernetes Services.
-	DefaultIPv4ServiceNet = "10.112.0.0/12"
+	DefaultIPv4ServiceNet = "10.96.0.0/12"
 
 	// DefaultIPv6PodNet is the IPv6 network to be used for kubernetes Pods.
 	DefaultIPv6PodNet = "fc00:db8:10::/56"
