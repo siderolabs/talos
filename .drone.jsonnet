@@ -109,12 +109,12 @@ local docker = {
     '--log-level=error',
     '--insecure-registry=127.0.0.1:5000',
   ],
-  resources: {
-    limits: {
-      cpu: '24000',
-      memory: '48GiB',
-    },
-  },
+  // resources: {
+  //   limits: {
+  //     cpu: '24000m',
+  //     memory: '48GiB',
+  //   },
+  // },
   volumes: volumes.ForStep(),
 };
 
@@ -294,9 +294,9 @@ local default_steps = [
   image_digital_ocean,
   image_gcp,
   image_vmware,
-  // unit_tests,
-  // unit_tests_race,
-  // coverage,
+  unit_tests,
+  unit_tests_race,
+  coverage,
   push_local,
   e2e_docker,
   e2e_firecracker,
