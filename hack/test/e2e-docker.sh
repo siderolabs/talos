@@ -15,8 +15,10 @@ function create_cluster {
     --masters=3 \
     --mtu 1500 \
     --memory 2048 \
-    --cpus 4.0 \
+    --cpus 2.0 \
     --with-init-node=false \
+    --docker-host-ip=127.0.0.1 \
+    --endpoint=127.0.0.1 \
     --crashdump
 
   "${TALOSCTL}" config node 10.5.0.2

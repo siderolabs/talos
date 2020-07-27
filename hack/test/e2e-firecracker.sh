@@ -13,6 +13,8 @@ case "${CI:-false}" in
     REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
     FIRECRACKER_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 --with-bootloader-emulation"
     INSTALLER_TAG="${TAG}"
+    docker tag ${IMAGE} 127.0.0.1:5000/autonomy/talos:"${TAG}"
+    docker push 127.0.0.1:5000/autonomy/installer:"${TAG}"
     ;;
   *)
     FIRECRACKER_FLAGS=
