@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eou pipefail
+set -eoux pipefail
 
 case "${CI:-false}" in
   true)
@@ -17,4 +17,8 @@ if [ "${INTEGRATION_TEST_RUN:-undefined}" != "undefined" ]; then
   INTEGRATION_TEST_FLAGS="${INTEGRATION_TEST_FLAGS} -test.run ${INTEGRATION_TEST_RUN}"
 fi
 
-"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mem 2048 -talos.provision.cpu 2 ${INTEGRATION_TEST_FLAGS}
+if [ "${INTEGRATION_TEST_TRACK:-undefined}" != "undefined" ]; then
+  INTEGRATION_TEST_FLAGS="${INTEGRATION_TEST_FLAGS} -talos.provision.cidr 172.$(( ${INTEGRATION_TEST_TRACK} + 21 )).0.0/24"
+fi
+
+"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mem 2048 -talos.provision.cpu 2  ${INTEGRATION_TEST_FLAGS}

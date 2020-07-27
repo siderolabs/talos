@@ -45,10 +45,6 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 		"--loadbalancer-upstreams", strings.Join(masterIPs, ","),
 	}
 
-	if clusterReq.Network.LoadBalancer.LimitApidOnlyInitNode {
-		args = append(args, "--apid-only-init-node")
-	}
-
 	cmd := exec.Command(clusterReq.SelfExecutable, args...)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile

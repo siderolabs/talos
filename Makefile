@@ -234,7 +234,8 @@ provision-tests-track-%:
 		TAG=$(TAG) \
 		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 \
-		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*"
+		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*" \
+		INTEGRATION_TEST_TRACK="$*"
 
 # Assets for releases
 
