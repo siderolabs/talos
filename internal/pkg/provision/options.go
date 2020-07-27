@@ -69,6 +69,15 @@ func WithDockerPorts(ports []string) Option {
 	}
 }
 
+// WithDockerPortsHostIP sets host IP for docker provisioner to expose ports on workers.
+func WithDockerPortsHostIP(hostIP string) Option {
+	return func(o *Options) error {
+		o.DockerPortsHostIP = hostIP
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
@@ -80,12 +89,14 @@ type Options struct {
 	BootloaderEmulation bool
 
 	// Expose ports to worker machines in docker provisioner
-	DockerPorts []string
+	DockerPorts       []string
+	DockerPortsHostIP string
 }
 
 // DefaultOptions returns default options.
 func DefaultOptions() Options {
 	return Options{
-		LogWriter: os.Stderr,
+		LogWriter:         os.Stderr,
+		DockerPortsHostIP: "0.0.0.0",
 	}
 }
