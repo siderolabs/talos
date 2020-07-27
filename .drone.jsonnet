@@ -115,14 +115,9 @@ local docker = {
 local setup_ci = {
   name: 'setup-ci',
   image: 'autonomy/build-container:latest',
-  privileged: true,
-  environment: {
-    BUILDX_KUBECONFIG: { from_secret: secret.name },
-  },
   commands: [
     'git fetch --tags',
     'apk add coreutils',
-    'echo -e "$BUILDX_KUBECONFIG" > /root/.kube/config',
     'docker buildx create --name ci --buildkitd-flags="--allow-insecure-entitlement security.insecure" --use',
     'docker buildx inspect --bootstrap',
     'make ./_out/sonobuoy',
