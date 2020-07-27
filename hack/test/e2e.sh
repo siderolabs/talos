@@ -11,6 +11,8 @@
 #  - SONOBUOY
 #  - SHORT_INTEGRATION_TEST
 #  - CUSTOM_CNI_URL
+#  - IMAGE
+#  - INSTALLER_IMAGE
 
 set -eoux pipefail
 
