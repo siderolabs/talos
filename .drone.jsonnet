@@ -518,7 +518,7 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
 // Final configuration file definition.
 
 [
-  secret,
+//  secret,
   default_pipeline,
 //  integration_pipeline,
 //  integration_nightly_pipeline,
@@ -526,5 +526,5 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
 //  conformance_pipeline,
 //  nightly_pipeline,
 //  release_pipeline,
-  notify_pipeline,
+//  notify_pipeline,
 ]
