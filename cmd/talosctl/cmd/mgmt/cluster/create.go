@@ -62,6 +62,7 @@ var (
 	cniConfDir              string
 	cniCacheDir             string
 	ports                   string
+	dockerHostIP            string
 	withInitNode            bool
 	customCNIUrl            string
 	crashdumpOnFailure      bool
@@ -171,6 +172,8 @@ func create(ctx context.Context) (err error) {
 		portList := strings.Split(ports, ",")
 		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
 	}
+
+	provisionOptions = append(provisionOptions, provision.WithDockerPortsHostIP(dockerHostIP))
 
 	if bootloaderEmulation {
 		provisionOptions = append(provisionOptions, provision.WithBootladerEmulation())
@@ -436,6 +439,7 @@ func init() {
 		"",
 		"Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)",
 	)
+	createCmd.Flags().StringVar(&dockerHostIP, "docker-host-ip", "0.0.0.0", "Host IP to forward exposed ports to (Docker provisioner only)")
 	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", true, "create the cluster with an init node")
 	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
 	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")

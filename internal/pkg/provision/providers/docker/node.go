@@ -119,7 +119,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 		var generatedPortMap portMap
 
-		generatedPortMap, err = genPortMap(portsToOpen)
+		generatedPortMap, err = genPortMap(portsToOpen, options.DockerPortsHostIP)
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}
@@ -204,7 +204,7 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 	return multiErr.ErrorOrNil()
 }
 
-func genPortMap(portList []string) (portMap, error) {
+func genPortMap(portList []string, hostIP string) (portMap, error) {
 	portSetRet := nat.PortSet{}
 	portMapRet := nat.PortMap{}
 
@@ -229,7 +229,7 @@ func genPortMap(portList []string) (portMap, error) {
 		portSetRet[natPort] = struct{}{}
 		portMapRet[natPort] = []nat.PortBinding{
 			{
-				HostIP:   "0.0.0.0",
+				HostIP:   hostIP,
 				HostPort: explodedPort[0],
 			},
 		}
