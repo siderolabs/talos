@@ -1,3 +1,56 @@
+<a name="v0.6.0-alpha.6"></a>
+
+## [v0.6.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.5...v0.6.0-alpha.6) (2020-07-27)
+
+### Chore
+
+- set default CIDRs
+- use outer docker as buildkit instance
+- upgrade pkgs and tools for Go 1.14.6
+- use Kubernetes pipelines
+- bump lodash from 4.17.15 to 4.17.19 in /docs/website
+- extract loadbalancer, network, crashdup and process from firecracker
+- initial extraction of base vm provisioner
+- move inmemhttp from firecracker provisioner to internal/pkg/
+- update module dependencies
+- update golangci-lint to 1.28.3
+- upgrade Go to 1.14.5
+- update clusterctl for CI testing
+
+### Docs
+
+- use latest talosctl download link
+- update worker creation flags for azure docs
+
+### Feat
+
+- force nodes to be set in `talosctl` commands using the API
+- upgrade etcd to 3.3.22 version
+- make partitions on additional disk without size occupy full disk
+- implement talosctl dashboard command
+- implement server-side API for cluster health checks
+- upgrade Kubernetes to v1.19.0-rc.0
+
+### Fix
+
+- log interface on validation error
+- skip removing CRI state when doing upgrade with preserve
+- skip vmware platform for !amd64
+- log messages properly when sequence/phase/task fails
+- ignore sequence lock errors in machined
+- wrap errors in upgrade API handler
+- update container name in docker crashdump
+
+### Refactor
+
+- use `humanize.Bytes` everywhere
+
+### Test
+
+- add an option to bind docker to specific host IP
+- fix racy test ReaderNoFollow
+- provider correct installer kernel args for firecracker
+
 <a name="v0.6.0-alpha.5"></a>
 
 ## [v0.6.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.4...v0.6.0-alpha.5) (2020-07-13)
@@ -43,6 +96,10 @@
 ### Refactor
 
 - merge osd into machined
+
+### Release
+
+- **v0.6.0-alpha.5:** prepare release
 
 ### Test
 
