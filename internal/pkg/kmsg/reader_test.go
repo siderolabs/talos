@@ -6,6 +6,7 @@ package kmsg_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -80,6 +81,13 @@ LOOP:
 				}
 
 				break LOOP
+			}
+
+			if closed && errors.Is(packet.Err, os.ErrClosed) {
+				// ignore 'file already closed' error as it might happen
+				// from the branch below depending on whether context cancel or
+				// read() finishes first
+				continue
 			}
 
 			assert.NoError(t, packet.Err)
