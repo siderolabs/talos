@@ -3,14 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //nolint: testpackage
-package config
+package v1alpha1
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 type Suite struct {
@@ -28,7 +26,7 @@ func (suite *Suite) TestNew() {
 		content     Content
 		errExpected bool
 	}{
-		{Content{Version: v1alpha1.Version}, false},
+		{Content{Version: Version}, false},
 		{Content{Version: ""}, true},
 	} {
 		_, err := newConfig(t.content)

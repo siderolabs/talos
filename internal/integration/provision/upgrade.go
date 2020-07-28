@@ -22,7 +22,6 @@ import (
 
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
@@ -31,7 +30,9 @@ import (
 	talosclient "github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -261,8 +262,8 @@ func (suite *UpgradeSuite) setupCluster() {
 		masterEndpoints[i] = ips[i].String()
 	}
 
-	suite.configBundle, err = config.NewConfigBundle(config.WithInputOptions(
-		&config.InputOptions{
+	suite.configBundle, err = bundle.NewConfigBundle(bundle.WithInputOptions(
+		&bundle.InputOptions{
 			ClusterName: clusterName,
 			Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
 			KubeVersion: "", // keep empty so that default version is used per Talos version
@@ -275,7 +276,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.Require().NoError(err)
 
 	for i := 0; i < suite.spec.MasterNodes; i++ {
-		var cfg runtime.Configurator
+		var cfg config.Provider
 
 		if i == 0 {
 			cfg = suite.configBundle.Init()
@@ -407,14 +408,14 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// upgrade master nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == runtime.MachineTypeInit || node.Type == runtime.MachineTypeControlPlane {
+		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
 			suite.upgradeNode(client, node)
 		}
 	}
 
 	// upgrade worker nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == runtime.MachineTypeJoin {
+		if node.Type == machine.TypeJoin {
 			suite.upgradeNode(client, node)
 		}
 	}

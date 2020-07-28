@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
@@ -103,7 +104,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 //
 // This is temorary and should be removed once we remove the init node type.
 func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
-	if r.Config().Machine().Type() != runtime.MachineTypeInit {
+	if r.Config().Machine().Type() != machine.TypeInit {
 		return nil
 	}
 

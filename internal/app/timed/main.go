@@ -10,7 +10,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/startup"
@@ -44,7 +44,7 @@ func main() {
 
 	server := DefaultServer
 
-	config, err := config.NewFromFile(*configPath)
+	config, err := v1alpha1.NewFromFile(*configPath)
 	if err != nil {
 		log.Fatalf("failed to create config from file: %v", err)
 	}

@@ -31,6 +31,11 @@ func (m Mode) String() string {
 	return [...]string{cloud, container, metal}[m]
 }
 
+// RequiresInstall implements config.RuntimeMode.
+func (m Mode) RequiresInstall() bool {
+	return m == ModeMetal
+}
+
 // ParseMode returns a `Mode` that matches the specified string.
 func ParseMode(s string) (mod Mode, err error) {
 	switch s {

@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -76,7 +77,7 @@ func (apiSuite *APISuite) DiscoverNodes() cluster.Info {
 }
 
 // RandomNode returns a random node of the specified type (or any type if no types are specified).
-func (apiSuite *APISuite) RandomDiscoveredNode(types ...runtime.MachineType) string {
+func (apiSuite *APISuite) RandomDiscoveredNode(types ...machine.Type) string {
 	nodeInfo := apiSuite.DiscoverNodes()
 
 	var nodes []string

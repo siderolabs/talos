@@ -9,18 +9,19 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 // Runtime implements the Runtime interface.
 type Runtime struct {
-	c runtime.Configurator
+	c config.Provider
 	s runtime.State
 	e runtime.EventStream
 	l runtime.LoggingManager
 }
 
 // NewRuntime initializes and returns the v1alpha1 runtime.
-func NewRuntime(c runtime.Configurator, s runtime.State, e runtime.EventStream, l runtime.LoggingManager) *Runtime {
+func NewRuntime(c config.Provider, s runtime.State, e runtime.EventStream, l runtime.LoggingManager) *Runtime {
 	return &Runtime{
 		c: c,
 		s: s,
@@ -30,13 +31,13 @@ func NewRuntime(c runtime.Configurator, s runtime.State, e runtime.EventStream, 
 }
 
 // Config implements the Runtime interface.
-func (r *Runtime) Config() runtime.Configurator {
+func (r *Runtime) Config() config.Provider {
 	return r.c
 }
 
 // SetConfig implements the Runtime interface.
 func (r *Runtime) SetConfig(b []byte) error {
-	cfg, err := config.NewFromBytes(b)
+	cfg, err := v1alpha1.NewFromBytes(b)
 	if err != nil {
 		return fmt.Errorf("failed to set config: %w", err)
 	}

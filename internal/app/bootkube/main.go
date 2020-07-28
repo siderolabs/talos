@@ -13,7 +13,7 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 	"github.com/kubernetes-sigs/bootkube/pkg/util"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -95,7 +95,7 @@ func main() {
 
 	defer util.FlushLogs()
 
-	config, err := config.NewFromFile(*configPath)
+	config, err := v1alpha1.NewFromFile(*configPath)
 	if err != nil {
 		log.Fatalf("failed to create config from file: %v", err)
 	}

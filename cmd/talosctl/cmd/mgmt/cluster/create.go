@@ -18,7 +18,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
@@ -28,7 +27,9 @@ import (
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -162,7 +163,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	provisionOptions := []provision.Option{}
-	configBundleOpts := []config.BundleOption{}
+	configBundleOpts := []bundle.Option{}
 
 	if ports != "" {
 		if provisionerName != "docker" {
@@ -180,7 +181,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	if inputDir != "" {
-		configBundleOpts = append(configBundleOpts, config.WithExistingConfigs(inputDir))
+		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
 	} else {
 		genOptions := []generate.GenOption{
 			generate.WithInstallImage(nodeInstallImage),
@@ -230,8 +231,8 @@ func create(ctx context.Context) (err error) {
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
 		configBundleOpts = append(configBundleOpts,
-			config.WithInputOptions(
-				&config.InputOptions{
+			bundle.WithInputOptions(
+				&bundle.InputOptions{
 					ClusterName: clusterName,
 					Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
 					KubeVersion: kubernetesVersion,
@@ -240,7 +241,7 @@ func create(ctx context.Context) (err error) {
 		)
 	}
 
-	configBundle, err := config.NewConfigBundle(configBundleOpts...)
+	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
 	if err != nil {
 		return err
 	}
@@ -250,7 +251,7 @@ func create(ctx context.Context) (err error) {
 
 	// Create the master nodes.
 	for i := 0; i < masters; i++ {
-		var cfg runtime.Configurator
+		var cfg config.Provider
 
 		nodeReq := provision.NodeRequest{
 			Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
@@ -322,7 +323,7 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 			return retry.UnexpectedError(err)
 		}
 
-		nodes := clusterAccess.NodesByType(runtime.MachineTypeControlPlane)
+		nodes := clusterAccess.NodesByType(machine.TypeControlPlane)
 		if len(nodes) == 0 {
 			return fmt.Errorf("expected at least 1 control plane node, got %d", len(nodes))
 		}

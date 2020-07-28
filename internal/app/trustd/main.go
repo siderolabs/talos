@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
@@ -41,7 +41,7 @@ func main() {
 		log.Fatalf("startup: %s", err)
 	}
 
-	config, err := config.NewFromFile(*configPath)
+	config, err := v1alpha1.NewFromFile(*configPath)
 	if err != nil {
 		log.Fatalf("failed to create config from file: %v", err)
 	}

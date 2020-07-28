@@ -16,7 +16,7 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 
@@ -114,18 +114,18 @@ ff02::2         ip6-allrouters
 {{ end }}
 `
 
-func writeHosts(hostname string, address net.IP, config runtime.Configurator) (err error) {
-	extraHosts := []runtime.ExtraHost{}
+func writeHosts(hostname string, address net.IP, cfg config.Provider) (err error) {
+	extraHosts := []config.ExtraHost{}
 
-	if config != nil {
-		extraHosts = config.Machine().Network().ExtraHosts()
+	if cfg != nil {
+		extraHosts = cfg.Machine().Network().ExtraHosts()
 	}
 
 	data := struct {
 		IP         string
 		Hostname   string
 		Alias      string
-		ExtraHosts []runtime.ExtraHost
+		ExtraHosts []config.ExtraHost
 	}{
 		IP:         address.String(),
 		Hostname:   hostname,

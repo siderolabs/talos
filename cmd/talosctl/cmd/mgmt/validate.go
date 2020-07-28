@@ -11,7 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 var (
@@ -26,7 +26,7 @@ var validateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := config.NewFromFile(validateConfigArg)
+		config, err := v1alpha1.NewFromFile(validateConfigArg)
 		if err != nil {
 			return err
 		}

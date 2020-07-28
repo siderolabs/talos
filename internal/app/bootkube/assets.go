@@ -24,13 +24,13 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 // nolint: gocyclo
-func generateAssets(config runtime.Configurator) (err error) {
+func generateAssets(config config.Provider) (err error) {
 	if err = os.MkdirAll(constants.ManifestsDirectory, 0o644); err != nil {
 		return err
 	}

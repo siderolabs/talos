@@ -2,109 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package config
 
 import (
 	"crypto/tls"
-	"fmt"
-	"net/url"
-	"os"
-	"time"
-
 	stdx509 "crypto/x509"
+	"fmt"
+	"os"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
-
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
-
-// Configurator defines the configuration interface.
-type Configurator interface {
-	Version() string
-	Debug() bool
-	Persist() bool
-	Machine() MachineConfig
-	Cluster() ClusterConfig
-	Validate(Mode) error
-	String() (string, error)
-	Bytes() ([]byte, error)
-}
-
-// ConfiguratorBundle defines the configuration bundle interface.
-type ConfiguratorBundle interface {
-	Init() Configurator
-	ControlPlane() Configurator
-	Join() Configurator
-	TalosConfig() *config.Config
-}
-
-// Machine defines the runtime parameters.
-type Machine interface {
-	State() MachineState
-	Config() MachineConfig
-}
-
-// MachineState defines the machined state.
-type MachineState interface {
-	Disk() *probe.ProbedBlockDevice
-	Close() error
-	Installed() bool
-}
-
-// MachineType represents a machine type.
-type MachineType int
-
-const (
-	// MachineTypeInit represents a bootstrap node.
-	MachineTypeInit MachineType = iota
-	// MachineTypeControlPlane represents a control plane node.
-	MachineTypeControlPlane
-	// MachineTypeJoin represents a worker node.
-	MachineTypeJoin
-)
-
-const (
-	machineTypeInit         = "init"
-	machineTypeControlPlane = "controlplane"
-	machineTypeJoin         = "join"
-)
-
-// String returns the string representation of Type.
-func (t MachineType) String() string {
-	return [...]string{machineTypeInit, machineTypeControlPlane, machineTypeJoin}[t]
-}
-
-// ParseMachineType parses string constant as Type.
-func ParseMachineType(t string) (MachineType, error) {
-	switch t {
-	case machineTypeInit:
-		return MachineTypeInit, nil
-	case machineTypeControlPlane:
-		return MachineTypeControlPlane, nil
-	case machineTypeJoin:
-		return MachineTypeJoin, nil
-	default:
-		return 0, fmt.Errorf("unknown machine type: %q", t)
-	}
-}
-
-// MachineConfig defines the requirements for a config that pertains to machine
-// related options.
-type MachineConfig interface {
-	Install() Install
-	Security() Security
-	Network() MachineNetwork
-	Disks() []Disk
-	Time() Time
-	Env() Env
-	Files() ([]File, error)
-	Type() MachineType
-	Kubelet() Kubelet
-	Sysctls() map[string]string
-	Registries() Registries
-}
 
 // Env represents a set of environment variables.
 type Env = map[string]string
@@ -115,25 +22,6 @@ type File struct {
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
 	Op          string      `yaml:"op"`
-}
-
-// Security defines the requirements for a config that pertains to security
-// related options.
-type Security interface {
-	CA() *x509.PEMEncodedCertificateAndKey
-	Token() string
-	CertSANs() []string
-	SetCertSANs([]string)
-}
-
-// MachineNetwork defines the requirements for a config that pertains to network
-// related options.
-type MachineNetwork interface {
-	Hostname() string
-	SetHostname(string)
-	Resolvers() []string
-	Devices() []Device
-	ExtraHosts() []ExtraHost
 }
 
 // ExtraHost represents a host entry in /etc/hosts.
@@ -201,17 +89,6 @@ type Route struct {
 	Gateway string `yaml:"gateway"`
 }
 
-// Install defines the requirements for a config that pertains to install
-// related options.
-type Install interface {
-	Image() string
-	Disk() string
-	ExtraKernelArgs() []string
-	Zero() bool
-	Force() bool
-	WithBootloader() bool
-}
-
 // Disk represents the options available for partitioning, formatting, and
 // mounting extra disks.
 type Disk struct {
@@ -223,20 +100,6 @@ type Disk struct {
 type Partition struct {
 	Size       uint   `yaml:"size,omitempty"`
 	MountPoint string `yaml:"mountpoint,omitempty"`
-}
-
-// Time defines the requirements for a config that pertains to time related
-// options.
-type Time interface {
-	Servers() []string
-}
-
-// Kubelet defines the requirements for a config that pertains to kubelet
-// related options.
-type Kubelet interface {
-	Image() string
-	ExtraArgs() map[string]string
-	ExtraMounts() []specs.Mount
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.
@@ -327,113 +190,4 @@ type Registries interface {
 	Config() map[string]RegistryConfig
 	// ExtraFiles generates TOML config for containerd CRI plugin.
 	ExtraFiles() ([]File, error)
-}
-
-// ClusterState defines the cluster state.
-type ClusterState interface{}
-
-// ClusterConfig defines the requirements for a config that pertains to cluster
-// related options.
-type ClusterConfig interface {
-	Name() string
-	APIServer() APIServer
-	ControllerManager() ControllerManager
-	Proxy() Proxy
-	Scheduler() Scheduler
-	Endpoint() *url.URL
-	Token() Token
-	CertSANs() []string
-	SetCertSANs([]string)
-	CA() *x509.PEMEncodedCertificateAndKey
-	AESCBCEncryptionSecret() string
-	Config(MachineType) (string, error)
-	Etcd() Etcd
-	Network() ClusterNetwork
-	LocalAPIServerPort() int
-	PodCheckpointer() PodCheckpointer
-	CoreDNS() CoreDNS
-	ExtraManifestURLs() []string
-	ExtraManifestHeaderMap() map[string]string
-	AdminKubeconfig() AdminKubeconfig
-}
-
-// ClusterNetwork defines the requirements for a config that pertains to cluster
-// network options.
-type ClusterNetwork interface {
-	CNI() CNI
-	PodCIDR() string
-	ServiceCIDR() string
-	DNSDomain() string
-}
-
-// CNI defines the requirements for a config that pertains to Kubernetes
-// cni.
-type CNI interface {
-	Name() string
-	URLs() []string
-}
-
-// APIServer defines the requirements for a config that pertains to apiserver related
-// options.
-type APIServer interface {
-	Image() string
-	ExtraArgs() map[string]string
-}
-
-// ControllerManager defines the requirements for a config that pertains to controller manager related
-// options.
-type ControllerManager interface {
-	Image() string
-	ExtraArgs() map[string]string
-}
-
-// Proxy defines the requirements for a config that pertains to the kube-proxy
-// options.
-type Proxy interface {
-	Image() string
-
-	// Mode indicates the proxy mode for kube-proxy.  By default, this is `iptables`.  Other options include `ipvs`.
-	Mode() string
-
-	// ExtraArgs describe an additional set of arguments to be supplied to the execution of `kube-proxy`
-	ExtraArgs() map[string]string
-}
-
-// Scheduler defines the requirements for a config that pertains to scheduler related
-// options.
-type Scheduler interface {
-	Image() string
-	ExtraArgs() map[string]string
-}
-
-// Etcd defines the requirements for a config that pertains to etcd related
-// options.
-type Etcd interface {
-	Image() string
-	CA() *x509.PEMEncodedCertificateAndKey
-	ExtraArgs() map[string]string
-}
-
-// Token defines the requirements for a config that pertains to Kubernetes
-// bootstrap token.
-type Token interface {
-	ID() string
-	Secret() string
-}
-
-// PodCheckpointer defines the requirements for a config that pertains to bootkube
-// pod-checkpointer options.
-type PodCheckpointer interface {
-	Image() string
-}
-
-// CoreDNS defines the requirements for a config that pertains to bootkube
-// coredns options.
-type CoreDNS interface {
-	Image() string
-}
-
-// AdminKubeconfig defines settings for admin kubeconfig.
-type AdminKubeconfig interface {
-	CertLifetime() time.Duration
 }

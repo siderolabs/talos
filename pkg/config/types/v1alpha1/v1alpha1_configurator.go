@@ -11,13 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	criplugin "github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
+	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
@@ -27,32 +28,32 @@ const (
 	Version = "v1alpha1"
 )
 
-// Version implements the Configurator interface.
+// Version implements the config.Provider interface.
 func (c *Config) Version() string {
 	return Version
 }
 
-// Debug implements the Configurator interface.
+// Debug implements the config.Provider interface.
 func (c *Config) Debug() bool {
 	return c.ConfigDebug
 }
 
-// Persist implements the Configurator interface.
+// Persist implements the config.Provider interface.
 func (c *Config) Persist() bool {
 	return c.ConfigPersist
 }
 
-// Machine implements the Configurator interface.
-func (c *Config) Machine() runtime.MachineConfig {
+// Machine implements the config.Provider interface.
+func (c *Config) Machine() config.MachineConfig {
 	return c.MachineConfig
 }
 
-// Cluster implements the Configurator interface.
-func (c *Config) Cluster() runtime.ClusterConfig {
+// Cluster implements the config.Provider interface.
+func (c *Config) Cluster() config.ClusterConfig {
 	return c.ClusterConfig
 }
 
-// String implements the Configurator interface.
+// String implements the config.Provider interface.
 func (c *Config) String() (string, error) {
 	b, err := c.Bytes()
 	if err != nil {
@@ -62,7 +63,7 @@ func (c *Config) String() (string, error) {
 	return string(b), nil
 }
 
-// Bytes implements the Configurator interface.
+// Bytes implements the config.Provider interface.
 func (c *Config) Bytes() ([]byte, error) {
 	b, err := yaml.Marshal(c)
 	if err != nil {
@@ -72,8 +73,8 @@ func (c *Config) Bytes() ([]byte, error) {
 	return b, nil
 }
 
-// Install implements the Configurator interface.
-func (m *MachineConfig) Install() runtime.Install {
+// Install implements the config.Provider interface.
+func (m *MachineConfig) Install() config.Install {
 	if m.MachineInstall == nil {
 		return &InstallConfig{}
 	}
@@ -81,18 +82,18 @@ func (m *MachineConfig) Install() runtime.Install {
 	return m.MachineInstall
 }
 
-// Security implements the Configurator interface.
-func (m *MachineConfig) Security() runtime.Security {
+// Security implements the config.Provider interface.
+func (m *MachineConfig) Security() config.Security {
 	return m
 }
 
-// Disks implements the Configurator interface.
-func (m *MachineConfig) Disks() []runtime.Disk {
+// Disks implements the config.Provider interface.
+func (m *MachineConfig) Disks() []config.Disk {
 	return m.MachineDisks
 }
 
-// Network implements the Configurator interface.
-func (m *MachineConfig) Network() runtime.MachineNetwork {
+// Network implements the config.Provider interface.
+func (m *MachineConfig) Network() config.MachineNetwork {
 	if m.MachineNetwork == nil {
 		return &NetworkConfig{}
 	}
@@ -100,8 +101,8 @@ func (m *MachineConfig) Network() runtime.MachineNetwork {
 	return m.MachineNetwork
 }
 
-// Time implements the Configurator interface.
-func (m *MachineConfig) Time() runtime.Time {
+// Time implements the config.Provider interface.
+func (m *MachineConfig) Time() config.Time {
 	if m.MachineTime == nil {
 		return &TimeConfig{}
 	}
@@ -109,41 +110,41 @@ func (m *MachineConfig) Time() runtime.Time {
 	return m.MachineTime
 }
 
-// Kubelet implements the Configurator interface.
-func (m *MachineConfig) Kubelet() runtime.Kubelet {
+// Kubelet implements the config.Provider interface.
+func (m *MachineConfig) Kubelet() config.Kubelet {
 	return m.MachineKubelet
 }
 
-// Env implements the Configurator interface.
-func (m *MachineConfig) Env() runtime.Env {
+// Env implements the config.Provider interface.
+func (m *MachineConfig) Env() config.Env {
 	return m.MachineEnv
 }
 
-// Files implements the Configurator interface.
-func (m *MachineConfig) Files() ([]runtime.File, error) {
+// Files implements the config.Provider interface.
+func (m *MachineConfig) Files() ([]config.File, error) {
 	files, err := m.Registries().ExtraFiles()
 
 	return append(files, m.MachineFiles...), err
 }
 
-// Type implements the Configurator interface.
-func (m *MachineConfig) Type() runtime.MachineType {
+// Type implements the config.Provider interface.
+func (m *MachineConfig) Type() machine.Type {
 	switch m.MachineType {
 	case "init":
-		return runtime.MachineTypeInit
+		return machine.TypeInit
 	case "controlplane":
-		return runtime.MachineTypeControlPlane
+		return machine.TypeControlPlane
 	default:
-		return runtime.MachineTypeJoin
+		return machine.TypeJoin
 	}
 }
 
-// Server implements the Configurator interface.
+// Server implements the config.Provider interface.
 func (m *MachineConfig) Server() string {
 	return ""
 }
 
-// Sysctls implements the Configurator interface.
+// Sysctls implements the config.Provider interface.
 func (m *MachineConfig) Sysctls() map[string]string {
 	if m.MachineSysctls == nil {
 		m.MachineSysctls = make(map[string]string)
@@ -152,32 +153,32 @@ func (m *MachineConfig) Sysctls() map[string]string {
 	return m.MachineSysctls
 }
 
-// CA implements the Configurator interface.
+// CA implements the config.Provider interface.
 func (m *MachineConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return m.MachineCA
 }
 
-// Token implements the Configurator interface.
+// Token implements the config.Provider interface.
 func (m *MachineConfig) Token() string {
 	return m.MachineToken
 }
 
-// CertSANs implements the Configurator interface.
+// CertSANs implements the config.Provider interface.
 func (m *MachineConfig) CertSANs() []string {
 	return m.MachineCertSANs
 }
 
-// SetCertSANs implements the Configurator interface.
+// SetCertSANs implements the config.Provider interface.
 func (m *MachineConfig) SetCertSANs(sans []string) {
 	m.MachineCertSANs = append(m.MachineCertSANs, sans...)
 }
 
-// Registries implements the Configurator interface.
-func (m *MachineConfig) Registries() runtime.Registries {
+// Registries implements the config.Provider interface.
+func (m *MachineConfig) Registries() config.Registries {
 	return &m.MachineRegistries
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage
 
@@ -188,7 +189,7 @@ func (k *KubeletConfig) Image() string {
 	return image
 }
 
-// ExtraArgs implements the Configurator interface.
+// ExtraArgs implements the config.Provider interface.
 func (k *KubeletConfig) ExtraArgs() map[string]string {
 	if k == nil {
 		k = &KubeletConfig{}
@@ -201,22 +202,22 @@ func (k *KubeletConfig) ExtraArgs() map[string]string {
 	return k.KubeletExtraArgs
 }
 
-// ExtraMounts implements the Configurator interface.
+// ExtraMounts implements the config.Provider interface.
 func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 	return k.KubeletExtraMounts
 }
 
-// Name implements the Configurator interface.
+// Name implements the config.Provider interface.
 func (c *ClusterConfig) Name() string {
 	return c.ClusterName
 }
 
-// Endpoint implements the Configurator interface.
+// Endpoint implements the config.Provider interface.
 func (c *ClusterConfig) Endpoint() *url.URL {
 	return c.ControlPlane.Endpoint.URL
 }
 
-// LocalAPIServerPort implements the Configurator interface.
+// LocalAPIServerPort implements the config.Provider interface.
 func (c *ClusterConfig) LocalAPIServerPort() int {
 	if c.ControlPlane.LocalAPIServerPort == 0 {
 		return 6443
@@ -225,12 +226,12 @@ func (c *ClusterConfig) LocalAPIServerPort() int {
 	return c.ControlPlane.LocalAPIServerPort
 }
 
-// CertSANs implements the Configurator interface.
+// CertSANs implements the config.Provider interface.
 func (c *ClusterConfig) CertSANs() []string {
 	return c.APIServerConfig.CertSANs
 }
 
-// SetCertSANs implements the Configurator interface.
+// SetCertSANs implements the config.Provider interface.
 func (c *ClusterConfig) SetCertSANs(sans []string) {
 	if c.APIServerConfig == nil {
 		c.APIServerConfig = &APIServerConfig{}
@@ -239,23 +240,23 @@ func (c *ClusterConfig) SetCertSANs(sans []string) {
 	c.APIServerConfig.CertSANs = append(c.APIServerConfig.CertSANs, sans...)
 }
 
-// CA implements the Configurator interface.
+// CA implements the config.Provider interface.
 func (c *ClusterConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return c.ClusterCA
 }
 
-// AESCBCEncryptionSecret implements the Configurator interface.
+// AESCBCEncryptionSecret implements the config.Provider interface.
 func (c *ClusterConfig) AESCBCEncryptionSecret() string {
 	return c.ClusterAESCBCEncryptionSecret
 }
 
-// Config implements the Configurator interface.
-func (c *ClusterConfig) Config(t runtime.MachineType) (string, error) {
+// Config implements the config.Provider interface.
+func (c *ClusterConfig) Config(t machine.Type) (string, error) {
 	return "", nil
 }
 
-// APIServer implements the Configurator interface.
-func (c *ClusterConfig) APIServer() runtime.APIServer {
+// APIServer implements the config.Provider interface.
+func (c *ClusterConfig) APIServer() config.APIServer {
 	if c.APIServerConfig == nil {
 		return &APIServerConfig{}
 	}
@@ -263,7 +264,7 @@ func (c *ClusterConfig) APIServer() runtime.APIServer {
 	return c.APIServerConfig
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (a *APIServerConfig) Image() string {
 	image := a.ContainerImage
 
@@ -274,13 +275,13 @@ func (a *APIServerConfig) Image() string {
 	return image
 }
 
-// ExtraArgs implements the Configurator interface.
+// ExtraArgs implements the config.Provider interface.
 func (a *APIServerConfig) ExtraArgs() map[string]string {
 	return a.ExtraArgsConfig
 }
 
-// ControllerManager implements the Configurator interface.
-func (c *ClusterConfig) ControllerManager() runtime.ControllerManager {
+// ControllerManager implements the config.Provider interface.
+func (c *ClusterConfig) ControllerManager() config.ControllerManager {
 	if c.ControllerManagerConfig == nil {
 		return &ControllerManagerConfig{}
 	}
@@ -288,7 +289,7 @@ func (c *ClusterConfig) ControllerManager() runtime.ControllerManager {
 	return c.ControllerManagerConfig
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (c *ControllerManagerConfig) Image() string {
 	image := c.ContainerImage
 
@@ -299,13 +300,13 @@ func (c *ControllerManagerConfig) Image() string {
 	return image
 }
 
-// ExtraArgs implements the Configurator interface.
+// ExtraArgs implements the config.Provider interface.
 func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 	return c.ExtraArgsConfig
 }
 
-// Proxy implements the Configurator interface.
-func (c *ClusterConfig) Proxy() runtime.Proxy {
+// Proxy implements the config.Provider interface.
+func (c *ClusterConfig) Proxy() config.Proxy {
 	if c.ProxyConfig == nil {
 		return &ProxyConfig{}
 	}
@@ -313,7 +314,7 @@ func (c *ClusterConfig) Proxy() runtime.Proxy {
 	return c.ProxyConfig
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (p *ProxyConfig) Image() string {
 	image := p.ContainerImage
 
@@ -338,8 +339,8 @@ func (p *ProxyConfig) ExtraArgs() map[string]string {
 	return p.ExtraArgsConfig
 }
 
-// Scheduler implements the Configurator interface.
-func (c *ClusterConfig) Scheduler() runtime.Scheduler {
+// Scheduler implements the config.Provider interface.
+func (c *ClusterConfig) Scheduler() config.Scheduler {
 	if c.SchedulerConfig == nil {
 		return &SchedulerConfig{}
 	}
@@ -347,12 +348,12 @@ func (c *ClusterConfig) Scheduler() runtime.Scheduler {
 	return c.SchedulerConfig
 }
 
-// AdminKubeconfig implements the Configurator interface.
-func (c *ClusterConfig) AdminKubeconfig() runtime.AdminKubeconfig {
+// AdminKubeconfig implements the config.Provider interface.
+func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 	return c.AdminKubeconfigConfig
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (s *SchedulerConfig) Image() string {
 	image := s.ContainerImage
 
@@ -363,17 +364,17 @@ func (s *SchedulerConfig) Image() string {
 	return image
 }
 
-// ExtraArgs implements the Configurator interface.
+// ExtraArgs implements the config.Provider interface.
 func (s *SchedulerConfig) ExtraArgs() map[string]string {
 	return s.ExtraArgsConfig
 }
 
-// Etcd implements the Configurator interface.
-func (c *ClusterConfig) Etcd() runtime.Etcd {
+// Etcd implements the config.Provider interface.
+func (c *ClusterConfig) Etcd() config.Etcd {
 	return c.EtcdConfig
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (e *EtcdConfig) Image() string {
 	image := e.ContainerImage
 	suffix := ""
@@ -389,12 +390,12 @@ func (e *EtcdConfig) Image() string {
 	return image
 }
 
-// CA implements the Configurator interface.
+// CA implements the config.Provider interface.
 func (e *EtcdConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return e.RootCA
 }
 
-// ExtraArgs implements the Configurator interface.
+// ExtraArgs implements the config.Provider interface.
 func (e *EtcdConfig) ExtraArgs() map[string]string {
 	if e.EtcdExtraArgs == nil {
 		e.EtcdExtraArgs = make(map[string]string)
@@ -404,26 +405,26 @@ func (e *EtcdConfig) ExtraArgs() map[string]string {
 }
 
 // Mirrors implements the Registries interface.
-func (r *RegistriesConfig) Mirrors() map[string]runtime.RegistryMirrorConfig {
+func (r *RegistriesConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	return r.RegistryMirrors
 }
 
 // Config implements the Registries interface.
-func (r *RegistriesConfig) Config() map[string]runtime.RegistryConfig {
+func (r *RegistriesConfig) Config() map[string]config.RegistryConfig {
 	return r.RegistryConfig
 }
 
 // ExtraFiles implements the Registries interface.
-func (r *RegistriesConfig) ExtraFiles() ([]runtime.File, error) {
+func (r *RegistriesConfig) ExtraFiles() ([]config.File, error) {
 	return criplugin.GenerateRegistriesConfig(r)
 }
 
-// Token implements the Configurator interface.
-func (c *ClusterConfig) Token() runtime.Token {
+// Token implements the config.Provider interface.
+func (c *ClusterConfig) Token() config.Token {
 	return c
 }
 
-// ID implements the Configurator interface.
+// ID implements the config.Provider interface.
 func (c *ClusterConfig) ID() string {
 	parts := strings.Split(c.BootstrapToken, ".")
 	if len(parts) != 2 {
@@ -433,7 +434,7 @@ func (c *ClusterConfig) ID() string {
 	return parts[0]
 }
 
-// Secret implements the Configurator interface.
+// Secret implements the config.Provider interface.
 func (c *ClusterConfig) Secret() string {
 	parts := strings.Split(c.BootstrapToken, ".")
 	if len(parts) != 2 {
@@ -443,12 +444,12 @@ func (c *ClusterConfig) Secret() string {
 	return parts[1]
 }
 
-// Network implements the Configurator interface.
-func (c *ClusterConfig) Network() runtime.ClusterNetwork {
+// Network implements the config.Provider interface.
+func (c *ClusterConfig) Network() config.ClusterNetwork {
 	return c
 }
 
-// DNSDomain implements the Configurator interface.
+// DNSDomain implements the config.Provider interface.
 func (c *ClusterConfig) DNSDomain() string {
 	if c.ClusterNetwork == nil {
 		return constants.DefaultDNSDomain
@@ -457,8 +458,8 @@ func (c *ClusterConfig) DNSDomain() string {
 	return c.ClusterNetwork.DNSDomain
 }
 
-// CNI implements the Configurator interface.
-func (c *ClusterConfig) CNI() runtime.CNI {
+// CNI implements the config.Provider interface.
+func (c *ClusterConfig) CNI() config.CNI {
 	switch {
 	case c.ClusterNetwork == nil:
 		fallthrough
@@ -472,7 +473,7 @@ func (c *ClusterConfig) CNI() runtime.CNI {
 	return c.ClusterNetwork.CNI
 }
 
-// PodCIDR implements the Configurator interface.
+// PodCIDR implements the config.Provider interface.
 func (c *ClusterConfig) PodCIDR() string {
 	switch {
 	case c.ClusterNetwork == nil:
@@ -484,7 +485,7 @@ func (c *ClusterConfig) PodCIDR() string {
 	return strings.Join(c.ClusterNetwork.PodSubnet, ",")
 }
 
-// ServiceCIDR implements the Configurator interface.
+// ServiceCIDR implements the config.Provider interface.
 func (c *ClusterConfig) ServiceCIDR() string {
 	switch {
 	case c.ClusterNetwork == nil:
@@ -496,18 +497,18 @@ func (c *ClusterConfig) ServiceCIDR() string {
 	return strings.Join(c.ClusterNetwork.ServiceSubnet, ",")
 }
 
-// ExtraManifestURLs implements the Configurator interface.
+// ExtraManifestURLs implements the config.Provider interface.
 func (c *ClusterConfig) ExtraManifestURLs() []string {
 	return c.ExtraManifests
 }
 
-// ExtraManifestHeaderMap implements the Configurator interface.
+// ExtraManifestHeaderMap implements the config.Provider interface.
 func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 	return c.ExtraManifestHeaders
 }
 
-// PodCheckpointer implements the Configurator interface.
-func (c *ClusterConfig) PodCheckpointer() runtime.PodCheckpointer {
+// PodCheckpointer implements the config.Provider interface.
+func (c *ClusterConfig) PodCheckpointer() config.PodCheckpointer {
 	if c.PodCheckpointerConfig == nil {
 		return &PodCheckpointer{}
 	}
@@ -515,8 +516,8 @@ func (c *ClusterConfig) PodCheckpointer() runtime.PodCheckpointer {
 	return c.PodCheckpointerConfig
 }
 
-// CoreDNS implements the Configurator interface.
-func (c *ClusterConfig) CoreDNS() runtime.CoreDNS {
+// CoreDNS implements the config.Provider interface.
+func (c *ClusterConfig) CoreDNS() config.CoreDNS {
 	if c.CoreDNSConfig == nil {
 		return &CoreDNS{}
 	}
@@ -524,77 +525,77 @@ func (c *ClusterConfig) CoreDNS() runtime.CoreDNS {
 	return c.CoreDNSConfig
 }
 
-// Name implements the Configurator interface.
+// Name implements the config.Provider interface.
 func (c *CNIConfig) Name() string {
 	return c.CNIName
 }
 
-// URLs implements the Configurator interface.
+// URLs implements the config.Provider interface.
 func (c *CNIConfig) URLs() []string {
 	return c.CNIUrls
 }
 
-// Hostname implements the Configurator interface.
+// Hostname implements the config.Provider interface.
 func (n *NetworkConfig) Hostname() string {
 	return n.NetworkHostname
 }
 
-// SetHostname implements the Configurator interface.
+// SetHostname implements the config.Provider interface.
 func (n *NetworkConfig) SetHostname(hostname string) {
 	n.NetworkHostname = hostname
 }
 
-// Devices implements the Configurator interface.
-func (n *NetworkConfig) Devices() []runtime.Device {
+// Devices implements the config.Provider interface.
+func (n *NetworkConfig) Devices() []config.Device {
 	return n.NetworkInterfaces
 }
 
-// Resolvers implements the Configurator interface.
+// Resolvers implements the config.Provider interface.
 func (n *NetworkConfig) Resolvers() []string {
 	return n.NameServers
 }
 
-// ExtraHosts implements the Configurator interface.
-func (n *NetworkConfig) ExtraHosts() []runtime.ExtraHost {
+// ExtraHosts implements the config.Provider interface.
+func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
 	return n.ExtraHostEntries
 }
 
-// Servers implements the Configurator interface.
+// Servers implements the config.Provider interface.
 func (t *TimeConfig) Servers() []string {
 	return t.TimeServers
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (i *InstallConfig) Image() string {
 	return i.InstallImage
 }
 
-// Disk implements the Configurator interface.
+// Disk implements the config.Provider interface.
 func (i *InstallConfig) Disk() string {
 	return i.InstallDisk
 }
 
-// ExtraKernelArgs implements the Configurator interface.
+// ExtraKernelArgs implements the config.Provider interface.
 func (i *InstallConfig) ExtraKernelArgs() []string {
 	return i.InstallExtraKernelArgs
 }
 
-// Zero implements the Configurator interface.
+// Zero implements the config.Provider interface.
 func (i *InstallConfig) Zero() bool {
 	return i.InstallWipe
 }
 
-// Force implements the Configurator interface.
+// Force implements the config.Provider interface.
 func (i *InstallConfig) Force() bool {
 	return i.InstallForce
 }
 
-// WithBootloader implements the Configurator interface.
+// WithBootloader implements the config.Provider interface.
 func (i *InstallConfig) WithBootloader() bool {
 	return i.InstallBootloader
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (c *CoreDNS) Image() string {
 	coreDNSImage := asset.DefaultImages.CoreDNS
 
@@ -605,7 +606,7 @@ func (c *CoreDNS) Image() string {
 	return coreDNSImage
 }
 
-// Image implements the Configurator interface.
+// Image implements the config.Provider interface.
 func (p *PodCheckpointer) Image() string {
 	checkpointerImage := constants.PodCheckpointerImage
 
@@ -616,7 +617,7 @@ func (p *PodCheckpointer) Image() string {
 	return checkpointerImage
 }
 
-// CertLifetime implements the Configurator interface.
+// CertLifetime implements the config.Provider interface.
 func (a AdminKubeconfigConfig) CertLifetime() time.Duration {
 	if a.AdminKubeconfigCertLifetime == 0 {
 		return constants.KubernetesAdminCertDefaultLifetime

@@ -10,7 +10,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
@@ -28,7 +28,7 @@ func init() {
 func main() {
 	log.Println("starting initial network configuration")
 
-	config, err := config.NewFromFile(*configPath)
+	config, err := v1alpha1.NewFromFile(*configPath)
 	if err != nil {
 		log.Fatalf("failed to create config from file: %v", err)
 	}

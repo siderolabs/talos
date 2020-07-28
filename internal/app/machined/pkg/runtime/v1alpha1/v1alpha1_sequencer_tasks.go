@@ -30,7 +30,7 @@ import (
 
 	"github.com/kubernetes-sigs/bootkube/pkg/recovery"
 
-	"github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -50,7 +50,8 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/cmd"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -433,7 +434,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return nil
 		}
 
-		cfg, err := config.NewFromFile(constants.ConfigPath)
+		cfg, err := v1alpha1.NewFromFile(constants.ConfigPath)
 		if err != nil {
 			logger.Printf("downloading config")
 
@@ -629,18 +630,18 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 		}
 
 		switch r.Config().Machine().Type() {
-		case runtime.MachineTypeInit:
+		case machine.TypeInit:
 			svcs.Load(
 				&services.Trustd{},
 				&services.Etcd{Bootstrap: true},
 				&services.Bootkube{},
 			)
-		case runtime.MachineTypeControlPlane:
+		case machine.TypeControlPlane:
 			svcs.Load(
 				&services.Trustd{},
 				&services.Etcd{},
 			)
-		case runtime.MachineTypeJoin:
+		case machine.TypeJoin:
 		}
 
 		system.Services(r).StartAll()
@@ -1313,7 +1314,7 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// This should be checked by the gRPC server, but we double check here just
 		// to be safe.
-		in, ok := data.(*machine.UpgradeRequest)
+		in, ok := data.(*machineapi.UpgradeRequest)
 		if !ok {
 			return runtime.ErrInvalidSequenceData
 		}
@@ -1551,11 +1552,11 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var (
-			in *machine.RecoverRequest
+			in *machineapi.RecoverRequest
 			ok bool
 		)
 
-		if in, ok = data.(*machine.RecoverRequest); !ok {
+		if in, ok = data.(*machineapi.RecoverRequest); !ok {
 			return runtime.ErrInvalidSequenceData
 		}
 
@@ -1577,7 +1578,7 @@ func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 		var backend recovery.Backend
 
 		switch in.Source {
-		case machine.RecoverRequest_ETCD:
+		case machineapi.RecoverRequest_ETCD:
 			var client *clientv3.Client
 
 			client, err = etcd.NewClient([]string{"127.0.0.1:2379"})
@@ -1587,7 +1588,7 @@ func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 
 			backend = recovery.NewEtcdBackend(client, "/registry")
 
-		case machine.RecoverRequest_APISERVER:
+		case machineapi.RecoverRequest_APISERVER:
 			backend, err = recovery.NewAPIServerBackend(kubeconfigPath)
 			if err != nil {
 				return err
