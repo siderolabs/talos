@@ -47,7 +47,7 @@ func DefaultClusterChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report", func(ctx context.Context) error {
 				return K8sAllNodesReportedAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Minute, 30*time.Second) // give more time per each attempt, as this check is going to build and cache kubeconfig
 		},
 		// wait for all the nodes to report ready at k8s level
 		func(cluster ClusterInfo) conditions.Condition {

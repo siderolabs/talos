@@ -53,6 +53,9 @@ func (n *NTP) Ready() bool {
 func (n *NTP) Daemon() (err error) {
 	if err = n.QueryAndSetTime(); err != nil {
 		log.Println(err)
+
+		// if initial time sync fails, restart the service for more aggressive retry
+		return err
 	}
 
 	for {
