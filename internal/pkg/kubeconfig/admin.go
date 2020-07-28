@@ -31,6 +31,7 @@ users:
 contexts:
 - context:
     cluster: {{ .Cluster }}
+    namespace: default
     user: admin
   name: admin@{{ .Cluster }}
 current-context: admin@{{ .Cluster }}
