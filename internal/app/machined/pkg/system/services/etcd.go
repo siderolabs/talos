@@ -36,6 +36,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/net"
@@ -456,12 +457,12 @@ func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 		}
 
 		switch r.Config().Machine().Type() { //nolint: exhaustive
-		case runtime.MachineTypeInit:
+		case machine.TypeInit:
 			err = e.argsForInit(ctx, r)
 			if err != nil {
 				return err
 			}
-		case runtime.MachineTypeControlPlane:
+		case machine.TypeControlPlane:
 			err = e.argsForControlPlane(ctx, r)
 			if err != nil {
 				return err

@@ -10,26 +10,26 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 type mockConfig struct {
-	mirrors map[string]runtime.RegistryMirrorConfig
-	config  map[string]runtime.RegistryConfig
+	mirrors map[string]config.RegistryMirrorConfig
+	config  map[string]config.RegistryConfig
 }
 
-func (c *mockConfig) Mirrors() map[string]runtime.RegistryMirrorConfig {
+func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	return c.mirrors
 }
 
-func (c *mockConfig) Config() map[string]runtime.RegistryConfig {
+func (c *mockConfig) Config() map[string]config.RegistryConfig {
 	return c.config
 }
 
-func (c *mockConfig) ExtraFiles() ([]runtime.File, error) {
+func (c *mockConfig) ExtraFiles() ([]config.File, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -39,20 +39,20 @@ type ConfigSuite struct {
 
 func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 	cfg := &mockConfig{
-		mirrors: map[string]runtime.RegistryMirrorConfig{
+		mirrors: map[string]config.RegistryMirrorConfig{
 			"docker.io": {
 				Endpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
 			},
 		},
-		config: map[string]runtime.RegistryConfig{
+		config: map[string]config.RegistryConfig{
 			"some.host:123": {
-				Auth: &runtime.RegistryAuthConfig{
+				Auth: &config.RegistryAuthConfig{
 					Username:      "root",
 					Password:      "secret",
 					Auth:          "auth",
 					IdentityToken: "token",
 				},
-				TLS: &runtime.RegistryTLSConfig{
+				TLS: &config.RegistryTLSConfig{
 					InsecureSkipVerify: true,
 					CA:                 []byte("cacert"),
 					ClientIdentity: &x509.PEMEncodedCertificateAndKey{
@@ -66,7 +66,7 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 
 	files, err := containerd.GenerateRegistriesConfig(cfg)
 	suite.Require().NoError(err)
-	suite.Assert().Equal([]runtime.File{
+	suite.Assert().Equal([]config.File{
 		{
 			Content:     `cacert`,
 			Permissions: 0o600,

@@ -5,8 +5,9 @@
 package v1alpha1
 
 import (
-	"github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 // Sequencer implements the sequencer interface.
@@ -212,7 +213,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"startEverything",
 		StartAllServices,
 	).AppendWhen(
-		r.Config().Machine().Type() != runtime.MachineTypeJoin,
+		r.Config().Machine().Type() != machine.TypeJoin,
 		"labelMaster",
 		LabelNodeAsMaster,
 	).AppendWhen(
@@ -286,7 +287,7 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 }
 
 // Recover is the recover sequence.
-func (*Sequencer) Recover(r runtime.Runtime, in *machine.RecoverRequest) []runtime.Phase {
+func (*Sequencer) Recover(r runtime.Runtime, in *machineapi.RecoverRequest) []runtime.Phase {
 	phases := PhaseList{}
 
 	phases = phases.Append("recover", Recover)
@@ -295,7 +296,7 @@ func (*Sequencer) Recover(r runtime.Runtime, in *machine.RecoverRequest) []runti
 }
 
 // Reset is the reset sequence.
-func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.Phase {
+func (*Sequencer) Reset(r runtime.Runtime, in *machineapi.ResetRequest) []runtime.Phase {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint: exhaustive
@@ -313,7 +314,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.P
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(
-			in.GetGraceful() && (r.Config().Machine().Type() != runtime.MachineTypeJoin),
+			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
 			LeaveEtcd,
 		).AppendWhen(
@@ -384,7 +385,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 }
 
 // Upgrade is the upgrade sequence.
-func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runtime.Phase {
+func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint: exhaustive
@@ -395,7 +396,7 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runti
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != runtime.MachineTypeJoin),
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
 			LeaveEtcd,
 		).AppendWhen(

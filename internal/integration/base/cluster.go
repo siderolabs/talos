@@ -6,7 +6,7 @@
 
 package base
 
-import "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+import "github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 
 type infoWrapper struct {
 	masterNodes []string
@@ -17,13 +17,13 @@ func (wrapper *infoWrapper) Nodes() []string {
 	return append(wrapper.masterNodes, wrapper.workerNodes...)
 }
 
-func (wrapper *infoWrapper) NodesByType(t runtime.MachineType) []string {
+func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
 	switch t {
-	case runtime.MachineTypeInit:
+	case machine.TypeInit:
 		return nil
-	case runtime.MachineTypeControlPlane:
+	case machine.TypeControlPlane:
 		return wrapper.masterNodes
-	case runtime.MachineTypeJoin:
+	case machine.TypeJoin:
 		return wrapper.workerNodes
 	default:
 		panic("unreachable")

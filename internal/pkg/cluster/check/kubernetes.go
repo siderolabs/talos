@@ -14,8 +14,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
@@ -61,7 +61,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 		return err
 	}
 
-	expectedNodes := append(cluster.NodesByType(runtime.MachineTypeInit), cluster.NodesByType(runtime.MachineTypeControlPlane)...)
+	expectedNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {

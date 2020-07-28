@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package config
+package bundle
 
 import "github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 
-// BundleOption controls config options specific to config bundle generation.
-type BundleOption func(o *BundleOptions) error
+// Option controls config options specific to config bundle generation.
+type Option func(o *Options) error
 
 // InputOptions holds necessary params for generating an input.
 type InputOptions struct {
@@ -17,28 +17,28 @@ type InputOptions struct {
 	GenOptions  []generate.GenOption
 }
 
-// BundleOptions describes generate parameters.
-type BundleOptions struct {
+// Options describes generate parameters.
+type Options struct {
 	ExistingConfigs string // path to existing config files
 	InputOptions    *InputOptions
 }
 
-// DefaultBundleOptions returns default options.
-func DefaultBundleOptions() BundleOptions {
-	return BundleOptions{}
+// DefaultOptions returns default options.
+func DefaultOptions() Options {
+	return Options{}
 }
 
 // WithExistingConfigs sets the path to existing config files.
-func WithExistingConfigs(configPath string) BundleOption {
-	return func(o *BundleOptions) error {
+func WithExistingConfigs(configPath string) Option {
+	return func(o *Options) error {
 		o.ExistingConfigs = configPath
 		return nil
 	}
 }
 
 // WithInputOptions allows passing in of various params for net-new input generation.
-func WithInputOptions(inputOpts *InputOptions) BundleOption {
-	return func(o *BundleOptions) error {
+func WithInputOptions(inputOpts *InputOptions) Option {
+	return func(o *Options) error {
 		o.InputOptions = inputOpts
 		return nil
 	}

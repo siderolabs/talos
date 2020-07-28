@@ -12,8 +12,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
@@ -46,7 +46,7 @@ func (suite *NetworkdSuite) TestHostname() {
 		err          error
 		hostname     string
 		nwd          *Networkd
-		sampleConfig runtime.Configurator
+		sampleConfig config.Provider
 	)
 
 	nwd, err = New(nil)
@@ -165,13 +165,13 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.11"))
 }
 
-func sampleConfigFile() runtime.Configurator {
+func sampleConfigFile() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
 				NameServers:     []string{"1.2.3.4", "2.3.4.5"},
 				NetworkHostname: "myhostname",
-				NetworkInterfaces: []runtime.Device{
+				NetworkInterfaces: []config.Device{
 					{
 						Interface: "eth0",
 						CIDR:      "192.168.0.10/24",
@@ -180,7 +180,7 @@ func sampleConfigFile() runtime.Configurator {
 					{
 						Interface: "bond0",
 						CIDR:      "192.168.0.10/24",
-						Bond: &runtime.Bond{
+						Bond: &config.Bond{
 							Interfaces: []string{"lo"},
 							Mode:       "balance-rr",
 						},
@@ -191,11 +191,11 @@ func sampleConfigFile() runtime.Configurator {
 	}
 }
 
-func dhcpConfigFile() runtime.Configurator {
+func dhcpConfigFile() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []runtime.Device{
+				NetworkInterfaces: []config.Device{
 					{
 						Interface: "eth0",
 					},

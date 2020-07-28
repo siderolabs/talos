@@ -11,8 +11,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 type NetconfSuite struct {
@@ -69,8 +69,8 @@ func (suite *NetconfSuite) TestKernelNetconfIncomplete() {
 	suite.Assert().Equal(len(addr.Routes()), 1)
 }
 
-func sampleConfig() []runtime.Device {
-	return []runtime.Device{
+func sampleConfig() []config.Device {
+	return []config.Device{
 		{
 			Interface: "eth0",
 			CIDR:      "192.168.0.10/24",
@@ -78,11 +78,11 @@ func sampleConfig() []runtime.Device {
 		{
 			Interface: "bond0",
 			CIDR:      "192.168.0.10/24",
-			Bond:      &runtime.Bond{Interfaces: []string{"lo"}},
+			Bond:      &config.Bond{Interfaces: []string{"lo"}},
 		},
 		{
 			Interface: "bond0",
-			Bond:      &runtime.Bond{Interfaces: []string{"lo"}, Mode: "balance-rr"},
+			Bond:      &config.Bond{Interfaces: []string{"lo"}, Mode: "balance-rr"},
 		},
 		{
 			Interface: "eth0",
@@ -92,11 +92,11 @@ func sampleConfig() []runtime.Device {
 			Interface: "eth0",
 			MTU:       9100,
 			CIDR:      "192.168.0.10/24",
-			Routes:    []runtime.Route{{Network: "10.0.0.0/8", Gateway: "10.0.0.1"}},
+			Routes:    []config.Route{{Network: "10.0.0.0/8", Gateway: "10.0.0.1"}},
 		},
 		{
 			Interface: "bond0",
-			Bond: &runtime.Bond{
+			Bond: &config.Bond{
 				Interfaces: []string{"lo"},
 				Mode:       "balance-rr",
 				HashPolicy: "layer2",
@@ -108,7 +108,7 @@ func sampleConfig() []runtime.Device {
 		},
 		{
 			Interface: "bondyolo0",
-			Bond: &runtime.Bond{
+			Bond: &config.Bond{
 				Interfaces:      []string{"lo"},
 				Mode:            "balance-rr",
 				HashPolicy:      "layer2",

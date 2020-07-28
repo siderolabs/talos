@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 // RestartSuite verifies dmesg command.
@@ -32,7 +32,7 @@ func (suite *RestartSuite) TestSystem() {
 	}
 
 	// trustd only runs on control plane nodes
-	node := suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane)
+	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
 
 	suite.RunCLI([]string{"restart", "-n", node, "trustd"},
 		base.StdoutEmpty())

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //nolint: testpackage
-package config
+package configloader
 
 import (
 	"testing"
@@ -13,6 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
+//docgen: nodoc
 type Suite struct {
 	suite.Suite
 }
@@ -25,11 +26,11 @@ func (suite *Suite) SetupSuite() {}
 
 func (suite *Suite) TestNew() {
 	for _, t := range []struct {
-		content     Content
+		content     content
 		errExpected bool
 	}{
-		{Content{Version: v1alpha1.Version}, false},
-		{Content{Version: ""}, true},
+		{content{Version: v1alpha1.Version}, false},
+		{content{Version: ""}, true},
 	} {
 		_, err := newConfig(t.content)
 

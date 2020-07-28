@@ -13,8 +13,8 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/configloader"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -72,12 +72,12 @@ func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCer
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
 func ValidateForUpgrade(preserve bool) error {
-	config, err := config.NewFromFile(constants.ConfigPath)
+	config, err := configloader.NewFromFile(constants.ConfigPath)
 	if err != nil {
 		return err
 	}
 
-	if config.Machine().Type() != runtime.MachineTypeJoin {
+	if config.Machine().Type() != machine.TypeJoin {
 		client, err := NewClientFromControlPlaneIPs(context.TODO(), config.Cluster().CA(), config.Cluster().Endpoint())
 		if err != nil {
 			return err
