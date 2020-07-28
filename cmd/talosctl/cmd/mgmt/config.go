@@ -16,9 +16,9 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -88,9 +88,9 @@ func genV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
 	}
 
-	configBundle, err := config.NewConfigBundle(
-		config.WithInputOptions(
-			&config.InputOptions{
+	configBundle, err := bundle.NewConfigBundle(
+		bundle.WithInputOptions(
+			&bundle.InputOptions{
 				ClusterName: args[0],
 				Endpoint:    args[1],
 				KubeVersion: kubernetesVersion,
@@ -107,24 +107,24 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
-	for _, t := range []runtime.MachineType{runtime.MachineTypeInit, runtime.MachineTypeControlPlane, runtime.MachineTypeJoin} {
+	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin} {
 		name := strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
 
 		var configString string
 
 		switch t {
-		case runtime.MachineTypeInit:
+		case machine.TypeInit:
 			configString, err = configBundle.Init().String()
 			if err != nil {
 				return err
 			}
-		case runtime.MachineTypeControlPlane:
+		case machine.TypeControlPlane:
 			configString, err = configBundle.ControlPlane().String()
 			if err != nil {
 				return err
 			}
-		case runtime.MachineTypeJoin:
+		case machine.TypeJoin:
 			configString, err = configBundle.Join().String()
 			if err != nil {
 				return err

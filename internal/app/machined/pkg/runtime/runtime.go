@@ -4,9 +4,11 @@
 
 package runtime
 
+import "github.com/talos-systems/talos/pkg/config"
+
 // Runtime defines the runtime parameters.
 type Runtime interface {
-	Config() Configurator
+	Config() config.Provider
 	SetConfig([]byte) error
 	State() State
 	Events() EventStream

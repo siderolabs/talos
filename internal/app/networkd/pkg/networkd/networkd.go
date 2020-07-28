@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -38,7 +39,7 @@ const (
 // and/or a specified configuration file.
 type Networkd struct {
 	Interfaces map[string]*nic.NetworkInterface
-	Config     runtime.Configurator
+	Config     config.Provider
 
 	hostname  string
 	resolvers []string
@@ -50,7 +51,7 @@ type Networkd struct {
 // New takes the supplied configuration and creates an abstract representation
 // of all interfaces (as nic.NetworkInterface).
 // nolint: gocyclo
-func New(config runtime.Configurator) (*Networkd, error) {
+func New(config config.Provider) (*Networkd, error) {
 	var (
 		hostname  string
 		option    *string

@@ -49,6 +49,8 @@ import (
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
+	"github.com/talos-systems/talos/pkg/config"
+	machinetype "github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -145,7 +147,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (rep
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
-	if s.Controller.Runtime().Config().Machine().Type() == runtime.MachineTypeJoin {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
 		return nil, fmt.Errorf("bootstrap can only be performed on a control plane node")
 	}
 
@@ -269,7 +271,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply *machine.RecoverResponse, err error) {
 	log.Printf("recover request received")
 
-	if s.Controller.Runtime().Config().Machine().Type() == runtime.MachineTypeJoin {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
 		return nil, fmt.Errorf("recover can only be performed on a control plane node")
 	}
 
@@ -777,7 +779,7 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 	return <-errCh
 }
 
-func pullAndValidateInstallerImage(ctx context.Context, reg runtime.Registries, ref string) error {
+func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, ref string) error {
 	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 

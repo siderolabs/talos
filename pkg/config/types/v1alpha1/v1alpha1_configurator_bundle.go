@@ -5,8 +5,8 @@
 package v1alpha1
 
 import (
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 // ConfigBundle defines the group of v1alpha1 config files.
@@ -15,25 +15,25 @@ type ConfigBundle struct {
 	InitCfg         *Config
 	ControlPlaneCfg *Config
 	JoinCfg         *Config
-	TalosCfg        *config.Config
+	TalosCfg        *clientconfig.Config
 }
 
 // Init implements the ConfiguratorBundle interface.
-func (c *ConfigBundle) Init() runtime.Configurator {
+func (c *ConfigBundle) Init() config.Provider {
 	return c.InitCfg
 }
 
 // ControlPlane implements the ConfiguratorBundle interface.
-func (c *ConfigBundle) ControlPlane() runtime.Configurator {
+func (c *ConfigBundle) ControlPlane() config.Provider {
 	return c.ControlPlaneCfg
 }
 
 // Join implements the ConfiguratorBundle interface.
-func (c *ConfigBundle) Join() runtime.Configurator {
+func (c *ConfigBundle) Join() config.Provider {
 	return c.JoinCfg
 }
 
 // TalosConfig implements the ConfiguratorBundle interface.
-func (c *ConfigBundle) TalosConfig() *config.Config {
+func (c *ConfigBundle) TalosConfig() *clientconfig.Config {
 	return c.TalosCfg
 }

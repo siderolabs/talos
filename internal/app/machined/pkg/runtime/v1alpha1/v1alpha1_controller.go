@@ -27,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/configloader"
 )
 
 // Controller represents the controller responsible for managing the execution
@@ -53,10 +54,10 @@ func NewController(b []byte) (*Controller, error) {
 		return nil, err
 	}
 
-	var cfg runtime.Configurator
+	var cfg config.Provider
 
 	if b != nil {
-		cfg, err = config.NewFromBytes(b)
+		cfg, err = configloader.NewFromBytes(b)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse config: %w", err)
 		}

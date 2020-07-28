@@ -15,9 +15,10 @@ import (
 
 	stdlibx509 "crypto/x509"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cis"
+	"github.com/talos-systems/talos/pkg/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 	tnet "github.com/talos-systems/talos/pkg/net"
@@ -25,17 +26,17 @@ import (
 
 // Config returns the talos config for a given node type.
 // nolint: gocyclo
-func Config(t runtime.MachineType, in *Input) (c *v1alpha1.Config, err error) {
+func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
-	case runtime.MachineTypeInit:
+	case machine.TypeInit:
 		if c, err = initUd(in); err != nil {
 			return c, err
 		}
-	case runtime.MachineTypeControlPlane:
+	case machine.TypeControlPlane:
 		if c, err = controlPlaneUd(in); err != nil {
 			return c, err
 		}
-	case runtime.MachineTypeJoin:
+	case machine.TypeJoin:
 		if c, err = workerUd(in); err != nil {
 			return c, err
 		}
@@ -78,7 +79,7 @@ type Input struct {
 	NetworkConfig *v1alpha1.NetworkConfig
 	CNIConfig     *v1alpha1.CNIConfig
 
-	RegistryMirrors map[string]runtime.RegistryMirrorConfig
+	RegistryMirrors map[string]config.RegistryMirrorConfig
 
 	Debug   bool
 	Persist bool

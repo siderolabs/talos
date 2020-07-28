@@ -12,8 +12,8 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 // ErrServiceNotFound is an error that indicates that a service was not found.
@@ -30,7 +30,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 
 	// by default, we check all control plane nodes. if some nodes don't have that service running,
 	// it won't be returned in the response
-	nodes := append(cluster.NodesByType(runtime.MachineTypeInit), cluster.NodesByType(runtime.MachineTypeControlPlane)...)
+	nodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
 	nodesCtx := client.WithNodes(ctx, nodes...)
 
 	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)

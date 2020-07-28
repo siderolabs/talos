@@ -19,8 +19,8 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -110,7 +110,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 	// Mutate the container configurations based on the node type.
 
-	if nodeReq.Config.Machine().Type() == runtime.MachineTypeInit || nodeReq.Config.Machine().Type() == runtime.MachineTypeControlPlane {
+	if nodeReq.Config.Machine().Type() == machine.TypeInit || nodeReq.Config.Machine().Type() == machine.TypeControlPlane {
 		portsToOpen := nodeReq.Ports
 
 		if len(options.DockerPorts) > 0 {

@@ -2,92 +2,32 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package config
 
 import (
 	"crypto/tls"
+	stdx509 "crypto/x509"
 	"fmt"
 	"net/url"
 	"os"
 	"time"
 
-	stdx509 "crypto/x509"
-
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
-// Configurator defines the configuration interface.
-type Configurator interface {
+// Provider defines the configuration consumption interface.
+type Provider interface {
 	Version() string
 	Debug() bool
 	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
-	Validate(Mode) error
+	Validate(RuntimeMode) error
 	String() (string, error)
 	Bytes() ([]byte, error)
-}
-
-// ConfiguratorBundle defines the configuration bundle interface.
-type ConfiguratorBundle interface {
-	Init() Configurator
-	ControlPlane() Configurator
-	Join() Configurator
-	TalosConfig() *config.Config
-}
-
-// Machine defines the runtime parameters.
-type Machine interface {
-	State() MachineState
-	Config() MachineConfig
-}
-
-// MachineState defines the machined state.
-type MachineState interface {
-	Disk() *probe.ProbedBlockDevice
-	Close() error
-	Installed() bool
-}
-
-// MachineType represents a machine type.
-type MachineType int
-
-const (
-	// MachineTypeInit represents a bootstrap node.
-	MachineTypeInit MachineType = iota
-	// MachineTypeControlPlane represents a control plane node.
-	MachineTypeControlPlane
-	// MachineTypeJoin represents a worker node.
-	MachineTypeJoin
-)
-
-const (
-	machineTypeInit         = "init"
-	machineTypeControlPlane = "controlplane"
-	machineTypeJoin         = "join"
-)
-
-// String returns the string representation of Type.
-func (t MachineType) String() string {
-	return [...]string{machineTypeInit, machineTypeControlPlane, machineTypeJoin}[t]
-}
-
-// ParseMachineType parses string constant as Type.
-func ParseMachineType(t string) (MachineType, error) {
-	switch t {
-	case machineTypeInit:
-		return MachineTypeInit, nil
-	case machineTypeControlPlane:
-		return MachineTypeControlPlane, nil
-	case machineTypeJoin:
-		return MachineTypeJoin, nil
-	default:
-		return 0, fmt.Errorf("unknown machine type: %q", t)
-	}
 }
 
 // MachineConfig defines the requirements for a config that pertains to machine
@@ -100,10 +40,23 @@ type MachineConfig interface {
 	Time() Time
 	Env() Env
 	Files() ([]File, error)
-	Type() MachineType
+	Type() machine.Type
 	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Registries() Registries
+}
+
+// Disk represents the options available for partitioning, formatting, and
+// mounting extra disks.
+type Disk struct {
+	Device     string      `yaml:"device,omitempty"`
+	Partitions []Partition `yaml:"partitions,omitempty"`
+}
+
+// Partition represents the options for a device partition.
+type Partition struct {
+	Size       uint   `yaml:"size,omitempty"`
+	MountPoint string `yaml:"mountpoint,omitempty"`
 }
 
 // Env represents a set of environment variables.
@@ -115,6 +68,17 @@ type File struct {
 	Permissions os.FileMode `yaml:"permissions"`
 	Path        string      `yaml:"path"`
 	Op          string      `yaml:"op"`
+}
+
+// Install defines the requirements for a config that pertains to install
+// related options.
+type Install interface {
+	Image() string
+	Disk() string
+	ExtraKernelArgs() []string
+	Zero() bool
+	Force() bool
+	WithBootloader() bool
 }
 
 // Security defines the requirements for a config that pertains to security
@@ -201,30 +165,6 @@ type Route struct {
 	Gateway string `yaml:"gateway"`
 }
 
-// Install defines the requirements for a config that pertains to install
-// related options.
-type Install interface {
-	Image() string
-	Disk() string
-	ExtraKernelArgs() []string
-	Zero() bool
-	Force() bool
-	WithBootloader() bool
-}
-
-// Disk represents the options available for partitioning, formatting, and
-// mounting extra disks.
-type Disk struct {
-	Device     string      `yaml:"device,omitempty"`
-	Partitions []Partition `yaml:"partitions,omitempty"`
-}
-
-// Partition represents the options for a device partition.
-type Partition struct {
-	Size       uint   `yaml:"size,omitempty"`
-	MountPoint string `yaml:"mountpoint,omitempty"`
-}
-
 // Time defines the requirements for a config that pertains to time related
 // options.
 type Time interface {
@@ -237,6 +177,16 @@ type Kubelet interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
+}
+
+// Registries defines the configuration for image fetching.
+type Registries interface {
+	// Mirror config by registry host (first part of image reference).
+	Mirrors() map[string]RegistryMirrorConfig
+	// Registry config (auth, TLS) by hostname.
+	Config() map[string]RegistryConfig
+	// ExtraFiles generates TOML config for containerd CRI plugin.
+	ExtraFiles() ([]File, error)
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.
@@ -319,19 +269,6 @@ func (cfg *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-// Registries defines the configuration for image fetching.
-type Registries interface {
-	// Mirror config by registry host (first part of image reference).
-	Mirrors() map[string]RegistryMirrorConfig
-	// Registry config (auth, TLS) by hostname.
-	Config() map[string]RegistryConfig
-	// ExtraFiles generates TOML config for containerd CRI plugin.
-	ExtraFiles() ([]File, error)
-}
-
-// ClusterState defines the cluster state.
-type ClusterState interface{}
-
 // ClusterConfig defines the requirements for a config that pertains to cluster
 // related options.
 type ClusterConfig interface {
@@ -346,7 +283,7 @@ type ClusterConfig interface {
 	SetCertSANs([]string)
 	CA() *x509.PEMEncodedCertificateAndKey
 	AESCBCEncryptionSecret() string
-	Config(MachineType) (string, error)
+	Config(machine.Type) (string, error)
 	Etcd() Etcd
 	Network() ClusterNetwork
 	LocalAPIServerPort() int

@@ -15,10 +15,10 @@ import (
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 type RecoverSuite struct {
@@ -82,7 +82,7 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 
 	suite.Assert().NoError(eg.Wait())
 
-	nodes := suite.DiscoverNodes().NodesByType(runtime.MachineTypeControlPlane)
+	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
 	suite.Require().NotEmpty(nodes)
 
 	sort.Strings(nodes)
@@ -96,8 +96,8 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 
 	nodeCtx := client.WithNodes(ctx, node)
 
-	in := &machine.RecoverRequest{
-		Source: machine.RecoverRequest_APISERVER,
+	in := &machineapi.RecoverRequest{
+		Source: machineapi.RecoverRequest_APISERVER,
 	}
 
 	_, err = suite.Client.MachineClient.Recover(nodeCtx, in)

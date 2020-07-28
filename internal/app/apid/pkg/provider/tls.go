@@ -11,7 +11,7 @@ import (
 	stdlibtls "crypto/tls"
 	stdlibnet "net"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
@@ -23,7 +23,7 @@ type TLSConfig struct {
 }
 
 // NewTLSConfig builds provider from configuration and endpoints.
-func NewTLSConfig(config runtime.Configurator, endpoints []string) (*TLSConfig, error) {
+func NewTLSConfig(config config.Provider, endpoints []string) (*TLSConfig, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)

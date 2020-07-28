@@ -19,9 +19,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -52,7 +52,7 @@ func (cliSuite *CLISuite) DiscoverNodes() cluster.Info {
 }
 
 // RandomNode returns a random node of the specified type (or any type if no types are specified).
-func (cliSuite *CLISuite) RandomDiscoveredNode(types ...runtime.MachineType) string {
+func (cliSuite *CLISuite) RandomDiscoveredNode(types ...machine.Type) string {
 	nodeInfo := cliSuite.DiscoverNodes()
 
 	var nodes []string

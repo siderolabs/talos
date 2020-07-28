@@ -9,8 +9,8 @@ package cli
 import (
 	"regexp"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 // ContainersSuite verifies dmesg command.
@@ -41,7 +41,7 @@ func (suite *ContainersSuite) TestCRI() {
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunCLI([]string{"containers", "-ck", "--nodes", suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane)},
+	suite.RunCLI([]string{"containers", "-ck", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 	)
 }

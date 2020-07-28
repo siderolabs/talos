@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	clusterapi "github.com/talos-systems/talos/api/cluster"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
@@ -84,13 +84,13 @@ func (cluster *clusterState) Nodes() []string {
 	return append(cluster.controlPlaneNodes, cluster.workerNodes...)
 }
 
-func (cluster *clusterState) NodesByType(t runtime.MachineType) []string {
+func (cluster *clusterState) NodesByType(t machine.Type) []string {
 	switch t {
-	case runtime.MachineTypeInit:
+	case machine.TypeInit:
 		return nil
-	case runtime.MachineTypeControlPlane:
+	case machine.TypeControlPlane:
 		return cluster.controlPlaneNodes
-	case runtime.MachineTypeJoin:
+	case machine.TypeJoin:
 		return cluster.workerNodes
 	default:
 		panic("unsupported machine type")

@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
@@ -36,7 +36,7 @@ func (suite *NtpSuite) TestNtpConfig() {
 	server := "time.cloudflare.com"
 
 	// Test unset config, single server config, multiple server config
-	for _, conf := range []runtime.Configurator{&v1alpha1.Config{MachineConfig: &v1alpha1.MachineConfig{}}, sampleConfigSingleServer(), sampleConfigMultipleServers()} {
+	for _, conf := range []config.Provider{&v1alpha1.Config{MachineConfig: &v1alpha1.MachineConfig{}}, sampleConfigSingleServer(), sampleConfigMultipleServers()} {
 		// Check if ntp servers are defined
 		// Support for only a single time server currently
 		if len(conf.Machine().Time().Servers()) >= 1 {
@@ -51,7 +51,7 @@ func (suite *NtpSuite) TestNtpConfig() {
 	}
 }
 
-func sampleConfigSingleServer() runtime.Configurator {
+func sampleConfigSingleServer() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineTime: &v1alpha1.TimeConfig{
@@ -61,7 +61,7 @@ func sampleConfigSingleServer() runtime.Configurator {
 	}
 }
 
-func sampleConfigMultipleServers() runtime.Configurator {
+func sampleConfigMultipleServers() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineTime: &v1alpha1.TimeConfig{

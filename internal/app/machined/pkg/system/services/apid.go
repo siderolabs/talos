@@ -25,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -58,7 +59,7 @@ func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error
 
 // Condition implements the Service interface.
 func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
-	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
+	if r.Config().Machine().Type() == machine.TypeJoin {
 		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
 
@@ -87,7 +88,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		return nil, err
 	}
 
-	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
+	if r.Config().Machine().Type() == machine.TypeJoin {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
 		err := retry.Constant(4*time.Minute, opts...).Retry(func() error {

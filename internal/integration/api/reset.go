@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 type ResetSuite struct {
@@ -57,7 +57,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 	initNodeAddress := ""
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == runtime.MachineTypeInit {
+		if node.Type == machine.TypeInit {
 			initNodeAddress = node.PrivateIP.String()
 			break
 		}

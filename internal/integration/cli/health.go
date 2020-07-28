@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 )
 
 // HealthSuite verifies health command.
@@ -36,7 +36,7 @@ func (suite *HealthSuite) TestClientSide() {
 	bootstrapAPIIsUsed := true
 
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == runtime.MachineTypeInit {
+		if node.Type == machine.TypeInit {
 			bootstrapAPIIsUsed = false
 		}
 	}
@@ -46,9 +46,9 @@ func (suite *HealthSuite) TestClientSide() {
 
 		for _, node := range suite.Cluster.Info().Nodes {
 			switch node.Type {
-			case runtime.MachineTypeControlPlane:
+			case machine.TypeControlPlane:
 				nodes = append(nodes, node.PrivateIP.String())
-			case runtime.MachineTypeJoin:
+			case machine.TypeJoin:
 				args = append(args, "--worker-nodes", node.PrivateIP.String())
 			}
 		}
@@ -65,11 +65,11 @@ func (suite *HealthSuite) TestClientSide() {
 	} else {
 		for _, node := range suite.Cluster.Info().Nodes {
 			switch node.Type {
-			case runtime.MachineTypeInit:
+			case machine.TypeInit:
 				args = append(args, "--init-node", node.PrivateIP.String())
-			case runtime.MachineTypeControlPlane:
+			case machine.TypeControlPlane:
 				args = append(args, "--control-plane-nodes", node.PrivateIP.String())
-			case runtime.MachineTypeJoin:
+			case machine.TypeJoin:
 				args = append(args, "--worker-nodes", node.PrivateIP.String())
 			}
 		}
@@ -88,7 +88,7 @@ func (suite *HealthSuite) TestClientSide() {
 
 // TestServerSide does successful health check run from server-side.
 func (suite *HealthSuite) TestServerSide() {
-	suite.RunCLI([]string{"health", "--nodes", suite.RandomDiscoveredNode(runtime.MachineTypeControlPlane)},
+	suite.RunCLI([]string{"health", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),

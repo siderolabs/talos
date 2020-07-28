@@ -12,24 +12,24 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/pkg/config"
 )
 
 type mockConfig struct {
-	mirrors map[string]runtime.RegistryMirrorConfig
-	config  map[string]runtime.RegistryConfig
+	mirrors map[string]config.RegistryMirrorConfig
+	config  map[string]config.RegistryConfig
 }
 
-func (c *mockConfig) Mirrors() map[string]runtime.RegistryMirrorConfig {
+func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	return c.mirrors
 }
 
-func (c *mockConfig) Config() map[string]runtime.RegistryConfig {
+func (c *mockConfig) Config() map[string]config.RegistryConfig {
 	return c.config
 }
 
-func (c *mockConfig) ExtraFiles() ([]runtime.File, error) {
+func (c *mockConfig) ExtraFiles() ([]config.File, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -49,7 +49,7 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 	// overrides without catch-all
 	cfg := &mockConfig{
-		mirrors: map[string]runtime.RegistryMirrorConfig{
+		mirrors: map[string]config.RegistryMirrorConfig{
 			"docker.io": {
 				Endpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
 			},
@@ -66,7 +66,7 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 	// overrides with catch-all
 	cfg = &mockConfig{
-		mirrors: map[string]runtime.RegistryMirrorConfig{
+		mirrors: map[string]config.RegistryMirrorConfig{
 			"docker.io": {
 				Endpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
 			},
@@ -91,7 +91,7 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("", pass)
 
-	user, pass, err = image.PrepareAuth(&runtime.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
 		Username: "root",
 		Password: "secret",
 	}, "docker.io", "not.docker.io")
@@ -99,7 +99,7 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("", pass)
 
-	user, pass, err = image.PrepareAuth(&runtime.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
 		Username: "root",
 		Password: "secret",
 	}, "docker.io", "docker.io")
@@ -107,21 +107,21 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("root", user)
 	suite.Assert().Equal("secret", pass)
 
-	user, pass, err = image.PrepareAuth(&runtime.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
 		IdentityToken: "xyz",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("xyz", pass)
 
-	user, pass, err = image.PrepareAuth(&runtime.RegistryAuthConfig{
+	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
 		Auth: "dXNlcjE6c2VjcmV0MQ==",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("user1", user)
 	suite.Assert().Equal("secret1", pass)
 
-	_, _, err = image.PrepareAuth(&runtime.RegistryAuthConfig{}, "docker.io", "docker.io")
+	_, _, err = image.PrepareAuth(&config.RegistryAuthConfig{}, "docker.io", "docker.io")
 	suite.Assert().EqualError(err, "invalid auth config for \"docker.io\"")
 }
 
@@ -135,7 +135,7 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig)
 
 	cfg := &mockConfig{
-		mirrors: map[string]runtime.RegistryMirrorConfig{
+		mirrors: map[string]config.RegistryMirrorConfig{
 			"docker.io": {
 				Endpoints: []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
 			},
@@ -155,18 +155,18 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Nil(registryHosts[1].Client.Transport.(*http.Transport).TLSClientConfig)
 
 	cfg = &mockConfig{
-		mirrors: map[string]runtime.RegistryMirrorConfig{
+		mirrors: map[string]config.RegistryMirrorConfig{
 			"docker.io": {
 				Endpoints: []string{"https://some.host:123"},
 			},
 		},
-		config: map[string]runtime.RegistryConfig{
+		config: map[string]config.RegistryConfig{
 			"some.host:123": {
-				TLS: &runtime.RegistryTLSConfig{
+				TLS: &config.RegistryTLSConfig{
 					CA: []byte(caCertMock),
 					// ClientIdentity: &x509.PEMEncodedCertificateAndKey{},
 				},
-				Auth: &runtime.RegistryAuthConfig{
+				Auth: &config.RegistryAuthConfig{
 					Username: "root",
 					Password: "secret",
 				},

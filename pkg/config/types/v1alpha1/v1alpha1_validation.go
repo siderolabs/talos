@@ -15,7 +15,8 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
@@ -52,11 +53,11 @@ var (
 
 // NetworkDeviceCheck defines the function type for checks.
 //nolint: dupl
-type NetworkDeviceCheck func(runtime.Device) error
+type NetworkDeviceCheck func(config.Device) error
 
 // Validate implements the Configurator interface.
 //nolint: gocyclo
-func (c *Config) Validate(mode runtime.Mode) error {
+func (c *Config) Validate(mode config.RuntimeMode) error {
 	var result *multierror.Error
 
 	if c.MachineConfig == nil {
@@ -71,13 +72,13 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		result = multierror.Append(result, errors.New("a cluster endpoint is required"))
 	}
 
-	if mode == runtime.ModeMetal {
+	if mode.RequiresInstall() {
 		if c.MachineConfig.MachineInstall == nil {
-			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", runtime.ModeMetal.String()))
+			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", mode))
 		}
 
 		if c.MachineConfig.MachineInstall.InstallDisk == "" {
-			result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", runtime.ModeMetal.String()))
+			result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", mode))
 		}
 
 		if _, err := os.Stat(c.MachineConfig.MachineInstall.InstallDisk); os.IsNotExist(err) {
@@ -85,7 +86,7 @@ func (c *Config) Validate(mode runtime.Mode) error {
 		}
 	}
 
-	if c.Machine().Type() == runtime.MachineTypeInit {
+	if c.Machine().Type() == machine.TypeInit {
 		switch c.Cluster().Network().CNI().Name() {
 		case "custom":
 			if len(c.Cluster().Network().CNI().URLs()) == 0 {
@@ -122,7 +123,7 @@ func (c *Config) Validate(mode runtime.Mode) error {
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
 //nolint: dupl
-func ValidateNetworkDevices(d runtime.Device, checks ...NetworkDeviceCheck) error {
+func ValidateNetworkDevices(d config.Device, checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
 	if d.Ignore {
@@ -138,7 +139,7 @@ func ValidateNetworkDevices(d runtime.Device, checks ...NetworkDeviceCheck) erro
 
 // CheckDeviceInterface ensures that the interface has been specified.
 //nolint: dupl
-func CheckDeviceInterface(d runtime.Device) error {
+func CheckDeviceInterface(d config.Device) error {
 	var result *multierror.Error
 
 	if d.Interface == "" {
@@ -151,7 +152,7 @@ func CheckDeviceInterface(d runtime.Device) error {
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified
 //nolint: dupl
-func CheckDeviceAddressing(d runtime.Device) error {
+func CheckDeviceAddressing(d config.Device) error {
 	var result *multierror.Error
 
 	// Test for both dhcp and cidr specified
@@ -176,7 +177,7 @@ func CheckDeviceAddressing(d runtime.Device) error {
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
 //nolint: dupl
-func CheckDeviceRoutes(d runtime.Device) error {
+func CheckDeviceRoutes(d config.Device) error {
 	var result *multierror.Error
 
 	if len(d.Routes) == 0 {

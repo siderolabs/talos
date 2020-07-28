@@ -20,16 +20,16 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // RunInstallerContainer performs an installation via the installer container.
 //
 //nolint: gocyclo
-func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, opts ...Option) error {
+func RunInstallerContainer(disk, platform, ref string, reg config.Registries, opts ...Option) error {
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
