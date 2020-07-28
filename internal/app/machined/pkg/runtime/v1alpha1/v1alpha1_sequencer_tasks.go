@@ -654,7 +654,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			all = append(all, cond)
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 
 		defer cancel()
 
@@ -1690,7 +1690,7 @@ func BootstrapKubernetes(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 
 		system.Services(r).LoadAndStart(svc)
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 		defer cancel()
 
 		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)
