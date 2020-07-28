@@ -331,7 +331,7 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, talosctl_linux, kernel], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel]);
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
