@@ -13,6 +13,10 @@ function changelog {
   fi
 }
 
+function release-notes {
+  git-chglog --output ${1} -c ./hack/chglog/config.yml "${2}"
+}
+
 function cherry-pick {
   if [ $# -ne 2 ]; then
     echo 1>&2 "Usage: $0 cherry-pick <commit> <branch>"

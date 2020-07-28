@@ -461,6 +461,8 @@ local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigge
 local iso = Step('iso', depends_on=[e2e_docker, e2e_firecracker]);
 local boot = Step('boot', depends_on=[e2e_docker, e2e_firecracker]);
 
+local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_firecracker]);
+
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
   name: 'release',
@@ -468,6 +470,7 @@ local release = {
   settings: {
     api_key: { from_secret: 'github_token' },
     draft: true,
+    note: '_out/RELEASE_NOTES.md',
     files: [
       '_out/aws.tar.gz',
       '_out/azure.tar.gz',
@@ -490,12 +493,13 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, push.name]
+  depends_on: [kernel.name, iso.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
   iso,
   boot,
+  release_notes,
   release,
 ];
 
