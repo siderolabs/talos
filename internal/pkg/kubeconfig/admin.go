@@ -39,7 +39,7 @@ current-context: admin@{{ .Cluster }}
 `
 
 // GenerateAdmin generates admin kubeconfig for the cluster.
-func GenerateAdmin(config config.ClusterConfig, out io.Writer) error {
+func GenerateAdmin(config config.Cluster, out io.Writer) error {
 	tpl, err := template.New("kubeconfig").Parse(adminKubeConfigTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing kubeconfig template: %w", err)

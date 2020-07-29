@@ -10,11 +10,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/decoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha2"
 )
 
 // newConfig initializes and returns a Configurator.
@@ -30,11 +32,12 @@ func newConfig(source []byte) (config config.Provider, err error) {
 	// a special way.
 	for _, manifest := range manifests {
 		if talosconfig, ok := manifest.(*v1alpha1.Config); ok {
+			log.Println("WARNING: The v1alpha1 machine config will be deprecated in a future release. Please prepare to migrate to the next version of the config as soon as possible.")
 			return talosconfig, nil
 		}
 	}
 
-	return nil, fmt.Errorf("config not found")
+	return v1alpha2.New(manifests)
 }
 
 // NewFromFile will take a filepath and attempt to parse a config file from it.

@@ -22,16 +22,16 @@ type Provider interface {
 	Version() string
 	Debug() bool
 	Persist() bool
-	Machine() MachineConfig
-	Cluster() ClusterConfig
+	Machine() Machine
+	Cluster() Cluster
 	Validate(RuntimeMode) error
 	String() (string, error)
 	Bytes() ([]byte, error)
 }
 
-// MachineConfig defines the requirements for a config that pertains to machine
+// Machine defines the requirements for a config that pertains to machine
 // related options.
-type MachineConfig interface {
+type Machine interface {
 	Install() Install
 	Security() Security
 	Network() MachineNetwork
@@ -213,9 +213,9 @@ type RegistryTLSConfig interface {
 	GetTLSConfig() (*tls.Config, error)
 }
 
-// ClusterConfig defines the requirements for a config that pertains to cluster
+// Cluster defines the requirements for a config that pertains to cluster
 // related options.
-type ClusterConfig interface {
+type Cluster interface {
 	Name() string
 	APIServer() APIServer
 	ControllerManager() ControllerManager

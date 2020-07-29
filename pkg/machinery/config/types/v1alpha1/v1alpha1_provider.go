@@ -47,12 +47,12 @@ func (c *Config) Persist() bool {
 }
 
 // Machine implements the config.Provider interface.
-func (c *Config) Machine() config.MachineConfig {
+func (c *Config) Machine() config.Machine {
 	return c.MachineConfig
 }
 
 // Cluster implements the config.Provider interface.
-func (c *Config) Cluster() config.ClusterConfig {
+func (c *Config) Cluster() config.Cluster {
 	return c.ClusterConfig
 }
 

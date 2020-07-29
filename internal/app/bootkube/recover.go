@@ -78,7 +78,7 @@ func recoverAssets(config config.Provider) error {
 	return nil
 }
 
-func aesTransformer(clusterConfig config.ClusterConfig) (recovery.TransformerFromStorage, error) {
+func aesTransformer(clusterConfig config.Cluster) (recovery.TransformerFromStorage, error) {
 	key, err := base64.StdEncoding.DecodeString(clusterConfig.AESCBCEncryptionSecret())
 	if err != nil {
 		return nil, err

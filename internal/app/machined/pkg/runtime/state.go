@@ -19,7 +19,7 @@ type State interface {
 // Machine defines the runtime parameters.
 type Machine interface {
 	State() MachineState
-	Config() config.MachineConfig
+	Config() config.Machine
 }
 
 // MachineState defines the machined state.
