@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 //docgen: nodoc
@@ -26,13 +24,10 @@ func (suite *Suite) SetupSuite() {}
 
 func (suite *Suite) TestNew() {
 	for _, t := range []struct {
-		content     content
+		source      []byte
 		errExpected bool
-	}{
-		{content{Version: v1alpha1.Version}, false},
-		{content{Version: ""}, true},
-	} {
-		_, err := newConfig(t.content)
+	}{} {
+		_, err := newConfig(t.source)
 
 		if t.errExpected {
 			suite.Require().Error(err)

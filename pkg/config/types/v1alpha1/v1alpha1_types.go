@@ -16,6 +16,14 @@ import (
 	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
+func init() {
+	config.Register("v1alpha1", func(version string) (target interface{}) {
+		target = &Config{}
+
+		return target
+	})
+}
+
 // Config defines the v1alpha1 configuration file.
 type Config struct {
 	//   description: |

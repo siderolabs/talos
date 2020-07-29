@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/stretchr/testify/assert"
 

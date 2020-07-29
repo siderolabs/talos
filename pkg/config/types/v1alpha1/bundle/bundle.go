@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 
 	clientconfig "github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"

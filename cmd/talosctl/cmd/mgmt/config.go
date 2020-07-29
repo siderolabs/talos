@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/bundle"
