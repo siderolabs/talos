@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	stdruntime "runtime"
 	"sort"
 	"strings"
 	"time"
@@ -41,10 +42,9 @@ var (
 	nodeInstallImage        string
 	registryMirrors         []string
 	kubernetesVersion       string
-	nodeVmlinuxPath         string
 	nodeVmlinuzPath         string
 	nodeInitramfsPath       string
-	bootloaderEmulation     bool
+	bootloaderEnabled       bool
 	configDebug             bool
 	networkCIDR             string
 	networkMTU              int
@@ -55,6 +55,7 @@ var (
 	clusterCpus             string
 	clusterMemory           int
 	clusterDiskSize         int
+	targetArch              string
 	clusterWait             bool
 	clusterWaitTimeout      time.Duration
 	forceInitNodeAsEndpoint bool
@@ -155,16 +156,19 @@ func create(ctx context.Context) (err error) {
 			},
 		},
 
-		Image:                  nodeImage,
-		UncompressedKernelPath: nodeVmlinuxPath,
-		CompressedKernelPath:   nodeVmlinuzPath,
-		InitramfsPath:          nodeInitramfsPath,
+		Image:         nodeImage,
+		KernelPath:    nodeVmlinuzPath,
+		InitramfsPath: nodeInitramfsPath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: stateDir,
 	}
 
-	provisionOptions := []provision.Option{}
+	provisionOptions := []provision.Option{
+		provision.WithDockerPortsHostIP(dockerHostIP),
+		provision.WithBootlader(bootloaderEnabled),
+		provision.WithTargetArch(targetArch),
+	}
 	configBundleOpts := []bundle.Option{}
 
 	if ports != "" {
@@ -174,12 +178,6 @@ func create(ctx context.Context) (err error) {
 
 		portList := strings.Split(ports, ",")
 		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
-	}
-
-	provisionOptions = append(provisionOptions, provision.WithDockerPortsHostIP(dockerHostIP))
-
-	if bootloaderEmulation {
-		provisionOptions = append(provisionOptions, provision.WithBootladerEmulation())
 	}
 
 	if inputDir != "" {
@@ -414,29 +412,29 @@ func init() {
 	createCmd.Flags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(constants.DefaultTalosImageRepository), "the image to use")
 	createCmd.Flags().StringVar(&nodeInstallImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the installer image to use")
-	createCmd.Flags().StringVar(&nodeVmlinuxPath, "vmlinux-path", helpers.ArtifactPath(constants.KernelUncompressedAsset), "the uncompressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAsset), "the compressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
-	createCmd.Flags().BoolVar(&bootloaderEmulation, "with-bootloader-emulation", false, "enable bootloader emulation to load kernel and initramfs from disk image")
+	createCmd.Flags().BoolVar(&bootloaderEnabled, "with-bootloader", true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
-	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the docker bridge network")
-	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the docker bridge network")
+	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the cluster network")
+	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the cluster network")
 	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use")
 	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	createCmd.Flags().StringVar(&clusterCpus, "cpus", "1.5", "the share of CPUs as fraction (each container)")
 	createCmd.Flags().IntVar(&clusterMemory, "memory", 1024, "the limit on memory usage in MB (each container)")
 	createCmd.Flags().IntVar(&clusterDiskSize, "disk", 4*1024, "the limit on disk size in MB (each VM)")
+	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
 	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
 	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
 	createCmd.Flags().BoolVar(&forceInitNodeAsEndpoint, "init-node-as-endpoint", false, "use init node as endpoint instead of any load balancer endpoint")
 	createCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
 	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	createCmd.Flags().StringVarP(&inputDir, "input-dir", "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries (firecracker only)")
-	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path (firecracker only)")
-	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path (firecracker only)")
+	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries (VM only)")
+	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path (VM only)")
+	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path (VM only)")
 	createCmd.Flags().StringVarP(&ports,
 		"exposed-ports",
 		"p",

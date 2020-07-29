@@ -5,7 +5,6 @@
 package qemu
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -24,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/cniutils"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
+	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.
@@ -31,13 +31,16 @@ type LaunchConfig struct {
 	StatePath string
 
 	// VM options
-	DiskPath        string
-	VCPUCount       int64
-	MemSize         int64
-	QemuExecutable  string
-	KernelImagePath string
-	InitrdPath      string
-	KernelArgs      string
+	DiskPath          string
+	VCPUCount         int64
+	MemSize           int64
+	QemuExecutable    string
+	KernelImagePath   string
+	InitrdPath        string
+	KernelArgs        string
+	MachineType       string
+	EnableKVM         bool
+	BootloaderEnabled bool
 
 	// Talos config
 	Config string
@@ -141,39 +144,57 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 	return f(config)
 }
 
+func checkPartitions(config *LaunchConfig) (bool, error) {
+	disk, err := os.Open(config.DiskPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to open disk file %w", err)
+	}
+
+	defer disk.Close() //nolint: errcheck
+
+	diskTable, err := gpt.NewGPT("vda", disk)
+	if err != nil {
+		return false, fmt.Errorf("error creating GPT object: %w", err)
+	}
+
+	if err = diskTable.Read(); err != nil {
+		return false, nil
+	}
+
+	return len(diskTable.Partitions()) > 0, nil
+}
+
 // launchVM runs qemu with args built based on config.
 func launchVM(config *LaunchConfig) error {
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
 		"-drive", fmt.Sprintf("format=raw,if=virtio,file=%s", config.DiskPath),
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
-		"-accel",
-		"kvm",
 		"-nographic",
 		"-netdev", fmt.Sprintf("tap,id=net0,ifname=%s,script=no,downscript=no", config.tapName),
 		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s", config.vmMAC),
+		"-no-reboot",
 	}
 
-	disk, err := os.Open(config.DiskPath)
+	machineArg := config.MachineType
+
+	if config.EnableKVM {
+		machineArg += ",accel=kvm"
+	}
+
+	args = append(args, "-machine", machineArg)
+
+	// check if disk is empty/wiped
+	diskBootable, err := checkPartitions(config)
 	if err != nil {
-		return fmt.Errorf("failed to open disk file %w", err)
+		return err
 	}
 
-	// check if disk is empty
-	checkSize := 512
-	buf := make([]byte, checkSize)
-
-	_, err = disk.Read(buf)
-	if err != nil {
-		return fmt.Errorf("failed to read disk file %w", err)
-	}
-
-	if bytes.Equal(buf, make([]byte, checkSize)) {
+	if !diskBootable || !config.BootloaderEnabled {
 		args = append(args,
 			"-kernel", config.KernelImagePath,
 			"-initrd", config.InitrdPath,
 			"-append", config.KernelArgs,
-			"-no-reboot",
 		)
 	}
 

@@ -80,7 +80,7 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", stableVersion, nextVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelUncompressedAsset)),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
 		SourceVersion:        stableVersion,
@@ -98,7 +98,7 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", nextVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelUncompressedAsset)),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
 		SourceVersion:        nextVersion,
@@ -116,7 +116,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("preserve-%s-%s", nextVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelUncompressedAsset)),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
 		SourceVersion:        nextVersion,
@@ -307,7 +307,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			})
 	}
 
-	suite.Cluster, err = suite.provisioner.Create(suite.ctx, request, provision.WithBootladerEmulation(), provision.WithTalosConfig(suite.configBundle.TalosConfig()))
+	suite.Cluster, err = suite.provisioner.Create(suite.ctx, request, provision.WithBootlader(true), provision.WithTalosConfig(suite.configBundle.TalosConfig()))
 	suite.Require().NoError(err)
 
 	suite.clusterAccess = access.NewAdapter(suite.Cluster, provision.WithTalosConfig(suite.configBundle.TalosConfig()))

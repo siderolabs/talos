@@ -17,7 +17,7 @@ case "${CI:-false}" in
     docker push 127.0.0.1:5000/autonomy/installer:"${TAG}"
     ;;
   *)
-    QEMU_FLAGS=
+    QEMU_FLAGS="--with-bootloader=false"
     INSTALLER_TAG="latest"
     ;;
 esac

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"runtime"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
@@ -25,6 +26,10 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
+	if options.TargetArch != runtime.GOARCH {
+		return nil, fmt.Errorf("firecracker is supported only on native arch: %q != %q", options.TargetArch, runtime.GOARCH)
+	}
+
 	statePath := filepath.Join(request.StateDirectory, request.Name)
 
 	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)
@@ -37,6 +42,15 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Fprintln(options.LogWriter, "uncompressing kernel")
+
+	tempKernelPath := state.GetRelativePath("vmlinux")
+	if err = uncompressKernel(request.KernelPath, tempKernelPath); err != nil {
+		return nil, err
+	}
+
+	request.KernelPath = tempKernelPath
 
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
 
