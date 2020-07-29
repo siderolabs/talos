@@ -135,12 +135,15 @@ func adjustTime(offset time.Duration) error {
 
 	fmt.Fprintf(&buf, "adjusting time by %s", offset)
 
-	state, err := timex.Adjtimex(&syscall.Timex{
-		Modes:  timex.ADJ_OFFSET | timex.ADJ_NANO,
+	req := syscall.Timex{
+		Modes:  timex.ADJ_OFFSET | timex.ADJ_NANO | timex.ADJ_STATUS,
 		Offset: int64(offset / time.Nanosecond),
-	})
+		Status: timex.STA_PLL,
+	}
 
-	fmt.Fprintf(&buf, ", state %s", state)
+	state, err := timex.Adjtimex(&req)
+
+	fmt.Fprintf(&buf, ", state %s, status %s", state, timex.Status(req.Status))
 
 	if err != nil {
 		fmt.Println(&buf, ", error was %s", err)
