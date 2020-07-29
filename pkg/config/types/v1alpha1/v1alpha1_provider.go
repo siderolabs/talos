@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"

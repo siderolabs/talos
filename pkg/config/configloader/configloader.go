@@ -9,76 +9,47 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/decoder"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
-// content represents the raw config data.
-//
-//docgen: nodoc
-type content struct {
-	Version string `yaml:"version"`
-
-	data []byte
-}
-
 // newConfig initializes and returns a Configurator.
-func newConfig(c content) (config config.Provider, err error) {
-	switch c.Version {
-	case v1alpha1.Version:
-		return v1alpha1.Load(c.data)
-	default:
-		return nil, fmt.Errorf("unknown version: %q", c.Version)
+func newConfig(source []byte) (config config.Provider, err error) {
+	dec := decoder.NewDecoder(source)
+
+	manifests, err := dec.Decode()
+	if err != nil {
+		return nil, err
 	}
+
+	// Look for the older flat v1alpha1 file first, since we have to handle it in
+	// a special way.
+	for _, manifest := range manifests {
+		if talosconfig, ok := manifest.(*v1alpha1.Config); ok {
+			return talosconfig, nil
+		}
+	}
+
+	return nil, fmt.Errorf("config not found")
 }
 
 // NewFromFile will take a filepath and attempt to parse a config file from it.
 func NewFromFile(filepath string) (config.Provider, error) {
-	c, err := fromFile(filepath)
+	source, err := fromFile(filepath)
 	if err != nil {
 		return nil, err
 	}
 
-	return newConfig(c)
+	return newConfig(source)
 }
 
 // NewFromBytes will take a byteslice and attempt to parse a config file from it.
-func NewFromBytes(in []byte) (config.Provider, error) {
-	c, err := fromBytes(in)
-	if err != nil {
-		return nil, err
-	}
-
-	return newConfig(c)
+func NewFromBytes(source []byte) (config.Provider, error) {
+	return newConfig(source)
 }
 
-// fromFile is a convenience function that reads the config from disk, and
-// unmarshals it.
-func fromFile(p string) (c content, err error) {
-	b, err := ioutil.ReadFile(p)
-	if err != nil {
-		return c, fmt.Errorf("read config: %w", err)
-	}
-
-	return unmarshal(b)
-}
-
-// fromBytes is a convenience function that reads the config from a string, and
-// unmarshals it.
-func fromBytes(b []byte) (c content, err error) {
-	return unmarshal(b)
-}
-
-func unmarshal(b []byte) (c content, err error) {
-	c = content{
-		data: b,
-	}
-
-	if err = yaml.Unmarshal(b, &c); err != nil {
-		return c, fmt.Errorf("failed to parse config: %s", err.Error())
-	}
-
-	return c, nil
+// fromFile is a convenience function that reads the config from disk.
+func fromFile(p string) ([]byte, error) {
+	return ioutil.ReadFile(p)
 }
