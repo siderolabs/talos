@@ -19,10 +19,9 @@ type ClusterRequest struct {
 	Network NetworkRequest
 	Nodes   NodeRequests
 
-	Image                  string
-	UncompressedKernelPath string
-	CompressedKernelPath   string
-	InitramfsPath          string
+	Image         string
+	KernelPath    string
+	InitramfsPath string
 
 	// Path to talosctl executable to re-execute itself as needed.
 	SelfExecutable string

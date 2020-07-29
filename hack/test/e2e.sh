@@ -156,6 +156,7 @@ function run_worker_cis_benchmark {
 }
 
 function get_kubeconfig {
+  rm -f "${TMP}/kubeconfig"
   "${TALOSCTL}" kubeconfig "${TMP}"
 }
 

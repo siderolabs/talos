@@ -7,6 +7,7 @@ package provision
 import (
 	"io"
 	"os"
+	"runtime"
 
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/client/config"
@@ -51,10 +52,19 @@ func WithTalosClient(client *client.Client) Option {
 	}
 }
 
-// WithBootladerEmulation enables bootloader emulation.
-func WithBootladerEmulation() Option {
+// WithBootlader enables or disables bootloader (bootloader is enabled by default).
+func WithBootlader(enabled bool) Option {
 	return func(o *Options) error {
-		o.BootloaderEmulation = true
+		o.BootloaderEnabled = enabled
+
+		return nil
+	}
+}
+
+// WithTargetArch specifies target architecture for the cluster.
+func WithTargetArch(arch string) Option {
+	return func(o *Options) error {
+		o.TargetArch = arch
 
 		return nil
 	}
@@ -84,9 +94,10 @@ type Options struct {
 	TalosConfig   *config.Config
 	TalosClient   *client.Client
 	ForceEndpoint string
+	TargetArch    string
 
-	// Enable bootloader by booting from disk image assets.
-	BootloaderEmulation bool
+	// Enable bootloader by booting from disk image after install.
+	BootloaderEnabled bool
 
 	// Expose ports to worker machines in docker provisioner
 	DockerPorts       []string
@@ -96,6 +107,8 @@ type Options struct {
 // DefaultOptions returns default options.
 func DefaultOptions() Options {
 	return Options{
+		BootloaderEnabled: true,
+		TargetArch:        runtime.GOARCH,
 		LogWriter:         os.Stderr,
 		DockerPortsHostIP: "0.0.0.0",
 	}

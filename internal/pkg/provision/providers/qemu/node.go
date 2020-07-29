@@ -12,6 +12,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"syscall"
 
@@ -24,7 +25,7 @@ import (
 )
 
 //nolint: gocyclo
-func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest) (provision.NodeInfo, error) {
+func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
 	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
@@ -64,23 +65,31 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
+	qemuArch, qemuMachineType, err := qemuArchFromGoArch(opts.TargetArch)
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
+
 	launchConfig := LaunchConfig{
-		QemuExecutable:  "qemu-system-x86_64",
-		DiskPath:        diskPath,
-		VCPUCount:       vcpuCount,
-		MemSize:         memSize,
-		KernelImagePath: clusterReq.CompressedKernelPath,
-		KernelArgs:      cmdline.String(),
-		InitrdPath:      clusterReq.InitramfsPath,
-		Config:          nodeConfig,
-		NetworkConfig:   state.VMCNIConfig,
-		CNI:             clusterReq.Network.CNI,
-		CIDR:            clusterReq.Network.CIDR,
-		IP:              nodeReq.IP,
-		Hostname:        nodeReq.Name,
-		GatewayAddr:     clusterReq.Network.GatewayAddr,
-		MTU:             clusterReq.Network.MTU,
-		Nameservers:     clusterReq.Network.Nameservers,
+		QemuExecutable:    fmt.Sprintf("qemu-system-%s", qemuArch),
+		DiskPath:          diskPath,
+		VCPUCount:         vcpuCount,
+		MemSize:           memSize,
+		KernelImagePath:   clusterReq.KernelPath,
+		KernelArgs:        cmdline.String(),
+		InitrdPath:        clusterReq.InitramfsPath,
+		MachineType:       qemuMachineType,
+		EnableKVM:         opts.TargetArch == runtime.GOARCH,
+		BootloaderEnabled: opts.BootloaderEnabled,
+		Config:            nodeConfig,
+		NetworkConfig:     state.VMCNIConfig,
+		CNI:               clusterReq.Network.CNI,
+		CIDR:              clusterReq.Network.CIDR,
+		IP:                nodeReq.IP,
+		Hostname:          nodeReq.Name,
+		GatewayAddr:       clusterReq.Network.GatewayAddr,
+		MTU:               clusterReq.Network.MTU,
+		Nameservers:       clusterReq.Network.Nameservers,
 	}
 
 	launchConfig.StatePath, err = state.StatePath()
@@ -136,13 +145,13 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	return nodeInfo, nil
 }
 
-func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, opts *provision.Options) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
 	for _, nodeReq := range nodeReqs {
 		go func(nodeReq provision.NodeRequest) {
-			nodeInfo, err := p.createNode(state, clusterReq, nodeReq)
+			nodeInfo, err := p.createNode(state, clusterReq, nodeReq, opts)
 			if err == nil {
 				nodeCh <- nodeInfo
 			}
