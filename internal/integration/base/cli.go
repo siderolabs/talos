@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -81,11 +82,11 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 	cliSuite.RunCLI([]string{"kubeconfig", tempDir}, StdoutEmpty())
 
 	masterNodes, err := cmd.Run(cliSuite.KubectlPath, "--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
-		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", "--selector=node-role.kubernetes.io/master")
+		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=%s", constants.LabelNodeRoleMaster))
 	cliSuite.Require().NoError(err)
 
 	workerNodes, err := cmd.Run(cliSuite.KubectlPath, "--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
-		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", "--selector=!node-role.kubernetes.io/master")
+		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=!%s", constants.LabelNodeRoleMaster))
 	cliSuite.Require().NoError(err)
 
 	return &infoWrapper{
