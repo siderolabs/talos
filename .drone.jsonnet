@@ -97,6 +97,7 @@ local volumes = {
     self.docker.step,
     self.kube.step,
     self.dev.step,
+    self.tmp.step,
     // self.cache.step,
   ],
 
@@ -223,7 +224,7 @@ local image_gcp = Step("image-gcp", depends_on=[image_digital_ocean]);
 local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"}, extra_volumes=[volumes.tmp.step]);
+local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"});
 local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
@@ -382,10 +383,10 @@ local creds_env_vars = {
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
-local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
-local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
-local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars, extra_volumes=[volumes.tmp.step]);
+local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker], environment=creds_env_vars);
+local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars);
+local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars);
+local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars);
 
 local e2e_steps = default_steps + [
   e2e_capi,
@@ -405,9 +406,9 @@ local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
 
 // Conformance pipeline.
 
-local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"}, extra_volumes=[volumes.tmp.step]);
-local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"}, extra_volumes=[volumes.tmp.step]);
-local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"}, extra_volumes=[volumes.tmp.step]);
+local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
+local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
+local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
 
 local push_edge = {
   name: 'push-edge',
