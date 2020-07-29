@@ -16,6 +16,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
@@ -72,7 +73,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 
 	for _, node := range nodes.Items {
 		for label := range node.Labels {
-			if label == "node-role.kubernetes.io/master" {
+			if label == constants.LabelNodeRoleMaster {
 				for _, nodeAddress := range node.Status.Addresses {
 					if nodeAddress.Type == v1.NodeInternalIP {
 						actualNodes = append(actualNodes, nodeAddress.Address)
