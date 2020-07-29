@@ -96,7 +96,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	cfg := firecracker.Config{
 		SocketPath:      socketPath,
-		KernelImagePath: clusterReq.UncompressedKernelPath,
+		KernelImagePath: clusterReq.KernelPath,
 		KernelArgs:      cmdline.String(),
 		InitrdPath:      clusterReq.InitramfsPath,
 		ForwardSignals:  []os.Signal{}, // don't forward any signals
@@ -147,7 +147,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		FirecrackerConfig:   cfg,
 		Config:              nodeConfig,
 		GatewayAddr:         clusterReq.Network.GatewayAddr,
-		BootloaderEmulation: opts.BootloaderEmulation,
+		BootloaderEmulation: opts.BootloaderEnabled,
 	}
 
 	launchConfigFile, err := os.Create(state.GetRelativePath(fmt.Sprintf("%s.config", nodeReq.Name)))

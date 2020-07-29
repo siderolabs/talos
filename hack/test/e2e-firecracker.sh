@@ -11,13 +11,13 @@ case "${CI:-false}" in
   true)
     REGISTRY="127.0.0.1:5000"
     REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
-    FIRECRACKER_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 --with-bootloader-emulation"
+    FIRECRACKER_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000"
     INSTALLER_TAG="${TAG}"
     docker tag ${INSTALLER_IMAGE} 127.0.0.1:5000/autonomy/installer:"${TAG}"
     docker push 127.0.0.1:5000/autonomy/installer:"${TAG}"
     ;;
   *)
-    FIRECRACKER_FLAGS=
+    FIRECRACKER_FLAGS="--with-bootloader=false"
     INSTALLER_TAG="latest"
     ;;
 esac

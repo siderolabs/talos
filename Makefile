@@ -240,7 +240,7 @@ provision-tests-track-%:
 # Assets for releases
 
 .PHONY: $(ARTIFACTS)/$(TALOS_RELEASE)
-$(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinux $(ARTIFACTS)/$(TALOS_RELEASE)/initramfs.xz
+$(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinuz $(ARTIFACTS)/$(TALOS_RELEASE)/initramfs.xz
 
 # download release artifacts for specific version
 $(ARTIFACTS)/$(TALOS_RELEASE)/%:

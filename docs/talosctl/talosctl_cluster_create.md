@@ -14,10 +14,11 @@ talosctl cluster create [flags]
 ### Options
 
 ```
+      --arch string                 cluster architecture (default "amd64")
       --cidr string                 CIDR of the docker bridge network (default "10.5.0.0/24")
-      --cni-bin-path strings        search path for CNI binaries (firecracker only) (default [/opt/cni/bin])
-      --cni-cache-dir string        CNI cache directory path (firecracker only) (default "/var/lib/cni")
-      --cni-conf-dir string         CNI config directory path (firecracker only) (default "/etc/cni/conf.d")
+      --cni-bin-path strings        search path for CNI binaries (VM only) (default [/opt/cni/bin])
+      --cni-cache-dir string        CNI cache directory path (VN only) (default "/var/lib/cni")
+      --cni-conf-dir string         CNI config directory path (VM only) (default "/etc/cni/conf.d")
       --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
       --crashdump                   print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string       install custom CNI from the URL (Talos cluster)
@@ -38,11 +39,10 @@ talosctl cluster create [flags]
       --mtu int                     MTU of the docker bridge network (default 1500)
       --nameservers strings         list of nameservers to use (default [8.8.8.8,1.1.1.1])
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
-      --vmlinux-path string         the uncompressed kernel image to use (default "_out/vmlinux")
       --vmlinuz-path string         the compressed kernel image to use (default "_out/vmlinuz")
       --wait                        wait for the cluster to be ready before returning (default true)
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
-      --with-bootloader-emulation   enable bootloader emulation to load kernel and initramfs from disk image
+      --with-bootloader             enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-debug                  enable debug in Talos config to send service logs to the console
       --with-init-node              create the cluster with an init node (default true)
       --workers int                 the number of workers to create (default 1)
