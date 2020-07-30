@@ -23,7 +23,7 @@ import (
 // mountsCmd represents the mounts command.
 var mountsCmd = &cobra.Command{
 	Use:     "mounts",
-	Aliases: []string{"m"},
+	Aliases: []string{"mount"},
 	Short:   "List mounts",
 	Long:    ``,
 	Args:    cobra.NoArgs,

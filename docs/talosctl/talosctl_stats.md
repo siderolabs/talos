@@ -1,11 +1,11 @@
 <!-- markdownlint-disable -->
 ## talosctl stats
 
-Get processes stats
+Get container stats
 
 ### Synopsis
 
-Get processes stats
+Get container stats
 
 ```
 talosctl stats [flags]
