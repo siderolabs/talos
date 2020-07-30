@@ -34,7 +34,7 @@ var (
 // processesCmd represents the processes command.
 var processesCmd = &cobra.Command{
 	Use:     "processes",
-	Aliases: []string{"p"},
+	Aliases: []string{"p", "ps"},
 	Short:   "List running processes",
 	Long:    ``,
 	Args:    cobra.NoArgs,

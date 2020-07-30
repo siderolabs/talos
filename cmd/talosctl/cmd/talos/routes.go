@@ -21,10 +21,11 @@ import (
 
 // routesCmd represents the net routes command.
 var routesCmd = &cobra.Command{
-	Use:   "routes",
-	Short: "List network routes",
-	Long:  ``,
-	Args:  cobra.NoArgs,
+	Use:     "routes",
+	Aliases: []string{"route"},
+	Short:   "List network routes",
+	Long:    ``,
+	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer

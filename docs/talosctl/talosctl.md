@@ -47,7 +47,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl routes](talosctl_routes.md)	 - List network routes
 * [talosctl service](talosctl_service.md)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](talosctl_shutdown.md)	 - Shutdown a node
-* [talosctl stats](talosctl_stats.md)	 - Get processes stats
+* [talosctl stats](talosctl_stats.md)	 - Get container stats
 * [talosctl time](talosctl_time.md)	 - Gets current server time
 * [talosctl upgrade](talosctl_upgrade.md)	 - Upgrade Talos on the target node
 * [talosctl validate](talosctl_validate.md)	 - Validate config
