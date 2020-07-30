@@ -70,7 +70,9 @@ local volumes = {
   tmp: {
     pipeline: {
       name: 'tmp',
-      temp: {},
+      temp: {
+        'medium': 'memory',
+      },
     },
     step: {
       name: $.tmp.pipeline.name,
