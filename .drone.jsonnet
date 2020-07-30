@@ -227,7 +227,7 @@ local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"});
-local e2e_firecracker = Step("e2e-firecracker-short", privileged=true, target="e2e-firecracker", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
   name: 'coverage',
@@ -264,7 +264,7 @@ local push = {
       ],
     },
   },
-  depends_on: [e2e_docker.name, e2e_firecracker.name],
+  depends_on: [e2e_docker.name, e2e_qemu.name],
 };
 
 local push_latest = {
@@ -285,7 +285,7 @@ local push_latest = {
       'push',
     ],
   },
-  depends_on: [e2e_docker.name, e2e_firecracker.name],
+  depends_on: [e2e_docker.name, e2e_qemu.name],
 };
 
 local default_steps = [
@@ -311,7 +311,7 @@ local default_steps = [
   unit_tests_race,
   coverage,
   e2e_docker,
-  e2e_firecracker,
+  e2e_qemu,
   push,
   push_latest,
 ];
@@ -334,11 +334,11 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_firecracker = Step("e2e-firecracker", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_firecracker, e2e_docker]);
+local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_qemu, e2e_docker]);
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-firecracker", privileged=true, depends_on=[integration_firecracker], environment={
+local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
         "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000",
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml",
@@ -346,7 +346,7 @@ local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-firecracker", pr
 
 
 local integration_steps = default_steps + [
-  integration_firecracker,
+  integration_qemu,
   integration_provision_tests_prepare,
   integration_provision_tests_track_0,
   integration_provision_tests_track_1,
@@ -461,10 +461,10 @@ local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigge
 
 // Release pipeline.
 
-local iso = Step('iso', depends_on=[e2e_docker, e2e_firecracker]);
-local boot = Step('boot', depends_on=[e2e_docker, e2e_firecracker]);
+local iso = Step('iso', depends_on=[e2e_docker, e2e_qemu]);
+local boot = Step('boot', depends_on=[e2e_docker, e2e_qemu]);
 
-local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_firecracker]);
+local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_qemu]);
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
