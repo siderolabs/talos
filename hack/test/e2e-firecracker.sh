@@ -50,10 +50,11 @@ function create_cluster {
 }
 
 function destroy_cluster() {
-  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}"
+  "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}"
 }
 
 create_cluster
 get_kubeconfig
 run_talos_integration_test
 run_kubernetes_integration_test
+destroy_cluster
