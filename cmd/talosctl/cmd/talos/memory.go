@@ -24,7 +24,7 @@ var verbose bool
 // memoryCmd represents the processes command.
 var memoryCmd = &cobra.Command{
 	Use:     "memory",
-	Aliases: []string{"m"},
+	Aliases: []string{"m", "free"},
 	Short:   "Show memory usage",
 	Long:    ``,
 	Args:    cobra.NoArgs,

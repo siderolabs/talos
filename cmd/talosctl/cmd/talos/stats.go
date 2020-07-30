@@ -24,10 +24,10 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-// statsCmd represents the processes command.
+// statsCmd represents the stats command.
 var statsCmd = &cobra.Command{
 	Use:   "stats",
-	Short: "Get processes stats",
+	Short: "Get container stats",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
