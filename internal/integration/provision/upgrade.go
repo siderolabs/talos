@@ -26,7 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/cluster/check"
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/access"
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
+	"github.com/talos-systems/talos/internal/pkg/provision/providers/qemu"
 	talosclient "github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
@@ -163,7 +163,7 @@ func (suite *UpgradeSuite) SetupSuite() {
 
 	var err error
 
-	suite.provisioner, err = firecracker.NewProvisioner(suite.ctx)
+	suite.provisioner, err = qemu.NewProvisioner(suite.ctx)
 	suite.Require().NoError(err)
 }
 
