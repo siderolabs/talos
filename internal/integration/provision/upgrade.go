@@ -376,7 +376,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
 
 	// wait for the version to be equal to target version
-	suite.Require().NoError(retry.Constant(5 * time.Minute).Retry(func() error {
+	suite.Require().NoError(retry.Constant(10 * time.Minute).Retry(func() error {
 		var version string
 
 		version, err = suite.readVersion(client, nodeCtx)
