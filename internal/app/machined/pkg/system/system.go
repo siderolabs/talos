@@ -109,8 +109,12 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	s.runningMu.Lock()
+	defer s.runningMu.Unlock()
+
 	for _, id := range servicesToRemove {
 		delete(s.state, id)
+		delete(s.running, id) // this fixes an edge case when defer() in Start() doesn't have time to remove stopped service from running
 	}
 
 	return nil
