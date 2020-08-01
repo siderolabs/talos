@@ -5,8 +5,11 @@
 package v1alpha1
 
 import (
+	"crypto/tls"
+	stdx509 "crypto/x509"
 	"fmt"
 	"net/url"
+	"os"
 	goruntime "runtime"
 	"strings"
 	"time"
@@ -16,7 +19,6 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
-	criplugin "github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -89,7 +91,13 @@ func (m *MachineConfig) Security() config.Security {
 
 // Disks implements the config.Provider interface.
 func (m *MachineConfig) Disks() []config.Disk {
-	return m.MachineDisks
+	disks := make([]config.Disk, len(m.MachineDisks))
+
+	for i := 0; i < len(m.MachineDisks); i++ {
+		disks[i] = m.MachineDisks[i]
+	}
+
+	return disks
 }
 
 // Network implements the config.Provider interface.
@@ -122,9 +130,13 @@ func (m *MachineConfig) Env() config.Env {
 
 // Files implements the config.Provider interface.
 func (m *MachineConfig) Files() ([]config.File, error) {
-	files, err := m.Registries().ExtraFiles()
+	files := make([]config.File, len(m.MachineFiles))
 
-	return append(files, m.MachineFiles...), err
+	for i := 0; i < len(m.MachineFiles); i++ {
+		files[i] = m.MachineFiles[i]
+	}
+
+	return files, nil
 }
 
 // Type implements the config.Provider interface.
@@ -406,17 +418,102 @@ func (e *EtcdConfig) ExtraArgs() map[string]string {
 
 // Mirrors implements the Registries interface.
 func (r *RegistriesConfig) Mirrors() map[string]config.RegistryMirrorConfig {
-	return r.RegistryMirrors
+	mirrors := make(map[string]config.RegistryMirrorConfig, len(r.RegistryMirrors))
+
+	for k, v := range r.RegistryMirrors {
+		mirrors[k] = v
+	}
+
+	return mirrors
 }
 
 // Config implements the Registries interface.
 func (r *RegistriesConfig) Config() map[string]config.RegistryConfig {
-	return r.RegistryConfig
+	registries := make(map[string]config.RegistryConfig, len(r.RegistryConfig))
+
+	for k, v := range r.RegistryConfig {
+		registries[k] = v
+	}
+
+	return registries
 }
 
-// ExtraFiles implements the Registries interface.
-func (r *RegistriesConfig) ExtraFiles() ([]config.File, error) {
-	return criplugin.GenerateRegistriesConfig(r)
+// TLS implements the Registries interface.
+func (r *RegistryConfig) TLS() config.RegistryTLSConfig {
+	if r == nil {
+		return nil
+	}
+
+	return r.RegistryTLS
+}
+
+// Auth implements the Registries interface.
+func (r *RegistryConfig) Auth() config.RegistryAuthConfig {
+	if r == nil {
+		return nil
+	}
+
+	return r.RegistryAuth
+}
+
+// Username implements the Registries interface.
+func (r *RegistryAuthConfig) Username() string {
+	return r.RegistryUsername
+}
+
+// Password implements the Registries interface.
+func (r *RegistryAuthConfig) Password() string {
+	return r.RegistryPassword
+}
+
+// Auth implements the Registries interface.
+func (r *RegistryAuthConfig) Auth() string {
+	return r.RegistryAuth
+}
+
+// IdentityToken implements the Registries interface.
+func (r *RegistryAuthConfig) IdentityToken() string {
+	return r.RegistryIdentityToken
+}
+
+// ClientIdentity implements the Registries interface.
+func (r *RegistryTLSConfig) ClientIdentity() *x509.PEMEncodedCertificateAndKey {
+	return r.TLSClientIdentity
+}
+
+// CA implements the Registries interface.
+func (r *RegistryTLSConfig) CA() []byte {
+	return r.TLSCA
+}
+
+// InsecureSkipVerify implements the Registries interface.
+func (r *RegistryTLSConfig) InsecureSkipVerify() bool {
+	return r.TLSInsecureSkipVerify
+}
+
+// GetTLSConfig prepares TLS configuration for connection.
+func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+
+	if r.TLSClientIdentity != nil {
+		cert, err := tls.X509KeyPair(r.TLSClientIdentity.Crt, r.TLSClientIdentity.Key)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing client identity: %w", err)
+		}
+
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	if r.CA() != nil {
+		tlsConfig.RootCAs = stdx509.NewCertPool()
+		tlsConfig.RootCAs.AppendCertsFromPEM(r.TLSCA)
+	}
+
+	if r.TLSInsecureSkipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	return tlsConfig, nil
 }
 
 // Token implements the config.Provider interface.
@@ -547,7 +644,13 @@ func (n *NetworkConfig) SetHostname(hostname string) {
 
 // Devices implements the config.Provider interface.
 func (n *NetworkConfig) Devices() []config.Device {
-	return n.NetworkInterfaces
+	interfaces := make([]config.Device, len(n.NetworkInterfaces))
+
+	for i := 0; i < len(n.NetworkInterfaces); i++ {
+		interfaces[i] = n.NetworkInterfaces[i]
+	}
+
+	return interfaces
 }
 
 // Resolvers implements the config.Provider interface.
@@ -557,7 +660,263 @@ func (n *NetworkConfig) Resolvers() []string {
 
 // ExtraHosts implements the config.Provider interface.
 func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
-	return n.ExtraHostEntries
+	hosts := make([]config.ExtraHost, len(n.ExtraHostEntries))
+
+	for i := 0; i < len(n.ExtraHostEntries); i++ {
+		hosts[i] = n.ExtraHostEntries[i]
+	}
+
+	return hosts
+}
+
+// IP implements the MachineNetwork interface.
+func (e *ExtraHost) IP() string {
+	return e.HostIP
+}
+
+// Aliases implements the MachineNetwork interface.
+func (e *ExtraHost) Aliases() []string {
+	return e.HostAliases
+}
+
+// Interface implements the MachineNetwork interface.
+func (d *Device) Interface() string {
+	return d.DeviceInterface
+}
+
+// CIDR implements the MachineNetwork interface.
+func (d *Device) CIDR() string {
+	return d.DeviceCIDR
+}
+
+// Routes implements the MachineNetwork interface.
+func (d *Device) Routes() []config.Route {
+	routes := make([]config.Route, len(d.DeviceRoutes))
+
+	for i := 0; i < len(d.DeviceRoutes); i++ {
+		routes[i] = d.DeviceRoutes[i]
+	}
+
+	return routes
+}
+
+// Bond implements the MachineNetwork interface.
+func (d *Device) Bond() config.Bond {
+	if d.DeviceBond == nil {
+		return nil
+	}
+
+	return d.DeviceBond
+}
+
+// Vlans implements the MachineNetwork interface.
+func (d *Device) Vlans() []config.Vlan {
+	vlans := make([]config.Vlan, len(d.DeviceVlans))
+
+	for i := 0; i < len(d.DeviceVlans); i++ {
+		vlans[i] = d.DeviceVlans[i]
+	}
+
+	return vlans
+}
+
+// MTU implements the MachineNetwork interface.
+func (d *Device) MTU() int {
+	return d.DeviceMTU
+}
+
+// DHCP implements the MachineNetwork interface.
+func (d *Device) DHCP() bool {
+	return d.DeviceDHCP
+}
+
+// Ignore implements the MachineNetwork interface.
+func (d *Device) Ignore() bool {
+	return d.DeviceIgnore
+}
+
+// Dummy implements the MachineNetwork interface.
+func (d *Device) Dummy() bool {
+	return d.DeviceDummy
+}
+
+// Network implements the MachineNetwork interface.
+func (r *Route) Network() string {
+	return r.RouteNetwork
+}
+
+// Gateway implements the MachineNetwork interface.
+func (r *Route) Gateway() string {
+	return r.RouteGateway
+}
+
+// Interfaces implements the MachineNetwork interface.
+func (b *Bond) Interfaces() []string {
+	if b == nil {
+		return nil
+	}
+
+	return b.BondInterfaces
+}
+
+// ARPIPTarget implements the MachineNetwork interface.
+func (b *Bond) ARPIPTarget() []string {
+	if b == nil {
+		return nil
+	}
+
+	return b.BondARPIPTarget
+}
+
+// Mode implements the MachineNetwork interface.
+func (b *Bond) Mode() string {
+	return b.BondMode
+}
+
+// HashPolicy implements the MachineNetwork interface.
+func (b *Bond) HashPolicy() string {
+	return b.BondHashPolicy
+}
+
+// LACPRate implements the MachineNetwork interface.
+func (b *Bond) LACPRate() string {
+	return b.BondLACPRate
+}
+
+// ADActorSystem implements the MachineNetwork interface.
+func (b *Bond) ADActorSystem() string {
+	return b.BondADActorSystem
+}
+
+// ARPValidate implements the MachineNetwork interface.
+func (b *Bond) ARPValidate() string {
+	return b.BondARPValidate
+}
+
+// ARPAllTargets implements the MachineNetwork interface.
+func (b *Bond) ARPAllTargets() string {
+	return b.BondARPAllTargets
+}
+
+// Primary implements the MachineNetwork interface.
+func (b *Bond) Primary() string {
+	return b.BondPrimary
+}
+
+// PrimaryReselect implements the MachineNetwork interface.
+func (b *Bond) PrimaryReselect() string {
+	return b.BondPrimaryReselect
+}
+
+// FailOverMac implements the MachineNetwork interface.
+func (b *Bond) FailOverMac() string {
+	return b.BondFailOverMac
+}
+
+// ADSelect implements the MachineNetwork interface.
+func (b *Bond) ADSelect() string {
+	return b.BondADSelect
+}
+
+// MIIMon implements the MachineNetwork interface.
+func (b *Bond) MIIMon() uint32 {
+	return b.BondMIIMon
+}
+
+// UpDelay implements the MachineNetwork interface.
+func (b *Bond) UpDelay() uint32 {
+	return b.BondUpDelay
+}
+
+// DownDelay implements the MachineNetwork interface.
+func (b *Bond) DownDelay() uint32 {
+	return b.BondDownDelay
+}
+
+// ARPInterval implements the MachineNetwork interface.
+func (b *Bond) ARPInterval() uint32 {
+	return b.BondARPInterval
+}
+
+// ResendIGMP implements the MachineNetwork interface.
+func (b *Bond) ResendIGMP() uint32 {
+	return b.BondResendIGMP
+}
+
+// MinLinks implements the MachineNetwork interface.
+func (b *Bond) MinLinks() uint32 {
+	return b.BondMinLinks
+}
+
+// LPInterval implements the MachineNetwork interface.
+func (b *Bond) LPInterval() uint32 {
+	return b.BondLPInterval
+}
+
+// PacketsPerSlave implements the MachineNetwork interface.
+func (b *Bond) PacketsPerSlave() uint32 {
+	return b.BondPacketsPerSlave
+}
+
+// NumPeerNotif implements the MachineNetwork interface.
+func (b *Bond) NumPeerNotif() uint8 {
+	return b.BondNumPeerNotif
+}
+
+// TLBDynamicLB implements the MachineNetwork interface.
+func (b *Bond) TLBDynamicLB() uint8 {
+	return b.BondTLBDynamicLB
+}
+
+// AllSlavesActive implements the MachineNetwork interface.
+func (b *Bond) AllSlavesActive() uint8 {
+	return b.BondAllSlavesActive
+}
+
+// UseCarrier implements the MachineNetwork interface.
+func (b *Bond) UseCarrier() bool {
+	return b.BondUseCarrier
+}
+
+// ADActorSysPrio implements the MachineNetwork interface.
+func (b *Bond) ADActorSysPrio() uint16 {
+	return b.BondADActorSysPrio
+}
+
+// ADUserPortKey implements the MachineNetwork interface.
+func (b *Bond) ADUserPortKey() uint16 {
+	return b.BondADUserPortKey
+}
+
+// PeerNotifyDelay implements the MachineNetwork interface.
+func (b *Bond) PeerNotifyDelay() uint32 {
+	return b.BondPeerNotifyDelay
+}
+
+// CIDR implements the MachineNetwork interface.
+func (v *Vlan) CIDR() string {
+	return v.VlanCIDR
+}
+
+// Routes implements the MachineNetwork interface.
+func (v *Vlan) Routes() []config.Route {
+	routes := make([]config.Route, len(v.VlanRoutes))
+
+	for i := 0; i < len(v.VlanRoutes); i++ {
+		routes[i] = v.VlanRoutes[i]
+	}
+
+	return routes
+}
+
+// DHCP implements the MachineNetwork interface.
+func (v *Vlan) DHCP() bool {
+	return v.VlanDHCP
+}
+
+// ID implements the MachineNetwork interface.
+func (v *Vlan) ID() uint16 {
+	return v.VlanID
 }
 
 // Servers implements the config.Provider interface.
@@ -624,4 +983,55 @@ func (a AdminKubeconfigConfig) CertLifetime() time.Duration {
 	}
 
 	return a.AdminKubeconfigCertLifetime
+}
+
+// Endpoints implements the config.Provider interface.
+func (r *RegistryMirrorConfig) Endpoints() []string {
+	return r.MirrorEndpoints
+}
+
+// Content implements the config.Provider interface.
+func (f *MachineFile) Content() string {
+	return f.FileContent
+}
+
+// Permissions implements the config.Provider interface.
+func (f *MachineFile) Permissions() os.FileMode {
+	return f.FilePermissions
+}
+
+// Path implements the config.Provider interface.
+func (f *MachineFile) Path() string {
+	return f.FilePath
+}
+
+// Op implements the config.Provider interface.
+func (f *MachineFile) Op() string {
+	return f.FileOp
+}
+
+// Device implements the config.Provider interface.
+func (d *MachineDisk) Device() string {
+	return d.DeviceName
+}
+
+// Partitions implements the config.Provider interface.
+func (d *MachineDisk) Partitions() []config.Partition {
+	partitions := make([]config.Partition, len(d.DiskPartitions))
+
+	for i := 0; i < len(d.DiskPartitions); i++ {
+		partitions[i] = d.DiskPartitions[i]
+	}
+
+	return partitions
+}
+
+// Size implements the config.Provider interface.
+func (p *DiskPartition) Size() uint {
+	return p.DiskSize
+}
+
+// MountPoint implements the config.Provider interface.
+func (p *DiskPartition) MountPoint() string {
+	return p.DiskMountPoint
 }

@@ -40,6 +40,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kernel/kspp"
@@ -772,7 +773,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 	for _, disk := range r.Config().Machine().Disks() {
 		var bd *blockdevice.BlockDevice
 
-		bd, err = blockdevice.Open(disk.Device)
+		bd, err = blockdevice.Open(disk.Device())
 		if err != nil {
 			return err
 		}
@@ -796,24 +797,24 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 
 		if pt != nil {
 			if len(pt.Partitions()) > 0 {
-				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device)
+				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
 				continue
 			}
 		}
 
-		if m.Targets[disk.Device] == nil {
-			m.Targets[disk.Device] = []*installer.Target{}
+		if m.Targets[disk.Device()] == nil {
+			m.Targets[disk.Device()] = []*installer.Target{}
 		}
 
-		for _, part := range disk.Partitions {
+		for _, part := range disk.Partitions() {
 			extraTarget := &installer.Target{
-				Device: disk.Device,
-				Size:   part.Size,
+				Device: disk.Device(),
+				Size:   part.Size(),
 				Force:  true,
 				Test:   false,
 			}
 
-			m.Targets[disk.Device] = append(m.Targets[disk.Device], extraTarget)
+			m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
 		}
 	}
 
@@ -828,21 +829,21 @@ func mountDisks(r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
 	for _, disk := range r.Config().Machine().Disks() {
-		for i, part := range disk.Partitions {
+		for i, part := range disk.Partitions() {
 			var partname string
 
-			partname, err = util.PartPath(disk.Device, i+1)
+			partname, err = util.PartPath(disk.Device(), i+1)
 			if err != nil {
 				return err
 			}
 
-			if _, err = os.Stat(part.MountPoint); errors.Is(err, os.ErrNotExist) {
-				if err = os.MkdirAll(part.MountPoint, 0o700); err != nil {
+			if _, err = os.Stat(part.MountPoint()); errors.Is(err, os.ErrNotExist) {
+				if err = os.MkdirAll(part.MountPoint(), 0o700); err != nil {
 					return err
 				}
 			}
 
-			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint, "xfs", unix.MS_NOATIME, ""))
+			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
 		}
 	}
 
@@ -865,58 +866,65 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			return fmt.Errorf("error generating extra files: %w", err)
 		}
 
-		for _, f := range files {
-			content := f.Content
+		extra, err := containerd.GenerateRegistriesConfig(r.Config().Machine().Registries())
+		if err != nil {
+			return err
+		}
 
-			switch f.Op {
+		files = append(files, extra...)
+
+		for _, f := range files {
+			content := f.Content()
+
+			switch f.Op() {
 			case "create":
-				if err = doesNotExists(f.Path); err != nil {
-					result = multierror.Append(result, fmt.Errorf("file must not exist: %q", f.Path))
+				if err = doesNotExists(f.Path()); err != nil {
+					result = multierror.Append(result, fmt.Errorf("file must not exist: %q", f.Path()))
 					continue
 				}
 			case "overwrite":
-				if err = existsAndIsFile(f.Path); err != nil {
+				if err = existsAndIsFile(f.Path()); err != nil {
 					result = multierror.Append(result, err)
 					continue
 				}
 			case "append":
-				if err = existsAndIsFile(f.Path); err != nil {
+				if err = existsAndIsFile(f.Path()); err != nil {
 					result = multierror.Append(result, err)
 					continue
 				}
 
 				var existingFileContents []byte
 
-				existingFileContents, err = ioutil.ReadFile(f.Path)
+				existingFileContents, err = ioutil.ReadFile(f.Path())
 				if err != nil {
 					result = multierror.Append(result, err)
 					continue
 				}
 
-				content = string(existingFileContents) + "\n" + f.Content
+				content = string(existingFileContents) + "\n" + f.Content()
 			default:
-				result = multierror.Append(result, fmt.Errorf("unknown operation for file %q: %q", f.Path, f.Op))
+				result = multierror.Append(result, fmt.Errorf("unknown operation for file %q: %q", f.Path(), f.Op()))
 				continue
 			}
 
 			// Determine if supplied path is in /var or not.
 			// If not, we'll write it to /var anyways and bind mount below
-			p := f.Path
+			p := f.Path()
 			inVar := true
 			explodedPath := strings.Split(
-				strings.TrimLeft(f.Path, "/"),
+				strings.TrimLeft(f.Path(), "/"),
 				string(os.PathSeparator),
 			)
 
 			if explodedPath[0] != "var" {
-				p = filepath.Join("/var", f.Path)
+				p = filepath.Join("/var", f.Path())
 				inVar = false
 			}
 
 			// We do not want to support creating new files anywhere outside of
 			// /var. If a valid use case comes up, we can reconsider then.
-			if !inVar && f.Op == "create" {
-				return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path)
+			if !inVar && f.Op() == "create" {
+				return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path())
 			}
 
 			if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
@@ -924,14 +932,14 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
-			if err = ioutil.WriteFile(p, []byte(content), f.Permissions); err != nil {
+			if err = ioutil.WriteFile(p, []byte(content), f.Permissions()); err != nil {
 				result = multierror.Append(result, err)
 				continue
 			}
 
 			// File path was not /var/... so we assume a bind mount is wanted
 			if !inVar {
-				if err = unix.Mount(p, f.Path, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
+				if err = unix.Mount(p, f.Path(), "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
 					result = multierror.Append(result, fmt.Errorf("failed to create bind mount for %s: %w", p, err))
 				}
 			}

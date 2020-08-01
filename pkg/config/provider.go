@@ -6,8 +6,6 @@ package config
 
 import (
 	"crypto/tls"
-	stdx509 "crypto/x509"
-	"fmt"
 	"net/url"
 	"os"
 	"time"
@@ -48,26 +46,26 @@ type MachineConfig interface {
 
 // Disk represents the options available for partitioning, formatting, and
 // mounting extra disks.
-type Disk struct {
-	Device     string      `yaml:"device,omitempty"`
-	Partitions []Partition `yaml:"partitions,omitempty"`
+type Disk interface {
+	Device() string
+	Partitions() []Partition
 }
 
 // Partition represents the options for a device partition.
-type Partition struct {
-	Size       uint   `yaml:"size,omitempty"`
-	MountPoint string `yaml:"mountpoint,omitempty"`
+type Partition interface {
+	Size() uint
+	MountPoint() string
 }
 
 // Env represents a set of environment variables.
 type Env = map[string]string
 
 // File represents a file to write to disk.
-type File struct {
-	Content     string      `yaml:"content"`
-	Permissions os.FileMode `yaml:"permissions"`
-	Path        string      `yaml:"path"`
-	Op          string      `yaml:"op"`
+type File interface {
+	Content() string
+	Permissions() os.FileMode
+	Path() string
+	Op() string
 }
 
 // Install defines the requirements for a config that pertains to install
@@ -101,68 +99,68 @@ type MachineNetwork interface {
 }
 
 // ExtraHost represents a host entry in /etc/hosts.
-type ExtraHost struct {
-	IP      string   `yaml:"ip"`
-	Aliases []string `yaml:"aliases"`
+type ExtraHost interface {
+	IP() string
+	Aliases() []string
 }
 
 // Device represents a network interface.
-type Device struct {
-	Interface string  `yaml:"interface"`
-	CIDR      string  `yaml:"cidr"`
-	Routes    []Route `yaml:"routes"`
-	Bond      *Bond   `yaml:"bond"`
-	Vlans     []*Vlan `yaml:"vlans"`
-	MTU       int     `yaml:"mtu"`
-	DHCP      bool    `yaml:"dhcp"`
-	Ignore    bool    `yaml:"ignore"`
-	Dummy     bool    `yaml:"dummy"`
+type Device interface {
+	Interface() string
+	CIDR() string
+	Routes() []Route
+	Bond() Bond
+	Vlans() []Vlan
+	MTU() int
+	DHCP() bool
+	Ignore() bool
+	Dummy() bool
 }
 
 // Bond contains the various options for configuring a
 // bonded interface.
-type Bond struct {
-	Interfaces      []string `yaml:"interfaces"`
-	ARPIPTarget     []string `yaml:"arpIPTarget"`
-	Mode            string   `yaml:"mode"`
-	HashPolicy      string   `yaml:"xmitHashPolicy"`
-	LACPRate        string   `yaml:"lacpRate"`
-	ADActorSystem   string   `yaml:"adActorSystem"`
-	ARPValidate     string   `yaml:"arpValidate"`
-	ARPAllTargets   string   `yaml:"arpAllTargets"`
-	Primary         string   `yaml:"primary"`
-	PrimaryReselect string   `yaml:"primaryReselect"`
-	FailOverMac     string   `yaml:"failOverMac"`
-	ADSelect        string   `yaml:"adSelect"`
-	MIIMon          uint32   `yaml:"miimon"`
-	UpDelay         uint32   `yaml:"updelay"`
-	DownDelay       uint32   `yaml:"downdelay"`
-	ARPInterval     uint32   `yaml:"arpInterval"`
-	ResendIGMP      uint32   `yaml:"resendIgmp"`
-	MinLinks        uint32   `yaml:"minLinks"`
-	LPInterval      uint32   `yaml:"lpInterval"`
-	PacketsPerSlave uint32   `yaml:"packetsPerSlave"`
-	NumPeerNotif    uint8    `yaml:"numPeerNotif"`
-	TLBDynamicLB    uint8    `yaml:"tlbDynamicLb"`
-	AllSlavesActive uint8    `yaml:"allSlavesActive"`
-	UseCarrier      bool     `yaml:"useCarrier"`
-	ADActorSysPrio  uint16   `yaml:"adActorSysPrio"`
-	ADUserPortKey   uint16   `yaml:"adUserPortKey"`
-	PeerNotifyDelay uint32   `yaml:"peerNotifyDelay"`
+type Bond interface {
+	Interfaces() []string
+	ARPIPTarget() []string
+	Mode() string
+	HashPolicy() string
+	LACPRate() string
+	ADActorSystem() string
+	ARPValidate() string
+	ARPAllTargets() string
+	Primary() string
+	PrimaryReselect() string
+	FailOverMac() string
+	ADSelect() string
+	MIIMon() uint32
+	UpDelay() uint32
+	DownDelay() uint32
+	ARPInterval() uint32
+	ResendIGMP() uint32
+	MinLinks() uint32
+	LPInterval() uint32
+	PacketsPerSlave() uint32
+	NumPeerNotif() uint8
+	TLBDynamicLB() uint8
+	AllSlavesActive() uint8
+	UseCarrier() bool
+	ADActorSysPrio() uint16
+	ADUserPortKey() uint16
+	PeerNotifyDelay() uint32
 }
 
 // Vlan represents vlan settings for a device.
-type Vlan struct {
-	CIDR   string  `ỳaml:"cidr"`
-	Routes []Route `yaml:"routes"`
-	DHCP   bool    `yaml:"dhcp"`
-	ID     uint16  `yaml:"vlanId"`
+type Vlan interface {
+	CIDR() string
+	Routes() []Route
+	DHCP() bool
+	ID() uint16
 }
 
 // Route represents a network route.
-type Route struct {
-	Network string `yaml:"network"`
-	Gateway string `yaml:"gateway"`
+type Route interface {
+	Network() string
+	Gateway() string
 }
 
 // Time defines the requirements for a config that pertains to time related
@@ -185,88 +183,33 @@ type Registries interface {
 	Mirrors() map[string]RegistryMirrorConfig
 	// Registry config (auth, TLS) by hostname.
 	Config() map[string]RegistryConfig
-	// ExtraFiles generates TOML config for containerd CRI plugin.
-	ExtraFiles() ([]File, error)
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.
-type RegistryMirrorConfig struct {
-	//   description: |
-	//     List of endpoints (URLs) for registry mirrors to use.
-	//     Endpoint configures HTTP/HTTPS access mode, host name,
-	//     port and path (if path is not set, it defaults to `/v2`).
-	Endpoints []string `yaml:"endpoints"`
+type RegistryMirrorConfig interface {
+	Endpoints() []string
 }
 
 // RegistryConfig specifies auth & TLS config per registry.
-type RegistryConfig struct {
-	TLS  *RegistryTLSConfig  `yaml:"tls,omitempty"`
-	Auth *RegistryAuthConfig `yaml:"auth,omitempty"`
+type RegistryConfig interface {
+	TLS() RegistryTLSConfig
+	Auth() RegistryAuthConfig
 }
 
 // RegistryAuthConfig specifies authentication configuration for a registry.
-type RegistryAuthConfig struct {
-	//   description: |
-	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	Username string `yaml:"username"`
-	//   description: |
-	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	Password string `yaml:"password"`
-	//   description: |
-	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	Auth string `yaml:"auth"`
-	//   description: |
-	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	IdentityToken string `yaml:"identityToken"`
+type RegistryAuthConfig interface {
+	Username() string
+	Password() string
+	Auth() string
+	IdentityToken() string
 }
 
 // RegistryTLSConfig specifies TLS config for HTTPS registries.
-type RegistryTLSConfig struct {
-	//   description: |
-	//     Enable mutual TLS authentication with the registry.
-	//     Client certificate and key should be base64-encoded.
-	//   examples:
-	//     - |
-	//       clientIdentity:
-	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
-	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
-	ClientIdentity *x509.PEMEncodedCertificateAndKey `yaml:"clientIdentity,omitempty"`
-	//   description: |
-	//     CA registry certificate to add the list of trusted certificates.
-	//     Certificate should be base64-encoded.
-	CA []byte `yaml:"ca,omitempty"`
-	//   description: |
-	//     Skip TLS server certificate verification (not recommended).
-	InsecureSkipVerify bool `yaml:"insecureSkipVerify,omitempty"`
-}
-
-// GetTLSConfig prepares TLS configuration for connection.
-func (cfg *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
-	tlsConfig := &tls.Config{}
-
-	if cfg.ClientIdentity != nil {
-		cert, err := tls.X509KeyPair(cfg.ClientIdentity.Crt, cfg.ClientIdentity.Key)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing client identity: %w", err)
-		}
-
-		tlsConfig.Certificates = []tls.Certificate{cert}
-	}
-
-	if cfg.CA != nil {
-		tlsConfig.RootCAs = stdx509.NewCertPool()
-		tlsConfig.RootCAs.AppendCertsFromPEM(cfg.CA)
-	}
-
-	if cfg.InsecureSkipVerify {
-		tlsConfig.InsecureSkipVerify = true
-	}
-
-	return tlsConfig, nil
+type RegistryTLSConfig interface {
+	ClientIdentity() *x509.PEMEncodedCertificateAndKey
+	CA() []byte
+	InsecureSkipVerify() bool
+	GetTLSConfig() (*tls.Config, error)
 }
 
 // ClusterConfig defines the requirements for a config that pertains to cluster

@@ -10,7 +10,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
-	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 )
@@ -58,11 +57,11 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		}),
 		generate.WithNetworkConfig(&v1alpha1.NetworkConfig{
 			NameServers: nameservers,
-			NetworkInterfaces: []config.Device{
+			NetworkInterfaces: []*v1alpha1.Device{
 				{
-					Interface: "eth0",
-					CIDR:      "169.254.128.128/32", // link-local IP just to trigger the static networkd config
-					MTU:       networkReq.MTU,
+					DeviceInterface: "eth0",
+					DeviceCIDR:      "169.254.128.128/32", // link-local IP just to trigger the static networkd config
+					DeviceMTU:       networkReq.MTU,
 				},
 			},
 		}),

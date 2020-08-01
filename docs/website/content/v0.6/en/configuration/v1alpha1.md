@@ -1176,3 +1176,392 @@ Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for t
 Type: `Duration`
 
 ---
+
+### MachineDisk
+
+#### device
+
+The name of the disk to use.
+Type: `string`
+
+#### partitions
+
+A list of partitions to create on the disk.
+Type: `array`
+
+---
+
+### DiskPartition
+
+#### size
+
+This size of the partition in bytes.
+
+Type: `uint`
+
+#### mountpoint
+
+Where to mount the partition.
+Type: `string`
+
+---
+
+### MachineFile
+
+#### content
+
+The contents of file.
+Type: `string`
+
+#### permissions
+
+The file's permissions in octal.
+Type: `FileMode`
+
+#### path
+
+The path of the file.
+Type: `string`
+
+#### op
+
+The operation to use
+Type: `string`
+
+Valid Values:
+
+- `create`
+- `append`
+
+---
+
+### ExtraHost
+
+#### ip
+
+The IP of the host.
+Type: `string`
+
+#### aliases
+
+The host alias.
+Type: `array`
+
+---
+
+### Device
+
+#### interface
+
+The interface name.
+Type: `string`
+
+#### cidr
+
+The CIDR to use.
+Type: `string`
+
+#### routes
+
+A list of routes associated with the interface.
+Type: `array`
+
+#### bond
+
+Bond specific options.
+Type: `Bond`
+
+#### vlans
+
+VLAN specific options.
+Type: `array`
+
+#### mtu
+
+The interface's MTU.
+Type: `int`
+
+#### dhcp
+
+Indicates if DHCP should be used.
+Type: `bool`
+
+#### ignore
+
+Indicates if the interface should be ignored.
+Type: `bool`
+
+#### dummy
+
+Indicates if the interface is a dummy interface.
+Type: `bool`
+
+---
+
+### Bond
+
+#### interfaces
+
+The CIDR to use.
+Type: `array`
+
+#### arpIPTarget
+
+The CIDR to use.
+Type: `array`
+
+#### mode
+
+The CIDR to use.
+Type: `string`
+
+#### xmitHashPolicy
+
+The CIDR to use.
+Type: `string`
+
+#### lacpRate
+
+The CIDR to use.
+Type: `string`
+
+#### adActorSystem
+
+The CIDR to use.
+Type: `string`
+
+#### arpValidate
+
+The CIDR to use.
+Type: `string`
+
+#### arpAllTargets
+
+The CIDR to use.
+Type: `string`
+
+#### primary
+
+The CIDR to use.
+Type: `string`
+
+#### primaryReselect
+
+The CIDR to use.
+Type: `string`
+
+#### failOverMac
+
+The CIDR to use.
+Type: `string`
+
+#### adSelect
+
+The CIDR to use.
+Type: `string`
+
+#### miimon
+
+The CIDR to use.
+Type: `uint32`
+
+#### updelay
+
+The CIDR to use.
+Type: `uint32`
+
+#### downdelay
+
+The CIDR to use.
+Type: `uint32`
+
+#### arpInterval
+
+The CIDR to use.
+Type: `uint32`
+
+#### resendIgmp
+
+The CIDR to use.
+Type: `uint32`
+
+#### minLinks
+
+The CIDR to use.
+Type: `uint32`
+
+#### lpInterval
+
+The CIDR to use.
+Type: `uint32`
+
+#### packetsPerSlave
+
+The CIDR to use.
+Type: `uint32`
+
+#### numPeerNotif
+
+The CIDR to use.
+Type: `uint8`
+
+#### tlbDynamicLb
+
+The CIDR to use.
+Type: `uint8`
+
+#### allSlavesActive
+
+The CIDR to use.
+Type: `uint8`
+
+#### useCarrier
+
+The CIDR to use.
+Type: `bool`
+
+#### adActorSysPrio
+
+The CIDR to use.
+Type: `uint16`
+
+#### adUserPortKey
+
+The CIDR to use.
+Type: `uint16`
+
+#### peerNotifyDelay
+
+The CIDR to use.
+Type: `uint32`
+
+---
+
+### Vlan
+
+#### cidr
+
+The CIDR to use.
+Type: `string`
+
+#### routes
+
+A list of routes associated with the VLAN.
+Type: `array`
+
+#### dhcp
+
+Indicates if DHCP should be used.
+Type: `bool`
+
+#### vlanId
+
+The VLAN's ID.
+Type: `uint16`
+
+---
+
+### Route
+
+#### network
+
+The route's network.
+Type: `string`
+
+#### gateway
+
+The route's gateway.
+Type: `string`
+
+---
+
+### RegistryMirrorConfig
+
+#### endpoints
+
+List of endpoints (URLs) for registry mirrors to use.
+Endpoint configures HTTP/HTTPS access mode, host name,
+port and path (if path is not set, it defaults to `/v2`).
+
+Type: `array`
+
+---
+
+### RegistryConfig
+
+#### tls
+
+The TLS configuration for this registry.
+Type: `RegistryTLSConfig`
+
+#### auth
+
+The auth configuration for this registry.
+Type: `RegistryAuthConfig`
+
+---
+
+### RegistryAuthConfig
+
+#### username
+
+Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.
+
+Type: `string`
+
+#### password
+
+Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.
+
+Type: `string`
+
+#### auth
+
+Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.
+
+Type: `string`
+
+#### identityToken
+
+Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.
+
+Type: `string`
+
+---
+
+### RegistryTLSConfig
+
+#### clientIdentity
+
+Enable mutual TLS authentication with the registry.
+Client certificate and key should be base64-encoded.
+
+Type: `PEMEncodedCertificateAndKey`
+
+Examples:
+
+```yaml
+clientIdentity:
+  crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
+  key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
+
+```
+
+#### ca
+
+CA registry certificate to add the list of trusted certificates.
+Certificate should be base64-encoded.
+
+Type: `array`
+
+#### insecureSkipVerify
+
+Skip TLS server certificate verification (not recommended).
+
+Type: `bool`
+
+---

@@ -53,7 +53,7 @@ var (
 
 // NetworkDeviceCheck defines the function type for checks.
 //nolint: dupl
-type NetworkDeviceCheck func(config.Device) error
+type NetworkDeviceCheck func(*Device) error
 
 // Validate implements the Configurator interface.
 //nolint: gocyclo
@@ -109,9 +109,9 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 
 	if c.MachineConfig.MachineDisks != nil {
 		for _, disk := range c.MachineConfig.MachineDisks {
-			for i, pt := range disk.Partitions {
-				if pt.Size == 0 && i != len(disk.Partitions)-1 {
-					result = multierror.Append(result, fmt.Errorf("partition for disk %q is set to occupy full disk, but it's not the last partition in the list", disk.Device))
+			for i, pt := range disk.DiskPartitions {
+				if pt.DiskSize == 0 && i != len(disk.DiskPartitions)-1 {
+					result = multierror.Append(result, fmt.Errorf("partition for disk %q is set to occupy full disk, but it's not the last partition in the list", disk.Device()))
 				}
 			}
 		}
@@ -123,10 +123,14 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
 //nolint: dupl
-func ValidateNetworkDevices(d config.Device, checks ...NetworkDeviceCheck) error {
+func ValidateNetworkDevices(d *Device, checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
-	if d.Ignore {
+	if d == nil {
+		return fmt.Errorf("empty device")
+	}
+
+	if d.DeviceIgnore {
 		return result.ErrorOrNil()
 	}
 
@@ -139,10 +143,14 @@ func ValidateNetworkDevices(d config.Device, checks ...NetworkDeviceCheck) error
 
 // CheckDeviceInterface ensures that the interface has been specified.
 //nolint: dupl
-func CheckDeviceInterface(d config.Device) error {
+func CheckDeviceInterface(d *Device) error {
 	var result *multierror.Error
 
-	if d.Interface == "" {
+	if d == nil {
+		return fmt.Errorf("empty device")
+	}
+
+	if d.DeviceInterface == "" {
 		result = multierror.Append(result, fmt.Errorf("[%s]: %w", "networking.os.device.interface", ErrRequiredSection))
 	}
 
@@ -152,23 +160,27 @@ func CheckDeviceInterface(d config.Device) error {
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified
 //nolint: dupl
-func CheckDeviceAddressing(d config.Device) error {
+func CheckDeviceAddressing(d *Device) error {
 	var result *multierror.Error
 
+	if d == nil {
+		return fmt.Errorf("empty device")
+	}
+
 	// Test for both dhcp and cidr specified
-	if d.DHCP && d.CIDR != "" {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.Interface, ErrBadAddressing))
+	if d.DeviceDHCP && d.DeviceCIDR != "" {
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.DeviceInterface, ErrBadAddressing))
 	}
 
 	// test for neither dhcp nor cidr specified
-	if !d.DHCP && d.CIDR == "" && len(d.Vlans) == 0 {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.Interface, ErrBadAddressing))
+	if !d.DeviceDHCP && d.DeviceCIDR == "" && len(d.DeviceVlans) == 0 {
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.DeviceInterface, ErrBadAddressing))
 	}
 
 	// ensure cidr is a valid address
-	if d.CIDR != "" {
-		if _, _, err := net.ParseCIDR(d.CIDR); err != nil {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", d.Interface, err))
+	if d.DeviceCIDR != "" {
+		if _, _, err := net.ParseCIDR(d.DeviceCIDR); err != nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", d.DeviceInterface, err))
 		}
 	}
 
@@ -177,20 +189,24 @@ func CheckDeviceAddressing(d config.Device) error {
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
 //nolint: dupl
-func CheckDeviceRoutes(d config.Device) error {
+func CheckDeviceRoutes(d *Device) error {
 	var result *multierror.Error
 
-	if len(d.Routes) == 0 {
+	if d == nil {
+		return fmt.Errorf("empty device")
+	}
+
+	if len(d.DeviceRoutes) == 0 {
 		return result.ErrorOrNil()
 	}
 
-	for idx, route := range d.Routes {
-		if _, _, err := net.ParseCIDR(route.Network); err != nil {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network, ErrInvalidAddress))
+	for idx, route := range d.DeviceRoutes {
+		if _, _, err := net.ParseCIDR(route.Network()); err != nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network(), ErrInvalidAddress))
 		}
 
-		if ip := net.ParseIP(route.Gateway); ip == nil {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway, ErrInvalidAddress))
+		if ip := net.ParseIP(route.Gateway()); ip == nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway(), ErrInvalidAddress))
 		}
 	}
 

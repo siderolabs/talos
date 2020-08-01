@@ -5,7 +5,6 @@
 package generate
 
 import (
-	"github.com/talos-systems/talos/pkg/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
@@ -70,10 +69,10 @@ func WithNetworkConfig(network *v1alpha1.NetworkConfig) GenOption {
 func WithRegistryMirror(host string, endpoints ...string) GenOption {
 	return func(o *GenOptions) error {
 		if o.RegistryMirrors == nil {
-			o.RegistryMirrors = make(map[string]config.RegistryMirrorConfig)
+			o.RegistryMirrors = make(map[string]*v1alpha1.RegistryMirrorConfig)
 		}
 
-		o.RegistryMirrors[host] = config.RegistryMirrorConfig{Endpoints: endpoints}
+		o.RegistryMirrors[host] = &v1alpha1.RegistryMirrorConfig{MirrorEndpoints: endpoints}
 
 		return nil
 	}
@@ -124,7 +123,7 @@ type GenOptions struct {
 	AdditionalSubjectAltNames []string
 	NetworkConfig             *v1alpha1.NetworkConfig
 	CNIConfig                 *v1alpha1.CNIConfig
-	RegistryMirrors           map[string]config.RegistryMirrorConfig
+	RegistryMirrors           map[string]*v1alpha1.RegistryMirrorConfig
 	DNSDomain                 string
 	Debug                     bool
 	Persist                   bool
