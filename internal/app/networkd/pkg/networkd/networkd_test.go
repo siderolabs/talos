@@ -171,18 +171,18 @@ func sampleConfigFile() config.Provider {
 			MachineNetwork: &v1alpha1.NetworkConfig{
 				NameServers:     []string{"1.2.3.4", "2.3.4.5"},
 				NetworkHostname: "myhostname",
-				NetworkInterfaces: []config.Device{
+				NetworkInterfaces: []*v1alpha1.Device{
 					{
-						Interface: "eth0",
-						CIDR:      "192.168.0.10/24",
-						MTU:       9100,
+						DeviceInterface: "eth0",
+						DeviceCIDR:      "192.168.0.10/24",
+						DeviceMTU:       9100,
 					},
 					{
-						Interface: "bond0",
-						CIDR:      "192.168.0.10/24",
-						Bond: &config.Bond{
-							Interfaces: []string{"lo"},
-							Mode:       "balance-rr",
+						DeviceInterface: "bond0",
+						DeviceCIDR:      "192.168.0.10/24",
+						DeviceBond: &v1alpha1.Bond{
+							BondInterfaces: []string{"lo"},
+							BondMode:       "balance-rr",
 						},
 					},
 				},
@@ -195,9 +195,9 @@ func dhcpConfigFile() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []config.Device{
+				NetworkInterfaces: []*v1alpha1.Device{
 					{
-						Interface: "eth0",
+						DeviceInterface: "eth0",
 					},
 				},
 			},

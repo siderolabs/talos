@@ -8,6 +8,7 @@ package v1alpha1
 
 import (
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -138,7 +139,7 @@ type MachineConfig struct {
 	//             - mountpoint: /var/lib/extra
 	//               size: 10000000000
 	//
-	MachineDisks []config.Disk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
+	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
 	//     Used to provide instructions for bare-metal installations.
 	//   examples:
@@ -167,7 +168,7 @@ type MachineConfig struct {
 	//           permissions: 0666
 	//           path: /tmp/file.txt
 	//           op: append
-	MachineFiles []config.File `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
+	MachineFiles []*MachineFile `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
 	//   description: |
 	//     The `env` field allows for the addition of environment variables to a machine.
 	//     All environment variables are set on the machine in addition to every service.
@@ -190,7 +191,7 @@ type MachineConfig struct {
 	//     - |
 	//       env:
 	//         https_proxy: http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/
-	MachineEnv config.Env `yaml:"env,omitempty"`
+	MachineEnv Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Used to configure the machine's time settings.
 	//   examples:
@@ -457,7 +458,7 @@ type NetworkConfig struct {
 	//     This parameter is optional.
 	//
 	//     Routes can be repeated and includes a `Network` and `Gateway` field.
-	NetworkInterfaces []config.Device `yaml:"interfaces,omitempty"`
+	NetworkInterfaces []*Device `yaml:"interfaces,omitempty"`
 	//   description: |
 	//     Used to statically set the nameservers for the host.
 	//     Defaults to `1.1.1.1` and `8.8.8.8`
@@ -471,7 +472,7 @@ type NetworkConfig struct {
 	//           aliases:
 	//             - test
 	//             - test.domain.tld
-	ExtraHostEntries []config.ExtraHost `yaml:"extraHostEntries,omitempty"`
+	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
 }
 
 // InstallConfig represents the installation options for preparing a node.
@@ -542,14 +543,14 @@ type RegistriesConfig struct {
 	//     Registry name is the first segment of image identifier, with 'docker.io'
 	//     being default one.
 	//     Name '*' catches any registry names not specified explicitly.
-	RegistryMirrors map[string]config.RegistryMirrorConfig `yaml:"mirrors,omitempty"`
+	RegistryMirrors map[string]*RegistryMirrorConfig `yaml:"mirrors,omitempty"`
 	//   description: |
 	//     Specifies TLS & auth configuration for HTTPS image registries.
 	//     Mutual TLS can be enabled with 'clientIdentity' option.
 	//
 	//     TLS configuration can be skipped if registry has trusted
 	//     server certificate.
-	RegistryConfig map[string]config.RegistryConfig `yaml:"config,omitempty"`
+	RegistryConfig map[string]*RegistryConfig `yaml:"config,omitempty"`
 }
 
 // PodCheckpointer represents the pod-checkpointer config values.
@@ -748,4 +749,259 @@ type AdminKubeconfigConfig struct {
 	//     Admin kubeconfig certificate lifetime (default is 1 year).
 	//     Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
 	AdminKubeconfigCertLifetime time.Duration `yaml:"certLifetime,omitempty"`
+}
+
+// MachineDisk represents the options available for partitioning, formatting, and
+// mounting extra disks.
+type MachineDisk struct {
+	//   description: The name of the disk to use.
+	DeviceName string `yaml:"device,omitempty"`
+	//   description: A list of partitions to create on the disk.
+	DiskPartitions []*DiskPartition `yaml:"partitions,omitempty"`
+}
+
+// DiskPartition represents the options for a device partition.
+type DiskPartition struct {
+	//   description: |
+	//     This size of the partition in bytes.
+	DiskSize uint `yaml:"size,omitempty"`
+	//   description:
+	//     Where to mount the partition.
+	DiskMountPoint string `yaml:"mountpoint,omitempty"`
+}
+
+// Env represents a set of environment variables.
+type Env = map[string]string
+
+// MachineFile represents a file to write to disk.
+type MachineFile struct {
+	//   description: The contents of file.
+	FileContent string `yaml:"content"`
+	//   description: The file's permissions in octal.
+	FilePermissions os.FileMode `yaml:"permissions"`
+	//   description: The path of the file.
+	FilePath string `yaml:"path"`
+	//   description: The operation to use
+	//   values:
+	//     - create
+	//     - append
+	FileOp string `yaml:"op"`
+}
+
+// ExtraHost represents a host entry in /etc/hosts.
+type ExtraHost struct {
+	//   description: The IP of the host.
+	HostIP string `yaml:"ip"`
+	//   description: The host alias.
+	HostAliases []string `yaml:"aliases"`
+}
+
+// Device represents a network interface.
+type Device struct {
+	//   description: The interface name.
+	DeviceInterface string `yaml:"interface"`
+	//   description: The CIDR to use.
+	DeviceCIDR string `yaml:"cidr"`
+	//   description: A list of routes associated with the interface.
+	DeviceRoutes []*Route `yaml:"routes"`
+	//   description: Bond specific options.
+	DeviceBond *Bond `yaml:"bond"`
+	//   description: VLAN specific options.
+	DeviceVlans []*Vlan `yaml:"vlans"`
+	//   description: The interface's MTU.
+	DeviceMTU int `yaml:"mtu"`
+	//   description: Indicates if DHCP should be used.
+	DeviceDHCP bool `yaml:"dhcp"`
+	//   description: Indicates if the interface should be ignored.
+	DeviceIgnore bool `yaml:"ignore"`
+	//   description: Indicates if the interface is a dummy interface.
+	DeviceDummy bool `yaml:"dummy"`
+}
+
+// Bond contains the various options for configuring a
+// bonded interface.
+type Bond struct {
+	//   description: The interfaces that make up the bond.
+	BondInterfaces []string `yaml:"interfaces"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondARPIPTarget []string `yaml:"arpIPTarget"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondMode string `yaml:"mode"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondHashPolicy string `yaml:"xmitHashPolicy"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondLACPRate string `yaml:"lacpRate"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondADActorSystem string `yaml:"adActorSystem"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondARPValidate string `yaml:"arpValidate"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondARPAllTargets string `yaml:"arpAllTargets"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondPrimary string `yaml:"primary"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondPrimaryReselect string `yaml:"primaryReselect"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondFailOverMac string `yaml:"failOverMac"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondADSelect string `yaml:"adSelect"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondMIIMon uint32 `yaml:"miimon"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondUpDelay uint32 `yaml:"updelay"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondDownDelay uint32 `yaml:"downdelay"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondARPInterval uint32 `yaml:"arpInterval"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondResendIGMP uint32 `yaml:"resendIgmp"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondMinLinks uint32 `yaml:"minLinks"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondLPInterval uint32 `yaml:"lpInterval"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondPacketsPerSlave uint32 `yaml:"packetsPerSlave"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondNumPeerNotif uint8 `yaml:"numPeerNotif"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondTLBDynamicLB uint8 `yaml:"tlbDynamicLb"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondAllSlavesActive uint8 `yaml:"allSlavesActive"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondUseCarrier bool `yaml:"useCarrier"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondADActorSysPrio uint16 `yaml:"adActorSysPrio"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondADUserPortKey uint16 `yaml:"adUserPortKey"`
+	//   description: |
+	//     A bond option.
+	//     Please see the official kernel documentation.
+	BondPeerNotifyDelay uint32 `yaml:"peerNotifyDelay"`
+}
+
+// Vlan represents vlan settings for a device.
+type Vlan struct {
+	//   description: The CIDR to use.
+	VlanCIDR string `yaml:"cidr"`
+	//   description: A list of routes associated with the VLAN.
+	VlanRoutes []*Route `yaml:"routes"`
+	//   description: Indicates if DHCP should be used.
+	VlanDHCP bool `yaml:"dhcp"`
+	//   description: The VLAN's ID.
+	VlanID uint16 `yaml:"vlanId"`
+}
+
+// Route represents a network route.
+type Route struct {
+	//   description: The route's network.
+	RouteNetwork string `yaml:"network"`
+	//   description: The route's gateway.
+	RouteGateway string `yaml:"gateway"`
+}
+
+// RegistryMirrorConfig represents mirror configuration for a registry.
+type RegistryMirrorConfig struct {
+	//   description: |
+	//     List of endpoints (URLs) for registry mirrors to use.
+	//     Endpoint configures HTTP/HTTPS access mode, host name,
+	//     port and path (if path is not set, it defaults to `/v2`).
+	MirrorEndpoints []string `yaml:"endpoints"`
+}
+
+// RegistryConfig specifies auth & TLS config per registry.
+type RegistryConfig struct {
+	//   description: The TLS configuration for this registry.
+	RegistryTLS *RegistryTLSConfig `yaml:"tls,omitempty"`
+	//   description: The auth configuration for this registry.
+	RegistryAuth *RegistryAuthConfig `yaml:"auth,omitempty"`
+}
+
+// RegistryAuthConfig specifies authentication configuration for a registry.
+type RegistryAuthConfig struct {
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	RegistryUsername string `yaml:"username"`
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	RegistryPassword string `yaml:"password"`
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	RegistryAuth string `yaml:"auth"`
+	//   description: |
+	//     Optional registry authentication.
+	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	RegistryIdentityToken string `yaml:"identityToken"`
+}
+
+// RegistryTLSConfig specifies TLS config for HTTPS registries.
+type RegistryTLSConfig struct {
+	//   description: |
+	//     Enable mutual TLS authentication with the registry.
+	//     Client certificate and key should be base64-encoded.
+	//   examples:
+	//     - |
+	//       clientIdentity:
+	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
+	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
+	TLSClientIdentity *x509.PEMEncodedCertificateAndKey `yaml:"clientIdentity,omitempty"`
+	//   description: |
+	//     CA registry certificate to add the list of trusted certificates.
+	//     Certificate should be base64-encoded.
+	TLSCA []byte `yaml:"ca,omitempty"`
+	//   description: |
+	//     Skip TLS server certificate verification (not recommended).
+	TLSInsecureSkipVerify bool `yaml:"insecureSkipVerify,omitempty"`
 }
