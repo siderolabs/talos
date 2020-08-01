@@ -28,6 +28,8 @@ func NewResolver(reg config.Registries) remotes.Resolver {
 }
 
 // RegistryHosts returns host configuration per registry.
+//
+//nolint: gocyclo
 func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost
@@ -48,12 +50,12 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 
 			registryConfig := reg.Config()[u.Host]
 
-			if u.Scheme != "https" && registryConfig.TLS != nil {
+			if u.Scheme != "https" && registryConfig != nil && registryConfig.TLS() != nil {
 				return nil, fmt.Errorf("TLS config specified for non-HTTPS registry: %q", u.Host)
 			}
 
-			if registryConfig.TLS != nil {
-				transport.TLSClientConfig, err = registryConfig.TLS.GetTLSConfig()
+			if registryConfig != nil && registryConfig.TLS() != nil {
+				transport.TLSClientConfig, err = registryConfig.TLS().GetTLSConfig()
 				if err != nil {
 					return nil, fmt.Errorf("error preparing TLS config for %q: %w", u.Host, err)
 				}
@@ -70,7 +72,11 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 				Authorizer: docker.NewDockerAuthorizer(
 					docker.WithAuthClient(client),
 					docker.WithAuthCreds(func(host string) (string, string, error) {
-						return PrepareAuth(registryConfig.Auth, uu.Host, host)
+						if registryConfig == nil {
+							return "", "", nil
+						}
+
+						return PrepareAuth(registryConfig.Auth(), uu.Host, host)
 					})),
 				Host:         uu.Host,
 				Scheme:       uu.Scheme,
@@ -88,12 +94,12 @@ func RegistryEndpoints(reg config.Registries, host string) ([]string, error) {
 	var endpoints []string
 
 	if hostConfig, ok := reg.Mirrors()[host]; ok {
-		endpoints = hostConfig.Endpoints
+		endpoints = hostConfig.Endpoints()
 	}
 
 	if endpoints == nil {
 		if catchAllConfig, ok := reg.Mirrors()["*"]; ok {
-			endpoints = catchAllConfig.Endpoints
+			endpoints = catchAllConfig.Endpoints()
 		}
 	}
 
@@ -111,7 +117,7 @@ func RegistryEndpoints(reg config.Registries, host string) ([]string, error) {
 }
 
 // PrepareAuth returns authentication info in the format expected by containerd.
-func PrepareAuth(auth *config.RegistryAuthConfig, host, expectedHost string) (string, string, error) {
+func PrepareAuth(auth config.RegistryAuthConfig, host, expectedHost string) (string, string, error) {
 	if auth == nil {
 		return "", "", nil
 	}
@@ -121,19 +127,19 @@ func PrepareAuth(auth *config.RegistryAuthConfig, host, expectedHost string) (st
 		return "", "", nil
 	}
 
-	if auth.Username != "" {
-		return auth.Username, auth.Password, nil
+	if auth.Username() != "" {
+		return auth.Username(), auth.Password(), nil
 	}
 
-	if auth.IdentityToken != "" {
-		return "", auth.IdentityToken, nil
+	if auth.IdentityToken() != "" {
+		return "", auth.IdentityToken(), nil
 	}
 
-	if auth.Auth != "" {
-		decLen := base64.StdEncoding.DecodedLen(len(auth.Auth))
+	if auth.Auth() != "" {
+		decLen := base64.StdEncoding.DecodedLen(len(auth.Auth()))
 		decoded := make([]byte, decLen)
 
-		_, err := base64.StdEncoding.Decode(decoded, []byte(auth.Auth))
+		_, err := base64.StdEncoding.Decode(decoded, []byte(auth.Auth()))
 		if err != nil {
 			return "", "", fmt.Errorf("error parsing auth for %q: %w", host, err)
 		}

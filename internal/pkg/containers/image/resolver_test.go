@@ -14,19 +14,32 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 )
 
 type mockConfig struct {
-	mirrors map[string]config.RegistryMirrorConfig
-	config  map[string]config.RegistryConfig
+	mirrors map[string]*v1alpha1.RegistryMirrorConfig
+	config  map[string]*v1alpha1.RegistryConfig
 }
 
 func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
-	return c.mirrors
+	mirrors := make(map[string]config.RegistryMirrorConfig, len(c.mirrors))
+
+	for k, v := range c.mirrors {
+		mirrors[k] = v
+	}
+
+	return mirrors
 }
 
 func (c *mockConfig) Config() map[string]config.RegistryConfig {
-	return c.config
+	registries := make(map[string]config.RegistryConfig, len(c.config))
+
+	for k, v := range c.config {
+		registries[k] = v
+	}
+
+	return registries
 }
 
 func (c *mockConfig) ExtraFiles() ([]config.File, error) {
@@ -49,9 +62,9 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 	// overrides without catch-all
 	cfg := &mockConfig{
-		mirrors: map[string]config.RegistryMirrorConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				Endpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+				MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
 			},
 		},
 	}
@@ -66,12 +79,12 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 
 	// overrides with catch-all
 	cfg = &mockConfig{
-		mirrors: map[string]config.RegistryMirrorConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				Endpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+				MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
 			},
 			"*": {
-				Endpoints: []string{"http://127.0.0.1:5001"},
+				MirrorEndpoints: []string{"http://127.0.0.1:5001"},
 			},
 		},
 	}
@@ -91,37 +104,37 @@ func (suite *ResolverSuite) TestPrepareAuth() {
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("", pass)
 
-	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
-		Username: "root",
-		Password: "secret",
+	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+		RegistryUsername: "root",
+		RegistryPassword: "secret",
 	}, "docker.io", "not.docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("", pass)
 
-	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
-		Username: "root",
-		Password: "secret",
+	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+		RegistryUsername: "root",
+		RegistryPassword: "secret",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("root", user)
 	suite.Assert().Equal("secret", pass)
 
-	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
-		IdentityToken: "xyz",
+	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+		RegistryIdentityToken: "xyz",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("", user)
 	suite.Assert().Equal("xyz", pass)
 
-	user, pass, err = image.PrepareAuth(&config.RegistryAuthConfig{
-		Auth: "dXNlcjE6c2VjcmV0MQ==",
+	user, pass, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{
+		RegistryAuth: "dXNlcjE6c2VjcmV0MQ==",
 	}, "docker.io", "docker.io")
 	suite.Assert().NoError(err)
 	suite.Assert().Equal("user1", user)
 	suite.Assert().Equal("secret1", pass)
 
-	_, _, err = image.PrepareAuth(&config.RegistryAuthConfig{}, "docker.io", "docker.io")
+	_, _, err = image.PrepareAuth(&v1alpha1.RegistryAuthConfig{}, "docker.io", "docker.io")
 	suite.Assert().EqualError(err, "invalid auth config for \"docker.io\"")
 }
 
@@ -135,9 +148,9 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig)
 
 	cfg := &mockConfig{
-		mirrors: map[string]config.RegistryMirrorConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				Endpoints: []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
+				MirrorEndpoints: []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
 			},
 		},
 	}
@@ -155,20 +168,20 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Nil(registryHosts[1].Client.Transport.(*http.Transport).TLSClientConfig)
 
 	cfg = &mockConfig{
-		mirrors: map[string]config.RegistryMirrorConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				Endpoints: []string{"https://some.host:123"},
+				MirrorEndpoints: []string{"https://some.host:123"},
 			},
 		},
-		config: map[string]config.RegistryConfig{
+		config: map[string]*v1alpha1.RegistryConfig{
 			"some.host:123": {
-				TLS: &config.RegistryTLSConfig{
-					CA: []byte(caCertMock),
+				RegistryTLS: &v1alpha1.RegistryTLSConfig{
+					TLSCA: []byte(caCertMock),
 					// ClientIdentity: &x509.PEMEncodedCertificateAndKey{},
 				},
-				Auth: &config.RegistryAuthConfig{
-					Username: "root",
-					Password: "secret",
+				RegistryAuth: &v1alpha1.RegistryAuthConfig{
+					RegistryUsername: "root",
+					RegistryPassword: "secret",
 				},
 			},
 		},

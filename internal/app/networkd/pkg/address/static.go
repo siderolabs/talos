@@ -87,9 +87,9 @@ func (s *Static) Scope() uint8 {
 func (s *Static) Routes() (routes []*Route) {
 	for _, route := range s.RouteList {
 		// nolint: errcheck
-		_, ipnet, _ := net.ParseCIDR(route.Network)
+		_, ipnet, _ := net.ParseCIDR(route.Network())
 
-		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway)})
+		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway())})
 	}
 
 	return routes

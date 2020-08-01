@@ -16,7 +16,6 @@ import (
 	stdlibx509 "crypto/x509"
 
 	"github.com/talos-systems/talos/internal/pkg/cis"
-	"github.com/talos-systems/talos/pkg/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
@@ -79,7 +78,7 @@ type Input struct {
 	NetworkConfig *v1alpha1.NetworkConfig
 	CNIConfig     *v1alpha1.CNIConfig
 
-	RegistryMirrors map[string]config.RegistryMirrorConfig
+	RegistryMirrors map[string]*v1alpha1.RegistryMirrorConfig
 
 	Debug   bool
 	Persist bool
