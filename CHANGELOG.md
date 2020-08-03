@@ -1,3 +1,51 @@
+<a name="v0.6.0-beta.0"></a>
+
+## [v0.6.0-beta.0](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.6...v0.6.0-beta.0) (2020-08-03)
+
+### Chore
+
+- bump elliptic from 6.5.2 to 6.5.3 in /docs/website
+- add aliases to some `talosctl` commands
+- use qemu instead of firecracker in CI
+- really mount /tmp in CI as tmpfs
+- mount `/tmp` in CI to the build steps
+- add release notes
+
+### Feat
+
+- add dynamic config decoder
+- taint master nodes with `NoSchedule` taint
+- upgrade Kubernetes to v1.19.0-rc.3
+- qemu provisioner
+- pull in kernel with fuse support
+
+### Fix
+
+- update AMI link to latest
+- workaround edge case for etcd re-injection on bootstrap
+- update status when adjusting the time
+- fail ntpd service if initial time sync fails
+- bump timeouts
+- generate admin kubeconfig with default namespace
+
+### Refactor
+
+- make `pkg/config` not rely on `machined/../internal/runtime`
+
+### Release
+
+- **v0.6.0-beta.0:** prepare release
+
+### Test
+
+- use registry mirrors in CI
+- destroy clusters in e2e tests (qemu/firecracker)
+- bump timeout for upgrade tests
+- update qemu/firecracker provisioners
+- upgrade versions the upgrade tests are operating on
+- provide node discovery for cli tests via kubectl
+- remove apid load balancer for firecracker
+
 <a name="v0.6.0-alpha.6"></a>
 
 ## [v0.6.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.5...v0.6.0-alpha.6) (2020-07-27)
@@ -44,6 +92,10 @@
 ### Refactor
 
 - use `humanize.Bytes` everywhere
+
+### Release
+
+- **v0.6.0-alpha.6:** prepare release
 
 ### Test
 
