@@ -24,7 +24,10 @@ type State struct {
 	ClusterInfo provision.ClusterInfo
 
 	VMCNIConfig *libcni.NetworkConfigList
-	statePath   string
+
+	PFlashImages []string
+
+	statePath string
 }
 
 // NewState create new vm provisioner state.
