@@ -26,6 +26,7 @@ import (
 
 //nolint: gocyclo
 func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
+	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
 	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
@@ -50,7 +51,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline := procfs.NewDefaultCmdline()
 
 	// required to get kernel console
-	cmdline.Append("console", "ttyS0")
+	cmdline.Append("console", arch.Console())
 
 	// reboot configuration
 	cmdline.Append("reboot", "k")
@@ -65,20 +66,16 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
-	qemuArch, qemuMachineType, err := qemuArchFromGoArch(opts.TargetArch)
-	if err != nil {
-		return provision.NodeInfo{}, err
-	}
-
 	launchConfig := LaunchConfig{
-		QemuExecutable:    fmt.Sprintf("qemu-system-%s", qemuArch),
+		QemuExecutable:    fmt.Sprintf("qemu-system-%s", arch.QemuArch()),
 		DiskPath:          diskPath,
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,
 		KernelImagePath:   clusterReq.KernelPath,
 		KernelArgs:        cmdline.String(),
 		InitrdPath:        clusterReq.InitramfsPath,
-		MachineType:       qemuMachineType,
+		MachineType:       arch.QemuMachine(),
+		PFlashImages:      state.PFlashImages,
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,
 		BootloaderEnabled: opts.BootloaderEnabled,
 		Config:            nodeConfig,

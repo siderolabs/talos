@@ -25,6 +25,11 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
+	arch := Arch(options.TargetArch)
+	if !arch.Valid() {
+		return nil, fmt.Errorf("unsupported arch: %q", options.TargetArch)
+	}
+
 	statePath := filepath.Join(request.StateDirectory, request.Name)
 
 	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)
@@ -36,6 +41,14 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if pflashSpec := arch.PFlash(); pflashSpec != nil {
+		fmt.Fprintln(options.LogWriter, "creating flash images")
+
+		if err = p.createPFlashImages(state, pflashSpec); err != nil {
+			return nil, fmt.Errorf("error creating flash images: %w", err)
+		}
 	}
 
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)

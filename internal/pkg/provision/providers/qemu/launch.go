@@ -37,6 +37,7 @@ type LaunchConfig struct {
 	QemuExecutable    string
 	KernelImagePath   string
 	InitrdPath        string
+	PFlashImages      []string
 	KernelArgs        string
 	MachineType       string
 	EnableKVM         bool
@@ -165,14 +166,18 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 }
 
 // launchVM runs qemu with args built based on config.
+//
+//nolint: gocyclo
 func launchVM(config *LaunchConfig) error {
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
 		"-drive", fmt.Sprintf("format=raw,if=virtio,file=%s", config.DiskPath),
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
+		"-cpu", "max",
 		"-nographic",
 		"-netdev", fmt.Sprintf("tap,id=net0,ifname=%s,script=no,downscript=no", config.tapName),
 		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s", config.vmMAC),
+		"-device", "virtio-rng-pci",
 		"-no-reboot",
 	}
 
@@ -183,6 +188,14 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	args = append(args, "-machine", machineArg)
+
+	pflashArgs := make([]string, 2*len(config.PFlashImages))
+	for i := range config.PFlashImages {
+		pflashArgs[2*i] = "-drive"
+		pflashArgs[2*i+1] = fmt.Sprintf("file=%s,format=raw,if=pflash", config.PFlashImages[i])
+	}
+
+	args = append(args, pflashArgs...)
 
 	// check if disk is empty/wiped
 	diskBootable, err := checkPartitions(config)

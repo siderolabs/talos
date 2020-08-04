@@ -6,7 +6,6 @@ package qemu
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
@@ -43,7 +42,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 	return []generate.GenOption{
 		generate.WithInstallDisk("/dev/vda"),
 		generate.WithInstallExtraKernelArgs([]string{
-			"console=ttyS0",
+			"console=ttyS0", // TODO: should depend on arch
 			// reboot configuration
 			"reboot=k",
 			"panic=1",
@@ -57,15 +56,4 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
 	// firecracker runs loadbalancer on the bridge, which is good for both internal & external access
 	return networkReq.GatewayAddr.String(), networkReq.GatewayAddr.String()
-}
-
-func qemuArchFromGoArch(arch string) (string, string, error) {
-	switch arch {
-	case "amd64":
-		return "x86_64", "q35", nil
-	case "arm64":
-		return "aarch64", "virt", nil
-	default:
-		return "", "", fmt.Errorf("architecture %q is not supported", arch)
-	}
 }
