@@ -916,7 +916,15 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			// We do not want to support creating new files anywhere outside of
 			// /var. If a valid use case comes up, we can reconsider then.
 			if !inVar && f.Op == "create" {
-				return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path)
+				var abs string
+
+				if abs, err = filepath.Abs(f.Path); err != nil {
+					return err
+				}
+
+				if !strings.HasPrefix(abs, constants.ManifestsDirectory) {
+					return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path)
+				}
 			}
 
 			if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
