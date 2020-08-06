@@ -31,6 +31,7 @@ var (
 	installImage      string
 	outputDir         string
 	registryMirrors   []string
+	persistConfig     bool
 )
 
 // genConfigCmd represents the gen config command.
@@ -99,6 +100,7 @@ func genV1Alpha1Config(args []string) error {
 					generate.WithInstallImage(installImage),
 					generate.WithAdditionalSubjectAltNames(additionalSANs),
 					generate.WithDNSDomain(dnsDomain),
+					generate.WithPersist(persistConfig),
 				),
 			},
 		),
@@ -167,4 +169,5 @@ func init() {
 	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
+	genConfigCmd.Flags().BoolVarP(&persistConfig, "persist", "p", true, "the desired persist value for configs")
 }
