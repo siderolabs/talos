@@ -26,6 +26,9 @@ type ClusterInfo struct {
 
 	Network NetworkInfo
 	Nodes   []NodeInfo
+
+	// ExtraNodes are not part of the cluster.
+	ExtraNodes []NodeInfo
 }
 
 // NetworkInfo describes cluster network.

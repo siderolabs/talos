@@ -69,6 +69,11 @@ var (
 	withInitNode            bool
 	customCNIUrl            string
 	crashdumpOnFailure      bool
+
+	pxeNodes         int
+	pxeTFTPServer    string
+	pxeBootFilename  string
+	ipxeBootFilename string
 )
 
 // createCmd represents the cluster up command.
@@ -113,7 +118,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	// Set starting ip at 2nd ip in range, ex: 192.168.0.2
-	ips := make([]net.IP, masters+workers)
+	ips := make([]net.IP, masters+workers+pxeNodes)
 
 	for i := range ips {
 		ips[i], err = talosnet.NthIPInNetwork(cidr, i+2)
@@ -292,6 +297,21 @@ func create(ctx context.Context) (err error) {
 			})
 	}
 
+	for i := 1; i <= pxeNodes; i++ {
+		request.Nodes = append(request.Nodes,
+			provision.NodeRequest{
+				Name:             fmt.Sprintf("%s-pxe-%d", clusterName, i),
+				IP:               ips[masters+workers+i-1],
+				Memory:           memory,
+				NanoCPUs:         nanoCPUs,
+				DiskSize:         diskSize,
+				PXEBooted:        true,
+				TFTPServer:       pxeTFTPServer,
+				BootFilename:     pxeBootFilename,
+				IPXEBootFilename: ipxeBootFilename,
+			})
+	}
+
 	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
 	if err != nil {
 		return err
@@ -446,5 +466,9 @@ func init() {
 	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
 	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
+	createCmd.Flags().IntVar(&pxeNodes, "pxe-nodes", 0, "the number of PXE nodes to create")
+	createCmd.Flags().StringVar(&pxeTFTPServer, "pxe-tftp-server", "127.0.0.1", "the TFTP server to boot from")
+	createCmd.Flags().StringVar(&pxeBootFilename, "pxe-boot-filename", "ipxe.efi", "the boot filename")
+	createCmd.Flags().StringVar(&ipxeBootFilename, "ipxe-boot-filename", "http://127.0.0.1:8081/boot.ipxe", "the boot filename")
 	Cmd.AddCommand(createCmd)
 }

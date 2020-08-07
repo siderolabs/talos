@@ -85,6 +85,17 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, err
 	}
 
+	var pxeNodeInfo []provision.NodeInfo
+
+	pxeNodes := request.Nodes.PXENodes()
+	if len(pxeNodes) > 0 {
+		fmt.Fprintln(options.LogWriter, "creating PXE nodes")
+
+		if pxeNodeInfo, err = p.createNodes(state, request, pxeNodes, &options); err != nil {
+			return nil, err
+		}
+	}
+
 	nodeInfo = append(nodeInfo, workerNodeInfo...)
 
 	state.ClusterInfo = provision.ClusterInfo{
@@ -95,7 +106,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 			GatewayAddr: request.Network.GatewayAddr,
 			MTU:         request.Network.MTU,
 		},
-		Nodes: nodeInfo,
+		Nodes:      nodeInfo,
+		ExtraNodes: pxeNodeInfo,
 	}
 
 	err = state.Save()

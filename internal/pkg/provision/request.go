@@ -57,6 +57,10 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 	found := false
 
 	for i := range reqs {
+		if reqs[i].Config == nil {
+			continue
+		}
+
 		if reqs[i].Config.Machine().Type() == machine.TypeInit {
 			if found {
 				err = fmt.Errorf("duplicate init node in requests")
@@ -78,6 +82,10 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 // MasterNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 	for i := range reqs {
+		if reqs[i].Config == nil {
+			continue
+		}
+
 		if reqs[i].Config.Machine().Type() == machine.TypeInit || reqs[i].Config.Machine().Type() == machine.TypeControlPlane {
 			nodes = append(nodes, reqs[i])
 		}
@@ -89,7 +97,22 @@ func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 // WorkerNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 	for i := range reqs {
+		if reqs[i].Config == nil {
+			continue
+		}
+
 		if reqs[i].Config.Machine().Type() == machine.TypeJoin {
+			nodes = append(nodes, reqs[i])
+		}
+	}
+
+	return
+}
+
+// PXENodes returns subset of nodes which are PXE booted.
+func (reqs NodeRequests) PXENodes() (nodes []NodeRequest) {
+	for i := range reqs {
+		if reqs[i].PXEBooted {
 			nodes = append(nodes, reqs[i])
 		}
 	}
@@ -111,4 +134,10 @@ type NodeRequest struct {
 	DiskSize int64
 	// Ports
 	Ports []string
+
+	// PXE-booted VMs
+	PXEBooted        bool
+	TFTPServer       string
+	BootFilename     string
+	IPXEBootFilename string
 }

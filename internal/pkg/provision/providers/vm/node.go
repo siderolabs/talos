@@ -16,7 +16,9 @@ import (
 func (p *Provisioner) DestroyNodes(cluster provision.ClusterInfo, options *provision.Options) error {
 	errCh := make(chan error)
 
-	for _, node := range cluster.Nodes {
+	nodes := append(cluster.Nodes, cluster.ExtraNodes...)
+
+	for _, node := range nodes {
 		go func(node provision.NodeInfo) {
 			fmt.Fprintln(options.LogWriter, "stopping VM", node.Name)
 
@@ -26,7 +28,7 @@ func (p *Provisioner) DestroyNodes(cluster provision.ClusterInfo, options *provi
 
 	var multiErr *multierror.Error
 
-	for range cluster.Nodes {
+	for range nodes {
 		multiErr = multierror.Append(multiErr, <-errCh)
 	}
 

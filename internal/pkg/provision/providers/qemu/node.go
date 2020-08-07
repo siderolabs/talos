@@ -20,6 +20,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/provision"
 	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
+	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 
 	"github.com/talos-systems/go-procfs/procfs"
 )
@@ -61,9 +62,13 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("talos.platform", "metal")
 	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
 
-	nodeConfig, err := nodeReq.Config.String()
-	if err != nil {
-		return provision.NodeInfo{}, err
+	var nodeConfig string
+
+	if nodeReq.Config != nil {
+		nodeConfig, err = nodeReq.Config.String()
+		if err != nil {
+			return provision.NodeInfo{}, err
+		}
 	}
 
 	launchConfig := LaunchConfig{
@@ -71,9 +76,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		DiskPath:          diskPath,
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,
-		KernelImagePath:   clusterReq.KernelPath,
 		KernelArgs:        cmdline.String(),
-		InitrdPath:        clusterReq.InitramfsPath,
 		MachineType:       arch.QemuMachine(),
 		PFlashImages:      state.PFlashImages,
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,
@@ -87,6 +90,14 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		GatewayAddr:       clusterReq.Network.GatewayAddr,
 		MTU:               clusterReq.Network.MTU,
 		Nameservers:       clusterReq.Network.Nameservers,
+		TFTPServer:        nodeReq.TFTPServer,
+		BootFilename:      nodeReq.BootFilename,
+		IPXEBootFileName:  nodeReq.IPXEBootFilename,
+	}
+
+	if !nodeReq.PXEBooted {
+		launchConfig.KernelImagePath = clusterReq.KernelPath
+		launchConfig.InitrdPath = clusterReq.InitramfsPath
 	}
 
 	launchConfig.StatePath, err = state.StatePath()
@@ -127,10 +138,15 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	// no need to wait here, as cmd has all the Stdin/out/err via *os.File
 
+	nodeType := machine.Type(-1) // HACK!
+	if nodeReq.Config != nil {
+		nodeType = nodeReq.Config.Machine().Type()
+	}
+
 	nodeInfo := provision.NodeInfo{
 		ID:   pidPath,
 		Name: nodeReq.Name,
-		Type: nodeReq.Config.Machine().Type(),
+		Type: nodeType,
 
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,
