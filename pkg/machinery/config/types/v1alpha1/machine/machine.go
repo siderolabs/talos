@@ -10,8 +10,10 @@ import "fmt"
 type Type int
 
 const (
+	// TypeUnknown represents undefined node type.
+	TypeUnknown Type = iota
 	// TypeInit represents a bootstrap node.
-	TypeInit Type = iota
+	TypeInit
 	// TypeControlPlane represents a control plane node.
 	TypeControlPlane
 	// TypeJoin represents a worker node.
@@ -19,6 +21,7 @@ const (
 )
 
 const (
+	typeUnknown      = "unknown"
 	typeInit         = "init"
 	typeControlPlane = "controlplane"
 	typeJoin         = "join"
@@ -26,12 +29,14 @@ const (
 
 // String returns the string representation of Type.
 func (t Type) String() string {
-	return [...]string{typeInit, typeControlPlane, typeJoin}[t]
+	return [...]string{typeUnknown, typeInit, typeControlPlane, typeJoin}[t]
 }
 
 // ParseType parses string constant as Type.
 func ParseType(t string) (Type, error) {
 	switch t {
+	case typeUnknown:
+		return TypeUnknown, nil
 	case typeInit:
 		return TypeInit, nil
 	case typeControlPlane:

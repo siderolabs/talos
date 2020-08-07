@@ -115,7 +115,7 @@ func genV1Alpha1Config(args []string) error {
 
 		var configString string
 
-		switch t {
+		switch t { //nolint: exhaustive
 		case machine.TypeInit:
 			configString, err = configBundle.Init().String()
 			if err != nil {

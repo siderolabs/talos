@@ -641,6 +641,8 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 				&services.Etcd{},
 			)
 		case machine.TypeJoin:
+		case machine.TypeUnknown:
+			return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
 		}
 
 		system.Services(r).StartAll()

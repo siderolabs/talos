@@ -92,6 +92,8 @@ func (cluster *clusterState) NodesByType(t machine.Type) []string {
 		return cluster.controlPlaneNodes
 	case machine.TypeJoin:
 		return cluster.workerNodes
+	case machine.TypeUnknown:
+		return nil
 	default:
 		panic("unsupported machine type")
 	}

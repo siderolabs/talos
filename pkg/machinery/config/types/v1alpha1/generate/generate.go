@@ -41,6 +41,8 @@ func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 		if c, err = workerUd(in); err != nil {
 			return c, err
 		}
+	case machine.TypeUnknown:
+		fallthrough
 	default:
 		return c, errors.New("failed to determine config type to generate")
 	}
