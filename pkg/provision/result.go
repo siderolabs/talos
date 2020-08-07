@@ -7,6 +7,8 @@ package provision
 import (
 	"net"
 
+	"github.com/google/uuid"
+
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -26,6 +28,9 @@ type ClusterInfo struct {
 
 	Network NetworkInfo
 	Nodes   []NodeInfo
+
+	// ExtraNodes are not part of the cluster.
+	ExtraNodes []NodeInfo
 }
 
 // NetworkInfo describes cluster network.
@@ -39,6 +44,7 @@ type NetworkInfo struct {
 // NodeInfo describes a node.
 type NodeInfo struct {
 	ID   string
+	UUID uuid.UUID
 	Name string
 	Type machine.Type
 

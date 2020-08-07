@@ -49,7 +49,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 				return bundle, err
 			}
 
-			switch configType {
+			switch configType { //nolint: exhaustive
 			case machine.TypeInit:
 				bundle.InitCfg = unmarshalledConfig
 			case machine.TypeControlPlane:
@@ -96,7 +96,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			return bundle, err
 		}
 
-		switch configType {
+		switch configType { //nolint: exhaustive
 		case machine.TypeInit:
 			bundle.InitCfg = generatedConfig
 		case machine.TypeControlPlane:
