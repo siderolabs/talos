@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
+//nolint: gocyclo
 func handler(serverIP net.IP, statePath string) server4.Handler {
 	return func(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
 		if m.OpCode != dhcpv4.OpcodeBootRequest {
@@ -45,7 +46,6 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 
 		resp, err := dhcpv4.NewReplyFromRequest(m,
 			dhcpv4.WithNetmask(match.Netmask),
-			dhcpv4.WithServerIP(serverIP),
 			dhcpv4.WithYourIP(match.IP),
 			dhcpv4.WithOption(dhcpv4.OptHostName(match.Hostname)),
 			dhcpv4.WithOption(dhcpv4.OptDNS(match.Nameservers...)),
@@ -56,6 +56,18 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 		if err != nil {
 			log.Printf("failure building response: %s", err)
 			return
+		}
+
+		if m.IsOptionRequested(dhcpv4.OptionBootfileName) {
+			log.Printf("received PXE boot request from %s", m.ClientHWAddr)
+
+			if match.TFTPServer != "" {
+				log.Printf("sending PXE response to %s: %s/%s", m.ClientHWAddr, match.TFTPServer, match.IPXEBootFilename)
+
+				resp.ServerIPAddr = net.ParseIP(match.TFTPServer)
+				resp.UpdateOption(dhcpv4.OptTFTPServerName(match.TFTPServer))
+				resp.UpdateOption(dhcpv4.OptBootFileName(match.IPXEBootFilename))
+			}
 		}
 
 		resp.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionInterfaceMTU, dhcpv4.Uint16(match.MTU).ToBytes()))

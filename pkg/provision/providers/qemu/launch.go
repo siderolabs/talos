@@ -42,6 +42,7 @@ type LaunchConfig struct {
 	MachineType       string
 	EnableKVM         bool
 	BootloaderEnabled bool
+	NodeUUID          uuid.UUID
 
 	// Talos config
 	Config string
@@ -55,6 +56,11 @@ type LaunchConfig struct {
 	GatewayAddr   net.IP
 	MTU           int
 	Nameservers   []net.IP
+
+	// PXE
+	TFTPServer       string
+	BootFilename     string
+	IPXEBootFileName string
 
 	// filled by CNI invocation
 	tapName string
@@ -131,13 +137,15 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 
 	// dump node IP/mac/hostname for dhcp
 	if err = vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
-		IP:          config.IP,
-		Netmask:     config.CIDR.Mask,
-		MAC:         vmIface.Mac,
-		Hostname:    config.Hostname,
-		Gateway:     config.GatewayAddr,
-		MTU:         config.MTU,
-		Nameservers: config.Nameservers,
+		IP:               config.IP,
+		Netmask:          config.CIDR.Mask,
+		MAC:              vmIface.Mac,
+		Hostname:         config.Hostname,
+		Gateway:          config.GatewayAddr,
+		MTU:              config.MTU,
+		Nameservers:      config.Nameservers,
+		TFTPServer:       config.TFTPServer,
+		IPXEBootFilename: config.IPXEBootFileName,
 	}); err != nil {
 		return err
 	}
@@ -179,6 +187,8 @@ func launchVM(config *LaunchConfig) error {
 		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s", config.vmMAC),
 		"-device", "virtio-rng-pci",
 		"-no-reboot",
+		"-boot", "order=cn,reboot-timeout=5000",
+		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),
 	}
 
 	machineArg := config.MachineType
@@ -203,7 +213,7 @@ func launchVM(config *LaunchConfig) error {
 		return err
 	}
 
-	if !diskBootable || !config.BootloaderEnabled {
+	if (!diskBootable || !config.BootloaderEnabled) && config.KernelImagePath != "" {
 		args = append(args,
 			"-kernel", config.KernelImagePath,
 			"-initrd", config.InitrdPath,

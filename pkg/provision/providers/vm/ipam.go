@@ -22,6 +22,9 @@ type IPAMRecord struct {
 	Gateway     net.IP
 	MTU         int
 	Nameservers []net.IP
+
+	TFTPServer       string
+	IPXEBootFilename string
 }
 
 // IPAMDatabase is a mapping from MAC address to records.
