@@ -870,10 +870,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 			switch f.Op {
 			case "create":
-				if err = doesNotExists(f.Path); err != nil {
-					result = multierror.Append(result, fmt.Errorf("file must not exist: %q", f.Path))
-					continue
-				}
+				// Allow create at all times.
 			case "overwrite":
 				if err = existsAndIsFile(f.Path); err != nil {
 					result = multierror.Append(result, err)
@@ -899,16 +896,25 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
+			if filepath.Dir(f.Path) == constants.ManifestsDirectory {
+				if err = ioutil.WriteFile(f.Path, []byte(content), f.Permissions); err != nil {
+					result = multierror.Append(result, err)
+					continue
+				}
+
+				continue
+			}
+
 			// Determine if supplied path is in /var or not.
 			// If not, we'll write it to /var anyways and bind mount below
 			p := f.Path
 			inVar := true
-			explodedPath := strings.Split(
+			parts := strings.Split(
 				strings.TrimLeft(f.Path, "/"),
 				string(os.PathSeparator),
 			)
 
-			if explodedPath[0] != "var" {
+			if parts[0] != "var" {
 				p = filepath.Join("/var", f.Path)
 				inVar = false
 			}
@@ -929,7 +935,6 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
-			// File path was not /var/... so we assume a bind mount is wanted
 			if !inVar {
 				if err = unix.Mount(p, f.Path, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
 					result = multierror.Append(result, fmt.Errorf("failed to create bind mount for %s: %w", p, err))
@@ -941,6 +946,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 	}, "writeUserFiles"
 }
 
+// nolint: deadcode,unused
 func doesNotExists(p string) (err error) {
 	_, err = os.Stat(p)
 	if err != nil {
