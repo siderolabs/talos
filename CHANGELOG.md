@@ -1,3 +1,20 @@
+<a name="v0.6.0-beta.1"></a>
+
+## [v0.6.0-beta.1](https://github.com/talos-systems/talos/compare/v0.6.0-beta.0...v0.6.0-beta.1) (2020-08-10)
+
+### Chore
+
+- update packages
+
+### Fix
+
+- retry non-HTTP errors from API server
+- allow static pod files
+
+### Release
+
+- **v0.6.0-beta.1:** prepare release
+
 <a name="v0.6.0-beta.0"></a>
 
 ## [v0.6.0-beta.0](https://github.com/talos-systems/talos/compare/v0.6.0-alpha.6...v0.6.0-beta.0) (2020-08-03)
