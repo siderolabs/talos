@@ -18,12 +18,12 @@
     "front-matter": "^3.1.0",
     "markdown-it": "^10.0.0",
     "markdown-it-anchor": "^5.2.7",
-    "markdown-it-prism": "^2.0.5",
+    "markdown-it-prism": "^2.1.1",
     "markdown-toc": "^1.2.0",
     "nuxt": "^2.12.0",
     "nuxt-interpolation": "^0.2.2",
     "nuxt-webfontloader": "^1.1.0",
-    "prismjs": "^1.19.0",
+    "prismjs": "^1.21.0",
     "vue-feather-icons": "^5.0.0"
   },
   "devDependencies": {
