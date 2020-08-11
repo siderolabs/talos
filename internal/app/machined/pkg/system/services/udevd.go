@@ -13,8 +13,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/talos/pkg/conditions"
 )
 
 // Udevd implements the Service interface. It serves as the concrete type with

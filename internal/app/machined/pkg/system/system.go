@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/conditions"
 )
 
 type singleton struct {

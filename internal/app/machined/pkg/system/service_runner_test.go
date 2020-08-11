@@ -13,7 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 

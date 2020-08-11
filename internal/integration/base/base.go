@@ -8,9 +8,9 @@
 package base
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/cluster"
-	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision/access"
+	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/talos-systems/talos/pkg/provision/access"
 )
 
 // TalosSuite defines most common settings for integration test suites.

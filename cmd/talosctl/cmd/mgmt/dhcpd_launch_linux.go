@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/vm"
+	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
 
 var dhcpdLaunchCmdFlags struct {
