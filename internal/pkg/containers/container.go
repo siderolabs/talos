@@ -13,10 +13,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/chunker"
 	"github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
+	"github.com/talos-systems/talos/pkg/tail"
 )
 
 // Container presents information about a container.

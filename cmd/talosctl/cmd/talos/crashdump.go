@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/cluster"
 )
 
 var crashdumpCmdFlags struct {

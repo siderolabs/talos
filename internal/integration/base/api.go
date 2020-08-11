@@ -17,13 +17,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/cluster"
-	"github.com/talos-systems/talos/internal/pkg/cluster/check"
-	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 

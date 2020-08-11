@@ -14,7 +14,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	multierror "github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/constants"
 )
 

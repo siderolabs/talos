@@ -23,11 +23,8 @@ import (
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/internal/pkg/cluster/check"
-	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision/access"
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/qemu"
 	talosclient "github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/bundle"
@@ -35,6 +32,9 @@ import (
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	talosnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/talos-systems/talos/pkg/provision/access"
+	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 

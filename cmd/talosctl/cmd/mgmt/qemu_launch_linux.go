@@ -9,7 +9,7 @@ package mgmt
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/qemu"
+	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
 )
 
 // qemuLaunchCmd represents the qemu-launch command.
