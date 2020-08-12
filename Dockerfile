@@ -76,8 +76,14 @@ COPY --from=generate-build /api/cluster/cluster.pb.go /api/cluster/
 # assets.
 
 FROM build AS base
-COPY ./go.mod ./
-COPY ./go.sum ./
+COPY ./go.mod ./go.sum ./
+COPY ./api/go.mod ./api/go.sum ./api/
+COPY ./pkg/client/go.mod ./pkg/client/go.sum ./pkg/client/
+COPY ./pkg/config/go.mod ./pkg/config/go.sum ./pkg/config/
+COPY ./pkg/constants/go.mod ./pkg/constants/go.sum ./pkg/constants/
+COPY ./pkg/crypto/go.mod ./pkg/crypto/go.sum ./pkg/crypto/
+COPY ./pkg/grpc/go.mod ./pkg/grpc/go.sum ./pkg/grpc/
+COPY ./pkg/net/go.mod ./pkg/net/go.sum ./pkg/net/
 RUN go mod download
 RUN go mod verify
 COPY ./cmd ./cmd
@@ -473,7 +479,7 @@ FROM base AS lint-go
 COPY .golangci.yml .
 ENV GOGC=50
 RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache/golangci-lint golangci-lint run --config .golangci.yml
-RUN --mount=type=cache,target=/.cache/go-build importvet ./...
+RUN --mount=type=cache,target=/.cache/go-build importvet github.com/talos-systems/talos/...
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
@@ -500,7 +506,9 @@ RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/docs/talosct
 # The docs target generates documentation.
 
 FROM base AS docs-build
-RUN go generate ./pkg/config/types/v1alpha1
+WORKDIR /src/pkg/config
+RUN go generate ./types/v1alpha1
+WORKDIR /src
 COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
 RUN mkdir -p /docs/talosctl \
     && env HOME=/home/user TAG=latest /bin/talosctl docs /docs/talosctl

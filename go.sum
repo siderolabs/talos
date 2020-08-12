@@ -98,6 +98,7 @@ github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:z
 github.com/containerd/cgroups v0.0.0-20190919134610-bf292b21730f/go.mod h1:OApqhQ4XNSNC13gXIwDjhOQxjWa/NxkwZXJ1EvqT0ko=
 github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 h1:9atoWyI9RtXFwf7UDbme/6M8Ud0rFrx+Q3ZWgSnsxtw=
 github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340/go.mod h1:s5q4SojHctfxANBDvMeIaIovkq29IP48TKAxnhYRxvo=
+github.com/containerd/console v0.0.0-20180822173158-c12b1e7919c1 h1:uict5mhHFTzKLUCufdSLym7z/J0CbBJT59lYbP9wtbg=
 github.com/containerd/console v0.0.0-20180822173158-c12b1e7919c1/go.mod h1:Tj/on1eG8kiEhd0+fhSDzsPAFESxzBBvdyEgyryXffw=
 github.com/containerd/containerd v1.3.2/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=
 github.com/containerd/containerd v1.3.6 h1:SMfcKoQyWhaRsYq7290ioC6XFcHDNcHvcEMjF6ORpac=
@@ -112,6 +113,7 @@ github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 h1:lsjC5ENBl+Zgf38
 github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00/go.mod h1:jPQ2IAeZRCYxpS/Cm1495vGFww6ecHmMk1YJH2Q5ln0=
 github.com/containerd/go-cni v1.0.0 h1:A681A9YQ5Du9V2/gZGk/pTm6g69wF0aGd9qFN9syB1E=
 github.com/containerd/go-cni v1.0.0/go.mod h1:8n8EnvP0b886Wmqum9jDXlN59aHCIBKgaNYQzcDvJbU=
+github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3 h1:esQOJREg8nw8aXj6uCN5dfW5cKUBiEJ/+nni1Q/D/sw=
 github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3/go.mod h1:IV7qH3hrUgRmyYrtgEeGWJfWbgcHL9CSRruz2Vqcph0=
 github.com/containerd/ttrpc v0.0.0-20190828154514-0e0f228740de/go.mod h1:PvCDdDGpgqzQIzDW1TphrGLssLDZp2GuS+X5DkEJB8o=
 github.com/containerd/ttrpc v1.0.1 h1:IfVOxKbjyBn9maoye2JN95pgGYOmPkQVqxtOu7rtNIc=

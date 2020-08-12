@@ -23,14 +23,14 @@ perform_short_tests() {
 case $1 in
   --race)
   shift
-  perform_race_tests "${1:-./...}"
+  perform_race_tests "${1:-github.com/talos-systems/talos/...}"
   ;;
   --short)
   shift
-  perform_short_tests "${1:-./...}"
+  perform_short_tests "${1:-github.com/talos-systems/talos/...}"
   ;;
   *)
-  perform_tests "${1:-./...}"
+  perform_tests "${1:-github.com/talos-systems/talos/...}"
   ;;
 esac
 

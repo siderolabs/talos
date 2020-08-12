@@ -1,8 +1,18 @@
 module github.com/talos-systems/talos
 
-go 1.13
+go 1.14
 
 replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+
+replace (
+	github.com/talos-systems/talos/api => ./api
+	github.com/talos-systems/talos/pkg/client => ./pkg/client
+	github.com/talos-systems/talos/pkg/config => ./pkg/config
+	github.com/talos-systems/talos/pkg/constants => ./pkg/constants
+	github.com/talos-systems/talos/pkg/crypto => ./pkg/crypto
+	github.com/talos-systems/talos/pkg/grpc => ./pkg/grpc
+	github.com/talos-systems/talos/pkg/net => ./pkg/net
+)
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -30,7 +40,6 @@ require (
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.1
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 // indirect
@@ -57,6 +66,13 @@ require (
 	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee
 	github.com/talos-systems/grpc-proxy v0.2.0
+	github.com/talos-systems/talos/api v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/talos/pkg/client v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/talos/pkg/config v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/talos/pkg/constants v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/talos/pkg/crypto v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/talos/pkg/grpc v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/talos/pkg/net v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
@@ -73,7 +89,6 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
-	gotest.tools v2.2.0+incompatible
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	k8s.io/api v0.19.0-rc.3
 	k8s.io/apimachinery v0.19.0-rc.3

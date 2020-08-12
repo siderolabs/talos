@@ -9,17 +9,10 @@ import (
 	"reflect"
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
-
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
-}
 
 func TestAddressContainsPort(t *testing.T) {
 	assert.Equal(t, talosnet.AddressContainsPort("192.168.1.1:9021"), true)
