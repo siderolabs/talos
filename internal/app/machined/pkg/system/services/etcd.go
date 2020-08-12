@@ -431,11 +431,17 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	return nil
 }
 
+//nolint: gocyclo
 func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
 	errCh <- func() error {
 		var err error
 
-		if err = os.MkdirAll(constants.EtcdDataPath, 0o755); err != nil {
+		if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
+			return err
+		}
+
+		// Data path might exist after upgrade from previous version of Talos.
+		if err = os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
 			return err
 		}
 

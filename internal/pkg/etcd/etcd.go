@@ -12,6 +12,7 @@ import (
 
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
+	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/config/configloader"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
@@ -38,6 +39,7 @@ func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 	client, err = clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
+		DialOptions: []grpc.DialOption{grpc.WithBlock()},
 		TLS:         tlsConfig,
 	})
 	if err != nil {
