@@ -174,7 +174,7 @@ const (
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
 
 	// DefaultEtcdVersion is the default target version of etcd.
-	DefaultEtcdVersion = "v3.3.22"
+	DefaultEtcdVersion = "v3.4.10"
 
 	// EtcdImage is the reposistory for the etcd image.
 	EtcdImage = "gcr.io/etcd-development/etcd"

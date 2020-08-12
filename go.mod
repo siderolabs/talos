@@ -18,7 +18,6 @@ require (
 	github.com/containerd/typeurl v1.0.1
 	github.com/containernetworking/cni v0.8.0
 	github.com/containernetworking/plugins v0.8.6
-	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
@@ -60,7 +59,7 @@ require (
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd v3.3.13+incompatible
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200716221620-18dfb9cca345 // v3.4.10
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
