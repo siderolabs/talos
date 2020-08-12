@@ -2,13 +2,12 @@ module github.com/talos-systems/talos/pkg/grpc
 
 go 1.14
 
-replace github.com/talos-systems/talos/api => ../../api
-
-replace github.com/talos-systems/talos/pkg/constants => ../constants
-
-replace github.com/talos-systems/talos/pkg/crypto => ../crypto
-
-replace github.com/talos-systems/talos/pkg/net => ../net
+replace (
+	github.com/talos-systems/talos/api => ../../api
+	github.com/talos-systems/talos/pkg/constants => ../constants
+	github.com/talos-systems/talos/pkg/crypto => ../crypto
+	github.com/talos-systems/talos/pkg/net => ../net
+)
 
 require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
