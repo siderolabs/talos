@@ -17,8 +17,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 var (

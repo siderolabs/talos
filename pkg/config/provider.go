@@ -12,8 +12,9 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 // Provider defines the configuration consumption interface.

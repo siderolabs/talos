@@ -13,8 +13,9 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 func init() {

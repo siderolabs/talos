@@ -10,7 +10,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 )
 
