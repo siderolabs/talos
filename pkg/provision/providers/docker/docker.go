@@ -48,18 +48,25 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		generate.WithPersist(false),
 	}
 
+	networkConfig := &v1alpha1.NetworkConfig{
+		NetworkInterfaces: []*v1alpha1.Device{
+			{
+				DeviceInterface: "eth0",
+				DeviceIgnore:    true,
+			},
+		},
+	}
+
 	if len(networkReq.Nameservers) > 0 {
 		nameservers := make([]string, len(networkReq.Nameservers))
 		for i := range nameservers {
 			nameservers[i] = networkReq.Nameservers[i].String()
 		}
 
-		ret = append(ret, generate.WithNetworkConfig(
-			&v1alpha1.NetworkConfig{
-				NameServers: nameservers,
-			}),
-		)
+		networkConfig.NameServers = nameservers
 	}
+
+	ret = append(ret, generate.WithNetworkConfig(networkConfig))
 
 	return ret
 }
