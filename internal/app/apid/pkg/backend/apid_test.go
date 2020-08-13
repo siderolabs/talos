@@ -17,8 +17,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
 )
 
 func TestAPIDInterfaces(t *testing.T) {

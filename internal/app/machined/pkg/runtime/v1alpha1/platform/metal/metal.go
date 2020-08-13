@@ -19,8 +19,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/download"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (

@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // KubeconfigSuite verifies dmesg command.

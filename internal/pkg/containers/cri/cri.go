@@ -16,7 +16,7 @@ import (
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type inspector struct {

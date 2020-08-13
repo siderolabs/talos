@@ -11,7 +11,7 @@ package runtime_test
 
 // 	"github.com/talos-systems/go-procfs/procfs"
 
-// 	"github.com/talos-systems/talos/api/machine"
+// 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 // )
 
 // type MockSuccessfulSequencer struct{}

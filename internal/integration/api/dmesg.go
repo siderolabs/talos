@@ -12,9 +12,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // DmesgSuite verifies Dmesg API.

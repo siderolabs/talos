@@ -4,5 +4,3 @@ rules:
     action: deny
   - regexp: ^github.com/talos-systems/talos/pkg
     action: allow
-  - regexp: ^github.com/talos-systems/talos/api
-    action: allow

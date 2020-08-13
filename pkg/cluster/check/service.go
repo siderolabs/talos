@@ -12,8 +12,8 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // ErrServiceNotFound is an error that indicates that a service was not found.

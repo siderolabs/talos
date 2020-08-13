@@ -16,9 +16,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // timeCmd represents the time command.

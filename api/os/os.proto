@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package os;
 
-option go_package = "github.com/talos-systems/talos/api/os";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/os";
 option java_multiple_files = true;
 option java_outer_classname = "OsApi";
 option java_package = "com.os.api";

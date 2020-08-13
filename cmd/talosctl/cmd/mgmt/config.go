@@ -16,10 +16,10 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/bundle"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (

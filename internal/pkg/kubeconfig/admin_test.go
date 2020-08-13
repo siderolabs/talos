@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type AdminSuite struct {

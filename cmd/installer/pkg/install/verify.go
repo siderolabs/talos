@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // VerifyEphemeralPartition verifies the supplied data device options.

@@ -18,11 +18,11 @@ import (
 	apidbackend "github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/configloader"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/factory"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/proxy/backend"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 

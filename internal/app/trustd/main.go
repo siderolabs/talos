@@ -14,11 +14,11 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
-	"github.com/talos-systems/talos/pkg/config/configloader"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/factory"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/middleware/auth/basic"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/startup"
 )

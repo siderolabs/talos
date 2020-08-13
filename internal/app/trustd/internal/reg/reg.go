@@ -15,8 +15,8 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 
-	securityapi "github.com/talos-systems/talos/api/security"
-	"github.com/talos-systems/talos/pkg/config"
+	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and

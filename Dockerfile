@@ -63,14 +63,14 @@ RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api cluster/clust
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 FROM scratch AS generate
-COPY --from=generate-build /api/common/common.pb.go /api/common/
-COPY --from=generate-build /api/health/health.pb.go /api/health/
-COPY --from=generate-build /api/os/os.pb.go /api/os/
-COPY --from=generate-build /api/security/security.pb.go /api/security/
-COPY --from=generate-build /api/machine/machine.pb.go /api/machine/
-COPY --from=generate-build /api/time/time.pb.go /api/time/
-COPY --from=generate-build /api/network/network.pb.go /api/network/
-COPY --from=generate-build /api/cluster/cluster.pb.go /api/cluster/
+COPY --from=generate-build /api/common/common.pb.go /pkg/machinery/api/common/
+COPY --from=generate-build /api/health/health.pb.go /pkg/machinery/api/health/
+COPY --from=generate-build /api/os/os.pb.go /pkg/machinery/api/os/
+COPY --from=generate-build /api/security/security.pb.go /pkg/machinery/api/security/
+COPY --from=generate-build /api/machine/machine.pb.go /pkg/machinery/api/machine/
+COPY --from=generate-build /api/time/time.pb.go /pkg/machinery/api/time/
+COPY --from=generate-build /api/network/network.pb.go /pkg/machinery/api/network/
+COPY --from=generate-build /api/cluster/cluster.pb.go /pkg/machinery/api/cluster/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -83,7 +83,7 @@ RUN go mod verify
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
-COPY --from=generate /api ./api
+COPY --from=generate /pkg/machinery/api ./pkg/machinery/api
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 

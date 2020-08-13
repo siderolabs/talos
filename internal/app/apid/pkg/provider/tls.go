@@ -11,9 +11,9 @@ import (
 	stdlibtls "crypto/tls"
 	stdlibnet "net"
 
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/tls"
 	"github.com/talos-systems/talos/pkg/net"
 )
 

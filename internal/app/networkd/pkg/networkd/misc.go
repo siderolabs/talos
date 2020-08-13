@@ -16,7 +16,7 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	talosnet "github.com/talos-systems/talos/pkg/net"
 )
 

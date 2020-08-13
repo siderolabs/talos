@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/talos-systems/talos/pkg/grpc/dialer"
+	"github.com/talos-systems/talos/pkg/machinery/grpc/dialer"
 )
 
 // Client is a lightweight implementation of CRI client.
