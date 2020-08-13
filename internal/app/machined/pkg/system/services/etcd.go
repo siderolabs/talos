@@ -23,6 +23,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
@@ -132,13 +133,32 @@ func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 			return err
 		}
 
+		defer client.Close() //nolint: errcheck
+
+		// Get a random key. As long as we can get the response without an error, the
+		// endpoint is healthy.
+
+		_, err = client.Get(ctx, "health")
+		if err == rpctypes.ErrPermissionDenied {
+			// Permission denied is OK since proposal goes through consensus to get this error.
+			err = nil
+		}
+
+		if err != nil {
+			return err
+		}
+
 		return client.Close()
 	}
 }
 
 // HealthSettings implements the HealthcheckedService interface.
 func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
-	return &health.DefaultSettings
+	return &health.Settings{
+		InitialDelay: 5 * time.Second,
+		Period:       20 * time.Second,
+		Timeout:      15 * time.Second,
+	}
 }
 
 // nolint: gocyclo
