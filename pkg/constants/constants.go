@@ -9,6 +9,7 @@ import (
 
 	"github.com/containerd/containerd/defaults"
 	cni "github.com/containerd/go-cni"
+	"github.com/talos-systems/crypto/x509"
 )
 
 const (
@@ -261,7 +262,7 @@ const (
 	RootfsAsset = "rootfs.sqsh"
 
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
-	DefaultCertificateValidityDuration = 24 * time.Hour
+	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration
 
 	// SystemPath is the path to write temporary runtime system related files
 	// and directories.

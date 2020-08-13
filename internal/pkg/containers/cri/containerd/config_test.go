@@ -9,11 +9,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 type mockConfig struct {

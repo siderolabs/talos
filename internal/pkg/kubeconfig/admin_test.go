@@ -14,9 +14,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 type AdminSuite struct {

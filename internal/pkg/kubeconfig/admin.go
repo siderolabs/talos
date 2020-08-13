@@ -11,9 +11,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/talos-systems/crypto/x509"
+
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 const adminKubeConfigTemplate = `apiVersion: v1
