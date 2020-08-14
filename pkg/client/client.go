@@ -27,6 +27,8 @@ import (
 
 	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
 
+	"github.com/talos-systems/net"
+
 	clusterapi "github.com/talos-systems/talos/api/cluster"
 	"github.com/talos-systems/talos/api/common"
 	machineapi "github.com/talos-systems/talos/api/machine"
@@ -34,7 +36,6 @@ import (
 	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/client/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/net"
 )
 
 // Credentials represents the set of values required to initialize a valid

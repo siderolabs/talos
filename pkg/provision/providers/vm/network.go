@@ -19,7 +19,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink"
 
-	talosnet "github.com/talos-systems/talos/pkg/net"
+	talosnet "github.com/talos-systems/net"
+
 	"github.com/talos-systems/talos/pkg/provision"
 )
 

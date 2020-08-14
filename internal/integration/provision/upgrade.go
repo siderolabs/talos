@@ -20,6 +20,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	talosnet "github.com/talos-systems/net"
+
 	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -31,7 +33,6 @@ import (
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	talosnet "github.com/talos-systems/talos/pkg/net"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/provision/providers/qemu"

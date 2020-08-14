@@ -11,8 +11,9 @@ import (
 
 	"google.golang.org/grpc/resolver"
 
+	"github.com/talos-systems/net"
+
 	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/net"
 )
 
 func init() {

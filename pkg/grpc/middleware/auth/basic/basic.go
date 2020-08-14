@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/net"
 )
 
 // Credentials describes an authorization method.

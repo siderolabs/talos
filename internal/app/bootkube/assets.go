@@ -24,9 +24,10 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
+	tnet "github.com/talos-systems/net"
+
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
-	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 // nolint: gocyclo
