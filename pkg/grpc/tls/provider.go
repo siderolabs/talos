@@ -9,10 +9,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"sync"
 	"time"
+
+	talosx509 "github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/constants"
 )
@@ -27,25 +30,79 @@ type CertificateProvider interface {
 
 	// GetClientCertificate returns the current certificate to present to the server.
 	GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error)
-
-	// UpdateCertificate updates the stored certificate for the given client request.
-	UpdateCertificates([]byte, *tls.Certificate) error
 }
 
-type embeddableCertificateProvider struct {
+// Generator describes an interface to sign the CSR.
+type Generator interface {
+	Identity(csr *talosx509.CertificateSigningRequest) (ca, crt []byte, err error)
+}
+
+type certificateProvider struct {
 	sync.RWMutex
+
+	generator Generator
 
 	ca  []byte
 	crt *tls.Certificate
 
 	dnsNames []string
 	ips      []net.IP
-
-	updateFunc  func() ([]byte, tls.Certificate, error)
-	updateHooks []func(newCert *tls.Certificate)
 }
 
-func (p *embeddableCertificateProvider) GetCA() ([]byte, error) {
+// NewRenewingCertificateProvider returns a new CertificateProvider
+// which manages and updates its certificates using Generator.
+func NewRenewingCertificateProvider(generator Generator, dnsNames []string, ips []net.IP) (CertificateProvider, error) {
+	provider := &certificateProvider{
+		generator: generator,
+		dnsNames:  dnsNames,
+		ips:       ips,
+	}
+
+	var (
+		ca   []byte
+		cert tls.Certificate
+		err  error
+	)
+
+	if ca, cert, err = provider.update(); err != nil {
+		return nil, fmt.Errorf("failed to create initial certificate: %w", err)
+	}
+
+	provider.updateCertificates(ca, &cert)
+
+	// nolint: errcheck
+	go provider.manageUpdates(context.Background())
+
+	return provider, nil
+}
+
+func (p *certificateProvider) update() (ca []byte, cert tls.Certificate, err error) {
+	var (
+		crt      []byte
+		csr      *talosx509.CertificateSigningRequest
+		identity *talosx509.PEMEncodedCertificateAndKey
+	)
+
+	csr, identity, err = talosx509.NewCSRAndIdentity(p.dnsNames, p.ips)
+	if err != nil {
+		return nil, cert, err
+	}
+
+	if ca, crt, err = p.generator.Identity(csr); err != nil {
+		return nil, cert, fmt.Errorf("failed to generate identity: %w", err)
+	}
+
+	identity.Crt = crt
+
+	cert, err = tls.X509KeyPair(identity.Crt, identity.Key)
+	if err != nil {
+		return nil, cert, fmt.Errorf("failed to parse cert and key into a TLS Certificate: %w", err)
+	}
+
+	return ca, cert, nil
+}
+
+func (p *certificateProvider) GetCA() ([]byte, error) {
 	if p == nil {
 		return nil, errors.New("no provider")
 	}
@@ -56,7 +113,7 @@ func (p *embeddableCertificateProvider) GetCA() ([]byte, error) {
 	return p.ca, nil
 }
 
-func (p *embeddableCertificateProvider) GetCertificate(h *tls.ClientHelloInfo) (*tls.Certificate, error) {
+func (p *certificateProvider) GetCertificate(h *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	if p == nil {
 		return nil, errors.New("no provider")
 	}
@@ -67,24 +124,19 @@ func (p *embeddableCertificateProvider) GetCertificate(h *tls.ClientHelloInfo) (
 	return p.crt, nil
 }
 
-func (p *embeddableCertificateProvider) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+func (p *certificateProvider) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 	return p.GetCertificate(nil)
 }
 
-func (p *embeddableCertificateProvider) UpdateCertificates(ca []byte, cert *tls.Certificate) error {
+func (p *certificateProvider) updateCertificates(ca []byte, cert *tls.Certificate) {
 	p.Lock()
+	defer p.Unlock()
+
 	p.ca = ca
 	p.crt = cert
-	p.Unlock()
-
-	for _, f := range p.updateHooks {
-		f(cert)
-	}
-
-	return nil
 }
 
-func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err error) {
+func (p *certificateProvider) manageUpdates(ctx context.Context) (err error) {
 	nextRenewal := constants.DefaultCertificateValidityDuration
 
 	for ctx.Err() == nil {
@@ -123,15 +175,12 @@ func (p *embeddableCertificateProvider) manageUpdates(ctx context.Context) (err 
 			cert tls.Certificate
 		)
 
-		if ca, cert, err = p.updateFunc(); err != nil {
+		if ca, cert, err = p.update(); err != nil {
 			log.Println("failed to renew certificate:", err)
 			continue
 		}
 
-		if err = p.UpdateCertificates(ca, &cert); err != nil {
-			log.Println("failed to renew certificate:", err)
-			continue
-		}
+		p.updateCertificates(ca, &cert)
 	}
 
 	return errors.New("certificate update manager exited unexpectedly")
