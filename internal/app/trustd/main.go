@@ -19,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/config/configloader"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 	"github.com/talos-systems/talos/pkg/startup"
@@ -65,9 +66,16 @@ func main() {
 		}
 	}
 
+	var generator tls.Generator
+
+	generator, err = gen.NewLocalGenerator(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt)
+	if err != nil {
+		log.Fatalln("failed to create local generator provider:", err)
+	}
+
 	var provider tls.CertificateProvider
 
-	provider, err = tls.NewLocalRenewingFileCertificateProvider(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt, dnsNames, ips)
+	provider, err = tls.NewRenewingCertificateProvider(generator, dnsNames, ips)
 	if err != nil {
 		log.Fatalln("failed to create local certificate provider:", err)
 	}

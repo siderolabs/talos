@@ -15,6 +15,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/tls"
 )
 
@@ -43,12 +44,19 @@ func NewTLSConfig(config config.Provider, endpoints []string) (*TLSConfig, error
 		}
 	}
 
-	tlsConfig := &TLSConfig{}
-
-	tlsConfig.certificateProvider, err = tls.NewRemoteRenewingFileCertificateProvider(
+	generator, err := gen.NewRemoteGenerator(
 		config.Machine().Security().Token(),
 		endpoints,
 		constants.TrustdPort,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create remote certificate genertor: %w", err)
+	}
+
+	tlsConfig := &TLSConfig{}
+
+	tlsConfig.certificateProvider, err = tls.NewRenewingCertificateProvider(
+		generator,
 		dnsNames,
 		ips,
 	)
