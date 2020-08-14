@@ -17,11 +17,12 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 
+	tnet "github.com/talos-systems/net"
+
 	"github.com/talos-systems/talos/pkg/config/internal/cis"
 	v1alpha1 "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
-	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 // Config returns the talos config for a given node type.

@@ -28,6 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
+	tnet "github.com/talos-systems/net"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -38,7 +40,6 @@ import (
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/constants"
-	tnet "github.com/talos-systems/talos/pkg/net"
 )
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
