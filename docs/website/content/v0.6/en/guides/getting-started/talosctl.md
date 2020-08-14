@@ -10,7 +10,7 @@ This guide gives you some hands on examples, and some more context when working 
 To get going with `talosctl` you need to download the latest release from Github [here](https://github.com/talos-systems/talos/releases).
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/download/latest/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
