@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	grpctls "github.com/talos-systems/talos/pkg/grpc/tls"
+	grpctls "github.com/talos-systems/crypto/tls"
 
 	"github.com/talos-systems/net"
 

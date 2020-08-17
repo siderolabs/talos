@@ -13,10 +13,11 @@ import (
 
 	"github.com/talos-systems/net"
 
+	"github.com/talos-systems/crypto/tls"
+
 	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/gen"
-	"github.com/talos-systems/talos/pkg/grpc/tls"
 )
 
 // TLSConfig provides client & server TLS configs for apid.
