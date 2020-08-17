@@ -60,52 +60,74 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 		suite.T().Skip("without full cluster state recover test is not reliable (can't wait for cluster readiness)")
 	}
 
-	pods, err := suite.Clientset.CoreV1().Pods("kube-system").List(suite.ctx, metav1.ListOptions{
-		LabelSelector: "k8s-app in (kube-scheduler,kube-controller-manager)",
-	})
+	for _, source := range []machineapi.RecoverRequest_Source{
+		machineapi.RecoverRequest_APISERVER,
+		machineapi.RecoverRequest_ETCD,
+	} {
+		source := source
 
-	suite.Assert().NoError(err)
+		suite.Run(source.String(), func() {
+			pods, err := suite.Clientset.CoreV1().Pods("kube-system").List(suite.ctx, metav1.ListOptions{
+				LabelSelector: "k8s-app in (kube-scheduler,kube-controller-manager)",
+			})
 
-	var eg errgroup.Group
+			suite.Assert().NoError(err)
 
-	for _, pod := range pods.Items {
-		pod := pod
+			var eg errgroup.Group
 
-		eg.Go(func() error {
-			suite.T().Logf("Deleting %s", pod.GetName())
+			for _, pod := range pods.Items {
+				pod := pod
 
-			err := suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{})
+				eg.Go(func() error {
+					suite.T().Logf("Deleting %s", pod.GetName())
 
-			return err
+					err := suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{})
+					if err != nil {
+						return err
+					}
+
+					return err
+				})
+			}
+
+			suite.Assert().NoError(eg.Wait())
+
+			suite.T().Logf("Waiting for the pods to be deleted")
+
+			for len(pods.Items) > 0 {
+				pods, err = suite.Clientset.CoreV1().Pods("kube-system").List(suite.ctx, metav1.ListOptions{
+					LabelSelector: "k8s-app in (kube-scheduler,kube-controller-manager)",
+				})
+
+				suite.Assert().NoError(err)
+			}
+
+			nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
+			suite.Require().NotEmpty(nodes)
+
+			sort.Strings(nodes)
+
+			node := nodes[0]
+
+			suite.T().Log("Recovering control plane")
+
+			ctx, ctxCancel := context.WithTimeout(suite.ctx, 5*time.Minute)
+			defer ctxCancel()
+
+			nodeCtx := client.WithNodes(ctx, node)
+
+			in := &machineapi.RecoverRequest{
+				Source: source,
+			}
+
+			_, err = suite.Client.MachineClient.Recover(nodeCtx, in)
+
+			suite.Assert().NoError(err)
+
+			// NB: using `ctx` here to have client talking to init node by default
+			suite.AssertClusterHealthy(ctx)
 		})
 	}
-
-	suite.Assert().NoError(eg.Wait())
-
-	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
-	suite.Require().NotEmpty(nodes)
-
-	sort.Strings(nodes)
-
-	node := nodes[0]
-
-	suite.T().Log("Recovering control plane")
-
-	ctx, ctxCancel := context.WithTimeout(suite.ctx, 5*time.Minute)
-	defer ctxCancel()
-
-	nodeCtx := client.WithNodes(ctx, node)
-
-	in := &machineapi.RecoverRequest{
-		Source: machineapi.RecoverRequest_APISERVER,
-	}
-
-	_, err = suite.Client.MachineClient.Recover(nodeCtx, in)
-
-	suite.Assert().NoError(err)
-
-	// NB: using `ctx` here to have client talking to init node by default
-	suite.AssertClusterHealthy(ctx)
 }
 
 func init() {

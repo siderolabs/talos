@@ -28,8 +28,6 @@ import (
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/kubernetes-sigs/bootkube/pkg/recovery"
-
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -1568,55 +1566,23 @@ func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			return runtime.ErrInvalidSequenceData
 		}
 
-		kubeconfigPath := "/etc/kubernetes/recovery.yaml"
-
 		var b bytes.Buffer
 
 		if err = kubeconfig.GenerateAdmin(r.Config().Cluster(), &b); err != nil {
 			return err
 		}
 
-		if err = ioutil.WriteFile(kubeconfigPath, b.Bytes(), 0o600); err != nil {
+		if err = ioutil.WriteFile(constants.RecoveryKubeconfig, b.Bytes(), 0o600); err != nil {
 			return fmt.Errorf("failed to create recovery kubeconfig: %w", err)
 		}
 
 		// nolint: errcheck
-		defer os.Remove(kubeconfigPath)
+		defer os.Remove(constants.RecoveryKubeconfig)
 
-		var backend recovery.Backend
-
-		switch in.Source {
-		case machineapi.RecoverRequest_ETCD:
-			var client *clientv3.Client
-
-			client, err = etcd.NewClient([]string{"127.0.0.1:2379"})
-			if err != nil {
-				return err
-			}
-
-			backend = recovery.NewEtcdBackend(client, "/registry")
-
-		case machineapi.RecoverRequest_APISERVER:
-			backend, err = recovery.NewAPIServerBackend(kubeconfigPath)
-			if err != nil {
-				return err
-			}
+		svc := &services.Bootkube{
+			Recover: true,
+			Source:  in.Source,
 		}
-
-		as, err := recovery.Recover(context.Background(), backend, kubeconfigPath)
-		if err != nil {
-			return err
-		}
-
-		if err = os.MkdirAll(constants.AssetsDirectory, 0o600); err != nil {
-			return err
-		}
-
-		if err = as.WriteFiles(constants.AssetsDirectory); err != nil {
-			return fmt.Errorf("failed to write recovered assets: %w", err)
-		}
-
-		svc := &services.Bootkube{Recover: true}
 
 		// unload bootkube (if any instance ran before)
 		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
@@ -1629,7 +1595,10 @@ func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			return fmt.Errorf("failed to start bootkube: %w", err)
 		}
 
-		return nil
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)
 	}, "recover"
 }
 

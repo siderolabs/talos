@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/conditions"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/retry"
@@ -32,6 +33,7 @@ import (
 // Bootkube implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Bootkube struct {
+	Source  machineapi.RecoverRequest_Source
 	Recover bool
 
 	provisioned bool
@@ -163,6 +165,8 @@ func (b *Bootkube) Runner(r runtime.Runtime) (runner.Runner, error) {
 			"/bootkube",
 			"--config=" + constants.ConfigPath,
 			"--strict=" + strconv.FormatBool(!b.Recover),
+			"--recover=" + strconv.FormatBool(b.Recover),
+			"--recover-source=" + b.Source.String(),
 		},
 	}
 
