@@ -18,8 +18,10 @@ import (
 )
 
 var (
-	configPath *string
-	strict     *bool
+	configPath    *string
+	strict        *bool
+	recover       *bool
+	recoverSource *string
 )
 
 func init() {
@@ -27,11 +29,17 @@ func init() {
 
 	configPath = flag.String("config", "", "the path to the config")
 	strict = flag.Bool("strict", true, "require all manifests to cleanly apply")
+	recover = flag.Bool("recover", false, "run recovery instead of generate")
+	recoverSource = flag.String("recover-source", "ETCD", "recovery source to use")
 
 	flag.Parse()
 }
 
 func run() error {
+	if err := os.MkdirAll(constants.ManifestsDirectory, 0o644); err != nil {
+		return err
+	}
+
 	defaultRequiredPods := []string{
 		"kube-system/pod-checkpointer",
 		"kube-system/kube-apiserver",
@@ -100,8 +108,14 @@ func main() {
 		log.Fatalf("failed to create config from file: %v", err)
 	}
 
-	if err := generateAssets(config); err != nil {
-		log.Fatalf("error generating assets: %s", err)
+	if *recover {
+		if err := recoverAssets(config); err != nil {
+			log.Fatalf("error recovering assets: %s", err)
+		}
+	} else {
+		if err := generateAssets(config); err != nil {
+			log.Fatalf("error generating assets: %s", err)
+		}
 	}
 
 	if err := run(); err != nil {

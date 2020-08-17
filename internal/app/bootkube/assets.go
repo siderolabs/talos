@@ -32,10 +32,6 @@ import (
 
 // nolint: gocyclo
 func generateAssets(config config.Provider) (err error) {
-	if err = os.MkdirAll(constants.ManifestsDirectory, 0o644); err != nil {
-		return err
-	}
-
 	// Ensure assets directory does not exist / is left over from a failed install
 	if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
 		// Ignore if the directory does not exist

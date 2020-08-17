@@ -37,7 +37,7 @@ require (
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20200711001733-e1b69ee5fb33
 	github.com/jsimonetti/rtnetlink v0.0.0-20200709124027-1aae10735293
-	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200501183829-d8e5fa33347a
+	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200817205730-0b4482256ca1
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.1.0
@@ -80,6 +80,7 @@ require (
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	k8s.io/api v0.19.0-rc.3
 	k8s.io/apimachinery v0.19.0-rc.3
+	k8s.io/apiserver v0.19.0-rc.3
 	k8s.io/client-go v0.19.0-rc.3
 	k8s.io/cri-api v0.19.0-rc.3
 	k8s.io/kubelet v0.19.0-rc.3
