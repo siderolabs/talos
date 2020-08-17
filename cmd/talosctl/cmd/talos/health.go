@@ -15,12 +15,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	clusterapi "github.com/talos-systems/talos/api/cluster"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cluster/check"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 type clusterNodes struct {

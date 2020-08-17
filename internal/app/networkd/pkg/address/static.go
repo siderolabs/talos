@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // Static implements the Addressing interface.

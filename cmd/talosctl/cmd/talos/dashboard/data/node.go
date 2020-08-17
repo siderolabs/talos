@@ -4,7 +4,7 @@
 
 package data
 
-import "github.com/talos-systems/talos/api/machine"
+import "github.com/talos-systems/talos/pkg/machinery/api/machine"
 
 // Node represents data gathered from a single node.
 type Node struct {

@@ -26,8 +26,8 @@ import (
 
 	tnet "github.com/talos-systems/net"
 
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // nolint: gocyclo

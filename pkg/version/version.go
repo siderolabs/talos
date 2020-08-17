@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"text/template"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 var (

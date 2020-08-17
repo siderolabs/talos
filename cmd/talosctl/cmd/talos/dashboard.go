@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var dashboardCmdFlags struct {

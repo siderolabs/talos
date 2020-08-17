@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 )
 
 type TimedSuite struct {

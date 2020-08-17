@@ -30,7 +30,6 @@ import (
 
 	"github.com/kubernetes-sigs/bootkube/pkg/recovery"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -51,10 +50,11 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/config/configloader"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 	"github.com/talos-systems/talos/pkg/sysctl"
 	"github.com/talos-systems/talos/pkg/version"

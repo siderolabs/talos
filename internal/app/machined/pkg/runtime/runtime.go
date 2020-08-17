@@ -4,7 +4,7 @@
 
 package runtime
 
-import "github.com/talos-systems/talos/pkg/config"
+import "github.com/talos-systems/talos/pkg/machinery/config"
 
 // Runtime defines the runtime parameters.
 type Runtime interface {

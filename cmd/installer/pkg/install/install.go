@@ -23,7 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
 

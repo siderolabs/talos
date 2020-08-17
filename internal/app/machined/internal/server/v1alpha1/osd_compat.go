@@ -5,8 +5,8 @@
 package runtime
 
 import (
-	"github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/api/os"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/os"
 )
 
 type osdServer struct {

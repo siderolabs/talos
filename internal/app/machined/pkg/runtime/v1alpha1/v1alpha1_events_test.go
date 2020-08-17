@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/time/rate"
 
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 func TestEvents_Publish(t *testing.T) {

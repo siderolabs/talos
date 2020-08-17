@@ -13,7 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt"
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos"
-	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // rootCmd represents the base command when called without any subcommands.

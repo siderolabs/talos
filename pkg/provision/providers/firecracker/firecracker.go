@@ -8,8 +8,8 @@ package firecracker
 import (
 	"context"
 
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )

@@ -18,11 +18,11 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	healthapi "github.com/talos-systems/talos/api/health"
-	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 )
 
 type NetworkdSuite struct {

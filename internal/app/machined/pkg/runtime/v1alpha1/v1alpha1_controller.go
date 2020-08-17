@@ -20,14 +20,14 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
 // Controller represents the controller responsible for managing the execution

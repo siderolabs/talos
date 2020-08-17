@@ -13,8 +13,8 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const adminKubeConfigTemplate = `apiVersion: v1

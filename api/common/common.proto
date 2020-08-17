@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package common;
 
-option go_package = "github.com/talos-systems/talos/api/common";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/common";
 
 import "google/protobuf/any.proto";
 

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	clusterapi "github.com/talos-systems/talos/api/cluster"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cluster/check"

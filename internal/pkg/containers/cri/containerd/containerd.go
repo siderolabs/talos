@@ -12,9 +12,9 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // GenerateRegistriesConfig returns a list of extra files.

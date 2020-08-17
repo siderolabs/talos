@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type inspector struct {

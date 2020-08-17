@@ -9,8 +9,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // Option controls Provisioner.

@@ -25,9 +25,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/kubernetes"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 
@@ -47,7 +47,7 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/apid.tar",
 		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/apid"),
+			containerdapi.WithIndexName("talos/pkg/machinery/apid"),
 		},
 	})
 }
@@ -79,7 +79,7 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 //
 //nolint: gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/apid"
+	image := "talos/pkg/machinery/apid"
 
 	endpoints := []string{"127.0.0.1"}
 

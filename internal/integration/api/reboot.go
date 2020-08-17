@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 

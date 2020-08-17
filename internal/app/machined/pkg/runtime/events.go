@@ -12,7 +12,7 @@ import (
 	"github.com/rs/xid"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Event is what is sent on the wire.

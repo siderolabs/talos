@@ -20,7 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // CurrentPlatform is a helper func for discovering the current platform.

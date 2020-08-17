@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package machine;
 
-option go_package = "github.com/talos-systems/talos/api/machine";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/machine";
 option java_multiple_files = true;
 option java_outer_classname = "MachineApi";
 option java_package = "com.machine.api";

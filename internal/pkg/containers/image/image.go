@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/retry"
 
 	"github.com/containerd/containerd"

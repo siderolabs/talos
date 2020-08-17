@@ -32,10 +32,6 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/api/cluster"
-	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/api/machine"
-	osapi "github.com/talos-systems/talos/api/os"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
@@ -49,9 +45,13 @@ import (
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
-	"github.com/talos-systems/talos/pkg/config"
-	machinetype "github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	osapi "github.com/talos-systems/talos/pkg/machinery/api/os"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
 

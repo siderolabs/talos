@@ -11,7 +11,7 @@ import (
 	"github.com/mdlayher/netlink"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // Vlan contins interface related parameters to a VLAN device.
