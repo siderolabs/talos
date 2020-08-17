@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	clientconfig "github.com/talos-systems/talos/pkg/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 var (

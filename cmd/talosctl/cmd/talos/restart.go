@@ -11,9 +11,9 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // restartCmd represents the restart command.

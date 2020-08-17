@@ -7,8 +7,8 @@
 package base
 
 import (
-	"github.com/talos-systems/talos/pkg/client"
 	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {

@@ -15,8 +15,8 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 
-	securityapi "github.com/talos-systems/talos/api/security"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
+	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
 )
 
 // RemoteGenerator represents the OS identity generator.

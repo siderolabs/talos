@@ -15,8 +15,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.

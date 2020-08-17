@@ -14,7 +14,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/prometheus/procfs"
 
-	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Hostname implements the machine.MachineServer interface.

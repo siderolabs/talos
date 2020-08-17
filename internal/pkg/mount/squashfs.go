@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/freddierice/go-losetup.v1"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // SquashfsMountPoints returns the mountpoints required to boot the system.

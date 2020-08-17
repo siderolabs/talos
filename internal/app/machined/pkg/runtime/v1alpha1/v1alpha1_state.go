@@ -11,7 +11,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // State implements the state interface.

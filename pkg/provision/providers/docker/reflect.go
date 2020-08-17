@@ -9,7 +9,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 

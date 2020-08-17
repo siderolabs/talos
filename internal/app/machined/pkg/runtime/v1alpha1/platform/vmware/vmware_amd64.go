@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // VMware is the concrete type that implements the platform.Platform interface.

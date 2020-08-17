@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 

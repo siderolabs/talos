@@ -4,6 +4,8 @@ go 1.13
 
 replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 
+replace github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
+
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
@@ -58,6 +60,7 @@ require (
 	github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.1.0
+	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e

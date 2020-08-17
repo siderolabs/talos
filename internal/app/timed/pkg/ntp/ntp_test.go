@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type NtpSuite struct {

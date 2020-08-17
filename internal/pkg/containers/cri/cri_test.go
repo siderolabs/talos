@@ -24,7 +24,7 @@ import (
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (

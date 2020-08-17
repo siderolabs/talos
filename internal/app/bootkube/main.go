@@ -13,8 +13,8 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 	"github.com/kubernetes-sigs/bootkube/pkg/util"
 
-	"github.com/talos-systems/talos/pkg/config/configloader"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (

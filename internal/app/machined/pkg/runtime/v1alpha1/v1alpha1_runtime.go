@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
 // Runtime implements the Runtime interface.

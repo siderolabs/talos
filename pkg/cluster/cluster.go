@@ -11,8 +11,8 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // ClientProvider builds Talos client by endpoint.

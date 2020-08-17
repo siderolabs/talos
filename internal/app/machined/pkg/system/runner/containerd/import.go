@@ -15,7 +15,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // ImportRequest represents an image import request.

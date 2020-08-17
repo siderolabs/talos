@@ -10,9 +10,9 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
-	"github.com/talos-systems/talos/pkg/config/configloader"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var configPath *string

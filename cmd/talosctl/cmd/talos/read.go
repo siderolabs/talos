@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // readCmd represents the read command.

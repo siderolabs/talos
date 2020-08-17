@@ -16,9 +16,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // serviceCmd represents the service command.

@@ -12,9 +12,9 @@ import (
 	"github.com/talos-systems/grpc-proxy/proxy"
 
 	"github.com/talos-systems/talos/internal/app/routerd/pkg/director"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 

@@ -7,7 +7,7 @@ package runtime
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Sequence represents a sequence type.

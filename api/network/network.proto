@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package network;
 
-option go_package = "github.com/talos-systems/talos/api/network";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/network";
 option java_multiple_files = true;
 option java_outer_classname = "NetworkApi";
 option java_package = "com.network.api";

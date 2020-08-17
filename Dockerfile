@@ -63,27 +63,27 @@ RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api cluster/clust
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 FROM scratch AS generate
-COPY --from=generate-build /api/common/common.pb.go /api/common/
-COPY --from=generate-build /api/health/health.pb.go /api/health/
-COPY --from=generate-build /api/os/os.pb.go /api/os/
-COPY --from=generate-build /api/security/security.pb.go /api/security/
-COPY --from=generate-build /api/machine/machine.pb.go /api/machine/
-COPY --from=generate-build /api/time/time.pb.go /api/time/
-COPY --from=generate-build /api/network/network.pb.go /api/network/
-COPY --from=generate-build /api/cluster/cluster.pb.go /api/cluster/
+COPY --from=generate-build /api/common/common.pb.go /pkg/machinery/api/common/
+COPY --from=generate-build /api/health/health.pb.go /pkg/machinery/api/health/
+COPY --from=generate-build /api/os/os.pb.go /pkg/machinery/api/os/
+COPY --from=generate-build /api/security/security.pb.go /pkg/machinery/api/security/
+COPY --from=generate-build /api/machine/machine.pb.go /pkg/machinery/api/machine/
+COPY --from=generate-build /api/time/time.pb.go /pkg/machinery/api/time/
+COPY --from=generate-build /api/network/network.pb.go /pkg/machinery/api/network/
+COPY --from=generate-build /api/cluster/cluster.pb.go /pkg/machinery/api/cluster/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
 
 FROM build AS base
-COPY ./go.mod ./
-COPY ./go.sum ./
+COPY ./go.mod ./go.sum ./
+COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
 RUN go mod download
 RUN go mod verify
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
-COPY --from=generate /api ./api
+COPY --from=generate /pkg/machinery/api ./pkg/machinery/api
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 
@@ -473,7 +473,10 @@ FROM base AS lint-go
 COPY .golangci.yml .
 ENV GOGC=50
 RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache/golangci-lint golangci-lint run --config .golangci.yml
-RUN --mount=type=cache,target=/.cache/go-build importvet ./...
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache/golangci-lint golangci-lint run --config ../../.golangci.yml
+WORKDIR /src
+RUN --mount=type=cache,target=/.cache/go-build importvet github.com/talos-systems/talos/...
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
@@ -500,7 +503,9 @@ RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/docs/talosct
 # The docs target generates documentation.
 
 FROM base AS docs-build
-RUN go generate ./pkg/config/types/v1alpha1
+WORKDIR /src/pkg/machinery/config
+RUN go generate ./types/v1alpha1
+WORKDIR /src
 COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
 RUN mkdir -p /docs/talosctl \
     && env HOME=/home/user TAG=latest /bin/talosctl docs /docs/talosctl

@@ -30,7 +30,7 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/retry"
 )
 

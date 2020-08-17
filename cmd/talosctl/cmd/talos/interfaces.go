@@ -14,9 +14,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // interfacesCmd represents the net interfaces command.

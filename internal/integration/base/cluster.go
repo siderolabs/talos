@@ -6,7 +6,7 @@
 
 package base
 
-import "github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
+import "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 
 type infoWrapper struct {
 	masterNodes []string

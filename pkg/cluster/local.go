@@ -10,8 +10,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // LocalClientProvider builds Talos client to connect to same-node apid instance over file socket.

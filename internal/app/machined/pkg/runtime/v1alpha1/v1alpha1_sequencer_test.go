@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 func TestNewSequencer(t *testing.T) {

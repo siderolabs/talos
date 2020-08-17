@@ -18,7 +18,7 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // DHCP implements the Addressing interface.

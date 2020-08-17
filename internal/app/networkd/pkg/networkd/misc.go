@@ -18,7 +18,7 @@ import (
 
 	talosnet "github.com/talos-systems/net"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // filterInterfaces filters network links by name so we only mange links

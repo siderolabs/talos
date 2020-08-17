@@ -6,7 +6,7 @@ package runtime
 
 import (
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // State defines the state.

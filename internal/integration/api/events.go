@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // EventsSuite verifies Events API.

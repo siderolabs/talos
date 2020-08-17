@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/internal/integration/k8s"
 	provision_test "github.com/talos-systems/talos/internal/integration/provision"
-	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/version"

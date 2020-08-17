@@ -21,7 +21,6 @@ import (
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
-	healthapi "github.com/talos-systems/talos/api/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -29,8 +28,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
+	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Networkd implements the Service interface. It serves as the concrete type with

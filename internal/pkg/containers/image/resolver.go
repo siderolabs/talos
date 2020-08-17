@@ -17,7 +17,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"golang.org/x/net/http/httpproxy"
 
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // NewResolver builds registry resolver based on Talos configuration.
