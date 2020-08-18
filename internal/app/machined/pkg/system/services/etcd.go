@@ -30,8 +30,6 @@ import (
 	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -356,31 +354,31 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	p, err := platform.CurrentPlatform()
-	if err != nil {
-		return err
-	}
+	// p, err := platform.CurrentPlatform()
+	// if err != nil {
+	// 	return err
+	// }
 
 	var upgraded bool
 
-	if p.Mode() != runtime.ModeContainer {
-		var f *os.File
+	// if p.Mode() != runtime.ModeContainer {
+	// var f *os.File
 
-		if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
-			return err
-		}
+	// if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
+	// 	return err
+	// }
 
-		// nolint: errcheck
-		defer f.Close()
+	// // nolint: errcheck
+	// defer f.Close()
 
-		var adv syslinux.ADV
+	// var adv syslinux.ADV
 
-		if adv, err = syslinux.NewADV(f); err != nil {
-			return err
-		}
+	// if adv, err = syslinux.NewADV(f); err != nil {
+	// 	return err
+	// }
 
-		_, upgraded = adv.ReadTag(syslinux.AdvUpgrade)
-	}
+	// _, upgraded = adv.ReadTag(syslinux.AdvUpgrade)
+	// }
 
 	primaryAddr, listenAddress, err := primaryAndListenAddresses()
 	if err != nil {

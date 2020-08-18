@@ -45,9 +45,17 @@ const (
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
+	// EFIPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	EFIPartitionLabel = "EFI"
+
+	// BIOSGrubPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	BIOSGrubPartitionLabel = "BIOS"
+
 	// BootPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
-	BootPartitionLabel = "ESP"
+	BootPartitionLabel = "BOOT"
 
 	// BootMountPoint is the label of the partition to use for mounting at
 	// the boot path.

@@ -31,7 +31,7 @@ import (
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
@@ -692,13 +692,15 @@ func VerifyInstallation(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			next    string
 		)
 
-		current, next, err = syslinux.Labels()
+		grub := &grub.Grub{}
+
+		current, next, err = grub.Labels()
 		if err != nil {
 			return err
 		}
 
 		if current == "" && next == "" {
-			return fmt.Errorf("syslinux.cfg is not configured")
+			return fmt.Errorf("bootloader is not configured")
 		}
 
 		return err
@@ -1382,27 +1384,6 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 // UpdateBootloader represents the UpdateBootloader task.
 func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0o700)
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer f.Close()
-
-		adv, err := syslinux.NewADV(f)
-		if err != nil {
-			return err
-		}
-
-		if ok := adv.DeleteTag(syslinux.AdvUpgrade); ok {
-			logger.Println("removing fallback")
-
-			if _, err = f.Write(adv); err != nil {
-				return err
-			}
-		}
-
 		return nil
 	}, "updateBootloader"
 }

@@ -23,7 +23,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
@@ -74,7 +74,9 @@ func handle(err error) {
 		log.Print(err)
 	}
 
-	if err := syslinux.Revert(); err != nil {
+	grub := &grub.Grub{}
+
+	if err := grub.Revert(); err != nil {
 		log.Printf("failed to revert upgrade: %v", err)
 	}
 
