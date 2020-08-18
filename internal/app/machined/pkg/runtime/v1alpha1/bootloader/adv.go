@@ -2,11 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package syslinux
+package bootloader
 
 import (
 	"encoding/binary"
 	"io"
+
+	"github.com/talos-systems/talos/pkg/blockdevice"
+	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
@@ -39,8 +43,38 @@ const (
 	AdvUpgrade
 )
 
+// Meta represents the meta reader.
+type Meta struct {
+	*blockdevice.BlockDevice
+	ADV
+}
+
 // ADV represents the Syslinux Auxiliary Data Vector.
 type ADV []byte
+
+// NewMeta initializes and returns a `Meta`.
+func NewMeta() (meta *Meta, err error) {
+	var dev *blockdevice.BlockDevice
+
+	dev, err = probe.GetBlockDeviceWithPartitonName(constants.MetaPartitionLabel)
+	if err != nil {
+		return nil, err
+	}
+
+	adv, err := NewADV(dev.Device())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Meta{
+		BlockDevice: dev,
+		ADV:         adv,
+	}, nil
+}
+
+func (m *Meta) Write() (int, error) {
+	return m.Device().Write(m.ADV)
+}
 
 // NewADV returns the Auxiliary Data Vector.
 func NewADV(r io.ReadSeeker) (adv ADV, err error) {

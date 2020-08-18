@@ -17,6 +17,7 @@ import (
 	"text/template"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 
@@ -197,18 +198,18 @@ func Revert() (err error) {
 	// nolint: errcheck
 	defer f.Close()
 
-	adv, err := NewADV(f)
+	adv, err := bootloader.NewADV(f)
 	if err != nil {
 		return err
 	}
 
-	label, ok := adv.ReadTag(AdvUpgrade)
+	label, ok := adv.ReadTag(bootloader.AdvUpgrade)
 	if !ok {
 		return nil
 	}
 
 	if label == "" {
-		adv.DeleteTag(AdvUpgrade)
+		adv.DeleteTag(bootloader.AdvUpgrade)
 
 		if _, err = f.Write(adv); err != nil {
 			return err
@@ -221,7 +222,7 @@ func Revert() (err error) {
 		return err
 	}
 
-	adv.DeleteTag(AdvUpgrade)
+	adv.DeleteTag(bootloader.AdvUpgrade)
 
 	if _, err = f.Write(adv); err != nil {
 		return err
@@ -349,13 +350,13 @@ func setADV(ldlinux, fallback string) (err error) {
 	// nolint: errcheck
 	defer f.Close()
 
-	var adv ADV
+	var adv bootloader.ADV
 
-	if adv, err = NewADV(f); err != nil {
+	if adv, err = bootloader.NewADV(f); err != nil {
 		return err
 	}
 
-	if ok := adv.SetTag(AdvUpgrade, fallback); !ok {
+	if ok := adv.SetTag(bootloader.AdvUpgrade, fallback); !ok {
 		return fmt.Errorf("failed to set upgrade tag: %q", fallback)
 	}
 

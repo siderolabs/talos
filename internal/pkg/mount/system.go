@@ -22,7 +22,7 @@ import (
 func SystemMountPointsForDevice(devpath string) (mountpoints *Points, err error) {
 	mountpoints = NewMountPoints()
 
-	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel} {
+	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.SystemPartitionLabel} {
 		var target string
 
 		switch name {
@@ -30,6 +30,10 @@ func SystemMountPointsForDevice(devpath string) (mountpoints *Points, err error)
 			target = constants.EphemeralMountPoint
 		case constants.BootPartitionLabel:
 			target = constants.BootMountPoint
+		case constants.EFIPartitionLabel:
+			target = constants.EFIMountPoint
+		case constants.SystemPartitionLabel:
+			target = constants.SystemMountPoint
 		}
 
 		var dev *probe.ProbedBlockDevice
@@ -65,6 +69,10 @@ func SystemMountPointForLabel(label string, opts ...Option) (mountpoint *Point, 
 		opts = append(opts, WithResize(true))
 	case constants.BootPartitionLabel:
 		target = constants.BootMountPoint
+	case constants.EFIPartitionLabel:
+		target = constants.EFIMountPoint
+	case constants.SystemPartitionLabel:
+		target = constants.SystemMountPoint
 	default:
 		return nil, fmt.Errorf("unknown label: %q", label)
 	}

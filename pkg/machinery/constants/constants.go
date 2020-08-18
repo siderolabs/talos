@@ -45,9 +45,33 @@ const (
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
+	// EFIPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	EFIPartitionLabel = "EFI"
+
+	// EFIMountPoint is the label of the partition to use for mounting at
+	// the boot path.
+	EFIMountPoint = BootMountPoint + "/EFI"
+
+	// BIOSGrubPartitionLabel is the label of the partition used by grub's second
+	// stage bootloader.
+	BIOSGrubPartitionLabel = "BIOS"
+
+	// MetaPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	MetaPartitionLabel = "META"
+
+	// SystemPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	SystemPartitionLabel = "SYSTEM"
+
+	// SystemMountPoint is the label of the partition to use for mounting at
+	// the boot path.
+	SystemMountPoint = "/system/ephemeral"
+
 	// BootPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
-	BootPartitionLabel = "ESP"
+	BootPartitionLabel = "BOOT"
 
 	// BootMountPoint is the label of the partition to use for mounting at
 	// the boot path.
@@ -190,7 +214,7 @@ const (
 	EtcdDataPath = "/var/lib/etcd"
 
 	// ConfigPath is the path to the downloaded config.
-	ConfigPath = "/boot/config.yaml"
+	ConfigPath = SystemMountPoint + "/config.yaml"
 
 	// MetalConfigISOLabel is the volume label for ISO based configuration.
 	MetalConfigISOLabel = "metal-iso"

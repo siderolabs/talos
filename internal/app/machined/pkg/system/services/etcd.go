@@ -30,7 +30,7 @@ import (
 	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -364,22 +364,15 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	var upgraded bool
 
 	if p.Mode() != runtime.ModeContainer {
-		var f *os.File
+		var meta *bootloader.Meta
 
-		if f, err = os.Open(syslinux.SyslinuxLdlinux); err != nil {
+		if meta, err = bootloader.NewMeta(); err != nil {
 			return err
 		}
-
 		// nolint: errcheck
-		defer f.Close()
+		defer meta.Close()
 
-		var adv syslinux.ADV
-
-		if adv, err = syslinux.NewADV(f); err != nil {
-			return err
-		}
-
-		_, upgraded = adv.ReadTag(syslinux.AdvUpgrade)
+		_, upgraded = meta.ReadTag(bootloader.AdvUpgrade)
 	}
 
 	primaryAddr, listenAddress, err := primaryAndListenAddresses()

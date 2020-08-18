@@ -85,8 +85,8 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			// the config on disk.
 		).AppendWhen(
 			r.State().Machine().Installed(),
-			"mountBoot",
-			MountBootPartition,
+			"mountSystem",
+			MountSystemPartition,
 		).Append(
 			"config",
 			LoadConfig,
@@ -95,8 +95,8 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			// need to mount the boot partition.
 		).AppendWhen(
 			r.State().Machine().Installed(),
-			"unmountBoot",
-			UnmountBootPartition,
+			"unmountSystem",
+			UnmountSystemPartition,
 		).Append(
 			"resetNetwork",
 			ResetNetwork,
@@ -131,14 +131,22 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"install",
 				Install,
 			).Append(
-				"mountBoot",
+				"mountSystem",
 				MountBootPartition,
+				MountSystemPartition,
+			).Append(
+				"mountEFI",
+				MountEFIPartition,
 			).Append(
 				"saveConfig",
 				SaveConfig,
 			).Append(
-				"unmountBoot",
+				"unmountEFI",
+				UnmountEFIPartition,
+			).Append(
+				"unmountSystem",
 				UnmountBootPartition,
+				UnmountSystemPartition,
 			).Append(
 				"stopEverything",
 				StopAllServices,
@@ -160,8 +168,13 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
-		"mountBoot",
+		"mountSystem",
 		MountBootPartition,
+		MountSystemPartition,
+	).AppendWhen(
+		r.State().Platform().Mode() != runtime.ModeContainer,
+		"mountEFI",
+		MountEFIPartition,
 	).Append(
 		"validateConfig",
 		ValidateConfig,
@@ -271,9 +284,13 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
+			"unmountEFI",
+			UnmountEFIPartition,
+		).Append(
 			"unmountSystem",
 			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountSystemPartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
@@ -329,9 +346,13 @@ func (*Sequencer) Reset(r runtime.Runtime, in *machineapi.ResetRequest) []runtim
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
+			"unmountEFI",
+			UnmountEFIPartition,
+		).Append(
 			"unmountSystem",
 			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountSystemPartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
@@ -369,9 +390,13 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
+			"unmountEFI",
+			UnmountEFIPartition,
+		).Append(
 			"unmountSystem",
 			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountSystemPartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
@@ -411,9 +436,13 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
+			"unmountEFI",
+			UnmountEFIPartition,
+		).Append(
 			"unmountSystem",
 			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountSystemPartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,

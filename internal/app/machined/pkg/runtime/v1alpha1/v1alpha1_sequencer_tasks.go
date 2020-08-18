@@ -31,7 +31,8 @@ import (
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
@@ -96,7 +97,7 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 // SetupSystemDirectory represents the SetupSystemDirectory task.
 func SetupSystemDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath} {
+		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath, constants.SystemMountPoint} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
@@ -692,13 +693,15 @@ func VerifyInstallation(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			next    string
 		)
 
-		current, next, err = syslinux.Labels()
+		grub := &grub.Grub{}
+
+		current, next, err = grub.Labels()
 		if err != nil {
 			return err
 		}
 
 		if current == "" && next == "" {
-			return fmt.Errorf("syslinux.cfg is not configured")
+			return fmt.Errorf("bootloader is not configured")
 		}
 
 		return err
@@ -1382,23 +1385,17 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 // UpdateBootloader represents the UpdateBootloader task.
 func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0o700)
+		meta, err := bootloader.NewMeta()
 		if err != nil {
 			return err
 		}
-
 		// nolint: errcheck
-		defer f.Close()
+		defer meta.Close()
 
-		adv, err := syslinux.NewADV(f)
-		if err != nil {
-			return err
-		}
-
-		if ok := adv.DeleteTag(syslinux.AdvUpgrade); ok {
+		if ok := meta.DeleteTag(bootloader.AdvUpgrade); ok {
 			logger.Println("removing fallback")
 
-			if _, err = f.Write(adv); err != nil {
+			if _, err = meta.Write(); err != nil {
 				return err
 			}
 		}
@@ -1468,6 +1465,34 @@ func UnmountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskE
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return unmountSystemPartition(constants.BootPartitionLabel)
 	}, "unmountBootPartition"
+}
+
+// MountEFIPartition mounts the EFI partition.
+func MountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return mountSystemPartition(constants.EFIPartitionLabel)
+	}, "mountEFIPartition"
+}
+
+// UnmountEFIPartition unmounts the EFI partition.
+func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		return unmountSystemPartition(constants.EFIPartitionLabel)
+	}, "unmountEFIPartition"
+}
+
+// MountSystemPartition mounts the system partition.
+func MountSystemPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return mountSystemPartition(constants.SystemPartitionLabel)
+	}, "mountSystemPartition"
+}
+
+// UnmountSystemPartition unmounts the system partition.
+func UnmountSystemPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		return unmountSystemPartition(constants.SystemPartitionLabel)
+	}, "unmountSystemPartition"
 }
 
 // MountEphermeralPartition mounts the ephemeral partition.

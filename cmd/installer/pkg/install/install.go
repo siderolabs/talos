@@ -17,7 +17,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
@@ -73,11 +74,13 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 // Installer represents the installer logic. It serves as the entrypoint to all
 // installation methods.
 type Installer struct {
-	cmdline  *procfs.Cmdline
-	options  *Options
-	manifest *Manifest
-	Current  string
-	Next     string
+	cmdline    *procfs.Cmdline
+	options    *Options
+	manifest   *Manifest
+	bootloader bootloader.Bootloader
+
+	Current string
+	Next    string
 
 	bootPartitionFound bool
 }
@@ -87,8 +90,9 @@ type Installer struct {
 // nolint: gocyclo
 func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) (i *Installer, err error) {
 	i = &Installer{
-		cmdline: cmdline,
-		options: opts,
+		cmdline:    cmdline,
+		options:    opts,
+		bootloader: &grub.Grub{},
 	}
 
 	var dev *probe.ProbedBlockDevice
@@ -109,7 +113,7 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 		}
 	}
 
-	i.Current, i.Next, err = syslinux.Labels()
+	i.Current, i.Next, err = i.bootloader.Labels()
 	if err != nil {
 		return nil, err
 	}
@@ -215,15 +219,6 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 
 	for _, targets := range i.manifest.Targets {
 		for _, target := range targets {
-			switch target.Label {
-			case constants.BootPartitionLabel:
-				if err = syslinux.Prepare(target.Device); err != nil {
-					return err
-				}
-			case constants.EphemeralPartitionLabel:
-				continue
-			}
-
 			// Handle the download and extraction of assets.
 			if err = target.Save(); err != nil {
 				return err
@@ -240,9 +235,9 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	if seq != runtime.SequenceUpgrade || !i.bootPartitionFound {
 		i.cmdline.Append("initrd", filepath.Join("/", i.Current, constants.InitramfsAsset))
 
-		syslinuxcfg := &syslinux.Cfg{
+		grubcfg := &grub.Cfg{
 			Default: i.Current,
-			Labels: []*syslinux.Label{
+			Labels: []*grub.Label{
 				{
 					Root:   i.Current,
 					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
@@ -252,15 +247,16 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 			},
 		}
 
-		if err = syslinux.Install("", syslinuxcfg, seq, i.bootPartitionFound); err != nil {
+		if err = i.bootloader.Install("", grubcfg, seq, i.bootPartitionFound); err != nil {
 			return err
 		}
 	} else {
 		i.cmdline.Append("initrd", filepath.Join("/", i.Next, constants.InitramfsAsset))
 
-		syslinuxcfg := &syslinux.Cfg{
-			Default: i.Next,
-			Labels: []*syslinux.Label{
+		grubcfg := &grub.Cfg{
+			Default:  i.Next,
+			Fallback: i.Current,
+			Labels: []*grub.Label{
 				{
 					Root:   i.Next,
 					Initrd: filepath.Join("/", i.Next, constants.InitramfsAsset),
@@ -276,7 +272,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 			},
 		}
 
-		if err = syslinux.Install(i.Current, syslinuxcfg, seq, i.bootPartitionFound); err != nil {
+		if err = i.bootloader.Install(i.Current, grubcfg, seq, i.bootPartitionFound); err != nil {
 			return err
 		}
 	}
