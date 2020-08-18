@@ -40,6 +40,7 @@ COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=IMPORTVET=$(IMPORTVET)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
+COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
@@ -148,7 +149,8 @@ talosctl-%:
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
-	@docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/out --privileged $(USERNAME)/installer:$(TAG) image --platform $*
+	@docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/out --privileged $(REGISTRY)/$(USERNAME)/installer:$(TAG) image --platform $*
+	@sleep 5
 
 images: image-aws image-azure image-digital-ocean image-gcp image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, and VMware).
 

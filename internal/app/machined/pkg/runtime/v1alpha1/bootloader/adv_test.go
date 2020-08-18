@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // nolint: dupl,lll,maligned,scopelint,testpackage
-package syslinux
+package bootloader
 
 import (
 	"bytes"
@@ -14,9 +14,9 @@ import (
 )
 
 func TestNewADV(t *testing.T) {
-	f, err := os.Open("testdata/ldlinux.sys")
+	f, err := os.Open("testdata/adv.sys")
 	if err != nil {
-		t.Errorf("failed to open test ldlinux.sys: %v", err)
+		t.Errorf("failed to open test adv.sys: %v", err)
 	}
 
 	// nolint: errcheck
