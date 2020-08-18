@@ -299,7 +299,6 @@ COPY --from=docker.io/autonomy/open-iscsi:v0.2.0-30-gdbbb62f / /rootfs
 COPY --from=docker.io/autonomy/open-isns:v0.2.0-30-gdbbb62f / /rootfs
 COPY --from=docker.io/autonomy/runc:v0.2.0-30-gdbbb62f / /rootfs
 COPY --from=docker.io/autonomy/socat:v0.2.0-30-gdbbb62f / /rootfs
-COPY --from=docker.io/autonomy/syslinux:v0.2.0-30-gdbbb62f / /rootfs
 COPY --from=docker.io/autonomy/xfsprogs:v0.2.0-30-gdbbb62f / /rootfs
 COPY --from=docker.io/autonomy/util-linux:v0.2.0-30-gdbbb62f /lib/libblkid.* /rootfs/lib/
 COPY --from=docker.io/autonomy/util-linux:v0.2.0-30-gdbbb62f /lib/libuuid.* /rootfs/lib/
@@ -373,11 +372,12 @@ RUN apk add --no-cache --update \
     ca-certificates \
     cdrkit \
     qemu-img \
-    syslinux \
+    grub \
+    grub-bios \
+    grub-efi \
     util-linux \
     xfsprogs
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
-COPY --from=rootfs /usr/lib/syslinux/ /usr/lib/syslinux
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl

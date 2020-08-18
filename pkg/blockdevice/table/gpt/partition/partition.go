@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/text/encoding/unicode"
 
+	"github.com/talos-systems/talos/pkg/endianness"
 	"github.com/talos-systems/talos/pkg/serde"
 )
 
@@ -69,10 +70,20 @@ func (prt *Partition) Fields() []*serde.Field {
 			Offset: 0,
 			Length: 16,
 			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
-				return prt.Type.MarshalBinary()
+				b, err := prt.Type.MarshalBinary()
+				if err != nil {
+					return nil, err
+				}
+
+				return endianness.ToMiddleEndian(b)
 			},
 			DeserializerFunc: func(contents []byte, opts interface{}) error {
-				guid, err := uuid.FromBytes(contents)
+				u, err := endianness.FromMiddleEndian(contents)
+				if err != nil {
+					return err
+				}
+
+				guid, err := uuid.FromBytes(u)
 				if err != nil {
 					return fmt.Errorf("invalid GUUID: %w", err)
 				}
@@ -89,10 +100,20 @@ func (prt *Partition) Fields() []*serde.Field {
 			Offset: 16,
 			Length: 16,
 			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
-				return prt.ID.MarshalBinary()
+				b, err := prt.ID.MarshalBinary()
+				if err != nil {
+					return nil, err
+				}
+
+				return endianness.ToMiddleEndian(b)
 			},
 			DeserializerFunc: func(contents []byte, opts interface{}) error {
-				guid, err := uuid.FromBytes(contents)
+				u, err := endianness.FromMiddleEndian(contents)
+				if err != nil {
+					return err
+				}
+
+				guid, err := uuid.FromBytes(u)
 				if err != nil {
 					return fmt.Errorf("invalid GUUID: %w", err)
 				}
@@ -135,6 +156,13 @@ func (prt *Partition) Fields() []*serde.Field {
 			},
 		},
 		// 8 bytes Attribute flags (e.g. bit 60 denotes read-only)
+		// Known attributes are:
+		//   0: system partition
+		//   1: hide from EFI
+		//   2: legacy BIOS bootable
+		//   60: read-only
+		//   62: hidden
+		//   63: do not automount
 		{
 			Offset: 48,
 			Length: 8,

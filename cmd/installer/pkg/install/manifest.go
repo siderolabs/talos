@@ -178,15 +178,16 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 
 	switch t.Label {
 	case constants.BootPartitionLabel:
-		// EFI System Partition
-		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+		// Boot Partition
+		// typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+		typeID := "21686148-6449-6E6F-744E-656564454649"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
 	case constants.EphemeralPartitionLabel:
 		// Ephemeral Partition
-		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
+		typeID := "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
 		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithMaximumSize(true))
 	default:
-		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
+		typeID := "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
 		opts = append(opts, partition.WithPartitionType(typeID))
 
 		if t.Size == 0 {
