@@ -17,6 +17,7 @@ import (
 	"text/template"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 
@@ -153,11 +154,11 @@ func Labels() (current, next string, err error) {
 	return current, next, err
 }
 
-// RevertTo reverts the default syslinx label to the previous installation.
+// Default sets the default syslinx label.
 //
 // nolint: gocyclo
-func RevertTo(label string) (err error) {
-	log.Printf("reverting default boot to %q", label)
+func Default(label string) (err error) {
+	log.Printf("setting default label to %q", label)
 
 	var b []byte
 
@@ -175,55 +176,6 @@ func RevertTo(label string) (err error) {
 	b = re.ReplaceAll(b, []byte(fmt.Sprintf("DEFAULT %s", label)))
 
 	if err = ioutil.WriteFile(SyslinuxConfig, b, 0o600); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Revert reverts the default syslinx label to the previous installation.
-//
-// nolint: gocyclo
-func Revert() (err error) {
-	f, err := os.OpenFile(SyslinuxLdlinux, os.O_RDWR, 0o700)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-
-		return err
-	}
-
-	// nolint: errcheck
-	defer f.Close()
-
-	adv, err := NewADV(f)
-	if err != nil {
-		return err
-	}
-
-	label, ok := adv.ReadTag(AdvUpgrade)
-	if !ok {
-		return nil
-	}
-
-	if label == "" {
-		adv.DeleteTag(AdvUpgrade)
-
-		if _, err = f.Write(adv); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	if err = RevertTo(label); err != nil {
-		return err
-	}
-
-	adv.DeleteTag(AdvUpgrade)
-
-	if _, err = f.Write(adv); err != nil {
 		return err
 	}
 
@@ -349,13 +301,13 @@ func setADV(ldlinux, fallback string) (err error) {
 	// nolint: errcheck
 	defer f.Close()
 
-	var adv ADV
+	var adv bootloader.ADV
 
-	if adv, err = NewADV(f); err != nil {
+	if adv, err = bootloader.NewADV(f); err != nil {
 		return err
 	}
 
-	if ok := adv.SetTag(AdvUpgrade, fallback); !ok {
+	if ok := adv.SetTag(bootloader.AdvUpgrade, fallback); !ok {
 		return fmt.Errorf("failed to set upgrade tag: %q", fallback)
 	}
 

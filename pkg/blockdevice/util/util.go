@@ -48,7 +48,7 @@ func DevnameFromPartname(partname string) (devname string, err error) {
 	case strings.HasPrefix(p, "nvme"):
 		fallthrough
 	case strings.HasPrefix(p, "loop"):
-		return strings.TrimRight(p, "p"+partno), nil
+		return strings.TrimSuffix(p, "p"+partno), nil
 	case strings.HasPrefix(p, "sd"):
 		fallthrough
 	case strings.HasPrefix(p, "hd"):
@@ -56,7 +56,7 @@ func DevnameFromPartname(partname string) (devname string, err error) {
 	case strings.HasPrefix(p, "vd"):
 		fallthrough
 	case strings.HasPrefix(p, "xvd"):
-		return strings.TrimRight(p, partno), nil
+		return strings.TrimSuffix(p, partno), nil
 	default:
 		return "", fmt.Errorf("could not determine dev name from partition name: %s", p)
 	}

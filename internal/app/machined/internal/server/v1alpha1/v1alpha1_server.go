@@ -33,7 +33,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
@@ -107,7 +107,11 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (reply *machine.RollbackResponse, err error) {
 	log.Printf("rollback via API received")
 
-	_, next, err := syslinux.Labels()
+	grub := &grub.Grub{
+		BootDisk: s.Controller.Runtime().Config().Machine().Install().Disk(),
+	}
+
+	_, next, err := grub.Labels()
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +120,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (rep
 		return nil, fmt.Errorf("cannot rollback to %q, label does not exist", next)
 	}
 
-	if err := syslinux.RevertTo(next); err != nil {
+	if err := grub.Default(next); err != nil {
 		return nil, fmt.Errorf("failed to revert bootloader: %v", err)
 	}
 

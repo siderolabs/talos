@@ -2,11 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package syslinux
+package bootloader
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
+	"os"
+
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/talos-systems/talos/pkg/blockdevice/probe"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
@@ -39,12 +45,94 @@ const (
 	AdvUpgrade
 )
 
+// Meta represents the meta reader.
+type Meta struct {
+	*os.File
+	ADV
+}
+
 // ADV represents the Syslinux Auxiliary Data Vector.
 type ADV []byte
 
+// NewMeta initializes and returns a `Meta`.
+func NewMeta() (meta *Meta, err error) {
+	var f *os.File
+
+	f, err = probe.GetPartitionWithName(constants.MetaPartitionLabel)
+	if err != nil {
+		return nil, err
+	}
+
+	adv, err := NewADV(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Meta{
+		File: f,
+		ADV:  adv,
+	}, nil
+}
+
+func (m *Meta) Read(b []byte) (int, error) {
+	return m.File.Read(b)
+}
+
+func (m *Meta) Write() (int, error) {
+	offset, err := m.File.Seek(-2*AdvSize, io.SeekEnd)
+	if err != nil {
+		return 0, err
+	}
+
+	n, err := m.File.WriteAt(m.ADV, offset)
+	if err != nil {
+		return n, err
+	}
+
+	if n != 2*AdvSize {
+		return n, fmt.Errorf("expected to write %d bytes, wrote %d", AdvLen*2, n)
+	}
+
+	return n, nil
+}
+
+// Revert reverts the default bootloader label to the previous installation.
+//
+// nolint: gocyclo
+func (m *Meta) Revert() (err error) {
+	label, ok := m.ReadTag(AdvUpgrade)
+	if !ok {
+		return nil
+	}
+
+	if label == "" {
+		m.DeleteTag(AdvUpgrade)
+
+		if _, err = m.Write(); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	g := &grub.Grub{}
+
+	if err = g.Default(label); err != nil {
+		return err
+	}
+
+	m.DeleteTag(AdvUpgrade)
+
+	if _, err = m.Write(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // NewADV returns the Auxiliary Data Vector.
 func NewADV(r io.ReadSeeker) (adv ADV, err error) {
-	_, err = r.Seek(-2*AdvSize, 2)
+	_, err = r.Seek(-2*AdvSize, io.SeekEnd)
 	if err != nil {
 		return nil, err
 	}
