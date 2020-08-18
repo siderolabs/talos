@@ -4,8 +4,11 @@
 
 package bootloader
 
+import "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+
 // Bootloader describes a bootloader.
 type Bootloader interface {
+	Labels() (string, string, error)
 	Prepare(string) error
-	Install(string, interface{}) error
+	Install(string, interface{}, runtime.Sequence, bool) error
 }
