@@ -12,6 +12,26 @@ import (
 	"github.com/talos-systems/crypto/x509"
 )
 
+var (
+	// Username the is the default registry username.
+	Username string
+
+	// Registry is the default registry.
+	Registry string
+
+	// DefaultInstallerImageName is the default container image name for
+	// the installer.
+	DefaultInstallerImageName = Username + "/installer"
+
+	// DefaultInstallerImageRepository is the default container repository for
+	// the installer.
+	DefaultInstallerImageRepository = Registry + "/" + DefaultInstallerImageName
+
+	// DefaultTalosImageRepository is the default container repository for
+	// the talos image.
+	DefaultTalosImageRepository = Registry + "/" + Username + "/" + "talos"
+)
+
 const (
 	// DefaultKernelVersion is the default Linux kernel version
 	DefaultKernelVersion = "5.8.5-talos"
@@ -45,9 +65,31 @@ const (
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
+	// EFIPartitionLabel is the label of the partition to use for mounting at
+	// the boot path.
+	EFIPartitionLabel = "EFI"
+
+	// EFIMountPoint is the label of the partition to use for mounting at
+	// the boot path.
+	EFIMountPoint = BootMountPoint + "/EFI"
+
+	// BIOSGrubPartitionLabel is the label of the partition used by grub's second
+	// stage bootloader.
+	BIOSGrubPartitionLabel = "BIOS"
+
+	// MetaPartitionLabel is the label of the meta partition.
+	MetaPartitionLabel = "META"
+
+	// StatePartitionLabel is the label of the state partition.
+	StatePartitionLabel = "STATE"
+
+	// StateMountPoint is the label of the partition to use for mounting at
+	// the state path.
+	StateMountPoint = "/system/state"
+
 	// BootPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
-	BootPartitionLabel = "ESP"
+	BootPartitionLabel = "BOOT"
 
 	// BootMountPoint is the label of the partition to use for mounting at
 	// the boot path.
@@ -190,7 +232,7 @@ const (
 	EtcdDataPath = "/var/lib/etcd"
 
 	// ConfigPath is the path to the downloaded config.
-	ConfigPath = "/boot/config.yaml"
+	ConfigPath = StateMountPoint + "/config.yaml"
 
 	// MetalConfigISOLabel is the volume label for ISO based configuration.
 	MetalConfigISOLabel = "metal-iso"
@@ -279,18 +321,6 @@ const (
 
 	// SystemEtcPath is the path to the system etc directory.
 	SystemEtcPath = SystemPath + "/etc"
-
-	// DefaultInstallerImageName is the default container image name for
-	// the installer.
-	DefaultInstallerImageName = "autonomy/installer"
-
-	// DefaultInstallerImageRepository is the default container repository for
-	// the installer.
-	DefaultInstallerImageRepository = "docker.io/" + DefaultInstallerImageName
-
-	// DefaultTalosImageRepository is the default container repository for
-	// the talos image.
-	DefaultTalosImageRepository = "docker.io/autonomy/talos"
 
 	// DefaultCNI is the default CNI.
 	DefaultCNI = "flannel"

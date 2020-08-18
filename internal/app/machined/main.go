@@ -23,7 +23,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
@@ -74,9 +74,19 @@ func handle(err error) {
 		log.Print(err)
 	}
 
-	if err := syslinux.Revert(); err != nil {
+	meta, err := bootloader.NewMeta()
+	if err != nil {
+		log.Printf("failed to open meta: %v", err)
+
+		return
+	}
+
+	if err = meta.Revert(); err != nil {
 		log.Printf("failed to revert upgrade: %v", err)
 	}
+
+	//nolint: errcheck
+	meta.Close()
 
 	if p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First(); p != nil {
 		if *p == "0" {

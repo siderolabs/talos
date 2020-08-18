@@ -220,10 +220,10 @@ local golint = Step("lint-go", depends_on=[check_dirty]);
 local markdownlint = Step("lint-markdown", depends_on=[check_dirty]);
 local protobuflint = Step("lint-protobuf", depends_on=[check_dirty]);
 local image_aws = Step("image-aws", depends_on=[installer]);
-local image_azure = Step("image-azure", depends_on=[image_aws]);
-local image_digital_ocean = Step("image-digital-ocean", depends_on=[image_azure]);
-local image_gcp = Step("image-gcp", depends_on=[image_digital_ocean]);
-local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
+local image_azure = Step("image-azure", depends_on=[installer]);
+local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
+local image_gcp = Step("image-gcp", depends_on=[installer]);
+local image_vmware = Step("image-vmware", depends_on=[installer]);
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"});
@@ -499,7 +499,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, push.name, release_notes.name]
+  depends_on: [kernel.name, iso.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, image_vmware.name, image_digital_ocean.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [

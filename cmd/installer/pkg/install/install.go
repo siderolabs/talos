@@ -17,12 +17,10 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/blockdevice/table"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -73,11 +71,13 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 // Installer represents the installer logic. It serves as the entrypoint to all
 // installation methods.
 type Installer struct {
-	cmdline  *procfs.Cmdline
-	options  *Options
-	manifest *Manifest
-	Current  string
-	Next     string
+	cmdline    *procfs.Cmdline
+	options    *Options
+	manifest   *Manifest
+	bootloader bootloader.Bootloader
+
+	Current string
+	Next    string
 
 	bootPartitionFound bool
 }
@@ -89,36 +89,27 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 	i = &Installer{
 		cmdline: cmdline,
 		options: opts,
+		bootloader: &grub.Grub{
+			BootDisk: opts.Disk,
+		},
 	}
 
 	var dev *probe.ProbedBlockDevice
 
-	if dev, err = probe.GetDevWithFileSystemLabel(constants.BootPartitionLabel); err != nil {
+	if dev, err = probe.DevForFileSystemLabel(opts.Disk, constants.BootPartitionLabel); err != nil {
 		i.bootPartitionFound = false
 	} else {
+		//nolint: errcheck
+		defer dev.Close()
 		i.bootPartitionFound = true
 	}
 
-	if seq == runtime.SequenceUpgrade && i.bootPartitionFound {
-		if err = os.MkdirAll("/boot", 0o777); err != nil {
-			return nil, err
-		}
-
-		if err = unix.Mount(dev.Path, "/boot", dev.SuperBlock.Type(), 0, ""); err != nil {
-			return nil, fmt.Errorf("failed to mount /boot: %w", err)
-		}
-	}
-
-	i.Current, i.Next, err = syslinux.Labels()
+	i.Current, i.Next, err = i.bootloader.Labels()
 	if err != nil {
 		return nil, err
 	}
 
-	label := i.Current
-
-	if seq == runtime.SequenceUpgrade && i.bootPartitionFound {
-		label = i.Next
-	}
+	label := i.Next
 
 	i.manifest, err = NewManifest(label, seq, i.options)
 	if err != nil {
@@ -133,7 +124,31 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 //
 // nolint: gocyclo
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
-	if seq != runtime.SequenceUpgrade || !i.bootPartitionFound {
+	if i.options.Force {
+		if i.bootPartitionFound {
+			var dev *probe.ProbedBlockDevice
+
+			if dev, err = probe.DevForFileSystemLabel(i.options.Disk, constants.BootPartitionLabel); err != nil {
+				return err
+			}
+
+			// Reset the partition table.
+
+			if err = dev.Reset(); err != nil {
+				return err
+			}
+
+			if err = dev.RereadPartitionTable(); err != nil {
+				return err
+			}
+
+			if err = dev.Close(); err != nil {
+				return err
+			}
+		}
+
+		// Zero the disk.
+
 		if i.options.Zero {
 			if err = zero(i.manifest); err != nil {
 				return fmt.Errorf("failed to wipe device(s): %w", err)
@@ -141,89 +156,74 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		}
 
 		// Partition and format the block device(s).
+
 		if err = i.manifest.ExecuteManifest(); err != nil {
 			return err
 		}
-
-		// Mount the partitions.
-
-		mountpoints := mount.NewMountPoints()
-		// look for mountpoints across all target devices
-		for dev := range i.manifest.Targets {
-			var mp *mount.Points
-
-			mp, err = mount.SystemMountPointsForDevice(dev)
-			if err != nil {
-				return err
-			}
-
-			iter := mp.Iter()
-			for iter.Next() {
-				mountpoints.Set(iter.Key(), iter.Value())
+	} else if !i.bootPartitionFound {
+		if i.options.Zero {
+			if err = zero(i.manifest); err != nil {
+				return fmt.Errorf("failed to wipe device(s): %w", err)
 			}
 		}
 
-		if err = mount.Mount(mountpoints); err != nil {
+		if err = i.manifest.ExecuteManifest(); err != nil {
+			return err
+		}
+	}
+
+	if seq == runtime.SequenceUpgrade {
+		var meta *bootloader.Meta
+
+		if meta, err = bootloader.NewMeta(); err != nil {
 			return err
 		}
 
-		// nolint: errcheck
-		defer mount.Unmount(mountpoints)
-	}
+		//nolint: errcheck
+		defer meta.Close()
 
-	if seq == runtime.SequenceUpgrade && i.bootPartitionFound && i.options.Force {
-		for dev, targets := range i.manifest.Targets {
-			var bd *blockdevice.BlockDevice
+		if ok := meta.SetTag(bootloader.AdvUpgrade, i.Current); !ok {
+			return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
+		}
 
-			if bd, err = blockdevice.Open(dev); err != nil {
-				return err
-			}
-
-			// nolint: errcheck
-			defer bd.Close()
-
-			var pt table.PartitionTable
-
-			pt, err = bd.PartitionTable()
-			if err != nil {
-				return err
-			}
-
-			for _, target := range targets {
-				for _, part := range pt.Partitions() {
-					switch target.Label {
-					case constants.BootPartitionLabel, constants.EphemeralPartitionLabel:
-						target.PartitionName, err = util.PartPath(target.Device, int(part.No()))
-						if err != nil {
-							return err
-						}
-					}
-				}
-
-				if target.Label == constants.BootPartitionLabel {
-					continue
-				}
-
-				if err = target.Format(); err != nil {
-					return fmt.Errorf("failed to format device: %w", err)
-				}
-			}
+		if _, err = meta.Write(); err != nil {
+			return err
 		}
 	}
+
+	// Mount the partitions.
+
+	mountpoints := mount.NewMountPoints()
+
+	for dev := range i.manifest.Targets {
+		var mp *mount.Points
+
+		mp, err = mount.SystemMountPointsForDevice(dev)
+		if err != nil {
+			return err
+		}
+
+		iter := mp.Iter()
+		for iter.Next() {
+			mountpoints.Set(iter.Key(), iter.Value())
+		}
+	}
+
+	if err = mount.Mount(mountpoints); err != nil {
+		return err
+	}
+
+	defer func() {
+		e := mount.Unmount(mountpoints)
+		if e != nil {
+			log.Printf("failed to unmount: %v", e)
+		}
+	}()
 
 	// Install the assets.
 
 	for _, targets := range i.manifest.Targets {
 		for _, target := range targets {
-			switch target.Label {
-			case constants.BootPartitionLabel:
-				if err = syslinux.Prepare(target.Device); err != nil {
-					return err
-				}
-			case constants.EphemeralPartitionLabel:
-				continue
-			}
-
 			// Handle the download and extraction of assets.
 			if err = target.Save(); err != nil {
 				return err
@@ -237,48 +237,33 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		return nil
 	}
 
-	if seq != runtime.SequenceUpgrade || !i.bootPartitionFound {
-		i.cmdline.Append("initrd", filepath.Join("/", i.Current, constants.InitramfsAsset))
+	i.cmdline.Append("initrd", filepath.Join("/", i.Next, constants.InitramfsAsset))
 
-		syslinuxcfg := &syslinux.Cfg{
-			Default: i.Current,
-			Labels: []*syslinux.Label{
-				{
-					Root:   i.Current,
-					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
-					Append: i.cmdline.String(),
-				},
+	grubcfg := &grub.Cfg{
+		Default: i.Next,
+		Labels: []*grub.Label{
+			{
+				Root:   i.Next,
+				Initrd: filepath.Join("/", i.Next, constants.InitramfsAsset),
+				Kernel: filepath.Join("/", i.Next, constants.KernelAsset),
+				Append: i.cmdline.String(),
 			},
-		}
+		},
+	}
 
-		if err = syslinux.Install("", syslinuxcfg, seq, i.bootPartitionFound); err != nil {
-			return err
-		}
-	} else {
-		i.cmdline.Append("initrd", filepath.Join("/", i.Next, constants.InitramfsAsset))
+	if i.bootPartitionFound && i.Current != "" {
+		grubcfg.Fallback = i.Current
 
-		syslinuxcfg := &syslinux.Cfg{
-			Default: i.Next,
-			Labels: []*syslinux.Label{
-				{
-					Root:   i.Next,
-					Initrd: filepath.Join("/", i.Next, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Next, constants.KernelAsset),
-					Append: i.cmdline.String(),
-				},
-				{
-					Root:   i.Current,
-					Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
-					Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
-					Append: procfs.ProcCmdline().String(),
-				},
-			},
-		}
+		grubcfg.Labels = append(grubcfg.Labels, &grub.Label{
+			Root:   i.Current,
+			Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
+			Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
+			Append: procfs.ProcCmdline().String(),
+		})
+	}
 
-		if err = syslinux.Install(i.Current, syslinuxcfg, seq, i.bootPartitionFound); err != nil {
-			return err
-		}
+	if err = i.bootloader.Install(i.Current, grubcfg, seq, i.bootPartitionFound); err != nil {
+		return err
 	}
 
 	if i.options.Save {

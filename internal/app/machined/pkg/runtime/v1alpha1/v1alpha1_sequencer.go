@@ -85,8 +85,8 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			// the config on disk.
 		).AppendWhen(
 			r.State().Machine().Installed(),
-			"mountBoot",
-			MountBootPartition,
+			"mountSystem",
+			MountStatePartition,
 		).Append(
 			"config",
 			LoadConfig,
@@ -95,8 +95,8 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			// need to mount the boot partition.
 		).AppendWhen(
 			r.State().Machine().Installed(),
-			"unmountBoot",
-			UnmountBootPartition,
+			"unmountSystem",
+			UnmountStatePartition,
 		).Append(
 			"resetNetwork",
 			ResetNetwork,
@@ -131,14 +131,14 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"install",
 				Install,
 			).Append(
-				"mountBoot",
-				MountBootPartition,
+				"mountState",
+				MountStatePartition,
 			).Append(
 				"saveConfig",
 				SaveConfig,
 			).Append(
-				"unmountBoot",
-				UnmountBootPartition,
+				"unmountState",
+				UnmountStatePartition,
 			).Append(
 				"stopEverything",
 				StopAllServices,
@@ -160,8 +160,8 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
-		"mountBoot",
-		MountBootPartition,
+		"mountState",
+		MountStatePartition,
 	).Append(
 		"validateConfig",
 		ValidateConfig,
@@ -272,8 +272,8 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 			UnmountPodMounts,
 		).Append(
 			"unmountSystem",
-			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountStatePartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
@@ -330,8 +330,8 @@ func (*Sequencer) Reset(r runtime.Runtime, in *machineapi.ResetRequest) []runtim
 			UnmountPodMounts,
 		).Append(
 			"unmountSystem",
-			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountStatePartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
@@ -370,8 +370,8 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 			UnmountPodMounts,
 		).Append(
 			"unmountSystem",
-			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountStatePartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
@@ -412,8 +412,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			UnmountPodMounts,
 		).Append(
 			"unmountSystem",
-			UnmountBootPartition,
 			UnmountEphemeralPartition,
+			UnmountStatePartition,
 		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,

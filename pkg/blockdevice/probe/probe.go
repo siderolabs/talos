@@ -7,6 +7,7 @@ package probe
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
+	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/retry"
 
@@ -176,6 +178,103 @@ func probe(devpath string) (devpaths []string) {
 	}
 
 	return devpaths
+}
+
+// GetBlockDeviceWithPartitonName probes all known block device's partition
+// table for a parition with the specified name.
+func GetBlockDeviceWithPartitonName(name string) (bd *blockdevice.BlockDevice, err error) {
+	var infos []os.FileInfo
+
+	if infos, err = ioutil.ReadDir("/sys/block"); err != nil {
+		return nil, err
+	}
+
+	for _, info := range infos {
+		devpath := "/dev/" + info.Name()
+
+		if bd, err = blockdevice.Open(devpath); err != nil {
+			continue
+		}
+
+		pt, err := bd.PartitionTable()
+		if err != nil {
+			// nolint: errcheck
+			bd.Close()
+
+			if errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to open partition table: %w", err)
+		}
+
+		for _, p := range pt.Partitions() {
+			if part, ok := p.(*gptpartition.Partition); ok {
+				if part.Name == name {
+					return bd, nil
+				}
+			}
+		}
+
+		// nolint: errcheck
+		bd.Close()
+	}
+
+	return nil, os.ErrNotExist
+}
+
+// GetPartitionWithName probes all known block device's partition
+// table for a parition with the specified name.
+//
+//nolint: gocyclo
+func GetPartitionWithName(name string) (f *os.File, err error) {
+	var infos []os.FileInfo
+
+	if infos, err = ioutil.ReadDir("/sys/block"); err != nil {
+		return nil, err
+	}
+
+	for _, info := range infos {
+		devpath := "/dev/" + info.Name()
+
+		var bd *blockdevice.BlockDevice
+
+		if bd, err = blockdevice.Open(devpath); err != nil {
+			continue
+		}
+
+		// nolint: errcheck
+		defer bd.Close()
+
+		pt, err := bd.PartitionTable()
+		if err != nil {
+			if errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to open partition table: %w", err)
+		}
+
+		for _, p := range pt.Partitions() {
+			if part, ok := p.(*gptpartition.Partition); ok {
+				if part.Name == name {
+					partpath, err := util.PartPath(info.Name(), int(part.No()))
+					if err != nil {
+						return nil, err
+					}
+
+					f, err = os.OpenFile(partpath, os.O_RDWR|unix.O_CLOEXEC, os.ModeDevice)
+					if err != nil {
+						return nil, err
+					}
+
+					return f, nil
+				}
+			}
+		}
+	}
+
+	return nil, os.ErrNotExist
 }
 
 func probeFilesystem(devpath string) (probed []*ProbedBlockDevice, err error) {

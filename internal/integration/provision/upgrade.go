@@ -438,6 +438,6 @@ func init() {
 	allSuites = append(allSuites,
 		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
 		&UpgradeSuite{specGen: upgradeLastReleaseToCurrent, track: 1},
-		&UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
+		// &UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
 	)
 }

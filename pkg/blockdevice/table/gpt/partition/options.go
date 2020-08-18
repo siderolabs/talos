@@ -47,17 +47,16 @@ func WithMaximumSize(o bool) Option {
 func WithLegacyBIOSBootableAttribute(o bool) Option {
 	return func(args *Options) {
 		if o {
-			args.Flags = 4
+			args.Flags |= (1 << 2)
 		}
 	}
 }
 
 // NewDefaultOptions initializes a Options struct with default values.
 func NewDefaultOptions(setters ...interface{}) *Options {
-	// Default to data type "af3dc60f-8384-7247-8e79-3d69d8477de4"
 	// TODO: An Option should return an error.
 	// nolint: errcheck
-	guuid, _ := uuid.Parse("af3dc60f-8384-7247-8e79-3d69d8477de4")
+	guuid, _ := uuid.Parse("0FC63DAF-8483-4772-8E79-3D69D8477DE4")
 
 	opts := &Options{
 		Type: guuid,

@@ -229,30 +229,39 @@ FROM base AS talosctl-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG ARTIFACTS
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
 
 FROM base AS talosctl-linux-arm64-build
 ARG SHA
 ARG TAG
 ARG ARTIFACTS
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-arm64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
 
 FROM base AS talosctl-linux-armv7-build
 ARG SHA
 ARG TAG
 ARG ARTIFACTS
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm GOARM=7  go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-armv7
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm GOARM=7  go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-armv7
 RUN chmod +x /talosctl-linux-armv7
 
 FROM scratch AS talosctl-linux
@@ -264,10 +273,13 @@ FROM base AS talosctl-darwin-build
 ARG SHA
 ARG TAG
 ARG ARTIFACTS
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 
 FROM scratch AS talosctl-darwin
@@ -298,7 +310,6 @@ COPY --from=docker.io/autonomy/open-iscsi:v0.2.0-34-g7e57ef7 / /rootfs
 COPY --from=docker.io/autonomy/open-isns:v0.2.0-34-g7e57ef7 / /rootfs
 COPY --from=docker.io/autonomy/runc:v0.2.0-34-g7e57ef7 / /rootfs
 COPY --from=docker.io/autonomy/socat:v0.2.0-34-g7e57ef7 / /rootfs
-COPY --from=docker.io/autonomy/syslinux:v0.2.0-34-g7e57ef7 / /rootfs
 COPY --from=docker.io/autonomy/xfsprogs:v0.2.0-34-g7e57ef7 / /rootfs
 COPY --from=docker.io/autonomy/util-linux:v0.2.0-34-g7e57ef7 /lib/libblkid.* /rootfs/lib/
 COPY --from=docker.io/autonomy/util-linux:v0.2.0-34-g7e57ef7 /lib/libuuid.* /rootfs/lib/
@@ -366,17 +377,17 @@ WORKDIR /src/cmd/installer
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.8 AS installer
+FROM alpine:3.11 AS installer
 RUN apk add --no-cache --update \
     bash \
     ca-certificates \
     cdrkit \
+    efibootmgr \
     qemu-img \
-    syslinux \
     util-linux \
     xfsprogs
+COPY --from=docker.io/autonomy/grub:v0.2.0-34-g7e57ef7   / /
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
-COPY --from=rootfs /usr/lib/syslinux/ /usr/lib/syslinux
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl
@@ -429,9 +440,12 @@ RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type
 FROM base AS integration-test-linux-build
 ARG SHA
 ARG TAG
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -441,9 +455,12 @@ COPY --from=integration-test-linux-build /src/integration.test /integration-test
 FROM base AS integration-test-darwin-build
 ARG SHA
 ARG TAG
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -455,11 +472,14 @@ COPY --from=integration-test-darwin-build /src/integration.test /integration-tes
 FROM base AS integration-test-provision-linux-build
 ARG SHA
 ARG TAG
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 ARG ARTIFACTS
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
     -tags integration,integration_provision \
     ./internal/integration
 

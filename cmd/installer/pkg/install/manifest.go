@@ -51,6 +51,10 @@ type Asset struct {
 
 // NewManifest initializes and returns a Manifest.
 func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manifest *Manifest, err error) {
+	if label == "" {
+		return nil, fmt.Errorf("a label is required, got \"\"")
+	}
+
 	manifest = &Manifest{
 		Targets: map[string][]*Target{},
 	}
@@ -74,13 +78,29 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 		manifest.Targets[opts.Disk] = []*Target{}
 	}
 
+	efiTarget := &Target{
+		Device: opts.Disk,
+		Label:  constants.EFIPartitionLabel,
+		Size:   100 * 1024 * 1024,
+		Force:  true,
+		Test:   false,
+	}
+
+	biosTarget := &Target{
+		Device: opts.Disk,
+		Label:  constants.BIOSGrubPartitionLabel,
+		Size:   1 * 1024 * 1024,
+		Force:  true,
+		Test:   false,
+	}
+
 	var bootTarget *Target
 
 	if opts.Bootloader {
 		bootTarget = &Target{
 			Device: opts.Disk,
 			Label:  constants.BootPartitionLabel,
-			Size:   512 * 1024 * 1024,
+			Size:   300 * 1024 * 1024,
 			Force:  true,
 			Test:   false,
 			Assets: []*Asset{
@@ -96,6 +116,22 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 		}
 	}
 
+	metaTarget := &Target{
+		Device: opts.Disk,
+		Label:  constants.MetaPartitionLabel,
+		Size:   1 * 1024 * 1024,
+		Force:  true,
+		Test:   false,
+	}
+
+	stateTarget := &Target{
+		Device: opts.Disk,
+		Label:  constants.StatePartitionLabel,
+		Size:   100 * 1024 * 1024,
+		Force:  true,
+		Test:   false,
+	}
+
 	ephemeralTarget := &Target{
 		Device: opts.Disk,
 		Label:  constants.EphemeralPartitionLabel,
@@ -104,7 +140,7 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 		Test:   false,
 	}
 
-	for _, target := range []*Target{bootTarget, ephemeralTarget} {
+	for _, target := range []*Target{efiTarget, biosTarget, bootTarget, metaTarget, stateTarget, ephemeralTarget} {
 		if target == nil {
 			continue
 		}
@@ -176,18 +212,27 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 
 	opts := []interface{}{}
 
+	const (
+		EFISystemPartition  = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+		BIOSBootPartition   = "21686148-6449-6E6F-744E-656564454649"
+		LinuxFilesystemData = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+	)
+
 	switch t.Label {
+	case constants.EFIPartitionLabel:
+		opts = append(opts, partition.WithPartitionType(EFISystemPartition), partition.WithPartitionName(t.Label))
+	case constants.BIOSGrubPartitionLabel:
+		opts = append(opts, partition.WithPartitionType(BIOSBootPartition), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
 	case constants.BootPartitionLabel:
-		// EFI System Partition
-		typeID := "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithLegacyBIOSBootableAttribute(true))
+		opts = append(opts, partition.WithPartitionType(LinuxFilesystemData), partition.WithPartitionName(t.Label))
+	case constants.MetaPartitionLabel:
+		opts = append(opts, partition.WithPartitionType(LinuxFilesystemData), partition.WithPartitionName(t.Label))
+	case constants.StatePartitionLabel:
+		opts = append(opts, partition.WithPartitionType(LinuxFilesystemData), partition.WithPartitionName(t.Label))
 	case constants.EphemeralPartitionLabel:
-		// Ephemeral Partition
-		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
-		opts = append(opts, partition.WithPartitionType(typeID), partition.WithPartitionName(t.Label), partition.WithMaximumSize(true))
+		opts = append(opts, partition.WithPartitionType(LinuxFilesystemData), partition.WithPartitionName(t.Label), partition.WithMaximumSize(true))
 	default:
-		typeID := "AF3DC60F-8384-7247-8E79-3D69D8477DE4"
-		opts = append(opts, partition.WithPartitionType(typeID))
+		opts = append(opts, partition.WithPartitionType(LinuxFilesystemData))
 
 		if t.Size == 0 {
 			opts = append(opts, partition.WithMaximumSize(true))
@@ -212,20 +257,47 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 }
 
 // Format creates a filesystem on the device/partition.
+//
+//nolint: gocyclo
 func (t *Target) Format() error {
-	if t.Label == constants.BootPartitionLabel {
+	switch t.Label {
+	case constants.EFIPartitionLabel:
 		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "fat", t.Label)
 		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
+	case constants.BIOSGrubPartitionLabel:
+		return nil
+	case constants.BootPartitionLabel:
+		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
+		opts := []xfs.Option{xfs.WithForce(t.Force)}
+
+		if t.Label != "" {
+			opts = append(opts, xfs.WithLabel(t.Label))
+		}
+
+		return xfs.MakeFS(t.PartitionName, opts...)
+	case constants.MetaPartitionLabel:
+		return nil
+	case constants.StatePartitionLabel:
+		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
+		opts := []xfs.Option{xfs.WithForce(t.Force)}
+
+		if t.Label != "" {
+			opts = append(opts, xfs.WithLabel(t.Label))
+		}
+
+		return xfs.MakeFS(t.PartitionName, opts...)
+	case constants.EphemeralPartitionLabel:
+		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
+		opts := []xfs.Option{xfs.WithForce(t.Force)}
+
+		if t.Label != "" {
+			opts = append(opts, xfs.WithLabel(t.Label))
+		}
+
+		return xfs.MakeFS(t.PartitionName, opts...)
+	default:
+		return nil
 	}
-
-	log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
-	opts := []xfs.Option{xfs.WithForce(t.Force)}
-
-	if t.Label != "" {
-		opts = append(opts, xfs.WithLabel(t.Label))
-	}
-
-	return xfs.MakeFS(t.PartitionName, opts...)
 }
 
 // Save copies the assets to the bootloader partition.

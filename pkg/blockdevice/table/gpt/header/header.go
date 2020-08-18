@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
+	"github.com/talos-systems/talos/pkg/endianness"
 	"github.com/talos-systems/talos/pkg/serde"
 )
 
@@ -240,10 +241,20 @@ func (hdr *Header) Fields() []*serde.Field {
 			Length: 16,
 			// Contents: []byte{0x00},
 			SerializerFunc: func(offset, length uint32, new []byte, opts interface{}) ([]byte, error) {
-				return hdr.GUUID.MarshalBinary()
+				b, err := hdr.GUUID.MarshalBinary()
+				if err != nil {
+					return nil, err
+				}
+
+				return endianness.ToMiddleEndian(b)
 			},
 			DeserializerFunc: func(contents []byte, opts interface{}) error {
-				guid, err := uuid.FromBytes(contents)
+				u, err := endianness.FromMiddleEndian(contents)
+				if err != nil {
+					return err
+				}
+
+				guid, err := uuid.FromBytes(u)
 				if err != nil {
 					return fmt.Errorf("invalid GUUID: %w", err)
 				}
