@@ -43,3 +43,8 @@ type Info interface {
 	// NodesByType return list of node endpoints by type.
 	NodesByType(machine.Type) []string
 }
+
+// Bootstrapper performs Talos cluster bootstrap.
+type Bootstrapper interface {
+	Bootstrap(ctx context.Context, out io.Writer) error
+}
