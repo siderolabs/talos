@@ -44,7 +44,7 @@ talosctl cluster create [flags]
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
       --with-bootloader             enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-debug                  enable debug in Talos config to send service logs to the console
-      --with-init-node              create the cluster with an init node (default true)
+      --with-init-node              create the cluster with an init node
       --workers int                 the number of workers to create (default 1)
 ```
 
