@@ -15,6 +15,7 @@ type Adapter struct {
 	cluster.ConfigClientProvider
 	cluster.KubernetesClient
 	cluster.APICrashDumper
+	cluster.APIBoostrapper
 	cluster.Info
 }
 
@@ -54,6 +55,8 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 		}
 	}
 
+	info := &infoWrapper{clusterInfo: clusterInfo.Info()}
+
 	configProvider := cluster.ConfigClientProvider{
 		DefaultClient: options.TalosClient,
 		TalosConfig:   options.TalosConfig,
@@ -67,8 +70,12 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 		},
 		APICrashDumper: cluster.APICrashDumper{
 			ClientProvider: &configProvider,
-			Info:           &infoWrapper{clusterInfo: clusterInfo.Info()},
+			Info:           info,
 		},
-		Info: &infoWrapper{clusterInfo: clusterInfo.Info()},
+		APIBoostrapper: cluster.APIBoostrapper{
+			ClientProvider: &configProvider,
+			Info:           info,
+		},
+		Info: info,
 	}
 }
