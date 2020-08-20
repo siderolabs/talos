@@ -6,8 +6,11 @@
 package configloader
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/decoder"
@@ -42,6 +45,23 @@ func NewFromFile(filepath string) (config.Provider, error) {
 	}
 
 	return newConfig(source)
+}
+
+// NewFromStdin initializes a config provider by reading from stdin.
+func NewFromStdin() (config.Provider, error) {
+	buf := bytes.NewBuffer(nil)
+
+	_, err := io.Copy(buf, os.Stdin)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := NewFromBytes(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed load config from stdin: %v", err)
+	}
+
+	return config, nil
 }
 
 // NewFromBytes will take a byteslice and attempt to parse a config file from it.

@@ -211,7 +211,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	if err = etcd.ValidateForUpgrade(in.GetPreserve()); err != nil {
+	if err = etcd.ValidateForUpgrade(s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
 		return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
 	}
 

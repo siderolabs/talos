@@ -18,7 +18,6 @@ import (
 )
 
 var (
-	configPath    *string
 	strict        *bool
 	recover       *bool
 	recoverSource *string
@@ -27,7 +26,6 @@ var (
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	configPath = flag.String("config", "", "the path to the config")
 	strict = flag.Bool("strict", true, "require all manifests to cleanly apply")
 	recover = flag.Bool("recover", false, "run recovery instead of generate")
 	recoverSource = flag.String("recover-source", "ETCD", "recovery source to use")
@@ -103,9 +101,9 @@ func main() {
 
 	defer util.FlushLogs()
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	if *recover {

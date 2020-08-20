@@ -6,6 +6,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -117,7 +118,6 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID: o.ID(r),
 		ProcessArgs: []string{
 			"/apid",
-			"--config=" + constants.ConfigPath,
 			"--endpoints=" + strings.Join(endpoints, ","),
 		},
 	}
@@ -125,7 +125,6 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.RouterdSocketPath), Source: filepath.Dir(constants.RouterdSocketPath), Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
 	}
@@ -146,9 +145,17 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		}
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
