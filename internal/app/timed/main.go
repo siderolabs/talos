@@ -25,12 +25,8 @@ const (
 	DefaultServer = "pool.ntp.org"
 )
 
-var configPath *string
-
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-
-	configPath = flag.String("config", "", "the path to the config")
 
 	flag.Parse()
 }
@@ -44,9 +40,9 @@ func main() {
 
 	server := DefaultServer
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	// Check if ntp servers are defined

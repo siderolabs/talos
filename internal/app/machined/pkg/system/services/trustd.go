@@ -6,6 +6,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -69,17 +70,13 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: t.ID(r),
-		ProcessArgs: []string{
-			"/trustd",
-			"--config=" + constants.ConfigPath,
-		},
+		ID:          t.ID(r),
+		ProcessArgs: []string{"/trustd"},
 	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}
@@ -87,9 +84,17 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
