@@ -5,7 +5,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +16,7 @@ import (
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 	"github.com/kubernetes-sigs/bootkube/pkg/util"
 
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -27,7 +31,6 @@ var (
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	configPath = flag.String("config", "", "the path to the config")
 	strict = flag.Bool("strict", true, "require all manifests to cleanly apply")
 	recover = flag.Bool("recover", false, "run recovery instead of generate")
 	recoverSource = flag.String("recover-source", "ETCD", "recovery source to use")
@@ -98,14 +101,30 @@ func run() error {
 	return nil
 }
 
+func loadConfig() (config.Provider, error) {
+	buf := bytes.NewBuffer(nil)
+
+	_, err := io.Copy(buf, os.Stdin)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := configloader.NewFromBytes(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed load config from stdin: %v", err)
+	}
+
+	return config, nil
+}
+
 func main() {
 	util.InitLogs()
 
 	defer util.FlushLogs()
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := loadConfig()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	if *recover {

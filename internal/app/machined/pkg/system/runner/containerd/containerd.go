@@ -135,12 +135,41 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		w = io.MultiWriter(w, os.Stdout)
 	}
 
-	creator := cio.NewCreator(cio.WithStreams(nil, w, w))
+	var (
+		stdin *stdinCloser
+		r     io.Reader
+	)
+
+	if c.opts.Stdin != nil {
+		if _, err := c.opts.Stdin.Seek(0, 0); err != nil {
+			return err
+		}
+
+		stdin = &stdinCloser{
+			stdin:  c.opts.Stdin,
+			closer: make(chan struct{}),
+		}
+
+		r = stdin
+	}
+
+	creator := cio.NewCreator(cio.WithStreams(r, w, w))
 
 	// Create the task and start it.
 	task, err = c.container.NewTask(c.ctx, creator)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %q: %w", c.args.ID, err)
+	}
+
+	if stdin != nil {
+		go func() {
+			select {
+			case <-c.ctx.Done():
+				return
+			case <-stdin.closer:
+				task.CloseIO(c.ctx, containerd.WithStdinCloser)
+			}
+		}()
 	}
 
 	defer task.Delete(c.ctx) // nolint: errcheck
@@ -229,4 +258,18 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 
 func (c *containerdRunner) String() string {
 	return fmt.Sprintf("Containerd(%v)", c.args.ID)
+}
+
+type stdinCloser struct {
+	stdin  io.Reader
+	closer chan struct{}
+}
+
+func (s *stdinCloser) Read(p []byte) (int, error) {
+	n, err := s.stdin.Read(p)
+	if err == io.EOF {
+		close(s.closer)
+	}
+
+	return n, err
 }

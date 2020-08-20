@@ -6,6 +6,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -73,7 +74,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	args := runner.Args{
 		ID:          n.ID(r),
-		ProcessArgs: []string{"/timed", "--config=" + constants.ConfigPath},
+		ProcessArgs: []string{"/timed"},
 	}
 
 	// Ensure socket dir exists
@@ -82,7 +83,6 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.TimeSocketPath), Source: filepath.Dir(constants.TimeSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
@@ -91,9 +91,17 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),

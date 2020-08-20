@@ -5,8 +5,12 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
+	"io"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -34,7 +38,6 @@ var (
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	configPath = flag.String("config", "", "the path to the config")
 	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
 
 	flag.Parse()
@@ -132,5 +135,17 @@ func main() {
 }
 
 func loadConfig() (config.Provider, error) {
-	return configloader.NewFromFile(*configPath)
+	buf := bytes.NewBuffer(nil)
+
+	_, err := io.Copy(buf, os.Stdin)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := configloader.NewFromBytes(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed load config from stdin: %v", err)
+	}
+
+	return config, nil
 }

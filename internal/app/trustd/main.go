@@ -5,8 +5,12 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
+	"io"
 	"log"
+	"os"
 
 	stdlibnet "net"
 
@@ -21,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
@@ -30,8 +35,6 @@ var configPath *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-
-	configPath = flag.String("config", "", "the path to the config")
 
 	flag.Parse()
 }
@@ -44,9 +47,9 @@ func main() {
 		log.Fatalf("startup: %s", err)
 	}
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := loadConfig()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	ips, err := net.IPAddrs()
@@ -111,4 +114,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen: %v", err)
 	}
+}
+
+func loadConfig() (config.Provider, error) {
+	buf := bytes.NewBuffer(nil)
+
+	_, err := io.Copy(buf, os.Stdin)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := configloader.NewFromBytes(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed load config from stdin: %v", err)
+	}
+
+	return config, nil
 }
