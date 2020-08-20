@@ -17,15 +17,11 @@ import (
 	"github.com/talos-systems/talos/pkg/constants"
 )
 
-var (
-	configPath *string
-	strict     *bool
-)
+var strict *bool
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	configPath = flag.String("config", "", "the path to the config")
 	strict = flag.Bool("strict", true, "require all manifests to cleanly apply")
 
 	flag.Parse()
@@ -95,9 +91,9 @@ func main() {
 
 	defer util.FlushLogs()
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	if err := generateAssets(config); err != nil {

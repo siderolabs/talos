@@ -15,12 +15,8 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 )
 
-var configPath *string
-
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-
-	configPath = flag.String("config", "", "the path to the config")
 
 	flag.Parse()
 }
@@ -28,9 +24,9 @@ func init() {
 func main() {
 	log.Println("starting initial network configuration")
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	nwd, err := networkd.New(config)

@@ -412,6 +412,38 @@ func (suite *ContainerdSuite) TestImportFail() {
 		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
 }
 
+func (suite *ContainerdSuite) TestContainerStdin() {
+	stdin := bytes.Repeat([]byte{0xde, 0xad, 0xbe, 0xef}, 2000)
+
+	r := containerdrunner.NewRunner(false, &runner.Args{
+		ID:          suite.containerID,
+		ProcessArgs: []string{"/bin/cat"},
+	},
+		runner.WithStdin(bytes.NewReader(stdin)),
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithNamespace(suite.containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
+	)
+
+	suite.Require().NoError(r.Open(context.Background()))
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	suite.Assert().NoError(r.Run(MockEventSink))
+
+	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
+	suite.Assert().NoError(err)
+
+	// nolint: errcheck
+	defer logFile.Close()
+
+	logContents, err := ioutil.ReadAll(logFile)
+	suite.Assert().NoError(err)
+
+	suite.Assert().Equal(stdin, logContents)
+}
+
 func TestContainerdSuite(t *testing.T) {
 	if os.Getuid() != 0 {
 		t.Skip("can't run the test as non-root")

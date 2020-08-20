@@ -30,9 +30,10 @@ type containerdRunner struct {
 	stop    chan struct{}
 	stopped chan struct{}
 
-	client    *containerd.Client
-	ctx       context.Context
-	container containerd.Container
+	client      *containerd.Client
+	ctx         context.Context
+	container   containerd.Container
+	stdinCloser *stdinCloser
 }
 
 // NewRunner creates runner.Runner that runs a container in containerd.
@@ -135,12 +136,30 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		w = io.MultiWriter(w, os.Stdout)
 	}
 
-	creator := cio.NewCreator(cio.WithStreams(nil, w, w))
+	r, err := c.StdinReader()
+	if err != nil {
+		return fmt.Errorf("failed to create stdin reader: %w", err)
+	}
+
+	creator := cio.NewCreator(cio.WithStreams(r, w, w))
 
 	// Create the task and start it.
 	task, err = c.container.NewTask(c.ctx, creator)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %q: %w", c.args.ID, err)
+	}
+
+	if r != nil {
+		// See https://github.com/containerd/containerd/issues/4489.
+		go func() {
+			select {
+			case <-c.ctx.Done():
+				return
+			case <-c.stdinCloser.closer:
+				//nolint: errcheck
+				task.CloseIO(c.ctx, containerd.WithStdinCloser)
+			}
+		}()
 	}
 
 	defer task.Delete(c.ctx) // nolint: errcheck
@@ -229,4 +248,35 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 
 func (c *containerdRunner) String() string {
 	return fmt.Sprintf("Containerd(%v)", c.args.ID)
+}
+
+func (c *containerdRunner) StdinReader() (io.Reader, error) {
+	if c.opts.Stdin == nil {
+		return nil, nil
+	}
+
+	if _, err := c.opts.Stdin.Seek(0, 0); err != nil {
+		return nil, err
+	}
+
+	c.stdinCloser = &stdinCloser{
+		stdin:  c.opts.Stdin,
+		closer: make(chan struct{}),
+	}
+
+	return c.stdinCloser, nil
+}
+
+type stdinCloser struct {
+	stdin  io.Reader
+	closer chan struct{}
+}
+
+func (s *stdinCloser) Read(p []byte) (int, error) {
+	n, err := s.stdin.Read(p)
+	if err == io.EOF {
+		close(s.closer)
+	}
+
+	return n, err
 }

@@ -13,7 +13,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 
-	"github.com/talos-systems/talos/pkg/config/configloader"
+	"github.com/talos-systems/talos/pkg/config"
 	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/crypto/x509"
@@ -71,12 +71,7 @@ func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCer
 
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
-func ValidateForUpgrade(preserve bool) error {
-	config, err := configloader.NewFromFile(constants.ConfigPath)
-	if err != nil {
-		return err
-	}
-
+func ValidateForUpgrade(config config.Provider, preserve bool) error {
 	if config.Machine().Type() != machine.TypeJoin {
 		client, err := NewClientFromControlPlaneIPs(context.TODO(), config.Cluster().CA(), config.Cluster().Endpoint())
 		if err != nil {

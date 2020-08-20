@@ -23,12 +23,8 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-var configPath *string
-
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-
-	configPath = flag.String("config", "", "the path to the config")
 
 	flag.Parse()
 }
@@ -41,9 +37,9 @@ func main() {
 		log.Fatalf("startup: %s", err)
 	}
 
-	config, err := configloader.NewFromFile(*configPath)
+	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	ips, err := net.IPAddrs()
