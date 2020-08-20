@@ -20,21 +20,16 @@ import (
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
-	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-var (
-	configPath *string
-	endpoints  *string
-)
+var endpoints *string
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	configPath = flag.String("config", "", "the path to the config")
 	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
 
 	flag.Parse()
@@ -45,7 +40,7 @@ func main() {
 		log.Fatalf("failed to seed RNG: %v", err)
 	}
 
-	config, err := loadConfig()
+	config, err := configloader.NewFromStdin()
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
@@ -129,8 +124,4 @@ func main() {
 	if err := errGroup.Wait(); err != nil {
 		log.Fatalf("listen: %v", err)
 	}
-}
-
-func loadConfig() (config.Provider, error) {
-	return configloader.NewFromFile(*configPath)
 }

@@ -5,6 +5,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -163,7 +164,6 @@ func (b *Bootkube) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID: b.ID(r),
 		ProcessArgs: []string{
 			"/bootkube",
-			"--config=" + constants.ConfigPath,
 			"--strict=" + strconv.FormatBool(!b.Recover),
 			"--recover=" + strconv.FormatBool(b.Recover),
 			"--recover-source=" + b.Source.String(),
@@ -178,13 +178,20 @@ func (b *Bootkube) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the required kubelet mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 	}
+
+	bb, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(bb)
 
 	return containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
