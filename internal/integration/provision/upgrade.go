@@ -58,7 +58,7 @@ type upgradeSpec struct {
 
 const (
 	stableVersion = "v0.5.1"
-	nextVersion   = "v0.6.0-alpha.6"
+	nextVersion   = "v0.6.0-beta.2"
 )
 
 var (
