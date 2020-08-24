@@ -1,8 +1,8 @@
 ---
-title: Firecracker
+title: QEMU
 ---
 
-In this guide we will create a Kubernetes cluster using Firecracker.
+In this guide we will create a Kubernetes cluster using QEMU.
 
 ## Requirements
 
@@ -12,7 +12,7 @@ In this guide we will create a Kubernetes cluster using Firecracker.
   - `CONFIG_NET_SCH_NETEM` enabled
   - `CONFIG_NET_SCH_INGRESS` enabled
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
-- [firecracker](https://github.com/firecracker-microvm/firecracker/releases) (v0.21.0 or higher)
+- QEMU
 - `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin`
 - iptables
 - `/etc/cni/conf.d` directory should exist
@@ -20,21 +20,13 @@ In this guide we will create a Kubernetes cluster using Firecracker.
 
 ## Installation
 
-### How to get firecracker (v0.21.0 or higher)
+### How to get QEMU
 
-You can download `firecracker` binary via
-[github.com/firecracker-microvm/firecracker/releases](https://github.com/firecracker-microvm/firecracker/releases)
-
-```bash
-curl https://github.com/firecracker-microvm/firecracker/releases/download/<version>/firecracker-<version>-<arch> -L -o firecracker
-```
-
-For example version `v0.21.1` for `linux` platform:
+Install QEMU with your operating system package manager.
+For example, on Ubuntu for x86:
 
 ```bash
-curl https://github.com/firecracker-microvm/firecracker/releases/download/v0.21.1/firecracker-v0.21.1-x86_64 -L -o firecracker
-sudo cp firecracker /usr/local/bin
-sudo chmod +x /usr/local/bin/firecracker
+apt install qemu-system-x86 qemu-kvm
 ```
 
 ### Install talosctl
@@ -88,7 +80,7 @@ sudo cp tc-redirect-tap /opt/cni/bin
 
 ## Install Talos kernel and initramfs
 
-Firecracker provisioner depends on Talos uncompressed kernel (`vmlinuz`) and initramfs (`initramfs.xz`).
+QEMU provisioner depends on Talos kernel (`vmlinuz`) and initramfs (`initramfs.xz`).
 These files can be downloaded from the Talos release:
 
 ```bash
@@ -106,8 +98,16 @@ curl https://github.com/talos-systems/talos/releases/download/v0.6.0/initramfs.x
 
 ## Create the Cluster
 
+For the first time, create root state directory as your user so that you can inspect the logs as non-root user:
+
 ```bash
-sudo talosctl cluster create --provisioner firecracker
+mkdir -p ~/.talos/clusters
+```
+
+Create the cluster:
+
+```bash
+sudo -E talosctl cluster create --provisioner qemu
 ```
 
 Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
@@ -115,7 +115,7 @@ Once the above finishes successfully, your talosconfig(`~/.talos/config`) will b
 ## Retrieve and Configure the `kubeconfig`
 
 ```bash
-talosctl kubeconfig .
+talosctl -n 10.5.0.2 kubeconfig .
 ```
 
 ## Using the Cluster
@@ -131,8 +131,8 @@ A loadbalancer runs on 10.5.0.1 by default, which handles loadbalancing for the 
 You can see a summary of the cluster state by running:
 
 ```bash
-$ talosctl cluster show --provisioner firecracker
-PROVISIONER       firecracker
+$ talosctl cluster show --provisioner qemu
+PROVISIONER       qemu
 NAME              talos-default
 NETWORK NAME      talos-default
 NETWORK CIDR      10.5.0.0/24
@@ -153,7 +153,7 @@ talos-default-worker-1   Join           10.5.0.5   1.00   1.6 GB   4.3 GB
 To cleanup, run:
 
 ```bash
-sudo talosctl cluster destroy --provisioner firecracker
+sudo -E talosctl cluster destroy --provisioner qemu
 ```
 
 > Note: In that case that the host machine is rebooted before destroying the cluster, you may need to manually remove `~/.talos/clusters/talos-default`.
@@ -167,36 +167,12 @@ The PIDs and network associated with the cluster nodes.
 If you happened to have deleted the state folder by mistake or you would like to cleanup
 the environment, here are the steps how to do it manually:
 
-### Stopping VMs
+### Remove VM Launchers
 
-Find the process of `firecracker --api-sock` execute:
-
-```bash
-ps -elf | grep '[f]irecracker --api-sock'
-```
-
-To stop the VMs manually, execute:
+Find the process of `talosctl qemu-launch`:
 
 ```bash
-sudo kill -s SIGTERM <PID>
-```
-
-Example output, where VMs are running with PIDs **158065** and **158216**
-
-```bash
-ps -elf | grep '[f]irecracker --api-sock'
-4 S root      158065  157615 44  80   0 - 264152 -     07:54 ?        00:34:25 firecracker --api-sock /root/.talos/clusters/k8s/k8s-master-1.sock
-4 S root      158216  157617 18  80   0 - 264152 -     07:55 ?        00:14:47 firecracker --api-sock /root/.talos/clusters/k8s/k8s-worker-1.sock
-sudo kill -s SIGTERM 158065
-sudo kill -s SIGTERM 158216
-```
-
-### Remove VMs
-
-Find the process of `talosctl firecracker-launch` execute:
-
-```bash
-ps -elf | grep 'talosctl firecracker-launch'
+ps -elf | grep 'talosctl qemu-launch'
 ```
 
 To remove the VMs manually, execute:
@@ -208,16 +184,40 @@ sudo kill -s SIGTERM <PID>
 Example output, where VMs are running with PIDs **157615** and **157617**
 
 ```bash
-ps -elf | grep '[t]alosctl firecracker-launch'
-0 S root      157615    2835  0  80   0 - 184934 -     07:53 ?        00:00:00 talosctl firecracker-launch
-0 S root      157617    2835  0  80   0 - 185062 -     07:53 ?        00:00:00 talosctl firecracker-launch
+ps -elf | grep '[t]alosctl qemu-launch'
+0 S root      157615    2835  0  80   0 - 184934 -     07:53 ?        00:00:00 talosctl qemu-launch
+0 S root      157617    2835  0  80   0 - 185062 -     07:53 ?        00:00:00 talosctl qemu-launch
 sudo kill -s SIGTERM 157615
 sudo kill -s SIGTERM 157617
 ```
 
+### Stopping VMs
+
+Find the process of `qemu-system`:
+
+```bash
+ps -elf | grep 'qemu-system'
+```
+
+To stop the VMs manually, execute:
+
+```bash
+sudo kill -s SIGTERM <PID>
+```
+
+Example output, where VMs are running with PIDs **158065** and **158216**
+
+```bash
+ps -elf | grep qemu-system
+2 S root     1061663 1061168 26  80   0 - 1786238 -    14:05 ?        01:53:56 qemu-system-x86_64 -m 2048 -drive format=raw,if=virtio,file=/home/username/.talos/clusters/talos-default/bootstrap-master.disk -smp cpus=2 -cpu max -nographic -netdev tap,id=net0,ifname=tap0,script=no,downscript=no -device virtio-net-pci,netdev=net0,mac=1e:86:c6:b4:7c:c4 -device virtio-rng-pci -no-reboot -boot order=cn,reboot-timeout=5000 -smbios type=1,uuid=7ec0a73c-826e-4eeb-afd1-39ff9f9160ca -machine q35,accel=kvm
+2 S root     1061663 1061170 67  80   0 - 621014 -     21:23 ?        00:00:07 qemu-system-x86_64 -m 2048 -drive format=raw,if=virtio,file=/homeusername/.talos/clusters/talos-default/pxe-1.disk -smp cpus=2 -cpu max -nographic -netdev tap,id=net0,ifname=tap0,script=no,downscript=no -device virtio-net-pci,netdev=net0,mac=36:f3:2f:c3:9f:06 -device virtio-rng-pci -no-reboot -boot order=cn,reboot-timeout=5000 -smbios type=1,uuid=ce12a0d0-29c8-490f-b935-f6073ab916a6 -machine q35,accel=kvm
+sudo kill -s SIGTERM 1061663
+sudo kill -s SIGTERM 1061663
+```
+
 ### Remove load balancer
 
-Find the process of `talosctl loadbalancer-launch` execute:
+Find the process of `talosctl loadbalancer-launch`:
 
 ```bash
 ps -elf | grep 'talosctl loadbalancer-launch'
@@ -237,14 +237,36 @@ ps -elf | grep '[t]alosctl loadbalancer-launch'
 sudo kill -s SIGTERM 157609
 ```
 
+### Remove DHCP server
+
+Find the process of `talosctl dhcpd-launch`:
+
+```bash
+ps -elf | grep 'talosctl dhcpd-launch'
+```
+
+To remove the LB manually, execute:
+
+```bash
+sudo kill -s SIGTERM <PID>
+```
+
+Example output, where loadbalancer is running with PID **157609**
+
+```bash
+ps -elf | grep '[t]alosctl dhcpd-launch'
+4 S root      157609    2835  0  80   0 - 184998 -     07:53 ?        00:00:07 talosctl dhcpd-launch --state-path /home/username/.talos/clusters/talos-default --addr 10.5.0.1 --interface talosbd9c32bc
+sudo kill -s SIGTERM 157609
+```
+
 ### Remove network
 
 This is more tricky part as if you have already deleted the state folder.
 If you didn't then it is written in the `state.yaml` in the
-`/root/.talos/clusters/<cluster-name>` directory.
+`~/.talos/clusters/<cluster-name>` directory.
 
 ```bash
-sudo cat /root/.talos/clusters/<cluster-name>/state.yaml | grep bridgename
+sudo cat ~/.talos/clusters/<cluster-name>/state.yaml | grep bridgename
 bridgename: talos<uuid>
 ```
 
@@ -271,7 +293,7 @@ sudo ip link del talos<uuid>
 To remove the state directory execute:
 
 ```bash
-sudo rm -Rf /root/.talos/clusters/<cluster-name>
+sudo rm -Rf /home/$USER/.talos/clusters/<cluster-name>
 ```
 
 ## Troubleshooting
@@ -281,7 +303,7 @@ sudo rm -Rf /root/.talos/clusters/<cluster-name>
 Inspect logs directory
 
 ```bash
-sudo cat /root/.talos/clusters/<cluster-name>/*.log
+sudo cat ~/.talos/clusters/<cluster-name>/*.log
 ```
 
 Logs are saved under `<cluster-name>-<role>-<node-id>.log`
@@ -289,7 +311,7 @@ Logs are saved under `<cluster-name>-<role>-<node-id>.log`
 For example in case of **k8s** cluster name:
 
 ```bash
-sudo ls -la /root/.talos/clusters/k8s | grep log
+ls -la ~/.talos/clusters/k8s | grep log
 -rw-r--r--. 1 root root      69415 Apr 26 20:58 k8s-master-1.log
 -rw-r--r--. 1 root root      68345 Apr 26 20:58 k8s-worker-1.log
 -rw-r--r--. 1 root root      24621 Apr 26 20:59 lb.log
@@ -298,16 +320,5 @@ sudo ls -la /root/.talos/clusters/k8s | grep log
 Inspect logs during the installation
 
 ```bash
-sudo su -
-tail -f /root/.talos/clusters/<cluster-name>/*.log
-```
-
-## Post-installation
-
-After executing these steps and you should be able to use `kubectl`
-
-```bash
-sudo talosctl kubeconfig .
-mv kubeconfig $HOME/.kube/config
-sudo chown $USER:$USER $HOME/.kube/config
+tail -f ~/.talos/clusters/<cluster-name>/*.log
 ```
