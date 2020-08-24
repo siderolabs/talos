@@ -29,6 +29,10 @@
             "path": "v0.6/en/guides/local/docker"
           },
           {
+            "title": "QEMU",
+            "path": "v0.6/en/guides/local/qemu"
+          },
+          {
             "title": "Firecracker",
             "path": "v0.6/en/guides/local/firecracker"
           },
