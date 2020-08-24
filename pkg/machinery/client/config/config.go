@@ -5,6 +5,8 @@
 package config
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -41,37 +43,40 @@ func (c *Context) upgrade() {
 	}
 }
 
-// Open reads the config and initilzes a Config struct.
+// Open reads the config and initializes a Config struct.
 func Open(p string) (c *Config, err error) {
 	if err = ensure(p); err != nil {
 		return nil, err
 	}
 
-	fileBytes, err := ioutil.ReadFile(p)
+	var f *os.File
+
+	f, err = os.Open(p)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	c = &Config{}
-	if err = yaml.Unmarshal(fileBytes, c); err != nil {
-		return nil, err
-	}
+	defer f.Close() //nolint: errcheck
 
-	c.upgrade()
-
-	return c, nil
+	return ReadFrom(f)
 }
 
 // FromString returns a config from a string.
 func FromString(p string) (c *Config, err error) {
+	return ReadFrom(bytes.NewReader([]byte(p)))
+}
+
+// ReadFrom reads a config from io.Reader.
+func ReadFrom(r io.Reader) (c *Config, err error) {
 	c = &Config{}
-	if err = yaml.Unmarshal([]byte(p), c); err != nil {
+
+	if err = yaml.NewDecoder(r).Decode(c); err != nil {
 		return
 	}
 
 	c.upgrade()
 
-	return c, nil
+	return
 }
 
 // Save writes the config to disk.
@@ -90,6 +95,19 @@ func (c *Config) Save(p string) (err error) {
 	}
 
 	return nil
+}
+
+// Merge in additional contexts from another Config.
+//
+// Current context is overridden from passed in config.
+func (c *Config) Merge(cfg *Config) {
+	for name, ctx := range cfg.Contexts {
+		c.Contexts[name] = ctx
+	}
+
+	if cfg.Context != "" {
+		c.Context = cfg.Context
+	}
 }
 
 func ensure(filename string) (err error) {

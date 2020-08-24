@@ -295,7 +295,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	// Create and save the talosctl configuration file.
-	if err = saveConfig(cluster, configBundle.TalosConfig()); err != nil {
+	if err = saveConfig(configBundle.TalosConfig()); err != nil {
 		return err
 	}
 
@@ -331,19 +331,13 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 	return check.Wait(checkCtx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
 }
 
-func saveConfig(cluster provision.Cluster, talosConfigObj *clientconfig.Config) (err error) {
+func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 	c, err := clientconfig.Open(talosconfig)
 	if err != nil {
 		return err
 	}
 
-	if c.Contexts == nil {
-		c.Contexts = map[string]*clientconfig.Context{}
-	}
-
-	c.Contexts[cluster.Info().ClusterName] = talosConfigObj.Contexts[cluster.Info().ClusterName]
-
-	c.Context = cluster.Info().ClusterName
+	c.Merge(talosConfigObj)
 
 	return c.Save(talosconfig)
 }

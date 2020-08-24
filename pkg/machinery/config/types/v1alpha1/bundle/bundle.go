@@ -7,12 +7,13 @@ package bundle
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -60,13 +61,14 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		// Pull existing talosconfig
-		talosConfig, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, "talosconfig"))
+		talosConfig, err := os.Open(filepath.Join(options.ExistingConfigs, "talosconfig"))
 		if err != nil {
 			return bundle, err
 		}
 
-		bundle.TalosCfg = &clientconfig.Config{}
-		if err = yaml.Unmarshal(talosConfig, bundle.TalosCfg); err != nil {
+		defer talosConfig.Close() //nolint: errcheck
+
+		if bundle.TalosCfg, err = config.ReadFrom(talosConfig); err != nil {
 			return bundle, err
 		}
 
