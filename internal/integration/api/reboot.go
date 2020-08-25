@@ -71,28 +71,25 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 		suite.T().Skip("cluster doesn't support reboots")
 	}
 
-	// offset to account for uptime measuremenet inaccuracy
-	const offset = 2 * time.Second
-
 	nodes := suite.DiscoverNodes().Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	errCh := make(chan error, len(nodes))
 
-	var initialUptime sync.Map
+	var initialBootID sync.Map
 
 	for _, node := range nodes {
 		go func(node string) {
 			errCh <- func() error {
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
-				// read uptime before reboot
-				uptimeBefore, err := suite.ReadUptime(nodeCtx)
+				// read boot_id before reboot
+				bootIDBefore, err := suite.ReadBootID(nodeCtx)
 				if err != nil {
-					return fmt.Errorf("error reading initial uptime (node %q): %w", node, err)
+					return fmt.Errorf("error reading initial bootID (node %q): %w", node, err)
 				}
 
-				initialUptime.Store(node, uptimeBefore)
+				initialBootID.Store(node, bootIDBefore)
 				return nil
 			}()
 		}(node)
@@ -102,8 +99,6 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 		suite.Require().NoError(<-errCh)
 	}
 
-	rebootTimestamp := time.Now()
-
 	allNodesCtx := client.WithNodes(suite.ctx, nodes...)
 
 	suite.Require().NoError(suite.Client.Reboot(allNodesCtx))
@@ -111,12 +106,12 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 	for _, node := range nodes {
 		go func(node string) {
 			errCh <- func() error {
-				uptimeBeforeInterface, ok := initialUptime.Load(node)
+				bootIDBeforeInterface, ok := initialBootID.Load(node)
 				if !ok {
-					return fmt.Errorf("uptime record not found for %q", node)
+					return fmt.Errorf("bootID record not found for %q", node)
 				}
 
-				uptimeBefore := uptimeBeforeInterface.(time.Duration) //nolint: errcheck
+				bootIDBefore := bootIDBeforeInterface.(string) //nolint: errcheck
 
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
@@ -124,19 +119,15 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 					requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, 5*time.Second)
 					defer requestCtxCancel()
 
-					elapsed := time.Since(rebootTimestamp) - offset
-
-					uptimeAfter, err := suite.ReadUptime(requestCtx)
+					bootIDAfter, err := suite.ReadBootID(requestCtx)
 					if err != nil {
 						// API might be unresponsive during reboot
-						return retry.ExpectedError(fmt.Errorf("error reading uptime for node %q: %w", node, err))
+						return retry.ExpectedError(fmt.Errorf("error reading bootID for node %q: %w", node, err))
 					}
 
-					// uptime of the node before it actually reboots still goes up linearly
-					// so we can safely add elapsed time here
-					if uptimeAfter >= uptimeBefore+elapsed {
-						// uptime should go down after reboot
-						return retry.ExpectedError(fmt.Errorf("uptime didn't go down for node %q: before %s + %s, after %s", node, uptimeBefore, elapsed, uptimeAfter))
+					if bootIDAfter == bootIDBefore {
+						// bootID should be different after reboot
+						return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s + %s, after %s", node, bootIDBefore, bootIDAfter))
 					}
 
 					return nil
