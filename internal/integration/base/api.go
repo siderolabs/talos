@@ -135,88 +135,76 @@ func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
 	apiSuite.Require().NoError(check.Wait(ctx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter()))
 }
 
-// ReadUptime reads node uptime.
+// ReadBootID reads node boot_id.
 //
 // Context provided might have specific node attached for API call.
-func (apiSuite *APISuite) ReadUptime(ctx context.Context) (time.Duration, error) {
-	// set up a short timeout around uptime read calls to work around
+func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
+	// set up a short timeout around boot_id read calls to work around
 	// cases when rebooted node doesn't answer for a long time on requests
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer reqCtxCancel()
 
-	reader, errCh, err := apiSuite.Client.Read(reqCtx, "/proc/uptime")
+	reader, errCh, err := apiSuite.Client.Read(reqCtx, "/proc/sys/kernel/random/boot_id")
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	defer reader.Close() //nolint: errcheck
 
-	var uptime float64
-
-	n, err := fmt.Fscanf(reader, "%f", &uptime)
+	body, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	if n != 1 {
-		return 0, fmt.Errorf("not all fields scanned: %d", n)
-	}
+	bootID := string(body)
 
 	_, err = io.Copy(ioutil.Discard, reader)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	for err = range errCh {
 		if err != nil {
-			return 0, err
+			return "", err
 		}
 	}
 
-	return time.Duration(uptime * float64(time.Second)), reader.Close()
+	return bootID, reader.Close()
 }
 
 // AssertRebooted verifies that node got rebooted as result of running some API call.
 //
-// Verification happens via reading uptime of the node.
+// Verification happens via reading boot_id of the node.
 func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, rebootFunc func(nodeCtx context.Context) error, timeout time.Duration) {
-	// offset to account for uptime measuremenet inaccuracy
-	const offset = 2 * time.Second
-
 	// timeout for single node Reset
 	ctx, ctxCancel := context.WithTimeout(ctx, timeout)
 	defer ctxCancel()
 
 	nodeCtx := client.WithNodes(ctx, node)
 
-	// read uptime before Reset
-	uptimeBefore, err := apiSuite.ReadUptime(nodeCtx)
+	// read boot_id before Reset
+	bootIDBefore, err := apiSuite.ReadBootID(nodeCtx)
+
 	apiSuite.Require().NoError(err)
 
 	apiSuite.Assert().NoError(rebootFunc(nodeCtx))
 
-	// capture current time when API returns
-	rebootTimestamp := time.Now()
-
-	var uptimeAfter time.Duration
+	var bootIDAfter string
 
 	apiSuite.Require().NoError(retry.Constant(timeout).Retry(func() error {
 		requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, 5*time.Second)
 		defer requestCtxCancel()
 
-		elapsed := time.Since(rebootTimestamp) - offset
+		bootIDAfter, err = apiSuite.ReadBootID(requestCtx)
 
-		uptimeAfter, err = apiSuite.ReadUptime(requestCtx)
 		if err != nil {
 			// API might be unresponsive during reboot
 			return retry.ExpectedError(err)
 		}
 
-		// uptime of the node before it actually reboots still goes up linearly
-		// so we can safely add elapsed time here
-		if uptimeAfter >= uptimeBefore+elapsed {
-			// uptime should go down after reboot
-			return retry.ExpectedError(fmt.Errorf("uptime didn't go down: before %s + %s, after %s", uptimeBefore, elapsed, uptimeAfter))
+		if bootIDAfter == bootIDBefore {
+			// bootID should be different after reboot
+			return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s + %s, after %s", node, bootIDBefore, bootIDAfter))
 		}
 
 		return nil
