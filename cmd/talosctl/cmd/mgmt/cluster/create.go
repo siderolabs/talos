@@ -42,6 +42,7 @@ var (
 	nodeVmlinuzPath         string
 	nodeInitramfsPath       string
 	bootloaderEnabled       bool
+	uefiEnabled             bool
 	configDebug             bool
 	networkCIDR             string
 	networkMTU              int
@@ -164,6 +165,7 @@ func create(ctx context.Context) (err error) {
 	provisionOptions := []provision.Option{
 		provision.WithDockerPortsHostIP(dockerHostIP),
 		provision.WithBootlader(bootloaderEnabled),
+		provision.WithUEFI(uefiEnabled),
 		provision.WithTargetArch(targetArch),
 	}
 	configBundleOpts := []bundle.Option{}
@@ -368,6 +370,7 @@ func init() {
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAsset), "the compressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAsset), "the uncompressed kernel image to use")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, "with-bootloader", true, "enable bootloader to load kernel and initramfs from disk image after install")
+	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", false, "enable UEFI on x86_64 architecture (always enabled for arm64)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
 	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the cluster network")

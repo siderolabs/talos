@@ -31,6 +31,16 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
+	var pflashImages []string
+
+	if pflashSpec := arch.PFlash(opts.UEFIEnabled); pflashSpec != nil {
+		var err error
+
+		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, pflashSpec); err != nil {
+			return provision.NodeInfo{}, fmt.Errorf("error creating flash images: %w", err)
+		}
+	}
+
 	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
 	if vcpuCount < 2 {
 		vcpuCount = 1
@@ -81,7 +91,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		MemSize:           memSize,
 		KernelArgs:        cmdline.String(),
 		MachineType:       arch.QemuMachine(),
-		PFlashImages:      state.PFlashImages,
+		PFlashImages:      pflashImages,
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,
 		BootloaderEnabled: opts.BootloaderEnabled,
 		NodeUUID:          nodeUUID,

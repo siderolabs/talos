@@ -43,14 +43,6 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, err
 	}
 
-	if pflashSpec := arch.PFlash(); pflashSpec != nil {
-		fmt.Fprintln(options.LogWriter, "creating flash images")
-
-		if err = p.createPFlashImages(state, pflashSpec); err != nil {
-			return nil, fmt.Errorf("error creating flash images: %w", err)
-		}
-	}
-
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
 
 	if err = p.CreateNetwork(ctx, state, request.Network); err != nil {
