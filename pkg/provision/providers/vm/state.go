@@ -25,8 +25,6 @@ type State struct {
 
 	VMCNIConfig *libcni.NetworkConfigList
 
-	PFlashImages []string
-
 	statePath string
 }
 

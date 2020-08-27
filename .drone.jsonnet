@@ -227,7 +227,7 @@ local image_vmware = Step("image-vmware", depends_on=[image_gcp]);
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"});
-local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000", "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
   name: 'coverage',
@@ -334,14 +334,17 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race]);
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_qemu, e2e_docker]);
-local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
-local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000"});
+local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare]);
+local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare]);
 local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
-        "FIRECRACKER_GO_SDK_REQUEST_TIMEOUT_MILLISECONDS": "2000",
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml",
+});
+local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
+        "SHORT_INTEGRATION_TEST": "yes",
+        "WITH_UEFI": "true",
 });
 
 
@@ -351,6 +354,7 @@ local integration_steps = default_steps + [
   integration_provision_tests_track_0,
   integration_provision_tests_track_1,
   integration_cilium,
+  integration_uefi,
 ];
 
 local integration_trigger = {

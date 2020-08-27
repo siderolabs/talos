@@ -31,6 +31,12 @@ case "${CUSTOM_CNI_URL:-false}" in
     ;;
 esac
 
+case "${WITH_UEFI:-false}" in
+  true)
+    QEMU_FLAGS="${QEMU_FLAGS} --with-uefi"
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 

@@ -61,6 +61,15 @@ func WithBootlader(enabled bool) Option {
 	}
 }
 
+// WithUEFI enables or disables UEFI boot on amd64 (default for amd64 is BIOS boot).
+func WithUEFI(enabled bool) Option {
+	return func(o *Options) error {
+		o.UEFIEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithTargetArch specifies target architecture for the cluster.
 func WithTargetArch(arch string) Option {
 	return func(o *Options) error {
@@ -98,6 +107,9 @@ type Options struct {
 
 	// Enable bootloader by booting from disk image after install.
 	BootloaderEnabled bool
+
+	// Enable UEFI (for amd64), arm64 can only boot UEFI
+	UEFIEnabled bool
 
 	// Expose ports to worker machines in docker provisioner
 	DockerPorts       []string

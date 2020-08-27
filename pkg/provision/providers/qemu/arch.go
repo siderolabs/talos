@@ -61,25 +61,34 @@ func (arch Arch) Console() string {
 
 // PFlash for UEFI boot.
 type PFlash struct {
-	Size       int64
-	SourcePath string
+	Size        int64
+	SourcePaths []string
 }
 
 // PFlash returns settings for parallel flash.
-func (arch Arch) PFlash() []PFlash {
+func (arch Arch) PFlash(uefiEnabled bool) []PFlash {
 	switch arch {
 	case ArchArm64:
 		return []PFlash{
 			{
-				Size:       64 * 1024 * 1024,
-				SourcePath: "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd",
+				Size:        64 * 1024 * 1024,
+				SourcePaths: []string{"/usr/share/qemu-efi-aarch64/QEMU_EFI.fd", "/usr/share/OVMF/QEMU_EFI.fd"},
 			},
 			{
 				Size: 64 * 1024 * 1024,
 			},
 		}
 	case ArchAmd64:
-		fallthrough
+		if !uefiEnabled {
+			return nil
+		}
+
+		return []PFlash{
+			{
+				Size:        0,
+				SourcePaths: []string{"/usr/share/ovmf/OVMF.fd", "/usr/share/OVMF/OVMF.fd"},
+			},
+		}
 	default:
 		return nil
 	}

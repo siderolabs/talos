@@ -12,42 +12,59 @@ import (
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
 
-func (p *provisioner) createPFlashImages(state *vm.State, pflashSpec []PFlash) error {
+//nolint: gocyclo
+func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
+	var images []string
+
 	for i, pflash := range pflashSpec {
 		if err := func(i int, pflash PFlash) error {
-			path := state.GetRelativePath(fmt.Sprintf("flash%d.img", i))
+			path := state.GetRelativePath(fmt.Sprintf("%s-flash%d.img", nodeName, i))
 
 			f, err := os.Create(path)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			defer f.Close() //nolint: errcheck
 
-			if err := f.Truncate(pflash.Size); err != nil {
+			if err = f.Truncate(pflash.Size); err != nil {
 				return err
 			}
 
-			if pflash.SourcePath != "" {
-				src, err := os.Open(pflash.SourcePath)
-				if err != nil {
-					return nil
+			if pflash.SourcePaths != nil {
+				for _, sourcePath := range pflash.SourcePaths {
+					var src *os.File
+
+					src, err = os.Open(sourcePath)
+					if err != nil {
+						if os.IsNotExist(err) {
+							continue
+						}
+
+						return err
+					}
+
+					defer src.Close() //nolint: errcheck
+
+					if _, err = io.Copy(f, src); err != nil {
+						return err
+					}
+
+					break
 				}
 
-				defer src.Close() //nolint: errcheck
-
-				if _, err := io.Copy(f, src); err != nil {
+				if err != nil {
 					return err
 				}
 			}
 
-			state.PFlashImages = append(state.PFlashImages, path)
+			images = append(images, path)
 
 			return nil
 		}(i, pflash); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return images, nil
 }
