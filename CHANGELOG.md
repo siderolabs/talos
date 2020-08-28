@@ -1,11 +1,24 @@
 
+<a name="v0.6.0-beta.3"></a>
+## [v0.6.0-beta.3](https://github.com/talos-systems/talos/compare/v0.6.0-beta.2...v0.6.0-beta.3) (2020-08-27)
+
+### Feat
+
+* update linux to 5.8.5
+* update kubernetes to v1.19.0
+
+
 <a name="v0.6.0-beta.2"></a>
-## [v0.6.0-beta.2](https://github.com/talos-systems/talos/compare/v0.6.0-beta.1...v0.6.0-beta.2) (2020-08-20)
+## [v0.6.0-beta.2](https://github.com/talos-systems/talos/compare/v0.6.0-beta.1...v0.6.0-beta.2) (2020-08-21)
 
 ### Fix
 
 * update e2e scripts to work with python3
 * pass config via stdin
+
+### Release
+
+* **v0.6.0-beta.2:** prepare release
 
 
 <a name="v0.6.0-beta.1"></a>
