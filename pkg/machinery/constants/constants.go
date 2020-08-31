@@ -246,9 +246,6 @@ const (
 	// RouterdSocketPath is the path to file socket of router API.
 	RouterdSocketPath = SystemRunPath + "/routerd/routerd.sock"
 
-	// KernelUncompressedAsset defines a well known name for our uncompressed kernel filename
-	KernelUncompressedAsset = "vmlinux"
-
 	// KernelAsset defines a well known name for our kernel filename
 	KernelAsset = "vmlinuz"
 

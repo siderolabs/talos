@@ -492,7 +492,6 @@ local release = {
       '_out/talosctl-linux-arm64',
       '_out/talosctl-linux-armv7',
       '_out/vmware.ova',
-      '_out/vmlinux',
       '_out/vmlinuz',
     ],
     checksum: ['sha256', 'sha512'],

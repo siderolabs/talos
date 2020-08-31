@@ -123,7 +123,7 @@ docs: ## Generates the documentation for machine config, and talosctl.
 # Local Artifacts
 
 .PHONY: kernel
-kernel: ## Outputs the kernel package contents (vmlinuz, and vmlinux) to the artifact directory.
+kernel: ## Outputs the kernel package contents (vmlinuz) to the artifact directory.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
 	@-rm -rf $(ARTIFACTS)/modules
 
