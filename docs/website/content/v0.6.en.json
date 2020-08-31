@@ -117,6 +117,10 @@
       {
         "title": "PKI",
         "path": "v0.6/en/troubleshooting/pki"
+      },
+      {
+        "title": "Machine Reset",
+        "path": "v0.6/en/troubleshooting/machine-reset"
       }
     ]
   },
