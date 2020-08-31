@@ -277,7 +277,6 @@ COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 
 FROM scratch AS kernel
 COPY --from=docker.io/autonomy/kernel:v0.2.0-34-g7e57ef7 /boot/vmlinuz /vmlinuz
-COPY --from=docker.io/autonomy/kernel:v0.2.0-34-g7e57ef7 /boot/vmlinux /vmlinux
 
 # The rootfs target provides the Talos rootfs.
 
