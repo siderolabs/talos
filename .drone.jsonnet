@@ -384,6 +384,7 @@ local creds_env_vars = {
   AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
   AWS_SVC_ACCT: {from_secret: "aws_svc_acct"},
   AZURE_SVC_ACCT: {from_secret: "azure_svc_acct"},
+  AZURE_DUMMY_SSH_PUB: {from_secret: "azure_dummy_ssh_pub"},
   // TODO(andrewrynhard): Rename this to the GCP convention.
   GCE_SVC_ACCT: {from_secret: "gce_svc_acct"},
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
@@ -396,8 +397,9 @@ local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_var
 
 local e2e_steps = default_steps + [
   e2e_capi,
-  e2e_aws,
-  e2e_gcp,
+  //e2e_aws,
+  e2e_azure,
+  //e2e_gcp,
 ];
 
 local e2e_trigger = {
@@ -437,6 +439,7 @@ local push_edge = {
 local conformance_steps = default_steps + [
   e2e_capi,
   conformance_aws,
+  conformance_azure,
   conformance_gcp,
   push_edge,
 ];
