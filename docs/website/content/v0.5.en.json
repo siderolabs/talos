@@ -73,7 +73,8 @@
     "path": "v0.5/en/troubleshooting",
     "items": [
       { "title": "Overview", "path": "v0.5/en/troubleshooting/overview" },
-      { "title": "PKI", "path": "v0.5/en/troubleshooting/pki" }
+      { "title": "PKI", "path": "v0.5/en/troubleshooting/pki" },
+      { "title": "Machine Reset", "path": "v0.5/en/troubleshooting/machine-reset" }
     ]
   },
   {

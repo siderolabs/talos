@@ -88,6 +88,10 @@
       {
         "title": "PKI",
         "path": "v0.4/en/troubleshooting/pki"
+      },
+      {
+        "title": "Machine Reset",
+        "path": "v0.4/en/troubleshooting/machine-reset"
       }
     ]
   },
