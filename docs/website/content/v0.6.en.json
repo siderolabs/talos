@@ -89,6 +89,10 @@
             "path": "v0.6/en/guides/metal/matchbox"
           }
         ]
+      },
+      {
+        "title": "Upgrading",
+        "path": "v0.6/en/guides/upgrading"
       }
     ]
   },
