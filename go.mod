@@ -64,7 +64,7 @@ require (
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20200716221620-18dfb9cca345 // v3.4.10
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5 // v3.4.10
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
@@ -78,10 +78,10 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
-	k8s.io/api v0.19.0-rc.3
-	k8s.io/apimachinery v0.19.0-rc.3
-	k8s.io/apiserver v0.19.0-rc.3
-	k8s.io/client-go v0.19.0-rc.3
-	k8s.io/cri-api v0.19.0-rc.3
-	k8s.io/kubelet v0.19.0-rc.3
+	k8s.io/api v0.19.0
+	k8s.io/apimachinery v0.19.0
+	k8s.io/apiserver v0.19.0
+	k8s.io/client-go v0.19.0
+	k8s.io/cri-api v0.19.0
+	k8s.io/kubelet v0.19.0
 )
