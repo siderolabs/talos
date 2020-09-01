@@ -7,7 +7,7 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= autonomy/tools:v0.2.0-8-g7e14b0a
+TOOLS ?= autonomy/tools:v0.2.0-11-g1976029
 GO_VERSION ?= 1.14
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
