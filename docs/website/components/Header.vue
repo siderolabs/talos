@@ -7,7 +7,7 @@
       <div class="flex py-6 ml-auto">
         <ul class="header-menu">
           <li>
-            <a href="/docs/v0.5">
+            <a href="/docs/v0.6">
               <span class="font-semibold mr-1">Documentation</span>
             </a>
           </li>
