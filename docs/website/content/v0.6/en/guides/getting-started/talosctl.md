@@ -118,7 +118,7 @@ This can be achieved by the `containers` subcommand:
 ```bash
 $ talosctl containers
 NODE          NAMESPACE   ID         IMAGE            PID    STATUS
-192.168.2.44   system      apid       talos/pkg/machinery/apid       4021   RUNNING
+192.168.2.44   system      apid       talos/apid       4021   RUNNING
 192.168.2.44   system      networkd   talos/networkd   3893   RUNNING
 192.168.2.44   system      ntpd       talos/ntpd       4144   RUNNING
 192.168.2.44   system      routerd    talos/routerd    3907   RUNNING
