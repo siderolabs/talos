@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/go-retry/retry"
 )
 
 const b64 = "base64"

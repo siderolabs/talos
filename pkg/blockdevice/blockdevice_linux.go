@@ -12,11 +12,11 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
-	"github.com/talos-systems/talos/pkg/retry"
-
-	"golang.org/x/sys/unix"
 )
 
 // BlockDevice represents a block device.

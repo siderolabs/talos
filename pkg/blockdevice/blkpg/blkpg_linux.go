@@ -11,11 +11,11 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/blockdevice/lba"
 	"github.com/talos-systems/talos/pkg/blockdevice/table"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // InformKernelOfAdd invokes the BLKPG_ADD_PARTITION ioctl.

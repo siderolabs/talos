@@ -26,7 +26,7 @@ import (
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
 	"github.com/talos-systems/crypto/x509"
-
+	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -43,7 +43,6 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // Etcd implements the Service interface. It serves as the concrete type with

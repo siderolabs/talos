@@ -15,9 +15,9 @@ import (
 
 	"github.com/beevik/ntp"
 	"github.com/hashicorp/go-multierror"
+	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/timex"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // NTP contains a server address.

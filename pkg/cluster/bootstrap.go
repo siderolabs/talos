@@ -11,9 +11,10 @@ import (
 	"sort"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
+
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // APIBoostrapper bootstraps cluster via Talos API.
