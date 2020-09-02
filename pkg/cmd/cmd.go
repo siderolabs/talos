@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -18,7 +19,12 @@ const MaxStderrLen = 4096
 
 // Run executes a command.
 func Run(name string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
+	return RunContext(context.Background(), name, args...)
+}
+
+// RunContext executes a command with context.
+func RunContext(ctx context.Context, name string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, name, args...)
 
 	stdout, err := circbuf.NewBuffer(MaxStderrLen)
 	if err != nil {

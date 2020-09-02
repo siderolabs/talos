@@ -596,17 +596,6 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return err
 		}
 
-		if _, err = cmd.Run("/sbin/udevadm", "trigger"); err != nil {
-			return err
-		}
-
-		// This ensures that `udevd` finishes processing kernel events, triggered by
-		// `udevd trigger`, to prevent a race condition when a user specifies a path
-		// under `/dev/disk/*` in any disk definitions.
-		if _, err = cmd.Run("/sbin/udevadm", "settle"); err != nil {
-			return err
-		}
-
 		return nil
 	}, "startUdevd"
 }
