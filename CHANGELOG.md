@@ -1,11 +1,24 @@
 
+<a name="v0.6.0"></a>
+## [v0.6.0](https://github.com/talos-systems/talos/compare/v0.6.0-beta.3...v0.6.0) (2020-09-02)
+
+### Chore
+
+* update k8s modules to 1.19 final version
+* upgrade Go to 1.14.8
+
+
 <a name="v0.6.0-beta.3"></a>
-## [v0.6.0-beta.3](https://github.com/talos-systems/talos/compare/v0.6.0-beta.2...v0.6.0-beta.3) (2020-08-27)
+## [v0.6.0-beta.3](https://github.com/talos-systems/talos/compare/v0.6.0-beta.2...v0.6.0-beta.3) (2020-08-28)
 
 ### Feat
 
 * update linux to 5.8.5
 * update kubernetes to v1.19.0
+
+### Release
+
+* **v0.6.0-beta.3:** prepare release
 
 
 <a name="v0.6.0-beta.2"></a>
