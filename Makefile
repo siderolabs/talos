@@ -25,8 +25,10 @@ RELEASES ?= v0.5.1 v0.6.0-beta.2
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
+, := ,
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
+MULTI_PLATFORM = $(findstring $(,),$(PLATFORM))
 PROGRESS ?= auto
 PUSH ?= false
 COMMON_ARGS := --file=Dockerfile
@@ -107,6 +109,9 @@ docker-%: ## Builds the specified target defined in the Dockerfile using the doc
 	@mkdir -p $(DEST)
 	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
 
+registry-%: ## Builds the specified target defined in the Dockerfile using the image/registry output type. The build result will be pushed to the registry if PUSH=true.
+	@$(MAKE) target-$* TARGET_ARGS="--output type=image,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
+
 hack-test-%: ## Runs the specied script in ./hack/test with well known environment variables.
 	@./hack/test/$*.sh
 
@@ -134,17 +139,25 @@ initramfs: ## Builds the compressed initramfs and outputs it to the artifact dir
 
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the artifact directory.
+ifeq (,$(MULTI_PLATFORM))
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 	@docker load < $(ARTIFACTS)/$@.tar
+else
+	@$(MAKE) registry-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
+endif
 
 .PHONY: talos
 talos: ## Builds the Talos container image and outputs it to the artifact directory.
+ifeq (,$(MULTI_PLATFORM))
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
 	@docker load < $(ARTIFACTS)/container.tar
+else
+	@$(MAKE) registry-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
+endif
 
 talosctl-%:
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64
 
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
@@ -269,14 +282,23 @@ ifeq ($(DOCKER_LOGIN_ENABLED), true)
 endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
+ifeq (,$(MULTI_PLATFORM))
 	@docker push $(REGISTRY_AND_USERNAME)/installer:$(TAG)
 	@docker push $(REGISTRY_AND_USERNAME)/talos:$(TAG)
+else
+	@$(MAKE) installer PUSH=true
+	@$(MAKE) talos PUSH=true
+endif
 
 push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
+ifeq (,$(MULTI_PLATFORM))
 	@docker tag $(REGISTRY_AND_USERNAME)/installer:$(TAG) $(REGISTRY_AND_USERNAME)/installer:$*
 	@docker tag $(REGISTRY_AND_USERNAME)/talos:$(TAG) $(REGISTRY_AND_USERNAME)/talos:$*
 	@docker push $(REGISTRY_AND_USERNAME)/installer:$*
 	@docker push $(REGISTRY_AND_USERNAME)/talos:$*
+else
+	@$(MAKE) push TAG=$*
+endif
 
 .PHONY: clean
 clean: ## Cleans up all artifacts.

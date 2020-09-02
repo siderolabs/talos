@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	goruntime "runtime"
 	"strings"
 	"time"
 
@@ -107,6 +108,10 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	env := []string{}
 	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
+	if goruntime.GOARCH == "arm64" {
+		env = append(env, "ETCD_UNSUPPORTED_ARCH=arm64")
 	}
 
 	return restart.New(containerd.NewRunner(

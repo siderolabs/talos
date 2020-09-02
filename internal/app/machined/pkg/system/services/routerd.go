@@ -61,7 +61,7 @@ func (o *Routerd) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *Routerd) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd"}
+	return []string{"containerd", "networkd"}
 }
 
 func (o *Routerd) Runner(r runtime.Runtime) (runner.Runner, error) {

@@ -22,7 +22,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 	machine := &v1alpha1.MachineConfig{
 		MachineType: "init",
 		MachineKubelet: &v1alpha1.KubeletConfig{
-			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
+			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, "1.19.0-1-g9b13ba7"), in.KubernetesVersion),
 		},
 		MachineNetwork:  in.NetworkConfig,
 		MachineCA:       in.Certs.OS,
