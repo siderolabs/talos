@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/retry"
-
 	"github.com/containerd/containerd"
+	"github.com/talos-systems/go-retry/retry"
+
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // Pull is a convenience function that wraps the containerd image pull func with

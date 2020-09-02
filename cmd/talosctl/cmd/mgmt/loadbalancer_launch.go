@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/loadbalancer"
+	"github.com/talos-systems/go-loadbalancer/loadbalancer"
 )
 
 var loadbalancerLaunchCmdFlags struct {

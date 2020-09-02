@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/blockdevice"
@@ -20,7 +21,6 @@ import (
 	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // RetryFunc defines the requirements for retrying a mount point operation.

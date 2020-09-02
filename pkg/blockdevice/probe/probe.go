@@ -15,6 +15,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/iso9660"
@@ -22,9 +25,6 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
 	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/retry"
-
-	"golang.org/x/sys/unix"
 )
 
 // ProbedBlockDevice represents a probed block device.

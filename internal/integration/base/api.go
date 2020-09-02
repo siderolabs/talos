@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cluster"
@@ -24,7 +25,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // APISuite is a base suite for API tests.

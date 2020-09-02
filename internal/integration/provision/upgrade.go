@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-
+	"github.com/talos-systems/go-retry/retry"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
@@ -36,7 +36,6 @@ import (
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 type upgradeSpec struct {

@@ -29,9 +29,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // Client represents a set of helper methods for interacting with the

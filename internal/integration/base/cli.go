@@ -18,12 +18,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // CLISuite is a base suite for CLI tests.

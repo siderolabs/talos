@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/blockdevice"
 	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
@@ -21,7 +23,6 @@ import (
 	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // Manifest represents the instructions for preparing all block devices
