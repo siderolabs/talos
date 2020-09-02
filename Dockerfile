@@ -384,8 +384,10 @@ RUN apk add --no-cache --update \
     cdrkit \
     efibootmgr \
     qemu-img \
+    syslinux \
     util-linux \
     xfsprogs
+COPY --from=docker.io/autonomy/syslinux:v0.2.0-34-g7e57ef7 / /
 COPY --from=docker.io/autonomy/grub:v0.2.0-35-g8be6358   / /
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
