@@ -49,7 +49,7 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	return importer.Import(&containerd.ImportRequest{
 		Path: "/usr/images/apid.tar",
 		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/pkg/machinery/apid"),
+			containerdapi.WithIndexName("talos/apid"),
 		},
 	})
 }
@@ -81,7 +81,7 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 //
 //nolint: gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/pkg/machinery/apid"
+	image := "talos/apid"
 
 	endpoints := []string{"127.0.0.1"}
 
