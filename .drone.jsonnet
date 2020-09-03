@@ -465,7 +465,6 @@ local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigge
 
 // Release pipeline.
 
-local iso = Step('iso', depends_on=[e2e_docker, e2e_qemu]);
 local boot = Step('boot', depends_on=[e2e_docker, e2e_qemu]);
 
 local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_qemu]);
@@ -499,11 +498,10 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, image_vmware.name, image_digital_ocean.name, push.name, release_notes.name]
+  depends_on: [kernel.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, image_vmware.name, image_digital_ocean.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
-  iso,
   boot,
   release_notes,
   release,
