@@ -153,10 +153,6 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 
 images: image-aws image-azure image-digital-ocean image-gcp image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, and VMware).
 
-.PHONY: iso
-iso: ## Builds the ISO and outputs it to the artifact directory.
-	@docker run --rm -i -v $(PWD)/$(ARTIFACTS):/out $(USERNAME)/installer:$(TAG) iso
-
 .PHONY: boot
 boot: ## Creates a compressed tarball that includes vmlinuz and initramfs.xz. Note that these files must already be present in the artifacts directory.
 	@tar  -C $(ARTIFACTS) -czf $(ARTIFACTS)/boot.tar.gz vmlinuz initramfs.xz
