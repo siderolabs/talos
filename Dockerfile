@@ -339,7 +339,6 @@ RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
 
 FROM rootfs-base AS rootfs-squashfs
-COPY --from=rootfs / /rootfs
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
 FROM scratch AS squashfs
