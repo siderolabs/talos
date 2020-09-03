@@ -905,6 +905,11 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 					continue
 				}
 
+				if err = os.Chmod(f.Path(), f.Permissions()); err != nil {
+					result = multierror.Append(result, err)
+					continue
+				}
+
 				continue
 			}
 
@@ -928,12 +933,17 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path())
 			}
 
-			if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
+			if err = os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 				result = multierror.Append(result, err)
 				continue
 			}
 
 			if err = ioutil.WriteFile(p, []byte(content), f.Permissions()); err != nil {
+				result = multierror.Append(result, err)
+				continue
+			}
+
+			if err = os.Chmod(p, f.Permissions()); err != nil {
 				result = multierror.Append(result, err)
 				continue
 			}
