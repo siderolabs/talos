@@ -43,9 +43,8 @@ require (
 	github.com/mdlayher/netlink v1.1.0
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v1.0.0-rc90 // indirect
-	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
-	github.com/opencontainers/selinux v1.6.0 // indirect
+	github.com/opencontainers/runc v1.0.0-rc92 // indirect
+	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/particledecay/kconf v1.8.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.1.3
@@ -71,7 +70,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
+	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1
 	golang.org/x/text v0.3.3
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	golang.org/x/tools v0.0.0-20200716134326-a8f9df4c9543 // indirect
