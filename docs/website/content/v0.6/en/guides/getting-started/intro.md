@@ -17,8 +17,8 @@ Some of the capabilities and benefits provided by Talos include:
 Talos is flexible and can be deployed in a variety of ways, but the easiest way to get started and experiment with the system is to run a local cluster on your laptop or workstation.
 There are two options:
 
-- [Run a Docker-based local cluster](/docs/v0.5/en/guides/local/docker) on your Linux or Mac workstation
-- [Run a Firecracker micro-VM-based](/docs/v0.5/en/guides/local/firecracker) cluster on your Linux workstation
+- [Run a Docker-based local cluster](/docs/v0.6/en/guides/local/docker) on your Linux or Mac workstation
+- [Run a Firecracker micro-VM-based](/docs/v0.6/en/guides/local/firecracker) cluster on your Linux workstation
 
 ### System requirements
 
