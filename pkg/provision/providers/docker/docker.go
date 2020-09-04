@@ -7,6 +7,7 @@ package docker
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/docker/docker/client"
 
@@ -74,6 +75,11 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 // GetLoadBalancers returns internal/external loadbalancer endpoints.
 func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
 	// docker doesn't provide internal LB, so return empty string
-	// external LB is always localhost where docker exposes ports
-	return "", "127.0.0.1"
+	// external LB is always localhost for OS X where docker exposes ports
+	switch runtime.GOOS {
+	case "darwin":
+		return "", "127.0.0.1"
+	default:
+		return "", ""
+	}
 }

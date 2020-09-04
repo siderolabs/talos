@@ -70,6 +70,6 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 
 // GetLoadBalancers returns internal/external loadbalancer endpoints.
 func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
-	// firecracker runs loadbalancer on the bridge, which is good for both internal & external access
-	return networkReq.GatewayAddr.String(), networkReq.GatewayAddr.String()
+	// firecracker runs loadbalancer on the bridge, which is good for both internal access, external access goes via round-robin
+	return networkReq.GatewayAddr.String(), ""
 }
