@@ -101,6 +101,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		oci.WithHostResolvconf,
 		oci.WithParentCgroupDevices,
 		oci.WithPrivileged,
+		oci.WithAllDevicesAllowed,
 	}
 
 	containerOpts := []containerd.NewContainerOpts{

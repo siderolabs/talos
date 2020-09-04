@@ -196,6 +196,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,
+			oci.WithAllDevicesAllowed,
 		),
 	),
 		restart.WithType(restart.Forever),
