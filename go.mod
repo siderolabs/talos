@@ -9,10 +9,11 @@ replace github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
+	github.com/Microsoft/hcsshim/test v0.0.0-20200831205110-d2cba219a8d7 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340
-	github.com/containerd/containerd v1.3.6
+	github.com/containerd/containerd v1.4.0
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
 	github.com/containerd/cri v1.11.1
 	github.com/containerd/go-cni v1.0.0
@@ -23,7 +24,6 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
-	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.21.0
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
@@ -45,6 +45,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc90 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
+	github.com/opencontainers/selinux v1.6.0 // indirect
 	github.com/particledecay/kconf v1.8.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.1.3
