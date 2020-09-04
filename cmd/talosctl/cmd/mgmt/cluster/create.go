@@ -206,7 +206,7 @@ func create(ctx context.Context) (err error) {
 			}))
 		}
 
-		defaultInternalLB, _ := provisioner.GetLoadBalancers(request.Network)
+		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
 		if defaultInternalLB == "" {
 			// provisioner doesn't provide internal LB, so use first master node
@@ -216,6 +216,12 @@ func create(ctx context.Context) (err error) {
 		var endpointList []string
 
 		switch {
+		case defaultEndpoint != "":
+			if forceEndpoint == "" {
+				forceEndpoint = defaultEndpoint
+			}
+
+			fallthrough
 		case forceEndpoint != "":
 			endpointList = []string{forceEndpoint}
 			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
