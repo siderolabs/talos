@@ -295,7 +295,7 @@ COPY --from=docker.io/autonomy/kernel:v0.3.0-1-g6d96d15 /boot/vmlinuz /vmlinuz
 FROM build AS rootfs-base
 COPY --from=docker.io/autonomy/fhs:v0.3.0-1-g6d96d15 / /rootfs
 COPY --from=docker.io/autonomy/ca-certificates:v0.3.0-1-g6d96d15 / /rootfs
-COPY --from=docker.io/autonomy/containerd:v0.3.0-1-g6d96d15 / /rootfs
+COPY --from=docker.io/andrewrynhard/containerd:v0.3.0-2-gdc2e4d5-dirty / /rootfs
 COPY --from=docker.io/autonomy/dosfstools:v0.3.0-1-g6d96d15 / /rootfs
 COPY --from=docker.io/autonomy/eudev:v0.3.0-1-g6d96d15 / /rootfs
 COPY --from=docker.io/autonomy/iptables:v0.3.0-1-g6d96d15 / /rootfs
