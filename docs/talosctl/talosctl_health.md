@@ -18,6 +18,7 @@ talosctl health [flags]
   -h, --help                          help for health
       --init-node string              specify IPs of init node
       --k8s-endpoint string           use endpoint instead of kubeconfig default
+      --run-e2e                       run Kubernetes e2e test
       --server                        run server-side check (default true)
       --wait-timeout duration         timeout to wait for the cluster to be ready (default 20m0s)
       --worker-nodes strings          specify IPs of worker nodes

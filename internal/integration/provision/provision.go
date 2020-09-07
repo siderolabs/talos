@@ -41,6 +41,8 @@ type Settings struct {
 	TargetInstallImageRegistry string
 	// Current version of the cluster (built in the CI pass)
 	CurrentVersion string
+	// Custom CNI URL to use.
+	CustomCNIURL string
 }
 
 // DefaultSettings filled in by test runner.
@@ -49,7 +51,7 @@ var DefaultSettings Settings = Settings{
 	MTU:                        1500,
 	CPUs:                       1,
 	MemMB:                      1.5 * 1024,
-	DiskGB:                     4,
+	DiskGB:                     8,
 	MasterNodes:                3,
 	WorkerNodes:                1,
 	TargetInstallImageRegistry: "docker.io",
