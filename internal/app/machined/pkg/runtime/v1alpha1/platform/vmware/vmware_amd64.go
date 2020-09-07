@@ -57,7 +57,7 @@ func (v *VMware) Configuration() ([]byte, error) {
 		}
 
 		if val == "" {
-			return nil, fmt.Errorf("config is required, no value found for guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
+			return nil, fmt.Errorf("config is required, no value found for guestinfo: %q", constants.VMwareGuestInfoConfigKey)
 		}
 
 		b, err := base64.StdEncoding.DecodeString(val)
@@ -89,7 +89,7 @@ func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
 // KernelArgs implements the runtime.Platform interface.
 func (v *VMware) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("tty0"),
+		procfs.NewParameter("console").Append("tty0").Append("ttyS0"),
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 	}
 }
