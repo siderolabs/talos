@@ -2,9 +2,11 @@ module github.com/talos-systems/talos
 
 go 1.13
 
-replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
-
-replace github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
+replace (
+	github.com/Azure/go-autorest v10.8.1+incompatible => github.com/Azure/go-autorest/autorest v0.9.1
+	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
+)
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -65,6 +67,7 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
+	github.com/vmware-tanzu/sonobuoy v0.19.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5 // v3.4.10
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
