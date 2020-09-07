@@ -20,7 +20,8 @@ import (
 )
 
 const mfTpl = `SHA256({{ .VMDK }})= {{ .VMDKSHA }}
-SHA256({{ .OVF }})= {{ .OVFSHA }}`
+SHA256({{ .OVF }})= {{ .OVFSHA }}
+`
 
 // OVF format reference: https://www.dmtf.org/standards/ovf.
 //nolint: lll
@@ -113,7 +114,6 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
         <rasd:ResourceSubType>vmware.vmci</rasd:ResourceSubType>
         <rasd:ResourceType>1</rasd:ResourceType>
       </Item>
-      <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="efi"/>
       <vmw:Config ovf:required="false" vmw:key="tools.syncTimeWithHost" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="tools.afterPowerOn" vmw:value="true"/>
       <vmw:Config ovf:required="false" vmw:key="tools.afterResume" vmw:value="true"/>
@@ -184,7 +184,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 		return err
 	}
 
-	if _, err = cmd.Run("tar", "-cvf", filepath.Join(out, "vmware.ova"), ".", "-C", dir); err != nil {
+	if _, err = cmd.Run("tar", "-cvf", filepath.Join(out, "vmware.ova"), "-C", dir, name+".ovf", name+".mf", name+".vmdk"); err != nil {
 		return err
 	}
 
