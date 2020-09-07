@@ -1147,7 +1147,7 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			return err
 		}
 
-		if err = kubeHelper.Uncordon(hostname); err != nil {
+		if err = kubeHelper.Uncordon(hostname, false); err != nil {
 			return err
 		}
 

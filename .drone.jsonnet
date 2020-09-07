@@ -338,9 +338,12 @@ local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_qemu, e2e_docker]);
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare]);
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare]);
-local integration_cilium = Step("e2e-cilium-1.8.0", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
+local integration_provision_tests_track_0_cilium = Step("provision-tests-track-0-cilium", target="provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_track_0], environment={
+        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.2/install/kubernetes/quick-install.yaml",
+});
+local integration_cilium = Step("e2e-cilium-1.8.2", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
         "SHORT_INTEGRATION_TEST": "yes",
-        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.0/install/kubernetes/quick-install.yaml",
+        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.2/install/kubernetes/quick-install.yaml",
 });
 local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "SHORT_INTEGRATION_TEST": "yes",

@@ -10,6 +10,7 @@ import (
 	"io"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -28,6 +29,8 @@ type ClientProvider interface {
 
 // K8sProvider builds Kubernetes client to access Talos cluster.
 type K8sProvider interface {
+	Kubeconfig(ctx context.Context) ([]byte, error)
+	K8sRestConfig(ctx context.Context) (*rest.Config, error)
 	K8sClient(ctx context.Context) (*kubernetes.Clientset, error)
 }
 

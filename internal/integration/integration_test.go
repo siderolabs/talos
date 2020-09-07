@@ -140,6 +140,7 @@ func init() {
 	flag.IntVar(&provision_test.DefaultSettings.MasterNodes, "talos.provision.masters", provision_test.DefaultSettings.MasterNodes, "master node count (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.WorkerNodes, "talos.provision.workers", provision_test.DefaultSettings.WorkerNodes, "worker node count (provision tests only)")
 	flag.StringVar(&provision_test.DefaultSettings.TargetInstallImageRegistry, "talos.provision.target-installer-registry", provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
+	flag.StringVar(&provision_test.DefaultSettings.CustomCNIURL, "talos.provision.custom-cni-url", provision_test.DefaultSettings.CustomCNIURL, "custom CNI URL for the cluster (provision tests only)")
 
 	allSuites = append(allSuites, api.GetAllSuites()...)
 	allSuites = append(allSuites, cli.GetAllSuites()...)

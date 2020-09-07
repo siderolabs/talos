@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -25,15 +26,17 @@ type KubernetesClient struct {
 	ForceEndpoint string
 
 	KubeHelper *k8s.Client
+
+	kubeconfig []byte
 	clientset  *kubernetes.Clientset
 }
 
-// K8sClient builds Kubernetes client via Talos Kubeconfig API.
+// Kubeconfig returns raw kubeconfig.
 //
-// Kubernetes client instance is cached.
-func (k *KubernetesClient) K8sClient(ctx context.Context) (*kubernetes.Clientset, error) {
-	if k.clientset != nil {
-		return k.clientset, nil
+// Kubeconfig is cached.
+func (k *KubernetesClient) Kubeconfig(ctx context.Context) ([]byte, error) {
+	if k.kubeconfig != nil {
+		return k.kubeconfig, nil
 	}
 
 	client, err := k.Client()
@@ -41,7 +44,14 @@ func (k *KubernetesClient) K8sClient(ctx context.Context) (*kubernetes.Clientset
 		return nil, err
 	}
 
-	kubeconfig, err := client.Kubeconfig(ctx)
+	k.kubeconfig, err = client.Kubeconfig(ctx)
+
+	return k.kubeconfig, err
+}
+
+// K8sRestConfig returns *rest.Config (parsed kubeconfig).
+func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, error) {
+	kubeconfig, err := k.Kubeconfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +68,22 @@ func (k *KubernetesClient) K8sClient(ctx context.Context) (*kubernetes.Clientset
 
 	if k.ForceEndpoint != "" {
 		config.Host = fmt.Sprintf("%s:%d", k.ForceEndpoint, 6443)
+	}
+
+	return config, nil
+}
+
+// K8sClient builds Kubernetes client via Talos Kubeconfig API.
+//
+// Kubernetes client instance is cached.
+func (k *KubernetesClient) K8sClient(ctx context.Context) (*kubernetes.Clientset, error) {
+	if k.clientset != nil {
+		return k.clientset, nil
+	}
+
+	config, err := k.K8sRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	if k.KubeHelper, err = k8s.NewForConfig(config); err != nil {

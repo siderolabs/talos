@@ -21,12 +21,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	talosnet "github.com/talos-systems/net"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/cluster/check"
+	"github.com/talos-systems/talos/pkg/cluster/sonobuoy"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	talosclient "github.com/talos-systems/talos/pkg/machinery/client"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
@@ -48,6 +51,7 @@ type upgradeSpec struct {
 
 	TargetInstallerImage string
 	TargetVersion        string
+	TargetK8sVersion     string
 
 	MasterNodes int
 	WorkerNodes int
@@ -57,7 +61,10 @@ type upgradeSpec struct {
 
 const (
 	stableVersion = "v0.5.1"
-	nextVersion   = "v0.6.0-beta.2"
+	nextVersion   = "v0.6.0"
+
+	stableK8sVersion = "1.18.6"
+	nextK8sVersion   = "1.19.0"
 )
 
 var (
@@ -87,6 +94,7 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 
 		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
 		TargetVersion:        nextVersion,
+		TargetK8sVersion:     stableK8sVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -105,6 +113,7 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     nextK8sVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -123,6 +132,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     nextK8sVersion,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -262,6 +272,13 @@ func (suite *UpgradeSuite) setupCluster() {
 		masterEndpoints[i] = ips[i].String()
 	}
 
+	if DefaultSettings.CustomCNIURL != "" {
+		genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
+			CNIName: "custom",
+			CNIUrls: []string{DefaultSettings.CustomCNIURL},
+		}))
+	}
+
 	suite.configBundle, err = bundle.NewConfigBundle(bundle.WithInputOptions(
 		&bundle.InputOptions{
 			ClusterName: clusterName,
@@ -271,6 +288,7 @@ func (suite *UpgradeSuite) setupCluster() {
 				genOptions,
 				generate.WithEndpointList(masterEndpoints),
 				generate.WithInstallImage(suite.spec.SourceInstallerImage),
+				generate.WithDNSDomain("cluster.local"),
 			),
 		}))
 	suite.Require().NoError(err)
@@ -310,6 +328,16 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.Cluster, err = suite.provisioner.Create(suite.ctx, request, provision.WithBootlader(true), provision.WithTalosConfig(suite.configBundle.TalosConfig()))
 	suite.Require().NoError(err)
 
+	defaultTalosConfig, err := clientconfig.GetDefaultPath()
+	suite.Require().NoError(err)
+
+	c, err := clientconfig.Open(defaultTalosConfig)
+	suite.Require().NoError(err)
+
+	c.Merge(suite.configBundle.TalosConfig())
+
+	suite.Require().NoError(c.Save(defaultTalosConfig))
+
 	suite.clusterAccess = access.NewAdapter(suite.Cluster, provision.WithTalosConfig(suite.configBundle.TalosConfig()))
 
 	suite.waitForClusterHealth()
@@ -321,6 +349,14 @@ func (suite *UpgradeSuite) waitForClusterHealth() {
 	defer checkCtxCancel()
 
 	suite.Require().NoError(check.Wait(checkCtx, suite.clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
+}
+
+// runE2E runs e2e test on the cluster.
+func (suite *UpgradeSuite) runE2E(k8sVersion string) {
+	options := sonobuoy.DefaultOptions()
+	options.KubernetesVersion = k8sVersion
+
+	suite.Assert().NoError(sonobuoy.Run(suite.ctx, suite.clusterAccess, options))
 }
 
 func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, expectedVersion string) {
@@ -365,6 +401,22 @@ func (suite *UpgradeSuite) readVersion(client *talosclient.Client, nodeCtx conte
 	return
 }
 
+func (suite *UpgradeSuite) uncordonNodes() {
+	clientset, err := suite.clusterAccess.K8sClient(suite.ctx)
+	suite.Require().NoError(err)
+
+	nodes, err := clientset.CoreV1().Nodes().List(suite.ctx, metav1.ListOptions{})
+	suite.Require().NoError(err)
+
+	for _, node := range nodes.Items {
+		if node.Spec.Unschedulable {
+			suite.T().Logf("uncordoning node %q", node.Name)
+
+			suite.Require().NoError(suite.clusterAccess.KubeHelper.Uncordon(node.Name, true))
+		}
+	}
+}
+
 func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provision.NodeInfo) {
 	suite.T().Logf("upgrading node %s", node.PrivateIP)
 
@@ -392,6 +444,8 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 		return nil
 	}))
+
+	suite.uncordonNodes()
 
 	suite.waitForClusterHealth()
 }
@@ -422,6 +476,9 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify final cluster version
 	suite.assertSameVersionCluster(client, suite.spec.TargetVersion)
+
+	// run e2e test
+	suite.runE2E(suite.spec.TargetK8sVersion)
 }
 
 // SuiteName ...
