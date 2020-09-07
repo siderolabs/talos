@@ -74,19 +74,16 @@ func handle(err error) {
 		log.Print(err)
 	}
 
-	meta, err := bootloader.NewMeta()
-	if err != nil {
+	if meta, err := bootloader.NewMeta(); err == nil {
+		if err = meta.Revert(); err != nil {
+			log.Printf("failed to revert upgrade: %v", err)
+		}
+
+		//nolint: errcheck
+		meta.Close()
+	} else {
 		log.Printf("failed to open meta: %v", err)
-
-		return
 	}
-
-	if err = meta.Revert(); err != nil {
-		log.Printf("failed to revert upgrade: %v", err)
-	}
-
-	//nolint: errcheck
-	meta.Close()
 
 	if p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First(); p != nil {
 		if *p == "0" {
