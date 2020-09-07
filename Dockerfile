@@ -4,6 +4,34 @@
 
 ARG TOOLS
 ARG IMPORTVET
+ARG PKGS
+
+# Resolve package images using ${PKGS} to be used later in COPY --from=.
+
+FROM docker.io/autonomy/fhs:${PKGS} AS pkg-fhs
+FROM docker.io/autonomy/ca-certificates:${PKGS} AS pkg-ca-certificates
+FROM docker.io/autonomy/containerd:${PKGS} AS pkg-containerd
+FROM docker.io/autonomy/dosfstools:${PKGS} AS pkg-dosfstools
+FROM docker.io/autonomy/eudev:${PKGS} AS pkg-eudev
+FROM docker.io/autonomy/grub:${PKGS} AS pkg-grub
+FROM docker.io/autonomy/iptables:${PKGS} AS pkg-iptables
+FROM docker.io/autonomy/libressl:${PKGS} AS pkg-libressl
+FROM docker.io/autonomy/libseccomp:${PKGS} AS pkg-libseccomp
+FROM docker.io/autonomy/linux-firmware:${PKGS} AS pkg-linux-firmware
+FROM docker.io/autonomy/linux-firmware:${PKGS} AS pkg-linux-firmware
+FROM docker.io/autonomy/lvm2:${PKGS} AS pkg-lvm2
+FROM docker.io/autonomy/libaio:${PKGS} AS pkg-libaio
+FROM docker.io/autonomy/musl:${PKGS} AS pkg-musl
+FROM docker.io/autonomy/open-iscsi:${PKGS} AS pkg-open-iscsi
+FROM docker.io/autonomy/open-isns:${PKGS} AS pkg-open-isns
+FROM docker.io/autonomy/runc:${PKGS} AS pkg-runc
+FROM docker.io/autonomy/socat:${PKGS} AS pkg-socat
+FROM docker.io/autonomy/xfsprogs:${PKGS} AS pkg-xfsprogs
+FROM docker.io/autonomy/util-linux:${PKGS} AS pkg-util-linux
+FROM docker.io/autonomy/util-linux:${PKGS} AS pkg-util-linux
+FROM docker.io/autonomy/util-linux:${PKGS} AS pkg-util-linux
+FROM docker.io/autonomy/kmod:${PKGS} AS pkg-kmod
+FROM docker.io/autonomy/kernel:${PKGS} AS pkg-kernel
 
 # The tools target provides base toolchain for the build.
 
@@ -288,34 +316,34 @@ COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=docker.io/autonomy/kernel:v0.3.0-5-gec61a1d /boot/vmlinuz /vmlinuz
+COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz
 
 # The rootfs target provides the Talos rootfs.
 
 FROM build AS rootfs-base
-COPY --from=docker.io/autonomy/fhs:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/ca-certificates:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/containerd:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/dosfstools:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/eudev:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/iptables:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/libressl:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/libseccomp:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/linux-firmware:v0.3.0-5-gec61a1d /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=docker.io/autonomy/linux-firmware:v0.3.0-5-gec61a1d /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
-COPY --from=docker.io/autonomy/lvm2:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/libaio:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/musl:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/open-iscsi:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/open-isns:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/runc:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/socat:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/xfsprogs:v0.3.0-5-gec61a1d / /rootfs
-COPY --from=docker.io/autonomy/util-linux:v0.3.0-5-gec61a1d /lib/libblkid.* /rootfs/lib/
-COPY --from=docker.io/autonomy/util-linux:v0.3.0-5-gec61a1d /lib/libuuid.* /rootfs/lib/
-COPY --from=docker.io/autonomy/util-linux:v0.3.0-5-gec61a1d /lib/libmount.* /rootfs/lib/
-COPY --from=docker.io/autonomy/kmod:v0.3.0-5-gec61a1d /usr/lib/libkmod.* /rootfs/lib/
-COPY --from=docker.io/autonomy/kernel:v0.3.0-5-gec61a1d /lib/modules /rootfs/lib/modules
+COPY --from=pkg-fhs / /rootfs
+COPY --from=pkg-ca-certificates / /rootfs
+COPY --from=pkg-containerd / /rootfs
+COPY --from=pkg-dosfstools / /rootfs
+COPY --from=pkg-eudev / /rootfs
+COPY --from=pkg-iptables / /rootfs
+COPY --from=pkg-libressl / /rootfs
+COPY --from=pkg-libseccomp / /rootfs
+COPY --from=pkg-linux-firmware /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
+COPY --from=pkg-linux-firmware /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-lvm2 / /rootfs
+COPY --from=pkg-libaio / /rootfs
+COPY --from=pkg-musl / /rootfs
+COPY --from=pkg-open-iscsi / /rootfs
+COPY --from=pkg-open-isns / /rootfs
+COPY --from=pkg-runc / /rootfs
+COPY --from=pkg-socat / /rootfs
+COPY --from=pkg-xfsprogs / /rootfs
+COPY --from=pkg-util-linux /lib/libblkid.* /rootfs/lib/
+COPY --from=pkg-util-linux /lib/libuuid.* /rootfs/lib/
+COPY --from=pkg-util-linux /lib/libmount.* /rootfs/lib/
+COPY --from=pkg-kmod /usr/lib/libkmod.* /rootfs/lib/
+COPY --from=pkg-kernel /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
@@ -385,7 +413,7 @@ RUN apk add --no-cache --update \
     qemu-img \
     util-linux \
     xfsprogs
-COPY --from=docker.io/autonomy/grub:v0.3.0-5-gec61a1d / /
+COPY --from=pkg-grub / /
 COPY --from=kernel /vmlinuz /usr/install/vmlinuz
 COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
 COPY --from=installer-build /installer /bin/installer
