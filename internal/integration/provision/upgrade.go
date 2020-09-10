@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/cluster/check"
+	"github.com/talos-systems/talos/pkg/cluster/kubernetes"
 	"github.com/talos-systems/talos/pkg/cluster/sonobuoy"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	talosclient "github.com/talos-systems/talos/pkg/machinery/client"
@@ -48,6 +49,7 @@ type upgradeSpec struct {
 	SourceInitramfsPath  string
 	SourceInstallerImage string
 	SourceVersion        string
+	SourceK8sVersion     string
 
 	TargetInstallerImage string
 	TargetVersion        string
@@ -63,8 +65,9 @@ const (
 	stableVersion = "v0.5.1"
 	nextVersion   = "v0.6.0"
 
-	stableK8sVersion = "1.18.6"
-	nextK8sVersion   = "1.19.0"
+	stableK8sVersion  = "1.18.6"
+	nextK8sVersion    = "1.19.0"
+	currentK8sVersion = "1.19.1"
 )
 
 var (
@@ -91,10 +94,11 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
 		SourceVersion:        stableVersion,
+		SourceK8sVersion:     stableK8sVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
 		TargetVersion:        nextVersion,
-		TargetK8sVersion:     stableK8sVersion,
+		TargetK8sVersion:     nextK8sVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -110,10 +114,11 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
 		SourceVersion:        nextVersion,
+		SourceK8sVersion:     nextK8sVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     nextK8sVersion,
+		TargetK8sVersion:     currentK8sVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -450,6 +455,18 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	suite.waitForClusterHealth()
 }
 
+func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
+	if fromVersion == toVersion {
+		suite.T().Logf("skipping Kubernetes upgrade, as versions are equal %q -> %q", fromVersion, toVersion)
+
+		return
+	}
+
+	suite.T().Logf("upgrading Kubernetes: %q -> %q", fromVersion, toVersion)
+
+	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, fromVersion, toVersion))
+}
+
 // TestRolling performs rolling upgrade starting with master nodes.
 func (suite *UpgradeSuite) TestRolling() {
 	suite.setupCluster()
@@ -459,6 +476,9 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify initial cluster version
 	suite.assertSameVersionCluster(client, suite.spec.SourceVersion)
+
+	// upgrade Kubernetes if required
+	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion)
 
 	// upgrade master nodes
 	for _, node := range suite.Cluster.Info().Nodes {
