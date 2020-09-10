@@ -196,6 +196,9 @@ const (
 	// KubernetesControllerManagerImage is the enforced controllermanager image to use for the control plane.
 	KubernetesControllerManagerImage = "k8s.gcr.io/kube-controller-manager"
 
+	// KubernetesProxyImage is the enforced proxy image to use for the control plane.
+	KubernetesProxyImage = "k8s.gcr.io/kube-proxy"
+
 	// KubernetesSchedulerImage is the enforced scheduler image to use for the control plane.
 	KubernetesSchedulerImage = "k8s.gcr.io/kube-scheduler"
 
