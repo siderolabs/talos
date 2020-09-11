@@ -16,7 +16,7 @@ talosctl upgrade-k8s [flags]
 ```
       --from string   the Kubernetes control plane version to upgrade from
   -h, --help          help for upgrade-k8s
-      --to string     the Kubernetes control plane version to upgrade to (default "1.19.0")
+      --to string     the Kubernetes control plane version to upgrade to (default "1.19.1")
 ```
 
 ### Options inherited from parent commands
