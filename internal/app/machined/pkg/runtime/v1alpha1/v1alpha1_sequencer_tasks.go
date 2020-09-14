@@ -902,7 +902,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 					continue
 				}
 
-				if err = os.Chmod(f.Path(), f.Permissions()); err != nil {
+				if err = os.Chmod(f.Path, f.Permissions); err != nil {
 					result = multierror.Append(result, err)
 					continue
 				}
@@ -940,7 +940,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
-			if err = os.Chmod(p, f.Permissions()); err != nil {
+			if err = os.Chmod(p, f.Permissions); err != nil {
 				result = multierror.Append(result, err)
 				continue
 			}
