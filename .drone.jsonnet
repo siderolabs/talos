@@ -356,8 +356,7 @@ local integration_steps = default_steps + [
   integration_provision_tests_prepare,
   integration_provision_tests_track_0,
   integration_provision_tests_track_1,
-  // TODO: disabled, as upgrade to 1.19 K8s with Cilium fails: https://github.com/cilium/cilium/issues/13096
-  // integration_provision_tests_track_0_cilium,
+  integration_provision_tests_track_0_cilium,
   integration_cilium,
   integration_uefi,
 ];
