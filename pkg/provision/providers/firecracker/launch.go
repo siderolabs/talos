@@ -50,7 +50,7 @@ func Launch() error {
 
 	ctx := context.Background()
 
-	httpServer, err := vm.NewConfigServer(config.GatewayAddr, []byte(config.Config))
+	httpServer, err := vm.NewHTTPServer(config.GatewayAddr, 0, []byte(config.Config), nil)
 	if err != nil {
 		return err
 	}
