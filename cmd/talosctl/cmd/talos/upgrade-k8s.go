@@ -9,11 +9,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/internal/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/client"
 	k8s "github.com/talos-systems/talos/pkg/cluster/kubernetes"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 // upgradeK8sCmd represents the upgrade-k8s command.

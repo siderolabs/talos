@@ -19,8 +19,8 @@ import (
 
 	"github.com/talos-systems/go-retry/retry"
 
-	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/internal/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/constants"
 )
 
 const (
