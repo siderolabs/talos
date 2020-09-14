@@ -62,6 +62,9 @@ type LaunchConfig struct {
 	BootFilename     string
 	IPXEBootFileName string
 
+	// API
+	APIPort int
+
 	// filled by CNI invocation
 	tapName string
 	vmMAC   string
@@ -69,6 +72,9 @@ type LaunchConfig struct {
 
 	// signals
 	c chan os.Signal
+
+	// controller
+	controller *Controller
 }
 
 // withCNI creates network namespace, launches CNI and passes control to the next function
@@ -177,6 +183,12 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 //
 //nolint: gocyclo
 func launchVM(config *LaunchConfig) error {
+	bootOrder := "cn"
+
+	if config.controller.ForcePXEBoot() {
+		bootOrder = "nc"
+	}
+
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
 		"-drive", fmt.Sprintf("format=raw,if=virtio,file=%s", config.DiskPath),
@@ -187,7 +199,7 @@ func launchVM(config *LaunchConfig) error {
 		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s", config.vmMAC),
 		"-device", "virtio-rng-pci",
 		"-no-reboot",
-		"-boot", "order=cn,reboot-timeout=5000",
+		"-boot", fmt.Sprintf("order=%s,reboot-timeout=5000", bootOrder),
 		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),
 	}
 
@@ -242,22 +254,36 @@ func launchVM(config *LaunchConfig) error {
 		done <- cmd.Wait()
 	}()
 
-	select {
-	case sig := <-config.c:
-		fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
+	for {
+		select {
+		case sig := <-config.c:
+			fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
 
-		if err := cmd.Process.Kill(); err != nil {
-			return fmt.Errorf("failed to kill process %w", err)
+			if err := cmd.Process.Kill(); err != nil {
+				return fmt.Errorf("failed to kill process %w", err)
+			}
+
+			return fmt.Errorf("process stopped")
+		case err := <-done:
+			if err != nil {
+				return fmt.Errorf("process exited with error %s", err)
+			}
+
+			// graceful exit
+			return nil
+		case command := <-config.controller.CommandsCh():
+			if command == VMCommandStop {
+				fmt.Fprintf(os.Stderr, "exiting VM as stop command via API was received\n")
+
+				if err := cmd.Process.Kill(); err != nil {
+					return fmt.Errorf("failed to kill process %w", err)
+				}
+
+				<-done
+
+				return nil
+			}
 		}
-
-		return fmt.Errorf("process stopped")
-	case err := <-done:
-		if err != nil {
-			return fmt.Errorf("process exited with error %s", err)
-		}
-
-		// graceful exit
-		return nil
 	}
 }
 
@@ -285,8 +311,9 @@ func Launch() error {
 	}
 
 	config.c = vm.ConfigureSignals()
+	config.controller = NewController()
 
-	httpServer, err := vm.NewConfigServer(config.GatewayAddr, []byte(config.Config))
+	httpServer, err := vm.NewHTTPServer(config.GatewayAddr, config.APIPort, []byte(config.Config), config.controller)
 	if err != nil {
 		return err
 	}
@@ -299,6 +326,17 @@ func Launch() error {
 
 	return withCNI(ctx, &config, func(config *LaunchConfig) error {
 		for {
+			for config.controller.PowerState() != PoweredOn {
+				select {
+				case <-config.controller.CommandsCh():
+					// machine might have been powered on
+				case sig := <-config.c:
+					fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
+
+					return fmt.Errorf("process stopped")
+				}
+			}
+
 			if err := launchVM(config); err != nil {
 				return err
 			}

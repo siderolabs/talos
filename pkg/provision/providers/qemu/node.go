@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
@@ -84,6 +85,11 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	nodeUUID := uuid.New()
 
+	apiPort, err := p.findBridgeListenPort(clusterReq)
+	if err != nil {
+		return provision.NodeInfo{}, fmt.Errorf("error finding listen address for the API: %w", err)
+	}
+
 	launchConfig := LaunchConfig{
 		QemuExecutable:    fmt.Sprintf("qemu-system-%s", arch.QemuArch()),
 		DiskPath:          diskPath,
@@ -106,6 +112,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		Nameservers:       clusterReq.Network.Nameservers,
 		TFTPServer:        nodeReq.TFTPServer,
 		IPXEBootFileName:  nodeReq.IPXEBootFilename,
+		APIPort:           apiPort,
 	}
 
 	if !nodeReq.PXEBooted {
@@ -167,6 +174,8 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		DiskSize: nodeReq.DiskSize,
 
 		PrivateIP: nodeReq.IP,
+
+		APIPort: apiPort,
 	}
 
 	return nodeInfo, nil
@@ -202,4 +211,15 @@ func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterR
 	}
 
 	return nodesInfo, multiErr.ErrorOrNil()
+}
+
+func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) (int, error) {
+	l, err := net.Listen("tcp", net.JoinHostPort(clusterReq.Network.GatewayAddr.String(), "0"))
+	if err != nil {
+		return 0, err
+	}
+
+	port := l.Addr().(*net.TCPAddr).Port
+
+	return port, l.Close()
 }

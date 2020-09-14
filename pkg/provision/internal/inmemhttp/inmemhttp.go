@@ -15,6 +15,7 @@ import (
 // Server is an in-memory http web server.
 type Server interface {
 	AddFile(filename string, contents []byte) error
+	AddHandler(pattern string, handler http.Handler)
 
 	GetAddr() net.Addr
 	Serve()
@@ -70,6 +71,10 @@ func (s *server) AddFile(filename string, contents []byte) error {
 	}))
 
 	return nil
+}
+
+func (s *server) AddHandler(pattern string, handler http.Handler) {
+	s.mux.Handle(pattern, handler)
 }
 
 func (s *server) GetAddr() net.Addr {

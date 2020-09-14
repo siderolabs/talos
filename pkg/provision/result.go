@@ -57,4 +57,6 @@ type NodeInfo struct {
 
 	PublicIP  net.IP
 	PrivateIP net.IP
+
+	APIPort int
 }
