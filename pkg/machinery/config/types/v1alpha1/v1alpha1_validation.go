@@ -172,11 +172,6 @@ func CheckDeviceAddressing(d *Device) error {
 		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.DeviceInterface, ErrBadAddressing))
 	}
 
-	// test for neither dhcp nor cidr specified
-	if !d.DeviceDHCP && d.DeviceCIDR == "" && len(d.DeviceVlans) == 0 {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.DeviceInterface, ErrBadAddressing))
-	}
-
 	// ensure cidr is a valid address
 	if d.DeviceCIDR != "" {
 		if _, _, err := net.ParseCIDR(d.DeviceCIDR); err != nil {

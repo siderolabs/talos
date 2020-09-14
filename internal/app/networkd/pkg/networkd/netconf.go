@@ -55,8 +55,10 @@ func buildOptions(device config.Device, hostname string) (name string, opts []ni
 
 			opts = append(opts, nic.WithNoAddressing())
 		} else {
-			d := &address.DHCP{}
-			opts = append(opts, nic.WithAddressing(d))
+			// No CIDR and DHCP==false results in a static without an IP.
+			// This handles cases like slaac addressing.
+			s := &address.Static{RouteList: device.Routes(), Mtu: device.MTU()}
+			opts = append(opts, nic.WithAddressing(s))
 		}
 	}
 
