@@ -45,6 +45,9 @@ set fallback="{{ . }}"
 {{- end }}
 set timeout=0
 
+terminal_input console
+terminal_output console
+
 {{ range $label := .Labels -}}
 menuentry "{{ $label.Root }}" {
   linux {{ $label.Kernel }} {{ $label.Append }}
