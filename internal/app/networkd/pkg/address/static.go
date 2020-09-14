@@ -39,9 +39,11 @@ func (s *Static) Name() string {
 // Address returns the IP address.
 func (s *Static) Address() *net.IPNet {
 	// nolint: errcheck
-	ip, ipn, _ := net.ParseCIDR(s.CIDR)
-	ipn.IP = ip
-
+	var ipn *net.IPNet
+	if s.CIDR != "" {
+		ip, ipn, _ := net.ParseCIDR(s.CIDR)
+		ipn.IP = ip
+	}
 	return ipn
 }
 
@@ -70,10 +72,13 @@ func (s *Static) TTL() time.Duration {
 
 // Family qualifies the address as ipv4 or ipv6.
 func (s *Static) Family() int {
+	if s.Address() == nil {
+		panic("unable to determine address family as address is nil")
+	}
+
 	if s.Address().IP.To4() != nil {
 		return unix.AF_INET
 	}
-
 	return unix.AF_INET6
 }
 

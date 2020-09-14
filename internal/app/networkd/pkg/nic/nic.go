@@ -336,30 +336,33 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 		return err
 	}
 
-	// Check to see if we need to configure the address
-	addrs, err := n.rtnlConn.Addrs(method.Link(), method.Family())
-	if err != nil {
-		return err
-	}
+	if method.Address() != nil {
 
-	addressExists := false
-
-	for _, addr := range addrs {
-		if method.Address().String() == addr.String() {
-			addressExists = true
-			break
+		// Check to see if we need to configure the address
+		addrs, err := n.rtnlConn.Addrs(method.Link(), method.Family())
+		if err != nil {
+			return err
 		}
-	}
 
-	if !addressExists {
-		if err = n.rtnlConn.AddrAdd(method.Link(), method.Address()); err != nil {
-			switch err := err.(type) {
-			case *netlink.OpError:
-				if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
-					return err
+		addressExists := false
+
+		for _, addr := range addrs {
+			if method.Address().String() == addr.String() {
+				addressExists = true
+				break
+			}
+		}
+
+		if !addressExists && method.Address() != nil {
+			if err = n.rtnlConn.AddrAdd(method.Link(), method.Address()); err != nil {
+				switch err := err.(type) {
+				case *netlink.OpError:
+					if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
+						return err
+					}
+				default:
+					return fmt.Errorf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
 				}
-			default:
-				return fmt.Errorf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
 			}
 		}
 	}
