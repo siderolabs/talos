@@ -58,7 +58,7 @@ func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, arch, ta
 
 	graceTimeout := 5 * time.Minute
 
-	fmt.Printf("sleeping %s to let the pod-checkpointer self-scheckpoint be updated\n", graceTimeout.String())
+	fmt.Printf("sleeping %s to let the pod-checkpointer self-checkpoint be updated\n", graceTimeout.String())
 	time.Sleep(graceTimeout)
 
 	daemonsets := []string{kubeAPIServer, kubeControllerManager, kubeScheduler, kubeProxy}
