@@ -1,4 +1,18 @@
 
+<a name="v0.6.1"></a>
+## [v0.6.1](https://github.com/talos-systems/talos/compare/v0.6.0...v0.6.1) (2020-09-14)
+
+### Feat
+
+* implement command `talosctl upgrade-k8s`
+
+### Fix
+
+* update import paths
+* update vmware image and platform
+* update permissions for directories and files created via extraFiles
+
+
 <a name="v0.6.0"></a>
 ## [v0.6.0](https://github.com/talos-systems/talos/compare/v0.6.0-beta.3...v0.6.0) (2020-09-02)
 
@@ -6,6 +20,10 @@
 
 * update k8s modules to 1.19 final version
 * upgrade Go to 1.14.8
+
+### Release
+
+* **v0.6.0:** prepare release
 
 
 <a name="v0.6.0-beta.3"></a>
