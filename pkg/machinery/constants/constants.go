@@ -114,12 +114,6 @@ const (
 	// PATH defines all locations where executables are stored.
 	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:" + cni.DefaultCNIDir
 
-	// CNICalico is used to specify Calico CNI.
-	CNICalico = "calico"
-
-	// CNIFlannel is used to specify Flannel CNI.
-	CNIFlannel = "flannel"
-
 	// DefaultCertificatesDir is the path the the Kubernetes PKI directory.
 	DefaultCertificatesDir = "/etc/kubernetes/pki"
 
