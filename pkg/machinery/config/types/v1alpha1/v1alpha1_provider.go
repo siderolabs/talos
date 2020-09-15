@@ -282,7 +282,7 @@ func (a *APIServerConfig) Image() string {
 	image := a.ContainerImage
 
 	if image == "" {
-		image = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, constants.DefaultKubernetesVersion)
+		image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesAPIServerImage, goruntime.GOARCH, constants.DefaultKubernetesVersion)
 	}
 
 	return image
@@ -307,7 +307,7 @@ func (c *ControllerManagerConfig) Image() string {
 	image := c.ContainerImage
 
 	if image == "" {
-		image = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, constants.DefaultKubernetesVersion)
+		image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesControllerManagerImage, goruntime.GOARCH, constants.DefaultKubernetesVersion)
 	}
 
 	return image
@@ -332,7 +332,7 @@ func (p *ProxyConfig) Image() string {
 	image := p.ContainerImage
 
 	if image == "" {
-		image = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, constants.DefaultKubernetesVersion)
+		image = fmt.Sprintf("%s-%s:v%s", constants.KubeProxyImage, goruntime.GOARCH, constants.DefaultKubernetesVersion)
 	}
 
 	return image
@@ -371,7 +371,7 @@ func (s *SchedulerConfig) Image() string {
 	image := s.ContainerImage
 
 	if image == "" {
-		image = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, constants.DefaultKubernetesVersion)
+		image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesSchedulerImage, goruntime.GOARCH, constants.DefaultKubernetesVersion)
 	}
 
 	return image
