@@ -26,10 +26,71 @@ In order to edit the control plane, we will need a working `kubectl` config.
 If you don't already have one, you can get one by running:
 
 ```bash
-talosctl kubeconfig
+talosctl --nodes <master node> kubeconfig
 ```
 
-### API Server
+### Automated Kubernetes Upgrade
+
+New command `talosctl upgrade-k8s` can be used to automate the Kubernetes upgrade process, this command was first released with Talos 0.6.1.
+
+```bash
+$ talosctl --nodes <master node> upgrade-k8s --from 1.18.6 --to 1.19.0
+updating pod-checkpointer grace period to "0m"
+sleeping 5m0s to let the pod-checkpointer self-scheckpoint be updated
+temporarily taking "kube-apiserver" out of pod-checkpointer control
+updating daemonset "kube-apiserver" to version "1.19.0"
+updating daemonset "kube-controller-manager" to version "1.19.0"
+updating daemonset "kube-scheduler" to version "1.19.0"
+updating daemonset "kube-proxy" to version "1.19.0"
+updating pod-checkpointer grace period to "5m0s"
+```
+
+### Manual Kubernetes Upgrade
+
+Kubernetes can be upgraded manually as well by following the steps outlined below, they are equivalent to the steps performed by the `talosctl upgrade-k8s` command.
+
+#### pod-checkpointer
+
+Talos runs `pod-checkpointer` component which helps to recover control plane components (specifically, API server) if control plane is not healthy, but the way
+checkpoints interact with API server upgrade might make upgrade take a lot of time due to race condition in API server listen port.
+
+In order to speed up upgrades, first lower `pod-checkpointer` grace period to zero (`kubectl  -n kube-system edit daemonset pod-checkpointer`), change:
+
+```yaml
+kind: DaemonSet
+...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      containers:
+      - name: pod-checkpointer
+        command:
+        ...
+        - --checkpoint-grace-period=5m0s
+```
+
+to:
+
+```yaml
+kind: DaemonSet
+...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      containers:
+      - name: pod-checkpointer
+        command:
+        ...
+        - --checkpoint-grace-period=0s
+```
+
+Wait for 5 minutes to let `pod-checkpointer` update self-checkpoint to the new grace period.
+
+#### API Server
 
 In the API server's `DaemonSet`, change:
 
@@ -73,7 +134,7 @@ To edit the `DaemonSet`, run:
 kubectl edit daemonsets -n kube-system kube-apiserver
 ```
 
-### Controller Manager
+#### Controller Manager
 
 In the controller manager's `DaemonSet`, change:
 
@@ -117,7 +178,7 @@ To edit the `DaemonSet`, run:
 kubectl edit daemonsets -n kube-system kube-controller-manager
 ```
 
-### Scheduler
+#### Scheduler
 
 In the scheduler's `DaemonSet`, change:
 
@@ -159,6 +220,42 @@ To edit the `DaemonSet`, run:
 
 ```bash
 kubectl edit daemonsets -n kube-system kube-scheduler
+```
+
+#### Restoring pod-checkpointer
+
+Restore grace period of 5 minutes (`kubectl  -n kube-system edit daemonset pod-checkpointer`), change:
+
+```yaml
+kind: DaemonSet
+...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      containers:
+      - name: pod-checkpointer
+        command:
+        ...
+        - --checkpoint-grace-period=0s
+```
+
+to:
+
+```yaml
+kind: DaemonSet
+...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      containers:
+      - name: pod-checkpointer
+        command:
+        ...
+        - --checkpoint-grace-period=5m0s
 ```
 
 ### Kubelet
