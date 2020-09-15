@@ -17,6 +17,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/hashicorp/go-getter"
@@ -127,6 +128,7 @@ func generateAssets(config config.Provider) (err error) {
 	images := asset.DefaultImages
 
 	// Override all kube-related images with default val or specified image locations
+	images.Flannel = fmt.Sprintf("quay.io/coreos/flannel:v0.12.0-%s", runtime.GOARCH)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
 	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
