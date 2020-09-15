@@ -34,19 +34,19 @@ const (
 )
 
 // Upgrade the Kubernetes control plane.
-func Upgrade(ctx context.Context, cluster cluster.K8sProvider, fromVersion, toVersion string) error {
+func Upgrade(ctx context.Context, cluster cluster.K8sProvider, arch, fromVersion, toVersion string) error {
 	switch {
 	case strings.HasPrefix(fromVersion, "1.18.") && strings.HasPrefix(toVersion, "1.19."):
-		return hyperkubeUpgrade(ctx, cluster, toVersion)
+		return hyperkubeUpgrade(ctx, cluster, arch, toVersion)
 	case strings.HasPrefix(fromVersion, "1.19.") && strings.HasPrefix(toVersion, "1.19."):
-		return hyperkubeUpgrade(ctx, cluster, toVersion)
+		return hyperkubeUpgrade(ctx, cluster, arch, toVersion)
 	default:
 		return fmt.Errorf("unsupported upgrade from %q to %q", fromVersion, toVersion)
 	}
 }
 
 // hyperkubeUpgrade upgrades from hyperkube-based to distroless images in 1.19.
-func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, targetVersion string) error {
+func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, arch, targetVersion string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
 		return fmt.Errorf("error building K8s client: %w", err)
@@ -64,7 +64,7 @@ func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, targetVe
 	daemonsets := []string{kubeAPIServer, kubeControllerManager, kubeScheduler, kubeProxy}
 
 	for _, ds := range daemonsets {
-		if err = hyperkubeUpgradeDs(ctx, clientset, ds, targetVersion); err != nil {
+		if err = hyperkubeUpgradeDs(ctx, clientset, ds, arch, targetVersion); err != nil {
 			return fmt.Errorf("failed updating daemonset %q: %w", ds, err)
 		}
 	}
@@ -158,7 +158,7 @@ func podCheckpointerGracePeriod(ctx context.Context, clientset *kubernetes.Clien
 }
 
 //nolint: gocyclo
-func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds, targetVersion string) error {
+func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds, arch, targetVersion string) error {
 	if ds == kubeAPIServer {
 		fmt.Printf("temporarily taking %q out of pod-checkpointer control\n", ds)
 
@@ -190,13 +190,13 @@ func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds
 
 		switch ds {
 		case kubeAPIServer:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, targetVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesAPIServerImage, arch, targetVersion)
 		case kubeControllerManager:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, targetVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesControllerManagerImage, arch, targetVersion)
 		case kubeScheduler:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, targetVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesSchedulerImage, arch, targetVersion)
 		case kubeProxy:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesProxyImage, targetVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesProxyImage, arch, targetVersion)
 		default:
 			return fmt.Errorf("failed to build new image spec")
 		}

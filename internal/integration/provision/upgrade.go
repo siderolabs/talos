@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -464,7 +465,7 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 
 	suite.T().Logf("upgrading Kubernetes: %q -> %q", fromVersion, toVersion)
 
-	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, fromVersion, toVersion))
+	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, runtime.GOARCH, fromVersion, toVersion))
 }
 
 // TestRolling performs rolling upgrade starting with master nodes.

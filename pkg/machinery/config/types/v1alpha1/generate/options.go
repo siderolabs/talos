@@ -114,6 +114,15 @@ func WithClusterCNIConfig(config *v1alpha1.CNIConfig) GenOption {
 	}
 }
 
+// WithArchitecture specifies architecture of the Talos cluster.
+func WithArchitecture(arch string) GenOption {
+	return func(o *GenOptions) error {
+		o.Architecture = arch
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -125,6 +134,7 @@ type GenOptions struct {
 	CNIConfig                 *v1alpha1.CNIConfig
 	RegistryMirrors           map[string]*v1alpha1.RegistryMirrorConfig
 	DNSDomain                 string
+	Architecture              string
 	Debug                     bool
 	Persist                   bool
 }
@@ -132,6 +142,7 @@ type GenOptions struct {
 // DefaultGenOptions returns default options.
 func DefaultGenOptions() GenOptions {
 	return GenOptions{
-		Persist: true,
+		Persist:      true,
+		Architecture: "amd64",
 	}
 }

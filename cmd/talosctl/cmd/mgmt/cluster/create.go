@@ -186,6 +186,7 @@ func create(ctx context.Context) (err error) {
 			generate.WithInstallImage(nodeInstallImage),
 			generate.WithDebug(configDebug),
 			generate.WithDNSDomain(dnsDomain),
+			generate.WithArchitecture(targetArch),
 		}
 
 		for _, registryMirror := range registryMirrors {
