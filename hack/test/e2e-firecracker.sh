@@ -32,6 +32,8 @@ case "${CUSTOM_CNI_URL:-false}" in
 esac
 
 function create_cluster {
+  make_tmp
+
   build_registry_mirrors
 
   "${TALOSCTL}" cluster create \
@@ -54,8 +56,10 @@ function create_cluster {
 
 function destroy_cluster() {
   "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}"
+  clean_tmp
 }
 
+destroy_cluster
 create_cluster
 get_kubeconfig
 run_talos_integration_test

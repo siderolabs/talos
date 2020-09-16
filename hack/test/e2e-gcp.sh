@@ -5,6 +5,7 @@ set -eou pipefail
 source ./hack/test/e2e.sh
 
 function setup {
+  make_tmp
   echo ${GCE_SVC_ACCT} | base64 -d > ${TMP}/svc-acct.json
   gcloud auth activate-service-account --key-file ${TMP}/svc-acct.json
   gsutil cp ${ARTIFACTS}/gcp.tar.gz gs://talos-e2e/gcp-${SHA}.tar.gz

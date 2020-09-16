@@ -38,6 +38,7 @@ case "${WITH_UEFI:-false}" in
 esac
 
 function create_cluster {
+  make_tmp
   build_registry_mirrors
 
   "${TALOSCTL}" cluster create \
@@ -60,6 +61,7 @@ function create_cluster {
 
 function destroy_cluster() {
   "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}" --provisioner "${PROVISIONER}"
+  clean_tmp
 }
 
 create_cluster

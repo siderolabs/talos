@@ -8,8 +8,9 @@ REGION="us-east-1"
 BUCKET="talos-ci-e2e"
 
 function setup {
+  make_tmp
+
   # Setup svc account
-  mkdir -p ${TMP}
 
   # Untar image
   tar -C ${TMP} -xf ${ARTIFACTS}/aws.tar.gz

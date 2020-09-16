@@ -17,7 +17,6 @@
 set -eoux pipefail
 
 TMP="/tmp/e2e/${PLATFORM}"
-mkdir -p "${TMP}"
 
 # Talos
 
@@ -36,8 +35,19 @@ export TIMEOUT=1200
 export NUM_NODES=6
 
 # default values, overridden by talosctl cluster create tests
-PROVISIONER=
-CLUSTER_NAME=
+PROVISIONER=${PROVISIONER:-""}
+CLUSTER_NAME=${CLUSTER_NAME:-""}
+
+function clean_tmp {
+   # Clean up the old, if it exists
+   if [ -e $TMP ]; then
+      rm -Rf $TMP
+   fi
+}
+
+function make_tmp {
+   mkdir -p "${TMP}"
+}
 
 cleanup_capi() {
   ${KUBECTL} --kubeconfig /tmp/e2e/docker/kubeconfig delete cluster ${NAME_PREFIX}

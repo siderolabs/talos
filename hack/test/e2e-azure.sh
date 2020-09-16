@@ -5,6 +5,8 @@ set -eou pipefail
 source ./hack/test/e2e.sh
 
 function setup {
+  make_tmp
+
   AZURE_STORAGE_ACCOUNT=talostesting
   AZURE_STORAGE_CONTAINER=talostesting
   AZURE_GROUP=talos

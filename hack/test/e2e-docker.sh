@@ -2,12 +2,15 @@
 
 set -eou pipefail
 
+export PROVISIONER=docker
+export CLUSTER_NAME=e2e-${PROVISIONER}
+
 source ./hack/test/e2e.sh
 
-PROVISIONER=docker
-CLUSTER_NAME=e2e-${PROVISIONER}
 
 function create_cluster {
+  make_tmp
+
   build_registry_mirrors
 
   "${TALOSCTL}" cluster create \
@@ -29,8 +32,10 @@ function create_cluster {
 
 function destroy_cluster() {
   "${TALOSCTL}" cluster destroy --name "${CLUSTER_NAME}"
+   clean_tmp
 }
 
+destroy_cluster
 create_cluster
 get_kubeconfig
 ${KUBECTL} config set-cluster e2e-docker --server https://10.5.0.2:6443

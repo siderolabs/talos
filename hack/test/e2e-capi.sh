@@ -4,6 +4,8 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
+make_tmp
+
 export CABPT_VERSION="0.2.0-alpha.0"
 export CACPPT_VERSION="0.1.0-alpha.2"
 export CAPA_VERSION="0.5.4"
