@@ -156,6 +156,11 @@ func New(config config.Provider) (*Networkd, error) {
 		}
 
 		for _, subif := range netif.SubInterfaces {
+			if _, ok := interfaces[subif.Name]; !ok {
+				result = multierror.Append(result, fmt.Errorf("bond subinterface %s does not exist", subif.Name))
+				continue
+			}
+
 			interfaces[subif.Name].Ignore = true
 		}
 	}
