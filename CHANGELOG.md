@@ -1,6 +1,14 @@
 
+<a name="v0.6.2"></a>
+## [v0.6.2](https://github.com/talos-systems/talos/compare/v0.6.1...v0.6.2) (2020-09-18)
+
+### Feat
+
+* upgrade Linux kernel to 5.8.10
+
+
 <a name="v0.6.1"></a>
-## [v0.6.1](https://github.com/talos-systems/talos/compare/v0.6.0...v0.6.1) (2020-09-14)
+## [v0.6.1](https://github.com/talos-systems/talos/compare/v0.6.0...v0.6.1) (2020-09-15)
 
 ### Feat
 
@@ -11,6 +19,10 @@
 * update import paths
 * update vmware image and platform
 * update permissions for directories and files created via extraFiles
+
+### Release
+
+* **v0.6.1:** prepare release
 
 
 <a name="v0.6.0"></a>
