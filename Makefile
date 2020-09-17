@@ -7,8 +7,8 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= autonomy/tools:v0.3.0-3-g6b491a6
-PKGS ?= v0.3.0-5-gec61a1d
+TOOLS ?= autonomy/tools:v0.3.0-4-gfb8cfaa
+PKGS ?= v0.3.0-9-gaef28aa
 GO_VERSION ?= 1.15
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
 IMPORTVET ?= autonomy/importvet:f6b07d9

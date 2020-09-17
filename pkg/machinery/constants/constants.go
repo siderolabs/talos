@@ -34,7 +34,7 @@ var (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version
-	DefaultKernelVersion = "5.8.5-talos"
+	DefaultKernelVersion = "5.8.10-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL
 	// to the config.
