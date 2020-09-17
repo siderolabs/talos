@@ -15,6 +15,8 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	talosnet "github.com/talos-systems/net"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -64,12 +66,8 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 		result = multierror.Append(result, errors.New("machine instructions are required"))
 	}
 
-	if c.ClusterConfig == nil {
-		result = multierror.Append(result, errors.New("cluster instructions are required"))
-	}
-
-	if c.Cluster().Endpoint() == nil || c.Cluster().Endpoint().String() == "" {
-		result = multierror.Append(result, errors.New("a cluster endpoint is required"))
+	if err := c.ClusterConfig.Validate(); err != nil {
+		result = multierror.Append(result, err)
 	}
 
 	if mode.RequiresInstall() {
@@ -115,6 +113,25 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 				}
 			}
 		}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// Validate validates the config.
+func (c *ClusterConfig) Validate() error {
+	var result *multierror.Error
+
+	if c == nil {
+		return fmt.Errorf("cluster instructions are required")
+	}
+
+	if c.ControlPlane == nil || c.ControlPlane.Endpoint == nil {
+		return fmt.Errorf("cluster controlplane endpoint is required")
+	}
+
+	if err := talosnet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
+		result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
 	}
 
 	return result.ErrorOrNil()

@@ -63,7 +63,7 @@ require (
 	github.com/talos-systems/go-retry v0.1.0
 	github.com/talos-systems/go-smbios v0.0.0-20200219201045-94b8c4e489ee
 	github.com/talos-systems/grpc-proxy v0.2.0
-	github.com/talos-systems/net v0.1.0
+	github.com/talos-systems/net v0.2.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v6.0.0+incompatible // indirect
 	github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe // indirect
