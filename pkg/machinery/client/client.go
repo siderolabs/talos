@@ -84,6 +84,10 @@ func (c *Client) resolveConfigContext() error {
 
 	c.options.configContext, ok = c.options.config.Contexts[c.options.config.Context]
 	if !ok {
+		if c.options.config.Context == "" && len(c.options.config.Contexts) == 0 {
+			return fmt.Errorf("talos config file is empty")
+		}
+
 		return fmt.Errorf("default context %q not found in config", c.options.config.Context)
 	}
 
