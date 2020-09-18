@@ -10,6 +10,8 @@ import (
 	"github.com/containerd/containerd/defaults"
 	cni "github.com/containerd/go-cni"
 	"github.com/talos-systems/crypto/x509"
+
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
@@ -26,6 +28,9 @@ var (
 	// DefaultInstallerImageRepository is the default container repository for
 	// the installer.
 	DefaultInstallerImageRepository = Registry + "/" + DefaultInstallerImageName
+
+	// DefaultInstallerImage is the default installer image.
+	DefaultInstallerImage = DefaultInstallerImageRepository + ":" + version.Tag
 
 	// DefaultTalosImageRepository is the default container repository for
 	// the talos image.
