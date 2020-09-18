@@ -349,6 +349,28 @@ local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, de
         "SHORT_INTEGRATION_TEST": "yes",
         "WITH_UEFI": "true",
 });
+local push_edge = {
+  name: 'push-edge',
+  image: 'autonomy/build-container:latest',
+  pull: 'always',
+  environment: {
+    DOCKER_USERNAME: { from_secret: 'docker_username' },
+    DOCKER_PASSWORD: { from_secret: 'docker_password' },
+  },
+  commands: ['make push-edge'],
+  volumes: volumes.ForStep(),
+  when: {
+    cron: [
+      'nightly',
+    ],
+  },
+  depends_on: [
+     // we skip track_0 dependency since it's a dependency for the cilium test below.
+    integration_provision_tests_track_1.name,
+    integration_uefi.name,
+    integration_provision_tests_track_0_cilium.name,
+  ],
+};
 
 
 local integration_steps = default_steps + [
@@ -359,6 +381,7 @@ local integration_steps = default_steps + [
   integration_provision_tests_track_0_cilium,
   integration_cilium,
   integration_uefi,
+  push_edge,
 ];
 
 local integration_trigger = {
@@ -420,29 +443,10 @@ local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds
 local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
 local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
 
-local push_edge = {
-  name: 'push-edge',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  environment: {
-    DOCKER_USERNAME: { from_secret: 'docker_username' },
-    DOCKER_PASSWORD: { from_secret: 'docker_password' },
-  },
-  commands: ['make push-edge'],
-  volumes: volumes.ForStep(),
-  when: {
-    cron: [
-      'nightly',
-    ],
-  },
-  depends_on: [conformance_aws.name, conformance_gcp.name],
-};
-
 local conformance_steps = default_steps + [
   e2e_capi,
   conformance_aws,
   conformance_gcp,
-  push_edge,
 ];
 
 local conformance_trigger = {
