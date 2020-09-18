@@ -17,7 +17,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/hashicorp/go-getter"
@@ -27,6 +26,7 @@ import (
 
 	tnet "github.com/talos-systems/net"
 
+	"github.com/talos-systems/talos/internal/app/bootkube/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -125,19 +125,7 @@ func generateAssets(config config.Provider) (err error) {
 		return fmt.Errorf("failed to calculate DNS service IP: %w", err)
 	}
 
-	images := asset.DefaultImages
-
-	// Override all kube-related images with default val or specified image locations
-	images.Flannel = fmt.Sprintf("quay.io/coreos/flannel:v0.12.0-%s", runtime.GOARCH)
-	images.Kubelet = config.Machine().Kubelet().Image()
-	images.KubeAPIServer = config.Cluster().APIServer().Image()
-	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
-	images.KubeProxy = config.Cluster().Proxy().Image()
-	images.KubeScheduler = config.Cluster().Scheduler().Image()
-
-	// Allow for overriding by users via config data
-	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.PodCheckpointer = config.Cluster().PodCheckpointer().Image()
+	images := images.List(config)
 
 	conf := asset.Config{
 		ClusterName:                config.Cluster().Name(),
