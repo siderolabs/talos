@@ -1564,10 +1564,6 @@ func unmountSystemPartition(label string) (err error) {
 // Install mounts or installs the system partitions.
 func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if r.Config().Machine().Install().Image() == "" {
-			return errors.New("an install image is required")
-		}
-
 		err = install.RunInstallerContainer(
 			r.Config().Machine().Install().Disk(),
 			r.State().Platform().Name(),

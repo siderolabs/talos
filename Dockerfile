@@ -133,9 +133,12 @@ COPY --from=init-build /init /init
 FROM base AS machined-build
 ARG SHA
 ARG TAG
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 WORKDIR /src/internal/app/machined
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /machined
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY}" -o /machined
 RUN chmod +x /machined
 
 FROM scratch AS machined
@@ -399,9 +402,12 @@ ENTRYPOINT ["/sbin/init"]
 FROM base AS installer-build
 ARG SHA
 ARG TAG
+ARG USERNAME
+ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
+ARG CONSTANTS_PKG="github.com/talos-systems/talos/pkg/machinery/constants"
 WORKDIR /src/cmd/installer
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}" -o /installer
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG}  -X ${CONSTANTS_PKG}.Username=${USERNAME} -X ${CONSTANTS_PKG}.Registry=${REGISTRY}" -o /installer
 RUN chmod +x /installer
 
 FROM alpine:3.11 AS installer
