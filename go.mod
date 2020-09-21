@@ -5,6 +5,7 @@ go 1.13
 replace (
 	github.com/Azure/go-autorest v10.8.1+incompatible => github.com/Azure/go-autorest/autorest v0.9.1
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/talos-systems/go-retry => github.com/smira/go-retry v0.0.0-20200921133422-4a90efe3ba44
 	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
 )
 
