@@ -10,9 +10,16 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+)
+
+// Image pull retry settings.
+const (
+	PullTimeout       = 20 * time.Minute
+	PullRetryInterval = 5 * time.Second
 )
 
 // Pull is a convenience function that wraps the containerd image pull func with
@@ -20,9 +27,15 @@ import (
 func Pull(ctx context.Context, reg config.Registries, client *containerd.Client, ref string) (img containerd.Image, err error) {
 	resolver := NewResolver(reg)
 
-	err = retry.Exponential(1*time.Minute, retry.WithUnits(1*time.Second)).Retry(func() error {
+	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).Retry(func() error {
 		if img, err = client.Pull(ctx, ref, containerd.WithPullUnpack, containerd.WithResolver(resolver)); err != nil {
-			return retry.ExpectedError(fmt.Errorf("failed to pull image %q: %w", ref, err))
+			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
+
+			if errdefs.IsNotFound(err) {
+				return retry.UnexpectedError(err)
+			}
+
+			return retry.ExpectedError(err)
 		}
 
 		return nil
