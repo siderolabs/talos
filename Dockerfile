@@ -557,5 +557,5 @@ RUN mkdir -p /docs/talosctl \
     && env HOME=/home/user TAG=latest /bin/talosctl docs /docs/talosctl
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.6/en/configuration/v1alpha1.md
+COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.7/en/configuration/v1alpha1.md
 COPY --from=docs-build /docs/talosctl/* /docs/talosctl/
