@@ -39,7 +39,11 @@ func (r *Runtime) Config() config.Provider {
 func (r *Runtime) SetConfig(b []byte) error {
 	cfg, err := configloader.NewFromBytes(b)
 	if err != nil {
-		return fmt.Errorf("failed to set config: %w", err)
+		return fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	if err := cfg.Validate(r.State().Platform().Mode()); err != nil {
+		return fmt.Errorf("failed to validate config: %w", err)
 	}
 
 	r.c = cfg

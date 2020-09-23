@@ -34,24 +34,27 @@ const (
 	SequenceRecover
 	// SequenceNoop is the noop sequence.
 	SequenceNoop
+	// SequenceApplyConfiguration is the apply configuration sequence.
+	SequenceApplyConfiguration
 )
 
 const (
-	boot       = "boot"
-	bootstrap  = "bootstrap"
-	initialize = "initialize"
-	install    = "install"
-	shutdown   = "shutdown"
-	upgrade    = "upgrade"
-	reset      = "reset"
-	reboot     = "reboot"
-	recover    = "recover"
-	noop       = "noop"
+	applyConfiguration = "applyConfiguration"
+	boot               = "boot"
+	bootstrap          = "bootstrap"
+	initialize         = "initialize"
+	install            = "install"
+	shutdown           = "shutdown"
+	upgrade            = "upgrade"
+	reset              = "reset"
+	reboot             = "reboot"
+	recover            = "recover"
+	noop               = "noop"
 )
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{boot, bootstrap, initialize, install, shutdown, upgrade, reset, reboot, recover, noop}[s]
+	return [...]string{boot, bootstrap, initialize, install, shutdown, upgrade, reset, reboot, recover, noop, applyConfiguration}[s]
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.
@@ -59,6 +62,8 @@ func (s Sequence) String() string {
 // nolint: gocyclo
 func ParseSequence(s string) (seq Sequence, err error) {
 	switch s {
+	case applyConfiguration:
+		seq = SequenceApplyConfiguration
 	case boot:
 		seq = SequenceBoot
 	case bootstrap:
@@ -89,6 +94,7 @@ func ParseSequence(s string) (seq Sequence, err error) {
 // Sequencer describes the set of sequences required for the lifecycle
 // management of the operating system.
 type Sequencer interface {
+	ApplyConfiguration(Runtime, *machine.ApplyConfigurationRequest) []Phase
 	Boot(Runtime) []Phase
 	Bootstrap(Runtime) []Phase
 	Initialize(Runtime) []Phase

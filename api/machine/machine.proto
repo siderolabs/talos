@@ -14,6 +14,7 @@ import "common/common.proto";
 
 // The machine service definition.
 service MachineService {
+  rpc ApplyConfiguration(ApplyConfigurationRequest) returns (ApplyConfigurationResponse);
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
@@ -46,6 +47,19 @@ service MachineService {
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
 }
+
+// rpc applyConfiguration
+// ApplyConfiguration describes a request to assert a new configuration upon a node.
+message ApplyConfigurationRequest {
+  bytes data = 1;
+
+  // enum op = 2; // (perhaps) patch, replace, etc
+
+  // bool no_reboot = 3; // (perhaps) do not reboot after application of new configuration
+}
+
+// ApplyConfigurationResponse describes the response to a configuration request.
+message ApplyConfigurationResponse {}
 
 // rpc reboot
 // The reboot message containing the reboot status.
