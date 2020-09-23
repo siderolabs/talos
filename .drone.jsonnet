@@ -250,8 +250,8 @@ local push = {
   image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
-    DOCKER_USERNAME: { from_secret: 'docker_username' },
-    DOCKER_PASSWORD: { from_secret: 'docker_password' },
+    GHCR_USERNAME: { from_secret: 'ghcr_username' },
+    GHCR_PASSWORD: { from_secret: 'ghcr_token' },
   },
   commands: ['make push'],
   volumes: volumes.ForStep(),
@@ -272,8 +272,8 @@ local push_latest = {
   image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
-    DOCKER_USERNAME: { from_secret: 'docker_username' },
-    DOCKER_PASSWORD: { from_secret: 'docker_password' },
+    GHCR_USERNAME: { from_secret: 'ghcr_username' },
+    GHCR_PASSWORD: { from_secret: 'ghcr_token' },
   },
   commands: ['make push-latest'],
   volumes: volumes.ForStep(),
@@ -354,8 +354,8 @@ local push_edge = {
   image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
-    DOCKER_USERNAME: { from_secret: 'docker_username' },
-    DOCKER_PASSWORD: { from_secret: 'docker_password' },
+    GHCR_USERNAME: { from_secret: 'ghcr_username' },
+    GHCR_PASSWORD: { from_secret: 'ghcr_password' },
   },
   commands: ['make push-edge'],
   volumes: volumes.ForStep(),

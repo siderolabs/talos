@@ -268,7 +268,7 @@ release-notes:
 .PHONY: login
 login: ## Logs in to the configured container registry.
 ifeq ($(DOCKER_LOGIN_ENABLED), true)
-	@docker login ghcr.io --username "$(DOCKER_USERNAME)" --password "$(DOCKER_PASSWORD)" $(REGISTRY)
+	@docker login --username "$(GHCR_USERNAME)" --password "$(GHCR_PASSWORD)" $(REGISTRY)
 endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
