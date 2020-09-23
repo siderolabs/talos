@@ -74,6 +74,31 @@ func (s *Server) Register(obj *grpc.Server) {
 	cluster.RegisterClusterServiceServer(obj, s)
 }
 
+// ApplyConfiguration implements machine.MachineServer.
+func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
+	if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
+		return nil, err
+	}
+
+	go func() {
+		if err = s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
+			log.Println("apply configuration failed:", err)
+
+			if err != runtime.ErrLocked {
+				s.server.GracefulStop()
+			}
+		}
+	}()
+
+	reply = &machine.ApplyConfigurationResponse{
+		Messages: []*machine.ApplyConfiguration{
+			{},
+		},
+	}
+
+	return reply, nil
+}
+
 // Reboot implements the machine.MachineServer interface.
 //
 // nolint: dupl

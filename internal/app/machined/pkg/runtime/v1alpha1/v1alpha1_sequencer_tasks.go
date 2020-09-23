@@ -1494,7 +1494,7 @@ func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mountSystemPartition(constants.StatePartitionLabel)
+		return mountSystemPartition(constants.StatePartitionLabel, mount.WithSkipIfMounted(true))
 	}, "mountStatePartition"
 }
 
@@ -1519,10 +1519,10 @@ func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.
 	}, "unmountEphemeralPartition"
 }
 
-func mountSystemPartition(label string) (err error) {
+func mountSystemPartition(label string, opts ...mount.Option) (err error) {
 	mountpoints := mount.NewMountPoints()
 
-	mountpoint, err := mount.SystemMountPointForLabel(label)
+	mountpoint, err := mount.SystemMountPointForLabel(label, opts...)
 	if err != nil {
 		return err
 	}
