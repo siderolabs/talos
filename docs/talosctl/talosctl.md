@@ -19,6 +19,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 
 ### SEE ALSO
 
+* [talosctl apply-config](talosctl_apply-config.md)	 - Apply a new configuration to a node
 * [talosctl bootstrap](talosctl_bootstrap.md)	 - Bootstrap the cluster
 * [talosctl cluster](talosctl_cluster.md)	 - A collection of commands for managing local docker-based or firecracker-based clusters
 * [talosctl completion](talosctl_completion.md)	 - Output shell completion code for the specified shell (bash or zsh)

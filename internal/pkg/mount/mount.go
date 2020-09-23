@@ -33,28 +33,46 @@ func Mount(mountpoints *Points) (err error) {
 	//  Mount the device(s).
 
 	for iter.Next() {
-		mountpoint := iter.Value()
-		// Repair the disk's partition table.
-		if mountpoint.Resize {
-			if err = mountpoint.ResizePartition(); err != nil {
-				return fmt.Errorf("error resizing %q: %w", iter.Value().Source(), err)
-			}
-		}
-
-		if err = mountpoint.Mount(); err != nil {
+		if err = mountMountpoint(iter.Value()); err != nil {
 			return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
-		}
-
-		// Grow the filesystem to the maximum allowed size.
-		if mountpoint.Resize {
-			if err = mountpoint.GrowFilesystem(); err != nil {
-				return fmt.Errorf("grow: %w", err)
-			}
 		}
 	}
 
 	if iter.Err() != nil {
 		return iter.Err()
+	}
+
+	return nil
+}
+
+func mountMountpoint(mountpoint *Point) (err error) {
+	var skipMount bool
+
+	// Repair the disk's partition table.
+	if mountpoint.Resize {
+		if err = mountpoint.ResizePartition(); err != nil {
+			return fmt.Errorf("error resizing %w", err)
+		}
+	}
+
+	if mountpoint.SkipIfMounted {
+		skipMount, err = mountpoint.IsMounted()
+		if err != nil {
+			return fmt.Errorf("mountpoint is set to skip if mounted, but the mount check failed: %w", err)
+		}
+	}
+
+	if !skipMount {
+		if err = mountpoint.Mount(); err != nil {
+			return fmt.Errorf("error mounting: %w", err)
+		}
+	}
+
+	// Grow the filesystem to the maximum allowed size.
+	if mountpoint.Resize {
+		if err = mountpoint.GrowFilesystem(); err != nil {
+			return fmt.Errorf("error resizing filesystem: %w", err)
+		}
 	}
 
 	return nil

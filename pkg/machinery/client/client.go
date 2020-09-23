@@ -360,6 +360,11 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 	return kubeconfig, err
 }
 
+// ApplyConfiguration implements proto.OSClient interface.
+func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.ApplyConfigurationResponse, err error) {
+	return c.MachineClient.ApplyConfiguration(ctx, req, callOptions...)
+}
+
 // Stats implements the proto.OSClient interface.
 func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *machineapi.StatsResponse, err error) {
 	resp, err = c.MachineClient.Stats(
