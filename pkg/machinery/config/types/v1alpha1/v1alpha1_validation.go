@@ -15,6 +15,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	valid "github.com/asaskevich/govalidator"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -113,6 +114,10 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 				}
 			}
 		}
+	}
+
+	if !valid.IsDNSName(c.ClusterConfig.ClusterNetwork.DNSDomain) {
+		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterConfig.ClusterNetwork.DNSDomain))
 	}
 
 	return result.ErrorOrNil()
