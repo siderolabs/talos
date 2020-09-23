@@ -40,6 +40,31 @@ func (p PhaseList) AppendWhen(when bool, name string, tasks ...runtime.TaskSetup
 	return p
 }
 
+// ApplyConfiguration is a sequence which is called to apply a new configuration to the system.
+// It will reboot subsequent make it active.
+func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyConfigurationRequest) []runtime.Phase {
+	phases := PhaseList{}
+
+	phases = phases.Append(
+		"mountState",
+		MountStatePartition,
+	).Append(
+		"saveConfig",
+		SaveConfig,
+	).Append(
+		"unmountState",
+		UnmountStatePartition,
+	).Append(
+		"stopEverything",
+		StopAllServices,
+	).Append(
+		"reboot",
+		Reboot,
+	)
+
+	return phases
+}
+
 // Initialize is the initialize sequence. The primary goals of this sequence is
 // to load the config and enforce kernel security requirements.
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {

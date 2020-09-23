@@ -6,12 +6,13 @@ package mount
 
 // Options is the functional options struct.
 type Options struct {
-	Loopback string
-	Prefix   string
-	ReadOnly bool
-	Shared   bool
-	Resize   bool
-	Overlay  bool
+	Loopback      string
+	Prefix        string
+	ReadOnly      bool
+	Shared        bool
+	Resize        bool
+	Overlay       bool
+	SkipIfMounted bool
 }
 
 // Option is the functional option func.
@@ -35,6 +36,13 @@ func WithReadOnly(o bool) Option {
 func WithShared(o bool) Option {
 	return func(args *Options) {
 		args.Shared = o
+	}
+}
+
+// WithSkipIfMounted is a functional option for skipping mount if the mountpoint is already mounted.
+func WithSkipIfMounted(o bool) Option {
+	return func(args *Options) {
+		args.SkipIfMounted = o
 	}
 }
 
