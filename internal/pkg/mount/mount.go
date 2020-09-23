@@ -28,12 +28,15 @@ type RetryFunc func(*Point) error
 
 // Mount mounts the device(s).
 func Mount(mountpoints *Points) (err error) {
+	var mounted bool
+
 	iter := mountpoints.Iter()
 
 	//  Mount the device(s).
 
 	for iter.Next() {
 		mountpoint := iter.Value()
+
 		// Repair the disk's partition table.
 		if mountpoint.Resize {
 			if err = mountpoint.ResizePartition(); err != nil {
@@ -41,8 +44,15 @@ func Mount(mountpoints *Points) (err error) {
 			}
 		}
 
-		if err = mountpoint.Mount(); err != nil {
-			return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
+		mounted, err = mountpoint.IsMounted()
+		if err != nil {
+			return fmt.Errorf("failed to detect mount state of %q: %w", iter.Value().Source(), err)
+		}
+
+		if !mounted {
+			if err = mountpoint.Mount(); err != nil {
+				return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
+			}
 		}
 
 		// Grow the filesystem to the maximum allowed size.
