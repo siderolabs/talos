@@ -29,7 +29,7 @@ machine:
   network: {}
   install:
     disk: /dev/sda
-    image: docker.io/autonomy/installer:latest
+    image: ghcr.io/talos-systems/installer:latest
     bootloader: true
     wipe: false
     force: false
@@ -258,7 +258,7 @@ install:
   disk: /dev/sda
   extraKernelArgs:
     - option=value
-  image: docker.io/autonomy/installer:latest
+  image: ghcr.io/talos-systems/installer:latest
   bootloader: true
   wipe: false
   force: false

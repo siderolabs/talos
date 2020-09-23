@@ -8,30 +8,30 @@ ARG PKGS
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
-FROM docker.io/autonomy/fhs:${PKGS} AS pkg-fhs
-FROM docker.io/autonomy/ca-certificates:${PKGS} AS pkg-ca-certificates
-FROM docker.io/autonomy/containerd:${PKGS} AS pkg-containerd
-FROM docker.io/autonomy/dosfstools:${PKGS} AS pkg-dosfstools
-FROM docker.io/autonomy/eudev:${PKGS} AS pkg-eudev
-FROM docker.io/autonomy/grub:${PKGS} AS pkg-grub
-FROM docker.io/autonomy/iptables:${PKGS} AS pkg-iptables
-FROM docker.io/autonomy/libressl:${PKGS} AS pkg-libressl
-FROM docker.io/autonomy/libseccomp:${PKGS} AS pkg-libseccomp
-FROM docker.io/autonomy/linux-firmware:${PKGS} AS pkg-linux-firmware
-FROM docker.io/autonomy/linux-firmware:${PKGS} AS pkg-linux-firmware
-FROM docker.io/autonomy/lvm2:${PKGS} AS pkg-lvm2
-FROM docker.io/autonomy/libaio:${PKGS} AS pkg-libaio
-FROM docker.io/autonomy/musl:${PKGS} AS pkg-musl
-FROM docker.io/autonomy/open-iscsi:${PKGS} AS pkg-open-iscsi
-FROM docker.io/autonomy/open-isns:${PKGS} AS pkg-open-isns
-FROM docker.io/autonomy/runc:${PKGS} AS pkg-runc
-FROM docker.io/autonomy/socat:${PKGS} AS pkg-socat
-FROM docker.io/autonomy/xfsprogs:${PKGS} AS pkg-xfsprogs
-FROM docker.io/autonomy/util-linux:${PKGS} AS pkg-util-linux
-FROM docker.io/autonomy/util-linux:${PKGS} AS pkg-util-linux
-FROM docker.io/autonomy/util-linux:${PKGS} AS pkg-util-linux
-FROM docker.io/autonomy/kmod:${PKGS} AS pkg-kmod
-FROM docker.io/autonomy/kernel:${PKGS} AS pkg-kernel
+FROM ghcr.io/talos-systems/fhs:${PKGS} AS pkg-fhs
+FROM ghcr.io/talos-systems/ca-certificates:${PKGS} AS pkg-ca-certificates
+FROM ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd
+FROM ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools
+FROM ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev
+FROM ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub
+FROM ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables
+FROM ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl
+FROM ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp
+FROM ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
+FROM ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
+FROM ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2
+FROM ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio
+FROM ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl
+FROM ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi
+FROM ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns
+FROM ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc
+FROM ghcr.io/talos-systems/socat:${PKGS} AS pkg-socat
+FROM ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs
+FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
+FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
+FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
+FROM ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod
+FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
 
 # The tools target provides base toolchain for the build.
 
