@@ -44,7 +44,7 @@ docker run -d -p 5003:5000 \
 ```
 
 > Note: Proxies are started as docker containers, and they're automatically configured to start with Docker daemon.
-Please note that `quay.io` proxy doesn't support recent Docker image schema, so we run older registry image version (2.5).
+> Please note that `quay.io` proxy doesn't support recent Docker image schema, so we run older registry image version (2.5).
 
 As a registry container can only handle a single upstream Docker registry, we launch a container per upstream, each on its own
 host port (5000, 5001, 5002).
@@ -81,6 +81,26 @@ talosctl cluster create --provisioner docker \
     --registry-mirror gcr.io=http://172.17.0.1:5003
 ```
 
+## Adding Talos Images to the Registries
+
+To get a list of images used by Talos, run:
+
+```bash
+$ talosctl images
+quay.io/coreos/flannel:v0.12.0-amd64
+docker.io/autonomy/install-cni:v0.3.0-7-g9344bd1
+k8s.gcr.io/coredns:1.6.5
+gcr.io/etcd-development/etcd:v3.4.12
+k8s.gcr.io/kube-apiserver-amd64:v1.19.1
+k8s.gcr.io/kube-controller-manager-amd64:v1.19.1
+k8s.gcr.io/kube-scheduler-amd64:v1.19.1
+k8s.gcr.io/kube-proxy-amd64:v1.19.1
+docker.io/autonomy/kubelet:v1.19.1
+docker.io/autonomy/installer:v0.7.0-alpha.3
+```
+
+Pull these images (`docker pull`), and then push them (`docker push`) into the relevant registry.
+
 ## Cleaning Up
 
 To cleanup, run:
@@ -93,4 +113,4 @@ docker rm -f registry-gcr.io
 ```
 
 > Note: Removing docker registry containers also removes the image cache.
-So if you plan to use caching registries, keep the containers running.
+> So if you plan to use caching registries, keep the containers running.
