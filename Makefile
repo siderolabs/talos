@@ -1,5 +1,5 @@
-REGISTRY ?= docker.io
-USERNAME ?= autonomy
+REGISTRY ?= ghcr.io
+USERNAME ?= talos-systems
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
@@ -7,8 +7,8 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= autonomy/tools:v0.3.0-4-gfb8cfaa
-PKGS ?= v0.3.0-9-gaef28aa
+TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-6-g7b00e69
+PKGS ?= v0.3.0-12-g90722c3
 GO_VERSION ?= 1.15
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
 IMPORTVET ?= autonomy/importvet:f6b07d9

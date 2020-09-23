@@ -28,7 +28,7 @@ machine:
   network: {}
   install:
     disk: /dev/sda
-    image: docker.io/autonomy/installer:latest
+    image: ghcr.io/talos-systems/installer:latest
     bootloader: true
     wipe: false
     force: false

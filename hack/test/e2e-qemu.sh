@@ -13,8 +13,8 @@ case "${CI:-false}" in
     REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
     QEMU_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000"
     INSTALLER_TAG="${TAG}"
-    docker tag ${INSTALLER_IMAGE} 127.0.0.1:5000/autonomy/installer:"${TAG}"
-    docker push 127.0.0.1:5000/autonomy/installer:"${TAG}"
+    docker tag ${INSTALLER_IMAGE} 127.0.0.1:5000/talos-systems/installer:"${TAG}"
+    docker push 127.0.0.1:5000/talos-systems/installer:"${TAG}"
     ;;
   *)
     QEMU_FLAGS="--with-bootloader=false"
@@ -48,7 +48,7 @@ function create_cluster {
     --memory 2048 \
     --cpus 2.0 \
     --cidr 172.20.1.0/24 \
-    --install-image ${REGISTRY:-docker.io}/autonomy/installer:${INSTALLER_TAG} \
+    --install-image ${REGISTRY:-ghcr.io}/talos-systems/installer:${INSTALLER_TAG} \
     --with-init-node=false \
     --crashdump \
     ${REGISTRY_MIRROR_FLAGS} \

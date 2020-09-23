@@ -22,7 +22,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --dns-domain string           the dns domain to use for cluster (default "cluster.local")
   -h, --help                        help for config
       --install-disk string         the disk to install to (default "/dev/sda")
-      --install-image string        the image used to perform an installation (default "docker.io/autonomy/installer:latest")
+      --install-image string        the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
       --kubernetes-version string   desired kubernetes version to run (default "1.19.1")
   -o, --output-dir string           destination to output generated files
   -p, --persist                     the desired persist value for configs (default true)
