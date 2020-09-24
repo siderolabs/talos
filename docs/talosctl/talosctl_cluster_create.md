@@ -19,10 +19,10 @@ talosctl cluster create [flags]
       --cni-bin-path strings        search path for CNI binaries (VM only) (default [/opt/cni/bin])
       --cni-cache-dir string        CNI cache directory path (VM only) (default "/var/lib/cni")
       --cni-conf-dir string         CNI config directory path (VM only) (default "/etc/cni/conf.d")
-      --cpus string                 the share of CPUs as fraction (each container) (default "1.5")
+      --cpus string                 the share of CPUs as fraction (each container/VM) (default "2.0")
       --crashdump                   print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string       install custom CNI from the URL (Talos cluster)
-      --disk int                    the limit on disk size in MB (each VM) (default 4096)
+      --disk int                    the limit on disk size in MB (each VM) (default 6144)
       --dns-domain string           the dns domain to use for cluster (default "cluster.local")
       --docker-host-ip string       Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
       --endpoint string             use endpoint instead of provider defaults
@@ -35,7 +35,7 @@ talosctl cluster create [flags]
       --install-image string        the installer image to use (default "ghcr.io/talos-systems/installer:latest")
       --kubernetes-version string   desired kubernetes version to run (default "1.19.1")
       --masters int                 the number of masters to create (default 1)
-      --memory int                  the limit on memory usage in MB (each container) (default 1024)
+      --memory int                  the limit on memory usage in MB (each container/VM) (default 2048)
       --mtu int                     MTU of the cluster network (default 1500)
       --nameservers strings         list of nameservers to use (default [8.8.8.8,1.1.1.1])
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
