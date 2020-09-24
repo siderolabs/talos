@@ -355,7 +355,7 @@ local push_edge = {
   pull: 'always',
   environment: {
     GHCR_USERNAME: { from_secret: 'ghcr_username' },
-    GHCR_PASSWORD: { from_secret: 'ghcr_password' },
+    GHCR_PASSWORD: { from_secret: 'ghcr_token' },
   },
   commands: ['make push-edge'],
   volumes: volumes.ForStep(),
