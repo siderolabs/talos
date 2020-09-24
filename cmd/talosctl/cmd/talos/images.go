@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/internal/app/bootkube/images"
+	imagespkg "github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // imagesCmd represents the images command.
@@ -44,7 +44,7 @@ var imagesCmd = &cobra.Command{
 		fmt.Printf("%s\n", images.KubeScheduler)
 		fmt.Printf("%s\n", images.KubeProxy)
 		fmt.Printf("%s\n", images.Kubelet)
-		fmt.Printf("%s\n", constants.DefaultInstallerImage)
+		fmt.Printf("%s\n", imagespkg.DefaultInstallerImage)
 
 		return nil
 	},

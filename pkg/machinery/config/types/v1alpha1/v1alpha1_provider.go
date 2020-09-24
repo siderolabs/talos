@@ -927,10 +927,6 @@ func (t *TimeConfig) Servers() []string {
 
 // Image implements the config.Provider interface.
 func (i *InstallConfig) Image() string {
-	if i.InstallImage == "" {
-		return constants.DefaultInstallerImage
-	}
-
 	return i.InstallImage
 }
 
