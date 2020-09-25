@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"syscall"
 
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
@@ -96,9 +98,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	cfg := firecracker.Config{
 		SocketPath:      socketPath,
-		KernelImagePath: clusterReq.KernelPath,
+		KernelImagePath: strings.ReplaceAll(clusterReq.KernelPath, constants.ArchVariable, opts.TargetArch),
 		KernelArgs:      cmdline.String(),
-		InitrdPath:      clusterReq.InitramfsPath,
+		InitrdPath:      strings.ReplaceAll(clusterReq.InitramfsPath, constants.ArchVariable, opts.TargetArch),
 		ForwardSignals:  []os.Signal{}, // don't forward any signals
 		MachineCfg: models.MachineConfiguration{
 			HtEnabled:  firecracker.Bool(false),

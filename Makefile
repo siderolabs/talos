@@ -26,8 +26,10 @@ RELEASES ?= v0.5.1 v0.6.0
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
+, := ,
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
+MULTI_PLATFORM = $(findstring $(,),$(PLATFORM))
 PROGRESS ?= auto
 PUSH ?= false
 COMMON_ARGS := --file=Dockerfile
@@ -104,10 +106,16 @@ target-%: ## Builds the specified target defined in the Dockerfile. The build re
 
 local-%: ## Builds the specified target defined in the Dockerfile using the local output type. The build result will be output to the specified local destination.
 	@$(MAKE) target-$* TARGET_ARGS="--output=type=local,dest=$(DEST) $(TARGET_ARGS)"
+	@PLATFORM=$(PLATFORM) \
+		ARTIFACTS=$(ARTIFACTS) \
+		./hack/fix-artifacts.sh
 
 docker-%: ## Builds the specified target defined in the Dockerfile using the docker output type. The build result will be output to the specified local destination.
 	@mkdir -p $(DEST)
 	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
+
+registry-%: ## Builds the specified target defined in the Dockerfile using the image/registry output type. The build result will be pushed to the registry if PUSH=true.
+	@$(MAKE) target-$* TARGET_ARGS="--output type=image,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
 
 hack-test-%: ## Runs the specied script in ./hack/test with well known environment variables.
 	@./hack/test/$*.sh
@@ -116,12 +124,12 @@ hack-test-%: ## Runs the specied script in ./hack/test with well known environme
 
 .PHONY: generate
 generate: ## Generates source code from protobuf definitions.
-	@$(MAKE) local-$@ DEST=./
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
 .PHONY: docs
 docs: ## Generates the documentation for machine config, and talosctl.
 	@rm -rf docs/talosctl/*
-	@$(MAKE) local-$@ DEST=./
+	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
 # Local Artifacts
 
@@ -136,17 +144,25 @@ initramfs: ## Builds the compressed initramfs and outputs it to the artifact dir
 
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the artifact directory.
+ifeq (,$(MULTI_PLATFORM))
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 	@docker load < $(ARTIFACTS)/$@.tar
+else
+	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+endif
 
 .PHONY: talos
 talos: ## Builds the Talos container image and outputs it to the artifact directory.
+ifeq (,$(MULTI_PLATFORM))
 	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
 	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
 	@docker load < $(ARTIFACTS)/container.tar
+else
+	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+endif
 
 talosctl-%:
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64
 
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
@@ -156,8 +172,11 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 images: image-aws image-azure image-digital-ocean image-gcp image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, and VMware).
 
 .PHONY: boot
-boot: ## Creates a compressed tarball that includes vmlinuz and initramfs.xz. Note that these files must already be present in the artifacts directory.
-	@tar  -C $(ARTIFACTS) -czf $(ARTIFACTS)/boot.tar.gz vmlinuz initramfs.xz
+boot: ## Creates a compressed tarball that includes vmlinuz-{amd64,arm64} and initramfs-{amd64,arm64}.xz. Note that these files must already be present in the artifacts directory.
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"` ; \
+		tar  -C $(ARTIFACTS) --transform=s/-$${arch}// -czf $(ARTIFACTS)/boot-$${arch}.tar.gz vmlinuz-$${arch} initramfs-$${arch}.xz ; \
+	done
 
 # Code Quality
 
@@ -166,7 +185,7 @@ fmt: ## Formats the source code.
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && cd - && gofumports -w -local github.com/talos-systems/talos ."
 
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
-	@$(MAKE) target-lint-$*
+	@$(MAKE) target-lint-$* PLATFORM=linux/amd64
 
 lint: ## Runs linters on go, protobuf, and markdown file types.
 	@$(MAKE) lint-go lint-protobuf lint-markdown
@@ -178,17 +197,17 @@ check-dirty: ## Verifies that source tree is not dirty
 
 .PHONY: unit-tests
 unit-tests: ## Performs unit tests.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
 
 .PHONY: unit-tests-race
 unit-tests-race: ## Performs unit tests with race detection enabled.
-	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS)
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS)
+	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
 
 $(ARTIFACTS)/sonobuoy:
 	@mkdir -p $(ARTIFACTS)
@@ -210,6 +229,7 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		PLATFORM=$* \
 		TAG=$(TAG) \
 		SHA=$(SHA) \
+		REGISTRY=$(REGISTRY) \
 		IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(TAG) \
 		INSTALLER_IMAGE=$(REGISTRY_AND_USERNAME)/installer:$(TAG) \
 		ARTIFACTS=$(ARTIFACTS) \
@@ -237,7 +257,8 @@ provision-tests-track-%:
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*" \
 		INTEGRATION_TEST_TRACK="$*" \
-		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL)
+		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
+		REGISTRY=$(REGISTRY)
 
 # Assets for releases
 
@@ -272,14 +293,23 @@ ifeq ($(DOCKER_LOGIN_ENABLED), true)
 endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
+ifeq (,$(MULTI_PLATFORM))
 	@docker push $(REGISTRY_AND_USERNAME)/installer:$(TAG)
 	@docker push $(REGISTRY_AND_USERNAME)/talos:$(TAG)
+else
+	@$(MAKE) installer PUSH=true
+	@$(MAKE) talos PUSH=true
+endif
 
 push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
+ifeq (,$(MULTI_PLATFORM))
 	@docker tag $(REGISTRY_AND_USERNAME)/installer:$(TAG) $(REGISTRY_AND_USERNAME)/installer:$*
 	@docker tag $(REGISTRY_AND_USERNAME)/talos:$(TAG) $(REGISTRY_AND_USERNAME)/talos:$*
 	@docker push $(REGISTRY_AND_USERNAME)/installer:$*
 	@docker push $(REGISTRY_AND_USERNAME)/talos:$*
+else
+	@$(MAKE) push TAG=$*
+endif
 
 .PHONY: clean
 clean: ## Cleans up all artifacts.
