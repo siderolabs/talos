@@ -4,9 +4,20 @@ set -eoux pipefail
 
 case "${CI:-false}" in
   true)
-    REGISTRY="127.0.0.1:5000"
-    REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
-    INTEGRATION_TEST_FLAGS="-talos.provision.registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 -talos.provision.target-installer-registry=${REGISTRY}"
+    mirror_flag=""
+
+    for registry in docker.io ghcr.io k8s.gcr.io quay.io gcr.io registry.dev.talos-systems.io; do
+      service="registry-${registry//./-}.ci.svc"
+      addr=`python3 -c "import socket; print(socket.gethostbyname('${service}'))"`
+
+      if [[ ! -z "${mirror_flag}" ]]; then
+        mirror_flag="${mirror_flag},"
+      fi
+
+      mirror_flag="${mirror_flag}${registry}=http://${addr}:5000"
+    done
+
+    INTEGRATION_TEST_FLAGS="-talos.provision.target-installer-registry=${REGISTRY} -talos.provision.registry-mirror ${mirror_flag}"
     ;;
   *)
     INTEGRATION_TEST_FLAGS=

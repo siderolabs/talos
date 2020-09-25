@@ -30,7 +30,7 @@ talosctl cluster create [flags]
   -h, --help                        help for create
       --image string                the image to use (default "ghcr.io/talos-systems/talos:latest")
       --init-node-as-endpoint       use init node as endpoint instead of any load balancer endpoint
-      --initrd-path string          the uncompressed kernel image to use (default "_out/initramfs.xz")
+      --initrd-path string          the uncompressed kernel image to use (default "_out/initramfs-${ARCH}.xz")
   -i, --input-dir string            location of pre-generated config files
       --install-image string        the installer image to use (default "ghcr.io/talos-systems/installer:latest")
       --kubernetes-version string   desired kubernetes version to run (default "1.19.1")
@@ -39,7 +39,7 @@ talosctl cluster create [flags]
       --mtu int                     MTU of the cluster network (default 1500)
       --nameservers strings         list of nameservers to use (default [8.8.8.8,1.1.1.1])
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
-      --vmlinuz-path string         the compressed kernel image to use (default "_out/vmlinuz")
+      --vmlinuz-path string         the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
       --wait                        wait for the cluster to be ready before returning (default true)
       --wait-timeout duration       timeout to wait for the cluster to be ready (default 20m0s)
       --with-bootloader             enable bootloader to load kernel and initramfs from disk image after install (default true)

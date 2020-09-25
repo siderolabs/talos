@@ -6,6 +6,7 @@
 // Sign with `drone sign talos-systems/talos --save`
 
 local build_container = 'autonomy/build-container:latest';
+local local_registry = 'registry.dev.talos-systems.io';
 
 local volumes = {
   dockersock: {
@@ -125,7 +126,6 @@ local docker = {
     '--dns=8.8.4.4',
     '--mtu=1500',
     '--log-level=error',
-    '--insecure-registry=127.0.0.1:5000',
   ],
   // Set resource requests to ensure that only one build can be performed at a
   // time. We set it on the service so that we get the scheduling restricitions
@@ -144,12 +144,13 @@ local setup_ci = {
   name: 'setup-ci',
   image: 'autonomy/build-container:latest',
   privileged: true,
+
   commands: [
     'sleep 5', // Give docker enough time to start.
     'apk add coreutils',
-    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name local --use unix:///var/outer-run/docker.sock',
+    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talosbuilder --use unix:///var/outer-run/docker.sock',
+    'docker buildx create --append --name talosbuilder --platform linux/arm64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" tcp://docker-arm64.ci.svc:2376',
     'docker buildx inspect --bootstrap',
-    'docker run -d -p 5000:5000 --restart=always --name registry registry:2',
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
     'git fetch --tags',
@@ -167,6 +168,7 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
   local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
 
   local common_env_vars = {
+    "PLATFORM": "linux/amd64,linux/arm64",
     // "CI_ARGS": "--cache-to=type=local,dest=/tmp/cache --cache-from=type=local,src=/tmp/cache"
   },
 
@@ -214,20 +216,20 @@ local talosctl_linux = Step("talosctl-linux", depends_on=[check_dirty]);
 local talosctl_darwin = Step("talosctl-darwin", depends_on=[check_dirty]);
 local kernel = Step('kernel', depends_on=[check_dirty]);
 local initramfs = Step("initramfs", depends_on=[check_dirty]);
-local installer = Step("installer", depends_on=[initramfs]);
-local talos = Step("talos", depends_on=[initramfs]);
+local installer = Step("installer", depends_on=[initramfs], environment={"REGISTRY": local_registry, "PUSH": true});
+local talos = Step("talos", depends_on=[initramfs], environment={"REGISTRY": local_registry, "PUSH": true});
 local golint = Step("lint-go", depends_on=[check_dirty]);
 local markdownlint = Step("lint-markdown", depends_on=[check_dirty]);
 local protobuflint = Step("lint-protobuf", depends_on=[check_dirty]);
-local image_aws = Step("image-aws", depends_on=[installer]);
-local image_azure = Step("image-azure", depends_on=[installer]);
-local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer]);
-local image_gcp = Step("image-gcp", depends_on=[installer]);
-local image_vmware = Step("image-vmware", depends_on=[installer]);
+local image_aws = Step("image-aws", depends_on=[installer], environment={"REGISTRY": local_registry});
+local image_azure = Step("image-azure", depends_on=[installer], environment={"REGISTRY": local_registry});
+local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer], environment={"REGISTRY": local_registry});
+local image_gcp = Step("image-gcp", depends_on=[installer], environment={"REGISTRY": local_registry});
+local image_vmware = Step("image-vmware", depends_on=[installer], environment={"REGISTRY": local_registry});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes"});
-local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
+local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
   name: 'coverage',
@@ -334,20 +336,23 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race]);
+local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race], environment={"REGISTRY": local_registry});
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_qemu, e2e_docker]);
-local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare]);
-local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare]);
+local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
+local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
 local integration_provision_tests_track_0_cilium = Step("provision-tests-track-0-cilium", target="provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_track_0], environment={
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.2/install/kubernetes/quick-install.yaml",
+        "REGISTRY": local_registry,
 });
 local integration_cilium = Step("e2e-cilium-1.8.2", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.2/install/kubernetes/quick-install.yaml",
+        "REGISTRY": local_registry,
 });
 local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "WITH_UEFI": "true",
+        "REGISTRY": local_registry,
 });
 local push_edge = {
   name: 'push-edge',
@@ -488,18 +493,19 @@ local release = {
     files: [
       '_out/aws.tar.gz',
       '_out/azure.tar.gz',
-      '_out/boot.tar.gz',
-      '_out/container.tar',
+      '_out/boot-amd64.tar.gz',
+      '_out/boot-arm64.tar.gz',
       '_out/digital-ocean.tar.gz',
       '_out/gcp.tar.gz',
-      '_out/initramfs.xz',
-      '_out/installer.tar',
+      '_out/initramfs-amd64.xz',
+      '_out/initramfs-arm64.xz',
       '_out/talosctl-darwin-amd64',
       '_out/talosctl-linux-amd64',
       '_out/talosctl-linux-arm64',
       '_out/talosctl-linux-armv7',
       '_out/vmware.ova',
-      '_out/vmlinuz',
+      '_out/vmlinuz-amd64',
+      '_out/vmlinuz-arm64',
     ],
     checksum: ['sha256', 'sha512'],
   },

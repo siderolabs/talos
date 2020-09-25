@@ -9,12 +9,8 @@ CLUSTER_NAME=e2e-${PROVISIONER}
 
 case "${CI:-false}" in
   true)
-    REGISTRY="127.0.0.1:5000"
-    REGISTRY_ADDR=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry`
-    QEMU_FLAGS="--registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000"
+    QEMU_FLAGS=""
     INSTALLER_TAG="${TAG}"
-    docker tag ${INSTALLER_IMAGE} 127.0.0.1:5000/talos-systems/installer:"${TAG}"
-    docker push 127.0.0.1:5000/talos-systems/installer:"${TAG}"
     ;;
   *)
     QEMU_FLAGS="--with-bootloader=false"
