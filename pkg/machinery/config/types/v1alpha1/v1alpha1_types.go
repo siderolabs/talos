@@ -443,6 +443,10 @@ type NetworkConfig struct {
 	//
 	//     > Note: This option is mutually exclusive with CIDR.
 	//
+	//     > Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
+	//     > in order for Talos to skip configuration of addresses.
+	//     > All other options will still apply.
+	//
 	//     ##### machine.network.interfaces.ignore
 	//
 	//     `ignore` is used to exclude a specific interface from configuration.
