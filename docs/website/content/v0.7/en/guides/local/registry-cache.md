@@ -14,11 +14,11 @@ It can be also used to verify that all the images are available in local registr
 The follow are requirements for creating the set of caching proxies:
 
 - Docker 18.03 or greater
-- Local cluster requirements for either [docker](docker) or [fireracker](firecracker).
+- Local cluster requirements for either [docker](docker) or [QEMU](qemu).
 
 ## Launch the Caching Docker Registry Proxies
 
-Talos pulls from `docker.io`, `k8s.gcr.io`, `gcr.io` and `quay.io` by default.
+Talos pulls from `docker.io`, `k8s.gcr.io`, `gcr.io`, `ghcr.io` and `quay.io` by default.
 If your configuration is different, you might need to modify the commands below:
 
 ```bash
@@ -41,17 +41,22 @@ docker run -d -p 5003:5000 \
     -e REGISTRY_PROXY_REMOTEURL=https://gcr.io \
     --restart always \
     --name registry-gcr.io registry:2
+
+docker run -d -p 5004:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
+    --restart always \
+    --name registry-ghcr.io registry:2
 ```
 
 > Note: Proxies are started as docker containers, and they're automatically configured to start with Docker daemon.
 Please note that `quay.io` proxy doesn't support recent Docker image schema, so we run older registry image version (2.5).
 
 As a registry container can only handle a single upstream Docker registry, we launch a container per upstream, each on its own
-host port (5000, 5001, 5002).
+host port (5000, 5001, 5002, 5003 and 5004).
 
-## Using Caching Registries with `firecracker` Local Cluster
+## Using Caching Registries with `QEMU` Local Cluster
 
-With a [firecracker](firecracker) local cluster, a bridge interface is created on the host.
+With a [QEMU](qemu) local cluster, a bridge interface is created on the host.
 As registry containers expose their ports on the host, we can use bridge IP to direct proxy requests.
 
 ```bash
@@ -59,7 +64,8 @@ sudo talosctl cluster create --provisioner firecracker \
     --registry-mirror docker.io=http://10.5.0.1:5000 \
     --registry-mirror k8s.gcr.io=http://10.5.0.1:5001 \
     --registry-mirror quay.io=http://10.5.0.1:5002 \
-    --registry-mirror gcr.io=http://10.5.0.1:5003
+    --registry-mirror gcr.io=http://10.5.0.1:5003 \
+    --registry-mirror ghcr.io=http://10.5.0.1:5004
 ```
 
 The Talos local cluster should now start pulling via caching registries.
@@ -78,7 +84,8 @@ talosctl cluster create --provisioner docker \
     --registry-mirror docker.io=http://172.17.0.1:5000 \
     --registry-mirror k8s.gcr.io=http://172.17.0.1:5001 \
     --registry-mirror quay.io=http://172.17.0.1:5002 \
-    --registry-mirror gcr.io=http://172.17.0.1:5003
+    --registry-mirror gcr.io=http://172.17.0.1:5003 \
+    --registry-mirror ghcr.io=http://172.17.0.1:5004
 ```
 
 ## Cleaning Up
@@ -90,6 +97,7 @@ docker rm -f registry-docker.io
 docker rm -f registry-k8s.gcr.io
 docker rm -f registry-quay.io
 docker rm -f registry-gcr.io
+docker rm -f registry-ghcr.io
 ```
 
 > Note: Removing docker registry containers also removes the image cache.
