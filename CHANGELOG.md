@@ -1,6 +1,39 @@
 
+<a name="v0.7.0-alpha.3"></a>
+## [v0.7.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.2...v0.7.0-alpha.3) (2020-09-25)
+
+### Chore
+
+* fix edge push
+* fix docker login
+* fix docker login
+* migrate to ghcr.io
+* push edge releases on successful nightly integration
+
+### Docs
+
+* add note around link-local addressing
+* add ghcr.io to the registry cache docs
+* add v0.7 docs
+
+### Feat
+
+* bump default resource limits for `talosctl cluster create`
+* add default install image
+* add images command
+
+### Fix
+
+* update one more places which had stale reference for constants
+* update the docs to fix the lint-markdown
+* use images package in integration tests
+* move installer image variables out of machinery
+* enable --removable options for GRUB
+* retry image pulling, stop on 404, no duplicate pulls
+
+
 <a name="v0.7.0-alpha.2"></a>
-## [v0.7.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.1...v0.7.0-alpha.2) (2020-09-17)
+## [v0.7.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.1...v0.7.0-alpha.2) (2020-09-18)
 
 ### Chore
 
@@ -47,6 +80,10 @@
 
 * garbage collect unused constants
 * deduplicate packages version in Dockerfile
+
+### Release
+
+* **v0.7.0-alpha.2:** prepare release
 
 ### Test
 
