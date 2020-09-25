@@ -29,6 +29,7 @@ import (
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/cluster/kubernetes"
 	"github.com/talos-systems/talos/pkg/cluster/sonobuoy"
+	"github.com/talos-systems/talos/pkg/images"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	talosclient "github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
@@ -93,11 +94,11 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, stableVersion),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, stableVersion),
 		SourceVersion:        stableVersion,
 		SourceK8sVersion:     stableK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
+		TargetInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, nextVersion),
 		TargetVersion:        nextVersion,
 		TargetK8sVersion:     nextK8sVersion,
 
@@ -113,7 +114,7 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, nextVersion),
 		SourceVersion:        nextVersion,
 		SourceK8sVersion:     nextK8sVersion,
 
@@ -133,10 +134,10 @@ func upgradeSingeNodePreserve() upgradeSpec {
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", constants.DefaultInstallerImageRepository, nextVersion),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, nextVersion),
 		SourceVersion:        nextVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     nextK8sVersion,
 
