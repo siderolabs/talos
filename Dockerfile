@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.1.2-experimental
+# syntax = docker/dockerfile-upstream:1.1.7-experimental
 
 # Meta args applied to stage base names.
 
@@ -319,7 +319,8 @@ COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
-COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz
+ARG TARGETARCH
+COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz-${TARGETARCH}
 
 # The rootfs target provides the Talos rootfs.
 
@@ -387,7 +388,8 @@ COPY --from=init /init .
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
 
 FROM scratch AS initramfs
-COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
+ARG TARGETARCH
+COPY --from=initramfs-archive /initramfs.xz /initramfs-${TARGETARCH}.xz
 
 # The talos target generates a docker image that can be used to run Talos
 # in containers.
@@ -420,8 +422,9 @@ RUN apk add --no-cache --update \
     util-linux \
     xfsprogs
 COPY --from=pkg-grub / /
-COPY --from=kernel /vmlinuz /usr/install/vmlinuz
-COPY --from=initramfs /initramfs.xz /usr/install/initramfs.xz
+ARG TARGETARCH
+COPY --from=kernel /vmlinuz-${TARGETARCH} /usr/install/vmlinuz
+COPY --from=initramfs /initramfs-${TARGETARCH}.xz /usr/install/initramfs.xz
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl
 ARG TAG

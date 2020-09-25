@@ -15,12 +15,14 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/google/uuid"
 	multierror "github.com/hashicorp/go-multierror"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 
@@ -116,8 +118,8 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	}
 
 	if !nodeReq.PXEBooted {
-		launchConfig.KernelImagePath = clusterReq.KernelPath
-		launchConfig.InitrdPath = clusterReq.InitramfsPath
+		launchConfig.KernelImagePath = strings.ReplaceAll(clusterReq.KernelPath, constants.ArchVariable, opts.TargetArch)
+		launchConfig.InitrdPath = strings.ReplaceAll(clusterReq.InitramfsPath, constants.ArchVariable, opts.TargetArch)
 	}
 
 	launchConfig.StatePath, err = state.StatePath()

@@ -92,13 +92,15 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", stableVersion, nextVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, stableVersion),
+		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
+		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
+		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", stableVersion),
 		SourceVersion:        stableVersion,
 		SourceK8sVersion:     stableK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, nextVersion),
+		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
+		TargetInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", nextVersion),
 		TargetVersion:        nextVersion,
 		TargetK8sVersion:     nextK8sVersion,
 
@@ -112,9 +114,10 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", nextVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, nextVersion),
+		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
+		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
+		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", nextVersion),
 		SourceVersion:        nextVersion,
 		SourceK8sVersion:     nextK8sVersion,
 
@@ -132,9 +135,10 @@ func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("preserve-%s-%s", nextVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, nextVersion),
+		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.KernelAsset)),
+		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(nextVersion), constants.InitramfsAsset)),
+		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", nextVersion),
 		SourceVersion:        nextVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
