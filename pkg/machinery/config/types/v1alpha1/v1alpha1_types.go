@@ -443,6 +443,9 @@ type NetworkConfig struct {
 	//
 	//     > Note: This option is mutually exclusive with CIDR.
 	//
+	//     > Note: To do link-local addressing (ex. SLAAC with IPv6), set CIDR to "" and DHCP to false.
+	//     > All other options will still apply.
+	//
 	//     ##### machine.network.interfaces.ignore
 	//
 	//     `ignore` is used to exclude a specific interface from configuration.
