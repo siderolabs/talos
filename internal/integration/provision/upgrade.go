@@ -118,7 +118,7 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 		SourceVersion:        nextVersion,
 		SourceK8sVersion:     nextK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, constants.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
 
