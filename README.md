@@ -35,22 +35,14 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 - Email: [info@talos-systems.com](mailto:info@talos-systems.com)
 
 If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
-We hold two weekly meetings targeted for different audiences.
+We hold a weekly meeting that all audiences are welcome to attend.
 
 ### Office Hours
 
 - When: Mondays at 17:00 UTC.
 - Where: [Google Meet](https://meet.google.com/day-pxhv-zky).
 
-### Maintainers and Contributors
-
-When attending this meeting, please add yourself to the [meeting notes](https://docs.google.com/document/d/1xBhfYg2TK8gtXtaMe3ojXeDS1qRN6MJ-Wo7IjNJSCwQ/edit#) as an attendee.
-If you would like to discuss a specific topic, we encourage you to add it to the agenda.
-
-- When: Thursdays at 17:00 UTC.
-- Where: [Google Meet](https://meet.google.com/fdr-xxvb-eva).
-
-You can subscribe to these meetings by joining the community forum above.
+You can subscribe to this meeting by joining the community forum above.
 
 > Note: You can convert the meeting hours to your [local time](https://everytimezone.com/s/6bb1045a).
 
