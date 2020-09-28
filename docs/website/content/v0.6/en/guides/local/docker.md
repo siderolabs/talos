@@ -24,6 +24,12 @@ talosctl cluster create --wait
 
 Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
 
+If you are running on MacOS, an additional command is required:
+
+```bash
+talosctl config --endpoints 127.0.0.1
+```
+
 > Note: Startup times can take up to a minute before the cluster is available.
 
 ## Retrieve and Configure the `kubeconfig`
