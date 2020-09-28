@@ -254,6 +254,7 @@ local push = {
   environment: {
     GHCR_USERNAME: { from_secret: 'ghcr_username' },
     GHCR_PASSWORD: { from_secret: 'ghcr_token' },
+    PLATFORM: "linux/amd64,linux/arm64",
   },
   commands: ['make push'],
   volumes: volumes.ForStep(),
@@ -276,6 +277,7 @@ local push_latest = {
   environment: {
     GHCR_USERNAME: { from_secret: 'ghcr_username' },
     GHCR_PASSWORD: { from_secret: 'ghcr_token' },
+    PLATFORM: "linux/amd64,linux/arm64",
   },
   commands: ['make push-latest'],
   volumes: volumes.ForStep(),
