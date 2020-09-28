@@ -11,6 +11,7 @@ import (
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // List returns a list of images used.
@@ -19,6 +20,7 @@ func List(config config.Provider) asset.ImageVersions {
 
 	// Override all kube-related images with default val or specified image locations
 	images.Flannel = fmt.Sprintf("quay.io/coreos/flannel:v0.12.0-%s", runtime.GOARCH)
+	images.FlannelCNI = fmt.Sprintf("ghcr.io/talos-systems/install-cni:%s", version.PkgsVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
 	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
