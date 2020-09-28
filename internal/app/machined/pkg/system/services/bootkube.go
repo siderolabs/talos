@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
@@ -25,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/conditions"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -94,14 +94,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		}
 	}
 
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/bootkube.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/bootkube"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/bootkube.tar", "talos/bootkube")
 }
 
 // PostFunc implements the Service interface.
