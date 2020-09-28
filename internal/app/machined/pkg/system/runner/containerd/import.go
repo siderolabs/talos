@@ -61,13 +61,13 @@ func NewImporter(namespace string, options ...ImporterOption) *Importer {
 }
 
 // Import imports the images specified by the import requests.
-func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
+func (i *Importer) Import(ctx context.Context, reqs ...*ImportRequest) (err error) {
 	err = conditions.WaitForFileToExist(i.options.containerdAddress).Wait(context.Background())
 	if err != nil {
 		return err
 	}
 
-	ctx := namespaces.WithNamespace(context.Background(), i.namespace)
+	ctx = namespaces.WithNamespace(ctx, i.namespace)
 
 	client, err := containerd.New(i.options.containerdAddress)
 	if err != nil {
@@ -120,6 +120,6 @@ func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
 }
 
 // Import imports the images specified by the import requests.
-func Import(namespace string, reqs ...*ImportRequest) error {
-	return NewImporter(namespace).Import(reqs...)
+func Import(ctx context.Context, namespace string, reqs ...*ImportRequest) error {
+	return NewImporter(namespace).Import(ctx, reqs...)
 }

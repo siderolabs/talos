@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -44,14 +44,7 @@ func (o *APID) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/apid.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/apid"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/apid.tar", "talos/apid")
 }
 
 // PostFunc implements the Service interface.

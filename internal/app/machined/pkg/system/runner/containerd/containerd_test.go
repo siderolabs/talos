@@ -382,7 +382,7 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 		},
 	}
 	suite.Assert().NoError(containerdrunner.NewImporter(
-		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
+		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(context.Background(), reqs...))
 
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
@@ -409,7 +409,7 @@ func (suite *ContainerdSuite) TestImportFail() {
 		},
 	}
 	suite.Assert().Error(containerdrunner.NewImporter(
-		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
+		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(context.Background(), reqs...))
 }
 
 func (suite *ContainerdSuite) TestContainerStdin() {
