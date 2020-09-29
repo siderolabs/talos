@@ -167,6 +167,7 @@ type Route interface {
 // Time defines the requirements for a config that pertains to time related
 // options.
 type Time interface {
+	Enabled() bool
 	Servers() []string
 }
 
