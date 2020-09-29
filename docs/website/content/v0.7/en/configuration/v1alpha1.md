@@ -870,6 +870,13 @@ Valid Values:
 
 ### TimeConfig
 
+#### enabled
+
+Indicates if time (ntp) is enabled for the machine
+Defaults to `true`.
+
+Type: `bool`
+
 #### servers
 
 Specifies time (ntp) servers to use for setting system time.

@@ -63,7 +63,7 @@ func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer {
+	if r.State().Platform().Mode() == runtime.ModeContainer || !r.Config().Machine().Time().Enabled() {
 		return []string{"containerd", "networkd"}
 	}
 
