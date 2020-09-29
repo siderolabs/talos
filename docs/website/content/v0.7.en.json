@@ -39,6 +39,10 @@
           {
             "title": "Registry Cache",
             "path": "v0.7/en/guides/local/registry-cache"
+          },
+          {
+            "title": "Air-gapped Environment",
+            "path": "v0.7/en/guides/local/air-gapped"
           }
         ]
       },
