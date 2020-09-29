@@ -613,7 +613,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			&services.Kubelet{},
 		)
 
-		if r.State().Platform().Mode() != runtime.ModeContainer {
+		if r.State().Platform().Mode() != runtime.ModeContainer && r.Config().Machine().Time().Enabled() {
 			svcs.Load(
 				&services.Timed{},
 			)
