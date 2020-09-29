@@ -25,7 +25,7 @@ clusters:
     server: {{ .Server }}
     certificate-authority-data: {{ .CACert }}
 users:
-- name: admin
+- name: admin@{{ .Cluster }}
   user:
     client-certificate-data: {{ .AdminCert }}
     client-key-data: {{ .AdminKey }}
@@ -33,7 +33,7 @@ contexts:
 - context:
     cluster: {{ .Cluster }}
     namespace: default
-    user: admin
+    user: admin@{{ .Cluster }}
   name: admin@{{ .Cluster }}
 current-context: admin@{{ .Cluster }}
 `
