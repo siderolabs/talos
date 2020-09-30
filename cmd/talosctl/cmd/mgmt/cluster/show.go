@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers"
 )
 
@@ -42,6 +43,10 @@ func show(ctx context.Context) error {
 		return err
 	}
 
+	return showCluster(cluster)
+}
+
+func showCluster(cluster provision.Cluster) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintf(w, "PROVISIONER\t%s\n", cluster.Provisioner())
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
@@ -52,7 +57,7 @@ func show(ctx context.Context) error {
 	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", cluster.Info().Network.GatewayAddr)
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
 
-	if err = w.Flush(); err != nil {
+	if err := w.Flush(); err != nil {
 		return err
 	}
 
