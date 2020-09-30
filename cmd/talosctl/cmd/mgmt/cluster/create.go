@@ -320,7 +320,7 @@ func create(ctx context.Context) (err error) {
 		return err
 	}
 
-	return nil
+	return showCluster(cluster)
 }
 
 func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
