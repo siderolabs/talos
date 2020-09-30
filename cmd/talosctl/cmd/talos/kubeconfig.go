@@ -7,7 +7,7 @@ package talos
 import (
 	"context"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -32,13 +32,67 @@ var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
-Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.
+Kubeconfig will be written to PWD or [local-path] if specified.
 If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if err := helpers.FailIfMultiNodes(ctx, "kubeconfig"); err != nil {
 				return err
+			}
+
+			var localPath string
+
+			if len(args) == 0 {
+				// no path given, use defaults
+				var err error
+
+				if merge {
+					var usr *user.User
+					usr, err = user.Current()
+
+					if err != nil {
+						return err
+					}
+
+					localPath = filepath.Join(usr.HomeDir, ".kube/config")
+				} else {
+					localPath, err = os.Getwd()
+					if err != nil {
+						return fmt.Errorf("error getting current working directory: %s", err)
+					}
+				}
+			} else {
+				localPath = args[0]
+			}
+
+			localPath = filepath.Clean(localPath)
+
+			st, err := os.Stat(localPath)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					return fmt.Errorf("error checking path %q: %w", localPath, err)
+				}
+
+				err = os.MkdirAll(filepath.Dir(localPath), 0o755)
+				if err != nil {
+					return err
+				}
+			} else if st.IsDir() {
+				// only dir name was given, append `kubeconfig` by default
+				localPath = filepath.Join(localPath, "kubeconfig")
+			}
+
+			_, err = os.Stat(localPath)
+			if err == nil && !(force || merge) {
+				return fmt.Errorf("kubeconfig file already exists, use --force to overwrite: %q", localPath)
+			} else if err != nil {
+				if os.IsNotExist(err) {
+					// merge doesn't make sense if target path doesn't exist
+					merge = false
+				} else {
+					return fmt.Errorf("error checking path %q: %w", localPath, err)
+				}
 			}
 
 			r, errCh, err := c.KubeconfigRaw(ctx)
@@ -57,67 +111,26 @@ If merge flag is defined, config will be merged with ~/.kube/config or [local-pa
 			}()
 
 			defer wg.Wait()
+			defer r.Close() //nolint: errcheck
+
+			data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
+			if err != nil {
+				return err
+			}
 
 			if merge {
-				return extractAndMerge(args, r)
+				return extractAndMerge(data, localPath)
 			}
 
-			localPath, err := os.Getwd()
-			if err != nil {
-				return fmt.Errorf("error getting current working directory: %s", err)
-			}
-			if len(args) == 1 {
-				localPath = args[0]
-			}
-			localPath = filepath.Clean(localPath)
-
-			// Drop the existing kubeconfig before writing the new one if force flag is specified.
-			if force {
-				err = os.Remove(filepath.Join(localPath, "kubeconfig"))
-				if err != nil && !os.IsNotExist(err) {
-					return fmt.Errorf("error deleting existing kubeconfig: %s", err)
-				}
-			}
-
-			return helpers.ExtractTarGz(localPath, r)
+			return ioutil.WriteFile(localPath, data, 0o640)
 		})
 	},
 }
 
-func extractAndMerge(args []string, r io.ReadCloser) error {
-	data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
-	if err != nil {
-		return err
-	}
-
-	var localPath string
-
-	if len(args) == 1 {
-		localPath = filepath.Clean(args[0])
-	} else {
-		var usr *user.User
-		usr, err = user.Current()
-
-		if err != nil {
-			return err
-		}
-
-		localPath = filepath.Join(usr.HomeDir, ".kube/config")
-	}
-
+func extractAndMerge(data []byte, localPath string) error {
 	config, err := clientcmd.Load(data)
 	if err != nil {
 		return err
-	}
-
-	// base file does not exist, dump config as is
-	if _, err = os.Stat(localPath); os.IsNotExist(err) {
-		err = os.MkdirAll(filepath.Dir(localPath), 0o755)
-		if err != nil {
-			return err
-		}
-
-		return clientcmd.WriteToFile(*config, localPath)
 	}
 
 	baseConfig, err := clientcmd.LoadFromFile(localPath)
