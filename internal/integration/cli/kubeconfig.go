@@ -65,6 +65,19 @@ func (suite *KubeconfigSuite) TestCwd() {
 	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
 }
 
+// TestCustomName generates kubeconfig with custom name.
+func (suite *KubeconfigSuite) TestCustomName() {
+	tempDir, err := ioutil.TempDir("", "talos")
+	suite.Require().NoError(err)
+
+	defer os.RemoveAll(tempDir) //nolint: errcheck
+
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
+		base.StdoutEmpty())
+
+	suite.Require().FileExists(filepath.Join(tempDir, "k8sconfig"))
+}
+
 // TestMultiNodeFail verifies that command fails with multiple nodes.
 func (suite *KubeconfigSuite) TestMultiNodeFail() {
 	suite.RunCLI([]string{"kubeconfig", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},

@@ -6,7 +6,7 @@ Download the admin kubeconfig from the node
 ### Synopsis
 
 Download the admin kubeconfig from the node.
-Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.
+Kubeconfig will be written to PWD or [local-path] if specified.
 If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.
 
 ```
