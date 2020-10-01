@@ -133,12 +133,12 @@ When scaling this guide to the bare-metal environment, following Talos config sn
 
 ```bash
 machine:
-...
-registries:
-    mirrors:
-    '*':
-        endpoints:
-        - http://10.5.0.1:6000/
+  ...
+  registries:
+      mirrors:
+      '*':
+          endpoints:
+          - http://10.5.0.1:6000/
 ...
 ```
 
