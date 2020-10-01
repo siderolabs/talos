@@ -443,7 +443,7 @@ func (r *RegistriesConfig) Config() map[string]config.RegistryConfig {
 
 // TLS implements the Registries interface.
 func (r *RegistryConfig) TLS() config.RegistryTLSConfig {
-	if r == nil {
+	if r.RegistryTLS == nil {
 		return nil
 	}
 
@@ -452,7 +452,7 @@ func (r *RegistryConfig) TLS() config.RegistryTLSConfig {
 
 // Auth implements the Registries interface.
 func (r *RegistryConfig) Auth() config.RegistryAuthConfig {
-	if r == nil {
+	if r.RegistryAuth == nil {
 		return nil
 	}
 
