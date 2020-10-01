@@ -389,7 +389,7 @@ registries:
  config:
   "some.host:123":
     tls:
-      CA: ... # base64-encoded CA certificate in PEM format
+      ca: ... # base64-encoded CA certificate in PEM format
       clientIdentity:
         cert: ...  # base64-encoded client certificate in PEM format
         key: ...  # base64-encoded client key in PEM format
