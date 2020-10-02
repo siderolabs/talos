@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -43,7 +44,7 @@ func (m *Metal) Name() string {
 func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
-		return nil, fmt.Errorf("no config option was found")
+		return nil, errors.ErrNoConfigSource
 	}
 
 	log.Printf("fetching machine config from: %q", *option)
