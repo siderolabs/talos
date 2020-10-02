@@ -5,26 +5,30 @@
 package talos
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"sync"
 
-	"github.com/particledecay/kconf/pkg/kubeconfig"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var (
-	force bool
-	merge bool
+	force            bool
+	forceContextName string
+	merge            bool
 )
 
 // kubeconfigCmd represents the kubeconfig command.
@@ -32,8 +36,8 @@ var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
-Kubeconfig will be written to PWD or [local-path] if specified.
-If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.`,
+If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.
+Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
@@ -133,23 +137,60 @@ func extractAndMerge(data []byte, localPath string) error {
 		return err
 	}
 
-	baseConfig, err := clientcmd.LoadFromFile(localPath)
+	merger, err := kubeconfig.Load(localPath)
 	if err != nil {
 		return err
 	}
 
-	kconf := kubeconfig.KConf{Config: *baseConfig}
-	err = kconf.Merge(config, Cmdcontext)
+	interactive := isatty.IsTerminal(os.Stdout.Fd())
+
+	err = merger.Merge(config, kubeconfig.MergeOptions{
+		ActivateContext:  true,
+		ForceContextName: forceContextName,
+		OutputWriter:     os.Stdout,
+		ConflictHandler: func(component kubeconfig.ConfigComponent, name string) (kubeconfig.ConflictDecision, error) {
+			if force {
+				return kubeconfig.OverwriteDecision, nil
+			}
+
+			if !interactive {
+				return kubeconfig.RenameDecision, nil
+			}
+
+			return askOverwriteOrRename(fmt.Sprintf("%s %q already exists", component, name))
+		},
+	})
 
 	if err != nil {
 		return err
 	}
 
-	return clientcmd.WriteToFile(kconf.Config, localPath)
+	return merger.Write(localPath)
+}
+
+func askOverwriteOrRename(prompt string) (kubeconfig.ConflictDecision, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [rename/overwrite]: ", prompt)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+
+		switch strings.ToLower(strings.TrimSpace(response)) {
+		case "overwrite", "o":
+			return kubeconfig.OverwriteDecision, nil
+		case "rename", "r":
+			return kubeconfig.RenameDecision, nil
+		}
+	}
 }
 
 func init() {
-	kubeconfigCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of kubeconfig if already present")
-	kubeconfigCmd.Flags().BoolVarP(&merge, "merge", "m", false, "Merge with existing kubeconfig")
+	kubeconfigCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge")
+	kubeconfigCmd.Flags().StringVar(&forceContextName, "force-context-name", "", "Force context name for kubeconfig merge")
+	kubeconfigCmd.Flags().BoolVarP(&merge, "merge", "m", true, "Merge with existing kubeconfig")
 	addCommand(kubeconfigCmd)
 }

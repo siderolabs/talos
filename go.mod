@@ -40,6 +40,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20200711001733-e1b69ee5fb33
 	github.com/jsimonetti/rtnetlink v0.0.0-20200709124027-1aae10735293
 	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200817205730-0b4482256ca1
+	github.com/mattn/go-isatty v0.0.8
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.1.0
@@ -47,7 +48,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc92 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
-	github.com/particledecay/kconf v1.8.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.1.3
 	github.com/rs/xid v1.2.1
@@ -72,6 +72,7 @@ require (
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5 // v3.4.10
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1
 	golang.org/x/text v0.3.3
