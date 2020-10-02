@@ -84,6 +84,7 @@ type Input struct {
 	CNIConfig     *v1alpha1.CNIConfig
 
 	RegistryMirrors map[string]*v1alpha1.RegistryMirrorConfig
+	RegistryConfig  map[string]*v1alpha1.RegistryConfig
 
 	Debug   bool
 	Persist bool
@@ -328,6 +329,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 		NetworkConfig:             options.NetworkConfig,
 		CNIConfig:                 options.CNIConfig,
 		RegistryMirrors:           options.RegistryMirrors,
+		RegistryConfig:            options.RegistryConfig,
 		Debug:                     options.Debug,
 		Persist:                   options.Persist,
 	}

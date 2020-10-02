@@ -78,6 +78,27 @@ func WithRegistryMirror(host string, endpoints ...string) GenOption {
 	}
 }
 
+// WithRegistryInsecureSkipVerify marks registry host to skip TLS verification.
+func WithRegistryInsecureSkipVerify(host string) GenOption {
+	return func(o *GenOptions) error {
+		if o.RegistryConfig == nil {
+			o.RegistryConfig = make(map[string]*v1alpha1.RegistryConfig)
+		}
+
+		if _, ok := o.RegistryConfig[host]; !ok {
+			o.RegistryConfig[host] = &v1alpha1.RegistryConfig{}
+		}
+
+		if o.RegistryConfig[host].RegistryTLS == nil {
+			o.RegistryConfig[host].RegistryTLS = &v1alpha1.RegistryTLSConfig{}
+		}
+
+		o.RegistryConfig[host].RegistryTLS.TLSInsecureSkipVerify = true
+
+		return nil
+	}
+}
+
 // WithDNSDomain specifies domain name to use in Talos cluster.
 func WithDNSDomain(dnsDomain string) GenOption {
 	return func(o *GenOptions) error {
@@ -133,6 +154,7 @@ type GenOptions struct {
 	NetworkConfig             *v1alpha1.NetworkConfig
 	CNIConfig                 *v1alpha1.CNIConfig
 	RegistryMirrors           map[string]*v1alpha1.RegistryMirrorConfig
+	RegistryConfig            map[string]*v1alpha1.RegistryConfig
 	DNSDomain                 string
 	Architecture              string
 	Debug                     bool

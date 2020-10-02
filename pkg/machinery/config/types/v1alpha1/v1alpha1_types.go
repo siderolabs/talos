@@ -1009,7 +1009,7 @@ type RegistryTLSConfig struct {
 	//   description: |
 	//     CA registry certificate to add the list of trusted certificates.
 	//     Certificate should be base64-encoded.
-	TLSCA []byte `yaml:"ca,omitempty"`
+	TLSCA Base64Bytes `yaml:"ca,omitempty"`
 	//   description: |
 	//     Skip TLS server certificate verification (not recommended).
 	TLSInsecureSkipVerify bool `yaml:"insecureSkipVerify,omitempty"`
