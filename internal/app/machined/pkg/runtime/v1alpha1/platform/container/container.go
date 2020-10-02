@@ -7,7 +7,6 @@ package container
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"log"
 	"net"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 )
 
 // Container is a platform for installing Talos via an Container image.
@@ -29,9 +29,9 @@ func (c *Container) Name() string {
 func (c *Container) Configuration(context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: USERDATA environment variable")
 
-	s, ok := os.LookupEnv("USERDATA")
-	if !ok {
-		return nil, errors.New("missing USERDATA environment variable")
+	s := os.Getenv("USERDATA")
+	if s == "" {
+		return nil, errors.ErrNoConfigSource
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(s)

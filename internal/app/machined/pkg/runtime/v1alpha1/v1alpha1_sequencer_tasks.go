@@ -40,6 +40,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	perrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
@@ -51,6 +52,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/webconfig"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/images"
@@ -428,6 +430,13 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			defer ctxCancel()
 
 			b, e := fetchConfig(fetchCtx, r)
+			if errors.Is(e, perrors.ErrNoConfigSource) {
+				b, e = receiveConfigViaWebconfig(ctx, logger, r)
+				if e != nil {
+					return fmt.Errorf("failed to receive config via webconfig: %w", err)
+				}
+			}
+
 			if e != nil {
 				return e
 			}
@@ -539,6 +548,29 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 	}
 
 	return b, nil
+}
+
+func receiveConfigViaWebconfig(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
+	cfgBytes, err := webconfig.Run(ctx, logger, r.State().Platform().Mode())
+	if err != nil {
+		return nil, fmt.Errorf("failed to receive config via webconfig: %w", err)
+	}
+
+	provider, err := configloader.NewFromBytes(cfgBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create config provider from webconfig bytes: %w", err)
+	}
+
+	if err = provider.Validate(r.State().Platform().Mode()); err != nil {
+		return nil, fmt.Errorf("failed to validate config received from webconfig: %w", err)
+	}
+
+	processedBytes, err := provider.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("failed to export validated webconfig to bytes: %w", err)
+	}
+
+	return processedBytes, nil
 }
 
 // ValidateConfig validates the config.
