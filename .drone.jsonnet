@@ -148,8 +148,8 @@ local setup_ci = {
   commands: [
     'sleep 5', // Give docker enough time to start.
     'apk add coreutils',
-    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --name talosbuilder --use unix:///var/outer-run/docker.sock',
-    'docker buildx create --append --name talosbuilder --platform linux/arm64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" tcp://docker-arm64.ci.svc:2376',
+    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --driver-opt image=moby/buildkit:master --name talosbuilder1 --use unix:///var/outer-run/docker.sock',
+    'docker buildx create --append --name talosbuilder1 --platform linux/arm64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --driver-opt image=moby/buildkit:master tcp://docker-arm64.ci.svc:2376',
     'docker buildx inspect --bootstrap',
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
