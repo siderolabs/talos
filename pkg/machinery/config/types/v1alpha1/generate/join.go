@@ -37,6 +37,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
 			RegistryMirrors: in.RegistryMirrors,
+			RegistryConfig:  in.RegistryConfig,
 		},
 	}
 

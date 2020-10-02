@@ -39,7 +39,7 @@ var validateCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("%s is valid for %s mode", validateConfigArg, validateModeArg)
+		fmt.Printf("%s is valid for %s mode\n", validateConfigArg, validateModeArg)
 
 		return nil
 	},

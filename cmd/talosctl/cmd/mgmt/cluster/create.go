@@ -39,6 +39,7 @@ var (
 	nodeImage               string
 	nodeInstallImage        string
 	registryMirrors         []string
+	registryInsecure        []string
 	kubernetesVersion       string
 	nodeVmlinuzPath         string
 	nodeInitramfsPath       string
@@ -197,6 +198,10 @@ func create(ctx context.Context) (err error) {
 			}
 
 			genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
+		}
+
+		for _, registryHost := range registryInsecure {
+			genOptions = append(genOptions, generate.WithRegistryInsecureSkipVerify(registryHost))
 		}
 
 		genOptions = append(genOptions, provisioner.GenOptions(request.Network)...)
@@ -380,6 +385,7 @@ func init() {
 	createCmd.Flags().BoolVar(&bootloaderEnabled, "with-bootloader", true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", false, "enable UEFI on x86_64 architecture (always enabled for arm64)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
+	createCmd.Flags().StringSliceVar(&registryInsecure, "registry-insecure-skip-verify", []string{}, "list of registry hostnames to skip TLS verification for")
 	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
 	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the cluster network")
 	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the cluster network")

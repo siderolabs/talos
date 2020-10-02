@@ -1619,7 +1619,7 @@ clientIdentity:
 CA registry certificate to add the list of trusted certificates.
 Certificate should be base64-encoded.
 
-Type: `array`
+Type: `Base64Bytes`
 
 #### insecureSkipVerify
 
