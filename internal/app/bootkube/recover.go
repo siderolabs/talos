@@ -14,7 +14,6 @@ import (
 	"os"
 
 	"github.com/kubernetes-sigs/bootkube/pkg/recovery"
-	"go.etcd.io/etcd/clientv3"
 	k8saes "k8s.io/apiserver/pkg/storage/value/encrypt/aes"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
@@ -40,7 +39,7 @@ func recoverAssets(config config.Provider) error {
 
 	switch *recoverSource {
 	case machineapi.RecoverRequest_ETCD.String():
-		var client *clientv3.Client
+		var client *etcd.Client
 
 		client, err = etcd.NewClient([]string{"127.0.0.1:2379"})
 		if err != nil {
@@ -54,7 +53,7 @@ func recoverAssets(config config.Provider) error {
 			return err
 		}
 
-		backend = recovery.NewEtcdBackendWithTransformer(client, "/registry", transform)
+		backend = recovery.NewEtcdBackendWithTransformer(client.Client, "/registry", transform)
 	case machineapi.RecoverRequest_APISERVER.String():
 		backend, err = recovery.NewAPIServerBackend(constants.RecoveryKubeconfig)
 		if err != nil {

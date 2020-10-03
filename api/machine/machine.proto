@@ -14,7 +14,8 @@ import "common/common.proto";
 
 // The machine service definition.
 service MachineService {
-  rpc ApplyConfiguration(ApplyConfigurationRequest) returns (ApplyConfigurationResponse);
+  rpc ApplyConfiguration(ApplyConfigurationRequest)
+      returns (ApplyConfigurationResponse);
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
@@ -22,6 +23,11 @@ service MachineService {
   rpc DiskStats(google.protobuf.Empty) returns (DiskStatsResponse);
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
+  rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
+  rpc EtcdLeaveCluster(EtcdLeaveClusterRequest)
+      returns (EtcdLeaveClusterResponse);
+  rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
+      returns (EtcdForfeitLeadershipResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
@@ -29,7 +35,8 @@ service MachineService {
   rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
-  rpc NetworkDeviceStats(google.protobuf.Empty) returns (NetworkDeviceStatsResponse);
+  rpc NetworkDeviceStats(google.protobuf.Empty)
+      returns (NetworkDeviceStatsResponse);
   rpc Processes(google.protobuf.Empty) returns (ProcessesResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
@@ -49,10 +56,9 @@ service MachineService {
 }
 
 // rpc applyConfiguration
-// ApplyConfiguration describes a request to assert a new configuration upon a node.
-message ApplyConfigurationRequest {
-  bytes data = 1;
-}
+// ApplyConfiguration describes a request to assert a new configuration upon a
+// node.
+message ApplyConfigurationRequest { bytes data = 1; }
 
 // ApplyConfigurationResponse describes the response to a configuration request.
 message ApplyConfiguration { common.Metadata metadata = 1; }
@@ -499,9 +505,7 @@ message MemInfo {
 
 // rpc Hostname
 
-message HostnameResponse {
-  repeated Hostname messages = 1;
-}
+message HostnameResponse { repeated Hostname messages = 1; }
 
 message Hostname {
   common.Metadata metadata = 1;
@@ -510,9 +514,7 @@ message Hostname {
 
 // rpc LoadAvg
 
-message LoadAvgResponse {
-  repeated LoadAvg messages = 1;
-}
+message LoadAvgResponse { repeated LoadAvg messages = 1; }
 
 message LoadAvg {
   common.Metadata metadata = 1;
@@ -521,12 +523,9 @@ message LoadAvg {
   double load15 = 4;
 }
 
-
 // rpc SystemStat
 
-message SystemStatResponse {
-  repeated SystemStat messages = 1;
-}
+message SystemStatResponse { repeated SystemStat messages = 1; }
 
 message SystemStat {
   common.Metadata metadata = 1;
@@ -569,12 +568,9 @@ message SoftIRQStat {
   uint64 rcu = 10;
 }
 
-
 // rpc CPUInfo
 
-message CPUInfoResponse {
-  repeated CPUsInfo messages = 1;
-}
+message CPUInfoResponse { repeated CPUsInfo messages = 1; }
 
 message CPUsInfo {
   common.Metadata metadata = 1;
@@ -610,12 +606,9 @@ message CPUInfo {
   string power_management = 26;
 }
 
-
 // rpc NetworkDeviceStats
 
-message NetworkDeviceStatsResponse {
-  repeated NetworkDeviceStats messages = 1;
-}
+message NetworkDeviceStatsResponse { repeated NetworkDeviceStats messages = 1; }
 
 message NetworkDeviceStats {
   common.Metadata metadata = 1;
@@ -643,12 +636,9 @@ message NetDev {
   uint64 tx_compressed = 17;
 }
 
-
 // rpc DiskStats
 
-message DiskStatsResponse {
-  repeated DiskStats messages = 1;
-}
+message DiskStatsResponse { repeated DiskStats messages = 1; }
 
 message DiskStats {
   common.Metadata metadata = 1;
@@ -674,3 +664,23 @@ message DiskStat {
   uint64 discard_sectors = 15;
   uint64 discard_time_ms = 16;
 }
+
+message EtcdLeaveClusterRequest {}
+message EtcdLeaveCluster { common.Metadata metadata = 1; }
+message EtcdLeaveClusterResponse { repeated EtcdLeaveCluster messages = 1; }
+
+message EtcdForfeitLeadershipRequest {}
+message EtcdForfeitLeadership {
+  common.Metadata metadata = 1;
+  string member = 2;
+}
+message EtcdForfeitLeadershipResponse {
+  repeated EtcdForfeitLeadership messages = 1;
+}
+
+message EtcdMemberListRequest {}
+message EtcdMemberList {
+  common.Metadata metadata = 1;
+  repeated string members = 2;
+}
+message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }

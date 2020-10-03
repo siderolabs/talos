@@ -1160,53 +1160,16 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 // nolint: gocyclo
 func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return err
-		}
-
 		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create etcd client: %w", err)
 		}
 
 		// nolint: errcheck
 		defer client.Close()
 
-		resp, err := client.MemberList(ctx)
-		if err != nil {
-			return err
-		}
-
-		var id *uint64
-
-		for _, member := range resp.Members {
-			if member.Name == hostname {
-				member := member
-				id = &member.ID
-
-				break
-			}
-		}
-
-		if id == nil {
-			return fmt.Errorf("failed to find %q in list of etcd members", hostname)
-		}
-
-		logger.Println("leaving etcd cluster")
-
-		_, err = client.MemberRemove(ctx, *id)
-		if err != nil {
-			return err
-		}
-
-		if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
-			return err
-		}
-
-		// Once the member is removed, the data is no longer valid.
-		if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
-			return err
+		if err = client.LeaveCluster(ctx); err != nil {
+			return fmt.Errorf("failed to leave cluster: %w", err)
 		}
 
 		return nil

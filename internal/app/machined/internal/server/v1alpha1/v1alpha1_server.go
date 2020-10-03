@@ -240,7 +240,12 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	if err = etcd.ValidateForUpgrade(s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	if err = client.ValidateForUpgrade(ctx, s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
 		return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
 	}
 
@@ -1199,4 +1204,85 @@ func (s *Server) Memory(ctx context.Context, in *empty.Empty) (reply *machine.Me
 	}
 
 	return reply, err
+}
+
+// EtcdMemberList implements the machine.MachineServer interface.
+func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListRequest) (reply *machine.EtcdMemberListResponse, err error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	if err != nil {
+		return nil, err
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	resp, err := client.MemberList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	members := make([]string, 0, len(resp.Members))
+
+	for _, member := range resp.Members {
+		members = append(members, member.GetName())
+	}
+
+	reply = &machine.EtcdMemberListResponse{
+		Messages: []*machine.EtcdMemberList{
+			{
+				Members: members,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// EtcdLeaveCluster implements the machine.MachineServer interface.
+func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClusterRequest) (reply *machine.EtcdLeaveClusterResponse, err error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	if err = client.LeaveCluster(ctx); err != nil {
+		return nil, fmt.Errorf("failed to leave cluster: %w", err)
+	}
+
+	reply = &machine.EtcdLeaveClusterResponse{
+		Messages: []*machine.EtcdLeaveCluster{
+			{},
+		},
+	}
+
+	return reply, nil
+}
+
+// EtcdForfeitLeadership implements the machine.MachineServer interface.
+func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForfeitLeadershipRequest) (reply *machine.EtcdForfeitLeadershipResponse, err error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	leader, err := client.ForfeitLeadership(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to forfeit leadership: %w", err)
+	}
+
+	reply = &machine.EtcdForfeitLeadershipResponse{
+		Messages: []*machine.EtcdForfeitLeadership{
+			{
+				Member: leader,
+			},
+		},
+	}
+
+	return reply, nil
 }

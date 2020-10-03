@@ -7,10 +7,13 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
+	"os"
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"go.etcd.io/etcd/pkg/transport"
 	"google.golang.org/grpc"
 
@@ -18,15 +21,21 @@ import (
 
 	"github.com/talos-systems/net"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+// Client is a wrapper around the official etcd client.
+type Client struct {
+	*clientv3.Client
+}
+
 // NewClient initializes and returns an etcd client configured to talk to
 // a local endpoint.
-func NewClient(endpoints []string) (client *clientv3.Client, err error) {
+func NewClient(endpoints []string) (client *Client, err error) {
 	tlsInfo := transport.TLSInfo{
 		CertFile:      constants.KubernetesEtcdPeerCert,
 		KeyFile:       constants.KubernetesEtcdPeerKey,
@@ -38,7 +47,7 @@ func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 		return nil, err
 	}
 
-	client, err = clientv3.New(clientv3.Config{
+	c, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
 		DialOptions: []grpc.DialOption{grpc.WithBlock()},
@@ -48,12 +57,12 @@ func NewClient(endpoints []string) (client *clientv3.Client, err error) {
 		return nil, err
 	}
 
-	return client, nil
+	return &Client{Client: c}, nil
 }
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
-func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *clientv3.Client, err error) {
+func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
 	h, err := kubernetes.NewTemporaryClientFromPKI(creds, endpoint)
 	if err != nil {
 		return nil, err
@@ -75,17 +84,9 @@ func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCer
 
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
-func ValidateForUpgrade(config config.Provider, preserve bool) error {
+func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider, preserve bool) error {
 	if config.Machine().Type() != machine.TypeJoin {
-		client, err := NewClientFromControlPlaneIPs(context.TODO(), config.Cluster().CA(), config.Cluster().Endpoint())
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer client.Close()
-
-		resp, err := client.MemberList(context.Background())
+		resp, err := c.MemberList(context.Background())
 		if err != nil {
 			return err
 		}
@@ -105,4 +106,113 @@ func ValidateForUpgrade(config config.Provider, preserve bool) error {
 	}
 
 	return nil
+}
+
+// LeaveCluster removes the current member from the etcd cluster.
+//
+// nolint: gocyclo
+func (c *Client) LeaveCluster(ctx context.Context) error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.MemberList(ctx)
+	if err != nil {
+		return err
+	}
+
+	var id *uint64
+
+	for _, member := range resp.Members {
+		if member.Name == hostname {
+			member := member
+			id = &member.ID
+
+			break
+		}
+	}
+
+	if id == nil {
+		return fmt.Errorf("failed to find %q in list of etcd members", hostname)
+	}
+
+	_, err = c.MemberRemove(ctx, *id)
+	if err != nil {
+		return fmt.Errorf("failed to remove member %d: %w", *id, err)
+	}
+
+	if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
+		return fmt.Errorf("failed to stop etcd: %w", err)
+	}
+
+	// Once the member is removed, the data is no longer valid.
+	if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
+		return fmt.Errorf("failed to remove %s: %w", constants.EtcdDataPath, err)
+	}
+
+	return nil
+}
+
+// ForfeitLeadership transfers leadership from the current member to another
+// member.
+//
+// nolint: gocyclo
+func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "", fmt.Errorf("failed to get hostname: %w", err)
+	}
+
+	resp, err := c.MemberList(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to list etcd members: %w", err)
+	}
+
+	if len(resp.Members) == 1 {
+		return "", fmt.Errorf("cannot forfeit leadership, only one member")
+	}
+
+	var member *etcdserverpb.Member
+
+	for _, m := range resp.Members {
+		if m.Name == hostname {
+			member = m
+			break
+		}
+	}
+
+	if member == nil {
+		return "", fmt.Errorf("failed to find %q in list of etcd members", hostname)
+	}
+
+	for _, ep := range member.GetClientURLs() {
+		var status *clientv3.StatusResponse
+
+		status, err = c.Status(ctx, ep)
+		if err != nil {
+			return "", err
+		}
+
+		if status.Leader != member.GetID() {
+			return "", nil
+		}
+
+		for _, m := range resp.Members {
+			if m.GetID() != member.GetID() {
+				log.Printf("moving leadership from %q to %q", member.GetName(), m.GetName())
+
+				c.SetEndpoints(ep)
+
+				_, err = c.MoveLeader(ctx, m.GetID())
+				if err != nil {
+					return "", err
+				}
+
+				return m.GetName(), nil
+			}
+		}
+	}
+
+	return "", nil
 }
