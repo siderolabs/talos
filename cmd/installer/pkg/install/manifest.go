@@ -15,14 +15,14 @@ import (
 
 	"github.com/talos-systems/go-retry/retry"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/table"
+	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/blockdevice"
-	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/vfat"
-	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
-	"github.com/talos-systems/talos/pkg/blockdevice/table"
-	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/makefs"
 )
 
 // Manifest represents the instructions for preparing all block devices
@@ -264,38 +264,38 @@ func (t *Target) Format() error {
 	switch t.Label {
 	case constants.EFIPartitionLabel:
 		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "fat", t.Label)
-		return vfat.MakeFS(t.PartitionName, vfat.WithLabel(t.Label))
+		return makefs.VFAT(t.PartitionName, makefs.WithLabel(t.Label))
 	case constants.BIOSGrubPartitionLabel:
 		return nil
 	case constants.BootPartitionLabel:
 		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
-		opts := []xfs.Option{xfs.WithForce(t.Force)}
+		opts := []makefs.Option{makefs.WithForce(t.Force)}
 
 		if t.Label != "" {
-			opts = append(opts, xfs.WithLabel(t.Label))
+			opts = append(opts, makefs.WithLabel(t.Label))
 		}
 
-		return xfs.MakeFS(t.PartitionName, opts...)
+		return makefs.XFS(t.PartitionName, opts...)
 	case constants.MetaPartitionLabel:
 		return nil
 	case constants.StatePartitionLabel:
 		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
-		opts := []xfs.Option{xfs.WithForce(t.Force)}
+		opts := []makefs.Option{makefs.WithForce(t.Force)}
 
 		if t.Label != "" {
-			opts = append(opts, xfs.WithLabel(t.Label))
+			opts = append(opts, makefs.WithLabel(t.Label))
 		}
 
-		return xfs.MakeFS(t.PartitionName, opts...)
+		return makefs.XFS(t.PartitionName, opts...)
 	case constants.EphemeralPartitionLabel:
 		log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, "xfs", t.Label)
-		opts := []xfs.Option{xfs.WithForce(t.Force)}
+		opts := []makefs.Option{makefs.WithForce(t.Force)}
 
 		if t.Label != "" {
-			opts = append(opts, xfs.WithLabel(t.Label))
+			opts = append(opts, makefs.WithLabel(t.Label))
 		}
 
-		return xfs.MakeFS(t.PartitionName, opts...)
+		return makefs.XFS(t.PartitionName, opts...)
 	default:
 		return nil
 	}
