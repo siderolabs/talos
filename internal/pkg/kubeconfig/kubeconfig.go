@@ -4,3 +4,18 @@
 
 // Package kubeconfig provides Kubernetes config file handling.
 package kubeconfig
+
+import (
+	"os"
+	"path/filepath"
+)
+
+// DefaultPath returns path to ~/.kube/config.
+func DefaultPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(home, ".kube/config"), nil
+}
