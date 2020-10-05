@@ -2,8 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package xfs provides an interface to xfsprogs.
-package xfs
+package makefs
 
 import (
 	"fmt"
@@ -11,16 +10,16 @@ import (
 	"github.com/talos-systems/talos/pkg/cmd"
 )
 
-// GrowFS expands a XFS filesystem to the maximum possible. The partition
+// XFSGrow expands a XFS filesystem to the maximum possible. The partition
 // MUST be mounted, or this will fail.
-func GrowFS(partname string) error {
+func XFSGrow(partname string) error {
 	_, err := cmd.Run("xfs_growfs", "-d", partname)
 
 	return err
 }
 
-// MakeFS creates a XFS filesystem on the specified partition.
-func MakeFS(partname string, setters ...Option) error {
+// XFS creates a XFS filesystem on the specified partition.
+func XFS(partname string, setters ...Option) error {
 	if partname == "" {
 		return fmt.Errorf("missing path to disk")
 	}

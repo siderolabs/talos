@@ -20,7 +20,8 @@ import (
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
 
-	"github.com/talos-systems/talos/pkg/blockdevice/table/gpt"
+	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt"
+
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"

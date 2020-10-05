@@ -10,8 +10,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 

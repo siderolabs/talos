@@ -18,9 +18,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 

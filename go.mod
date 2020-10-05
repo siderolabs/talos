@@ -32,7 +32,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/protobuf v1.4.2
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-multierror v1.1.0
@@ -58,6 +58,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/bootkube-plugin v0.0.0-20200915135634-229d57e818f3
 	github.com/talos-systems/crypto v0.2.0
+	github.com/talos-systems/go-blockdevice v0.1.0
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-retry v0.1.1-0.20200922131245-752f081252cf
@@ -74,8 +75,7 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1
-	golang.org/x/text v0.3.3
+	golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	golang.org/x/tools v0.0.0-20200716134326-a8f9df4c9543 // indirect
 	google.golang.org/grpc v1.29.0

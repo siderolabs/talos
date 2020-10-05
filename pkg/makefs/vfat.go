@@ -2,14 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package vfat
+package makefs
 
 import (
 	"github.com/talos-systems/talos/pkg/cmd"
 )
 
-// MakeFS creates a VFAT filesystem on the specified partition.
-func MakeFS(partname string, setters ...Option) error {
+// VFAT creates a VFAT filesystem on the specified partition.
+func VFAT(partname string, setters ...Option) error {
 	opts := NewDefaultOptions(setters...)
 
 	args := []string{}

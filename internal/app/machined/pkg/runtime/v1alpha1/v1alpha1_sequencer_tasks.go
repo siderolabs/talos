@@ -30,6 +30,10 @@ import (
 
 	"github.com/talos-systems/go-retry/retry"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/table"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -46,9 +50,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/blockdevice"
-	"github.com/talos-systems/talos/pkg/blockdevice/table"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/kubernetes"

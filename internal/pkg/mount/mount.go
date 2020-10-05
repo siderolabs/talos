@@ -16,11 +16,12 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/blockdevice"
-	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
-	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
+	gptpartition "github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/makefs"
 )
 
 // RetryFunc defines the requirements for retrying a mount point operation.
@@ -334,7 +335,7 @@ func (p *Point) ResizePartition() (err error) {
 // GrowFilesystem grows a partition's filesystem to the maximum size allowed.
 // NB: An XFS partition MUST be mounted, or this will fail.
 func (p *Point) GrowFilesystem() (err error) {
-	if err = xfs.GrowFS(p.Target()); err != nil {
+	if err = makefs.XFSGrow(p.Target()); err != nil {
 		return fmt.Errorf("xfs_growfs: %w", err)
 	}
 

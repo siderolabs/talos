@@ -17,8 +17,9 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-smbios/smbios"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
