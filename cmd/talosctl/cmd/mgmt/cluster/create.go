@@ -16,10 +16,12 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
 
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/images"
@@ -69,12 +71,13 @@ var (
 	withInitNode            bool
 	customCNIUrl            string
 	crashdumpOnFailure      bool
+	skipKubeconfig          bool
 )
 
 // createCmd represents the cluster up command.
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Creates a local docker-based or firecracker-based kubernetes cluster",
+	Short: "Creates a local docker-based or QEMU-based kubernetes cluster",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -343,7 +346,17 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 	defer checkCtxCancel()
 
-	return check.Wait(checkCtx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
+	if err := check.Wait(checkCtx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter()); err != nil {
+		return err
+	}
+
+	if !skipKubeconfig {
+		if err := mergeKubeconfig(ctx, clusterAccess); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
@@ -355,6 +368,58 @@ func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 	c.Merge(talosConfigObj)
 
 	return c.Save(talosconfig)
+}
+
+func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
+	kubeconfigPath, err := kubeconfig.DefaultPath()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("\nmerging kubeconfig into %q\n", kubeconfigPath)
+
+	k8sconfig, err := clusterAccess.Kubeconfig(ctx)
+	if err != nil {
+		return fmt.Errorf("error fetching kubeconfig: %w", err)
+	}
+
+	config, err := clientcmd.Load(k8sconfig)
+	if err != nil {
+		return fmt.Errorf("error parsing kubeconfig: %w", err)
+	}
+
+	if clusterAccess.ForceEndpoint != "" {
+		for name := range config.Clusters {
+			config.Clusters[name].Server = fmt.Sprintf("https://%s:%d", clusterAccess.ForceEndpoint, 6443)
+		}
+	}
+
+	_, err = os.Stat(kubeconfigPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+
+		return clientcmd.WriteToFile(*config, kubeconfigPath)
+	}
+
+	merger, err := kubeconfig.Load(kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("error loading existing kubeconfig: %w", err)
+	}
+
+	err = merger.Merge(config, kubeconfig.MergeOptions{
+		ActivateContext: true,
+		OutputWriter:    os.Stdout,
+		ConflictHandler: func(component kubeconfig.ConfigComponent, name string) (kubeconfig.ConflictDecision, error) {
+			return kubeconfig.RenameDecision, nil
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("error merging kubeconfig: %w", err)
+	}
+
+	return merger.Write(kubeconfigPath)
 }
 
 func parseCPUShare() (int64, error) {
@@ -416,5 +481,6 @@ func init() {
 	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
 	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
+	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
 	Cmd.AddCommand(createCmd)
 }

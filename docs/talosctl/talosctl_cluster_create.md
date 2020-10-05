@@ -1,11 +1,11 @@
 <!-- markdownlint-disable -->
 ## talosctl cluster create
 
-Creates a local docker-based or firecracker-based kubernetes cluster
+Creates a local docker-based or QEMU-based kubernetes cluster
 
 ### Synopsis
 
-Creates a local docker-based or firecracker-based kubernetes cluster
+Creates a local docker-based or QEMU-based kubernetes cluster
 
 ```
 talosctl cluster create [flags]
@@ -40,6 +40,7 @@ talosctl cluster create [flags]
       --nameservers strings                     list of nameservers to use (default [8.8.8.8,1.1.1.1])
       --registry-insecure-skip-verify strings   list of registry hostnames to skip TLS verification for
       --registry-mirror strings                 list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --skip-kubeconfig                         skip merging kubeconfig from the created cluster
       --vmlinuz-path string                     the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
       --wait                                    wait for the cluster to be ready before returning (default true)
       --wait-timeout duration                   timeout to wait for the cluster to be ready (default 20m0s)

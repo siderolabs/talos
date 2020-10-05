@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -52,14 +51,10 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				var err error
 
 				if merge {
-					var usr *user.User
-					usr, err = user.Current()
-
+					localPath, err = kubeconfig.DefaultPath()
 					if err != nil {
 						return err
 					}
-
-					localPath = filepath.Join(usr.HomeDir, ".kube/config")
 				} else {
 					localPath, err = os.Getwd()
 					if err != nil {

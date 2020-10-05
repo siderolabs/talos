@@ -28,7 +28,7 @@ A collection of commands for managing local docker-based or firecracker-based cl
 ### SEE ALSO
 
 * [talosctl](talosctl.md)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl cluster create](talosctl_cluster_create.md)	 - Creates a local docker-based or firecracker-based kubernetes cluster
+* [talosctl cluster create](talosctl_cluster_create.md)	 - Creates a local docker-based or QEMU-based kubernetes cluster
 * [talosctl cluster destroy](talosctl_cluster_destroy.md)	 - Destroys a local docker-based or firecracker-based kubernetes cluster
 * [talosctl cluster show](talosctl_cluster_show.md)	 - Shows info about a local provisioned kubernetes cluster
 
