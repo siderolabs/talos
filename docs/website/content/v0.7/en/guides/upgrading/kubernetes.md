@@ -1,8 +1,6 @@
 ---
-title: Upgrading
+title: Upgrading Kubernetes
 ---
-
-## Talos
 
 In an effort to create more production ready clusters, Talos will now taint control plane nodes as unschedulable.
 This means that any application you might have deployed must tolerate this taint if you intend on running the application on control plane nodes.
@@ -266,7 +264,7 @@ spec:
 
 The Talos team now maintains an image for the `kubelet` that should be used starting with Kubernetes 1.19.
 The image for this release is `docker.io/autonomy/kubelet:v1.19.0`.
-To explicitly set the image, we can use the [official documentation](https://www.talos.dev/docs/v0.6/en/configuration/v1alpha1#kubelet).
+To explicitly set the image, we can use the [official documentation](https://www.talos.dev/docs/v0.7/en/configuration/v1alpha1#kubelet).
 For example:
 
 ```yaml

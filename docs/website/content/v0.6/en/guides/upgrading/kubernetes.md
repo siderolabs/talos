@@ -1,8 +1,6 @@
 ---
-title: Upgrading
+title: Upgrading Kubernetes
 ---
-
-## Talos
 
 In an effort to create more production ready clusters, Talos will now taint control plane nodes as unschedulable.
 This means that any application you might have deployed must tolerate this taint if you intend on running the application on control plane nodes.

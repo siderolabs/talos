@@ -96,7 +96,17 @@
       },
       {
         "title": "Upgrading",
-        "path": "v0.7/en/guides/upgrading"
+        "path": "v0.7/en/guides/upgrading",
+        "children":[
+          {
+            "title": "Kubernetes",
+            "path": "v0.7/en/guides/upgrading/kubernetes"
+          },
+          {
+            "title": "Talos",
+            "path": "v0.7/en/guides/upgrading/talos"
+          }
+        ]
       }
     ]
   },
