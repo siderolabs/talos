@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package api
 
 import (
@@ -19,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
+// RebootSuite represents the reboot API suite.
 type RebootSuite struct {
 	base.APISuite
 
@@ -67,6 +66,8 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 }
 
 // TestRebootAllNodes reboots all cluster nodes at the same time.
+//
+// nolint: gocyclo
 func (suite *RebootSuite) TestRebootAllNodes() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboots")
@@ -128,7 +129,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 
 					if bootIDAfter == bootIDBefore {
 						// bootID should be different after reboot
-						return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s + %s, after %s", node, bootIDBefore, bootIDAfter))
+						return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s, after %s", node, bootIDBefore, bootIDAfter))
 					}
 
 					return nil

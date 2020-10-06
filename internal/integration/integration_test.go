@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration
-
 // Package integration_test contains core runners for integration tests
 package integration_test
 
@@ -45,6 +43,7 @@ var (
 	stateDir         string
 )
 
+// nolint: gocyclo
 func TestIntegration(t *testing.T) {
 	if talosConfig == "" {
 		t.Error("--talos.config is not provided")
@@ -139,7 +138,12 @@ func init() {
 	flag.Int64Var(&provision_test.DefaultSettings.DiskGB, "talos.provision.disk", provision_test.DefaultSettings.DiskGB, "disk size (in GiB) for each VM (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.MasterNodes, "talos.provision.masters", provision_test.DefaultSettings.MasterNodes, "master node count (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.WorkerNodes, "talos.provision.workers", provision_test.DefaultSettings.WorkerNodes, "worker node count (provision tests only)")
-	flag.StringVar(&provision_test.DefaultSettings.TargetInstallImageRegistry, "talos.provision.target-installer-registry", provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
+	flag.StringVar(
+		&provision_test.DefaultSettings.TargetInstallImageRegistry,
+		"talos.provision.target-installer-registry",
+		provision_test.DefaultSettings.TargetInstallImageRegistry,
+		"image registry for target installer image (provision tests only)",
+	)
 	flag.StringVar(&provision_test.DefaultSettings.CustomCNIURL, "talos.provision.custom-cni-url", provision_test.DefaultSettings.CustomCNIURL, "custom CNI URL for the cluster (provision tests only)")
 
 	allSuites = append(allSuites, api.GetAllSuites()...)

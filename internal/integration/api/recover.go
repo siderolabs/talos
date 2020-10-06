@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package api
 
 import (
@@ -21,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
+// RecoverSuite represent the recover API suite.
 type RecoverSuite struct {
 	base.K8sSuite
 
@@ -81,12 +80,12 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 				eg.Go(func() error {
 					suite.T().Logf("Deleting %s", pod.GetName())
 
-					err := suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{})
-					if err != nil {
-						return err
+					e := suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{})
+					if e != nil {
+						return e
 					}
 
-					return err
+					return e
 				})
 			}
 

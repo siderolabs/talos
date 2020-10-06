@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_k8s
-
 package k8s
 
 import (
@@ -32,8 +30,8 @@ func (suite *VersionSuite) TestExpectedVersion() {
 	apiServerVersion, err := suite.DiscoveryClient.ServerVersion()
 	suite.Require().NoError(err)
 
-	expectedApiServerVersion := fmt.Sprintf("v%s", constants.DefaultKubernetesVersion)
-	suite.Assert().Equal(expectedApiServerVersion, apiServerVersion.GitVersion)
+	expectedAPIServerVersion := fmt.Sprintf("v%s", constants.DefaultKubernetesVersion)
+	suite.Assert().Equal(expectedAPIServerVersion, apiServerVersion.GitVersion)
 
 	checkKernelVersion := suite.Capabilities().RunsTalosKernel
 
@@ -51,6 +49,7 @@ func (suite *VersionSuite) TestExpectedVersion() {
 		suite.Assert().Equal("linux", node.Status.NodeInfo.OperatingSystem)
 		suite.Assert().Equal(expectedContainerRuntimeVersion, node.Status.NodeInfo.ContainerRuntimeVersion)
 		suite.Assert().Equal(expectedKubeletVersion, node.Status.NodeInfo.KubeletVersion)
+
 		if checkKernelVersion {
 			suite.Assert().Equal(expectedKernelVersion, node.Status.NodeInfo.KernelVersion)
 		}

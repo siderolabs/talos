@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration
-
 package base
 
 import "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -25,6 +23,8 @@ func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
 		return wrapper.masterNodes
 	case machine.TypeJoin:
 		return wrapper.workerNodes
+	case machine.TypeUnknown:
+		panic("unimplemented")
 	default:
 		panic("unreachable")
 	}

@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_cli
-
 package cli
 
 import (
@@ -30,6 +28,7 @@ func (suite *CrashdumpSuite) TestRun() {
 	}
 
 	args := []string{}
+
 	for _, node := range suite.Cluster.Info().Nodes {
 		switch node.Type {
 		case machine.TypeInit:
@@ -38,6 +37,8 @@ func (suite *CrashdumpSuite) TestRun() {
 			args = append(args, "--control-plane-nodes", node.PrivateIP.String())
 		case machine.TypeJoin:
 			args = append(args, "--worker-nodes", node.PrivateIP.String())
+		case machine.TypeUnknown:
+			panic("unimplemented")
 		}
 	}
 

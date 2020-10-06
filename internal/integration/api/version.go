@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package api
 
 import (
@@ -74,6 +72,7 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 	suite.Require().Len(v.Messages, len(nodes))
 
 	expectedVersion := v.Messages[0].Version.Tag
+
 	for _, version := range v.Messages {
 		suite.Assert().Equal(expectedVersion, version.Version.Tag)
 	}

@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_cli
-
 package cli
 
 import (
@@ -27,6 +25,7 @@ func (suite *ValidateSuite) SuiteName() string {
 	return "cli.ValidateSuite"
 }
 
+// SetupTest sets up the test.
 func (suite *ValidateSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -38,6 +37,7 @@ func (suite *ValidateSuite) SetupTest() {
 	suite.Require().NoError(os.Chdir(suite.tmpDir))
 }
 
+// TearDownTest tears down the test.
 func (suite *ValidateSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))
@@ -53,7 +53,11 @@ func (suite *ValidateSuite) TestValidate() {
 	suite.RunCLI([]string{"gen", "config", "foobar", "https://10.0.0.1"})
 
 	for _, configFile := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
+		configFile := configFile
+
 		for _, mode := range []string{"cloud", "container"} {
+			mode := mode
+
 			suite.Run(fmt.Sprintf("%s-%s", configFile, mode), func() {
 				suite.RunCLI([]string{"validate", "-m", mode, "-c", configFile})
 			})

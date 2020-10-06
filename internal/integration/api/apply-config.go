@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package api
 
 import (
@@ -40,6 +38,7 @@ const applyConfigTestSysctlVal = "1"
 
 const assertRebootedRebootTimeout = 10 * time.Minute
 
+// ApplyConfigSuite represents the ApplyConfiguration API suite.
 type ApplyConfigSuite struct {
 	base.K8sSuite
 
@@ -93,7 +92,7 @@ func (suite *ApplyConfigSuite) TestRecoverControlPlane() {
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		_, err := suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 			Data: cfgDataOut,
 		})
 		if err != nil {
@@ -122,9 +121,10 @@ func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (conf
 	if err != nil {
 		return nil, fmt.Errorf("error creating reader: %w", err)
 	}
+	// nolint: errcheck
 	defer reader.Close()
 
-	if err := copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
+	if err = copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
 		return nil, fmt.Errorf("error reading: %w", err)
 	}
 
@@ -142,6 +142,7 @@ func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) 
 	var chanErr error
 
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 

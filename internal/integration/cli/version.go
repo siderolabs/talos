@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_cli
-
 package cli
 
 import (
@@ -37,7 +35,7 @@ func (suite *VersionSuite) TestShortVersion() {
 	)
 }
 
-// TestClientVersion verifies only client version output.
+// TestClient verifies only client version output.
 func (suite *VersionSuite) TestClient() {
 	suite.RunCLI([]string{"version", "--client"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),

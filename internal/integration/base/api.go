@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package base
 
 import (
@@ -76,7 +74,7 @@ func (apiSuite *APISuite) DiscoverNodes() cluster.Info {
 	return apiSuite.discoveredNodes
 }
 
-// RandomNode returns a random node of the specified type (or any type if no types are specified).
+// RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
 func (apiSuite *APISuite) RandomDiscoveredNode(types ...machine.Type) string {
 	nodeInfo := apiSuite.DiscoverNodes()
 
@@ -204,7 +202,7 @@ func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, reboo
 
 		if bootIDAfter == bootIDBefore {
 			// bootID should be different after reboot
-			return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s + %s, after %s", node, bootIDBefore, bootIDAfter))
+			return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s, after %s", node, bootIDBefore, bootIDAfter))
 		}
 
 		return nil

@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package api
 
 import (
@@ -139,6 +137,7 @@ func (suite *DmesgSuite) TestClusterHasDmesg() {
 			if err == io.EOF {
 				break
 			}
+
 			suite.Require().NoError(err)
 		}
 

@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_cli
-
 package cli
 
 import (
@@ -26,6 +24,7 @@ func (suite *GenSuite) SuiteName() string {
 	return "cli.GenSuite"
 }
 
+// SetupTest sets up the test.
 func (suite *GenSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -37,6 +36,7 @@ func (suite *GenSuite) SetupTest() {
 	suite.Require().NoError(os.Chdir(suite.tmpDir))
 }
 
+// TearDownTest tears down the test.
 func (suite *GenSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))

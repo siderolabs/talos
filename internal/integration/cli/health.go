@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_cli
-
 package cli
 
 import (
@@ -26,6 +24,8 @@ func (suite *HealthSuite) SuiteName() string {
 }
 
 // TestClientSide does successful health check run from client-side.
+//
+// nolint: gocyclo
 func (suite *HealthSuite) TestClientSide() {
 	if suite.Cluster == nil {
 		suite.T().Skip("Cluster is not available, skipping test")
@@ -45,6 +45,7 @@ func (suite *HealthSuite) TestClientSide() {
 		nodes := []string{}
 
 		for _, node := range suite.Cluster.Info().Nodes {
+			// nolint: exhaustive
 			switch node.Type {
 			case machine.TypeControlPlane:
 				nodes = append(nodes, node.PrivateIP.String())
@@ -64,6 +65,7 @@ func (suite *HealthSuite) TestClientSide() {
 		}
 	} else {
 		for _, node := range suite.Cluster.Info().Nodes {
+			// nolint: exhaustive
 			switch node.Type {
 			case machine.TypeInit:
 				args = append(args, "--init-node", node.PrivateIP.String())

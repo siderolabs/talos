@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration
-
 // Package base provides shared definition of base suites for tests
 package base
 
@@ -36,14 +34,14 @@ type TalosSuite struct {
 // DiscoverNodes provides basic functionality to discover cluster nodes via test settings.
 //
 // This method is overridden in specific suites to allow for specific discovery.
-func (talosSuite *TalosSuite) DiscoverNodes() cluster.Info {
-	if talosSuite.discoveredNodes == nil {
-		if talosSuite.Cluster != nil {
-			talosSuite.discoveredNodes = access.NewAdapter(talosSuite.Cluster).Info
+func (suite *TalosSuite) DiscoverNodes() cluster.Info {
+	if suite.discoveredNodes == nil {
+		if suite.Cluster != nil {
+			suite.discoveredNodes = access.NewAdapter(suite.Cluster).Info
 		}
 	}
 
-	return talosSuite.discoveredNodes
+	return suite.discoveredNodes
 }
 
 // ConfiguredSuite expects config to be set before running.

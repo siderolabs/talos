@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_api
-
 package api
 
 import (
@@ -16,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
+// ResetSuite represents the reset API suite.
 type ResetSuite struct {
 	base.APISuite
 
@@ -56,6 +55,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 	}
 
 	initNodeAddress := ""
+
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeInit {
 			initNodeAddress = node.PrivateIP.String()
@@ -79,12 +79,11 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		suite.T().Log("Resetting node", node)
 
 		// uptime should go down after Reset, as it reboots the node
+		// TODO: there is no good way to assert that node was reset and disk contents were really wiped
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
 			return suite.Client.Reset(nodeCtx, true, true)
 		}, 10*time.Minute)
-
-		// TODO: there is no good way to assert that node was reset and disk contents were really wiped
 	}
 }
 

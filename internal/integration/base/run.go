@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build integration_cli
-
 package base
 
 import (
@@ -100,7 +98,7 @@ func StdoutMatchFunc(f MatchFunc) RunOption {
 	}
 }
 
-// StderrtMatchFunc appends to the list of MatchFuncs to run against stderr.
+// StderrMatchFunc appends to the list of MatchFuncs to run against stderr.
 func StderrMatchFunc(f MatchFunc) RunOption {
 	return func(opts *runOptions) {
 		opts.stderrMatchers = append(opts.stderrMatchers, f)
@@ -124,6 +122,7 @@ func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 		if index < 0 {
 			continue
 		}
+
 		switch strings.ToUpper(keyvalue[:index]) {
 		case "PATH":
 			fallthrough
@@ -142,6 +141,8 @@ func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 }
 
 // Run executes command and asserts on its exit status/output.
+//
+// nolint: gocyclo
 func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 	var opts runOptions
 
