@@ -31,12 +31,22 @@ type clusterNodes struct {
 }
 
 func (cluster *clusterNodes) Nodes() []string {
-	return append([]string{cluster.InitNode}, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
+	var initNodes []string
+
+	if cluster.InitNode != "" {
+		initNodes = []string{cluster.InitNode}
+	}
+
+	return append(initNodes, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
 }
 
 func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
 	switch t {
 	case machine.TypeInit:
+		if cluster.InitNode == "" {
+			return nil
+		}
+
 		return []string{cluster.InitNode}
 	case machine.TypeControlPlane:
 		return cluster.ControlPlaneNodes

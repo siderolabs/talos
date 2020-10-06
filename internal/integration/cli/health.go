@@ -8,7 +8,6 @@ package cli
 
 import (
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -42,25 +41,13 @@ func (suite *HealthSuite) TestClientSide() {
 	}
 
 	if bootstrapAPIIsUsed {
-		nodes := []string{}
-
 		for _, node := range suite.Cluster.Info().Nodes {
 			switch node.Type {
 			case machine.TypeControlPlane:
-				nodes = append(nodes, node.PrivateIP.String())
+				args = append(args, "--control-plane-nodes", node.PrivateIP.String())
 			case machine.TypeJoin:
 				args = append(args, "--worker-nodes", node.PrivateIP.String())
 			}
-		}
-
-		sort.Strings(nodes)
-
-		if len(nodes) > 0 {
-			args = append(args, "--init-node", nodes[0])
-		}
-
-		if len(nodes) > 1 {
-			args = append(args, "--control-plane-nodes", strings.Join(nodes[1:], ","))
 		}
 	} else {
 		for _, node := range suite.Cluster.Info().Nodes {
