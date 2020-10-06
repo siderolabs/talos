@@ -1,4 +1,49 @@
 
+<a name="v0.7.0-alpha.4"></a>
+## [v0.7.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.3...v0.7.0-alpha.4) (2020-10-06)
+
+### Chore
+
+* attempt to fix image pushing for GitHub
+* update qemu hack script to use ISO
+* fix 'push' targets
+
+### Docs
+
+* small fixes for the config docs and air-gapped
+* add guide on setting up air-gapped environment with `images`
+* add note on settings endpoints on MacOS
+* remove second meeting from README
+* fix cluster name in docker docs
+
+### Feat
+
+* add etcd API
+* allow disabling NoSchedule on master nodes
+* colorize output of cluster health checks
+* pull kubeconfig from the cluster on successful `cluster create`
+* use kubeconfig merge in `talosctl kubeconfig` by default
+* support --registry-insecure-skip-verify for `cluster create`
+* show cluster state when `talosctl cluster create` finishes
+* support custom filename for talosctl kubeconfig
+* add support for disabling time
+* add ApplyConfiguration API
+* validate cluster DNS name
+* build Talos images/artifacts for amd64/arm64
+
+### Fix
+
+* make CLI context exit immediately on second ^C
+* registry auth config building
+* provide unique username in generate kubeconfig
+* make Flannel CNI image follow `$PKGS` version
+* retry container image import
+
+### Refactor
+
+* extract blockdevice library
+
+
 <a name="v0.7.0-alpha.3"></a>
 ## [v0.7.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.2...v0.7.0-alpha.3) (2020-09-25)
 
@@ -30,6 +75,10 @@
 * move installer image variables out of machinery
 * enable --removable options for GRUB
 * retry image pulling, stop on 404, no duplicate pulls
+
+### Release
+
+* **v0.7.0-alpha.3:** prepare release
 
 
 <a name="v0.7.0-alpha.2"></a>
