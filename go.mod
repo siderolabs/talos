@@ -27,6 +27,7 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
+	github.com/fatih/color v1.7.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.21.0
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gizak/termui/v3 v3.1.0
