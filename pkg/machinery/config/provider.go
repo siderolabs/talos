@@ -10,8 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
-
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -237,6 +236,7 @@ type ClusterConfig interface {
 	ExtraManifestURLs() []string
 	ExtraManifestHeaderMap() map[string]string
 	AdminKubeconfig() AdminKubeconfig
+	ScheduleOnMasters() bool
 }
 
 // ClusterNetwork defines the requirements for a config that pertains to cluster

@@ -16,7 +16,8 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
 
 	"github.com/talos-systems/crypto/x509"
@@ -366,6 +367,11 @@ func (c *ClusterConfig) Scheduler() config.Scheduler {
 // AdminKubeconfig implements the config.Provider interface.
 func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 	return c.AdminKubeconfigConfig
+}
+
+// ScheduleOnMasters implements the config.Provider interface.
+func (c *ClusterConfig) ScheduleOnMasters() bool {
+	return c.AllowSchedulingOnMasters
 }
 
 // Image implements the config.Provider interface.

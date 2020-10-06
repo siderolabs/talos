@@ -23,11 +23,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"go.etcd.io/etcd/clientv3"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
@@ -1378,7 +1378,7 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 		}
 
 		err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
-			if err = h.LabelNodeAsMaster(hostname); err != nil {
+			if err = h.LabelNodeAsMaster(hostname, !r.Config().Cluster().ScheduleOnMasters()); err != nil {
 				return retry.ExpectedError(err)
 			}
 
