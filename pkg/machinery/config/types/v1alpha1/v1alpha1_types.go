@@ -11,8 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
-
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -379,6 +378,14 @@ type ClusterConfig struct {
 	//       adminKubeconfig:
 	//         certLifetime: 1h
 	AdminKubeconfigConfig AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
+	//   description: |
+	//     Indicates if master nodes are schedulable.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	AllowSchedulingOnMasters bool `yaml:"allowSchedulingOnMasters,omitempty"`
 }
 
 // KubeletConfig reperesents the kubelet config values.

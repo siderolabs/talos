@@ -643,6 +643,19 @@ adminKubeconfig:
 
 ```
 
+#### allowSchedulingOnMasters
+
+Indicates if master nodes are schedulable.
+
+Type: `bool`
+
+Valid Values:
+
+- `true`
+- `yes`
+- `false`
+- `no`
+
 ---
 
 ### KubeletConfig

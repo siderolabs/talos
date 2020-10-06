@@ -189,7 +189,7 @@ func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
 // LabelNodeAsMaster labels a node with the required master label and NoSchedule taint.
 //
 //nolint: gocyclo
-func (h *Client) LabelNodeAsMaster(name string) (err error) {
+func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error) {
 	n, err := h.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -208,21 +208,23 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 
 	n.Labels[constants.LabelNodeRoleMaster] = ""
 
-	taintFound := false
+	if taintNoSchedule {
+		taintFound := false
 
-	for _, taint := range n.Spec.Taints {
-		if taint.Key == constants.LabelNodeRoleMaster && taint.Value == "true" {
-			taintFound = true
-			break
+		for _, taint := range n.Spec.Taints {
+			if taint.Key == constants.LabelNodeRoleMaster && taint.Value == "true" {
+				taintFound = true
+				break
+			}
 		}
-	}
 
-	if !taintFound {
-		n.Spec.Taints = append(n.Spec.Taints, corev1.Taint{
-			Key:    constants.LabelNodeRoleMaster,
-			Value:  "true",
-			Effect: corev1.TaintEffectNoSchedule,
-		})
+		if !taintFound {
+			n.Spec.Taints = append(n.Spec.Taints, corev1.Taint{
+				Key:    constants.LabelNodeRoleMaster,
+				Value:  "true",
+				Effect: corev1.TaintEffectNoSchedule,
+			})
+		}
 	}
 
 	newData, err := json.Marshal(n)
