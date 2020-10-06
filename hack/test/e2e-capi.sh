@@ -4,8 +4,6 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
-export CABPT_VERSION="0.2.0-alpha.0"
-export CACPPT_VERSION="0.1.0-alpha.2"
 export CAPA_VERSION="0.5.4"
 
 # We need to override this here since e2e.sh will set it to ${TMP}/capi/kubeconfig.
@@ -21,10 +19,11 @@ apk add --no-cache gettext
 export GCP_B64ENCODED_CREDENTIALS=${GCE_SVC_ACCT}
 export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
 
+# Deploys latest releases of our components and a known version of GCP and AWS.
 ${CLUSTERCTL} init \
-    --control-plane "talos:v${CACPPT_VERSION}" \
+    --control-plane "talos" \
     --infrastructure "aws:v${CAPA_VERSION}" \
-    --bootstrap "talos:v${CABPT_VERSION}"
+    --bootstrap "talos"
 
 cat ${PWD}/hack/test/capi/components-capg.yaml| envsubst | ${KUBECTL} apply -f -
 
