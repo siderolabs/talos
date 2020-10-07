@@ -32,6 +32,10 @@ const (
 	// initial interface used to bootstrap the node
 	KernelParamDefaultInterface = "talos.interface"
 
+	// KernelParamShutdown is the kernel parameter for specifying the
+	// shutdown type (halt/poweroff)
+	KernelParamShutdown = "talos.shutdown"
+
 	// KernelParamNetworkInterfaceIgnore is the kernel parameter for specifying network interfaces which should be ignored by talos
 	KernelParamNetworkInterfaceIgnore = "talos.network.interface.ignore"
 

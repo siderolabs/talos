@@ -28,6 +28,7 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
@@ -1397,6 +1398,12 @@ func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, 
 func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		SyncNonVolatileStorageBuffers()
+
+		if p := procfs.ProcCmdline().Get(constants.KernelParamShutdown).First(); p != nil {
+			if *p == "halt" {
+				return unix.Reboot(unix.LINUX_REBOOT_CMD_HALT)
+			}
+		}
 
 		return unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
 	}, "shutdown"
