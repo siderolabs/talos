@@ -141,11 +141,7 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 	}
 
 	for _, platform := range platforms {
-		args := []string{"--boot-directory=" + constants.BootMountPoint, "--efi-directory=" + constants.EFIMountPoint}
-
-		if strings.HasSuffix(platform, "-efi") {
-			args = append(args, "--removable")
-		}
+		args := []string{"--boot-directory=" + constants.BootMountPoint, "--efi-directory=" + constants.EFIMountPoint, "--removable"}
 
 		if loopDevice {
 			args = append(args, "--no-nvram")
