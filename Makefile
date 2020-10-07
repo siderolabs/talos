@@ -284,7 +284,7 @@ conformance: ## Performs policy checks against the commit and source code.
 
 .PHONY: release-notes
 release-notes:
-	./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
+	ARTIFACTS=$(ARTIFACTS) ./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
 
 .PHONY: login
 login: ## Logs in to the configured container registry.

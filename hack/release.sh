@@ -15,6 +15,10 @@ function changelog {
 
 function release-notes {
   git-chglog --output ${1} -c ./hack/chglog/config.yml "${2}"
+
+  echo -e '## Images\n\n```' >> ${1}
+  ${ARTIFACTS}/talosctl-linux-amd64 images >> ${1}
+  echo -e '```\n' >> ${1}
 }
 
 function cherry-pick {
