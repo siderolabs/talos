@@ -8,16 +8,18 @@
 package networkd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sys/unix"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -324,11 +326,14 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 	// Platform
 	var p runtime.Platform
 
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
 	p, err = platform.CurrentPlatform()
 	if err == nil {
 		var pHostname []byte
 
-		if pHostname, err = p.Hostname(); err == nil && string(pHostname) != "" {
+		if pHostname, err = p.Hostname(ctx); err == nil && string(pHostname) != "" {
 			hostname = string(pHostname)
 		}
 	}

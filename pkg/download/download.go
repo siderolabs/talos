@@ -5,6 +5,7 @@
 package download
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -55,7 +56,7 @@ func WithHeaders(headers map[string]string) Option {
 
 // Download downloads a config.
 // nolint: gocyclo
-func Download(endpoint string, opts ...Option) (b []byte, err error) {
+func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return b, err
@@ -73,7 +74,7 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 
 	var req *http.Request
 
-	if req, err = http.NewRequest(http.MethodGet, u.String(), nil); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
 		return b, err
 	}
 
@@ -82,6 +83,12 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 	}
 
 	err = retry.Exponential(60*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second)).Retry(func() error {
+		select {
+		case <-ctx.Done():
+			return retry.UnexpectedError(context.Canceled)
+		default:
+		}
+
 		b, err = download(req)
 		if err != nil {
 			return retry.ExpectedError(err)

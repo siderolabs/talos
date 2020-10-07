@@ -5,6 +5,7 @@
 package container
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"log"
@@ -25,7 +26,7 @@ func (c *Container) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (c *Container) Configuration() ([]byte, error) {
+func (c *Container) Configuration(context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: USERDATA environment variable")
 
 	s, ok := os.LookupEnv("USERDATA")
@@ -42,7 +43,7 @@ func (c *Container) Configuration() ([]byte, error) {
 }
 
 // Hostname implements the platform.Platform interface.
-func (c *Container) Hostname() (hostname []byte, err error) {
+func (c *Container) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, nil
 }
 
@@ -52,7 +53,7 @@ func (c *Container) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (c *Container) ExternalIPs() (addrs []net.IP, err error) {
+func (c *Container) ExternalIPs(context.Context) (addrs []net.IP, err error) {
 	return addrs, err
 }
 

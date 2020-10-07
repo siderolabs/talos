@@ -12,7 +12,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -38,14 +37,14 @@ func (g *GCP) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (g *GCP) Configuration() ([]byte, error) {
+func (g *GCP) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", GCUserDataEndpoint)
 
-	return download.Download(GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
+	return download.Download(ctx, GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
 }
 
 // Hostname implements the platform.Platform interface.
-func (g *GCP) Hostname() (hostname []byte, err error) {
+func (g *GCP) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, nil
 }
 
@@ -55,15 +54,12 @@ func (g *GCP) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (g *GCP) ExternalIPs() (addrs []net.IP, err error) {
+func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request
 		resp *http.Response
 	)
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	if req, err = http.NewRequestWithContext(ctx, "GET", GCExternalIPEndpoint, nil); err != nil {
 		return

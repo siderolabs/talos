@@ -5,6 +5,7 @@
 package packet
 
 import (
+	"context"
 	"log"
 	"net"
 
@@ -28,10 +29,10 @@ func (p *Packet) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (p *Packet) Configuration() ([]byte, error) {
+func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", PacketUserDataEndpoint)
 
-	return download.Download(PacketUserDataEndpoint)
+	return download.Download(ctx, PacketUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.
@@ -40,12 +41,12 @@ func (p *Packet) Mode() runtime.Mode {
 }
 
 // Hostname implements the platform.Platform interface.
-func (p *Packet) Hostname() (hostname []byte, err error) {
+func (p *Packet) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, nil
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (p *Packet) ExternalIPs() (addrs []net.IP, err error) {
+func (p *Packet) ExternalIPs(context.Context) (addrs []net.IP, err error) {
 	return addrs, err
 }
 
