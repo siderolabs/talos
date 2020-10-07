@@ -71,6 +71,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	// reboot configuration
 	cmdline.Append("reboot", "k")
 	cmdline.Append("panic", "1")
+	cmdline.Append("talos.shutdown", "halt")
 
 	// Talos config
 	cmdline.Append("talos.platform", "metal")

@@ -46,6 +46,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 			// reboot configuration
 			"reboot=k",
 			"panic=1",
+			"talos.shutdown=halt",
 			// Talos-specific
 			"talos.platform=metal",
 		}),
