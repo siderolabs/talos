@@ -5,6 +5,7 @@
 package metal
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -39,7 +40,7 @@ func (m *Metal) Name() string {
 // Configuration implements the platform.Platform interface.
 //
 // nolint: gocyclo
-func (m *Metal) Configuration() ([]byte, error) {
+func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("no config option was found")
@@ -83,12 +84,12 @@ func (m *Metal) Configuration() ([]byte, error) {
 	case constants.MetalConfigISOLabel:
 		return readConfigFromISO()
 	default:
-		return download.Download(*option)
+		return download.Download(ctx, *option)
 	}
 }
 
 // Hostname implements the platform.Platform interface.
-func (m *Metal) Hostname() (hostname []byte, err error) {
+func (m *Metal) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, nil
 }
 
@@ -98,7 +99,7 @@ func (m *Metal) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the platform.Platform interface.
-func (m *Metal) ExternalIPs() (addrs []net.IP, err error) {
+func (m *Metal) ExternalIPs(context.Context) (addrs []net.IP, err error) {
 	return addrs, err
 }
 

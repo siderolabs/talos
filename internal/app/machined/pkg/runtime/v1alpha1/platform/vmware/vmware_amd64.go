@@ -7,6 +7,7 @@
 package vmware
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ func (v *VMware) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (v *VMware) Configuration() ([]byte, error) {
+func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("no config option was found")
@@ -72,7 +73,7 @@ func (v *VMware) Configuration() ([]byte, error) {
 }
 
 // Hostname implements the platform.Platform interface.
-func (v *VMware) Hostname() (hostname []byte, err error) {
+func (v *VMware) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, nil
 }
 
@@ -82,7 +83,7 @@ func (v *VMware) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
+func (v *VMware) ExternalIPs(context.Context) (addrs []net.IP, err error) {
 	return addrs, err
 }
 

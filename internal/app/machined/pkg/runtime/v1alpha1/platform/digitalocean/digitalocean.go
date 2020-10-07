@@ -11,7 +11,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -37,10 +36,10 @@ func (d *DigitalOcean) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (d *DigitalOcean) Configuration() ([]byte, error) {
+func (d *DigitalOcean) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", DigitalOceanUserDataEndpoint)
 
-	return download.Download(DigitalOceanUserDataEndpoint)
+	return download.Download(ctx, DigitalOceanUserDataEndpoint)
 }
 
 // Mode implements the platform.Platform interface.
@@ -49,10 +48,7 @@ func (d *DigitalOcean) Mode() runtime.Mode {
 }
 
 // Hostname implements the platform.Platform interface.
-func (d *DigitalOcean) Hostname() (hostname []byte, err error) {
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
-
+func (d *DigitalOcean) Hostname(ctx context.Context) (hostname []byte, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, DigitalOceanHostnameEndpoint, nil)
 	if err != nil {
 		return nil, err
@@ -73,15 +69,12 @@ func (d *DigitalOcean) Hostname() (hostname []byte, err error) {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (d *DigitalOcean) ExternalIPs() (addrs []net.IP, err error) {
+func (d *DigitalOcean) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request
 		resp *http.Response
 	)
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	if req, err = http.NewRequestWithContext(ctx, "GET", DigitalOceanExternalIPEndpoint, nil); err != nil {
 		return

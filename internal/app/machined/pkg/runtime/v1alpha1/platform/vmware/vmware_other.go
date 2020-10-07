@@ -7,6 +7,7 @@
 package vmware
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -24,12 +25,12 @@ func (v *VMware) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (v *VMware) Configuration() ([]byte, error) {
+func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	return nil, fmt.Errorf("arch not supported")
 }
 
 // Hostname implements the platform.Platform interface.
-func (v *VMware) Hostname() (hostname []byte, err error) {
+func (v *VMware) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, fmt.Errorf("arch not supported")
 }
 
@@ -39,7 +40,7 @@ func (v *VMware) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (v *VMware) ExternalIPs() (addrs []net.IP, err error) {
+func (v *VMware) ExternalIPs(context.Context) (addrs []net.IP, err error) {
 	return addrs, err
 }
 

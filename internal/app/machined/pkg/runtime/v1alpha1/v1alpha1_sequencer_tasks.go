@@ -422,7 +422,10 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		download := func() error {
 			var b []byte
 
-			b, e := fetchConfig(r)
+			fetchCtx, ctxCancel := context.WithTimeout(context.Background(), 70*time.Second)
+			defer ctxCancel()
+
+			b, e := fetchConfig(fetchCtx, r)
 			if e != nil {
 				return e
 			}
@@ -467,7 +470,10 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 // SaveConfig represents the SaveConfig task.
 func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		hostname, err := r.State().Platform().Hostname()
+		saveCtx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer ctxCancel()
+
+		hostname, err := r.State().Platform().Hostname(saveCtx)
 		if err != nil {
 			return err
 		}
@@ -476,7 +482,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			r.Config().Machine().Network().SetHostname(string(hostname))
 		}
 
-		addrs, err := r.State().Platform().ExternalIPs()
+		addrs, err := r.State().Platform().ExternalIPs(saveCtx)
 		if err != nil {
 			logger.Printf("certificates will be created without external IPs: %v", err)
 		}
@@ -500,10 +506,10 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 	}, "saveConfig"
 }
 
-func fetchConfig(r runtime.Runtime) (out []byte, err error) {
+func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
 	var b []byte
 
-	if b, err = r.State().Platform().Configuration(); err != nil {
+	if b, err = r.State().Platform().Configuration(ctx); err != nil {
 		return nil, err
 	}
 

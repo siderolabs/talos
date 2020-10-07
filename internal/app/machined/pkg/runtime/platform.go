@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"context"
 	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
@@ -13,9 +14,9 @@ import (
 // Platform defines the requirements for a platform.
 type Platform interface {
 	Name() string
-	Configuration() ([]byte, error)
-	Hostname() ([]byte, error)
+	Configuration(context.Context) ([]byte, error)
+	Hostname(context.Context) ([]byte, error)
 	Mode() Mode
-	ExternalIPs() ([]net.IP, error)
+	ExternalIPs(context.Context) ([]net.IP, error)
 	KernelArgs() procfs.Parameters
 }

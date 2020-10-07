@@ -133,10 +133,10 @@ func (a *AWS) Name() string {
 }
 
 // Configuration implements the runtime.Platform interface.
-func (a *AWS) Configuration() ([]byte, error) {
+func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", AWSUserDataEndpoint)
 
-	return download.Download(AWSUserDataEndpoint)
+	return download.Download(ctx, AWSUserDataEndpoint)
 }
 
 // Mode implements the runtime.Platform interface.
@@ -145,10 +145,7 @@ func (a *AWS) Mode() runtime.Mode {
 }
 
 // Hostname implements the runtime.Platform interface.
-func (a *AWS) Hostname() (hostname []byte, err error) {
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
-
+func (a *AWS) Hostname(ctx context.Context) (hostname []byte, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, AWSHostnameEndpoint, nil)
 	if err != nil {
 		return nil, err
@@ -169,15 +166,12 @@ func (a *AWS) Hostname() (hostname []byte, err error) {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
+func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request
 		resp *http.Response
 	)
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	if req, err = http.NewRequestWithContext(ctx, "GET", AWSExternalIPEndpoint, nil); err != nil {
 		return
