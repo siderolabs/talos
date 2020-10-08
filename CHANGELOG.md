@@ -1,4 +1,25 @@
 
+<a name="v0.7.0-alpha.5"></a>
+## [v0.7.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.4...v0.7.0-alpha.5) (2020-10-08)
+
+### Chore
+
+* add Context as param to some methods of `Platform` interface
+* bump pkgs version
+* publish list of images to release notes
+
+### Feat
+
+* bring in install-cni & pod-checkpointer from extras packages
+* implement talos.shutdown=[halt|poweroff] kernel argument
+
+### Fix
+
+* random failures in cluster health checks
+* apply --removable option always to get standard UEFI filename
+* nil pointer panic in talosctl dashboard
+
+
 <a name="v0.7.0-alpha.4"></a>
 ## [v0.7.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.3...v0.7.0-alpha.4) (2020-10-06)
 
@@ -42,6 +63,10 @@
 ### Refactor
 
 * extract blockdevice library
+
+### Release
+
+* **v0.7.0-alpha.4:** prepare release
 
 
 <a name="v0.7.0-alpha.3"></a>
