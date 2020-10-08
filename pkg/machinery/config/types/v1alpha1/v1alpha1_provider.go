@@ -981,13 +981,7 @@ func (c *CoreDNS) Image() string {
 
 // Image implements the config.Provider interface.
 func (p *PodCheckpointer) Image() string {
-	checkpointerImage := constants.PodCheckpointerImage
-
-	if p.PodCheckpointerImage != "" {
-		checkpointerImage = p.PodCheckpointerImage
-	}
-
-	return checkpointerImage
+	return p.PodCheckpointerImage
 }
 
 // CertLifetime implements the config.Provider interface.

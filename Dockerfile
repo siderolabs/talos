@@ -121,9 +121,10 @@ FROM base AS init-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/init
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /init
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /init
 RUN chmod +x /init
 
 FROM scratch AS init
@@ -135,12 +136,13 @@ FROM base AS machined-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 WORKDIR /src/internal/app/machined
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /machined
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /machined
 RUN chmod +x /machined
 
 FROM scratch AS machined
@@ -152,9 +154,10 @@ FROM base AS timed-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/timed
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /timed
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /timed
 RUN chmod +x /timed
 
 FROM base AS timed-image
@@ -171,9 +174,10 @@ FROM base AS apid-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/apid
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /apid
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /apid
 RUN chmod +x /apid
 
 FROM base AS apid-image
@@ -190,9 +194,10 @@ FROM base AS trustd-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/trustd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /trustd
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /trustd
 RUN chmod +x /trustd
 
 FROM base AS trustd-image
@@ -209,9 +214,10 @@ FROM base AS networkd-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/networkd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /networkd
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /networkd
 RUN chmod +x /networkd
 
 FROM base AS networkd-image
@@ -228,9 +234,10 @@ FROM base AS routerd-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/routerd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /routerd
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /routerd
 RUN chmod +x /routerd
 
 FROM base AS routerd-image
@@ -248,9 +255,10 @@ FROM base AS bootkube-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/bootkube
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS}" -o /bootkube
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /bootkube
 RUN chmod +x /bootkube
 
 FROM base AS bootkube-image
@@ -268,6 +276,7 @@ FROM base AS talosctl-linux-amd64-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG ARTIFACTS
 ARG USERNAME
 ARG REGISTRY
@@ -275,13 +284,14 @@ ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
 
 FROM base AS talosctl-linux-arm64-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG ARTIFACTS
 ARG USERNAME
 ARG REGISTRY
@@ -289,13 +299,14 @@ ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-arm64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
 
 FROM base AS talosctl-linux-armv7-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG ARTIFACTS
 ARG USERNAME
 ARG REGISTRY
@@ -303,7 +314,7 @@ ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm GOARM=7  go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-armv7
+RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=arm GOARM=7  go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-armv7
 RUN chmod +x /talosctl-linux-armv7
 
 FROM scratch AS talosctl-linux
@@ -315,6 +326,7 @@ FROM base AS talosctl-darwin-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG ARTIFACTS
 ARG USERNAME
 ARG REGISTRY
@@ -322,7 +334,7 @@ ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-darwin-amd64
+RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 
 FROM scratch AS talosctl-darwin
@@ -417,12 +429,13 @@ FROM base AS installer-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 WORKDIR /src/cmd/installer
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /installer
+RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /installer
 RUN chmod +x /installer
 
 FROM alpine:3.11 AS installer
@@ -490,12 +503,13 @@ FROM base AS integration-test-linux-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -506,12 +520,13 @@ FROM base AS integration-test-darwin-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 RUN --mount=type=cache,target=/.cache/go-build GOOS=darwin GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -524,6 +539,7 @@ FROM base AS integration-test-provision-linux-build
 ARG SHA
 ARG TAG
 ARG PKGS
+ARG EXTRAS
 ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
@@ -531,7 +547,7 @@ ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 ARG ARTIFACTS
 RUN --mount=type=cache,target=/.cache/go-build GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
+    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
     -tags integration,integration_provision \
     ./internal/integration
 

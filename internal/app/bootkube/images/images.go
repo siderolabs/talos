@@ -20,7 +20,8 @@ func List(config config.Provider) asset.ImageVersions {
 
 	// Override all kube-related images with default val or specified image locations
 	images.Flannel = fmt.Sprintf("quay.io/coreos/flannel:v0.12.0-%s", runtime.GOARCH)
-	images.FlannelCNI = fmt.Sprintf("ghcr.io/talos-systems/install-cni:%s", version.PkgsVersion)
+	images.FlannelCNI = fmt.Sprintf("ghcr.io/talos-systems/install-cni:%s", version.ExtrasVersion)
+	images.PodCheckpointer = fmt.Sprintf("ghcr.io/talos-systems/pod-checkpointer:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
 	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
@@ -30,7 +31,10 @@ func List(config config.Provider) asset.ImageVersions {
 
 	// Allow for overriding by users via config data
 	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.PodCheckpointer = config.Cluster().PodCheckpointer().Image()
+
+	if config.Cluster().PodCheckpointer().Image() != "" {
+		images.PodCheckpointer = config.Cluster().PodCheckpointer().Image()
+	}
 
 	return images
 }

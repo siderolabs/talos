@@ -53,6 +53,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
@@ -1541,10 +1542,15 @@ func unmountSystemPartition(label string) (err error) {
 // Install mounts or installs the system partitions.
 func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		installerImage := r.Config().Machine().Install().Image()
+		if installerImage == "" {
+			installerImage = images.DefaultInstallerImage
+		}
+
 		err = install.RunInstallerContainer(
 			r.Config().Machine().Install().Disk(),
 			r.State().Platform().Name(),
-			r.Config().Machine().Install().Image(),
+			installerImage,
 			r.Config().Machine().Registries(),
 			install.WithForce(r.Config().Machine().Install().Force()),
 			install.WithZero(r.Config().Machine().Install().Zero()),

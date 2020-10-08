@@ -9,6 +9,7 @@ DOCKER_LOGIN_ENABLED ?= true
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-6-g7b00e69
 PKGS ?= v0.3.0-14-g5f4cff9
+EXTRAS ?= v0.1.0
 GO_VERSION ?= 1.15
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
 IMPORTVET ?= autonomy/importvet:f6b07d9
@@ -38,6 +39,7 @@ COMMON_ARGS += --platform=$(PLATFORM)
 COMMON_ARGS += --push=$(PUSH)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
+COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
