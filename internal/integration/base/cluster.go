@@ -14,7 +14,7 @@ type infoWrapper struct {
 }
 
 func (wrapper *infoWrapper) Nodes() []string {
-	return append(wrapper.masterNodes, wrapper.workerNodes...)
+	return append([]string(nil), append(wrapper.masterNodes, wrapper.workerNodes...)...)
 }
 
 func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
@@ -22,9 +22,9 @@ func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
 	case machine.TypeInit:
 		return nil
 	case machine.TypeControlPlane:
-		return wrapper.masterNodes
+		return append([]string(nil), wrapper.masterNodes...)
 	case machine.TypeJoin:
-		return wrapper.workerNodes
+		return append([]string(nil), wrapper.workerNodes...)
 	default:
 		panic("unreachable")
 	}

@@ -81,7 +81,7 @@ type clusterState struct {
 }
 
 func (cluster *clusterState) Nodes() []string {
-	return append(cluster.controlPlaneNodes, cluster.workerNodes...)
+	return append([]string(nil), append(cluster.controlPlaneNodes, cluster.workerNodes...)...)
 }
 
 func (cluster *clusterState) NodesByType(t machine.Type) []string {
@@ -89,9 +89,9 @@ func (cluster *clusterState) NodesByType(t machine.Type) []string {
 	case machine.TypeInit:
 		return nil
 	case machine.TypeControlPlane:
-		return cluster.controlPlaneNodes
+		return append([]string(nil), cluster.controlPlaneNodes...)
 	case machine.TypeJoin:
-		return cluster.workerNodes
+		return append([]string(nil), cluster.workerNodes...)
 	case machine.TypeUnknown:
 		return nil
 	default:
