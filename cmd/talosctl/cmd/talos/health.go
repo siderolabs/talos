@@ -49,9 +49,9 @@ func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
 
 		return []string{cluster.InitNode}
 	case machine.TypeControlPlane:
-		return cluster.ControlPlaneNodes
+		return append([]string(nil), cluster.ControlPlaneNodes...)
 	case machine.TypeJoin:
-		return cluster.WorkerNodes
+		return append([]string(nil), cluster.WorkerNodes...)
 	case machine.TypeUnknown:
 		return nil
 	default:
