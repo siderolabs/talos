@@ -180,11 +180,6 @@ const (
 	// KubernetesSchedulerImage is the enforced scheduler image to use for the control plane.
 	KubernetesSchedulerImage = "k8s.gcr.io/kube-scheduler"
 
-	// PodCheckpointerImage is the enforced pod checkpointer for bootkube to use
-	// TODO(andrewrynhard): This is a hack workaround for now. Update this once
-	// there is an official image.
-	PodCheckpointerImage = "docker.io/autonomy/pod-checkpointer:51fba9528e96d3be488562574c288b2fb82a1e3b"
-
 	// RecoveryKubeconfig is the path to kubeconfig used temporarily while recovering control plane.
 	RecoveryKubeconfig = "/etc/kubernetes/kubeconfig"
 

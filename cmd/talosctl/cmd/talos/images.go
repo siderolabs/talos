@@ -44,6 +44,7 @@ var imagesCmd = &cobra.Command{
 		fmt.Printf("%s\n", images.KubeScheduler)
 		fmt.Printf("%s\n", images.KubeProxy)
 		fmt.Printf("%s\n", images.Kubelet)
+		fmt.Printf("%s\n", images.PodCheckpointer)
 		fmt.Printf("%s\n", imagespkg.DefaultInstallerImage)
 
 		return nil

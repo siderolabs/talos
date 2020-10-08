@@ -22,8 +22,10 @@ var (
 	SHA string
 	// Built is set at build time.
 	Built string
-	// PkgsVersion is set at build time
+	// PkgsVersion is set at build time.
 	PkgsVersion string
+	// ExtrasVersion is set at build time.
+	ExtrasVersion string
 )
 
 const versionTemplate = `	Tag:         {{ .Tag }}
