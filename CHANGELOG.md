@@ -1,4 +1,12 @@
 
+<a name="v0.7.0-alpha.6"></a>
+## [v0.7.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.5...v0.7.0-alpha.6) (2020-10-09)
+
+### Test
+
+* potential fix for talosctl cluster destroy being stuck
+
+
 <a name="v0.7.0-alpha.5"></a>
 ## [v0.7.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.4...v0.7.0-alpha.5) (2020-10-08)
 
@@ -18,6 +26,10 @@
 * random failures in cluster health checks
 * apply --removable option always to get standard UEFI filename
 * nil pointer panic in talosctl dashboard
+
+### Release
+
+* **v0.7.0-alpha.5:** prepare release
 
 
 <a name="v0.7.0-alpha.4"></a>
@@ -103,11 +115,12 @@
 
 ### Release
 
+* **v0.7.0-alpha.2:** prepare release
 * **v0.7.0-alpha.3:** prepare release
 
 
 <a name="v0.7.0-alpha.2"></a>
-## [v0.7.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.1...v0.7.0-alpha.2) (2020-09-18)
+## [v0.7.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.1...v0.7.0-alpha.2) (2020-09-17)
 
 ### Chore
 
@@ -154,10 +167,6 @@
 
 * garbage collect unused constants
 * deduplicate packages version in Dockerfile
-
-### Release
-
-* **v0.7.0-alpha.2:** prepare release
 
 ### Test
 
