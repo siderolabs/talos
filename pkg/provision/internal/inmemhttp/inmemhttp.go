@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // Server is an in-memory http web server.
@@ -86,5 +87,8 @@ func (s *server) Serve() {
 }
 
 func (s *server) Shutdown(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	return s.srv.Shutdown(ctx)
 }

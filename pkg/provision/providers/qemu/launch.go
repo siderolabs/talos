@@ -332,7 +332,7 @@ func Launch() error {
 				case <-config.controller.CommandsCh():
 					// machine might have been powered on
 				case sig := <-config.c:
-					fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
+					fmt.Fprintf(os.Stderr, "exiting stopped launcher as signal %s was received\n", sig)
 
 					return fmt.Errorf("process stopped")
 				}
