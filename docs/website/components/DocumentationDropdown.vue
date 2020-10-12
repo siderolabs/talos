@@ -36,7 +36,7 @@ export default {
     return {
       options: [
         { version: 'v0.7', url: '/docs/v0.7', prerelease: true },
-        { version: 'v0.6', url: '/docs/v0.6', prerelease: false },
+        { version: 'v0.6', url: '/docs/v0.6', prerelease: false, latest: true },
         { version: 'v0.5', url: '/docs/v0.5', prerelease: false },
         { version: 'v0.4', url: '/docs/v0.4', prerelease: false }
       ],
@@ -47,6 +47,10 @@ export default {
   methods: {
     version(option) {
       if (option.prerelease) {
+        return `${option.version} (pre-release)`
+      }
+
+      if (option.latest) {
         return `${option.version} (pre-release)`
       }
 

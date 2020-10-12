@@ -100,6 +100,18 @@ export default {
         }
 
         generatedRoutes.push(r)
+
+        if (version === 'v0.6') {
+          const latest = {
+            route: '/docs/latest/',
+            payload: {
+              sections: require(`${__dirname}/static/${version}.sections.${lang}.json`),
+              menu: require(`${__dirname}/static/${version}.menu.${lang}.json`)
+            }
+          }
+
+          generatedRoutes.push(latest)
+        }
       })
 
       callback(null, generatedRoutes)
