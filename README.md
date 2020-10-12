@@ -25,7 +25,7 @@ Some of the capabilities and benefits provided by Talos include:
 
 ## Documentation
 
-For instructions on deploying and managing Talos, see the [Documentation](https://www.talos.dev/docs/v0.4/).
+For instructions on deploying and managing Talos, see the [Documentation](https://www.talos.dev/docs/latest/).
 
 ## Community
 
