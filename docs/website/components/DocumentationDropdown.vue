@@ -51,7 +51,7 @@ export default {
       }
 
       if (option.latest) {
-        return `${option.version} (pre-release)`
+        return `${option.version} (latest)`
       }
 
       return option.version
