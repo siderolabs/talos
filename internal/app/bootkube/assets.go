@@ -236,8 +236,10 @@ func fetchManifests(urls []string, headers map[string]string) error {
 			Options: []getter.ClientOption{},
 		}
 
+		fmt.Printf("Downloading manifest: %q -> %q", client.Src, client.Dst)
+
 		if err = client.Get(); err != nil {
-			result = multierror.Append(result, err)
+			result = multierror.Append(result, fmt.Errorf("error fetching manifest by URL %q: %w", url, err))
 			continue
 		}
 	}
