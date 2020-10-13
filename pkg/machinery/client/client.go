@@ -563,6 +563,11 @@ func (c *Client) LS(ctx context.Context, req *machineapi.ListRequest) (stream ma
 	return c.MachineClient.List(ctx, req)
 }
 
+// DiskUsage implements the proto.OSClient interface.
+func (c *Client) DiskUsage(ctx context.Context, req *machineapi.DiskUsageRequest) (stream machineapi.MachineService_DiskUsageClient, err error) {
+	return c.MachineClient.DiskUsage(ctx, req)
+}
+
 // Copy implements the proto.OSClient interface.
 func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
 	stream, err := c.MachineClient.Copy(ctx, &machineapi.CopyRequest{
