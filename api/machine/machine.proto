@@ -31,6 +31,7 @@ service MachineService {
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
+  rpc DiskUsage(DiskUsageRequest) returns (stream DiskUsageInfo);
   rpc LoadAvg(google.protobuf.Empty) returns (LoadAvgResponse);
   rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
@@ -270,6 +271,20 @@ message ListRequest {
   int32 recursion_depth = 3;
 }
 
+// DiskUsageRequest describes a request to list disk usage of directories and regular files
+message DiskUsageRequest {
+  // RecursionDepth indicates how many levels of subdirectories should be
+  // recursed.  The default (0) indicates that no limit should be enforced.
+  int32 recursion_depth = 1;
+  // All write sizes for all files, not just directories.
+  bool all = 2;
+  // Threshold exclude entries smaller than SIZE if positive,
+  // or entries greater than SIZE if negative.
+  int64 threshold = 3;
+  // DiskUsagePaths is the list of directories to calculate disk usage for.
+  repeated string paths = 4;
+}
+
 // FileInfo describes a file or directory's information
 message FileInfo {
   common.Metadata metadata = 1;
@@ -290,6 +305,20 @@ message FileInfo {
   string link = 8;
   // RelativeName is the name of the file or directory relative to the RootPath
   string relative_name = 9;
+}
+
+// DiskUsageInfo describes a file or directory's information for du command
+message DiskUsageInfo {
+  common.Metadata metadata = 1;
+  // Name is the name (including prefixed path) of the file or directory
+  string name = 2;
+  // Size indicates the number of bytes contained within the file
+  int64 size = 3;
+  // Error describes any error encountered while trying to read the file
+  // information.
+  string error = 4;
+  // RelativeName is the name of the file or directory relative to the RootPath
+  string relative_name = 5;
 }
 
 // The messages message containing the requested df stats.

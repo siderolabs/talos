@@ -53,6 +53,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl time](talosctl_time.md)	 - Gets current server time
 * [talosctl upgrade](talosctl_upgrade.md)	 - Upgrade Talos on the target node
 * [talosctl upgrade-k8s](talosctl_upgrade-k8s.md)	 - Upgrade Kubernetes control plane in the Talos cluster.
+* [talosctl usage](talosctl_usage.md)	 - Retrieve a disk usage
 * [talosctl validate](talosctl_validate.md)	 - Validate config
 * [talosctl version](talosctl_version.md)	 - Prints the version
 

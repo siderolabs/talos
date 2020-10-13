@@ -26,7 +26,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"golang.org/x/sys/unix"
@@ -500,6 +500,187 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// DiskUsage implements the machine.MachineServer interface.
+func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineService_DiskUsageServer) error { //nolint: gocyclo
+	if req == nil {
+		req = new(machine.DiskUsageRequest)
+	}
+
+	for _, path := range req.Paths {
+		if !strings.HasPrefix(path, OSPathSeparator) {
+			// Make sure we use complete paths
+			path = OSPathSeparator + path
+		}
+
+		path = strings.TrimSuffix(path, OSPathSeparator)
+		if path == "" {
+			path = "/"
+		}
+
+		_, err := os.Stat(path)
+		if err == os.ErrNotExist {
+			err = obj.Send(
+				&machine.DiskUsageInfo{
+					Name:         path,
+					RelativeName: path,
+					Error:        err.Error(),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		files, err := archiver.Walker(obj.Context(), path, archiver.WithMaxRecurseDepth(-1))
+		if err != nil {
+			err = obj.Send(
+				&machine.DiskUsageInfo{
+					Name:         path,
+					RelativeName: path,
+					Error:        err.Error(),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		folders := map[string]*machine.DiskUsageInfo{}
+
+		// send a record back to client if the message shouldn't be skipped
+		// at the same time use record information for folder size estimation
+		sendSize := func(info *machine.DiskUsageInfo, depth int32, isDir bool) error {
+			prefix := strings.TrimRight(filepath.Dir(info.Name), "/")
+			if folder, ok := folders[prefix]; ok {
+				folder.Size += info.Size
+			}
+
+			// recursion depth check
+			skip := depth >= req.RecursionDepth && req.RecursionDepth > 0
+			// skip files check
+			skip = skip || !isDir && !req.All
+			// threshold check
+			skip = skip || req.Threshold > 0 && info.Size < req.Threshold
+			skip = skip || req.Threshold < 0 && info.Size > -req.Threshold
+
+			if skip {
+				return nil
+			}
+
+			return obj.Send(info)
+		}
+
+		var (
+			depth     int32
+			prefix    = path
+			rootDepth = int32(strings.Count(path, archiver.OSPathSeparator))
+		)
+
+		// flush all folder sizes until we get to the common prefix
+		flushFolders := func(prefix, nextPrefix string) error {
+			for !strings.HasPrefix(nextPrefix, prefix) {
+				currentDepth := int32(strings.Count(prefix, archiver.OSPathSeparator)) - rootDepth
+
+				if folder, ok := folders[prefix]; ok {
+					err = sendSize(folder, currentDepth, true)
+					if err != nil {
+						return err
+					}
+
+					delete(folders, prefix)
+				}
+
+				prefix = strings.TrimRight(filepath.Dir(prefix), "/")
+			}
+
+			return nil
+		}
+
+		for fi := range files {
+			if fi.Error != nil {
+				err = obj.Send(
+					&machine.DiskUsageInfo{
+						Name:         fi.FullPath,
+						RelativeName: fi.RelPath,
+						Error:        fi.Error.Error(),
+					},
+				)
+			} else {
+				currentDepth := int32(strings.Count(fi.FullPath, archiver.OSPathSeparator)) - rootDepth
+				size := fi.FileInfo.Size()
+				if size < 0 {
+					size = 0
+				}
+
+				// kcore file size gives wrong value, this code should be smarter when it reads it
+				// TODO: figure out better way to skip such file
+				if fi.FullPath == "/proc/kcore" {
+					size = 0
+				}
+
+				if fi.FileInfo.IsDir() {
+					folders[strings.TrimRight(fi.FullPath, "/")] = &machine.DiskUsageInfo{
+						Name:         fi.FullPath,
+						RelativeName: fi.RelPath,
+						Size:         size,
+					}
+				} else {
+					err = sendSize(&machine.DiskUsageInfo{
+						Name:         fi.FullPath,
+						RelativeName: fi.RelPath,
+						Size:         size,
+					}, currentDepth, false)
+
+					if err != nil {
+						return err
+					}
+				}
+
+				// depth goes down when walker gets to the next sibling folder
+				if currentDepth < depth {
+					nextPrefix := fi.FullPath
+					err = flushFolders(prefix, nextPrefix)
+
+					if err != nil {
+						return err
+					}
+
+					prefix = nextPrefix
+				}
+
+				if fi.FileInfo.IsDir() {
+					prefix = fi.FullPath
+				}
+				depth = currentDepth
+			}
+		}
+
+		if path != "" {
+			p := strings.TrimRight(path, "/")
+			if folder, ok := folders[p]; ok {
+				err = flushFolders(prefix, p)
+				if err != nil {
+					return err
+				}
+
+				err = sendSize(folder, 0, true)
+
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
 	}
 
 	return nil

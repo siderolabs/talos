@@ -68,6 +68,7 @@ func main() {
 	// all existing streaming methods
 	for _, methodName := range []string{
 		"/machine.MachineService/Copy",
+		"/machine.MachineService/DiskUsage",
 		"/machine.MachineService/Dmesg",
 		"/machine.MachineService/Events",
 		"/machine.MachineService/Kubeconfig",
