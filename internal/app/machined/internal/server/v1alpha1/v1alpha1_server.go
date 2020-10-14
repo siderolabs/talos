@@ -65,6 +65,16 @@ type Server struct {
 	server *grpc.Server
 }
 
+func (s *Server) checkSupported(feature runtime.ModeCapability) error {
+	mode := s.Controller.Runtime().State().Platform().Mode()
+
+	if !mode.Supports(feature) {
+		return fmt.Errorf("method is not supported in %s mode", mode.String())
+	}
+
+	return nil
+}
+
 // Register implements the factory.Registrator interface.
 func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
@@ -105,6 +115,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.RebootResponse, err error) {
 	log.Printf("reboot via API received")
 
+	if err := s.checkSupported(runtime.Reboot); err != nil {
+		return nil, err
+	}
+
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceReboot, in); err != nil {
 			log.Println("reboot failed:", err)
@@ -131,6 +145,10 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 // nolint: dupl
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (reply *machine.RollbackResponse, err error) {
 	log.Printf("rollback via API received")
+
+	if err = s.checkSupported(runtime.Rollback); err != nil {
+		return nil, err
+	}
 
 	grub := &grub.Grub{
 		BootDisk: s.Controller.Runtime().Config().Machine().Install().Disk(),
@@ -207,6 +225,10 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.ShutdownResponse, err error) {
 	log.Printf("shutdown via API received")
 
+	if err = s.checkSupported(runtime.Shutdown); err != nil {
+		return nil, err
+	}
+
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceShutdown, in); err != nil {
 			log.Println("shutdown failed:", err)
@@ -232,6 +254,10 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 //
 // nolint: dupl
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
+	if err = s.checkSupported(runtime.Upgrade); err != nil {
+		return nil, err
+	}
+
 	log.Printf("upgrade request received")
 
 	log.Printf("validating %q", in.GetImage())

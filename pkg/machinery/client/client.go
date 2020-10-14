@@ -402,48 +402,82 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 
 // Restart implements the proto.OSClient interface.
 func (c *Client) Restart(ctx context.Context, namespace string, driver common.ContainerDriver, id string, callOptions ...grpc.CallOption) (err error) {
-	_, err = c.MachineClient.Restart(ctx, &machineapi.RestartRequest{
+	resp, err := c.MachineClient.Restart(ctx, &machineapi.RestartRequest{
 		Id:        id,
 		Namespace: namespace,
 		Driver:    driver,
 	})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
 
 	return
 }
 
 // Reset implements the proto.OSClient interface.
 func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
-	_, err = c.MachineClient.Reset(ctx, &machineapi.ResetRequest{Graceful: graceful, Reboot: reboot})
+	resp, err := c.MachineClient.Reset(ctx, &machineapi.ResetRequest{Graceful: graceful, Reboot: reboot})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
 	return
 }
 
 // Reboot implements the proto.OSClient interface.
 func (c *Client) Reboot(ctx context.Context) (err error) {
-	_, err = c.MachineClient.Reboot(ctx, &empty.Empty{})
+	resp, err := c.MachineClient.Reboot(ctx, &empty.Empty{})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
 	return
 }
 
 // Recover implements the proto.OSClient interface.
 func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_Source) (err error) {
-	_, err = c.MachineClient.Recover(ctx, &machineapi.RecoverRequest{Source: source})
+	resp, err := c.MachineClient.Recover(ctx, &machineapi.RecoverRequest{Source: source})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
 	return
 }
 
 // Rollback implements the proto.OSClient interface.
 func (c *Client) Rollback(ctx context.Context) (err error) {
-	_, err = c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})
+	resp, err := c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
 	return
 }
 
 // Bootstrap implements the proto.OSClient interface.
 func (c *Client) Bootstrap(ctx context.Context) (err error) {
-	_, err = c.MachineClient.Bootstrap(ctx, &machineapi.BootstrapRequest{})
+	resp, err := c.MachineClient.Bootstrap(ctx, &machineapi.BootstrapRequest{})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
 	return
 }
 
 // Shutdown implements the proto.OSClient interface.
 func (c *Client) Shutdown(ctx context.Context) (err error) {
-	_, err = c.MachineClient.Shutdown(ctx, &empty.Empty{})
+	resp, err := c.MachineClient.Shutdown(ctx, &empty.Empty{})
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
 	return
 }
 
