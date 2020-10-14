@@ -60,7 +60,7 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 		Targets: map[string][]*Target{},
 	}
 
-	// Verify that the target device(s) can satisify the requested options.
+	// Verify that the target device(s) can satisfy the requested options.
 
 	if sequence != runtime.SequenceUpgrade {
 		if err = VerifyEphemeralPartition(opts); err != nil {
@@ -72,7 +72,7 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 		}
 	}
 
-	// Initialize any slices we need. Note that a boot paritition is not
+	// Initialize any slices we need. Note that a boot partition is not
 	// required.
 
 	if manifest.Targets[opts.Disk] == nil {
@@ -304,42 +304,52 @@ func (t *Target) Format() error {
 // Save copies the assets to the bootloader partition.
 func (t *Target) Save() (err error) {
 	for _, asset := range t.Assets {
-		var (
-			sourceFile *os.File
-			destFile   *os.File
-		)
+		asset := asset
 
-		if sourceFile, err = os.Open(asset.Source); err != nil {
-			return err
-		}
-		// nolint: errcheck
-		defer sourceFile.Close()
+		err = func() error {
+			var (
+				sourceFile *os.File
+				destFile   *os.File
+			)
 
-		if err = os.MkdirAll(filepath.Dir(asset.Destination), os.ModeDir); err != nil {
-			return err
-		}
+			if sourceFile, err = os.Open(asset.Source); err != nil {
+				return err
+			}
+			// nolint: errcheck
+			defer sourceFile.Close()
 
-		if destFile, err = os.Create(asset.Destination); err != nil {
-			return err
-		}
+			if err = os.MkdirAll(filepath.Dir(asset.Destination), os.ModeDir); err != nil {
+				return err
+			}
 
-		// nolint: errcheck
-		defer destFile.Close()
+			if destFile, err = os.Create(asset.Destination); err != nil {
+				return err
+			}
 
-		log.Printf("copying %s to %s\n", sourceFile.Name(), destFile.Name())
+			// nolint: errcheck
+			defer destFile.Close()
 
-		if _, err = io.Copy(destFile, sourceFile); err != nil {
-			log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
-			return err
-		}
+			log.Printf("copying %s to %s\n", sourceFile.Name(), destFile.Name())
 
-		if err = destFile.Close(); err != nil {
-			log.Printf("failed to close %s", destFile.Name())
-			return err
-		}
+			if _, err = io.Copy(destFile, sourceFile); err != nil {
+				log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
+				return err
+			}
 
-		if err = sourceFile.Close(); err != nil {
-			log.Printf("failed to close %s", sourceFile.Name())
+			if err = destFile.Close(); err != nil {
+				log.Printf("failed to close %s", destFile.Name())
+				return err
+			}
+
+			if err = sourceFile.Close(); err != nil {
+				log.Printf("failed to close %s", sourceFile.Name())
+				return err
+			}
+
+			return nil
+		}()
+
+		if err != nil {
 			return err
 		}
 	}
