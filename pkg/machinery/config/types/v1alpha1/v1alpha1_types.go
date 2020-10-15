@@ -832,6 +832,16 @@ type Device struct {
 	DeviceIgnore bool `yaml:"ignore"`
 	//   description: Indicates if the interface is a dummy interface.
 	DeviceDummy bool `yaml:"dummy"`
+	//   description: |
+	//     DHCP specific options.
+	//     DHCP *must* be set to true for these to take effect.
+	DeviceDHCPOptions *DHCPOptions `yaml:"dhcpOptions"`
+}
+
+// DHCPOptions contains options for configuring the DHCP settings for a given interface.
+type DHCPOptions struct {
+	//   description: The priority of all routes received via DHCP
+	DHCPRouteMetric uint32 `yaml:"routeMetric"`
 }
 
 // Bond contains the various options for configuring a

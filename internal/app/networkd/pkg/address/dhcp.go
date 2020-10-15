@@ -18,13 +18,15 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // DHCP implements the Addressing interface.
 type DHCP struct {
-	Ack   *dhcpv4.DHCPv4
-	NetIf *net.Interface
+	Ack         *dhcpv4.DHCPv4
+	NetIf       *net.Interface
+	DHCPOptions config.DHCPOptions
 }
 
 // Name returns back the name of the address method.

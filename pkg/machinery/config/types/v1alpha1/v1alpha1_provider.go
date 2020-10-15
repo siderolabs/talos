@@ -749,6 +749,23 @@ func (d *Device) Dummy() bool {
 	return d.DeviceDummy
 }
 
+// DHCPOptions implements the MachineNetwork interface.
+func (d *Device) DHCPOptions() config.DHCPOptions {
+	// Default route metric on systemd is 1024. This sets the same.
+	if d.DeviceDHCPOptions == nil {
+		return &DHCPOptions{
+			DHCPRouteMetric: uint32(0),
+		}
+	}
+
+	return d.DeviceDHCPOptions
+}
+
+// RouteMetric implements the MachineNetwork interface.
+func (d *DHCPOptions) RouteMetric() uint32 {
+	return d.DHCPRouteMetric
+}
+
 // Network implements the MachineNetwork interface.
 func (r *Route) Network() string {
 	return r.RouteNetwork

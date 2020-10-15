@@ -115,6 +115,12 @@ type Device interface {
 	DHCP() bool
 	Ignore() bool
 	Dummy() bool
+	DHCPOptions() DHCPOptions
+}
+
+// DHCPOptions represents a set of DHCP options.
+type DHCPOptions interface {
+	RouteMetric() uint32
 }
 
 // Bond contains the various options for configuring a

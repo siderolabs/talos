@@ -1320,6 +1320,22 @@ Type: `bool`
 Indicates if the interface is a dummy interface.
 Type: `bool`
 
+#### dhcpOptions
+
+DHCP specific options.
+DHCP *must* be set to true for these to take effect.
+
+Type: `DHCPOptions`
+
+---
+
+### DHCPOptions
+
+#### routeMetric
+
+The priority of all routes received via DHCP
+Type: `uint32`
+
 ---
 
 ### Bond
