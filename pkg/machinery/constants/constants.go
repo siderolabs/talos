@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version
-	DefaultKernelVersion = "5.8.10-talos"
+	DefaultKernelVersion = "5.8.15-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL
 	// to the config.
@@ -235,7 +235,7 @@ const (
 	TrustdPort = 50001
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.4.0"
+	DefaultContainerdVersion = "1.4.1"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
