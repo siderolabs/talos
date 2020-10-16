@@ -818,13 +818,17 @@ type Device struct {
 	DeviceInterface string `yaml:"interface"`
 	//   description: The CIDR to use.
 	DeviceCIDR string `yaml:"cidr"`
-	//   description: A list of routes associated with the interface.
+	//   description: |
+	//     A list of routes associated with the interface.
+	//     If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.
 	DeviceRoutes []*Route `yaml:"routes"`
 	//   description: Bond specific options.
 	DeviceBond *Bond `yaml:"bond"`
 	//   description: VLAN specific options.
 	DeviceVlans []*Vlan `yaml:"vlans"`
-	//   description: The interface's MTU.
+	//   description: |
+	//     The interface's MTU.
+	//     If used in combination with DHCP, this will override any MTU settings returned from DHCP server.
 	DeviceMTU int `yaml:"mtu"`
 	//   description: Indicates if DHCP should be used.
 	DeviceDHCP bool `yaml:"dhcp"`
