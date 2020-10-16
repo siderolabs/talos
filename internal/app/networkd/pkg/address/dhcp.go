@@ -27,6 +27,8 @@ type DHCP struct {
 	Ack         *dhcpv4.DHCPv4
 	NetIf       *net.Interface
 	DHCPOptions config.DHCPOptions
+	Mtu         int
+	RouteList   []config.Route
 }
 
 // Name returns back the name of the address method.
@@ -65,13 +67,20 @@ func (d *DHCP) Mask() net.IPMask {
 
 // MTU returs the MTU size from the DHCP offer.
 func (d *DHCP) MTU() uint32 {
+	mtuReturn := uint32(d.NetIf.MTU)
+
 	// TODO do we need to implement dhcpv4.GetUint32 upstream?
 	mtu, err := dhcpv4.GetUint16(dhcpv4.OptionInterfaceMTU, d.Ack.Options)
-	if err != nil {
-		return uint32(d.NetIf.MTU)
+	if err == nil {
+		mtuReturn = uint32(mtu)
 	}
 
-	return uint32(mtu)
+	// override with any non-zero Mtu value passed into the dhcp object
+	if uint32(d.Mtu) > 0 {
+		mtuReturn = uint32(d.Mtu)
+	}
+
+	return mtuReturn
 }
 
 // TTL denotes how long a DHCP offer is valid for.
@@ -108,10 +117,6 @@ func (d *DHCP) Valid() bool {
 //   If the DHCP server returns both a Classless Static Routes option and
 //   a Router option, the DHCP client MUST ignore the Router option.
 func (d *DHCP) Routes() (routes []*Route) {
-	if len(d.Ack.ClasslessStaticRoute()) > 0 {
-		return d.Ack.ClasslessStaticRoute()
-	}
-
 	defRoute := &net.IPNet{
 		IP:   net.IPv4zero,
 		Mask: net.IPv4Mask(0, 0, 0, 0),
@@ -119,6 +124,19 @@ func (d *DHCP) Routes() (routes []*Route) {
 
 	for _, router := range d.Ack.Router() {
 		routes = append(routes, &Route{Router: router, Dest: defRoute})
+	}
+
+	// overwrite router option if classless routes were provided.
+	if len(d.Ack.ClasslessStaticRoute()) > 0 {
+		routes = d.Ack.ClasslessStaticRoute()
+	}
+
+	// append any routes that were provided in config
+	for _, route := range d.RouteList {
+		// nolint: errcheck
+		_, ipnet, _ := net.ParseCIDR(route.Network())
+
+		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway())})
 	}
 
 	return routes

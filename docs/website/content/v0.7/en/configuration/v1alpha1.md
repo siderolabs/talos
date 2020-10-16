@@ -1288,6 +1288,8 @@ Type: `string`
 #### routes
 
 A list of routes associated with the interface.
+If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.
+
 Type: `array`
 
 #### bond
@@ -1303,6 +1305,8 @@ Type: `array`
 #### mtu
 
 The interface's MTU.
+If used in combination with DHCP, this will override any MTU settings returned from DHCP server.
+
 Type: `int`
 
 #### dhcp
