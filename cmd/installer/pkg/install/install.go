@@ -11,12 +11,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"unsafe"
 
 	"github.com/talos-systems/go-procfs/procfs"
-	"golang.org/x/sys/unix"
-
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -79,8 +75,6 @@ type Installer struct {
 
 	Current string
 	Next    string
-
-	bootPartitionFound bool
 }
 
 // NewInstaller initializes and returns an Installer.
@@ -93,16 +87,6 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 		bootloader: &grub.Grub{
 			BootDisk: opts.Disk,
 		},
-	}
-
-	var dev *probe.ProbedBlockDevice
-
-	if dev, err = probe.DevForFileSystemLabel(opts.Disk, constants.BootPartitionLabel); err != nil {
-		i.bootPartitionFound = false
-	} else {
-		//nolint: errcheck
-		defer dev.Close()
-		i.bootPartitionFound = true
 	}
 
 	i.Current, i.Next, err = i.bootloader.Labels()
@@ -125,89 +109,15 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 //
 // nolint: gocyclo
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
-	if i.options.Force {
-		if i.bootPartitionFound {
-			var dev *probe.ProbedBlockDevice
-
-			if dev, err = probe.DevForFileSystemLabel(i.options.Disk, constants.BootPartitionLabel); err != nil {
-				return err
-			}
-
-			// Reset the partition table.
-
-			if err = dev.Reset(); err != nil {
-				return err
-			}
-
-			if err = dev.RereadPartitionTable(); err != nil {
-				return err
-			}
-
-			if err = dev.Close(); err != nil {
-				return err
-			}
-		}
-
-		// Zero the disk.
-
-		if i.options.Zero {
-			if err = zero(i.manifest); err != nil {
-				return fmt.Errorf("failed to wipe device(s): %w", err)
-			}
-		}
-
-		// Partition and format the block device(s).
-
-		if err = i.manifest.ExecuteManifest(); err != nil {
-			return err
-		}
-	} else if !i.bootPartitionFound {
-		if i.options.Zero {
-			if err = zero(i.manifest); err != nil {
-				return fmt.Errorf("failed to wipe device(s): %w", err)
-			}
-		}
-
-		if err = i.manifest.ExecuteManifest(); err != nil {
-			return err
-		}
-	}
-
-	if seq == runtime.SequenceUpgrade {
-		var meta *bootloader.Meta
-
-		if meta, err = bootloader.NewMeta(); err != nil {
-			return err
-		}
-
-		//nolint: errcheck
-		defer meta.Close()
-
-		if ok := meta.SetTag(bootloader.AdvUpgrade, i.Current); !ok {
-			return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
-		}
-
-		if _, err = meta.Write(); err != nil {
-			return err
-		}
+	if err = i.manifest.Execute(); err != nil {
+		return err
 	}
 
 	// Mount the partitions.
 
-	mountpoints := mount.NewMountPoints()
-
-	for dev := range i.manifest.Targets {
-		var mp *mount.Points
-
-		mp, err = mount.SystemMountPointsForDevice(dev)
-		if err != nil {
-			return err
-		}
-
-		iter := mp.Iter()
-		for iter.Next() {
-			mountpoints.Set(iter.Key(), iter.Value())
-		}
+	mountpoints, err := i.manifest.SystemMountpoints()
+	if err != nil {
+		return err
 	}
 
 	if err = mount.Mount(mountpoints); err != nil {
@@ -252,7 +162,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		},
 	}
 
-	if i.bootPartitionFound && i.Current != "" {
+	if i.Current != "" {
 		grubcfg.Fallback = i.Current
 
 		grubcfg.Labels = append(grubcfg.Labels, &grub.Label{
@@ -263,8 +173,27 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		})
 	}
 
-	if err = i.bootloader.Install(i.Current, grubcfg, seq, i.bootPartitionFound); err != nil {
+	if err = i.bootloader.Install(i.Current, grubcfg, seq); err != nil {
 		return err
+	}
+
+	if seq == runtime.SequenceUpgrade {
+		var meta *bootloader.Meta
+
+		if meta, err = bootloader.NewMeta(); err != nil {
+			return err
+		}
+
+		//nolint: errcheck
+		defer meta.Close()
+
+		if ok := meta.SetTag(bootloader.AdvUpgrade, i.Current); !ok {
+			return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
+		}
+
+		if _, err = meta.Write(); err != nil {
+			return err
+		}
 	}
 
 	if i.options.Save {
@@ -300,42 +229,4 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	return nil
-}
-
-func zero(manifest *Manifest) (err error) {
-	var zero *os.File
-
-	if zero, err = os.Open("/dev/zero"); err != nil {
-		return err
-	}
-
-	defer zero.Close() //nolint: errcheck
-
-	for dev := range manifest.Targets {
-		if err = func(dev string) error {
-			var f *os.File
-
-			if f, err = os.OpenFile(dev, os.O_RDWR, os.ModeDevice); err != nil {
-				return err
-			}
-
-			defer f.Close() //nolint: errcheck
-
-			var size uint64
-
-			if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
-				return fmt.Errorf("failed to got block device size: %v", ret)
-			}
-
-			if _, err = io.CopyN(f, zero, int64(size)); err != nil {
-				return err
-			}
-
-			return f.Close()
-		}(dev); err != nil {
-			return err
-		}
-	}
-
-	return zero.Close()
 }

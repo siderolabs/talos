@@ -116,6 +116,17 @@ func Move(mountpoints *Points, prefix string) (err error) {
 	return nil
 }
 
+// PrefixMountTargets prefixes all mountpoints targets with fixed path.
+func PrefixMountTargets(mountpoints *Points, targetPrefix string) error {
+	iter := mountpoints.Iter()
+	for iter.Next() {
+		mountpoint := iter.Value()
+		mountpoint.target = filepath.Join(targetPrefix, mountpoint.target)
+	}
+
+	return iter.Err()
+}
+
 func mountRetry(f RetryFunc, p *Point) (err error) {
 	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
 		if err = f(p); err != nil {

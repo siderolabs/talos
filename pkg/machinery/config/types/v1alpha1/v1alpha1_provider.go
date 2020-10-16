@@ -979,11 +979,6 @@ func (i *InstallConfig) Zero() bool {
 	return i.InstallWipe
 }
 
-// Force implements the config.Provider interface.
-func (i *InstallConfig) Force() bool {
-	return i.InstallForce
-}
-
 // WithBootloader implements the config.Provider interface.
 func (i *InstallConfig) WithBootloader() bool {
 	return i.InstallBootloader

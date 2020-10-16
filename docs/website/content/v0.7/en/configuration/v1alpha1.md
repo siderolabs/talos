@@ -866,19 +866,6 @@ Valid Values:
 - `false`
 - `no`
 
-#### force
-
-Indicates if filesystems should be forcefully created.
-
-Type: `bool`
-
-Valid Values:
-
-- `true`
-- `yes`
-- `false`
-- `no`
-
 ---
 
 ### TimeConfig

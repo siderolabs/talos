@@ -11,6 +11,6 @@ import (
 // Bootloader describes a bootloader.
 type Bootloader interface {
 	Labels() (string, string, error)
-	Install(string, interface{}, runtime.Sequence, bool) error
+	Install(string, interface{}, runtime.Sequence) error
 	Default(string) error
 }

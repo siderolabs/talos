@@ -105,7 +105,7 @@ func (g *Grub) Labels() (current, next string, err error) {
 // specified kernel parameters.
 //
 // nolint: gocyclo
-func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Sequence, bootPartitionFound bool) (err error) {
+func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Sequence) (err error) {
 	grubcfg, ok := config.(*Cfg)
 	if !ok {
 		return errors.New("expected a grub config")

@@ -75,7 +75,6 @@ type Install interface {
 	Disk() string
 	ExtraKernelArgs() []string
 	Zero() bool
-	Force() bool
 	WithBootloader() bool
 }
 
