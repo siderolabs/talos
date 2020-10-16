@@ -6,18 +6,20 @@ package install_test
 
 import (
 	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/loopback"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 )
 
 // Some tests in this package cannot be run under buildkit, as buildkit doesn't propagate partition devices
@@ -32,13 +34,19 @@ type manifestSuite struct {
 	loopbackDevice *os.File
 }
 
-const diskSize = 10 * 1024 * 1024 * 1024 * 1024 // 10 GiB
+const (
+	diskSize    = 4 * 1024 * 1024 * 1024 // 4 GiB
+	lbaSize     = 512
+	gptReserved = 67
+)
 
 func TestManifestSuite(t *testing.T) {
 	suite.Run(t, new(manifestSuite))
 }
 
 func (suite *manifestSuite) SetupSuite() {
+	suite.skipIfNotRoot()
+
 	var err error
 
 	suite.disk, err = ioutil.TempFile("", "talos")
@@ -75,7 +83,13 @@ func (suite *manifestSuite) skipUnderBuildkit() {
 	}
 }
 
-func (suite *manifestSuite) verifyBlockdevice() {
+func (suite *manifestSuite) skipIfNotRoot() {
+	if os.Getuid() != 0 {
+		suite.T().Skip("can't run the test as non-root")
+	}
+}
+
+func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest) {
 	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
@@ -84,23 +98,113 @@ func (suite *manifestSuite) verifyBlockdevice() {
 	table, err := bd.PartitionTable()
 	suite.Require().NoError(err)
 
-	suite.Assert().Len(table.Partitions(), 5)
+	// verify partition table
+
+	suite.Assert().Len(table.Partitions(), 6)
+
+	part := table.Partitions()[0]
+	suite.Assert().Equal(install.EFISystemPartition, strings.ToUpper(part.(*partition.Partition).Type.String()))
+	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	suite.Assert().EqualValues(install.EFISize/lbaSize, part.Length())
+
+	part = table.Partitions()[1]
+	suite.Assert().Equal(install.BIOSBootPartition, strings.ToUpper(part.(*partition.Partition).Type.String()))
+	suite.Assert().EqualValues(4, part.(*partition.Partition).Flags)
+	suite.Assert().EqualValues(install.BIOSGrubSize/lbaSize, part.Length())
+
+	part = table.Partitions()[2]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
+	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	suite.Assert().EqualValues(install.BootSize/lbaSize, part.Length())
+
+	part = table.Partitions()[3]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
+	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	suite.Assert().EqualValues(install.MetaSize/lbaSize, part.Length())
+
+	part = table.Partitions()[4]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
+	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	suite.Assert().EqualValues(install.StateSize/lbaSize, part.Length())
+
+	part = table.Partitions()[5]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
+	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	suite.Assert().EqualValues((diskSize-install.EFISize-install.BIOSGrubSize-install.BootSize-install.MetaSize-install.StateSize)/lbaSize-gptReserved, part.Length())
 
 	suite.Assert().NoError(bd.Close())
+
+	// query mount points directly for the device
+
+	mountpoints, err := mount.SystemMountPointsForDevice(suite.loopbackDevice.Name())
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(4, mountpoints.Len())
+
+	// verify filesystems by mounting and unmounting
+
+	tempDir, err := ioutil.TempDir("", "talos")
+	suite.Require().NoError(err)
+
+	defer func() {
+		suite.Assert().NoError(os.RemoveAll(tempDir))
+	}()
+
+	mountpoints, err = manifest.SystemMountpoints()
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(4, mountpoints.Len())
+
+	suite.Require().NoError(mount.PrefixMountTargets(mountpoints, tempDir))
+
+	err = mount.Mount(mountpoints)
+	suite.Require().NoError(err)
+
+	defer func() {
+		suite.Assert().NoError(mount.Unmount(mountpoints))
+	}()
 }
 
 func (suite *manifestSuite) TestExecuteManifestClean() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest("A", runtime.SequenceInstall, &install.Options{
-		Disk:  suite.loopbackDevice.Name(),
-		Force: true,
+		Disk:       suite.loopbackDevice.Name(),
+		Bootloader: true,
+		Force:      true,
 	})
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(manifest.ExecuteManifest())
+	suite.Assert().NoError(manifest.Execute())
 
-	suite.verifyBlockdevice()
+	suite.verifyBlockdevice(manifest)
+}
+
+func (suite *manifestSuite) TestExecuteManifestForce() {
+	suite.skipUnderBuildkit()
+
+	manifest, err := install.NewManifest("A", runtime.SequenceInstall, &install.Options{
+		Disk:       suite.loopbackDevice.Name(),
+		Bootloader: true,
+		Force:      true,
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(manifest.Execute())
+
+	// reinstall
+
+	manifest, err = install.NewManifest("B", runtime.SequenceInstall, &install.Options{
+		Disk:       suite.loopbackDevice.Name(),
+		Bootloader: true,
+		Force:      true,
+		Zero:       true,
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(manifest.Execute())
+
+	suite.verifyBlockdevice(manifest)
 }
 
 func (suite *manifestSuite) TestTargetInstall() {
@@ -112,25 +216,19 @@ func (suite *manifestSuite) TestTargetInstall() {
 	defer os.RemoveAll(dir)
 
 	// Create a tempfile for local copy
-	tempfile, err := ioutil.TempFile(dir, "example")
+	src, err := ioutil.TempFile(dir, "example")
 	suite.Require().NoError(err)
 
-	// Create simple http test server to serve up some content
-	mux := http.NewServeMux()
-	mux.HandleFunc("/yolo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// nolint: errcheck
-		w.Write([]byte("null"))
-	}))
+	suite.Require().NoError(src.Close())
 
-	ts := httptest.NewServer(mux)
+	dst := filepath.Join(dir, "dest")
 
-	defer ts.Close()
 	// Attempt to download and copy files
 	target := &install.Target{
 		Assets: []*install.Asset{
 			{
-				Source:      tempfile.Name(),
-				Destination: "/path/relative/to/mountpoint/example",
+				Source:      src.Name(),
+				Destination: dst,
 			},
 		},
 	}

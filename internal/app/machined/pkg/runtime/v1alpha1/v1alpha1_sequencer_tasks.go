@@ -815,14 +815,13 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 				Device: disk.Device(),
 				Size:   part.Size(),
 				Force:  true,
-				Test:   false,
 			}
 
 			m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
 		}
 	}
 
-	if err = m.ExecuteManifest(); err != nil {
+	if err = m.Execute(); err != nil {
 		return err
 	}
 
@@ -1229,12 +1228,6 @@ func ResetSystemDisk(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 // disk is not in use.
 func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		//  We only need to verify system disk availability if we are going to
-		// reformat the ephemeral partition.
-		if !r.Config().Machine().Install().Force() {
-			return nil
-		}
-
 		devname := r.State().Machine().Disk().BlockDevice.Device().Name()
 
 		// We MUST close this in order to avoid EBUSY.
@@ -1552,7 +1545,7 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			r.State().Platform().Name(),
 			installerImage,
 			r.Config().Machine().Registries(),
-			install.WithForce(r.Config().Machine().Install().Force()),
+			install.WithForce(true),
 			install.WithZero(r.Config().Machine().Install().Zero()),
 			install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
 		)
