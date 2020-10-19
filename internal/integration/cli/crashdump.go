@@ -30,6 +30,7 @@ func (suite *CrashdumpSuite) TestRun() {
 	}
 
 	args := []string{}
+
 	for _, node := range suite.Cluster.Info().Nodes {
 		switch node.Type {
 		case machine.TypeInit:
@@ -38,6 +39,8 @@ func (suite *CrashdumpSuite) TestRun() {
 			args = append(args, "--control-plane-nodes", node.PrivateIP.String())
 		case machine.TypeJoin:
 			args = append(args, "--worker-nodes", node.PrivateIP.String())
+		case machine.TypeUnknown:
+			panic("unexpected")
 		}
 	}
 

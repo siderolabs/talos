@@ -25,6 +25,8 @@ func (suite *HealthSuite) SuiteName() string {
 }
 
 // TestClientSide does successful health check run from client-side.
+//
+//nolint: gocyclo
 func (suite *HealthSuite) TestClientSide() {
 	if suite.Cluster == nil {
 		suite.T().Skip("Cluster is not available, skipping test")
@@ -47,6 +49,8 @@ func (suite *HealthSuite) TestClientSide() {
 				args = append(args, "--control-plane-nodes", node.PrivateIP.String())
 			case machine.TypeJoin:
 				args = append(args, "--worker-nodes", node.PrivateIP.String())
+			case machine.TypeInit, machine.TypeUnknown:
+				panic("unexpected")
 			}
 		}
 	} else {
@@ -58,6 +62,8 @@ func (suite *HealthSuite) TestClientSide() {
 				args = append(args, "--control-plane-nodes", node.PrivateIP.String())
 			case machine.TypeJoin:
 				args = append(args, "--worker-nodes", node.PrivateIP.String())
+			case machine.TypeUnknown:
+				panic("unexpected")
 			}
 		}
 	}

@@ -74,6 +74,7 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 	suite.Require().Len(v.Messages, len(nodes))
 
 	expectedVersion := v.Messages[0].Version.Tag
+
 	for _, version := range v.Messages {
 		suite.Assert().Equal(expectedVersion, version.Version.Tag)
 	}

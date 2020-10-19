@@ -22,6 +22,14 @@ run:
   skip-files:
     - .*\\.pb\\.go$
 
+  # list of build tags, all linters use it. Default is empty list.
+  build-tags:
+    - integration
+    - integration_api
+    - integration_cli
+    - integration_k8s
+    - integration_provision
+
 # output configuration options
 output:
   # colored-line-number|line-number|json|tab|checkstyle, default is "colored-line-number"

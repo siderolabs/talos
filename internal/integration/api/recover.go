@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
+// RecoverSuite ...
 type RecoverSuite struct {
 	base.K8sSuite
 
@@ -73,6 +74,8 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 
 			suite.Assert().NoError(err)
 
+			deletedPods := make(map[string]struct{})
+
 			var eg errgroup.Group
 
 			for _, pod := range pods.Items {
@@ -81,12 +84,9 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 				eg.Go(func() error {
 					suite.T().Logf("Deleting %s", pod.GetName())
 
-					err := suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{})
-					if err != nil {
-						return err
-					}
+					deletedPods[pod.GetName()] = struct{}{}
 
-					return err
+					return suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{})
 				})
 			}
 
@@ -100,6 +100,16 @@ func (suite *RecoverSuite) TestRecoverControlPlane() {
 				})
 
 				suite.Assert().NoError(err)
+
+				for _, pod := range pods.Items {
+					if _, ok := deletedPods[pod.GetName()]; !ok {
+						suite.T().Logf("Deleting %s", pod.GetName())
+
+						deletedPods[pod.GetName()] = struct{}{}
+
+						suite.Require().NoError(suite.Clientset.CoreV1().Pods(pod.GetNamespace()).Delete(suite.ctx, pod.GetName(), metav1.DeleteOptions{}))
+					}
+				}
 			}
 
 			nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)

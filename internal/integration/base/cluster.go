@@ -25,6 +25,8 @@ func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
 		return append([]string(nil), wrapper.masterNodes...)
 	case machine.TypeJoin:
 		return append([]string(nil), wrapper.workerNodes...)
+	case machine.TypeUnknown:
+		fallthrough
 	default:
 		panic("unreachable")
 	}

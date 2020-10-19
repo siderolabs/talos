@@ -63,27 +63,27 @@ func (suite *DiskUsageSuite) TestDiskUsageRequests() {
 	}
 
 	cases := []*testParams{
-		&testParams{
+		{
 			recursionDepth: 0,
 			all:            false,
 			paths:          defaultPaths,
 		},
-		&testParams{
+		{
 			recursionDepth: 1,
 			all:            false,
 			paths:          defaultPaths,
 		},
-		&testParams{
+		{
 			recursionDepth: 0,
 			all:            true,
 			paths:          defaultPaths,
 		},
-		&testParams{
+		{
 			recursionDepth: 1,
 			all:            true,
 			paths:          defaultPaths,
 		},
-		&testParams{
+		{
 			recursionDepth: 0,
 			all:            true,
 			paths:          append([]string{"/this/is/going/to/fail"}, defaultPaths...),
@@ -93,7 +93,6 @@ func (suite *DiskUsageSuite) TestDiskUsageRequests() {
 	sizes := map[string]int64{}
 
 	for _, params := range cases {
-
 		lookupPaths := map[string]bool{}
 		for _, path := range params.paths {
 			lookupPaths[path] = true
@@ -110,9 +109,11 @@ func (suite *DiskUsageSuite) TestDiskUsageRequests() {
 		suite.Require().NoError(err)
 
 		responseCount := 0
+
 		for {
 			info, err := stream.Recv()
 			responseCount++
+
 			if err != nil {
 				if err == io.EOF || status.Code(err) == codes.Canceled {
 					break
@@ -120,6 +121,7 @@ func (suite *DiskUsageSuite) TestDiskUsageRequests() {
 
 				suite.Require().NoError(err)
 			}
+
 			if size, ok := sizes[info.Name]; ok {
 				suite.Require().EqualValues(size, info.Size)
 			}

@@ -42,7 +42,7 @@ func (suite *RestartSuite) TestSystem() {
 	suite.RunAndWaitForMatch([]string{"service", "-n", node, "trustd"}, regexp.MustCompile(`EVENTS\s+\[Running\]: Health check successful`), 30*time.Second)
 }
 
-// TestKubernetes restarts K8s container.
+// TestK8s restarts K8s container.
 func (suite *RestartSuite) TestK8s() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")

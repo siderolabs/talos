@@ -39,6 +39,7 @@ func splitLine(line string) []string {
 			columns = append(columns, strings.TrimSpace(part))
 		}
 	}
+
 	return columns
 }
 
@@ -54,7 +55,7 @@ func parseLine(line string) (*duInfo, error) {
 
 	if len(columns) == 3 {
 		res.node = columns[0]
-		offset += 1
+		offset++
 	}
 
 	size, err := strconv.ParseInt(columns[offset], 10, 64)
@@ -74,6 +75,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 	node := suite.RandomDiscoveredNode()
 
 	var folderSize int64 = 4096
+
 	suite.RunCLI([]string{"list", "--nodes", node, folder, "-l"},
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Split(strings.TrimSpace(stdout), "\n")

@@ -160,6 +160,7 @@ func (suite *LogsSuite) TestTailStreaming0() {
 	suite.testStreaming(0)
 }
 
+//nolint: gocyclo
 func (suite *LogsSuite) testStreaming(tailLines int32) {
 	if tailLines >= 0 {
 		// invoke machined enough times to generate
@@ -189,7 +190,9 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		defer close(respCh)
 
 		for {
-			msg, err := logsStream.Recv()
+			var msg *common.Data
+
+			msg, err = logsStream.Recv()
 			if err != nil {
 				errCh <- err
 				return

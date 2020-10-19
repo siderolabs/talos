@@ -37,7 +37,7 @@ func (suite *VersionSuite) TestShortVersion() {
 	)
 }
 
-// TestClientVersion verifies only client version output.
+// TestClient verifies only client version output.
 func (suite *VersionSuite) TestClient() {
 	suite.RunCLI([]string{"version", "--client"},
 		base.StdoutShouldMatch(regexp.MustCompile(`Client:\n\s*Tag:\s*`+regexp.QuoteMeta(suite.Version))),
