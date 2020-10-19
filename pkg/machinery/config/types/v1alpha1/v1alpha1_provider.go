@@ -124,6 +124,10 @@ func (m *MachineConfig) Time() config.Time {
 
 // Kubelet implements the config.Provider interface.
 func (m *MachineConfig) Kubelet() config.Kubelet {
+	if m.MachineKubelet == nil {
+		return &KubeletConfig{}
+	}
+
 	return m.MachineKubelet
 }
 
