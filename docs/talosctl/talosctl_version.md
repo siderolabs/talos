@@ -3,10 +3,6 @@
 
 Prints the version
 
-### Synopsis
-
-Prints the version
-
 ```
 talosctl version [flags]
 ```

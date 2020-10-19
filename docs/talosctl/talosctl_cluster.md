@@ -3,10 +3,6 @@
 
 A collection of commands for managing local docker-based or firecracker-based clusters
 
-### Synopsis
-
-A collection of commands for managing local docker-based or firecracker-based clusters
-
 ### Options
 
 ```

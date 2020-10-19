@@ -3,10 +3,6 @@
 
 Add a new context
 
-### Synopsis
-
-Add a new context
-
 ```
 talosctl config add <context> [flags]
 ```

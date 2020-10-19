@@ -3,10 +3,6 @@
 
 Reboot a node
 
-### Synopsis
-
-Reboot a node
-
 ```
 talosctl reboot [flags]
 ```

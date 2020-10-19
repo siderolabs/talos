@@ -3,10 +3,6 @@
 
 Set the endpoint(s) for the current context
 
-### Synopsis
-
-Set the endpoint(s) for the current context
-
 ```
 talosctl config endpoint <endpoint>... [flags]
 ```

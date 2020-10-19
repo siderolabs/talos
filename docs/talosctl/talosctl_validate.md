@@ -3,10 +3,6 @@
 
 Validate config
 
-### Synopsis
-
-Validate config
-
 ```
 talosctl validate [flags]
 ```

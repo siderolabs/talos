@@ -3,10 +3,6 @@
 
 Retrieve kernel logs
 
-### Synopsis
-
-Retrieve kernel logs
-
 ```
 talosctl dmesg [flags]
 ```

@@ -3,10 +3,6 @@
 
 Recover a control plane
 
-### Synopsis
-
-Recover a control plane
-
 ```
 talosctl recover [flags]
 ```

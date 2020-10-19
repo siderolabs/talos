@@ -3,10 +3,6 @@
 
 Apply a new configuration to a node
 
-### Synopsis
-
-Apply a new configuration to a node
-
 ```
 talosctl apply-config [flags]
 ```

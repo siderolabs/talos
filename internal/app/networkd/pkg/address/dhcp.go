@@ -195,12 +195,12 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	// nolint: errcheck
 	defer cli.Close()
 
-	_, ack, err := cli.Request(context.Background(), mods...)
+	lease, err := cli.Request(context.Background(), mods...)
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
 		log.Println("failed dhcp request for", d.NetIf.Name)
 		return nil, err
 	}
 
-	return ack, err
+	return lease.ACK, err
 }

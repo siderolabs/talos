@@ -3,10 +3,6 @@
 
 List the default images used by Talos
 
-### Synopsis
-
-List the default images used by Talos
-
 ```
 talosctl images [flags]
 ```

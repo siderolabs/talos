@@ -3,10 +3,6 @@
 
 Check cluster health
 
-### Synopsis
-
-Check cluster health
-
 ```
 talosctl health [flags]
 ```

@@ -3,10 +3,6 @@
 
 Bootstrap the cluster
 
-### Synopsis
-
-Bootstrap the cluster
-
 ```
 talosctl bootstrap [flags]
 ```

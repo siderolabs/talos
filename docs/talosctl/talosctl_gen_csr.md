@@ -3,10 +3,6 @@
 
 Generates a CSR using an Ed25519 private key
 
-### Synopsis
-
-Generates a CSR using an Ed25519 private key
-
 ```
 talosctl gen csr [flags]
 ```

@@ -3,10 +3,6 @@
 
 Destroys a local docker-based or firecracker-based kubernetes cluster
 
-### Synopsis
-
-Destroys a local docker-based or firecracker-based kubernetes cluster
-
 ```
 talosctl cluster destroy [flags]
 ```

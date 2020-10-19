@@ -3,10 +3,6 @@
 
 Upgrade Talos on the target node
 
-### Synopsis
-
-Upgrade Talos on the target node
-
 ```
 talosctl upgrade [flags]
 ```

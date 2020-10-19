@@ -3,10 +3,6 @@
 
 Reset a node
 
-### Synopsis
-
-Reset a node
-
 ```
 talosctl reset [flags]
 ```

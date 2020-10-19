@@ -3,10 +3,6 @@
 
 List running processes
 
-### Synopsis
-
-List running processes
-
 ```
 talosctl processes [flags]
 ```

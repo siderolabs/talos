@@ -3,10 +3,6 @@
 
 Stream runtime events
 
-### Synopsis
-
-Stream runtime events
-
 ```
 talosctl events [flags]
 ```

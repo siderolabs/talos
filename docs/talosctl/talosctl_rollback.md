@@ -3,10 +3,6 @@
 
 Rollback a node to the previous installation
 
-### Synopsis
-
-Rollback a node to the previous installation
-
 ```
 talosctl rollback [flags]
 ```

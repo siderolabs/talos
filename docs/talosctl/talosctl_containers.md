@@ -3,10 +3,6 @@
 
 List containers
 
-### Synopsis
-
-List containers
-
 ```
 talosctl containers [flags]
 ```

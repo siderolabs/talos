@@ -3,10 +3,6 @@
 
 Generates an X.509 Ed25519 certificate
 
-### Synopsis
-
-Generates an X.509 Ed25519 certificate
-
 ```
 talosctl gen crt [flags]
 ```

@@ -3,10 +3,6 @@
 
 Set the node(s) for the current context
 
-### Synopsis
-
-Set the node(s) for the current context
-
 ```
 talosctl config node <endpoint>... [flags]
 ```

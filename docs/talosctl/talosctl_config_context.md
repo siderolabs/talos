@@ -3,10 +3,6 @@
 
 Set the current context
 
-### Synopsis
-
-Set the current context
-
 ```
 talosctl config context <context> [flags]
 ```

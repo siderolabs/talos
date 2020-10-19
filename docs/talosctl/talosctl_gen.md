@@ -3,10 +3,6 @@
 
 Generate CAs, certificates, and private keys
 
-### Synopsis
-
-Generate CAs, certificates, and private keys
-
 ### Options
 
 ```
