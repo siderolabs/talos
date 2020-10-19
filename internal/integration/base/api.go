@@ -12,10 +12,12 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"google.golang.org/grpc/backoff"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cluster"
@@ -56,14 +58,26 @@ func (apiSuite *APISuite) SetupSuite() {
 	nodes := apiSuite.DiscoverNodes().Nodes()
 
 	if len(nodes) > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		// grpc might trigger backoff on reconnect attempts, so make sure we clear them
+		ctx, cancel := context.WithTimeout(context.Background(), backoff.DefaultConfig.MaxDelay)
 		defer cancel()
 
-		for i := 0; i < len(nodes); i++ {
-			_, err = apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
-		}
+		apiSuite.Require().NoError(retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(time.Second)).Retry(func() error {
+			for i := 0; i < len(nodes); i++ {
+				_, err = apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
+				if err == nil {
+					continue
+				}
 
-		apiSuite.Require().NoError(err)
+				if strings.Contains(err.Error(), "connection refused") {
+					return retry.ExpectedError(err)
+				}
+
+				return retry.UnexpectedError(err)
+			}
+
+			return nil
+		}))
 	}
 }
 
