@@ -3,10 +3,6 @@
 
 Generates an Ed25519 private key
 
-### Synopsis
-
-Generates an Ed25519 private key
-
 ```
 talosctl gen key [flags]
 ```

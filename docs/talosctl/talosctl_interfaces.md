@@ -3,10 +3,6 @@
 
 List network interfaces
 
-### Synopsis
-
-List network interfaces
-
 ```
 talosctl interfaces [flags]
 ```

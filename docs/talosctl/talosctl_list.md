@@ -3,10 +3,6 @@
 
 Retrieve a directory listing
 
-### Synopsis
-
-Retrieve a directory listing
-
 ```
 talosctl list [path] [flags]
 ```

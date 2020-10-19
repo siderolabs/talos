@@ -3,10 +3,6 @@
 
 Shutdown a node
 
-### Synopsis
-
-Shutdown a node
-
 ```
 talosctl shutdown [flags]
 ```

@@ -3,10 +3,6 @@
 
 List network routes
 
-### Synopsis
-
-List network routes
-
 ```
 talosctl routes [flags]
 ```

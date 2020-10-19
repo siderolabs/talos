@@ -3,10 +3,6 @@
 
 A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-### Synopsis
-
-A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ### Options
 
 ```

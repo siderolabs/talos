@@ -3,10 +3,6 @@
 
 Generates a self-signed X.509 certificate authority
 
-### Synopsis
-
-Generates a self-signed X.509 certificate authority
-
 ```
 talosctl gen ca [flags]
 ```

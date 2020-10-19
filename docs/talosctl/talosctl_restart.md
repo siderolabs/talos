@@ -3,10 +3,6 @@
 
 Restart a process
 
-### Synopsis
-
-Restart a process
-
 ```
 talosctl restart <id> [flags]
 ```

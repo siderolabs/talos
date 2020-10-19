@@ -3,10 +3,6 @@
 
 Retrieve a disk usage
 
-### Synopsis
-
-Retrieve a disk usage
-
 ```
 talosctl usage [path1] [path2] ... [pathN] [flags]
 ```

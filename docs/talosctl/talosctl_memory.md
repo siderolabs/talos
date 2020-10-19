@@ -3,10 +3,6 @@
 
 Show memory usage
 
-### Synopsis
-
-Show memory usage
-
 ```
 talosctl memory [flags]
 ```

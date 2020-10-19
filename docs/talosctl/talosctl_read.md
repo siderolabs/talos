@@ -3,10 +3,6 @@
 
 Read a file on the machine
 
-### Synopsis
-
-Read a file on the machine
-
 ```
 talosctl read <path> [flags]
 ```

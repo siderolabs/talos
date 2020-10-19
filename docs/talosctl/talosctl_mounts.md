@@ -3,10 +3,6 @@
 
 List mounts
 
-### Synopsis
-
-List mounts
-
 ```
 talosctl mounts [flags]
 ```

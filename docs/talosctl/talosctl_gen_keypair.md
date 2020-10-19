@@ -3,10 +3,6 @@
 
 Generates an X.509 Ed25519 key pair
 
-### Synopsis
-
-Generates an X.509 Ed25519 key pair
-
 ```
 talosctl gen keypair [flags]
 ```

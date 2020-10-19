@@ -3,10 +3,6 @@
 
 Manage the client configuration
 
-### Synopsis
-
-Manage the client configuration
-
 ### Options
 
 ```

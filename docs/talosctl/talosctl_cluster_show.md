@@ -3,10 +3,6 @@
 
 Shows info about a local provisioned kubernetes cluster
 
-### Synopsis
-
-Shows info about a local provisioned kubernetes cluster
-
 ```
 talosctl cluster show [flags]
 ```

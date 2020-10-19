@@ -3,10 +3,6 @@
 
 Get container stats
 
-### Synopsis
-
-Get container stats
-
 ```
 talosctl stats [flags]
 ```

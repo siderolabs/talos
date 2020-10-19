@@ -3,10 +3,6 @@
 
 Gets current server time
 
-### Synopsis
-
-Gets current server time
-
 ```
 talosctl time [--check server] [flags]
 ```

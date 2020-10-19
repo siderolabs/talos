@@ -3,10 +3,6 @@
 
 Dump debug information about the cluster
 
-### Synopsis
-
-Dump debug information about the cluster
-
 ```
 talosctl crashdump [flags]
 ```

@@ -3,10 +3,6 @@
 
 Retrieve logs for a service
 
-### Synopsis
-
-Retrieve logs for a service
-
 ```
 talosctl logs <service name> [flags]
 ```

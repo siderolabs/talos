@@ -3,10 +3,6 @@
 
 Creates a local docker-based or QEMU-based kubernetes cluster
 
-### Synopsis
-
-Creates a local docker-based or QEMU-based kubernetes cluster
-
 ```
 talosctl cluster create [flags]
 ```
