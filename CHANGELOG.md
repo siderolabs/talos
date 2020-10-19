@@ -1,6 +1,54 @@
 
+<a name="v0.7.0-alpha.7"></a>
+## [v0.7.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.6...v0.7.0-alpha.7) (2020-10-20)
+
+### Chore
+
+* bump module dependencies in go.mod
+* bump Go to 1.15.3
+
+### Docs
+
+* link container images to our repository
+* fix latest tag
+* add link to latest docs
+
+### Feat
+
+* upgrade Kubernetes to 1.19.3
+* support MTU and route changes for DHCP
+* bump packages for Linux 5.8.15 and containerd 1.4.1
+* support metric values for DHCP
+* bump packages version for the kernel with BBR TCP congestion algo
+* handle unsupported commands being called for docker
+* support disk usage command in talosctl
+
+### Fix
+
+* update handling of ntp disable
+* address nil pointer panic
+* improve logging and errors for extra manifests by URL
+
+### Refactor
+
+* bring more control to install.Manifest execution
+
+### Release
+
+* **v0.7.0-alpha.7:** prepare release
+
+### Test
+
+* clean up integration test code, fix flakes
+* add unit-test for the installer manifest
+
+
 <a name="v0.7.0-alpha.6"></a>
 ## [v0.7.0-alpha.6](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.5...v0.7.0-alpha.6) (2020-10-09)
+
+### Release
+
+* **v0.7.0-alpha.6:** prepare release
 
 ### Test
 
@@ -115,12 +163,11 @@
 
 ### Release
 
-* **v0.7.0-alpha.2:** prepare release
 * **v0.7.0-alpha.3:** prepare release
 
 
 <a name="v0.7.0-alpha.2"></a>
-## [v0.7.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.1...v0.7.0-alpha.2) (2020-09-17)
+## [v0.7.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.1...v0.7.0-alpha.2) (2020-09-18)
 
 ### Chore
 
@@ -167,6 +214,10 @@
 
 * garbage collect unused constants
 * deduplicate packages version in Dockerfile
+
+### Release
+
+* **v0.7.0-alpha.2:** prepare release
 
 ### Test
 
