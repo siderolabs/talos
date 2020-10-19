@@ -26,6 +26,7 @@ func (suite *GenSuite) SuiteName() string {
 	return "cli.GenSuite"
 }
 
+// SetupTest ...
 func (suite *GenSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -37,6 +38,7 @@ func (suite *GenSuite) SetupTest() {
 	suite.Require().NoError(os.Chdir(suite.tmpDir))
 }
 
+// TearDownTest ...
 func (suite *GenSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))

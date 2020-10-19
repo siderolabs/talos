@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
+// ResetSuite ...
 type ResetSuite struct {
 	base.APISuite
 
@@ -56,6 +57,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 	}
 
 	initNodeAddress := ""
+
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeInit {
 			initNodeAddress = node.PrivateIP.String()
@@ -78,13 +80,13 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 		suite.T().Log("Resetting node", node)
 
+		// TODO: there is no good way to assert that node was reset and disk contents were really wiped
+
 		// uptime should go down after Reset, as it reboots the node
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
 			return suite.Client.Reset(nodeCtx, true, true)
 		}, 10*time.Minute)
-
-		// TODO: there is no good way to assert that node was reset and disk contents were really wiped
 	}
 }
 

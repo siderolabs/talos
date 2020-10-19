@@ -52,7 +52,7 @@ func (cliSuite *CLISuite) DiscoverNodes() cluster.Info {
 	return nil
 }
 
-// RandomNode returns a random node of the specified type (or any type if no types are specified).
+// RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
 func (cliSuite *CLISuite) RandomDiscoveredNode(types ...machine.Type) string {
 	nodeInfo := cliSuite.DiscoverNodes()
 
@@ -97,7 +97,6 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 
 func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 	// TODO: add support for calling `talosctl config endpoint` before running talosctl
-
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
 
 	return exec.Command(cliSuite.TalosctlPath, args...)
@@ -108,6 +107,7 @@ func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) {
 	Run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
 }
 
+// RunAndWaitForMatch retries command until output matches.
 func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
 	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
 		stdout, _, err := RunAndWait(&cliSuite.Suite, cliSuite.buildCLICmd(args))

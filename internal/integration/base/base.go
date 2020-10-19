@@ -52,8 +52,8 @@ type ConfiguredSuite interface {
 }
 
 // SetConfig implements ConfiguredSuite.
-func (suite *TalosSuite) SetConfig(config TalosSuite) {
-	*suite = config
+func (talosSuite *TalosSuite) SetConfig(config TalosSuite) {
+	*talosSuite = config
 }
 
 // NamedSuite interface provides names for test suites.

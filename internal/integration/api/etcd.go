@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+// EtcdSuite ...
 type EtcdSuite struct {
 	base.APISuite
 
@@ -115,7 +116,9 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 	suite.Require().NoError(err)
 
 	for {
-		info, err := stream.Recv()
+		var info *machineapi.FileInfo
+
+		info, err = stream.Recv()
 		if err != nil {
 			if err == io.EOF || status.Code(err) == codes.Canceled {
 				break

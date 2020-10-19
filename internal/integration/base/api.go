@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cluster/check"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -50,6 +51,20 @@ func (apiSuite *APISuite) SetupSuite() {
 
 	apiSuite.Client, err = client.New(context.TODO(), opts...)
 	apiSuite.Require().NoError(err)
+
+	// clear any connection refused errors left after the previous tests
+	nodes := apiSuite.DiscoverNodes().Nodes()
+
+	if len(nodes) > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		for i := 0; i < len(nodes); i++ {
+			_, err = apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
+		}
+
+		apiSuite.Require().NoError(err)
+	}
 }
 
 // DiscoverNodes provides list of Talos nodes in the cluster.
@@ -76,7 +91,7 @@ func (apiSuite *APISuite) DiscoverNodes() cluster.Info {
 	return apiSuite.discoveredNodes
 }
 
-// RandomNode returns a random node of the specified type (or any type if no types are specified).
+// RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
 func (apiSuite *APISuite) RandomDiscoveredNode(types ...machine.Type) string {
 	nodeInfo := apiSuite.DiscoverNodes()
 
@@ -204,7 +219,7 @@ func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, reboo
 
 		if bootIDAfter == bootIDBefore {
 			// bootID should be different after reboot
-			return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s + %s, after %s", node, bootIDBefore, bootIDAfter))
+			return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s, after %s", node, bootIDBefore, bootIDAfter))
 		}
 
 		return nil
@@ -215,6 +230,38 @@ func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, reboo
 		// NB: using `ctx` here to have client talking to init node by default
 		apiSuite.AssertClusterHealthy(ctx)
 	}
+}
+
+// WaitForBootDone waits for boot phase done event.
+func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
+	nodes := apiSuite.DiscoverNodes().Nodes()
+
+	nodesNotDoneBooting := make(map[string]struct{})
+
+	for _, node := range nodes {
+		nodesNotDoneBooting[node] = struct{}{}
+	}
+
+	ctx, cancel := context.WithTimeout(client.WithNodes(ctx, nodes...), 3*time.Minute)
+	defer cancel()
+
+	apiSuite.Require().NoError(apiSuite.Client.EventsWatch(ctx, func(ch <-chan client.Event) {
+		defer cancel()
+
+		for event := range ch {
+			if msg, ok := event.Payload.(*machineapi.SequenceEvent); ok {
+				if msg.GetAction() == machineapi.SequenceEvent_STOP && msg.GetSequence() == runtime.SequenceBoot.String() {
+					delete(nodesNotDoneBooting, event.Node)
+
+					if len(nodesNotDoneBooting) == 0 {
+						return
+					}
+				}
+			}
+		}
+	}, client.WithTailEvents(-1)))
+
+	apiSuite.Require().Empty(nodesNotDoneBooting)
 }
 
 // TearDownSuite closes Talos API client.

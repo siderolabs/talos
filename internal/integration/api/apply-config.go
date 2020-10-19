@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -40,6 +42,7 @@ const applyConfigTestSysctlVal = "1"
 
 const assertRebootedRebootTimeout = 10 * time.Minute
 
+// ApplyConfigSuite ...
 type ApplyConfigSuite struct {
 	base.K8sSuite
 
@@ -69,14 +72,16 @@ func (suite *ApplyConfigSuite) TearDownTest() {
 	}
 }
 
-// TestRecoverControlPlane removes the control plane components and attempts to recover them with the recover API.
-func (suite *ApplyConfigSuite) TestRecoverControlPlane() {
+// TestApply verifies the apply config API.
+func (suite *ApplyConfigSuite) TestApply() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
 	nodes := suite.DiscoverNodes().NodesByType(machine.TypeJoin)
 	suite.Require().NotEmpty(nodes)
+
+	suite.WaitForBootDone(suite.ctx)
 
 	sort.Strings(nodes)
 
@@ -93,7 +98,7 @@ func (suite *ApplyConfigSuite) TestRecoverControlPlane() {
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		_, err := suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 			Data: cfgDataOut,
 		})
 		if err != nil {
@@ -105,8 +110,16 @@ func (suite *ApplyConfigSuite) TestRecoverControlPlane() {
 	}, assertRebootedRebootTimeout)
 
 	// Verify configuration change
-	newProvider, err := suite.readConfigFromNode(nodeCtx)
-	suite.Assert().Nilf(err, "failed to read updated configuration from node %q: %w", node, err)
+	var newProvider config.Provider
+
+	suite.Require().Nilf(retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
+		newProvider, err = suite.readConfigFromNode(nodeCtx)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		return nil
+	}), "failed to read updated configuration from node %q: %w", node, err)
 
 	suite.Assert().Equal(
 		newProvider.Machine().Sysctls()[applyConfigTestSysctl],
@@ -122,9 +135,9 @@ func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (conf
 	if err != nil {
 		return nil, fmt.Errorf("error creating reader: %w", err)
 	}
-	defer reader.Close()
+	defer reader.Close() //nolint: errcheck
 
-	if err := copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
+	if err = copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
 		return nil, fmt.Errorf("error reading: %w", err)
 	}
 
@@ -142,6 +155,7 @@ func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) 
 	var chanErr error
 
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 

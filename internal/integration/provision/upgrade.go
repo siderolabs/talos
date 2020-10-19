@@ -131,6 +131,8 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 }
 
 // upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
+//
+//nolint: deadcode,unused
 func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("preserve-%s-%s", nextVersion, DefaultSettings.CurrentVersion),
@@ -151,6 +153,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 	}
 }
 
+// UpgradeSuite ...
 type UpgradeSuite struct {
 	suite.Suite
 	base.TalosSuite
@@ -242,7 +245,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.stateDir, err = ioutil.TempDir("", "talos-integration")
 	suite.Require().NoError(err)
 
-	suite.T().Logf("initalizing provisioner with cluster name %q, state directory %q", clusterName, suite.stateDir)
+	suite.T().Logf("initializing provisioner with cluster name %q, state directory %q", clusterName, suite.stateDir)
 
 	request := provision.ClusterRequest{
 		Name: clusterName,
@@ -399,7 +402,7 @@ func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, 
 	}
 }
 
-func (suite *UpgradeSuite) readVersion(client *talosclient.Client, nodeCtx context.Context) (version string, err error) {
+func (suite *UpgradeSuite) readVersion(nodeCtx context.Context, client *talosclient.Client) (version string, err error) {
 	var v *machineapi.VersionResponse
 
 	v, err = client.Version(nodeCtx)
@@ -442,7 +445,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	suite.Require().NoError(retry.Constant(10 * time.Minute).Retry(func() error {
 		var version string
 
-		version, err = suite.readVersion(client, nodeCtx)
+		version, err = suite.readVersion(nodeCtx, client)
 		if err != nil {
 			// API might be unresponsive during upgrade
 			return retry.ExpectedError(err)

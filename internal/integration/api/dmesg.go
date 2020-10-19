@@ -139,6 +139,7 @@ func (suite *DmesgSuite) TestClusterHasDmesg() {
 			if err == io.EOF {
 				break
 			}
+
 			suite.Require().NoError(err)
 		}
 
