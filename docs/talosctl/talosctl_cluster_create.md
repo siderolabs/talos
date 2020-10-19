@@ -33,7 +33,7 @@ talosctl cluster create [flags]
       --initrd-path string                      the uncompressed kernel image to use (default "_out/initramfs-${ARCH}.xz")
   -i, --input-dir string                        location of pre-generated config files
       --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string               desired kubernetes version to run (default "1.19.1")
+      --kubernetes-version string               desired kubernetes version to run (default "1.19.3")
       --masters int                             the number of masters to create (default 1)
       --memory int                              the limit on memory usage in MB (each container/VM) (default 2048)
       --mtu int                                 MTU of the cluster network (default 1500)
