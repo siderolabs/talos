@@ -38,7 +38,7 @@ require (
 	github.com/hashicorp/go-getter v1.5.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/insomniacslk/dhcp v0.0.0-20200922210017-67c425063dca
-	github.com/jsimonetti/rtnetlink v0.0.0-20201014071711-e1a37f341155
+	github.com/jsimonetti/rtnetlink v0.0.0-20201022080559-7cf95b6356e5
 	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200817205730-0b4482256ca1
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mdlayher/genetlink v1.0.0
