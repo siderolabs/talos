@@ -1437,99 +1437,57 @@ func SyncNonVolatileStorageBuffers() {
 // MountBootPartition mounts the boot partition.
 func MountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mountSystemPartition(constants.BootPartitionLabel)
+		return mount.SystemPartitionMount(constants.BootPartitionLabel)
 	}, "mountBootPartition"
 }
 
 // UnmountBootPartition unmounts the boot partition.
 func UnmountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return unmountSystemPartition(constants.BootPartitionLabel)
+		return mount.SystemPartitionUnmount(constants.BootPartitionLabel)
 	}, "unmountBootPartition"
 }
 
 // MountEFIPartition mounts the EFI partition.
 func MountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mountSystemPartition(constants.EFIPartitionLabel)
+		return mount.SystemPartitionMount(constants.EFIPartitionLabel)
 	}, "mountEFIPartition"
 }
 
 // UnmountEFIPartition unmounts the EFI partition.
 func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return unmountSystemPartition(constants.EFIPartitionLabel)
+		return mount.SystemPartitionUnmount(constants.EFIPartitionLabel)
 	}, "unmountEFIPartition"
 }
 
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mountSystemPartition(constants.StatePartitionLabel, mount.WithSkipIfMounted(true))
+		return mount.SystemPartitionMount(constants.StatePartitionLabel, mount.WithSkipIfMounted(true))
 	}, "mountStatePartition"
 }
 
 // UnmountStatePartition unmounts the system partition.
 func UnmountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return unmountSystemPartition(constants.StatePartitionLabel)
+		return mount.SystemPartitionUnmount(constants.StatePartitionLabel)
 	}, "unmountStatePartition"
 }
 
 // MountEphermeralPartition mounts the ephemeral partition.
 func MountEphermeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mountSystemPartition(constants.EphemeralPartitionLabel)
+		return mount.SystemPartitionMount(constants.EphemeralPartitionLabel)
 	}, "mountEphermeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
 func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return unmountSystemPartition(constants.EphemeralPartitionLabel)
+		return mount.SystemPartitionUnmount(constants.EphemeralPartitionLabel)
 	}, "unmountEphemeralPartition"
-}
-
-func mountSystemPartition(label string, opts ...mount.Option) (err error) {
-	mountpoints := mount.NewMountPoints()
-
-	mountpoint, err := mount.SystemMountPointForLabel(label, opts...)
-	if err != nil {
-		return err
-	}
-
-	if mountpoint == nil {
-		return fmt.Errorf("no mountpoints for label %q", label)
-	}
-
-	mountpoints.Set(label, mountpoint)
-
-	if err = mount.Mount(mountpoints); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func unmountSystemPartition(label string) (err error) {
-	mountpoints := mount.NewMountPoints()
-
-	mountpoint, err := mount.SystemMountPointForLabel(label)
-	if err != nil {
-		return err
-	}
-
-	if mountpoint == nil {
-		return fmt.Errorf("no mountpoints for label %q", label)
-	}
-
-	mountpoints.Set(label, mountpoint)
-
-	if err = mount.Unmount(mountpoints); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Install mounts or installs the system partitions.

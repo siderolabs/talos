@@ -41,5 +41,4 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&options.Upgrade, "upgrade", false, "Indicates that the install is being performed by an upgrade")
 	rootCmd.PersistentFlags().BoolVar(&options.Force, "force", false, "Indicates that the install should forcefully format the partition")
 	rootCmd.PersistentFlags().BoolVar(&options.Zero, "zero", false, "Indicates that the install should write zeros to the disk before installing")
-	rootCmd.PersistentFlags().BoolVar(&options.Save, "save", false, "Indicates that the install should write the config to disk (only supports file:// scheme)")
 }

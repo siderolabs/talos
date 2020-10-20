@@ -5,6 +5,9 @@
 package install
 
 import (
+	"bytes"
+	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -14,15 +17,16 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-blockdevice/blockdevice/table"
 	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/makefs"
 )
@@ -53,12 +57,14 @@ type Target struct {
 	FileSystemType     FileSystemType
 	LegacyBIOSBootable bool
 
-	Size   uint
-	Force  bool
-	Assets []*Asset
+	Size             uint
+	Force            bool
+	Assets           []*Asset
+	PreserveContents bool
 
 	// set during execution
 	PartitionName string
+	Contents      *bytes.Buffer
 }
 
 // Asset represents a file required by a target.
@@ -103,7 +109,7 @@ const (
 // NewManifest initializes and returns a Manifest.
 //
 //nolint: gocyclo
-func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manifest *Manifest, err error) {
+func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound bool, opts *Options) (manifest *Manifest, err error) {
 	if label == "" {
 		return nil, fmt.Errorf("a label is required, got \"\"")
 	}
@@ -123,18 +129,6 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 		if err = VerifyBootPartition(opts); err != nil {
 			return nil, fmt.Errorf("failed to prepare boot partition: %w", err)
 		}
-	}
-
-	// Verify existence of boot partition.
-
-	var bootPartitionFound bool
-
-	if dev, err := probe.DevForFileSystemLabel(opts.Disk, constants.BootPartitionLabel); err != nil {
-		bootPartitionFound = false
-	} else {
-		//nolint: errcheck
-		defer dev.Close()
-		bootPartitionFound = true
 	}
 
 	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
@@ -187,12 +181,13 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 
 	if opts.Bootloader {
 		bootTarget = &Target{
-			Device:         opts.Disk,
-			Label:          constants.BootPartitionLabel,
-			PartitionType:  LinuxFilesystemData,
-			FileSystemType: FilesystemTypeXFS,
-			Size:           BootSize,
-			Force:          true,
+			Device:           opts.Disk,
+			Label:            constants.BootPartitionLabel,
+			PartitionType:    LinuxFilesystemData,
+			FileSystemType:   FilesystemTypeXFS,
+			Size:             BootSize,
+			Force:            true,
+			PreserveContents: bootPartitionFound,
 			Assets: []*Asset{
 				{
 					Source:      constants.KernelAssetPath,
@@ -207,21 +202,23 @@ func NewManifest(label string, sequence runtime.Sequence, opts *Options) (manife
 	}
 
 	metaTarget := &Target{
-		Device:         opts.Disk,
-		Label:          constants.MetaPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeNone,
-		Size:           MetaSize,
-		Force:          true,
+		Device:           opts.Disk,
+		Label:            constants.MetaPartitionLabel,
+		PartitionType:    LinuxFilesystemData,
+		FileSystemType:   FilesystemTypeNone,
+		Size:             MetaSize,
+		Force:            true,
+		PreserveContents: bootPartitionFound,
 	}
 
 	stateTarget := &Target{
-		Device:         opts.Disk,
-		Label:          constants.StatePartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           StateSize,
-		Force:          true,
+		Device:           opts.Disk,
+		Label:            constants.StatePartitionLabel,
+		PartitionType:    LinuxFilesystemData,
+		FileSystemType:   FilesystemTypeXFS,
+		Size:             StateSize,
+		Force:            true,
+		PreserveContents: bootPartitionFound,
 	}
 
 	ephemeralTarget := &Target{
@@ -257,6 +254,10 @@ func (m *Manifest) Execute() (err error) {
 
 //nolint: gocyclo
 func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error) {
+	if err = m.preserveContents(device, targets); err != nil {
+		return err
+	}
+
 	if device.Zero {
 		if err = m.zeroDevice(device); err != nil {
 			return err
@@ -269,6 +270,9 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		return err
 	}
 
+	// nolint: errcheck
+	defer bd.Close()
+
 	if device.ResetPartitionTable {
 		// TODO: how should it work with zero option above?
 		if err = bd.Reset(); err != nil {
@@ -279,9 +283,6 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 	}
-
-	// nolint: errcheck
-	defer bd.Close()
 
 	for _, target := range targets {
 		if err = target.Partition(bd); err != nil {
@@ -315,6 +316,86 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		}
 	}
 
+	if err = m.restoreContents(targets); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//nolint: gocyclo
+func (m *Manifest) preserveContents(device Device, targets []*Target) (err error) {
+	anyPreserveContents := false
+
+	for _, target := range targets {
+		if target.PreserveContents {
+			anyPreserveContents = true
+
+			break
+		}
+	}
+
+	if !anyPreserveContents {
+		// no target to preserve contents, exit early
+		return nil
+	}
+
+	var bd *blockdevice.BlockDevice
+
+	if bd, err = blockdevice.Open(device.Device); err != nil {
+		// failed to open the block device, probably it's damaged?
+		log.Printf("warning: skipping preserve contents on %q as block device failed: %s", device.Device, err)
+
+		return nil
+	}
+
+	// nolint: errcheck
+	defer bd.Close()
+
+	pt, err := bd.PartitionTable()
+	if err != nil {
+		log.Printf("warning: skipping preserve contents on %q as partition table failed: %s", device.Device, err)
+
+		return nil
+	}
+
+	for _, target := range targets {
+		if !target.PreserveContents {
+			continue
+		}
+
+		var source table.Partition
+
+		// find matching existing partition table entry
+		for _, part := range pt.Partitions() {
+			if part.Label() == target.Label {
+				source = part
+
+				break
+			}
+		}
+
+		if source == nil {
+			log.Printf("warning: failed to preserve contents of %q on %q, as no source partition was found", target.Label, device.Device)
+
+			continue
+		}
+
+		if err = target.SaveContents(device, source); err != nil {
+			log.Printf("warning: failed to preserve contents of %q on %q: %s", target.Label, device.Device, err)
+		}
+	}
+
+	return nil
+}
+
+func (m *Manifest) restoreContents(targets []*Target) error {
+	for _, target := range targets {
+		if err := target.RestoreContents(); err != nil {
+			return fmt.Errorf("error restoring contents for %q: %w", target.Label, err)
+		}
+	}
+
 	return nil
 }
 
@@ -337,7 +418,7 @@ func (m *Manifest) SystemMountpoints() (*mount.Points, error) {
 	return mountpoints, nil
 }
 
-// zeroDevice fills first block of the device with zeroes.
+// zeroDevice fills the device with zeroes.
 func (m *Manifest) zeroDevice(device Device) (err error) {
 	var bd *blockdevice.BlockDevice
 
@@ -477,4 +558,126 @@ func (t *Target) Save() (err error) {
 	}
 
 	return nil
+}
+
+func (t *Target) withTemporaryMounted(partPath string, flags uintptr, f func(mountPath string) error) error {
+	mountPath := filepath.Join(constants.SystemPath, "mnt")
+
+	mountpoints := mount.NewMountPoints()
+
+	mountpoint := mount.NewMountPoint(partPath, mountPath, t.FileSystemType, unix.MS_NOATIME|flags, "")
+	mountpoints.Set(t.Label, mountpoint)
+
+	if err := mount.Mount(mountpoints); err != nil {
+		return fmt.Errorf("failed to mount %q: %w", partPath, err)
+	}
+
+	defer mount.Unmount(mountpoints) //nolint: errcheck
+
+	return f(mountPath)
+}
+
+// SaveContents saves contents of partition to the target (in-memory).
+func (t *Target) SaveContents(device Device, source table.Partition) error {
+	partPath, err := util.PartPath(device.Device, int(source.No()))
+	if err != nil {
+		return err
+	}
+
+	if t.FileSystemType == FilesystemTypeNone {
+		err = t.saveRawContents(partPath)
+	} else {
+		err = t.saveFilesystemContents(partPath)
+	}
+
+	if err != nil {
+		t.Contents = nil
+
+		return err
+	}
+
+	log.Printf("preserved contents of %q: %d bytes", t.Label, t.Contents.Len())
+
+	return nil
+}
+
+func (t *Target) saveRawContents(partPath string) error {
+	src, err := os.Open(partPath)
+	if err != nil {
+		return fmt.Errorf("error opening source partition: %q", err)
+	}
+
+	defer src.Close() //nolint: errcheck
+
+	t.Contents = bytes.NewBuffer(nil)
+
+	zw := gzip.NewWriter(t.Contents)
+	defer zw.Close() //nolint: errcheck
+
+	_, err = io.Copy(zw, src)
+	if err != nil {
+		return fmt.Errorf("error copying partition %q contents: %w", partPath, err)
+	}
+
+	return src.Close()
+}
+
+func (t *Target) saveFilesystemContents(partPath string) error {
+	t.Contents = bytes.NewBuffer(nil)
+
+	return t.withTemporaryMounted(partPath, unix.MS_RDONLY, func(mountPath string) error {
+		return archiver.TarGz(context.TODO(), mountPath, t.Contents)
+	})
+}
+
+// RestoreContents restores previously saved contents to the disk.
+func (t *Target) RestoreContents() error {
+	if t.Contents == nil {
+		return nil
+	}
+
+	var err error
+
+	if t.FileSystemType == FilesystemTypeNone {
+		err = t.restoreRawContents()
+	} else {
+		err = t.restoreFilesystemContents()
+	}
+
+	t.Contents = nil
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("restored contents of %q", t.Label)
+
+	return nil
+}
+
+func (t *Target) restoreRawContents() error {
+	dst, err := os.OpenFile(t.PartitionName, os.O_WRONLY, 0)
+	if err != nil {
+		return fmt.Errorf("error opening source partition: %q", err)
+	}
+
+	defer dst.Close() //nolint: errcheck
+
+	zr, err := gzip.NewReader(t.Contents)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(dst, zr)
+	if err != nil {
+		return fmt.Errorf("error restoring partition %q contents: %w", t.PartitionName, err)
+	}
+
+	return dst.Close()
+}
+
+func (t *Target) restoreFilesystemContents() error {
+	return t.withTemporaryMounted(t.PartitionName, 0, func(mountPath string) error {
+		return archiver.UntarGz(context.TODO(), t.Contents, mountPath)
+	})
 }

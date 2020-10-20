@@ -54,7 +54,7 @@ menuentry "{{ $label.Root }}" {
   linux {{ $label.Kernel }} {{ $label.Append }}
   initrd {{ $label.Initrd }}
 }
-{{- end }}
+{{ end }}
 `
 
 // Grub represents the grub bootloader.
@@ -84,7 +84,6 @@ func (g *Grub) Labels() (current, next string, err error) {
 	}
 
 	if len(matches[0]) != 2 {
-		log.Printf("%+v", matches[0])
 		return "", "", fmt.Errorf("expected 2 matches, got %d", len(matches[0]))
 	}
 
@@ -168,8 +167,19 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 }
 
 // Default implements the bootloader interface.
-func (g *Grub) Default(label string) error {
-	return nil
+func (g *Grub) Default(label string) (err error) {
+	var b []byte
+
+	if b, err = ioutil.ReadFile(GrubConfig); err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(`^set default="(.*)"`)
+	b = re.ReplaceAll(b, []byte(fmt.Sprintf(`set default="%s"`, label)))
+
+	log.Printf("writing %s to disk", GrubConfig)
+
+	return ioutil.WriteFile(GrubConfig, b, 0o600)
 }
 
 func writeCfg(path string, grubcfg *Cfg) (err error) {

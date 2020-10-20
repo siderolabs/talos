@@ -6,13 +6,12 @@ package install
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"net/url"
-	"os"
 	"path/filepath"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -32,7 +31,6 @@ type Options struct {
 	Upgrade         bool
 	Force           bool
 	Zero            bool
-	Save            bool
 }
 
 // Install installs Talos.
@@ -73,6 +71,8 @@ type Installer struct {
 	manifest   *Manifest
 	bootloader bootloader.Bootloader
 
+	bootPartitionFound bool
+
 	Current string
 	Next    string
 }
@@ -89,19 +89,50 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 		},
 	}
 
-	i.Current, i.Next, err = i.bootloader.Labels()
-	if err != nil {
+	if err = i.probeBootPartition(); err != nil {
 		return nil, err
 	}
 
-	label := i.Next
-
-	i.manifest, err = NewManifest(label, seq, i.options)
+	i.manifest, err = NewManifest(i.Next, seq, i.bootPartitionFound, i.options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation manifest: %w", err)
 	}
 
 	return i, nil
+}
+
+// Verify existence of boot partition.
+func (i *Installer) probeBootPartition() error {
+	// there's no reason to discover boot partition if the disk is about to be wiped
+	if !i.options.Zero {
+		if dev, err := probe.DevForFileSystemLabel(i.options.Disk, constants.BootPartitionLabel); err != nil {
+			i.bootPartitionFound = false
+		} else {
+			//nolint: errcheck
+			defer dev.Close()
+
+			i.bootPartitionFound = true
+
+			// mount the boot partition temporarily to find the bootloader labels
+			mountpoints := mount.NewMountPoints()
+
+			mountpoint := mount.NewMountPoint(dev.Path, constants.BootMountPoint, dev.SuperBlock.Type(), unix.MS_NOATIME|unix.MS_RDONLY, "")
+			mountpoints.Set(constants.BootPartitionLabel, mountpoint)
+
+			if err := mount.Mount(mountpoints); err != nil {
+				log.Printf("warning: failed to mount boot partition %q: %s", dev.Path, err)
+			} else {
+				defer mount.Unmount(mountpoints) //nolint: errcheck
+			}
+		}
+	}
+
+	var err error
+
+	// anyways run the Labels() to get the defaults initialized
+	i.Current, i.Next, err = i.bootloader.Labels()
+
+	return err
 }
 
 // Install fetches the necessary data locations and copies or extracts
@@ -192,38 +223,6 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		}
 
 		if _, err = meta.Write(); err != nil {
-			return err
-		}
-	}
-
-	if i.options.Save {
-		u, err := url.Parse(i.options.ConfigSource)
-		if err != nil {
-			return err
-		}
-
-		if u.Scheme != "file" {
-			return fmt.Errorf("file:// scheme must be used with the save option, have %s", u.Scheme)
-		}
-
-		src, err := os.Open(u.Path)
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer src.Close()
-
-		dst, err := os.OpenFile(constants.ConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o600)
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer dst.Close()
-
-		_, err = io.Copy(dst, src)
-		if err != nil {
 			return err
 		}
 	}
