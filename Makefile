@@ -193,7 +193,7 @@ lint: ## Runs linters on go, protobuf, and markdown file types.
 	@$(MAKE) lint-go lint-protobuf lint-markdown
 
 check-dirty: ## Verifies that source tree is not dirty
-	@case "$(TAG)" in *-dirty) echo "Source tree is dirty"; git status; exit 1 ;; esac
+	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; exit 1 ; fi
 
 # Tests
 
