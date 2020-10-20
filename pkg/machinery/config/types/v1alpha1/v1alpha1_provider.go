@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v3"
-
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
@@ -23,6 +21,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -68,13 +67,10 @@ func (c *Config) String() (string, error) {
 }
 
 // Bytes implements the config.Provider interface.
-func (c *Config) Bytes() ([]byte, error) {
-	b, err := yaml.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
+func (c *Config) Bytes() (res []byte, err error) {
+	res, err = encoder.NewEncoder(c).Encode()
 
-	return b, nil
+	return
 }
 
 // Install implements the config.Provider interface.

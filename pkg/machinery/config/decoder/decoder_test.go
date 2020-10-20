@@ -18,7 +18,7 @@ type Mock struct {
 }
 
 func init() {
-	config.Register("mock", func(verion string) interface{} {
+	config.Register("mock", func(string) interface{} {
 		return &Mock{}
 	})
 }

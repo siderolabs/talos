@@ -130,6 +130,7 @@ generate: ## Generates source code from protobuf definitions.
 
 .PHONY: docs
 docs: ## Generates the documentation for machine config, and talosctl.
+	@rm -rf docs/configuration/*
 	@rm -rf docs/talosctl/*
 	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
