@@ -96,3 +96,47 @@ func SystemMountPointForLabel(label string, opts ...Option) (mountpoint *Point, 
 
 	return mountpoint, nil
 }
+
+// SystemPartitionMount mounts a system partition by the label.
+func SystemPartitionMount(label string, opts ...Option) (err error) {
+	mountpoints := NewMountPoints()
+
+	mountpoint, err := SystemMountPointForLabel(label, opts...)
+	if err != nil {
+		return err
+	}
+
+	if mountpoint == nil {
+		return fmt.Errorf("no mountpoints for label %q", label)
+	}
+
+	mountpoints.Set(label, mountpoint)
+
+	if err = Mount(mountpoints); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SystemPartitionUnmount unmounts a system partition by the label.
+func SystemPartitionUnmount(label string) (err error) {
+	mountpoints := NewMountPoints()
+
+	mountpoint, err := SystemMountPointForLabel(label)
+	if err != nil {
+		return err
+	}
+
+	if mountpoint == nil {
+		return fmt.Errorf("no mountpoints for label %q", label)
+	}
+
+	mountpoints.Set(label, mountpoint)
+
+	if err = Unmount(mountpoints); err != nil {
+		return err
+	}
+
+	return nil
+}

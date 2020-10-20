@@ -5,6 +5,8 @@
 package install_test
 
 import (
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -44,7 +46,7 @@ func TestManifestSuite(t *testing.T) {
 	suite.Run(t, new(manifestSuite))
 }
 
-func (suite *manifestSuite) SetupSuite() {
+func (suite *manifestSuite) SetupTest() {
 	suite.skipIfNotRoot()
 
 	var err error
@@ -64,7 +66,7 @@ func (suite *manifestSuite) SetupSuite() {
 	suite.Require().NoError(loopback.LoopSetReadWrite(suite.loopbackDevice))
 }
 
-func (suite *manifestSuite) TearDownSuite() {
+func (suite *manifestSuite) TearDownTest() {
 	if suite.loopbackDevice != nil {
 		suite.Assert().NoError(loopback.Unloop(suite.loopbackDevice))
 	}
@@ -89,7 +91,7 @@ func (suite *manifestSuite) skipIfNotRoot() {
 	}
 }
 
-func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest) {
+func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, current, next string) {
 	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
@@ -160,6 +162,42 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest) {
 	err = mount.Mount(mountpoints)
 	suite.Require().NoError(err)
 
+	metaPath := fmt.Sprintf("%sp%d", suite.loopbackDevice.Name(), table.Partitions()[3].No())
+
+	if current != "" {
+		// verify that current was preserved
+		suite.Assert().DirExists(filepath.Join(tempDir, "boot", current))
+
+		suite.Assert().FileExists(filepath.Join(tempDir, "boot", current, "kernel"))
+
+		buf := make([]byte, len(current))
+
+		f, err := os.Open(metaPath)
+		suite.Require().NoError(err)
+
+		_, err = io.ReadFull(f, buf)
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(current, string(buf))
+
+		suite.Assert().NoError(f.Close())
+	}
+
+	if next != "" {
+		suite.Assert().NoError(os.MkdirAll(filepath.Join(tempDir, "boot", next), 0o700))
+		suite.Assert().NoError(ioutil.WriteFile(filepath.Join(tempDir, "boot", next, "kernel"), []byte("LINUX!"), 0o660))
+
+		buf := []byte(next)
+
+		f, err := os.OpenFile(metaPath, os.O_WRONLY, 0)
+		suite.Require().NoError(err)
+
+		_, err = f.Write(buf)
+		suite.Require().NoError(err)
+
+		suite.Assert().NoError(f.Close())
+	}
+
 	defer func() {
 		suite.Assert().NoError(mount.Unmount(mountpoints))
 	}()
@@ -168,7 +206,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest) {
 func (suite *manifestSuite) TestExecuteManifestClean() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest("A", runtime.SequenceInstall, &install.Options{
+	manifest, err := install.NewManifest("A", runtime.SequenceInstall, false, &install.Options{
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
@@ -177,13 +215,13 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 
 	suite.Assert().NoError(manifest.Execute())
 
-	suite.verifyBlockdevice(manifest)
+	suite.verifyBlockdevice(manifest, "", "A")
 }
 
 func (suite *manifestSuite) TestExecuteManifestForce() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest("A", runtime.SequenceInstall, &install.Options{
+	manifest, err := install.NewManifest("A", runtime.SequenceInstall, false, &install.Options{
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
@@ -192,9 +230,11 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 
 	suite.Assert().NoError(manifest.Execute())
 
+	suite.verifyBlockdevice(manifest, "", "A")
+
 	// reinstall
 
-	manifest, err = install.NewManifest("B", runtime.SequenceInstall, &install.Options{
+	manifest, err = install.NewManifest("B", runtime.SequenceInstall, true, &install.Options{
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
@@ -204,7 +244,7 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 
 	suite.Assert().NoError(manifest.Execute())
 
-	suite.verifyBlockdevice(manifest)
+	suite.verifyBlockdevice(manifest, "A", "B")
 }
 
 func (suite *manifestSuite) TestTargetInstall() {

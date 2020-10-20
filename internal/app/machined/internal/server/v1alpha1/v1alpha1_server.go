@@ -42,6 +42,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
@@ -143,28 +144,44 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 // Rollback implements the machine.MachineServer interface.
 //
 // nolint: dupl
-func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (reply *machine.RollbackResponse, err error) {
+func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*machine.RollbackResponse, error) {
 	log.Printf("rollback via API received")
 
-	if err = s.checkSupported(runtime.Rollback); err != nil {
+	if err := s.checkSupported(runtime.Rollback); err != nil {
 		return nil, err
 	}
 
-	grub := &grub.Grub{
-		BootDisk: s.Controller.Runtime().Config().Machine().Install().Disk(),
-	}
+	if err := func() error {
+		if err := mount.SystemPartitionMount(constants.BootPartitionLabel); err != nil {
+			return fmt.Errorf("error mounting boot partition: %w", err)
+		}
 
-	_, next, err := grub.Labels()
-	if err != nil {
+		defer func() {
+			if err := mount.SystemPartitionUnmount(constants.BootPartitionLabel); err != nil {
+				log.Printf("failed unmounting boot partition: %s", err)
+			}
+		}()
+
+		grub := &grub.Grub{
+			BootDisk: s.Controller.Runtime().Config().Machine().Install().Disk(),
+		}
+
+		_, next, err := grub.Labels()
+		if err != nil {
+			return err
+		}
+
+		if _, err = os.Stat(filepath.Join(constants.BootMountPoint, next)); errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("cannot rollback to %q, label does not exist", next)
+		}
+
+		if err := grub.Default(next); err != nil {
+			return fmt.Errorf("failed to revert bootloader: %v", err)
+		}
+
+		return nil
+	}(); err != nil {
 		return nil, err
-	}
-
-	if _, err = os.Stat(filepath.Join(constants.BootMountPoint, next)); errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("cannot rollback to %q, label does not exist", next)
-	}
-
-	if err := grub.Default(next); err != nil {
-		return nil, fmt.Errorf("failed to revert bootloader: %v", err)
 	}
 
 	go func() {
@@ -179,13 +196,11 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (rep
 		}
 	}()
 
-	reply = &machine.RollbackResponse{
+	return &machine.RollbackResponse{
 		Messages: []*machine.Rollback{
 			{},
 		},
-	}
-
-	return reply, nil
+	}, nil
 }
 
 // Bootstrap implements the machine.MachineServer interface.
@@ -266,13 +281,15 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create etcd client: %w", err)
-	}
+	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeJoin {
+		client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create etcd client: %w", err)
+		}
 
-	if err = client.ValidateForUpgrade(ctx, s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
-		return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
+		if err = client.ValidateForUpgrade(ctx, s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
+			return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
+		}
 	}
 
 	go func() {

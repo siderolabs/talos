@@ -185,7 +185,7 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	bootID := string(body)
+	bootID := strings.TrimSpace(string(body))
 
 	_, err = io.Copy(ioutil.Discard, reader)
 	if err != nil {
