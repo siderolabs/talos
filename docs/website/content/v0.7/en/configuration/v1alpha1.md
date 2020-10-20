@@ -870,10 +870,10 @@ Valid Values:
 
 ### TimeConfig
 
-#### enabled
+#### disabled
 
-Indicates if time (ntp) is enabled for the machine
-Defaults to `true`.
+Indicates if time (ntp) is disabled for the machine
+Defaults to `false`.
 
 Type: `bool`
 
