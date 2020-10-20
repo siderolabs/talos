@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
@@ -30,6 +31,8 @@ var spinner = []string{"◰", "◳", "◲", "◱"}
 //nolint: gocyclo
 func (wr *writerReporter) Update(condition conditions.Condition) {
 	line := strings.TrimSpace(fmt.Sprintf("waiting for %s", condition))
+	// replace tabs with spaces to get consistent output length
+	line = strings.ReplaceAll(line, "\t", "    ")
 
 	if !wr.colorized {
 		if line != wr.lastLine {
@@ -40,6 +43,11 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 		return
 	}
 
+	w, _, _ := terminal.GetSize(int(wr.w.Fd())) //nolint: errcheck
+	if w <= 0 {
+		w = 80
+	}
+
 	var coloredLine string
 
 	showSpinner := false
@@ -47,19 +55,21 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 
 	switch {
 	case strings.HasSuffix(line, "..."):
-		coloredLine = color.YellowString("%s %s", spinner[wr.spinnerIdx], line)
+		line = fmt.Sprintf("%s %s", spinner[wr.spinnerIdx], line)
+		coloredLine = color.YellowString("%s", line)
 		wr.lastLineTemporary = true
 		showSpinner = true
 	case strings.HasSuffix(line, "OK"):
 		coloredLine = line
 		wr.lastLineTemporary = false
 	default:
-		coloredLine = color.RedString("%s %s", spinner[wr.spinnerIdx], line)
+		line = fmt.Sprintf("%s %s", spinner[wr.spinnerIdx], line)
+		coloredLine = color.RedString("%s", line)
 		wr.lastLineTemporary = true
 		showSpinner = true
 	}
 
-	if !showSpinner && line == wr.lastLine {
+	if line == wr.lastLine {
 		return
 	}
 
@@ -68,13 +78,8 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 	}
 
 	if prevLineTemporary {
-		w, _, _ := terminal.GetSize(int(wr.w.Fd())) //nolint: errcheck
-		if w <= 0 {
-			w = 80
-		}
-
 		for _, outputLine := range strings.Split(wr.lastLine, "\n") {
-			for i := 0; i < (len(outputLine)+w-1)/w; i++ {
+			for i := 0; i < (utf8.RuneCountInString(outputLine)+w-1)/w; i++ {
 				fmt.Fprint(wr.w, "\033[A\033[K") // cursor up, clear line
 			}
 		}
