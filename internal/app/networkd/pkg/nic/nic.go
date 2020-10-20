@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/mdlayher/netlink"
@@ -371,7 +370,39 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 
 	// Add any routes
 	for _, r := range method.Routes() {
-		err = n.addRoute(method, r)
+		// If gateway/router is 0.0.0.0 we'll set to nil so route scope decision will be correct
+		gw := r.Router
+		if net.IPv4zero.Equal(gw) {
+			gw = nil
+		}
+
+		src := method.Address()
+		// if destination is the ipv6 route,and gateway is LL do not pass a src address to set the default geteway
+		if net.IPv6zero.Equal(r.Dest.IP) && gw.IsLinkLocalUnicast() {
+			src = nil
+		}
+
+		attr := rtnetlink.RouteAttributes{
+			Dst:      r.Dest.IP,
+			OutIface: uint32(method.Link().Index),
+		}
+
+		if gw != nil {
+			attr.Gateway = gw
+		}
+
+		// Set DHCP specific options
+		if dhcpObj, ok := method.(*address.DHCP); ok {
+			if dhcpObj.DHCPOptions != nil {
+				attr.Priority = dhcpObj.DHCPOptions.RouteMetric()
+			}
+
+			if attr.Priority == uint32(0) {
+				attr.Priority = uint32(1024)
+			}
+		}
+
+		err = n.rtnlConn.RouteAdd(method.Link(), *r.Dest, gw, rtnl.WithRouteSrc(src), rtnl.WithRouteAttrs(attr))
 		if err != nil {
 			return err
 		}
@@ -405,90 +436,4 @@ func (n *NetworkInterface) Reset() {
 
 	// nolint: errcheck
 	n.rtnlConn.LinkDown(link)
-}
-
-// addRoute is a function loosely copied from https://github.com/jsimonetti/rtnetlink/blob/154ecd417600f79d7847278a1e984056dc647acc/rtnl/route.go
-// and merged with our logic on determining gw, src, dst, etc.
-// we need this b/c we need to craft the route message ourselves to add attributes.
-// nolint: gocyclo
-func (n *NetworkInterface) addRoute(method address.Addressing, r *dhcpv4.Route) error {
-	dst := *r.Dest
-
-	// If gateway/router is 0.0.0.0 we'll set to nil so route scope decision will be correct
-	gw := r.Router
-	if net.IPv4zero.Equal(gw) {
-		gw = nil
-	}
-
-	src := method.Address()
-	// if destination is the ipv6 route,and gateway is LL do not pass a src address to set the default geteway
-	if net.IPv6zero.Equal(r.Dest.IP) && gw.IsLinkLocalUnicast() {
-		src = nil
-	}
-
-	// determine if this is ipv4 or 6
-	var af int
-	if dst.IP.To4() != nil {
-		af = unix.AF_INET
-	} else if len(dst.IP) == net.IPv6len {
-		af = unix.AF_INET6
-	}
-
-	ifc := method.Link()
-
-	// Determine scope
-	var scope uint8
-
-	switch {
-	case gw != nil:
-		scope = unix.RT_SCOPE_UNIVERSE
-
-	case len(dst.IP) == net.IPv6len && dst.IP.To4() == nil:
-		scope = unix.RT_SCOPE_UNIVERSE
-
-	default:
-		// Set default scope to LINK
-		scope = unix.RT_SCOPE_LINK
-	}
-
-	attr := rtnetlink.RouteAttributes{
-		Dst:      dst.IP,
-		OutIface: uint32(ifc.Index),
-	}
-
-	// Set DHCP specific options
-	if dhcpObj, ok := method.(*address.DHCP); ok {
-		if dhcpObj.DHCPOptions != nil {
-			attr.Priority = dhcpObj.DHCPOptions.RouteMetric()
-		}
-
-		if attr.Priority == uint32(0) {
-			attr.Priority = uint32(1024)
-		}
-	}
-
-	if gw != nil {
-		attr.Gateway = gw
-	}
-
-	var srclen int
-	if src != nil {
-		srclen, _ = src.Mask.Size()
-		attr.Src = src.IP
-	}
-
-	dstlen, _ := dst.Mask.Size()
-
-	tx := &rtnetlink.RouteMessage{
-		Family:     uint8(af),
-		Table:      unix.RT_TABLE_MAIN,
-		Protocol:   unix.RTPROT_BOOT,
-		Type:       unix.RTN_UNICAST,
-		Scope:      scope,
-		DstLength:  uint8(dstlen),
-		SrcLength:  uint8(srclen),
-		Attributes: attr,
-	}
-
-	return n.rtnlConn.Conn.Route.Add(tx)
 }
