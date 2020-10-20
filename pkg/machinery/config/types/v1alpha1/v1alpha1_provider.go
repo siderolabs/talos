@@ -114,9 +114,7 @@ func (m *MachineConfig) Network() config.MachineNetwork {
 // Time implements the config.Provider interface.
 func (m *MachineConfig) Time() config.Time {
 	if m.MachineTime == nil {
-		return &TimeConfig{
-			TimeEnabled: true,
-		}
+		return &TimeConfig{}
 	}
 
 	return m.MachineTime
@@ -949,9 +947,9 @@ func (v *Vlan) ID() uint16 {
 	return v.VlanID
 }
 
-// Enabled implements the config.Provider interface.
-func (t *TimeConfig) Enabled() bool {
-	return t.TimeEnabled
+// Disabled implements the config.Provider interface.
+func (t *TimeConfig) Disabled() bool {
+	return t.TimeDisabled
 }
 
 // Servers implements the config.Provider interface.

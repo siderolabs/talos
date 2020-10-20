@@ -51,7 +51,7 @@ func (t *Trustd) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (t *Trustd) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer || !r.Config().Machine().Time().Enabled() {
+	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
 		return []string{"containerd", "networkd"}
 	}
 

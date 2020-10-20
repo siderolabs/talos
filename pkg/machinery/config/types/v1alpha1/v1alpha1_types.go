@@ -530,9 +530,9 @@ type InstallConfig struct {
 // TimeConfig represents the options for configuring time on a node.
 type TimeConfig struct {
 	//   description: |
-	//     Indicates if time (ntp) is enabled for the machine
-	//     Defaults to `true`.
-	TimeEnabled bool `yaml:"enabled"`
+	//     Indicates if time (ntp) is disabled for the machine
+	//     Defaults to `false`.
+	TimeDisabled bool `yaml:"disabled"`
 	//   description: |
 	//     Specifies time (ntp) servers to use for setting system time.
 	//     Defaults to `pool.ntp.org`
