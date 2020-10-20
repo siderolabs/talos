@@ -2,9 +2,65 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+/*
+Package v1alpha1 configuration file contains all the options available for configuring a machine.
+
+We can generate the files using `talosctl`.
+This configuration is enough to get started in most cases, however it can be customized as needed.
+
+```bash
+talosctl config generate --version v1alpha1 <cluster name> <cluster endpoint>
+````
+
+This will generate a machine config for each node type, and a talosconfig.
+The following is an example of an `init.yaml`:
+
+```yaml
+version: v1alpha1
+machine:
+  type: init
+  token: 5dt69c.npg6duv71zwqhzbg
+  ca:
+    crt: <base64 encoded Ed25519 certificate>
+    key: <base64 encoded Ed25519 key>
+  certSANs: []
+  kubelet: {}
+  network: {}
+  install:
+    disk: /dev/sda
+    image: ghcr.io/talos-systems/installer:latest
+    bootloader: true
+    wipe: false
+    force: false
+cluster:
+  controlPlane:
+    endpoint: https://1.2.3.4
+  clusterName: example
+  network:
+    cni: ""
+    dnsDomain: cluster.local
+    podSubnets:
+    - 10.244.0.0/16
+    serviceSubnets:
+    - 10.96.0.0/12
+  token: wlzjyw.bei2zfylhs2by0wd
+  certificateKey: 20d9aafb46d6db4c0958db5b3fc481c8c14fc9b1abd8ac43194f4246b77131be
+  aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
+  ca:
+    crt: <base64 encoded RSA certificate>
+    key: <base64 encoded RSA key>
+  apiServer: {}
+  controllerManager: {}
+  scheduler: {}
+  etcd:
+    ca:
+      crt: <base64 encoded RSA certificate>
+      key: <base64 encoded RSA key>
+```
+*/
 package v1alpha1
 
-//go:generate docgen . /tmp/v1alpha1.md
+//go:generate docgen ./v1alpha1_types.go ./v1alpha1_types_doc.go v1alpha1
 
 import (
 	"net/url"
@@ -24,6 +80,209 @@ func init() {
 		return target
 	})
 }
+
+var (
+
+	// Examples section.
+
+	machineConfigRegistriesExample = &RegistriesConfig{
+		RegistryMirrors: map[string]*RegistryMirrorConfig{
+			"docker.io": {
+				MirrorEndpoints: []string{"https://registry-1.docker.io"},
+			},
+		},
+		RegistryConfig: map[string]*RegistryConfig{
+			"some.host:123": {
+				RegistryTLS: &RegistryTLSConfig{
+					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("..."),
+						Key: []byte("..."),
+					},
+				},
+				RegistryAuth: &RegistryAuthConfig{
+					RegistryUsername:      "...",
+					RegistryPassword:      "...",
+					RegistryAuth:          "...",
+					RegistryIdentityToken: "...",
+				},
+			},
+		},
+	}
+
+	pemEncodedCertificateExample *x509.PEMEncodedCertificateAndKey = &x509.PEMEncodedCertificateAndKey{
+		Crt: []byte("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF..."),
+		Key: []byte("LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM..."),
+	}
+
+	machineKubeletExample = &KubeletConfig{
+		KubeletImage: "docker.io/autonomy/kubelet:v1.19.3",
+		KubeletExtraArgs: map[string]string{
+			"key": "value",
+		},
+	}
+
+	machineNetworkConfigExample = &NetworkConfig{
+		NetworkHostname: "worker-1",
+		NetworkInterfaces: []*Device{
+			{},
+		},
+		NameServers: []string{"9.8.7.6", "8.7.6.5"},
+	}
+
+	machineDisksExample []*MachineDisk = []*MachineDisk{
+		{
+			DeviceName: "/dev/sdb",
+			DiskPartitions: []*DiskPartition{
+				{
+					DiskMountPoint: "//lib/extra",
+					DiskSize:       100000000,
+				},
+			},
+		},
+	}
+
+	machineInstallExample = &InstallConfig{
+		InstallDisk:            "/dev/sda",
+		InstallExtraKernelArgs: []string{"option=value"},
+		InstallImage:           "ghcr.io/talos-systems/installer:latest",
+		InstallBootloader:      true,
+		InstallWipe:            false,
+	}
+
+	machineFilesExample = []*MachineFile{
+		{
+			FileContent:     "...",
+			FilePermissions: 0o666,
+			FilePath:        "/tmp/file.txt",
+			FileOp:          "append",
+		},
+	}
+
+	machineEnvExamples = []Env{
+		{
+			"GRPC_GO_LOG_VERBOSITY_LEVEL": "99",
+			"GRPC_GO_LOG_SEVERITY_LEVEL":  "info",
+			"https_proxy":                 "http://SERVER:PORT/",
+		},
+		{
+			"GRPC_GO_LOG_SEVERITY_LEVEL": "error",
+			"https_proxy":                "https://USERNAME:PASSWORD@SERVER:PORT/",
+		},
+		{
+			"https_proxy": "http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/",
+		},
+	}
+
+	machineTimeExample = &TimeConfig{
+		TimeServers: []string{"time.cloudflare.com"},
+	}
+
+	machineSysctlsExample map[string]string = map[string]string{
+		"kernel.domainname":   "talos.dev",
+		"net.ipv4.ip_forward": "0",
+	}
+
+	clusterControlPlaneExample = &ControlPlaneConfig{
+		Endpoint: &Endpoint{
+			&url.URL{
+				Host:   "1.2.3.4",
+				Scheme: "https",
+			},
+		},
+		LocalAPIServerPort: 443,
+	}
+
+	clusterNetworkExample = &ClusterNetworkConfig{
+		CNI: &CNIConfig{
+			CNIName: "flannel",
+		},
+		DNSDomain:     "cluster.local",
+		PodSubnet:     []string{"10.244.0.0/16"},
+		ServiceSubnet: []string{"10.96.0.0/12"},
+	}
+
+	clusterAPIServerExample = &APIServerConfig{
+		ContainerImage: "...", // TODO: actual image name
+		ExtraArgsConfig: map[string]string{
+			"key": "value", // TODO: add more real live examples
+		},
+		CertSANs: []string{
+			"1.2.3.4",
+			"4.5.6.7",
+		},
+	}
+
+	clusterControllerManagerExample = &ControllerManagerConfig{
+		ContainerImage: "...", // TODO: actual image name
+		ExtraArgsConfig: map[string]string{
+			"key": "value", // TODO: add more real live examples
+		},
+	}
+
+	clusterProxyExample = &ProxyConfig{
+		ContainerImage: "...", // TODO: actual image name
+		ExtraArgsConfig: map[string]string{
+			"key": "value", // TODO: add more real live examples
+		},
+		ModeConfig: "ipvs",
+	}
+
+	clusterSchedulerConfig = &SchedulerConfig{
+		ContainerImage: "...", // TODO: actual image name
+		ExtraArgsConfig: map[string]string{
+			"key": "value", // TODO: add more real live examples
+		},
+	}
+
+	clusterEtcdConfig = &EtcdConfig{
+		ContainerImage: "...", // TODO: actual image name
+		EtcdExtraArgs: map[string]string{
+			"key": "value", // TODO: add more real live examples
+		},
+		RootCA: pemEncodedCertificateExample,
+	}
+
+	clusterPodCheckpointerExample = &PodCheckpointer{
+		PodCheckpointerImage: "...", // TODO: actual image name
+	}
+
+	clusterCoreDNSExample = &CoreDNS{
+		CoreDNSImage: "...", // TODO: actual image name
+	}
+
+	clusterAdminKubeconfigExample = AdminKubeconfigConfig{
+		AdminKubeconfigCertLifetime: time.Hour,
+	}
+
+	kubeletExtraMountsExample = []specs.Mount{
+		{
+			Source:      "/var/lib/example",
+			Destination: "/var/lib/example",
+			Type:        "bind",
+			Options: []string{
+				"rshared",
+				"ro",
+			},
+		},
+	}
+
+	networkConfigExtraHostsExample = []*ExtraHost{
+		{
+			HostIP: "192.168.1.100",
+			HostAliases: []string{
+				"test",
+				"test.domain.tld",
+			},
+		},
+	}
+
+	clusterCustomCNIExample = &CNIConfig{
+		CNIName: "custom",
+		CNIUrls: []string{
+			"https://www.mysweethttpserver.com/supersecretcni.yaml",
+		},
+	}
+)
 
 // Config defines the v1alpha1 configuration file.
 type Config struct {
@@ -85,46 +344,34 @@ type MachineConfig struct {
 	//     The `token` is used by a machine to join the PKI of the cluster.
 	//     Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity.
 	//   examples:
-	//     - "token: 328hom.uqjzh6jnn2eie9oi"
+	//     - name: example token
+	//       value: "\"328hom.uqjzh6jnn2eie9oi\""
 	MachineToken string `yaml:"token"` // Warning: It is important to ensure that this token is correct since a machine's certificate has a short TTL by default
 	//   description: |
 	//     The root certificate authority of the PKI.
 	//     It is composed of a base64 encoded `crt` and `key`.
 	//   examples:
-	//     - |
-	//       ca:
-	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
-	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
+	//     - value: pemEncodedCertificateExample
+	//       name: machine CA example
 	MachineCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
 	//     Extra certificate subject alternative names for the machine's certificate.
 	//     By default, all non-loopback interface IPs are automatically added to the certificate's SANs.
 	//   examples:
-	//     - |
-	//       certSANs:
-	//         - 10.0.0.10
-	//         - 172.16.0.10
-	//         - 192.168.0.10
+	//     - name: Uncomment this to enable SANs.
+	//       value: '[]string{"10.0.0.10", "172.16.0.10", "192.168.0.10"}'
 	MachineCertSANs []string `yaml:"certSANs"`
 	//   description: |
 	//     Used to provide additional options to the kubelet.
 	//   examples:
-	//     - |
-	//       kubelet:
-	//         image:
-	//         extraArgs:
-	//           key: value
+	//     - name: Kubelet definition example.
+	//       value: machineKubeletExample
 	MachineKubelet *KubeletConfig `yaml:"kubelet,omitempty"`
 	//   description: |
 	//     Used to configure the machine's network.
 	//   examples:
-	//     - |
-	//       network:
-	//         hostname: worker-1
-	//         interfaces:
-	//         nameservers:
-	//           - 9.8.7.6
-	//           - 8.7.6.5
+	//     - name: Network definition example.
+	//       value: machineNetworkConfigExample
 	MachineNetwork *NetworkConfig `yaml:"network,omitempty"`
 	//   description: |
 	//     Used to partition, format and mount additional disks.
@@ -132,26 +379,14 @@ type MachineConfig struct {
 	//     Note that the partitioning and formating is done only once, if and only if no existing  partitions are found.
 	//     If `size:` is omitted, the partition is sized to occupy full disk.
 	//   examples:
-	//     - |
-	//       disks:
-	//         - device: /dev/sdb
-	//           partitions:
-	//             - mountpoint: /var/lib/extra
-	//               size: 10000000000
-	//
+	//     - name: MachineDisks list example.
+	//       value: machineDisksExample
 	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
 	//     Used to provide instructions for bare-metal installations.
 	//   examples:
-	//     - |
-	//       install:
-	//         disk: /dev/sda
-	//         extraKernelArgs:
-	//           - option=value
-	//         image: ghcr.io/talos-systems/installer:latest
-	//         bootloader: true
-	//         wipe: false
-	//         force: false
+	//     - name: MachineInstall config usage example.
+	//       value: machineInstallExample
 	MachineInstall *InstallConfig `yaml:"install,omitempty"`
 	//   description: |
 	//     Allows the addition of user specified files.
@@ -161,13 +396,8 @@ type MachineConfig struct {
 	//     If an `op` value of `append` is used, the existing file will be appended.
 	//     Note that the file contents are not required to be base64 encoded.
 	//   examples:
-	//     - |
-	//       files:
-	//         - content: |
-	//             ...
-	//           permissions: 0666
-	//           path: /tmp/file.txt
-	//           op: append
+	//      - name: MachineFiles usage example.
+	//        value: machineFilesExample
 	MachineFiles []*MachineFile `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
 	//   description: |
 	//     The `env` field allows for the addition of environment variables to a machine.
@@ -179,34 +409,22 @@ type MachineConfig struct {
 	//     - "`https_proxy`"
 	//     - "`no_proxy`"
 	//   examples:
-	//     - |
-	//       env:
-	//         GRPC_GO_LOG_VERBOSITY_LEVEL: "99"
-	//         GRPC_GO_LOG_SEVERITY_LEVEL: info
-	//         https_proxy: http://SERVER:PORT/
-	//     - |
-	//       env:
-	//         GRPC_GO_LOG_SEVERITY_LEVEL: error
-	//         https_proxy: https://USERNAME:PASSWORD@SERVER:PORT/
-	//     - |
-	//       env:
-	//         https_proxy: http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/
+	//     - name: Environment variables definition examples.
+	//       value: machineEnvExamples[0]
+	//     - value: machineEnvExamples[1]
+	//     - value: machineEnvExamples[2]
 	MachineEnv Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Used to configure the machine's time settings.
 	//   examples:
-	//     - |
-	//       time:
-	//         servers:
-	//           - time.cloudflare.com
+	//     - name: Example configuration for cloudflare ntp server.
+	//       value: machineTimeExample
 	MachineTime *TimeConfig `yaml:"time,omitempty"`
 	//   description: |
 	//     Used to configure the machine's sysctls.
 	//   examples:
-	//     - |
-	//       sysctls:
-	//         kernel.domainname: talos.dev
-	//         net.ipv4.ip_forward: "0"
+	//     - name: MachineSysctls usage example.
+	//       value: machineSysctlsExample
 	MachineSysctls map[string]string `yaml:"sysctls,omitempty"`
 	//   description: |
 	//     Used to configure the machine's container image registry mirrors.
@@ -222,27 +440,7 @@ type MachineConfig struct {
 	//
 	//     See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).
 	//   examples:
-	//     - |
-	//       registries:
-	//         mirrors:
-	//           docker.io:
-	//             endpoints:
-	//               - https://registry-1.docker.io
-	//           '*':
-	//             endpoints:
-	//               - http://some.host:123/
-	//        config:
-	//         "some.host:123":
-	//           tls:
-	//             ca: ... # base64-encoded CA certificate in PEM format
-	//             clientIdentity:
-	//               cert: ...  # base64-encoded client certificate in PEM format
-	//               key: ...  # base64-encoded client key in PEM format
-	//           auth:
-	//             username: ...
-	//             password: ...
-	//             auth: ...
-	//             identityToken: ...
+	//     - value: machineConfigRegistriesExample
 	MachineRegistries RegistriesConfig `yaml:"registries,omitempty"`
 }
 
@@ -251,10 +449,8 @@ type ClusterConfig struct {
 	//   description: |
 	//     Provides control plane specific configuration options.
 	//   examples:
-	//     - |
-	//       controlPlane:
-	//         endpoint: https://1.2.3.4
-	//         localAPIServerPort: 443
+	//     - name: Setting controlplain endpoint address to 1.2.3.4 and port to 443 example.
+	//       value: clusterControlPlaneExample
 	ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
 	//   description: |
 	//     Configures the cluster's name.
@@ -262,121 +458,86 @@ type ClusterConfig struct {
 	//   description: |
 	//     Provides cluster network configuration.
 	//   examples:
-	//     - |
-	//       network:
-	//         cni:
-	//           name: flannel
-	//         dnsDomain: cluster.local
-	//         podSubnets:
-	//         - 10.244.0.0/16
-	//         serviceSubnets:
-	//         - 10.96.0.0/12
+	//     - name: Configuring with flannel cni and setting up subnets.
+	//       value:  clusterNetworkExample
 	ClusterNetwork *ClusterNetworkConfig `yaml:"network,omitempty"`
 	//   description: |
 	//     The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/).
 	//   examples:
-	//     - wlzjyw.bei2zfylhs2by0wd
+	//     - name: Bootstrap token example (do not use in production!).
+	//       value: '"wlzjyw.bei2zfylhs2by0wd"'
 	BootstrapToken string `yaml:"token,omitempty"`
 	//   description: |
 	//     The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
 	//   examples:
-	//     - z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
+	//     - name: Decryption secret example (do not use in production!).
+	//       value: '"z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM="'
 	ClusterAESCBCEncryptionSecret string `yaml:"aescbcEncryptionSecret"`
 	//   description: |
 	//     The base64 encoded root certificate authority used by Kubernetes.
 	//   examples:
-	//     - |
-	//       ca:
-	//         crt: LS0tLS1CRUdJTiBDRV...
-	//         key: LS0tLS1CRUdJTiBSU0...
+	//     - name: ClusterCA example.
+	//       value: pemEncodedCertificateExample
 	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
 	//     API server specific configuration options.
 	//   examples:
-	//     - |
-	//       apiServer:
-	//         image: ...
-	//         extraArgs:
-	//           key: value
-	//         certSANs:
-	//           - 1.2.3.4
-	//           - 5.6.7.8
+	//     - value: clusterAPIServerExample
 	APIServerConfig *APIServerConfig `yaml:"apiServer,omitempty"`
 	//   description: |
 	//     Controller manager server specific configuration options.
 	//   examples:
-	//     - |
-	//       controllerManager:
-	//         image: ...
-	//         extraArgs:
-	//           key: value
+	//     - value: clusterControllerManagerExample
 	ControllerManagerConfig *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
 	//   description: |
 	//     Kube-proxy server-specific configuration options
 	//   examples:
-	//     - |
-	//       proxy:
-	//         mode: ipvs
-	//         extraArgs:
-	//           key: value
+	//     - value: clusterProxyExample
 	ProxyConfig *ProxyConfig `yaml:"proxy,omitempty"`
 	//   description: |
 	//     Scheduler server specific configuration options.
 	//   examples:
-	//     - |
-	//       scheduler:
-	//         image: ...
-	//         extraArgs:
-	//           key: value
+	//     - value: clusterSchedulerConfig
 	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
 	//   description: |
 	//     Etcd specific configuration options.
 	//   examples:
-	//     - |
-	//       etcd:
-	//         ca:
-	//           crt: LS0tLS1CRUdJTiBDRV...
-	//           key: LS0tLS1CRUdJTiBSU0...
-	//         image: ...
+	//     - value: clusterEtcdConfig
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
 	//   description: |
 	//     Pod Checkpointer specific configuration options.
 	//   examples:
-	//     - |
-	//       podCheckpointer:
-	//         image: ...
+	//     - value: clusterPodCheckpointerExample
 	PodCheckpointerConfig *PodCheckpointer `yaml:"podCheckpointer,omitempty"`
 	//   description: |
 	//     Core DNS specific configuration options.
 	//   examples:
-	//     - |
-	//       coreDNS:
-	//         image: ...
+	//     - value: clusterCoreDNSExample
 	CoreDNSConfig *CoreDNS `yaml:"coreDNS,omitempty"`
 	//   description: |
 	//     A list of urls that point to additional manifests.
 	//     These will get automatically deployed by bootkube.
 	//   examples:
-	//     - |
-	//       extraManifests:
-	//         - "https://www.mysweethttpserver.com/manifest1.yaml"
-	//         - "https://www.mysweethttpserver.com/manifest2.yaml"
+	//     - value: >
+	//        []string{
+	//         "https://www.mysweethttpserver.com/manifest1.yaml",
+	//         "https://www.mysweethttpserver.com/manifest2.yaml",
+	//        }
 	ExtraManifests []string `yaml:"extraManifests,omitempty"`
 	//   description: |
 	//     A map of key value pairs that will be added while fetching the ExtraManifests.
 	//   examples:
-	//     - |
-	//       extraManifestHeaders:
-	//         Token: "1234567"
-	//         X-ExtraInfo: info
+	//     - value: >
+	//         map[string]string{
+	//           "Token": "1234567",
+	//           "X-ExtraInfo": "info",
+	//         }
 	ExtraManifestHeaders map[string]string `yaml:"extraManifestHeaders,omitempty"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
 	//     Certificate lifetime can be configured.
 	//   examples:
-	//     - |
-	//       adminKubeconfig:
-	//         certLifetime: 1h
+	//     - value: clusterAdminKubeconfigExample
 	AdminKubeconfigConfig AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 	//   description: |
 	//     Indicates if master nodes are schedulable.
@@ -393,26 +554,20 @@ type KubeletConfig struct {
 	//   description: |
 	//     The `image` field is an optional reference to an alternative kubelet image.
 	//   examples:
-	//     - "image: docker.io/<org>/kubelet:latest"
+	//     - value: '"docker.io/<org>/kubelet:latest"'
 	KubeletImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     The `extraArgs` field is used to provide additional flags to the kubelet.
 	//   examples:
-	//     - |
-	//       extraArgs:
-	//         key: value
+	//     - value: >
+	//         map[string]string{
+	//           "key": "value",
+	//         }
 	KubeletExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     The `extraMounts` field is used to add additional mounts to the kubelet container.
 	//   examples:
-	//     - |
-	//       extraMounts:
-	//         - source: /var/lib/example
-	//           destination: /var/lib/example
-	//           type: bind
-	//           options:
-	//             - rshared
-	//             - ro
+	//     - value: kubeletExtraMountsExample
 	KubeletExtraMounts []specs.Mount `yaml:"extraMounts,omitempty"`
 }
 
@@ -478,12 +633,7 @@ type NetworkConfig struct {
 	//   description: |
 	//     Allows for extra entries to be added to /etc/hosts file
 	//   examples:
-	//     - |
-	//       extraHostEntries:
-	//         - ip: 192.168.1.100
-	//           aliases:
-	//             - test
-	//             - test.domain.tld
+	//     - value: networkConfigExtraHostsExample
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
 }
 
@@ -492,21 +642,18 @@ type InstallConfig struct {
 	//   description: |
 	//     The disk used to install the bootloader, and ephemeral partitions.
 	//   examples:
-	//     - /dev/sda
-	//     - /dev/nvme0
+	//     - value: '"/dev/sda"'
+	//     - value: '"/dev/nvme0"'
 	InstallDisk string `yaml:"disk,omitempty"`
 	//   description: |
 	//     Allows for supplying extra kernel args to the bootloader config.
 	//   examples:
-	//     - |
-	//       extraKernelArgs:
-	//         - a=b
+	//     - value: '[]string{"a=b"}'
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
 	//   description: |
 	//     Allows for supplying the image used to perform the installation.
 	//   examples:
-	//     - |
-	//       image: docker.io/<org>/installer:latest
+	//     - value: '"docker.io/<org>/installer:latest"'
 	InstallImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Indicates if a bootloader should be installed.
@@ -609,7 +756,7 @@ type ControlPlaneConfig struct {
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 	//     It is single-valued, and may optionally include a port number.
 	//   examples:
-	//     - https://1.2.3.4:443
+	//     - value: '"https://1.2.3.4:443"'
 	Endpoint *Endpoint `yaml:"endpoint"`
 	//   description: |
 	//     The port that the API server listens on internally.
@@ -674,10 +821,7 @@ type EtcdConfig struct {
 	//     The `ca` is the root certificate authority of the PKI.
 	//     It is composed of a base64 encoded `crt` and `key`.
 	//   examples:
-	//     - |
-	//       ca:
-	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
-	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
+	//     - value: pemEncodedCertificateExample
 	RootCA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 	//   description: |
 	//     Extra arguments to supply to etcd.
@@ -696,10 +840,11 @@ type EtcdConfig struct {
 	//     - `peer-trusted-ca-file`
 	//     - `peer-key-file`
 	//   examples:
-	//     - |
-	//       extraArgs:
-	//         initial-cluster: https://1.2.3.4:2380
-	//         advertise-client-urls: https://1.2.3.4:2379
+	//     - values: >
+	//         map[string]string{
+	//           "initial-cluster": "https://1.2.3.4:2380",
+	//           "advertise-client-urls": "https://1.2.3.4:2379",
+	//         }
 	EtcdExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
 }
 
@@ -713,31 +858,26 @@ type ClusterNetworkConfig struct {
 	//     URLs should point to a single yaml file that will get deployed.
 	//     Empty struct or any other name will default to bootkube's flannel.
 	//   examples:
-	//     - |
-	//       cni:
-	//         name: "custom"
-	//         urls:
-	//           - "https://www.mysweethttpserver.com/supersecretcni.yaml"
+	//     - value: clusterCustomCNIExample
 	CNI *CNIConfig `yaml:"cni,omitempty"`
 	//   description: |
 	//     The domain used by Kubernetes DNS.
 	//     The default is `cluster.local`
 	//   examples:
-	//     - cluser.local
+	//     - value: '"cluser.local"'
 	DNSDomain string `yaml:"dnsDomain"`
 	//   description: |
 	//     The pod subnet CIDR.
 	//   examples:
-	//     -  |
-	//       podSubnets:
-	//         - 10.244.0.0/16
+	//     -  value: >
+	//          []string{"10.244.0.0/16"}
 	PodSubnet []string `yaml:"podSubnets"`
 	//   description: |
 	//     The service subnet CIDR.
 	//   examples:
-	//     -  |
-	//       serviceSubnets:
-	//         - 10.96.0.0/12
+	//   examples:
+	//     -  value: >
+	//          []string{"10.96.0.0/12"}
 	ServiceSubnet []string `yaml:"serviceSubnets"`
 }
 
@@ -1014,10 +1154,7 @@ type RegistryTLSConfig struct {
 	//     Enable mutual TLS authentication with the registry.
 	//     Client certificate and key should be base64-encoded.
 	//   examples:
-	//     - |
-	//       clientIdentity:
-	//         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF...
-	//         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM...
+	//     - value: pemEncodedCertificateExample
 	TLSClientIdentity *x509.PEMEncodedCertificateAndKey `yaml:"clientIdentity,omitempty"`
 	//   description: |
 	//     CA registry certificate to add the list of trusted certificates.

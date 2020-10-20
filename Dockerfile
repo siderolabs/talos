@@ -90,6 +90,12 @@ RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api cluster/clust
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
+# run docgen for machinery config
+COPY ./pkg/machinery /pkg/machinery
+WORKDIR /pkg/machinery
+RUN go generate /pkg/machinery/config/types/v1alpha1/
+WORKDIR /
+
 FROM scratch AS generate
 COPY --from=generate-build /api/common/common.pb.go /pkg/machinery/api/common/
 COPY --from=generate-build /api/health/health.pb.go /pkg/machinery/api/health/
@@ -99,6 +105,7 @@ COPY --from=generate-build /api/machine/machine.pb.go /pkg/machinery/api/machine
 COPY --from=generate-build /api/time/time.pb.go /pkg/machinery/api/time/
 COPY --from=generate-build /api/network/network.pb.go /pkg/machinery/api/network/
 COPY --from=generate-build /api/cluster/cluster.pb.go /pkg/machinery/api/cluster/
+COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -112,6 +119,7 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=generate /pkg/machinery/api ./pkg/machinery/api
+COPY --from=generate /pkg/machinery/config ./pkg/machinery/config
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 
@@ -592,13 +600,12 @@ RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/docs/talosct
 # The docs target generates documentation.
 
 FROM base AS docs-build
-WORKDIR /src/pkg/machinery/config
-RUN go generate ./types/v1alpha1
 WORKDIR /src
 COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
 RUN mkdir -p /docs/talosctl \
-    && env HOME=/home/user TAG=latest /bin/talosctl docs /docs/talosctl
+    && env HOME=/home/user TAG=latest /bin/talosctl docs --config /docs/configuration \
+    && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /docs/talosctl
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/v1alpha1.md /docs/website/content/v0.7/en/configuration/v1alpha1.md
+COPY --from=docs-build /docs/configuration/* /docs/website/content/v0.7/en/configuration/
 COPY --from=docs-build /docs/talosctl/* /docs/talosctl/
