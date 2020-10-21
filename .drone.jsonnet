@@ -209,23 +209,16 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 // Default pipeline.
 
-local docs = Step("docs", depends_on=[setup_ci]);
-local generate = Step("generate", depends_on=[setup_ci]);
-local check_dirty = Step("check-dirty", depends_on=[docs, generate]);
+local generate = Step("generate", target="generate docs", depends_on=[setup_ci]);
+local check_dirty = Step("check-dirty", depends_on=[generate]);
 local talosctl_linux = Step("talosctl-linux", depends_on=[check_dirty]);
 local talosctl_darwin = Step("talosctl-darwin", depends_on=[check_dirty]);
 local kernel = Step('kernel', depends_on=[check_dirty]);
 local initramfs = Step("initramfs", depends_on=[check_dirty]);
 local installer = Step("installer", depends_on=[initramfs], environment={"REGISTRY": local_registry, "PUSH": true});
-local talos = Step("talos", depends_on=[initramfs], environment={"REGISTRY": local_registry, "PUSH": true});
-local golint = Step("lint-go", depends_on=[check_dirty]);
-local markdownlint = Step("lint-markdown", depends_on=[check_dirty]);
-local protobuflint = Step("lint-protobuf", depends_on=[check_dirty]);
-local image_aws = Step("image-aws", depends_on=[installer], environment={"REGISTRY": local_registry});
-local image_azure = Step("image-azure", depends_on=[installer], environment={"REGISTRY": local_registry});
-local image_digital_ocean = Step("image-digital-ocean", depends_on=[installer], environment={"REGISTRY": local_registry});
-local image_gcp = Step("image-gcp", depends_on=[installer], environment={"REGISTRY": local_registry});
-local image_vmware = Step("image-vmware", depends_on=[installer], environment={"REGISTRY": local_registry});
+local talos = Step("talos", depends_on=[installer], environment={"REGISTRY": local_registry, "PUSH": true});
+local lint = Step("lint", depends_on=[check_dirty]);
+local images = Step("images", depends_on=[installer], environment={"REGISTRY": local_registry});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
@@ -294,7 +287,6 @@ local push_latest = {
 
 local default_steps = [
   setup_ci,
-  docs,
   generate,
   check_dirty,
   talosctl_linux,
@@ -303,14 +295,8 @@ local default_steps = [
   initramfs,
   installer,
   talos,
-  golint,
-  markdownlint,
-  protobuflint,
-  image_aws,
-  image_azure,
-  image_digital_ocean,
-  image_gcp,
-  image_vmware,
+  lint,
+  images,
   unit_tests,
   unit_tests_race,
   coverage,
@@ -514,7 +500,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, boot.name, image_gcp.name, image_azure.name, image_aws.name, image_vmware.name, image_digital_ocean.name, push.name, release_notes.name]
+  depends_on: [kernel.name, boot.name, images.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
