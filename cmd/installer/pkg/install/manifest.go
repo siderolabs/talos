@@ -12,10 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/talos-systems/go-retry/retry"
-	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
@@ -341,33 +339,23 @@ func (m *Manifest) SystemMountpoints() (*mount.Points, error) {
 
 // zeroDevice fills first block of the device with zeroes.
 func (m *Manifest) zeroDevice(device Device) (err error) {
-	var zero *os.File
+	var bd *blockdevice.BlockDevice
 
-	if zero, err = os.Open("/dev/zero"); err != nil {
+	if bd, err = blockdevice.Open(device.Device); err != nil {
 		return err
 	}
 
-	defer zero.Close() //nolint: errcheck
+	defer bd.Close() //nolint: errcheck
 
-	var f *os.File
+	var method string
 
-	if f, err = os.OpenFile(device.Device, os.O_RDWR, os.ModeDevice); err != nil {
+	if method, err = bd.Wipe(); err != nil {
 		return err
 	}
 
-	defer f.Close() //nolint: errcheck
+	log.Printf("wiped %q with %q", device.Device, method)
 
-	var size uint64
-
-	if _, _, ret := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); ret != 0 {
-		return fmt.Errorf("failed to got block device size: %v", ret)
-	}
-
-	if _, err = io.CopyN(f, zero, int64(size)); err != nil {
-		return err
-	}
-
-	return f.Close()
+	return bd.Close()
 }
 
 // Partition creates a new partition on the specified device.
