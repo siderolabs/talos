@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"go.etcd.io/etcd/pkg/transport"
 	"google.golang.org/grpc"
@@ -27,6 +28,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+// QuorumCheckTimeout is the amount of time to allow for KV operations before quorum is declared invalid.
+const QuorumCheckTimeout = 15 * time.Second
 
 // Client is a wrapper around the official etcd client.
 type Client struct {
@@ -97,15 +101,51 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider,
 			}
 		}
 
+		if len(resp.Members) == 2 {
+			return fmt.Errorf("etcd member count(%d) is insufficient to maintain quorum if upgrade commences", len(resp.Members))
+		}
+
 		for _, member := range resp.Members {
 			// If the member is not started, the name will be an empty string.
 			if len(member.Name) == 0 {
 				return fmt.Errorf("etcd member %d is not started, all members must be running to perform an upgrade", member.ID)
 			}
+
+			if err = validateMemberHealth(ctx, member.GetClientURLs()); err != nil {
+				return fmt.Errorf("etcd member %d is not healthy; all members must be healthy to perform an upgrade: %w", member.ID, err)
+			}
 		}
 	}
 
 	return nil
+}
+
+// ValidateQuorum performs a KV operation to make certain that quorum is good.
+func (c *Client) ValidateQuorum(ctx context.Context) (err error) {
+	// Get a random key. As long as we can get the response without an error, quorum is good.
+	checkCtx, cancel := context.WithTimeout(ctx, QuorumCheckTimeout)
+	defer cancel()
+
+	_, err = c.Get(checkCtx, "health")
+	if err == rpctypes.ErrPermissionDenied {
+		// Permission denied is OK since proposal goes through consensus to get this error.
+		err = nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) {
+	c, err := NewClient(memberURIs)
+	if err != nil {
+		return fmt.Errorf("failed to create client to member: %w", err)
+	}
+
+	return c.ValidateQuorum(ctx)
 }
 
 // LeaveCluster removes the current member from the etcd cluster.
