@@ -4,8 +4,8 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
-export CABPT_VERSION="0.2.0-alpha.0"
-export CACPPT_VERSION="0.1.0-alpha.2"
+export CABPT_VERSION="0.2.0-alpha.6"
+export CACPPT_VERSION="0.1.0-alpha.8"
 export CAPA_VERSION="0.5.4"
 
 # We need to override this here since e2e.sh will set it to ${TMP}/capi/kubeconfig.
@@ -18,15 +18,19 @@ export CABPT_NS="cabpt-system"
 apk add --no-cache gettext
 
 # Env vars for cloud accounts
+set +x
 export GCP_B64ENCODED_CREDENTIALS=${GCE_SVC_ACCT}
 export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
+set -x
 
 ${CLUSTERCTL} init \
     --control-plane "talos:v${CACPPT_VERSION}" \
     --infrastructure "aws:v${CAPA_VERSION}" \
     --bootstrap "talos:v${CABPT_VERSION}"
 
+set +x
 cat ${PWD}/hack/test/capi/components-capg.yaml| envsubst | ${KUBECTL} apply -f -
+set -x
 
 # Wait for the talosconfig
 timeout=$(($(date +%s) + ${TIMEOUT}))
