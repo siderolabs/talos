@@ -198,6 +198,12 @@ const (
 	// DefaultEtcdVersion is the default target version of etcd.
 	DefaultEtcdVersion = "v3.4.12"
 
+	// EtcdRootTalosKey is the root etcd key for Talos-specific storage
+	EtcdRootTalosKey = "talos:v1"
+
+	// EtcdTalosEtcdUpgradeMutex is the etcd mutex prefix to be used to set an etcd upgrade lock
+	EtcdTalosEtcdUpgradeMutex = EtcdRootTalosKey + ":etcdUpgradeMutex"
+
 	// EtcdImage is the reposistory for the etcd image.
 	EtcdImage = "gcr.io/etcd-development/etcd"
 

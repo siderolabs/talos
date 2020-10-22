@@ -29,6 +29,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
+	"go.etcd.io/etcd/clientv3/concurrency"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -55,6 +56,12 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
+
+// MinimumEtcdUpgradeLeaseLockSeconds indicates the minimum number of seconds for which we open a lease lock for upgrading Etcd nodes.
+// This is not intended to lock for the duration of an upgrade.
+// Rather, it is intended to make sure only one node processes the various pre-upgrade checks at a time.
+// Thus, this timeout should be reflective of the expected time for the pre-upgrade checks, NOT the time to perform the upgrade itself.
+const MinimumEtcdUpgradeLeaseLockSeconds = 60
 
 // OSPathSeparator is the string version of the os.PathSeparator.
 const OSPathSeparator = string(os.PathSeparator)
@@ -267,8 +274,10 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 
 // Upgrade initiates an upgrade.
 //
-// nolint: dupl
+// nolint: dupl gocyclo
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
+	var mu *concurrency.Mutex
+
 	if err = s.checkSupported(runtime.Upgrade); err != nil {
 		return nil, err
 	}
@@ -287,12 +296,29 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			return nil, fmt.Errorf("failed to create etcd client: %w", err)
 		}
 
+		// acquire the upgrade mutex
+		if mu, err = upgradeMutex(client); err != nil {
+			return nil, fmt.Errorf("failed to acquire upgrade mutex: %w", err)
+		}
+
+		// TODO: after we upgrade to v3.4, we can use mu.TryLock() here, to fail
+		// immediately if the lock is not available, instead of blocking here until
+		// the context times out or the upgrade lock comes available.
+		if err = mu.Lock(ctx); err != nil {
+			return nil, fmt.Errorf("failed to acquire upgrade lock: %w", err)
+		}
+
 		if err = client.ValidateForUpgrade(ctx, s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
+			mu.Unlock(ctx) // nolint: errcheck
 			return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
 		}
 	}
 
 	go func() {
+		if mu != nil {
+			defer mu.Unlock(ctx) // nolint: errcheck
+		}
+
 		if err := s.Controller.Run(runtime.SequenceUpgrade, in); err != nil {
 			log.Println("upgrade failed:", err)
 
@@ -1509,4 +1535,17 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 	}
 
 	return reply, nil
+}
+
+func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {
+	sess, err := concurrency.NewSession(c.Client,
+		concurrency.WithTTL(MinimumEtcdUpgradeLeaseLockSeconds),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mu := concurrency.NewMutex(sess, constants.EtcdTalosEtcdUpgradeMutex)
+
+	return mu, nil
 }
