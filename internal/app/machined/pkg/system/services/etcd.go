@@ -24,7 +24,6 @@ import (
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
@@ -141,20 +140,7 @@ func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 
 		defer client.Close() //nolint: errcheck
 
-		// Get a random key. As long as we can get the response without an error, the
-		// endpoint is healthy.
-
-		_, err = client.Get(ctx, "health")
-		if err == rpctypes.ErrPermissionDenied {
-			// Permission denied is OK since proposal goes through consensus to get this error.
-			err = nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return client.Close()
+		return client.ValidateQuorum(ctx)
 	}
 }
 

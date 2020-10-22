@@ -6,13 +6,16 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"go.etcd.io/etcd/pkg/transport"
 	"google.golang.org/grpc"
@@ -27,6 +30,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+// QuorumCheckTimeout is the amount of time to allow for KV operations before quorum is declared invalid.
+const QuorumCheckTimeout = 15 * time.Second
 
 // Client is a wrapper around the official etcd client.
 type Client struct {
@@ -102,10 +108,81 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider,
 			if len(member.Name) == 0 {
 				return fmt.Errorf("etcd member %d is not started, all members must be running to perform an upgrade", member.ID)
 			}
+
+			if err = validateMemberHealth(ctx, member.GetPeerURLs()); err != nil {
+				return fmt.Errorf("etcd member %d is not healthy; all members must be health to perform an upgrade: %w", member.ID, err)
+			}
+		}
+
+		// Member count must not be an even number, lest the uprgade cause a loss of quorum.
+		if len(resp.Members)%2 == 0 {
+			return fmt.Errorf("etcd member count (%d) is even; upgrade of this node may cause loss of quorum", len(resp.Members))
+		}
+
+		// Quorum must be good before allowing an upgrade of an etcd member.
+		if err = c.ValidateQuorum(ctx); err != nil {
+			return fmt.Errorf("etcd membership quorum validation failed: %w", err)
 		}
 	}
 
 	return nil
+}
+
+// ValidateQuorum performs a KV operation to make certain that quorum is good.
+func (c *Client) ValidateQuorum(ctx context.Context) (err error) {
+	// Get a random key. As long as we can get the response without an error, quorum is good.
+	checkCtx, cancel := context.WithTimeout(ctx, QuorumCheckTimeout)
+	defer cancel()
+
+	_, err = c.Get(checkCtx, "health")
+	if err == rpctypes.ErrPermissionDenied {
+		// Permission denied is OK since proposal goes through consensus to get this error.
+		err = nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateMemberHealth(ctx context.Context, memberURIs []string) error {
+	type healthResult struct {
+		Health string `json:"health"`
+		Reason string `json:"reason"`
+	}
+
+	for _, u := range memberURIs {
+		uri, err := url.Parse(u)
+		if err != nil {
+			continue
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://%s/health", uri.Host), nil)
+		if err != nil {
+			continue
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close() // nolint: errcheck
+
+		health := new(healthResult)
+		if err = json.NewDecoder(resp.Body).Decode(health); err != nil {
+			continue
+		}
+
+		if health.Health != "true" {
+			return fmt.Errorf("error check failed with reason: %s", health.Reason)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("no valid health check responses")
 }
 
 // LeaveCluster removes the current member from the etcd cluster.
