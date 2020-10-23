@@ -1185,11 +1185,11 @@ func (_ RegistryTLSConfig) Doc() *encoder.Doc {
 	return &RegistryTLSConfigDoc
 }
 
-// GetDoc returns documentation for the file ./v1alpha1_types_doc.go.
-func GetDoc() *encoder.FileDoc {
+// GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
+func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
-		Name:        "v1alpha1",
-		Description: "---\ntitle: v1alpha1\n---\n<!-- markdownlint-disable MD024 -->\n\nPackage v1alpha1 configuration file contains all the options available for configuring a machine.\n\nWe can generate the files using `talosctl`.\nThis configuration is enough to get started in most cases, however it can be customized as needed.\n\n```bash\ntalosctl config generate --version v1alpha1 <cluster name> <cluster endpoint>\n````\n\nThis will generate a machine config for each node type, and a talosconfig.\nThe following is an example of an `init.yaml`:\n\n```yaml\nversion: v1alpha1\nmachine:\n  type: init\n  token: 5dt69c.npg6duv71zwqhzbg\n  ca:\n    crt: <base64 encoded Ed25519 certificate>\n    key: <base64 encoded Ed25519 key>\n  certSANs: []\n  kubelet: {}\n  network: {}\n  install:\n    disk: /dev/sda\n    image: ghcr.io/talos-systems/installer:latest\n    bootloader: true\n    wipe: false\n    force: false\ncluster:\n  controlPlane:\n    endpoint: https://1.2.3.4\n  clusterName: example\n  network:\n    cni: \"\"\n    dnsDomain: cluster.local\n    podSubnets:\n    - 10.244.0.0/16\n    serviceSubnets:\n    - 10.96.0.0/12\n  token: wlzjyw.bei2zfylhs2by0wd\n  certificateKey: 20d9aafb46d6db4c0958db5b3fc481c8c14fc9b1abd8ac43194f4246b77131be\n  aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=\n  ca:\n    crt: <base64 encoded RSA certificate>\n    key: <base64 encoded RSA key>\n  apiServer: {}\n  controllerManager: {}\n  scheduler: {}\n  etcd:\n    ca:\n      crt: <base64 encoded RSA certificate>\n      key: <base64 encoded RSA key>\n```\n",
+		Name:        "Configuration",
+		Description: "Package v1alpha1 configuration file contains all the options available for configuring a machine.\n\nTo generate a set of basic configuration files, run:\n```bash\ntalosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>\n````\n\nThis will generate a machine config for each node type, and a talosconfig for the CLI.\n",
 		Structs: []*encoder.Doc{
 			&ConfigDoc,
 			&MachineConfigDoc,

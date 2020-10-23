@@ -83,8 +83,8 @@ func (_ {{ $struct.Name }}) Doc() *encoder.Doc {
 // Get{{ .Name }}Doc returns documentation for the file {{ .File }}.
 func Get{{ .Name }}Doc() *encoder.FileDoc {
 	return &encoder.FileDoc{
-		Name: "{{ .Package }}{{ if .Name }}.{{ .Name }}{{ end }}",
-		Description: "---\ntitle: {{ .Package }}{{ if .Name }}.{{ .Name }}{{ end }}\n---\n<!-- markdownlint-disable MD024 -->\n\n{{ .Header }}",
+		Name: "{{ .Name }}",
+		Description: "{{ .Header }}",
 		Structs: []*encoder.Doc{
 			{{ range $struct := .Structs -}}
 			&{{ $struct.Name }}Doc,
@@ -383,11 +383,13 @@ func main() {
 		doc.Structs = append(doc.Structs, s)
 	}
 
-	if err == nil && len(os.Args) > 3 {
+	if len(os.Args) != 4 {
+		log.Fatalf("expected 3 args, got %d", len(os.Args)-1)
+	}
+
+	if err == nil {
 		doc.Package = node.Name.Name
-		if os.Args[3] != doc.Package {
-			doc.Name = os.Args[3]
-		}
+		doc.Name = os.Args[3]
 
 		if node.Doc != nil {
 			doc.Header = escape(node.Doc.Text())

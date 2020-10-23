@@ -595,17 +595,38 @@ WORKDIR /src
 COPY .markdownlint.json .
 COPY . .
 RUN markdownlint --ignore "**/node_modules/**" --ignore '**/hack/chglog/**' .
-RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/docs/talosctl/*' | xargs textlint --rule one-sentence-per-line --stdin-filename
+RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/website/content/docs/v0.7/Talosctl/*' | xargs textlint --rule one-sentence-per-line --stdin-filename
 
 # The docs target generates documentation.
 
 FROM base AS docs-build
 WORKDIR /src
 COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
-RUN mkdir -p /docs/talosctl \
-    && env HOME=/home/user TAG=latest /bin/talosctl docs --config /docs/configuration \
-    && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /docs/talosctl
+RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp \
+    && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
+
+FROM pseudomuto/protoc-gen-doc as proto-docs-build
+COPY --from=generate-build /api /protos
+COPY ./hack/protoc-gen-doc/markdown.tmpl /tmp/markdown.tmpl
+RUN protoc \
+    -I/protos \
+    -I/protos/common \
+    -I/protos/health \
+    -I/protos/machine \
+    -I/protos/network \
+    -I/protos/os \
+    -I/protos/security \
+    -I/protos/time \
+    --doc_opt=/tmp/markdown.tmpl,api.md \
+    --doc_out=/tmp \
+    /protos/health/*.proto \
+    /protos/machine/*.proto \
+    /protos/network/*.proto \
+    /protos/os/*.proto \
+    /protos/security/*.proto \
+    /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /docs/configuration/* /docs/website/content/v0.7/en/configuration/
-COPY --from=docs-build /docs/talosctl/* /docs/talosctl/
+COPY --from=docs-build /tmp/configuration.md /website/content/docs/v0.7/Reference/
+COPY --from=docs-build /tmp/cli.md /website/content/docs/v0.7/Reference/
+COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v0.7/Reference/
