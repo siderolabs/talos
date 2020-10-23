@@ -43,6 +43,8 @@ type Settings struct {
 	CurrentVersion string
 	// Custom CNI URL to use.
 	CustomCNIURL string
+	// Enable crashdump on failure.
+	CrashdumpEnabled bool
 }
 
 // DefaultSettings filled in by test runner.
@@ -54,5 +56,5 @@ var DefaultSettings Settings = Settings{
 	DiskGB:                     8,
 	MasterNodes:                3,
 	WorkerNodes:                1,
-	TargetInstallImageRegistry: "docker.io",
+	TargetInstallImageRegistry: "ghcr.io",
 }

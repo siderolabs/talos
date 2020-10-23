@@ -23,6 +23,7 @@ type FileItem struct {
 type walkerOptions struct {
 	skipRoot        bool
 	maxRecurseDepth int
+	fnmatchPatterns []string
 }
 
 // WalkerOption configures Walker.
@@ -41,6 +42,15 @@ func WithSkipRoot() WalkerOption {
 func WithMaxRecurseDepth(maxDepth int) WalkerOption {
 	return func(o *walkerOptions) {
 		o.maxRecurseDepth = maxDepth
+	}
+}
+
+// WithFnmatchPatterns filters results to match the patterns.
+//
+// Default is not to do any filtering.
+func WithFnmatchPatterns(patterns ...string) WalkerOption {
+	return func(o *walkerOptions) {
+		o.fnmatchPatterns = append(o.fnmatchPatterns, patterns...)
 	}
 }
 
@@ -93,6 +103,20 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 
 			if item.Error == nil && fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 				item.Link, item.Error = os.Readlink(path)
+			}
+
+			if item.Error == nil && len(opts.fnmatchPatterns) > 0 {
+				matches := false
+
+				for _, pattern := range opts.fnmatchPatterns {
+					if matches, _ = filepath.Match(pattern, item.RelPath); matches { //nolint: errcheck
+						break
+					}
+				}
+
+				if !matches {
+					return nil
+				}
 			}
 
 			select {

@@ -17,7 +17,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
-	gptpartition "github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -329,7 +328,7 @@ func (p *Point) ResizePartition() (err error) {
 	}
 
 	for _, partition := range pt.Partitions() {
-		if partition.(*gptpartition.Partition).Name == constants.EphemeralPartitionLabel {
+		if partition.Label() == constants.EphemeralPartitionLabel {
 			if err := pt.Resize(partition); err != nil {
 				return err
 			}
