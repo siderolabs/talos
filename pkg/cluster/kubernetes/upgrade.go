@@ -12,6 +12,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
@@ -115,6 +116,10 @@ func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds st
 	return retry.Constant(5*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
 		daemonset, err = clientset.AppsV1().DaemonSets(namespace).Get(ctx, ds, metav1.GetOptions{})
 		if err != nil {
+			if apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) || apierrors.IsInternalError(err) {
+				return retry.ExpectedError(err)
+			}
+
 			return retry.UnexpectedError(fmt.Errorf("error fetching daemonset: %w", err))
 		}
 
