@@ -127,7 +127,7 @@ func PrefixMountTargets(mountpoints *Points, targetPrefix string) error {
 	return iter.Err()
 }
 
-func mountRetry(f RetryFunc, p *Point) (err error) {
+func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
 		if err = f(p); err != nil {
 			switch err {
@@ -139,7 +139,7 @@ func mountRetry(f RetryFunc, p *Point) (err error) {
 					return retry.ExpectedError(checkErr)
 				}
 
-				if !isMounted {
+				if !isMounted && isUnmount { // if partition is already unmounted, ignore EINVAL
 					return nil
 				}
 
@@ -235,9 +235,9 @@ func (p *Point) Mount() (err error) {
 
 	switch {
 	case p.Overlay:
-		err = mountRetry(overlay, p)
+		err = mountRetry(overlay, p, false)
 	default:
-		err = mountRetry(mount, p)
+		err = mountRetry(mount, p, false)
 	}
 
 	if err != nil {
@@ -245,7 +245,7 @@ func (p *Point) Mount() (err error) {
 	}
 
 	if p.Shared {
-		if err = mountRetry(share, p); err != nil {
+		if err = mountRetry(share, p, false); err != nil {
 			return fmt.Errorf("error sharing mount point %s: %+v", p.target, err)
 		}
 	}
@@ -257,7 +257,7 @@ func (p *Point) Mount() (err error) {
 // retry every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Unmount() (err error) {
 	p.target = path.Join(p.Prefix, p.target)
-	if err := mountRetry(unmount, p); err != nil {
+	if err := mountRetry(unmount, p, true); err != nil {
 		return err
 	}
 
