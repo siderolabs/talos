@@ -125,6 +125,18 @@ func (i *Installer) probeBootPartition() error {
 				defer mount.Unmount(mountpoints) //nolint: errcheck
 			}
 		}
+
+		// try legacy boot partition
+		//
+		// TODO: remove this in Talos 0.8 (only required for upgrading from 0.6)
+		if !i.bootPartitionFound {
+			if dev, err := probe.DevForFileSystemLabel(i.options.Disk, constants.LegacyBootPartitionLabel); err == nil {
+				//nolint: errcheck
+				defer dev.Close()
+
+				i.bootPartitionFound = true
+			}
+		}
 	}
 
 	var err error

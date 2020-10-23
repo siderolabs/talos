@@ -12,8 +12,8 @@ import (
 )
 
 // TarGz produces .tar.gz archive of filesystem starting at rootPath.
-func TarGz(ctx context.Context, rootPath string, output io.Writer) error {
-	paths, err := Walker(ctx, rootPath, WithSkipRoot())
+func TarGz(ctx context.Context, rootPath string, output io.Writer, walkerOptions ...WalkerOption) error {
+	paths, err := Walker(ctx, rootPath, append(walkerOptions, WithSkipRoot())...)
 	if err != nil {
 		return err
 	}

@@ -64,7 +64,7 @@ func isSet(value reflect.Value) bool {
 	//nolint:exhaustive
 	switch value.Kind() {
 	case reflect.Ptr:
-		return !value.IsNil() && !value.Elem().IsZero()
+		return !value.IsNil()
 	case reflect.Map:
 		return len(value.MapKeys()) != 0
 	case reflect.Slice:

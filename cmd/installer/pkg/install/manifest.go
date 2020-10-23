@@ -5,6 +5,7 @@
 package install
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -57,10 +58,22 @@ type Target struct {
 	FileSystemType     FileSystemType
 	LegacyBIOSBootable bool
 
-	Size             uint
-	Force            bool
-	Assets           []*Asset
+	Size   uint
+	Force  bool
+	Assets []*Asset
+
+	// Preserve contents of the partition with the same label (if it exists).
 	PreserveContents bool
+
+	// Extra preserved locations (for upgrading from older versions of Talos).
+	//
+	// Used only if PreserveContents is true.
+	ExtraPreserveSources []PreserveSource
+
+	// Skip makes manifest skip any actions with the partition (creating, formatting).
+	//
+	// Skipped partitions should exist on the disk by the time manifest execution starts.
+	Skip bool
 
 	// set during execution
 	PartitionName string
@@ -71,6 +84,13 @@ type Target struct {
 type Asset struct {
 	Source      string
 	Destination string
+}
+
+// PreserveSource instructs Talos where to look for source files to preserve.
+type PreserveSource struct {
+	Label          string
+	FnmatchFilters []string
+	FileSystemType FileSystemType
 }
 
 // PartitionType in partition table.
@@ -119,6 +139,19 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		Targets: map[string][]*Target{},
 	}
 
+	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
+	if !bootPartitionFound {
+		opts.Force = true
+	}
+
+	if !opts.Force && opts.Zero {
+		return nil, fmt.Errorf("zero option can't be used without force")
+	}
+
+	if !opts.Force && !bootPartitionFound {
+		return nil, fmt.Errorf("install with preserve is not supported if existing boot partition was not found")
+	}
+
 	// Verify that the target device(s) can satisfy the requested options.
 
 	if sequence != runtime.SequenceUpgrade {
@@ -131,23 +164,10 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		}
 	}
 
-	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
-	if !bootPartitionFound {
-		opts.Force = true
-	}
-
-	if !opts.Force {
-		return nil, fmt.Errorf("installation with preserve is not supported yet")
-	}
-
-	if !opts.Force && opts.Zero {
-		return nil, fmt.Errorf("zero option can't be used without force")
-	}
-
 	manifest.Devices[opts.Disk] = Device{
 		Device: opts.Disk,
 
-		ResetPartitionTable: bootPartitionFound && opts.Force,
+		ResetPartitionTable: opts.Force,
 		Zero:                opts.Zero,
 	}
 
@@ -219,6 +239,13 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		Size:             StateSize,
 		Force:            true,
 		PreserveContents: bootPartitionFound,
+		ExtraPreserveSources: []PreserveSource{
+			{
+				Label:          constants.LegacyBootPartitionLabel,
+				FileSystemType: FilesystemTypeVFAT,
+				FnmatchFilters: []string{"config.yaml"},
+			},
+		},
 	}
 
 	ephemeralTarget := &Target{
@@ -227,7 +254,13 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		PartitionType:  LinuxFilesystemData,
 		FileSystemType: FilesystemTypeXFS,
 		Size:           0,
-		Force:          true,
+	}
+
+	if opts.Force {
+		ephemeralTarget.Force = true
+	} else {
+		ephemeralTarget.Skip = true
+		stateTarget.Size = 0 // expand previous partition to cover whatever space is available
 	}
 
 	for _, target := range []*Target{efiTarget, biosTarget, bootTarget, metaTarget, stateTarget, ephemeralTarget} {
@@ -252,8 +285,55 @@ func (m *Manifest) Execute() (err error) {
 	return nil
 }
 
+// checkMounts verifies that no active mounts in any mount namespace exist for the device.
+func (m *Manifest) checkMounts(device Device) error {
+	matches, err := filepath.Glob("/proc/*/mountinfo")
+	if err != nil {
+		return err
+	}
+
+	for _, path := range matches {
+		path := path
+
+		if err = func() error {
+			var f *os.File
+
+			f, err = os.Open(path)
+			if err != nil {
+				// ignore error in case process got removed
+				return nil
+			}
+
+			defer f.Close() //nolint: errcheck
+
+			scanner := bufio.NewScanner(f)
+			for scanner.Scan() {
+				fields := strings.Fields(scanner.Text())
+
+				if len(fields) < 2 {
+					continue
+				}
+
+				if fields[len(fields)-2] == device.Device {
+					return fmt.Errorf("found active mount in %q for %q: %s", path, device.Device, scanner.Text())
+				}
+			}
+
+			return f.Close()
+		}(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 //nolint: gocyclo
 func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error) {
+	if err = m.checkMounts(device); err != nil {
+		return err
+	}
+
 	if err = m.preserveContents(device, targets); err != nil {
 		return err
 	}
@@ -266,7 +346,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 	var bd *blockdevice.BlockDevice
 
-	if bd, err = blockdevice.Open(device.Device, blockdevice.WithNewGPT(true)); err != nil {
+	if bd, err = blockdevice.Open(device.Device, blockdevice.WithNewGPT(device.ResetPartitionTable)); err != nil {
 		return err
 	}
 
@@ -274,6 +354,8 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	defer bd.Close()
 
 	if device.ResetPartitionTable {
+		log.Printf("resetting partition table on %s", device.Device)
+
 		// TODO: how should it work with zero option above?
 		if err = bd.Reset(); err != nil {
 			return err
@@ -282,12 +364,73 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		if err = bd.RereadPartitionTable(); err != nil {
 			return err
 		}
+	} else {
+		// clean up partitions which are going to be recreated
+		var pt table.PartitionTable
+
+		pt, err = bd.PartitionTable()
+		if err != nil {
+			return err
+		}
+
+		keepPartitions := map[string]struct{}{}
+
+		for _, target := range targets {
+			if target.Skip {
+				keepPartitions[target.Label] = struct{}{}
+			}
+		}
+
+		// make sure all partitions to be skipped already exist
+		missingPartitions := map[string]struct{}{}
+
+		for label := range keepPartitions {
+			missingPartitions[label] = struct{}{}
+		}
+
+		for _, part := range pt.Partitions() {
+			delete(missingPartitions, part.Label())
+		}
+
+		if len(missingPartitions) > 0 {
+			return fmt.Errorf("some partitions to be skipped are missing: %v", missingPartitions)
+		}
+
+		// delete all partitions which are not skipped
+		for _, part := range pt.Partitions() {
+			if _, ok := keepPartitions[part.Label()]; !ok {
+				log.Printf("deleting partition %s", part.Label())
+
+				if err = pt.Delete(part); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err = pt.Write(); err != nil {
+			return err
+		}
+
+		if err = bd.RereadPartitionTable(); err != nil {
+			return err
+		}
 	}
 
-	for _, target := range targets {
-		if err = target.Partition(bd); err != nil {
+	var pt table.PartitionTable
+
+	pt, err = bd.PartitionTable()
+	if err != nil {
+		return err
+	}
+
+	for i, target := range targets {
+		if err = target.Partition(pt, i, bd); err != nil {
 			return fmt.Errorf("failed to partition device: %w", err)
 		}
+	}
+
+	if err = pt.Write(); err != nil {
+		return err
 	}
 
 	if err = bd.RereadPartitionTable(); err != nil {
@@ -364,24 +507,39 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 			continue
 		}
 
-		var source table.Partition
+		var (
+			sourcePart     table.Partition
+			fileSystemType FileSystemType
+			fnmatchFilters []string
+		)
 
-		// find matching existing partition table entry
-		for _, part := range pt.Partitions() {
-			if part.Label() == target.Label {
-				source = part
+		sources := append([]PreserveSource{
+			{
+				Label:          target.Label,
+				FileSystemType: target.FileSystemType,
+			},
+		}, target.ExtraPreserveSources...)
 
-				break
+		for _, source := range sources {
+			// find matching existing partition table entry
+			for _, part := range pt.Partitions() {
+				if part.Label() == source.Label {
+					sourcePart = part
+					fileSystemType = source.FileSystemType
+					fnmatchFilters = source.FnmatchFilters
+
+					break
+				}
 			}
 		}
 
-		if source == nil {
-			log.Printf("warning: failed to preserve contents of %q on %q, as no source partition was found", target.Label, device.Device)
+		if sourcePart == nil {
+			log.Printf("warning: failed to preserve contents of %q on %q, as source partition wasn't found", target.Label, device.Device)
 
 			continue
 		}
 
-		if err = target.SaveContents(device, source); err != nil {
+		if err = target.SaveContents(device, sourcePart, fileSystemType, fnmatchFilters); err != nil {
 			log.Printf("warning: failed to preserve contents of %q on %q: %s", target.Label, device.Device, err)
 		}
 	}
@@ -441,14 +599,25 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 
 // Partition creates a new partition on the specified device.
 // nolint: dupl, gocyclo
-func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
-	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
+func (t *Target) Partition(pt table.PartitionTable, pos int, bd *blockdevice.BlockDevice) (err error) {
+	if t.Skip {
+		for _, part := range pt.Partitions() {
+			if part.Label() == t.Label {
+				t.PartitionName, err = util.PartPath(t.Device, int(part.No()))
+				if err != nil {
+					return err
+				}
 
-	var pt table.PartitionTable
+				log.Printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
 
-	if pt, err = bd.PartitionTable(); err != nil {
-		return err
+				break
+			}
+		}
+
+		return nil
 	}
+
+	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
 
 	opts := []interface{}{
 		partition.WithPartitionType(t.PartitionType),
@@ -463,14 +632,8 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		opts = append(opts, partition.WithLegacyBIOSBootableAttribute(true))
 	}
 
-	part, err := pt.Add(uint64(t.Size), opts...)
+	part, err := pt.InsertAt(pos, uint64(t.Size), opts...)
 	if err != nil {
-		return err
-	}
-
-	log.Printf("created %sp%d (%s) size %d blocks", t.Device, part.No(), t.Label, part.Length())
-
-	if err = pt.Write(); err != nil {
 		return err
 	}
 
@@ -479,6 +642,8 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 		return err
 	}
 
+	log.Printf("created %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
+
 	return nil
 }
 
@@ -486,6 +651,10 @@ func (t *Target) Partition(bd *blockdevice.BlockDevice) (err error) {
 //
 //nolint: gocyclo
 func (t *Target) Format() error {
+	if t.Skip {
+		return nil
+	}
+
 	if t.FileSystemType == FilesystemTypeNone {
 		return nil
 	}
@@ -560,34 +729,38 @@ func (t *Target) Save() (err error) {
 	return nil
 }
 
-func (t *Target) withTemporaryMounted(partPath string, flags uintptr, f func(mountPath string) error) error {
+func withTemporaryMounted(partPath string, flags uintptr, fileSystemType FileSystemType, label string, f func(mountPath string) error) error {
 	mountPath := filepath.Join(constants.SystemPath, "mnt")
 
 	mountpoints := mount.NewMountPoints()
 
-	mountpoint := mount.NewMountPoint(partPath, mountPath, t.FileSystemType, unix.MS_NOATIME|flags, "")
-	mountpoints.Set(t.Label, mountpoint)
+	mountpoint := mount.NewMountPoint(partPath, mountPath, fileSystemType, unix.MS_NOATIME|flags, "")
+	mountpoints.Set(label, mountpoint)
 
 	if err := mount.Mount(mountpoints); err != nil {
 		return fmt.Errorf("failed to mount %q: %w", partPath, err)
 	}
 
-	defer mount.Unmount(mountpoints) //nolint: errcheck
+	defer func() {
+		if err := mount.Unmount(mountpoints); err != nil {
+			log.Printf("failed to unmount: %s", err)
+		}
+	}()
 
 	return f(mountPath)
 }
 
 // SaveContents saves contents of partition to the target (in-memory).
-func (t *Target) SaveContents(device Device, source table.Partition) error {
+func (t *Target) SaveContents(device Device, source table.Partition, fileSystemType FileSystemType, fnmatchFilters []string) error {
 	partPath, err := util.PartPath(device.Device, int(source.No()))
 	if err != nil {
 		return err
 	}
 
-	if t.FileSystemType == FilesystemTypeNone {
+	if fileSystemType == FilesystemTypeNone {
 		err = t.saveRawContents(partPath)
 	} else {
-		err = t.saveFilesystemContents(partPath)
+		err = t.saveFilesystemContents(partPath, fileSystemType, fnmatchFilters)
 	}
 
 	if err != nil {
@@ -622,11 +795,11 @@ func (t *Target) saveRawContents(partPath string) error {
 	return src.Close()
 }
 
-func (t *Target) saveFilesystemContents(partPath string) error {
+func (t *Target) saveFilesystemContents(partPath string, fileSystemType FileSystemType, fnmatchFilters []string) error {
 	t.Contents = bytes.NewBuffer(nil)
 
-	return t.withTemporaryMounted(partPath, unix.MS_RDONLY, func(mountPath string) error {
-		return archiver.TarGz(context.TODO(), mountPath, t.Contents)
+	return withTemporaryMounted(partPath, unix.MS_RDONLY, fileSystemType, t.Label, func(mountPath string) error {
+		return archiver.TarGz(context.TODO(), mountPath, t.Contents, archiver.WithFnmatchPatterns(fnmatchFilters...))
 	})
 }
 
@@ -677,7 +850,7 @@ func (t *Target) restoreRawContents() error {
 }
 
 func (t *Target) restoreFilesystemContents() error {
-	return t.withTemporaryMounted(t.PartitionName, 0, func(mountPath string) error {
+	return withTemporaryMounted(t.PartitionName, 0, t.FileSystemType, t.Label, func(mountPath string) error {
 		return archiver.UntarGz(context.TODO(), t.Contents, mountPath)
 	})
 }

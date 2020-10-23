@@ -23,7 +23,7 @@ CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/downlo
 SONOBUOY_VERSION ?= 0.18.4
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= github.com/talos-systems/talos/...
-RELEASES ?= v0.5.1 v0.6.0
+RELEASES ?= v0.6.2 v0.7.0-alpha.3
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
@@ -271,7 +271,25 @@ $(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinuz $(ARTIFACTS
 # download release artifacts for specific version
 $(ARTIFACTS)/$(TALOS_RELEASE)/%:
 	@mkdir -p $(ARTIFACTS)/$(TALOS_RELEASE)/
-	@curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/$*"
+	@case "$(TALOS_RELEASE)" in \
+		v0.6*) \
+			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/$*" \
+			;; \
+		v0.7.0-alpha.[0-3]) \
+			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/$*" \
+			;; \
+		*) \
+			case "$*" in \
+				vmlinuz) \
+					curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
+					;; \
+				initramfs.xz) \
+					curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
+					;; \
+			esac \
+			;; \
+	esac
+
 
 .PHONY: release-artifacts
 release-artifacts:

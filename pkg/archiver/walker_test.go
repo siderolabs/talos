@@ -45,6 +45,28 @@ func (suite *WalkerSuite) TestIterationDir() {
 		relPaths)
 }
 
+func (suite *WalkerSuite) TestIterationFilter() {
+	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithSkipRoot(), archiver.WithFnmatchPatterns("dev/*", "lib"))
+	suite.Require().NoError(err)
+
+	relPaths := []string(nil)
+
+	for fi := range ch {
+		suite.Require().NoError(fi.Error)
+		relPaths = append(relPaths, fi.RelPath)
+
+		if fi.RelPath == "usr/bin/mv" {
+			suite.Assert().Equal("/usr/bin/cp", fi.Link)
+		}
+	}
+
+	suite.Assert().Equal([]string{
+		"dev/random",
+		"lib",
+	},
+		relPaths)
+}
+
 func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(1))
 	suite.Require().NoError(err)

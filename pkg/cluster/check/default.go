@@ -43,6 +43,12 @@ func DefaultClusterChecks() []ClusterCheck {
 				return ApidReadyAssertion(ctx, cluster)
 			}, 2*time.Minute, 5*time.Second)
 		},
+		// wait for kubelet to be healthy on all
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
+				return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+			}, 5*time.Minute, 5*time.Second)
+		},
 		// wait for all the nodes to report in at k8s level
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report", func(ctx context.Context) error {
@@ -73,14 +79,6 @@ func DefaultClusterChecks() []ClusterCheck {
 				return K8sPodReadyAssertion(ctx, cluster, "kube-system", "k8s-app=kube-dns")
 			}, 3*time.Minute, 5*time.Second)
 		},
-	}
-}
-
-// ExtraClusterChecks returns a set of additional Talos cluster readiness checks which work only for newer versions of Talos.
-//
-// ExtraClusterChecks can't be used reliably in upgrade tests, as older versions might not pass the checks.
-func ExtraClusterChecks() []ClusterCheck {
-	return []ClusterCheck{
 		// wait for all the nodes to be schedulable
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report schedulable", func(ctx context.Context) error {
@@ -88,4 +86,11 @@ func ExtraClusterChecks() []ClusterCheck {
 			}, 2*time.Minute, 5*time.Second)
 		},
 	}
+}
+
+// ExtraClusterChecks returns a set of additional Talos cluster readiness checks which work only for newer versions of Talos.
+//
+// ExtraClusterChecks can't be used reliably in upgrade tests, as older versions might not pass the checks.
+func ExtraClusterChecks() []ClusterCheck {
+	return []ClusterCheck{}
 }

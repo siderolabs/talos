@@ -231,13 +231,19 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 	var notReadyPods []string
 
 	for _, pod := range pods.Items {
+		ready := false
+
 		for _, cond := range pod.Status.Conditions {
 			if cond.Type == v1.PodReady {
-				if cond.Status != v1.ConditionTrue {
-					notReadyPods = append(notReadyPods, pod.Name)
+				if cond.Status == v1.ConditionTrue {
+					ready = true
 					break
 				}
 			}
+		}
+
+		if !ready {
+			notReadyPods = append(notReadyPods, pod.Name)
 		}
 	}
 

@@ -77,6 +77,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	provision_test.DefaultSettings.CurrentVersion = expectedVersion
+	provision_test.DefaultSettings.CrashdumpEnabled = crashdumpEnabled
 
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
