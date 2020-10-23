@@ -20,7 +20,7 @@ var markdownTemplate = `{{ .Description }}
 {{- $anchors := .Anchors -}}
 {{- $tick := "` + "`" + `" -}}
 {{ range $struct := .Structs }}
-### {{ $struct.Type }}
+## {{ $struct.Type }}
 {{ if $struct.Description -}}
 {{ $struct.Description }}
 {{ end -}}
@@ -34,7 +34,7 @@ Examples:
 {{ if $struct.Fields -}}
 {{ range $field := $struct.Fields -}}
 
-#### {{ $field.Name }}
+### {{ $field.Name }}
 
 Type: <code>{{ encodeType $field.Type }}</code>
 
@@ -105,7 +105,7 @@ func (fd *FileDoc) Encode() ([]byte, error) {
 }
 
 // Write dumps documentation string to folder.
-func (fd *FileDoc) Write(path string) error {
+func (fd *FileDoc) Write(path, frontmatter string) error {
 	data, err := fd.Encode()
 	if err != nil {
 		return err
@@ -121,8 +121,12 @@ func (fd *FileDoc) Write(path string) error {
 		}
 	}
 
-	f, err := os.Create(filepath.Join(path, fmt.Sprintf("%s.%s", fd.Name, "md")))
+	f, err := os.Create(filepath.Join(path, fmt.Sprintf("%s.%s", strings.ToLower(fd.Name), "md")))
 	if err != nil {
+		return err
+	}
+
+	if _, err := f.Write([]byte(frontmatter)); err != nil {
 		return err
 	}
 

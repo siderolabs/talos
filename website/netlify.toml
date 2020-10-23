@@ -1,0 +1,3 @@
+[build]
+  command = "gridsome build"
+  publish = "dist/"
