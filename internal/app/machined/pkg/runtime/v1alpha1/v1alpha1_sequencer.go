@@ -358,6 +358,10 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			!in.GetPreserve(),
 			"cleanup",
 			RemoveAllPods,
+		).AppendWhen(
+			in.GetPreserve(),
+			"cleanup",
+			StopAllPods,
 		).Append(
 			"stopServices",
 			StopServicesForUpgrade,
