@@ -666,13 +666,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 // StopServicesForUpgrade represents the StopServicesForUpgrade task.
 func StopServicesForUpgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, service := range []string{"kubelet", "cri", "udevd"} {
-			if err = system.Services(nil).Stop(ctx, service); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return system.Services(nil).StopWithRevDepenencies(ctx, "cri", "etcd", "kubelet", "udevd")
 	}, "stopServicesForUpgrade"
 }
 
@@ -1209,10 +1203,19 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 	}, "leaveEtcd"
 }
 
-// RemoveAllPods represents the task for stopping all pods.
+// RemoveAllPods represents the task for stopping and removing all pods.
 func RemoveAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return stopAndRemoveAllPods(cri.StopAndRemove), "removeAllPods"
+}
+
+// StopAllPods represents the task for stopping all pods.
+func StopAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return stopAndRemoveAllPods(cri.StopOnly), "stopAllPods"
+}
+
+func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if err = system.Services(nil).Stop(context.Background(), "kubelet"); err != nil {
+		if err = system.Services(nil).Stop(ctx, "kubelet"); err != nil {
 			return err
 		}
 
@@ -1228,19 +1231,19 @@ func RemoveAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 		// any cleanup tasks. If we don't do this, we run the risk of killing the
 		// CNI, preventing the CRI from cleaning up the pod's netwokring.
 
-		if err = client.RemovePodSandboxes(runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
+		if err = client.StopAndRemovePodSandboxes(ctx, stopAction, runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
 			return err
 		}
 
 		// With the POD network mode pods out of the way, we kill the remaining
 		// pods.
 
-		if err = client.RemovePodSandboxes(); err != nil {
+		if err = client.StopAndRemovePodSandboxes(ctx, stopAction); err != nil {
 			return err
 		}
 
 		return nil
-	}, "removeAllPods"
+	}
 }
 
 // ResetSystemDisk represents the task to reset the system disk.
