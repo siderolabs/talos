@@ -180,6 +180,12 @@ const (
 	// KubernetesSchedulerImage is the enforced scheduler image to use for the control plane.
 	KubernetesSchedulerImage = "k8s.gcr.io/kube-scheduler"
 
+	// CoreDNSImage is the enforced CoreDNS image to use.
+	CoreDNSImage = "k8s.gcr.io/coredns"
+
+	// DefaultCoreDNSVersion is the default version for the CoreDNS.
+	DefaultCoreDNSVersion = "1.7.0"
+
 	// RecoveryKubeconfig is the path to kubeconfig used temporarily while recovering control plane.
 	RecoveryKubeconfig = "/etc/kubernetes/kubeconfig"
 
