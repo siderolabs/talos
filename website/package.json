@@ -11,7 +11,8 @@
     "gridsome": "^0.7.21",
     "gridsome-source-docs": "github:andrewrynhard/gridsome-source-docs#main",
     "slugify": "^1.4.5",
-    "tailwindcss-grid": "^1.2.1"
+    "tailwindcss-grid": "^1.2.1",
+    "vuex": "^3.5.1"
   },
   "devDependencies": {
     "@gridsome/plugin-google-analytics": "^0.1.2",

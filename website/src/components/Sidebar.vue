@@ -1,5 +1,5 @@
 <template>
-  <div ref="sidebar" v-if="showSidebar" class="px-4 pt-8 lg:pt-12">
+  <div ref="sidebar" class="px-4 pt-8 lg:pt-12">
     <div class="mb-6">
       <SidebarDropdown />
     </div>
@@ -51,9 +51,6 @@ export default {
       }
 
       return null;
-    },
-    showSidebar() {
-      return this.$page.markdownPage.version && this.sidebar;
     },
   },
 };
