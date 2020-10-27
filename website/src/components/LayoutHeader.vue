@@ -1,12 +1,21 @@
 <template>
-  <div class="py-2 border-t-2 border-ui-primary">
+  <div class="border-ui-primary w-full">
     <div class="container">
       <div class="flex items-center justify-between -mx-2 sm:-mx-4">
         <div
-          class="flex flex-col items-center px-2 mr-auto sm:px-4 sm:flex-row"
+          class="flex flex-row items-center px-2 mr-auto sm:px-4 sm:flex-row"
         >
+          <div v-if="$page" class="z-50 p-2 lg:hidden">
+            <button
+              class="p-2 text-ui-primary rounded-full"
+              @click="$store.commit('toggleSidebarIsOpen')"
+            >
+              <XIcon v-if="$store.state.sidebarIsOpen" />
+              <MenuIcon v-else />
+            </button>
+          </div>
+
           <g-link to="/" class="flex items-center text-ui-primary" title="Home">
-            <!-- <Logo :width="40" class="text-ui-primary" /> -->
             <span
               class="hidden ml-2 text-xl font-black tracking-tighter uppercase sm:block"
             >
@@ -14,10 +23,7 @@
             </span>
           </g-link>
 
-          <div
-            v-if="settings.nav.links.length > 0"
-            class="hidden ml-2 mr-5 sm:block sm:ml-8"
-          >
+          <div v-if="settings.nav.links.length > 0" class="ml-2 mr-2 sm:block">
             <g-link
               v-for="link in settings.nav.links"
               :key="link.path"
@@ -112,6 +118,8 @@ import {
   GlobeIcon,
   GithubIcon,
   TwitterIcon,
+  MenuIcon,
+  XIcon,
 } from "vue-feather-icons";
 
 const Search = () =>
@@ -129,6 +137,8 @@ export default {
     GlobeIcon,
     GithubIcon,
     TwitterIcon,
+    MenuIcon,
+    XIcon,
   },
 
   computed: {

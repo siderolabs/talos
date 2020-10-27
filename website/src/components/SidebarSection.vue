@@ -1,31 +1,35 @@
 <template>
   <div>
-    <div class="inline-flex justify-between w-full">
-      <h3 class="pt-0 mt-0 mb-1 text-sm tracking-tight uppercase border-none">
-        {{ title }}
-      </h3>
-
-      <svg
-        class="h-6 w-6 fill-current mr-2 text-ui-typo cursor-pointer caret"
-        :class="{ rotate: show }"
-        viewBox="0 0 32 32"
-        aria-hidden="true"
-        @click="show = !show"
+    <div>
+      <div
+        @click="isExpanded = !isExpanded"
+        class="inline-flex justify-between w-full cursor-pointer"
       >
-        <path
-          class="text-ui-typo"
-          d="M16.003 18.626l7.081-7.081L25 13.46l-8.997 8.998-9.003-9 1.917-1.916z"
-        />
-      </svg>
+        <h3 class="pt-0 mt-0 mb-1 text-sm tracking-tight uppercase border-none">
+          {{ title }}
+        </h3>
+
+        <svg
+          class="h-6 w-6 fill-current mr-2 text-ui-typo caret"
+          :class="{ rotate: isExpanded }"
+          viewBox="0 0 32 32"
+          aria-hidden="true"
+        >
+          <path
+            class="text-ui-typo"
+            d="M16.003 18.626l7.081-7.081L25 13.46l-8.997 8.998-9.003-9 1.917-1.916z"
+          />
+        </svg>
+      </div>
     </div>
 
-    <ul v-show="show" class="max-w-full pl-2">
+    <ul v-show="isExpanded" class="max-w-full pl-2">
       <li
         v-for="page in findPages(items)"
         :id="page.path"
         :key="page.path"
         :class="getClassesForAnchor(page)"
-        @mousedown="$emit('navigate')"
+        @click="$store.commit('setSidebarIsOpen', false)"
       >
         <g-link :to="`${page.path}`" class="flex items-center py-1">
           <span
@@ -47,7 +51,7 @@ export default {
 
   data() {
     return {
-      show: false,
+      isExpanded: false,
     };
   },
 

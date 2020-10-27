@@ -3,8 +3,7 @@
     <div class="flex flex-col justify-start min-h-screen">
       <header
         ref="header"
-        class="sticky top-0 z-10 w-full border-b bg-ui-background border-ui-border"
-        @resize="setHeaderHeight"
+        class="sticky top-0 z-10 w-full border-b bg-ui-background border-ui-border h-20 flex items-center"
       >
         <LayoutHeader />
       </header>
@@ -13,33 +12,19 @@
         class="container relative flex flex-wrap justify-start flex-1 w-full bg-ui-background"
       >
         <aside
-          v-if="hasSidebar"
+          v-if="$page"
           class="sidebar"
-          :class="{ open: sidebarOpen }"
-          :style="sidebarStyle"
+          :class="{ open: $store.state.sidebarIsOpen }"
         >
           <div class="w-full pb-16 bg-ui-background">
-            <Sidebar @navigate="sidebarOpen = false" />
+            <Sidebar />
           </div>
         </aside>
 
-        <div
-          class="w-full pb-24"
-          :class="{ 'pl-0 lg:pl-12 lg:w-3/4': hasSidebar }"
-        >
+        <div class="w-full pb-24" :class="{ 'pl-0 lg:pl-12 lg:w-3/4': $page }">
           <slot />
         </div>
       </main>
-    </div>
-
-    <div v-if="hasSidebar" class="fixed bottom-0 right-0 z-50 p-8 lg:hidden">
-      <button
-        class="p-3 text-white rounded-full shadow-lg bg-ui-primary hover:text-white"
-        @click="sidebarOpen = !sidebarOpen"
-      >
-        <XIcon v-if="sidebarOpen" />
-        <MenuIcon v-else />
-      </button>
     </div>
 
     <footer>
@@ -60,48 +45,14 @@ query {
 import Sidebar from "@/components/Sidebar";
 import LayoutHeader from "@/components/LayoutHeader";
 import LayoutFooter from "@/components/LayoutFooter";
-import { MenuIcon, XIcon } from "vue-feather-icons";
 
 export default {
   components: {
     Sidebar,
     LayoutHeader,
     LayoutFooter,
-    MenuIcon,
-    XIcon,
   },
-  data() {
-    return {
-      headerHeight: 0,
-      sidebarOpen: false,
-    };
-  },
-  watch: {
-    sidebarOpen: function (isOpen) {
-      document.body.classList.toggle("overflow-hidden", isOpen);
-    },
-  },
-  methods: {
-    setHeaderHeight() {
-      this.$nextTick(() => {
-        this.headerHeight = this.$refs.header.offsetHeight;
-      });
-    },
-  },
-  computed: {
-    sidebarStyle() {
-      return {
-        top: this.headerHeight + "px",
-        height: `calc(100vh - ${this.headerHeight}px)`,
-      };
-    },
-    hasSidebar() {
-      return this.$page && this.headerHeight > 0;
-    },
-  },
-  mounted() {
-    this.setHeaderHeight();
-  },
+
   metaInfo() {
     return {
       meta: [
@@ -319,6 +270,7 @@ table {
 .sidebar {
   @apply fixed bg-ui-background px-4 inset-x-0 bottom-0 w-full border-r border-ui-border overflow-y-auto transition-all z-40;
   transform: translateX(-100%);
+  top: 5rem;
 
   &.open {
     transform: translateX(0);
