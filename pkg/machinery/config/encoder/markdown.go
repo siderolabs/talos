@@ -142,7 +142,7 @@ func (fd *FileDoc) encodeType(t string) string {
 
 	for _, s := range re.FindAllString(t, -1) {
 		if anchor, ok := fd.Anchors[s]; ok {
-			t = strings.ReplaceAll(t, s, fmt.Sprintf("[%s](#%s)", s, anchor))
+			t = strings.ReplaceAll(t, s, formatLink(s, "#"+anchor))
 		}
 	}
 
@@ -172,4 +172,8 @@ func encodeYaml(in interface{}, name string) string {
 	}
 
 	return fmt.Sprintf("```yaml\n%s```", strings.Join(lines, "\n"))
+}
+
+func formatLink(text, link string) string {
+	return fmt.Sprintf(`<a href="%s">%s</a>`, link, text)
 }

@@ -53,13 +53,13 @@ Valid Values:
 
 ### machine
 
-Type: <code>[MachineConfig](#machineconfig)</code>
+Type: <code><a href="#machineconfig">MachineConfig</a></code>
 
 Provides machine specific configuration options.
 
 ### cluster
 
-Type: <code>[ClusterConfig](#clusterconfig)</code>
+Type: <code><a href="#clusterconfig">ClusterConfig</a></code>
 
 Provides cluster specific configuration options.
 
@@ -143,7 +143,7 @@ certSANs:
 
 ### kubelet
 
-Type: <code>[KubeletConfig](#kubeletconfig)</code>
+Type: <code><a href="#kubeletconfig">KubeletConfig</a></code>
 
 Used to provide additional options to the kubelet.
 
@@ -168,7 +168,7 @@ kubelet:
 
 ### network
 
-Type: <code>[NetworkConfig](#networkconfig)</code>
+Type: <code><a href="#networkconfig">NetworkConfig</a></code>
 
 Used to configure the machine's network.
 
@@ -207,7 +207,7 @@ network:
 
 ### disks
 
-Type: <code>[][MachineDisk](#machinedisk)</code>
+Type: <code>[]<a href="#machinedisk">MachineDisk</a></code>
 
 Used to partition, format and mount additional disks.
 Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
@@ -229,7 +229,7 @@ disks:
 
 ### install
 
-Type: <code>[InstallConfig](#installconfig)</code>
+Type: <code><a href="#installconfig">InstallConfig</a></code>
 
 Used to provide instructions for bare-metal installations.
 
@@ -248,7 +248,7 @@ install:
 
 ### files
 
-Type: <code>[][MachineFile](#machinefile)</code>
+Type: <code>[]<a href="#machinefile">MachineFile</a></code>
 
 Allows the addition of user specified files.
 The value of `op` can be `create`, `overwrite`, or `append`.
@@ -306,7 +306,7 @@ env:
 
 ### time
 
-Type: <code>[TimeConfig](#timeconfig)</code>
+Type: <code><a href="#timeconfig">TimeConfig</a></code>
 
 Used to configure the machine's time settings.
 
@@ -336,7 +336,7 @@ sysctls:
 
 ### registries
 
-Type: <code>[RegistriesConfig](#registriesconfig)</code>
+Type: <code><a href="#registriesconfig">RegistriesConfig</a></code>
 
 Used to configure the machine's container image registry mirrors.
 
@@ -384,7 +384,7 @@ registries:
 
 ### controlPlane
 
-Type: <code>[ControlPlaneConfig](#controlplaneconfig)</code>
+Type: <code><a href="#controlplaneconfig">ControlPlaneConfig</a></code>
 
 Provides control plane specific configuration options.
 
@@ -404,7 +404,7 @@ Configures the cluster's name.
 
 ### network
 
-Type: <code>[ClusterNetworkConfig](#clusternetworkconfig)</code>
+Type: <code><a href="#clusternetworkconfig">ClusterNetworkConfig</a></code>
 
 Provides cluster network configuration.
 
@@ -464,7 +464,7 @@ ca:
 
 ### apiServer
 
-Type: <code>[APIServerConfig](#apiserverconfig)</code>
+Type: <code><a href="#apiserverconfig">APIServerConfig</a></code>
 
 API server specific configuration options.
 
@@ -484,7 +484,7 @@ apiServer:
 
 ### controllerManager
 
-Type: <code>[ControllerManagerConfig](#controllermanagerconfig)</code>
+Type: <code><a href="#controllermanagerconfig">ControllerManagerConfig</a></code>
 
 Controller manager server specific configuration options.
 
@@ -500,7 +500,7 @@ controllerManager:
 
 ### proxy
 
-Type: <code>[ProxyConfig](#proxyconfig)</code>
+Type: <code><a href="#proxyconfig">ProxyConfig</a></code>
 
 Kube-proxy server-specific configuration options
 
@@ -517,7 +517,7 @@ proxy:
 
 ### scheduler
 
-Type: <code>[SchedulerConfig](#schedulerconfig)</code>
+Type: <code><a href="#schedulerconfig">SchedulerConfig</a></code>
 
 Scheduler server specific configuration options.
 
@@ -533,7 +533,7 @@ scheduler:
 
 ### etcd
 
-Type: <code>[EtcdConfig](#etcdconfig)</code>
+Type: <code><a href="#etcdconfig">EtcdConfig</a></code>
 
 Etcd specific configuration options.
 
@@ -553,7 +553,7 @@ etcd:
 
 ### podCheckpointer
 
-Type: <code>[PodCheckpointer](#podcheckpointer)</code>
+Type: <code><a href="#podcheckpointer">PodCheckpointer</a></code>
 
 Pod Checkpointer specific configuration options.
 
@@ -566,7 +566,7 @@ podCheckpointer:
 
 ### coreDNS
 
-Type: <code>[CoreDNS](#coredns)</code>
+Type: <code><a href="#coredns">CoreDNS</a></code>
 
 Core DNS specific configuration options.
 
@@ -608,7 +608,7 @@ extraManifestHeaders:
 
 ### adminKubeconfig
 
-Type: <code>[AdminKubeconfigConfig](#adminkubeconfigconfig)</code>
+Type: <code><a href="#adminkubeconfigconfig">AdminKubeconfigConfig</a></code>
 
 Settings for admin kubeconfig generation.
 Certificate lifetime can be configured.
@@ -692,7 +692,7 @@ Used to statically set the hostname for the host.
 
 ### interfaces
 
-Type: <code>[][Device](#device)</code>
+Type: <code>[]<a href="#device">Device</a></code>
 
 `interfaces` is used to define the network interface configuration.
 By default all network interfaces will attempt a DHCP discovery.
@@ -752,7 +752,7 @@ Defaults to `1.1.1.1` and `8.8.8.8`
 
 ### extraHostEntries
 
-Type: <code>[][ExtraHost](#extrahost)</code>
+Type: <code>[]<a href="#extrahost">ExtraHost</a></code>
 
 Allows for extra entries to be added to /etc/hosts file
 
@@ -865,7 +865,7 @@ Defaults to `pool.ntp.org`
 
 ### mirrors
 
-Type: <code>map[string][RegistryMirrorConfig](#registrymirrorconfig)</code>
+Type: <code>map[string]<a href="#registrymirrorconfig">RegistryMirrorConfig</a></code>
 
 Specifies mirror configuration for each registry.
 This setting allows to use local pull-through caching registires,
@@ -877,7 +877,7 @@ Name '*' catches any registry names not specified explicitly.
 
 ### config
 
-Type: <code>map[string][RegistryConfig](#registryconfig)</code>
+Type: <code>map[string]<a href="#registryconfig">RegistryConfig</a></code>
 
 Specifies TLS & auth configuration for HTTPS image registries.
 Mutual TLS can be enabled with 'clientIdentity' option.
@@ -915,7 +915,7 @@ The `image` field is an override to the default coredns image.
 
 ### endpoint
 
-Type: <code>[Endpoint](#endpoint)</code>
+Type: <code><a href="#endpoint">Endpoint</a></code>
 
 Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 It is single-valued, and may optionally include a port number.
@@ -1062,7 +1062,7 @@ Note that the following args are not allowed:
 
 ### cni
 
-Type: <code>[CNIConfig](#cniconfig)</code>
+Type: <code><a href="#cniconfig">CNIConfig</a></code>
 
 The CNI used.
 Composed of "name" and "url".
@@ -1159,7 +1159,7 @@ The name of the disk to use.
 
 ### partitions
 
-Type: <code>[][DiskPartition](#diskpartition)</code>
+Type: <code>[]<a href="#diskpartition">DiskPartition</a></code>
 
 A list of partitions to create on the disk.
 
@@ -1246,20 +1246,20 @@ The CIDR to use.
 
 ### routes
 
-Type: <code>[][Route](#route)</code>
+Type: <code>[]<a href="#route">Route</a></code>
 
 A list of routes associated with the interface.
 If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.
 
 ### bond
 
-Type: <code>[Bond](#bond)</code>
+Type: <code><a href="#bond">Bond</a></code>
 
 Bond specific options.
 
 ### vlans
 
-Type: <code>[][Vlan](#vlan)</code>
+Type: <code>[]<a href="#vlan">Vlan</a></code>
 
 VLAN specific options.
 
@@ -1290,7 +1290,7 @@ Indicates if the interface is a dummy interface.
 
 ### dhcpOptions
 
-Type: <code>[DHCPOptions](#dhcpoptions)</code>
+Type: <code><a href="#dhcpoptions">DHCPOptions</a></code>
 
 DHCP specific options.
 DHCP *must* be set to true for these to take effect.
@@ -1509,7 +1509,7 @@ The CIDR to use.
 
 ### routes
 
-Type: <code>[][Route](#route)</code>
+Type: <code>[]<a href="#route">Route</a></code>
 
 A list of routes associated with the VLAN.
 
@@ -1559,13 +1559,13 @@ port and path (if path is not set, it defaults to `/v2`).
 
 ### tls
 
-Type: <code>[RegistryTLSConfig](#registrytlsconfig)</code>
+Type: <code><a href="#registrytlsconfig">RegistryTLSConfig</a></code>
 
 The TLS configuration for this registry.
 
 ### auth
 
-Type: <code>[RegistryAuthConfig](#registryauthconfig)</code>
+Type: <code><a href="#registryauthconfig">RegistryAuthConfig</a></code>
 
 The auth configuration for this registry.
 
