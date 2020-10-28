@@ -16,6 +16,8 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/talos-systems/bootkube-plugin/pkg/asset"
+
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -978,7 +980,7 @@ func (i *InstallConfig) WithBootloader() bool {
 
 // Image implements the config.Provider interface.
 func (c *CoreDNS) Image() string {
-	coreDNSImage := fmt.Sprintf("%s:v%s", constants.CoreDNSImage, constants.DefaultCoreDNSVersion)
+	coreDNSImage := asset.DefaultImages.CoreDNS
 
 	if c.CoreDNSImage != "" {
 		coreDNSImage = c.CoreDNSImage
