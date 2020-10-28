@@ -70,6 +70,7 @@ var timeCmd = &cobra.Command{
 				if err != nil {
 					return fmt.Errorf("error parsing local time: %w", err)
 				}
+
 				remotetime, err = ptypes.Timestamp(msg.Remotetime)
 				if err != nil {
 					return fmt.Errorf("error parsing remote time: %w", err)
@@ -84,6 +85,6 @@ var timeCmd = &cobra.Command{
 }
 
 func init() {
-	timeCmd.Flags().StringP("check", "c", "pool.ntp.org", "checks server time against specified ntp server")
+	timeCmd.Flags().String("check", "c", "checks server time against specified ntp server")
 	addCommand(timeCmd)
 }
