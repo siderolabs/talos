@@ -51,6 +51,16 @@ func init() {
 	{{ $docVar }}.AddExample("{{ $example.Name }}", {{ $example.Value }})
 	{{ end -}}
 	{{ end -}}
+	{{ if $struct.AppearsIn -}}
+	{{ $docVar }}.AppearsIn = []encoder.Appearance{
+	{{ range $value := $struct.AppearsIn -}}
+		{
+			TypeName: "{{ $value.Struct.Name }}",
+			FieldName: "{{ $value.FieldName }}",
+		},
+	{{ end -}}
+	}
+	{{ end -}}
 	{{ $docVar }}.Fields = make([]encoder.Doc,{{ len $struct.Fields }})
 	{{ range $index, $field := $struct.Fields -}}
 	{{ $docVar }}.Fields[{{ $index }}].Name = "{{ $field.Tag }}"
@@ -104,9 +114,15 @@ type Doc struct {
 }
 
 type Struct struct {
-	Name   string
-	Text   *Text
-	Fields []*Field
+	Name      string
+	Text      *Text
+	Fields    []*Field
+	AppearsIn []Appearance
+}
+
+type Appearance struct {
+	Struct    *Struct
+	FieldName string
 }
 
 type Example struct {
@@ -115,11 +131,12 @@ type Example struct {
 }
 
 type Field struct {
-	Name string
-	Type string
-	Text *Text
-	Tag  string
-	Note string
+	Name    string
+	Type    string
+	TypeRef string
+	Text    *Text
+	Tag     string
+	Note    string
 }
 
 type Text struct {
@@ -231,22 +248,41 @@ func parseComment(comment []byte) *Text {
 	return text
 }
 
-func parseFieldType(p interface{}) string {
+func getFieldType(p interface{}) string {
 	if m, ok := p.(*ast.MapType); ok {
-		return fmt.Sprintf("map[%s]%s", parseFieldType(m.Key), parseFieldType(m.Value))
+		return getFieldType(m.Value)
 	}
 
 	switch t := p.(type) {
 	case *ast.Ident:
 		return t.Name
 	case *ast.ArrayType:
-		return "[]" + parseFieldType(p.(*ast.ArrayType).Elt)
+		return getFieldType(p.(*ast.ArrayType).Elt)
+	case *ast.StarExpr:
+		return getFieldType(t.X)
+	case *ast.SelectorExpr:
+		return getFieldType(t.Sel)
+	default:
+		return ""
+	}
+}
+
+func formatFieldType(p interface{}) string {
+	if m, ok := p.(*ast.MapType); ok {
+		return fmt.Sprintf("map[%s]%s", formatFieldType(m.Key), formatFieldType(m.Value))
+	}
+
+	switch t := p.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.ArrayType:
+		return "[]" + formatFieldType(p.(*ast.ArrayType).Elt)
 	case *ast.StructType:
 		return "struct"
 	case *ast.StarExpr:
-		return parseFieldType(t.X)
+		return formatFieldType(t.X)
 	case *ast.SelectorExpr:
-		return parseFieldType(t.Sel)
+		return formatFieldType(t.Sel)
 	default:
 		log.Printf("unknown: %#v", t)
 
@@ -279,7 +315,8 @@ func collectFields(s *structType) (fields []*Field) {
 
 		name := f.Names[0].Name
 
-		fieldType := parseFieldType(f.Type)
+		fieldType := formatFieldType(f.Type)
+		fieldTypeRef := getFieldType(f.Type)
 
 		tag := reflect.StructTag(strings.Trim(f.Tag.Value, "`"))
 		yamlTag := tag.Get("yaml")
@@ -292,10 +329,11 @@ func collectFields(s *structType) (fields []*Field) {
 		text := parseComment([]byte(f.Doc.Text()))
 
 		field := &Field{
-			Name: name,
-			Tag:  yamlTag,
-			Type: fieldType,
-			Text: text,
+			Name:    name,
+			Tag:     yamlTag,
+			Type:    fieldType,
+			TypeRef: fieldTypeRef,
+			Text:    text,
 		}
 
 		if f.Comment != nil {
@@ -369,6 +407,9 @@ func main() {
 		Structs: []*Struct{},
 	}
 
+	extraExamples := map[string][]*Example{}
+	backReferences := map[string][]Appearance{}
+
 	for _, s := range structs {
 		fmt.Printf("generating docs for type: %q\n", s.name)
 
@@ -380,7 +421,32 @@ func main() {
 			Fields: fields,
 		}
 
+		for _, field := range fields {
+			if field.TypeRef == "" {
+				continue
+			}
+
+			if len(field.Text.Examples) > 0 {
+				extraExamples[field.TypeRef] = append(extraExamples[field.TypeRef], field.Text.Examples...)
+			}
+
+			backReferences[field.TypeRef] = append(backReferences[field.TypeRef], Appearance{
+				Struct:    s,
+				FieldName: field.Tag,
+			})
+		}
+
 		doc.Structs = append(doc.Structs, s)
+	}
+
+	for _, s := range doc.Structs {
+		if extra, ok := extraExamples[s.Name]; ok {
+			s.Text.Examples = append(s.Text.Examples, extra...)
+		}
+
+		if ref, ok := backReferences[s.Name]; ok {
+			s.AppearsIn = append(s.AppearsIn, ref...)
+		}
 	}
 
 	if len(os.Args) != 4 {

@@ -57,7 +57,7 @@ func init() {
 	ConfigDoc.Fields[0].Description = "Indicates the schema used to decode the contents."
 	ConfigDoc.Fields[0].Comments[encoder.LineComment] = "Indicates the schema used to decode the contents."
 	ConfigDoc.Fields[0].Values = []string{
-		"`v1alpha1`",
+		"v1alpha1",
 	}
 	ConfigDoc.Fields[1].Name = "debug"
 	ConfigDoc.Fields[1].Type = "bool"
@@ -95,16 +95,22 @@ func init() {
 	MachineConfigDoc.Type = "MachineConfig"
 	MachineConfigDoc.Comments[encoder.HeadComment] = ""
 	MachineConfigDoc.Description = ""
+	MachineConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Config",
+			FieldName: "machine",
+		},
+	}
 	MachineConfigDoc.Fields = make([]encoder.Doc, 13)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
-	MachineConfigDoc.Fields[0].Description = "Defines the role of the machine within the cluster.\n\n##### Init\n\nInit node type designates the first control plane node to come up.\nYou can think of it like a bootstrap node.\nThis node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.\n\n##### Control Plane\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.\n\n##### Worker\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads."
+	MachineConfigDoc.Fields[0].Description = "Defines the role of the machine within the cluster.\n\n#### Init\n\nInit node type designates the first control plane node to come up.\nYou can think of it like a bootstrap node.\nThis node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.\n\n#### Control Plane\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.\n\n#### Worker\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads."
 	MachineConfigDoc.Fields[0].Comments[encoder.LineComment] = "Defines the role of the machine within the cluster."
 	MachineConfigDoc.Fields[0].Values = []string{
-		"`init`",
-		"`controlplane`",
-		"`join`",
+		"init",
+		"controlplane",
+		"join",
 	}
 	MachineConfigDoc.Fields[1].Name = "token"
 	MachineConfigDoc.Fields[1].Type = "string"
@@ -205,6 +211,12 @@ func init() {
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.HeadComment] = ""
 	ClusterConfigDoc.Description = ""
+	ClusterConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Config",
+			FieldName: "cluster",
+		},
+	}
 	ClusterConfigDoc.Fields = make([]encoder.Doc, 17)
 	ClusterConfigDoc.Fields[0].Name = "controlPlane"
 	ClusterConfigDoc.Fields[0].Type = "ControlPlaneConfig"
@@ -337,6 +349,14 @@ func init() {
 	KubeletConfigDoc.Type = "KubeletConfig"
 	KubeletConfigDoc.Comments[encoder.HeadComment] = ""
 	KubeletConfigDoc.Description = ""
+
+	KubeletConfigDoc.AddExample("Kubelet definition example.", machineKubeletExample)
+	KubeletConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "kubelet",
+		},
+	}
 	KubeletConfigDoc.Fields = make([]encoder.Doc, 3)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
@@ -344,7 +364,7 @@ func init() {
 	KubeletConfigDoc.Fields[0].Description = "The `image` field is an optional reference to an alternative kubelet image."
 	KubeletConfigDoc.Fields[0].Comments[encoder.LineComment] = "The `image` field is an optional reference to an alternative kubelet image."
 
-	KubeletConfigDoc.Fields[0].AddExample("", "docker.io/<org>/kubelet:latest")
+	KubeletConfigDoc.Fields[0].AddExample("", kubeletImageExample)
 	KubeletConfigDoc.Fields[1].Name = "extraArgs"
 	KubeletConfigDoc.Fields[1].Type = "map[string]string"
 	KubeletConfigDoc.Fields[1].Note = ""
@@ -365,6 +385,14 @@ func init() {
 	NetworkConfigDoc.Type = "NetworkConfig"
 	NetworkConfigDoc.Comments[encoder.HeadComment] = ""
 	NetworkConfigDoc.Description = ""
+
+	NetworkConfigDoc.AddExample("Network definition example.", machineNetworkConfigExample)
+	NetworkConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "network",
+		},
+	}
 	NetworkConfigDoc.Fields = make([]encoder.Doc, 4)
 	NetworkConfigDoc.Fields[0].Name = "hostname"
 	NetworkConfigDoc.Fields[0].Type = "string"
@@ -374,7 +402,7 @@ func init() {
 	NetworkConfigDoc.Fields[1].Name = "interfaces"
 	NetworkConfigDoc.Fields[1].Type = "[]Device"
 	NetworkConfigDoc.Fields[1].Note = ""
-	NetworkConfigDoc.Fields[1].Description = "`interfaces` is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter.\n\n##### machine.network.interfaces.interface\n\nThis is the interface name that should be configured.\n\n##### machine.network.interfaces.cidr\n\n`cidr` is used to specify a static IP address to the interface.\nThis should be in proper CIDR notation ( `192.168.2.5/24` ).\n\n> Note: This option is mutually exclusive with DHCP.\n\n##### machine.network.interfaces.dhcp\n\n`dhcp` is used to specify that this device should be configured via DHCP.\n\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`\n\n> Note: This option is mutually exclusive with CIDR.\n>\n> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to \"\" and DHCP to false\n> in order for Talos to skip configuration of addresses.\n> All other options will still apply.\n\n##### machine.network.interfaces.ignore\n\n`ignore` is used to exclude a specific interface from configuration.\nThis parameter is optional.\n\n##### machine.network.interfaces.dummy\n\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface.\nThis parameter is optional.\n\n##### machine.network.interfaces.routes\n\n`routes` is used to specify static routes that may be necessary.\nThis parameter is optional.\n\nRoutes can be repeated and includes a `Network` and `Gateway` field."
+	NetworkConfigDoc.Fields[1].Description = "`interfaces` is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter.\n\n#### machine.network.interfaces.interface\n\nThis is the interface name that should be configured.\n\n#### machine.network.interfaces.cidr\n\n`cidr` is used to specify a static IP address to the interface.\nThis should be in proper CIDR notation ( `192.168.2.5/24` ).\n\n> Note: This option is mutually exclusive with DHCP.\n\n#### machine.network.interfaces.dhcp\n\n`dhcp` is used to specify that this device should be configured via DHCP.\n\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`\n\n> Note: This option is mutually exclusive with CIDR.\n>\n> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to \"\" and DHCP to false\n> in order for Talos to skip configuration of addresses.\n> All other options will still apply.\n\n#### machine.network.interfaces.ignore\n\n`ignore` is used to exclude a specific interface from configuration.\nThis parameter is optional.\n\n#### machine.network.interfaces.dummy\n\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface.\nThis parameter is optional.\n\n#### machine.network.interfaces.routes\n\n`routes` is used to specify static routes that may be necessary.\nThis parameter is optional.\n\nRoutes can be repeated and includes a `Network` and `Gateway` field."
 	NetworkConfigDoc.Fields[1].Comments[encoder.LineComment] = "`interfaces` is used to define the network interface configuration."
 	NetworkConfigDoc.Fields[2].Name = "nameservers"
 	NetworkConfigDoc.Fields[2].Type = "[]string"
@@ -392,6 +420,14 @@ func init() {
 	InstallConfigDoc.Type = "InstallConfig"
 	InstallConfigDoc.Comments[encoder.HeadComment] = ""
 	InstallConfigDoc.Description = ""
+
+	InstallConfigDoc.AddExample("MachineInstall config usage example.", machineInstallExample)
+	InstallConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "install",
+		},
+	}
 	InstallConfigDoc.Fields = make([]encoder.Doc, 5)
 	InstallConfigDoc.Fields[0].Name = "disk"
 	InstallConfigDoc.Fields[0].Type = "string"
@@ -442,6 +478,14 @@ func init() {
 	TimeConfigDoc.Type = "TimeConfig"
 	TimeConfigDoc.Comments[encoder.HeadComment] = ""
 	TimeConfigDoc.Description = ""
+
+	TimeConfigDoc.AddExample("Example configuration for cloudflare ntp server.", machineTimeExample)
+	TimeConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "time",
+		},
+	}
 	TimeConfigDoc.Fields = make([]encoder.Doc, 2)
 	TimeConfigDoc.Fields[0].Name = "disabled"
 	TimeConfigDoc.Fields[0].Type = "bool"
@@ -457,6 +501,14 @@ func init() {
 	RegistriesConfigDoc.Type = "RegistriesConfig"
 	RegistriesConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistriesConfigDoc.Description = ""
+
+	RegistriesConfigDoc.AddExample("", machineConfigRegistriesExample)
+	RegistriesConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "registries",
+		},
+	}
 	RegistriesConfigDoc.Fields = make([]encoder.Doc, 2)
 	RegistriesConfigDoc.Fields[0].Name = "mirrors"
 	RegistriesConfigDoc.Fields[0].Type = "map[string]RegistryMirrorConfig"
@@ -472,6 +524,14 @@ func init() {
 	PodCheckpointerDoc.Type = "PodCheckpointer"
 	PodCheckpointerDoc.Comments[encoder.HeadComment] = ""
 	PodCheckpointerDoc.Description = ""
+
+	PodCheckpointerDoc.AddExample("", clusterPodCheckpointerExample)
+	PodCheckpointerDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "podCheckpointer",
+		},
+	}
 	PodCheckpointerDoc.Fields = make([]encoder.Doc, 1)
 	PodCheckpointerDoc.Fields[0].Name = "image"
 	PodCheckpointerDoc.Fields[0].Type = "string"
@@ -482,6 +542,14 @@ func init() {
 	CoreDNSDoc.Type = "CoreDNS"
 	CoreDNSDoc.Comments[encoder.HeadComment] = ""
 	CoreDNSDoc.Description = ""
+
+	CoreDNSDoc.AddExample("", clusterCoreDNSExample)
+	CoreDNSDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "coreDNS",
+		},
+	}
 	CoreDNSDoc.Fields = make([]encoder.Doc, 1)
 	CoreDNSDoc.Fields[0].Name = "image"
 	CoreDNSDoc.Fields[0].Type = "string"
@@ -492,11 +560,27 @@ func init() {
 	EndpointDoc.Type = "Endpoint"
 	EndpointDoc.Comments[encoder.HeadComment] = ""
 	EndpointDoc.Description = ""
+
+	EndpointDoc.AddExample("", "https://1.2.3.4:443")
+	EndpointDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ControlPlaneConfig",
+			FieldName: "endpoint",
+		},
+	}
 	EndpointDoc.Fields = make([]encoder.Doc, 0)
 
 	ControlPlaneConfigDoc.Type = "ControlPlaneConfig"
 	ControlPlaneConfigDoc.Comments[encoder.HeadComment] = ""
 	ControlPlaneConfigDoc.Description = ""
+
+	ControlPlaneConfigDoc.AddExample("Setting controlplain endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample)
+	ControlPlaneConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "controlPlane",
+		},
+	}
 	ControlPlaneConfigDoc.Fields = make([]encoder.Doc, 2)
 	ControlPlaneConfigDoc.Fields[0].Name = "endpoint"
 	ControlPlaneConfigDoc.Fields[0].Type = "Endpoint"
@@ -514,6 +598,14 @@ func init() {
 	APIServerConfigDoc.Type = "APIServerConfig"
 	APIServerConfigDoc.Comments[encoder.HeadComment] = ""
 	APIServerConfigDoc.Description = ""
+
+	APIServerConfigDoc.AddExample("", clusterAPIServerExample)
+	APIServerConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "apiServer",
+		},
+	}
 	APIServerConfigDoc.Fields = make([]encoder.Doc, 3)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
@@ -534,6 +626,14 @@ func init() {
 	ControllerManagerConfigDoc.Type = "ControllerManagerConfig"
 	ControllerManagerConfigDoc.Comments[encoder.HeadComment] = ""
 	ControllerManagerConfigDoc.Description = ""
+
+	ControllerManagerConfigDoc.AddExample("", clusterControllerManagerExample)
+	ControllerManagerConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "controllerManager",
+		},
+	}
 	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 2)
 	ControllerManagerConfigDoc.Fields[0].Name = "image"
 	ControllerManagerConfigDoc.Fields[0].Type = "string"
@@ -549,6 +649,14 @@ func init() {
 	ProxyConfigDoc.Type = "ProxyConfig"
 	ProxyConfigDoc.Comments[encoder.HeadComment] = ""
 	ProxyConfigDoc.Description = ""
+
+	ProxyConfigDoc.AddExample("", clusterProxyExample)
+	ProxyConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "proxy",
+		},
+	}
 	ProxyConfigDoc.Fields = make([]encoder.Doc, 3)
 	ProxyConfigDoc.Fields[0].Name = "image"
 	ProxyConfigDoc.Fields[0].Type = "string"
@@ -569,6 +677,14 @@ func init() {
 	SchedulerConfigDoc.Type = "SchedulerConfig"
 	SchedulerConfigDoc.Comments[encoder.HeadComment] = ""
 	SchedulerConfigDoc.Description = ""
+
+	SchedulerConfigDoc.AddExample("", clusterSchedulerConfig)
+	SchedulerConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "scheduler",
+		},
+	}
 	SchedulerConfigDoc.Fields = make([]encoder.Doc, 2)
 	SchedulerConfigDoc.Fields[0].Name = "image"
 	SchedulerConfigDoc.Fields[0].Type = "string"
@@ -584,6 +700,14 @@ func init() {
 	EtcdConfigDoc.Type = "EtcdConfig"
 	EtcdConfigDoc.Comments[encoder.HeadComment] = ""
 	EtcdConfigDoc.Description = ""
+
+	EtcdConfigDoc.AddExample("", clusterEtcdConfig)
+	EtcdConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "etcd",
+		},
+	}
 	EtcdConfigDoc.Fields = make([]encoder.Doc, 3)
 	EtcdConfigDoc.Fields[0].Name = "image"
 	EtcdConfigDoc.Fields[0].Type = "string"
@@ -606,6 +730,14 @@ func init() {
 	ClusterNetworkConfigDoc.Type = "ClusterNetworkConfig"
 	ClusterNetworkConfigDoc.Comments[encoder.HeadComment] = ""
 	ClusterNetworkConfigDoc.Description = ""
+
+	ClusterNetworkConfigDoc.AddExample("Configuring with flannel cni and setting up subnets.", clusterNetworkExample)
+	ClusterNetworkConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "network",
+		},
+	}
 	ClusterNetworkConfigDoc.Fields = make([]encoder.Doc, 4)
 	ClusterNetworkConfigDoc.Fields[0].Name = "cni"
 	ClusterNetworkConfigDoc.Fields[0].Type = "CNIConfig"
@@ -639,6 +771,14 @@ func init() {
 	CNIConfigDoc.Type = "CNIConfig"
 	CNIConfigDoc.Comments[encoder.HeadComment] = ""
 	CNIConfigDoc.Description = ""
+
+	CNIConfigDoc.AddExample("", clusterCustomCNIExample)
+	CNIConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterNetworkConfig",
+			FieldName: "cni",
+		},
+	}
 	CNIConfigDoc.Fields = make([]encoder.Doc, 2)
 	CNIConfigDoc.Fields[0].Name = "name"
 	CNIConfigDoc.Fields[0].Type = "string"
@@ -654,6 +794,14 @@ func init() {
 	AdminKubeconfigConfigDoc.Type = "AdminKubeconfigConfig"
 	AdminKubeconfigConfigDoc.Comments[encoder.HeadComment] = ""
 	AdminKubeconfigConfigDoc.Description = ""
+
+	AdminKubeconfigConfigDoc.AddExample("", clusterAdminKubeconfigExample)
+	AdminKubeconfigConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "adminKubeconfig",
+		},
+	}
 	AdminKubeconfigConfigDoc.Fields = make([]encoder.Doc, 1)
 	AdminKubeconfigConfigDoc.Fields[0].Name = "certLifetime"
 	AdminKubeconfigConfigDoc.Fields[0].Type = "Duration"
@@ -664,6 +812,14 @@ func init() {
 	MachineDiskDoc.Type = "MachineDisk"
 	MachineDiskDoc.Comments[encoder.HeadComment] = ""
 	MachineDiskDoc.Description = ""
+
+	MachineDiskDoc.AddExample("MachineDisks list example.", machineDisksExample)
+	MachineDiskDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "disks",
+		},
+	}
 	MachineDiskDoc.Fields = make([]encoder.Doc, 2)
 	MachineDiskDoc.Fields[0].Name = "device"
 	MachineDiskDoc.Fields[0].Type = "string"
@@ -679,6 +835,12 @@ func init() {
 	DiskPartitionDoc.Type = "DiskPartition"
 	DiskPartitionDoc.Comments[encoder.HeadComment] = ""
 	DiskPartitionDoc.Description = ""
+	DiskPartitionDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineDisk",
+			FieldName: "partitions",
+		},
+	}
 	DiskPartitionDoc.Fields = make([]encoder.Doc, 2)
 	DiskPartitionDoc.Fields[0].Name = "size"
 	DiskPartitionDoc.Fields[0].Type = "uint64"
@@ -694,6 +856,14 @@ func init() {
 	MachineFileDoc.Type = "MachineFile"
 	MachineFileDoc.Comments[encoder.HeadComment] = ""
 	MachineFileDoc.Description = ""
+
+	MachineFileDoc.AddExample("MachineFiles usage example.", machineFilesExample)
+	MachineFileDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "files",
+		},
+	}
 	MachineFileDoc.Fields = make([]encoder.Doc, 4)
 	MachineFileDoc.Fields[0].Name = "content"
 	MachineFileDoc.Fields[0].Type = "string"
@@ -723,6 +893,14 @@ func init() {
 	ExtraHostDoc.Type = "ExtraHost"
 	ExtraHostDoc.Comments[encoder.HeadComment] = ""
 	ExtraHostDoc.Description = ""
+
+	ExtraHostDoc.AddExample("", networkConfigExtraHostsExample)
+	ExtraHostDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "NetworkConfig",
+			FieldName: "extraHostEntries",
+		},
+	}
 	ExtraHostDoc.Fields = make([]encoder.Doc, 2)
 	ExtraHostDoc.Fields[0].Name = "ip"
 	ExtraHostDoc.Fields[0].Type = "string"
@@ -738,6 +916,12 @@ func init() {
 	DeviceDoc.Type = "Device"
 	DeviceDoc.Comments[encoder.HeadComment] = ""
 	DeviceDoc.Description = ""
+	DeviceDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "NetworkConfig",
+			FieldName: "interfaces",
+		},
+	}
 	DeviceDoc.Fields = make([]encoder.Doc, 10)
 	DeviceDoc.Fields[0].Name = "interface"
 	DeviceDoc.Fields[0].Type = "string"
@@ -793,6 +977,12 @@ func init() {
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.HeadComment] = ""
 	DHCPOptionsDoc.Description = ""
+	DHCPOptionsDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "dhcpOptions",
+		},
+	}
 	DHCPOptionsDoc.Fields = make([]encoder.Doc, 1)
 	DHCPOptionsDoc.Fields[0].Name = "routeMetric"
 	DHCPOptionsDoc.Fields[0].Type = "uint32"
@@ -803,6 +993,12 @@ func init() {
 	BondDoc.Type = "Bond"
 	BondDoc.Comments[encoder.HeadComment] = ""
 	BondDoc.Description = ""
+	BondDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "bond",
+		},
+	}
 	BondDoc.Fields = make([]encoder.Doc, 27)
 	BondDoc.Fields[0].Name = "interfaces"
 	BondDoc.Fields[0].Type = "[]string"
@@ -943,6 +1139,12 @@ func init() {
 	VlanDoc.Type = "Vlan"
 	VlanDoc.Comments[encoder.HeadComment] = ""
 	VlanDoc.Description = ""
+	VlanDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "vlans",
+		},
+	}
 	VlanDoc.Fields = make([]encoder.Doc, 4)
 	VlanDoc.Fields[0].Name = "cidr"
 	VlanDoc.Fields[0].Type = "string"
@@ -968,6 +1170,16 @@ func init() {
 	RouteDoc.Type = "Route"
 	RouteDoc.Comments[encoder.HeadComment] = ""
 	RouteDoc.Description = ""
+	RouteDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "routes",
+		},
+		{
+			TypeName:  "Vlan",
+			FieldName: "routes",
+		},
+	}
 	RouteDoc.Fields = make([]encoder.Doc, 2)
 	RouteDoc.Fields[0].Name = "network"
 	RouteDoc.Fields[0].Type = "string"
@@ -983,6 +1195,12 @@ func init() {
 	RegistryMirrorConfigDoc.Type = "RegistryMirrorConfig"
 	RegistryMirrorConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryMirrorConfigDoc.Description = ""
+	RegistryMirrorConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "RegistriesConfig",
+			FieldName: "mirrors",
+		},
+	}
 	RegistryMirrorConfigDoc.Fields = make([]encoder.Doc, 1)
 	RegistryMirrorConfigDoc.Fields[0].Name = "endpoints"
 	RegistryMirrorConfigDoc.Fields[0].Type = "[]string"
@@ -993,6 +1211,12 @@ func init() {
 	RegistryConfigDoc.Type = "RegistryConfig"
 	RegistryConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryConfigDoc.Description = ""
+	RegistryConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "RegistriesConfig",
+			FieldName: "config",
+		},
+	}
 	RegistryConfigDoc.Fields = make([]encoder.Doc, 2)
 	RegistryConfigDoc.Fields[0].Name = "tls"
 	RegistryConfigDoc.Fields[0].Type = "RegistryTLSConfig"
@@ -1008,6 +1232,12 @@ func init() {
 	RegistryAuthConfigDoc.Type = "RegistryAuthConfig"
 	RegistryAuthConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryAuthConfigDoc.Description = ""
+	RegistryAuthConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "RegistryConfig",
+			FieldName: "auth",
+		},
+	}
 	RegistryAuthConfigDoc.Fields = make([]encoder.Doc, 4)
 	RegistryAuthConfigDoc.Fields[0].Name = "username"
 	RegistryAuthConfigDoc.Fields[0].Type = "string"
@@ -1033,6 +1263,12 @@ func init() {
 	RegistryTLSConfigDoc.Type = "RegistryTLSConfig"
 	RegistryTLSConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryTLSConfigDoc.Description = ""
+	RegistryTLSConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "RegistryConfig",
+			FieldName: "tls",
+		},
+	}
 	RegistryTLSConfigDoc.Fields = make([]encoder.Doc, 3)
 	RegistryTLSConfigDoc.Fields[0].Name = "clientIdentity"
 	RegistryTLSConfigDoc.Fields[0].Type = "PEMEncodedCertificateAndKey"

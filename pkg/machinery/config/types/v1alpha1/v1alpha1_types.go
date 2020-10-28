@@ -42,22 +42,25 @@ var (
 	machineConfigRegistriesExample = &RegistriesConfig{
 		RegistryMirrors: map[string]*RegistryMirrorConfig{
 			"docker.io": {
-				MirrorEndpoints: []string{"https://registry-1.docker.io"},
+				MirrorEndpoints: []string{"https://registry.local"},
+			},
+			"ghcr.io": {
+				MirrorEndpoints: []string{"https://registry.insecure", "https://ghcr.io/v2/"},
 			},
 		},
 		RegistryConfig: map[string]*RegistryConfig{
-			"some.host:123": {
+			"registry.local": {
 				RegistryTLS: &RegistryTLSConfig{
-					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
-						Crt: []byte("..."),
-						Key: []byte("..."),
-					},
+					TLSClientIdentity: pemEncodedCertificateExample,
 				},
 				RegistryAuth: &RegistryAuthConfig{
-					RegistryUsername:      "...",
-					RegistryPassword:      "...",
-					RegistryAuth:          "...",
-					RegistryIdentityToken: "...",
+					RegistryUsername: "username",
+					RegistryPassword: "password",
+				},
+			},
+			"registry.insecure": {
+				RegistryTLS: &RegistryTLSConfig{
+					TLSInsecureSkipVerify: true,
 				},
 			},
 		},
@@ -69,11 +72,13 @@ var (
 	}
 
 	machineKubeletExample = &KubeletConfig{
-		KubeletImage: "docker.io/autonomy/kubelet:v1.19.3",
+		KubeletImage: (&KubeletConfig{}).Image(),
 		KubeletExtraArgs: map[string]string{
 			"key": "value",
 		},
 	}
+
+	kubeletImageExample = (&KubeletConfig{}).Image()
 
 	machineNetworkConfigExample = &NetworkConfig{
 		NetworkHostname: "worker-1",
@@ -88,7 +93,7 @@ var (
 			DeviceName: "/dev/sdb",
 			DiskPartitions: []*DiskPartition{
 				{
-					DiskMountPoint: "//lib/extra",
+					DiskMountPoint: "/var/mnt/extra",
 					DiskSize:       100000000,
 				},
 			},
@@ -156,7 +161,7 @@ var (
 	}
 
 	clusterAPIServerExample = &APIServerConfig{
-		ContainerImage: "...", // TODO: actual image name
+		ContainerImage: (&APIServerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
 			"key": "value", // TODO: add more real live examples
 		},
@@ -167,14 +172,14 @@ var (
 	}
 
 	clusterControllerManagerExample = &ControllerManagerConfig{
-		ContainerImage: "...", // TODO: actual image name
+		ContainerImage: (&ControllerManagerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
 			"key": "value", // TODO: add more real live examples
 		},
 	}
 
 	clusterProxyExample = &ProxyConfig{
-		ContainerImage: "...", // TODO: actual image name
+		ContainerImage: (&ProxyConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
 			"key": "value", // TODO: add more real live examples
 		},
@@ -182,14 +187,14 @@ var (
 	}
 
 	clusterSchedulerConfig = &SchedulerConfig{
-		ContainerImage: "...", // TODO: actual image name
+		ContainerImage: (&SchedulerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
 			"key": "value", // TODO: add more real live examples
 		},
 	}
 
 	clusterEtcdConfig = &EtcdConfig{
-		ContainerImage: "...", // TODO: actual image name
+		ContainerImage: (&EtcdConfig{}).Image(),
 		EtcdExtraArgs: map[string]string{
 			"key": "value", // TODO: add more real live examples
 		},
@@ -197,11 +202,11 @@ var (
 	}
 
 	clusterPodCheckpointerExample = &PodCheckpointer{
-		PodCheckpointerImage: "...", // TODO: actual image name
+		PodCheckpointerImage: "...",
 	}
 
 	clusterCoreDNSExample = &CoreDNS{
-		CoreDNSImage: "...", // TODO: actual image name
+		CoreDNSImage: (&CoreDNS{}).Image(),
 	}
 
 	clusterAdminKubeconfigExample = AdminKubeconfigConfig{
@@ -243,7 +248,7 @@ type Config struct {
 	//   description: |
 	//     Indicates the schema used to decode the contents.
 	//   values:
-	//     - "`v1alpha1`"
+	//     - "v1alpha1"
 	ConfigVersion string `yaml:"version"`
 	//   description: |
 	//     Enable verbose logging.
@@ -274,25 +279,25 @@ type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
 	//
-	//     ##### Init
+	//     #### Init
 	//
 	//     Init node type designates the first control plane node to come up.
 	//     You can think of it like a bootstrap node.
 	//     This node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.
 	//
-	//     ##### Control Plane
+	//     #### Control Plane
 	//
 	//     Control Plane node type designates the node as a control plane member.
 	//     This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.
 	//
-	//     ##### Worker
+	//     #### Worker
 	//
 	//     Worker node type designates the node as a worker node.
 	//     This means it will be an available compute node for scheduling workloads.
 	//   values:
-	//     - "`init`"
-	//     - "`controlplane`"
-	//     - "`join`"
+	//     - "init"
+	//     - "controlplane"
+	//     - "join"
 	MachineType string `yaml:"type"`
 	//   description: |
 	//     The `token` is used by a machine to join the PKI of the cluster.
@@ -508,7 +513,7 @@ type KubeletConfig struct {
 	//   description: |
 	//     The `image` field is an optional reference to an alternative kubelet image.
 	//   examples:
-	//     - value: '"docker.io/<org>/kubelet:latest"'
+	//     - value: kubeletImageExample
 	KubeletImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     The `extraArgs` field is used to provide additional flags to the kubelet.
@@ -535,18 +540,18 @@ type NetworkConfig struct {
 	//     By default all network interfaces will attempt a DHCP discovery.
 	//     This can be further tuned through this configuration parameter.
 	//
-	//     ##### machine.network.interfaces.interface
+	//     #### machine.network.interfaces.interface
 	//
 	//     This is the interface name that should be configured.
 	//
-	//     ##### machine.network.interfaces.cidr
+	//     #### machine.network.interfaces.cidr
 	//
 	//     `cidr` is used to specify a static IP address to the interface.
 	//     This should be in proper CIDR notation ( `192.168.2.5/24` ).
 	//
 	//     > Note: This option is mutually exclusive with DHCP.
 	//
-	//     ##### machine.network.interfaces.dhcp
+	//     #### machine.network.interfaces.dhcp
 	//
 	//     `dhcp` is used to specify that this device should be configured via DHCP.
 	//
@@ -563,17 +568,17 @@ type NetworkConfig struct {
 	//     > in order for Talos to skip configuration of addresses.
 	//     > All other options will still apply.
 	//
-	//     ##### machine.network.interfaces.ignore
+	//     #### machine.network.interfaces.ignore
 	//
 	//     `ignore` is used to exclude a specific interface from configuration.
 	//     This parameter is optional.
 	//
-	//     ##### machine.network.interfaces.dummy
+	//     #### machine.network.interfaces.dummy
 	//
 	//     `dummy` is used to specify that this interface should be a virtual-only, dummy interface.
 	//     This parameter is optional.
 	//
-	//     ##### machine.network.interfaces.routes
+	//     #### machine.network.interfaces.routes
 	//
 	//     `routes` is used to specify static routes that may be necessary.
 	//     This parameter is optional.
@@ -1087,19 +1092,19 @@ type RegistryAuthConfig struct {
 	//   description: |
 	//     Optional registry authentication.
 	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	RegistryUsername string `yaml:"username"`
+	RegistryUsername string `yaml:"username,omitempty"`
 	//   description: |
 	//     Optional registry authentication.
 	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	RegistryPassword string `yaml:"password"`
+	RegistryPassword string `yaml:"password,omitempty"`
 	//   description: |
 	//     Optional registry authentication.
 	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	RegistryAuth string `yaml:"auth"`
+	RegistryAuth string `yaml:"auth,omitempty"`
 	//   description: |
 	//     Optional registry authentication.
 	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
-	RegistryIdentityToken string `yaml:"identityToken"`
+	RegistryIdentityToken string `yaml:"identityToken,omitempty"`
 }
 
 // RegistryTLSConfig specifies TLS config for HTTPS registries.

@@ -16,7 +16,16 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-var markdownTemplate = `{{ .Description }}
+var markdownTemplate = `
+{{ define "fieldExamples" }}
+Examples:
+
+{{ range $example := .Examples }}
+{{ yaml $example.Value $.Name }}
+{{ end }}
+{{ end }}
+
+{{ .Description }}
 {{- $anchors := .Anchors -}}
 {{- $tick := "` + "`" + `" -}}
 {{ range $struct := .Structs }}
@@ -24,39 +33,54 @@ var markdownTemplate = `{{ .Description }}
 {{ if $struct.Description -}}
 {{ $struct.Description }}
 {{ end -}}
+{{ if $struct.AppearsIn -}}
+Appears in:
+
+{{ range $appearance := $struct.AppearsIn }}
+- <code>{{ encodeType $appearance.TypeName }}.{{ $appearance.FieldName }}</code>
+{{ end -}}
+{{ end }}
 {{ if $struct.Examples -}}
 
-Examples:
 {{ range $example := $struct.Examples }}
 {{ yaml $example.Value "" }}
-{{ end -}}
+{{- end -}}
 {{ end }}
+
 {{ if $struct.Fields -}}
+
 {{ range $field := $struct.Fields -}}
+<div class="dd">
 
-### {{ $field.Name }}
+<code>{{ $field.Name }}</code>  <i>{{ encodeType $field.Type }}</i>
 
-Type: <code>{{ encodeType $field.Type }}</code>
+</div>
+<div class="dt">
 
 {{ $field.Description }}
-{{ if $field.Values }}
-Valid Values:
 
-{{ range $value := $field.Values -}}
-- {{ $tick }}{{ $value }}{{ $tick }}
+{{ if $field.Values }}
+Valid values:
+
+{{ range $value := $field.Values }}
+  - <code>{{ $value }}</code>
 {{ end -}}
 {{ end -}}
-{{ if $field.Examples }}
-Examples:
-{{ range $example := $field.Examples }}
-{{ yaml $example.Value $field.Name }}
-{{ end -}}
-{{ end }}
-{{ if $field.Note -}}
+
+{{- if $field.Note }}
 > {{ $field.Note }}
 {{ end -}}
+
+{{- if $field.Examples }}
+{{ template "fieldExamples" $field }}
 {{ end -}}
+
+</div>
+
+{{ end }}
+
 {{ end -}}
+
 {{ if $struct.Values -}}
 
 {{ $struct.Type }} Valid Values:
@@ -64,9 +88,10 @@ Examples:
 {{ range $value := $struct.Values -}}
 - {{ $tick }}{{ $value }}{{ $tick }}
 {{ end -}}
-{{- end -}}
+{{- end }}
+
 ---
-{{ end -}}`
+{{ end }}`
 
 // FileDoc represents a single go file documentation.
 type FileDoc struct {
@@ -77,6 +102,8 @@ type FileDoc struct {
 	// Structs structs defined in the file.
 	Structs []*Doc
 	Anchors map[string]string
+
+	t *template.Template
 }
 
 // Encode encodes file documentation as MD file.
@@ -88,7 +115,7 @@ func (fd *FileDoc) Encode() ([]byte, error) {
 
 	fd.Anchors = anchors
 
-	t := template.Must(template.New("file_markdown.tpl").
+	fd.t = template.Must(template.New("file_markdown.tpl").
 		Funcs(template.FuncMap{
 			"yaml":       encodeYaml,
 			"encodeType": fd.encodeType,
@@ -97,7 +124,7 @@ func (fd *FileDoc) Encode() ([]byte, error) {
 
 	buf := bytes.Buffer{}
 
-	if err := t.Execute(&buf, fd); err != nil {
+	if err := fd.t.Execute(&buf, fd); err != nil {
 		return nil, err
 	}
 
@@ -171,7 +198,7 @@ func encodeYaml(in interface{}, name string) string {
 		lines[i] = strings.TrimRight(line, " ")
 	}
 
-	return fmt.Sprintf("```yaml\n%s```", strings.Join(lines, "\n"))
+	return fmt.Sprintf("``` yaml\n%s```", strings.Join(lines, "\n"))
 }
 
 func formatLink(text, link string) string {
