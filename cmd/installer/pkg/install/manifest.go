@@ -580,6 +580,8 @@ func (m *Manifest) SystemMountpoints() (*mount.Points, error) {
 func (m *Manifest) zeroDevice(device Device) (err error) {
 	var bd *blockdevice.BlockDevice
 
+	log.Printf("wiping %q", device.Device)
+
 	if bd, err = blockdevice.Open(device.Device); err != nil {
 		return err
 	}

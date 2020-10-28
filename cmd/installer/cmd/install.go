@@ -5,11 +5,14 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // installCmd represents the install command.
@@ -33,6 +36,8 @@ func init() {
 }
 
 func runInstallCmd() (err error) {
+	log.Printf("running Talos installer %s", version.NewVersion().Tag)
+
 	seq := runtime.SequenceInstall
 
 	if options.Upgrade {
