@@ -1,3 +1,14 @@
 /* purgecss start ignore */
 @import url("asciinema-player.css");
 /* purgecss end ignore */
+
+div.dt {
+    margin-left: 2em;
+}
+
+div.dd {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+
+    font-weight: bolder;
+}

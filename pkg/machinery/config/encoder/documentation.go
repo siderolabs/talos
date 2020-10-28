@@ -39,6 +39,8 @@ type Doc struct {
 	Type string
 	// Note is rendered as a note for the example in markdown file.
 	Note string
+	// AppearsIn describes back references for the type.
+	AppearsIn []Appearance
 }
 
 // AddExample adds a new example snippet to the doc.
@@ -66,6 +68,12 @@ func (d *Doc) Field(i int) *Doc {
 	}
 
 	return nil
+}
+
+// Appearance of a type in a different type.
+type Appearance struct {
+	TypeName  string
+	FieldName string
 }
 
 // Documented is used to check if struct has any documentation defined for it.
