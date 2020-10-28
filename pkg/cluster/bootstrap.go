@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
+	"google.golang.org/grpc/backoff"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -61,8 +63,18 @@ func (s *APIBoostrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 
 	fmt.Fprintln(out, "bootstrapping cluster")
 
-	bootstrapCtx, cancel := context.WithTimeout(nodeCtx, 30*time.Second)
-	defer cancel()
+	return retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+		retryCtx, cancel := context.WithTimeout(nodeCtx, 500*time.Millisecond)
+		defer cancel()
 
-	return cli.Bootstrap(bootstrapCtx)
+		if err = cli.Bootstrap(retryCtx); err != nil {
+			if strings.Contains(err.Error(), "connection refused") {
+				return retry.ExpectedError(err)
+			}
+
+			return retry.UnexpectedError(err)
+		}
+
+		return nil
+	})
 }
