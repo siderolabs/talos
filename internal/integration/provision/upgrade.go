@@ -65,7 +65,7 @@ type upgradeSpec struct {
 }
 
 const (
-	stableVersion = "v0.6.2-1-g6fd29ebb"
+	stableVersion = "v0.6.3"
 	nextVersion   = "v0.7.0-alpha.3"
 
 	stableK8sVersion  = "1.19.0"
