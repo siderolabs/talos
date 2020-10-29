@@ -5,6 +5,7 @@
 ARG TOOLS
 ARG IMPORTVET
 ARG PKGS
+ARG EXTRAS
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
@@ -32,6 +33,10 @@ FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod
 FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
+
+# Resolve package images using ${EXTRAS} to be used later in COPY --from=.
+
+FROM ghcr.io/talos-systems/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl-cni-bundle-install
 
 # The tools target provides base toolchain for the build.
 
@@ -630,3 +635,9 @@ FROM scratch AS docs
 COPY --from=docs-build /tmp/configuration.md /website/content/docs/v0.7/Reference/
 COPY --from=docs-build /tmp/cli.md /website/content/docs/v0.7/Reference/
 COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v0.7/Reference/
+
+# The talosctl-cni-bundle builds the CNI bundle for talosctl.
+
+FROM scratch AS talosctl-cni-bundle
+ARG TARGETARCH
+COPY --from=extras-talosctl-cni-bundle-install /opt/cni/bin/ /talosctl-cni-bundle-${TARGETARCH}/

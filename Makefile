@@ -28,6 +28,7 @@ SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
 , := ,
+space := $(subst ,, )
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
 MULTI_PLATFORM = $(findstring $(,),$(PLATFORM))
@@ -180,6 +181,15 @@ boot: ## Creates a compressed tarball that includes vmlinuz-{amd64,arm64} and in
 		arch=`basename "$${platform}"` ; \
 		tar  -C $(ARTIFACTS) --transform=s/-$${arch}// -czf $(ARTIFACTS)/boot-$${arch}.tar.gz vmlinuz-$${arch} initramfs-$${arch}.xz ; \
 	done
+
+.PHONY: talosctl-cni-bundle
+talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle for talosctl.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"` ; \
+		tar  -C $(ARTIFACTS)/talosctl-cni-bundle-$${arch} -czf $(ARTIFACTS)/talosctl-cni-bundle-$${arch}.tar.gz . ; \
+	done
+	@rm -rf $(ARTIFACTS)/talosctl-cni-bundle-*/
 
 # Code Quality
 

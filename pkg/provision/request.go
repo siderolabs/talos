@@ -36,6 +36,8 @@ type CNIConfig struct {
 	BinPath  []string
 	ConfDir  string
 	CacheDir string
+
+	BundleURL string
 }
 
 // NetworkRequest describes cluster network.

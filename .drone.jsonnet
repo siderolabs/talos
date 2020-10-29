@@ -218,11 +218,12 @@ local initramfs = Step("initramfs", depends_on=[check_dirty]);
 local installer = Step("installer", depends_on=[initramfs], environment={"REGISTRY": local_registry, "PUSH": true});
 local talos = Step("talos", depends_on=[installer], environment={"REGISTRY": local_registry, "PUSH": true});
 local lint = Step("lint", depends_on=[check_dirty]);
+local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[lint]);
 local images = Step("images", depends_on=[installer], environment={"REGISTRY": local_registry});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
-local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race, talosctl_cni_bundle], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 
 local coverage = {
   name: 'coverage',
@@ -296,6 +297,7 @@ local default_steps = [
   installer,
   talos,
   lint,
+  talosctl_cni_bundle,
   images,
   unit_tests,
   unit_tests_race,
@@ -324,7 +326,7 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race], environment={"REGISTRY": local_registry});
+local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, talosctl_cni_bundle], environment={"REGISTRY": local_registry});
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_qemu, e2e_docker]);
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
@@ -487,6 +489,8 @@ local release = {
       '_out/gcp.tar.gz',
       '_out/initramfs-amd64.xz',
       '_out/initramfs-arm64.xz',
+      '_out/talosctl-cni-bundle-amd64.tar.gz',
+      '_out/talosctl-cni-bundle-arm64.tar.gz',
       '_out/talosctl-darwin-amd64',
       '_out/talosctl-linux-amd64',
       '_out/talosctl-linux-arm64',
@@ -500,7 +504,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, boot.name, images.name, push.name, release_notes.name]
+  depends_on: [kernel.name, boot.name, talosctl_cni_bundle.name, images.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [

@@ -4,6 +4,8 @@ title: Firecracker
 
 In this guide we will create a Kubernetes cluster using Firecracker.
 
+> Note: Talos on [QEMU](../qemu/) offers easier way to run Talos in a set of VMs.
+
 ## Requirements
 
 - Linux
