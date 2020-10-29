@@ -53,7 +53,7 @@ type Disk interface {
 
 // Partition represents the options for a device partition.
 type Partition interface {
-	Size() uint
+	Size() uint64
 	MountPoint() string
 }
 

@@ -1043,7 +1043,7 @@ func (d *MachineDisk) Partitions() []config.Partition {
 }
 
 // Size implements the config.Provider interface.
-func (p *DiskPartition) Size() uint {
+func (p *DiskPartition) Size() uint64 {
 	return p.DiskSize
 }
 

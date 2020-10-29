@@ -1169,7 +1169,7 @@ A list of partitions to create on the disk.
 
 ### size
 
-Type: <code>uint</code>
+Type: <code>uint64</code>
 
 This size of the partition in bytes.
 

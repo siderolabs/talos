@@ -681,7 +681,7 @@ func init() {
 	DiskPartitionDoc.Description = ""
 	DiskPartitionDoc.Fields = make([]encoder.Doc, 2)
 	DiskPartitionDoc.Fields[0].Name = "size"
-	DiskPartitionDoc.Fields[0].Type = "uint"
+	DiskPartitionDoc.Fields[0].Type = "uint64"
 	DiskPartitionDoc.Fields[0].Note = ""
 	DiskPartitionDoc.Fields[0].Description = "This size of the partition in bytes."
 	DiskPartitionDoc.Fields[0].Comments[encoder.LineComment] = "This size of the partition in bytes."
