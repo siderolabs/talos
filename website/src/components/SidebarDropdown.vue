@@ -2,7 +2,7 @@
   <div @mouseleave="active = false">
     <button
       @mouseover="active = true"
-      class="font-semibold my-2 rounded inline-flex items-center"
+      class="font-semibold mb-2 rounded inline-flex items-center"
     >
       <span class="mr-1 text-ui-typo">{{ $page.markdownPage.version }}</span>
       <svg

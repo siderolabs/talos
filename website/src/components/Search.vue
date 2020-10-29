@@ -81,6 +81,7 @@ query Search {
         id
         path
         title
+        version
         headings {
         	depth
           value
@@ -120,9 +121,11 @@ export default {
     },
     headings() {
       let result = [];
-      const allPages = this.$static.allMarkdownPage.edges.map(
-        (edge) => edge.node
-      );
+      const allPages = this.$static.allMarkdownPage.edges
+        .map((edge) => edge.node)
+        .filter((node) => {
+          return node.version === this.$page.markdownPage.version;
+        });
 
       // Create the array of all headings of all pages.
       allPages.forEach((page) => {
@@ -173,6 +176,8 @@ export default {
       // Unfocus the input and reset the query.
       this.$refs.input.blur();
       this.query = "";
+
+      this.$store.commit("toggleSidebarIsOpen");
     },
   },
 };

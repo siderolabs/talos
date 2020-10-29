@@ -1,7 +1,11 @@
 <template>
   <div ref="sidebar" class="px-4 pt-8 lg:pt-12">
-    <div class="mb-6">
-      <SidebarDropdown />
+    <SidebarDropdown />
+
+    <div class="pr-2 pt-2 pb-10 max-w-lg max-w-screen-xs">
+      <ClientOnly>
+        <Search />
+      </ClientOnly>
     </div>
 
     <div
@@ -34,10 +38,16 @@ query Sidebar {
 import SidebarDropdown from "~/components/SidebarDropdown.vue";
 import SidebarSection from "~/components/SidebarSection.vue";
 
+const Search = () =>
+  import(
+    /* webpackChunkName: "search" */ "@/components/Search"
+  ).catch((error) => console.warn(error));
+
 export default {
   components: {
     SidebarDropdown,
     SidebarSection,
+    Search,
   },
 
   computed: {
