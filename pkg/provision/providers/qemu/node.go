@@ -94,7 +94,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	}
 
 	launchConfig := LaunchConfig{
-		QemuExecutable:    fmt.Sprintf("qemu-system-%s", arch.QemuArch()),
+		QemuExecutable:    arch.QemuExecutable(),
 		DiskPaths:         diskPaths,
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,

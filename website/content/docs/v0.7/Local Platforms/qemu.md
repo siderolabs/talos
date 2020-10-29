@@ -13,9 +13,8 @@ In this guide we will create a Kubernetes cluster using QEMU.
   - `CONFIG_NET_SCH_INGRESS` enabled
 - at least `CAP_SYS_ADMIN` and `CAP_NET_ADMIN` capabilities
 - QEMU
-- `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin`
+- `bridge`, `static` and `firewall` CNI plugins from the [standard CNI plugins](https://github.com/containernetworking/cni), and `tc-redirect-tap` CNI plugin from the [awslabs tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) installed to `/opt/cni/bin` (installed automatically by `talosctl`)
 - iptables
-- `/etc/cni/conf.d` directory should exist
 - `/var/run/netns` directory should exist
 
 ## Installation
@@ -45,38 +44,6 @@ curl https://github.com/talos-systems/talos/releases/download/v0.7.0/talosctl-li
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
-
-### Install bridge, firewall and static required CNI plugins
-
-You can download standard CNI required plugins via
-[github.com/containernetworking/plugins/releases](https://github.com/containernetworking/plugins/releases)
-
-```bash
-curl https://github.com/containernetworking/plugins/releases/download/<version>/cni-plugins-<platform>-<arch>-<version>tgz -L -o cni-plugins-<platform>-<arch>-<version>.tgz
-```
-
-For example version `v0.8.5` for `linux` platform:
-
-```bash
-curl https://github.com/containernetworking/plugins/releases/download/v0.8.5/cni-plugins-linux-amd64-v0.8.5.tgz -L -o cni-plugins-linux-amd64-v0.8.5.tgz
-mkdir cni-plugins-linux
-tar -xf cni-plugins-linux-amd64-v0.8.5.tgz -C cni-plugins-linux
-sudo mkdir -p /opt/cni/bin
-sudo cp cni-plugins-linux/{bridge,firewall,static} /opt/cni/bin
-```
-
-### Install tc-redirect-tap CNI plugin
-
-You should install CNI plugin from the `tc-redirect-tap` repository [github.com/awslabs/tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap)
-
-```bash
-go get -d github.com/awslabs/tc-redirect-tap/cmd/tc-redirect-tap
-cd $GOPATH/src/github.com/awslabs/tc-redirect-tap
-make all
-sudo cp tc-redirect-tap /opt/cni/bin
-```
-
-> Note: if `$GOPATH` is not set, it defaults to `~/go`.
 
 ## Install Talos kernel and initramfs
 
@@ -110,23 +77,22 @@ Create the cluster:
 sudo -E talosctl cluster create --provisioner qemu
 ```
 
-Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
+Before the first cluster is created, `talosctl` will download the CNI bundle for the VM provisioning and install it to `~/.talos/cni` directory.
 
-## Retrieve and Configure the `kubeconfig`
+Once the above finishes successfully, your talosconfig (`~/.talos/config`) will be configured to point to the new cluster, and `kubeconfig` will be
+downloaded and merged into default kubectl config location (`~/.kube/config`).
 
-```bash
-talosctl -n 10.5.0.2 kubeconfig .
-```
+Cluster provisioning process can be optimized with [registry pull-through cahces](../../guides/configuring-pull-through-cache/).
 
 ## Using the Cluster
 
 Once the cluster is available, you can make use of `talosctl` and `kubectl` to interact with the cluster.
-For example, to view current running containers, run `talosctl containers` for a list of containers in the `system` namespace, or `talosctl containers -k` for the `k8s.io` namespace.
-To view the logs of a container, use `talosctl logs <container>` or `talosctl logs -k <container>`.
+For example, to view current running containers, run `talosctl -n 10.5.0.2 containers` for a list of containers in the `system` namespace, or `talosctl -n 10.5.0.2 containers -k` for the `k8s.io` namespace.
+To view the logs of a container, use `talosctl -n 10.5.0.2 logs <container>` or `talosctl -n 10.5.0.2 logs -k <container>`.
 
 A bridge interface will be created, and assigned the default IP 10.5.0.1.
 Each node will be directly accessible on the subnet specified at cluster creation time.
-A loadbalancer runs on 10.5.0.1 by default, which handles loadbalancing for the Talos, and Kubernetes APIs.
+A loadbalancer runs on 10.5.0.1 by default, which handles loadbalancing for the Kubernetes APIs.
 
 You can see a summary of the cluster state by running:
 

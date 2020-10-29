@@ -4,6 +4,8 @@
 
 package qemu
 
+import "fmt"
+
 // Arch abstracts away differences between different architectures.
 type Arch string
 
@@ -92,4 +94,9 @@ func (arch Arch) PFlash(uefiEnabled bool) []PFlash {
 	default:
 		return nil
 	}
+}
+
+// QemuExecutable returns name of qemu executable for the arch.
+func (arch Arch) QemuExecutable() string {
+	return fmt.Sprintf("qemu-system-%s", arch.QemuArch())
 }

@@ -11,6 +11,8 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"path/filepath"
+	"regexp"
 	stdruntime "runtime"
 	"strconv"
 	"strings"
@@ -36,6 +38,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/provision/providers"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 var (
@@ -69,6 +72,7 @@ var (
 	cniBinPath              []string
 	cniConfDir              string
 	cniCacheDir             string
+	cniBundleURL            string
 	ports                   string
 	dockerHostIP            string
 	withInitNode            bool
@@ -158,6 +162,8 @@ func create(ctx context.Context) (err error) {
 				BinPath:  cniBinPath,
 				ConfDir:  cniConfDir,
 				CacheDir: cniCacheDir,
+
+				BundleURL: cniBundleURL,
 			},
 		},
 
@@ -515,6 +521,11 @@ func getDisks() ([]*provision.Disk, error) {
 	return disks, nil
 }
 
+func trimVersion(version string) string {
+	// remove anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`
+	return regexp.MustCompile(`(-\d+-g[0-9a-f]+(-dirty)?)$`).ReplaceAllString(version, "")
+}
+
 func init() {
 	defaultTalosConfig, err := clientconfig.GetDefaultPath()
 	if err != nil {
@@ -547,9 +558,11 @@ func init() {
 	createCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
 	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", fmt.Sprintf("desired kubernetes version to run (default %q)", constants.DefaultKubernetesVersion))
 	createCmd.Flags().StringVarP(&inputDir, "input-dir", "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{"/opt/cni/bin"}, "search path for CNI binaries (VM only)")
-	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", "/etc/cni/conf.d", "CNI config directory path (VM only)")
-	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", "/var/lib/cni", "CNI cache directory path (VM only)")
+	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{filepath.Join(defaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
+	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
+	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
+	createCmd.Flags().StringVar(&cniBundleURL, "cni-bundle-url", fmt.Sprintf("https://github.com/talos-systems/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
+		trimVersion(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
 	createCmd.Flags().StringVarP(&ports,
 		"exposed-ports",
 		"p",

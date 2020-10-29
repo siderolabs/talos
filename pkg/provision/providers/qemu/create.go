@@ -30,6 +30,10 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("unsupported arch: %q", options.TargetArch)
 	}
 
+	if err := p.preflightChecks(ctx, request, options, arch); err != nil {
+		return nil, err
+	}
+
 	statePath := filepath.Join(request.StateDirectory, request.Name)
 
 	fmt.Fprintf(options.LogWriter, "creating state directory in %q\n", statePath)

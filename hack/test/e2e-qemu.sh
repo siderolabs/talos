@@ -50,6 +50,7 @@ function create_cluster {
     --user-disk /var/lib/p1:100MB:/var/lib/p2:100MB \
     --install-image ${REGISTRY:-ghcr.io}/talos-systems/installer:${INSTALLER_TAG} \
     --with-init-node=false \
+    --cni-bundle-url ${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
     --crashdump \
     ${REGISTRY_MIRROR_FLAGS} \
     ${QEMU_FLAGS} \
