@@ -315,8 +315,12 @@ func (suite *UpgradeSuite) setupCluster() {
 				IP:       ips[i],
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				DiskSize: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
-				Config:   suite.configBundle.ControlPlane(),
+				Disks: []*provision.Disk{
+					{
+						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
+					},
+				},
+				Config: suite.configBundle.ControlPlane(),
 			})
 	}
 
@@ -327,8 +331,12 @@ func (suite *UpgradeSuite) setupCluster() {
 				IP:       ips[suite.spec.MasterNodes+i-1],
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				DiskSize: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
-				Config:   suite.configBundle.Join(),
+				Disks: []*provision.Disk{
+					{
+						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
+					},
+				},
+				Config: suite.configBundle.Join(),
 			})
 	}
 

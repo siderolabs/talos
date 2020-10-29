@@ -59,6 +59,7 @@ func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterR
 	return nodesInfo, multiErr.ErrorOrNil()
 }
 
+//nolint:gocyclo
 func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	socketPath := state.GetRelativePath(fmt.Sprintf("%s.sock", nodeReq.Name))
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
@@ -70,7 +71,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	memSize := nodeReq.Memory / 1024 / 1024
 
-	diskPath, err := p.CreateDisk(state, nodeReq)
+	diskPaths, err := p.CreateDisks(state, nodeReq)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -95,6 +96,17 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("talos.hostname", nodeReq.Name)
 
 	ones, _ := clusterReq.Network.CIDR.Mask.Size()
+
+	drives := make([]models.Drive, len(diskPaths))
+
+	for i, disk := range diskPaths {
+		drives[i] = models.Drive{
+			DriveID:      firecracker.String("disk"),
+			IsRootDevice: firecracker.Bool(false),
+			IsReadOnly:   firecracker.Bool(false),
+			PathOnHost:   firecracker.String(disk),
+		}
+	}
 
 	cfg := firecracker.Config{
 		SocketPath:      socketPath,
@@ -123,14 +135,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 				},
 			},
 		},
-		Drives: []models.Drive{
-			{
-				DriveID:      firecracker.String("disk"),
-				IsRootDevice: firecracker.Bool(false),
-				IsReadOnly:   firecracker.Bool(false),
-				PathOnHost:   firecracker.String(diskPath),
-			},
-		},
+		Drives: drives,
 	}
 
 	logFile, err := os.OpenFile(state.GetRelativePath(fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
@@ -192,7 +197,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,
-		DiskSize: nodeReq.DiskSize,
+		DiskSize: nodeReq.Disks[0].Size,
 
 		PrivateIP: nodeReq.IP,
 	}

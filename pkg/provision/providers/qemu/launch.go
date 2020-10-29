@@ -32,7 +32,7 @@ type LaunchConfig struct {
 	StatePath string
 
 	// VM options
-	DiskPath          string
+	DiskPaths         []string
 	VCPUCount         int64
 	MemSize           int64
 	QemuExecutable    string
@@ -161,7 +161,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 }
 
 func checkPartitions(config *LaunchConfig) (bool, error) {
-	disk, err := os.Open(config.DiskPath)
+	disk, err := os.Open(config.DiskPaths[0])
 	if err != nil {
 		return false, fmt.Errorf("failed to open disk file %w", err)
 	}
@@ -192,7 +192,6 @@ func launchVM(config *LaunchConfig) error {
 
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
-		"-drive", fmt.Sprintf("format=raw,if=virtio,file=%s", config.DiskPath),
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
 		"-cpu", "max",
 		"-nographic",
@@ -202,6 +201,10 @@ func launchVM(config *LaunchConfig) error {
 		"-no-reboot",
 		"-boot", fmt.Sprintf("order=%s,reboot-timeout=5000", bootOrder),
 		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),
+	}
+
+	for _, disk := range config.DiskPaths {
+		args = append(args, "-drive", fmt.Sprintf("format=raw,if=virtio,file=%s", disk))
 	}
 
 	machineArg := config.MachineType

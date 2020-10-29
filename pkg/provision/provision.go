@@ -25,4 +25,6 @@ type Provisioner interface {
 	GetLoadBalancers(NetworkRequest) (internalEndpoint, externalEndpoint string)
 
 	Close() error
+
+	UserDiskName(index int) string
 }

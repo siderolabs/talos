@@ -39,6 +39,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 			RegistryMirrors: in.RegistryMirrors,
 			RegistryConfig:  in.RegistryConfig,
 		},
+		MachineDisks: in.MachineDisks,
 	}
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)

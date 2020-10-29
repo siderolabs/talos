@@ -53,7 +53,7 @@ type NodeInfo struct {
 	// Memory limit in bytes
 	Memory int64
 	// Disk (volume) size in bytes, if applicable
-	DiskSize int64
+	DiskSize uint64
 
 	PublicIP  net.IP
 	PrivateIP net.IP

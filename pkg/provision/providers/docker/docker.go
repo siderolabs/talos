@@ -83,3 +83,8 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 		return "", ""
 	}
 }
+
+// UserDiskName not implemented for docker.
+func (p *provisioner) UserDiskName(index int) string {
+	return ""
+}
