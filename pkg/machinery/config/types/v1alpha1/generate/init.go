@@ -38,6 +38,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			RegistryMirrors: in.RegistryMirrors,
 			RegistryConfig:  in.RegistryConfig,
 		},
+		MachineDisks: in.MachineDisks,
 	}
 
 	certSANs := in.GetAPIServerSANs()

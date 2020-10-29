@@ -9,6 +9,7 @@ import (
 	"net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -120,6 +121,14 @@ func (reqs NodeRequests) PXENodes() (nodes []NodeRequest) {
 	return
 }
 
+// Disk represents a disk size and name in NodeRequest.
+type Disk struct {
+	// Size in bytes.
+	Size uint64
+	// Partitions represents the list of partitions.
+	Partitions []*v1alpha1.DiskPartition
+}
+
 // NodeRequest describes a request for a node.
 type NodeRequest struct {
 	Name   string
@@ -130,8 +139,8 @@ type NodeRequest struct {
 	NanoCPUs int64
 	// Memory limit in bytes
 	Memory int64
-	// Disk (volume) size in bytes, if applicable
-	DiskSize int64
+	// Disks (volumes), if applicable
+	Disks []*Disk
 	// Ports
 	Ports []string
 

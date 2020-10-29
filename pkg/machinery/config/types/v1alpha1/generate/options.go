@@ -144,6 +144,15 @@ func WithArchitecture(arch string) GenOption {
 	}
 }
 
+// WithUserDisks generates user partitions config.
+func WithUserDisks(disks []*v1alpha1.MachineDisk) GenOption {
+	return func(o *GenOptions) error {
+		o.MachineDisks = disks
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -159,6 +168,7 @@ type GenOptions struct {
 	Architecture              string
 	Debug                     bool
 	Persist                   bool
+	MachineDisks              []*v1alpha1.MachineDisk
 }
 
 // DefaultGenOptions returns default options.

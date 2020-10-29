@@ -85,6 +85,7 @@ type Input struct {
 
 	RegistryMirrors map[string]*v1alpha1.RegistryMirrorConfig
 	RegistryConfig  map[string]*v1alpha1.RegistryConfig
+	MachineDisks    []*v1alpha1.MachineDisk
 
 	Debug   bool
 	Persist bool
@@ -332,6 +333,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 		RegistryConfig:            options.RegistryConfig,
 		Debug:                     options.Debug,
 		Persist:                   options.Persist,
+		MachineDisks:              options.MachineDisks,
 	}
 
 	return input, nil

@@ -78,7 +78,7 @@ talosctl cluster create [flags]
       --cpus string                             the share of CPUs as fraction (each container/VM) (default "2.0")
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
-      --disk int                                the limit on disk size in MB (each VM) (default 6144)
+      --disk int                                default limit on disk size in MB (each VM) (default 6144)
       --dns-domain string                       the dns domain to use for cluster (default "cluster.local")
       --docker-host-ip string                   Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
       --endpoint string                         use endpoint instead of provider defaults
@@ -97,6 +97,7 @@ talosctl cluster create [flags]
       --registry-insecure-skip-verify strings   list of registry hostnames to skip TLS verification for
       --registry-mirror strings                 list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-kubeconfig                         skip merging kubeconfig from the created cluster
+      --user-disk strings                       list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
       --vmlinuz-path string                     the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
       --wait                                    wait for the cluster to be ready before returning (default true)
       --wait-timeout duration                   timeout to wait for the cluster to be ready (default 20m0s)

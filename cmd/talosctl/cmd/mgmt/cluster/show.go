@@ -83,7 +83,7 @@ func showCluster(cluster provision.Cluster) error {
 
 		disk := "-"
 		if node.DiskSize > 0 {
-			disk = humanize.Bytes(uint64(node.DiskSize))
+			disk = humanize.Bytes(node.DiskSize)
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",

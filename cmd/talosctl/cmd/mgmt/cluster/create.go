@@ -12,9 +12,11 @@ import (
 	"net"
 	"os"
 	stdruntime "runtime"
+	"strconv"
 	"strings"
 	"time"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -57,6 +59,7 @@ var (
 	clusterCpus             string
 	clusterMemory           int
 	clusterDiskSize         int
+	clusterDisks            []string
 	targetArch              string
 	clusterWait             bool
 	clusterWaitTimeout      time.Duration
@@ -97,7 +100,6 @@ func create(ctx context.Context) (err error) {
 	}
 
 	memory := int64(clusterMemory) * 1024 * 1024
-	diskSize := int64(clusterDiskSize) * 1024 * 1024
 
 	// Validate CIDR range and allocate IPs
 	fmt.Println("validating CIDR and reserving IPs")
@@ -184,6 +186,11 @@ func create(ctx context.Context) (err error) {
 		provisionOptions = append(provisionOptions, provision.WithDockerPorts(portList))
 	}
 
+	disks, err := getDisks()
+	if err != nil {
+		return err
+	}
+
 	if inputDir != "" {
 		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
 	} else {
@@ -214,6 +221,19 @@ func create(ctx context.Context) (err error) {
 				CNIName: "custom",
 				CNIUrls: []string{customCNIUrl},
 			}))
+		}
+
+		if len(disks) > 1 {
+			// convert provision disks to machine disks
+			machineDisks := make([]*v1alpha1.MachineDisk, len(disks)-1)
+			for i, disk := range disks[1:] {
+				machineDisks[i] = &v1alpha1.MachineDisk{
+					DeviceName:     provisioner.UserDiskName(i + 1),
+					DiskPartitions: disk.Partitions,
+				}
+			}
+
+			genOptions = append(genOptions, generate.WithUserDisks(machineDisks))
 		}
 
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
@@ -273,7 +293,7 @@ func create(ctx context.Context) (err error) {
 			IP:       ips[i],
 			Memory:   memory,
 			NanoCPUs: nanoCPUs,
-			DiskSize: diskSize,
+			Disks:    disks,
 		}
 
 		if i == 0 {
@@ -296,13 +316,15 @@ func create(ctx context.Context) (err error) {
 	}
 
 	for i := 1; i <= workers; i++ {
+		name := fmt.Sprintf("%s-worker-%d", clusterName, i)
+
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:     fmt.Sprintf("%s-worker-%d", clusterName, i),
+				Name:     name,
 				IP:       ips[masters+i-1],
 				Memory:   memory,
 				NanoCPUs: nanoCPUs,
-				DiskSize: diskSize,
+				Disks:    disks,
 				Config:   configBundle.Join(),
 			})
 	}
@@ -436,6 +458,63 @@ func parseCPUShare() (int64, error) {
 	return nano.Num().Int64(), nil
 }
 
+func getDisks() ([]*provision.Disk, error) {
+	// should have at least a single primary disk
+	disks := []*provision.Disk{
+		{
+			Size: uint64(clusterDiskSize) * 1024 * 1024,
+		},
+	}
+
+	for _, disk := range clusterDisks {
+		var (
+			partitions     = strings.Split(disk, ":")
+			diskPartitions = make([]*v1alpha1.DiskPartition, len(partitions)/2)
+			diskSize       uint64
+		)
+
+		if len(partitions)%2 != 0 {
+			return nil, fmt.Errorf("failed to parse malformed partition definitions")
+		}
+
+		partitionIndex := 0
+
+		for j := 0; j < len(partitions); j += 2 {
+			partitionPath := partitions[j]
+
+			if !strings.HasPrefix(partitionPath, "/var") {
+				return nil, fmt.Errorf("user disk partitions can only be mounted into /var folder")
+			}
+
+			value, e := strconv.ParseInt(partitions[j+1], 10, -1)
+			partitionSize := uint64(value)
+
+			if e != nil {
+				partitionSize, e = humanize.ParseBytes(partitions[j+1])
+
+				if e != nil {
+					return nil, fmt.Errorf("failed to parse partition size")
+				}
+			}
+
+			diskPartitions[partitionIndex] = &v1alpha1.DiskPartition{
+				DiskSize:       partitionSize,
+				DiskMountPoint: partitionPath,
+			}
+			diskSize += partitionSize
+			partitionIndex++
+		}
+
+		disks = append(disks, &provision.Disk{
+			// add 1 MB to make extra room for GPT
+			Size:       diskSize + 1024*1024,
+			Partitions: diskPartitions,
+		})
+	}
+
+	return disks, nil
+}
+
 func init() {
 	defaultTalosConfig, err := clientconfig.GetDefaultPath()
 	if err != nil {
@@ -459,7 +538,8 @@ func init() {
 	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	createCmd.Flags().StringVar(&clusterCpus, "cpus", "2.0", "the share of CPUs as fraction (each container/VM)")
 	createCmd.Flags().IntVar(&clusterMemory, "memory", 2048, "the limit on memory usage in MB (each container/VM)")
-	createCmd.Flags().IntVar(&clusterDiskSize, "disk", 6*1024, "the limit on disk size in MB (each VM)")
+	createCmd.Flags().IntVar(&clusterDiskSize, "disk", 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().StringSliceVar(&clusterDisks, "user-disk", []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
 	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
 	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
 	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")

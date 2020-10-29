@@ -2,6 +2,8 @@
 
 set -eou pipefail
 
+export USER_DISKS_MOUNTS="/var/lib/extra,/var/lib/p1,/var/lib/p2"
+
 source ./hack/test/e2e.sh
 
 PROVISIONER=qemu
@@ -44,6 +46,8 @@ function create_cluster {
     --memory 2048 \
     --cpus 2.0 \
     --cidr 172.20.1.0/24 \
+    --user-disk /var/lib/extra:100MB \
+    --user-disk /var/lib/p1:100MB:/var/lib/p2:100MB \
     --install-image ${REGISTRY:-ghcr.io}/talos-systems/installer:${INSTALLER_TAG} \
     --with-init-node=false \
     --crashdump \

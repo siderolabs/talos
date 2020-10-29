@@ -33,7 +33,7 @@ type Settings struct {
 	// VM parameters
 	CPUs   int64
 	MemMB  int64
-	DiskGB int64
+	DiskGB uint64
 	// Node count for the tests
 	MasterNodes int
 	WorkerNodes int

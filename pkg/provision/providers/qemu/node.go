@@ -51,7 +51,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	memSize := nodeReq.Memory / 1024 / 1024
 
-	diskPath, err := p.CreateDisk(state, nodeReq)
+	diskPaths, err := p.CreateDisks(state, nodeReq)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -95,7 +95,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	launchConfig := LaunchConfig{
 		QemuExecutable:    fmt.Sprintf("qemu-system-%s", arch.QemuArch()),
-		DiskPath:          diskPath,
+		DiskPaths:         diskPaths,
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,
 		KernelArgs:        cmdline.String(),
@@ -174,7 +174,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,
-		DiskSize: nodeReq.DiskSize,
+		DiskSize: nodeReq.Disks[0].Size,
 
 		PrivateIP: nodeReq.IP,
 
