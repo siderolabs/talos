@@ -2,9 +2,7 @@
   <div class="border-ui-primary w-full">
     <div class="container">
       <div class="flex items-center justify-between -mx-2 sm:-mx-4">
-        <div
-          class="flex flex-row items-center px-2 mr-auto sm:px-4 sm:flex-row"
-        >
+        <div class="flex flex-row items-center px-2 sm:px-4 sm:flex-row">
           <div v-if="$page" class="z-50 p-2 lg:hidden">
             <button
               class="p-2 text-ui-primary rounded-full"
@@ -23,7 +21,10 @@
             </span>
           </g-link>
 
-          <div v-if="settings.nav.links.length > 0" class="ml-2 mr-2 sm:block">
+          <div
+            v-if="settings.nav.links.length > 0"
+            class="lg:ml-8 lg:mr-8 ml-2 mr-2 sm:block"
+          >
             <g-link
               v-for="link in settings.nav.links"
               :key="link.path"
@@ -33,12 +34,6 @@
               {{ link.title }}
             </g-link>
           </div>
-        </div>
-
-        <div class="w-full px-2 sm:px-4 max-w-screen-xs">
-          <ClientOnly>
-            <Search />
-          </ClientOnly>
         </div>
 
         <div class="flex items-center justify-end px-2 sm:px-4">
@@ -122,15 +117,9 @@ import {
   XIcon,
 } from "vue-feather-icons";
 
-const Search = () =>
-  import(
-    /* webpackChunkName: "search" */ "@/components/Search"
-  ).catch((error) => console.warn(error));
-
 export default {
   components: {
     Logo,
-    Search,
     ToggleDarkMode,
     SunIcon,
     MoonIcon,
