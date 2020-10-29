@@ -765,6 +765,7 @@ func MountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 // here.
 func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) {
 	m := &installer.Manifest{
+		Devices: map[string]installer.Device{},
 		Targets: map[string][]*installer.Target{},
 	}
 
@@ -800,15 +801,22 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 			}
 		}
 
+		m.Devices[disk.Device()] = installer.Device{
+			Device:              disk.Device(),
+			ResetPartitionTable: true,
+		}
+
 		if m.Targets[disk.Device()] == nil {
 			m.Targets[disk.Device()] = []*installer.Target{}
 		}
 
 		for _, part := range disk.Partitions() {
 			extraTarget := &installer.Target{
-				Device: disk.Device(),
-				Size:   part.Size(),
-				Force:  true,
+				Device:         disk.Device(),
+				Size:           part.Size(),
+				Force:          true,
+				PartitionType:  installer.LinuxFilesystemData,
+				FileSystemType: installer.FilesystemTypeXFS,
 			}
 
 			m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
