@@ -866,7 +866,7 @@ type MachineDisk struct {
 type DiskPartition struct {
 	//   description: |
 	//     This size of the partition in bytes.
-	DiskSize uint `yaml:"size,omitempty"`
+	DiskSize uint64 `yaml:"size,omitempty"`
 	//   description:
 	//     Where to mount the partition.
 	DiskMountPoint string `yaml:"mountpoint,omitempty"`

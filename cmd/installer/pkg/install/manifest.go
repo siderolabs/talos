@@ -58,7 +58,7 @@ type Target struct {
 	FileSystemType     FileSystemType
 	LegacyBIOSBootable bool
 
-	Size   uint
+	Size   uint64
 	Force  bool
 	Assets []*Asset
 
@@ -634,7 +634,7 @@ func (t *Target) Partition(pt table.PartitionTable, pos int, bd *blockdevice.Blo
 		opts = append(opts, partition.WithLegacyBIOSBootableAttribute(true))
 	}
 
-	part, err := pt.InsertAt(pos, uint64(t.Size), opts...)
+	part, err := pt.InsertAt(pos, t.Size, opts...)
 	if err != nil {
 		return err
 	}
