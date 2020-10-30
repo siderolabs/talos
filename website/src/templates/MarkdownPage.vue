@@ -97,4 +97,16 @@ code[class*="language-"],
 pre[class*="language-"] {
   @apply text-sm;
 }
+
+hr {
+  @apply my-4 border-t border-dashed border-ui-border;
+}
+
+.dt {
+  @apply ml-8;
+}
+
+.dd {
+  @apply mx-1 font-bold;
+}
 </style>

@@ -49,6 +49,8 @@ Appears in:
 
 {{ if $struct.Fields -}}
 
+<hr />
+
 {{ range $field := $struct.Fields -}}
 <div class="dd">
 
@@ -77,6 +79,8 @@ Valid values:
 
 </div>
 
+<hr />
+
 {{ end }}
 
 {{ end -}}
@@ -89,8 +93,6 @@ Valid values:
 - {{ $tick }}{{ $value }}{{ $tick }}
 {{ end -}}
 {{- end }}
-
----
 {{ end }}`
 
 // FileDoc represents a single go file documentation.
