@@ -50,7 +50,7 @@ func mountMountpoint(mountpoint *Point) (err error) {
 
 	// Repair the disk's partition table.
 	if mountpoint.Resize {
-		if err = mountpoint.ResizePartition(); err != nil {
+		if _, err = mountpoint.ResizePartition(); err != nil {
 			return fmt.Errorf("error resizing %w", err)
 		}
 	}
@@ -69,6 +69,9 @@ func mountMountpoint(mountpoint *Point) (err error) {
 	}
 
 	// Grow the filesystem to the maximum allowed size.
+	//
+	// Growfs is called always, even if ResizePartition returns false to workaround failure scenario
+	// when partition was resized, but growfs never got called.
 	if mountpoint.Resize {
 		if err = mountpoint.GrowFilesystem(); err != nil {
 			return fmt.Errorf("error resizing filesystem: %w", err)
@@ -303,16 +306,16 @@ func (p *Point) Move(prefix string) (err error) {
 }
 
 // ResizePartition resizes a partition to the maximum size allowed.
-func (p *Point) ResizePartition() (err error) {
+func (p *Point) ResizePartition() (resized bool, err error) {
 	var devname string
 
 	if devname, err = util.DevnameFromPartname(p.Source()); err != nil {
-		return err
+		return false, err
 	}
 
 	bd, err := blockdevice.Open("/dev/" + devname)
 	if err != nil {
-		return fmt.Errorf("error opening block device %q: %w", devname, err)
+		return false, fmt.Errorf("error opening block device %q: %w", devname, err)
 	}
 
 	// nolint: errcheck
@@ -320,26 +323,31 @@ func (p *Point) ResizePartition() (err error) {
 
 	pt, err := bd.PartitionTable()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if err := pt.Repair(); err != nil {
-		return err
+		return false, err
 	}
 
 	for _, partition := range pt.Partitions() {
 		if partition.Label() == constants.EphemeralPartitionLabel {
-			if err := pt.Resize(partition); err != nil {
-				return err
+			resized, err := pt.Resize(partition)
+			if err != nil {
+				return false, err
+			}
+
+			if !resized {
+				return false, nil
 			}
 		}
 	}
 
 	if err := pt.Write(); err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }
 
 // GrowFilesystem grows a partition's filesystem to the maximum size allowed.
