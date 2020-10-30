@@ -1,0 +1,2 @@
+# Redirects from what the browser requests to what we serve
+/docs/latest /docs/v0.6
