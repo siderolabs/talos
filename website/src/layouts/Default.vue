@@ -296,6 +296,10 @@ table {
   }
 }
 
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
 .sidebar-l {
   @extend .sidebar;
   @apply px-4 border-r transition-all;
@@ -319,9 +323,5 @@ table {
   @screen lg {
     @apply px-4 border-l;
   }
-}
-
-::-webkit-scrollbar {
-  display: none;
 }
 </style>
