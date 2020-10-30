@@ -1,31 +1,27 @@
 <template>
-  <div
-    class="mt-8 sm:pl-4 md:pl-6 md:pt-12 lg:pl-8 sm:pb-16 sm:border-l border-ui-border md:mt-0"
-  >
-    <h3 class="pt-0 mt-0 text-sm tracking-wide uppercase border-none">
-      On this page
-    </h3>
+  <div v-if="headings.length > 0">
+    <h3 class="text-sm tracking-wide uppercase border-none">On this page</h3>
     <div class="h-screen overflow-y-auto">
       <ul>
         <li
           v-for="(heading, index) in headings"
           :key="`${page.path}${heading.anchor}`"
           :class="{
-            'border-t border-dashed border-ui-border pt-2 mt-2':
+            'border-t border-dashed border-ui-border':
               index > 0 && heading.depth === 2,
             'font-semibold': heading.depth === 2,
             [`depth-${heading.depth}`]: true,
           }"
-          class="pl-4"
+          class="pl-4 pb-2"
         >
           <g-link
             :to="`${page.path}${heading.anchor}`"
-            class="relative flex items-center py-1 text-sm transition transform hover:translate-x-1"
+            class="relative flex items-center text-sm transition transform hover:translate-x-1"
             :class="{
               'pl-2': heading.depth === 3,
-              'pl-3': heading.depth === 4,
-              'pl-4': heading.depth === 5,
-              'pl-5': heading.depth === 6,
+              'pl-4': heading.depth === 4,
+              'pl-6': heading.depth === 5,
+              'pl-8': heading.depth === 6,
               'font-bold text-ui-primary': activeAnchor === heading.anchor,
             }"
           >

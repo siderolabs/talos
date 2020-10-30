@@ -1,23 +1,14 @@
 <template>
   <Layout>
-    <div class="flex flex-wrap items-start justify-start">
+    <div>
+      <h1 class="content" v-html="$page.markdownPage.title" />
       <div
-        class="order-2 w-full md:w-1/3 sm:pl-4 md:pl-6 lg:pl-8 sticky"
-        style="top: 5rem"
-      >
-        <OnThisPage />
-      </div>
+        class="content overflow-x-auto"
+        v-html="$page.markdownPage.content"
+      />
 
-      <div class="order-1 w-full md:w-2/3">
-        <h1 class="content" v-html="$page.markdownPage.title" />
-        <div
-          class="content overflow-x-auto"
-          v-html="$page.markdownPage.content"
-        />
-
-        <div class="mt-8 pt-8 lg:mt-12 lg:pt-12 border-t border-ui-border">
-          <NextPrevLinks />
-        </div>
+      <div class="mt-8 pt-8 lg:mt-12 lg:pt-12 border-t border-ui-border">
+        <NextPrevLinks />
       </div>
     </div>
   </Layout>
@@ -54,12 +45,10 @@ query ($id: ID!) {
 </page-query>
 
 <script>
-import OnThisPage from "@/components/OnThisPage.vue";
 import NextPrevLinks from "@/components/NextPrevLinks.vue";
 
 export default {
   components: {
-    OnThisPage,
     NextPrevLinks,
   },
 

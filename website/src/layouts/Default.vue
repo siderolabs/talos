@@ -1,31 +1,48 @@
 <template>
   <div class="font-sans antialiased text-ui-typo bg-ui-background">
-    <div class="flex flex-col justify-start min-h-screen">
-      <header
-        ref="header"
-        class="sticky top-0 z-10 w-full border-b bg-ui-background border-ui-border h-20 flex items-center"
-      >
-        <LayoutHeader />
-      </header>
+    <header
+      ref="header"
+      class="sticky top-0 z-10 w-full border-b bg-ui-background border-ui-border h-20 flex items-center"
+    >
+      <LayoutHeader />
+    </header>
 
-      <main
-        class="container relative flex flex-wrap justify-start flex-1 w-full bg-ui-background"
-      >
-        <aside
-          v-if="$page"
-          class="sidebar"
-          :class="{ open: $store.state.sidebarIsOpen }"
-        >
-          <div class="w-full pb-16 bg-ui-background">
-            <Sidebar />
-          </div>
-        </aside>
-
-        <div class="w-full pb-24" :class="{ 'pl-0 lg:pl-12 lg:w-3/4': $page }">
-          <slot />
+    <main>
+      <div v-if="$page" class="container grid grid-cols-1 md:grid-cols-10">
+        <div class="col-span-1 md:col-span-2">
+          <aside
+            :class="{ open: $store.state.sidebarIsOpen }"
+            class="sidebar-l"
+          >
+            <div class="w-full mt-10">
+              <Sidebar />
+            </div>
+          </aside>
         </div>
-      </main>
-    </div>
+
+        <div class="col-span-1 md:col-span-6">
+          <div class="w-full mt-1 px-2 md:px-6">
+            <slot />
+          </div>
+        </div>
+
+        <div class="col-span-1 md:col-span-2">
+          <aside class="sidebar-r">
+            <div class="w-full mt-10">
+              <OnThisPage />
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div v-else class="container grid grid-cols-1">
+        <div class="col-span-1">
+          <div class="w-full">
+            <slot />
+          </div>
+        </div>
+      </div>
+    </main>
 
     <footer>
       <LayoutFooter />
@@ -42,14 +59,16 @@ query {
 </static-query>
 
 <script>
-import Sidebar from "@/components/Sidebar";
 import LayoutHeader from "@/components/LayoutHeader";
+import Sidebar from "@/components/Sidebar";
+import OnThisPage from "@/components/OnThisPage.vue";
 import LayoutFooter from "@/components/LayoutFooter";
 
 export default {
   components: {
-    Sidebar,
     LayoutHeader,
+    Sidebar,
+    OnThisPage,
     LayoutFooter,
   },
 
@@ -268,18 +287,37 @@ table {
 }
 
 .sidebar {
-  @apply fixed bg-ui-background px-4 inset-x-0 bottom-0 w-full border-r border-ui-border overflow-y-auto transition-all z-50;
-  height: calc(100vh - 80px);
+  @apply w-full inset-x-0 z-50 overflow-y-auto bg-ui-background border-ui-border;
+  height: calc(100vh - 5rem);
+
+  @screen lg {
+    top: 5rem;
+    @apply px-0 bg-transparent bottom-auto inset-x-auto sticky z-0;
+  }
+}
+
+.sidebar-l {
+  @extend .sidebar;
+  @apply px-4 border-r transition-all;
   transform: translateX(-100%);
-  top: 5rem;
 
   &.open {
     transform: translateX(0);
   }
 
+  @media (max-width: 1024px) {
+    @apply fixed;
+  }
+
   @screen lg {
-    @apply w-1/4 px-0 bg-transparent bottom-auto inset-x-auto sticky z-0;
     transform: translateX(0);
+  }
+}
+
+.sidebar-r {
+  @extend .sidebar;
+  @screen lg {
+    @apply px-4 border-l;
   }
 }
 
