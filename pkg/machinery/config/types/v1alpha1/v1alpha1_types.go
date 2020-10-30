@@ -47,9 +47,6 @@ var (
 			"docker.io": {
 				MirrorEndpoints: []string{"https://registry.local"},
 			},
-			"ghcr.io": {
-				MirrorEndpoints: []string{"https://registry.insecure", "https://ghcr.io/v2/"},
-			},
 		},
 		RegistryConfig: map[string]*RegistryConfig{
 			"registry.local": {
@@ -61,12 +58,34 @@ var (
 					RegistryPassword: "password",
 				},
 			},
-			"registry.insecure": {
-				RegistryTLS: &RegistryTLSConfig{
-					TLSInsecureSkipVerify: true,
-				},
+		},
+	}
+
+	machineConfigRegistryMirrorsExample = map[string]*RegistryMirrorConfig{
+		"ghcr.io": {
+			MirrorEndpoints: []string{"https://registry.insecure", "https://ghcr.io/v2/"},
+		},
+	}
+
+	machineConfigRegistryConfigExample = map[string]*RegistryConfig{
+		"registry.insecure": {
+			RegistryTLS: &RegistryTLSConfig{
+				TLSInsecureSkipVerify: true,
 			},
 		},
+	}
+
+	machineConfigRegistryTLSConfigExample1 = &RegistryTLSConfig{
+		TLSClientIdentity: pemEncodedCertificateExample,
+	}
+
+	machineConfigRegistryTLSConfigExample2 = &RegistryTLSConfig{
+		TLSInsecureSkipVerify: true,
+	}
+
+	machineConfigRegistryAuthConfigExample = &RegistryAuthConfig{
+		RegistryUsername: "username",
+		RegistryPassword: "password",
 	}
 
 	pemEncodedCertificateExample *x509.PEMEncodedCertificateAndKey = &x509.PEMEncodedCertificateAndKey{
@@ -86,7 +105,17 @@ var (
 	machineNetworkConfigExample = &NetworkConfig{
 		NetworkHostname: "worker-1",
 		NetworkInterfaces: []*Device{
-			{},
+			{
+				DeviceInterface: "eth0",
+				DeviceCIDR:      "192.168.2.0/24",
+				DeviceMTU:       1500,
+				DeviceRoutes: []*Route{
+					{
+						RouteNetwork: "0.0.0.0/0",
+						RouteGateway: "192.168.2.1",
+					},
+				},
+			},
 		},
 		NameServers: []string{"9.8.7.6", "8.7.6.5"},
 	}
@@ -237,6 +266,27 @@ var (
 		},
 	}
 
+	networkConfigRoutesExample = []*Route{
+		{
+			RouteNetwork: "0.0.0.0/0",
+			RouteGateway: "10.5.0.1",
+		},
+		{
+			RouteNetwork: "10.2.0.0/16",
+			RouteGateway: "10.2.0.1",
+		},
+	}
+
+	networkConfigBondExample = &Bond{
+		BondMode:       "802.3ad",
+		BondLACPRate:   "fast",
+		BondInterfaces: []string{"eth0", "eth1"},
+	}
+
+	networkConfigDHCPOptionsExample = &DHCPOptions{
+		DHCPRouteMetric: 1024,
+	}
+
 	clusterCustomCNIExample = &CNIConfig{
 		CNIName: "custom",
 		CNIUrls: []string{
@@ -276,7 +326,7 @@ type Config struct {
 	ClusterConfig *ClusterConfig `yaml:"cluster"`
 }
 
-// MachineConfig reperesents the machine-specific config values.
+// MachineConfig represents the machine-specific config values.
 type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
@@ -541,55 +591,14 @@ type NetworkConfig struct {
 	//     `interfaces` is used to define the network interface configuration.
 	//     By default all network interfaces will attempt a DHCP discovery.
 	//     This can be further tuned through this configuration parameter.
-	//
-	//     #### machine.network.interfaces.interface
-	//
-	//     This is the interface name that should be configured.
-	//
-	//     #### machine.network.interfaces.cidr
-	//
-	//     `cidr` is used to specify a static IP address to the interface.
-	//     This should be in proper CIDR notation ( `192.168.2.5/24` ).
-	//
-	//     > Note: This option is mutually exclusive with DHCP.
-	//
-	//     #### machine.network.interfaces.dhcp
-	//
-	//     `dhcp` is used to specify that this device should be configured via DHCP.
-	//
-	//     The following DHCP options are supported:
-	//
-	//     - `OptionClasslessStaticRoute`
-	//     - `OptionDomainNameServer`
-	//     - `OptionDNSDomainSearchList`
-	//     - `OptionHostName`
-	//
-	//     > Note: This option is mutually exclusive with CIDR.
-	//     >
-	//     > Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
-	//     > in order for Talos to skip configuration of addresses.
-	//     > All other options will still apply.
-	//
-	//     #### machine.network.interfaces.ignore
-	//
-	//     `ignore` is used to exclude a specific interface from configuration.
-	//     This parameter is optional.
-	//
-	//     #### machine.network.interfaces.dummy
-	//
-	//     `dummy` is used to specify that this interface should be a virtual-only, dummy interface.
-	//     This parameter is optional.
-	//
-	//     #### machine.network.interfaces.routes
-	//
-	//     `routes` is used to specify static routes that may be necessary.
-	//     This parameter is optional.
-	//
-	//     Routes can be repeated and includes a `Network` and `Gateway` field.
+	//   examples:
+	//     - value: machineNetworkConfigExample.NetworkInterfaces
 	NetworkInterfaces []*Device `yaml:"interfaces,omitempty"`
 	//   description: |
 	//     Used to statically set the nameservers for the host.
 	//     Defaults to `1.1.1.1` and `8.8.8.8`
+	//   examples:
+	//     - value: '[]string{"8.8.8.8", "1.1.1.1"}'
 	NameServers []string `yaml:"nameservers,omitempty"`
 	//   description: |
 	//     Allows for extra entries to be added to /etc/hosts file
@@ -659,6 +668,8 @@ type RegistriesConfig struct {
 	//     Registry name is the first segment of image identifier, with 'docker.io'
 	//     being default one.
 	//     Name '*' catches any registry names not specified explicitly.
+	//   examples:
+	//     - value: machineConfigRegistryMirrorsExample
 	RegistryMirrors map[string]*RegistryMirrorConfig `yaml:"mirrors,omitempty"`
 	//   description: |
 	//     Specifies TLS & auth configuration for HTTPS image registries.
@@ -666,6 +677,8 @@ type RegistriesConfig struct {
 	//
 	//     TLS configuration can be skipped if registry has trusted
 	//     server certificate.
+	//   examples:
+	//     - value: machineConfigRegistryConfigExample
 	RegistryConfig map[string]*RegistryConfig `yaml:"config,omitempty"`
 }
 
@@ -966,36 +979,67 @@ type ExtraHost struct {
 // Device represents a network interface.
 type Device struct {
 	//   description: The interface name.
+	//   examples:
+	//     - value: '"eth0"'
 	DeviceInterface string `yaml:"interface"`
-	//   description: The CIDR to use.
-	DeviceCIDR string `yaml:"cidr"`
+	//   description: |
+	//     Assigns a static IP address to the interface.
+	//     This should be in proper CIDR notation.
+	//
+	//     > Note: This option is mutually exclusive with DHCP option.
+	//   examples:
+	//     - value: '"10.5.0.0/16"'
+	DeviceCIDR string `yaml:"cidr,omitempty"`
 	//   description: |
 	//     A list of routes associated with the interface.
 	//     If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.
-	DeviceRoutes []*Route `yaml:"routes"`
+	//   examples:
+	//     - value: networkConfigRoutesExample
+	DeviceRoutes []*Route `yaml:"routes,omitempty"`
 	//   description: Bond specific options.
-	DeviceBond *Bond `yaml:"bond"`
+	//   examples:
+	//     - value: networkConfigBondExample
+	DeviceBond *Bond `yaml:"bond,omitempty"`
 	//   description: VLAN specific options.
-	DeviceVlans []*Vlan `yaml:"vlans"`
+	DeviceVlans []*Vlan `yaml:"vlans,omitempty"`
 	//   description: |
 	//     The interface's MTU.
 	//     If used in combination with DHCP, this will override any MTU settings returned from DHCP server.
 	DeviceMTU int `yaml:"mtu"`
-	//   description: Indicates if DHCP should be used.
-	DeviceDHCP bool `yaml:"dhcp"`
-	//   description: Indicates if the interface should be ignored.
-	DeviceIgnore bool `yaml:"ignore"`
-	//   description: Indicates if the interface is a dummy interface.
-	DeviceDummy bool `yaml:"dummy"`
+	//   description: |
+	//     Indicates if DHCP should be used to configure the interface.
+	//     The following DHCP options are supported:
+	//
+	//     - `OptionClasslessStaticRoute`
+	//     - `OptionDomainNameServer`
+	//     - `OptionDNSDomainSearchList`
+	//     - `OptionHostName`
+	//
+	//     > Note: This option is mutually exclusive with CIDR.
+	//     >
+	//     > Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
+	//     > in order for Talos to skip configuration of addresses.
+	//     > All other options will still apply.
+	//   examples:
+	//     - value: true
+	DeviceDHCP bool `yaml:"dhcp,omitempty"`
+	//   description: Indicates if the interface should be ignored (skips configuration).
+	DeviceIgnore bool `yaml:"ignore,omitempty"`
+	//   description: |
+	//     Indicates if the interface is a dummy interface.
+	//     `dummy` is used to specify that this interface should be a virtual-only, dummy interface.
+	DeviceDummy bool `yaml:"dummy,omitempty"`
 	//   description: |
 	//     DHCP specific options.
-	//     DHCP *must* be set to true for these to take effect.
-	DeviceDHCPOptions *DHCPOptions `yaml:"dhcpOptions"`
+	//     `dhcp` *must* be set to true for these to take effect.
+	//   examples:
+	//     - value: networkConfigDHCPOptionsExample
+	DeviceDHCPOptions *DHCPOptions `yaml:"dhcpOptions,omitempty"`
 }
 
 // DHCPOptions contains options for configuring the DHCP settings for a given interface.
 type DHCPOptions struct {
-	//   description: The priority of all routes received via DHCP
+	//   description: The priority of all routes received via DHCP.
 	DHCPRouteMetric uint32 `yaml:"routeMetric"`
 }
 
@@ -1007,7 +1051,7 @@ type Bond struct {
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondARPIPTarget []string `yaml:"arpIPTarget"`
+	BondARPIPTarget []string `yaml:"arpIPTarget,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
@@ -1015,99 +1059,99 @@ type Bond struct {
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondHashPolicy string `yaml:"xmitHashPolicy"`
+	BondHashPolicy string `yaml:"xmitHashPolicy,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondLACPRate string `yaml:"lacpRate"`
+	BondLACPRate string `yaml:"lacpRate,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondADActorSystem string `yaml:"adActorSystem"`
+	BondADActorSystem string `yaml:"adActorSystem,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondARPValidate string `yaml:"arpValidate"`
+	BondARPValidate string `yaml:"arpValidate,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondARPAllTargets string `yaml:"arpAllTargets"`
+	BondARPAllTargets string `yaml:"arpAllTargets,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondPrimary string `yaml:"primary"`
+	BondPrimary string `yaml:"primary,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondPrimaryReselect string `yaml:"primaryReselect"`
+	BondPrimaryReselect string `yaml:"primaryReselect,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondFailOverMac string `yaml:"failOverMac"`
+	BondFailOverMac string `yaml:"failOverMac,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondADSelect string `yaml:"adSelect"`
+	BondADSelect string `yaml:"adSelect,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondMIIMon uint32 `yaml:"miimon"`
+	BondMIIMon uint32 `yaml:"miimon,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondUpDelay uint32 `yaml:"updelay"`
+	BondUpDelay uint32 `yaml:"updelay,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondDownDelay uint32 `yaml:"downdelay"`
+	BondDownDelay uint32 `yaml:"downdelay,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondARPInterval uint32 `yaml:"arpInterval"`
+	BondARPInterval uint32 `yaml:"arpInterval,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondResendIGMP uint32 `yaml:"resendIgmp"`
+	BondResendIGMP uint32 `yaml:"resendIgmp,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondMinLinks uint32 `yaml:"minLinks"`
+	BondMinLinks uint32 `yaml:"minLinks,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondLPInterval uint32 `yaml:"lpInterval"`
+	BondLPInterval uint32 `yaml:"lpInterval,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondPacketsPerSlave uint32 `yaml:"packetsPerSlave"`
+	BondPacketsPerSlave uint32 `yaml:"packetsPerSlave,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondNumPeerNotif uint8 `yaml:"numPeerNotif"`
+	BondNumPeerNotif uint8 `yaml:"numPeerNotif,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondTLBDynamicLB uint8 `yaml:"tlbDynamicLb"`
+	BondTLBDynamicLB uint8 `yaml:"tlbDynamicLb,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondAllSlavesActive uint8 `yaml:"allSlavesActive"`
+	BondAllSlavesActive uint8 `yaml:"allSlavesActive,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondUseCarrier bool `yaml:"useCarrier"`
+	BondUseCarrier bool `yaml:"useCarrier,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondADActorSysPrio uint16 `yaml:"adActorSysPrio"`
+	BondADActorSysPrio uint16 `yaml:"adActorSysPrio,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondADUserPortKey uint16 `yaml:"adUserPortKey"`
+	BondADUserPortKey uint16 `yaml:"adUserPortKey,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondPeerNotifyDelay uint32 `yaml:"peerNotifyDelay"`
+	BondPeerNotifyDelay uint32 `yaml:"peerNotifyDelay,omitempty"`
 }
 
 // Vlan represents vlan settings for a device.
@@ -1141,9 +1185,15 @@ type RegistryMirrorConfig struct {
 
 // RegistryConfig specifies auth & TLS config per registry.
 type RegistryConfig struct {
-	//   description: The TLS configuration for this registry.
+	//   description: |
+	//     The TLS configuration for the registry.
+	//   examples:
+	//     - value: machineConfigRegistryTLSConfigExample1
+	//     - value: machineConfigRegistryTLSConfigExample2
 	RegistryTLS *RegistryTLSConfig `yaml:"tls,omitempty"`
 	//   description: The auth configuration for this registry.
+	//   examples:
+	//     - value: machineConfigRegistryAuthConfigExample
 	RegistryAuth *RegistryAuthConfig `yaml:"auth,omitempty"`
 }
 

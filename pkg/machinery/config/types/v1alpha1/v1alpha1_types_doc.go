@@ -402,13 +402,17 @@ func init() {
 	NetworkConfigDoc.Fields[1].Name = "interfaces"
 	NetworkConfigDoc.Fields[1].Type = "[]Device"
 	NetworkConfigDoc.Fields[1].Note = ""
-	NetworkConfigDoc.Fields[1].Description = "`interfaces` is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter.\n\n#### machine.network.interfaces.interface\n\nThis is the interface name that should be configured.\n\n#### machine.network.interfaces.cidr\n\n`cidr` is used to specify a static IP address to the interface.\nThis should be in proper CIDR notation ( `192.168.2.5/24` ).\n\n> Note: This option is mutually exclusive with DHCP.\n\n#### machine.network.interfaces.dhcp\n\n`dhcp` is used to specify that this device should be configured via DHCP.\n\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`\n\n> Note: This option is mutually exclusive with CIDR.\n>\n> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to \"\" and DHCP to false\n> in order for Talos to skip configuration of addresses.\n> All other options will still apply.\n\n#### machine.network.interfaces.ignore\n\n`ignore` is used to exclude a specific interface from configuration.\nThis parameter is optional.\n\n#### machine.network.interfaces.dummy\n\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface.\nThis parameter is optional.\n\n#### machine.network.interfaces.routes\n\n`routes` is used to specify static routes that may be necessary.\nThis parameter is optional.\n\nRoutes can be repeated and includes a `Network` and `Gateway` field."
+	NetworkConfigDoc.Fields[1].Description = "`interfaces` is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter."
 	NetworkConfigDoc.Fields[1].Comments[encoder.LineComment] = "`interfaces` is used to define the network interface configuration."
+
+	NetworkConfigDoc.Fields[1].AddExample("", machineNetworkConfigExample.NetworkInterfaces)
 	NetworkConfigDoc.Fields[2].Name = "nameservers"
 	NetworkConfigDoc.Fields[2].Type = "[]string"
 	NetworkConfigDoc.Fields[2].Note = ""
 	NetworkConfigDoc.Fields[2].Description = "Used to statically set the nameservers for the host.\nDefaults to `1.1.1.1` and `8.8.8.8`"
 	NetworkConfigDoc.Fields[2].Comments[encoder.LineComment] = "Used to statically set the nameservers for the host."
+
+	NetworkConfigDoc.Fields[2].AddExample("", []string{"8.8.8.8", "1.1.1.1"})
 	NetworkConfigDoc.Fields[3].Name = "extraHostEntries"
 	NetworkConfigDoc.Fields[3].Type = "[]ExtraHost"
 	NetworkConfigDoc.Fields[3].Note = ""
@@ -515,11 +519,15 @@ func init() {
 	RegistriesConfigDoc.Fields[0].Note = ""
 	RegistriesConfigDoc.Fields[0].Description = "Specifies mirror configuration for each registry.\nThis setting allows to use local pull-through caching registires,\nair-gapped installations, etc.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one.\nName '*' catches any registry names not specified explicitly."
 	RegistriesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies mirror configuration for each registry."
+
+	RegistriesConfigDoc.Fields[0].AddExample("", machineConfigRegistryMirrorsExample)
 	RegistriesConfigDoc.Fields[1].Name = "config"
 	RegistriesConfigDoc.Fields[1].Type = "map[string]RegistryConfig"
 	RegistriesConfigDoc.Fields[1].Note = ""
 	RegistriesConfigDoc.Fields[1].Description = "Specifies TLS & auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate."
 	RegistriesConfigDoc.Fields[1].Comments[encoder.LineComment] = "Specifies TLS & auth configuration for HTTPS image registries."
+
+	RegistriesConfigDoc.Fields[1].AddExample("", machineConfigRegistryConfigExample)
 
 	PodCheckpointerDoc.Type = "PodCheckpointer"
 	PodCheckpointerDoc.Comments[encoder.HeadComment] = ""
@@ -920,6 +928,8 @@ func init() {
 	DeviceDoc.Type = "Device"
 	DeviceDoc.Comments[encoder.HeadComment] = ""
 	DeviceDoc.Description = ""
+
+	DeviceDoc.AddExample("", machineNetworkConfigExample.NetworkInterfaces)
 	DeviceDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "NetworkConfig",
@@ -932,21 +942,29 @@ func init() {
 	DeviceDoc.Fields[0].Note = ""
 	DeviceDoc.Fields[0].Description = "The interface name."
 	DeviceDoc.Fields[0].Comments[encoder.LineComment] = "The interface name."
+
+	DeviceDoc.Fields[0].AddExample("", "eth0")
 	DeviceDoc.Fields[1].Name = "cidr"
 	DeviceDoc.Fields[1].Type = "string"
 	DeviceDoc.Fields[1].Note = ""
-	DeviceDoc.Fields[1].Description = "The CIDR to use."
-	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "The CIDR to use."
+	DeviceDoc.Fields[1].Description = "Assigns a static IP address to the interface.\nThis should be in proper CIDR notation.\n\n> Note: This option is mutually exclusive with DHCP option."
+	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "Assigns a static IP address to the interface."
+
+	DeviceDoc.Fields[1].AddExample("", "10.5.0.0/16")
 	DeviceDoc.Fields[2].Name = "routes"
 	DeviceDoc.Fields[2].Type = "[]Route"
 	DeviceDoc.Fields[2].Note = ""
 	DeviceDoc.Fields[2].Description = "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server."
 	DeviceDoc.Fields[2].Comments[encoder.LineComment] = "A list of routes associated with the interface."
+
+	DeviceDoc.Fields[2].AddExample("", networkConfigRoutesExample)
 	DeviceDoc.Fields[3].Name = "bond"
 	DeviceDoc.Fields[3].Type = "Bond"
 	DeviceDoc.Fields[3].Note = ""
 	DeviceDoc.Fields[3].Description = "Bond specific options."
 	DeviceDoc.Fields[3].Comments[encoder.LineComment] = "Bond specific options."
+
+	DeviceDoc.Fields[3].AddExample("", networkConfigBondExample)
 	DeviceDoc.Fields[4].Name = "vlans"
 	DeviceDoc.Fields[4].Type = "[]Vlan"
 	DeviceDoc.Fields[4].Note = ""
@@ -960,27 +978,33 @@ func init() {
 	DeviceDoc.Fields[6].Name = "dhcp"
 	DeviceDoc.Fields[6].Type = "bool"
 	DeviceDoc.Fields[6].Note = ""
-	DeviceDoc.Fields[6].Description = "Indicates if DHCP should be used."
-	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if DHCP should be used."
+	DeviceDoc.Fields[6].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`\n\n> Note: This option is mutually exclusive with CIDR.\n>\n> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to \"\" and DHCP to false\n> in order for Talos to skip configuration of addresses.\n> All other options will still apply."
+	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+
+	DeviceDoc.Fields[6].AddExample("", true)
 	DeviceDoc.Fields[7].Name = "ignore"
 	DeviceDoc.Fields[7].Type = "bool"
 	DeviceDoc.Fields[7].Note = ""
-	DeviceDoc.Fields[7].Description = "Indicates if the interface should be ignored."
-	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "Indicates if the interface should be ignored."
+	DeviceDoc.Fields[7].Description = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
 	DeviceDoc.Fields[8].Name = "dummy"
 	DeviceDoc.Fields[8].Type = "bool"
 	DeviceDoc.Fields[8].Note = ""
-	DeviceDoc.Fields[8].Description = "Indicates if the interface is a dummy interface."
+	DeviceDoc.Fields[8].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
 	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
 	DeviceDoc.Fields[9].Name = "dhcpOptions"
 	DeviceDoc.Fields[9].Type = "DHCPOptions"
 	DeviceDoc.Fields[9].Note = ""
-	DeviceDoc.Fields[9].Description = "DHCP specific options.\nDHCP *must* be set to true for these to take effect."
+	DeviceDoc.Fields[9].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
 	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "DHCP specific options."
+
+	DeviceDoc.Fields[9].AddExample("", networkConfigDHCPOptionsExample)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.HeadComment] = ""
 	DHCPOptionsDoc.Description = ""
+
+	DHCPOptionsDoc.AddExample("", networkConfigDHCPOptionsExample)
 	DHCPOptionsDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Device",
@@ -991,12 +1015,14 @@ func init() {
 	DHCPOptionsDoc.Fields[0].Name = "routeMetric"
 	DHCPOptionsDoc.Fields[0].Type = "uint32"
 	DHCPOptionsDoc.Fields[0].Note = ""
-	DHCPOptionsDoc.Fields[0].Description = "The priority of all routes received via DHCP"
-	DHCPOptionsDoc.Fields[0].Comments[encoder.LineComment] = "The priority of all routes received via DHCP"
+	DHCPOptionsDoc.Fields[0].Description = "The priority of all routes received via DHCP."
+	DHCPOptionsDoc.Fields[0].Comments[encoder.LineComment] = "The priority of all routes received via DHCP."
 
 	BondDoc.Type = "Bond"
 	BondDoc.Comments[encoder.HeadComment] = ""
 	BondDoc.Description = ""
+
+	BondDoc.AddExample("", networkConfigBondExample)
 	BondDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Device",
@@ -1174,6 +1200,8 @@ func init() {
 	RouteDoc.Type = "Route"
 	RouteDoc.Comments[encoder.HeadComment] = ""
 	RouteDoc.Description = ""
+
+	RouteDoc.AddExample("", networkConfigRoutesExample)
 	RouteDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Device",
@@ -1199,6 +1227,8 @@ func init() {
 	RegistryMirrorConfigDoc.Type = "RegistryMirrorConfig"
 	RegistryMirrorConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryMirrorConfigDoc.Description = ""
+
+	RegistryMirrorConfigDoc.AddExample("", machineConfigRegistryMirrorsExample)
 	RegistryMirrorConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "RegistriesConfig",
@@ -1215,6 +1245,8 @@ func init() {
 	RegistryConfigDoc.Type = "RegistryConfig"
 	RegistryConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryConfigDoc.Description = ""
+
+	RegistryConfigDoc.AddExample("", machineConfigRegistryConfigExample)
 	RegistryConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "RegistriesConfig",
@@ -1225,17 +1257,25 @@ func init() {
 	RegistryConfigDoc.Fields[0].Name = "tls"
 	RegistryConfigDoc.Fields[0].Type = "RegistryTLSConfig"
 	RegistryConfigDoc.Fields[0].Note = ""
-	RegistryConfigDoc.Fields[0].Description = "The TLS configuration for this registry."
-	RegistryConfigDoc.Fields[0].Comments[encoder.LineComment] = "The TLS configuration for this registry."
+	RegistryConfigDoc.Fields[0].Description = "The TLS configuration for the registry."
+	RegistryConfigDoc.Fields[0].Comments[encoder.LineComment] = "The TLS configuration for the registry."
+
+	RegistryConfigDoc.Fields[0].AddExample("", machineConfigRegistryTLSConfigExample1)
+
+	RegistryConfigDoc.Fields[0].AddExample("", machineConfigRegistryTLSConfigExample2)
 	RegistryConfigDoc.Fields[1].Name = "auth"
 	RegistryConfigDoc.Fields[1].Type = "RegistryAuthConfig"
 	RegistryConfigDoc.Fields[1].Note = ""
 	RegistryConfigDoc.Fields[1].Description = "The auth configuration for this registry."
 	RegistryConfigDoc.Fields[1].Comments[encoder.LineComment] = "The auth configuration for this registry."
 
+	RegistryConfigDoc.Fields[1].AddExample("", machineConfigRegistryAuthConfigExample)
+
 	RegistryAuthConfigDoc.Type = "RegistryAuthConfig"
 	RegistryAuthConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryAuthConfigDoc.Description = ""
+
+	RegistryAuthConfigDoc.AddExample("", machineConfigRegistryAuthConfigExample)
 	RegistryAuthConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "RegistryConfig",
@@ -1267,6 +1307,10 @@ func init() {
 	RegistryTLSConfigDoc.Type = "RegistryTLSConfig"
 	RegistryTLSConfigDoc.Comments[encoder.HeadComment] = ""
 	RegistryTLSConfigDoc.Description = ""
+
+	RegistryTLSConfigDoc.AddExample("", machineConfigRegistryTLSConfigExample1)
+
+	RegistryTLSConfigDoc.AddExample("", machineConfigRegistryTLSConfigExample2)
 	RegistryTLSConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "RegistryConfig",
