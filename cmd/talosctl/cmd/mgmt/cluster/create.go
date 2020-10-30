@@ -498,7 +498,7 @@ func getDisks() ([]*provision.Disk, error) {
 			}
 
 			diskPartitions[partitionIndex] = &v1alpha1.DiskPartition{
-				DiskSize:       partitionSize,
+				DiskSize:       v1alpha1.DiskSize(partitionSize),
 				DiskMountPoint: partitionPath,
 			}
 			diskSize += partitionSize

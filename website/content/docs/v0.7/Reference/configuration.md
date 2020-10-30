@@ -357,8 +357,14 @@ disks:
     - device: /dev/sdb # The name of the disk to use.
       # A list of partitions to create on the disk.
       partitions:
-        - size: 100000000 # This size of the partition in bytes.
-          mountpoint: /var/mnt/extra # Where to mount the partition.
+        - mountpoint: /var/mnt/extra # Where to mount the partition.
+
+          # # This size of partition: either bytes or human readable representation.
+
+          # # Human readable representation.
+          # size: 100 MB
+          # # Precise value in bytes.
+          # size: 1073741824
 ```
 
 
@@ -421,7 +427,7 @@ Examples:
 ``` yaml
 files:
     - content: '...' # The contents of file.
-      permissions: 438 # The file's permissions in octal.
+      permissions: 0o666 # The file's permissions in octal.
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
 ```
@@ -2251,8 +2257,14 @@ Appears in:
 - device: /dev/sdb # The name of the disk to use.
   # A list of partitions to create on the disk.
   partitions:
-    - size: 100000000 # This size of the partition in bytes.
-      mountpoint: /var/mnt/extra # Where to mount the partition.
+    - mountpoint: /var/mnt/extra # Where to mount the partition.
+
+      # # This size of partition: either bytes or human readable representation.
+
+      # # Human readable representation.
+      # size: 100 MB
+      # # Precise value in bytes.
+      # size: 1073741824
 ```
 
 <hr />
@@ -2299,12 +2311,26 @@ Appears in:
 
 <div class="dd">
 
-<code>size</code>  <i>uint64</i>
+<code>size</code>  <i>DiskSize</i>
 
 </div>
 <div class="dt">
 
-This size of the partition in bytes.
+This size of partition: either bytes or human readable representation.
+
+
+
+Examples:
+
+
+``` yaml
+size: 100 MB
+```
+
+``` yaml
+size: 1073741824
+```
+
 
 </div>
 
@@ -2336,7 +2362,7 @@ Appears in:
 
 ``` yaml
 - content: '...' # The contents of file.
-  permissions: 438 # The file's permissions in octal.
+  permissions: 0o666 # The file's permissions in octal.
   path: /tmp/file.txt # The path of the file.
   op: append # The operation to use
 ```

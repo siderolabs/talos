@@ -843,10 +843,14 @@ func init() {
 	}
 	DiskPartitionDoc.Fields = make([]encoder.Doc, 2)
 	DiskPartitionDoc.Fields[0].Name = "size"
-	DiskPartitionDoc.Fields[0].Type = "uint64"
+	DiskPartitionDoc.Fields[0].Type = "DiskSize"
 	DiskPartitionDoc.Fields[0].Note = ""
-	DiskPartitionDoc.Fields[0].Description = "This size of the partition in bytes."
-	DiskPartitionDoc.Fields[0].Comments[encoder.LineComment] = "This size of the partition in bytes."
+	DiskPartitionDoc.Fields[0].Description = "This size of partition: either bytes or human readable representation."
+	DiskPartitionDoc.Fields[0].Comments[encoder.LineComment] = "This size of partition: either bytes or human readable representation."
+
+	DiskPartitionDoc.Fields[0].AddExample("Human readable representation.", DiskSize(100000000))
+
+	DiskPartitionDoc.Fields[0].AddExample("Precise value in bytes.", 1024*1024*1024)
 	DiskPartitionDoc.Fields[1].Name = "mountpoint"
 	DiskPartitionDoc.Fields[1].Type = "string"
 	DiskPartitionDoc.Fields[1].Note = ""

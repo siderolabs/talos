@@ -1013,7 +1013,7 @@ func (f *MachineFile) Content() string {
 
 // Permissions implements the config.Provider interface.
 func (f *MachineFile) Permissions() os.FileMode {
-	return f.FilePermissions
+	return os.FileMode(f.FilePermissions)
 }
 
 // Path implements the config.Provider interface.
@@ -1044,7 +1044,7 @@ func (d *MachineDisk) Partitions() []config.Partition {
 
 // Size implements the config.Provider interface.
 func (p *DiskPartition) Size() uint64 {
-	return p.DiskSize
+	return uint64(p.DiskSize)
 }
 
 // MountPoint implements the config.Provider interface.
