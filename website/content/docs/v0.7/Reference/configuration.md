@@ -20,6 +20,8 @@ This will generate a machine config for each node type, and a talosconfig for th
 
 
 
+<hr />
+
 <div class="dd">
 
 <code>version</code>  <i>string</i>
@@ -35,6 +37,8 @@ Valid values:
 
   - <code>v1alpha1</code>
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -58,6 +62,8 @@ Valid values:
   - <code>no</code>
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>persist</code>  <i>bool</i>
@@ -80,6 +86,8 @@ Valid values:
   - <code>no</code>
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>machine</code>  <i><a href="#machineconfig">MachineConfig</a></i>
@@ -90,6 +98,8 @@ Valid values:
 Provides machine specific configuration options.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -102,11 +112,11 @@ Provides cluster specific configuration options.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## MachineConfig
 Appears in:
@@ -115,6 +125,8 @@ Appears in:
 - <code><a href="#config">Config</a>.machine</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -152,6 +164,8 @@ Valid values:
   - <code>join</code>
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>token</code>  <i>string</i>
@@ -177,6 +191,8 @@ token: 328hom.uqjzh6jnn2eie9oi
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
@@ -200,6 +216,8 @@ ca:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -225,6 +243,8 @@ certSANs:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -259,6 +279,8 @@ kubelet:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -308,6 +330,8 @@ network:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>disks</code>  <i>[]<a href="#machinedisk">MachineDisk</a></i>
@@ -340,6 +364,8 @@ disks:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>install</code>  <i><a href="#installconfig">InstallConfig</a></i>
@@ -367,6 +393,8 @@ install:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -400,6 +428,8 @@ files:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -450,6 +480,8 @@ env:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>time</code>  <i><a href="#timeconfig">TimeConfig</a></i>
@@ -475,6 +507,8 @@ time:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>sysctls</code>  <i>map[string]string</i>
@@ -497,6 +531,8 @@ sysctls:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -563,11 +599,11 @@ registries:
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## ClusterConfig
 Appears in:
@@ -576,6 +612,8 @@ Appears in:
 - <code><a href="#config">Config</a>.cluster</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -600,6 +638,8 @@ controlPlane:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>clusterName</code>  <i>string</i>
@@ -610,6 +650,8 @@ controlPlane:
 Configures the cluster's name.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -642,6 +684,8 @@ network:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>token</code>  <i>string</i>
@@ -663,6 +707,8 @@ token: wlzjyw.bei2zfylhs2by0wd
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>aescbcEncryptionSecret</code>  <i>string</i>
@@ -683,6 +729,8 @@ aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -706,6 +754,8 @@ ca:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -736,6 +786,8 @@ apiServer:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>controllerManager</code>  <i><a href="#controllermanagerconfig">ControllerManagerConfig</a></i>
@@ -760,6 +812,8 @@ controllerManager:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -787,6 +841,8 @@ proxy:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>scheduler</code>  <i><a href="#schedulerconfig">SchedulerConfig</a></i>
@@ -811,6 +867,8 @@ scheduler:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -841,6 +899,8 @@ etcd:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>podCheckpointer</code>  <i><a href="#podcheckpointer">PodCheckpointer</a></i>
@@ -863,6 +923,8 @@ podCheckpointer:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>coreDNS</code>  <i><a href="#coredns">CoreDNS</a></i>
@@ -884,6 +946,8 @@ coreDNS:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -909,6 +973,8 @@ extraManifests:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>extraManifestHeaders</code>  <i>map[string]string</i>
@@ -931,6 +997,8 @@ extraManifestHeaders:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -955,6 +1023,8 @@ adminKubeconfig:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>allowSchedulingOnMasters</code>  <i>bool</i>
@@ -977,11 +1047,11 @@ Valid values:
   - <code>no</code>
 </div>
 
+<hr />
 
 
 
 
----
 
 ## KubeletConfig
 Appears in:
@@ -1006,6 +1076,8 @@ extraArgs:
 #         - ro
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1026,6 +1098,8 @@ image: docker.io/autonomy/kubelet:v1.19.3
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1048,6 +1122,8 @@ extraArgs:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1076,11 +1152,11 @@ extraMounts:
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## NetworkConfig
 Appears in:
@@ -1119,6 +1195,8 @@ nameservers:
 #         - test.domain.tld
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>hostname</code>  <i>string</i>
@@ -1129,6 +1207,8 @@ nameservers:
 Used to statically set the hostname for the host.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1188,6 +1268,8 @@ Routes can be repeated and includes a `Network` and `Gateway` field.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>nameservers</code>  <i>[]string</i>
@@ -1199,6 +1281,8 @@ Used to statically set the nameservers for the host.
 Defaults to `1.1.1.1` and `8.8.8.8`
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1226,11 +1310,11 @@ extraHostEntries:
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## InstallConfig
 Appears in:
@@ -1248,6 +1332,8 @@ image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image u
 bootloader: true # Indicates if a bootloader should be installed.
 wipe: false # Indicates if zeroes should be written to the `disk` before performing and installation.
 ```
+
+<hr />
 
 <div class="dd">
 
@@ -1274,6 +1360,8 @@ disk: /dev/nvme0
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>extraKernelArgs</code>  <i>[]string</i>
@@ -1296,6 +1384,8 @@ extraKernelArgs:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1316,6 +1406,8 @@ image: docker.io/<org>/installer:latest
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1338,6 +1430,8 @@ Valid values:
 
   - <code>no</code>
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1362,11 +1456,11 @@ Valid values:
   - <code>no</code>
 </div>
 
+<hr />
 
 
 
 
----
 
 ## TimeConfig
 Appears in:
@@ -1382,6 +1476,8 @@ servers:
     - time.cloudflare.com
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>disabled</code>  <i>bool</i>
@@ -1393,6 +1489,8 @@ Indicates if time (ntp) is disabled for the machine
 Defaults to `false`.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1408,11 +1506,11 @@ Defaults to `pool.ntp.org`
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## RegistriesConfig
 Appears in:
@@ -1457,6 +1555,8 @@ config:
             password: password # Optional registry authentication.
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>mirrors</code>  <i>map[string]<a href="#registrymirrorconfig">RegistryMirrorConfig</a></i>
@@ -1474,6 +1574,8 @@ Name '*' catches any registry names not specified explicitly.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>config</code>  <i>map[string]<a href="#registryconfig">RegistryConfig</a></i>
@@ -1489,11 +1591,11 @@ server certificate.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## PodCheckpointer
 Appears in:
@@ -1506,6 +1608,8 @@ Appears in:
 image: '...' # The `image` field is an override to the default pod-checkpointer image.
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1517,11 +1621,11 @@ The `image` field is an override to the default pod-checkpointer image.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## CoreDNS
 Appears in:
@@ -1534,6 +1638,8 @@ Appears in:
 image: k8s.gcr.io/coredns:1.7.0 # The `image` field is an override to the default coredns image.
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1545,11 +1651,11 @@ The `image` field is an override to the default coredns image.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## Endpoint
 Appears in:
@@ -1564,8 +1670,6 @@ https://1.2.3.4:443
 
 
 
----
-
 ## ControlPlaneConfig
 Appears in:
 
@@ -1577,6 +1681,8 @@ Appears in:
 endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 localAPIServerPort: 443 # The port that the API server listens on internally.
 ```
+
+<hr />
 
 <div class="dd">
 
@@ -1600,6 +1706,8 @@ endpoint: https://1.2.3.4:443
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>localAPIServerPort</code>  <i>int</i>
@@ -1613,11 +1721,11 @@ The default is 6443.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## APIServerConfig
 Appears in:
@@ -1637,6 +1745,8 @@ certSANs:
     - 4.5.6.7
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1647,6 +1757,8 @@ certSANs:
 The container image used in the API server manifest.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1659,6 +1771,8 @@ Extra arguments to supply to the API server.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>certSANs</code>  <i>[]string</i>
@@ -1670,11 +1784,11 @@ Extra certificate subject alternative names for the API server's certificate.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## ControllerManagerConfig
 Appears in:
@@ -1690,6 +1804,8 @@ extraArgs:
     key: value
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1700,6 +1816,8 @@ extraArgs:
 The container image used in the controller manager manifest.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1712,11 +1830,11 @@ Extra arguments to supply to the controller manager.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## ProxyConfig
 Appears in:
@@ -1733,6 +1851,8 @@ extraArgs:
     key: value
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1743,6 +1863,8 @@ extraArgs:
 The container image used in the kube-proxy manifest.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1756,6 +1878,8 @@ By default, this is 'iptables'.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -1767,11 +1891,11 @@ Extra arguments to supply to kube-proxy.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## SchedulerConfig
 Appears in:
@@ -1787,6 +1911,8 @@ extraArgs:
     key: value
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1797,6 +1923,8 @@ extraArgs:
 The container image used in the scheduler manifest.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1809,11 +1937,11 @@ Extra arguments to supply to the scheduler.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## EtcdConfig
 Appears in:
@@ -1833,6 +1961,8 @@ extraArgs:
     key: value
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1843,6 +1973,8 @@ extraArgs:
 The container image used to create the etcd service.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1867,6 +1999,8 @@ ca:
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1893,11 +2027,11 @@ Note that the following args are not allowed:
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## ClusterNetworkConfig
 Appears in:
@@ -1918,6 +2052,8 @@ podSubnets:
 serviceSubnets:
     - 10.96.0.0/12
 ```
+
+<hr />
 
 <div class="dd">
 
@@ -1949,6 +2085,8 @@ cni:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>dnsDomain</code>  <i>string</i>
@@ -1970,6 +2108,8 @@ dnsDomain: cluser.local
 
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -1993,6 +2133,8 @@ podSubnets:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>serviceSubnets</code>  <i>[]string</i>
@@ -2015,11 +2157,11 @@ serviceSubnets:
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## CNIConfig
 Appears in:
@@ -2035,6 +2177,8 @@ urls:
     - https://www.mysweethttpserver.com/supersecretcni.yaml
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>name</code>  <i>string</i>
@@ -2045,6 +2189,8 @@ urls:
 Name of CNI to use.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2057,11 +2203,11 @@ URLs containing manifests to apply for CNI.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## AdminKubeconfigConfig
 Appears in:
@@ -2073,6 +2219,8 @@ Appears in:
 ``` yaml
 certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
 ```
+
+<hr />
 
 <div class="dd">
 
@@ -2086,11 +2234,11 @@ Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for t
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## MachineDisk
 Appears in:
@@ -2107,6 +2255,8 @@ Appears in:
       mountpoint: /var/mnt/extra # Where to mount the partition.
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>device</code>  <i>string</i>
@@ -2117,6 +2267,8 @@ Appears in:
 The name of the disk to use.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2129,11 +2281,11 @@ A list of partitions to create on the disk.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## DiskPartition
 Appears in:
@@ -2142,6 +2294,8 @@ Appears in:
 - <code><a href="#machinedisk">MachineDisk</a>.partitions</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2154,6 +2308,8 @@ This size of the partition in bytes.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>mountpoint</code>  <i>string</i>
@@ -2165,11 +2321,11 @@ Where to mount the partition.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## MachineFile
 Appears in:
@@ -2185,6 +2341,8 @@ Appears in:
   op: append # The operation to use
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>content</code>  <i>string</i>
@@ -2195,6 +2353,8 @@ Appears in:
 The contents of file.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2207,6 +2367,8 @@ The file's permissions in octal.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>path</code>  <i>string</i>
@@ -2217,6 +2379,8 @@ The file's permissions in octal.
 The path of the file.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2236,11 +2400,11 @@ Valid values:
   - <code>append</code>
 </div>
 
+<hr />
 
 
 
 
----
 
 ## ExtraHost
 Appears in:
@@ -2257,6 +2421,8 @@ Appears in:
     - test.domain.tld
 ```
 
+<hr />
+
 <div class="dd">
 
 <code>ip</code>  <i>string</i>
@@ -2267,6 +2433,8 @@ Appears in:
 The IP of the host.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2279,11 +2447,11 @@ The host alias.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## Device
 Appears in:
@@ -2292,6 +2460,8 @@ Appears in:
 - <code><a href="#networkconfig">NetworkConfig</a>.interfaces</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2304,6 +2474,8 @@ The interface name.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>cidr</code>  <i>string</i>
@@ -2314,6 +2486,8 @@ The interface name.
 The CIDR to use.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2327,6 +2501,8 @@ If used in combination with DHCP, these routes will be appended to routes return
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>bond</code>  <i><a href="#bond">Bond</a></i>
@@ -2338,6 +2514,8 @@ Bond specific options.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>vlans</code>  <i>[]<a href="#vlan">Vlan</a></i>
@@ -2348,6 +2526,8 @@ Bond specific options.
 VLAN specific options.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2361,6 +2541,8 @@ If used in combination with DHCP, this will override any MTU settings returned f
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>dhcp</code>  <i>bool</i>
@@ -2371,6 +2553,8 @@ If used in combination with DHCP, this will override any MTU settings returned f
 Indicates if DHCP should be used.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2383,6 +2567,8 @@ Indicates if the interface should be ignored.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>dummy</code>  <i>bool</i>
@@ -2393,6 +2579,8 @@ Indicates if the interface should be ignored.
 Indicates if the interface is a dummy interface.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2406,11 +2594,11 @@ DHCP *must* be set to true for these to take effect.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## DHCPOptions
 Appears in:
@@ -2419,6 +2607,8 @@ Appears in:
 - <code><a href="#device">Device</a>.dhcpOptions</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2431,11 +2621,11 @@ The priority of all routes received via DHCP
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## Bond
 Appears in:
@@ -2444,6 +2634,8 @@ Appears in:
 - <code><a href="#device">Device</a>.bond</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2455,6 +2647,8 @@ Appears in:
 The interfaces that make up the bond.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2468,6 +2662,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>mode</code>  <i>string</i>
@@ -2479,6 +2675,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2492,6 +2690,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>lacpRate</code>  <i>string</i>
@@ -2503,6 +2703,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2516,6 +2718,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>arpValidate</code>  <i>string</i>
@@ -2527,6 +2731,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2540,6 +2746,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>primary</code>  <i>string</i>
@@ -2551,6 +2759,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2564,6 +2774,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>failOverMac</code>  <i>string</i>
@@ -2575,6 +2787,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2588,6 +2802,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>miimon</code>  <i>uint32</i>
@@ -2599,6 +2815,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2612,6 +2830,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>downdelay</code>  <i>uint32</i>
@@ -2623,6 +2843,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2636,6 +2858,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>resendIgmp</code>  <i>uint32</i>
@@ -2647,6 +2871,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2660,6 +2886,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>lpInterval</code>  <i>uint32</i>
@@ -2671,6 +2899,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2684,6 +2914,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>numPeerNotif</code>  <i>uint8</i>
@@ -2695,6 +2927,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2708,6 +2942,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>allSlavesActive</code>  <i>uint8</i>
@@ -2719,6 +2955,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2732,6 +2970,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>adActorSysPrio</code>  <i>uint16</i>
@@ -2743,6 +2983,8 @@ A bond option.
 Please see the official kernel documentation.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2756,6 +2998,8 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>peerNotifyDelay</code>  <i>uint32</i>
@@ -2768,11 +3012,11 @@ Please see the official kernel documentation.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## Vlan
 Appears in:
@@ -2781,6 +3025,8 @@ Appears in:
 - <code><a href="#device">Device</a>.vlans</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2793,6 +3039,8 @@ The CIDR to use.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>routes</code>  <i>[]<a href="#route">Route</a></i>
@@ -2803,6 +3051,8 @@ The CIDR to use.
 A list of routes associated with the VLAN.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2815,6 +3065,8 @@ Indicates if DHCP should be used.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>vlanId</code>  <i>uint16</i>
@@ -2826,11 +3078,11 @@ The VLAN's ID.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## Route
 Appears in:
@@ -2841,6 +3093,8 @@ Appears in:
 - <code><a href="#vlan">Vlan</a>.routes</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2853,6 +3107,8 @@ The route's network.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>gateway</code>  <i>string</i>
@@ -2864,11 +3120,11 @@ The route's gateway.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## RegistryMirrorConfig
 Appears in:
@@ -2877,6 +3133,8 @@ Appears in:
 - <code><a href="#registriesconfig">RegistriesConfig</a>.mirrors</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2891,11 +3149,11 @@ port and path (if path is not set, it defaults to `/v2`).
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## RegistryConfig
 Appears in:
@@ -2904,6 +3162,8 @@ Appears in:
 - <code><a href="#registriesconfig">RegistriesConfig</a>.config</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2916,6 +3176,8 @@ The TLS configuration for this registry.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>auth</code>  <i><a href="#registryauthconfig">RegistryAuthConfig</a></i>
@@ -2927,11 +3189,11 @@ The auth configuration for this registry.
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## RegistryAuthConfig
 Appears in:
@@ -2940,6 +3202,8 @@ Appears in:
 - <code><a href="#registryconfig">RegistryConfig</a>.auth</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -2953,6 +3217,8 @@ The meaning of each field is the same with the corresponding field in .docker/co
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>password</code>  <i>string</i>
@@ -2964,6 +3230,8 @@ Optional registry authentication.
 The meaning of each field is the same with the corresponding field in .docker/config.json.
 
 </div>
+
+<hr />
 
 <div class="dd">
 
@@ -2977,6 +3245,8 @@ The meaning of each field is the same with the corresponding field in .docker/co
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>identityToken</code>  <i>string</i>
@@ -2989,11 +3259,11 @@ The meaning of each field is the same with the corresponding field in .docker/co
 
 </div>
 
+<hr />
 
 
 
 
----
 
 ## RegistryTLSConfig
 Appears in:
@@ -3002,6 +3272,8 @@ Appears in:
 - <code><a href="#registryconfig">RegistryConfig</a>.tls</code>
 
 
+
+<hr />
 
 <div class="dd">
 
@@ -3027,6 +3299,8 @@ clientIdentity:
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>ca</code>  <i>Base64Bytes</i>
@@ -3039,6 +3313,8 @@ Certificate should be base64-encoded.
 
 </div>
 
+<hr />
+
 <div class="dd">
 
 <code>insecureSkipVerify</code>  <i>bool</i>
@@ -3050,8 +3326,8 @@ Skip TLS server certificate verification (not recommended).
 
 </div>
 
+<hr />
 
 
 
 
----

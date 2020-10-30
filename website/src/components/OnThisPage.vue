@@ -4,15 +4,14 @@
     <div class="h-screen overflow-y-auto">
       <ul>
         <li
-          v-for="(heading, index) in headings"
+          v-for="heading in headings"
           :key="`${page.path}${heading.anchor}`"
           :class="{
-            'border-t border-dashed border-ui-border':
-              index > 0 && heading.depth === 2,
+            'mt-3': heading.depth === 2,
             'font-semibold': heading.depth === 2,
             [`depth-${heading.depth}`]: true,
           }"
-          class="pl-4 pb-2"
+          class="pl-4 pb-1"
         >
           <g-link
             :to="`${page.path}${heading.anchor}`"
