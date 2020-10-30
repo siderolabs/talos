@@ -60,7 +60,7 @@ With a [QEMU](qemu) local cluster, a bridge interface is created on the host.
 As registry containers expose their ports on the host, we can use bridge IP to direct proxy requests.
 
 ```bash
-sudo talosctl cluster create --provisioner firecracker \
+sudo talosctl cluster create --provisioner qemu \
     --registry-mirror docker.io=http://10.5.0.1:5000 \
     --registry-mirror k8s.gcr.io=http://10.5.0.1:5001 \
     --registry-mirror quay.io=http://10.5.0.1:5002 \

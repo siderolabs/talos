@@ -301,18 +301,29 @@ network:
     hostname: worker-1 # Used to statically set the hostname for the host.
     # `interfaces` is used to define the network interface configuration.
     interfaces:
-        - interface: "" # The interface name.
-          cidr: "" # The CIDR to use.
+        - interface: eth0 # The interface name.
+          cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
           # A list of routes associated with the interface.
-          routes: []
-          bond: null # Bond specific options.
-          # VLAN specific options.
-          vlans: []
-          mtu: 0 # The interface's MTU.
-          dhcp: false # Indicates if DHCP should be used.
-          ignore: false # Indicates if the interface should be ignored.
-          dummy: false # Indicates if the interface is a dummy interface.
-          dhcpOptions: null # DHCP specific options.
+          routes:
+            - network: 0.0.0.0/0 # The route's network.
+              gateway: 192.168.2.1 # The route's gateway.
+          mtu: 1500 # The interface's MTU.
+
+          # # Bond specific options.
+          # bond:
+          #     # The interfaces that make up the bond.
+          #     interfaces:
+          #         - eth0
+          #         - eth1
+          #     mode: 802.3ad # A bond option.
+          #     lacpRate: fast # A bond option.
+
+          # # Indicates if DHCP should be used to configure the interface.
+          # dhcp: true
+
+          # # DHCP specific options.
+          # dhcpOptions:
+          #     routeMetric: 1024 # The priority of all routes received via DHCP.
     # Used to statically set the nameservers for the host.
     nameservers:
         - 9.8.7.6
@@ -573,24 +584,10 @@ registries:
             # List of endpoints (URLs) for registry mirrors to use.
             endpoints:
                 - https://registry.local
-        ghcr.io:
-            # List of endpoints (URLs) for registry mirrors to use.
-            endpoints:
-                - https://registry.insecure
-                - https://ghcr.io/v2/
     # Specifies TLS & auth configuration for HTTPS image registries.
     config:
-        registry.insecure:
-            # The TLS configuration for this registry.
-            tls:
-                insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
-
-                # # Enable mutual TLS authentication with the registry.
-                # clientIdentity:
-                #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-                #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
         registry.local:
-            # The TLS configuration for this registry.
+            # The TLS configuration for the registry.
             tls:
                 # Enable mutual TLS authentication with the registry.
                 clientIdentity:
@@ -1175,18 +1172,29 @@ Appears in:
 hostname: worker-1 # Used to statically set the hostname for the host.
 # `interfaces` is used to define the network interface configuration.
 interfaces:
-    - interface: "" # The interface name.
-      cidr: "" # The CIDR to use.
+    - interface: eth0 # The interface name.
+      cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
       # A list of routes associated with the interface.
-      routes: []
-      bond: null # Bond specific options.
-      # VLAN specific options.
-      vlans: []
-      mtu: 0 # The interface's MTU.
-      dhcp: false # Indicates if DHCP should be used.
-      ignore: false # Indicates if the interface should be ignored.
-      dummy: false # Indicates if the interface is a dummy interface.
-      dhcpOptions: null # DHCP specific options.
+      routes:
+        - network: 0.0.0.0/0 # The route's network.
+          gateway: 192.168.2.1 # The route's gateway.
+      mtu: 1500 # The interface's MTU.
+
+      # # Bond specific options.
+      # bond:
+      #     # The interfaces that make up the bond.
+      #     interfaces:
+      #         - eth0
+      #         - eth1
+      #     mode: 802.3ad # A bond option.
+      #     lacpRate: fast # A bond option.
+
+      # # Indicates if DHCP should be used to configure the interface.
+      # dhcp: true
+
+      # # DHCP specific options.
+      # dhcpOptions:
+      #     routeMetric: 1024 # The priority of all routes received via DHCP.
 # Used to statically set the nameservers for the host.
 nameservers:
     - 9.8.7.6
@@ -1227,50 +1235,38 @@ Used to statically set the hostname for the host.
 By default all network interfaces will attempt a DHCP discovery.
 This can be further tuned through this configuration parameter.
 
-#### machine.network.interfaces.interface
 
-This is the interface name that should be configured.
 
-#### machine.network.interfaces.cidr
+Examples:
 
-`cidr` is used to specify a static IP address to the interface.
-This should be in proper CIDR notation ( `192.168.2.5/24` ).
 
-> Note: This option is mutually exclusive with DHCP.
+``` yaml
+interfaces:
+    - interface: eth0 # The interface name.
+      cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
+      # A list of routes associated with the interface.
+      routes:
+        - network: 0.0.0.0/0 # The route's network.
+          gateway: 192.168.2.1 # The route's gateway.
+      mtu: 1500 # The interface's MTU.
 
-#### machine.network.interfaces.dhcp
+      # # Bond specific options.
+      # bond:
+      #     # The interfaces that make up the bond.
+      #     interfaces:
+      #         - eth0
+      #         - eth1
+      #     mode: 802.3ad # A bond option.
+      #     lacpRate: fast # A bond option.
 
-`dhcp` is used to specify that this device should be configured via DHCP.
+      # # Indicates if DHCP should be used to configure the interface.
+      # dhcp: true
 
-The following DHCP options are supported:
+      # # DHCP specific options.
+      # dhcpOptions:
+      #     routeMetric: 1024 # The priority of all routes received via DHCP.
+```
 
-- `OptionClasslessStaticRoute`
-- `OptionDomainNameServer`
-- `OptionDNSDomainSearchList`
-- `OptionHostName`
-
-> Note: This option is mutually exclusive with CIDR.
->
-> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
-> in order for Talos to skip configuration of addresses.
-> All other options will still apply.
-
-#### machine.network.interfaces.ignore
-
-`ignore` is used to exclude a specific interface from configuration.
-This parameter is optional.
-
-#### machine.network.interfaces.dummy
-
-`dummy` is used to specify that this interface should be a virtual-only, dummy interface.
-This parameter is optional.
-
-#### machine.network.interfaces.routes
-
-`routes` is used to specify static routes that may be necessary.
-This parameter is optional.
-
-Routes can be repeated and includes a `Network` and `Gateway` field.
 
 </div>
 
@@ -1285,6 +1281,18 @@ Routes can be repeated and includes a `Network` and `Gateway` field.
 
 Used to statically set the nameservers for the host.
 Defaults to `1.1.1.1` and `8.8.8.8`
+
+
+
+Examples:
+
+
+``` yaml
+nameservers:
+    - 8.8.8.8
+    - 1.1.1.1
+```
+
 
 </div>
 
@@ -1532,24 +1540,10 @@ mirrors:
         # List of endpoints (URLs) for registry mirrors to use.
         endpoints:
             - https://registry.local
-    ghcr.io:
-        # List of endpoints (URLs) for registry mirrors to use.
-        endpoints:
-            - https://registry.insecure
-            - https://ghcr.io/v2/
 # Specifies TLS & auth configuration for HTTPS image registries.
 config:
-    registry.insecure:
-        # The TLS configuration for this registry.
-        tls:
-            insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
-
-            # # Enable mutual TLS authentication with the registry.
-            # clientIdentity:
-            #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-            #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
     registry.local:
-        # The TLS configuration for this registry.
+        # The TLS configuration for the registry.
         tls:
             # Enable mutual TLS authentication with the registry.
             clientIdentity:
@@ -1578,6 +1572,21 @@ Registry name is the first segment of image identifier, with 'docker.io'
 being default one.
 Name '*' catches any registry names not specified explicitly.
 
+
+
+Examples:
+
+
+``` yaml
+mirrors:
+    ghcr.io:
+        # List of endpoints (URLs) for registry mirrors to use.
+        endpoints:
+            - https://registry.insecure
+            - https://ghcr.io/v2/
+```
+
+
 </div>
 
 <hr />
@@ -1594,6 +1603,30 @@ Mutual TLS can be enabled with 'clientIdentity' option.
 
 TLS configuration can be skipped if registry has trusted
 server certificate.
+
+
+
+Examples:
+
+
+``` yaml
+config:
+    registry.insecure:
+        # The TLS configuration for the registry.
+        tls:
+            insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
+
+            # # Enable mutual TLS authentication with the registry.
+            # clientIdentity:
+            #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+            #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+
+        # # The auth configuration for this registry.
+        # auth:
+        #     username: username # Optional registry authentication.
+        #     password: password # Optional registry authentication.
+```
+
 
 </div>
 
@@ -2486,6 +2519,31 @@ Appears in:
 - <code><a href="#networkconfig">NetworkConfig</a>.interfaces</code>
 
 
+``` yaml
+- interface: eth0 # The interface name.
+  cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
+  # A list of routes associated with the interface.
+  routes:
+    - network: 0.0.0.0/0 # The route's network.
+      gateway: 192.168.2.1 # The route's gateway.
+  mtu: 1500 # The interface's MTU.
+
+  # # Bond specific options.
+  # bond:
+  #     # The interfaces that make up the bond.
+  #     interfaces:
+  #         - eth0
+  #         - eth1
+  #     mode: 802.3ad # A bond option.
+  #     lacpRate: fast # A bond option.
+
+  # # Indicates if DHCP should be used to configure the interface.
+  # dhcp: true
+
+  # # DHCP specific options.
+  # dhcpOptions:
+  #     routeMetric: 1024 # The priority of all routes received via DHCP.
+```
 
 <hr />
 
@@ -2498,6 +2556,16 @@ Appears in:
 
 The interface name.
 
+
+
+Examples:
+
+
+``` yaml
+interface: eth0
+```
+
+
 </div>
 
 <hr />
@@ -2509,7 +2577,20 @@ The interface name.
 </div>
 <div class="dt">
 
-The CIDR to use.
+Assigns a static IP address to the interface.
+This should be in proper CIDR notation.
+
+> Note: This option is mutually exclusive with DHCP option.
+
+
+
+Examples:
+
+
+``` yaml
+cidr: 10.5.0.0/16
+```
+
 
 </div>
 
@@ -2525,6 +2606,20 @@ The CIDR to use.
 A list of routes associated with the interface.
 If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.
 
+
+
+Examples:
+
+
+``` yaml
+routes:
+    - network: 0.0.0.0/0 # The route's network.
+      gateway: 10.5.0.1 # The route's gateway.
+    - network: 10.2.0.0/16 # The route's network.
+      gateway: 10.2.0.1 # The route's gateway.
+```
+
+
 </div>
 
 <hr />
@@ -2537,6 +2632,22 @@ If used in combination with DHCP, these routes will be appended to routes return
 <div class="dt">
 
 Bond specific options.
+
+
+
+Examples:
+
+
+``` yaml
+bond:
+    # The interfaces that make up the bond.
+    interfaces:
+        - eth0
+        - eth1
+    mode: 802.3ad # A bond option.
+    lacpRate: fast # A bond option.
+```
+
 
 </div>
 
@@ -2576,7 +2687,29 @@ If used in combination with DHCP, this will override any MTU settings returned f
 </div>
 <div class="dt">
 
-Indicates if DHCP should be used.
+Indicates if DHCP should be used to configure the interface.
+The following DHCP options are supported:
+
+- `OptionClasslessStaticRoute`
+- `OptionDomainNameServer`
+- `OptionDNSDomainSearchList`
+- `OptionHostName`
+
+> Note: This option is mutually exclusive with CIDR.
+>
+> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
+> in order for Talos to skip configuration of addresses.
+> All other options will still apply.
+
+
+
+Examples:
+
+
+``` yaml
+dhcp: true
+```
+
 
 </div>
 
@@ -2589,7 +2722,7 @@ Indicates if DHCP should be used.
 </div>
 <div class="dt">
 
-Indicates if the interface should be ignored.
+Indicates if the interface should be ignored (skips configuration).
 
 </div>
 
@@ -2603,6 +2736,7 @@ Indicates if the interface should be ignored.
 <div class="dt">
 
 Indicates if the interface is a dummy interface.
+`dummy` is used to specify that this interface should be a virtual-only, dummy interface.
 
 </div>
 
@@ -2616,7 +2750,18 @@ Indicates if the interface is a dummy interface.
 <div class="dt">
 
 DHCP specific options.
-DHCP *must* be set to true for these to take effect.
+`dhcp` *must* be set to true for these to take effect.
+
+
+
+Examples:
+
+
+``` yaml
+dhcpOptions:
+    routeMetric: 1024 # The priority of all routes received via DHCP.
+```
+
 
 </div>
 
@@ -2633,6 +2778,9 @@ Appears in:
 - <code><a href="#device">Device</a>.dhcpOptions</code>
 
 
+``` yaml
+routeMetric: 1024 # The priority of all routes received via DHCP.
+```
 
 <hr />
 
@@ -2643,7 +2791,7 @@ Appears in:
 </div>
 <div class="dt">
 
-The priority of all routes received via DHCP
+The priority of all routes received via DHCP.
 
 </div>
 
@@ -2660,6 +2808,14 @@ Appears in:
 - <code><a href="#device">Device</a>.bond</code>
 
 
+``` yaml
+# The interfaces that make up the bond.
+interfaces:
+    - eth0
+    - eth1
+mode: 802.3ad # A bond option.
+lacpRate: fast # A bond option.
+```
 
 <hr />
 
@@ -3119,6 +3275,12 @@ Appears in:
 - <code><a href="#vlan">Vlan</a>.routes</code>
 
 
+``` yaml
+- network: 0.0.0.0/0 # The route's network.
+  gateway: 10.5.0.1 # The route's gateway.
+- network: 10.2.0.0/16 # The route's network.
+  gateway: 10.2.0.1 # The route's gateway.
+```
 
 <hr />
 
@@ -3159,6 +3321,13 @@ Appears in:
 - <code><a href="#registriesconfig">RegistriesConfig</a>.mirrors</code>
 
 
+``` yaml
+ghcr.io:
+    # List of endpoints (URLs) for registry mirrors to use.
+    endpoints:
+        - https://registry.insecure
+        - https://ghcr.io/v2/
+```
 
 <hr />
 
@@ -3188,6 +3357,22 @@ Appears in:
 - <code><a href="#registriesconfig">RegistriesConfig</a>.config</code>
 
 
+``` yaml
+registry.insecure:
+    # The TLS configuration for the registry.
+    tls:
+        insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
+
+        # # Enable mutual TLS authentication with the registry.
+        # clientIdentity:
+        #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+        #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+
+    # # The auth configuration for this registry.
+    # auth:
+    #     username: username # Optional registry authentication.
+    #     password: password # Optional registry authentication.
+```
 
 <hr />
 
@@ -3198,7 +3383,31 @@ Appears in:
 </div>
 <div class="dt">
 
-The TLS configuration for this registry.
+The TLS configuration for the registry.
+
+
+
+Examples:
+
+
+``` yaml
+tls:
+    # Enable mutual TLS authentication with the registry.
+    clientIdentity:
+        crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+        key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+```
+
+``` yaml
+tls:
+    insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
+
+    # # Enable mutual TLS authentication with the registry.
+    # clientIdentity:
+    #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+    #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+```
+
 
 </div>
 
@@ -3212,6 +3421,18 @@ The TLS configuration for this registry.
 <div class="dt">
 
 The auth configuration for this registry.
+
+
+
+Examples:
+
+
+``` yaml
+auth:
+    username: username # Optional registry authentication.
+    password: password # Optional registry authentication.
+```
+
 
 </div>
 
@@ -3228,6 +3449,10 @@ Appears in:
 - <code><a href="#registryconfig">RegistryConfig</a>.auth</code>
 
 
+``` yaml
+username: username # Optional registry authentication.
+password: password # Optional registry authentication.
+```
 
 <hr />
 
@@ -3298,6 +3523,20 @@ Appears in:
 - <code><a href="#registryconfig">RegistryConfig</a>.tls</code>
 
 
+``` yaml
+# Enable mutual TLS authentication with the registry.
+clientIdentity:
+    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+```
+``` yaml
+insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
+
+# # Enable mutual TLS authentication with the registry.
+# clientIdentity:
+#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+```
 
 <hr />
 
