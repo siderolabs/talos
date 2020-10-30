@@ -1,7 +1,7 @@
 <template>
   <div v-if="headings.length > 0">
     <h3 class="text-sm tracking-wide uppercase border-none">On this page</h3>
-    <div class="h-screen overflow-y-auto">
+    <div class="h-screen">
       <ul>
         <li
           v-for="heading in headings"

@@ -28,7 +28,7 @@
             <g-link
               v-for="link in settings.nav.links"
               :key="link.path"
-              :to="link.path"
+              :to="pathTo(link)"
               class="block p-1 font-medium nav-link text-ui-typo hover:text-ui-primary"
             >
               {{ link.title }}
@@ -99,6 +99,11 @@ query {
           title
         }
       }
+      dropdownOptions {
+        version
+        url
+        latest
+      }
     }
   }
 }
@@ -136,6 +141,26 @@ export default {
     },
     settings() {
       return this.meta.settings;
+    },
+  },
+
+  methods: {
+    pathTo(link) {
+      if (link.path) {
+        return link.path;
+      }
+
+      let url = "";
+
+      this.meta.settings.dropdownOptions.forEach((element) => {
+        if (element.latest) {
+          url = element.url;
+
+          return;
+        }
+      });
+
+      return url;
     },
   },
 };

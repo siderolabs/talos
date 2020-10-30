@@ -251,7 +251,7 @@ var (
 			Type:        "bind",
 			Options: []string{
 				"rshared",
-				"ro",
+				"rw",
 			},
 		},
 	}
@@ -260,8 +260,8 @@ var (
 		{
 			HostIP: "192.168.1.100",
 			HostAliases: []string{
-				"test",
-				"test.domain.tld",
+				"example",
+				"example.domain.tld",
 			},
 		},
 	}
@@ -290,7 +290,7 @@ var (
 	clusterCustomCNIExample = &CNIConfig{
 		CNIName: "custom",
 		CNIUrls: []string{
-			"https://www.mysweethttpserver.com/supersecretcni.yaml",
+			"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
 		},
 	}
 )
@@ -303,7 +303,7 @@ type Config struct {
 	//     - "v1alpha1"
 	ConfigVersion string `yaml:"version"`
 	//   description: |
-	//     Enable verbose logging.
+	//     Enable verbose logging to the console.
 	//   values:
 	//     - true
 	//     - yes
@@ -357,7 +357,7 @@ type MachineConfig struct {
 	//   examples:
 	//     - name: example token
 	//       value: "\"328hom.uqjzh6jnn2eie9oi\""
-	MachineToken string `yaml:"token"` // Warning: It is important to ensure that this token is correct since a machine's certificate has a short TTL by default
+	MachineToken string `yaml:"token"` // Warning: It is important to ensure that this token is correct since a machine's certificate has a short TTL by default.
 	//   description: |
 	//     The root certificate authority of the PKI.
 	//     It is composed of a base64 encoded `crt` and `key`.
@@ -379,7 +379,7 @@ type MachineConfig struct {
 	//       value: machineKubeletExample
 	MachineKubelet *KubeletConfig `yaml:"kubelet,omitempty"`
 	//   description: |
-	//     Used to configure the machine's network.
+	//     Provides machine specific network configuration options.
 	//   examples:
 	//     - name: Network definition example.
 	//       value: machineNetworkConfigExample
@@ -387,14 +387,14 @@ type MachineConfig struct {
 	//   description: |
 	//     Used to partition, format and mount additional disks.
 	//     Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
-	//     Note that the partitioning and formating is done only once, if and only if no existing  partitions are found.
-	//     If `size:` is omitted, the partition is sized to occupy full disk.
+	//     Note that the partitioning and formating is done only once, if and only if no existing partitions are found.
+	//     If `size:` is omitted, the partition is sized to occupy the full disk.
 	//   examples:
 	//     - name: MachineDisks list example.
 	//       value: machineDisksExample
 	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
-	//     Used to provide instructions for bare-metal installations.
+	//     Used to provide instructions for installations.
 	//   examples:
 	//     - name: MachineInstall config usage example.
 	//       value: machineInstallExample
@@ -411,8 +411,8 @@ type MachineConfig struct {
 	//        value: machineFilesExample
 	MachineFiles []*MachineFile `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
 	//   description: |
-	//     The `env` field allows for the addition of environment variables to a machine.
-	//     All environment variables are set on the machine in addition to every service.
+	//     The `env` field allows for the addition of environment variables.
+	//     All environment variables are set on PID 1 in addition to every service.
 	//   values:
 	//     - "`GRPC_GO_LOG_VERBOSITY_LEVEL`"
 	//     - "`GRPC_GO_LOG_SEVERITY_LEVEL`"
@@ -442,10 +442,10 @@ type MachineConfig struct {
 	//
 	//     Automatically generates matching CRI configuration for registry mirrors.
 	//
-	//     Section `mirrors` allows to redirect requests for images to non-default registry,
+	//     The `mirrors` section allows to redirect requests for images to non-default registry,
 	//     which might be local registry or caching mirror.
 	//
-	//     Section `config` provides a way to authenticate to the registry with TLS client
+	//     The `config` section provides a way to authenticate to the registry with TLS client
 	//     identity, provide registry CA, or authentication information.
 	//     Authentication information has same meaning with the corresponding field in `.docker/config.json`.
 	//
@@ -460,20 +460,20 @@ type ClusterConfig struct {
 	//   description: |
 	//     Provides control plane specific configuration options.
 	//   examples:
-	//     - name: Setting controlplain endpoint address to 1.2.3.4 and port to 443 example.
+	//     - name: Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.
 	//       value: clusterControlPlaneExample
 	ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
 	//   description: |
 	//     Configures the cluster's name.
 	ClusterName string `yaml:"clusterName,omitempty"`
 	//   description: |
-	//     Provides cluster network configuration.
+	//     Provides cluster specific network configuration options.
 	//   examples:
-	//     - name: Configuring with flannel cni and setting up subnets.
+	//     - name: Configuring with flannel CNI and setting up subnets.
 	//       value:  clusterNetworkExample
 	ClusterNetwork *ClusterNetworkConfig `yaml:"network,omitempty"`
 	//   description: |
-	//     The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/).
+	//     The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.
 	//   examples:
 	//     - name: Bootstrap token example (do not use in production!).
 	//       value: '"wlzjyw.bei2zfylhs2by0wd"'
@@ -531,8 +531,8 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: >
 	//        []string{
-	//         "https://www.mysweethttpserver.com/manifest1.yaml",
-	//         "https://www.mysweethttpserver.com/manifest2.yaml",
+	//         "https://www.example.com/manifest1.yaml",
+	//         "https://www.example.com/manifest2.yaml",
 	//        }
 	ExtraManifests []string `yaml:"extraManifests,omitempty"`
 	//   description: |
@@ -585,7 +585,7 @@ type KubeletConfig struct {
 // NetworkConfig reperesents the machine's networking config values.
 type NetworkConfig struct {
 	//   description: |
-	//     Used to statically set the hostname for the host.
+	//     Used to statically set the hostname for the machine.
 	NetworkHostname string `yaml:"hostname,omitempty"`
 	//   description: |
 	//     `interfaces` is used to define the network interface configuration.
@@ -595,13 +595,13 @@ type NetworkConfig struct {
 	//     - value: machineNetworkConfigExample.NetworkInterfaces
 	NetworkInterfaces []*Device `yaml:"interfaces,omitempty"`
 	//   description: |
-	//     Used to statically set the nameservers for the host.
+	//     Used to statically set the nameservers for the machine.
 	//     Defaults to `1.1.1.1` and `8.8.8.8`
 	//   examples:
 	//     - value: '[]string{"8.8.8.8", "1.1.1.1"}'
 	NameServers []string `yaml:"nameservers,omitempty"`
 	//   description: |
-	//     Allows for extra entries to be added to /etc/hosts file
+	//     Allows for extra entries to be added to the `/etc/hosts` file
 	//   examples:
 	//     - value: networkConfigExtraHostsExample
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
@@ -610,20 +610,20 @@ type NetworkConfig struct {
 // InstallConfig represents the installation options for preparing a node.
 type InstallConfig struct {
 	//   description: |
-	//     The disk used to install the bootloader, and ephemeral partitions.
+	//     The disk used for installations.
 	//   examples:
 	//     - value: '"/dev/sda"'
 	//     - value: '"/dev/nvme0"'
 	InstallDisk string `yaml:"disk,omitempty"`
 	//   description: |
-	//     Allows for supplying extra kernel args to the bootloader config.
+	//     Allows for supplying extra kernel args via the bootloader.
 	//   examples:
 	//     - value: '[]string{"a=b"}'
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
 	//   description: |
 	//     Allows for supplying the image used to perform the installation.
 	//   examples:
-	//     - value: '"docker.io/<org>/installer:latest"'
+	//     - value: '"docker.io/<org>/<image>:<tag>"'
 	InstallImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Indicates if a bootloader should be installed.
@@ -634,7 +634,7 @@ type InstallConfig struct {
 	//     - no
 	InstallBootloader bool `yaml:"bootloader,omitempty"`
 	//   description: |
-	//     Indicates if zeroes should be written to the `disk` before performing and installation.
+	//     Indicates if the installation disk should be wiped at installation time.
 	//     Defaults to `true`.
 	//   values:
 	//     - true
@@ -644,18 +644,16 @@ type InstallConfig struct {
 	InstallWipe bool `yaml:"wipe"`
 }
 
-// TimeConfig represents the options for configuring time on a node.
+// TimeConfig represents the options for configuring time on a machine.
 type TimeConfig struct {
 	//   description: |
-	//     Indicates if time (ntp) is disabled for the machine
+	//     Indicates if the time service is disabled for the machine.
 	//     Defaults to `false`.
 	TimeDisabled bool `yaml:"disabled"`
 	//   description: |
-	//     Specifies time (ntp) servers to use for setting system time.
+	//     Specifies time (NTP) servers to use for setting the system time.
 	//     Defaults to `pool.ntp.org`
-	//
-	//     > Note: This parameter only supports a single time server
-	TimeServers []string `yaml:"servers,omitempty"`
+	TimeServers []string `yaml:"servers,omitempty"` // This parameter only supports a single time server.
 }
 
 // RegistriesConfig represents the image pull options.
@@ -667,7 +665,7 @@ type RegistriesConfig struct {
 	//
 	//     Registry name is the first segment of image identifier, with 'docker.io'
 	//     being default one.
-	//     Name '*' catches any registry names not specified explicitly.
+	//     To catch any registry names not specified explicitly, use '*'.
 	//   examples:
 	//     - value: machineConfigRegistryMirrorsExample
 	RegistryMirrors map[string]*RegistryMirrorConfig `yaml:"mirrors,omitempty"`
@@ -689,19 +687,19 @@ type PodCheckpointer struct {
 	PodCheckpointerImage string `yaml:"image,omitempty"`
 }
 
-// CoreDNS represents the coredns config values.
+// CoreDNS represents the CoreDNS config values.
 type CoreDNS struct {
 	//   description: |
 	//     The `image` field is an override to the default coredns image.
 	CoreDNSImage string `yaml:"image,omitempty"`
 }
 
-// Endpoint struct holds the endpoint url parsed out of machine config.
+// Endpoint represents the endpoint URL parsed out of the machine config.
 type Endpoint struct {
 	*url.URL
 }
 
-// UnmarshalYAML is a custom unmarshaller for the endpoint struct.
+// UnmarshalYAML is a custom unmarshaller for `Endpoint`.
 func (e *Endpoint) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var endpoint string
 
@@ -719,12 +717,12 @@ func (e *Endpoint) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// MarshalYAML is a custom unmarshaller for the endpoint struct.
+// MarshalYAML is a custom unmarshaller for `Endpoint`.
 func (e *Endpoint) MarshalYAML() (interface{}, error) {
 	return e.URL.String(), nil
 }
 
-// ControlPlaneConfig represents control plane config vals.
+// ControlPlaneConfig represents the control plane configuration options.
 type ControlPlaneConfig struct {
 	//   description: |
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
@@ -735,11 +733,11 @@ type ControlPlaneConfig struct {
 	//   description: |
 	//     The port that the API server listens on internally.
 	//     This may be different than the port portion listed in the endpoint field above.
-	//     The default is 6443.
+	//     The default is `6443`.
 	LocalAPIServerPort int `yaml:"localAPIServerPort,omitempty"`
 }
 
-// APIServerConfig represents kube apiserver config vals.
+// APIServerConfig represents the kube apiserver configuration options.
 type APIServerConfig struct {
 	//   description: |
 	//     The container image used in the API server manifest.
@@ -752,7 +750,7 @@ type APIServerConfig struct {
 	CertSANs []string `yaml:"certSANs,omitempty"`
 }
 
-// ControllerManagerConfig represents kube controller manager config vals.
+// ControllerManagerConfig represents the kube controller manager configuration options.
 type ControllerManagerConfig struct {
 	//   description: |
 	//     The container image used in the controller manager manifest.
@@ -762,21 +760,21 @@ type ControllerManagerConfig struct {
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
-// ProxyConfig represents the kube proxy configuration values.
+// ProxyConfig represents the kube proxy configuration options.
 type ProxyConfig struct {
 	//   description: |
 	//     The container image used in the kube-proxy manifest.
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     proxy mode of kube-proxy.
-	//     By default, this is 'iptables'.
+	//     The default is 'iptables'.
 	ModeConfig string `yaml:"mode,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to kube-proxy.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
-// SchedulerConfig represents kube scheduler config vals.
+// SchedulerConfig represents the kube scheduler configuration options.
 type SchedulerConfig struct {
 	//   description: |
 	//     The container image used in the scheduler manifest.
@@ -786,7 +784,7 @@ type SchedulerConfig struct {
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
-// EtcdConfig represents etcd config vals.
+// EtcdConfig represents the etcd configuration options.
 type EtcdConfig struct {
 	//   description: |
 	//     The container image used to create the etcd service.
@@ -822,15 +820,15 @@ type EtcdConfig struct {
 	EtcdExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
 }
 
-// ClusterNetworkConfig represents kube networking config vals.
+// ClusterNetworkConfig represents kube networking configuration options.
 type ClusterNetworkConfig struct {
 	//   description: |
 	//     The CNI used.
 	//     Composed of "name" and "url".
-	//     The "name" key only supports upstream bootkube options of "flannel" or "custom".
+	//     The "name" key only supports options of "flannel" or "custom".
 	//     URLs is only used if name is equal to "custom".
-	//     URLs should point to a single yaml file that will get deployed.
-	//     Empty struct or any other name will default to bootkube's flannel.
+	//     URLs should point to the set of YAML files to be deployed.
+	//     An empty struct or any other name will default to bootkube's flannel.
 	//   examples:
 	//     - value: clusterCustomCNIExample
 	CNI *CNIConfig `yaml:"cni,omitempty"`
@@ -855,13 +853,13 @@ type ClusterNetworkConfig struct {
 	ServiceSubnet []string `yaml:"serviceSubnets"`
 }
 
-// CNIConfig contains the info about which CNI we'll deploy.
+// CNIConfig represents the CNI configuration options.
 type CNIConfig struct {
 	//   description: |
 	//     Name of CNI to use.
 	CNIName string `yaml:"name"`
 	//   description: |
-	//     URLs containing manifests to apply for CNI.
+	//     URLs containing manifests to apply for the CNI.
 	CNIUrls []string `yaml:"urls,omitempty"`
 }
 
@@ -918,7 +916,7 @@ func (ds *DiskSize) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// DiskPartition represents the options for a device partition.
+// DiskPartition represents the options for a disk partition.
 type DiskPartition struct {
 	//   description: |
 	//     This size of partition: either bytes or human readable representation.
@@ -944,7 +942,7 @@ func (fm FileMode) String() string {
 	return "0o" + strconv.FormatUint(uint64(fm), 8)
 }
 
-// MarshalYAML encodes as octal value.
+// MarshalYAML encodes as an octal value.
 func (fm FileMode) MarshalYAML() (interface{}, error) {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
@@ -955,7 +953,7 @@ func (fm FileMode) MarshalYAML() (interface{}, error) {
 
 // MachineFile represents a file to write to disk.
 type MachineFile struct {
-	//   description: The contents of file.
+	//   description: The contents of the file.
 	FileContent string `yaml:"content"`
 	//   description: The file's permissions in octal.
 	FilePermissions FileMode `yaml:"permissions"`
@@ -965,6 +963,7 @@ type MachineFile struct {
 	//   values:
 	//     - create
 	//     - append
+	//     - overwrite
 	FileOp string `yaml:"op"`
 }
 

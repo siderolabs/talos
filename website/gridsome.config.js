@@ -18,7 +18,7 @@ module.exports = {
     twitter: "https://twitter.com/talossystems",
     github: "https://github.com/talos-systems/talos",
     nav: {
-      links: [{ path: "/docs/v0.6/", title: "Docs" }],
+      links: [{ path: "", title: "Docs" }],
     },
     dropdownOptions: [
       {

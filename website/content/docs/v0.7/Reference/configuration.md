@@ -47,7 +47,7 @@ Valid values:
 </div>
 <div class="dt">
 
-Enable verbose logging.
+Enable verbose logging to the console.
 
 
 Valid values:
@@ -177,7 +177,7 @@ The `token` is used by a machine to join the PKI of the cluster.
 Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity.
 
 
-> Warning: It is important to ensure that this token is correct since a machine's certificate has a short TTL by default
+> Warning: It is important to ensure that this token is correct since a machine's certificate has a short TTL by default.
 
 
 
@@ -274,7 +274,7 @@ kubelet:
     #       source: /var/lib/example
     #       options:
     #         - rshared
-    #         - ro
+    #         - rw
 ```
 
 
@@ -289,7 +289,7 @@ kubelet:
 </div>
 <div class="dt">
 
-Used to configure the machine's network.
+Provides machine specific network configuration options.
 
 
 
@@ -298,7 +298,7 @@ Examples:
 
 ``` yaml
 network:
-    hostname: worker-1 # Used to statically set the hostname for the host.
+    hostname: worker-1 # Used to statically set the hostname for the machine.
     # `interfaces` is used to define the network interface configuration.
     interfaces:
         - interface: eth0 # The interface name.
@@ -324,18 +324,18 @@ network:
           # # DHCP specific options.
           # dhcpOptions:
           #     routeMetric: 1024 # The priority of all routes received via DHCP.
-    # Used to statically set the nameservers for the host.
+    # Used to statically set the nameservers for the machine.
     nameservers:
         - 9.8.7.6
         - 8.7.6.5
 
-    # # Allows for extra entries to be added to /etc/hosts file
+    # # Allows for extra entries to be added to the `/etc/hosts` file
     # extraHostEntries:
     #     - ip: 192.168.1.100 # The IP of the host.
     #       # The host alias.
     #       aliases:
-    #         - test
-    #         - test.domain.tld
+    #         - example
+    #         - example.domain.tld
 ```
 
 
@@ -352,8 +352,8 @@ network:
 
 Used to partition, format and mount additional disks.
 Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
-Note that the partitioning and formating is done only once, if and only if no existing  partitions are found.
-If `size:` is omitted, the partition is sized to occupy full disk.
+Note that the partitioning and formating is done only once, if and only if no existing partitions are found.
+If `size:` is omitted, the partition is sized to occupy the full disk.
 
 
 > Note: `size` is in units of bytes.
@@ -390,7 +390,7 @@ disks:
 </div>
 <div class="dt">
 
-Used to provide instructions for bare-metal installations.
+Used to provide instructions for installations.
 
 
 
@@ -399,13 +399,13 @@ Examples:
 
 ``` yaml
 install:
-    disk: /dev/sda # The disk used to install the bootloader, and ephemeral partitions.
-    # Allows for supplying extra kernel args to the bootloader config.
+    disk: /dev/sda # The disk used for installations.
+    # Allows for supplying extra kernel args via the bootloader.
     extraKernelArgs:
         - option=value
     image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
     bootloader: true # Indicates if a bootloader should be installed.
-    wipe: false # Indicates if zeroes should be written to the `disk` before performing and installation.
+    wipe: false # Indicates if the installation disk should be wiped at installation time.
 ```
 
 
@@ -437,7 +437,7 @@ Examples:
 
 ``` yaml
 files:
-    - content: '...' # The contents of file.
+    - content: '...' # The contents of the file.
       permissions: 0o666 # The file's permissions in octal.
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
@@ -455,8 +455,8 @@ files:
 </div>
 <div class="dt">
 
-The `env` field allows for the addition of environment variables to a machine.
-All environment variables are set on the machine in addition to every service.
+The `env` field allows for the addition of environment variables.
+All environment variables are set on PID 1 in addition to every service.
 
 
 Valid values:
@@ -515,8 +515,8 @@ Examples:
 
 ``` yaml
 time:
-    disabled: false # Indicates if time (ntp) is disabled for the machine
-    # Specifies time (ntp) servers to use for setting system time.
+    disabled: false # Indicates if the time service is disabled for the machine.
+    # Specifies time (NTP) servers to use for setting the system time.
     servers:
         - time.cloudflare.com
 ```
@@ -562,10 +562,10 @@ Used to configure the machine's container image registry mirrors.
 
 Automatically generates matching CRI configuration for registry mirrors.
 
-Section `mirrors` allows to redirect requests for images to non-default registry,
+The `mirrors` section allows to redirect requests for images to non-default registry,
 which might be local registry or caching mirror.
 
-Section `config` provides a way to authenticate to the registry with TLS client
+The `config` section provides a way to authenticate to the registry with TLS client
 identity, provide registry CA, or authentication information.
 Authentication information has same meaning with the corresponding field in `.docker/config.json`.
 
@@ -663,7 +663,7 @@ Configures the cluster's name.
 </div>
 <div class="dt">
 
-Provides cluster network configuration.
+Provides cluster specific network configuration options.
 
 
 
@@ -696,7 +696,7 @@ network:
 </div>
 <div class="dt">
 
-The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/).
+The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.
 
 
 
@@ -969,8 +969,8 @@ Examples:
 
 ``` yaml
 extraManifests:
-    - https://www.mysweethttpserver.com/manifest1.yaml
-    - https://www.mysweethttpserver.com/manifest2.yaml
+    - https://www.example.com/manifest1.yaml
+    - https://www.example.com/manifest2.yaml
 ```
 
 
@@ -1076,7 +1076,7 @@ extraArgs:
 #       source: /var/lib/example
 #       options:
 #         - rshared
-#         - ro
+#         - rw
 ```
 
 <hr />
@@ -1149,7 +1149,7 @@ extraMounts:
       source: /var/lib/example
       options:
         - rshared
-        - ro
+        - rw
 ```
 
 
@@ -1169,7 +1169,7 @@ Appears in:
 
 
 ``` yaml
-hostname: worker-1 # Used to statically set the hostname for the host.
+hostname: worker-1 # Used to statically set the hostname for the machine.
 # `interfaces` is used to define the network interface configuration.
 interfaces:
     - interface: eth0 # The interface name.
@@ -1195,18 +1195,18 @@ interfaces:
       # # DHCP specific options.
       # dhcpOptions:
       #     routeMetric: 1024 # The priority of all routes received via DHCP.
-# Used to statically set the nameservers for the host.
+# Used to statically set the nameservers for the machine.
 nameservers:
     - 9.8.7.6
     - 8.7.6.5
 
-# # Allows for extra entries to be added to /etc/hosts file
+# # Allows for extra entries to be added to the `/etc/hosts` file
 # extraHostEntries:
 #     - ip: 192.168.1.100 # The IP of the host.
 #       # The host alias.
 #       aliases:
-#         - test
-#         - test.domain.tld
+#         - example
+#         - example.domain.tld
 ```
 
 <hr />
@@ -1218,7 +1218,7 @@ nameservers:
 </div>
 <div class="dt">
 
-Used to statically set the hostname for the host.
+Used to statically set the hostname for the machine.
 
 </div>
 
@@ -1279,7 +1279,7 @@ interfaces:
 </div>
 <div class="dt">
 
-Used to statically set the nameservers for the host.
+Used to statically set the nameservers for the machine.
 Defaults to `1.1.1.1` and `8.8.8.8`
 
 
@@ -1305,7 +1305,7 @@ nameservers:
 </div>
 <div class="dt">
 
-Allows for extra entries to be added to /etc/hosts file
+Allows for extra entries to be added to the `/etc/hosts` file
 
 
 
@@ -1317,8 +1317,8 @@ extraHostEntries:
     - ip: 192.168.1.100 # The IP of the host.
       # The host alias.
       aliases:
-        - test
-        - test.domain.tld
+        - example
+        - example.domain.tld
 ```
 
 
@@ -1338,13 +1338,13 @@ Appears in:
 
 
 ``` yaml
-disk: /dev/sda # The disk used to install the bootloader, and ephemeral partitions.
-# Allows for supplying extra kernel args to the bootloader config.
+disk: /dev/sda # The disk used for installations.
+# Allows for supplying extra kernel args via the bootloader.
 extraKernelArgs:
     - option=value
 image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
 bootloader: true # Indicates if a bootloader should be installed.
-wipe: false # Indicates if zeroes should be written to the `disk` before performing and installation.
+wipe: false # Indicates if the installation disk should be wiped at installation time.
 ```
 
 <hr />
@@ -1356,7 +1356,7 @@ wipe: false # Indicates if zeroes should be written to the `disk` before perform
 </div>
 <div class="dt">
 
-The disk used to install the bootloader, and ephemeral partitions.
+The disk used for installations.
 
 
 
@@ -1383,7 +1383,7 @@ disk: /dev/nvme0
 </div>
 <div class="dt">
 
-Allows for supplying extra kernel args to the bootloader config.
+Allows for supplying extra kernel args via the bootloader.
 
 
 
@@ -1415,7 +1415,7 @@ Examples:
 
 
 ``` yaml
-image: docker.io/<org>/installer:latest
+image: docker.io/<org>/<image>:<tag>
 ```
 
 
@@ -1454,7 +1454,7 @@ Valid values:
 </div>
 <div class="dt">
 
-Indicates if zeroes should be written to the `disk` before performing and installation.
+Indicates if the installation disk should be wiped at installation time.
 Defaults to `true`.
 
 
@@ -1484,8 +1484,8 @@ Appears in:
 
 
 ``` yaml
-disabled: false # Indicates if time (ntp) is disabled for the machine
-# Specifies time (ntp) servers to use for setting system time.
+disabled: false # Indicates if the time service is disabled for the machine.
+# Specifies time (NTP) servers to use for setting the system time.
 servers:
     - time.cloudflare.com
 ```
@@ -1499,7 +1499,7 @@ servers:
 </div>
 <div class="dt">
 
-Indicates if time (ntp) is disabled for the machine
+Indicates if the time service is disabled for the machine.
 Defaults to `false`.
 
 </div>
@@ -1513,10 +1513,11 @@ Defaults to `false`.
 </div>
 <div class="dt">
 
-Specifies time (ntp) servers to use for setting system time.
+Specifies time (NTP) servers to use for setting the system time.
 Defaults to `pool.ntp.org`
 
-> Note: This parameter only supports a single time server
+
+> This parameter only supports a single time server.
 
 </div>
 
@@ -1570,7 +1571,7 @@ air-gapped installations, etc.
 
 Registry name is the first segment of image identifier, with 'docker.io'
 being default one.
-Name '*' catches any registry names not specified explicitly.
+To catch any registry names not specified explicitly, use '*'.
 
 
 
@@ -1756,7 +1757,7 @@ endpoint: https://1.2.3.4:443
 
 The port that the API server listens on internally.
 This may be different than the port portion listed in the endpoint field above.
-The default is 6443.
+The default is `6443`.
 
 </div>
 
@@ -1913,7 +1914,7 @@ The container image used in the kube-proxy manifest.
 <div class="dt">
 
 proxy mode of kube-proxy.
-By default, this is 'iptables'.
+The default is 'iptables'.
 
 </div>
 
@@ -2103,10 +2104,10 @@ serviceSubnets:
 
 The CNI used.
 Composed of "name" and "url".
-The "name" key only supports upstream bootkube options of "flannel" or "custom".
+The "name" key only supports options of "flannel" or "custom".
 URLs is only used if name is equal to "custom".
-URLs should point to a single yaml file that will get deployed.
-Empty struct or any other name will default to bootkube's flannel.
+URLs should point to the set of YAML files to be deployed.
+An empty struct or any other name will default to bootkube's flannel.
 
 
 
@@ -2116,9 +2117,9 @@ Examples:
 ``` yaml
 cni:
     name: custom # Name of CNI to use.
-    # URLs containing manifests to apply for CNI.
+    # URLs containing manifests to apply for the CNI.
     urls:
-        - https://www.mysweethttpserver.com/supersecretcni.yaml
+        - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
 ```
 
 
@@ -2211,9 +2212,9 @@ Appears in:
 
 ``` yaml
 name: custom # Name of CNI to use.
-# URLs containing manifests to apply for CNI.
+# URLs containing manifests to apply for the CNI.
 urls:
-    - https://www.mysweethttpserver.com/supersecretcni.yaml
+    - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
 ```
 
 <hr />
@@ -2238,7 +2239,7 @@ Name of CNI to use.
 </div>
 <div class="dt">
 
-URLs containing manifests to apply for CNI.
+URLs containing manifests to apply for the CNI.
 
 </div>
 
@@ -2394,7 +2395,7 @@ Appears in:
 
 
 ``` yaml
-- content: '...' # The contents of file.
+- content: '...' # The contents of the file.
   permissions: 0o666 # The file's permissions in octal.
   path: /tmp/file.txt # The path of the file.
   op: append # The operation to use
@@ -2409,7 +2410,7 @@ Appears in:
 </div>
 <div class="dt">
 
-The contents of file.
+The contents of the file.
 
 </div>
 
@@ -2457,6 +2458,8 @@ Valid values:
   - <code>create</code>
 
   - <code>append</code>
+
+  - <code>overwrite</code>
 </div>
 
 <hr />
@@ -2476,8 +2479,8 @@ Appears in:
 - ip: 192.168.1.100 # The IP of the host.
   # The host alias.
   aliases:
-    - test
-    - test.domain.tld
+    - example
+    - example.domain.tld
 ```
 
 <hr />
