@@ -1,26 +1,24 @@
 <template>
   <div>
-    <div>
-      <div
-        @click="isExpanded = !isExpanded"
-        class="inline-flex justify-between w-full cursor-pointer"
-      >
-        <h3 class="pt-0 mt-0 mb-1 text-sm tracking-tight uppercase border-none">
-          {{ title }}
-        </h3>
+    <div
+      @click="isExpanded = !isExpanded"
+      class="inline-flex justify-between w-full cursor-pointer"
+    >
+      <h3 class="text-sm tracking-tight uppercase border-none">
+        {{ title }}
+      </h3>
 
-        <svg
-          class="h-6 w-6 fill-current mr-2 text-ui-typo caret"
-          :class="{ rotate: isExpanded }"
-          viewBox="0 0 32 32"
-          aria-hidden="true"
-        >
-          <path
-            class="text-ui-typo"
-            d="M16.003 18.626l7.081-7.081L25 13.46l-8.997 8.998-9.003-9 1.917-1.916z"
-          />
-        </svg>
-      </div>
+      <svg
+        class="h-6 w-6 fill-current mr-2 text-ui-typo caret"
+        :class="{ rotate: isExpanded }"
+        viewBox="0 0 32 32"
+        aria-hidden="true"
+      >
+        <path
+          class="text-ui-typo"
+          d="M16.003 18.626l7.081-7.081L25 13.46l-8.997 8.998-9.003-9 1.917-1.916z"
+        />
+      </svg>
     </div>
 
     <ul v-show="isExpanded" class="max-w-full pl-2">
@@ -30,8 +28,9 @@
         :key="page.path"
         :class="getClassesForAnchor(page)"
         @click="$store.commit('setSidebarIsOpen', false)"
+        class="py-1"
       >
-        <g-link :to="`${page.path}`" class="flex items-center py-1">
+        <g-link :to="`${page.path}`" class="flex items-center">
           <span
             class="absolute w-2 h-2 -ml-3 rounded-full opacity-0 bg-ui-primary transition transform scale-0 origin-center"
             :class="{
