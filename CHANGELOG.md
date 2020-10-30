@@ -1,4 +1,54 @@
 
+<a name="v0.7.0-alpha.8"></a>
+## [v0.7.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.7...v0.7.0-alpha.8) (2020-10-29)
+
+### Chore
+
+* output more logs from the installer
+* update CI scripts
+* move to newer release of rtnetlink with fn args
+* reduce numer of steps/parallelism of Drone build
+* fix the check-dirty command to abort on untracked files
+
+### Docs
+
+* use grid instead of flexbox
+* improve the config reference documentation
+* improve search bar
+* address small nits
+* add robots.txt and fix sitemap.xml
+* fix config reference types links
+* move to gridsome
+
+### Feat
+
+* bump CoreDNS to 1.7.0
+* bump Linux to 5.8.16, enable mpt3sas driver
+* bump CoreDNS to 1.7.0
+* encode comments as part of talosctl generated configs
+* extend etcd health check on upgrade
+* wipe disks faster in the installer
+
+### Fix
+
+* bump type for `DiskSize` to be 64-bit
+* properly initialize manifest in user disks creation
+* remove default time server in time command
+* retry connection refused errors while bootstrapping a cluster
+* re-implement upgrade (install) with preserve
+* revert "feat: bump CoreDNS to 1.7.0"
+* stop CRI pods on upgrade with preserve
+* stop etcd on any path on upgrade
+* ignore transient errors in upgrade Kubernetes code
+* stop ignoring `EINVAL` on mount
+* implement preserving contents of partition on install
+* correctly calculate output width in colored health reporter
+
+### Test
+
+* bump Talos version for upgrade tests, bump Cilium version
+
+
 <a name="v0.7.0-alpha.7"></a>
 ## [v0.7.0-alpha.7](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.6...v0.7.0-alpha.7) (2020-10-20)
 
